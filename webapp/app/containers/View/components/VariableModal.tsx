@@ -2,33 +2,51 @@ import React from 'react'
 import { Modal, Form, Input, InputNumber, Select, Checkbox, Button, Row, Col } from 'antd'
 const FormItem = Form.Item
 const { Option } = Select
+import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { FormComponentProps } from 'antd/lib/form/Form'
 import ConditionValuesControl, { ConditionValueTypes } from 'components/ConditionValuesControl'
-import { IViewVariable } from 'containers/View/types'
+import {
+  IViewVariable,
+  IDacChannel, IDacTenant, IDacBiz
+} from 'containers/View/types'
 import OperatorTypes from 'utils/operatorTypes'
 import { ViewVariableTypes, ViewVariableTypesLocale, ViewVariableValueTypes, ViewVariableValueTypesLocale } from 'containers/View/constants'
 
 interface IVariableModalProps {
   visible: boolean
   variable: IViewVariable
-  nameValidator?: (name: string, callback: (msg?: string) => void) => void
+
+  channels: IDacChannel[]
+  tenants: IDacTenant[]
+  bizs: IDacBiz[]
+
+  nameValidator?: (key: string, name: string, callback: (msg?: string) => void) => void
   onCancel: () => void
   onSave: (variable: IViewVariable) => void
+
+  onLoadDacTenants: (channelName: string) => void
+  onLoadDacBizs: (channelName: string, tenantId: number) => void
 }
 
 interface IVariableModalStates {
-  variableName: string,
-  editType: 'add' | 'edit'
   operatorType: OperatorTypes
   selectedType: ViewVariableTypes
   selectedValueType: ViewVariableValueTypes
   defaultValues: ConditionValueTypes[]
+  isFromService: boolean
+}
+
+const defaultVarible: IViewVariable = {
+  key: '',
+  name: '',
+  alias: '',
+  type: ViewVariableTypes.Query,
+  valueType: ViewVariableValueTypes.String,
+  defaultValues: [],
+  fromService: false
 }
 
 export class VariableModal extends React.Component<IVariableModalProps & FormComponentProps, IVariableModalStates> {
-
-  private static DefaultType = ViewVariableTypes.Query
-  private static DefaultValueType = ViewVariableValueTypes.String
 
   private formItemStyle = {
     labelCol: { span: 5 },
@@ -44,49 +62,33 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
   ))
 
   public state: Readonly<IVariableModalStates> = {
-    variableName: '',
-    editType: 'add',
     operatorType: OperatorTypes.In,
     selectedType: ViewVariableTypes.Query,
     selectedValueType: ViewVariableValueTypes.String,
-    defaultValues: []
+    defaultValues: [],
+    isFromService: false
   }
 
-  // public componentDidMount () {
-  //   const { form, variable } = this.props
-  //   form.setFieldsValue({ ...variable })
-  // }
-
-  public static getDerivedStateFromProps:
-    React.GetDerivedStateFromProps<IVariableModalProps & FormComponentProps, IVariableModalStates>
-  = (props, state) => {
-    const { variable, form } = props
-    if (!variable) {
-      return {
-        variableName: '',
-        editType: 'add',
-        operatorType: OperatorTypes.In,
-        selectedType: VariableModal.DefaultType,
-        selectedValueType: VariableModal.DefaultValueType,
-        defaultValues: []
-      }
+  public componentDidUpdate (prevProps: IVariableModalProps & FormComponentProps) {
+    const { form, variable, visible, channels } = this.props
+    if (variable !== prevProps.variable || visible !== prevProps.visible) {
+      const { type, valueType, defaultValues, fromService } = variable || defaultVarible
+      this.setState({
+        selectedType: type,
+        selectedValueType: valueType,
+        defaultValues: defaultValues || [],
+        isFromService: fromService && channels.length > 0
+      }, () => {
+        form.setFieldsValue(variable || defaultVarible)
+      })
     }
-    if (variable.name !== state.variableName) {
-      form.setFieldsValue({ ...variable })
-      return {
-        variableName: variable.name,
-        editType: variable.name ? 'edit' : 'add',
-        operatorType: variable.valueType === ViewVariableValueTypes.Boolean ? OperatorTypes.Equal : OperatorTypes.In,
-        selectedType: variable.type,
-        selectedValueType: variable.valueType,
-        defaultValues: variable.defaultValues
-      }
-    }
-    return null
   }
 
   private typeChange = (selectedType: ViewVariableTypes) => {
-    this.setState({ selectedType })
+    this.setState(({ isFromService }) => ({
+      selectedType,
+      isFromService: selectedType === ViewVariableTypes.Query ? false : isFromService
+    }))
   }
 
   private valueTypeChange = (selectedValueType: ViewVariableValueTypes) => {
@@ -101,6 +103,17 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
     this.setState({ defaultValues: values })
   }
 
+  private fromServiceChange = (e: CheckboxChangeEvent) => {
+    const fromService = e.target.checked
+    this.setState({ isFromService: fromService })
+  }
+
+  private loadDacBizs = (tenantId: number) => {
+    const { form, onLoadDacBizs } = this.props
+    const channelName = form.getFieldValue('channel.name')
+    onLoadDacBizs(channelName, tenantId)
+  }
+
   private validateVariableName = (_: any, name: string, callback: (msg?: string) => void) => {
     const isValidName = /[\w]+/.test(name)
     if (!isValidName) {
@@ -112,7 +125,9 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
       callback()
       return
     }
-    nameValidator(name, callback)
+    const { variable } = this.props
+    const key = variable ? variable.key : ''
+    nameValidator(key, name, callback)
   }
 
   private clearFieldsValue = () => {
@@ -120,22 +135,29 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
   }
 
   private save = () => {
-    const { form, onSave } = this.props
+    const { form, variable, onSave } = this.props
     form.validateFieldsAndScroll((err, fieldsValue) => {
       if (!err) {
-        const variable = fieldsValue as IViewVariable
-        if (variable.type === ViewVariableTypes.Query) {
-          variable.defaultValues = this.state.defaultValues
+        const updatedVariable = fieldsValue as IViewVariable
+        if (variable) {
+          updatedVariable.key = variable.key
         }
-        onSave(variable)
+        if (updatedVariable.type === ViewVariableTypes.Query) {
+          updatedVariable.defaultValues = this.state.defaultValues
+        }
+        onSave(updatedVariable)
       }
     })
   }
 
   public render () {
-    const { visible, onCancel, form } = this.props
+    const {
+      visible, variable, onCancel, form,
+      channels, tenants, bizs,
+      onLoadDacTenants
+    } = this.props
     const { getFieldDecorator } = form
-    const { editType, operatorType, selectedType, selectedValueType, defaultValues } = this.state
+    const { operatorType, selectedType, selectedValueType, defaultValues, isFromService } = this.state
 
     const modalButtons = [(
       <Button
@@ -150,8 +172,6 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
         key="submit"
         size="large"
         type="primary"
-        // loading={loading}
-        // disabled={loading}
         onClick={this.save}
       >
         保 存
@@ -160,8 +180,9 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
 
     return (
       <Modal
-        title={`${editType === 'add' ? '新增' : '修改'}变量`}
+        title={`${variable && variable.key ? '修改' : '新增'}变量`}
         wrapClassName="ant-modal-small"
+        maskClosable={false}
         visible={visible}
         footer={modalButtons}
         onCancel={onCancel}
@@ -175,13 +196,15 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
               }]
             })(<Input />)}
           </FormItem>
+          <FormItem label="别名" {...this.formItemStyle}>
+            {getFieldDecorator<IViewVariable>('alias')(<Input />)}
+          </FormItem>
           <FormItem label="类型" {...this.formItemStyle}>
             {getFieldDecorator<IViewVariable>('type', {
               rules: [{
                 required: true,
                 message: '请选择类型'
-              }],
-              initialValue: ViewVariableTypes.Query
+              }]
             })(<Select onChange={this.typeChange}>{this.viewVariableTypeOptions}</Select>)}
           </FormItem>
           <FormItem label="值类型" {...this.formItemStyle}>
@@ -189,8 +212,7 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
               rules: [{
                 required: true,
                 message: '请选择值类型'
-              }],
-              initialValue: VariableModal.DefaultValueType
+              }]
             })(<Select onChange={this.valueTypeChange}>{this.viewVariableValueTypeOptions}</Select>)}
           </FormItem>
           {selectedType === ViewVariableTypes.Query && (
@@ -202,14 +224,55 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
                 onChange={this.defaultValueChange}
               />
             </FormItem>)}
-          <FormItem>
-            <Row>
-              <Col span={this.formItemStyle.wrapperCol.span} offset={this.formItemStyle.labelCol.span}>
-                {getFieldDecorator<IViewVariable>('fromService')(
-                  <Checkbox>通过外部服务取值变量</Checkbox>)}
-              </Col>
-            </Row>
-          </FormItem>
+          {selectedType === ViewVariableTypes.Authorization && channels.length > 0 && (
+            <FormItem>
+              <Row>
+                <Col span={this.formItemStyle.wrapperCol.span} offset={this.formItemStyle.labelCol.span}>
+                  {getFieldDecorator<IViewVariable>('fromService', {
+                    valuePropName: 'checked'
+                  })(
+                    <Checkbox onChange={this.fromServiceChange}>通过外部服务取值变量</Checkbox>)}
+                </Col>
+              </Row>
+            </FormItem>
+          )}
+          {isFromService && (
+            <>
+              <FormItem label="服务" {...this.formItemStyle}>
+                {getFieldDecorator('channel.name', {
+                  rules: [{
+                    required: true,
+                    message: '服务不能为空'
+                  }]
+                })(
+                <Select onChange={onLoadDacTenants}>
+                  {channels.map((c) => <Option key={c} value={c}>{c}</Option>)}
+                </Select>)}
+              </FormItem>
+              <FormItem label="租户" {...this.formItemStyle}>
+                {getFieldDecorator('channel.tenantId', {
+                  rules: [{
+                    required: true,
+                    message: '租户不能为空'
+                  }]
+                })(
+                <Select onChange={this.loadDacBizs}>
+                  {tenants.map(({ id, name }) => <Option key={id.toString()} value={id}>{name}</Option>)}
+                </Select>)}
+              </FormItem>
+              <FormItem label="业务" {...this.formItemStyle}>
+                {getFieldDecorator('channel.bizId', {
+                  rules: [{
+                    required: true,
+                    message: '业务不能为空'
+                  }]
+                })(
+                <Select>
+                  {bizs.map(({ id, name }) => <Option key={id.toString()} value={id}>{name}</Option>)}
+                </Select>)}
+              </FormItem>
+            </>
+          )}
         </Form>
       </Modal>
     )

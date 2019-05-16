@@ -19,7 +19,7 @@
  */
 
 import { Record } from 'immutable'
-import { IViewState, IViewModel, IView, IFormedView, IFormedViews } from './types'
+import { IViewState, IViewRoleRaw, IViewRole, IViewModel, IView, IFormedView, IFormedViews } from './types'
 import { getValidModel } from './util'
 
 import { ActionTypes, DEFAULT_SQL_LIMIT } from './constants'
@@ -73,7 +73,11 @@ const ViewRecord = Record<IViewState>({
     table: false,
     modal: false,
     execute: false
-  }
+  },
+
+  channels: [],
+  tenants: [],
+  bizs: []
 })
 const initialState = new ViewRecord()
 
@@ -99,12 +103,17 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
       const { id: viewId, variable, model, roles } = action.payload.view
       const formedModel = JSON.parse((model || '{}'))
       const formedVariable = JSON.parse((variable || '[]'))
+      const formedRoles = (roles as IViewRoleRaw[]).map<IViewRole>(({ roleId, columnAuth, rowAuth }) => ({
+        roleId,
+        columnAuth: JSON.parse(columnAuth || '[]'),
+        rowAuth: JSON.parse(rowAuth || '[]')
+      }))
       return state
         .set('editingView', action.payload.view)
         .set('editingViewInfo', {
           model: formedModel,
           variable: formedVariable,
-          roles: roles || []
+          roles: formedRoles
         })
         .set('formedViews', {
           ...formedViews,
@@ -112,7 +121,7 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
             ...action.payload.view,
             model: formedModel,
             variable: formedVariable,
-            roles: roles || []
+            roles: formedRoles
           }
         })
     case SourceActionTypes.LOAD_SOURCES_SUCCESS:
@@ -164,6 +173,18 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
       return state.set('editingViewInfo', action.payload.viewInfo)
     case ActionTypes.SET_SQL_LIMIT:
       return state.set('sqlLimit', action.payload.limit)
+
+    case ActionTypes.LOAD_DAC_CHANNELS_SUCCESS:
+      return state.set('channels', action.payload.channels)
+    case ActionTypes.LOAD_DAC_TENANTS_SUCCESS:
+      return state.set('tenants', action.payload.tenants)
+    case ActionTypes.LOAD_DAC_TENANTS_FAILURE:
+      return state.set('tenants', [])
+    case ActionTypes.LOAD_DAC_BIZS_SUCCESS:
+      return state.set('bizs', action.payload.bizs)
+    case ActionTypes.LOAD_DAC_BIZS_FAILURE:
+      return state.set('bizs', [])
+
     case ActionTypes.RESET_VIEW_STATE:
       return new ViewRecord()
     case LOAD_WIDGET_DETAIL_SUCCESS:

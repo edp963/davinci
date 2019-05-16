@@ -21,7 +21,10 @@
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
 import { IDavinciResponse } from 'utils/request'
-import { IViewBase, IView, IExecuteSqlParams, IExecuteSqlResponse, IViewInfo } from './types'
+import {
+  IViewBase, IView, IExecuteSqlParams, IExecuteSqlResponse, IViewInfo,
+  IDacChannel, IDacTenant, IDacBiz
+} from './types'
 import { IDataRequestParams } from 'containers/Dashboard/Grid'
 import { RenderType } from 'containers/Widget/components/Widget'
 
@@ -203,6 +206,76 @@ export const ViewActions = {
       payload: {}
     }
   },
+
+  /** Actions for fetch external authorization variables values */
+  loadDacChannels () {
+    return {
+      type: ActionTypes.LOAD_DAC_CHANNELS,
+      payload: {}
+    }
+  },
+  dacChannelsLoaded (channels: IDacChannel[]) {
+    return {
+      type: ActionTypes.LOAD_DAC_CHANNELS_SUCCESS,
+      payload: {
+        channels
+      }
+    }
+  },
+  loadDacChannelsFail () {
+    return {
+      type: ActionTypes.LOAD_DAC_CHANNELS_FAILURE,
+      payload: {}
+    }
+  },
+
+  loadDacTenants (channelName: string) {
+    return {
+      type: ActionTypes.LOAD_DAC_TENANTS,
+      payload: {
+        channelName
+      }
+    }
+  },
+  dacTenantsLoaded (tenants: IDacTenant[]) {
+    return {
+      type: ActionTypes.LOAD_DAC_TENANTS_SUCCESS,
+      payload: {
+        tenants
+      }
+    }
+  },
+  loadDacTenantsFail () {
+    return {
+      type: ActionTypes.LOAD_DAC_TENANTS_FAILURE,
+      payload: {}
+    }
+  },
+
+  loadDacBizs (channelName: string, tenantId: number) {
+    return {
+      type: ActionTypes.LOAD_DAC_BIZS,
+      payload: {
+        channelName,
+        tenantId
+      }
+    }
+  },
+  dacBizsLoaded (bizs: IDacBiz[]) {
+    return {
+      type: ActionTypes.LOAD_DAC_BIZS_SUCCESS,
+      payload: {
+        bizs
+      }
+    }
+  },
+  loadDacBizsFail () {
+    return {
+      type: ActionTypes.LOAD_DAC_BIZS_FAILURE,
+      payload: {}
+    }
+  },
+  /** */
 
   /** Actions for external usages */
   loadCascadeViewData (controlId: string, viewId: number, columns: string[], parents: Array<{ column: string, value: string }>) {

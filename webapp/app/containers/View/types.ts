@@ -39,14 +39,15 @@ export interface IView extends IViewTemp {
   projectId: number
   source?: ISourceSimple
   sourceId: number
-  roles: IViewRole[]
+  roles: IViewRoleRaw[]
 }
 
-type IViewTemp2 = Omit<Omit<IView, 'model'>, 'variable'>
+type IViewTemp2 = Omit<Omit<Omit<IView, 'model'>, 'variable'>, 'roles'>
 
 export interface IFormedView extends IViewTemp2 {
   model: IViewModel
   variable: IViewVariable[]
+  roles: IViewRole[]
 }
 
 export interface ISqlValidation {
@@ -65,6 +66,7 @@ export interface IExecuteSqlParams {
   sourceId: number
   sql: string
   limit: number
+  variables: IViewVariableBase[]
 }
 
 export interface ISqlColumn {
@@ -89,12 +91,30 @@ export interface IViewModel {
   [name: string]: Omit<IViewModelProps, 'name'>
 }
 
-export interface IViewVariable {
+interface IViewVariableChannel {
+  bizId: number
+  name: string
+  tenantId: number
+}
+
+interface IViewVariableBase {
   name: string
   type: ViewVariableTypes
   valueType: ViewVariableValueTypes
   defaultValues: Array<string | number | boolean>
+  channel?: IViewVariableChannel
+}
+
+export interface IViewVariable extends IViewVariableBase {
+  key: string
+  alias: string
   fromService: boolean
+}
+
+export interface IViewRoleRaw {
+  roleId: number
+  columnAuth: string
+  rowAuth: string
 }
 
 export interface IViewRole {
@@ -111,7 +131,7 @@ export interface IViewRole {
    * @type {(Array<string | number>)}
    * @memberof IViewRole
    */
-  rowAuth: Array<{ name: string, values: Array<string | number> }>
+  rowAuth: Array<{ name: string, values: Array<string | number | boolean> }>
 }
 
 export interface IViewInfo {
@@ -122,6 +142,16 @@ export interface IViewInfo {
 
 export interface IFormedViews {
   [viewId: number]: IFormedView
+}
+
+export type IDacChannel = string
+export interface IDacTenant {
+  id: number
+  name: string
+}
+export interface IDacBiz {
+  id: number
+  name: string
 }
 
 export interface IViewState {
@@ -136,4 +166,8 @@ export interface IViewState {
   sqlDataSource: IExecuteSqlResponse
   sqlLimit: number
   loading: IViewLoading
+
+  channels: IDacChannel[]
+  tenants: IDacTenant[]
+  bizs: IDacBiz[]
 }

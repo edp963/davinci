@@ -1,26 +1,43 @@
 import React from 'react'
 import classnames from 'classnames'
 import memoizeOne from 'memoize-one'
-import { Table, Tabs, Radio, Select, Row, Col, Button, Tag } from 'antd'
+import { Table, Tabs, Radio, Select, Row, Col, Button, Tag, Tooltip, Icon } from 'antd'
 const { Column } = Table
 const { TabPane } = Tabs
 const RadioGroup = Radio.Group
 const { Option } = Select
 import { RadioChangeEvent } from 'antd/lib/radio'
-import { ColumnProps } from 'antd/lib/table'
+import { TableProps, ColumnProps } from 'antd/lib/table'
 
 import { IViewVariable, IViewModelProps, IViewModel, IExecuteSqlResponse, IViewRole } from '../types'
 import {
   ViewModelTypes,
   ViewModelVisualTypes,
   ViewModelTypesLocale,
+  ViewVariableValueTypes,
   ModelTypeSqlTypeSetting,
   ViewModelVisualTypesLocale,
   VisualTypeSqlTypeSetting
 } from '../constants'
 
+import OperatorTypes from 'utils/operatorTypes'
+import ConditionValuesControl, { ConditionValueTypes } from 'components/ConditionValuesControl'
 import ModelAuthModal from './ModelAuthModal'
 import Styles from '../View.less'
+
+interface IViewRoleConverted {
+  roleId: number
+  roleName: string
+  roleDesc: string
+  columnAuth: string[]
+  rowAuthConverted: {
+    [variableName: string]: {
+      name: string,
+      values: Array<string | number | boolean>,
+      variable: IViewVariable
+    }
+  }
+}
 
 interface IModelAuthProps {
   visible: boolean
@@ -73,7 +90,7 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
     this.props.onStepChange(step)
   }
 
-  private setColumnAuth = (viewRole: IViewRole) => () => {
+  private setColumnAuth = (viewRole: IViewRoleConverted) => () => {
     const { roleId, columnAuth } = viewRole
     const { model } = this.props
     this.setState({
@@ -83,51 +100,110 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
     })
   }
 
+  private rowAuthValuesChange = (roleId: number, variableName: string) => (values: Array<string | number | boolean>) => {
+    const { onViewRoleChange, viewRoles } = this.props
+    let viewRole = viewRoles.find((v) => v.roleId === roleId)
+    if (!viewRole) {
+      viewRole = {
+        roleId,
+        columnAuth: [],
+        rowAuth: [{ name: variableName, values }]
+      }
+    } else {
+      const variableIdx = viewRole.rowAuth.findIndex((auth) => auth.name === variableName)
+      if (variableIdx < 0) {
+        viewRole.rowAuth.push({ name: variableName, values })
+      } else {
+        viewRole.rowAuth[variableIdx].values = values
+      }
+    }
+    onViewRoleChange({ ...viewRole })
+  }
+
   private getAuthTableColumns = memoizeOne((model: IViewModel, variables: IViewVariable[]) => {
-    const columns: Array<ColumnProps<any>> = variables.map((variable) => ({
-      title: variable.name
+    const columnsChildren = variables.map<ColumnProps<IViewRoleConverted>>((variable) => ({
+      title: `${variable.alias || variable.name}`,
+      dataIndex: 'rowAuthConverted',
+      width: 250,
+      render: (_, record: IViewRoleConverted) => {
+        const { name: variableName, valueType } = variable
+        const { roleId, rowAuthConverted } = record
+        const { values: rowAuthValues } = rowAuthConverted[variableName]
+        const operatorType = (valueType === ViewVariableValueTypes.Boolean ? OperatorTypes.Equal : OperatorTypes.In)
+        return (
+          <ConditionValuesControl
+            visualType={valueType}
+            operatorType={operatorType}
+            conditionValues={rowAuthValues}
+            onChange={this.rowAuthValuesChange(roleId, variableName)}
+          />
+        )
+      }
     }))
-    columns.unshift({
+    const columns: Array<ColumnProps<IViewRoleConverted>> = [{
       title: '角色',
-      dataIndex: 'roleName'
+      dataIndex: 'roleName',
+      width: 300,
+      render: (roleName: string, record: IViewRoleConverted) => (
+        <span>
+          {roleName}
+          {record.roleDesc && (
+            <Tooltip title={record.roleDesc}>
+              <Icon className={Styles.cellIcon} type="info-circle" />
+            </Tooltip>
+          )}
+        </span>
+      )
     }, {
-      title: '描述',
-      dataIndex: 'roleDesc'
-    })
-    columns.push({
+      title: '权限变量值设置',
+      children: columnsChildren
+    }, {
       title: '可见字段',
       dataIndex: 'columnAuth',
+      width: 120,
       render: (columnAuth: string[], record) => {
         if (columnAuth.length === 0) {
-          return (<Tag onClick={this.setColumnAuth(record)} color="#f50">不可见</Tag>)
+          return (<Tag onClick={this.setColumnAuth(record)}>全部可见</Tag>)
         }
         if (columnAuth.length === Object.keys(model).length) {
-          return (<Tag onClick={this.setColumnAuth(record)}>全部可见</Tag>)
+          return (<Tag onClick={this.setColumnAuth(record)} color="#f50">不可见</Tag>)
         }
         return (<Tag color="green" onClick={this.setColumnAuth(record)}>部分可见</Tag>)
       }
-    })
+    }]
     return columns
   })
 
-  private getAuthDatasource = (roles: any[], viewRoles: IViewRole[]) => {
+  private getAuthTableScroll = memoizeOne((columns: Array<ColumnProps<any>>) => {
+    const scroll: TableProps<any>['scroll'] = {}
+    const columnsTotalWidth = columns.reduce((acc, c) => acc + (c.width as number), 0)
+    scroll.x = columnsTotalWidth
+    return scroll
+  })
+
+  private getAuthDatasource = (roles: any[], varibles: IViewVariable[], viewRoles: IViewRole[]) => {
     if (!Array.isArray(roles)) { return [] }
 
-    const authDatasource = roles.map<IViewRole>((role) => {
+    const authDatasource = roles.map<IViewRoleConverted>((role) => {
       const { id: roleId, name: roleName, description: roleDesc } = role
-      let columnAuth = []
-      let rowAuth = []
       const viewRole = viewRoles.find((v) => v.roleId === roleId)
-      if (viewRole) {
-        columnAuth = viewRole.columnAuth
-        rowAuth = viewRole.rowAuth
-      }
+      const columnAuth = viewRole ? viewRole.columnAuth : []
+      const rowAuthConverted = varibles.reduce<IViewRoleConverted['rowAuthConverted']>((obj, variable) => {
+        const { name: variableName } = variable
+        const authIdx = viewRole ? viewRole.rowAuth.findIndex((auth) => auth.name === variableName) : -1
+        obj[variableName] = {
+          name: variableName,
+          values: authIdx < 0 ? [] : viewRole.rowAuth[authIdx].values,
+          variable
+        }
+        return obj
+      }, {})
       return {
         roleId,
         roleName,
         roleDesc,
         columnAuth,
-        rowAuth
+        rowAuthConverted
       }
     })
     return authDatasource
@@ -152,14 +228,22 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
   )
 
   private saveModelAuth = (columnAuth: string[]) => {
-    const { onViewRoleChange, roles, viewRoles } = this.props
+    const { onViewRoleChange, viewRoles } = this.props
     const { selectedRoleId } = this.state
-    const authDatasource = this.getAuthDatasource(roles, viewRoles)
-    const viewRole = authDatasource.find((v) => v.roleId === selectedRoleId)
-    onViewRoleChange({
-      ...viewRole,
-      columnAuth
-    })
+    let viewRole = viewRoles.find((v) => v.roleId === selectedRoleId)
+    if (!viewRole) {
+      viewRole = {
+        roleId: selectedRoleId,
+        columnAuth,
+        rowAuth: []
+      }
+    } else {
+      viewRole = {
+        ...viewRole,
+        columnAuth
+      }
+    }
+    onViewRoleChange(viewRole)
     this.closeModelAuth()
   }
 
@@ -169,10 +253,11 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
 
   public render () {
     const { visible, model, variable, viewRoles, sqlColumns, roles, onModelChange } = this.props
-    const { modalVisible, selectedColumnAuth } = this.state
+    const { modalVisible, selectedColumnAuth, selectedRoleId } = this.state
     const modelDatasource = Object.entries(model).map(([name, value]) => ({ name, ...value }))
     const authColumns = this.getAuthTableColumns(model, variable)
-    const authDatasource = this.getAuthDatasource(roles, viewRoles)
+    const authScroll = this.getAuthTableScroll(authColumns)
+    const authDatasource = this.getAuthDatasource(roles, variable, viewRoles)
     const styleCls = classnames({
       [Styles.containerHorizontal]: true,
       [Styles.modelAuth]: true
@@ -198,12 +283,14 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
                 rowKey="roleId"
                 pagination={false}
                 columns={authColumns}
+                scroll={authScroll}
                 dataSource={authDatasource}
               />
             </div>
             <ModelAuthModal
               visible={modalVisible}
               model={model}
+              roleId={selectedRoleId}
               auth={selectedColumnAuth}
               onSave={this.saveModelAuth}
               onCancel={this.closeModelAuth}

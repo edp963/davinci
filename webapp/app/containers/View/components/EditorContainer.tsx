@@ -21,8 +21,13 @@
 import React from 'react'
 
 import { ISource, ISourceTable, IMapTableColumns } from 'containers/source/types'
-import { IExecuteSqlParams, IViewVariable, IView, IExecuteSqlResponse, IViewLoading } from '../types'
+import {
+  IViewVariable, IView,
+  IExecuteSqlParams, IExecuteSqlResponse, IViewLoading,
+  IDacChannel, IDacTenant, IDacBiz
+} from '../types'
 
+import { uuid } from 'utils/util'
 import { InputNumber, Button, Row, Col, Tooltip } from 'antd'
 import Resizable, { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
 import SourceTable from './SourceTable'
@@ -36,6 +41,7 @@ import Styles from '../View.less'
 interface IEditorContainerProps {
   visible: boolean
   view: IView
+  variable: IViewVariable[]
   sources: ISource[],
   tables: ISourceTable[],
   mapTableColumns: IMapTableColumns
@@ -43,19 +49,27 @@ interface IEditorContainerProps {
   sqlLimit: number
   loading: IViewLoading
   nextDisabled: boolean
+
+  channels: IDacChannel[]
+  tenants: IDacTenant[]
+  bizs: IDacBiz[]
+
   onLoadSourceTables: (sourceId: number) => void
   onLoadTableColumns: (sourceId: number, tableName: string) => void
   onSetSqlLimit: (limit: number) => void
   onExecuteSql: (params: IExecuteSqlParams) => void
+  onVariableChange: (variable: IViewVariable[]) => void
   onStepChange: (stepChange: number) => void
   onViewChange: (propName: keyof(IView), value: string | number) => void
+
+  onLoadDacTenants: (channelName: string) => void
+  onLoadDacBizs: (channelName: string, tenantId: number) => void
 }
 
 interface IEditorContainerStates {
   editorHeight: number
   siderWidth: number
   previewHeight: number
-  viewVariables: IViewVariable[]
   variableModalVisible: boolean
   editingVariable: IViewVariable
 }
@@ -70,7 +84,6 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
     editorHeight: 0,
     siderWidth: EditorContainer.SiderMinWidth,
     previewHeight: 0,
-    viewVariables: [],
     variableModalVisible: false,
     editingVariable: null
   }
@@ -136,25 +149,26 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
     })
   }
 
-  private saveVariable = (variable: IViewVariable) => {
-    const { viewVariables, editingVariable } = this.state
-    const updatedViewVariables = [...viewVariables]
-    if (!editingVariable) {
-      updatedViewVariables.push({ ...variable })
+  private saveVariable = (updatedVariable: IViewVariable) => {
+    const { variable, onVariableChange } = this.props
+    const updatedViewVariables = [...variable]
+    if (!updatedVariable.key) {
+      updatedVariable.key = uuid(5)
+      updatedViewVariables.push(updatedVariable)
     } else {
-      const idx = viewVariables.findIndex((v) => v.name === variable.name)
-      updatedViewVariables[idx] = { ...variable }
+      const idx = variable.findIndex((v) => v.key === updatedVariable.key)
+      updatedViewVariables[idx] = updatedVariable
     }
+    onVariableChange(updatedViewVariables)
     this.setState({
-      viewVariables: updatedViewVariables,
       variableModalVisible: false
     })
   }
 
-  private deleteVariable = (name: string) => {
-    this.setState({
-      viewVariables: this.state.viewVariables.filter((v) => v.name !== name)
-    })
+  private deleteVariable = (key: string) => {
+    const { variable, onVariableChange } = this.props
+    const updatedViewVariables = variable.filter((v) => v.key !== key)
+    onVariableChange(updatedViewVariables)
   }
 
   private editVariable = (variable: IViewVariable) => {
@@ -164,10 +178,16 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
     })
   }
 
-  private variableNameValidate = (name: string, callback: (msg?: string) => void) => {
-    const { viewVariables } = this.state
-    const exists = viewVariables.findIndex((v) => v.name === name) >= 0
-    exists ? callback('名称不能重复') : callback()
+  private variableNameValidate = (key: string, name: string, callback: (msg?: string) => void) => {
+    const { variable } = this.props
+    if (key) {
+      const existed = variable.findIndex((v) => v.key !== key && v.name === name) >= 0
+      if (existed) {
+        callback('名称不能重复')
+        return
+      }
+    }
+    callback()
   }
 
   private closeVariableModal = () => {
@@ -183,12 +203,13 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
   }
 
   private executeSql = (params?: Partial<IExecuteSqlParams>) => {
-    const { onExecuteSql, view, sqlLimit } = this.props
+    const { onExecuteSql, view, sqlLimit, variable } = this.props
     const { sourceId, sql } = view
     const updatedParams: IExecuteSqlParams = {
       sourceId,
       sql,
       limit: sqlLimit,
+      variables: variable,
       ...params
     }
     onExecuteSql(updatedParams)
@@ -204,12 +225,13 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
 
   public render () {
     const {
-      visible, view, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
-      onViewChange, onSetSqlLimit
+      visible, view, variable, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
+      channels, tenants, bizs,
+      onViewChange, onSetSqlLimit, onLoadDacTenants, onLoadDacBizs
     } = this.props
     const {
       editorHeight, siderWidth, previewHeight,
-      viewVariables, variableModalVisible, editingVariable } = this.state
+      variableModalVisible, editingVariable } = this.state
     const { execute: loadingExecute } = loading
     const style = visible ? {} : { display: 'none' }
 
@@ -258,7 +280,7 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
                     </div>
                     <div className={Styles.list}>
                       <ViewVariableList
-                        variables={viewVariables}
+                        variables={variable}
                         onAdd={this.addVariable}
                         onDelete={this.deleteVariable}
                         onEdit={this.editVariable}
@@ -305,8 +327,16 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
           visible={variableModalVisible}
           variable={editingVariable}
           nameValidator={this.variableNameValidate}
+
+          channels={channels}
+          tenants={tenants}
+          bizs={bizs}
+
           onCancel={this.closeVariableModal}
           onSave={this.saveVariable}
+
+          onLoadDacTenants={onLoadDacTenants}
+          onLoadDacBizs={onLoadDacBizs}
         />
       </>
     )

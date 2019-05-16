@@ -333,10 +333,9 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
   }
 
   private removeTag = (tag) => () => {
+    const { onChange } = this.props
     const { localValues } = this.state
-    this.setState({
-      localValues: localValues.filter((val) => val !== tag)
-    })
+    onChange(localValues.filter((val) => val !== tag))
   }
 
   private tagInputValueChange = (...args: any[]) => {

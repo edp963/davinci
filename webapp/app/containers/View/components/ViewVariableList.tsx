@@ -8,7 +8,7 @@ import Styles from '../View.less'
 interface IViewVariableProps {
   variables: IViewVariable[]
   onAdd: () => void
-  onDelete: (name: string) => void
+  onDelete: (key: string) => void
   onEdit: (variable: IViewVariable) => void
 }
 
@@ -18,8 +18,8 @@ export class ViewVariableList extends React.Component<IViewVariableProps> {
     this.props.onEdit({ ...variable })
   }
 
-  private deleteItem = (name: string) => () => {
-    this.props.onDelete(name)
+  private deleteItem = (key: string) => () => {
+    this.props.onDelete(key)
   }
 
   private renderItem = (item: IViewVariable) => {
@@ -34,7 +34,7 @@ export class ViewVariableList extends React.Component<IViewVariableProps> {
           key="delete"
           title="确定删除？"
           placement="left"
-          onConfirm={this.deleteItem(item.name)}
+          onConfirm={this.deleteItem(item.key)}
         >
           <Tooltip title="删除">
             <Icon type="delete" />
@@ -42,11 +42,12 @@ export class ViewVariableList extends React.Component<IViewVariableProps> {
         </Popconfirm>
       )
     ]
+    const { name, alias } = item
 
     return (
       <List.Item actions={icons}>
         <div className={Styles.variableItem}>
-          <div>{item.name}</div>
+          <div>{name}{alias ? `[${alias}]` : null}</div>
         </div>
       </List.Item>
     )

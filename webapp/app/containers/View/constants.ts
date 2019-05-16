@@ -52,6 +52,20 @@ enum Types {
   SET_SQL_LIMIT = 'davinci/View/SET_SQL_LIMIT',
   RESET_VIEW_STATE = 'davinci/View/RESET_VIEW_STATE',
 
+  /** Actions for fetch external authorization variables values */
+  LOAD_DAC_CHANNELS = 'davinci/View/LOAD_DAC_CHANNELS',
+  LOAD_DAC_CHANNELS_SUCCESS = 'davinci/View/LOAD_DAC_CHANNELS_SUCCESS',
+  LOAD_DAC_CHANNELS_FAILURE = 'davinci/View/LOAD_DAC_CHANNELS_FAILURE',
+
+  LOAD_DAC_TENANTS = 'davinci/View/LOAD_DAC_TENANTS',
+  LOAD_DAC_TENANTS_SUCCESS = 'davinci/View/LOAD_DAC_TENANTS_SUCCESS',
+  LOAD_DAC_TENANTS_FAILURE = 'davinci/View/LOAD_DAC_TENANTS_FAILURE',
+
+  LOAD_DAC_BIZS = 'davinci/View/LOAD_DAC_BIZS',
+  LOAD_DAC_BIZS_SUCCESS = 'davinci/View/LOAD_DAC_BIZS_SUCCESS',
+  LOAD_DAC_BIZS_FAILURE = 'davinci/View/LOAD_DAC_BIZS_FAILURE',
+  /** */
+
   /** Actions for external usages */
   LOAD_CASCADE_VIEW_DATA = 'davinci/View/LOAD_CASCADE_VIEW_DATA',
   LOAD_CASCADE_VIEW_DATA_SUCCESS = 'davinci/View/LOAD_CASCADE_VIEW_DATA_SUCCESS',
