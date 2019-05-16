@@ -159,7 +159,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
 
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryConditions = currentLayersInfo[itemId].queryConditions
     let linkageFilters
@@ -187,6 +187,13 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       column: decodeMetricName(m.name),
       func: m.agg
     }))
+
+    if (secondaryMetrics && secondaryMetrics.length) {
+      aggregators = aggregators.concat(secondaryMetrics.map((second) => ({
+        column: decodeMetricName(second.name),
+        func: second.agg
+      })))
+    }
 
     if (color) {
       groups = groups.concat(color.items.map((c) => c.name))
