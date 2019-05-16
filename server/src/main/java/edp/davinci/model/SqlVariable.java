@@ -30,13 +30,7 @@ public class SqlVariable {
     private String valueType;      //变量值类型 string/number/boolean/date
     private List<Object> defaultValues;   //默认值
 
-    private Channel channel;
+    private SqlVariableChannel channel;
 }
 
 
-@Data
-class Channel {
-    private String name;
-    private Long tenantId;
-    private Long bizId;
-}

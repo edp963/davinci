@@ -67,7 +67,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static edp.core.consts.Consts.comma;
 import static edp.core.consts.Consts.minus;
 
 @Slf4j
@@ -160,6 +159,9 @@ public class ViewServiceImpl implements ViewService {
         if (projectPermission.getViewPermission() == UserPermissionEnum.HIDDEN.getPermission()) {
             throw new NotFoundException("Insufficient permissions");
         }
+
+        List<RelRoleView> relRoleViews = relRoleViewMapper.getByView(view.getId());
+        view.setRoles(relRoleViews);
 
         return view;
     }
@@ -654,7 +656,7 @@ public class ViewServiceImpl implements ViewService {
             Set<String> columns = new HashSet<>();
             roleViewList.forEach(r -> {
                 if (!StringUtils.isEmpty(r.getColumnAuth())) {
-                    columns.addAll(Arrays.asList(r.getColumnAuth().split(comma)));
+                    columns.addAll(JSONObject.parseArray(r.getColumnAuth(), String.class));
                 }
             });
             return columns;
@@ -711,9 +713,7 @@ public class ViewServiceImpl implements ViewService {
                 ConcurrentHashMap<String, Set<String>> map = new ConcurrentHashMap<>();
                 try {
                     list.forEach(sqlVariable -> executorService.execute(() -> {
-                        //TODO 外部获取参数url
-                        String url = "";
-                        List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, url);
+                        List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
                         if (map.containsKey(sqlVariable.getName().trim())) {
                             map.get(sqlVariable.getName().trim()).addAll(values);
                         } else {
@@ -759,31 +759,61 @@ public class ViewServiceImpl implements ViewService {
 
     private void checkAndInsertRoleParam(String sqlVarible, List<RelRoleViewDto> roles, User user, View view) {
         List<SqlVariable> variables = JSONObject.parseArray(sqlVarible, SqlVariable.class);
-        if (null != variables && variables.size() > 0) {
+
+        if (null == roles && roles.size() == 0) {
+            relRoleViewMapper.deleteByViewId(view.getId());
+        } else {
             new Thread(() -> {
-                Set<String> vars = variables.stream().map(SqlVariable::getName).collect(Collectors.toSet());
+                Set<String> vars = null, columns = null;
+
+                if (null != variables && variables.size() > 0) {
+                    vars = variables.stream().map(SqlVariable::getName).collect(Collectors.toSet());
+                }
+                if (!StringUtils.isEmpty(view.getModel())) {
+                    columns = JSONObject.parseObject(view.getModel(), HashMap.class).keySet();
+                }
+
+                Set<String> finalColumns = columns;
+                Set<String> finalVars = vars;
+
                 List<RelRoleView> relRoleViews = new ArrayList<>();
                 roles.forEach(r -> {
-                    if (!StringUtils.isEmpty(r.getRowAuth()) && r.getRoleId().longValue() > 0L) {
-                        JSONArray jsonArray = JSONObject.parseArray(r.getRowAuth());
-                        if (null != jsonArray && jsonArray.size() > 0) {
-                            for (int i = 0; i < jsonArray.size(); i++) {
-                                JSONObject jsonObject = jsonArray.getJSONObject(i);
-                                String name = jsonObject.getString(SQL_VARABLE_KEY);
-                                if (vars.contains(name)) {
-                                    RelRoleView relRoleView = new RelRoleView().createdBy(user.getId());
-                                    BeanUtils.copyProperties(r, relRoleView);
-                                    relRoleView.setViewId(view.getId());
-                                    relRoleViews.add(relRoleView);
+                    if (r.getRoleId().longValue() > 0L) {
+                        String rowAuth = null, columnAuth = null;
+                        if (!StringUtils.isEmpty(r.getRowAuth())) {
+                            JSONArray rowAuthArray = JSONObject.parseArray(r.getRowAuth());
+                            if (null != rowAuthArray && rowAuthArray.size() > 0) {
+                                JSONArray newArray = new JSONArray();
+                                for (int i = 0; i < rowAuthArray.size(); i++) {
+                                    JSONObject jsonObject = rowAuthArray.getJSONObject(i);
+                                    String name = jsonObject.getString(SQL_VARABLE_KEY);
+                                    if (finalVars.contains(name)) {
+                                        newArray.add(jsonObject);
+                                    }
                                 }
+                                rowAuth = newArray.toJSONString();
+                                newArray.clear();
                             }
                         }
+
+                        if (null != finalColumns && !StringUtils.isEmpty(r.getColumnAuth())) {
+                            List<String> clms = JSONObject.parseArray(r.getColumnAuth(), String.class);
+                            List<String> collect = clms.stream().filter(c -> finalColumns.contains(c)).collect(Collectors.toList());
+                            columnAuth = JSONObject.toJSONString(collect);
+                        }
+
+                        RelRoleView relRoleView = new RelRoleView(view.getId(), r.getRoleId(), rowAuth, columnAuth)
+                                .createdBy(user.getId());
+                        relRoleViews.add(relRoleView);
                     }
                 });
-                relRoleViewMapper.insertBatch(relRoleViews);
+                if (null != relRoleViews && relRoleViews.size() > 0) {
+                    relRoleViewMapper.insertBatch(relRoleViews);
+                }
             }).start();
         }
     }
+
 
 }
 

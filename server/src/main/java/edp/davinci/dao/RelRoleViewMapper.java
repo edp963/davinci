@@ -66,4 +66,9 @@ public interface RelRoleViewMapper {
             "where v.id = #{viewId} and rru.user_id = #{userId}"
     })
     List<RelRoleView> getByUserAndView(@Param("userId") Long userId, @Param("viewId") Long viewId);
+
+    @Select({
+           "select * from rel_role_view where  view_id = #{viewId}"
+    })
+    List<RelRoleView> getByView(Long viewId);
 }

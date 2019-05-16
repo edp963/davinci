@@ -28,6 +28,7 @@ import edp.davinci.core.enums.SqlVariableTypeEnum;
 import edp.davinci.core.enums.SqlVariableValueTypeEnum;
 import edp.davinci.core.model.SqlEntity;
 import edp.davinci.model.SqlVariable;
+import edp.davinci.model.SqlVariableChannel;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
@@ -35,7 +36,6 @@ import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 import org.stringtemplate.v4.ST;
 
 import java.util.*;
@@ -58,10 +58,8 @@ public class SqlParseUtils {
 
     private static final String WITH = "with";
 
-    private static final ExecutorService executorService = Executors.newFixedThreadPool(8);
-
     @Autowired
-    private RestTemplate restTemplate;
+    private DacChannelUtil dacChannelUtil;
 
     /**
      * 解析sql
@@ -91,6 +89,7 @@ public class SqlParseUtils {
 
         //解析参数
         if (null != variables && variables.size() > 0) {
+            ExecutorService executorService = Executors.newFixedThreadPool(8);
             try {
                 CountDownLatch countDownLatch = new CountDownLatch(variables.size());
                 variables.forEach(variable -> executorService.execute(() -> {
@@ -101,8 +100,11 @@ public class SqlParseUtils {
                                 queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValue(variable.getValueType(), variable.getDefaultValues()));
                                 break;
                             case AUTHVARE:
-                                authParamMap.put(String.join("", String.valueOf(delimiter), variable.getName().trim(), String.valueOf(delimiter)),
-                                        getAuthVarValue(variable, null));
+                                String k = String.join("", String.valueOf(delimiter), variable.getName().trim(), String.valueOf(delimiter));
+                                List<String> v = getAuthVarValue(variable, null);
+                                if (null != v && v.size() > 0) {
+                                    authParamMap.put(k, v);
+                                }
                                 break;
                         }
                     }
@@ -112,20 +114,25 @@ public class SqlParseUtils {
                 countDownLatch.await();
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            } finally {
+                executorService.shutdown();
             }
         }
         return new SqlEntity(sqlStr, queryParamMap, authParamMap);
     }
 
 
-    public List<String> getAuthVarValue(SqlVariable variable, String outDataUrl) {
+    public List<String> getAuthVarValue(SqlVariable variable, String email) {
         if (null == variable) {
             return null;
         }
-        if (null == variable.getChannel()) {
+        SqlVariableChannel channel = variable.getChannel();
+        if (null == channel) {
             return SqlVariableValueTypeEnum.getValue(variable.getValueType(), variable.getDefaultValues());
-        } else if (!StringUtils.isEmpty(outDataUrl)) {
-            return restTemplate.<List>getForObject(outDataUrl, List.class);
+        } else {
+            if (!DacChannelUtil.dacMap.containsKey(channel.getName())) {
+                return dacChannelUtil.getData(channel.getName(), channel.getBizId().toString(), email);
+            }
         }
         return null;
     }
@@ -149,11 +156,10 @@ public class SqlParseUtils {
         //替换auth@var
         Pattern p = Pattern.compile(getReg(REG_AUTHVAR, delimiter));
         Matcher matcher = p.matcher(sql);
-        String parenthesesEndREG = "\\" + parenthesesEnd + "{2,}";
 
         Set<String> expSet = new HashSet<>();
         while (matcher.find()) {
-            expSet.add(matcher.group().replaceAll(parenthesesEndREG, parenthesesEnd));
+            expSet.add(matcher.group());
         }
         if (expSet.size() > 0) {
             Map<String, String> parsedMap = getParsedExpression(expSet, authParamMap, delimiter);
@@ -239,7 +245,7 @@ public class SqlParseUtils {
 
     private static String getAuthVarExpression(String srcExpression, Map<String, List<String>> authParamMap, char sqlTempDelimiter) throws Exception {
 
-        if (null == authParamMap) {
+        if (null == authParamMap || authParamMap.size() == 0) {
             return "1=1";
         }
 

@@ -47,7 +47,7 @@
 
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
-        insert ignore rel_role_view
+        replace into rel_role_view
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `view_id`,
             `role_id`,

@@ -33,6 +33,8 @@ public class Consts {
 
     public static final String semicolon = ";";
 
+    public static final String questionMark = "?";
+
     public static final String sqlUrlSeparator = "&";
 
     public static final String octothorpe = "#";

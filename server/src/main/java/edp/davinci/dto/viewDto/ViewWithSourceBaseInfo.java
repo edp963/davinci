@@ -19,10 +19,15 @@
 package edp.davinci.dto.viewDto;
 
 import edp.davinci.dto.sourceDto.SourceBaseInfo;
+import edp.davinci.model.RelRoleView;
 import edp.davinci.model.View;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class ViewWithSourceBaseInfo extends View {
     private SourceBaseInfo source;
+
+    private List<RelRoleView> roles;
 }
