@@ -138,14 +138,14 @@ export default function (chartProps: IChartProps) {
 
   let leftMax
   let rightMax
-  // if (stack && stack.length) {
-  //   console.log('leftMetrics', leftMetrics)
-  //   leftMax = leftMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
-  //   rightMax = rightMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
-  // } else {
-  leftMax = Math.max(...metrics.map((m) => Math.max(...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`]))))
-  rightMax = secondaryMetrics ? Math.max(...secondaryMetrics.map((m) => Math.max(...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`])))) : 0
-  // }
+
+  if (stack) {
+    leftMax = metrics.reduce((num, m) => num + Math.max(...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`])), 0)
+    rightMax = secondaryMetrics.reduce((num, m) => num + Math.max(...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`])), 0)
+  } else {
+    leftMax = Math.max(...metrics.map((m) => Math.max(...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`]))))
+    rightMax = Math.max(...secondaryMetrics.map((m) => Math.max(...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`]))))
+  }
 
   const leftInterval = getYaxisInterval(leftMax, (yAxisSplitNumber - 1))
   const rightInterval = rightMax > 0 ? getYaxisInterval(rightMax, (yAxisSplitNumber - 1)) : leftInterval
@@ -171,7 +171,7 @@ export default function (chartProps: IChartProps) {
         type: 'value',
         key: 'yAxisIndex0',
         min: 0,
-        max: rightMax > 0 ? rightMax : leftMax,
+        max: rightMax > 0 ? rightInterval * (yAxisSplitNumber - 1) : leftInterval * (yAxisSplitNumber - 1),
         interval: rightInterval,
         position: 'right',
         ...getDoubleYAxis(doubleYAxis)
@@ -180,7 +180,7 @@ export default function (chartProps: IChartProps) {
         type: 'value',
         key: 'yAxisIndex1',
         min: 0,
-        max: leftMax,
+        max: leftInterval * (yAxisSplitNumber - 1),
         interval: leftInterval,
         position: 'left',
         ...getDoubleYAxis(doubleYAxis)

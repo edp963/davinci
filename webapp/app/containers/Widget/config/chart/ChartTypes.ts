@@ -87,7 +87,7 @@ export enum ChartTypes {
   /**
    * 双Y轴
    */
-  DoubleYAxis = 15
+  DoubleYAxis = 16
 }
 
 export default ChartTypes
