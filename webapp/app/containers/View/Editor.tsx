@@ -47,13 +47,20 @@ import {
   makeSelectSqlDataSource,
   makeSelectSqlLimit,
   makeSelectSqlValidation,
-  makeSelectLoading
+  makeSelectLoading,
+
+  makeSelectChannels,
+  makeSelectTenants,
+  makeSelectBizs
 } from './selectors'
 
 import { loadProjectRoles } from 'containers/Organizations/actions'
 import { makeSelectCurrentOrganizationProjectRoles } from 'containers/Organizations/selectors'
 
-import { IExecuteSqlParams, IView, IExecuteSqlResponse, IViewLoading, IViewBase, IViewModel, IViewInfo, ISqlValidation, IViewRole, IViewVariable, IViewRoleRaw } from './types'
+import {
+  IView, IViewModel, IViewRoleRaw, IViewRole, IViewVariable, IViewInfo,
+  IExecuteSqlParams, IExecuteSqlResponse, IViewLoading, ISqlValidation,
+  IDacChannel, IDacTenant, IDacBiz } from './types'
 import { ISource, ISourceTable, IMapTableColumns } from '../Source/types'
 
 import { ModelTypeSqlTypeSetting, VisualTypeSqlTypeSetting } from './constants'
@@ -76,6 +83,10 @@ interface IViewEditorStateProps {
   sqlValidation: ISqlValidation
   loading: IViewLoading
   projectRoles: any[]
+
+  channels: IDacChannel[]
+  tenants: IDacTenant[]
+  bizs: IDacBiz[]
 }
 
 interface IViewEditorDispatchProps {
@@ -90,6 +101,11 @@ interface IViewEditorDispatchProps {
   onUpdateEditingView: (view: IView) => void
   onUpdateEditingViewInfo: (viewInfo: IViewInfo) => void
   onSetSqlLimit: (limit: number) => void
+
+  onLoadDacChannels: () => void,
+  onLoadDacTenants: (channelName: string) => void,
+  onLoadDacBizs: (channelName: string, tenantId: number) => void,
+
   onResetState: () => void
   onLoadProjectRoles: (projectId: number) => void
 }
@@ -117,7 +133,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
 
   public constructor (props: IViewEditorProps) {
     super(props)
-    const { onLoadSources, onLoadViewDetail, onLoadProjectRoles, params } = this.props
+    const { onLoadSources, onLoadViewDetail, onLoadProjectRoles, onLoadDacChannels, params } = this.props
     const { viewId, pid: projectId } = params
     if (projectId) {
       onLoadSources(+projectId)
@@ -126,6 +142,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     if (viewId) {
       onLoadViewDetail(+viewId)
     }
+    onLoadDacChannels()
   }
 
   public static getDerivedStateFromProps:
@@ -252,13 +269,17 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
   public render () {
     const {
       sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, projectRoles,
+      channels, tenants, bizs,
       editingView, editingViewInfo,
-      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql } = this.props
+      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql,
+      onLoadDacTenants, onLoadDacBizs } = this.props
     const { currentStep, nextDisabled } = this.state
     const { model, variable, roles: viewRoles } = editingViewInfo
     const containerProps = {
       view: editingView, variable, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
-      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql }
+      channels, tenants, bizs,
+      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql,
+      onLoadDacTenants, onLoadDacBizs }
     const containerVisible = !currentStep
     const modelAuthVisible = !!currentStep
 
@@ -304,6 +325,11 @@ const mapDispatchToProps = (dispatch: Dispatch<ViewActionType | SourceActionType
   onUpdateEditingView: (view) => dispatch(ViewActions.updateEditingView(view)),
   onUpdateEditingViewInfo: (viewInfo: IViewInfo) => dispatch(ViewActions.updateEditingViewInfo(viewInfo)),
   onSetSqlLimit: (limit: number) => dispatch(ViewActions.setSqlLimit(limit)),
+
+  onLoadDacChannels: () => dispatch(ViewActions.loadDacChannels()),
+  onLoadDacTenants: (channelName) => dispatch(ViewActions.loadDacTenants(channelName)),
+  onLoadDacBizs: (channelName, tenantId) => dispatch(ViewActions.loadDacBizs(channelName, tenantId)),
+
   onResetState: () => dispatch(ViewActions.resetViewState()),
   onLoadProjectRoles: (projectId) => dispatch(loadProjectRoles(projectId))
 })
@@ -318,7 +344,11 @@ const mapStateToProps = createStructuredSelector({
   sqlLimit: makeSelectSqlLimit(),
   sqlValidation: makeSelectSqlValidation(),
   loading: makeSelectLoading(),
-  projectRoles: makeSelectCurrentOrganizationProjectRoles()
+  projectRoles: makeSelectCurrentOrganizationProjectRoles(),
+
+  channels: makeSelectChannels(),
+  tenants: makeSelectTenants(),
+  bizs: makeSelectBizs()
 })
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)

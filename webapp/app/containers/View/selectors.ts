@@ -78,6 +78,19 @@ const makeSelectLoading = () => createSelector(
   (viewState: ViewStateType) => viewState.get('loading')
 )
 
+const makeSelectChannels = () => createSelector(
+  selectView,
+  (viewState: ViewStateType) => viewState.get('channels')
+)
+const makeSelectTenants = () => createSelector(
+  selectView,
+  (viewState: ViewStateType) => viewState.get('tenants')
+)
+const makeSelectBizs = () => createSelector(
+  selectView,
+  (viewState: ViewStateType) => viewState.get('bizs')
+)
+
 export {
   selectView,
   makeSelectViews,
@@ -90,5 +103,9 @@ export {
   makeSelectSqlValidation,
   makeSelectSqlDataSource,
   makeSelectSqlLimit,
-  makeSelectLoading
+  makeSelectLoading,
+
+  makeSelectChannels,
+  makeSelectTenants,
+  makeSelectBizs
 }

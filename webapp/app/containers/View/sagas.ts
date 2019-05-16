@@ -21,13 +21,14 @@
 import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import { ActionTypes } from './constants'
 import { ViewActions, ViewActionType } from './actions'
+import omit from 'lodash/omit'
 
 import { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import request, { IDavinciResponse } from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 
-import { IViewBase, IView, IExecuteSqlResponse } from './types'
+import { IViewBase, IView, IExecuteSqlResponse, IExecuteSqlParams, IViewVariable } from './types'
 
 export function* getViews (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS) { return }
@@ -121,12 +122,18 @@ export function* deleteView (action: ViewActionType) {
 export function* executeSql (action: ViewActionType) {
   if (action.type !== ActionTypes.EXECUTE_SQL) { return }
   const { params } = action.payload
+  const { variables, ...rest } = params
+  const omitKeys: Array<keyof IViewVariable> = ['key', 'alias', 'fromService']
+  const variableParam = variables.map((v) => omit(v, omitKeys))
   const { sqlExecuted, executeSqlFail } = ViewActions
   try {
     const asyncData: IDavinciResponse<IExecuteSqlResponse> = yield call<AxiosRequestConfig>(request, {
       method: 'post',
       url: `${api.view}/executesql`,
-      data: params
+      data: {
+        ...rest,
+        variables: variableParam
+      }
     })
     yield put(sqlExecuted(asyncData))
   } catch (err) {
@@ -220,7 +227,47 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
     errorHandler(err)
   }
 }
+/** */
 
+/** View sagas for fetch external authorization variables values */
+export function* getDacChannels (action: ViewActionType) {
+  if (action.type !== ActionTypes.LOAD_DAC_CHANNELS) { return }
+  const { dacChannelsLoaded, loadDacChannelsFail } = ViewActions
+  try {
+    const asyncData = yield call(request, `${api.view}/dac/channels`)
+    const channels = asyncData.payload
+    yield put(dacChannelsLoaded(channels))
+  } catch (err) {
+    yield put(loadDacChannelsFail())
+    errorHandler(err)
+  }
+}
+export function* getDacTenants (action: ViewActionType) {
+  if (action.type !== ActionTypes.LOAD_DAC_TENANTS) { return }
+  const { dacTenantsLoaded, loadDacTenantsFail } = ViewActions
+  const { channelName } = action.payload
+  try {
+    const asyncData = yield call(request, `${api.view}/dac/${channelName}/tenants`)
+    const tenants = asyncData.payload
+    yield put(dacTenantsLoaded(tenants))
+  } catch (err) {
+    yield put(loadDacTenantsFail())
+    errorHandler(err)
+  }
+}
+export function* getDacBizs (action: ViewActionType) {
+  if (action.type !== ActionTypes.LOAD_DAC_BIZS) { return }
+  const { dacBizsLoaded, loadDacBizsFail } = ViewActions
+  const { channelName, tenantId } = action.payload
+  try {
+    const asyncData = yield call(request, `${api.view}/dac/${channelName}/tenants/${tenantId}/bizs`)
+    const bizs = asyncData.payload
+    yield put(dacBizsLoaded(bizs))
+  } catch (err) {
+    yield put(loadDacBizsFail())
+    errorHandler(err)
+  }
+}
 /** */
 
 export default function* rootViewSaga () {
@@ -234,6 +281,10 @@ export default function* rootViewSaga () {
 
     takeEvery(ActionTypes.LOAD_VIEW_DATA, getViewData),
     takeEvery(ActionTypes.LOAD_VIEW_DISTINCT_VALUE, getViewDistinctValue),
-    takeEvery(ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM, getViewDataFromVizItem)
+    takeEvery(ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM, getViewDataFromVizItem),
+
+    takeEvery(ActionTypes.LOAD_DAC_CHANNELS, getDacChannels),
+    takeEvery(ActionTypes.LOAD_DAC_TENANTS, getDacTenants),
+    takeEvery(ActionTypes.LOAD_DAC_BIZS, getDacBizs)
   ])
 }

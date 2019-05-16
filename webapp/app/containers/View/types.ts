@@ -66,6 +66,7 @@ export interface IExecuteSqlParams {
   sourceId: number
   sql: string
   limit: number
+  variables: IViewVariableBase[]
 }
 
 export interface ISqlColumn {
@@ -90,13 +91,23 @@ export interface IViewModel {
   [name: string]: Omit<IViewModelProps, 'name'>
 }
 
-export interface IViewVariable {
-  key: string
+interface IViewVariableChannel {
+  bizId: number
   name: string
-  alias: string
+  tenantId: number
+}
+
+interface IViewVariableBase {
+  name: string
   type: ViewVariableTypes
   valueType: ViewVariableValueTypes
   defaultValues: Array<string | number | boolean>
+  channel?: IViewVariableChannel
+}
+
+export interface IViewVariable extends IViewVariableBase {
+  key: string
+  alias: string
   fromService: boolean
 }
 
@@ -120,7 +131,7 @@ export interface IViewRole {
    * @type {(Array<string | number>)}
    * @memberof IViewRole
    */
-  rowAuth: Array<{ name: string, values: Array<string | number> }>
+  rowAuth: Array<{ name: string, values: Array<string | number | boolean> }>
 }
 
 export interface IViewInfo {
@@ -131,6 +142,16 @@ export interface IViewInfo {
 
 export interface IFormedViews {
   [viewId: number]: IFormedView
+}
+
+export type IDacChannel = string
+export interface IDacTenant {
+  id: number
+  name: string
+}
+export interface IDacBiz {
+  id: number
+  name: string
 }
 
 export interface IViewState {
@@ -145,4 +166,8 @@ export interface IViewState {
   sqlDataSource: IExecuteSqlResponse
   sqlLimit: number
   loading: IViewLoading
+
+  channels: IDacChannel[]
+  tenants: IDacTenant[]
+  bizs: IDacBiz[]
 }

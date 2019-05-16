@@ -73,7 +73,11 @@ const ViewRecord = Record<IViewState>({
     table: false,
     modal: false,
     execute: false
-  }
+  },
+
+  channels: [],
+  tenants: [],
+  bizs: []
 })
 const initialState = new ViewRecord()
 
@@ -169,6 +173,18 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
       return state.set('editingViewInfo', action.payload.viewInfo)
     case ActionTypes.SET_SQL_LIMIT:
       return state.set('sqlLimit', action.payload.limit)
+
+    case ActionTypes.LOAD_DAC_CHANNELS_SUCCESS:
+      return state.set('channels', action.payload.channels)
+    case ActionTypes.LOAD_DAC_TENANTS_SUCCESS:
+      return state.set('tenants', action.payload.tenants)
+    case ActionTypes.LOAD_DAC_TENANTS_FAILURE:
+      return state.set('tenants', [])
+    case ActionTypes.LOAD_DAC_BIZS_SUCCESS:
+      return state.set('bizs', action.payload.bizs)
+    case ActionTypes.LOAD_DAC_BIZS_FAILURE:
+      return state.set('bizs', [])
+
     case ActionTypes.RESET_VIEW_STATE:
       return new ViewRecord()
     case LOAD_WIDGET_DETAIL_SUCCESS:

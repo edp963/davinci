@@ -2,18 +2,30 @@ import React from 'react'
 import { Modal, Form, Input, InputNumber, Select, Checkbox, Button, Row, Col } from 'antd'
 const FormItem = Form.Item
 const { Option } = Select
+import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { FormComponentProps } from 'antd/lib/form/Form'
 import ConditionValuesControl, { ConditionValueTypes } from 'components/ConditionValuesControl'
-import { IViewVariable } from 'containers/View/types'
+import {
+  IViewVariable,
+  IDacChannel, IDacTenant, IDacBiz
+} from 'containers/View/types'
 import OperatorTypes from 'utils/operatorTypes'
 import { ViewVariableTypes, ViewVariableTypesLocale, ViewVariableValueTypes, ViewVariableValueTypesLocale } from 'containers/View/constants'
 
 interface IVariableModalProps {
   visible: boolean
   variable: IViewVariable
+
+  channels: IDacChannel[]
+  tenants: IDacTenant[]
+  bizs: IDacBiz[]
+
   nameValidator?: (key: string, name: string, callback: (msg?: string) => void) => void
   onCancel: () => void
   onSave: (variable: IViewVariable) => void
+
+  onLoadDacTenants: (channelName: string) => void
+  onLoadDacBizs: (channelName: string, tenantId: number) => void
 }
 
 interface IVariableModalStates {
@@ -21,6 +33,7 @@ interface IVariableModalStates {
   selectedType: ViewVariableTypes
   selectedValueType: ViewVariableValueTypes
   defaultValues: ConditionValueTypes[]
+  isFromService: boolean
 }
 
 const defaultVarible: IViewVariable = {
@@ -52,24 +65,30 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
     operatorType: OperatorTypes.In,
     selectedType: ViewVariableTypes.Query,
     selectedValueType: ViewVariableValueTypes.String,
-    defaultValues: []
+    defaultValues: [],
+    isFromService: false
   }
 
   public componentDidUpdate (prevProps: IVariableModalProps & FormComponentProps) {
-    const { form, variable, visible } = this.props
+    const { form, variable, visible, channels } = this.props
     if (variable !== prevProps.variable || visible !== prevProps.visible) {
-      form.setFieldsValue(variable || defaultVarible)
-      const { type, valueType, defaultValues } = variable || defaultVarible
+      const { type, valueType, defaultValues, fromService } = variable || defaultVarible
       this.setState({
         selectedType: type,
         selectedValueType: valueType,
-        defaultValues: [...defaultValues]
+        defaultValues: defaultValues || [],
+        isFromService: fromService && channels.length > 0
+      }, () => {
+        form.setFieldsValue(variable || defaultVarible)
       })
     }
   }
 
   private typeChange = (selectedType: ViewVariableTypes) => {
-    this.setState({ selectedType })
+    this.setState(({ isFromService }) => ({
+      selectedType,
+      isFromService: selectedType === ViewVariableTypes.Query ? false : isFromService
+    }))
   }
 
   private valueTypeChange = (selectedValueType: ViewVariableValueTypes) => {
@@ -82,6 +101,17 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
 
   private defaultValueChange = (values: ConditionValueTypes[]) => {
     this.setState({ defaultValues: values })
+  }
+
+  private fromServiceChange = (e: CheckboxChangeEvent) => {
+    const fromService = e.target.checked
+    this.setState({ isFromService: fromService })
+  }
+
+  private loadDacBizs = (tenantId: number) => {
+    const { form, onLoadDacBizs } = this.props
+    const channelName = form.getFieldValue('channel.name')
+    onLoadDacBizs(channelName, tenantId)
   }
 
   private validateVariableName = (_: any, name: string, callback: (msg?: string) => void) => {
@@ -121,9 +151,13 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
   }
 
   public render () {
-    const { visible, variable, onCancel, form } = this.props
+    const {
+      visible, variable, onCancel, form,
+      channels, tenants, bizs,
+      onLoadDacTenants
+    } = this.props
     const { getFieldDecorator } = form
-    const { operatorType, selectedType, selectedValueType, defaultValues } = this.state
+    const { operatorType, selectedType, selectedValueType, defaultValues, isFromService } = this.state
 
     const modalButtons = [(
       <Button
@@ -190,14 +224,55 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
                 onChange={this.defaultValueChange}
               />
             </FormItem>)}
-          <FormItem>
-            <Row>
-              <Col span={this.formItemStyle.wrapperCol.span} offset={this.formItemStyle.labelCol.span}>
-                {getFieldDecorator<IViewVariable>('fromService')(
-                  <Checkbox>通过外部服务取值变量</Checkbox>)}
-              </Col>
-            </Row>
-          </FormItem>
+          {selectedType === ViewVariableTypes.Authorization && channels.length > 0 && (
+            <FormItem>
+              <Row>
+                <Col span={this.formItemStyle.wrapperCol.span} offset={this.formItemStyle.labelCol.span}>
+                  {getFieldDecorator<IViewVariable>('fromService', {
+                    valuePropName: 'checked'
+                  })(
+                    <Checkbox onChange={this.fromServiceChange}>通过外部服务取值变量</Checkbox>)}
+                </Col>
+              </Row>
+            </FormItem>
+          )}
+          {isFromService && (
+            <>
+              <FormItem label="服务" {...this.formItemStyle}>
+                {getFieldDecorator('channel.name', {
+                  rules: [{
+                    required: true,
+                    message: '服务不能为空'
+                  }]
+                })(
+                <Select onChange={onLoadDacTenants}>
+                  {channels.map((c) => <Option key={c} value={c}>{c}</Option>)}
+                </Select>)}
+              </FormItem>
+              <FormItem label="租户" {...this.formItemStyle}>
+                {getFieldDecorator('channel.tenantId', {
+                  rules: [{
+                    required: true,
+                    message: '租户不能为空'
+                  }]
+                })(
+                <Select onChange={this.loadDacBizs}>
+                  {tenants.map(({ id, name }) => <Option key={id.toString()} value={id}>{name}</Option>)}
+                </Select>)}
+              </FormItem>
+              <FormItem label="业务" {...this.formItemStyle}>
+                {getFieldDecorator('channel.bizId', {
+                  rules: [{
+                    required: true,
+                    message: '业务不能为空'
+                  }]
+                })(
+                <Select>
+                  {bizs.map(({ id, name }) => <Option key={id.toString()} value={id}>{name}</Option>)}
+                </Select>)}
+              </FormItem>
+            </>
+          )}
         </Form>
       </Modal>
     )

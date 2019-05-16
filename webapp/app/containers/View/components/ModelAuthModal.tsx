@@ -101,7 +101,7 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
 
     return (
       <Modal
-        title="编辑字段可见"
+        title="勾选不可见字段"
         visible={visible}
         footer={this.modalFooter}
         onCancel={onCancel}

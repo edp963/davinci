@@ -21,7 +21,11 @@
 import React from 'react'
 
 import { ISource, ISourceTable, IMapTableColumns } from 'containers/source/types'
-import { IExecuteSqlParams, IViewVariable, IView, IViewModel, IExecuteSqlResponse, IViewLoading } from '../types'
+import {
+  IViewVariable, IView,
+  IExecuteSqlParams, IExecuteSqlResponse, IViewLoading,
+  IDacChannel, IDacTenant, IDacBiz
+} from '../types'
 
 import { uuid } from 'utils/util'
 import { InputNumber, Button, Row, Col, Tooltip } from 'antd'
@@ -45,6 +49,11 @@ interface IEditorContainerProps {
   sqlLimit: number
   loading: IViewLoading
   nextDisabled: boolean
+
+  channels: IDacChannel[]
+  tenants: IDacTenant[]
+  bizs: IDacBiz[]
+
   onLoadSourceTables: (sourceId: number) => void
   onLoadTableColumns: (sourceId: number, tableName: string) => void
   onSetSqlLimit: (limit: number) => void
@@ -52,6 +61,9 @@ interface IEditorContainerProps {
   onVariableChange: (variable: IViewVariable[]) => void
   onStepChange: (stepChange: number) => void
   onViewChange: (propName: keyof(IView), value: string | number) => void
+
+  onLoadDacTenants: (channelName: string) => void
+  onLoadDacBizs: (channelName: string, tenantId: number) => void
 }
 
 interface IEditorContainerStates {
@@ -191,12 +203,13 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
   }
 
   private executeSql = (params?: Partial<IExecuteSqlParams>) => {
-    const { onExecuteSql, view, sqlLimit } = this.props
+    const { onExecuteSql, view, sqlLimit, variable } = this.props
     const { sourceId, sql } = view
     const updatedParams: IExecuteSqlParams = {
       sourceId,
       sql,
       limit: sqlLimit,
+      variables: variable,
       ...params
     }
     onExecuteSql(updatedParams)
@@ -213,7 +226,8 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
   public render () {
     const {
       visible, view, variable, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
-      onViewChange, onSetSqlLimit
+      channels, tenants, bizs,
+      onViewChange, onSetSqlLimit, onLoadDacTenants, onLoadDacBizs
     } = this.props
     const {
       editorHeight, siderWidth, previewHeight,
@@ -313,8 +327,16 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
           visible={variableModalVisible}
           variable={editingVariable}
           nameValidator={this.variableNameValidate}
+
+          channels={channels}
+          tenants={tenants}
+          bizs={bizs}
+
           onCancel={this.closeVariableModal}
           onSave={this.saveVariable}
+
+          onLoadDacTenants={onLoadDacTenants}
+          onLoadDacBizs={onLoadDacBizs}
         />
       </>
     )
