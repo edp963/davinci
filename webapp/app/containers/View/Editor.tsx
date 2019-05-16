@@ -146,8 +146,8 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
   public static getDerivedStateFromProps:
     React.GetDerivedStateFromProps<IViewEditorProps, IViewEditorStates>
   = (props, state) => {
-    const { params, editingView, editingViewInfo, sqlValidation } = props
-    const { pid: projectId, viewId } = params
+    const { params, editingView, sqlValidation } = props
+    const { viewId } = params
     const { init, sqlValidationCode } = state
     let nextDisabled = state.nextDisabled
     if (sqlValidationCode !== sqlValidation.code && sqlValidation.code) {
@@ -162,6 +162,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     if (editingView && editingView.id === +viewId) {
       if (init) {
         props.onLoadSourceTables(editingView.sourceId)
+        ViewEditor.ExecuteSql(props)
         return {
           init: false,
           sqlValidationCode: sqlValidation.code,
@@ -184,6 +185,23 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
 
   public componentWillUnmount () {
     this.props.onResetState()
+  }
+
+  private executeSql = () => {
+    ViewEditor.ExecuteSql(this.props)
+  }
+
+  private static ExecuteSql = (props: IViewEditorProps) => {
+    const { onExecuteSql, editingView, editingViewInfo, sqlLimit } = props
+    const { sourceId, sql } = editingView
+    const { variable } = editingViewInfo
+    const updatedParams: IExecuteSqlParams = {
+      sourceId,
+      sql,
+      limit: sqlLimit,
+      variables: variable
+    }
+    onExecuteSql(updatedParams)
   }
 
   private stepChange = (step: number) => {
@@ -284,7 +302,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     const containerProps = {
       view: editingView, variable, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
       channels, tenants, bizs,
-      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql,
+      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql: this.executeSql,
       onLoadDacTenants, onLoadDacBizs }
     const containerVisible = !currentStep
     const modelAuthVisible = !!currentStep
