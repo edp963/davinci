@@ -231,12 +231,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         dataIndex: 'user',
         key: 'userKey',
         render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
-      },
-        {
-          title: 'team',
-          dataIndex: 'teamNum',
-          key: 'teamNum'
-        }, {
+      }, {
           title: 'settings',
           dataIndex: 'user',
           className: isHidden ? utilStyles.hide : '',
@@ -279,12 +274,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         dataIndex: 'user',
         key: 'userKey',
         render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
-      },
-        {
-          title: 'team',
-          dataIndex: 'teamNum',
-          key: 'teamNum'
-        }]
+      }]
     }
     return (
       <div className={styles.listWrapper}>
