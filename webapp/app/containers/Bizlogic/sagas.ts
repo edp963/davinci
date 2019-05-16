@@ -24,7 +24,7 @@ import {
   ADD_BIZLOGIC,
   DELETE_BIZLOGIC,
   EDIT_BIZLOGIC,
-  LOAD_CASCADESOURCE,
+  LOAD_SELECT_OPTIONS,
   EXECUTE_SQL,
   LOAD_DATA,
   LOAD_DISTINCT_VALUE,
@@ -42,8 +42,8 @@ import {
   deleteBizlogicFail,
   bizlogicEdited,
   editBizlogicFail,
-  cascadeSourceLoaded,
-  loadCascadeSourceFail,
+  selectOptionsLoaded,
+  loadSelectOptionsFail,
   sqlExecuted,
   executeSqlFail,
   dataLoaded,
@@ -63,6 +63,7 @@ import {
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
+import { IDistinctValueReqeustParams } from 'app/components/Filters'
 
 declare interface IObjectConstructor {
   assign (...objects: object[]): object
@@ -138,22 +139,34 @@ export function* editBizlogic (action) {
   }
 }
 
-export function* getCascadeSource (action) {
+export function* getSelectOptions (action) {
   const { payload } = action
   try {
-    const { controlId, viewId, columns, parents } = payload
-
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
-      data: {
-        columns,
-        parents: parents || []
-      }
+    const { controlKey, requestParams } = payload
+    const requestParamsMap: Array<[string, IDistinctValueReqeustParams]> = Object.entries(requestParams)
+    const requests = requestParamsMap.map(([viewId, params]: [string, IDistinctValueReqeustParams]) => {
+      const { columns, filters, variables } = params
+      return call(request, {
+        method: 'post',
+        url: `${api.bizlogic}/${viewId}/getdata`,
+        data: {
+          groups: columns,
+          filters,
+          params: variables
+        }
+      })
     })
-    yield put(cascadeSourceLoaded(controlId, columns, asyncData.payload))
+    const results = yield all(requests)
+    const values = results.reduce((payloads, r, index) => {
+      const { columns } = requestParamsMap[index][1]
+      if (columns.length === 1) {
+        return payloads.concat(r.payload.resultList.map((obj) => obj[columns[0]]))
+      }
+      return payloads
+    }, [])
+    yield put(selectOptionsLoaded(controlKey, values))
   } catch (err) {
-    yield put(loadCascadeSourceFail(err))
+    yield put(loadSelectOptionsFail(err))
     errorHandler(err)
   }
 }
@@ -312,7 +325,7 @@ export default function* rootBizlogicSaga (): IterableIterator<any> {
     takeEvery(ADD_BIZLOGIC, addBizlogic),
     takeEvery(DELETE_BIZLOGIC, deleteBizlogic),
     takeEvery(EDIT_BIZLOGIC, editBizlogic),
-    takeEvery(LOAD_CASCADESOURCE, getCascadeSource),
+    takeEvery(LOAD_SELECT_OPTIONS, getSelectOptions),
     takeEvery(LOAD_SOURCE_TABLE, loadSourceTable),
     takeEvery(LOAD_SOURCE_TABLE_COLUMN, loadSourceTableColumn),
     takeLatest(EXECUTE_SQL, executeSql),

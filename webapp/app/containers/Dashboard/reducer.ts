@@ -60,14 +60,16 @@ import {
   DRILL_DASHBOARDITEM,
   DELETE_DRILL_HISTORY,
   DRILL_PATH_SETTING,
-  SELECT_DASHBOARD_ITEM_CHART
+  SELECT_DASHBOARD_ITEM_CHART,
+  SET_SELECT_OPTIONS
 } from './constants'
 
 import { ActionTypes as ViewActionTypes } from '../View/constants'
 import { ViewActionType } from '../View/actions'
 
 import {
-  IFilterItem,
+  IGlobalControl,
+  IGlobalControlRelatedField,
   getVariableValue,
   getModelValue,
   getDefaultValue
@@ -80,7 +82,7 @@ const initialState = fromJS({
   currentDashboardShareInfo: '',
   currentDashboardSecretInfo: '',
   currentDashboardShareInfoLoading: false,
-  currentDashboardCascadeSources: {},
+  currentDashboardSelectOptions: {},
   currentItems: null,
   currentItemsInfo: null,
   modalLoading: false
@@ -89,7 +91,7 @@ const initialState = fromJS({
 function dashboardReducer (state = initialState, action: ViewActionType | any) {
   const { type, payload } = action
   const dashboards = state.get('dashboards')
-  const dashboardCascadeSources = state.get('currentDashboardCascadeSources')
+  const dashboardSelectOptions = state.get('currentDashboardSelectOptions')
   const items = state.get('currentItems')
   const itemsInfo = state.get('currentItemsInfo')
 
@@ -133,7 +135,7 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
     case EDIT_CURRENT_DASHBOARD_SUCCESS:
       return state
         .set('currentDashboard', payload.result)
-        .set('currentDashboardCascadeSources', {})
+        .set('currentDashboardSelectOptions', {})
         .set('currentDashboardLoading', false)
     case EDIT_CURRENT_DASHBOARD_FAILURE:
       return state.set('currentDashboardLoading', false)
@@ -150,39 +152,41 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
       const { dashboardDetail } = payload
       const dashboardConfig = dashboardDetail.config ? JSON.parse(dashboardDetail.config) : {}
-      const globalFilters = dashboardConfig.filters || []
-      const globalFiltersInitialValue = {}
-      globalFilters.forEach((filter: IFilterItem) => {
-        const { key, type, relatedViews, operator } = filter
-        const defaultValue = getDefaultValue(filter)
+      const globalControls = dashboardConfig.filters || []
+      const globalControlsInitialValue = {}
+
+      globalControls.forEach((control: IGlobalControl) => {
+        const { interactionType, relatedItems, relatedViews, operator } = control
+        const defaultValue = getDefaultValue(control)
         if (defaultValue) {
-          Object.entries(relatedViews).forEach(([viewId, config]) => {
-            const { items, isVariable } = config
-            if (items.length) {
-              const filterValue = isVariable
-                ? getVariableValue(filter, config, defaultValue)
-                : getModelValue(filter, config, operator, defaultValue)
-              items.forEach((itemId) => {
-                if (!globalFiltersInitialValue[itemId]) {
-                  globalFiltersInitialValue[itemId] = {
-                    filters: [],
-                    variables: []
+          Object.entries(relatedItems).forEach(([itemId, config]) => {
+            Object.entries(relatedViews).forEach(([viewId, fields]) => {
+              if (config.checked && config.viewId === Number(viewId)) {
+                const filterValue = interactionType === 'column'
+                  ? getModelValue(control, fields as IGlobalControlRelatedField, defaultValue)
+                  : getVariableValue(control, fields, defaultValue)
+                items.forEach((itemId) => {
+                  if (!globalControlsInitialValue[itemId]) {
+                    globalControlsInitialValue[itemId] = {
+                      filters: [],
+                      variables: []
+                    }
                   }
-                }
-                if (isVariable) {
-                  globalFiltersInitialValue[itemId].variables = globalFiltersInitialValue[itemId].variables.concat(filterValue)
-                } else {
-                  globalFiltersInitialValue[itemId].filters = globalFiltersInitialValue[itemId].filters.concat(filterValue)
-                }
-              })
-            }
+                  if (interactionType === 'column') {
+                    globalControlsInitialValue[itemId].filters = globalControlsInitialValue[itemId].filters.concat(filterValue)
+                  } else {
+                    globalControlsInitialValue[itemId].variables = globalControlsInitialValue[itemId].variables.concat(filterValue)
+                  }
+                })
+              }
+            })
           })
         }
       })
       return state
         .set('currentDashboardLoading', false)
         .set('currentDashboard', payload.dashboardDetail)
-        .set('currentDashboardCascadeSources', {})
+        .set('currentDashboardSelectOptions', {})
         .set('currentItems', payload.dashboardDetail.widgets)
         .set('currentItemsInfo', payload.dashboardDetail.widgets.reduce((obj, w) => {
           const drillpathSetting = w.config && w.config.length ? JSON.parse(w.config) : void 0
@@ -191,10 +195,10 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
             loading: false,
             queryConditions: {
               linkageFilters: [],
-              globalFilters: globalFiltersInitialValue[w.id] ? globalFiltersInitialValue[w.id].filters : [],
+              globalFilters: globalControlsInitialValue[w.id] ? globalControlsInitialValue[w.id].filters : [],
               variables: [],
               linkageVariables: [],
-              globalVariables: globalFiltersInitialValue[w.id] ? globalFiltersInitialValue[w.id].variables : [],
+              globalVariables: globalControlsInitialValue[w.id] ? globalControlsInitialValue[w.id].variables : [],
               pagination: {},
               drillpathInstance: [],
               ...drillpathSetting
@@ -424,9 +428,14 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
         }
       })
     case ViewActionTypes.LOAD_CASCADE_VIEW_DATA_SUCCESS:
-      return state.set('currentDashboardCascadeSources', {
-        ...dashboardCascadeSources,
-        [payload.controlId]: payload.values
+      return state.set('currentDashboardSelectOptions', {
+        ...dashboardSelectOptions,
+        [payload.controlKey]: payload.values
+      })
+    case SET_SELECT_OPTIONS:
+      return state.set('currentDashboardSelectOptions', {
+        ...dashboardSelectOptions,
+        [payload.controlKey]: payload.options
       })
     case RENDER_DASHBOARDITEM:
       return state.set('currentItemsInfo', {

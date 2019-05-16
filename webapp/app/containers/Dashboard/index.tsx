@@ -29,10 +29,10 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
-import reducerProject from '../Projects/reducer'
-import sagaProject from '../Projects/sagas'
-import portalSaga from '../Portal/sagas'
+import projectReducer from '../Projects/reducer'
+import projectSaga from '../Projects/sagas'
 import portalReducer from '../Portal/reducer'
+import portalSaga from '../Portal/sagas'
 import viewReducer from '../view/reducer'
 import viewSaga from '../view/sagas'
 
@@ -845,8 +845,8 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'dashboard', reducer })
 const withSaga = injectSaga({ key: 'dashboard', saga })
 
-const withReducerProject = injectReducer({ key: 'project', reducer: reducerProject })
-const withSagaProject = injectSaga({ key: 'project', saga: sagaProject })
+const withProjectReducer = injectReducer({ key: 'project', reducer: projectReducer })
+const withProjectSaga = injectSaga({ key: 'project', saga: projectSaga })
 
 const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
 const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
@@ -856,12 +856,12 @@ const withSagaView = injectSaga({ key: 'view', saga: viewSaga })
 
 export default compose(
   withReducer,
-  withReducerProject,
+  withProjectReducer,
   withPortalReducer,
-  withSaga,
-  withSagaProject,
-  withPortalSaga,
-  withConnect,
   withReducerView,
-  withSagaView
+  withSaga,
+  withProjectSaga,
+  withPortalSaga,
+  withSagaView,
+  withConnect
 )(Dashboard)

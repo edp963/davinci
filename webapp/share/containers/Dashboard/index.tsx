@@ -22,7 +22,7 @@ import React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-
+// import html2canvas from 'html2canvas'
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
@@ -35,8 +35,8 @@ import DashboardItem from '../../../app/containers/Dashboard/components/Dashboar
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
 import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
 
-import { IMapItemFilterValue } from '../../../app/components/Filters'
-import DashboardFilterPanel from 'containers/Dashboard/components/DashboardFilterPanel'
+import { IMapItemFilterValue, InteractionType } from '../../../app/components/Filters'
+import GlobalControlPanel from '../../../app/components/Filters/FilterPanel'
 
 import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
 import { Row, Col } from 'antd'
@@ -47,7 +47,7 @@ import {
   getResultset,
   setIndividualDashboard,
   loadWidgetCsv,
-  loadCascadeSourceFromDashboard,
+  loadSelectOptions,
   resizeAllDashboardItem,
   drillDashboardItem,
   deleteDrillHistory
@@ -56,7 +56,7 @@ import {
   makeSelectDashboard,
   makeSelectTitle,
   makeSelectConfig,
-  makeSelectDashboardCascadeSources,
+  makeSelectDashboardSelectOptionss,
   makeSelectWidgets,
   makeSelectItems,
   makeSelectItemsInfo,
@@ -97,7 +97,7 @@ interface IDashboardProps {
     }
   },
   widgets: any[],
-  dashboardCascadeSources: any,
+  dashboardSelectOptionss: any,
   linkages: any[]
   onLoadDashboard: (shareInfo: any, error: (err) => void) => void,
   onLoadWidget: (aesStr: string, success?: (widget) => void, error?: (err) => void) => void,
@@ -113,14 +113,13 @@ interface IDashboardProps {
     requestParams: IDataRequestParams,
     dataToken: string
   ) => void,
-  onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, columns, parents) => void
+  onLoadSelectOptions: (controlKey, dataToken, paramsOrOptions) => void
   onResizeAllDashboardItem: () => void
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
 }
 
 interface IDashboardStates {
-  mounted: boolean,
   type: string,
   shareInfo: string,
   modalLoading: boolean,
@@ -129,13 +128,15 @@ interface IDashboardStates {
   currentDataInFullScreen: any,
   showLogin: boolean,
   phantomRenderSign: boolean
+  controlTokenMapping: {
+    [key: string]: string
+  }
 }
 
 export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   constructor (props) {
     super(props)
     this.state = {
-      mounted: false,
       type: '',
       shareInfo: '',
 
@@ -145,7 +146,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       currentDataInFullScreen: {},
       showLogin: false,
 
-      phantomRenderSign: false
+      phantomRenderSign: false,
+
+      controlTokenMapping: {}
     }
   }
 
@@ -200,11 +203,10 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
   public componentDidMount () {
     window.addEventListener('resize', this.onWindowResize, false)
-    this.setState({ mounted: true })
   }
 
   public componentWillReceiveProps (nextProps: IDashboardProps) {
-    const { currentItems, currentItemsInfo } = nextProps
+    const { currentItems, currentItemsInfo, dashboard, widgets } = nextProps
     if (currentItemsInfo) {
       if (Object.values(currentItemsInfo).filter((info) => !!info.datasource.resultList.length).length === currentItems.length) {
         // FIXME
@@ -212,9 +214,24 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           this.setState({
             phantomRenderSign: true
           })
+
+          // html2canvas(document.body, { useCORS: true }).then((canvas) => {
+          //   const b64 = canvas.toDataURL("image/jpeg")
+          //   const img = document.createElement('img')
+          //   img.src = b64
+          //   document.body.appendChild(img)
+          // })
+
         }, 5000)
       }
     }
+    // if (dashboard && !this.props.dashboard) {
+    //   const config = JSON.parse(dashboard.config || '{}')
+    //   const globalControls = config.filters || []
+    //   const controlTokenMapping = globalControls.map((control) => {
+        
+    //   })
+    // }
   }
 
   public componentWillUnmount () {
@@ -476,25 +493,29 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     })
   }
 
-  private getOptions = (controlId, viewId, columns, parents) => {
-    this.props.onLoadCascadeSourceFromDashboard(controlId, viewId, this.state.shareInfo, columns, parents)
-  }
+  // private getOptions = (controlKey, interactionType: InteractionType, paramsOrOptions) => {
+  //   if (interactionType === 'column') {
+  //     this.props.onLoadSelectOptions(controlKey, this.state.shareInfo, paramsOrOptions)
+  //   } else {
 
-  private globalFilterChange = (queryConditions: IMapItemFilterValue) => {
-    const { currentItems, currentItemsInfo } = this.props
-    Object.entries(queryConditions).forEach(([itemId, condition]) => {
-      const item = currentItems.find((ci) => ci.id === +itemId)
-      let pageNo = 0
-      const { pagination } = currentItemsInfo[itemId].queryConditions
-      if (pagination.pageNo) { pageNo = 1 }
-      const { variables: globalVariables, filters: globalFilters } = condition
-      this.getChartData('rerender', +itemId, item.widgetId, {
-        globalVariables,
-        globalFilters,
-        pagination: { ...pagination, pageNo }
-      })
-    })
-  }
+  //   }
+  // }
+
+  // private globalFilterChange = (queryConditions: IMapItemFilterValue) => {
+  //   const { currentItems, currentItemsInfo } = this.props
+  //   Object.entries(queryConditions).forEach(([itemId, condition]) => {
+  //     const item = currentItems.find((ci) => ci.id === +itemId)
+  //     let pageNo = 0
+  //     const { pagination } = currentItemsInfo[itemId].queryConditions
+  //     if (pagination.pageNo) { pageNo = 1 }
+  //     const { variables: globalVariables, filters: globalFilters } = condition
+  //     this.getChartData('rerender', +itemId, item.widgetId, {
+  //       globalVariables,
+  //       globalFilters,
+  //       pagination: { ...pagination, pageNo }
+  //     })
+  //   })
+  // }
 
   private dataDrill = (e) => {
     const {
@@ -610,11 +631,10 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       currentItems,
       currentItemsInfo,
       widgets,
-      dashboardCascadeSources
+      dashboardSelectOptionss
     } = this.props
 
     const {
-      mounted,
       shareInfo,
       showLogin,
       interactingStatus,
@@ -694,7 +714,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           cols={GRID_COLS}
           layouts={layouts}
           measureBeforeMount={false}
-          useCSSTransforms={mounted}
+          useCSSTransforms={false}
           isDraggable={false}
           isResizable={false}
         >
@@ -736,13 +756,13 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               <h2 className={styles.shareTitle}>{title}</h2>
             </Col>
           </Row>
-          <DashboardFilterPanel
+          {/* <GlobalControlPanel
             currentDashboard={dashboard}
             currentItems={currentItems}
             onGetOptions={this.getOptions}
-            mapOptions={dashboardCascadeSources}
+            mapOptions={dashboardSelectOptionss}
             onChange={this.globalFilterChange}
-          />
+          /> */}
         </Container.Title>
         {grids}
         <div className={styles.gridBottom} />
@@ -761,7 +781,7 @@ const mapStateToProps = createStructuredSelector({
   widgets: makeSelectWidgets(),
   currentItems: makeSelectItems(),
   currentItemsInfo: makeSelectItemsInfo(),
-  dashboardCascadeSources: makeSelectDashboardCascadeSources(),
+  dashboardSelectOptionss: makeSelectDashboardSelectOptionss(),
   linkages: makeSelectLinkages()
 })
 
@@ -772,7 +792,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadResultset: (renderType, itemid, dataToken, requestParams) => dispatch(getResultset(renderType, itemid, dataToken, requestParams)),
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
     onLoadWidgetCsv: (itemId, requestParams, dataToken) => dispatch(loadWidgetCsv(itemId, requestParams, dataToken)),
-    onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, columns, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, viewId, dataToken, columns, parents)),
+    onLoadSelectOptions: (controlKey, dataToken, paramsOrOptions) => dispatch(loadSelectOptions(controlKey, dataToken, paramsOrOptions)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index))

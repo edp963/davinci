@@ -91,7 +91,7 @@ export class NumberRange extends PureComponent<INumberRangeProps, INumberRangeSt
           onChange={this.inputChange('from')}
           onPressEnter={this.inputSearch}
         />
-        <Input className={styles.numberDivider} placeholder="~" readOnly tabIndex={-1} />
+        <Input className={styles.numberDivider} placeholder="-" readOnly tabIndex={-1} />
         <Input
           className={styles.number}
           value={value[1]}

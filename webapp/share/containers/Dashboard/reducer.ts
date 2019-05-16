@@ -29,7 +29,7 @@ import {
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
   LOAD_WIDGET_CSV_FAILURE,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
+  LOAD_SELECT_OPTIONS_SUCCESS,
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
   DELETE_DRILL_HISTORY
@@ -39,14 +39,14 @@ const initialState = fromJS({
   dashboard: null,
   title: '',
   config: '{}',
-  dashboardCascadeSources: null,
+  dashboardSelectOptionss: null,
   widgets: null,
   items: null,
   itemsInfo: null
 })
 
 function shareReducer (state = initialState, { type, payload }) {
-  const dashboardCascadeSources = state.get('dashboardCascadeSources')
+  const dashboardSelectOptionss = state.get('dashboardSelectOptionss')
   const itemsInfo = state.get('itemsInfo')
   let widgets = state.get('widgets')
 
@@ -56,7 +56,7 @@ function shareReducer (state = initialState, { type, payload }) {
         .set('title', payload.dashboard.name)
         .set('dashboard', payload.dashboard)
         .set('config', payload.dashboard.config)
-        .set('dashboardCascadeSources', {})
+        .set('dashboardSelectOptionss', {})
         .set('widgets', payload.dashboard.widgets)
         .set('items', payload.dashboard.relations)
         .set('itemsInfo', payload.dashboard.relations.reduce((obj, item) => {
@@ -182,9 +182,9 @@ function shareReducer (state = initialState, { type, payload }) {
           downloadCsvLoading: false
         }
       })
-    case LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS:
-      return state.set('dashboardCascadeSources', {
-        ...dashboardCascadeSources,
+    case LOAD_SELECT_OPTIONS_SUCCESS:
+      return state.set('dashboardSelectOptionss', {
+        ...dashboardSelectOptionss,
         [payload.controlId]: payload.values
       })
     case RESIZE_ALL_DASHBOARDITEM:

@@ -1,146 +1,107 @@
-import React, { Suspense } from 'react'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import React, { Component, PureComponent, Suspense, ReactNode } from 'react'
+import * as debounce from 'lodash/debounce'
 import {
-  IFilterItem,
-  OnGetFilterControlOptions,
+  IGlobalControl,
   OnFilterControlValueChange,
-  FilterControlOptions,
+  ControlOptions,
   renderInputText,
   renderNumberRange,
   renderSelect,
   renderTreeSelect,
   renderDate,
   renderDateRange,
-  renderMultiDate,
   getDefaultValue
 } from './'
-import { FilterTypes, FilterTypesViewSetting } from './filterTypes'
-import * as debounce from 'lodash/debounce'
-
+import { FilterTypes } from './filterTypes'
 import { Form } from 'antd'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
 const FormItem = Form.Item
 
 const styles = require('./filter.less')
 
+interface IParentInfo {
+  control: IGlobalControl
+  value: any
+}
+
 interface IFilterControlProps {
-  formToAppend: WrappedFormUtils
-  filter: IFilterItem
-  currentOptions: FilterControlOptions
-  parentValues?: Array<{column: string, value: any}>
-  onGetOptions: OnGetFilterControlOptions
+  form: WrappedFormUtils
+  control: IGlobalControl
+  currentOptions: ControlOptions
+  parentsInfo?: IParentInfo[]
   onChange: OnFilterControlValueChange
 }
 
-export class FilterControl extends React.PureComponent<IFilterControlProps, {}> {
+export class FilterControl extends PureComponent<IFilterControlProps, {}> {
 
   public componentWillMount () {
-    const { filter, parentValues, onGetOptions, onChange } = this.props
-    this.loadOptions(filter, parentValues, onGetOptions)
+    const { onChange } = this.props
     this.debouncedOnChange = debounce(onChange, 800)
   }
 
   public componentWillReceiveProps (nextProps: IFilterControlProps) {
-    const { filter, parentValues, onGetOptions, onChange } = nextProps
-    if (filter && filter !== this.props.filter) {
-      this.loadOptions(filter, parentValues, onGetOptions)
-    }
-    if (this.compareParentValues(parentValues, this.props.parentValues)) {
-      this.loadOptions(filter, parentValues, onGetOptions)
-    }
+    const { onChange } = nextProps
     if (onChange !== this.props.onChange) {
       this.debouncedOnChange = debounce(this.props.onChange, 800)
     }
   }
 
-  private compareParentValues = (current, prev) => {
-    if (!current || !prev) {
-      return false
+  private renderControl = (filter) => {
+    const { currentOptions } = this.props
+    const options = currentOptions || []
+    let component
+    switch (filter.type) {
+      case FilterTypes.InputText:
+        component = renderInputText(filter, this.onInputChange)
+        break
+      case FilterTypes.NumberRange:
+        component = renderNumberRange(filter, this.change)
+        break
+      case FilterTypes.Select:
+        component = renderSelect(filter, this.change, options)
+        break
+      case FilterTypes.TreeSelect:
+        component = renderTreeSelect(filter, this.change, options)
+        break
+      case FilterTypes.Date:
+        component = renderDate(filter, this.change)
+        break
+      case FilterTypes.DateRange:
+        component = renderDateRange(filter, this.change)
+        break
     }
-    const currentToString = current
-      .map((c) => [c.column, c.value.toString()].join(String.fromCharCode(0)))
-      .join(String.fromCharCode(0))
-    const prevToString = prev
-      .map((p) => [p.column, p.value.toString()].join(String.fromCharCode(0)))
-      .join(String.fromCharCode(0))
-    return currentToString !== prevToString
+    return this.wrapFormItem(filter, component)
   }
 
-  private loadOptions = (filter: IFilterItem, parentValues, onGetOptions) => {
-    if (!filter) { return }
-    const { type } = filter
-    if (!FilterTypesViewSetting[type]) { return } // @TODO 固定过滤项处理
-    const { key, fromView, fromModel, fromText, fromParent } = filter
-    if (!fromView) { return }
-    const columns = [fromModel]
-    if (fromText !== fromModel) { columns.push(fromModel) }
-    if (!columns.join('').length) { return }
-    // if (fromChild) { columns.push(fromChild) }
-    if (fromParent) { columns.push(fromParent) }
-    onGetOptions(key, fromView, columns, parentValues)
-  }
-
-  private wrapFormItem = (filter: IFilterItem, form: WrappedFormUtils, control) => {
-    const { getFieldDecorator } = form
+  private wrapFormItem = (control: IGlobalControl, component: Component): ReactNode => {
+    const { getFieldDecorator } = this.props.form
     return (
       <FormItem className={styles.filterControl}>
-        {getFieldDecorator(`${filter.key}`, {
-          initialValue: getDefaultValue(filter)
-        })(control)}
+        {getFieldDecorator(`${control.key}`, {
+          initialValue: getDefaultValue(control)
+        })(component)}
       </FormItem>
     )
   }
 
-  private renderControl = (filter) => {
-    const { currentOptions, formToAppend } = this.props
-    const options = currentOptions || []
-    let control
-    switch (filter.type) {
-      case FilterTypes.InputText:
-        control = renderInputText(filter, this.onInputChange)
-        break
-      // case FilterTypes.InputNumber:
-      //   control = this.renderInputNumber(filter, this.change)
-      //   break
-      case FilterTypes.NumberRange:
-        control = renderNumberRange(filter, this.change)
-        break
-      case FilterTypes.Select:
-        control = renderSelect(filter, this.change, options)
-        break
-      case FilterTypes.TreeSelect:
-        control = renderTreeSelect(filter, this.change, options)
-        break
-      case FilterTypes.Date:
-        control = renderDate(filter, this.change)
-        break
-      case FilterTypes.MultiDate:
-        control = renderMultiDate(filter, this.change)
-        break
-      case FilterTypes.DateRange:
-        control = renderDateRange(filter, this.change)
-        break
-    }
-    return this.wrapFormItem(filter, formToAppend, control)
-  }
-
   private change = (val) => {
-    const { filter, onChange } = this.props
-    onChange(filter, val)
+    const { control, onChange } = this.props
+    onChange(control, val)
   }
 
   private debouncedOnChange = null
   private onInputChange = (e) => {
-    const { filter } = this.props
+    const { control } = this.props
     let val = e.target.value
     if (val === '') { val = undefined }
-    this.debouncedOnChange(filter, val)
+    this.debouncedOnChange(control, val)
   }
 
   public render () {
-    const { filter } = this.props
+    const { control } = this.props
     return (
       <Suspense fallback={null}>
-        {this.renderControl(filter)}
+        {this.renderControl(control)}
       </Suspense>
     )
   }

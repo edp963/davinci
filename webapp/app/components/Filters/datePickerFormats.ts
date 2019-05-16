@@ -16,7 +16,21 @@ export const DatePickerFormatsLocale = {
   [DatePickerFormats.Year]: '年'
 }
 
-export default DatePickerFormats
+export const DatePickerFormatsSelectSetting = {
+  normal: [
+    DatePickerFormats.Date,
+    DatePickerFormats.Datetime,
+    DatePickerFormats.DatetimeMinute,
+    DatePickerFormats.Month,
+    DatePickerFormats.Week,
+    DatePickerFormats.Year
+  ],
+  multiple: [
+    DatePickerFormats.Date,
+    DatePickerFormats.Month,
+    DatePickerFormats.Year
+  ]
+}
 
 export enum DatePickerDefaultValues {
   Today = 'today',
@@ -53,3 +67,5 @@ export const DatePickerDefaultValuesLocales = {
   [DatePickerDefaultValues.LastYear]: '去年',
   [DatePickerDefaultValues.Custom]: '自定义'
 }
+
+export default DatePickerFormats

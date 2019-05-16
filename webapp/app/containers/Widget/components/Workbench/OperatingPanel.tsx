@@ -34,7 +34,7 @@ import PivotTypes from '../../config/pivot/PivotTypes'
 import { uuid } from '../../../../utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
-import { Row, Col, Icon, Menu, Table, Button, Radio, InputNumber, Dropdown, Modal, Popconfirm } from 'antd'
+import { Row, Col, Icon, Menu, Table, Button, Radio, InputNumber, Dropdown, Modal, Popconfirm, Empty } from 'antd'
 const MenuItem = Menu.Item
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
@@ -150,7 +150,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private tabKeys = [
     { key: 'data', title: '数据' },
     { key: 'style', title: '样式' },
-    // { key: 'variable', title: '变量' },
     { key: 'setting', title: '配置' }
   ]
 
@@ -1443,7 +1442,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       title: '操作',
       key: 'action',
       width: 100,
-      className: `${utilStyles.textAlignCenter}`,
+      className: `${utilStyles.textAlignRight}`,
       render: (text, record) => (
         <span className="ant-table-action-column">
           <Button
@@ -1592,39 +1591,40 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       case 'setting':
         tabPane = (
           <div className={styles.paramsPane}>
-            <div className={styles.paneBlock}>
-                <h4 className={styles.control}>控制器</h4>
-            </div>
-              {
-                  queryInfo.length ?
-                  <div className={styles.paramsPane}>
-                    <Row  type="flex" align="middle" className={styles.blockRow}>
-                      <Col
-                        span={24}
+            {
+              queryInfo.length
+                ? <div className={styles.paneBlock}>
+                    <h4>
+                      <span>控制器</span>
+                      <span
                         className={styles.addVariable}
                         onClick={this.showVariableConfigTable()}
                       >
                         <Icon type="plus" /> 点击添加
-                      </Col>
-                    </Row>
+                      </span>
+                    </h4>
                     <Table
                       dataSource={controls}
                       columns={queryConfigColumns}
                       rowKey="id"
+                      size="middle"
+                      showHeader={false}
                       pagination={false}
                     />
-                    <div style={{height: '10px'}}/>
-                  </div> :
-                  <div className={styles.paramsPane}>
-                    <div className={styles.paneBlock}>
-                      <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                        <Col span={24}>
-                          <h4>没有变量可以设置</h4>
-                        </Col>
-                      </Row>
-                    </div>
                   </div>
-              }
+                : <div className={styles.paneBlock}>
+                    <h4>控制器</h4>
+                    <Row
+                      gutter={8}
+                      type="flex"
+                      justify="center"
+                      align="middle"
+                      className={`${styles.blockRow} ${styles.noVariable}`}
+                    >
+                      <Icon type="stop" /> 没有变量可以设置
+                    </Row>
+                  </div>
+            }
             <div className={styles.paneBlock}>
               <h4>开启缓存</h4>
               <div className={styles.blockBody}>

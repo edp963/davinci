@@ -69,7 +69,9 @@ import {
   DRILL_PATH_DASHBOARDITEM,
   DELETE_DRILL_PATH_HISTORY,
   DRILL_PATH_SETTING,
-  SELECT_DASHBOARD_ITEM_CHART
+  SELECT_DASHBOARD_ITEM_CHART,
+  SET_SELECT_OPTIONS,
+  SET_CONTROL_FORM_VALUES
 } from './constants'
 
 export function addDashboardItems (portalId, items, resolve) {
@@ -501,6 +503,25 @@ export function selectDashboardItemChart (itemId, renderType, selectedItems) {
       itemId,
       renderType,
       selectedItems
+    }
+  }
+}
+
+export function setSelectOptions (controlKey, options) {
+  return {
+    type: SET_SELECT_OPTIONS,
+    payload: {
+      controlKey,
+      options
+    }
+  }
+}
+
+export function setControlFormValues (formValues) {
+  return {
+    type: SET_CONTROL_FORM_VALUES,
+    payload: {
+      formValues
     }
   }
 }

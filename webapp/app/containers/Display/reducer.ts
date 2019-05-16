@@ -33,7 +33,7 @@ const emptyDisplayState = {
   currentDisplaySecretInfo: '',
   currentSlide: null,
   currentSlideLoading: false,
-  currentDisplayCascadeSources: {},
+  currentDisplaySelectOptions: {},
 
   currentLayers: [],
   currentLayersInfo: {},
@@ -53,7 +53,7 @@ function displayReducer (state = initialState, action) {
   const { type, payload } = action
 
   const displays = state.get('displays')
-  const displayCascadeSources = state.get('currentDisplayCascadeSources')
+  const displaySelectOptions = state.get('currentDisplaySelectOptions')
   const layers = state.get('currentLayers')
   const layersInfo = state.get('currentLayersInfo')
   const layersOperationInfo = state.get('currentLayersOperationInfo')
@@ -110,7 +110,7 @@ function displayReducer (state = initialState, action) {
       return state
         .set('currentDisplayLoading', false)
         .set('currentDisplay', payload.display)
-        .set('currentDisplayCascadeSources', {})
+        .set('currentDisplaySelectOptions', {})
         .set('currentSlide', payload.slide)
         .set('currentLayers', payload.layers || [])
         .set('currentLayersInfo', (payload.layers || []).reduce((obj, layer) => {
