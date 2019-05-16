@@ -199,7 +199,7 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
       })
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
     case DisplayActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
-      const updatedViews: IFormedViews = action.payload.views.reduce((obj, view) => {
+      const updatedViews: IFormedViews = (action.payload.views || []).reduce((obj, view) => {
         obj[view.id] = {
           ...view,
           model: JSON.parse(view.model || '{}'),

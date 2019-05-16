@@ -113,7 +113,7 @@ function displayReducer (state = initialState, action) {
         .set('currentDisplayCascadeSources', {})
         .set('currentSlide', payload.slide)
         .set('currentLayers', payload.layers || [])
-        .set('currentLayersInfo', payload.layers.reduce((obj, layer) => {
+        .set('currentLayersInfo', (payload.layers || []).reduce((obj, layer) => {
           obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
             datasource: { resultList: [] },
             loading: false,
@@ -134,7 +134,7 @@ function displayReducer (state = initialState, action) {
           }
           return obj
         }, {}))
-        .set('currentLayersOperationInfo', payload.layers.reduce((obj, layer) => {
+        .set('currentLayersOperationInfo', (payload.layers || []).reduce((obj, layer) => {
           obj[layer.id] = {
             selected: false,
             dragging: false,
