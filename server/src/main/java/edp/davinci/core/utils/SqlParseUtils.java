@@ -101,9 +101,11 @@ public class SqlParseUtils {
                                 break;
                             case AUTHVARE:
                                 String k = String.join("", String.valueOf(delimiter), variable.getName().trim(), String.valueOf(delimiter));
-                                List<String> v = getAuthVarValue(variable, null);
-                                if (null != v && v.size() > 0) {
-                                    authParamMap.put(k, v);
+                                if (null != variable) {
+                                    List<String> v = getAuthVarValue(variable, null);
+                                    if (null != v && v.size() > 0) {
+                                        authParamMap.put(k, v);
+                                    }
                                 }
                                 break;
                         }
@@ -123,18 +125,16 @@ public class SqlParseUtils {
 
 
     public List<String> getAuthVarValue(SqlVariable variable, String email) {
-        if (null == variable) {
-            return null;
-        }
         SqlVariableChannel channel = variable.getChannel();
         if (null == channel) {
             return SqlVariableValueTypeEnum.getValue(variable.getValueType(), variable.getDefaultValues());
-        } else {
-            if (!DacChannelUtil.dacMap.containsKey(channel.getName())) {
-                return dacChannelUtil.getData(channel.getName(), channel.getBizId().toString(), email);
+        } else if (DacChannelUtil.dacMap.containsKey(channel.getName())) {
+            List<Object> data = dacChannelUtil.getData(channel.getName(), channel.getBizId().toString(), email);
+            if (null != data) {
+                return data.stream().map(String::valueOf).map(s -> String.join("", apostrophe, s, apostrophe)).collect(Collectors.toList());
             }
         }
-        return null;
+        return new ArrayList<>();
     }
 
     /**
@@ -245,7 +245,7 @@ public class SqlParseUtils {
 
     private static String getAuthVarExpression(String srcExpression, Map<String, List<String>> authParamMap, char sqlTempDelimiter) throws Exception {
 
-        if (null == authParamMap || authParamMap.size() == 0) {
+        if (null == authParamMap) {
             return "1=1";
         }
 
@@ -265,18 +265,20 @@ public class SqlParseUtils {
             where.accept(SqlOperatorEnum.getVisitor(listBuffer));
             Map<SqlOperatorEnum, List<String>> operatorMap = listBuffer.toList().head;
 
+            String delimiter = String.valueOf(sqlTempDelimiter);
+
             for (SqlOperatorEnum sqlOperator : operatorMap.keySet()) {
                 List<String> expList = operatorMap.get(sqlOperator);
                 if (null != expList && expList.size() > 0) {
                     String left = operatorMap.get(sqlOperator).get(0);
                     String right = operatorMap.get(sqlOperator).get(expList.size() - 1);
-                    if (right.startsWith(parenthesesStart) && right.endsWith(parenthesesEnd)) {
+                    if (right.startsWith(delimiter) && right.endsWith(delimiter)) {
                         right = right.substring(1, right.length() - 1);
                     }
                     if (authParamMap.containsKey(right)) {
-                        StringBuilder expBuilder = new StringBuilder();
                         List<String> list = authParamMap.get(right);
                         if (null != list && list.size() > 0) {
+                            StringBuilder expBuilder = new StringBuilder();
                             if (list.size() == 1) {
                                 if (!StringUtils.isEmpty(list.get(0))) {
                                     switch (sqlOperator) {
@@ -334,8 +336,10 @@ public class SqlParseUtils {
                                         break;
                                 }
                             }
+                            return expBuilder.toString();
+                        } else {
+                            return "1=0";
                         }
-                        return expBuilder.toString();
                     } else {
                         return "1=0";
                     }

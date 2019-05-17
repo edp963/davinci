@@ -365,7 +365,10 @@ public class WidgetServiceImpl implements WidgetService {
         try {
             if (type.equals(FileTypeEnum.CSV.getType())) {
                 ViewWithSource viewWithSource = viewMapper.getViewWithSource(widget.getViewId());
-                PaginateWithQueryColumns paginate = viewService.getResultDataList(projectDetail, viewWithSource, executeParam, user);
+
+                boolean maintainer = projectService.isMaintainer(projectDetail, user);
+
+                PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer, viewWithSource, executeParam, user);
                 List<QueryColumn> columns = paginate.getColumns();
                 if (null != columns && columns.size() > 0) {
                     File file = new File(rootPath);
@@ -437,6 +440,9 @@ public class WidgetServiceImpl implements WidgetService {
         int i = 1;
 
         ScriptEngine engine = getExecuptParamScriptEngine();
+
+        boolean maintainer = projectService.isMaintainer(projectDetail, user);
+
         while (iterator.hasNext()) {
             Widget widget = iterator.next();
             final String sheetName = widgets.size() == 1 ? "Sheet" : "Sheet" + (widgets.size() - (i - 1));
@@ -452,7 +458,7 @@ public class WidgetServiceImpl implements WidgetService {
                         executeParam = getViewExecuteParam((engine), null, widget.getConfig(), null);
                     }
 
-                    PaginateWithQueryColumns paginate = viewService.getResultDataList(projectDetail, viewWithProjectAndSource, executeParam, user);
+                    PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer, viewWithProjectAndSource, executeParam, user);
 
                     sheet = wb.createSheet(sheetName);
                     ExcelUtils.writeSheet(sheet, paginate.getColumns(), paginate.getResultList(), wb, containType, widget.getConfig(), executeParam.getParams());

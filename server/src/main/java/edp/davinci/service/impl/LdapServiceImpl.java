@@ -19,7 +19,6 @@
 package edp.davinci.service.impl;
 
 import edp.core.exception.ServerException;
-import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.dao.OrganizationMapper;
 import edp.davinci.dao.RelUserOrganizationMapper;
@@ -130,7 +129,7 @@ public class LdapServiceImpl implements LdapService {
         if (insert > 0) {
             String OrgName = user.getUsername() + "'s Organization";
 
-            Organization organization = new Organization(OrgName, Constants.DEFAULT_ORGANIZATION_DES, user.getId());
+            Organization organization = new Organization(OrgName, null, user.getId());
             int i = organizationMapper.insert(organization);
             if (i > 0) {
                 RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), user.getId(), UserOrgRoleEnum.OWNER.getRole());

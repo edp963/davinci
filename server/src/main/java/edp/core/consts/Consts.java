@@ -70,7 +70,7 @@ public class Consts {
 
     public static final String mysqlKeyDelimiter = "`";
 
-    public static final String apostrophe = "\'";
+    public static final String apostrophe = "'";
 
     public static final String doubleQuotes = "\"";
 

@@ -24,6 +24,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static edp.core.consts.Consts.apostrophe;
+
 public enum SqlVariableValueTypeEnum {
     STRING("string"),
     NUMBER("number"),
@@ -44,13 +46,13 @@ public enum SqlVariableValueTypeEnum {
         switch (SqlVariableValueTypeEnum.valueOf(valueType.toUpperCase())) {
             case STRING:
             case DATE:
-                return values.stream().map(String::valueOf).map(s -> String.join("", "'", s, "'")).collect(Collectors.toList());
+                return values.stream().map(String::valueOf).map(s -> String.join("", apostrophe, s, apostrophe)).collect(Collectors.toList());
             case NUMBER:
                 return values.stream().map(String::valueOf).collect(Collectors.toList());
             case BOOLEAN:
                 return Arrays.asList(String.valueOf(values.get(values.size() - 1)));
         }
-        return values.stream().map(String::valueOf).map(s -> String.join("", "'", s, "'")).collect(Collectors.toList());
+        return values.stream().map(String::valueOf).map(s -> String.join("", apostrophe, s, apostrophe)).collect(Collectors.toList());
     }
 
 }

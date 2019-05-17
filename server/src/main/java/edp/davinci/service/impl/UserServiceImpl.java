@@ -283,7 +283,7 @@ public class UserServiceImpl implements UserService {
             String OrgName = user.getUsername() + "'s Organization";
 
             //激活成功，创建默认Orgnization
-            Organization organization = new Organization(OrgName, Constants.DEFAULT_ORGANIZATION_DES, user.getId());
+            Organization organization = new Organization(OrgName, null, user.getId());
             organizationMapper.insert(organization);
 
             //关联用户和组织，创建人是组织的owner

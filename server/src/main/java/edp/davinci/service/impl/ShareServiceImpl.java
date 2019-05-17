@@ -343,8 +343,9 @@ public class ShareServiceImpl implements ShareService {
         ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(shareInfo.getShareId());
 
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareInfo.getShareUser(), false);
+        boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
 
-        Paginate paginate = viewService.getResultDataList(projectDetail, viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
+        Paginate paginate = viewService.getResultDataList(maintainer, viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
         return paginate;
     }
 
@@ -385,7 +386,8 @@ public class ShareServiceImpl implements ShareService {
 
         PaginateWithQueryColumns paginate = null;
         try {
-            paginate = viewService.getResultDataList(projectDetail, viewWithSource, executeParam, shareInfo.getShareUser());
+            boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
+            paginate = viewService.getResultDataList(maintainer, viewWithSource, executeParam, shareInfo.getShareUser());
         } catch (SQLException e) {
             e.printStackTrace();
             throw new ServerException(HttpCodeEnum.SERVER_ERROR.getMessage());
@@ -446,7 +448,8 @@ public class ShareServiceImpl implements ShareService {
             }
 
             try {
-                list = viewService.getDistinctValueData(projectDetail, viewWithProjectAndSource, param, shareInfo.getShareUser());
+                boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
+                list = viewService.getDistinctValueData(maintainer, viewWithProjectAndSource, param, shareInfo.getShareUser());
             } catch (ServerException e) {
                 return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
             }

@@ -130,7 +130,7 @@ public class DacChannelUtil {
     }
 
 
-    public List getData(String dacName, String bizId, String email) {
+    public List<Object> getData(String dacName, String bizId, String email) {
         if (dacMap.containsKey(dacName)) {
             DacChannel channel = dacMap.get(dacName);
 
@@ -148,7 +148,7 @@ public class DacChannelUtil {
 
                 if (result.getStatusCode().equals(HttpStatus.OK)) {
                     ResultMap resultMap = result.getBody();
-                    return (List) resultMap.get(PAYLOAD);
+                    return (List<Object>) resultMap.get(PAYLOAD);
                 }
             } catch (RestClientException e) {
                 log.error(e.getMessage());

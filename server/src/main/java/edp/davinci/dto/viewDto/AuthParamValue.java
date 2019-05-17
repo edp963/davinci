@@ -27,4 +27,5 @@ import java.util.List;
 public class AuthParamValue {
     private String name;
     private List<Object> values;
+    private boolean enable;
 }

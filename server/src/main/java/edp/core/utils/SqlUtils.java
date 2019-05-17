@@ -139,18 +139,14 @@ public class SqlUtils {
     }
 
     @CachePut(value = "query", keyGenerator = "keyGenerator")
-    public PaginateWithQueryColumns query4Paginate(String sql, int pageNo, int pageSize, int totalCount, int limit) throws Exception {
+    public PaginateWithQueryColumns query4Paginate(String sql, int pageNo, int pageSize, int totalCount, int limit, Set<String> excludeColumns) throws Exception {
         PaginateWithQueryColumns paginateWithQueryColumns = new PaginateWithQueryColumns();
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
 
-        String md5 = MD5Util.getMD5(sql, true, 16);
+        String md5 = MD5Util.getMD5(sql + pageNo + pageSize + limit, true, 16);
 
         long befor = System.currentTimeMillis();
-
-        if (isQueryLogEnable) {
-            sqlLogger.info("{}  >> \n{}", md5, sql);
-        }
 
         JdbcTemplate jdbcTemplate = jdbcTemplate();
         jdbcTemplate.setMaxRows(resultLimit);
@@ -160,8 +156,11 @@ public class SqlUtils {
             if (limit > 0) {
                 resultLimit = limit > resultLimit ? resultLimit : limit;
             }
+            if (isQueryLogEnable) {
+                sqlLogger.info("{}  >> \n{}", md5, sql);
+            }
             jdbcTemplate.setMaxRows(resultLimit);
-            getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate);
+            getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns);
             paginateWithQueryColumns.setPageNo(1);
             int size = paginateWithQueryColumns.getResultList().size();
             paginateWithQueryColumns.setPageSize(size);
@@ -186,15 +185,27 @@ public class SqlUtils {
 
             switch (this.dataTypeEnum) {
                 case MYSQL:
-                    getResultForPaginate(sql + " LIMIT " + startRow + ", " + pageSize, paginateWithQueryColumns, jdbcTemplate);
+                    sql = sql + " LIMIT " + startRow + ", " + pageSize;
+                    md5 = MD5Util.getMD5(sql, true, 16);
+                    if (isQueryLogEnable) {
+                        sqlLogger.info("{}  >> \n{}", md5, sql);
+                    }
+                    getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns);
+                    break;
                 case MOONBOX:
+                    if (isQueryLogEnable) {
+                        sqlLogger.info("{}  >> \n{}", md5, sql);
+                    }
                     jdbcTemplate.setMaxRows(maxRows);
-                    jdbcTemplate.query(sql, getPaginateResultSetExtractor(paginateWithQueryColumns, startRow));
+                    jdbcTemplate.query(sql, getPaginateResultSetExtractor(paginateWithQueryColumns, startRow, excludeColumns));
                     break;
                 default:
+                    if (isQueryLogEnable) {
+                        sqlLogger.info("{}  >> \n{}", md5, sql);
+                    }
                     jdbcTemplate.setMaxRows(maxRows);
                     jdbcTemplate.query(new StreamingStatementCreator(sql, this.dataTypeEnum),
-                            getPaginateResultSetExtractor(paginateWithQueryColumns, startRow));
+                            getPaginateResultSetExtractor(paginateWithQueryColumns, startRow, excludeColumns));
                     break;
             }
         }
@@ -206,14 +217,18 @@ public class SqlUtils {
         return paginateWithQueryColumns;
     }
 
-    private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate) {
+    private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns) {
         SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql);
         if (null != sqlRowSet) {
             SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
 
             List<QueryColumn> queryColumns = new ArrayList<>();
             for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                queryColumns.add(new QueryColumn(metaData.getColumnLabel(i), metaData.getColumnTypeName(i)));
+                String key = metaData.getColumnLabel(i);
+                if (null != excludeColumns && excludeColumns.size() > 0 && excludeColumns.contains(key)) {
+                    continue;
+                }
+                queryColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
             }
             paginateWithQueryColumns.setColumns(queryColumns);
 
@@ -222,6 +237,9 @@ public class SqlUtils {
                 Map<String, Object> map = new LinkedHashMap<>();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
                     String key = metaData.getColumnLabel(i);
+                    if (null != excludeColumns && excludeColumns.size() > 0 && excludeColumns.contains(key)) {
+                        continue;
+                    }
                     map.put(key, sqlRowSet.getObject(key));
                 }
                 resultList.add(map);
@@ -230,15 +248,18 @@ public class SqlUtils {
         }
     }
 
-    private ResultSetExtractor<PaginateWithQueryColumns> getPaginateResultSetExtractor(PaginateWithQueryColumns paginateWithQueryColumns, int startRow) {
+    private ResultSetExtractor<PaginateWithQueryColumns> getPaginateResultSetExtractor(PaginateWithQueryColumns paginateWithQueryColumns, int startRow, Set<String> excludeColumns) {
         return (ResultSet resultSet) -> {
             final List<Map<String, Object>> resultList = paginateWithQueryColumns.getResultList();
             ResultSetMetaData metaData = resultSet.getMetaData();
 
             List<QueryColumn> queryColumns = new ArrayList<>();
-
             for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                queryColumns.add(new QueryColumn(metaData.getColumnLabel(i), metaData.getColumnTypeName(i)));
+                String c = metaData.getColumnLabel(i);
+                if (null != excludeColumns && excludeColumns.size() > 0 && excludeColumns.contains(c)) {
+                    continue;
+                }
+                queryColumns.add(new QueryColumn(c, metaData.getColumnTypeName(i)));
             }
 
             paginateWithQueryColumns.setColumns(queryColumns);
@@ -248,6 +269,9 @@ public class SqlUtils {
                 Map<String, Object> map = new HashMap<>();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
                     String c = metaData.getColumnLabel(i);
+                    if (null != excludeColumns && excludeColumns.size() > 0 && excludeColumns.contains(c)) {
+                        continue;
+                    }
                     Object v = resultSet.getObject(c);
                     map.put(c, v);
                 }
@@ -261,7 +285,7 @@ public class SqlUtils {
 
 
     @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
-    public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer totalCount, Integer limit) throws Exception {
+    public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer totalCount, Integer limit, Set<String> excludeColumns) throws Exception {
         if (null == pageNo) {
             pageNo = -1;
         }
@@ -276,7 +300,7 @@ public class SqlUtils {
             limit = -1;
         }
 
-        PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit);
+        PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit, excludeColumns);
         return paginate;
     }
 
