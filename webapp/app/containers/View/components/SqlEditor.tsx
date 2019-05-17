@@ -24,7 +24,9 @@ import debounce from 'lodash/debounce'
 import Styles from '../View.less'
 
 interface ISqlEditorProps {
-  // hintItems: string[]
+  hints: {
+    [name: string]: []
+  }
   value: string
   onSqlChange: (sql: string) => void
 }
@@ -79,15 +81,16 @@ export class SqlEditor extends React.PureComponent<ISqlEditorProps> {
     this.sqlEditor.doc.setValue(value)
     this.sqlEditor.on('change', (_: CodeMirror.Editor, change: CodeMirror.EditorChange) => {
       this.debouncedSqlChange(_.getDoc().getValue())
-    //   if (change.origin )
 
-    //   this.sqlEditor.showHint({
-    //     completeSingle: false,
-    //     hint: () => ({
-    //       from:
-    //       list: [{ }, {}]
-    //     })
-    //   })
+      if (change.origin === '+input'
+          && change.text[0] !== ';'
+          && change.text[0].trim() !== ''
+          && change.text[1] !== '') {
+        this.sqlEditor.showHint({
+          completeSingle: false,
+          tables: this.props.hints
+        })
+      }
     })
   }
 

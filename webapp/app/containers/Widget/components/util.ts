@@ -624,7 +624,7 @@ export function getChartTooltipLabel (type, seriesData, options) {
             : record[`${mc.agg}(${decodedName})`]
           : 0
         value = getFormattedValue(value, mc.format)
-        return `${decodedName}: ${value}`
+        return `${getFieldAlias(mc.field, {}) || mc.name}: ${value}`
       }))
       .join('<br/>')
   }

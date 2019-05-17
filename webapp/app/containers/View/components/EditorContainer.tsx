@@ -19,6 +19,7 @@
  */
 
 import React from 'react'
+import memoizeOne from 'memoize-one'
 
 import { ISource, ISourceTable, IMapTableColumns } from 'containers/source/types'
 import {
@@ -206,6 +207,18 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
     this.props.onStepChange(1)
   }
 
+  private getSqlHints = memoizeOne((tables: string[], mapTableColumns: IMapTableColumns, variables: IViewVariable[]) => {
+    const tableHints = tables.reduce((acc, tableName) => {
+      acc[tableName] = !mapTableColumns[tableName] ? [] : mapTableColumns[tableName].columns.map((c) => c.name)
+      return acc
+    }, {})
+    const hints = variables.reduce((acc, v) => {
+      acc[`$${v.name}$`] = []
+      return acc
+    }, tableHints)
+    return hints
+  })
+
   public render () {
     const {
       visible, view, variable, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
@@ -217,6 +230,7 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
       variableModalVisible, editingVariable } = this.state
     const { execute: loadingExecute } = loading
     const style = visible ? {} : { display: 'none' }
+    const hints = this.getSqlHints(tables, mapTableColumns, variable)
 
     return (
       <>
@@ -258,6 +272,7 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
                     <div className={Styles.editor}>
                       <SqlEditor
                         value={view.sql}
+                        hints={hints}
                         onSqlChange={this.sqlChange}
                       />
                     </div>

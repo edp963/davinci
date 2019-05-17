@@ -31,7 +31,7 @@ const Styles = require('./RichText.less')
 interface IRichTextEditorProps {
   content: string
   fontSizes: number[]
-  fields: string[]
+  mapFields: object
   data: any[]
   fieldBoundaries: [string, string]
   onChange: (value: string) => void
@@ -89,14 +89,14 @@ export class RichTextEditor extends React.Component<IRichTextEditorProps, IRichT
   }
 
   public render () {
-    const { content, onChange, fontSizes, fields, data, fieldBoundaries } = this.props
+    const { content, onChange, fontSizes, mapFields, data, fieldBoundaries } = this.props
     const { previewVisible } = this.state
 
-    const fieldItems = fields.length ? (
+    const fieldItems = Object.keys(mapFields).length ? (
       <Menu>
-        {fields.map((field) => (
-          <MenuItem key={field}>
-            <a href="javascript:void(0)" onClick={this.selectField(field)}>{field}</a>
+        {Object.keys(mapFields).map((fieldName) => (
+          <MenuItem key={fieldName}>
+            <a href="javascript:void(0)" onClick={this.selectField(fieldName)}>{fieldName}</a>
           </MenuItem>
         ))}
       </Menu>
@@ -150,7 +150,7 @@ export class RichTextEditor extends React.Component<IRichTextEditorProps, IRichT
           footer={null}
           onCancel={this.closePreview}
         >
-          <Preview content={content} fieldBoundaries={fieldBoundaries} data={data} />
+          <Preview content={content} fieldBoundaries={fieldBoundaries} data={data} mapFields={mapFields} />
         </Modal>
       </div>
     )

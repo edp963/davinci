@@ -16,12 +16,14 @@ const styles = require('../TableSection.less')
 
 export const AvailableTableConditionStyleTypes = {
   [TableConditionStyleTypes.BackgroundColor]: '背景颜色',
+  [TableConditionStyleTypes.TextColor]: '字体颜色',
   [TableConditionStyleTypes.NumericBar]: '条形图',
   [TableConditionStyleTypes.Custom]: '自定义'
 }
 
 const TableConditionStyleTypesSetting = {
   [TableConditionStyleTypes.BackgroundColor]: ['string', 'geoCountry', 'geoProvince', 'geoCity', 'number', 'date'],
+  [TableConditionStyleTypes.TextColor]: ['string', 'geoCountry', 'geoProvince', 'geoCity', 'number', 'date'],
   [TableConditionStyleTypes.NumericBar]: ['number'],
   [TableConditionStyleTypes.Custom]: ['string', 'geoCountry', 'geoProvince', 'geoCity', 'number', 'date']
 }
@@ -107,6 +109,8 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
     switch (type) {
       case TableConditionStyleTypes.BackgroundColor:
         return this.renderBackgroundColor()
+      case TableConditionStyleTypes.TextColor:
+        return this.renderTextColor()
       case TableConditionStyleTypes.NumericBar:
         return this.renderNumericBar()
       case TableConditionStyleTypes.Custom:
@@ -130,6 +134,24 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
             onChange={this.propChange('background', 'colors')}
           /><label>背景</label>
         </Col>
+        <Col span={4} className={styles.colColor}>
+          <ColorPicker
+            className={styles.color}
+            value={fore}
+            onChange={this.propChange('fore', 'colors')}
+          /><label>文字</label>
+        </Col>
+      </Row>
+    )
+  }
+
+  private renderTextColor = () => {
+    const { localStyle } = this.state
+    const { colors } = localStyle
+    const { fore } = colors
+    return (
+      <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+        <Col span={8}>颜色：</Col>
         <Col span={4} className={styles.colColor}>
           <ColorPicker
             className={styles.color}

@@ -35,9 +35,24 @@ export class RichText extends React.Component<IChartProps> {
 
   // @FIXME use memoizeOne
   private getFields = (cols: IWidgetDimension[], rows: IWidgetDimension[], metrics: IWidgetMetric[]) => {
-    let fields =  cols.concat(rows).map((field) => field.name)
-    fields = fields.concat(metrics.map((field) => `${field.agg}(${decodeMetricName(field.name)})`))
-    return fields
+    let map =  cols.concat(rows).reduce((mapFields, field) => {
+      mapFields[field.name] = {
+        name: field.name,
+        field: field.field,
+        format: field.format
+      }
+      return mapFields
+    }, {})
+    map = metrics.reduce((mapFields, field) => {
+      const name = `${field.agg}(${decodeMetricName(field.name)})`
+      mapFields[name] = {
+        name,
+        field: field.field,
+        format: field.format
+      }
+      return mapFields
+    }, map)
+    return map
   }
 
   private editorChange = (updatedContent: string) => {
@@ -48,7 +63,7 @@ export class RichText extends React.Component<IChartProps> {
   public render () {
     const { editing, data, cols, rows, metrics, chartStyles } = this.props
     const { content } = chartStyles.richText
-    const fields = this.getFields(cols, rows, metrics)
+    const mapFields = this.getFields(cols, rows, metrics)
 
     return (
       <Suspense fallback={<Spin />}>
@@ -56,12 +71,13 @@ export class RichText extends React.Component<IChartProps> {
           <Preview
             content={content}
             fieldBoundaries={RichText.FieldBoundaries}
+            mapFields={mapFields}
             data={data}
           /> :
           <Editor
             content={content}
             fontSizes={PIVOT_CHART_FONT_SIZES}
-            fields={fields}
+            mapFields={mapFields}
             data={data}
             fieldBoundaries={RichText.FieldBoundaries}
             onChange={this.editorChange}
