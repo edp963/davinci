@@ -41,6 +41,7 @@ import { Button, Modal } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { ICurrentDashboard } from '../../../containers/Dashboard'
 import { setControlFormValues } from '../../../containers/Dashboard/actions'
+import { IViewVariable } from 'app/containers/View/types'
 
 const styles = require('../filter.less')
 
@@ -53,7 +54,7 @@ export interface IRelatedViewSource {
   id: number
   name: string
   model: IModelItem[]
-  variables: string[]
+  variables: IViewVariable[]
   fields: IGlobalControlRelatedField | IGlobalControlRelatedField[]
 }
 
@@ -159,7 +160,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
       .filter((s) => s.checked)
       .reduce((viewObj, itemSource) => {
         if (!viewObj[itemSource.viewId]) {
-          viewObj[itemSource.viewId] = views.find((v) => v.id === itemSource.viewId)
+          viewObj[itemSource.viewId] = views[itemSource.viewId]
         }
         return viewObj
       }, {})
@@ -180,17 +181,16 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     interactionType: InteractionType
   ): {
     model: IModelItem[],
-    variables: string[],
+    variables: IViewVariable[],
     fields: IGlobalControlRelatedField | IGlobalControlRelatedField[]
   } => {
-    const varReg = /query@var\s+\$(\w+)\$/g
-    const model = Object.entries(JSON.parse(view.model))
+    const model = Object.entries(view.model)
       .filter(([k, v]: [string, IModelItem]) => v.modelType === 'category')
       .map(([k, v]: [string, IModelItem]) => ({
         name: k,
         ...v
       }))
-    const variables = (view.sql.match(varReg) || []).map((qv) => qv.substring(qv.indexOf('$') + 1, qv.length - 1))
+    const variables = view.variable
     const fields = relatedViews[view.id]
 
     if (fields) {
@@ -218,12 +218,12 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
           fields: variables.length
             ? IS_RANGE_TYPE[type]
               ? [{
-                name: variables[0],
-                sqlType: ''
+                name: variables[0].name,
+                sqlType: variables[0].valueType
               }]
               : {
-                name: variables[0],
-                sqlType: ''
+                name: variables[0].name,
+                sqlType: variables[0].valueType
               }
             : IS_RANGE_TYPE[type] ? [] : void 0
         }
@@ -526,7 +526,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
   }
 
   public render () {
-    const { currentItems, views, widgets, loading, visible, mapOptions, onCancel, onGetOptions } = this.props
+    const { loading, visible, onCancel } = this.props
     const { controls, selected, itemSelectorSource, viewSelectorSource } = this.state
 
     const modalButtons = [(
@@ -586,7 +586,6 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
                     onInteractionTypeChange={this.interactionTypeChange}
                   />
                   <FilterFormWithRedux
-                    views={views}
                     onControlTypeChange={this.controlTypeChange}
                     wrappedComponentRef={this.filterForm}
                   />

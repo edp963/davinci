@@ -35,3 +35,4 @@ export const LOAD_SELECT_OPTIONS_FAILURE = 'davinci/Share/LOAD_SELECT_OPTIONS_FA
 export const RESIZE_ALL_DASHBOARDITEM = 'davinci/Share/RESIZE_ALL_DASHBOARDITEM'
 export const DRILL_DASHBOARDITEM = 'davinci/Dashboard/DRILL_DASHBOARDITEM'
 export const DELETE_DRILL_HISTORY = 'davinci/Dashboard/DELETE_DRILL_HISTORY'
+export const SET_SELECT_OPTIONS = 'davinci/Dashboard/SET_SELECT_OPTIONS'

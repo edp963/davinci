@@ -35,6 +35,7 @@ import { uuid } from '../../../../utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { Row, Col, Icon, Menu, Table, Button, Radio, InputNumber, Dropdown, Modal, Popconfirm, Empty } from 'antd'
+import { IDistinctValueReqeustParams } from 'app/components/Filters'
 const MenuItem = Menu.Item
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
@@ -74,7 +75,7 @@ interface IOperatingPanelProps {
   onDeleteComputed: (computesField: any[]) => void
   onSetWidgetProps: (widgetProps: IWidgetProps) => void
   onLoadData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
-  onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
+  onLoadDistinctValue: (viewId: number, params: IDistinctValueReqeustParams) => void
 }
 
 interface IOperatingPanelStates {
@@ -387,10 +388,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const { mode, dataParams } = this.state
     const { metrics } = dataParams
 
+    if (mode === 'pivot' && cachedItem.name === '指标名称') {
+      resolve(false)
+      this.setState({ dragged: null })
+      return
+    }
+
     switch (name) {
       case 'filters':
         if (cachedItem.visualType !== 'number' && cachedItem.visualType !== 'date') {
-          onLoadDistinctValue(selectedView.id, cachedItem.name)
+          onLoadDistinctValue(selectedView.id, { columns: [cachedItem.name] })
         }
         this.setState({
           modalCachedData: cachedItem,
@@ -400,7 +407,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         })
         break
       case 'color':
-        onLoadDistinctValue(selectedView.id, cachedItem.name)
+        onLoadDistinctValue(selectedView.id, { columns: [cachedItem.name] })
         this.setState({
           modalCachedData: cachedItem,
           modalCallback: resolve,
@@ -593,7 +600,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private dropboxItemChangeColorConfig = (item: IDataParamSource) => {
     const { selectedView, onLoadDistinctValue } = this.props
     const { dataParams, styleParams } = this.state
-    onLoadDistinctValue(selectedView.id, item.name)
+    onLoadDistinctValue(selectedView.id, { columns: [item.name] })
     this.setState({
       modalCachedData: item,
       modalDataFrom: 'color',
@@ -619,7 +626,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const { selectedView, onLoadDistinctValue } = this.props
     const { dataParams, styleParams } = this.state
     if (item.type === 'category') {
-      onLoadDistinctValue(selectedView.id, item.name)
+      onLoadDistinctValue(selectedView.id, { columns: [item.name] })
     }
     this.setState({
       modalCachedData: item,

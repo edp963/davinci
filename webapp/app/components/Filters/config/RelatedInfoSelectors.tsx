@@ -134,17 +134,17 @@ export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsPro
                     <Option key={m.name} value={m.name}>{m.name}</Option>
                   ))
                 ) : (
-                  v.variables.map((p) => (
+                  v.variables.map((v) => (
                     <Option
-                      key={p}
-                      value={p}
+                      key={v.key}
+                      value={v.key}
                       disabled={
                         isMultiple
                         && value.length === 2
-                        && !value.includes(p)
+                        && !value.includes(v.key)
                       }
                     >
-                      {p}
+                      {v.name}
                     </Option>
                   ))
                 )

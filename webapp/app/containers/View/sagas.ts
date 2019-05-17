@@ -29,6 +29,7 @@ import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 
 import { IViewBase, IView, IExecuteSqlResponse, IExecuteSqlParams, IViewVariable } from './types'
+import { IDistinctValueReqeustParams } from 'app/components/Filters'
 
 export function* getViews (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS) { return }
@@ -165,25 +166,56 @@ export function* getViewData (action: ViewActionType) {
   }
 }
 
+export function* getSelectOptions (action: ViewActionType) {
+  if (action.type !== ActionTypes.LOAD_SELECT_OPTIONS) { return }
+  const { payload } = action
+  const { selectOptionsLoaded, loadSelectOptionsFail } = ViewActions
+  try {
+    const { controlKey, requestParams } = payload
+    const requestParamsMap: Array<[string, IDistinctValueReqeustParams]> = Object.entries(requestParams)
+    const requests = requestParamsMap.map(([viewId, params]: [string, IDistinctValueReqeustParams]) => {
+      const { columns, filters, variables } = params
+      return call(request, {
+        method: 'post',
+        url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
+        data: {
+          columns,
+          filters,
+          params: variables
+        }
+      })
+    })
+    const results = yield all(requests)
+    const values = results.reduce((payloads, r, index) => {
+      const { columns } = requestParamsMap[index][1]
+      if (columns.length === 1) {
+        return payloads.concat(r.payload.map((obj) => obj[columns[0]]))
+      }
+      return payloads
+    }, [])
+    yield put(selectOptionsLoaded(controlKey, values))
+  } catch (err) {
+    yield put(loadSelectOptionsFail(err))
+    errorHandler(err)
+  }
+}
+
 export function* getViewDistinctValue (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEW_DISTINCT_VALUE) { return }
-  const { viewId, fieldName, filters, resolve } = action.payload
+  const { viewId, params, resolve } = action.payload
   const { viewDistinctValueLoaded, loadViewDistinctValueFail } = ViewActions
   try {
-    const asyncData = yield call(request, {
+    const result = yield call(request, {
       method: 'post',
       url: `${api.view}/${viewId}/getdistinctvalue`,
-      data: {
-        columns: [fieldName],
-        parents: filters
-          ? Object.entries(filters).map(([column, value]) => ({ column, value }))
-          : []
-      }
+      data: params
     })
-    const result = asyncData.payload.map((item) => item[fieldName])
-    yield put(viewDistinctValueLoaded(result, fieldName))
+    const list = params.columns.reduce((arr, col) => {
+      return arr.concat(result.payload.map((item) => item[col]))
+    }, [])
+    yield put(viewDistinctValueLoaded(list))
     if (resolve) {
-      resolve(asyncData.payload)
+      resolve(result.payload)
     }
   } catch (err) {
     yield put(loadViewDistinctValueFail(err))
@@ -280,6 +312,7 @@ export default function* rootViewSaga () {
     takeLatest(ActionTypes.EXECUTE_SQL, executeSql),
 
     takeEvery(ActionTypes.LOAD_VIEW_DATA, getViewData),
+    takeEvery(ActionTypes.LOAD_SELECT_OPTIONS, getSelectOptions),
     takeEvery(ActionTypes.LOAD_VIEW_DISTINCT_VALUE, getViewDistinctValue),
     takeEvery(ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM, getViewDataFromVizItem),
 

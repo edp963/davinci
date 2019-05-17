@@ -26,6 +26,7 @@ import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
 import { message } from 'antd'
 import 'assets/less/resizer.less'
+import { IDistinctValueReqeustParams } from 'app/components/Filters'
 const styles = require('./Workbench.less')
 
 interface IWidget {
@@ -56,7 +57,7 @@ interface IWorkbenchProps {
   onLoadViewData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
   onAddWidget: (widget: IWidget, resolve: () => void) => void
   onEditWidget: (widget: IWidget, resolve: () => void) => void
-  onLoadViewDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
+  onLoadViewDistinctValue: (viewId: number, params: IDistinctValueReqeustParams) => void
   onClearCurrentWidget: () => void
   onExecuteComputed: (sql: string) => void
 }
@@ -518,7 +519,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadViewData: (viewId, requestParams, resolve) => dispatch(loadViewData(viewId, requestParams, resolve)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),
     onEditWidget: (widget, resolve) => dispatch(editWidget(widget, resolve)),
-    onLoadViewDistinctValue: (viewId, column, parents) => dispatch(loadViewDistinctValue(viewId, column, parents)),
+    onLoadViewDistinctValue: (viewId, params) => dispatch(loadViewDistinctValue(viewId, params)),
     onClearCurrentWidget: () => dispatch(clearCurrentWidget()),
     onExecuteComputed: (sql) => dispatch(executeComputed(sql))
   }

@@ -138,9 +138,9 @@ export function* getSelectOptions (action) {
       const { columns, filters, variables } = params
       return call(request, {
         method: 'post',
-        url: `${api.share}/data/${dataToken}`,
+        url: `${api.share}/data/${dataToken}/distinctvalue/${viewId}`,
         data: {
-          groups: columns,
+          columns,
           filters,
           params: variables
         }
@@ -150,11 +150,11 @@ export function* getSelectOptions (action) {
     const values = results.reduce((payloads, r, index) => {
       const { columns } = requestParamsMap[index][1]
       if (columns.length === 1) {
-        return payloads.concat(r.payload.resultList.map((obj) => obj[columns[0]]))
+        return payloads.concat(r.payload.map((obj) => obj[columns[0]]))
       }
       return payloads
     }, [])
-    yield put(selectOptionsLoaded(controlKey, dataToken, values))
+    yield put(selectOptionsLoaded(controlKey, values))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
     errorHandler(err)

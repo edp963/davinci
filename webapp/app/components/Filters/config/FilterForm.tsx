@@ -50,39 +50,12 @@ const styles = require('../filter.less')
 
 interface IFilterFormProps {
   form: any
-  views: any[]
   controlFormValues: any
   onControlTypeChange: (value) => void
   onSetControlFormValues: (values) => void
 }
 
 export class FilterForm extends React.Component<IFilterFormProps, {}> {
-
-  private onFromViewChange = (viewId, fromModel) => {
-    const { views } = this.props
-    const view = views.find((v) => v.id === +viewId)
-    const modelItems = Object.entries(JSON.parse(view.model))
-      .filter(([k, v]: [string, IModelItem]) => v.modelType === 'category')
-      .map(([k, v]: [string, IModelItem]) => ({
-        name: k,
-        ...v
-      }))
-    this.setState({
-      modelItems
-    }, () => {
-      const { form } = this.props
-      if (!fromModel || modelItems.findIndex((item) => item.name === fromModel) < 0) {
-        const defaultItem = modelItems[0]
-        form.setFieldsValue({
-          fromModel: defaultItem.name,
-          fromText: defaultItem.name,
-          fromSqlType: defaultItem.sqlType,
-          fromParent: null
-          // fromChild: null
-        })
-      }
-    })
-  }
 
   private renderDefaultValueComponent = () => {
     const { form, controlFormValues } = this.props

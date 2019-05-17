@@ -89,7 +89,7 @@ import {
   makeSelectCurrentLinkages
 } from './selectors'
 import { ViewActions, ViewActionType } from '../View/actions'
-const { loadViewDataFromVizItem, loadCascadeViewData, loadViewDistinctValue } = ViewActions
+const { loadViewDataFromVizItem, loadSelectOptions } = ViewActions
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
 import { makeSelectCurrentProject } from '../Projects/selectors'
@@ -1517,7 +1517,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         <GlobalControlConfig
           currentDashboard={currentDashboard}
           currentItems={currentItems}
-          views={views}
+          views={formedViews}
           widgets={widgets}
           visible={globalFilterConfigVisible}
           loading={currentDashboardLoading}

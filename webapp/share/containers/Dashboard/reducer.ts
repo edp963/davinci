@@ -32,21 +32,22 @@ import {
   LOAD_SELECT_OPTIONS_SUCCESS,
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
-  DELETE_DRILL_HISTORY
+  DELETE_DRILL_HISTORY,
+  SET_SELECT_OPTIONS
 } from './constants'
 
 const initialState = fromJS({
   dashboard: null,
   title: '',
   config: '{}',
-  dashboardSelectOptionss: null,
+  dashboardSelectOptions: null,
   widgets: null,
   items: null,
   itemsInfo: null
 })
 
 function shareReducer (state = initialState, { type, payload }) {
-  const dashboardSelectOptionss = state.get('dashboardSelectOptionss')
+  const dashboardSelectOptions = state.get('dashboardSelectOptions')
   const itemsInfo = state.get('itemsInfo')
   let widgets = state.get('widgets')
 
@@ -56,7 +57,7 @@ function shareReducer (state = initialState, { type, payload }) {
         .set('title', payload.dashboard.name)
         .set('dashboard', payload.dashboard)
         .set('config', payload.dashboard.config)
-        .set('dashboardSelectOptionss', {})
+        .set('dashboardSelectOptions', {})
         .set('widgets', payload.dashboard.widgets)
         .set('items', payload.dashboard.relations)
         .set('itemsInfo', payload.dashboard.relations.reduce((obj, item) => {
@@ -183,9 +184,14 @@ function shareReducer (state = initialState, { type, payload }) {
         }
       })
     case LOAD_SELECT_OPTIONS_SUCCESS:
-      return state.set('dashboardSelectOptionss', {
-        ...dashboardSelectOptionss,
-        [payload.controlId]: payload.values
+      return state.set('dashboardSelectOptions', {
+        ...dashboardSelectOptions,
+        [payload.controlKey]: payload.values
+      })
+    case SET_SELECT_OPTIONS:
+      return state.set('dashboardSelectOptions', {
+        ...dashboardSelectOptions,
+        [payload.controlKey]: payload.options
       })
     case RESIZE_ALL_DASHBOARDITEM:
       return state.set(

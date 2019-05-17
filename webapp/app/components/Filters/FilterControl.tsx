@@ -1,5 +1,4 @@
 import React, { Component, PureComponent, Suspense, ReactNode } from 'react'
-import * as debounce from 'lodash/debounce'
 import {
   IGlobalControl,
   OnFilterControlValueChange,
@@ -33,18 +32,6 @@ interface IFilterControlProps {
 }
 
 export class FilterControl extends PureComponent<IFilterControlProps, {}> {
-
-  public componentWillMount () {
-    const { onChange } = this.props
-    this.debouncedOnChange = debounce(onChange, 800)
-  }
-
-  public componentWillReceiveProps (nextProps: IFilterControlProps) {
-    const { onChange } = nextProps
-    if (onChange !== this.props.onChange) {
-      this.debouncedOnChange = debounce(this.props.onChange, 800)
-    }
-  }
 
   private renderControl = (filter) => {
     const { currentOptions } = this.props
@@ -89,12 +76,11 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
     onChange(control, val)
   }
 
-  private debouncedOnChange = null
   private onInputChange = (e) => {
-    const { control } = this.props
+    const { control, onChange } = this.props
     let val = e.target.value
     if (val === '') { val = undefined }
-    this.debouncedOnChange(control, val)
+    onChange(control, val)
   }
 
   public render () {

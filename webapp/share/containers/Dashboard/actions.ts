@@ -35,7 +35,8 @@ import {
   LOAD_SELECT_OPTIONS_FAILURE,
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
-  DELETE_DRILL_HISTORY
+  DELETE_DRILL_HISTORY,
+  SET_SELECT_OPTIONS
 } from './constants'
 
 export function getDashboard (token, reject) {
@@ -198,6 +199,16 @@ export function deleteDrillHistory (itemId, index) {
     payload: {
       itemId,
       index
+    }
+  }
+}
+
+export function setSelectOptions (controlKey, options) {
+  return {
+    type: SET_SELECT_OPTIONS,
+    payload: {
+      controlKey,
+      options
     }
   }
 }

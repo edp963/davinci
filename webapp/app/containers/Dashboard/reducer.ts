@@ -427,7 +427,7 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
           downloadCsvLoading: false
         }
       })
-    case ViewActionTypes.LOAD_CASCADE_VIEW_DATA_SUCCESS:
+    case ViewActionTypes.LOAD_SELECT_OPTIONS_SUCCESS:
       return state.set('currentDashboardSelectOptions', {
         ...dashboardSelectOptions,
         [payload.controlKey]: payload.values

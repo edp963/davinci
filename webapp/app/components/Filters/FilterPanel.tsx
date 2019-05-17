@@ -11,7 +11,6 @@ import {
   IMapControlOptions,
   getVariableValue,
   getModelValue,
-  getValidValue,
   getDefaultValue,
   IRenderTreeItem,
   getControlRenderTree,
@@ -62,10 +61,6 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
   } = {}
 
   public componentWillReceiveProps (nextProps: IFilterPanelProps & FormComponentProps) {
-    // const { filters } = this.props
-    // if (nextProps.filters !== filters) {
-    //   this.initcontrolValues(nextProps.filters)
-    // }
     const { currentDashboard, currentItems } = nextProps
     if (currentDashboard !== this.props.currentDashboard || currentItems !== this.props.currentItems) {
       this.initDerivedState(currentDashboard, currentItems)

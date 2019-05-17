@@ -12,6 +12,7 @@ const MultiDatePicker = React.lazy(() => import('../MultiDatePicker'))
 import DatePickerFormats, { DatePickerDefaultValues, DatePickerFormatsSelectSetting } from './datePickerFormats'
 const { WeekPicker, MonthPicker, RangePicker } = DatePicker
 import { SQL_NUMBER_TYPES } from '../../globalConstants'
+import { ViewVariableValueTypes } from 'app/containers/View/constants'
 
 const styles = require('./filter.less')
 
@@ -77,8 +78,8 @@ export interface IMapItemControlRequestParams {
 
 export interface IDistinctValueReqeustParams {
   columns: string[]
-  filters: string[]
-  variables: Array<{name: string, value: string | number}>
+  filters?: string[]
+  variables?: Array<{name: string, value: string | number}>
 }
 
 export type OnGetControlOptions = (
@@ -139,7 +140,7 @@ export const traverseFilters = (
 
 export function renderInputText (filter, onChange) {
   return (
-    <Input placeholder={filter.name} onChange={onChange} />
+    <Input placeholder={filter.name} onPressEnter={onChange} />
   )
 }
 
@@ -278,13 +279,13 @@ export function getVariableValue (filter: IGlobalControl, fields: IGlobalControl
   switch (type) {
     case FilterTypes.InputText:
     case FilterTypes.Select:
-      if (multiple) {
-        if (value.length && value.length > 0) {
-          variable.push({ name, value: value.map((val) => getValidValue(val, sqlType)).join(',') })
-        }
-      } else {
-        if (value !== void 0) {
-          variable.push({ name, value: getValidValue(value, sqlType) })
+      if (value !== void 0) {
+        if (multiple) {
+          if (value.length && value.length > 0) {
+            variable.push({ name, value: value.map((val) => getValidVariableValue(val, sqlType)).join(',') })
+          }
+        } else {
+          variable.push({ name, value: getValidVariableValue(value, sqlType) })
         }
       }
       break
@@ -292,14 +293,14 @@ export function getVariableValue (filter: IGlobalControl, fields: IGlobalControl
       variable = value.reduce((arr, val, index) => {
         if (val !== '' && !isNaN(val)) {
           const { name, sqlType } = fields[index]
-          return arr.concat({ name, value: getValidValue(val, sqlType) })
+          return arr.concat({ name, value: getValidVariableValue(val, sqlType) })
         }
         return arr
       }, [])
       break
     case FilterTypes.TreeSelect:
       if (value.length && value.length > 0) {
-        variable.push({ name, value: value.map((val) => getValidValue(val, sqlType)).join(',') })
+        variable.push({ name, value: value.map((val) => getValidVariableValue(val, sqlType)).join(',') })
       }
       break
     case FilterTypes.Date:
@@ -323,7 +324,7 @@ export function getVariableValue (filter: IGlobalControl, fields: IGlobalControl
     default:
       const val = value.target.value.trim()
       if (val) {
-        variable.push({ name, value: getValidValue(val, sqlType) })
+        variable.push({ name, value: getValidVariableValue(val, sqlType) })
       }
       break
   }
@@ -338,48 +339,48 @@ export function getModelValue (control: IGlobalControl, field: IGlobalControlRel
   switch (type) {
     case FilterTypes.InputText:
     case FilterTypes.Select:
-      if (multiple) {
-        if (value.length && value.length > 0) {
-          filters.push(`${name} ${operator} (${value.map((val) => getValidValue(val, sqlType)).join(',')})`)
-        }
-      } else {
-        if (value !== void 0) {
-          filters.push(`${name} ${operator} ${getValidValue(value, sqlType)}`)
+      if (value !== void 0) {
+        if (multiple) {
+          if (value.length && value.length > 0) {
+            filters.push(`${name} ${operator} (${value.map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
+          }
+        } else {
+          filters.push(`${name} ${operator} ${getValidColumnValue(value, sqlType)}`)
         }
       }
       break
     case FilterTypes.NumberRange:
       if (value[0] !== '' && !isNaN(value[0])) {
-        filters.push(`${name} >= ${getValidValue(value[0], sqlType)}`)
+        filters.push(`${name} >= ${getValidColumnValue(value[0], sqlType)}`)
       }
       if (value[1] !== '' && !isNaN(value[1])) {
-        filters.push(`${name} <= ${getValidValue(value[1], sqlType)}`)
+        filters.push(`${name} <= ${getValidColumnValue(value[1], sqlType)}`)
       }
       break
     case FilterTypes.TreeSelect:
       if (value.length && value.length > 0) {
-        filters.push(`${name} ${operator} (${value.map((val) => getValidValue(val, sqlType)).join(',')})`)
+        filters.push(`${name} ${operator} (${value.map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
       }
       break
     case FilterTypes.Date:
       if (value) {
         if (multiple) {
-          filters.push(`${name} ${operator} (${value.split(',').map((val) => getValidValue(val, sqlType)).join(',')})`)
+          filters.push(`${name} ${operator} (${value.split(',').map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
         } else {
-          filters.push(`${name} ${operator} ${getValidValue(moment(value).format(dateFormat), sqlType)}`)
+          filters.push(`${name} ${operator} ${getValidColumnValue(moment(value).format(dateFormat), sqlType)}`)
         }
       }
       break
     case FilterTypes.DateRange:
       if (value.length) {
-        filters.push(`${name} >= ${getValidValue(moment(value[0]).format(dateFormat), sqlType)}`)
-        filters.push(`${name} <= ${getValidValue(moment(value[1]).format(dateFormat), sqlType)}`)
+        filters.push(`${name} >= ${getValidColumnValue(moment(value[0]).format(dateFormat), sqlType)}`)
+        filters.push(`${name} <= ${getValidColumnValue(moment(value[1]).format(dateFormat), sqlType)}`)
       }
       break
     default:
       const inputValue = value.target.value.trim()
       if (inputValue) {
-        filters.push(`${name} ${operator} ${getValidValue(inputValue, sqlType)}`)
+        filters.push(`${name} ${operator} ${getValidColumnValue(inputValue, sqlType)}`)
       }
       break
   }
@@ -387,9 +388,21 @@ export function getModelValue (control: IGlobalControl, field: IGlobalControlRel
   return filters
 }
 
-export function getValidValue (value, sqlType) {
+export function getValidColumnValue (value, sqlType) {
   if (!value || !sqlType) { return value }
   return SQL_NUMBER_TYPES.includes(sqlType) ? value : `'${value}'`
+}
+
+export function getValidVariableValue (value, valueType: ViewVariableValueTypes) {
+  switch (valueType) {
+    case ViewVariableValueTypes.String:
+    case ViewVariableValueTypes.Date:
+      return `'${value}'`
+    case ViewVariableValueTypes.Boolean:
+      return !!value
+    default:
+      return value
+  }
 }
 
 export function getDefaultValue (control: IGlobalControl) {
