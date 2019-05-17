@@ -83,9 +83,9 @@
     }
 
     .list {
-      width: 250px;
+      width: 280px;
       display: flex;
-      overflow: auto;
+      flex-direction: column;
     }
   }
 
@@ -195,20 +195,39 @@
   :global {
     .ant-spin-nested-loading {
       flex: 1;
-      overflow-y: auto;
     }
 
     .ant-list-item-action {
+      margin-left: 8px;
       display: none;
+
+      li {
+        padding: 0 4px;
+      }
     }
 
-    .ant-list-item:hover .ant-list-item-action{
+    .ant-list-item:hover .ant-list-item-action {
       display: block;
+    }
+
+    .ant-list-item-action {
+      margin-left: 0;
+      margin-right: 12px;
+    }
+
+    .ant-tag {
+      width: 55px;
+      text-align: center;
+      margin-left: 16px;
     }
   }
 
   .variableItem {
-    padding: 0 16px;
+    flex: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding-right: 16px;
   }
 }
 

@@ -181,12 +181,10 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
 
   private variableNameValidate = (key: string, name: string, callback: (msg?: string) => void) => {
     const { variable } = this.props
-    if (key) {
-      const existed = variable.findIndex((v) => v.key !== key && v.name === name) >= 0
-      if (existed) {
-        callback('名称不能重复')
-        return
-      }
+    const existed = variable.findIndex((v) => ((!key || v.key !== key) && v.name === name)) >= 0
+    if (existed) {
+      callback('名称不能重复')
+      return
     }
     callback()
   }
