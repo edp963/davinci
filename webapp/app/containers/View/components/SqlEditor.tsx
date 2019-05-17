@@ -51,7 +51,6 @@ export class SqlEditor extends React.PureComponent<ISqlEditorProps> {
       'codemirror/addon/hint/sql-hint',
       'codemirror/addon/display/placeholder'
     ], (CodeMirror) => {
-      console.log(CodeMirror)
       this.initEditor(CodeMirror, props.value)
     })
   }

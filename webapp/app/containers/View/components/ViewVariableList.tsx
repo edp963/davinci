@@ -43,16 +43,15 @@ export class ViewVariableList extends React.Component<IViewVariableProps> {
         </Popconfirm>
       )
     ]
-    const { name, alias, type, fromService } = item
+    const { name, alias, type } = item
     const text = alias ? `${name}[${alias}]` : `${name}`
-    const color = type === ViewVariableTypes.Query ? 'green' :
-      (!fromService ? 'red' : 'volcano')
+    const color = type === ViewVariableTypes.Query ? 'green' : 'volcano'
+    const category = type === ViewVariableTypes.Query ? 'QUERY' : 'AUTH'
 
     return (
       <List.Item actions={icons}>
-        <div className={Styles.variableItem}>
-          <Tag color={color}>{text}</Tag>
-        </div>
+        <Tag color={color}>{category}</Tag>
+        <div className={Styles.variableItem}>{text}</div>
       </List.Item>
     )
   }
