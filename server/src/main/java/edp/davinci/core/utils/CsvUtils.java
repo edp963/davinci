@@ -74,7 +74,7 @@ public class CsvUtils {
             if (null != records && records.size() > 0) {
                 headers = new HashSet<>();
                 for (String key : csvHeaders) {
-                    headers.add(new QueryColumn(key, SqlUtils.formatSqlType(records.get(0).get(key))));
+                    headers.add(new QueryColumn(key.replace("\uFEFF", ""), SqlUtils.formatSqlType(records.get(0).get(key))));
                 }
                 if (records.size() > 1) {
                     values = new ArrayList<>();

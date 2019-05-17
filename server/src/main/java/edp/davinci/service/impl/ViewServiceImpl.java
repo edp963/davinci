@@ -584,17 +584,6 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user, sqlTempDelimiter);
                     Map<String, String> queryParam = getQueryParam(sqlEntity, executeParam);
 
-                    cacheKey = getCacheKey(viewDataCacheKey, viewWithProjectAndSource, executeParam, teamParams, queryParam);
-                    try {
-                        Object object = redisUtils.get(cacheKey);
-                        if (null != object && executeParam.getCache()) {
-                            paginate = (Paginate) object;
-                            return paginate;
-                        }
-                    } catch (Exception e) {
-                        log.warn("get data by cache: {}", e.getMessage());
-                    }
-
                     String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), queryParam, teamParams, sqlTempDelimiter);
 
                     SqlUtils sqlUtils = this.sqlUtils.init(source);
@@ -607,6 +596,32 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     }
                     if (null != querySqlList && querySqlList.size() > 0) {
                         buildQuerySql(querySqlList, sqlEntity, executeParam, source);
+
+                        if (null != executeParam
+                                && null != executeParam.getCache()
+                                && executeParam.getCache()
+                                && executeParam.getExpired() > 0L) {
+
+                            StringBuilder pageInfoStringBuilder = new StringBuilder();
+                            pageInfoStringBuilder.append(executeParam.getPageNo());
+                            pageInfoStringBuilder.append(minus);
+                            pageInfoStringBuilder.append(executeParam.getLimit());
+                            pageInfoStringBuilder.append(minus);
+                            pageInfoStringBuilder.append(executeParam.getPageSize());
+
+                            cacheKey = MD5Util.getMD5(pageInfoStringBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true, 32);
+
+                            try {
+                                Object object = redisUtils.get(cacheKey);
+                                if (null != object && executeParam.getCache()) {
+                                    paginate = (Paginate) object;
+                                    return paginate;
+                                }
+                            } catch (Exception e) {
+                                log.warn("get data by cache: {}", e.getMessage());
+                            }
+                        }
+
                         for (String sql : querySqlList) {
                             paginate = sqlUtils.syncQuery4Paginate(
                                     sql,
