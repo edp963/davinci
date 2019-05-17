@@ -354,7 +354,7 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
         <Row className={Styles.bottom} type="flex" align="middle" justify="end">
           <Col span={12} className={Styles.toolBtns}>
             <Button type="primary" onClick={this.stepChange(-1)}>上一步</Button>
-            <Button>取消</Button>
+            <Button onClick={this.stepChange(-2)}>取消</Button>
             <Button onClick={this.stepChange(1)}>保存</Button>
           </Col>
         </Row>
