@@ -48,6 +48,7 @@ interface IDisplayContainerProps {
 interface IDisplayContainerStates {
   translate: string
   scale: number
+  containerStyle: React.CSSProperties
 }
 
 export class DisplayContainer extends React.Component<IDisplayContainerProps, IDisplayContainerStates> {
@@ -103,9 +104,14 @@ export class DisplayContainer extends React.Component<IDisplayContainerProps, ID
     const translateX = (Math.max(clientWidth - slideWidth * scale, 64)) / (2 * slideWidth) * 100
     const translateY = (Math.max(clientHeight - slideHeight * scale, 64)) / (2 * slideHeight) * 100
     const translate = `translate(${translateX}%, ${translateY}%)`
+    const containerStyle: React.CSSProperties = { overflow: 'hidden' }
+    if (slideWidth * scale + 64 > containerWidth || slideHeight * scale + 64 > containerHeight) {
+      containerStyle.overflow = 'auto'
+    }
     this.setState({
       scale,
-      translate
+      translate,
+      containerStyle
     })
     onScaleChange(scale)
   }
@@ -206,7 +212,7 @@ export class DisplayContainer extends React.Component<IDisplayContainerProps, ID
       onLayersSelectionRemove
     } = this.props
 
-    const { scale, translate } = this.state
+    const { scale, translate, containerStyle } = this.state
 
     const slideStyle = this.getSlideStyle(slideParams, scale, translate)
 
@@ -214,6 +220,7 @@ export class DisplayContainer extends React.Component<IDisplayContainerProps, ID
       <div
         ref={this.container}
         className={styles.displayContainer}
+        style={containerStyle}
         tabIndex={0}
       >
         <div
