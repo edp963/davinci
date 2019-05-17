@@ -34,7 +34,7 @@ import reducerView from '../View/reducer'
 import sagaView from '../View/sagas'
 import formReducer from './FormReducer'
 
-import { IViewBase, IFormedView } from '../View/types'
+import { IViewBase, IFormedViews } from '../View/types'
 
 import Container from '../../components/Container'
 // import DataDrill from '../../components/DataDrill/Panel'
@@ -178,7 +178,7 @@ interface IGridProps {
   dashboards: any[]
   widgets: any[]
   views: IViewBase[]
-  formedViews: IFormedView[]
+  formedViews: IFormedViews
   currentProject: IProject
   router: InjectedRouter
   params: any

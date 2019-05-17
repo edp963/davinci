@@ -41,7 +41,7 @@ import { Button, Modal } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { ICurrentDashboard } from '../../../containers/Dashboard'
 import { setControlFormValues } from '../../../containers/Dashboard/actions'
-import { IViewVariable } from 'app/containers/View/types'
+import { IFormedView, IFormedViews, IViewVariable } from 'app/containers/View/types'
 
 const styles = require('../filter.less')
 
@@ -61,7 +61,7 @@ export interface IRelatedViewSource {
 interface IGlobalControlConfigProps {
   currentDashboard: ICurrentDashboard
   currentItems: any[]
-  views: any[]
+  views: IFormedViews
   widgets: any[]
   visible: boolean
   loading: boolean
@@ -158,14 +158,14 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     const { relatedViews, type, interactionType } = control
     const selectedItemRelatedViews = itemSelectorSource
       .filter((s) => s.checked)
-      .reduce((viewObj, itemSource) => {
+      .reduce<IFormedViews>((viewObj, itemSource) => {
         if (!viewObj[itemSource.viewId]) {
           viewObj[itemSource.viewId] = views[itemSource.viewId]
         }
         return viewObj
       }, {})
     return Object.entries(selectedItemRelatedViews)
-      .map(([viewId, view]) => ({
+      .map(([viewId, view]: [string, IFormedView]) => ({
         id: Number(viewId),
         name: view.name,
         ...this.getRelatedViewInfo(relatedViews, view, type, interactionType)
