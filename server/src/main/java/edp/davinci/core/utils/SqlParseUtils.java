@@ -131,7 +131,7 @@ public class SqlParseUtils {
         } else if (DacChannelUtil.dacMap.containsKey(channel.getName())) {
             List<Object> data = dacChannelUtil.getData(channel.getName(), channel.getBizId().toString(), email);
             if (null != data) {
-                return data.stream().map(String::valueOf).map(s -> String.join("", apostrophe, s, apostrophe)).collect(Collectors.toList());
+                return SqlVariableValueTypeEnum.getValue(variable.getValueType(), data);
             }
         }
         return new ArrayList<>();
@@ -338,7 +338,7 @@ public class SqlParseUtils {
                             }
                             return expBuilder.toString();
                         } else {
-                            return "1=0";
+                            return "1=1";
                         }
                     } else {
                         return "1=0";

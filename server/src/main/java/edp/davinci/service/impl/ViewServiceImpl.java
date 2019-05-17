@@ -691,7 +691,11 @@ public class ViewServiceImpl implements ViewService {
                     authParamValues.forEach(v -> {
                         if (map.containsKey(v.getName())) {
                             SqlVariable sqlVariable = map.get(v.getName());
-                            sqlVariable.setDefaultValues(v.isEnable() ? v.getValues() : null);
+                            if (v.isEnable()) {
+                                sqlVariable.setDefaultValues(v.getValues());
+                            } else {
+                                sqlVariable.setDefaultValues(null);
+                            }
                             list.add(sqlVariable);
                         }
                     });

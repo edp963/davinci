@@ -284,9 +284,9 @@ public class ViewController extends BaseController {
     @ApiOperation(value = "get dac bizs")
     @GetMapping("/dac/{dacName}/tenants/{tenantId}/bizs")
     public ResponseEntity getDacBizs(@PathVariable String dacName,
-                                        @PathVariable String tenantId,
-                                        @ApiIgnore @CurrentUser User user,
-                                        HttpServletRequest request) {
+                                     @PathVariable String tenantId,
+                                     @ApiIgnore @CurrentUser User user,
+                                     HttpServletRequest request) {
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(dacChannelUtil.getBizs(dacName, tenantId)));
     }
 }

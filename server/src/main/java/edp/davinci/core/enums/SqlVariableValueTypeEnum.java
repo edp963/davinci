@@ -46,13 +46,17 @@ public enum SqlVariableValueTypeEnum {
         switch (SqlVariableValueTypeEnum.valueOf(valueType.toUpperCase())) {
             case STRING:
             case DATE:
-                return values.stream().map(String::valueOf).map(s -> String.join("", apostrophe, s, apostrophe)).collect(Collectors.toList());
+                return values.stream().map(String::valueOf)
+                        .map(s -> s.startsWith(apostrophe) && s.endsWith(apostrophe) ? s : String.join("", apostrophe, s, apostrophe))
+                        .collect(Collectors.toList());
             case NUMBER:
                 return values.stream().map(String::valueOf).collect(Collectors.toList());
             case BOOLEAN:
                 return Arrays.asList(String.valueOf(values.get(values.size() - 1)));
         }
-        return values.stream().map(String::valueOf).map(s -> String.join("", apostrophe, s, apostrophe)).collect(Collectors.toList());
+        return values.stream().map(String::valueOf)
+                .map(s -> s.startsWith(apostrophe) && s.endsWith(apostrophe) ? s : String.join("", apostrophe, s, apostrophe))
+                .collect(Collectors.toList());
     }
 
 }
