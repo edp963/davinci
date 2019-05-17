@@ -23,7 +23,7 @@ import { compose, Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import Helmet from 'react-helmet'
-import { Link, RouteComponentProps } from 'react-router'
+import { RouteComponentProps } from 'react-router'
 
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
@@ -31,8 +31,8 @@ import reducer, { ViewStateType } from './reducer'
 import sagas from './sagas'
 import reducerSource from 'containers/Source/reducer'
 import sagasSource from 'containers/Source/sagas'
-import reducerOrganization from 'containers/Organizations/reducer'
-import sagasOrganization from 'containers/Organizations/sagas'
+import reducerProject from 'containers/Projects/reducer'
+import sagasProject from 'containers/Projects/sagas'
 
 import { IRouteParams } from 'app/routes'
 import { hideNavigator } from '../App/actions'
@@ -55,15 +55,14 @@ import {
 } from './selectors'
 
 import { loadProjectRoles } from 'containers/Organizations/actions'
-import { makeSelectCurrentOrganizationProjectRoles } from 'containers/Organizations/selectors'
+import { makeSelectProjectRoles } from 'containers/Projects/selectors'
 
 import {
   IView, IViewModel, IViewRoleRaw, IViewRole, IViewVariable, IViewInfo,
   IExecuteSqlParams, IExecuteSqlResponse, IViewLoading, ISqlValidation,
   IDacChannel, IDacTenant, IDacBiz } from './types'
 import { ISource, ISourceTable, IMapTableColumns } from '../Source/types'
-
-import { ModelTypeSqlTypeSetting, VisualTypeSqlTypeSetting } from './constants'
+import { ViewVariableTypes } from './constants'
 
 import { message } from 'antd'
 import EditorSteps from './components/EditorSteps'
@@ -148,8 +147,8 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
   public static getDerivedStateFromProps:
     React.GetDerivedStateFromProps<IViewEditorProps, IViewEditorStates>
   = (props, state) => {
-    const { params, editingView, editingViewInfo, sqlValidation } = props
-    const { pid: projectId, viewId } = params
+    const { params, editingView, sqlValidation } = props
+    const { viewId } = params
     const { init, sqlValidationCode } = state
     let nextDisabled = state.nextDisabled
     if (sqlValidationCode !== sqlValidation.code && sqlValidation.code) {
@@ -164,6 +163,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     if (editingView && editingView.id === +viewId) {
       if (init) {
         props.onLoadSourceTables(editingView.sourceId)
+        ViewEditor.ExecuteSql(props)
         return {
           init: false,
           sqlValidationCode: sqlValidation.code,
@@ -188,6 +188,23 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     this.props.onResetState()
   }
 
+  private executeSql = () => {
+    ViewEditor.ExecuteSql(this.props)
+  }
+
+  private static ExecuteSql = (props: IViewEditorProps) => {
+    const { onExecuteSql, editingView, editingViewInfo, sqlLimit } = props
+    const { sourceId, sql } = editingView
+    const { variable } = editingViewInfo
+    const updatedParams: IExecuteSqlParams = {
+      sourceId,
+      sql,
+      limit: sqlLimit,
+      variables: variable
+    }
+    onExecuteSql(updatedParams)
+  }
+
   private stepChange = (step: number) => {
     const { currentStep } = this.state
     if (currentStep + step < 0) {
@@ -196,24 +213,37 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     }
     this.setState({ currentStep: currentStep + step }, () => {
       if (this.state.currentStep > 1) {
-        const { onAddView, onEditView, editingView, editingViewInfo, params } = this.props
-        const { pid: projectId } = params
-        const { model, variable, roles } = editingViewInfo
-        const { id: viewId } = editingView
-        const updatedView: IView = {
-          ...editingView,
-          projectId: +projectId,
-          model: JSON.stringify(model),
-          variable: JSON.stringify(variable),
-          roles: roles.map<IViewRoleRaw>(({ roleId, columnAuth, rowAuth }) => ({
-            roleId,
-            columnAuth: JSON.stringify(columnAuth),
-            rowAuth: JSON.stringify(rowAuth)
-          }))
-        }
-        viewId ? onEditView(updatedView, this.goToViewList) : onAddView(updatedView, this.goToViewList)
+        this.saveView()
       }
     })
+  }
+
+  private saveView = () => {
+    const { onAddView, onEditView, editingView, editingViewInfo, projectRoles, params } = this.props
+    const { pid: projectId } = params
+    const { model, variable, roles } = editingViewInfo
+    const { id: viewId } = editingView
+    const validRoles = roles.filter(({ roleId }) => projectRoles && projectRoles.findIndex(({ id }) => id === roleId) >= 0)
+    const updatedView: IView = {
+      ...editingView,
+      projectId: +projectId,
+      model: JSON.stringify(model),
+      variable: JSON.stringify(variable),
+      roles: validRoles.map<IViewRoleRaw>(({ roleId, columnAuth, rowAuth }) => {
+        const validColumnAuth = columnAuth.filter((c) => !!model[c])
+        const validRowAuth = rowAuth.filter((r) => {
+          const v = variable.find((v) => v.name === r.name)
+          if (!v) { return false }
+          return (v.type === ViewVariableTypes.Authorization && !v.fromService)
+        })
+        return {
+          roleId,
+          columnAuth: JSON.stringify(validColumnAuth),
+          rowAuth: JSON.stringify(validRowAuth)
+        }
+      })
+    }
+    viewId ? onEditView(updatedView, this.goToViewList) : onAddView(updatedView, this.goToViewList)
   }
 
   private goToViewList = () => {
@@ -271,44 +301,47 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
       sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, projectRoles,
       channels, tenants, bizs,
       editingView, editingViewInfo,
-      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql,
+      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit,
       onLoadDacTenants, onLoadDacBizs } = this.props
     const { currentStep, nextDisabled } = this.state
     const { model, variable, roles: viewRoles } = editingViewInfo
     const containerProps = {
       view: editingView, variable, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
       channels, tenants, bizs,
-      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql,
+      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql: this.executeSql,
       onLoadDacTenants, onLoadDacBizs }
     const containerVisible = !currentStep
     const modelAuthVisible = !!currentStep
 
     return (
-      <div className={Styles.viewEditor}>
-        <div className={Styles.header}>
-          <div className={Styles.steps}>
-            <EditorSteps current={currentStep} />
+      <>
+        <Helmet title="View" />
+        <div className={Styles.viewEditor}>
+          <div className={Styles.header}>
+            <div className={Styles.steps}>
+              <EditorSteps current={currentStep} />
+            </div>
           </div>
+          <EditorContainer
+            {...containerProps}
+            visible={containerVisible}
+            onVariableChange={this.variableChange}
+            onStepChange={this.stepChange}
+            onViewChange={this.viewChange}
+          />
+          <ModelAuth
+            visible={modelAuthVisible}
+            model={model}
+            variable={variable}
+            sqlColumns={sqlDataSource.columns}
+            roles={projectRoles}
+            viewRoles={viewRoles}
+            onModelChange={this.modelChange}
+            onViewRoleChange={this.viewRoleChange}
+            onStepChange={this.stepChange}
+          />
         </div>
-        <EditorContainer
-          {...containerProps}
-          visible={containerVisible}
-          onVariableChange={this.variableChange}
-          onStepChange={this.stepChange}
-          onViewChange={this.viewChange}
-        />
-        <ModelAuth
-          visible={modelAuthVisible}
-          model={model}
-          variable={variable}
-          sqlColumns={sqlDataSource.columns}
-          roles={projectRoles}
-          viewRoles={viewRoles}
-          onModelChange={this.modelChange}
-          onViewRoleChange={this.viewRoleChange}
-          onStepChange={this.stepChange}
-        />
-      </div>
+      </>
     )
   }
 }
@@ -344,7 +377,7 @@ const mapStateToProps = createStructuredSelector({
   sqlLimit: makeSelectSqlLimit(),
   sqlValidation: makeSelectSqlValidation(),
   loading: makeSelectLoading(),
-  projectRoles: makeSelectCurrentOrganizationProjectRoles(),
+  projectRoles: makeSelectProjectRoles(),
 
   channels: makeSelectChannels(),
   tenants: makeSelectTenants(),
@@ -356,15 +389,15 @@ const withReducer = injectReducer({ key: 'view', reducer })
 const withSaga = injectSaga({ key: 'view', saga: sagas })
 const withReducerSource = injectReducer({ key: 'source', reducer: reducerSource })
 const withSagaSource = injectSaga({ key: 'source', saga: sagasSource })
-const withReducerOrganization = injectReducer({ key: 'organization', reducer: reducerOrganization })
-const withSagaOrganization = injectSaga({ key: 'organization', saga: sagasOrganization })
+const withReducerProject = injectReducer({ key: 'project', reducer: reducerProject })
+const withSagaProject = injectSaga({ key: 'project', saga: sagasProject })
 
 export default compose(
   withReducer,
   withReducerSource,
   withSaga,
   withSagaSource,
-  withReducerOrganization,
-  withSagaOrganization,
+  withReducerProject,
+  withSagaProject,
   withConnect
 )(ViewEditor)

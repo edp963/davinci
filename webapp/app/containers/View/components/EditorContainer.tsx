@@ -23,7 +23,7 @@ import React from 'react'
 import { ISource, ISourceTable, IMapTableColumns } from 'containers/source/types'
 import {
   IViewVariable, IView,
-  IExecuteSqlParams, IExecuteSqlResponse, IViewLoading,
+  IExecuteSqlResponse, IViewLoading,
   IDacChannel, IDacTenant, IDacBiz
 } from '../types'
 
@@ -57,7 +57,7 @@ interface IEditorContainerProps {
   onLoadSourceTables: (sourceId: number) => void
   onLoadTableColumns: (sourceId: number, tableName: string) => void
   onSetSqlLimit: (limit: number) => void
-  onExecuteSql: (params: IExecuteSqlParams) => void
+  onExecuteSql: () => void
   onVariableChange: (variable: IViewVariable[]) => void
   onStepChange: (stepChange: number) => void
   onViewChange: (propName: keyof(IView), value: string | number) => void
@@ -198,23 +198,6 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
     this.props.onViewChange('sql', sql)
   }
 
-  private initExecuteSql = () => {
-    this.executeSql()
-  }
-
-  private executeSql = (params?: Partial<IExecuteSqlParams>) => {
-    const { onExecuteSql, view, sqlLimit, variable } = this.props
-    const { sourceId, sql } = view
-    const updatedParams: IExecuteSqlParams = {
-      sourceId,
-      sql,
-      limit: sqlLimit,
-      variables: variable,
-      ...params
-    }
-    onExecuteSql(updatedParams)
-  }
-
   private cancel = () => {
     this.props.onStepChange(-1)
   }
@@ -227,7 +210,7 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
     const {
       visible, view, variable, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
       channels, tenants, bizs,
-      onViewChange, onSetSqlLimit, onLoadDacTenants, onLoadDacBizs
+      onViewChange, onSetSqlLimit, onExecuteSql, onLoadDacTenants, onLoadDacBizs
     } = this.props
     const {
       editorHeight, siderWidth, previewHeight,
@@ -293,7 +276,6 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
                   <SqlPreview
                     loading={loadingExecute}
                     response={sqlDataSource}
-                    onChange={this.executeSql}
                   />
               </div>
             </div>
@@ -310,7 +292,7 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
                   disabled={loadingExecute}
                   loading={loadingExecute}
                   icon="caret-right"
-                  onClick={this.initExecuteSql}
+                  onClick={onExecuteSql}
                 >
                   执行
                 </Button>

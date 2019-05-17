@@ -10,6 +10,7 @@ import Styles from './ConditionValuesControl.less'
 export type ConditionValueTypes = string | number | boolean
 
 interface IConditionValuesControlProps {
+  className?: string
   size: 'small' | 'default'
   visualType: string
   operatorType: OperatorTypes
@@ -267,7 +268,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
           )
           break
         case 'date':
-          const dateValue = moment(tagInputValue as string)
+          const dateValue = moment((tagInputValue || moment().format('YYYY-MM-DD')) as string)
           tagInputControl.push(
             <DatePicker
               key="datePicker"
@@ -345,7 +346,12 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
   }
 
   public render () {
-    return this.renderRow()
+    const { className } = this.props
+    return (
+      <div className={className}>
+        {this.renderRow()}
+      </div>
+    )
   }
 }
 

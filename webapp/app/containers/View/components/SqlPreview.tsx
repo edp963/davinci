@@ -13,7 +13,6 @@ import { getTextWidth } from 'utils/util'
 interface ISqlPreviewProps {
   loading: boolean
   response: IExecuteSqlResponse
-  onChange: (params: Partial<IExecuteSqlParams>) => void
 }
 
 export class SqlPreview extends React.PureComponent<ISqlPreviewProps> {
@@ -44,7 +43,7 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps> {
   })
 
   public render () {
-    const { loading, response, onChange } = this.props
+    const { loading, response } = this.props
     const { totalCount, columns, resultList } = response
     const paginationConfig: PaginationConfig = {
       ...SqlPreview.basePagination,
@@ -73,7 +72,6 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps> {
         scroll={scroll}
         loading={loading}
         rowKey={SqlPreview.computeRowKey}
-        // onChange={onChange}
       />
     )
   }

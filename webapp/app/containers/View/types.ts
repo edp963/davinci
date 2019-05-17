@@ -117,6 +117,12 @@ export interface IViewRoleRaw {
   rowAuth: string
 }
 
+export interface IViewRoleRowAuth {
+  name: string
+  values: Array<string | number | boolean>
+  enable: boolean
+}
+
 export interface IViewRole {
   roleId: number
   /**
@@ -131,7 +137,7 @@ export interface IViewRole {
    * @type {(Array<string | number>)}
    * @memberof IViewRole
    */
-  rowAuth: Array<{ name: string, values: Array<string | number | boolean> }>
+  rowAuth: IViewRoleRowAuth[]
 }
 
 export interface IViewInfo {
