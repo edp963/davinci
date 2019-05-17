@@ -1,7 +1,8 @@
 import React from 'react'
-import { List, Icon, Tooltip, Popconfirm } from 'antd'
+import { List, Icon, Tooltip, Popconfirm, Tag } from 'antd'
 
 import { IViewVariable } from 'containers/View/types'
+import { ViewVariableTypes } from '../constants'
 
 import Styles from '../View.less'
 
@@ -42,12 +43,15 @@ export class ViewVariableList extends React.Component<IViewVariableProps> {
         </Popconfirm>
       )
     ]
-    const { name, alias } = item
+    const { name, alias, type, fromService } = item
+    const text = alias ? `${name}[${alias}]` : `${name}`
+    const color = type === ViewVariableTypes.Query ? 'green' :
+      (!fromService ? 'red' : 'volcano')
 
     return (
       <List.Item actions={icons}>
         <div className={Styles.variableItem}>
-          <div>{name}{alias ? `[${alias}]` : null}</div>
+          <Tag color={color}>{text}</Tag>
         </div>
       </List.Item>
     )
