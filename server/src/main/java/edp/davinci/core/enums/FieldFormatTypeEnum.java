@@ -46,7 +46,6 @@ public enum FieldFormatTypeEnum {
     }
 
 
-
     FieldFormatTypeEnum(String type) {
         this.type = type;
     }

@@ -18,25 +18,24 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.RelUserOrganizationMapper" >
+<mapper namespace="edp.davinci.dao.RelUserOrganizationMapper">
     <insert id="insert" parameterType="edp.davinci.model.RelUserOrganization">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
         insert ignore rel_user_organization
-        <trim prefix="(" suffix=")" suffixOverrides="," >
+        <trim prefix="(" suffix=")" suffixOverrides=",">
             org_id,
             user_id,
             role
         </trim>
         values
-        <trim prefix=" (" suffix=")" suffixOverrides="," >
+        <trim prefix=" (" suffix=")" suffixOverrides=",">
             #{orgId, jdbcType=BIGINT},
             #{userId, jdbcType=BIGINT},
             #{role, jdbcType=SMALLINT}
         </trim>
     </insert>
-
 
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
@@ -54,9 +53,15 @@
 
 
     <delete id="deleteBatch" parameterType="java.util.List">
-        DELETE FROM rel_user_organization WHERE id in
-        <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        DELETE FROM rel_user_organization WHERE
+        <if test="set != null and set.size > 0">
+            id in
+            <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="set == null or set.size == 0">
+            1=0
+        </if>
     </delete>
 </mapper>

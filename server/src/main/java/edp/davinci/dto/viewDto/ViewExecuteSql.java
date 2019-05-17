@@ -18,10 +18,12 @@
 
 package edp.davinci.dto.viewDto;
 
+import edp.davinci.model.SqlVariable;
 import lombok.Data;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import java.util.List;
 
 @Data
 public class ViewExecuteSql {
@@ -30,6 +32,8 @@ public class ViewExecuteSql {
 
     @NotBlank(message = "sql cannot be empty")
     private String sql;
+
+    private List<SqlVariable> variables;
 
     private int limit = 0;
     private int pageNo = -1;

@@ -61,7 +61,7 @@ public class RedisUtils {
     }
 
     public Object get(String key) {
-        if (null ==redisTemplate) {
+        if (null == redisTemplate) {
             return null;
         }
         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();

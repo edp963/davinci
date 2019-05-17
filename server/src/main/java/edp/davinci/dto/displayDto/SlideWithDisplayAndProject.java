@@ -29,4 +29,9 @@ public class SlideWithDisplayAndProject extends DisplaySlide {
     private Display display;
 
     private Project project;
+
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }

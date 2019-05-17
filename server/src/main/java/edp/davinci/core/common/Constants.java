@@ -75,11 +75,6 @@ public class Constants extends Consts {
     public static final String SOURCE_CSV_PATH = "/source/csv/";
 
     /**
-     * 团队头像上传地址
-     */
-    public static final String TEAM_AVATAR_PATH = "/image/organization/";
-
-    /**
      * 邀请组织成员邮件主题
      * inviter username
      * organization
@@ -135,4 +130,24 @@ public class Constants extends Consts {
     public static final String EXCEL_FORMAT_KEY = "format";
 
     public static final String EXCEL_FORMAT_TYPE_KEY = "formatType";
+
+    public static final String REG_SQL_PLACEHOLDER = "[a-zA-Z0-9_.-]+\\s?\\w*[<>!=]*\\s?%s\\w+%s?";
+
+    public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.-]{1,}\\s+\\w*[<>!=]*\\s+\\(?%s\\w+%s\\)?\\s?\\)";
+
+
+    public static final String LDAP_USER_PASSWORD = "LDAP";
+
+
+    public static char getSqlTempDelimiter(String sqlTempDelimiter) {
+        return sqlTempDelimiter.charAt(sqlTempDelimiter.length() - 1);
+    }
+
+    public static String getReg(String express, char delimiter) {
+        String arg = String.valueOf(delimiter);
+        if (delimiter == dollarDelimiter) {
+            arg = "\\" + arg;
+        }
+        return String.format(express, arg, arg);
+    }
 }

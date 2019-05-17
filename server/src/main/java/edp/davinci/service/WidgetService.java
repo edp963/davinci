@@ -18,35 +18,36 @@
 
 package edp.davinci.service;
 
-import edp.davinci.core.common.ResultMap;
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
+import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
 import edp.davinci.model.User;
 import edp.davinci.model.Widget;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public interface WidgetService extends CheckEntityService {
-    ResultMap getWidgets(Long projectId, User user, HttpServletRequest request);
+    List<Widget> getWidgets(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap createWidget(WidgetCreate widgetCreate, User user, HttpServletRequest request);
+    Widget createWidget(WidgetCreate widgetCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateWidget(WidgetUpdate widgetUpdate, User user, HttpServletRequest request);
+    boolean updateWidget(WidgetUpdate widgetUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteWidget(Long id, User user, HttpServletRequest request);
+    boolean deleteWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap shareWidget(Long id, User user, String username, HttpServletRequest request);
+    String shareWidget(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap getWidget(Long id, User user, HttpServletRequest request);
+    Widget getWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap generationFile(Long id, ViewExecuteParam executeParam, User user, String type, HttpServletRequest request);
+    String generationFile(Long id, ViewExecuteParam executeParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption;
 
-    void upgradeWidgetConfig();
-
-    File writeExcel(Set<Widget> widgets, Map<Long, ViewExecuteParam> executeParamMap, String filePath, User user, boolean containType) throws Exception;
+    File writeExcel(Set<Widget> widgets, ProjectDetail projectDetail, Map<Long, ViewExecuteParam> executeParamMap, String filePath, User user, boolean containType) throws Exception;
 }

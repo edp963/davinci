@@ -20,8 +20,6 @@ package edp.davinci.model;
 
 import lombok.Data;
 
-import java.util.List;
-
 @Data
 public class LdapPerson {
 
@@ -34,12 +32,6 @@ public class LdapPerson {
      * 用户名
      */
     private String sAMAccountName;
-
-
-    /**
-     * 机构信息
-     */
-    private String dept;
 
     /**
      * 邮箱

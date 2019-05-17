@@ -18,36 +18,24 @@
 
 package edp.davinci.service;
 
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.dto.userDto.UserLogin;
+import edp.core.exception.ServerException;
 import edp.davinci.model.LdapPerson;
 import edp.davinci.model.User;
 
 public interface LdapService {
 
+    boolean existLdapServer();
 
     /**
      * 查找 ldap 用户
+     *
      * @param username
      * @param password
      * @return
      * @throws Exception
      */
-    LdapPerson findByUsername(String username, String password) throws Exception;
+    LdapPerson findByUsername(String username, String password);
 
 
-    /**
-     * 用户登录
-     * @param userLogin
-     * @return
-     */
-    ResultMap userLogin(UserLogin userLogin);
-
-
-    /**
-     * 将ldap 用户注册到 davinci系统
-     * @param ldapPerson
-     * @return
-     */
-    User registUser(LdapPerson ldapPerson);
+    User registPerson(LdapPerson ldapPerson) throws ServerException;
 }

@@ -92,19 +92,19 @@ ORDER BY <orders:{order|<if(order)><order.column> <order.direction><endif>}; sep
 >>
 
 
-queryDistinctSql(columns, params, sql, keywordPrefix, keywordSuffix)
+queryDistinctSql(columns, filters, sql, keywordPrefix, keywordSuffix)
 ::=<<
 <if(columns && sql)>
 <if(keywordPrefix && keywordSuffix)>
 SELECT DISTINCT <columns:{column|<if(column)>T.<keywordPrefix><column><keywordSuffix><endif>}; separator=","> FROM (<sql>) T
-<if(params)>
-WHERE <params:{paramMap|<if(paramMap)><paramMap:{k|T.<keywordPrefix><k><keywordSuffix><paramMap.(k)>}><endif>}; separator=" AND ">
+<if(filters)>
+WHERE <filters:{filter|<if(filter)><filter><endif>}; separator=" AND ">
 <endif>
 ORDER BY <columns:{column|<if(column)>T.<keywordPrefix><column><keywordSuffix><endif>}; separator=",">
 <else>
 SELECT DISTINCT <columns:{column|<if(column)>T.<column><endif>}; separator=","> FROM (<sql>) T
-<if(params)>
-WHERE <params:{param|<if(param)>T.<param.column> = <param.value><endif>}; separator=" AND ">
+<if(filters)>
+WHERE <filters:{filter|<if(filter)><filter><endif>}; separator=" AND ">
 <endif>
 ORDER BY <columns:{column|<if(column)>T.<column><endif>}; separator=",">
 <endif>

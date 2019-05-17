@@ -29,16 +29,16 @@ public class SqlEntity {
     //查询sql
     private String sql;
 
-    private Map<String, String> quaryParams;
+    private Map<String, Object> quaryParams;
 
-    private Map<String, List<String>> teamParams;
+    private Map<String, List<String>> authParams;
 
     public SqlEntity() {
     }
 
-    public SqlEntity(String sql, Map<String, String> quaryParams, Map<String, List<String>> teamParams) {
+    public SqlEntity(String sql, Map<String, Object> quaryParams, Map<String, List<String>> authParams) {
         this.sql = sql;
         this.quaryParams = quaryParams;
-        this.teamParams = teamParams;
+        this.authParams = authParams;
     }
 }

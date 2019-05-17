@@ -20,7 +20,6 @@ package edp.davinci.controller;
 
 
 import edp.core.annotation.CurrentUser;
-import edp.core.enums.HttpCodeEnum;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -28,6 +27,7 @@ import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
 import edp.davinci.model.User;
+import edp.davinci.model.Widget;
 import edp.davinci.service.WidgetService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -43,6 +43,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
 
 @Api(value = "/widgets", tags = "widgets", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "widget not found"))
@@ -71,14 +72,9 @@ public class WidgetController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = widgetService.getWidgets(projectId, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+
+        List<Widget> widgets = widgetService.getWidgets(projectId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(widgets));
     }
 
 
@@ -99,21 +95,15 @@ public class WidgetController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = widgetService.getWidget(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        Widget widget = widgetService.getWidget(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(widget));
     }
 
 
     /**
      * 新建widget
      *
-     * @param widgetCreate
+     * @param widget
      * @param bindingResult
      * @param user
      * @param request
@@ -121,7 +111,7 @@ public class WidgetController extends BaseController {
      */
     @ApiOperation(value = "create widget")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity createWidgets(@Valid @RequestBody WidgetCreate widgetCreate,
+    public ResponseEntity createWidgets(@Valid @RequestBody WidgetCreate widget,
                                         @ApiIgnore BindingResult bindingResult,
                                         @ApiIgnore @CurrentUser User user,
                                         HttpServletRequest request) {
@@ -130,14 +120,8 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = widgetService.createWidget(widgetCreate, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        Widget newWidget = widgetService.createWidget(widget, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(newWidget));
     }
 
 
@@ -145,7 +129,7 @@ public class WidgetController extends BaseController {
      * 修改widget
      *
      * @param id
-     * @param widgetUpdate
+     * @param widget
      * @param bindingResult
      * @param user
      * @param request
@@ -154,7 +138,7 @@ public class WidgetController extends BaseController {
     @ApiOperation(value = "update widget")
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateWidget(@PathVariable Long id,
-                                       @Valid @RequestBody WidgetUpdate widgetUpdate,
+                                       @Valid @RequestBody WidgetUpdate widget,
                                        @ApiIgnore BindingResult bindingResult,
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) {
@@ -164,19 +148,13 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        if (invalidId(id) || !id.equals(widgetUpdate.getId())) {
+        if (invalidId(id) || !id.equals(widget.getId())) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = widgetService.updateWidget(widgetUpdate, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        widgetService.updateWidget(widget, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -199,14 +177,8 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = widgetService.deleteWidget(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        widgetService.deleteWidget(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -218,7 +190,7 @@ public class WidgetController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "download widget csv")
+    @ApiOperation(value = "download widget")
     @PostMapping("/{id}/{type}")
     public ResponseEntity downloadWidget(@PathVariable("id") Long id,
                                          @PathVariable("type") String type,
@@ -236,14 +208,8 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = widgetService.generationFile(id, executeParam, user, type, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        String filePath = widgetService.generationFile(id, executeParam, user, type);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(filePath));
     }
 
 
@@ -267,14 +233,8 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = widgetService.shareWidget(id, user, username, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        String shareToken = widgetService.shareWidget(id, user, username);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
     }
 
 }

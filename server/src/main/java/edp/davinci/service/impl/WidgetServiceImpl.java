@@ -19,66 +19,66 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
-import edp.core.model.Paginate;
+import edp.core.exception.UnAuthorizedExecption;
+import edp.core.model.PaginateWithQueryColumns;
 import edp.core.model.QueryColumn;
 import edp.core.utils.FileUtils;
-import edp.core.utils.TokenUtils;
-import edp.davinci.common.service.CommonService;
-import edp.davinci.core.common.ResultMap;
+import edp.core.utils.ServerUtils;
 import edp.davinci.core.enums.FileTypeEnum;
-import edp.davinci.core.enums.UserOrgRoleEnum;
+import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.core.utils.ExcelUtils;
-import edp.davinci.dao.*;
-import edp.davinci.dto.projectDto.ProjectWithOrganization;
-import edp.davinci.dto.viewDto.Aggregator;
-import edp.davinci.dto.viewDto.Order;
+import edp.davinci.dao.MemDashboardWidgetMapper;
+import edp.davinci.dao.MemDisplaySlideWidgetMapper;
+import edp.davinci.dao.ViewMapper;
+import edp.davinci.dao.WidgetMapper;
+import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
+import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
-import edp.davinci.dto.widgetDto.WidgetWithProjectAndView;
-import edp.davinci.model.*;
+import edp.davinci.model.User;
+import edp.davinci.model.View;
+import edp.davinci.model.Widget;
+import edp.davinci.service.ProjectService;
 import edp.davinci.service.ShareService;
 import edp.davinci.service.ViewService;
 import edp.davinci.service.WidgetService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.script.ScriptEngine;
-import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
 
 @Service("widgetService")
 @Slf4j
-public class WidgetServiceImpl extends CommonService<Widget> implements WidgetService {
+public class WidgetServiceImpl implements WidgetService {
+    private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
     private WidgetMapper widgetMapper;
-
-    @Autowired
-    private TokenUtils tokenUtils;
-
-    @Autowired
-    private ProjectMapper projectMapper;
 
     @Autowired
     private ViewMapper viewMapper;
@@ -98,6 +98,12 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
     @Autowired
     private FileUtils fileUtils;
 
+    @Autowired
+    private ServerUtils serverUtils;
+
+    @Autowired
+    private ProjectService projectService;
+
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
         Long widgetId = widgetMapper.getByNameWithProjectId(name, projectId);
@@ -112,71 +118,30 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
      *
      * @param projectId
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getWidgets(Long projectId, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public List<Widget> getWidgets(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(projectId);
-
-        if (null == projectWithOrganization) {
-            log.info("project {} not found", projectId);
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
-
-        if (!allowRead(projectWithOrganization, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+        ProjectDetail projectDetail = null;
+        try {
+            projectDetail = projectService.getProjectDetail(projectId, user, false);
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (UnAuthorizedExecption e) {
+            return null;
         }
 
         List<Widget> widgets = widgetMapper.getByProject(projectId);
 
-        if (null != widgets && widgets.size() > 0) {
-
-            //获取当前用户在organization的role
-            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectWithOrganization.getOrgId());
-
-            //当前用户是project的创建者和organization的owner，直接返回
-            if (!isProjectAdmin(projectWithOrganization, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-                Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
-                if (teamNumOfOrgByUser > 0) {
-                    //查询project所属team中当前用户最高角色
-                    short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
-
-                    //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
-                    if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-
-                        short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(projectId, user.getId());
-                        //查询当前用户在的 project所属team对project view的最高权限
-                        short maxWidgetPermission = relTeamProjectMapper.getMaxWidgetPermission(projectId, user.getId());
-
-                        short permission = (short) Math.max(maxVizPermission, maxWidgetPermission);
-
-                        if (permission == UserPermissionEnum.HIDDEN.getPermission()) {
-                            //隐藏
-                            widgets = null;
-                        } else if (permission == UserPermissionEnum.READ.getPermission()) {
-                            //只读, remove未发布的
-                            Iterator<Widget> iterator = widgets.iterator();
-                            while (iterator.hasNext()) {
-                                Widget widget = iterator.next();
-                                if (!widget.getPublish()) {
-                                    iterator.remove();
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    Organization organization = projectWithOrganization.getOrganization();
-                    if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
-                        widgets = null;
-                    }
-                }
+        if (null != widgets) {
+            ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+            if (projectPermission.getWidgetPermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+                return null;
             }
         }
 
-        return resultMap.successAndRefreshToken(request).payloads(widgets);
+        return widgets;
     }
 
 
@@ -185,28 +150,25 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
      *
      * @param id
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getWidget(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public Widget getWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        WidgetWithProjectAndView widgetWithProjectAndView = widgetMapper.getWidgetWithProjectAndViewById(id);
+        Widget widget = widgetMapper.getById(id);
 
-        if (null == widgetWithProjectAndView) {
+        if (null == widget) {
             log.info("widget {} not found", id);
-            return resultMap.failAndRefreshToken(request).message("widget is not found");
+            throw new NotFoundException("widget is not found");
         }
 
-        if (!allowRead(widgetWithProjectAndView.getProject(), user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+        ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        if (projectPermission.getWidgetPermission() < UserPermissionEnum.READ.getPermission()) {
+            throw new UnAuthorizedExecption();
         }
 
-        Widget widget = new Widget();
-        BeanUtils.copyProperties(widgetWithProjectAndView, widget);
-
-        return resultMap.successAndRefreshToken(request).payload(widget);
+        return widget;
     }
 
     /**
@@ -214,45 +176,39 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
      *
      * @param widgetCreate
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap createWidget(WidgetCreate widgetCreate, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public Widget createWidget(WidgetCreate widgetCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        Project project = projectMapper.getById(widgetCreate.getProjectId());
-        if (null == project) {
-            log.info("project (:{}) not found", widgetCreate.getProjectId());
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(widgetCreate.getProjectId(), user, false);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
-        //校验权限
-        if (!allowWrite(project, user)) {
+        if (projectPermission.getWidgetPermission() < UserPermissionEnum.WRITE.getPermission()) {
             log.info("user {} have not permisson to create widget", user.getUsername());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to create widget");
+            throw new UnAuthorizedExecption("you have not permission to create widget");
         }
 
         if (isExist(widgetCreate.getName(), null, widgetCreate.getProjectId())) {
             log.info("the widget {} name is already taken", widgetCreate.getName());
-            return resultMap.failAndRefreshToken(request).message("the widget name is already taken");
+            throw new ServerException("the widget name is already taken");
         }
 
         View view = viewMapper.getById(widgetCreate.getViewId());
         if (null == view) {
-            log.info("view not found");
-            return resultMap.failAndRefreshToken(request).message("view not found");
+            log.info("view (:{}) is not found", widgetCreate.getViewId());
+            throw new NotFoundException("view not found");
         }
 
-        Widget widget = new Widget();
+        Widget widget = new Widget().createdBy(user.getId());
         BeanUtils.copyProperties(widgetCreate, widget);
-
         int insert = widgetMapper.insert(widget);
         if (insert > 0) {
-            return resultMap.successAndRefreshToken(request).payload(widget);
+            optLogger.info("widget ({}) create by user(:{})", widget.toString());
+            return widget;
         } else {
-            return resultMap.failAndRefreshToken(request).message("create widget fail");
+            throw new ServerException("create widget fail");
         }
     }
 
@@ -261,47 +217,48 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
      *
      * @param widgetUpdate
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap updateWidget(WidgetUpdate widgetUpdate, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        WidgetWithProjectAndView widgetWithProjectAndView = widgetMapper.getWidgetWithProjectAndViewById(widgetUpdate.getId());
-        if (null == widgetWithProjectAndView) {
-            return resultMap.failAndRefreshToken(request).message("view not found");
+    public boolean updateWidget(WidgetUpdate widgetUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Widget widget = widgetMapper.getById(widgetUpdate.getId());
+        if (null == widget) {
+            log.info("widget (:{}) is not found", widgetUpdate.getId());
+            throw new NotFoundException("widget is not found");
         }
 
-        Project project = widgetWithProjectAndView.getProject();
-        if (null == project) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
         //校验权限
-        if (!allowWrite(project, user)) {
+        if (projectPermission.getWidgetPermission() < UserPermissionEnum.WRITE.getPermission()) {
             log.info("user {} have not permisson to update widget", user.getUsername());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to update widget");
+            throw new UnAuthorizedExecption("you have not permission to update widget");
         }
 
-        if (isExist(widgetUpdate.getName(), widgetUpdate.getId(), project.getId())) {
-            log.info("the view {} name is already taken", widgetUpdate.getName());
-            return resultMap.failAndRefreshToken(request).message("the widget name is already taken");
+        if (isExist(widgetUpdate.getName(), widgetUpdate.getId(), projectDetail.getId())) {
+            log.info("the widget {} name is already taken", widgetUpdate.getName());
+            throw new ServerException("the widget name is already taken");
         }
 
-        View view = widgetWithProjectAndView.getView();
+        View view = viewMapper.getById(widgetUpdate.getViewId());
         if (null == view) {
-            log.info("view not found");
-            return resultMap.failAndRefreshToken(request).message("view not found");
+            log.info("view (:{}) not found", widgetUpdate.getViewId());
+            throw new NotFoundException("view not found");
         }
 
-        Widget widget = new Widget();
+        String originStr = widget.toString();
+
         BeanUtils.copyProperties(widgetUpdate, widget);
-        widget.setProjectId(project.getId());
-        widgetMapper.update(widget);
-        return resultMap.successAndRefreshToken(request);
+        widget.updatedBy(user.getId());
+        int update = widgetMapper.update(widget);
+        if (update > 0) {
+            optLogger.info("widget ({}) is updated by user(:{}), origin: ({})", widget.toString(), user.getId(), originStr);
+            return true;
+        } else {
+            throw new ServerException("update widget fail");
+        }
     }
 
     /**
@@ -309,30 +266,25 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
      *
      * @param id
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap deleteWidget(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public boolean deleteWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        WidgetWithProjectAndView widgetWithProjectAndView = widgetMapper.getWidgetWithProjectAndViewById(id);
-
-        if (null == widgetWithProjectAndView) {
-            log.info("widget (:{}) not found", id);
-            return resultMap.failAndRefreshToken(request).message("widget not found");
+        Widget widget = widgetMapper.getById(id);
+        if (null == widget) {
+            log.info("widget (:{}) is not found", id);
+            throw new NotFoundException("widget is not found");
         }
 
-        if (null == widgetWithProjectAndView.getProject()) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
         //校验权限
-        if (!allowDelete(widgetWithProjectAndView.getProject(), user)) {
-            log.info("user {} have not permisson to delete the widget {}", user.getUsername(), id);
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to delete the widget");
+        if (projectPermission.getWidgetPermission() < UserPermissionEnum.DELETE.getPermission()) {
+            log.info("user {} have not permisson to delete widget", user.getUsername());
+            throw new UnAuthorizedExecption("you have not permission to delete widget");
         }
 
         //删除引用widget的dashboard
@@ -342,8 +294,9 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
         memDisplaySlideWidgetMapper.deleteByWidget(id);
 
         widgetMapper.deleteById(id);
+        optLogger.info("widget ( {} ) delete by user( :{} )", widget.toString(), user.getId());
 
-        return resultMap.successAndRefreshToken(request);
+        return true;
     }
 
 
@@ -353,64 +306,45 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
      * @param id
      * @param user
      * @param username
-     * @param request
      * @return
      */
     @Override
-    public ResultMap shareWidget(Long id, User user, String username, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public String shareWidget(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        WidgetWithProjectAndView widgetWithProjectAndView = widgetMapper.getWidgetWithProjectAndViewById(id);
-
-        if (null == widgetWithProjectAndView) {
-            log.info("widget (:{}) not found", id);
-            return resultMap.failAndRefreshToken(request).message("widget not found");
+        Widget widget = widgetMapper.getById(id);
+        if (null == widget) {
+            log.info("widget (:{}) is not found", id);
+            throw new NotFoundException("widget is not found");
         }
 
-        if (null == widgetWithProjectAndView.getProject()) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(widget.getProjectId(), user, false), user);
 
         //校验权限
-        if (!allowShare(widgetWithProjectAndView.getProject(), user)) {
+        if (!projectPermission.getSharePermission()) {
             log.info("user {} have not permisson to share the widget {}", user.getUsername(), id);
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to share the widget");
+            throw new UnAuthorizedExecption("you have not permission to share the widget");
         }
 
-        try {
-            return resultMap.successAndRefreshToken(request).payload(shareService.generateShareToken(id, username, user.getId()));
-        } catch (ServerException e) {
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
-        }
+        return shareService.generateShareToken(id, username, user.getId());
     }
 
 
     @Override
-    public ResultMap generationFile(Long id, ViewExecuteParam executeParam, User user, String type, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public String generationFile(Long id, ViewExecuteParam executeParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption {
         String filePath = null;
-        WidgetWithProjectAndView widgetWithProjectAndView = widgetMapper.getWidgetWithProjectAndViewById(id);
+        Widget widget = widgetMapper.getById(id);
 
-        if (null == widgetWithProjectAndView) {
+        if (null == widget) {
             log.info("widget (:{}) not found", id);
-            return resultMap.failAndRefreshToken(request).message("widget not found");
+            throw new NotFoundException("widget is not found");
         }
 
-        if (null == widgetWithProjectAndView.getProject()) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
-
-        if (!allowDownload(widgetWithProjectAndView.getProject(), user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to download the widget");
-        }
-
-        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(widgetWithProjectAndView.getViewId());
-
-        if (null == viewWithProjectAndSource) {
-            return resultMap.failAndRefreshToken(request).message("view not found");
+        ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        //校验权限
+        if (!projectPermission.getDownloadPermission()) {
+            log.info("user {} have not permisson to download the widget {}", user.getUsername(), id);
+            throw new UnAuthorizedExecption("you have not permission to download the widget");
         }
 
         executeParam.setPageNo(-1);
@@ -430,15 +364,19 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
         try {
             if (type.equals(FileTypeEnum.CSV.getType())) {
-                Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
-                List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
+                ViewWithSource viewWithSource = viewMapper.getViewWithSource(widget.getViewId());
+
+                boolean maintainer = projectService.isMaintainer(projectDetail, user);
+
+                PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer, viewWithSource, executeParam, user);
+                List<QueryColumn> columns = paginate.getColumns();
                 if (null != columns && columns.size() > 0) {
                     File file = new File(rootPath);
                     if (!file.exists()) {
                         file.mkdirs();
                     }
 
-                    String csvName = viewWithProjectAndSource.getName() + "_" +
+                    String csvName = widget.getName() + "_" +
                             System.currentTimeMillis() +
                             UUID.randomUUID().toString().replace("-", "") +
                             FileTypeEnum.CSV.getFormat();
@@ -447,113 +385,27 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
                 }
             } else if (type.equals(FileTypeEnum.XLSX.getType())) {
 
-                String excelName = widgetWithProjectAndView.getName() + "_" +
+                String excelName = widget.getName() + "_" +
                         System.currentTimeMillis() +
                         UUID.randomUUID().toString().replace("-", "") +
                         FileTypeEnum.XLSX.getFormat();
 
 
                 HashSet<Widget> widgets = new HashSet<>();
-                widgets.add(widgetWithProjectAndView);
+                widgets.add(widget);
                 Map<Long, ViewExecuteParam> executeParamMap = new HashMap<>();
-                executeParamMap.put(widgetWithProjectAndView.getId(), executeParam);
+                executeParamMap.put(widget.getId(), executeParam);
 
                 filePath = rootPath + excelName;
-                writeExcel(widgets, executeParamMap, filePath, user, false);
+                writeExcel(widgets, projectDetail, executeParamMap, filePath, user, false);
             } else {
-                return resultMap.failAndRefreshToken(request).message("unknow file type");
+                throw new ServerException("unknow file type");
             }
         } catch (Exception e) {
-            return resultMap.failAndRefreshToken(request).message("generation " + type + " error!");
+            throw new ServerException("generation " + type + " error!");
         }
 
-
-        filePath = fileUtils.formatFilePath(filePath);
-
-        return resultMap.successAndRefreshToken(request).payload(getHost() + filePath);
-    }
-
-
-    @Transactional
-    public void upgradeWidgetConfig() {
-        List<Widget> widgets = widgetMapper.queryUpgrade();
-        List<Widget> updateList = null;
-        if (null != widgets && widgets.size() > 0) {
-            updateList = new ArrayList<>();
-
-            for (Widget widget : widgets) {
-                if (StringUtils.isEmpty(widget.getConfig())) {
-                    continue;
-                }
-
-                JSONObject jsonObject = JSONObject.parseObject(widget.getConfig());
-                if (null != jsonObject) {
-                    if (jsonObject.containsKey("cols")) {
-                        JSONArray cols = jsonObject.getJSONArray("cols");
-                        if (null != cols && cols.size() > 0) {
-                            Map<Long, List<JSONObject>> map = null;
-                            for (Object obj : cols) {
-                                if (obj instanceof String) {
-                                    if (null == map) {
-                                        map = new HashMap<>();
-                                    }
-
-                                    List<JSONObject> list = null;
-                                    if (map.containsKey(widget.getId())) {
-                                        list = map.get(widget.getId());
-                                    } else {
-                                        list = new ArrayList<>();
-                                        map.put(widget.getId(), list);
-                                    }
-                                    JSONObject col = new JSONObject();
-                                    col.put("name", String.valueOf(obj));
-                                    list.add(col);
-                                }
-                            }
-                            if (null != map && map.size() > 0) {
-                                jsonObject.put("cols", map.get(widget.getId()));
-                                widget.setConfig(jsonObject.toJSONString());
-                                updateList.add(widget);
-                            }
-                        }
-                    }
-
-                    if (jsonObject.containsKey("rows")) {
-                        JSONArray cols = jsonObject.getJSONArray("rows");
-                        if (null != cols && cols.size() > 0) {
-                            Map<Long, List<JSONObject>> map = null;
-                            for (Object obj : cols) {
-                                if (obj instanceof String) {
-                                    if (null == map) {
-                                        map = new HashMap<>();
-                                    }
-
-                                    List<JSONObject> list = null;
-                                    if (map.containsKey(widget.getId())) {
-                                        list = map.get(widget.getId());
-                                    } else {
-                                        list = new ArrayList<>();
-                                        map.put(widget.getId(), list);
-                                    }
-                                    JSONObject col = new JSONObject();
-                                    col.put("name", String.valueOf(obj));
-                                    list.add(col);
-                                }
-                            }
-                            if (null != map && map.size() > 0) {
-                                jsonObject.put("rows", map.get(widget.getId()));
-                                widget.setConfig(jsonObject.toJSONString());
-                                updateList.add(widget);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (null != updateList && updateList.size() > 0) {
-            widgetMapper.updateConfigBatch(updateList);
-        }
+        return serverUtils.getHost() + fileUtils.formatFilePath(filePath);
     }
 
 
@@ -561,6 +413,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
      * widget列表数据写入指定excle文件
      *
      * @param widgets
+     * @param projectDetail
      * @param executeParamMap
      * @param filePath
      * @param user
@@ -569,7 +422,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
      * @throws Exception
      */
     public File writeExcel(Set<Widget> widgets,
-                           Map<Long, ViewExecuteParam> executeParamMap,
+                           ProjectDetail projectDetail, Map<Long, ViewExecuteParam> executeParamMap,
                            String filePath, User user, boolean containType) throws Exception {
         if (StringUtils.isEmpty(filePath)) {
             throw new ServerException("excel file path is empty");
@@ -580,11 +433,15 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
         SXSSFWorkbook wb = new SXSSFWorkbook(1000);
 
+        ExecutorService executorService = Executors.newFixedThreadPool(8);
         CountDownLatch countDownLatch = new CountDownLatch(widgets.size());
 
         Iterator<Widget> iterator = widgets.iterator();
         int i = 1;
+
         ScriptEngine engine = getExecuptParamScriptEngine();
+
+        boolean maintainer = projectService.isMaintainer(projectDetail, user);
 
         while (iterator.hasNext()) {
             Widget widget = iterator.next();
@@ -601,13 +458,13 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
                         executeParam = getViewExecuteParam((engine), null, widget.getConfig(), null);
                     }
 
-                    List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
-
-                    Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
+                    PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer, viewWithProjectAndSource, executeParam, user);
 
                     sheet = wb.createSheet(sheetName);
-                    ExcelUtils.writeSheet(sheet, columns, paginate.getResultList(), wb, containType, widget.getConfig(), executeParam.getParams());
+                    ExcelUtils.writeSheet(sheet, paginate.getColumns(), paginate.getResultList(), wb, containType, widget.getConfig(), executeParam.getParams());
                 } catch (ServerException e) {
+                    e.printStackTrace();
+                } catch (SQLException e) {
                     e.printStackTrace();
                 } finally {
                     sheet = null;
@@ -619,6 +476,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
         }
 
         countDownLatch.await();
+        executorService.shutdown();
 
         File file = new File(filePath);
         File dir = new File(file.getParent());

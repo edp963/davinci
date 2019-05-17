@@ -18,6 +18,7 @@
 
 package edp.davinci.model;
 
+import edp.davinci.common.model.RecordInfo;
 import lombok.Data;
 
 import javax.validation.constraints.Min;
@@ -26,7 +27,7 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @NotNull(message = "display info cannot be null")
-public class Display {
+public class Display extends RecordInfo<Display> {
     @Min(value = 1L, message = "Invalid display id")
     private Long id;
 

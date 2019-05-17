@@ -20,8 +20,7 @@
 package edp.davinci.runner;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.utils.CustomDataSourceUtils;
-import edp.davinci.service.CronJobService;
+import edp.davinci.core.utils.DacChannelUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,6 +54,9 @@ public class CheckConfigRunner implements ApplicationRunner {
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private DacChannelUtil dacChannelUtil;
+
 
     @Override
     public void run(ApplicationArguments args) {
@@ -77,5 +79,7 @@ public class CheckConfigRunner implements ApplicationRunner {
             log.error("**************     Configuration error: mail nickname connot be empty!      **************");
             SpringApplication.exit(applicationContext);
         }
+
+        dacChannelUtil.loadDacMap();
     }
 }

@@ -38,7 +38,7 @@ public class Organization {
 
     private Integer memberNum = 1;
 
-    private Integer teamNum = 0;
+    private Integer roleNum = 0;
 
     private Boolean allowCreateProject = true;
 

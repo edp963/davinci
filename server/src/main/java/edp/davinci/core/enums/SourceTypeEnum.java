@@ -18,7 +18,7 @@
 
 package edp.davinci.core.enums;
 
-public enum  SourceTypeEnum {
+public enum SourceTypeEnum {
 
     JDBC("jdbc"),
     CSV("csv");
