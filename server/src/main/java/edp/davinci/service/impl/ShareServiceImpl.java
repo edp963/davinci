@@ -443,7 +443,7 @@ public class ShareServiceImpl implements ShareService {
 
             ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(),  shareInfo.getShareUser(), false);
 
-            if (!projectService.allowGetData(projectDetail, user)) {
+            if (!projectService.allowGetData(projectDetail, shareInfo.getShareUser())) {
                 return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
             }
 
