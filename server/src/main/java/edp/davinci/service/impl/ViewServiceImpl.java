@@ -365,6 +365,11 @@ public class ViewServiceImpl implements ViewService {
             SqlEntity sqlEntity = sqlParseUtils.parseSql(executeSql.getSql(), executeSql.getVariables(), sqlTempDelimiter);
             if (null != sqlUtils && null != sqlEntity) {
                 if (!StringUtils.isEmpty(sqlEntity.getSql())) {
+
+                    if (projectService.isMaintainer(projectDetail, user)) {
+                        sqlEntity.setAuthParams(null);
+                    }
+
                     String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
                     SqlUtils sqlUtils = this.sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword());
@@ -614,7 +619,7 @@ public class ViewServiceImpl implements ViewService {
                     rowVariables = getRowVariables(roleViewList, variables);
                 }
 
-                parseParams(isMaintainer, sqlEntity, null, rowVariables, user);
+                parseParams(isMaintainer, sqlEntity, param.getParams(), rowVariables, user);
 
                 //替换参数
                 String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
@@ -634,7 +639,7 @@ public class ViewServiceImpl implements ViewService {
                         STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
                         ST st = stg.getInstanceOf("queryDistinctSql");
                         st.add("columns", param.getColumns());
-                        st.add("params", param.getParents());
+                        st.add("filters", param.getFilters());
                         st.add("sql", querySqlList.get(querySqlList.size() - 1));
                         st.add("keywordPrefix", SqlUtils.getKeywordPrefix(source.getJdbcUrl()));
                         st.add("keywordSuffix", SqlUtils.getKeywordSuffix(source.getJdbcUrl()));
@@ -712,7 +717,6 @@ public class ViewServiceImpl implements ViewService {
         //如果当前用户是project的维护者，直接不走行权限
         if (isMaintaner) {
             sqlEntity.setAuthParams(null);
-            sqlEntity.setQuaryParams(null);
             return;
         }
 

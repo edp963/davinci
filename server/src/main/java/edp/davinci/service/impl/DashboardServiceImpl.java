@@ -570,7 +570,7 @@ public class DashboardServiceImpl implements DashboardService {
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
         //校验权限
-        if (projectPermission.getSharePermission()) {
+        if (!projectPermission.getSharePermission()) {
             log.info("user {} have not permisson to share the dashboard {}", user.getUsername(), user.getId());
             throw new UnAuthorizedExecption("you have not permission to share the dashboard");
         }

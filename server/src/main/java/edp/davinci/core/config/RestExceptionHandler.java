@@ -26,30 +26,19 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.ResultMap;
-import edp.davinci.core.enums.LogNameEnum;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.sql.SQLException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @ControllerAdvice(annotations = RestController.class)
 @Slf4j
 public class RestExceptionHandler {
 
-    private static final Logger sqlLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SQL.getName());
-
     @Autowired
     private TokenUtils tokenUtils;
-
-    private static final String REG_GETDATA = "(views|share)/((\\d+/(getdata|getdistinctvalue))|executesql|data/.+)";
-
 
     @ExceptionHandler
     @ResponseBody
@@ -91,28 +80,6 @@ public class RestExceptionHandler {
     private ResultMap notFoundExceptionHandler(HttpServletRequest request, Exception e) {
         log.error(e.getMessage());
         return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.NOT_FOUND).message(e.getMessage());
-    }
-
-
-    @ExceptionHandler(value = SQLException.class)
-    @ResponseBody
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    private ResultMap sqlExceptionHandler(HttpServletRequest request, Exception e) {
-        e.printStackTrace();
-
-        String message = HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase();
-
-        String servletPath = request.getServletPath();
-        Pattern pattern = Pattern.compile(REG_GETDATA);
-        Matcher matcher = pattern.matcher(servletPath);
-        if (matcher.find()) {
-            sqlLogger.info(e.getMessage());
-            message = e.getMessage();
-        } else {
-            log.error(e.getMessage());
-        }
-
-        return new ResultMap(tokenUtils).failAndRefreshToken(request).message(message);
     }
 
 }
