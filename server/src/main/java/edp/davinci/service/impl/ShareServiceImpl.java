@@ -441,7 +441,7 @@ public class ShareServiceImpl implements ShareService {
                 return resultFail(user, request, null).message("view not found");
             }
 
-            ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), user, false);
+            ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(),  shareInfo.getShareUser(), false);
 
             if (!projectService.allowGetData(projectDetail, user)) {
                 return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
