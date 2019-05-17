@@ -18,9 +18,11 @@
 
 package edp.davinci.dto.userDto;
 
+import edp.davinci.core.common.Constants;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 
 @Data
 public class UserLogin {
@@ -29,5 +31,6 @@ public class UserLogin {
     private String username;
 
     @NotBlank(message = "password cannot be empty")
+    @Pattern(regexp = Constants.REG_USER_PASSWORD, message = "密码长度为6-20位")
     private String password;
 }

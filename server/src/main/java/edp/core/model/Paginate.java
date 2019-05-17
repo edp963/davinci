@@ -31,5 +31,5 @@ public class Paginate<T> implements Serializable {
     private int pageNo = -1;
     private int pageSize = -1;
     private long totalCount = -1;
-    private List<T> resultList = new ArrayList<>();
+    private List<T> resultList = new ArrayList<T>();
 }

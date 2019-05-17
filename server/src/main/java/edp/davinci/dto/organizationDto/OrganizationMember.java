@@ -28,7 +28,6 @@ public class OrganizationMember {
      * 关联id
      */
     private Long id;
-    private Integer teamNum;
 
     /**
      * 复合属性

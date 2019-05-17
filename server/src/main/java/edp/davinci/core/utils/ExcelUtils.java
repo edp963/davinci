@@ -181,16 +181,13 @@ public class ExcelUtils {
         CellStyle headerCellStyle = workbook.createCellStyle();
 
 
-//        XSSFDataFormat format = workbook.createDataFormat();
         DataFormat format = workbook.createDataFormat();
 
         //常规格式
-//        XSSFCellStyle generalStyle = workbook.createCellStyle();
         CellStyle generalStyle = workbook.createCellStyle();
         generalStyle.setDataFormat(format.getFormat("General"));
 
         //表头粗体居中
-//        XSSFFont font = workbook.createFont();
         Font font = workbook.createFont();
         font.setFontName("黑体");
         font.setBoldweight(Font.BOLDWEIGHT_BOLD);
@@ -216,7 +213,6 @@ public class ExcelUtils {
 
 
         //用于记录表头对应数据格式
-//        Map<String, XSSFCellStyle> headerFormatMap = null;
         Map<String, CellStyle> headerFormatMap = null;
         //用于标记标记数字格式单位
         Map<String, NumericUnitEnum> dataUnitMap = null;
@@ -264,10 +260,7 @@ public class ExcelUtils {
                             //生成excel数据格式
                             String dataFormat = getDataFormat(excelHeader.getFormat());
                             if (!StringUtils.isEmpty(dataFormat)) {
-//                                XSSFCellStyle dataStyle = workbook.createCellStyle();
                                 CellStyle dataStyle = workbook.createCellStyle();
-
-//                                XSSFDataFormat xssfDataFormat = workbook.createDataFormat();
                                 DataFormat xssfDataFormat = workbook.createDataFormat();
                                 dataStyle.setDataFormat(xssfDataFormat.getFormat(dataFormat));
                                 headerFormatMap.put(queryColumn.getName(), dataStyle);
@@ -283,7 +276,6 @@ public class ExcelUtils {
 
             //画出表头
             for (int i = 0; i < rownum + 1; i++) {
-//                XSSFRow headerRow = sheet.createRow(i);
                 Row headerRow = sheet.createRow(i);
                 for (int j = 0; j <= colnum; j++) {
                     headerRow.createCell(j);
@@ -300,14 +292,12 @@ public class ExcelUtils {
                         sheet.addMergedRegion(cellRangeAddress);
                     }
                 }
-//                XSSFCell cell = sheet.getRow(excelHeader.getRow()).getCell(excelHeader.getCol());
                 Cell cell = sheet.getRow(excelHeader.getRow()).getCell(excelHeader.getCol());
                 cell.setCellStyle(headerCellStyle);
                 cell.setCellValue(StringUtils.isEmpty(excelHeader.getAlias()) ? excelHeader.getKey() : excelHeader.getAlias());
             }
 
         } else {
-//            row = sheet.createRow(rownum);
             row = sheet.createRow(rownum);
             for (int i = 0; i < columns.size(); i++) {
                 QueryColumn queryColumn = columns.get(i);
@@ -315,7 +305,6 @@ public class ExcelUtils {
                 columnWidthMap.put(queryColumn.getName(), queryColumn.getName().getBytes().length >= queryColumn.getType().getBytes().length ?
                         queryColumn.getName().getBytes().length : queryColumn.getType().getBytes().length);
 
-//                XSSFCell cell = row.createCell(i);
                 Cell cell = row.createCell(i);
                 cell.setCellStyle(headerCellStyle);
                 cell.setCellValue(queryColumn.getName());
@@ -349,7 +338,6 @@ public class ExcelUtils {
                 QueryColumn queryColumn = columns.get(j);
                 cellStyle.setDataFormat(format.getFormat("@"));
                 Object obj = map.get(queryColumn.getName());
-//                XSSFCell cell = row.createCell(j);
                 Cell cell = row.createCell(j);
                 if (null != obj) {
                     if (obj instanceof Number || queryColumn.getType().equals("value")) {
@@ -431,7 +419,7 @@ public class ExcelUtils {
                 fmtSB.append(octothorpe);
 
                 if (fieldNumeric.isUseThousandSeparator()) {
-                    fmtSB.append(conditionSeparator)
+                    fmtSB.append(comma)
                             .append(makeNTimesString(2, octothorpe))
                             .append("0");
                 }
@@ -503,14 +491,14 @@ public class ExcelUtils {
                 break;
             case Thousand:
             case TenThousand:
-                unitExpr = conditionSeparator + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                unitExpr = comma + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
                 break;
             case Million:
             case OneHundredMillion:
-                unitExpr = makeNTimesString(2, conditionSeparator) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                unitExpr = makeNTimesString(2, comma) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
                 break;
             case Giga:
-                unitExpr = makeNTimesString(3, conditionSeparator) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                unitExpr = makeNTimesString(3, comma) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
                 break;
 
             default:

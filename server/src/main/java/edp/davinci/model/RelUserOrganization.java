@@ -18,10 +18,11 @@
 
 package edp.davinci.model;
 
+import edp.davinci.common.model.RecordInfo;
 import lombok.Data;
 
 @Data
-public class RelUserOrganization {
+public class RelUserOrganization extends RecordInfo<RelUserOrganization> {
     private Long id;
 
     private Long orgId;

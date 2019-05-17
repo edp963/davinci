@@ -29,7 +29,6 @@ import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -57,15 +56,12 @@ public class CaffeineCacheConfig {
 
     @Bean(name = "keyGenerator")
     public KeyGenerator keyGenerator() {
-        return new KeyGenerator() {
-            @Override
-            public Object generate(Object o, Method method, Object... params) {
-                StringBuilder sb = new StringBuilder();
-                for (Object obj : params) {
-                    sb.append(obj.toString());
-                }
-                return MD5Util.getMD5(sb.toString(), false, 32);
+        return (o, method, params) -> {
+            StringBuilder sb = new StringBuilder();
+            for (Object obj : params) {
+                sb.append(obj.toString());
             }
+            return MD5Util.getMD5(sb.toString(), false, 32);
         };
     }
 }

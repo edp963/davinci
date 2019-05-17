@@ -20,8 +20,7 @@ package edp.core.common.cache;
 
 public enum Caches {
     datasource,
-    query(10, 10000)
-    ;
+    query(10, 10000);
 
     private int maxSize = 1000; //默认最大缓存数量
     private int ttl = 3600;     //默认过期时间（单位：秒）

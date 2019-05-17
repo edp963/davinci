@@ -22,6 +22,5 @@ import lombok.Data;
 
 @Data
 public class ProjectInfo extends ProjectWithCreateBy {
-    private boolean inTeam = false;
     private ProjectPermission permission = new ProjectPermission();
 }

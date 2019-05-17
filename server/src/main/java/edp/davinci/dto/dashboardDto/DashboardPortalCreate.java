@@ -42,10 +42,5 @@ public class DashboardPortalCreate {
 
     private Boolean publish = true;
 
-    private Long[] teamIds;
-
-
-    public List<Long> getTeamIds() {
-        return null == this.teamIds || this.teamIds.length == 0 ? null : Arrays.asList(this.teamIds);
-    }
+    private List<Long> roleIds;
 }

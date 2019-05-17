@@ -18,43 +18,41 @@
 
 package edp.davinci.service;
 
-import edp.davinci.core.common.ResultMap;
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
-import edp.davinci.dto.organizationDto.OrganizationCreate;
-import edp.davinci.dto.organizationDto.OrganizationPut;
+import edp.davinci.dto.organizationDto.*;
 import edp.davinci.model.User;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.Map;
 
 public interface OrganizationService extends CheckEntityService {
 
-    ResultMap getOrganizations(User user, HttpServletRequest request);
+    List<OrganizationInfo> getOrganizations(User user);
 
-    ResultMap updateOrganization(OrganizationPut organizationPut, User user, HttpServletRequest request);
+    boolean updateOrganization(OrganizationPut organizationPut, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap createOrganization(OrganizationCreate organizationCreate, User user, HttpServletRequest request);
+    OrganizationBaseInfo createOrganization(OrganizationCreate organizationCreate, User user) throws ServerException;
 
-    ResultMap uploadAvatar(Long id, MultipartFile file, User user, HttpServletRequest request);
+    Map<String, String> uploadAvatar(Long id, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteOrganization(Long id, User user, HttpServletRequest request);
+    boolean deleteOrganization(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap getOrganization(Long id, User user, HttpServletRequest request);
+    OrganizationInfo getOrganization(Long id, User user) throws NotFoundException, UnAuthorizedExecption;
 
-    ResultMap getOrgProjects(Long id, User user, String keyword, int pageNum, int pageSize, HttpServletRequest request);
+    List<OrganizationMember> getOrgMembers(Long id);
 
-    ResultMap getOrgMembers(Long id, HttpServletRequest request);
+    void inviteMember(Long orgId, Long memId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap getOrgTeamsByOrgId(Long id, User user, HttpServletRequest request);
+    OrganizationInfo confirmInvite(String token, User user) throws ServerException;
 
-    ResultMap inviteMember(Long orgId, Long memId, User user, HttpServletRequest request);
+    boolean deleteOrgMember(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap confirmInvite(String token, User user, HttpServletRequest request);
+    boolean updateMemberRole(Long relationId, User user, int role) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteOrgMember(Long relationId, User user, HttpServletRequest request);
-
-    ResultMap updateMemberRole(Long relationId, User user, int role, HttpServletRequest request);
-
-    ResultMap confirmInviteNoLogin(String token);
+    void confirmInviteNoLogin(String token) throws NotFoundException, ServerException;
 }
 

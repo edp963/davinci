@@ -72,7 +72,7 @@
 
 
     <select id="getUsersByKeyword" resultType="edp.davinci.dto.userDto.UserBaseInfo">
-        select DISTINCT u.id, IF(u.`name` is NULL,u.username,u.`name`) as username, u.avatar
+        select DISTINCT u.id, IF(u.`name` is NULL,u.username,u.`name`) as username, u.email, u.avatar
         from `user` u
         LEFT JOIN rel_user_organization r on r.user_id = u.id
         where
@@ -82,6 +82,19 @@
         LOWER(username) like CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
         or LOWER(name) like CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
         or email like #{keyword}
+    </select>
+
+    <select id="getByIds" resultType="edp.davinci.model.User">
+        select * from `user` where
+        <if test="userIds != null and userIds.size > 0">
+            id in
+            <foreach collection="userIds" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="userIds == null or userIds.size == 0">
+            1=0
+        </if>
     </select>
 
 </mapper>

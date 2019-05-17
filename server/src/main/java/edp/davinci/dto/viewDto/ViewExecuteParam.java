@@ -25,8 +25,10 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Data
 public class ViewExecuteParam {
@@ -40,6 +42,7 @@ public class ViewExecuteParam {
     private int limit = 0;
     private int pageNo = -1;
     private int pageSize = -1;
+    private int totalCount = 0;
 
     private boolean nativeQuery = false;
 
@@ -95,34 +98,43 @@ public class ViewExecuteParam {
         return list;
     }
 
-    public List<String> getAggregators(String jdbcUrl) {
-        List<String> list = null;
-        if (null != this.aggregators && this.aggregators.size() > 0) {
-            Iterator<Aggregator> iterator = this.aggregators.iterator();
-            list = new ArrayList<>();
-            while (iterator.hasNext()) {
-                Aggregator next = iterator.next();
-                StringBuilder sb = new StringBuilder();
-                if ("COUNTDISTINCT".equals(next.getFunc().trim().toUpperCase())) {
-                    sb.append("COUNT(").append("DISTINCT").append(" ");
-                    sb.append(getField(next.getColumn(), jdbcUrl));
-                    sb.append(")");
-                    sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl)).append("COUNTDISTINCT(");
-                    sb.append(next.getColumn());
-                    sb.append(")").append(SqlUtils.getAliasSuffix(jdbcUrl));
-                } else {
-                    sb.append(next.getFunc()).append("(");
-                    sb.append(getField(next.getColumn(), jdbcUrl));
-                    sb.append(")");
-                    sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl));
-                    sb.append(next.getFunc()).append("(");
-                    sb.append(next.getColumn());
-                    sb.append(")").append(SqlUtils.getAliasSuffix(jdbcUrl));
-                }
-                list.add(sb.toString());
-            }
+    public void addExcludeColumn(Set<String> excludeColumns, String jdbcUrl) {
+        if (null != excludeColumns && excludeColumns.size() > 0 && null != this.aggregators && this.aggregators.size() > 0) {
+            excludeColumns.addAll(this.aggregators.stream()
+                    .filter(a -> null != excludeColumns && excludeColumns.size() > 0 && excludeColumns.contains(a.getColumn()))
+                    .map(a -> formatColumn(a.getColumn(), a.getFunc(), jdbcUrl))
+                    .collect(Collectors.toSet())
+            );
         }
-        return list;
+    }
+
+    public List<String> getAggregators(String jdbcUrl) {
+        if (null != this.aggregators && this.aggregators.size() > 0) {
+            return this.aggregators.stream().map(a -> formatColumn(a.getColumn(), a.getFunc(), jdbcUrl)).collect(Collectors.toList());
+        }
+        return null;
+    }
+
+
+    private String formatColumn(String column, String func, String jdbcUrl) {
+        StringBuilder sb = new StringBuilder();
+        if ("COUNTDISTINCT".equals(func.trim().toUpperCase())) {
+            sb.append("COUNT(").append("DISTINCT").append(" ");
+            sb.append(getField(column, jdbcUrl));
+            sb.append(")");
+            sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl)).append("COUNTDISTINCT(");
+            sb.append(column);
+            sb.append(")").append(SqlUtils.getAliasSuffix(jdbcUrl));
+        } else {
+            sb.append(func.trim()).append("(");
+            sb.append(getField(column, jdbcUrl));
+            sb.append(")");
+            sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl));
+            sb.append(func.trim()).append("(");
+            sb.append(column);
+            sb.append(")").append(SqlUtils.getAliasSuffix(jdbcUrl));
+        }
+        return sb.toString();
     }
 
     public static String getField(String field, String jdbcUrl) {

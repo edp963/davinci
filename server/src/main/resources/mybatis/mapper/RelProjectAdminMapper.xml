@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.RelProjectAdminMapper">
+
+    <insert id="insert" parameterType="edp.davinci.model.RelProjectAdmin">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+        insert ignore rel_project_admin
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            `project_id`,
+            `user_id`,
+            `create_by`,
+            `create_time`
+        </trim>
+        values
+        <trim prefix=" (" suffix=")" suffixOverrides=",">
+            #{projectId, jdbcType=BIGINT},
+            #{userId,jdbcType=BIGINT},
+            #{createBy,jdbcType=BIGINT},
+            #{createTime,jdbcType=TIMESTAMP}
+        </trim>
+    </insert>
+</mapper>

@@ -38,9 +38,16 @@
 
 
     <delete id="deleteBatch" parameterType="java.util.List">
-        DELETE FROM favorite WHERE user_id = #{userId} and project_id in
-        <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        DELETE FROM favorite WHERE user_id = #{userId}
+        <if test="list != null and list.size > 0">
+            and project_id in
+            <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="list == null or list.size == 0">
+            and 1=0
+        </if>
+
     </delete>
 </mapper>

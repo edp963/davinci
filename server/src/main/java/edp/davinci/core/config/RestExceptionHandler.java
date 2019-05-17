@@ -19,19 +19,23 @@
 
 package edp.davinci.core.config;
 
+import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.ForbiddenExecption;
+import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.ResultMap;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.sql.SQLException;
 
 @ControllerAdvice(annotations = RestController.class)
+@Slf4j
 public class RestExceptionHandler {
-
 
     @Autowired
     private TokenUtils tokenUtils;
@@ -39,15 +43,43 @@ public class RestExceptionHandler {
     @ExceptionHandler
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    private ResultMap runtimeExceptionHandler(HttpServletRequest request, Exception e) {
-
+    private ResultMap commonExceptionHandler(HttpServletRequest request, Exception e) {
         e.printStackTrace();
-
-        String message = HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase();
-        if (e instanceof ServerException || e instanceof SQLException) {
-            message = e.getMessage();
-        }
-
-        return new ResultMap(tokenUtils).failAndRefreshToken(request).message(message);
+        log.error(e.getMessage());
+        return new ResultMap(tokenUtils).failAndRefreshToken(request).message(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
     }
+
+    @ExceptionHandler(value = ServerException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    private ResultMap serverExceptionHandler(HttpServletRequest request, Exception e) {
+        e.printStackTrace();
+        log.error(e.getMessage());
+        return new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
+    }
+
+    @ExceptionHandler(value = ForbiddenExecption.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    private ResultMap forbiddenExceptionHandler(HttpServletRequest request, Exception e) {
+        log.error(e.getMessage());
+        return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
+    }
+
+    @ExceptionHandler(value = UnAuthorizedExecption.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    private ResultMap unAuthorizedExceptionHandler(HttpServletRequest request, Exception e) {
+        log.error(e.getMessage());
+        return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
+    }
+
+    @ExceptionHandler(value = NotFoundException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    private ResultMap notFoundExceptionHandler(HttpServletRequest request, Exception e) {
+        log.error(e.getMessage());
+        return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.NOT_FOUND).message(e.getMessage());
+    }
+
 }

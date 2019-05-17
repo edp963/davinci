@@ -18,45 +18,38 @@
 
 package edp.davinci.service;
 
+import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.Paginate;
-import edp.core.model.QueryColumn;
-import edp.davinci.core.common.ResultMap;
+import edp.core.model.PaginateWithQueryColumns;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.viewDto.*;
-import edp.davinci.model.Project;
 import edp.davinci.model.User;
-import edp.davinci.model.View;
 
-import javax.servlet.http.HttpServletRequest;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
 public interface ViewService extends CheckEntityService {
 
-    ResultMap getViews(Long projectId, User user, HttpServletRequest request);
+    List<ViewBaseInfo> getViews(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap createView(ViewCreate viewCreate, User user, HttpServletRequest request);
+    ViewWithSourceBaseInfo createView(ViewCreate viewCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateView(ViewUpdate viewUpdate, User user, HttpServletRequest request);
+    boolean updateView(ViewUpdate viewUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteView(Long id, User user, HttpServletRequest request);
+    boolean deleteView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap executeSql(ViewExecuteSql executeSql, User user, HttpServletRequest request);
+    PaginateWithQueryColumns executeSql(ViewExecuteSql executeSql, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap getData(Long id, ViewExecuteParam executeParam, User user, HttpServletRequest request);
+    Paginate<Map<String, Object>> getData(Long id, ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException, SQLException;
 
-    Paginate<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
+    PaginateWithQueryColumns getResultDataList(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException;
 
-    List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
+    List<Map<String, Object>> getDistinctValue(Long id, DistinctParam param, User user) throws NotFoundException, ServerException, UnAuthorizedExecption;
 
-    ResultMap getDistinctValue(Long id, DistinctParam param, User user, HttpServletRequest request);
+    List<Map<String, Object>> getDistinctValueData(boolean isMaintainer, ViewWithSource viewWithSource, DistinctParam param, User user) throws ServerException;
 
-    boolean allowGetData(Project project, User user);
-
-    List<Map<String, Object>> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException;
-
-    ResultMap getViewConfigTeamVar(Long id, User user, HttpServletRequest request);
-
-    void updateViewTeamVar(View view, String config, Project project, User user);
+    ViewWithSourceBaseInfo getView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

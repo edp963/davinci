@@ -25,11 +25,15 @@ public class Consts {
     /**
      * 特殊符号定义
      */
-    public static final String conditionSeparator = ",";
+    public static final String comma = ",";
+
+    public static final String Slash = "/";
 
     public static final String space = " ";
 
-    public static final String sqlSeparator = ";";
+    public static final String semicolon = ";";
+
+    public static final String questionMark = "?";
 
     public static final String sqlUrlSeparator = "&";
 
@@ -66,7 +70,7 @@ public class Consts {
 
     public static final String mysqlKeyDelimiter = "`";
 
-    public static final String apostrophe = "\'";
+    public static final String apostrophe = "'";
 
     public static final String doubleQuotes = "\"";
 
@@ -145,4 +149,12 @@ public class Consts {
 
     public static final String DIR_TEMPL = File.separator + "tempFiles" + File.separator;
 
+    public static final String HTTP_PROTOCOL = "http";
+
+    public static final String HTTPS_PROTOCOL = "https";
+
+    public static final String PROTOCOL_SEPARATOR = "://";
+
+
+    public static final String QUERY_COUNT_SQL = "SELECT COUNT(*) FROM (%s) CT";
 }
