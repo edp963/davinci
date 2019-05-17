@@ -34,7 +34,8 @@ import PivotTypes from '../../config/pivot/PivotTypes'
 import { uuid } from '../../../../utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
-import { Row, Col, Icon, Menu, Table, Button, Radio, InputNumber, Dropdown, Modal, Popconfirm } from 'antd'
+import { Row, Col, Icon, Menu, Table, Button, Radio, InputNumber, Dropdown, Modal, Popconfirm, Empty } from 'antd'
+import { IDistinctValueReqeustParams } from 'app/components/Filters'
 const MenuItem = Menu.Item
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
@@ -74,7 +75,7 @@ interface IOperatingPanelProps {
   onDeleteComputed: (computesField: any[]) => void
   onSetWidgetProps: (widgetProps: IWidgetProps) => void
   onLoadData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
-  onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
+  onLoadDistinctValue: (viewId: number, params: IDistinctValueReqeustParams) => void
 }
 
 interface IOperatingPanelStates {
@@ -150,7 +151,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private tabKeys = [
     { key: 'data', title: '数据' },
     { key: 'style', title: '样式' },
-    // { key: 'variable', title: '变量' },
     { key: 'setting', title: '配置' }
   ]
 
@@ -388,10 +388,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const { mode, dataParams } = this.state
     const { metrics } = dataParams
 
+    if (mode === 'pivot' && cachedItem.name === '指标名称') {
+      resolve(false)
+      this.setState({ dragged: null })
+      return
+    }
+
     switch (name) {
       case 'filters':
         if (cachedItem.visualType !== 'number' && cachedItem.visualType !== 'date') {
-          onLoadDistinctValue(selectedView.id, cachedItem.name)
+          onLoadDistinctValue(selectedView.id, { columns: [cachedItem.name] })
         }
         this.setState({
           modalCachedData: cachedItem,
@@ -401,7 +407,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         })
         break
       case 'color':
-        onLoadDistinctValue(selectedView.id, cachedItem.name)
+        onLoadDistinctValue(selectedView.id, { columns: [cachedItem.name] })
         this.setState({
           modalCachedData: cachedItem,
           modalCallback: resolve,
@@ -594,7 +600,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private dropboxItemChangeColorConfig = (item: IDataParamSource) => {
     const { selectedView, onLoadDistinctValue } = this.props
     const { dataParams, styleParams } = this.state
-    onLoadDistinctValue(selectedView.id, item.name)
+    onLoadDistinctValue(selectedView.id, { columns: [item.name] })
     this.setState({
       modalCachedData: item,
       modalDataFrom: 'color',
@@ -620,7 +626,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const { selectedView, onLoadDistinctValue } = this.props
     const { dataParams, styleParams } = this.state
     if (item.type === 'category') {
-      onLoadDistinctValue(selectedView.id, item.name)
+      onLoadDistinctValue(selectedView.id, { columns: [item.name] })
     }
     this.setState({
       modalCachedData: item,
@@ -1443,7 +1449,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       title: '操作',
       key: 'action',
       width: 100,
-      className: `${utilStyles.textAlignCenter}`,
+      className: `${utilStyles.textAlignRight}`,
       render: (text, record) => (
         <span className="ant-table-action-column">
           <Button
@@ -1592,39 +1598,40 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       case 'setting':
         tabPane = (
           <div className={styles.paramsPane}>
-            <div className={styles.paneBlock}>
-                <h4 className={styles.control}>控制器</h4>
-            </div>
-              {
-                  queryInfo.length ?
-                  <div className={styles.paramsPane}>
-                    <Row  type="flex" align="middle" className={styles.blockRow}>
-                      <Col
-                        span={24}
+            {
+              queryInfo.length
+                ? <div className={styles.paneBlock}>
+                    <h4>
+                      <span>控制器</span>
+                      <span
                         className={styles.addVariable}
                         onClick={this.showVariableConfigTable()}
                       >
                         <Icon type="plus" /> 点击添加
-                      </Col>
-                    </Row>
+                      </span>
+                    </h4>
                     <Table
                       dataSource={controls}
                       columns={queryConfigColumns}
                       rowKey="id"
+                      size="middle"
+                      showHeader={false}
                       pagination={false}
                     />
-                    <div style={{height: '10px'}}/>
-                  </div> :
-                  <div className={styles.paramsPane}>
-                    <div className={styles.paneBlock}>
-                      <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                        <Col span={24}>
-                          <h4>没有变量可以设置</h4>
-                        </Col>
-                      </Row>
-                    </div>
                   </div>
-              }
+                : <div className={styles.paneBlock}>
+                    <h4>控制器</h4>
+                    <Row
+                      gutter={8}
+                      type="flex"
+                      justify="center"
+                      align="middle"
+                      className={`${styles.blockRow} ${styles.noVariable}`}
+                    >
+                      <Icon type="stop" /> 没有变量可以设置
+                    </Row>
+                  </div>
+            }
             <div className={styles.paneBlock}>
               <h4>开启缓存</h4>
               <div className={styles.blockBody}>

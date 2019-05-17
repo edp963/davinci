@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React, { createRef } from 'react'
 
 import { Input, Row, Col} from 'antd'
 import config, { env } from '../../globalConfig'
@@ -14,10 +14,11 @@ interface IShareFormProps {
 }
 
 export class ShareForm extends React.PureComponent<IShareFormProps, {}> {
-  private shareLinkInput = null
 
-  private handleInputSelect = (inputRefName) => () => {
-    this[inputRefName].refs.input.select()
+  private shareLinkInput = createRef<Input>()
+
+  private handleInputSelect = () => {
+    this.shareLinkInput.current.input.select()
     document.execCommand('copy')
   }
 
@@ -56,12 +57,12 @@ export class ShareForm extends React.PureComponent<IShareFormProps, {}> {
               addonAfter={
                 <span
                   style={{cursor: 'pointer'}}
-                  onClick={this.handleInputSelect('shareLinkInput')}
+                  onClick={this.handleInputSelect}
                 >
                   复制
                 </span>
               }
-              ref={(f) => this.shareLinkInput = f}
+              ref={this.shareLinkInput}
               readOnly
             />
           </Col>

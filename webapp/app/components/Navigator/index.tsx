@@ -25,11 +25,12 @@ import { Link } from 'react-router'
 import classnames from 'classnames'
 
 import { makeSelectLoginUser } from '../../containers/App/selectors'
-import { Dropdown, Menu } from 'antd'
+import { Dropdown, Menu, Icon } from 'antd'
 
 const styles = require('./Navigator.less')
 
 const goGithub = () => window.open('https://github.com/edp963/davinci')
+const goDoc = () => window.open('https://edp963.github.io/davinci/')
 
 interface INavigatorProps {
   show: boolean
@@ -62,7 +63,6 @@ export function Navigator (props: INavigatorProps) {
     <nav className={headerClass}>
       <div className={styles.logoPc}>
         <div className={styles.logo}>
-          {/*<Link to="/report/dashboards">*/}
           <Link to="/projects">
             <img src={require('../../assets/images/logo.svg')} />
           </Link>
@@ -76,17 +76,15 @@ export function Navigator (props: INavigatorProps) {
         </div>
       </div>
       <ul className={styles.tools}>
-        {/*<li className={styles.emailHide}>*/}
-          {/*<p>{props.loginUser.email}</p>*/}
-        {/*</li>*/}
         <li>
-          {/*<Icon type="github" onClick={goGithub}/>*/}
-          <i className="iconfont icon-GitHub" onClick={goGithub} style={{lineHeight: '38px'}}/>
+          <Icon type="file-text" onClick={goDoc} />
+        </li>
+        <li>
+          <Icon type="github" onClick={goGithub}/>
         </li>
         <li>
           <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
-            {/*<Icon type="user" />*/}
-            <i className="iconfont icon-user_circle" style={{fontSize: '26px'}}/>
+            <Icon type="user" />
           </Dropdown>
         </li>
       </ul>

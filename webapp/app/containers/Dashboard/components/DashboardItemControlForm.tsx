@@ -19,6 +19,7 @@
  */
 
 import React, { Suspense } from 'react'
+import moment from 'moment'
 
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { Form, Input, InputNumber, Select, DatePicker, Button, Row, Col } from 'antd'
@@ -114,7 +115,6 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
           </Col>
         )
       case 'select':
-   //   case 'multiSelect':
         const options = []
         let followComponents = []
 
@@ -124,7 +124,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
           )
 
           if (c.type === 'select' &&
-              c.hasRelatedComponent === true &&
+              c.hasRelatedComponent &&
               sub.variableType &&
               this.state.parentSelValues[c.id] === index) {   // todo 变量关联控件
             followComponents = followComponents.concat(this.generateFormComponent({
@@ -135,7 +135,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
           }
         })
 
-        const mode = c.multiple === true
+        const mode = c.multiple
           ? {
             mode: 'multiple'
           }
@@ -294,7 +294,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
       if (Object.prototype.toString.call(val) === '[object Array]') {
         switch (valControl.type) {
           case 'dateRange':
-            val = val.map((v) => v.format('YYYY-MM-DD'))
+            val = val.map((v) => moment(v).format('YYYY-MM-DD'))
             arr = arr.concat({
               name: valControl.variables[0],
               value: `'${val[0]}'`
@@ -375,7 +375,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
             }
           } else {
             if (valControl.type === 'select') {
-              if (valControl.hasRelatedComponent === false) {
+              if (!valControl.hasRelatedComponent) {
                 const chosenSub = valControl.sub.find((s) => s.value === val)
 
                 if (chosenSub.variables[0]) {

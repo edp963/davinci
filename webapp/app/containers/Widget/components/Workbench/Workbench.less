@@ -262,7 +262,6 @@
     }
   }
 
-
   .paramsPane {
     flex: 1;
     position: relative;
@@ -278,7 +277,6 @@
 
       &:first-child {
         padding-top: 4px;
-        border-bottom: none;
       }
 
       h4 {
@@ -314,6 +312,23 @@
       .blockElm {
         width: 100%;
       }
+
+      .noVariable {
+        color: @disabled-text-color;
+
+        i {
+          margin-right: 4px;
+        }
+      }
+
+      .addVariable {
+        text-align: right;
+        cursor: pointer;
+  
+        &:hover {
+          color: @primary-color;
+        }
+      }
     }
 
     .toggleRowsAndCols {
@@ -339,19 +354,6 @@
 
       i {
         font-size: 1.125em;
-      }
-    }
-
-    .addVariable {
-      margin-right: 8px;
-      line-height: 32px;
-      color: @light-text-color;
-      font-weight: bold;
-      text-align: center;
-      cursor: pointer;
-
-      &:hover {
-        color: @primary-color;
       }
     }
 
@@ -887,8 +889,4 @@
 .sizePanel {
   min-width: 120px;
   max-width: 256px;
-}
-.control {
-  display: flex;
-  align-content: space-between;
 }

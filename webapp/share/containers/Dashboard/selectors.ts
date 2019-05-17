@@ -47,9 +47,9 @@ const makeSelectItemsInfo = () => createSelector(
   selectShare,
   (shareState) => shareState.get('itemsInfo')
 )
-const makeSelectDashboardCascadeSources = () => createSelector(
+const makeSelectDashboardSelectOptions = () => createSelector(
   selectShare,
-  (shareState) => shareState.get('dashboardCascadeSources')
+  (shareState) => shareState.get('dashboardSelectOptions')
 )
 
 const makeSelectLinkages = () => createSelector(
@@ -76,7 +76,7 @@ export {
   makeSelectDashboard,
   makeSelectTitle,
   makeSelectConfig,
-  makeSelectDashboardCascadeSources,
+  makeSelectDashboardSelectOptions,
   makeSelectWidgets,
   makeSelectItems,
   makeSelectItemsInfo,

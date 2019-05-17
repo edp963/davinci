@@ -27,6 +27,7 @@ import {
 } from './types'
 import { IDataRequestParams } from 'containers/Dashboard/Grid'
 import { RenderType } from 'containers/Widget/components/Widget'
+import { IDistinctValueReqeustParams } from 'app/components/Filters';
 
 export const ViewActions = {
   viewsLoaded (views: IViewBase[]) {
@@ -278,30 +279,27 @@ export const ViewActions = {
   /** */
 
   /** Actions for external usages */
-  loadCascadeViewData (controlId: string, viewId: number, columns: string[], parents: Array<{ column: string, value: string }>) {
+  loadSelectOptions (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }) {
     return {
-      type: ActionTypes.LOAD_CASCADE_VIEW_DATA,
+      type: ActionTypes.LOAD_SELECT_OPTIONS,
       payload: {
-        controlId,
-        viewId,
-        columns,
-        parents
+        controlKey,
+        requestParams
       }
     }
   },
-  cascadeViewDataLoaded (controlId: string, columns: string[], values: any[]) {
+  selectOptionsLoaded (controlKey: string, values: any[]) {
     return {
-      type: ActionTypes.LOAD_CASCADE_VIEW_DATA_SUCCESS,
+      type: ActionTypes.LOAD_SELECT_OPTIONS_SUCCESS,
       payload: {
-        controlId,
-        columns,
+        controlKey,
         values
       }
     }
   },
-  loadCascadeViewDataFail (err) {
+  loadSelectOptionsFail (err) {
     return {
-      type: ActionTypes.LOAD_CASCADE_VIEW_DATA_FAILURE,
+      type: ActionTypes.LOAD_SELECT_OPTIONS_FAILURE,
       payload: {
         err
       }
@@ -332,23 +330,21 @@ export const ViewActions = {
     }
   },
 
-  loadViewDistinctValue (viewId: number, fieldName: string, filters?: any[], resolve?: any) {
+  loadViewDistinctValue (viewId: number, params: IDistinctValueReqeustParams, resolve?: any) {
     return {
       type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE,
       payload: {
         viewId,
-        fieldName,
-        filters,
+        params,
         resolve
       }
     }
   },
-  viewDistinctValueLoaded (data: any[], fieldName: string) {
+  viewDistinctValueLoaded (data: any[]) {
     return {
       type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE_SUCCESS,
       payload: {
-        data,
-        fieldName
+        data
       }
     }
   },

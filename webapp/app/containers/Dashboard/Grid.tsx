@@ -28,10 +28,11 @@ import { Link } from 'react-router'
 import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
-import reducerWidget from '../Widget/reducer'
-import sagaWidget from '../Widget/sagas'
+import widgetReducer from '../Widget/reducer'
+import widgetSaga from '../Widget/sagas'
 import reducerView from '../View/reducer'
 import sagaView from '../View/sagas'
+import formReducer from './FormReducer'
 
 import { IViewBase, IFormedView } from '../View/types'
 
@@ -43,9 +44,9 @@ import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
-import { IMapItemFilterValue, IMapFilterControlOptions } from 'components/Filters'
-import DashboardFilterPanel from './components/DashboardFilterPanel'
-import DashboardFilterConfig from './components/DashboardFilterConfig'
+import { IMapItemControlRequestParams, IMapControlOptions, IDistinctValueReqeustParams, InteractionType } from 'components/Filters'
+import GlobalControlPanel from '../../components/Filters/FilterPanel'
+import GlobalControlConfig from '../../components/Filters/config/FilterConfig'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 
 import { Responsive, WidthProvider } from 'libs/react-grid-layout'
@@ -72,7 +73,8 @@ import {
   drillDashboardItem,
   deleteDrillHistory,
   drillPathsetting,
-  selectDashboardItemChart
+  selectDashboardItemChart,
+  setSelectOptions
 } from './actions'
 import {
   makeSelectDashboards,
@@ -83,11 +85,11 @@ import {
   makeSelectCurrentDashboardShareInfo,
   makeSelectCurrentDashboardSecretInfo,
   makeSelectCurrentDashboardShareInfoLoading,
-  makeSelectCurrentDashboardCascadeSources,
+  makeSelectCurrentDashboardSelectOptions,
   makeSelectCurrentLinkages
 } from './selectors'
 import { ViewActions, ViewActionType } from '../View/actions'
-const { loadViewDataFromVizItem, loadCascadeViewData, loadViewDistinctValue } = ViewActions
+const { loadViewDataFromVizItem, loadSelectOptions } = ViewActions
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
 import { makeSelectCurrentProject } from '../Projects/selectors'
@@ -189,7 +191,7 @@ interface IGridProps {
   currentItemsInfo: {
     [key: string]: IDashboardItemInfo
   }
-  currentDashboardCascadeSources: IMapFilterControlOptions
+  currentDashboardSelectOptions: IMapControlOptions
   currentLinkages: any[]
   onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
   onAddDashboardItems: (portalId: number, items: IDashboardItem[], resolve: (items: IDashboardItem[]) => void) => any
@@ -209,8 +211,8 @@ interface IGridProps {
     requestParams: IDataRequestParams
   ) => void
   onClearCurrentDashboard: () => any
-  onLoadCascadeSource: (controlId: number, viewId: number, columns: string[], parents: Array<{ column: string, value: string }>) => void
-  onLoadDistinctValue: (viewId: number, fieldName: string, resolve: (data) => void) => void
+  onLoadSelectOptions: (controlKey: number, requestParams: { [viewId: string]: IDistinctValueReqeustParams }) => void
+  onSetSelectOptions: (controlKey: number, options: any[]) => void
   onRenderDashboardItem: (itemId: number) => void
   onResizeDashboardItem: (itemId: number) => void
   onResizeAllDashboardItem: () => void
@@ -319,7 +321,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentItemsInfo,
       params
     } = nextProps
-    const { onLoadDashboardDetail, onLoadCascadeSource } = this.props
+    const { onLoadDashboardDetail } = this.props
     const { layoutInitialized } = this.state
 
     if (params.dashboardId !== this.props.params.dashboardId) {
@@ -868,11 +870,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private getOptions = (controlId, viewId, columns, parents) => {
-    this.props.onLoadCascadeSource(controlId, viewId, columns, parents)
+  private getOptions = (controlKey, interactionType: InteractionType, paramsOrOptions) => {
+    if (interactionType === 'column') {
+      this.props.onLoadSelectOptions(controlKey, paramsOrOptions)
+    } else {
+      this.props.onSetSelectOptions(controlKey, paramsOrOptions)
+    }
   }
 
-  private globalFilterChange = (queryConditions: IMapItemFilterValue) => {
+  private globalFilterChange = (queryConditions: IMapItemControlRequestParams) => {
     const { currentItems, currentItemsInfo } = this.props
     Object.entries(queryConditions).forEach(([itemId, condition]) => {
       const item = currentItems.find((ci) => ci.id === +itemId)
@@ -1200,7 +1206,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentDashboardShareInfoLoading,
       currentItems,
       currentItemsInfo,
-      currentDashboardCascadeSources,
+      currentDashboardSelectOptions,
       views,
       formedViews,
       onLoadDashboardShareLink,
@@ -1446,11 +1452,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onToggleLinkageVisibility={this.toggleLinkageConfig}
             />
           </Row>
-          <DashboardFilterPanel
+          <GlobalControlPanel
             currentDashboard={currentDashboard}
             currentItems={currentItems}
             onGetOptions={this.getOptions}
-            mapOptions={currentDashboardCascadeSources}
+            mapOptions={currentDashboardSelectOptions}
             onChange={this.globalFilterChange}
           />
         </Container.Title>
@@ -1508,14 +1514,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           onCancel={this.toggleLinkageConfig(false)}
           linkages={currentLinkages}
         />
-        <DashboardFilterConfig
+        <GlobalControlConfig
           currentDashboard={currentDashboard}
           currentItems={currentItems}
-          views={views}
+          views={formedViews}
           widgets={widgets}
           visible={globalFilterConfigVisible}
           loading={currentDashboardLoading}
-          mapOptions={currentDashboardCascadeSources}
+          mapOptions={currentDashboardSelectOptions}
           onCancel={this.toggleGlobalFilterConfig(false)}
           onSave={this.saveFilters}
           onGetOptions={this.getOptions}
@@ -1544,7 +1550,7 @@ const mapStateToProps = createStructuredSelector({
   currentDashboardShareInfoLoading: makeSelectCurrentDashboardShareInfoLoading(),
   currentItems: makeSelectCurrentItems(),
   currentItemsInfo: makeSelectCurrentItemsInfo(),
-  currentDashboardCascadeSources: makeSelectCurrentDashboardCascadeSources(),
+  currentDashboardSelectOptions: makeSelectCurrentDashboardSelectOptions(),
   currentLinkages: makeSelectCurrentLinkages(),
   widgets: makeSelectWidgets(),
   views: makeSelectViews(),
@@ -1564,8 +1570,8 @@ export function mapDispatchToProps (dispatch) {
                         dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard')),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, widgetId, requestParams) => dispatch(loadWidgetCsv(itemId, widgetId, requestParams)),
-    onLoadCascadeSource: (controlId, viewId, columns, parents) => dispatch(loadCascadeViewData(controlId, viewId, columns, parents)),
-    onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadViewDistinctValue(viewId, fieldName, [], resolve)),
+    onLoadSelectOptions: (controlKey, requestParams) => dispatch(loadSelectOptions(controlKey, requestParams)),
+    onSetSelectOptions: (controlKey, options) => dispatch(setSelectOptions(controlKey, options)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),
     onResizeDashboardItem: (itemId) => dispatch(resizeDashboardItem(itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
@@ -1580,16 +1586,17 @@ export function mapDispatchToProps (dispatch) {
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget })
-const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
-
+const withWidgetReducer = injectReducer({ key: 'widget', reducer: widgetReducer })
 const withReducerView = injectReducer({ key: 'view', reducer: reducerView })
+const withFormReducer = injectReducer({ key: 'form', reducer: formReducer })
+const withWidgetSaga = injectSaga({ key: 'widget', saga: widgetSaga })
 const withSagaView = injectSaga({ key: 'view', saga: sagaView })
 
 export default compose(
-  withReducerWidget,
+  withWidgetReducer,
   withReducerView,
-  withSagaWidget,
+  withFormReducer,
+  withWidgetSaga,
   withSagaView,
   withConnect
 )(Grid)
