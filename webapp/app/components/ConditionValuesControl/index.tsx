@@ -268,7 +268,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
           )
           break
         case 'date':
-          const dateValue = moment(tagInputValue as string)
+          const dateValue = moment((tagInputValue || moment().format('YYYY-MM-DD')) as string)
           tagInputControl.push(
             <DatePicker
               key="datePicker"
