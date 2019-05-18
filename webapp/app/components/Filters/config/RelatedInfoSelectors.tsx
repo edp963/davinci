@@ -20,18 +20,15 @@
 
 import React, { PureComponent } from 'react'
 import { Row, Col, Checkbox, Select, Radio, Empty } from 'antd'
-import { IModelItem, InteractionType, IGlobalControlRelatedField } from '..'
+import { InteractionType, IGlobalControlRelatedField } from '..'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { IRelatedItemSource, IRelatedViewSource } from './FilterConfig'
+import { IViewModelProps } from 'app/containers/View/types'
 
 const Option = Select.Option
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 const styles = require('../filter.less')
-
-interface IFilterModelItem extends IModelItem {
-  name: string
-}
 
 interface IRelatedInfoSelectorsProps {
   itemSelectorSource: IRelatedItemSource[]
@@ -44,23 +41,7 @@ interface IRelatedInfoSelectorsProps {
 }
 
 interface IRelatedInfoSelectorsStates {
-  selectedViews: {
-    [viewId: number]: {
-      id: number
-      name: string
-      model: [{
-        key: string
-        visualType: string
-        sqlType: string
-      }]
-      variables: string[]
-      items: Array<{
-        id: number
-        name: string
-      }>
-    }
-  }
-  modelItems: IFilterModelItem[]
+  modelItems: IViewModelProps[]
 }
 
 export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsProps, IRelatedInfoSelectorsStates> {
@@ -68,7 +49,6 @@ export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsPro
   constructor (props) {
     super(props)
     this.state = {
-      selectedViews: {},
       modelItems: []
     }
   }
@@ -130,18 +110,18 @@ export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsPro
             >
               {
                 interactionType === 'column' ? (
-                  v.model.map((m: IModelItem) => (
+                  v.model.map((m: IViewModelProps) => (
                     <Option key={m.name} value={m.name}>{m.name}</Option>
                   ))
                 ) : (
                   v.variables.map((v) => (
                     <Option
-                      key={v.key}
-                      value={v.key}
+                      key={v.name}
+                      value={v.name}
                       disabled={
                         isMultiple
                         && value.length === 2
-                        && !value.includes(v.key)
+                        && !value.includes(v.name)
                       }
                     >
                       {v.name}

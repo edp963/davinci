@@ -851,17 +851,17 @@ const withProjectSaga = injectSaga({ key: 'project', saga: projectSaga })
 const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
 const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
 
-const withReducerView = injectReducer({ key: 'view', reducer: viewReducer })
-const withSagaView = injectSaga({ key: 'view', saga: viewSaga })
+const withViewReducer = injectReducer({ key: 'view', reducer: viewReducer })
+const withViewSaga = injectSaga({ key: 'view', saga: viewSaga })
 
 export default compose(
   withReducer,
   withProjectReducer,
   withPortalReducer,
-  withReducerView,
+  withViewReducer,
   withSaga,
   withProjectSaga,
   withPortalSaga,
-  withSagaView,
+  withViewSaga,
   withConnect
 )(Dashboard)

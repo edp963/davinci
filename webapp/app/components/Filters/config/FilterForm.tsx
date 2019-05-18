@@ -31,8 +31,6 @@ const Option = Select.Option
 import { OperatorTypes } from 'utils/operatorTypes'
 import { FilterTypeList, FilterTypesLocale, FilterTypesOperatorSetting, FilterTypes } from '../filterTypes'
 import {
-  IModel,
-  IModelItem,
   renderDate,
   getOperatorOptions,
   getDatePickerFormatOptions

@@ -28,8 +28,6 @@ import {
   IGlobalControl,
   IGlobalControlRelatedItem,
   InteractionType,
-  IModel,
-  IModelItem,
   IGlobalControlRelatedField
 } from '..'
 import { FilterTypes, IS_RANGE_TYPE} from '../filterTypes'
@@ -41,7 +39,8 @@ import { Button, Modal } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { ICurrentDashboard } from '../../../containers/Dashboard'
 import { setControlFormValues } from '../../../containers/Dashboard/actions'
-import { IFormedView, IFormedViews, IViewVariable } from 'app/containers/View/types'
+import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
+import { ViewVariableTypes } from 'app/containers/View/constants'
 
 const styles = require('../filter.less')
 
@@ -53,7 +52,7 @@ export interface IRelatedItemSource extends IGlobalControlRelatedItem {
 export interface IRelatedViewSource {
   id: number
   name: string
-  model: IModelItem[]
+  model: IViewModelProps[]
   variables: IViewVariable[]
   fields: IGlobalControlRelatedField | IGlobalControlRelatedField[]
 }
@@ -94,15 +93,16 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
   private filterForm = createRef<FilterForm>()
 
   public componentWillReceiveProps (nextProps: IGlobalControlConfigProps) {
-    const { currentDashboard, currentItems, widgets, views, visible } = nextProps
+    const { currentDashboard, currentItems, visible } = nextProps
     if (currentDashboard !== this.props.currentDashboard
         || currentItems !== this.props.currentItems
         || visible && !this.props.visible) {
-      this.initDerivedState(currentDashboard, currentItems, widgets, views)
+      this.initDerivedState(nextProps)
     }
   }
 
-  private initDerivedState = (currentDashboard, currentItems, widgets, views) => {
+  private initDerivedState = (props: IGlobalControlConfigProps) => {
+    const { currentDashboard, currentItems, widgets, views } = props
     if (currentDashboard) {
       const config = JSON.parse(currentDashboard.config || '{}')
       const globalControls = config.filters || []
@@ -132,7 +132,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     }
   }
 
-  private setRelatedInfo = (control: IGlobalControl, items, widgets, views) => {
+  private setRelatedInfo = (control: IGlobalControl, items, widgets, views: IFormedViews) => {
     if (control) {
       const { relatedItems } = control
 
@@ -154,9 +154,13 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     }
   }
 
-  private getViewSelectorSource = (itemSelectorSource: IRelatedItemSource[], control: IGlobalControl, views) => {
+  private getViewSelectorSource = (
+    itemSelectorSource: IRelatedItemSource[],
+    control: IGlobalControl,
+    views: IFormedViews
+  ) => {
     const { relatedViews, type, interactionType } = control
-    const selectedItemRelatedViews = itemSelectorSource
+    const selectedItemRelatedViews: IFormedViews = itemSelectorSource
       .filter((s) => s.checked)
       .reduce<IFormedViews>((viewObj, itemSource) => {
         if (!viewObj[itemSource.viewId]) {
@@ -176,58 +180,56 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     relatedViews: {
       [key: string]: IGlobalControlRelatedField | IGlobalControlRelatedField[]
     },
-    view,
+    view: IFormedView,
     type: FilterTypes,
     interactionType: InteractionType
   ): {
-    model: IModelItem[],
+    model: IViewModelProps[],
     variables: IViewVariable[],
     fields: IGlobalControlRelatedField | IGlobalControlRelatedField[]
   } => {
     const model = Object.entries(view.model)
-      .filter(([k, v]: [string, IModelItem]) => v.modelType === 'category')
-      .map(([k, v]: [string, IModelItem]) => ({
+      .filter(([k, v]: [string, IViewModelProps]) => v.modelType === 'category')
+      .map(([k, v]: [string, IViewModelProps]) => ({
         name: k,
         ...v
       }))
-    const variables = view.variable
-    const fields = relatedViews[view.id]
+    const variables = view.variable.filter((v) => v.type === ViewVariableTypes.Query)
+    let fields = relatedViews[view.id]
 
-    if (fields) {
-      return {
-        model,
-        variables,
-        fields
+    if (interactionType === 'column') {
+      if (!fields) {
+        fields = model.length
+          ? {
+            name: model[0].name,
+            type: model[0].sqlType
+          }
+          : void 0
       }
     } else {
-      if (interactionType === 'column') {
-        return {
-          model,
-          variables,
-          fields: model.length
-            ? {
-              name: model[0].name,
-              sqlType: model[0].sqlType
+      if (!fields) {
+        fields = variables.length
+          ? IS_RANGE_TYPE[type]
+            ? [{
+              name: variables[0].name,
+              type: variables[0].valueType
+            }]
+            : {
+              name: variables[0].name,
+              type: variables[0].valueType
             }
-            : void 0
-        }
+          : IS_RANGE_TYPE[type] ? [] : void 0
       } else {
-        return {
-          model,
-          variables,
-          fields: variables.length
-            ? IS_RANGE_TYPE[type]
-              ? [{
-                name: variables[0].name,
-                sqlType: variables[0].valueType
-              }]
-              : {
-                name: variables[0].name,
-                sqlType: variables[0].valueType
-              }
-            : IS_RANGE_TYPE[type] ? [] : void 0
-        }
+        fields = IS_RANGE_TYPE[type]
+          ? [].concat(fields)
+          : fields
       }
+    }
+
+    return {
+      model,
+      variables,
+      fields
     }
   }
 
@@ -456,22 +458,29 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
       viewSelectorSource: viewSelectorSource.map((v) => {
         if (v.id === id) {
           let fields
+          let detail
           if (selected.interactionType === 'column') {
-            const detail = v.model.find((m) => m.name === value)
+            detail = v.model.find((m) => m.name === value)
             fields = {
               name: detail.name,
-              sqlType: detail.sqlType
+              type: detail.sqlType
             }
           } else {
-            fields = IS_RANGE_TYPE[selected.type]
-              ? (value as string[]).map((v) => ({
-                name: v,
-                sqlType: ''
-              }))
-              : {
-                name: value,
-                sqlType: ''
+            if (IS_RANGE_TYPE[selected.type]) {
+              fields = (value as string[]).map((str) => {
+                detail = v.variables.find((m) => m.name === str)
+                return {
+                  name: detail.name,
+                  type: detail.valueType
+                }
+              })
+            } else {
+              detail = v.variables.find((m) => m.name === value)
+              fields = {
+                name: detail.name,
+                type: detail.valueType
               }
+            }
           }
           return {
             ...v,
@@ -501,9 +510,15 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
 
   private interactionTypeChange = (e: RadioChangeEvent) => {
     const { views } = this.props
+    const currentSelected = this.state.selected
     const selected = {
-      ...this.state.selected,
-      interactionType: e.target.value
+      ...currentSelected,
+      interactionType: e.target.value,
+      relatedViews: Object.keys(currentSelected.relatedViews)
+        .reduce((obj, viewId) => {
+          obj[viewId] = void 0
+          return obj
+        }, {})
     }
     this.setState({
       selected,
@@ -514,8 +529,19 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
   private controlTypeChange = (value) => {
     const { views } = this.props
     const { selected, itemSelectorSource } = this.state
+    const { interactionType, relatedViews } = selected
 
-    const changedSelected = { ...selected, type: value}
+    const changedSelected = {
+      ...selected,
+      type: value,
+      relatedViews: Object.entries(relatedViews)
+        .reduce((obj, [viewId, fields]) => {
+          obj[viewId] = interactionType === 'variable'
+            ? fields && Array.isArray(fields) ? fields[0] : fields
+            : fields
+          return obj
+        }, {})
+    }
 
     const viewSelectorSource = this.getViewSelectorSource(itemSelectorSource, changedSelected, views)
 

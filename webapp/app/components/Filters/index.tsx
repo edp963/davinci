@@ -11,23 +11,12 @@ import NumberRange from '../NumberRange'
 const MultiDatePicker = React.lazy(() => import('../MultiDatePicker'))
 import DatePickerFormats, { DatePickerDefaultValues, DatePickerFormatsSelectSetting } from './datePickerFormats'
 const { WeekPicker, MonthPicker, RangePicker } = DatePicker
-import { SQL_NUMBER_TYPES } from '../../globalConstants'
+import { SQL_NUMBER_TYPES, SqlTypes } from '../../globalConstants'
 import { ViewVariableValueTypes } from 'app/containers/View/constants'
 
 const styles = require('./filter.less')
 
 export type InteractionType = 'column' | 'variable'
-
-export interface IModelItem {
-  name: string
-  sqlType: string
-  visualType: string
-  modelType: 'value' | 'category'
-}
-
-export interface IModel {
-  [itemName: string]: IModelItem
-}
 
 export interface IGlobalControlRelatedItem {
   viewId: number
@@ -36,7 +25,7 @@ export interface IGlobalControlRelatedItem {
 
 export interface IGlobalControlRelatedField {
   name: string
-  sqlType: string
+  type: SqlTypes | ViewVariableValueTypes
 }
 
 export interface IRenderTreeItem extends IGlobalControl {
@@ -268,48 +257,50 @@ function datetimePickerChange (onChange) {
 export function getVariableValue (filter: IGlobalControl, fields: IGlobalControlRelatedField | IGlobalControlRelatedField[], value) {
   const { type, dateFormat, multiple } = filter
   let name
-  let sqlType
+  let valueType
   let variable = []
+
+  if (value === void 0 || value === null) {
+    return variable
+  }
 
   if (!Array.isArray(fields)) {
     name = fields.name
-    sqlType = fields.sqlType
+    valueType = fields.type
   }
 
   switch (type) {
     case FilterTypes.InputText:
+      variable.push({ name, value: getValidVariableValue(value, valueType) })
+      break
     case FilterTypes.Select:
-      if (value !== void 0) {
-        if (multiple) {
-          if (value.length && value.length > 0) {
-            variable.push({ name, value: value.map((val) => getValidVariableValue(val, sqlType)).join(',') })
-          }
-        } else {
-          variable.push({ name, value: getValidVariableValue(value, sqlType) })
+      if (multiple) {
+        if (value.length && value.length > 0) {
+          variable.push({ name, value: value.map((val) => getValidVariableValue(val, valueType)).join(',') })
         }
+      } else {
+        variable.push({ name, value: getValidVariableValue(value, valueType) })
       }
       break
     case FilterTypes.NumberRange:
       variable = value.reduce((arr, val, index) => {
         if (val !== '' && !isNaN(val)) {
-          const { name, sqlType } = fields[index]
-          return arr.concat({ name, value: getValidVariableValue(val, sqlType) })
+          const { name, type: valueType } = fields[index]
+          return arr.concat({ name, value: getValidVariableValue(val, valueType) })
         }
         return arr
       }, [])
       break
     case FilterTypes.TreeSelect:
       if (value.length && value.length > 0) {
-        variable.push({ name, value: value.map((val) => getValidVariableValue(val, sqlType)).join(',') })
+        variable.push({ name, value: value.map((val) => getValidVariableValue(val, valueType)).join(',') })
       }
       break
     case FilterTypes.Date:
-      if (value) {
-        if (multiple) {
-          variable.push({ name, value: value.split(',').map((v) => `'${v}'`).join(',') })
-        } else {
-          variable.push({ name, value: `'${moment(value).format(dateFormat)}'` })
-        }
+      if (multiple) {
+        variable.push({ name, value: value.split(',').map((v) => `'${v}'`).join(',') })
+      } else {
+        variable.push({ name, value: `'${moment(value).format(dateFormat)}'` })
       }
       break
     case FilterTypes.DateRange:
@@ -324,7 +315,7 @@ export function getVariableValue (filter: IGlobalControl, fields: IGlobalControl
     default:
       const val = value.target.value.trim()
       if (val) {
-        variable.push({ name, value: getValidVariableValue(val, sqlType) })
+        variable.push({ name, value: getValidVariableValue(val, valueType) })
       }
       break
   }
@@ -333,20 +324,24 @@ export function getVariableValue (filter: IGlobalControl, fields: IGlobalControl
 
 export function getModelValue (control: IGlobalControl, field: IGlobalControlRelatedField, value) {
   const { type, dateFormat, multiple, operator } = control
-  const { name, sqlType } = field
+  const { name, type: sqlType } = field
   const filters = []
+
+  if (value === void 0 || value === null) {
+    return filters
+  }
 
   switch (type) {
     case FilterTypes.InputText:
+      filters.push(`${name} ${operator} ${getValidColumnValue(value, sqlType)}`)
+      break
     case FilterTypes.Select:
-      if (value !== void 0) {
-        if (multiple) {
-          if (value.length && value.length > 0) {
-            filters.push(`${name} ${operator} (${value.map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
-          }
-        } else {
-          filters.push(`${name} ${operator} ${getValidColumnValue(value, sqlType)}`)
+      if (multiple) {
+        if (value.length && value.length > 0) {
+          filters.push(`${name} ${operator} (${value.map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
         }
+      } else {
+        filters.push(`${name} ${operator} ${getValidColumnValue(value, sqlType)}`)
       }
       break
     case FilterTypes.NumberRange:
@@ -363,12 +358,10 @@ export function getModelValue (control: IGlobalControl, field: IGlobalControlRel
       }
       break
     case FilterTypes.Date:
-      if (value) {
-        if (multiple) {
-          filters.push(`${name} ${operator} (${value.split(',').map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
-        } else {
-          filters.push(`${name} ${operator} ${getValidColumnValue(moment(value).format(dateFormat), sqlType)}`)
-        }
+      if (multiple) {
+        filters.push(`${name} ${operator} (${value.split(',').map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
+      } else {
+        filters.push(`${name} ${operator} ${getValidColumnValue(moment(value).format(dateFormat), sqlType)}`)
       }
       break
     case FilterTypes.DateRange:

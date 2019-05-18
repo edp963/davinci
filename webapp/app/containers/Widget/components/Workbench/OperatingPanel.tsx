@@ -1470,8 +1470,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
     let queryInfo: string[] = []
     if (selectedView) {
-      queryInfo = (selectedView.sql.match(/query@var\s+\$\w+\$/g) || [])
-        .map((q) => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$')))
+      queryInfo = selectedView.variable.map((v) => v.name)
     }
 
     let mapLegendLayerType
