@@ -98,7 +98,7 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
   }
 
   public render () {
-    const { type, visible, loading, form, onCancel,exludeRoles } = this.props
+    const { type, visible, loading, form, onCancel, exludeRoles } = this.props
     const { getFieldDecorator } = form
     const authControl = exludeRoles && exludeRoles.length ? exludeRoles.map((role) => (
       <div className={styles.excludeList} key={`${role.name}key`}>

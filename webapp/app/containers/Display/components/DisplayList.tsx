@@ -124,7 +124,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
         exludeRoles: this.state.exludeRoles.map((role) => {
           return {
             ...role,
-            permission: false
+            permission: true
           }
         })
       })

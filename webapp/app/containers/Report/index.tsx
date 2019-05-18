@@ -92,6 +92,7 @@ export class Report extends React.Component<IReportProps, {}> {
         }
       }
     }
+
     if (permission === 0) {
       this.props.router.replace(`/noAuthorization`)
     }
