@@ -34,6 +34,7 @@ import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlVariableTypeEnum;
+import edp.davinci.core.enums.SqlVariableValueTypeEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.model.SqlEntity;
 import edp.davinci.core.utils.SqlParseUtils;
@@ -68,6 +69,8 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.minus;
+import static edp.davinci.core.enums.SqlVariableTypeEnum.AUTHVARE;
+import static edp.davinci.core.enums.SqlVariableTypeEnum.QUERYVAR;
 
 @Slf4j
 @Service("viewService")
@@ -492,23 +495,9 @@ public class ViewServiceImpl implements ViewService {
                 List<SqlVariable> variables = viewWithSource.getVariables();
                 //解析sql
                 SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
-
-                //行权限
-                List<SqlVariable> rowVariables = null;
-
                 //列权限（只记录被限制访问的字段）
-                Set<String> excludeColumns = null;
-
-                if (!isMaintainer) {
-                    //获取当前用户对该view的行列权限配置
-                    List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewWithSource.getId());
-                    rowVariables = getRowVariables(roleViewList, variables);
-                    excludeColumns = getColumnAuth(roleViewList);
-                }
-
-                parseParams(isMaintainer, sqlEntity, executeParam.getParams(), rowVariables, user);
-
-                //替换参数
+                Set<String> excludeColumns = new HashSet<>();
+                packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(), excludeColumns, user);
                 String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
                 Source source = viewWithSource.getSource();
@@ -604,24 +593,10 @@ public class ViewServiceImpl implements ViewService {
     public List<Map<String, Object>> getDistinctValueData(boolean isMaintainer, ViewWithSource viewWithSource, DistinctParam param, User user) throws ServerException {
         try {
             if (!StringUtils.isEmpty(viewWithSource.getSql())) {
-                //解析变量
                 List<SqlVariable> variables = viewWithSource.getVariables();
-                //解析sql
                 SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
+                packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, param.getParams(), null, user);
 
-
-                //行权限
-                List<SqlVariable> rowVariables = null;
-
-                if (!isMaintainer) {
-                    //获取当前用户对该view的行列权限配置
-                    List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewWithSource.getId());
-                    rowVariables = getRowVariables(roleViewList, variables);
-                }
-
-                parseParams(isMaintainer, sqlEntity, param.getParams(), rowVariables, user);
-
-                //替换参数
                 String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
                 Source source = viewWithSource.getSource();
@@ -677,13 +652,22 @@ public class ViewServiceImpl implements ViewService {
         return null;
     }
 
-    private List<SqlVariable> getRowVariables(List<RelRoleView> roleViewList, List<SqlVariable> variables) {
+
+    private List<SqlVariable> getQueryVariables(List<SqlVariable> variables) {
+        if (null != variables && variables.size() > 0) {
+            return variables.stream().filter(v -> QUERYVAR == SqlVariableTypeEnum.typeOf(v.getType())).collect(Collectors.toList());
+        }
+        return null;
+    }
+
+    private List<SqlVariable> getAuthVariables(List<RelRoleView> roleViewList, List<SqlVariable> variables) {
         if (null != roleViewList && roleViewList.size() > 0 && null != variables && variables.size() > 0) {
             List<SqlVariable> list = new ArrayList<>();
             Map<String, SqlVariable> map = new HashMap<>();
-            variables.forEach(v -> map.put(v.getName(), v));
 
-            List<SqlVariable> dacVars = variables.stream().filter(v -> null != v.getChannel() && !v.getChannel().getBizId().equals(0L)).collect(Collectors.toList());
+            List<SqlVariable> authVarables = variables.stream().filter(v -> AUTHVARE == SqlVariableTypeEnum.typeOf(v.getType())).collect(Collectors.toList());
+            authVarables.forEach(v -> map.put(v.getName(), v));
+            List<SqlVariable> dacVars = authVarables.stream().filter(v -> null != v.getChannel() && !v.getChannel().getBizId().equals(0L)).collect(Collectors.toList());
 
             roleViewList.forEach(r -> {
                 if (!StringUtils.isEmpty(r.getRowAuth())) {
@@ -709,73 +693,72 @@ public class ViewServiceImpl implements ViewService {
     }
 
 
-    private void parseParams(boolean isMaintaner, SqlEntity sqlEntity, List<Param> paramList, List<SqlVariable> variables, User user) {
-        //查询参数
-        if (null != paramList && paramList.size() > 0) {
-            if (null == sqlEntity.getQuaryParams()) {
-                sqlEntity.setQuaryParams(new HashMap<>());
+    private void packageParams(boolean isProjectMaintainer, Long viewId, SqlEntity sqlEntity, List<SqlVariable> variables, List<Param> paramList, Set<String> excludeColumns, User user) {
+
+        List<SqlVariable> queryVariables = getQueryVariables(variables);
+        List<SqlVariable> authVariables = null;
+
+        if (!isProjectMaintainer) {
+            List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewId);
+            authVariables = getAuthVariables(roleViewList, variables);
+            if (null != excludeColumns) {
+                excludeColumns.addAll(getColumnAuth(roleViewList));
             }
-            paramList.forEach(p -> sqlEntity.getQuaryParams().put(p.getName().trim(), p.getValue()));
+        }
+
+        //查询参数
+        if (null != queryVariables && queryVariables.size() > 0 && null != paramList && paramList.size() > 0) {
+            Map<String, List<SqlVariable>> map = queryVariables.stream().collect(Collectors.groupingBy(SqlVariable::getName));
+            paramList.forEach(p -> {
+                if (map.containsKey(p.getName())) {
+                    List<SqlVariable> list = map.get(p.getName());
+                    if (null != list && list.size() > 0) {
+                        SqlVariable v = list.get(list.size() - 1);
+                        sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue()));
+                    }
+                }
+            });
         }
 
         //如果当前用户是project的维护者，直接不走行权限
-        if (isMaintaner) {
+        if (isProjectMaintainer) {
             sqlEntity.setAuthParams(null);
             return;
         }
 
         //权限参数
-        if (null != variables) {
-            List<SqlVariable> list = variables.stream().filter(v -> v.getType().equals(SqlVariableTypeEnum.AUTHVARE.getType())).collect(Collectors.toList());
-            if (null != list && list.size() > 0) {
-                ExecutorService executorService = Executors.newFixedThreadPool(8);
-                CountDownLatch countDownLatch = new CountDownLatch(list.size());
-                ConcurrentHashMap<String, Set<String>> map = new ConcurrentHashMap<>();
-                try {
-                    list.forEach(sqlVariable -> executorService.execute(() -> {
-                        if (null != sqlVariable) {
-                            List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
-                            if (map.containsKey(sqlVariable.getName().trim())) {
-                                map.get(sqlVariable.getName().trim()).addAll(values);
-                            } else {
-                                map.put(sqlVariable.getName().trim(), new HashSet<>(values));
-                            }
+        if (null != authVariables && authVariables.size() > 0) {
+            ExecutorService executorService = Executors.newFixedThreadPool(8);
+            CountDownLatch countDownLatch = new CountDownLatch(authVariables.size());
+            ConcurrentHashMap<String, Set<String>> map = new ConcurrentHashMap<>();
+            try {
+                authVariables.forEach(sqlVariable -> executorService.execute(() -> {
+                    if (null != sqlVariable) {
+                        List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
+                        if (map.containsKey(sqlVariable.getName().trim())) {
+                            map.get(sqlVariable.getName().trim()).addAll(values);
+                        } else {
+                            map.put(sqlVariable.getName().trim(), new HashSet<>(values));
                         }
-                        countDownLatch.countDown();
-                    }));
-                    countDownLatch.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } finally {
-                    executorService.shutdown();
-                }
-
-                if (map.size() > 0) {
-                    if (null == sqlEntity.getAuthParams()) {
-                        sqlEntity.setAuthParams(new HashMap<>());
                     }
-                    map.forEach((k, v) -> sqlEntity.getAuthParams().put(k, new ArrayList<String>(v)));
-                }
-            } else {
-                sqlEntity.setAuthParams(new HashMap<>());
+                    countDownLatch.countDown();
+                }));
+                countDownLatch.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                executorService.shutdown();
             }
-        }
-    }
 
-    private Map<String, Object> getQueryParam(SqlEntity sqlEntity, ViewExecuteParam viewExecuteParam) {
-        Map<String, Object> map = null;
-        if (null != sqlEntity && null != viewExecuteParam) {
-            map = new HashMap<>();
-            if (null != sqlEntity.getQuaryParams() && sqlEntity.getQuaryParams().size() > 0) {
-                map.putAll(sqlEntity.getQuaryParams());
-            }
-            if (null != viewExecuteParam.getParams() && viewExecuteParam.getParams().size() > 0) {
-                for (Param param : viewExecuteParam.getParams()) {
-                    map.put(param.getName().trim(), param.getValue());
+            if (map.size() > 0) {
+                if (null == sqlEntity.getAuthParams()) {
+                    sqlEntity.setAuthParams(new HashMap<>());
                 }
+                map.forEach((k, v) -> sqlEntity.getAuthParams().put(k, new ArrayList<String>(v)));
             }
+        } else {
+            sqlEntity.setAuthParams(new HashMap<>());
         }
-        return map;
     }
 
 

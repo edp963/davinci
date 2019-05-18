@@ -97,7 +97,7 @@ public class SqlParseUtils {
                     if (null != typeEnum) {
                         switch (typeEnum) {
                             case QUERYVAR:
-                                queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValue(variable.getValueType(), variable.getDefaultValues()));
+                                queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues()));
                                 break;
                             case AUTHVARE:
                                 String k = String.join("", String.valueOf(delimiter), variable.getName().trim(), String.valueOf(delimiter));
@@ -127,11 +127,11 @@ public class SqlParseUtils {
     public List<String> getAuthVarValue(SqlVariable variable, String email) {
         SqlVariableChannel channel = variable.getChannel();
         if (null == channel) {
-            return SqlVariableValueTypeEnum.getValue(variable.getValueType(), variable.getDefaultValues());
+            return SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues());
         } else if (DacChannelUtil.dacMap.containsKey(channel.getName())) {
             List<Object> data = dacChannelUtil.getData(channel.getName(), channel.getBizId().toString(), email);
             if (null != data) {
-                return SqlVariableValueTypeEnum.getValue(variable.getValueType(), data);
+                return SqlVariableValueTypeEnum.getValues(variable.getValueType(), data);
             }
         }
         return new ArrayList<>();

@@ -37,4 +37,6 @@ public class ProjectCreat {
     private Long orgId;
 
     private String pic;
+
+    private boolean visibility;
 }

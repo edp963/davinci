@@ -72,7 +72,7 @@
 
 
     <sql id="userMaxPermissionBaseSql">
-        SELECT IFNULL(rrp.project_id, 0)               as projectId,
+        SELECT rrp.project_id                          as projectId,
                IFNULL(max(rrp.viz_permission), 0)      as vizPermission,
                IFNULL(max(rrp.widget_permission), 0)   as widgetPermission,
                IFNULL(max(rrp.view_permission), 0)     as viewPermission,
