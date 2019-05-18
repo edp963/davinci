@@ -145,7 +145,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
           exludeRoles: this.state.exludeRoles.map((role) => {
             return {
               ...role,
-              permission: false
+              permission: true
             }
           })
         })
@@ -233,8 +233,6 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   }
 
   public render () {
-    console.log(this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id))
-    console.log(this.state.exludeRoles)
     const {
       projectId,
       portals,

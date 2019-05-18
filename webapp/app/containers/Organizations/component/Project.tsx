@@ -264,7 +264,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
               移交项目
             </div>
             <div className={styles.titleDesc}>
-              <p className={styles.desc}> <span className={styles.label}>项目归属</span> <b>{name}</b></p>
+              <p className={styles.desc}> <span className={styles.label}>项目名称</span> <b>{name}</b></p>
               <p className={styles.desc}><span className={styles.label}>创建人</span>  <b>{createBy.username}</b></p>
               <p className={styles.button}>
                 <Tooltip title="移交">

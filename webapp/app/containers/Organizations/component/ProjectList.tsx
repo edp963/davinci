@@ -133,10 +133,12 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     } = this.props
     onLoadOrganizationProjects({id: Number(organizationId)})
     onLoadCollectProjects()
-    onLoadVizs(Number(organizationId))
   }
 
   private showEditProjectForm = (formType, option) => (e) => {
+    const { onLoadVizs } = this.props
+    const {orgId, id, name, pic, description, visibility} = option
+    onLoadVizs(Number(id))
     this.setState({
       formType,
       editFormVisible: true,
@@ -144,7 +146,6 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     }, () => {
       setTimeout(() => {
         this.props.onSetCurrentProject(option)
-        const {orgId, id, name, pic, description, visibility} = option
         this.ProjectEditForm.props.form.setFieldsValue({
           orgId: `${orgId}`,
           id,

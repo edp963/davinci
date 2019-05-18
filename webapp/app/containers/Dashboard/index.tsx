@@ -62,17 +62,17 @@ import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 import { loadPortals } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
 import { loadProjectDetail } from '../Projects/actions'
-
+import {IExludeRoles} from '../Portal/components/PortalList'
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
 const widgetStyles = require('../Widget/Widget.less')
-import {makeSelectCurrentProject} from '../Projects/selectors'
+import {makeSelectCurrentProject, makeSelectProjectRoles} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects'
 import EditorHeader from '../../components/EditorHeader'
 const SplitPane = React.lazy(() => import('react-split-pane'))
-
+import {IProjectRoles} from '../Organizations/component/ProjectRole'
 interface IDashboardProps {
   modalLoading: boolean
   dashboards: IDashboard[]
@@ -80,6 +80,7 @@ interface IDashboardProps {
   params: any
   currentProject: IProject
   portals: any[]
+  projectRoles: IProjectRoles[]
   onLoadDashboards: (portalId: number, resolve: any) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
@@ -120,6 +121,7 @@ interface IDashboardStates {
   checkedKeys: any[]
   splitSize: number
   portalTreeWidth: number
+  exludeRoles: IExludeRoles[]
 }
 
 export class Dashboard extends React.Component<IDashboardProps, IDashboardStates> {
@@ -142,7 +144,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       isGrid: true,
       checkedKeys: [],
       splitSize,
-      portalTreeWidth: 0
+      portalTreeWidth: 0,
+      exludeRoles: []
     }
   }
 
@@ -208,7 +211,18 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     if (nextProps.dashboards !== this.props.dashboards) {
       this.initalDashboardData(nextProps.dashboards)
     }
+    if (nextProps && nextProps.projectRoles) {
+      this.setState({
+        exludeRoles: nextProps.projectRoles.map((role) => {
+          return {
+            ...role,
+            permission: false
+          }
+        })
+      })
+    }
   }
+
 
   public componentDidMount () {
     this.props.onHideNavigator()
@@ -480,6 +494,35 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     })
   }
 
+  // private showDisplayFormModal = (formType: 'edit' | 'add', display?: IDisplay) => (e: React.MouseEvent<HTMLDivElement>) => {
+  //   e.stopPropagation()
+  //   this.setState({
+  //     editingDisplay: display,
+  //     formType,
+  //     formVisible: true
+  //   })
+  //   const { onExcludeRoles, projectRoles } = this.props
+  //   if (onExcludeRoles && display) {
+  //     onExcludeRoles('display', display.id, (result: number[]) => {
+  //       this.setState({
+  //         exludeRoles:  projectRoles.map((role) => {
+  //           return result.some((re) => re === role.id) ? role : {...role, permission: true}
+  //         })
+  //       })
+  //     })
+  //   } else {
+  //     this.setState({
+  //       exludeRoles: this.state.exludeRoles.map((role) => {
+  //         return {
+  //           ...role,
+  //           permission: false
+  //         }
+  //       })
+  //     })
+  //   }
+  // }
+
+
   private onOperateMore = (item, type) => {
     this.setState({
       formType: type
@@ -600,6 +643,13 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     localStorage.setItem('dashboardSplitSize', newSize.toString())
     this.setState({
       portalTreeWidth: newSize
+    })
+  }
+
+  private changePermission = (scope: IExludeRoles, event) => {
+    scope.permission = event.target.checked
+    this.setState({
+      exludeRoles: this.state.exludeRoles.map((role) => role && role.id === scope.id ? scope : role)
     })
   }
 
@@ -811,7 +861,9 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             itemId={this.state.itemId}
             dashboards={dashboards}
             portalId={params.portalId}
+            exludeRoles={this.state.exludeRoles}
             onCheckUniqueName={onCheckUniqueName}
+            onChangePermission={this.changePermission}
             wrappedComponentRef={this.refHandlers.dashboardForm}
           />
         </Modal>
@@ -824,7 +876,8 @@ const mapStateToProps = createStructuredSelector({
   dashboards: makeSelectDashboards(),
   modalLoading: makeSelectModalLoading(),
   currentProject: makeSelectCurrentProject(),
-  portals: makeSelectPortals()
+  portals: makeSelectPortals(),
+  projectRoles: makeSelectProjectRoles()
 })
 
 export function mapDispatchToProps (dispatch) {

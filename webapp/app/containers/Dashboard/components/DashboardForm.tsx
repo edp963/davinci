@@ -20,7 +20,10 @@
 
 import * as React from 'react'
 
-import { Form, Row, Col, Input, Radio, Select } from 'antd'
+import { Form, Row, Col, Input, Radio, Select, Tabs, Checkbox} from 'antd'
+import {IExludeRoles} from '../../Portal/components/PortalList'
+const styles = require('../../Portal/Portal.less')
+const TabPane = Tabs.TabPane
 const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
@@ -34,6 +37,8 @@ interface IDashboardFormProps {
   form: any
   dashboards: any[]
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
+  exludeRoles?: IExludeRoles[]
+  onChangePermission: (scope: object, e: any) => any
 }
 
 export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> {
@@ -62,11 +67,17 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
 
   public render () {
     const { getFieldDecorator } = this.props.form
-    const { dashboards, type, itemId } = this.props
+    const { dashboards, type, itemId, exludeRoles } = this.props
     const commonFormItemStyle = {
       labelCol: { span: 6 },
       wrapperCol: { span: 16 }
     }
+    const authControl = exludeRoles && exludeRoles.length ? exludeRoles.map((role) => (
+      <div className={styles.excludeList} key={`${role.name}key`}>
+        <Checkbox checked={role.permission} onChange={this.props.onChangePermission.bind(this, role)}/>
+        <b>{role.name}</b>
+      </div>
+    )) : []
 
     const dashboardsArr = (dashboards as any[]).filter((d) => d.type === 0)
     const folderOptions = (dashboardsArr as any[]).map((s) => <Option key={`${s.id}`} value={`${s.id}`}>{s.name}</Option>)
@@ -107,6 +118,8 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
           </Col>
         </Row>
         <Row gutter={8} className={type === 'delete' || type === 'move' ? utilStyles.hide : ''}>
+        <Tabs defaultActiveKey="dashboardInfo">
+          <TabPane tab="基本信息" key="dashboardInfo">
           <Col span={24}>
             <FormItem label="所属文件夹" {...commonFormItemStyle}>
               {getFieldDecorator('folder', {
@@ -165,6 +178,13 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
               )}
             </FormItem>
           </Col>
+          </TabPane>
+          <TabPane tab="权限管理" key="dashboardControl">
+            {
+              authControl
+            }
+          </TabPane>
+          </Tabs>
         </Row>
         <p className={type === 'delete' ? '' : utilStyles.hide}>
           确定要删除 {deleteType}：{deleteName} ？

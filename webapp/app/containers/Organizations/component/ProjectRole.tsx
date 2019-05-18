@@ -34,7 +34,7 @@ const styles = require('../Project.less')
 const utilStyles =  require('../../../assets/less/util.less')
 import {createStructuredSelector} from 'reselect'
 import { addProjectRole, addProjectRoleFail, loadRelRoleProject, updateRelRoleProject, deleteRelRoleProject} from '../../Projects/actions'
-import {makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationRole, makeSelectCurrentOrganizationProjectRoles } from '../selectors'
+import {makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationRole, makeSelectCurrentOrganizationProjectRoles, makeSelectCurrentOrganizations } from '../selectors'
 import { makeSelectCurrentProjectRole} from '../../Projects/selectors'
 import { makeSelectVizs } from '../../Schedule/selectors'
 
@@ -64,6 +64,7 @@ interface IRoleProps {
     permission: object
   }
   vizs: any
+  currentOrganization: any
   onLoadOrganizationRole: (id: number) => any
   onLoadProjectRoles: (id: number) => any
   onAddProjectRole: (id: number, roleIds: number[], resolve: () => any) => any
@@ -100,7 +101,7 @@ export class ProjectRole extends React.Component<IRoleProps, IRoleStates> {
     }
   }
 
-  private loadOrganizationRole = () => this.props.onLoadOrganizationRole(this.props.projectDetail['id'])
+  private loadOrganizationRole = () => this.props.onLoadOrganizationRole(this.props.currentOrganization['id'])
 
   private loadProjectRoles = () => this.props.onLoadProjectRoles(this.props.projectDetail['id'])
 
@@ -344,6 +345,7 @@ export class ProjectRole extends React.Component<IRoleProps, IRoleStates> {
 
 const mapStateToProps = createStructuredSelector({
   vizs: makeSelectVizs(),
+  currentOrganization: makeSelectCurrentOrganizations(),
   projectDetail: makeSelectCurrentOrganizationProject(),
   organizationRoles: makeSelectCurrentOrganizationRole(),
   projectRoles: makeSelectCurrentOrganizationProjectRoles(),
