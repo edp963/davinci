@@ -30,8 +30,8 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import widgetReducer from '../Widget/reducer'
 import widgetSaga from '../Widget/sagas'
-import reducerView from '../View/reducer'
-import sagaView from '../View/sagas'
+import viewReducer from '../View/reducer'
+import viewSaga from '../View/sagas'
 import formReducer from './FormReducer'
 
 import { IViewBase, IFormedViews } from '../View/types'
@@ -1587,16 +1587,18 @@ export function mapDispatchToProps (dispatch) {
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
 const withWidgetReducer = injectReducer({ key: 'widget', reducer: widgetReducer })
-const withReducerView = injectReducer({ key: 'view', reducer: reducerView })
-const withFormReducer = injectReducer({ key: 'form', reducer: formReducer })
 const withWidgetSaga = injectSaga({ key: 'widget', saga: widgetSaga })
-const withSagaView = injectSaga({ key: 'view', saga: sagaView })
+
+const withViewReducer = injectReducer({ key: 'view', reducer: viewReducer })
+const withViewSaga = injectSaga({ key: 'view', saga: viewSaga })
+
+const withFormReducer = injectReducer({ key: 'form', reducer: formReducer })
 
 export default compose(
   withWidgetReducer,
-  withReducerView,
+  withViewReducer,
   withFormReducer,
   withWidgetSaga,
-  withSagaView,
+  withViewSaga,
   withConnect
 )(Grid)
