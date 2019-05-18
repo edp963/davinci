@@ -270,6 +270,12 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
+
+        if (null == memberIds || memberIds.size() == 0) {
+            relRoleUserMapper.deleteByRoleId(id);
+            return null;
+        }
+
         List<User> members = userMapper.getByIds(memberIds);
         if (null == members || members.size() == 0) {
             log.info("user ( :{} ) is not found", memberIds);

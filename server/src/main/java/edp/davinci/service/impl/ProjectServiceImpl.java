@@ -648,7 +648,7 @@ public class ProjectServiceImpl implements ProjectService {
             return ProjectPermission.adminPermission();
         } else {
             UserMaxProjectPermission permission = relRoleProjectMapper.getMaxPermission(projectDetail.getId(), user.getId());
-            if (null != permission) {
+            if (null != permission && null != permission.getProjectId()) {
                 return permission;
             } else if (projectDetail.getVisibility() && projectDetail.getOrganization().getMemberPermission() > (short) 0) {
                 return ProjectPermission.previewPermission();

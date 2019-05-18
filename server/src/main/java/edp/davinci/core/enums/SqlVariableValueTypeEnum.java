@@ -19,6 +19,8 @@
 
 package edp.davinci.core.enums;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +40,7 @@ public enum SqlVariableValueTypeEnum {
         this.valueType = valueType;
     }
 
-    public static List<String> getValue(String valueType, List<Object> values) {
+    public static List<String> getValues(String valueType, List<Object> values) {
         if (null == values || values.size() == 0) {
             return new ArrayList<>();
         }
@@ -57,6 +59,22 @@ public enum SqlVariableValueTypeEnum {
         return values.stream().map(String::valueOf)
                 .map(s -> s.startsWith(apostrophe) && s.endsWith(apostrophe) ? s : String.join("", apostrophe, s, apostrophe))
                 .collect(Collectors.toList());
+    }
+
+
+    public static Object getValue(String valueType, String value) {
+        if (!StringUtils.isEmpty(value)) {
+            switch (SqlVariableValueTypeEnum.valueOf(valueType.toUpperCase())) {
+                case STRING:
+                case DATE:
+                    return String.join("", value.startsWith(apostrophe) ? "" : apostrophe, value, value.endsWith(apostrophe) ? "" : apostrophe);
+                case NUMBER:
+                    return value;
+                case BOOLEAN:
+                    return Boolean.parseBoolean(value);
+            }
+        }
+        return value;
     }
 
 }
