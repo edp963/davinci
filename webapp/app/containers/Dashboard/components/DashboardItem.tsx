@@ -757,9 +757,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           <Menu.Item className={styles.menuItem}>
             <InfoButton className={styles.menuText} onClick={onShowEdit(itemId)}>基本信息</InfoButton>
           </Menu.Item>
-          <Menu.Item className={styles.menuItem}>
+          {/* <Menu.Item className={styles.menuItem}>
             <InfoButton className={styles.menuText} onClick={onShowDrillEdit(itemId)}>钻取设置</InfoButton>
-          </Menu.Item>
+          </Menu.Item> */}
           <Menu.Item className={styles.menuItem}>
             <Popconfirm
               title="确定删除？"
