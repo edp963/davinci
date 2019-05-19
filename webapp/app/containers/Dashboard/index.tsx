@@ -216,16 +216,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     if (nextProps.dashboards !== this.props.dashboards) {
       this.initalDashboardData(nextProps.dashboards)
     }
-    // if (nextProps && nextProps.projectRoles) {
-    //   console.log('componentWillReceiveProps')
-    //   this.setState({
-    //     exludeRoles: nextProps.projectRoles.map((role) => {
-    //       return {
-    //         ...role
-    //       }
-    //     })
-    //   })
-    // }
   }
 
 
@@ -514,7 +504,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         onExcludeRoles('dashboard', item.id, (result: number[]) => {
           this.setState({
             exludeRoles:  projectRoles.map((role) => {
-              return result.some((re) => re === role.id) ? role : {...role, permission: true}
+              return result.some((re) => re === role.id) ? {...role, permission: false} : {...role, permission: true}
             })
           })
         })
