@@ -144,9 +144,11 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     controlValues: { [key: string]: any }
   ) => {
     const { onGetOptions } = this.props
-    const { key, interactionType, relatedViews, parent, options } = renderControl
+    const { key, interactionType, relatedViews, parent, customOptions, options } = renderControl
 
-    if (interactionType === 'column') {
+    if (customOptions) {
+      onGetOptions(key, true, options)
+    } else {
       const parents = this.getParents(parent, flatTree)
 
       const requestParams = Object.entries(relatedViews).reduce((obj, [viewId, fields]) => {
@@ -166,18 +168,28 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
           })
         })
 
-        obj[viewId] = {
-          columns: Array.isArray(fields) ? fields.map((f) => f.name) : [fields.name],
-          filters,
-          variables
+        if (interactionType === 'column') {
+          obj[viewId] = {
+            columns: [(fields as IGlobalControlRelatedField).name],
+            filters,
+            variables
+          }
+        } else {
+          if ((fields as IGlobalControlRelatedField).optionsFromColumn) {
+            obj[viewId] = {
+              columns: [(fields as IGlobalControlRelatedField).column],
+              filters,
+              variables
+            }
+          }
         }
 
         return obj
       }, {})
 
-      onGetOptions(key, interactionType, requestParams)
-    } else {
-      onGetOptions(key, interactionType, options)
+      if (Object.keys(requestParams).length) {
+        onGetOptions(key, false, requestParams)
+      }
     }
   }
 

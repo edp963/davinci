@@ -39,17 +39,17 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
     let component
     switch (filter.type) {
       case FilterTypes.InputText:
-        component = renderInputText(filter, this.onInputChange)
+        component = renderInputText(this.onInputChange)
         break
       case FilterTypes.NumberRange:
-        component = renderNumberRange(filter, this.change)
+        component = renderNumberRange(this.change)
         break
       case FilterTypes.Select:
         component = renderSelect(filter, this.change, options)
         break
-      case FilterTypes.TreeSelect:
-        component = renderTreeSelect(filter, this.change, options)
-        break
+      // case FilterTypes.TreeSelect:
+      //   component = renderTreeSelect(filter, this.change, options)
+      //   break
       case FilterTypes.Date:
         component = renderDate(filter, this.change)
         break
@@ -63,7 +63,7 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
   private wrapFormItem = (control: IGlobalControl, component: Component): ReactNode => {
     const { getFieldDecorator } = this.props.form
     return (
-      <FormItem className={styles.filterControl}>
+      <FormItem label={control.name} className={styles.filterControl}>
         {getFieldDecorator(`${control.key}`, {
           initialValue: getDefaultValue(control)
         })(component)}

@@ -29,18 +29,16 @@ import {
   IGlobalControlRelatedItem,
   InteractionType,
   IGlobalControlRelatedField
-} from '..'
-import { FilterTypes, IS_RANGE_TYPE} from '../filterTypes'
+} from 'app/components/Filters'
+import { FilterTypes, IS_RANGE_TYPE} from 'app/components/Filters/filterTypes'
 
-import FilterList from './FilterList'
-import FilterFormWithRedux, { FilterForm } from './FilterForm'
-import OptionSettingFormWithModal, { OptionSettingForm } from './OptionSettingForm'
-import RelatedInfoSelectors from './RelatedInfoSelectors'
+import FilterList from 'app/components/Filters/config/FilterList'
+import FilterFormWithRedux, { FilterForm } from 'app/components/Filters/config/FilterForm'
+import OptionSettingFormWithModal, { OptionSettingForm } from 'app/components/Filters/config/OptionSettingForm'
 import { Button, Modal } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
-import { ICurrentDashboard } from '../../../containers/Dashboard'
-import { setControlFormValues } from '../../../containers/Dashboard/actions'
+import { setControlFormValues } from 'app/containers/Dashboard/actions'
 import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
 import { ViewVariableTypes } from 'app/containers/View/constants'
 
@@ -60,8 +58,6 @@ export interface IRelatedViewSource {
 }
 
 interface IGlobalControlConfigProps {
-  currentDashboard: ICurrentDashboard
-  currentItems: any[]
   views: IFormedViews
   widgets: any[]
   visible: boolean
@@ -82,7 +78,7 @@ interface IGlobalControlConfigStates {
   optionValues: string
 }
 
-export class GlobalControlConfig extends React.Component<IGlobalControlConfigProps, IGlobalControlConfigStates> {
+export class LocalControlConfig extends React.Component<IGlobalControlConfigProps, IGlobalControlConfigStates> {
 
   constructor (props) {
     super(props)
@@ -681,18 +677,6 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
             {
               selected && (
                 <>
-                  <RelatedInfoSelectors
-                    itemSelectorSource={itemSelectorSource}
-                    viewSelectorSource={viewSelectorSource}
-                    interactionType={selected.interactionType}
-                    controlType={selected.type}
-                    onItemCheck={this.itemCheck}
-                    onModelOrVariableSelect={this.modelOrVariableSelect}
-                    onOptionsFromColumnCheck={this.optionsFromColumnChecked}
-                    onOptionsFromColumnSelect={this.optionsFromColumnSelect}
-                    onToggleCheckAll={this.toggleCheckAll}
-                    onInteractionTypeChange={this.interactionTypeChange}
-                  />
                   <FilterFormWithRedux
                     onControlTypeChange={this.controlTypeChange}
                     onOpenOptionModal={this.openOptionModal}
@@ -721,4 +705,4 @@ function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(null, mapDispatchToProps)(GlobalControlConfig)
+export default connect(null, mapDispatchToProps)(LocalControlConfig)
