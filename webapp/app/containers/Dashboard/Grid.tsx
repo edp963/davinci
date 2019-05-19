@@ -89,7 +89,7 @@ import {
   makeSelectCurrentLinkages
 } from './selectors'
 import { ViewActions, ViewActionType } from '../View/actions'
-const { loadViewDataFromVizItem, loadSelectOptions } = ViewActions
+const { loadViewDataFromVizItem, loadViewsDetail, loadSelectOptions } = ViewActions
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
 import { makeSelectCurrentProject } from '../Projects/selectors'
@@ -205,6 +205,7 @@ interface IGridProps {
     viewId: number,
     requestParams: IDataRequestParams
   ) => void
+  onLoadViewsDetail: (viewIds: number[], resolve: () => void) => void
   onLoadWidgetCsv: (
     itemId: number,
     widgetId: number,
@@ -642,7 +643,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private saveDashboardItem = () => {
-    const { params, currentDashboard, currentItems, widgets } = this.props
+    const { params, currentDashboard, currentItems, widgets, formedViews } = this.props
     const portalId = +params.portalId
     const { selectedWidgets, dashboardItemFormType } = this.state
     const formdata: any = this.dashboardItemForm.props.form.getFieldsValue()
@@ -702,10 +703,22 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         }
         return item
       })
+      const selectedWidgetsViewIds = widgets.filter((w) => selectedWidgets.includes(w.id)).map((w) => w.viewId)
+      const viewIds = selectedWidgetsViewIds
+        .filter((viewId, idx) => selectedWidgetsViewIds.indexOf(viewId) === idx)
+        .filter((viewId) => !formedViews[viewId])
 
-      this.props.onAddDashboardItems(portalId, newItems, () => {
-        this.hideDashboardItemForm()
-      })
+      if (viewIds.length) {
+        this.props.onLoadViewsDetail(viewIds, () => {
+          this.props.onAddDashboardItems(portalId, newItems, () => {
+            this.hideDashboardItemForm()
+          })
+        })
+      } else {
+        this.props.onAddDashboardItems(portalId, newItems, () => {
+          this.hideDashboardItemForm()
+        })
+      }
     } else {
       const dashboardItem = currentItems.find((item) => item.id === Number(formdata.id))
       const modifiedDashboardItem = {
@@ -1568,6 +1581,7 @@ export function mapDispatchToProps (dispatch) {
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
     onLoadDataFromItem: (renderType, itemId, viewId, requestParams) =>
                         dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard')),
+    onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, widgetId, requestParams) => dispatch(loadWidgetCsv(itemId, widgetId, requestParams)),
     onLoadSelectOptions: (controlKey, requestParams) => dispatch(loadSelectOptions(controlKey, requestParams)),

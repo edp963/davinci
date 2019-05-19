@@ -11,7 +11,7 @@ import saga from '../../sagas'
 import viewSaga from '../../../View/sagas'
 import { hideNavigator } from '../../../App/actions'
 import { ViewActions } from 'containers/View/actions'
-const { loadViews, loadViewDetail, loadViewData, loadViewDistinctValue } = ViewActions
+const { loadViews, loadViewsDetail, loadViewData, loadViewDistinctValue } = ViewActions
 import { addWidget, editWidget, loadWidgetDetail, clearCurrentWidget, executeComputed } from '../../actions'
 import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, makeSelectDistinctColumnValues, makeSelectColumnValueLoading } from '../../selectors'
 import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
@@ -514,7 +514,7 @@ export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadViews: (projectId, resolve) => dispatch(loadViews(projectId, resolve)),
-    onLoadViewDetail: (viewId, resolve) => dispatch(loadViewDetail(viewId, resolve)),
+    onLoadViewDetail: (viewId, resolve) => dispatch(loadViewsDetail([viewId], resolve)),
     onLoadWidgetDetail: (id) => dispatch(loadWidgetDetail(id)),
     onLoadViewData: (viewId, requestParams, resolve) => dispatch(loadViewData(viewId, requestParams, resolve)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),

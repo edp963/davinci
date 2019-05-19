@@ -1,7 +1,22 @@
-import { IViewModel, ISqlColumn } from './types'
+import { IViewModel, ISqlColumn, IView, IFormedView, IViewRoleRaw, IViewRole } from './types'
 
 import { SqlTypes } from 'app/globalConstants'
 import { ModelTypeSqlTypeSetting, VisualTypeSqlTypeSetting } from './constants'
+
+export function getFormedView (view: IView): IFormedView {
+  const { model, variable, roles } = view
+  const formedView = {
+    ...view,
+    model: JSON.parse((model || '{}')),
+    variable: JSON.parse((variable || '[]')),
+    roles: (roles as IViewRoleRaw[]).map<IViewRole>(({ roleId, columnAuth, rowAuth }) => ({
+      roleId,
+      columnAuth: JSON.parse(columnAuth || '[]'),
+      rowAuth: JSON.parse(rowAuth || '[]')
+    }))
+  }
+  return formedView
+}
 
 function getMapKeyByValue (value: SqlTypes, map: typeof VisualTypeSqlTypeSetting | typeof ModelTypeSqlTypeSetting) {
   let result

@@ -19,8 +19,9 @@
  */
 
 import { Record } from 'immutable'
+import pick from 'lodash/pick'
 import { IViewState, IViewRoleRaw, IViewRole, IViewModel, IView, IFormedView, IFormedViews } from './types'
-import { getValidModel } from './util'
+import { getFormedView, getValidModel } from './util'
 
 import { ActionTypes, DEFAULT_SQL_LIMIT } from './constants'
 import { ViewActionType } from './actions'
@@ -99,31 +100,23 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
       return state
         .set('views', action.payload.views)
         .set('loading', { ...loading, view: false })
-    case ActionTypes.LOAD_VIEW_DETAIL_SUCCESS:
-      const { id: viewId, variable, model, roles } = action.payload.view
-      const formedModel = JSON.parse((model || '{}'))
-      const formedVariable = JSON.parse((variable || '[]'))
-      const formedRoles = (roles as IViewRoleRaw[]).map<IViewRole>(({ roleId, columnAuth, rowAuth }) => ({
-        roleId,
-        columnAuth: JSON.parse(columnAuth || '[]'),
-        rowAuth: JSON.parse(rowAuth || '[]')
-      }))
+    case ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS:
+      const detailedViews = action.payload.views
+
       return state
-        .set('editingView', action.payload.view)
-        .set('editingViewInfo', {
-          model: formedModel,
-          variable: formedVariable,
-          roles: formedRoles
-        })
-        .set('formedViews', {
-          ...formedViews,
-          [viewId]: {
-            ...action.payload.view,
-            model: formedModel,
-            variable: formedVariable,
-            roles: formedRoles
+        .set('editingView', detailedViews[0])
+        .set('editingViewInfo', pick(getFormedView(detailedViews[0]), ['model', 'variable', 'roles']))
+        .set('formedViews', detailedViews.reduce((acc, view) => {
+          const { id, model, variable, roles } = getFormedView(view)
+          acc[id] = {
+            ...view,
+            model,
+            variable,
+            roles
           }
-        })
+          return acc
+        }, formedViews))
+
     case SourceActionTypes.LOAD_SOURCES_SUCCESS:
       return state.set('sources', action.payload.sources)
     case SourceActionTypes.LOAD_SOURCE_TABLES_SUCCESS:

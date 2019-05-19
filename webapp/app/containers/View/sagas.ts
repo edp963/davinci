@@ -50,19 +50,19 @@ export function* getViews (action: ViewActionType) {
   }
 }
 
-export function* getViewDetail (action: ViewActionType) {
-  if (action.type !== ActionTypes.LOAD_VIEW_DETAIL) { return }
+export function* getViewsDetail (action: ViewActionType) {
+  if (action.type !== ActionTypes.LOAD_VIEWS_DETAIL) { return }
   const { payload } = action
-  const { viewDetailLoaded, loadViewDetailFail } = ViewActions
+  const { viewsDetailLoaded, loadViewsDetailFail } = ViewActions
+  const { viewIds, resolve } = payload
   try {
-    const asyncData = yield call(request, `${api.view}/${payload.viewId}`)
-    const view: IView = asyncData.payload
-    yield put(viewDetailLoaded(view))
-    if (payload.resolve) {
-      payload.resolve()
-    }
+    // @FIXME make it be a single request
+    const asyncData = yield all(viewIds.map((viewId) => (call(request, `${api.view}/${viewId}`))))
+    const views: IView[] = asyncData.map((item) => item.payload)
+    yield put(viewsDetailLoaded(views))
+    if (resolve) { resolve() }
   } catch (err) {
-    yield put(loadViewDetailFail())
+    yield put(loadViewsDetailFail())
     errorHandler(err)
   }
 }
@@ -307,7 +307,7 @@ export function* getDacBizs (action: ViewActionType) {
 export default function* rootViewSaga () {
   yield all([
     takeLatest(ActionTypes.LOAD_VIEWS, getViews),
-    takeEvery(ActionTypes.LOAD_VIEW_DETAIL, getViewDetail),
+    takeEvery(ActionTypes.LOAD_VIEWS_DETAIL, getViewsDetail),
     takeLatest(ActionTypes.ADD_VIEW, addView),
     takeEvery(ActionTypes.EDIT_VIEW, editView),
     takeEvery(ActionTypes.DELETE_VIEW, deleteView),
