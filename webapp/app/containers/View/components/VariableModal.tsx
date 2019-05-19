@@ -280,4 +280,4 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
 
 }
 
-export default Form.create<IVariableModalProps>()(VariableModal)
+export default Form.create<IVariableModalProps & FormComponentProps>()(VariableModal)
