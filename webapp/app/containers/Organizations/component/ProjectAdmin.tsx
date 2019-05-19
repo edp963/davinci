@@ -74,27 +74,30 @@ export class ProjectAdmin extends React.PureComponent<IProjectAdminProps, IProje
   }
 
   public componentWillMount () {
-      this.loadAdmins()
+      this.loadAdmins(this.props.projectDetail['id'])
   }
 
-  private loadAdmins = () => this.props.onLoadProjectAdmin(this.props.projectDetail['id'])
+  private loadAdmins = (id) => this.props.onLoadProjectAdmin(id)
 
   private onSaveAdmin = () => {
     const { adminTargetKeys } = this.state
     const { projectDetail: {id} } = this.props
     this.props.onAddProjectAdmin(id, adminTargetKeys[0], (result) => {
-        this.loadAdmins()
+        this.loadAdmins(id)
         this.toggleAdminForm()
         this.setState({ adminTargetKeys: []})
     })
   }
 
   public componentWillReceiveProps (nextProps) {
-    const { projectAdmins } = nextProps
+    const { projectAdmins, projectDetail: {id} } = nextProps
     if (projectAdmins !== this.props.projectAdmins) {
         this.setState ({
             projectAdmins
         })
+    }
+    if (id !== this.props.projectDetail['id']) {
+      this.loadAdmins(id)
     }
   }
 

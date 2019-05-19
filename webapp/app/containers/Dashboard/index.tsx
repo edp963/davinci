@@ -61,7 +61,7 @@ import { hideNavigator, checkNameUniqueAction } from '../App/actions'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 import { loadPortals } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
-import { loadProjectDetail } from '../Projects/actions'
+import { loadProjectDetail, excludeRoles } from '../Projects/actions'
 import {IExludeRoles} from '../Portal/components/PortalList'
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
@@ -73,6 +73,8 @@ import { IProject } from '../Projects'
 import EditorHeader from '../../components/EditorHeader'
 const SplitPane = React.lazy(() => import('react-split-pane'))
 import {IProjectRoles} from '../Organizations/component/ProjectRole'
+import { loadProjectRoles } from '../Organizations/actions'
+
 interface IDashboardProps {
   modalLoading: boolean
   dashboards: IDashboard[]
@@ -89,6 +91,8 @@ interface IDashboardProps {
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   onLoadPortals: (projectId) => void
   onLoadProjectDetail: (id) => any
+  onExcludeRoles: (type: string, id: number, resolve?: any) => any
+  onLoadProjectRoles: (id: number) => any
 }
 
 export interface IDashboard {
@@ -156,9 +160,10 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
   public componentWillMount () {
     // this.props.onHideNavigator()
-    const { params, router, dashboards, onLoadDashboards, onLoadPortals, onLoadProjectDetail } = this.props
+    const { params, router, dashboards, onLoadDashboards, onLoadPortals, onLoadProjectDetail, onLoadProjectRoles } = this.props
     const { pid, portalId, portalName, dashboardId } = params
 
+    onLoadProjectRoles(Number(pid))
     onLoadDashboards(params.portalId, (result) => {
       let defaultDashboardId = 0
       const dashboardData = listToTree(result, 0)
@@ -211,16 +216,16 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     if (nextProps.dashboards !== this.props.dashboards) {
       this.initalDashboardData(nextProps.dashboards)
     }
-    if (nextProps && nextProps.projectRoles) {
-      this.setState({
-        exludeRoles: nextProps.projectRoles.map((role) => {
-          return {
-            ...role,
-            permission: false
-          }
-        })
-      })
-    }
+    // if (nextProps && nextProps.projectRoles) {
+    //   console.log('componentWillReceiveProps')
+    //   this.setState({
+    //     exludeRoles: nextProps.projectRoles.map((role) => {
+    //       return {
+    //         ...role
+    //       }
+    //     })
+    //   })
+    // }
   }
 
 
@@ -274,14 +279,16 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           const addObj = {
             ...obj,
             parentId: Number(folder),
-            index: indexTemp
+            index: indexTemp,
+            roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id)
           }
 
           const editObj = [{
             ...obj,
             parentId: Number(folder),
             id,
-            index
+            index,
+            roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id)
           }]
 
           const currentArr = dashboards.filter((d) => d.parentId === Number(folder))
@@ -438,6 +445,15 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     this.setState({
       formVisible: true,
       formType: 'add'
+    }, () => {
+      this.setState({
+        exludeRoles: this.props.projectRoles.map((role) => {
+          return {
+            ...role,
+            permission: true
+          }
+        })
+      })
     })
   }
 
@@ -491,36 +507,20 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           })
         }, 0)
       })
+
+      const { onExcludeRoles, projectRoles } = this.props
+
+      if (onExcludeRoles && item && item.id) {
+        onExcludeRoles('dashboard', item.id, (result: number[]) => {
+          this.setState({
+            exludeRoles:  projectRoles.map((role) => {
+              return result.some((re) => re === role.id) ? role : {...role, permission: true}
+            })
+          })
+        })
+      }
     })
   }
-
-  // private showDisplayFormModal = (formType: 'edit' | 'add', display?: IDisplay) => (e: React.MouseEvent<HTMLDivElement>) => {
-  //   e.stopPropagation()
-  //   this.setState({
-  //     editingDisplay: display,
-  //     formType,
-  //     formVisible: true
-  //   })
-  //   const { onExcludeRoles, projectRoles } = this.props
-  //   if (onExcludeRoles && display) {
-  //     onExcludeRoles('display', display.id, (result: number[]) => {
-  //       this.setState({
-  //         exludeRoles:  projectRoles.map((role) => {
-  //           return result.some((re) => re === role.id) ? role : {...role, permission: true}
-  //         })
-  //       })
-  //     })
-  //   } else {
-  //     this.setState({
-  //       exludeRoles: this.state.exludeRoles.map((role) => {
-  //         return {
-  //           ...role,
-  //           permission: false
-  //         }
-  //       })
-  //     })
-  //   }
-  // }
 
 
   private onOperateMore = (item, type) => {
@@ -889,7 +889,9 @@ export function mapDispatchToProps (dispatch) {
     onHideNavigator: () => dispatch(hideNavigator()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
-    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id))
+    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
+    onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
+    onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id))
   }
 }
 
