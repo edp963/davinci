@@ -95,7 +95,7 @@ export class ProjectRole extends React.Component<IRoleProps, IRoleStates> {
   public componentWillMount () {
     const {vizs} = this.props
     this.loadOrganizationRole()
-    this.loadProjectRoles()
+    this.loadProjectRoles(this.props.projectDetail['id'])
     if (vizs && vizs.length) {
       this.setState({vizs})
     }
@@ -103,7 +103,7 @@ export class ProjectRole extends React.Component<IRoleProps, IRoleStates> {
 
   private loadOrganizationRole = () => this.props.onLoadOrganizationRole(this.props.currentOrganization['id'])
 
-  private loadProjectRoles = () => this.props.onLoadProjectRoles(this.props.projectDetail['id'])
+  private loadProjectRoles = (id) => this.props.onLoadProjectRoles(id)
 
   private loopVizs = (key, value, tree) => {
     tree.forEach((viz) => {
@@ -143,13 +143,16 @@ export class ProjectRole extends React.Component<IRoleProps, IRoleStates> {
   }
 
   public componentWillReceiveProps (nextProps) {
-    const { projectRoles } = nextProps
+    const { projectRoles, projectDetail: {id} } = nextProps
     if (projectRoles !== this.props.projectRoles) {
         this.setState ({
           projectRoles
         })
         const roled = projectRoles.map((role) => role.id)
         this.setState({roleTargetKeys: roled})
+    }
+    if (id !== this.props.projectDetail['id']) {
+      this.loadProjectRoles(id)
     }
   }
 
@@ -169,7 +172,7 @@ export class ProjectRole extends React.Component<IRoleProps, IRoleStates> {
     const { roleTargetKeys } = this.state
     const { projectDetail: {id} } = this.props
     this.props.onAddProjectRole(id, roleTargetKeys, () => {
-        this.loadProjectRoles()
+        this.loadProjectRoles(id)
         this.toggleModal('relationRoleVisible')()
     })
   }
@@ -268,7 +271,7 @@ export class ProjectRole extends React.Component<IRoleProps, IRoleStates> {
                 <Popconfirm
                   title="确定删除？"
                   placement="bottom"
-                  onConfirm={this.props.onDeleteRelRoleProject(record.id, projectDetail.id, () => this.loadProjectRoles())}
+                  onConfirm={this.props.onDeleteRelRoleProject(record.id, projectDetail.id, () => this.loadProjectRoles(projectDetail.id))}
                 >
                   <Tooltip title="删除">
                    <a href="javascript:;">删除角色</a>
