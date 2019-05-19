@@ -49,7 +49,7 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
   )]
 
   private toggleCheckAll = (e: CheckboxChangeEvent) => {
-    const localAuth = e.target.checked ? Object.keys(this.props.model) : []
+    const localAuth = e.target.checked ? [] : Object.keys(this.props.model)
     this.setState({ localAuth })
   }
 
@@ -57,9 +57,9 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
     const checked = e.target.checked
     this.setState(({ localAuth }) => {
       if (checked) {
-        return { localAuth: [...localAuth, name] }
+        return { localAuth: localAuth.filter((item) => item !== name) }
       }
-      return { localAuth: localAuth.filter((item) => item !== name) }
+      return { localAuth: [...localAuth, name] }
     })
   }
 
@@ -67,7 +67,7 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
     const { model } = props
     const { localAuth } = this.state
     const indeterminate = (localAuth.length > 0 && localAuth.length !== Object.keys(model).length)
-    const checkAll = (localAuth.length === Object.keys(model).length)
+    const checkAll = (localAuth.length === 0)
 
     return (
       <Checkbox
@@ -82,7 +82,7 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
 
   private renderItem = (name: string) => {
     const { localAuth } = this.state
-    const checked = localAuth.includes(name)
+    const checked = !localAuth.includes(name)
     return (
       <ListItem>
         <Checkbox
@@ -101,7 +101,7 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
 
     return (
       <Modal
-        title="勾选不可见字段"
+        title="勾选可见字段"
         visible={visible}
         footer={this.modalFooter}
         onCancel={onCancel}
