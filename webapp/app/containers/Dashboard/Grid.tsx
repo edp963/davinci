@@ -37,7 +37,6 @@ import formReducer from './FormReducer'
 import { IViewBase, IFormedViews } from '../View/types'
 
 import Container from '../../components/Container'
-// import DataDrill from '../../components/DataDrill/Panel'
 import DashboardToolbar from './components/DashboardToolbar'
 import DashboardItemForm from './components/DashboardItemForm'
 import DrillPathSetting from './components/DrillPathSetting'

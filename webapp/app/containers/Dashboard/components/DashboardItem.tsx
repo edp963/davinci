@@ -822,6 +822,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       })
     }
     const categoriesCol = []
+    console.log({model})
     Object.entries(model).forEach(([key, m]) => {
       if (m.modelType === 'category') {
         categoriesCol.push({
