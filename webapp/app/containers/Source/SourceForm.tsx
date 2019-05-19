@@ -243,5 +243,5 @@ export class SourceForm extends React.PureComponent<ISourceFormProps & FormCompo
   }
 }
 
-export default Form.create<ISourceFormProps>()(SourceForm)
+export default Form.create<ISourceFormProps & FormComponentProps>()(SourceForm)
 

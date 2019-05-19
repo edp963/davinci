@@ -41,7 +41,7 @@ interface IDashboardItemFormProps {
   polling: boolean,
   step: number
   onWidgetSelect: (selectedRowKeys: any[]) => void
-  onPollingSelect: () => any
+  onPollingSelect: (val: string) => any
 }
 
 interface IDashboardItemFormStates {
@@ -315,4 +315,4 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
   }
 }
 
-export default Form.create<IDashboardItemFormProps>()(DashboardItemForm)
+export default Form.create<IDashboardItemFormProps & FormComponentProps>()(DashboardItemForm)

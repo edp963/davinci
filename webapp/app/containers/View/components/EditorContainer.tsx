@@ -206,14 +206,14 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
   }
 
   private getSqlHints = memoizeOne((tables: string[], mapTableColumns: IMapTableColumns, variables: IViewVariable[]) => {
-    const tableHints = tables.reduce((acc, tableName) => {
-      acc[tableName] = !mapTableColumns[tableName] ? [] : mapTableColumns[tableName].columns.map((c) => c.name)
-      return acc
-    }, {})
-    const hints = variables.reduce((acc, v) => {
+    const variableHints = variables.reduce((acc, v) => {
       acc[`$${v.name}$`] = []
       return acc
-    }, tableHints)
+    }, {})
+    const hints = tables.reduce((acc, tableName) => {
+      acc[tableName] = !mapTableColumns[tableName] ? [] : mapTableColumns[tableName].columns.map((c) => c.name)
+      return acc
+    }, variableHints)
     return hints
   })
 

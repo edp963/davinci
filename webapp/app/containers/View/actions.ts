@@ -27,7 +27,7 @@ import {
 } from './types'
 import { IDataRequestParams } from 'containers/Dashboard/Grid'
 import { RenderType } from 'containers/Widget/components/Widget'
-import { IDistinctValueReqeustParams } from 'app/components/Filters';
+import { IDistinctValueReqeustParams } from 'app/components/Filters'
 
 export const ViewActions = {
   viewsLoaded (views: IViewBase[]) {
@@ -54,26 +54,26 @@ export const ViewActions = {
     }
   },
 
-  viewDetailLoaded (view: IView) {
+  viewsDetailLoaded (views: IView[]) {
     return {
-      type: ActionTypes.LOAD_VIEW_DETAIL_SUCCESS,
+      type: ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS,
       payload: {
-        view
+        views
       }
     }
   },
-  loadViewDetail (viewId: number, resolve?: () => void) {
+  loadViewsDetail (viewIds: number[], resolve?: () => void) {
     return {
-      type: ActionTypes.LOAD_VIEW_DETAIL,
+      type: ActionTypes.LOAD_VIEWS_DETAIL,
       payload: {
-        viewId,
+        viewIds,
         resolve
       }
     }
   },
-  loadViewDetailFail () {
+  loadViewsDetailFail () {
     return {
-      type: ActionTypes.LOAD_VIEW_DETAIL_FAILURE,
+      type: ActionTypes.LOAD_VIEWS_DETAIL_FAILURE,
       payload: {}
     }
   },

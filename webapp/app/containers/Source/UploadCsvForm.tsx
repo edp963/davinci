@@ -214,5 +214,5 @@ export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps & For
   }
 }
 
-export default Form.create<IUploadCsvFormProps>()(UploadCsvForm)
+export default Form.create<IUploadCsvFormProps & FormComponentProps>()(UploadCsvForm)
 

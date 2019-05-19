@@ -208,4 +208,4 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
   }
 }
 
-export default Form.create<IDisplayFormModalProps>()(DisplayFormModal)
+export default Form.create<IDisplayFormModalProps & FormComponentProps>()(DisplayFormModal)

@@ -348,7 +348,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
 
 const mapDispatchToProps = (dispatch: Dispatch<ViewActionType | SourceActionType | any>) => ({
   onHideNavigator: () => dispatch(hideNavigator()),
-  onLoadViewDetail: (viewId: number) => dispatch(ViewActions.loadViewDetail(viewId)), // @FIXME only load current editing view
+  onLoadViewDetail: (viewId: number) => dispatch(ViewActions.loadViewsDetail([viewId])),
   onLoadSources: (projectId) => dispatch(SourceActions.loadSources(projectId)),
   onLoadSourceTables: (sourceId) => dispatch(SourceActions.loadSourceTables(sourceId)),
   onLoadTableColumns: (sourceId, tableName) => dispatch(SourceActions.loadTableColumns(sourceId, tableName)),
