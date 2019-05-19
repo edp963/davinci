@@ -70,14 +70,16 @@ export function* getViewDetail (action: ViewActionType) {
 export function* addView (action: ViewActionType) {
   if (action.type !== ActionTypes.ADD_VIEW) { return }
   const { payload } = action
+  const { view, resolve } = payload
   const { viewAdded, addViewFail } = ViewActions
   try {
     const asyncData = yield call<AxiosRequestConfig>(request, {
       method: 'post',
       url: api.view,
-      data: payload.view
+      data: view
     })
     yield put(viewAdded(asyncData.payload))
+    resolve()
   } catch (err) {
     yield put(addViewFail())
     errorHandler(err)
