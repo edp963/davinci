@@ -411,6 +411,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       }
 
       if (widgetProps.dimetionAxis) {
+        console.log('1')
         if (widgetProps.dimetionAxis === 'col') {
           this.setState({
             widgetProps: {
@@ -440,6 +441,16 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             }
           })
         }
+      } else {
+        this.setState({
+          widgetProps: {
+            ...widgetProps,
+            ...{
+              cols: historyCols,
+              rows: historyRows
+            }
+          }
+        })
       }
       if (item === -1 && !history) {
         this.setState({widgetProps: {...this.state.cacheWidgetProps}})

@@ -37,7 +37,6 @@ import formReducer from './FormReducer'
 import { IViewBase, IFormedViews } from '../View/types'
 
 import Container from '../../components/Container'
-// import DataDrill from '../../components/DataDrill/Panel'
 import DashboardToolbar from './components/DashboardToolbar'
 import DashboardItemForm from './components/DashboardItemForm'
 import DrillPathSetting from './components/DrillPathSetting'
@@ -1033,6 +1032,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           const rows = widgetConfig.rows
           name = rows[rows.length - 1]['name']
         } else if (mode === 'chart'  && widgetConfig.selectedChart === ChartTypes.Table) {
+          // todo coustomTable
           const coustomTable = sourceDataFilter.reduce((a, b) => {
             a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
             return a
