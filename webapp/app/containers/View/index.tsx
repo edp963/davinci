@@ -116,8 +116,9 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
   private getTableColumns = (
     { viewPermission, AdminButton, EditButton }: ReturnType<typeof ViewList.getViewPermission>
   ) => {
-    const {} = this.props
+    const { views } = this.props
     const { tempFilterViewName, filterViewName, filterDropdownVisible, tableSorter } = this.state
+    const sourceNames = views.map(({ sourceName }) => sourceName)
 
     const columns: Array<ColumnProps<IViewBase>> = [{
       title: '名称',
@@ -139,7 +140,12 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
       dataIndex: 'description'
     }, {
       title: 'Source',
-      dataIndex: 'source.name'
+      dataIndex: 'sourceName',
+      filterMultiple: false,
+      onFilter: (val, record) => record.sourceName === val,
+      filters: sourceNames
+        .filter((name, idx) => sourceNames.indexOf(name) === idx)
+        .map((name) => ({ text: name, value: name }))
     }]
 
     if (filterViewName) {
