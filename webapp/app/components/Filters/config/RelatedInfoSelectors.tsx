@@ -19,12 +19,16 @@
  */
 
 import React, { PureComponent } from 'react'
-import { Row, Col, Checkbox, Select, Radio, Empty } from 'antd'
+import classnames from 'classnames'
+import { Form, Row, Col, Checkbox, Select, Radio, Empty } from 'antd'
 import { InteractionType, IGlobalControlRelatedField } from '..'
 import { RadioChangeEvent } from 'antd/lib/radio'
+import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { IRelatedItemSource, IRelatedViewSource } from './FilterConfig'
 import { IViewModelProps } from 'app/containers/View/types'
+import FilterTypes from '../filterTypes'
 
+const FormItem = Form.Item
 const Option = Select.Option
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
@@ -34,8 +38,11 @@ interface IRelatedInfoSelectorsProps {
   itemSelectorSource: IRelatedItemSource[]
   viewSelectorSource: IRelatedViewSource[]
   interactionType: InteractionType
+  controlType: FilterTypes
   onItemCheck: (id: number) => () => void
   onModelOrVariableSelect: (id: number) => (value: string | string[]) => void
+  onOptionsFromColumnCheck: (id: number) => (e: CheckboxChangeEvent) => void
+  onOptionsFromColumnSelect: (id: number) => (value: string) => void
   onToggleCheckAll: () => void
   onInteractionTypeChange: (e: RadioChangeEvent) => void
 }
@@ -58,14 +65,18 @@ export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsPro
       itemSelectorSource,
       viewSelectorSource,
       interactionType,
+      controlType,
       onItemCheck,
       onModelOrVariableSelect,
+      onOptionsFromColumnCheck,
+      onOptionsFromColumnSelect,
       onToggleCheckAll,
       onInteractionTypeChange
     } = this.props
     const checkAll = itemSelectorSource.every((i) => i.checked)
 
     const interactionTypeContent = interactionType === 'column' ? '字段' : '变量'
+    const variableSelect = interactionType === 'variable' && controlType === FilterTypes.Select
 
     const widgetCheckboxes = itemSelectorSource.map((item) => (
       <li key={item.id}>
@@ -84,54 +95,112 @@ export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsPro
     viewSelectorSource.forEach((v) => {
       let value
       let isMultiple
+      let optionsFromColumn
+      let column
 
       if (Array.isArray(v.fields)) {
-        value = v.fields.map((f) => f.name)
         isMultiple = true
+        value = v.fields.map((f) => f.name)
       } else {
-        value = v.fields && v.fields.name
         isMultiple = false
+        if (v.fields) {
+          value = v.fields.name
+          optionsFromColumn = v.fields.optionsFromColumn
+          column = v.fields.column
+        }
+      }
+
+      const optionsFromColumnFormItemProps = optionsFromColumn && {
+        labelCol: { span: 10 },
+        wrapperCol: { span: 14 }
       }
 
       viewVariableSelects = viewVariableSelects.concat(
-        <Row key={v.id}>
-          <Col span={24}>
-            <h4>{v.name}</h4>
-          </Col>
-          <Col span={24}>
-            <Select
-              size="small"
-              placeholder="请选择"
-              className={styles.selector}
-              value={value}
-              onChange={onModelOrVariableSelect(v.id)}
-              dropdownMatchSelectWidth={false}
-              {...isMultiple && {mode: 'multiple'}}
-            >
-              {
-                interactionType === 'column' ? (
-                  v.model.map((m: IViewModelProps) => (
-                    <Option key={m.name} value={m.name}>{m.name}</Option>
-                  ))
-                ) : (
-                  v.variables.map((v) => (
-                    <Option
-                      key={v.name}
-                      value={v.name}
-                      disabled={
-                        isMultiple
-                        && value.length === 2
-                        && !value.includes(v.name)
-                      }
+        <div key={v.id}>
+          <h4 className={classnames({[styles.variableSelect]: variableSelect})}>
+            {v.name}
+            {
+              variableSelect && (
+                <Checkbox
+                  className={styles.checkbox}
+                  checked={optionsFromColumn}
+                  onChange={onOptionsFromColumnCheck(v.id)}
+                >
+                  从字段取值
+                </Checkbox>
+              )
+            }
+          </h4>
+          <Row gutter={4}>
+            <Col span={24}>
+              <FormItem
+                className={styles.formItem}
+                {...optionsFromColumn && { label: '变量' }}
+                {...optionsFromColumnFormItemProps}
+              >
+                <Select
+                  size="small"
+                  placeholder="请选择"
+                  className={styles.selector}
+                  value={value}
+                  onChange={onModelOrVariableSelect(v.id)}
+                  dropdownMatchSelectWidth={false}
+                  {...isMultiple && {mode: 'multiple'}}
+                >
+                  {
+                    interactionType === 'column' ? (
+                      v.model.map((m: IViewModelProps) => (
+                        <Option key={m.name} value={m.name}>{m.name}</Option>
+                      ))
+                    ) : (
+                      v.variables.map((v) => (
+                        <Option
+                          key={v.name}
+                          value={v.name}
+                          disabled={
+                            isMultiple
+                            && value.length === 2
+                            && !value.includes(v.name)
+                          }
+                        >
+                          {v.name}
+                        </Option>
+                      ))
+                    )
+                  }
+                </Select>
+              </FormItem>
+            </Col>
+          </Row>
+          {
+            optionsFromColumn && (
+              <Row gutter={4}>
+                <Col span={24}>
+                  <FormItem
+                    className={styles.formItem}
+                    {...optionsFromColumn && { label: '取值字段' }}
+                    {...optionsFromColumnFormItemProps}
+                  >
+                    <Select
+                      size="small"
+                      placeholder="请选择"
+                      className={styles.selector}
+                      value={column}
+                      onChange={onOptionsFromColumnSelect(v.id)}
+                      dropdownMatchSelectWidth={false}
                     >
-                      {v.name}
-                    </Option>
-                  ))
-                )
-              }
-            </Select>
-          </Col>
-        </Row>
+                      {
+                        v.model.map((m: IViewModelProps) => (
+                          <Option key={m.name} value={m.name}>{m.name}</Option>
+                        ))
+                      }
+                    </Select>
+                  </FormItem>
+                </Col>
+              </Row>
+            )
+          }
+        </div>
       )
     })
 
@@ -164,6 +233,7 @@ export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsPro
           <div className={styles.title}>
             <h2>类别</h2>
             <RadioGroup
+              className={styles.interactionType}
               size="small"
               value={interactionType}
               onChange={onInteractionTypeChange}

@@ -26,10 +26,14 @@ export interface IGlobalControlRelatedItem {
 export interface IGlobalControlRelatedField {
   name: string
   type: SqlTypes | ViewVariableValueTypes
+  optionsFromColumn?: boolean
+  column?: string
 }
 
-export interface IRenderTreeItem extends IGlobalControl {
-  children?: IRenderTreeItem[]
+export interface IGlobalControlSelectOption {
+  text: string
+  value: string
+  variable?: string
 }
 
 export interface IGlobalControl {
@@ -40,10 +44,8 @@ export interface IGlobalControl {
   operator: OperatorTypes
   dateFormat?: DatePickerFormats
   multiple?: boolean
-  textColumn?: string
-  valueColumn?: string
-  parentColumn?: string
-  options?: any[]
+  customOptions?: boolean
+  options?: IGlobalControlSelectOption[]
   width: number
   dynamicDefaultValue?: any
   defaultValue?: any
@@ -54,6 +56,10 @@ export interface IGlobalControl {
     [viewId: string]: IGlobalControlRelatedField | IGlobalControlRelatedField[]
   }
   parent?: string
+}
+
+export interface IRenderTreeItem extends IGlobalControl {
+  children?: IRenderTreeItem[]
 }
 
 export interface IControlRequestParams {
@@ -73,7 +79,7 @@ export interface IDistinctValueReqeustParams {
 
 export type OnGetControlOptions = (
   controlKey: string,
-  interactionType: InteractionType,
+  userOptions: boolean,
   paramsOrOptions: { [viewId: string]: IDistinctValueReqeustParams } | any[]
 ) => void
 
@@ -109,47 +115,30 @@ export function getDefaultFilterItem (): IGlobalControl {
   return filterItem
 }
 
-export const traverseFilters = (
-  filters: IGlobalControl[],
-  key: string,
-  cb: (filter: IGlobalControl, idx: number, originFilters: IGlobalControl[], parent?: IGlobalControl) => void,
-  parent?: IGlobalControl
-) => {
-  if (!Array.isArray(filters)) { return }
-
-  filters.forEach((filter, idx, arr) => {
-    if (filter.key === key) {
-      return cb(filter, idx, arr, parent)
-    }
-    if (filter.children) {
-      return traverseFilters(filter.children, key, cb, filter)
-    }
-  })
-}
-
-export function renderInputText (filter, onChange) {
+export function renderInputText (onChange) {
   return (
-    <Input placeholder={filter.name} onPressEnter={onChange} />
+    <Input.Search placeholder="请输入" onPressEnter={onChange} />
   )
 }
 
-export function renderNumberRange (filter, onChange) {
+export function renderNumberRange (onChange) {
   return (
-    <NumberRange placeholder={filter.name} onSearch={onChange} />
+    <NumberRange onSearch={onChange} />
   )
 }
 
 export function renderSelect (control: IGlobalControl, onChange, options) {
-  const { name, multiple } = control
+  const { multiple } = control
+  const pureOptions = options.map((o) => typeof o === 'object' ? o.value : o)
   return (
     <Select
       showSearch
       allowClear
-      placeholder={name}
+      placeholder="请选择"
       onChange={onChange}
       {...multiple && {mode: 'multiple'}}
     >
-      {options.map((o) => (<Option key={o} value={o}>{o}</Option>))}
+      {pureOptions.map((o) => (<Option key={o} value={o}>{o}</Option>))}
     </Select>
   )
 }
@@ -168,7 +157,7 @@ export function renderTreeSelect (filter: IGlobalControl, onChange, options) {
       allowClear
       multiple
       treeDataSimpleMode
-      placeholder={name}
+      placeholder="请选择"
       treeData={treeData}
       onChange={onChange}
     />
@@ -186,7 +175,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
   if (filter.multiple) {
     return (
       <MultiDatePicker
-        placeholder={filter.name}
+        placeholder="请选择"
         format={filter.dateFormat}
         onChange={onChange}
       />
@@ -197,7 +186,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
         return (
           <WeekPicker
             className={styles.filterControlComponent}
-            placeholder={filter.name}
+            placeholder="请选择"
             onChange={onChange}
             {...extraProps}
           />
@@ -207,7 +196,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
         return (
           <MonthPicker
             className={styles.filterControlComponent}
-            placeholder={filter.name}
+            placeholder="请选择"
             format={filter.dateFormat}
             onChange={onChange}
             {...extraProps}
@@ -218,7 +207,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
         return (
           <DatePicker
             className={styles.filterControlComponent}
-            placeholder={filter.name}
+            placeholder="请选择"
             showTime={isDatetimePicker}
             format={filter.dateFormat}
             onChange={isDatetimePicker ? datetimePickerChange(onChange) : onChange}
@@ -231,7 +220,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
 }
 
 export function renderDateRange (filter, onChange) {
-  const placeholder: [string, string] = [`${filter.name}从`, '到']
+  const placeholder: [string, string] = ['从', '到']
   const { Datetime, DatetimeMinute } = DatePickerFormats
   const isDatetimePicker = [Datetime, DatetimeMinute].includes(filter.dateFormat)
   return (
@@ -291,11 +280,11 @@ export function getVariableValue (filter: IGlobalControl, fields: IGlobalControl
         return arr
       }, [])
       break
-    case FilterTypes.TreeSelect:
-      if (value.length && value.length > 0) {
-        variable.push({ name, value: value.map((val) => getValidVariableValue(val, valueType)).join(',') })
-      }
-      break
+    // case FilterTypes.TreeSelect:
+    //   if (value.length && value.length > 0) {
+    //     variable.push({ name, value: value.map((val) => getValidVariableValue(val, valueType)).join(',') })
+    //   }
+    //   break
     case FilterTypes.Date:
       if (multiple) {
         variable.push({ name, value: value.split(',').map((v) => `'${v}'`).join(',') })
@@ -352,11 +341,11 @@ export function getModelValue (control: IGlobalControl, field: IGlobalControlRel
         filters.push(`${name} <= ${getValidColumnValue(value[1], sqlType)}`)
       }
       break
-    case FilterTypes.TreeSelect:
-      if (value.length && value.length > 0) {
-        filters.push(`${name} ${operator} (${value.map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
-      }
-      break
+    // case FilterTypes.TreeSelect:
+    //   if (value.length && value.length > 0) {
+    //     filters.push(`${name} ${operator} (${value.map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
+    //   }
+    //   break
     case FilterTypes.Date:
       if (multiple) {
         filters.push(`${name} ${operator} (${value.split(',').map((val) => getValidColumnValue(val, sqlType)).join(',')})`)

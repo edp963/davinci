@@ -211,8 +211,8 @@ interface IGridProps {
     requestParams: IDataRequestParams
   ) => void
   onClearCurrentDashboard: () => any
-  onLoadSelectOptions: (controlKey: number, requestParams: { [viewId: string]: IDistinctValueReqeustParams }) => void
-  onSetSelectOptions: (controlKey: number, options: any[]) => void
+  onLoadSelectOptions: (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }) => void
+  onSetSelectOptions: (controlKey: string, options: any[]) => void
   onRenderDashboardItem: (itemId: number) => void
   onResizeDashboardItem: (itemId: number) => void
   onResizeAllDashboardItem: () => void
@@ -870,11 +870,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private getOptions = (controlKey, interactionType: InteractionType, paramsOrOptions) => {
-    if (interactionType === 'column') {
-      this.props.onLoadSelectOptions(controlKey, paramsOrOptions)
-    } else {
+  private getOptions = (controlKey: string, useOptions: boolean, paramsOrOptions) => {
+    if (useOptions) {
       this.props.onSetSelectOptions(controlKey, paramsOrOptions)
+    } else {
+      this.props.onLoadSelectOptions(controlKey, paramsOrOptions)
     }
   }
 

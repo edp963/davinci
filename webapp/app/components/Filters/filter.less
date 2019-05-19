@@ -22,38 +22,32 @@
     .title {
       flex-shrink: 0;
       padding: 0 8px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
+      position: relative;
   
       h2 {
-        flex: 1;
         color: @light-text-color;
         font-size: 14px;
         line-height: 3em;
       }
+
+      .rightSide {
+        position: absolute;
+        top: 10px
+      }
+
+      .interactionType {
+        .rightSide;
+        right: 8px;
+      }
   
       .checkAll {
-        flex-shrink: 0;
+        .rightSide;
+        right: 0;
+        color: @light-text-color;
         font-weight: normal;
       }
-  
-      .type {
-        flex-shrink: 0;
-      }
-  
-      // &.widgetConfigTitle {
-      //   border-bottom: 1px solid @border-color-split;
-      // }
     }
   }
-
-  // .bottom {
-  //   min-height: 90px;
-  //   border-top: 1px solid @border-color-split;
-  //   display: flex;
-  //   flex-direction: column;
-  // }
 }
 
 .filterList {
@@ -260,12 +254,40 @@
     }
 
     h4 {
+      position: relative;
       color: @light-text-color;
+      .ellipsis;
+
+      &.variableSelect {
+        padding-right: 116px;
+      }
+
+      .checkbox {
+        position: absolute;
+        top: 0;
+        right: 0;
+        color: @light-text-color;
+        font-weight: normal;
+      }
+    }
+
+    .formItem {
+      margin: 2px 0 0 0;
     }
 
     .selector {
       width: 100%;
-      margin: 4px 0;
+    }
+    
+    :global(.ant-form-item-label) {
+      line-height: 32px;
+
+      label {
+        color: @light-text-color;
+      }
+    }
+    :global(.ant-form-item-control) {
+      line-height: 32px;
     }
   }
 }
@@ -277,6 +299,12 @@
 
   .formBody {
     padding: 0 16px;
+  }
+
+  .optionList {
+    flex: 1;
+    padding-bottom: 16px;
+    overflow-y: auto;
   }
 
   :global(.ant-form-item) {
@@ -325,13 +353,39 @@
 
 .filterPanel {
   background-color: @white;
-  padding: 0 8px !important;
-  margin-top: 16px !important;
+  padding: 4px 8px 8px;
+  margin-top: 16px;
   border-radius: 3px;
 }
 
 .filterControl {
-  margin: 8px 0 !important;
+  margin: 2px 0;
+  :global(.ant-form-item) {
+    margin-bottom: 4px;
+  }
+  :global(.ant-form-item-label) {
+    line-height: 1em;
+  }
+  :global(.ant-form-item-label label) {
+    color: @disabled-text-color;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  :global(.ant-form-item-required:before) {
+    margin-right: 2px;
+    vertical-align: middle;
+  }
+}
+
+.optionsModal {
+  .formItem {
+    margin: 0;
+  }
+
+  :global(.ant-modal-header),
+  :global(.ant-modal-body) {
+    padding: 16px;
+  }
 }
 
 .filterControlComponent {

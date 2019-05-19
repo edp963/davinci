@@ -23,10 +23,12 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import classnames from 'classnames'
 
-import { Form, Row, Col, Input, Checkbox, Select, Radio } from 'antd'
+import { Form, Row, Col, Input, Checkbox, Select, Radio, Button, List, Modal } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
 const FormItem = Form.Item
 const Option = Select.Option
+const ListItem = List.Item
+const TextArea = Input.TextArea
 
 import { OperatorTypes } from 'utils/operatorTypes'
 import { FilterTypeList, FilterTypesLocale, FilterTypesOperatorSetting, FilterTypes } from '../filterTypes'
@@ -51,6 +53,7 @@ interface IFilterFormProps {
   controlFormValues: any
   onControlTypeChange: (value) => void
   onSetControlFormValues: (values) => void
+  onOpenOptionModal: () => void
 }
 
 export class FilterForm extends React.Component<IFilterFormProps, {}> {
@@ -107,23 +110,32 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
     return container
   }
 
+  private renderListItem = (item) => {
+    return (
+      <ListItem>{item}</ListItem>
+    )
+  }
+
   public render () {
-    const { form, controlFormValues } = this.props
-    // const {
-    //   modelItems
-    // } = this.state
+    const { form, controlFormValues, onOpenOptionModal } = this.props
     const { getFieldDecorator } = form
 
     let type
     let operatorOptions
     let datePickerFormatOptions
+    let customOptions
+    let options
+    let listSource
     const filterTypeRelatedInput = []
 
     if (controlFormValues) {
-      const { type: typeValue, multiple } = controlFormValues
-      type = typeValue
-      operatorOptions = getOperatorOptions(typeValue, multiple)
-      datePickerFormatOptions = getDatePickerFormatOptions(typeValue, multiple)
+      const { type: t, multiple, customOptions: co, options: o } = controlFormValues
+      type = t
+      operatorOptions = getOperatorOptions(type, multiple)
+      datePickerFormatOptions = getDatePickerFormatOptions(type, multiple)
+      customOptions = co && type === FilterTypes.Select
+      options = o
+      listSource = options && options.map((o) => o.value)
 
       const dateFormatFormComponent = (
         <Col key="dateFormat" span={8}>
@@ -156,7 +168,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
         </Col>
       )
 
-      switch (typeValue) {
+      switch (type) {
         case FilterTypes.Date:
           filterTypeRelatedInput.push(dateFormatFormComponent)
           filterTypeRelatedInput.push(multipleFormComponent)
@@ -197,68 +209,6 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
         </Row>
         <Row gutter={8} className={styles.formBody}>
           {
-            type === FilterTypes.TreeSelect ? (
-              <>
-                <Col span={8}>
-                  <FormItem label="值字段">
-                    {getFieldDecorator('valueColumn', {
-                      rules: [{
-                        required: true,
-                        message: '不能为空'
-                      }]
-                    })(
-                      <Select size="small" dropdownMatchSelectWidth={false}>
-                        {/* {
-                          modelItems.map((item) => (
-                            <Option key={item.name} value={item.name}>{item.name}</Option>
-                          ))
-                        } */}
-                      </Select>
-                    )}
-                  </FormItem>
-                </Col>
-                <Col span={8}>
-                  <FormItem label="文本字段">
-                    {getFieldDecorator('textColumn', {
-                      rules: [{
-                        required: true,
-                        message: '不能为空'
-                      }]
-                    })(
-                      <Select size="small" dropdownMatchSelectWidth={false}>
-                        {/* {
-                          modelItems.map((item) => (
-                            <Option key={item.name} value={item.name}>{item.name}</Option>
-                          ))
-                        } */}
-                      </Select>
-                    )}
-                  </FormItem>
-                </Col>
-                <Col span={8}>
-                  <FormItem label="父级字段">
-                    {getFieldDecorator('parentColumn', {
-                      rules: [{
-                        required: true,
-                        message: '不能为空'
-                      }]
-                    })(
-                      <Select size="small" dropdownMatchSelectWidth={false}>
-                        {/* {
-                          modelItems.map((item) => (
-                            <Option key={item.name} value={item.name}>{item.name}</Option>
-                          ))
-                        } */}
-                      </Select>
-                    )}
-                  </FormItem>
-                </Col>
-              </>
-            ) : null
-          }
-        </Row>
-        <Row gutter={8} className={styles.formBody}>
-          {
             operatorOptions && !!operatorOptions.length && (
               <Col span={8}>
                 <FormItem label="对应关系">
@@ -295,6 +245,53 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
         <Row gutter={8} className={styles.formBody}>
           {this.renderDefaultValueComponent()}
         </Row>
+        {
+          type === FilterTypes.Select && (
+            <Row gutter={8} className={styles.formBody}>
+              <Col span={6}>
+                <FormItem label="选项">
+                  {getFieldDecorator('customOptions', {
+                    valuePropName: 'checked'
+                  })(
+                    <Checkbox>自定义选项</Checkbox>
+                  )}
+                </FormItem>
+              </Col>
+              {
+                customOptions && (
+                  <Col span={2}>
+                    <FormItem label=" " colon={false}>
+                      <Button
+                        size="small"
+                        type="primary"
+                        icon="plus"
+                        shape="circle"
+                        onClick={onOpenOptionModal}
+                      />
+                    </FormItem>
+                    <FormItem className={utilStyles.hide}>
+                      {getFieldDecorator('options', {})(<Input />)}
+                    </FormItem>
+                  </Col>
+                    )
+              }
+            </Row>
+          )
+        }
+        {
+          customOptions && (
+            <Row gutter={8} className={`${styles.formBody} ${styles.optionList}`}>
+              <Col span={12}>
+                <List
+                  size="small"
+                  bordered
+                  dataSource={listSource}
+                  renderItem={this.renderListItem}
+                />
+              </Col>
+            </Row>
+          )
+        }
       </Form>
     )
   }
@@ -325,10 +322,6 @@ const formOptions = {
             }
             break
         }
-      }
-
-      if (changedValues.hasOwnProperty('valueColumn')) {
-        changedValues.textColumn = changedValues.valueColumn
       }
 
       if (changedValues.hasOwnProperty('type')) {
