@@ -25,7 +25,6 @@ import { Radio, Select, Button, Icon, message } from 'antd'
 const RadioGroup = Radio.Group
 const Option = Select.Option
 
-import { IFormedViews, IViewModelProps } from 'containers/View/types'
 
 import SearchFilterDropdown from '../../../components/SearchFilterDropdown'
 import { SQL_NUMBER_TYPES, SQL_DATE_TYPES } from '../../../globalConstants'
@@ -35,7 +34,7 @@ const styles = require('../Dashboard.less')
 
 interface IDrillPathSettingProps {
   widgets: any[]
-  views: IFormedViews
+  views: any[]
   itemId: number | boolean
   selectedWidget: number[]
   drillpathSetting: any[]
@@ -51,7 +50,7 @@ interface IDrillPathSettingStates {
 }
 
 export interface IPathNode {
-  views: IViewModelProps[]
+  views: any[]
   widget: string
   enter: string
   out: string
@@ -73,15 +72,19 @@ export class DrillPathSetting extends React.PureComponent<IDrillPathSettingProps
     }
   }
   private getViewList = (widgetId) => {
-    const { views, widgets } = this.props
-    const widget = widgets.find((w) => w.id === widgetId)
-    const view = views[widget.viewId]
+    const {views, widgets} = this.props
+    const view = views.find((view) => view.id === (widgets.find((widget) => widget.id === widgetId))['viewId'])
     const { model } = view
-    const viewLists = Object.entries(model).map<IViewModelProps>(([name, m]) => ({ ...m, name }))
+    const modelObj = JSON.parse(model)
+    const viewLists = []
+    Object.entries(modelObj).forEach(([key, m]) => {
+      m['name'] = key
+      viewLists.push(m)
+    })
     return viewLists
   }
   private init = () => {
-    const { selectedWidget, drillpathSetting } = this.props
+    const {selectedWidget, drillpathSetting} = this.props
     const viewLists = this.getViewList(selectedWidget[0])
     let newPathNodes = void 0
     if (drillpathSetting && drillpathSetting.length) {
