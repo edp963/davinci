@@ -278,7 +278,7 @@ export function* getWidgetShareLink (action) {
 
 export function* getWidgetCsv (action) {
   const { itemId, widgetId, requestParams } = action.payload
-  const { filters, linkageFilters, globalFilters, variables, linkageVariables, globalVariables, ...rest } = requestParams
+  const { filters, tempFilters, linkageFilters, globalFilters, variables, linkageVariables, globalVariables, ...rest } = requestParams
 
   try {
     const path = yield call(request, {
@@ -286,7 +286,7 @@ export function* getWidgetCsv (action) {
       url: `${api.widget}/${widgetId}/excel`,
       data: {
         ...rest,
-        filters: filters.concat(linkageFilters).concat(globalFilters),
+        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
         params: variables.concat(linkageVariables).concat(globalVariables)
       }
     })

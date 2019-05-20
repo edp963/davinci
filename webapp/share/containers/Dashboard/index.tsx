@@ -287,6 +287,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     const cachedQueryConditions = currentItemsInfo[itemId].queryConditions
 
+    let tempFilters
     let linkageFilters
     let globalFilters
     let variables
@@ -297,6 +298,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let nativeQuery
 
     if (queryConditions) {
+      tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
       linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
       globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
       variables = queryConditions.variables || cachedQueryConditions.variables
@@ -306,6 +308,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       pagination = queryConditions.pagination || cachedQueryConditions.pagination
       nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
     } else {
+      tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
       globalFilters = cachedQueryConditions.globalFilters
       variables = cachedQueryConditions.variables
@@ -372,6 +375,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
         aggregators,
         filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
+        tempFilters,
         linkageFilters,
         globalFilters,
         variables,

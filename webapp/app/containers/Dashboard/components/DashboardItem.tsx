@@ -18,9 +18,9 @@
  * >>
  */
 
-import * as React from 'react'
-import * as Animate from 'rc-animate'
-import * as classnames from 'classnames'
+import React from 'react'
+import Animate from 'rc-animate'
+import classnames from 'classnames'
 
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
@@ -38,8 +38,8 @@ import { Icon, Tooltip, Popconfirm, Popover, Dropdown, Menu } from 'antd'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
 import { IProject } from '../../Projects'
-import { DEFAULT_SPLITER } from '../../../globalConstants'
 import { IQueryConditions, IQueryVariableMap } from '../Grid'
+import { IMapControlOptions, OnGetControlOptions, IDistinctValueReqeustParams } from 'app/components/Filters'
 const styles = require('../Dashboard.less')
 const utilStyles = require('../../../assets/less/util.less')
 
@@ -62,6 +62,7 @@ interface IDashboardItemProps {
   drillpathInstance?: any
   rendered?: boolean
   renderType: RenderType
+  controlSelectOptions: IMapControlOptions
   selectedItems: number[]
   currentProject?: IProject
   queryConditions: IQueryConditions
@@ -81,6 +82,7 @@ interface IDashboardItemProps {
   onDrillData?: (e: object) => void
   onDrillPathData?: (e: object) => void
   onSelectChartsItems?: (itemId: number, renderType: string, selectedItems: number[]) => void
+  onGetControlOptions: OnGetControlOptions
 }
 
 interface IDashboardItemStates {
@@ -636,12 +638,23 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       }
     }
   }
+
   private selectChartsItems = (selectedItems) => {
     const {onSelectChartsItems, itemId} = this.props
     if (onSelectChartsItems) {
       onSelectChartsItems(itemId, 'select', selectedItems)
     }
   }
+
+  private getControlSelectOptions = (
+    controlKey: string,
+    userOptions: boolean,
+    paramsOrOptions: { [viewId: string]: IDistinctValueReqeustParams } | any[]
+  ) => {
+    const { itemId, onGetControlOptions } = this.props
+    onGetControlOptions(controlKey, userOptions, paramsOrOptions, itemId)
+  }
+
   public render () {
     const {
       itemId,
@@ -656,6 +669,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       shareInfoLoading,
       downloadCsvLoading,
       renderType,
+      controlSelectOptions,
       currentProject,
       onShowEdit,
       onShowDrillEdit,
@@ -771,7 +785,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       )
     }
 
-    const controls = widgetProps.controls.filter((c) => c.type)
+    const controls = widgetProps.controls
     const controlPanelHandle = controls.length
       ? (
         <Tooltip title="选择参数">
@@ -907,7 +921,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             onClose={this.toggleControlPanel}
           >
             <DashboardItemControlForm
+              viewId={widget.viewId}
               controls={controls}
+              mapOptions={controlSelectOptions}
+              onGetOptions={this.getControlSelectOptions}
               onSearch={this.onControlSearch}
               onHide={this.toggleControlPanel}
             />

@@ -76,6 +76,7 @@ export function* getResultset (action) {
   const { renderType, itemId, dataToken, requestParams } = payload
   const {
     filters,
+    tempFilters,
     linkageFilters,
     globalFilters,
     variables,
@@ -92,7 +93,7 @@ export function* getResultset (action) {
       url: `${api.share}/data/${dataToken}`,
       data: {
         ...rest,
-        filters: filters.concat(linkageFilters).concat(globalFilters),
+        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
         params: variables.concat(linkageVariables).concat(globalVariables),
         pageSize,
         pageNo
@@ -108,7 +109,7 @@ export function* getResultset (action) {
 
 export function* getWidgetCsv (action) {
   const { itemId, requestParams, token } = action.payload
-  const { filters, linkageFilters, globalFilters, variables, linkageVariables, globalVariables, ...rest } = requestParams
+  const { filters, tempFilters, linkageFilters, globalFilters, variables, linkageVariables, globalVariables, ...rest } = requestParams
 
   try {
     const path = yield call(request, {
@@ -116,7 +117,7 @@ export function* getWidgetCsv (action) {
       url: `${api.share}/csv/${token}`,
       data: {
         ...rest,
-        filters: filters.concat(linkageFilters).concat(globalFilters),
+        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
         params: variables.concat(linkageVariables).concat(globalVariables)
       }
     })

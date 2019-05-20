@@ -1,15 +1,14 @@
 import React, { Component, PureComponent, Suspense, ReactNode } from 'react'
 import {
-  IGlobalControl,
   OnFilterControlValueChange,
   ControlOptions,
   renderInputText,
   renderNumberRange,
   renderSelect,
-  renderTreeSelect,
   renderDate,
   renderDateRange,
-  getDefaultValue
+  getDefaultValue,
+  IControlBase
 } from './'
 import { FilterTypes } from './filterTypes'
 import { Form } from 'antd'
@@ -19,13 +18,13 @@ const FormItem = Form.Item
 const styles = require('./filter.less')
 
 interface IParentInfo {
-  control: IGlobalControl
+  control: IControlBase
   value: any
 }
 
 interface IFilterControlProps {
   form: WrappedFormUtils
-  control: IGlobalControl
+  control: IControlBase
   currentOptions: ControlOptions
   parentsInfo?: IParentInfo[]
   onChange: OnFilterControlValueChange
@@ -60,10 +59,10 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
     return this.wrapFormItem(filter, component)
   }
 
-  private wrapFormItem = (control: IGlobalControl, component: Component): ReactNode => {
+  private wrapFormItem = (control: IControlBase, component: Component): ReactNode => {
     const { getFieldDecorator } = this.props.form
     return (
-      <FormItem label={control.name} className={styles.filterControl}>
+      <FormItem label={control.name} className={styles.controlItem}>
         {getFieldDecorator(`${control.key}`, {
           initialValue: getDefaultValue(control)
         })(component)}

@@ -69,7 +69,7 @@ import { ViewActionType } from '../View/actions'
 
 import {
   IGlobalControl,
-  IGlobalControlRelatedField,
+  IControlRelatedField,
   getVariableValue,
   getModelValue,
   getDefaultValue
@@ -156,28 +156,26 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
       const globalControlsInitialValue = {}
 
       globalControls.forEach((control: IGlobalControl) => {
-        const { interactionType, relatedItems, relatedViews, operator } = control
+        const { interactionType, relatedItems, relatedViews } = control
         const defaultValue = getDefaultValue(control)
         if (defaultValue) {
           Object.entries(relatedItems).forEach(([itemId, config]) => {
             Object.entries(relatedViews).forEach(([viewId, fields]) => {
               if (config.checked && config.viewId === Number(viewId)) {
                 const filterValue = interactionType === 'column'
-                  ? getModelValue(control, fields as IGlobalControlRelatedField, defaultValue)
+                  ? getModelValue(control, fields as IControlRelatedField, defaultValue)
                   : getVariableValue(control, fields, defaultValue)
-                items.forEach((itemId) => {
-                  if (!globalControlsInitialValue[itemId]) {
-                    globalControlsInitialValue[itemId] = {
-                      filters: [],
-                      variables: []
-                    }
+                if (!globalControlsInitialValue[itemId]) {
+                  globalControlsInitialValue[itemId] = {
+                    filters: [],
+                    variables: []
                   }
-                  if (interactionType === 'column') {
-                    globalControlsInitialValue[itemId].filters = globalControlsInitialValue[itemId].filters.concat(filterValue)
-                  } else {
-                    globalControlsInitialValue[itemId].variables = globalControlsInitialValue[itemId].variables.concat(filterValue)
-                  }
-                })
+                }
+                if (interactionType === 'column') {
+                  globalControlsInitialValue[itemId].filters = globalControlsInitialValue[itemId].filters.concat(filterValue)
+                } else {
+                  globalControlsInitialValue[itemId].variables = globalControlsInitialValue[itemId].variables.concat(filterValue)
+                }
               }
             })
           })
@@ -194,6 +192,7 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
+              tempFilters: [],
               linkageFilters: [],
               globalFilters: globalControlsInitialValue[w.id] ? globalControlsInitialValue[w.id].filters : [],
               variables: [],
@@ -209,7 +208,8 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
             downloadCsvLoading: false,
             interactId: '',
             rendered: false,
-            renderType: 'rerender'
+            renderType: 'rerender',
+            controlSelectOptions: {}
           }
           return obj
         }, {}))
@@ -226,6 +226,7 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
               datasource: { resultList: [] },
               loading: false,
               queryConditions: {
+                tempFilters: [],
                 linkageFilters: [],
                 globalFilters: [],
                 variables: [],
@@ -240,7 +241,8 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
               downloadCsvLoading: false,
               interactId: '',
               rendered: false,
-              renderType: 'rerender'
+              renderType: 'rerender',
+              controlSelectOptions: {}
             }
             return obj
           }, {})
@@ -292,6 +294,7 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
           renderType: payload.renderType,
           queryConditions: {
             ...itemsInfo[payload.itemId].queryConditions,
+            tempFilters: payload.requestParams.tempFilters,
             linkageFilters: payload.requestParams.linkageFilters,
             globalFilters: payload.requestParams.globalFilters,
             variables: payload.requestParams.variables,
@@ -428,15 +431,37 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
         }
       })
     case ViewActionTypes.LOAD_SELECT_OPTIONS_SUCCESS:
-      return state.set('currentDashboardSelectOptions', {
-        ...dashboardSelectOptions,
-        [payload.controlKey]: payload.values
-      })
+      return payload.itemId
+        ?  state.set('currentItemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            controlSelectOptions: {
+              ...itemsInfo[payload.itemId].controlSelectOptions,
+              [payload.controlKey]: payload.values
+            }
+          }
+        })
+        : state.set('currentDashboardSelectOptions', {
+          ...dashboardSelectOptions,
+          [payload.controlKey]: payload.values
+        })
     case SET_SELECT_OPTIONS:
-      return state.set('currentDashboardSelectOptions', {
-        ...dashboardSelectOptions,
-        [payload.controlKey]: payload.options
-      })
+      return payload.itemId
+        ? state.set('currentItemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            controlSelectOptions: {
+              ...itemsInfo[payload.itemId].controlSelectOptions,
+              [payload.controlKey]: payload.options
+            }
+          }
+        })
+        : state.set('currentDashboardSelectOptions', {
+          ...dashboardSelectOptions,
+          [payload.controlKey]: payload.options
+        })
     case RENDER_DASHBOARDITEM:
       return state.set('currentItemsInfo', {
         ...itemsInfo,

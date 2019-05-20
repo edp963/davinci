@@ -1,9 +1,9 @@
-import React, { Component, ReactNode } from 'react'
+import React, { Component } from 'react'
+import classnames from 'classnames'
 import { FormComponentProps } from 'antd/lib/form/Form'
 import {
   IGlobalControl,
-  IGlobalControlRelatedItem,
-  IGlobalControlRelatedField,
+  IControlRelatedField,
   IControlRequestParams,
   IMapItemControlRequestParams,
   OnGetControlOptions,
@@ -12,13 +12,12 @@ import {
   getVariableValue,
   getModelValue,
   getDefaultValue,
-  IRenderTreeItem,
+  IGlobalRenderTreeItem,
   getControlRenderTree,
-  getAllChildren
+  getAllChildren,
+  getParents
 } from './'
-import { FilterTypes, CascadeFilterTypes, defaultFilterControlGridProps, SHOULD_LOAD_OPTIONS } from './filterTypes'
-import { OperatorTypes } from 'utils/operatorTypes'
-import { SQL_NUMBER_TYPES } from '../../globalConstants'
+import { defaultFilterControlGridProps, SHOULD_LOAD_OPTIONS } from './filterTypes'
 import FilterControl from './FilterControl'
 
 import { Row, Col, Form } from 'antd'
@@ -34,9 +33,9 @@ interface IFilterPanelProps {
 }
 
 interface IFilterPanelStates {
-  renderTree: IRenderTreeItem[],
+  renderTree: IGlobalRenderTreeItem[],
   flatTree: {
-    [key: string]: IRenderTreeItem
+    [key: string]: IGlobalRenderTreeItem
   },
   controlValues: {
     [key: string]: any
@@ -130,7 +129,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
           }
         }
         if (interactionType === 'column') {
-          this.controlRequestParamsByItem[id][key].filters = getModelValue(control, fields as IGlobalControlRelatedField, val)
+          this.controlRequestParamsByItem[id][key].filters = getModelValue(control, fields as IControlRelatedField, val)
         } else {
           this.controlRequestParamsByItem[id][key].variables = getVariableValue(control, fields, val)
         }
@@ -139,8 +138,8 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
   }
 
   private loadOptions = (
-    renderControl: IRenderTreeItem,
-    flatTree: { [key: string]: IRenderTreeItem },
+    renderControl: IGlobalRenderTreeItem,
+    flatTree: { [key: string]: IGlobalRenderTreeItem },
     controlValues: { [key: string]: any }
   ) => {
     const { onGetOptions } = this.props
@@ -149,7 +148,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     if (customOptions) {
       onGetOptions(key, true, options)
     } else {
-      const parents = this.getParents(parent, flatTree)
+      const parents = getParents<IGlobalControl>(parent, flatTree)
 
       const requestParams = Object.entries(relatedViews).reduce((obj, [viewId, fields]) => {
         let filters = []
@@ -160,7 +159,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
           Object.entries(parentControl.relatedViews).forEach(([parentViewId, parentFields]) => {
             if (relatedViews[parentViewId]) {
               if (parentControl.interactionType === 'column') {
-                filters = filters.concat(getModelValue(parentControl, parentFields as IGlobalControlRelatedField, parentValue))
+                filters = filters.concat(getModelValue(parentControl, parentFields as IControlRelatedField, parentValue))
               } else {
                 variables = variables.concat(getVariableValue(parentControl, parentFields, parentValue))
               }
@@ -170,14 +169,14 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
 
         if (interactionType === 'column') {
           obj[viewId] = {
-            columns: [(fields as IGlobalControlRelatedField).name],
+            columns: [(fields as IControlRelatedField).name],
             filters,
             variables
           }
         } else {
-          if ((fields as IGlobalControlRelatedField).optionsFromColumn) {
+          if ((fields as IControlRelatedField).optionsFromColumn) {
             obj[viewId] = {
-              columns: [(fields as IGlobalControlRelatedField).column],
+              columns: [(fields as IControlRelatedField).column],
               filters,
               variables
             }
@@ -191,18 +190,6 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
         onGetOptions(key, false, requestParams)
       }
     }
-  }
-
-  private getParents = (parentKey: string, flatTree: { [key: string]: IRenderTreeItem }): IGlobalControl[] => {
-    let parents = []
-    const parent = flatTree[parentKey]
-    if (parent) {
-      const { children, ...rest } = parent
-      parents = parents
-        .concat({...rest})
-        .concat(this.getParents(rest.parent, flatTree))
-    }
-    return parents
   }
 
   private change = (control: IGlobalControl, val) => {
@@ -246,7 +233,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     this.props.onChange(mapItemControlRequestParams, key)
   }
 
-  private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: IGlobalControl[]) => {
+  private renderFilterControls = (renderTree: IGlobalRenderTreeItem[], parents?: IGlobalControl[]) => {
     const { form, onGetOptions, mapOptions } = this.props
     const { controlValues } = this.state
 
@@ -298,9 +285,12 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
 
   public render () {
     const { renderTree } = this.state
-
+    const panelClass = classnames({
+      [styles.controlPanel]: true,
+      [styles.empty]: !renderTree.length
+    })
     return (
-      <Form className={styles.filterPanel}>
+      <Form className={panelClass}>
         <Row gutter={8}>
           {this.renderFilterControls(renderTree)}
           {/* <Col span={4}>

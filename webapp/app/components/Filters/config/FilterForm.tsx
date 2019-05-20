@@ -23,19 +23,17 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import classnames from 'classnames'
 
-import { Form, Row, Col, Input, Checkbox, Select, Radio, Button, List, Modal } from 'antd'
+import { Form, Row, Col, Input, Checkbox, Select, Button, Table } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
 const FormItem = Form.Item
 const Option = Select.Option
-const ListItem = List.Item
-const TextArea = Input.TextArea
 
-import { OperatorTypes } from 'utils/operatorTypes'
-import { FilterTypeList, FilterTypesLocale, FilterTypesOperatorSetting, FilterTypes } from '../filterTypes'
+import { FilterTypeList, FilterTypesLocale, FilterTypes } from '../filterTypes'
 import {
   renderDate,
   getOperatorOptions,
-  getDatePickerFormatOptions
+  getDatePickerFormatOptions,
+  InteractionType
 } from '..'
 import DatePickerFormats, {
   DatePickerFormatsLocale,
@@ -50,6 +48,7 @@ const styles = require('../filter.less')
 
 interface IFilterFormProps {
   form: any
+  interactionType: InteractionType
   controlFormValues: any
   onControlTypeChange: (value) => void
   onSetControlFormValues: (values) => void
@@ -110,14 +109,8 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
     return container
   }
 
-  private renderListItem = (item) => {
-    return (
-      <ListItem>{item}</ListItem>
-    )
-  }
-
   public render () {
-    const { form, controlFormValues, onOpenOptionModal } = this.props
+    const { form, interactionType, controlFormValues, onOpenOptionModal } = this.props
     const { getFieldDecorator } = form
 
     let type
@@ -125,7 +118,6 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
     let datePickerFormatOptions
     let customOptions
     let options
-    let listSource
     const filterTypeRelatedInput = []
 
     if (controlFormValues) {
@@ -135,7 +127,6 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
       datePickerFormatOptions = getDatePickerFormatOptions(type, multiple)
       customOptions = co && type === FilterTypes.Select
       options = o
-      listSource = options && options.map((o) => o.value)
 
       const dateFormatFormComponent = (
         <Col key="dateFormat" span={8}>
@@ -183,6 +174,16 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
       }
     }
 
+    const columns = [{
+      title: '文本',
+      key: 'text',
+      dataIndex: 'text'
+    }, {
+      title: '值',
+      key: 'value',
+      dataIndex: 'value'
+    }]
+
     return (
       <Form className={styles.filterForm}>
         <div className={styles.title}>
@@ -209,7 +210,9 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
         </Row>
         <Row gutter={8} className={styles.formBody}>
           {
-            operatorOptions && !!operatorOptions.length && (
+            interactionType === 'column'
+            && operatorOptions
+            && !!operatorOptions.length && (
               <Col span={8}>
                 <FormItem label="对应关系">
                   {getFieldDecorator('operator', {})(
@@ -280,16 +283,14 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
         }
         {
           customOptions && (
-            <Row gutter={8} className={`${styles.formBody} ${styles.optionList}`}>
-              <Col span={12}>
-                <List
-                  size="small"
-                  bordered
-                  dataSource={listSource}
-                  renderItem={this.renderListItem}
-                />
-              </Col>
-            </Row>
+            <Table
+              className={styles.optionList}
+              size="small"
+              dataSource={options}
+              columns={columns}
+              pagination={false}
+              bordered
+            />
           )
         }
       </Form>

@@ -9,6 +9,7 @@ import reducer from '../../reducer'
 import viewReducer from '../../../View/reducer'
 import saga from '../../sagas'
 import viewSaga from '../../../View/sagas'
+import formReducer from '../../../Dashboard/FormReducer'
 import { hideNavigator } from '../../../App/actions'
 import { ViewActions } from 'containers/View/actions'
 const { loadViews, loadViewsDetail, loadViewData, loadViewDistinctValue } = ViewActions
@@ -533,9 +534,12 @@ const withSagaWidget = injectSaga({ key: 'widget', saga })
 const withReducerView = injectReducer({ key: 'view', reducer: viewReducer })
 const withSagaView = injectSaga({ key: 'view', saga: viewSaga })
 
+const withFormReducer = injectReducer({ key: 'form', reducer: formReducer })
+
 export default compose(
   withReducerWidget,
   withReducerView,
+  withFormReducer,
   withSagaView,
   withSagaWidget,
   withConnect

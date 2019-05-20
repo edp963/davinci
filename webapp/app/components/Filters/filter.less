@@ -292,19 +292,15 @@
   }
 }
 
-.filterForm {
+.filterFormContainer {
   flex: 1;
   display: flex;
   flex-direction: column;
+}
 
+.controlFormAntdOverride {
   .formBody {
     padding: 0 16px;
-  }
-
-  .optionList {
-    flex: 1;
-    padding-bottom: 16px;
-    overflow-y: auto;
   }
 
   :global(.ant-form-item) {
@@ -324,6 +320,29 @@
   }
   :global(.ant-form-item-control) {
     line-height: 32px;
+  }
+}
+
+.baseForm {
+  flex-shrink: 0;
+  .controlFormAntdOverride;
+
+  .selector {
+    width: 100%;
+  }
+}
+
+.filterForm {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  .controlFormAntdOverride;
+
+  .optionList {
+    flex: 1;
+    padding: 0 16px 16px;
+    overflow-y: auto;
   }
 }
 
@@ -351,14 +370,19 @@
   }
 }
 
-.filterPanel {
+.controlPanel {
   background-color: @white;
   padding: 4px 8px 8px;
   margin-top: 16px;
   border-radius: 3px;
+
+  &.empty {
+    padding: 0;
+    margin: 0;
+  }
 }
 
-.filterControl {
+.controlItem {
   margin: 2px 0;
   :global(.ant-form-item) {
     margin-bottom: 4px;
@@ -388,6 +412,6 @@
   }
 }
 
-.filterControlComponent {
+.controlComponent {
   width: 100% !important;
 }

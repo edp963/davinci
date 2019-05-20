@@ -12,6 +12,7 @@ import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
 import VariableConfigForm from '../VariableConfigForm'
+import ControlConfig from './ControlConfig'
 import ComputedConfigForm from '../ComputedConfigForm'
 import ChartIndicator from './ChartIndicator'
 import AxisSection, { IAxisConfig } from './ConfigSections/AxisSection'
@@ -104,8 +105,8 @@ interface IOperatingPanelStates {
   actOnModalVisible: boolean
   actOnModalList: IDataParamSource[]
   filterModalVisible: boolean
-  variableConfigModalVisible: boolean
-  variableConfigControl: object
+  controlConfigVisible: boolean
+
   computedConfigModalVisible: boolean
   selectedComputed: object
 }
@@ -139,8 +140,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalVisible: false,
       actOnModalList: null,
       filterModalVisible: false,
-      variableConfigModalVisible: false,
-      variableConfigControl: {},
+      controlConfigVisible: false,
+
       computedConfigModalVisible: false,
       selectedComputed: null
     }
@@ -1162,42 +1163,21 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     })
   }
 
-  private showVariableConfigTable = (id?: string) => () => {
+  private showControlConfig = () => {
     this.setState({
-      variableConfigModalVisible: true,
-      variableConfigControl: id
-        ? this.props.controls.find((q) => q.id === id)
-        : {}
+      controlConfigVisible: true
     })
   }
 
-  private hideVariableConfigTable = () => {
+  private closeControlConfig = () => {
     this.setState({
-      variableConfigModalVisible: false,
-      variableConfigControl: {}
+      controlConfigVisible: false
     })
   }
 
-  private resetVariableConfigForm = () => {
-    this.variableConfigForm.resetForm()
-  }
-
-  private saveControl = (control) => {
-    const { controls, onSetControls } = this.props
-    const { dataParams, styleParams } = this.state
-    const itemIndex = controls.findIndex((q) => q.id === control.id)
-
-    if (itemIndex >= 0) {
-      controls.splice(itemIndex, 1, control)
-      onSetControls([...controls.slice(0, itemIndex), control, ...controls.slice(itemIndex + 1)])
-    } else {
-      onSetControls(controls.concat(control))
-    }
-  }
-
-  private deleteControl = (id) => () => {
-    const { controls, onSetControls } = this.props
-    onSetControls(controls.filter((q) => q.id !== id))
+  private saveControls = (controls) => {
+    this.props.onSetControls(controls)
+    this.closeControlConfig()
   }
 
   private coustomFieldSelect = (event) => {
@@ -1310,8 +1290,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalVisible,
       actOnModalList,
       filterModalVisible,
-      variableConfigModalVisible,
-      variableConfigControl,
+      controlConfigVisible,
       computedConfigModalVisible,
       selectedComputed
     } = this.state
@@ -1436,37 +1415,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         </li>
       )
     })
-
-    const queryConfigColumns = [{
-      title: '控制器名称',
-      dataIndex: 'variables',
-      key: 'variables',
-      render: (text, record) => {
-        return record.name
-        // return  record.variables.join(',')
-      }
-    }, {
-      title: '操作',
-      key: 'action',
-      width: 100,
-      className: `${utilStyles.textAlignRight}`,
-      render: (text, record) => (
-        <span className="ant-table-action-column">
-          <Button
-            size="small"
-            shape="circle"
-            icon="edit"
-            onClick={this.showVariableConfigTable(record.id)}
-          />
-          <Button
-            size="small"
-            shape="circle"
-            icon="delete"
-            onClick={this.deleteControl(record.id)}
-          />
-        </span>
-      )
-    }]
 
     let queryInfo: string[] = []
     if (selectedView) {
@@ -1604,19 +1552,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                       <span>控制器</span>
                       <span
                         className={styles.addVariable}
-                        onClick={this.showVariableConfigTable()}
+                        onClick={this.showControlConfig}
                       >
-                        <Icon type="plus" /> 点击添加
+                        <Icon type="edit" /> 点击配置
                       </span>
                     </h4>
-                    <Table
-                      dataSource={controls}
-                      columns={queryConfigColumns}
-                      rowKey="id"
-                      size="middle"
-                      showHeader={false}
-                      pagination={false}
-                    />
                   </div>
                 : <div className={styles.paneBlock}>
                     <h4>控制器</h4>
@@ -1836,7 +1776,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ref={(f) => this.filterSettingForm = f}
           />
         </Modal>
-        <Modal
+        <ControlConfig
+          currentControls={controls}
+          view={selectedView}
+          visible={controlConfigVisible}
+          onSave={this.saveControls}
+          onCancel={this.closeControlConfig}
+        />
+        {/* <Modal
           title="控制器配置"
           wrapClassName="ant-modal-large"
           visible={variableConfigModalVisible}
@@ -1852,7 +1799,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             onClose={this.hideVariableConfigTable}
             wrappedComponentRef={this.refHandlers.variableConfigForm}
           />
-        </Modal>
+        </Modal> */}
         {!currentEditingItem ? null : [(
           <FieldConfigModal
             key="fieldConfigModal"

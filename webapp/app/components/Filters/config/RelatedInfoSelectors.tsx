@@ -21,7 +21,7 @@
 import React, { PureComponent } from 'react'
 import classnames from 'classnames'
 import { Form, Row, Col, Checkbox, Select, Radio, Empty } from 'antd'
-import { InteractionType, IGlobalControlRelatedField } from '..'
+import { InteractionType, IControlRelatedField } from '..'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { IRelatedItemSource, IRelatedViewSource } from './FilterConfig'
@@ -148,12 +148,11 @@ export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsPro
                   {...isMultiple && {mode: 'multiple'}}
                 >
                   {
-                    interactionType === 'column' ? (
-                      v.model.map((m: IViewModelProps) => (
+                    interactionType === 'column'
+                      ? v.model.map((m: IViewModelProps) => (
                         <Option key={m.name} value={m.name}>{m.name}</Option>
                       ))
-                    ) : (
-                      v.variables.map((v) => (
+                      : v.variables.map((v) => (
                         <Option
                           key={v.name}
                           value={v.name}
@@ -166,7 +165,6 @@ export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsPro
                           {v.name}
                         </Option>
                       ))
-                    )
                   }
                 </Select>
               </FormItem>

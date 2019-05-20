@@ -18,403 +18,262 @@
  * >>
  */
 
-import React, { Suspense } from 'react'
-import moment from 'moment'
-
-import { WrappedFormUtils } from 'antd/lib/form/Form'
-import { Form, Input, InputNumber, Select, DatePicker, Button, Row, Col } from 'antd'
-const FormItem = Form.Item
-const Option = Select.Option
-const RangePicker = DatePicker.RangePicker
-
-import { KEY_COLUMN } from '../../../globalConstants'
+import React, { PureComponent, Suspense } from 'react'
+import { Form, Button, Row, Col } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
 import { QueryVariable } from '../Grid'
+import {
+  ILocalRenderTreeItem,
+  IControlRequestParams,
+  ILocalControl,
+  getDefaultValue,
+  getControlRenderTree,
+  getModelValue,
+  getVariableValue,
+  IControlRelatedField,
+  OnGetControlOptions,
+  IMapControlOptions,
+  getParents,
+  getAllChildren
+} from 'app/components/Filters'
+import { SHOULD_LOAD_OPTIONS, defaultFilterControlGridProps } from 'app/components/Filters/filterTypes'
+import FilterControl from 'app/components/Filters/FilterControl'
+
 const styles = require('../Dashboard.less')
-const MultiDatePicker = React.lazy(() => import('../../../components/MultiDatePicker'))
 
 interface IDashboardItemControlFormProps {
-  form: WrappedFormUtils
-  controls: any[]
+  viewId: number
+  controls: ILocalControl[]
+  mapOptions: IMapControlOptions
+  onGetOptions: OnGetControlOptions
   onSearch: (queayConditions: { variables: QueryVariable }) => void
   onHide: () => void
 }
 
 interface IDashboardItemControlFormStates {
-  parentSelValues: object
+  renderTree: ILocalRenderTreeItem[],
+  flatTree: {
+    [key: string]: ILocalRenderTreeItem
+  },
+  controlValues: {
+    [key: string]: any
+  }
 }
 
-export class DashboardItemControlForm extends React.PureComponent<IDashboardItemControlFormProps, IDashboardItemControlFormStates> {
+export class DashboardItemControlForm extends PureComponent<IDashboardItemControlFormProps & FormComponentProps, IDashboardItemControlFormStates> {
+
   constructor (props) {
     super(props)
     this.state = {
-      parentSelValues: null
+      renderTree: [],
+      flatTree: {},
+      controlValues: {}
     }
   }
 
+  private controlRequestParams: {
+    [filterKey: string]: IControlRequestParams
+  } = {}
+
   public componentWillMount () {
-    this.getStateValues(this.props.controls)
+    this.initDerivedState(this.props.controls)
   }
 
   public componentWillReceiveProps (nextProps) {
-    if (nextProps.controls.map((c) => c.id).join(',') !==
-        this.props.controls.map((c) => c.id).join(',')) {
-      this.getStateValues(nextProps.controls)
+    const { controls } = this.props
+    if (nextProps.controls !== controls) {
+      this.initDerivedState(nextProps.controls)
     }
   }
 
-  private getStateValues = (controls) => {
+  private initDerivedState = (controls: ILocalControl[]) => {
+    const controlValues = {}
+
+    this.controlRequestParams = {}
+
+    const replica = controls.map((control) => {
+      const defaultFilterValue = getDefaultValue(control)
+      if (defaultFilterValue) {
+        controlValues[control.key] = defaultFilterValue
+        this.setControlRequestParams(control, defaultFilterValue)
+      }
+      return {...control}
+    })
+
+    const { renderTree, flatTree } = getControlRenderTree(replica)
+
+    Object.values(flatTree).forEach((control) => {
+      if (SHOULD_LOAD_OPTIONS[control.type]) {
+        this.loadOptions(control, flatTree, controlValues)
+      }
+    })
+
     this.setState({
-      parentSelValues: controls
-        .filter((c) => c.sub.length)
-        .reduce((acc, c) => {
-          acc[c.id] = 0
-          return acc
-        }, {})
+      renderTree,
+      flatTree,
+      controlValues
     })
   }
 
-// {
-// 	"id": "96F6258E",
-// 	"type": "multiSelect",
-// 	"variables": ["city"],
-// 	"sub": [{
-// 		"id": "FB0DF8A8",
-// 		"text": "北京",
-// 		"value": "beijing",
-// 		"variables": ["city"],
-// 		"status": 1
-// 	}, {
-// 		"id": "57940A50",
-// 		"text": "上海",
-// 		"value": "shanghai",
-// 		"variables": ["city"],
-// 		"status": 1
-// 	}]
-// }
-  private generateFormComponent = (c) => {
-    const {
-      form,
-      controls
-    } = this.props
+  private setControlRequestParams = (control: ILocalControl, val) => {
+    const { key, interactionType, fields } = control
 
-    const { getFieldDecorator } = form
-
-    switch (c.type) {
-      case 'inputNumber':
-        return (
-          <Col
-            key={c.id}
-            xl={8}
-            md={12}
-          >
-            <FormItem className={styles.formItem}>
-              {getFieldDecorator(`${c.id}`, {})(
-                <InputNumber placeholder={c.variables[0]} />
-              )}
-            </FormItem>
-          </Col>
-        )
-      case 'select':
-        const options = []
-        let followComponents = []
-
-        c.sub.forEach((sub, index) => {
-          options.push(
-            <Option key={sub.id} value={sub.value}>{sub.text}</Option>
-          )
-
-          if (c.type === 'select' &&
-              c.hasRelatedComponent &&
-              sub.variableType &&
-              this.state.parentSelValues[c.id] === index) {   // todo 变量关联控件
-            followComponents = followComponents.concat(this.generateFormComponent({
-              ...sub,
-              id: `sub_${c.id}_${sub.id}`,
-              type: sub.variableType
-            }))
-          }
-        })
-
-        const mode = c.multiple
-          ? {
-            mode: 'multiple'
-          }
-          : {
-            allowClear: true
-          }
-        const selProperties = {
-          placeholder: c.variables[0] || '请选择',
-          onChange: this.parentSelectChange(c),
-          ...mode
-        }
-
-        followComponents.unshift(
-          <Col
-            key={c.id}
-            xl={8}
-            md={12}
-          >
-            <FormItem className={styles.formItem}>
-              {getFieldDecorator(`${c.id}`, {})(
-                <Select {...selProperties}>
-                  {options}
-                </Select>
-              )}
-            </FormItem>
-          </Col>
-        )
-
-        return followComponents
-      case 'date':
-      case 'datetime':
-        const dateFormat = c.type === 'datetime'
-          ? {
-            format: 'YYYY-MM-DD HH:mm:ss',
-            showTime: true
-          }
-          : {
-            format: 'YYYY-MM-DD'
-          }
-        const dateProperties = {...dateFormat}
-        if (c.type === 'date' && c.multiple === true) {
-          return (
-            <Col
-              key={c.id}
-              xl={12}
-            >
-              <FormItem className={styles.formItem}>
-                {getFieldDecorator(`${c.id}`, {})(
-                  <MultiDatePicker />
-                )}
-              </FormItem>
-            </Col>
-          )
-        }
-        return (
-          <Col
-            key={c.id}
-            xl={8}
-            md={12}
-          >
-            <FormItem className={styles.formItem}>
-              {getFieldDecorator(`${c.id}`, {})(
-                <DatePicker {...dateProperties} />
-              )}
-            </FormItem>
-          </Col>
-        )
-      case 'dateRange':
-      case 'datetimeRange':
-        const rangeFormat = c.type === 'datetimeRange'
-          ? {
-            format: 'YYYY-MM-DD HH:mm:ss',
-            showTime: true
-          }
-          : {
-            format: 'YYYY-MM-DD'
-          }
-        const rangeProperties = {
-          placeholder: c.variables[0],
-          ...rangeFormat
-        }
-
-        return (
-          <Col
-            key={c.id}
-            xl={8}
-            md={12}
-          >
-            <FormItem className={styles.formItem}>
-              {getFieldDecorator(`${c.id}`, {})(
-                <RangePicker {...rangeProperties} />
-              )}
-            </FormItem>
-          </Col>
-        )
-      default:
-        return (
-          <Col
-            key={c.id}
-            xl={8}
-            md={12}
-          >
-            <FormItem className={styles.formItem}>
-              {getFieldDecorator(`${c.id}`, {})(
-                <Input placeholder={c.variables[0]} />
-              )}
-            </FormItem>
-          </Col>
-        )
+    if (!this.controlRequestParams[key]) {
+      this.controlRequestParams[key] = {
+        variables: [],
+        filters: []
+      }
+    }
+    if (interactionType === 'column') {
+      this.controlRequestParams[key].filters = getModelValue(control, fields as IControlRelatedField, val)
+    } else {
+      this.controlRequestParams[key].variables = getVariableValue(control, fields, val)
     }
   }
 
-  private parentSelectChange = (control) => (val) => {
-    const { parentSelValues } = this.state
+  private loadOptions = (
+    renderControl: ILocalRenderTreeItem,
+    flatTree: { [key: string]: ILocalRenderTreeItem },
+    controlValues: { [key: string]: any }
+  ) => {
+    const { viewId, onGetOptions } = this.props
+    const { key, interactionType, fields, parent, customOptions, options } = renderControl
 
-    if (Object.prototype.toString.call(val) !== '[object Array]') { // 下拉多选
-      let selIndex = -1
+    if (customOptions) {
+      onGetOptions(key, true, options)
+    } else {
+      const parents = getParents<ILocalControl>(parent, flatTree)
+      let filters = []
+      let variables = []
 
-      if (val) {
-        selIndex = control.sub.findIndex((c) => c.value === val)
-        parentSelValues[control.id] = selIndex
-      } else {
-        selIndex = parentSelValues[control.id]
-        parentSelValues[control.id] = 0
-      }
+      parents.forEach((parentControl) => {
+        const parentValue = controlValues[parentControl.key]
+        if (parentControl.interactionType === 'column') {
+          filters = filters.concat(getModelValue(parentControl, parentControl.fields as IControlRelatedField, parentValue))
+        } else {
+          variables = variables.concat(getVariableValue(parentControl, parentControl.fields, parentValue))
+        }
+      })
 
-      this.setState({
-        parentSelValues
-      }, () => {
-        // FIXME 当未关联控件时控制台报错
-        this.props.form.setFieldsValue({
-          [`sub_${control.id}_${control.sub[selIndex].id}`]: ''
+      const columns = interactionType === 'column'
+        ? [(fields as IControlRelatedField).name]
+        : (fields as IControlRelatedField).optionsFromColumn
+          ? [(fields as IControlRelatedField).column]
+          : void 0
+
+      if (columns) {
+        onGetOptions(key, false, {
+          [viewId]: { columns, filters, variables }
         })
+      }
+    }
+  }
+
+  private change = (control: ILocalControl, val) => {
+    const { flatTree } = this.state
+    const { key } = control
+    const childrenKeys = getAllChildren(key, flatTree)
+
+    const controlValues = {
+      ...this.state.controlValues,
+      [key]: val
+    }
+
+    this.setControlRequestParams(control, val)
+
+    if (childrenKeys.length) {
+      childrenKeys.forEach((childKey) => {
+        const child = flatTree[childKey]
+        if (SHOULD_LOAD_OPTIONS[child.type]) {
+          this.loadOptions(child, flatTree, controlValues)
+        }
       })
     }
+
+    this.setState({ controlValues })
   }
 
-  private onControlSearch = () => {
-    const { controls, onSearch, onHide } = this.props
+  private search = () => {
+    const { onSearch, onHide } = this.props
 
-    const formValues = this.props.form.getFieldsValue()
+    // const formValues = this.props.form.getFieldsValue()
+    const queryConditions = Object.values(this.controlRequestParams).reduce((filterValue, val) => {
+      filterValue.variables = filterValue.variables.concat(val.variables)
+      filterValue.tempFilters = filterValue.tempFilters.concat(val.filters)
+      return filterValue
+    }, {
+      variables: [],
+      tempFilters: []
+    })
 
-    const variables = Object.keys(formValues).reduce((arr, key) => {
-      let val = formValues[key]
-
-      let valControl
-
-      if (key.indexOf('sub') >= 0) {
-        const idArr = key.split('_')
-        valControl = controls.find((c) => c.id === idArr[1]).sub.find((s) => s.id === idArr[2])
-      } else {
-        valControl = controls.find((c) => c.id === key)
-      }
-
-      valControl.type = valControl.variableType || valControl.type
-      if (Object.prototype.toString.call(val) === '[object Array]') {
-        switch (valControl.type) {
-          case 'dateRange':
-            val = val.map((v) => moment(v).format('YYYY-MM-DD'))
-            arr = arr.concat({
-              name: valControl.variables[0],
-              value: `'${val[0]}'`
-            }).concat({
-              name: valControl.variables[1],
-              value: `'${val[1]}'`
-            })
-            break
-          case 'datetimeRange':
-            val = val.map((v) => v.format('YYYY-MM-DD HH:mm:ss'))
-            arr = arr.concat({
-              name: valControl.variables[0],
-              value: `'${val[0]}'`
-            }).concat({
-              name: valControl.variables[1],
-              value: `'${val[1]}'`
-            })
-            break
-          // case 'multiSelect':
-          //   if (val.length) {
-          //     arr = arr.concat({
-          //       name: valControl.variables[0],
-          //       value: val.map((v) => `${v}`).join(',')
-          //     })
-          //   }
-            case 'select':
-            if (valControl.multiple === true) { // 适配下拉多选
-              if (val.length) {
-                arr = arr.concat({
-                  name: valControl.variables[0],
-                  value: val.map((v) => `'${v}'`).join(',')
-                })
-              }
-            }
-            break
-          default:
-            break
-        }
-      } else {
-        if (val) {
-          if (valControl.variables[0]) {
-            switch (valControl.type) {
-              case 'date':
-                if (valControl.multiple === false) {
-                  val = val.format('YYYY-MM-DD')
-                  arr = arr.concat({
-                    name: valControl.variables[0],
-                    value: `'${val}'`
-                  })
-                } else {
-                  arr = arr.concat({
-                    name: valControl.variables[0],
-                    value: val.split(',').map((v) => `'${v}'`).join(',')
-                  })
-                }
-                break
-              case 'datetime':
-                val = val.format('YYYY-MM-DD HH:mm:ss')
-                arr = arr.concat({
-                  name: valControl.variables[0],
-                  value: `'${val}'`
-                })
-                break
-              case 'select':
-                if (valControl.multiple === false) {
-                  arr = arr.concat({
-                    name: valControl.variables[0],
-                    value: `${val}`
-                  })
-                }
-                break
-              default:
-                arr = arr.concat({
-                  name: valControl.variables[0],
-                  value: `'${val}'`
-                })
-                break
-            }
-          } else {
-            if (valControl.type === 'select') {
-              if (!valControl.hasRelatedComponent) {
-                const chosenSub = valControl.sub.find((s) => s.value === val)
-
-                if (chosenSub.variables[0]) {
-                  arr = arr.concat({
-                    name: chosenSub.variables[0],
-                    value: `'${val}'`
-                  })
-                }
-              }
-            }
-          }
-        }
-      }
-
-      return arr
-    }, [])
-
-    onSearch({ variables })
+    onSearch({ ...queryConditions })
 
     onHide()
   }
 
+  private renderFilterControls = (renderTree: ILocalRenderTreeItem[], parents?: ILocalControl[]) => {
+    const { form, onGetOptions, mapOptions } = this.props
+    const { controlValues } = this.state
+
+    let components = []
+
+    renderTree.forEach((control) => {
+      const { key, width, children, ...rest } = control
+      const parentsInfo = parents
+        ? parents.reduce((values, parentControl) => {
+            const parentSelectedValue = controlValues[parentControl.key]
+            if (parentSelectedValue && !(Array.isArray(parentSelectedValue) && !parentSelectedValue.length)) {
+              values = values.concat({
+                control: parentControl,
+                value: parentSelectedValue
+              })
+            }
+            return values
+          }, [])
+        : null
+      const controlGridProps = width
+          ? {
+              lg: width,
+              md: width < 8 ? 12 : 24
+            }
+          : defaultFilterControlGridProps
+      components = components.concat(
+        <Col
+          key={key}
+          {...controlGridProps}
+        >
+          <FilterControl
+            form={form}
+            control={control}
+            currentOptions={mapOptions[key] || []}
+            parentsInfo={parentsInfo}
+            onChange={this.change}
+          />
+        </Col>
+      )
+      if (children) {
+        const controlWithOutChildren = { key, width, ...rest }
+        components = components.concat(
+          this.renderFilterControls(children, parents ? parents.concat(controlWithOutChildren) : [controlWithOutChildren])
+        )
+      }
+    })
+    return components
+  }
+
   public render () {
-    const {
-      controls
-    } = this.props
-    const controlItems = controls
-      .map((c) => this.generateFormComponent(c))
+    const { renderTree } = this.state
 
     return (
       <Form className={styles.controlForm}>
         <Row gutter={10}>
           <Suspense fallback={null}>
-            {controlItems}
+            {this.renderFilterControls(renderTree)}
           </Suspense>
         </Row>
         <Row className={styles.buttonRow}>
           <Col span={24}>
-            <Button type="primary" onClick={this.onControlSearch}>查询</Button>
+            <Button type="primary" onClick={this.search}>查询</Button>
           </Col>
         </Row>
       </Form>
@@ -422,4 +281,4 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
   }
 }
 
-export default Form.create()(DashboardItemControlForm)
+export default Form.create<IDashboardItemControlFormProps & FormComponentProps>()(DashboardItemControlForm)

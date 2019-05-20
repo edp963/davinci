@@ -507,12 +507,13 @@ export function selectDashboardItemChart (itemId, renderType, selectedItems) {
   }
 }
 
-export function setSelectOptions (controlKey, options) {
+export function setSelectOptions (controlKey, options, itemId?) {
   return {
     type: SET_SELECT_OPTIONS,
     payload: {
       controlKey,
-      options
+      options,
+      itemId
     }
   }
 }
