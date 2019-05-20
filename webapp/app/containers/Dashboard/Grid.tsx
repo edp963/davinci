@@ -1509,7 +1509,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
              drillpathSetting={drillpathSetting}
              selectedWidget={this.state.selectedWidgets}
              widgets={widgets || []}
-             views={formedViews}
+             views={views || []}
              saveDrillPathSetting={this.saveDrillPathSetting}
              cancel={this.hideDrillPathSettingModal}
           />
