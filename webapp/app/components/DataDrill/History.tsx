@@ -44,6 +44,9 @@ export function DataDrillHistory (props: IDataDrillHistoryProps) {
   )
   function drill (history, item) {
     return function () {
+      if (item === drillHistory.length - 1) {
+        return
+      }
       if (onSelectDrillHistory) {
         onSelectDrillHistory(history, item, itemId, widgetId)
       }
