@@ -173,7 +173,7 @@ export function* getSelectOptions (action: ViewActionType) {
   const { payload } = action
   const { selectOptionsLoaded, loadSelectOptionsFail } = ViewActions
   try {
-    const { controlKey, requestParams } = payload
+    const { controlKey, requestParams, itemId } = payload
     const requestParamsMap: Array<[string, IDistinctValueReqeustParams]> = Object.entries(requestParams)
     const requests = requestParamsMap.map(([viewId, params]: [string, IDistinctValueReqeustParams]) => {
       const { columns, filters, variables } = params
@@ -195,7 +195,7 @@ export function* getSelectOptions (action: ViewActionType) {
       }
       return payloads
     }, [])
-    yield put(selectOptionsLoaded(controlKey, values))
+    yield put(selectOptionsLoaded(controlKey, values, itemId))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
     errorHandler(err)
@@ -231,6 +231,7 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
   const { viewDataFromVizItemLoaded, loadViewDataFromVizItemFail } = ViewActions
   const {
     filters,
+    tempFilters,
     linkageFilters,
     globalFilters,
     variables,
@@ -247,7 +248,7 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
       url: `${api.view}/${viewId}/getdata`,
       data: {
         ...rest,
-        filters: filters.concat(linkageFilters).concat(globalFilters),
+        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
         params: variables.concat(linkageVariables).concat(globalVariables),
         pageSize,
         pageNo

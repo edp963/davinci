@@ -65,6 +65,7 @@ function shareReducer (state = initialState, { type, payload }) {
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
+              tempFilters: [],
               linkageFilters: [],
               globalFilters: [],
               variables: [],
@@ -96,6 +97,7 @@ function shareReducer (state = initialState, { type, payload }) {
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
+              tempFilters: [],
               linkageFilters: [],
               globalFilters: [],
               variables: [],
@@ -121,6 +123,7 @@ function shareReducer (state = initialState, { type, payload }) {
           loading: true,
           queryConditions: {
             ...itemsInfo[payload.itemId].queryConditions,
+            tempFilters: payload.requestParams.tempFilters,
             linkageFilters: payload.requestParams.linkageFilters,
             globalFilters: payload.requestParams.globalFilters,
             variables: payload.requestParams.variables,

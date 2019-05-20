@@ -20,7 +20,7 @@
 
 import React, { PureComponent } from 'react'
 
-import { Form, Input, Modal } from 'antd'
+import { Form, Input, Modal, Icon } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
 const FormItem = Form.Item
 const TextArea = Input.TextArea
@@ -46,6 +46,7 @@ export class OptionSettingForm extends PureComponent<IOptionSettingFormProps & F
   public render () {
     const { form, visible, onSave, onCancel } = this.props
     const { getFieldDecorator } = form
+    const placeholder = `请输入选项文本与值，用回车分隔，例如：\n北京 1\n上海 2\n天津 Tianjin\n`
     return (
       <Modal
         title="编辑自定义选项"
@@ -58,7 +59,7 @@ export class OptionSettingForm extends PureComponent<IOptionSettingFormProps & F
           <FormItem className={styles.formItem}>
             {getFieldDecorator('options', {})(
               <TextArea
-                placeholder="请输入选项，使用回车分隔"
+                placeholder={placeholder}
                 autosize={{minRows: 5, maxRows: 10}}
               />
             )}

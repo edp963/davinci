@@ -19,74 +19,71 @@
  */
 
 import React, { createRef } from 'react'
+import { fromJS } from 'immutable'
 import { connect } from 'react-redux'
 import moment from 'moment'
 import {
-  getDefaultFilterItem,
-  OnGetControlOptions,
-  IMapControlOptions,
+  getDefaultLocalControl,
   IGlobalControl,
   IGlobalControlRelatedItem,
   InteractionType,
-  IGlobalControlRelatedField
+  IControlRelatedField,
+  ILocalControl,
+  getRelatedFieldsInfo
 } from 'app/components/Filters'
 import { FilterTypes, IS_RANGE_TYPE} from 'app/components/Filters/filterTypes'
 
 import FilterList from 'app/components/Filters/config/FilterList'
 import FilterFormWithRedux, { FilterForm } from 'app/components/Filters/config/FilterForm'
 import OptionSettingFormWithModal, { OptionSettingForm } from 'app/components/Filters/config/OptionSettingForm'
-import { Button, Modal } from 'antd'
+import { Form, Row, Col, Button, Modal, Radio, Select, Checkbox } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
-import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { setControlFormValues } from 'app/containers/Dashboard/actions'
 import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
 import { ViewVariableTypes } from 'app/containers/View/constants'
+import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 
-const styles = require('../filter.less')
+const FormItem = Form.Item
+const RadioGroup = Radio.Group
+const Option = Select.Option
+const styles = require('app/components/Filters/filter.less')
 
 export interface IRelatedItemSource extends IGlobalControlRelatedItem {
   id: number
   name: string
 }
 
-export interface IRelatedViewSource {
-  id: number
-  name: string
+export interface IRelatedSource {
   model: IViewModelProps[]
   variables: IViewVariable[]
-  fields: IGlobalControlRelatedField | IGlobalControlRelatedField[]
+  fields: IControlRelatedField | IControlRelatedField[]
 }
 
-interface IGlobalControlConfigProps {
-  views: IFormedViews
-  widgets: any[]
+interface ILocalControlConfigProps {
+  currentControls: ILocalControl[]
+  view: IFormedView
   visible: boolean
-  loading: boolean
-  mapOptions: IMapControlOptions
   onCancel: () => void
   onSave: (filterItems: any[]) => void
-  onGetOptions: OnGetControlOptions
   onSetControlFormValues: (values) => void
 }
 
-interface IGlobalControlConfigStates {
-  controls: IGlobalControl[]
-  selected: IGlobalControl
-  itemSelectorSource: IRelatedItemSource[]
-  viewSelectorSource: IRelatedViewSource[]
+interface ILocalControlConfigStates {
+  controls: ILocalControl[]
+  selected: ILocalControl
+  relatedFields: IRelatedSource
   optionModalVisible: boolean,
   optionValues: string
 }
 
-export class LocalControlConfig extends React.Component<IGlobalControlConfigProps, IGlobalControlConfigStates> {
+export class LocalControlConfig extends React.Component<ILocalControlConfigProps, ILocalControlConfigStates> {
 
   constructor (props) {
     super(props)
     this.state = {
       controls: [],
       selected: null,
-      itemSelectorSource: [],
-      viewSelectorSource: [],
+      relatedFields: null,
       optionModalVisible: false,
       optionValues: ''
     }
@@ -95,153 +92,40 @@ export class LocalControlConfig extends React.Component<IGlobalControlConfigProp
   private filterForm = createRef<FilterForm>()
   private optionSettingForm = createRef<OptionSettingForm>()
 
-  public componentWillReceiveProps (nextProps: IGlobalControlConfigProps) {
-    const { currentDashboard, currentItems, widgets, views, visible } = nextProps
-    if (currentDashboard !== this.props.currentDashboard
-        || currentItems !== this.props.currentItems
+  public componentWillReceiveProps (nextProps: ILocalControlConfigProps) {
+    const { view, currentControls, visible } = nextProps
+    if (currentControls !== this.props.currentControls
         || visible && !this.props.visible) {
-      if (currentDashboard) {
-        const config = JSON.parse(currentDashboard.config || '{}')
-        const globalControls = config.filters || []
-
-        let selected
-        const controls =  globalControls.map((control) => {
-          const { relatedItems } = control
-          Object.keys(relatedItems).forEach((itemId) => {
-            if (!currentItems.find((ci) => ci.id === Number(itemId))) {
-              delete relatedItems[itemId]
-            }
-          })
-
-          if (!selected && !control.parent) {
-            selected = control
-          }
-
-          return control
-        })
-
-        this.setState({
-          controls,
-          selected
-        })
-        this.setRelatedInfo(selected, currentItems, widgets, views)
-        this.setFormData(selected)
-      }
-    }
-  }
-
-  private setRelatedInfo = (control: IGlobalControl, items, widgets, views: IFormedViews) => {
-    if (control) {
-      const { relatedItems } = control
-
-      const itemSelectorSource: IRelatedItemSource[] = items.map((i) => {
-        const widget = widgets.find((w) => w.id === i.widgetId)
-        return {
-          id: i.id,
-          name: widget.name,
-          viewId: widget.viewId,
-          checked: relatedItems[i.id] ? relatedItems[i.id].checked : false
+      let selected
+      const controls = fromJS(currentControls).toJS().map((control) => {
+        if (!selected && !control.parent) {
+          selected = control
         }
+        return control
       })
-      const viewSelectorSource = this.getViewSelectorSource(itemSelectorSource, control, views)
-
       this.setState({
-        itemSelectorSource,
-        viewSelectorSource
+        controls,
+        selected,
+        relatedFields: this.getRelatedFields(selected, view)
       })
+      this.setFormData(selected)
     }
   }
 
-  private getViewSelectorSource = (
-    itemSelectorSource: IRelatedItemSource[],
-    control: IGlobalControl,
-    views: IFormedViews
-  ) => {
-    const { relatedViews, type, interactionType } = control
-    const selectedItemRelatedViews: IFormedViews = itemSelectorSource
-      .filter((s) => s.checked)
-      .reduce<IFormedViews>((viewObj, itemSource) => {
-        if (!viewObj[itemSource.viewId]) {
-          viewObj[itemSource.viewId] = views[itemSource.viewId]
-        }
-        return viewObj
-      }, {})
-    return Object.entries(selectedItemRelatedViews)
-      .map(([viewId, view]: [string, IFormedView]) => ({
-        id: Number(viewId),
-        name: view.name,
-        ...this.getRelatedViewInfo(relatedViews, view, type, interactionType)
-      }))
+  private getRelatedFields = (selected: ILocalControl, view?: IFormedView): IRelatedSource => {
+    if (!view) {
+      view = this.props.view
+    }
+    if (selected) {
+      const { type, interactionType, fields } = selected
+      return getRelatedFieldsInfo(view, type, interactionType, fields)
+    }
+    return null
   }
 
-  private getRelatedViewInfo = (
-    relatedViews: {
-      [key: string]: IGlobalControlRelatedField | IGlobalControlRelatedField[]
-    },
-    view: IFormedView,
-    type: FilterTypes,
-    interactionType: InteractionType
-  ): {
-    model: IViewModelProps[],
-    variables: IViewVariable[],
-    fields: IGlobalControlRelatedField | IGlobalControlRelatedField[]
-  } => {
-    const model = Object.entries(view.model)
-      .filter(([k, v]: [string, IViewModelProps]) => v.modelType === 'category')
-      .map(([k, v]: [string, IViewModelProps]) => ({
-        name: k,
-        ...v
-      }))
-    const variables = view.variable.filter((v) => v.type === ViewVariableTypes.Query)
-    let fields = relatedViews[view.id]
-
-    if (interactionType === 'column') {
-      if (!fields) {
-        fields = model.length
-          ? {
-            name: model[0].name,
-            type: model[0].sqlType
-          }
-          : void 0
-      }
-    } else {
-      if (!fields) {
-        if (variables.length) {
-          const fieldBase = {
-            name: variables[0].name,
-            type: variables[0].valueType
-          }
-          if (IS_RANGE_TYPE[type]) {
-            fields = [fieldBase]
-          } else if (type === FilterTypes.Select) {
-            fields = {
-              ...fieldBase,
-              optionsFromColumn: false,
-              column: model.length ? model[0].name : void 0
-            }
-          } else {
-            fields = fieldBase
-          }
-        } else {
-          fields = IS_RANGE_TYPE[type] ? [] : void 0
-        } 
-      } else {
-        fields = IS_RANGE_TYPE[type]
-          ? [].concat(fields)
-          : fields
-      }
-    }
-
-    return {
-      model,
-      variables,
-      fields
-    }
-  }
-
-  private setFormData = (control: IGlobalControl) => {
+  private setFormData = (control: ILocalControl) => {
     if (control) {
-      const { type, interactionType, defaultValue, relatedItems, relatedViews, ...rest } = control
+      const { type, interactionType, defaultValue, ...rest } = control
       const isControlDateType = [FilterTypes.Date, FilterTypes.DateRange].includes(type)
       const fieldsValue = {
         type,
@@ -257,47 +141,44 @@ export class LocalControlConfig extends React.Component<IGlobalControlConfigProp
   }
 
   private selectFilter = (key: string) => {
-    const { currentItems, widgets, views } = this.props
-
     this.getCachedFormValues((err, controls) => {
       if (err) { return }
       const selected = controls.find((c) => c.key === key)
       this.setState({
         selected,
-        controls
+        controls,
+        relatedFields: this.getRelatedFields(selected)
       })
-      this.setRelatedInfo(selected, currentItems, widgets, views)
       this.setFormData(selected)
     })
   }
 
   private addFilter = () => {
-    const { currentItems, widgets, views } = this.props
+    const { view } = this.props
     const { controls, selected } = this.state
-    const newFilter: IGlobalControl = getDefaultFilterItem()
+    const newFilter: ILocalControl = getDefaultLocalControl(view)
 
     if (selected) {
       this.getCachedFormValues((err, cachedControls) => {
         if (err) { return }
         this.setState({
           controls: [...cachedControls, newFilter],
-          selected: newFilter
+          selected: newFilter,
+          relatedFields: this.getRelatedFields(newFilter)
         })
-        this.setRelatedInfo(newFilter, currentItems, widgets, views)
         this.setFormData(newFilter)
       })
     } else {
       this.setState({
         controls: [...controls, newFilter],
-        selected: newFilter
+        selected: newFilter,
+        relatedFields: this.getRelatedFields(newFilter)
       })
-      this.setRelatedInfo(newFilter, currentItems, widgets, views)
       this.setFormData(newFilter)
     }
   }
 
   private deleteFilter = (keys: string[], reselectedKey: string) => {
-    const { currentItems, widgets, views } = this.props
     const { controls } = this.state
 
     const reselected = reselectedKey
@@ -306,9 +187,9 @@ export class LocalControlConfig extends React.Component<IGlobalControlConfigProp
 
     this.setState({
       controls: controls.filter((c) => !keys.includes(c.key)),
-      selected: reselected
+      selected: reselected,
+      relatedFields: this.getRelatedFields(reselected)
     })
-    this.setRelatedInfo(reselected, currentItems, widgets, views)
     this.setFormData(reselected)
   }
 
@@ -379,7 +260,7 @@ export class LocalControlConfig extends React.Component<IGlobalControlConfigProp
   private getCachedFormValues = (
     resolve?: (err, cachedControls?) => void
   ) => {
-    const { controls, selected, itemSelectorSource, viewSelectorSource } = this.state
+    const { controls, selected, relatedFields } = this.state
     this.filterForm.current.props.form.validateFieldsAndScroll((err, values) => {
       if (err) {
         if (resolve) {
@@ -399,17 +280,7 @@ export class LocalControlConfig extends React.Component<IGlobalControlConfigProp
             defaultValue: isControlDateType
               ? (defaultValue && defaultValue.format(dateFormat))
               : defaultValue,
-            relatedItems: itemSelectorSource.reduce((obj, source) => {
-              obj[source.id] = {
-                viewId: source.viewId,
-                checked: source.checked
-              }
-              return obj
-            }, {}),
-            relatedViews: viewSelectorSource.reduce((obj, source) => {
-              obj[source.id] = source.fields
-              return obj
-            }, {})
+            fields: relatedFields.fields
           }
         } else {
           return c
@@ -440,159 +311,102 @@ export class LocalControlConfig extends React.Component<IGlobalControlConfigProp
     })
   }
 
-  private itemCheck = (id: number) => () => {
-    const { views } = this.props
-    const { selected } = this.state
-    const itemSelectorSource = this.state.itemSelectorSource.map((s) => {
-      return s.id === id
-        ? {
-          ...s,
-          checked: !s.checked
-        }
-        : s
-    })
-    const viewSelectorSource = this.getViewSelectorSource(itemSelectorSource, selected, views)
-    this.setState({
-      itemSelectorSource,
-      viewSelectorSource
-    })
-  }
+  private modelOrVariableSelect = (value: string | string[]) => {
+    const { selected, relatedFields } = this.state
+    const { model, variables } = relatedFields
 
-  private modelOrVariableSelect = (id: number) => (value: string | string[]) => {
-    const { selected, viewSelectorSource } = this.state
-    this.setState({
-      viewSelectorSource: viewSelectorSource.map((v) => {
-        if (v.id === id) {
-          let fields
-          let detail
-          if (selected.interactionType === 'column') {
-            detail = v.model.find((m) => m.name === value)
-            fields = {
-              name: detail.name,
-              type: detail.sqlType
-            }
-          } else {
-            if (IS_RANGE_TYPE[selected.type]) {
-              fields = (value as string[]).map((str) => {
-                detail = v.variables.find((m) => m.name === str)
-                return {
-                  name: detail.name,
-                  type: detail.valueType
-                }
-              })
-            } else {
-              detail = v.variables.find((m) => m.name === value)
-              fields = {
-                ...selected.type === FilterTypes.Select && v.fields,
-                name: detail.name,
-                type: detail.valueType
-              }
-            }
-          }
+    let fields
+    let detail
+    if (selected.interactionType === 'column') {
+      detail = model.find((m) => m.name === value)
+      fields = {
+        name: detail.name,
+        type: detail.sqlType
+      }
+    } else {
+      if (IS_RANGE_TYPE[selected.type]) {
+        fields = (value as string[]).map((str) => {
+          detail = variables.find((m) => m.name === str)
           return {
-            ...v,
-            fields
+            name: detail.name,
+            type: detail.valueType
           }
-        } else {
-          return v
+        })
+      } else {
+        detail = variables.find((m) => m.name === value)
+        fields = {
+          ...selected.type === FilterTypes.Select && relatedFields.fields,
+          name: detail.name,
+          type: detail.valueType
         }
-      })
+      }
+    }
+
+    this.setState({
+      relatedFields: {
+        ...relatedFields,
+        fields
+      }
     })
   }
 
-  private optionsFromColumnChecked = (id: number) => (e: CheckboxChangeEvent) => {
-    const { viewSelectorSource } = this.state
+  private optionsFromColumnChecked = (e: CheckboxChangeEvent) => {
+    const { relatedFields } = this.state
     this.setState({
-      viewSelectorSource: viewSelectorSource.map((v) => {
-        if (v.id === id) {
-          return {
-            ...v,
-            fields: {
-              ...v.fields,
-              optionsFromColumn: e.target.checked
-            }
-          }
-        } else {
-          return v
+      relatedFields: {
+        ...relatedFields,
+        fields: {
+          ...relatedFields.fields,
+          optionsFromColumn: e.target.checked
         }
-      })
+      }
     })
   }
 
-  private optionsFromColumnSelect = (id: number) => (value: string) => {
-    const { viewSelectorSource } = this.state
+  private optionsFromColumnSelect = (value: string) => {
+    const { relatedFields } = this.state
     this.setState({
-      viewSelectorSource: viewSelectorSource.map((v) => {
-        if (v.id === id) {
-          return {
-            ...v,
-            fields: {
-              ...v.fields,
-              column: value
-            }
-          }
-        } else {
-          return v
+      relatedFields: {
+        ...relatedFields,
+        fields: {
+          ...relatedFields.fields,
+          column: value
         }
-      })
-    })
-  }
-
-  private toggleCheckAll = () => {
-    const { views } = this.props
-    const { selected } = this.state
-    const allChecked = this.state.itemSelectorSource.every((s) => s.checked)
-    const itemSelectorSource = this.state.itemSelectorSource.map((a) => ({
-      ...a,
-      checked: !allChecked
-    }))
-    const viewSelectorSource = this.getViewSelectorSource(itemSelectorSource, selected, views)
-    this.setState({
-      itemSelectorSource,
-      viewSelectorSource
+      }
     })
   }
 
   private interactionTypeChange = (e: RadioChangeEvent) => {
-    const { views } = this.props
     const currentSelected = this.state.selected
     const selected = {
       ...currentSelected,
       interactionType: e.target.value,
-      relatedViews: Object.keys(currentSelected.relatedViews)
-        .reduce((obj, viewId) => {
-          obj[viewId] = void 0
-          return obj
-        }, {})
+      fields: void 0
     }
     this.setState({
       selected,
-      viewSelectorSource: this.getViewSelectorSource(this.state.itemSelectorSource, selected, views)
+      relatedFields: this.getRelatedFields({
+        ...selected,
+        fields: void 0
+      })
     })
   }
 
   private controlTypeChange = (value) => {
-    const { views } = this.props
-    const { selected, itemSelectorSource } = this.state
-    const { interactionType, relatedViews } = selected
+    const { selected } = this.state
+    const { interactionType, fields } = selected
 
     const changedSelected = {
       ...selected,
       type: value,
-      relatedViews: Object.entries(relatedViews)
-        .reduce((obj, [viewId, fields]) => {
-          obj[viewId] = interactionType === 'variable'
-            ? fields && Array.isArray(fields) ? fields[0] : fields
-            : fields
-          return obj
-        }, {})
+      fields: interactionType === 'variable'
+        ? fields && Array.isArray(fields) ? fields[0] : fields
+        : fields
     }
-
-    const viewSelectorSource = this.getViewSelectorSource(itemSelectorSource, changedSelected, views)
 
     this.setState({
       selected: changedSelected,
-      viewSelectorSource
+      relatedFields: this.getRelatedFields(changedSelected)
     })
   }
 
@@ -600,7 +414,7 @@ export class LocalControlConfig extends React.Component<IGlobalControlConfigProp
     const { options } = this.state.selected
     this.setState({
       optionModalVisible: true,
-      optionValues: options && options.map((o) => o.value).join('\n')
+      optionValues: options && options.map((o) => `${o.text} ${o.value}`).join('\n')
     })
   }
 
@@ -612,23 +426,60 @@ export class LocalControlConfig extends React.Component<IGlobalControlConfigProp
     this.optionSettingForm.current.props.form.validateFieldsAndScroll((err, values) => {
       if (err) { return }
       const options = values.options
-        ? [...new Set(values.options.split(/\n/))].map((v) => ({ text: v, value: v }))
-        : []
+      ? [...new Set(values.options.split(/\n/))]
+          .filter((tnv: string) => !!tnv.trim())
+          .map((tnv: string) => {
+            const tnvArr = tnv.split(/\s+/)
+            return tnvArr.length === 1
+              ? { text: tnvArr[0], value: tnvArr[0] }
+              : { text: tnvArr[0], value: tnvArr[1] }
+          })
+      : []
       this.filterForm.current.props.form.setFieldsValue({options})
       this.closeOptionModal()
     })
   }
 
   public render () {
-    const { loading, visible, onCancel } = this.props
+    const { visible, onCancel } = this.props
     const {
       controls,
       selected,
-      itemSelectorSource,
-      viewSelectorSource,
+      relatedFields,
       optionModalVisible,
       optionValues
     } = this.state
+
+    let interactionType
+    let interactionTypeContent
+    let variableSelect
+    let model = []
+    let variables = []
+    let fieldsValue
+    let isMultiple
+    let optionsFromColumn
+    let column
+
+    if (selected) {
+      const { type: t, interactionType: it } = selected
+      const { model: o, variables: v, fields } = relatedFields
+      interactionType = it
+      interactionTypeContent = interactionType === 'column' ? '字段' : '变量'
+      variableSelect = it === 'variable' && t === FilterTypes.Select
+      model = o
+      variables = v
+      if (Array.isArray(fields)) {
+        isMultiple = true
+        fieldsValue = fields.map((f) => f.name)
+      } else {
+        isMultiple = false
+        if (fields) {
+          fieldsValue = fields.name
+          optionsFromColumn = fields.optionsFromColumn
+          column = fields.column
+        }
+      }
+    }
 
     const modalButtons = [(
       <Button
@@ -643,8 +494,6 @@ export class LocalControlConfig extends React.Component<IGlobalControlConfigProp
         key="submit"
         size="large"
         type="primary"
-        loading={loading}
-        disabled={loading}
         onClick={this.save}
       >
         保 存
@@ -654,7 +503,7 @@ export class LocalControlConfig extends React.Component<IGlobalControlConfigProp
     return (
       <Modal
         wrapClassName="ant-modal-large ant-modal-center"
-        title="全局筛选配置"
+        title="本地控制器配置"
         maskClosable={false}
         visible={visible}
         footer={modalButtons}
@@ -676,13 +525,104 @@ export class LocalControlConfig extends React.Component<IGlobalControlConfigProp
           <div className={styles.center}>
             {
               selected && (
-                <>
+                <div className={styles.filterFormContainer}>
+                  <div className={styles.baseForm}>
+                    <div className={styles.title}>
+                      <h2>基础配置</h2>
+                    </div>
+                    <Row gutter={8} className={styles.formBody}>
+                      <Col span={8}>
+                        <FormItem label="类型">
+                          <RadioGroup
+                            value={interactionType}
+                            onChange={this.interactionTypeChange}
+                          >
+                            <Radio value="column">字段</Radio>
+                            <Radio value="variable">变量</Radio>
+                          </RadioGroup>
+                        </FormItem>
+                      </Col>
+                      {
+                        variableSelect && (
+                          <Col span={8}>
+                            <FormItem label=" " colon={false}>
+                              <Checkbox
+                                checked={optionsFromColumn}
+                                onChange={this.optionsFromColumnChecked}
+                              >
+                                从字段取值
+                              </Checkbox>
+                            </FormItem>
+                          </Col>
+                        )
+                      }
+                    </Row>
+                    <Row gutter={8} className={styles.formBody}>
+                      <Col span={8}>
+                        <FormItem label={`关联${interactionTypeContent}`}>
+                          <Select
+                            size="small"
+                            placeholder="请选择"
+                            className={styles.selector}
+                            value={fieldsValue}
+                            onChange={this.modelOrVariableSelect}
+                            dropdownMatchSelectWidth={false}
+                            {...isMultiple && {mode: 'multiple'}}
+                          >
+                            {
+                              interactionType === 'column'
+                                ? model.map((m: IViewModelProps) => (
+                                  <Option key={m.name} value={m.name}>{m.name}</Option>
+                                ))
+                                : variables.map((v) => (
+                                  <Option
+                                    key={v.name}
+                                    value={v.name}
+                                    disabled={
+                                      isMultiple
+                                      && fieldsValue.length === 2
+                                      && !fieldsValue.includes(v.name)
+                                    }
+                                  >
+                                    {v.name}
+                                  </Option>
+                                ))
+                            }
+                          </Select>
+                        </FormItem>
+                      </Col>
+                      {
+                        optionsFromColumn && (
+                          <Col span={8}>
+                            <FormItem label="取值字段">
+                            <Select
+                              size="small"
+                              placeholder="请选择"
+                              className={styles.selector}
+                              value={column}
+                              onChange={this.optionsFromColumnSelect}
+                              dropdownMatchSelectWidth={false}
+                              {...isMultiple && {mode: 'multiple'}}
+                            >
+                              {
+                                model.map((m: IViewModelProps) => (
+                                  <Option key={m.name} value={m.name}>{m.name}</Option>
+                                ))
+                              }
+                            </Select>
+                            </FormItem>
+                          </Col>
+                        )
+                      }
+                    </Row>
+                  </div>
                   <FilterFormWithRedux
+                    interactionType={selected.interactionType}
                     onControlTypeChange={this.controlTypeChange}
                     onOpenOptionModal={this.openOptionModal}
                     wrappedComponentRef={this.filterForm}
                   />
-                </>
+                </div>
               )
             }
           </div>

@@ -279,21 +279,23 @@ export const ViewActions = {
   /** */
 
   /** Actions for external usages */
-  loadSelectOptions (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }) {
+  loadSelectOptions (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }, itemId?: number) {
     return {
       type: ActionTypes.LOAD_SELECT_OPTIONS,
       payload: {
         controlKey,
-        requestParams
+        requestParams,
+        itemId
       }
     }
   },
-  selectOptionsLoaded (controlKey: string, values: any[]) {
+  selectOptionsLoaded (controlKey: string, values: any[], itemId?: number) {
     return {
       type: ActionTypes.LOAD_SELECT_OPTIONS_SUCCESS,
       payload: {
         controlKey,
-        values
+        values,
+        itemId
       }
     }
   },

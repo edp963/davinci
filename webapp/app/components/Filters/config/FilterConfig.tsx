@@ -22,13 +22,13 @@ import React, { createRef } from 'react'
 import { connect } from 'react-redux'
 import moment from 'moment'
 import {
-  getDefaultFilterItem,
+  getDefaultGlobalControl,
   OnGetControlOptions,
   IMapControlOptions,
   IGlobalControl,
   IGlobalControlRelatedItem,
-  InteractionType,
-  IGlobalControlRelatedField
+  IControlRelatedField,
+  getRelatedFieldsInfo
 } from '..'
 import { FilterTypes, IS_RANGE_TYPE} from '../filterTypes'
 
@@ -42,7 +42,6 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { ICurrentDashboard } from '../../../containers/Dashboard'
 import { setControlFormValues } from '../../../containers/Dashboard/actions'
 import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
-import { ViewVariableTypes } from 'app/containers/View/constants'
 
 const styles = require('../filter.less')
 
@@ -56,7 +55,7 @@ export interface IRelatedViewSource {
   name: string
   model: IViewModelProps[]
   variables: IViewVariable[]
-  fields: IGlobalControlRelatedField | IGlobalControlRelatedField[]
+  fields: IControlRelatedField | IControlRelatedField[]
 }
 
 interface IGlobalControlConfigProps {
@@ -174,73 +173,8 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
       .map(([viewId, view]: [string, IFormedView]) => ({
         id: Number(viewId),
         name: view.name,
-        ...this.getRelatedViewInfo(relatedViews, view, type, interactionType)
+        ...getRelatedFieldsInfo(view, type, interactionType, relatedViews[view.id])
       }))
-  }
-
-  private getRelatedViewInfo = (
-    relatedViews: {
-      [key: string]: IGlobalControlRelatedField | IGlobalControlRelatedField[]
-    },
-    view: IFormedView,
-    type: FilterTypes,
-    interactionType: InteractionType
-  ): {
-    model: IViewModelProps[],
-    variables: IViewVariable[],
-    fields: IGlobalControlRelatedField | IGlobalControlRelatedField[]
-  } => {
-    const model = Object.entries(view.model)
-      .filter(([k, v]: [string, IViewModelProps]) => v.modelType === 'category')
-      .map(([k, v]: [string, IViewModelProps]) => ({
-        name: k,
-        ...v
-      }))
-    const variables = view.variable.filter((v) => v.type === ViewVariableTypes.Query)
-    let fields = relatedViews[view.id]
-
-    if (interactionType === 'column') {
-      if (!fields) {
-        fields = model.length
-          ? {
-            name: model[0].name,
-            type: model[0].sqlType
-          }
-          : void 0
-      }
-    } else {
-      if (!fields) {
-        if (variables.length) {
-          const fieldBase = {
-            name: variables[0].name,
-            type: variables[0].valueType
-          }
-          if (IS_RANGE_TYPE[type]) {
-            fields = [fieldBase]
-          } else if (type === FilterTypes.Select) {
-            fields = {
-              ...fieldBase,
-              optionsFromColumn: false,
-              column: model.length ? model[0].name : void 0
-            }
-          } else {
-            fields = fieldBase
-          }
-        } else {
-          fields = IS_RANGE_TYPE[type] ? [] : void 0
-        } 
-      } else {
-        fields = IS_RANGE_TYPE[type]
-          ? [].concat(fields)
-          : fields
-      }
-    }
-
-    return {
-      model,
-      variables,
-      fields
-    }
   }
 
   private setFormData = (control: IGlobalControl) => {
@@ -278,7 +212,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
   private addFilter = () => {
     const { currentItems, widgets, views } = this.props
     const { controls, selected } = this.state
-    const newFilter: IGlobalControl = getDefaultFilterItem()
+    const newFilter: IGlobalControl = getDefaultGlobalControl()
 
     if (selected) {
       this.getCachedFormValues((err, cachedControls) => {
@@ -604,7 +538,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     const { options } = this.state.selected
     this.setState({
       optionModalVisible: true,
-      optionValues: options && options.map((o) => o.value).join('\n')
+      optionValues: options && options.map((o) => `${o.text} ${o.value}`).join('\n')
     })
   }
 
@@ -616,7 +550,14 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     this.optionSettingForm.current.props.form.validateFieldsAndScroll((err, values) => {
       if (err) { return }
       const options = values.options
-        ? [...new Set(values.options.split(/\n/))].map((v) => ({ text: v, value: v }))
+        ? [...new Set(values.options.split(/\n/))]
+            .filter((tnv: string) => !!tnv.trim())
+            .map((tnv: string) => {
+              const tnvArr = tnv.split(/\s+/)
+              return tnvArr.length === 1
+                ? { text: tnvArr[0], value: tnvArr[0] }
+                : { text: tnvArr[0], value: tnvArr[1] }
+            })
         : []
       this.filterForm.current.props.form.setFieldsValue({options})
       this.closeOptionModal()
@@ -694,6 +635,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
                     onInteractionTypeChange={this.interactionTypeChange}
                   />
                   <FilterFormWithRedux
+                    interactionType={selected.interactionType}
                     onControlTypeChange={this.controlTypeChange}
                     onOpenOptionModal={this.openOptionModal}
                     wrappedComponentRef={this.filterForm}

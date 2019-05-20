@@ -1,7 +1,7 @@
 import React from 'react'
 import moment from 'moment'
 import { uuid } from 'utils/util'
-import { FilterTypes, FilterTypesOperatorSetting } from './filterTypes'
+import { FilterTypes, FilterTypesOperatorSetting, IS_RANGE_TYPE } from './filterTypes'
 import { OperatorTypes } from 'utils/operatorTypes'
 import { QueryVariable } from '../../containers/Dashboard/Grid'
 
@@ -12,7 +12,8 @@ const MultiDatePicker = React.lazy(() => import('../MultiDatePicker'))
 import DatePickerFormats, { DatePickerDefaultValues, DatePickerFormatsSelectSetting } from './datePickerFormats'
 const { WeekPicker, MonthPicker, RangePicker } = DatePicker
 import { SQL_NUMBER_TYPES, SqlTypes } from '../../globalConstants'
-import { ViewVariableValueTypes } from 'app/containers/View/constants'
+import { ViewVariableValueTypes, ViewVariableTypes } from 'app/containers/View/constants'
+import { IFormedView, IViewModelProps, IViewVariable } from 'app/containers/View/types'
 
 const styles = require('./filter.less')
 
@@ -23,20 +24,20 @@ export interface IGlobalControlRelatedItem {
   checked: boolean
 }
 
-export interface IGlobalControlRelatedField {
+export interface IControlRelatedField {
   name: string
   type: SqlTypes | ViewVariableValueTypes
   optionsFromColumn?: boolean
   column?: string
 }
 
-export interface IGlobalControlSelectOption {
+export interface IControlSelectOption {
   text: string
   value: string
   variable?: string
 }
 
-export interface IGlobalControl {
+export interface IControlBase {
   key: string
   name: string
   type: FilterTypes
@@ -45,21 +46,32 @@ export interface IGlobalControl {
   dateFormat?: DatePickerFormats
   multiple?: boolean
   customOptions?: boolean
-  options?: IGlobalControlSelectOption[]
+  options?: IControlSelectOption[]
   width: number
   dynamicDefaultValue?: any
   defaultValue?: any
+  parent?: string
+}
+
+export interface IGlobalControl extends IControlBase {
   relatedItems: {
     [itemId: string]: IGlobalControlRelatedItem
   }
   relatedViews: {
-    [viewId: string]: IGlobalControlRelatedField | IGlobalControlRelatedField[]
+    [viewId: string]: IControlRelatedField | IControlRelatedField[]
   }
-  parent?: string
 }
 
-export interface IRenderTreeItem extends IGlobalControl {
-  children?: IRenderTreeItem[]
+export interface ILocalControl extends IControlBase {
+  fields: IControlRelatedField | IControlRelatedField[]
+}
+
+export interface IGlobalRenderTreeItem extends IGlobalControl {
+  children?: IGlobalRenderTreeItem[]
+}
+
+export interface ILocalRenderTreeItem extends ILocalControl {
+  children?: ILocalRenderTreeItem[]
 }
 
 export interface IControlRequestParams {
@@ -80,7 +92,8 @@ export interface IDistinctValueReqeustParams {
 export type OnGetControlOptions = (
   controlKey: string,
   userOptions: boolean,
-  paramsOrOptions: { [viewId: string]: IDistinctValueReqeustParams } | any[]
+  paramsOrOptions: { [viewId: string]: IDistinctValueReqeustParams } | any[],
+  itemId?: number
 ) => void
 
 export type ControlOptions = Array<{
@@ -92,7 +105,7 @@ export interface IMapControlOptions {
 }
 
 export type OnFilterControlValueChange = (
-  filterItem: IGlobalControl,
+  control: IControlBase,
   value: number | string
 ) => void
 
@@ -101,8 +114,8 @@ export type OnFilterValueChange = (
   filterKey: string
 ) => void
 
-export function getDefaultFilterItem (): IGlobalControl {
-  const filterItem: IGlobalControl = {
+export function getDefaultGlobalControl (): IGlobalControl {
+  const control: IGlobalControl = {
     key: uuid(8, 16),
     name: '新建全局筛选',
     type: FilterTypes.Select,
@@ -112,7 +125,23 @@ export function getDefaultFilterItem (): IGlobalControl {
     relatedItems: {},
     relatedViews: {}
   }
-  return filterItem
+  return control
+}
+
+export function getDefaultLocalControl (view: IFormedView): ILocalControl {
+  const model = view.model || {}
+  const modelList = Object.entries(model)
+  const defaultFields = modelList[0]
+  const control: ILocalControl = {
+    key: uuid(8, 16),
+    name: '新建全局筛选',
+    type: FilterTypes.Select,
+    interactionType: 'column',
+    operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],
+    width: 0,
+    fields: defaultFields && { name: defaultFields[0], type: defaultFields[1].sqlType }
+  }
+  return control
 }
 
 export function renderInputText (onChange) {
@@ -129,7 +158,6 @@ export function renderNumberRange (onChange) {
 
 export function renderSelect (control: IGlobalControl, onChange, options) {
   const { multiple } = control
-  const pureOptions = options.map((o) => typeof o === 'object' ? o.value : o)
   return (
     <Select
       showSearch
@@ -138,7 +166,11 @@ export function renderSelect (control: IGlobalControl, onChange, options) {
       onChange={onChange}
       {...multiple && {mode: 'multiple'}}
     >
-      {pureOptions.map((o) => (<Option key={o} value={o}>{o}</Option>))}
+      {options.map((o) => {
+        return typeof o === 'object'
+          ? <Option key={o.value} value={o.value}>{o.text}</Option>
+          : <Option key={o} value={o}>{o}</Option>
+      })}
     </Select>
   )
 }
@@ -185,7 +217,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
       case Week:
         return (
           <WeekPicker
-            className={styles.filterControlComponent}
+            className={styles.controlComponent}
             placeholder="请选择"
             onChange={onChange}
             {...extraProps}
@@ -195,7 +227,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
       case Year:
         return (
           <MonthPicker
-            className={styles.filterControlComponent}
+            className={styles.controlComponent}
             placeholder="请选择"
             format={filter.dateFormat}
             onChange={onChange}
@@ -206,7 +238,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
         const isDatetimePicker = [Datetime, DatetimeMinute].includes(filter.dateFormat)
         return (
           <DatePicker
-            className={styles.filterControlComponent}
+            className={styles.controlComponent}
             placeholder="请选择"
             showTime={isDatetimePicker}
             format={filter.dateFormat}
@@ -225,7 +257,7 @@ export function renderDateRange (filter, onChange) {
   const isDatetimePicker = [Datetime, DatetimeMinute].includes(filter.dateFormat)
   return (
     <RangePicker
-      className={styles.filterControlComponent}
+      className={styles.controlComponent}
       placeholder={placeholder}
       showTime={isDatetimePicker}
       format={filter.dateFormat}
@@ -243,7 +275,7 @@ function datetimePickerChange (onChange) {
   }
 }
 
-export function getVariableValue (filter: IGlobalControl, fields: IGlobalControlRelatedField | IGlobalControlRelatedField[], value) {
+export function getVariableValue (filter: IControlBase, fields: IControlRelatedField | IControlRelatedField[], value) {
   const { type, dateFormat, multiple } = filter
   let name
   let valueType
@@ -311,7 +343,7 @@ export function getVariableValue (filter: IGlobalControl, fields: IGlobalControl
   return variable
 }
 
-export function getModelValue (control: IGlobalControl, field: IGlobalControlRelatedField, value) {
+export function getModelValue (control: IControlBase, field: IControlRelatedField, value) {
   const { type, dateFormat, multiple, operator } = control
   const { name, type: sqlType } = field
   const filters = []
@@ -387,7 +419,7 @@ export function getValidVariableValue (value, valueType: ViewVariableValueTypes)
   }
 }
 
-export function getDefaultValue (control: IGlobalControl) {
+export function getDefaultValue (control: IControlBase) {
   const { type, dynamicDefaultValue, defaultValue } = control
   switch (type) {
     case FilterTypes.Date:
@@ -455,10 +487,10 @@ export function getDatePickerFormatOptions (type: FilterTypes, multiple: boolean
   }
 }
 
-export function getControlRenderTree (controls: IGlobalControl[]): {
-  renderTree: IRenderTreeItem[],
+export function getControlRenderTree<T extends IControlBase, U extends T> (controls: T[]): {
+  renderTree: U[],
   flatTree: {
-    [key: string]: IRenderTreeItem
+    [key: string]: U
   }
 } {
   const renderTree = []
@@ -489,7 +521,10 @@ export function getControlRenderTree (controls: IGlobalControl[]): {
   }
 }
 
-export function getAllChildren (key: string, flatTree: { [key: string]: IRenderTreeItem }) {
+export function getAllChildren (
+  key: string,
+  flatTree: { [key: string]: IGlobalRenderTreeItem | ILocalRenderTreeItem }
+) {
   let keys = []
   if (flatTree[key].children) {
     flatTree[key].children.forEach((c) => {
@@ -497,4 +532,83 @@ export function getAllChildren (key: string, flatTree: { [key: string]: IRenderT
     })
   }
   return keys
+}
+
+export function getParents<T extends IGlobalRenderTreeItem | ILocalRenderTreeItem> (
+  parentKey: string,
+  flatTree: {
+    [key: string]: IGlobalRenderTreeItem | ILocalRenderTreeItem
+  }
+): T[] {
+  let parents = []
+  const parent = flatTree[parentKey]
+  if (parent) {
+    const { children, ...rest } = parent
+    parents = parents
+      .concat({...rest})
+      .concat(getParents(rest.parent, flatTree))
+  }
+  return parents
+}
+
+export function getRelatedFieldsInfo (
+  view: IFormedView,
+  type: FilterTypes,
+  interactionType: InteractionType,
+  fields: IControlRelatedField | IControlRelatedField[]
+): {
+  model: IViewModelProps[],
+  variables: IViewVariable[],
+  fields: IControlRelatedField | IControlRelatedField[]
+} {
+  const model = Object.entries(view.model)
+    .filter(([k, v]: [string, IViewModelProps]) => v.modelType === 'category')
+    .map(([k, v]: [string, IViewModelProps]) => ({
+      name: k,
+      ...v
+    }))
+  const variables = view.variable.filter((v) => v.type === ViewVariableTypes.Query)
+
+  if (interactionType === 'column') {
+    if (!fields) {
+      fields = model.length
+        ? {
+          name: model[0].name,
+          type: model[0].sqlType
+        }
+        : void 0
+    }
+  } else {
+    if (!fields) {
+      if (variables.length) {
+        const fieldBase = {
+          name: variables[0].name,
+          type: variables[0].valueType
+        }
+        if (IS_RANGE_TYPE[type]) {
+          fields = [fieldBase]
+        } else if (type === FilterTypes.Select) {
+          fields = {
+            ...fieldBase,
+            optionsFromColumn: false,
+            column: model.length ? model[0].name : void 0
+          }
+        } else {
+          fields = fieldBase
+        }
+      } else {
+        fields = IS_RANGE_TYPE[type] ? [] : void 0
+      }
+    } else {
+      fields = IS_RANGE_TYPE[type]
+        ? [].concat(fields)
+        : fields
+    }
+  }
+
+  return {
+    model,
+    variables,
+    fields
+  }
 }

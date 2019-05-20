@@ -119,6 +119,7 @@ export interface IQueryVariableMap {
 
 export interface IQueryConditions {
   filters: string[]
+  tempFilters: string[]
   linkageFilters: string[]
   globalFilters: string[]
   variables: QueryVariable
@@ -151,6 +152,7 @@ interface IDashboardItemInfo {
   interactId: string
   rendered: boolean
   renderType: RenderType
+  controlSelectOptions: IMapControlOptions
   selectedItems?: number[]
 }
 
@@ -158,6 +160,7 @@ export interface IDataRequestParams {
   groups: string[]
   aggregators: Array<{column: string, func: string}>
   filters: string[]
+  tempFilters?: string[]
   linkageFilters?: string[]
   globalFilters?: string[]
   variables?: QueryVariable
@@ -211,8 +214,8 @@ interface IGridProps {
     requestParams: IDataRequestParams
   ) => void
   onClearCurrentDashboard: () => any
-  onLoadSelectOptions: (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }) => void
-  onSetSelectOptions: (controlKey: string, options: any[]) => void
+  onLoadSelectOptions: (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }, itemId?: number) => void
+  onSetSelectOptions: (controlKey: string, options: any[], itemId?: number) => void
   onRenderDashboardItem: (itemId: number) => void
   onResizeDashboardItem: (itemId: number) => void
   onResizeAllDashboardItem: () => void
@@ -430,6 +433,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryConditions = currentItemsInfo[itemId].queryConditions
+
+    let tempFilters
     let linkageFilters
     let globalFilters
     let variables
@@ -440,6 +445,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let nativeQuery
 
     if (queryConditions) {
+      tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
       linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
       globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
       variables = queryConditions.variables || cachedQueryConditions.variables
@@ -449,6 +455,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       pagination = queryConditions.pagination || cachedQueryConditions.pagination
       nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
     } else {
+      tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
       globalFilters = cachedQueryConditions.globalFilters
       variables = cachedQueryConditions.variables
@@ -511,6 +518,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
       aggregators,
       filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
+      tempFilters,
       linkageFilters,
       globalFilters,
       variables,
@@ -882,11 +890,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private getOptions = (controlKey: string, useOptions: boolean, paramsOrOptions) => {
+  private getOptions = (controlKey: string, useOptions: boolean, paramsOrOptions, itemId?: number) => {
     if (useOptions) {
-      this.props.onSetSelectOptions(controlKey, paramsOrOptions)
+      this.props.onSetSelectOptions(controlKey, paramsOrOptions, itemId)
     } else {
-      this.props.onLoadSelectOptions(controlKey, paramsOrOptions)
+      this.props.onLoadSelectOptions(controlKey, paramsOrOptions, itemId)
     }
   }
 
@@ -1293,7 +1301,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           rendered,
           renderType,
           queryConditions,
-          selectedItems
+          selectedItems,
+          controlSelectOptions
         } = currentItemsInfo[id]
         const widget = widgets.find((w) => w.id === widgetId)
         const interacting = interactingStatus[id] || false
@@ -1321,6 +1330,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               currentProject={currentProject}
               rendered={rendered}
               renderType={renderType}
+              controlSelectOptions={controlSelectOptions}
               queryConditions={queryConditions}
               drillHistory={drillHistory}
               drillpathSetting={drillpathSetting}
@@ -1340,6 +1350,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onDrillData={this.dataDrill}
               onDrillPathData={this.onDrillPathData}
               onSelectChartsItems={this.selectChartsItems}
+              onGetControlOptions={this.getOptions}
               selectedItems={selectedItems || []}
               ref={(f) => this[`dashboardItem${id}`] = f}
             />
@@ -1581,8 +1592,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, widgetId, requestParams) => dispatch(loadWidgetCsv(itemId, widgetId, requestParams)),
-    onLoadSelectOptions: (controlKey, requestParams) => dispatch(loadSelectOptions(controlKey, requestParams)),
-    onSetSelectOptions: (controlKey, options) => dispatch(setSelectOptions(controlKey, options)),
+    onLoadSelectOptions: (controlKey, requestParams, itemId) => dispatch(loadSelectOptions(controlKey, requestParams, itemId)),
+    onSetSelectOptions: (controlKey, options, itemId) => dispatch(setSelectOptions(controlKey, options, itemId)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),
     onResizeDashboardItem: (itemId) => dispatch(resizeDashboardItem(itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),

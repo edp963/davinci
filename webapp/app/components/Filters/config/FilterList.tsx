@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { fromJS } from 'immutable'
 
-import { IGlobalControl, IRenderTreeItem, getControlRenderTree, getAllChildren } from '..'
+import { IGlobalControl, IRenderTreeItem, getControlRenderTree, getAllChildren, ILocalControl } from '..'
 import FilterListItem from './FilterListItem'
 
 const styles = require('../filter.less')
@@ -11,7 +11,7 @@ const { TreeNode } = Tree
 
 interface IFilterListProps {
   list: any[]
-  selectedFilter: IGlobalControl
+  selectedFilter: IGlobalControl | ILocalControl
   onSelectFilter: (key: string) => void
   onAddFilter: () => void
   onDeleteFilter: (keys: string[], selectKey: string) => void
@@ -58,7 +58,7 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
     this.setState(getControlRenderTree(replica))
   }
 
-  private getSelectedKeys = (selectedFilter: IGlobalControl) => {
+  private getSelectedKeys = (selectedFilter: IGlobalControl | ILocalControl) => {
     this.setState({
       selectedKeys: selectedFilter ? [selectedFilter.key] : []
     })
