@@ -230,8 +230,8 @@ public class ExcelUtils {
 
             List<QueryColumn> columnList = new ArrayList<>();
             for (ExcelHeader excelHeader : excelHeaders) {
-                if (excelHeader.getRow() + 1 > rownum) {
-                    rownum = excelHeader.getRow();
+                if (excelHeader.getRow() + excelHeader.getRowspan() > rownum) {
+                    rownum = excelHeader.getRow() + excelHeader.getRowspan();
                 }
                 if (excelHeader.getCol() + 1 > colnum) {
                     colnum = excelHeader.getCol();
@@ -297,6 +297,8 @@ public class ExcelUtils {
                 cell.setCellValue(StringUtils.isEmpty(excelHeader.getAlias()) ? excelHeader.getKey() : excelHeader.getAlias());
             }
 
+            rownum--;
+
         } else {
             row = sheet.createRow(rownum);
             for (int i = 0; i < columns.size(); i++) {
@@ -323,7 +325,6 @@ public class ExcelUtils {
                 row.createCell(i).setCellValue(type);
             }
         }
-
 
         //data
         for (int i = 0; i < dataList.size(); i++) {

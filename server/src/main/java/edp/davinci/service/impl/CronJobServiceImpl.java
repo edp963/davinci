@@ -214,7 +214,7 @@ public class CronJobServiceImpl implements CronJobService {
     public boolean deleteCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         CronJob cronJob = cronJobMapper.getById(id);
-        if (null != cronJob) {
+        if (null == cronJob) {
             log.info("cronjob (:{}) is not found", id);
             throw new NotFoundException("cronjob is not found");
         }
@@ -240,7 +240,7 @@ public class CronJobServiceImpl implements CronJobService {
     @Transactional
     public CronJob startCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         CronJob cronJob = cronJobMapper.getById(id);
-        if (null != cronJob) {
+        if (null == cronJob) {
             log.info("cronjob (:{}) is not found", id);
             throw new NotFoundException("cronjob is not found");
         }
@@ -272,7 +272,7 @@ public class CronJobServiceImpl implements CronJobService {
     @Transactional
     public CronJob stopCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         CronJob cronJob = cronJobMapper.getById(id);
-        if (null != cronJob) {
+        if (null == cronJob) {
             log.info("cronjob (:{}) is not found", id);
             throw new NotFoundException("cronjob is not found");
         }
