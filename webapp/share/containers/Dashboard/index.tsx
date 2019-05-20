@@ -35,7 +35,7 @@ import DashboardItem from '../../../app/containers/Dashboard/components/Dashboar
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
 import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
 
-import { IMapItemFilterValue, InteractionType, IMapItemControlRequestParams } from '../../../app/components/Filters'
+import { IMapItemFilterValue, InteractionType, IMapItemControlRequestParams, IMapControlOptions } from '../../../app/components/Filters'
 import GlobalControlPanel from '../../../app/components/Filters/FilterPanel'
 
 import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
@@ -94,7 +94,8 @@ interface IDashboardProps {
       loading: boolean
       queryConditions: IQueryConditions
       downloadCsvLoading: boolean
-      renderType: RenderType
+      renderType: RenderType,
+      controlSelectOptions: IMapControlOptions
     }
   },
   widgets: any[],
@@ -114,8 +115,8 @@ interface IDashboardProps {
     requestParams: IDataRequestParams,
     dataToken: string
   ) => void,
-  onLoadSelectOptions: (controlKey, dataToken, paramsOrOptions) => void
-  onSetSelectOptions: (controlKey: number, options: any[]) => void
+  onLoadSelectOptions: (controlKey, dataToken, paramsOrOptions, itemId?: number) => void
+  onSetSelectOptions: (controlKey: string, options: any[], itemId?: number) => void
   onResizeAllDashboardItem: () => void
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
@@ -499,11 +500,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     })
   }
 
-  private getOptions = (controlKey, interactionType: InteractionType, paramsOrOptions) => {
-    if (interactionType === 'column') {
-      this.props.onLoadSelectOptions(controlKey, this.state.shareInfo, paramsOrOptions)
+  private getOptions = (controlKey: string, useOptions: boolean, paramsOrOptions, itemId?: number) => {
+    if (useOptions) {
+      this.props.onSetSelectOptions(controlKey, paramsOrOptions, itemId)
     } else {
-      this.props.onSetSelectOptions(controlKey, paramsOrOptions)
+      this.props.onLoadSelectOptions(controlKey, this.state.shareInfo, paramsOrOptions, itemId)
     }
   }
 
@@ -665,7 +666,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           loading,
           downloadCsvLoading,
           renderType,
-          queryConditions
+          queryConditions,
+          controlSelectOptions
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
@@ -690,14 +692,16 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               frequency={frequency}
               shareInfo={widget.dataToken}
               downloadCsvLoading={downloadCsvLoading}
+              renderType={renderType}
+              controlSelectOptions={controlSelectOptions}
+              queryConditions={queryConditions}
               onGetChartData={this.getChartData}
               onDownloadCsv={this.downloadCsv}
               onTurnOffInteract={this.turnOffInteract}
               onCheckTableInteract={this.checkInteract}
               onDoTableInteract={this.doInteract}
               onShowFullScreen={this.visibleFullScreen}
-              renderType={renderType}
-              queryConditions={queryConditions}
+              onGetControlOptions={this.getOptions}
               container="share"
             />
           </div>
@@ -800,8 +804,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadResultset: (renderType, itemid, dataToken, requestParams) => dispatch(getResultset(renderType, itemid, dataToken, requestParams)),
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
     onLoadWidgetCsv: (itemId, requestParams, dataToken) => dispatch(loadWidgetCsv(itemId, requestParams, dataToken)),
-    onLoadSelectOptions: (controlKey, dataToken, paramsOrOptions) => dispatch(loadSelectOptions(controlKey, dataToken, paramsOrOptions)),
-    onSetSelectOptions: (controlKey, options) => dispatch(setSelectOptions(controlKey, options)),
+    onLoadSelectOptions: (controlKey, dataToken, paramsOrOptions, itemId) => dispatch(loadSelectOptions(controlKey, dataToken, paramsOrOptions, itemId)),
+    onSetSelectOptions: (controlKey, options, itemId) => dispatch(setSelectOptions(controlKey, options, itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index))

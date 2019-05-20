@@ -133,7 +133,7 @@ export function* getWidgetCsv (action) {
 export function* getSelectOptions (action) {
   try {
     const { payload } = action
-    const { controlKey, dataToken, requestParams } = payload
+    const { controlKey, dataToken, requestParams, itemId } = payload
     const requestParamsMap: Array<[string, IDistinctValueReqeustParams]> = Object.entries(requestParams)
     const requests = requestParamsMap.map(([viewId, params]: [string, IDistinctValueReqeustParams]) => {
       const { columns, filters, variables } = params
@@ -155,7 +155,7 @@ export function* getSelectOptions (action) {
       }
       return payloads
     }, [])
-    yield put(selectOptionsLoaded(controlKey, values))
+    yield put(selectOptionsLoaded(controlKey, values, itemId))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
     errorHandler(err)

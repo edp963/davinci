@@ -75,7 +75,8 @@ function shareReducer (state = initialState, { type, payload }) {
             },
             downloadCsvLoading: false,
             interactId: '',
-            renderType: 'rerender'
+            renderType: 'rerender',
+            controlSelectOptions: {}
           }
           return obj
         }, {}))
@@ -107,7 +108,8 @@ function shareReducer (state = initialState, { type, payload }) {
             },
             downloadCsvLoading: false,
             interactId: '',
-            renderType: 'rerender'
+            renderType: 'rerender',
+            controlSelectOptions: {}
           }
         })
     case LOAD_SHARE_WIDGET_SUCCESS:
@@ -187,15 +189,37 @@ function shareReducer (state = initialState, { type, payload }) {
         }
       })
     case LOAD_SELECT_OPTIONS_SUCCESS:
-      return state.set('dashboardSelectOptions', {
-        ...dashboardSelectOptions,
-        [payload.controlKey]: payload.values
-      })
+      return payload.itemId
+        ? state.set('itemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            controlSelectOptions: {
+              ...itemsInfo[payload.itemId].controlSelectOptions,
+              [payload.controlKey]: payload.values
+            }
+          }
+        })
+        : state.set('dashboardSelectOptions', {
+          ...dashboardSelectOptions,
+          [payload.controlKey]: payload.values
+        })
     case SET_SELECT_OPTIONS:
-      return state.set('dashboardSelectOptions', {
-        ...dashboardSelectOptions,
-        [payload.controlKey]: payload.options
-      })
+      return payload.itemId
+        ? state.set('itemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            controlSelectOptions: {
+              ...itemsInfo[payload.itemId].controlSelectOptions,
+              [payload.controlKey]: payload.options
+            }
+          }
+        })
+        : state.set('dashboardSelectOptions', {
+          ...dashboardSelectOptions,
+          [payload.controlKey]: payload.options
+        })
     case RESIZE_ALL_DASHBOARDITEM:
       return state.set(
         'itemsInfo',

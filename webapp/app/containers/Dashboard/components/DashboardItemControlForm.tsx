@@ -195,8 +195,14 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
 
   private search = () => {
     const { onSearch, onHide } = this.props
+    const { flatTree } = this.state
+    const formValues = this.props.form.getFieldsValue()
 
-    // const formValues = this.props.form.getFieldsValue()
+    Object.entries(formValues).forEach(([controlKey, value]) => {
+      const control = flatTree[controlKey]
+      this.setControlRequestParams(control, value)
+    })
+
     const queryConditions = Object.values(this.controlRequestParams).reduce((filterValue, val) => {
       filterValue.variables = filterValue.variables.concat(val.variables)
       filterValue.tempFilters = filterValue.tempFilters.concat(val.filters)

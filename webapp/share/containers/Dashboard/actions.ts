@@ -147,23 +147,25 @@ export function loadWidgetCsvFail (itemId) {
   }
 }
 
-export function loadSelectOptions (controlKey, dataToken, requestParams) {
+export function loadSelectOptions (controlKey, dataToken, requestParams, itemId) {
   return {
     type: LOAD_SELECT_OPTIONS,
     payload: {
       controlKey,
       dataToken,
-      requestParams
+      requestParams,
+      itemId
     }
   }
 }
 
-export function selectOptionsLoaded (controlKey, values) {
+export function selectOptionsLoaded (controlKey, values, itemId) {
   return {
     type: LOAD_SELECT_OPTIONS_SUCCESS,
     payload: {
       controlKey,
-      values
+      values,
+      itemId
     }
   }
 }
@@ -203,12 +205,13 @@ export function deleteDrillHistory (itemId, index) {
   }
 }
 
-export function setSelectOptions (controlKey, options) {
+export function setSelectOptions (controlKey, options, itemId) {
   return {
     type: SET_SELECT_OPTIONS,
     payload: {
       controlKey,
-      options
+      options,
+      itemId
     }
   }
 }
