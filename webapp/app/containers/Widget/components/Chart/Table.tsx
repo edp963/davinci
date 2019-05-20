@@ -895,7 +895,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       ...this.basePagination,
       ...pagination
     }
-    const key = new Date().getTime() // FIXME force to rerender Table to avoid bug by setting changes
+    // const key = new Date().getTime() // FIXME force to rerender Table to avoid bug by setting changes
     const scroll = this.getTableScroll(columns, width, headerFixed, tableBodyHeight)
     const style = this.getTableStyle(headerFixed, tableBodyHeight)
 
@@ -914,7 +914,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return (
       <>
         <AntTable
-          key={key}
+          // key={key}
           style={style}
           className={tableCls}
           ref={this.table}
