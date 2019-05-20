@@ -561,13 +561,16 @@ public class ProjectServiceImpl implements ProjectService {
         List<RelRoleProject> list = roleList.stream().map(role -> new RelRoleProject(projectDetail.getId(), role.getId()).createdBy(user.getId())).collect(Collectors.toList());
 
         relRoleProjectMapper.deleteByProjectId(id);
-        relRoleProjectMapper.insertBatch(list);
-        List<RoleProject> roleProjects = list.stream().map(r -> {
-            RoleProject roleProject = new RoleProject(projectDetail);
-            BeanUtils.copyProperties(r, roleProject);
-            return roleProject;
-        }).collect(Collectors.toList());
-        return roleProjects;
+        if (null != list && list.size() > 0) {
+            relRoleProjectMapper.insertBatch(list);
+            List<RoleProject> roleProjects = list.stream().map(r -> {
+                RoleProject roleProject = new RoleProject(projectDetail);
+                BeanUtils.copyProperties(r, roleProject);
+                return roleProject;
+            }).collect(Collectors.toList());
+            return roleProjects;
+        }
+        return null;
     }
 
     @Override

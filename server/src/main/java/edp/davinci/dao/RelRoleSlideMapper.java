@@ -24,7 +24,7 @@ public interface RelRoleSlideMapper {
             "inner join display d on d.id = s.display_id",
             "where rru.user_id = #{userId} and rrs.visible = 0 and d.project_id = #{projectId}"
     })
-    List<Long> getDisableDisplayByUser(@Param("userId") Long userId, @Param("projectId") Long projectId);
+    List<Long> getDisableSlides(@Param("userId") Long userId, @Param("projectId") Long projectId);
 
     @Select({
             "select role_id from rel_role_slide where slide_id = #{slideId} and visible = 0"

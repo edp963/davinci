@@ -18,6 +18,7 @@
 
 package edp.davinci.dto.projectDto;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import edp.davinci.core.enums.UserPermissionEnum;
 import lombok.Data;
 
@@ -37,6 +38,9 @@ public class ProjectPermission {
     private Boolean sharePermission = false;
 
     private Boolean downloadPermission = false;
+
+    @JSONField(serialize = false)
+    private boolean isProjectMaintainer = false;
 
 
     public ProjectPermission() {
@@ -66,6 +70,7 @@ public class ProjectPermission {
         ProjectPermission permission = new ProjectPermission(UserPermissionEnum.DELETE.getPermission());
         permission.setDownloadPermission(true);
         permission.setSharePermission(true);
+        permission.isProjectMaintainer = true;
         return permission;
     }
 }

@@ -26,5 +26,5 @@ import java.util.List;
 
 @Data
 public class DashboardDto extends Dashboard {
-    private List<Long> roles;
+    private List<Long> roleIds;
 }

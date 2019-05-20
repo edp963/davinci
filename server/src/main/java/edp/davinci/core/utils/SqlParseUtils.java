@@ -100,11 +100,10 @@ public class SqlParseUtils {
                                 queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues()));
                                 break;
                             case AUTHVARE:
-                                String k = String.join("", String.valueOf(delimiter), variable.getName().trim(), String.valueOf(delimiter));
                                 if (null != variable) {
                                     List<String> v = getAuthVarValue(variable, null);
-                                    if (null != v && v.size() > 0) {
-                                        authParamMap.put(k, v);
+                                    if (null != v) {
+                                        authParamMap.put(variable.getName().trim(), v);
                                     }
                                 }
                                 break;
@@ -171,11 +170,12 @@ public class SqlParseUtils {
         }
 
         ST st = new ST(sql, delimiter, delimiter);
+        if (null != authParamMap && authParamMap.size() > 0) {
+            authParamMap.forEach((k, v) -> st.add(k, true));
+        }
         //替换query@var
         if (null != queryParamMap && queryParamMap.size() > 0) {
-            for (String key : queryParamMap.keySet()) {
-                st.add(key, queryParamMap.get(key));
-            }
+            queryParamMap.forEach(st::add);
         }
         sql = st.render();
         return sql;
@@ -236,11 +236,7 @@ public class SqlParseUtils {
                 continue;
             }
         }
-        if (map.size() > 0) {
-            return map;
-        } else {
-            return null;
-        }
+        return map.size() > 0 ? map : null;
     }
 
     private static String getAuthVarExpression(String srcExpression, Map<String, List<String>> authParamMap, char sqlTempDelimiter) throws Exception {
@@ -272,11 +268,14 @@ public class SqlParseUtils {
                 if (null != expList && expList.size() > 0) {
                     String left = operatorMap.get(sqlOperator).get(0);
                     String right = operatorMap.get(sqlOperator).get(expList.size() - 1);
+                    if (right.startsWith(parenthesesStart) && right.endsWith(parenthesesEnd)) {
+                        right = right.substring(1, right.length() - 1);
+                    }
                     if (right.startsWith(delimiter) && right.endsWith(delimiter)) {
                         right = right.substring(1, right.length() - 1);
                     }
-                    if (authParamMap.containsKey(right)) {
-                        List<String> list = authParamMap.get(right);
+                    if (authParamMap.containsKey(right.trim())) {
+                        List<String> list = authParamMap.get(right.trim());
                         if (null != list && list.size() > 0) {
                             StringBuilder expBuilder = new StringBuilder();
                             if (list.size() == 1) {

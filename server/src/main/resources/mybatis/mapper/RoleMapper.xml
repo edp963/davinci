@@ -31,7 +31,7 @@
             </foreach>
         </if>
         <if test="roleIds == null or roleIds.size == 0">
-            1=0
+            and 1=0
         </if>
     </select>
 
