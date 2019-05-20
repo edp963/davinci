@@ -115,7 +115,7 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
         Iterator<DashboardPortal> iterator = dashboardPortals.iterator();
         while (iterator.hasNext()) {
             DashboardPortal portal = iterator.next();
-            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && (disbalePortals.contains(portal.getId()) || !portal.getPublish())) {
+            if (!projectPermission.isProjectMaintainer() && (disbalePortals.contains(portal.getId()) || !portal.getPublish())) {
                 iterator.remove();
             }
         }
@@ -197,8 +197,12 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardPortal.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
+        List<Long> disbalePortals = relRolePortalMapper.getDisablePortalByUser(user.getId(), dashboardPortal.getProjectId());
+
+
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() ||
+                (!projectPermission.isProjectMaintainer() && disbalePortals.contains(dashboardPortal.getId()))) {
             log.info("user {} have not permisson to update widget", user.getUsername());
             throw new UnAuthorizedExecption("you have not permission to update portal");
         }
@@ -286,8 +290,12 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardPortal.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
+        List<Long> disbalePortals = relRolePortalMapper.getDisablePortalByUser(user.getId(), dashboardPortal.getProjectId());
+
+
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission() ||
+                (!projectPermission.isProjectMaintainer() && disbalePortals.contains(dashboardPortal.getId()))) {
             log.info("user {} have not permisson to delete widget", user.getUsername());
             throw new UnAuthorizedExecption("you have not permission to delete portal");
         }

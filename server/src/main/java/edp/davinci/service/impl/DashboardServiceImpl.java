@@ -118,8 +118,7 @@ public class DashboardServiceImpl implements DashboardService {
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         boolean isDisable = relRolePortalMapper.isDisable(dashboardPortal.getId(), user.getId());
 
-        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() ||
-                (isDisable && projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission())) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() || (!projectPermission.isProjectMaintainer() && isDisable)) {
             return null;
         }
 
@@ -134,7 +133,7 @@ public class DashboardServiceImpl implements DashboardService {
         Iterator<Dashboard> iterator = dashboardList.iterator();
         while (iterator.hasNext()) {
             Dashboard dashboard = iterator.next();
-            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && disableDashboards.contains(dashboard.getId())) {
+            if (!projectPermission.isProjectMaintainer() && disableDashboards.contains(dashboard.getId())) {
                 iterator.remove();
             }
         }
@@ -175,8 +174,7 @@ public class DashboardServiceImpl implements DashboardService {
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         boolean isDisable = relRolePortalMapper.isDisable(portalId, user.getId());
 
-        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() ||
-                (isDisable && projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission())) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() || (!projectPermission.isProjectMaintainer() && isDisable)) {
             return null;
         }
 
@@ -229,8 +227,11 @@ public class DashboardServiceImpl implements DashboardService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardPortal.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
+        boolean isDisable = relRolePortalMapper.isDisable(dashboardCreate.getDashboardPortalId(), user.getId());
+
+
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (projectPermission.isProjectMaintainer() && isDisable)) {
             log.info("user {} have not permisson to create dashboard", user.getUsername());
             throw new UnAuthorizedExecption("you have not permission to create dashboard");
         }
@@ -290,8 +291,11 @@ public class DashboardServiceImpl implements DashboardService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardPortal.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
+        boolean isDisable = relRolePortalMapper.isDisable(portalId, user.getId());
+
+
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && isDisable)) {
             log.info("user {} have not permisson to update dashboard", user.getUsername());
             throw new UnAuthorizedExecption("you have not permission to update dashboard");
         }
@@ -305,7 +309,13 @@ public class DashboardServiceImpl implements DashboardService {
             parentMap = dashboardMapper.getFullParentIds(parentIds);
         }
 
+        List<Long> disableDashboards = relRoleDashboardMapper.getDisableByUser(user.getId(), portalId);
+
         for (DashboardDto dashboardDto : dashboards) {
+            if (!projectPermission.isProjectMaintainer() && disableDashboards.contains(dashboardDto.getId())) {
+                throw new UnAuthorizedExecption("you have not permission to update dashboard: \"" + dashboardDto.getName() + "\"");
+            }
+
             if (!dashboardDto.getDashboardPortalId().equals(portalId)) {
                 throw new ServerException("Invalid dashboard portal id");
             }
@@ -323,7 +333,7 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             dashboardList.add(dashboardDto);
-            rolesMap.put(dashboardDto.getId(), dashboardDto.getRoles());
+            rolesMap.put(dashboardDto.getId(), dashboardDto.getRoleIds());
         }
 
         int i = dashboardMapper.updateBatch(dashboardList);
@@ -370,8 +380,11 @@ public class DashboardServiceImpl implements DashboardService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardWithPortalAndProject.getProject().getId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
+        List<Long> disableDashboards = relRoleDashboardMapper.getDisableByUser(user.getId(), dashboardWithPortalAndProject.getDashboardPortalId());
+
+
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disableDashboards.contains(id))) {
             log.info("user {} have not permisson to create dashboard", user.getUsername());
             throw new UnAuthorizedExecption("you have not permission to create dashboard");
         }
@@ -411,15 +424,25 @@ public class DashboardServiceImpl implements DashboardService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardWithPortalAndProject.getProject().getId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
+        boolean isDisable = relRolePortalMapper.isDisable(portalId, user.getId());
+
+
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && isDisable)) {
             log.info("user {} have not permisson to do this operation", user.getUsername(), dashboardId);
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
+        List<Long> disableDashboards = relRoleDashboardMapper.getDisableByUser(user.getId(), portalId);
+
+
         Set<Long> ids = new HashSet<>();
         List<MemDashboardWidget> list = new ArrayList<>();
         for (MemDashboardWidgetCreate memDashboardWidgetCreate : memDashboardWidgetCreates) {
+
+            if (!projectPermission.isProjectMaintainer() && disableDashboards.contains(memDashboardWidgetCreate.getDashboardId())) {
+                throw new UnAuthorizedExecption("Insufficient permissions");
+            }
 
             if (memDashboardWidgetCreate.getPolling() && memDashboardWidgetCreate.getFrequency() < 1) {
                 throw new ServerException("Invalid frequency");
@@ -471,8 +494,10 @@ public class DashboardServiceImpl implements DashboardService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardPortal.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
+        boolean isDisable = relRolePortalMapper.isDisable(portalId, user.getId());
+
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && isDisable)) {
             log.info("user (:{}) have not permission to update memDashboardWidget", user.getId());
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
@@ -487,7 +512,14 @@ public class DashboardServiceImpl implements DashboardService {
 
         String befor = list.toString();
 
+        List<Long> disableDashboards = relRoleDashboardMapper.getDisableByUser(user.getId(), portalId);
+
+
         list.forEach(m -> {
+            if (!projectPermission.isProjectMaintainer() && disableDashboards.contains(m.getDashboardId())) {
+                throw new UnAuthorizedExecption("Insufficient permissions");
+            }
+
             if (!dashboardIds.contains(m.getDashboardId())) {
                 throw new ServerException("Invalid dashboard id");
             }
@@ -534,8 +566,14 @@ public class DashboardServiceImpl implements DashboardService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardWithPortalAndProject.getProject().getId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
+        boolean isDisable = relRolePortalMapper.isDisable(dashboardWithPortalAndProject.getDashboardPortalId(), user.getId());
+
+        List<Long> disableDashboards = relRoleDashboardMapper.getDisableByUser(user.getId(), dashboardWithPortalAndProject.getDashboardPortalId());
+
+
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (isDisable || disableDashboards.contains(dashboardWithPortalAndProject.getId())))) {
             log.info("user ({}) have not permission to delete memDashboardWidget ({})", user.getId(), memDashboardWidget.getId());
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
@@ -569,8 +607,13 @@ public class DashboardServiceImpl implements DashboardService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardWithPortalAndProject.getProject().getId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
+        boolean isDisable = relRolePortalMapper.isDisable(dashboardWithPortalAndProject.getDashboardPortalId(), user.getId());
+
+        List<Long> disableDashboards = relRoleDashboardMapper.getDisableByUser(user.getId(), dashboardWithPortalAndProject.getDashboardPortalId());
+
         //校验权限
-        if (!projectPermission.getSharePermission()) {
+        if (!projectPermission.getSharePermission() ||
+                (!projectPermission.isProjectMaintainer() && (isDisable || disableDashboards.contains(dashboardWithPortalAndProject.getId())))) {
             log.info("user {} have not permisson to share the dashboard {}", user.getUsername(), user.getId());
             throw new UnAuthorizedExecption("you have not permission to share the dashboard");
         }

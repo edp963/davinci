@@ -3,24 +3,24 @@ List of third-party dependencies grouped by their license type.
 
     Apache 2:
 
-        * druid (com.alibaba:druid:1.0.18 - https://github.com/alibaba/druid)
+        * druid (com.alibaba:druid:1.1.11 - https://github.com/alibaba/druid)
         * fastjson (com.alibaba:fastjson:1.2.28 - https://github.com/alibaba/fastjson)
         * Joda-Time (joda-time:joda-time:2.9.9 - http://www.joda.org/joda-time/)
-        * Lucene Common Analyzers (org.apache.lucene:lucene-analyzers-common:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-analyzers-common)
-        * Lucene Memory (org.apache.lucene:lucene-backward-codecs:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-backward-codecs)
-        * Lucene Core (org.apache.lucene:lucene-core:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-core)
-        * Lucene Grouping (org.apache.lucene:lucene-grouping:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-grouping)
-        * Lucene Highlighter (org.apache.lucene:lucene-highlighter:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-highlighter)
-        * Lucene Join (org.apache.lucene:lucene-join:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-join)
-        * Lucene Memory (org.apache.lucene:lucene-memory:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-memory)
-        * Lucene Miscellaneous (org.apache.lucene:lucene-misc:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-misc)
-        * Lucene Queries (org.apache.lucene:lucene-queries:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-queries)
-        * Lucene QueryParsers (org.apache.lucene:lucene-queryparser:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-queryparser)
-        * Lucene Sandbox (org.apache.lucene:lucene-sandbox:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-sandbox)
-        * Lucene Spatial (org.apache.lucene:lucene-spatial:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-spatial)
-        * Lucene Spatial Extras (org.apache.lucene:lucene-spatial-extras:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-spatial-extras)
-        * Lucene Spatial 3D (org.apache.lucene:lucene-spatial3d:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-spatial3d)
-        * Lucene Suggest (org.apache.lucene:lucene-suggest:6.4.2 - http://lucene.apache.org/lucene-parent/lucene-suggest)
+        * Lucene Common Analyzers (org.apache.lucene:lucene-analyzers-common:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-analyzers-common)
+        * Lucene Memory (org.apache.lucene:lucene-backward-codecs:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-backward-codecs)
+        * Lucene Core (org.apache.lucene:lucene-core:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-core)
+        * Lucene Grouping (org.apache.lucene:lucene-grouping:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-grouping)
+        * Lucene Highlighter (org.apache.lucene:lucene-highlighter:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-highlighter)
+        * Lucene Join (org.apache.lucene:lucene-join:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-join)
+        * Lucene Memory (org.apache.lucene:lucene-memory:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-memory)
+        * Lucene Miscellaneous (org.apache.lucene:lucene-misc:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-misc)
+        * Lucene Queries (org.apache.lucene:lucene-queries:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-queries)
+        * Lucene QueryParsers (org.apache.lucene:lucene-queryparser:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-queryparser)
+        * Lucene Sandbox (org.apache.lucene:lucene-sandbox:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-sandbox)
+        * Lucene Spatial (org.apache.lucene:lucene-spatial:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-spatial)
+        * Lucene Spatial Extras (org.apache.lucene:lucene-spatial-extras:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-spatial-extras)
+        * Lucene Spatial 3D (org.apache.lucene:lucene-spatial3d:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-spatial3d)
+        * Lucene Suggest (org.apache.lucene:lucene-suggest:6.3.0 - http://lucene.apache.org/lucene-parent/lucene-suggest)
         * Objenesis (org.objenesis:objenesis:2.6 - http://objenesis.org)
 
     Apache 2.0:
@@ -32,68 +32,69 @@ List of third-party dependencies grouped by their license type.
         * JSON Web Token support for the JVM (io.jsonwebtoken:jjwt:0.7.0 - http://nexus.sonatype.org/oss-repository-hosting.html/jjwt)
         * Lettuce (io.lettuce:lettuce-core:5.0.4.RELEASE - http://github.com/lettuce-io/lettuce-core)
         * Netty (io.netty:netty:3.10.6.Final - http://netty.io/)
-        * Netty/Buffer (io.netty:netty-buffer:4.1.24.Final - http://netty.io/netty-buffer/)
-        * Netty/Codec (io.netty:netty-codec:4.1.24.Final - http://netty.io/netty-codec/)
-        * Netty/Codec/HTTP (io.netty:netty-codec-http:4.1.24.Final - http://netty.io/netty-codec-http/)
-        * Netty/Common (io.netty:netty-common:4.1.24.Final - http://netty.io/netty-common/)
-        * Netty/Handler (io.netty:netty-handler:4.1.24.Final - http://netty.io/netty-handler/)
-        * Netty/Resolver (io.netty:netty-resolver:4.1.24.Final - http://netty.io/netty-resolver/)
-        * Netty/Transport (io.netty:netty-transport:4.1.24.Final - http://netty.io/netty-transport/)
+        * Netty/Buffer (io.netty:netty-buffer:4.1.27.Final - http://netty.io/netty-buffer/)
+        * Netty/Codec (io.netty:netty-codec:4.1.27.Final - http://netty.io/netty-codec/)
+        * Netty/Codec/HTTP (io.netty:netty-codec-http:4.1.27.Final - http://netty.io/netty-codec-http/)
+        * Netty/Common (io.netty:netty-common:4.1.27.Final - http://netty.io/netty-common/)
+        * Netty/Handler (io.netty:netty-handler:4.1.27.Final - http://netty.io/netty-handler/)
+        * Netty/Resolver (io.netty:netty-resolver:4.1.27.Final - http://netty.io/netty-resolver/)
+        * Netty/Transport (io.netty:netty-transport:4.1.27.Final - http://netty.io/netty-transport/)
         * swagger-annotations (io.swagger:swagger-annotations:1.5.10 - https://github.com/swagger-api/swagger-core/modules/swagger-annotations)
         * swagger-models (io.swagger:swagger-models:1.5.10 - https://github.com/swagger-api/swagger-core/modules/swagger-models)
         * Bean Validation API (javax.validation:validation-api:2.0.1.Final - http://beanvalidation.org)
-        * Apache Commons Collections (org.apache.commons:commons-collections4:4.1 - http://commons.apache.org/proper/commons-collections/)
         * Apache Commons CSV (org.apache.commons:commons-csv:1.4 - http://commons.apache.org/proper/commons-csv/)
         * Apache HttpAsyncClient (org.apache.httpcomponents:httpasyncclient:4.1.3 - http://hc.apache.org/httpcomponents-asyncclient)
-        * Apache HttpClient (org.apache.httpcomponents:httpclient:4.5.5 - http://hc.apache.org/httpcomponents-client)
-        * Apache HttpCore (org.apache.httpcomponents:httpcore:4.4.9 - http://hc.apache.org/httpcomponents-core-ga)
-        * Apache HttpCore NIO (org.apache.httpcomponents:httpcore-nio:4.4.9 - http://hc.apache.org/httpcomponents-core-ga)
+        * Apache HttpClient (org.apache.httpcomponents:httpclient:4.5.7 - http://hc.apache.org/httpcomponents-client)
+        * Apache HttpCore (org.apache.httpcomponents:httpcore:4.4.10 - http://hc.apache.org/httpcomponents-core-ga)
+        * Apache HttpCore NIO (org.apache.httpcomponents:httpcore-nio:4.4.10 - http://hc.apache.org/httpcomponents-core-ga)
         * Apache Log4j API (org.apache.logging.log4j:log4j-api:2.10.0 - https://logging.apache.org/log4j/2.x/log4j-api/)
-        * Apache Log4j Core (org.apache.logging.log4j:log4j-core:2.10.0 - https://logging.apache.org/log4j/2.x/log4j-core/)
         * Apache Log4j to SLF4J Adapter (org.apache.logging.log4j:log4j-to-slf4j:2.10.0 - https://logging.apache.org/log4j/2.x/log4j-to-slf4j/)
-        * tomcat-embed-core (org.apache.tomcat.embed:tomcat-embed-core:8.5.31 - http://tomcat.apache.org/)
-        * tomcat-embed-el (org.apache.tomcat.embed:tomcat-embed-el:8.5.31 - http://tomcat.apache.org/)
-        * tomcat-embed-websocket (org.apache.tomcat.embed:tomcat-embed-websocket:8.5.31 - http://tomcat.apache.org/)
+        * tomcat-embed-core (org.apache.tomcat.embed:tomcat-embed-core:8.5.32 - http://tomcat.apache.org/)
+        * tomcat-embed-el (org.apache.tomcat.embed:tomcat-embed-el:8.5.32 - http://tomcat.apache.org/)
+        * tomcat-embed-websocket (org.apache.tomcat.embed:tomcat-embed-websocket:8.5.32 - http://tomcat.apache.org/)
         * AssertJ fluent assertions (org.assertj:assertj-core:3.9.1 - http://assertj.org/assertj-core)
-        * Hibernate Validator Engine (org.hibernate.validator:hibernate-validator:6.0.9.Final - http://hibernate.org/validator/hibernate-validator)
-        * Spring AOP (org.springframework:spring-aop:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring Beans (org.springframework:spring-beans:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring Context (org.springframework:spring-context:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring Context Support (org.springframework:spring-context-support:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring Core (org.springframework:spring-core:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring Expression Language (SpEL) (org.springframework:spring-expression:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring Commons Logging Bridge (org.springframework:spring-jcl:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring JDBC (org.springframework:spring-jdbc:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring Object/XML Marshalling (org.springframework:spring-oxm:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring TestContext Framework (org.springframework:spring-test:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring Transaction (org.springframework:spring-tx:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring Web (org.springframework:spring-web:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring Web MVC (org.springframework:spring-webmvc:5.0.6.RELEASE - https://github.com/spring-projects/spring-framework)
-        * Spring Boot (org.springframework.boot:spring-boot:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot)
-        * Spring Boot AutoConfigure (org.springframework.boot:spring-boot-autoconfigure:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-autoconfigure)
-        * Spring Boot Starter (org.springframework.boot:spring-boot-starter:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter)
-        * Spring Boot Cache Starter (org.springframework.boot:spring-boot-starter-cache:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-cache)
-        * Spring Boot Data Redis Starter (org.springframework.boot:spring-boot-starter-data-redis:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-data-redis)
-        * Spring Boot JDBC Starter (org.springframework.boot:spring-boot-starter-jdbc:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-jdbc)
-        * Spring Boot Json Starter (org.springframework.boot:spring-boot-starter-json:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-json)
-        * Spring Boot Logging Starter (org.springframework.boot:spring-boot-starter-logging:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-logging)
-        * Spring Boot Mail Starter (org.springframework.boot:spring-boot-starter-mail:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-mail)
-        * Spring Boot Test Starter (org.springframework.boot:spring-boot-starter-test:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-test)
-        * Spring Boot Thymeleaf Starter (org.springframework.boot:spring-boot-starter-thymeleaf:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-thymeleaf)
-        * Spring Boot Tomcat Starter (org.springframework.boot:spring-boot-starter-tomcat:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-tomcat)
-        * Spring Boot Web Starter (org.springframework.boot:spring-boot-starter-web:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-web)
-        * Spring Boot Test (org.springframework.boot:spring-boot-test:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-test)
-        * Spring Boot Test Auto-Configure (org.springframework.boot:spring-boot-test-autoconfigure:2.0.2.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-test-autoconfigure)
-        * Spring Data Core (org.springframework.data:spring-data-commons:2.0.7.RELEASE - http://www.spring.io/spring-data/spring-data-commons)
-        * Spring Data KeyValue (org.springframework.data:spring-data-keyvalue:2.0.7.RELEASE - http://www.spring.io/spring-data/spring-data-keyvalue)
-        * Spring Data Redis (org.springframework.data:spring-data-redis:2.0.7.RELEASE - http://www.spring.io/spring-data/spring-data-redis)
+        * Hibernate Validator Engine (org.hibernate.validator:hibernate-validator:6.0.11.Final - http://hibernate.org/validator/hibernate-validator)
+        * Javassist (org.javassist:javassist:3.18.1-GA - http://www.javassist.org/)
+        * Spring AOP (org.springframework:spring-aop:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring Beans (org.springframework:spring-beans:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring Context (org.springframework:spring-context:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring Context Support (org.springframework:spring-context-support:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring Core (org.springframework:spring-core:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring Expression Language (SpEL) (org.springframework:spring-expression:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring Commons Logging Bridge (org.springframework:spring-jcl:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring JDBC (org.springframework:spring-jdbc:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring Object/XML Marshalling (org.springframework:spring-oxm:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring TestContext Framework (org.springframework:spring-test:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring Transaction (org.springframework:spring-tx:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring Web (org.springframework:spring-web:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring Web MVC (org.springframework:spring-webmvc:5.0.8.RELEASE - https://github.com/spring-projects/spring-framework)
+        * Spring Boot (org.springframework.boot:spring-boot:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot)
+        * Spring Boot AutoConfigure (org.springframework.boot:spring-boot-autoconfigure:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-autoconfigure)
+        * Spring Boot Starter (org.springframework.boot:spring-boot-starter:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter)
+        * Spring Boot Cache Starter (org.springframework.boot:spring-boot-starter-cache:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-cache)
+        * Spring Boot Data LDAP Starter (org.springframework.boot:spring-boot-starter-data-ldap:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-data-ldap)
+        * Spring Boot Data Redis Starter (org.springframework.boot:spring-boot-starter-data-redis:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-data-redis)
+        * Spring Boot JDBC Starter (org.springframework.boot:spring-boot-starter-jdbc:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-jdbc)
+        * Spring Boot Json Starter (org.springframework.boot:spring-boot-starter-json:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-json)
+        * Spring Boot Logging Starter (org.springframework.boot:spring-boot-starter-logging:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-logging)
+        * Spring Boot Mail Starter (org.springframework.boot:spring-boot-starter-mail:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-mail)
+        * Spring Boot Test Starter (org.springframework.boot:spring-boot-starter-test:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-test)
+        * Spring Boot Thymeleaf Starter (org.springframework.boot:spring-boot-starter-thymeleaf:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-thymeleaf)
+        * Spring Boot Tomcat Starter (org.springframework.boot:spring-boot-starter-tomcat:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-tomcat)
+        * Spring Boot Web Starter (org.springframework.boot:spring-boot-starter-web:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-web)
+        * Spring Boot Test (org.springframework.boot:spring-boot-test:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-test)
+        * Spring Boot Test Auto-Configure (org.springframework.boot:spring-boot-test-autoconfigure:2.0.4.RELEASE - https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-test-autoconfigure)
+        * Spring Data Core (org.springframework.data:spring-data-commons:2.0.9.RELEASE - http://www.spring.io/spring-data/spring-data-commons)
+        * Spring Data KeyValue (org.springframework.data:spring-data-keyvalue:2.0.9.RELEASE - http://www.spring.io/spring-data/spring-data-keyvalue)
+        * Spring Data LDAP (org.springframework.data:spring-data-ldap:2.0.9.RELEASE - https://github.com/spring-projects/spring-data-ldap)
+        * Spring Data Redis (org.springframework.data:spring-data-redis:2.0.9.RELEASE - http://www.spring.io/spring-data/spring-data-redis)
         * Spring Plugin - Core (org.springframework.plugin:spring-plugin-core:1.2.0.RELEASE - https://github.com/spring-projects/spring-plugin/spring-plugin-core)
         * Spring Plugin - Metadata Extension (org.springframework.plugin:spring-plugin-metadata:1.2.0.RELEASE - https://github.com/spring-projects/spring-plugin/spring-plugin-metadata)
         * SnakeYAML (org.yaml:snakeyaml:1.19 - http://www.snakeyaml.org)
 
     Apache License v2.0:
 
-        * Java Native Access (net.java.dev.jna:jna:4.5.1 - https://github.com/java-native-access/jna)
+        * Java Native Access (net.java.dev.jna:jna:4.5.2 - https://github.com/java-native-access/jna)
 
     Apache License, version 2.0:
 
@@ -101,13 +102,10 @@ List of third-party dependencies grouped by their license type.
 
     BSD:
 
+        * JLine (jline:jline:0.9.94 - http://jline.sourceforge.net)
         * StringTemplate 4 (org.antlr:ST4:4.0.8 - http://www.stringtemplate.org)
         * ANTLR 3 Runtime (org.antlr:antlr-runtime:3.5.2 - http://www.antlr.org)
         * ASM Core (org.ow2.asm:asm:5.0.4 - http://asm.objectweb.org/asm/)
-
-    BSD License:
-
-        * curvesapi (com.github.virtuald:curvesapi:1.04 - https://github.com/virtuald/curvesapi)
 
     CC0:
 
@@ -118,6 +116,7 @@ List of third-party dependencies grouped by their license type.
 
         * JavaBeans Activation Framework (JAF) (javax.activation:activation:1.1 - http://java.sun.com/products/javabeans/jaf/index.jsp)
         * javax.annotation API (javax.annotation:javax.annotation-api:1.3.2 - http://jcp.org/en/jsr/detail?id=250)
+        * jaxb-api (javax.xml.bind:jaxb-api:2.3.0 - https://github.com/javaee/jaxb-spec/jaxb-api)
 
     CDDL/GPLv2+CE:
 
@@ -149,13 +148,18 @@ List of third-party dependencies grouped by their license type.
 
         * JSQLParser library (com.github.jsqlparser:jsqlparser:1.2 - https://github.com/JSQLParser/JSqlParser)
 
+    GPL:
+
+        * jaxb-api (javax.xml.bind:jaxb-api:2.3.0 - https://github.com/javaee/jaxb-spec/jaxb-api)
+
     ISC/BSD License:
 
         * jbcrypt (org.mindrot:jbcrypt:0.3m - http://www.mindrot.org/)
 
     LGPL:
 
-        * Java Native Access (net.java.dev.jna:jna:4.5.1 - https://github.com/java-native-access/jna)
+        * Java Native Access (net.java.dev.jna:jna:4.5.2 - https://github.com/java-native-access/jna)
+        * Javassist (org.javassist:javassist:3.18.1-GA - http://www.javassist.org/)
 
     Lesser General Public License (LGPL):
 
@@ -165,10 +169,14 @@ List of third-party dependencies grouped by their license type.
 
         * JOpt Simple (net.sf.jopt-simple:jopt-simple:5.0.2 - http://pholser.github.io/jopt-simple)
         * mockito-core (org.mockito:mockito-core:2.15.0 - https://github.com/mockito/mockito)
-        * Project Lombok (org.projectlombok:lombok:1.16.20 - https://projectlombok.org)
+        * Project Lombok (org.projectlombok:lombok:1.16.22 - https://projectlombok.org)
         * JUL to SLF4J bridge (org.slf4j:jul-to-slf4j:1.7.25 - http://www.slf4j.org)
         * SLF4J API Module (org.slf4j:slf4j-api:1.7.25 - http://www.slf4j.org)
         * jquery (org.webjars:jquery:1.11.3 - http://webjars.org)
+
+    MPL:
+
+        * Javassist (org.javassist:javassist:3.18.1-GA - http://www.javassist.org/)
 
     New BSD License:
 
@@ -180,21 +188,22 @@ List of third-party dependencies grouped by their license type.
         * HPPC Collections (com.carrotsearch:hppc:0.7.1 - http://labs.carrotsearch.com/hppc.html/hppc)
         * ClassMate (com.fasterxml:classmate:1.3.4 - http://github.com/FasterXML/java-classmate)
         * Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.9.0 - http://github.com/FasterXML/jackson)
-        * Jackson-core (com.fasterxml.jackson.core:jackson-core:2.9.5 - https://github.com/FasterXML/jackson-core)
-        * jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.9.5 - http://github.com/FasterXML/jackson)
-        * Jackson dataformat: CBOR (com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.5 - http://github.com/FasterXML/jackson-dataformats-binary)
-        * Jackson dataformat: Smile (com.fasterxml.jackson.dataformat:jackson-dataformat-smile:2.9.5 - http://github.com/FasterXML/jackson-dataformats-binary)
-        * Jackson-dataformat-YAML (com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.5 - https://github.com/FasterXML/jackson-dataformats-text)
-        * Jackson datatype: jdk8 (com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.5 - https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jdk8)
-        * Jackson datatype: JSR310 (com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.5 - https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jsr310)
-        * Jackson-module-parameter-names (com.fasterxml.jackson.module:jackson-module-parameter-names:2.9.5 - https://github.com/FasterXML/jackson-modules-java8/jackson-module-parameter-names)
+        * Jackson-core (com.fasterxml.jackson.core:jackson-core:2.9.6 - https://github.com/FasterXML/jackson-core)
+        * jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.9.6 - http://github.com/FasterXML/jackson)
+        * Jackson dataformat: CBOR (com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.6 - http://github.com/FasterXML/jackson-dataformats-binary)
+        * Jackson dataformat: Smile (com.fasterxml.jackson.dataformat:jackson-dataformat-smile:2.9.6 - http://github.com/FasterXML/jackson-dataformats-binary)
+        * Jackson-dataformat-YAML (com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.6 - https://github.com/FasterXML/jackson-dataformats-text)
+        * Jackson datatype: jdk8 (com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.6 - https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jdk8)
+        * Jackson datatype: JSR310 (com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.6 - https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jsr310)
+        * Jackson-module-parameter-names (com.fasterxml.jackson.module:jackson-module-parameter-names:2.9.6 - https://github.com/FasterXML/jackson-modules-java8/jackson-module-parameter-names)
         * JSQLParser library (com.github.jsqlparser:jsqlparser:1.2 - https://github.com/JSQLParser/JSqlParser)
         * Guava: Google Core Libraries for Java (com.google.guava:guava:18.0 - http://code.google.com/p/guava-libraries/guava)
         * project ':json-path' (com.jayway.jsonpath:json-path:2.4.0 - https://github.com/jayway/JsonPath)
         * T-Digest (com.tdunning:t-digest:3.0 - https://github.com/tdunning/t-digest)
         * HikariCP (com.zaxxer:HikariCP:2.7.9 - https://github.com/brettwooldridge/HikariCP)
+        * Commons Lang (commons-lang:commons-lang:2.6 - http://commons.apache.org/lang/)
         * Commons Logging (commons-logging:commons-logging:1.1.3 - http://commons.apache.org/proper/commons-logging/)
-        * Non-Blocking Reactive Foundation for the JVM (io.projectreactor:reactor-core:3.1.7.RELEASE - https://github.com/reactor/reactor-core)
+        * Non-Blocking Reactive Foundation for the JVM (io.projectreactor:reactor-core:3.1.8.RELEASE - https://github.com/reactor/reactor-core)
         * springfox-core (io.springfox:springfox-core:2.6.1 - https://github.com/springfox/springfox)
         * springfox-schema (io.springfox:springfox-schema:2.6.1 - https://github.com/springfox/springfox)
         * springfox-spi (io.springfox:springfox-spi:2.6.1 - https://github.com/springfox/springfox)
@@ -202,40 +211,46 @@ List of third-party dependencies grouped by their license type.
         * springfox-swagger-common (io.springfox:springfox-swagger-common:2.6.1 - https://github.com/springfox/springfox)
         * springfox-swagger-ui (io.springfox:springfox-swagger-ui:2.6.1 - https://github.com/springfox/springfox)
         * springfox-swagger2 (io.springfox:springfox-swagger2:2.6.1 - https://github.com/springfox/springfox)
+        * Apache Log4j (log4j:log4j:1.2.16 - http://logging.apache.org/log4j/1.2/)
         * Byte Buddy (without dependencies) (net.bytebuddy:byte-buddy:1.7.11 - http://bytebuddy.net/byte-buddy)
         * Byte Buddy Java agent (net.bytebuddy:byte-buddy-agent:1.7.11 - http://bytebuddy.net/byte-buddy-agent)
+        * LZ4 and xxHash (net.jpountz.lz4:lz4:1.3.0 - https://github.com/jpountz/lz4-java)
         * ASM based accessors helper used by json-smart (net.minidev:accessors-smart:1.2 - http://www.minidev.net/)
         * JSON Small and Fast Parser (net.minidev:json-smart:2.3 - http://www.minidev.net/)
-        * Apache POI (org.apache.poi:poi:3.17 - http://poi.apache.org/)
-        * Apache POI (org.apache.poi:poi-ooxml:3.17 - http://poi.apache.org/)
-        * Apache POI (org.apache.poi:poi-ooxml-schemas:3.17 - http://poi.apache.org/)
-        * XmlBeans (org.apache.xmlbeans:xmlbeans:2.6.0 - http://xmlbeans.apache.org)
+        * Curator Client (org.apache.curator:curator-client:2.12.0 - http://curator.apache.org/curator-client)
+        * Curator Framework (org.apache.curator:curator-framework:2.12.0 - http://curator.apache.org/curator-framework)
+        * Curator Testing (org.apache.curator:curator-test:2.12.0 - http://curator.apache.org/curator-test)
+        * Apache POI (org.apache.poi:poi:3.9 - http://poi.apache.org/)
+        * Apache POI (org.apache.poi:poi-ooxml:3.9 - http://poi.apache.org/)
+        * Apache POI (org.apache.poi:poi-ooxml-schemas:3.9 - http://poi.apache.org/)
+        * XmlBeans (org.apache.xmlbeans:xmlbeans:2.3.0 - http://xmlbeans.apache.org)
         * attoparser (org.attoparser:attoparser:2.0.4.RELEASE - http://www.attoparser.org)
-        * core (org.elasticsearch:elasticsearch:5.3.2 - https://github.com/elastic/elasticsearch)
-        * Elastic JNA Distribution (org.elasticsearch:jna:4.4.0-1 - https://github.com/elastic/jna-build)
+        * core (org.elasticsearch:elasticsearch:5.1.2 - https://github.com/elastic/elasticsearch)
         * Elasticsearch SecureSM (org.elasticsearch:securesm:1.1 - http://nexus.sonatype.org/oss-repository-hosting.html/securesm)
-        * rest (org.elasticsearch.client:rest:5.3.2 - https://github.com/elastic/elasticsearch)
-        * transport (org.elasticsearch.client:transport:5.3.2 - https://github.com/elastic/elasticsearch)
-        * lang-mustache (org.elasticsearch.plugin:lang-mustache-client:5.3.2 - https://github.com/elastic/elasticsearch)
-        * percolator (org.elasticsearch.plugin:percolator-client:5.3.2 - https://github.com/elastic/elasticsearch)
-        * reindex (org.elasticsearch.plugin:reindex-client:5.3.2 - https://github.com/elastic/elasticsearch)
-        * transport-netty3 (org.elasticsearch.plugin:transport-netty3-client:5.3.2 - https://github.com/elastic/elasticsearch)
-        * transport-netty4 (org.elasticsearch.plugin:transport-netty4-client:5.6.9 - https://github.com/elastic/elasticsearch)
+        * rest (org.elasticsearch.client:rest:5.1.2 - https://github.com/elastic/elasticsearch)
+        * transport (org.elasticsearch.client:transport:5.1.2 - https://github.com/elastic/elasticsearch)
+        * lang-mustache (org.elasticsearch.plugin:lang-mustache-client:5.1.2 - https://github.com/elastic/elasticsearch)
+        * percolator (org.elasticsearch.plugin:percolator-client:5.1.2 - https://github.com/elastic/elasticsearch)
+        * reindex (org.elasticsearch.plugin:reindex-client:5.1.2 - https://github.com/elastic/elasticsearch)
+        * transport-netty3 (org.elasticsearch.plugin:transport-netty3-client:5.1.2 - https://github.com/elastic/elasticsearch)
+        * transport-netty4 (org.elasticsearch.plugin:transport-netty4-client:5.1.2 - https://github.com/elastic/elasticsearch)
         * Spatial4J (org.locationtech.spatial4j:spatial4j:0.6 - http://www.locationtech.org/projects/locationtech.spatial4j)
         * MapStruct Core (org.mapstruct:mapstruct:1.0.0.Final - http://mapstruct.org/mapstruct/)
         * mybatis (org.mybatis:mybatis:3.4.6 - http://www.mybatis.org/mybatis-3)
         * mybatis-spring (org.mybatis:mybatis-spring:1.3.2 - http://www.mybatis.org/spring/)
         * mybatis-spring-boot-autoconfigure (org.mybatis.spring.boot:mybatis-spring-boot-autoconfigure:1.3.2 - http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure/)
         * mybatis-spring-boot-starter (org.mybatis.spring.boot:mybatis-spring-boot-starter:1.3.2 - http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-starter/)
-        * elasticsearch-sql (org.nlpcn:elasticsearch-sql:5.3.2.0 - https://github.com/NLPchina/elasticsearch-sql/)
+        * elasticsearch-sql (org.nlpcn:elasticsearch-sql:5.1.2.0 - https://github.com/NLPchina/elasticsearch-sql/)
         * quartz (org.quartz-scheduler:quartz:2.3.0 - http://www.quartz-scheduler.org/quartz)
         * JSONassert (org.skyscreamer:jsonassert:1.5.0 - https://github.com/skyscreamer/JSONassert)
+        * spring-ldap-core (org.springframework.ldap:spring-ldap-core:2.3.2.RELEASE - http://www.springframework.org/ldap)
         * thymeleaf (org.thymeleaf:thymeleaf:3.0.9.RELEASE - http://www.thymeleaf.org)
         * thymeleaf-spring5 (org.thymeleaf:thymeleaf-spring5:3.0.9.RELEASE - http://www.thymeleaf.org)
         * thymeleaf-extras-java8time (org.thymeleaf.extras:thymeleaf-extras-java8time:3.0.1.RELEASE - http://www.thymeleaf.org)
         * unbescape (org.unbescape:unbescape:1.1.5.RELEASE - http://www.unbescape.org)
         * org.xmlunit:xmlunit-core (org.xmlunit:xmlunit-core:2.5.1 - http://www.xmlunit.org/)
         * StAX API (stax:stax-api:1.0.1 - http://stax.codehaus.org/)
+        * XML Commons External Components XML APIs (xml-apis:xml-apis:1.4.01 - http://xml.apache.org/commons/components/external/)
 
     The GNU General Public License, Version 2:
 
@@ -243,10 +258,21 @@ List of third-party dependencies grouped by their license type.
 
     The MIT License (MIT):
 
-        * pagehelper 5 (com.github.pagehelper:pagehelper:5.1.2 - https://github.com/pagehelper/Mybatis-PageHelper)
-        * pagehelper-spring-boot-autoconfigure (com.github.pagehelper:pagehelper-spring-boot-autoconfigure:1.2.3 - https://github.com/pagehelper/pagehelper-boot-starter/pagehelper-spring-boot-autoconfigure/)
-        * pagehelper-spring-boot-starter (com.github.pagehelper:pagehelper-spring-boot-starter:1.2.3 - https://github.com/pagehelper/pagehelper-boot-starter/pagehelper-spring-boot-starter/)
+        * pagehelper 5 (com.github.pagehelper:pagehelper:5.1.4 - https://github.com/pagehelper/Mybatis-PageHelper)
+
+    The SAX License:
+
+        * XML Commons External Components XML APIs (xml-apis:xml-apis:1.4.01 - http://xml.apache.org/commons/components/external/)
+
+    The W3C License:
+
+        * XML Commons External Components XML APIs (xml-apis:xml-apis:1.4.01 - http://xml.apache.org/commons/components/external/)
 
     Unknown License:
 
-        * ojdbc6 (com.oracle:ojdbc6:11.2.0.3 - no url defined)
+        * dom4j (dom4j:dom4j:1.6.1 - http://dom4j.org)
+        * zookeeper (org.apache.zookeeper:zookeeper:3.4.8 - no url defined)
+
+    license.txt:
+
+        * JPA 2.0 API (org.hibernate.javax.persistence:hibernate-jpa-2.0-api:1.0.1.Final - http://hibernate.org)

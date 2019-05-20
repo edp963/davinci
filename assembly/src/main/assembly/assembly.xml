@@ -20,7 +20,7 @@
 
 
 <assembly>
-    <id>dist-beta.4</id>
+    <id>dist-beta.5</id>
     <formats>
         <format>zip</format>
     </formats>
@@ -51,7 +51,9 @@
             </directory>
             <outputDirectory>bin</outputDirectory>
             <excludes>
-                <exclude>upgrade.go</exclude>
+                <exclude>upgrade/**</exclude>
+                <exclude>upgrade.*</exclude>
+                <exclude>upgrade-*</exclude>
             </excludes>
         </fileSet>
         <fileSet>
@@ -60,7 +62,8 @@
             </directory>
             <outputDirectory>userfiles</outputDirectory>
             <excludes>
-                <exclude>*</exclude>
+                <exclude>download/**</exclude>
+                <exclude>tempFiles/**</exclude>
             </excludes>
         </fileSet>
         <fileSet>
@@ -68,9 +71,10 @@
                 ${project.parent.basedir}/logs
             </directory>
             <outputDirectory>logs</outputDirectory>
-            <excludes>
-                <exclude>*</exclude>
-            </excludes>
+            <includes>
+                <include>sys</include>
+                <include>user</include>
+            </includes>
         </fileSet>
         <fileSet>
             <directory>

@@ -78,7 +78,7 @@
                 #{item}
             </foreach>
         </if>
-        <if test="parentIds!=null or parentIds.size == 0">
+        <if test="parentIds == null or parentIds.size == 0">
             where 1=0
         </if>
     </select>

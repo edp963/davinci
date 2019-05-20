@@ -639,7 +639,7 @@ public class ViewServiceImpl implements ViewService {
     }
 
 
-    private Set<String> getColumnAuth(List<RelRoleView> roleViewList) {
+    private Set<String> getExcludeColumns(List<RelRoleView> roleViewList) {
         if (null != roleViewList && roleViewList.size() > 0) {
             Set<String> columns = new HashSet<>();
             roleViewList.forEach(r -> {
@@ -702,7 +702,10 @@ public class ViewServiceImpl implements ViewService {
             List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewId);
             authVariables = getAuthVariables(roleViewList, variables);
             if (null != excludeColumns) {
-                excludeColumns.addAll(getColumnAuth(roleViewList));
+                Set<String> eclmns = getExcludeColumns(roleViewList);
+                if (null != eclmns && eclmns.size() > 0) {
+                    excludeColumns.addAll(eclmns);
+                }
             }
         }
 

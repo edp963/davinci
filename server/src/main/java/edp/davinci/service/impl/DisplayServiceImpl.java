@@ -171,8 +171,10 @@ public class DisplayServiceImpl implements DisplayService {
         ProjectDetail projectDetail = projectService.getProjectDetail(displayWithProject.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
+        boolean disable = relRoleDisplayMapper.isDisable(id, user.getId());
+
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
             log.info("user {} have not permisson to delete display", user.getUsername());
             throw new UnAuthorizedExecption("you have not permission to delete display");
         }
@@ -216,8 +218,13 @@ public class DisplayServiceImpl implements DisplayService {
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
 
+        boolean disable = relRoleDisplayMapper.isDisable(displaySlide.getDisplayId(), user.getId());
+
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), display.getId());
+
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
             log.info("user {} have not permisson to delete display slide", user.getUsername());
             throw new UnAuthorizedExecption("you have not permisson to delete this display slide");
         }
@@ -252,9 +259,11 @@ public class DisplayServiceImpl implements DisplayService {
 
         ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        boolean disable = relRoleDisplayMapper.isDisable(display.getId(), user.getId());
+
 
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
             log.info("user {} have not permisson to update display", user.getUsername());
             throw new UnAuthorizedExecption("you have not permission to update display");
         }
@@ -315,9 +324,10 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(display.getId(), user.getId());
 
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
             log.info("user {} have not permisson to create displaySlide", user.getUsername());
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
@@ -369,15 +379,23 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(displayId, user.getId());
 
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
             log.info("user {} have not permisson to update displaySlide", user.getUsername());
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), displayId);
+
 
         List<DisplaySlide> displaySlideList = new ArrayList<>();
         for (DisplaySlide displaySlide : displaySlides) {
+
+            if (!projectPermission.isProjectMaintainer() && disableSlides.contains(displaySlide.getId())) {
+                throw new UnAuthorizedExecption("Insufficient permissions");
+            }
+
             if (!displaySlide.getDisplayId().equals(displayId)) {
                 throw new ServerException("Invalid display id");
             }
@@ -413,6 +431,18 @@ public class DisplayServiceImpl implements DisplayService {
             throw new ServerException("Invalid display slide");
         }
 
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(displayId, user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), displayId);
+
+
+        //校验权限
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
+        }
+
+
         Set<Long> ids = new HashSet<>();
         List<MemDisplaySlideWidget> list = new ArrayList<>();
         List<MemDisplaySlideWidget> clist = new ArrayList<>();
@@ -432,13 +462,6 @@ public class DisplayServiceImpl implements DisplayService {
         List<Widget> widgets = widgetMapper.getByIds(ids);
         if (null == widgets) {
             throw new ServerException("Invalid widget id");
-        }
-
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-
-        //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
-            throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
 
@@ -490,9 +513,12 @@ public class DisplayServiceImpl implements DisplayService {
 
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(displayId, user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), displayId);
 
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
@@ -537,9 +563,12 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
 
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(memDisplaySlideWidget.getDisplaySlideId())))) {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
@@ -585,9 +614,12 @@ public class DisplayServiceImpl implements DisplayService {
 
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
 
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideWidget.getDisplaySlideId())))) {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
@@ -635,7 +667,7 @@ public class DisplayServiceImpl implements DisplayService {
         Iterator<Display> iterator = displays.iterator();
         while (iterator.hasNext()) {
             Display display = iterator.next();
-            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && (disableList.contains(display.getId()) || !display.getPublish())) {
+            if (!projectPermission.isProjectMaintainer() && (disableList.contains(display.getId()) || !display.getPublish())) {
                 iterator.remove();
             }
         }
@@ -670,8 +702,7 @@ public class DisplayServiceImpl implements DisplayService {
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         boolean isDisable = relRoleDisplayMapper.isDisable(displayId, user.getId());
 
-        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() ||
-                (isDisable && projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission())) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() || (!projectPermission.isProjectMaintainer() && isDisable)) {
             return null;
         }
 
@@ -680,12 +711,12 @@ public class DisplayServiceImpl implements DisplayService {
             return null;
         }
 
-        List<Long> disableList = relRoleSlideMapper.getDisableDisplayByUser(user.getId(), display.getProjectId());
+        List<Long> disableList = relRoleSlideMapper.getDisableSlides(user.getId(), display.getProjectId());
 
         Iterator<DisplaySlide> iterator = displaySlides.iterator();
         while (iterator.hasNext()) {
             DisplaySlide displaySlide = iterator.next();
-            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && disableList.contains(displaySlide.getId())) {
+            if (!projectPermission.isProjectMaintainer() && disableList.contains(displaySlide.getId())) {
                 iterator.remove();
             }
         }
@@ -741,7 +772,7 @@ public class DisplayServiceImpl implements DisplayService {
             return null;
         }
 
-        List<Long> disableList = relRoleSlideMapper.getDisableDisplayByUser(user.getId(), display.getProjectId());
+        List<Long> disableList = relRoleSlideMapper.getDisableSlides(user.getId(), display.getProjectId());
 
         Iterator<MemDisplaySlideWidget> iterator = widgetList.iterator();
 
@@ -793,7 +824,12 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-        if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission()) {
+
+        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
+
+        if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
@@ -853,7 +889,10 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        boolean disable = relRoleDisplayMapper.isDisable(slideWithDipaly.getDisplayId(), user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDipaly.getDisplayId());
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
@@ -943,7 +982,10 @@ public class DisplayServiceImpl implements DisplayService {
         SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(memDisplaySlideWidget.getDisplaySlideId());
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideWithDisplayAndProject.getId())))) {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
@@ -1004,8 +1046,8 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(displayWithProject.getProjectId(), user, false), user);
-
-        if (!projectPermission.getSharePermission()) {
+        boolean disable = relRoleDisplayMapper.isDisable(id, user.getId());
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
             throw new UnAuthorizedExecption("you have not permission to share this display");
         }
 

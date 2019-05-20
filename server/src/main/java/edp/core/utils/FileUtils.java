@@ -190,17 +190,15 @@ public class FileUtils {
      * @param dir
      * @return
      */
-    public static boolean deleteDir(File dir) {
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
-                if (!success) {
-                    return false;
-                }
+    public static void deleteDir(File dir) {
+        if (dir.isFile() || dir.list().length == 0) {
+            dir.delete();
+        } else {
+            for (File f : dir.listFiles()) {
+                deleteDir(f);
             }
+            dir.delete();
         }
-        return dir.delete();
     }
 
     /**
