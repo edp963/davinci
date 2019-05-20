@@ -399,15 +399,32 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
     const changedSelected = {
       ...selected,
       type: value,
-      fields: interactionType === 'variable'
-        ? fields && Array.isArray(fields) ? fields[0] : fields
-        : fields
+      fields: this.getValidaFields(interactionType, value, fields)
     }
 
     this.setState({
       selected: changedSelected,
       relatedFields: this.getRelatedFields(changedSelected)
     })
+  }
+
+  private getValidaFields = (
+    interactionType: InteractionType,
+    type: FilterTypes,
+    fields: IControlRelatedField | IControlRelatedField[]
+  ): IControlRelatedField | IControlRelatedField[] => {
+    if (fields) {
+      if (interactionType === 'variable') {
+        if (IS_RANGE_TYPE[type]) {
+          return fields
+        } else {
+          return Array.isArray(fields) ? fields[0] : fields
+        }
+      } else {
+        return fields
+      }
+    }
+    return fields
   }
 
   private openOptionModal = () => {

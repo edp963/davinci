@@ -28,7 +28,8 @@ import {
   IGlobalControl,
   IGlobalControlRelatedItem,
   IControlRelatedField,
-  getRelatedFieldsInfo
+  getRelatedFieldsInfo,
+  InteractionType
 } from '..'
 import { FilterTypes, IS_RANGE_TYPE} from '../filterTypes'
 
@@ -519,9 +520,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
       type: value,
       relatedViews: Object.entries(relatedViews)
         .reduce((obj, [viewId, fields]) => {
-          obj[viewId] = interactionType === 'variable'
-            ? fields && Array.isArray(fields) ? fields[0] : fields
-            : fields
+          obj[viewId] = this.getValidaFields(interactionType, value, fields)
           return obj
         }, {})
     }
@@ -532,6 +531,25 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
       selected: changedSelected,
       viewSelectorSource
     })
+  }
+
+  private getValidaFields = (
+    interactionType: InteractionType,
+    type: FilterTypes,
+    fields: IControlRelatedField | IControlRelatedField[]
+  ): IControlRelatedField | IControlRelatedField[] => {
+    if (fields) {
+      if (interactionType === 'variable') {
+        if (IS_RANGE_TYPE[type]) {
+          return fields
+        } else {
+          return Array.isArray(fields) ? fields[0] : fields
+        }
+      } else {
+        return fields
+      }
+    }
+    return fields
   }
 
   private openOptionModal = () => {
