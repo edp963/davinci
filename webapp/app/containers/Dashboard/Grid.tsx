@@ -1108,19 +1108,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           sqls = sqls.concat(coustomTableSqls)
         }
         if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
-          currentCol = groups && groups.length ? lastDrillHistory.col.concat(groups) : lastDrillHistory.col
+          currentCol = groups && groups.length ? lastDrillHistory.col.concat({name: groups}) : lastDrillHistory.col
         }
       } else {
         name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
         filterSource = sourceDataFilter.map((source) => source[name])
         sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
         sqls = lastDrillHistory.filter.sqls.concat(sql)
-        if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
-          currentCol = col && col.length ? lastDrillHistory.col.concat(col) : lastDrillHistory.col
-        }
-        if (lastDrillHistory && lastDrillHistory.row && lastDrillHistory.row.length) {
-          currentRow = row && row.length ? lastDrillHistory.row.concat(row) : lastDrillHistory.row
-        }
+        currentCol = col && col.length ? (lastDrillHistory.col || []).concat({name: col}) : lastDrillHistory.col
+        currentRow = row && row.length ? (lastDrillHistory.row || []).concat({name: row}) : lastDrillHistory.row
       }
       const isDrillUp = lastDrillHistory.groups.some((cg) => cg === groups)
       let currentDrillGroups = void 0
@@ -1504,7 +1500,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           footer={null}
           onCancel={this.hideDrillPathSettingModal}
         >
-          <DrillPathSetting
+          {/* 临时下架功能，勿删 */}
+          {/* <DrillPathSetting
              itemId={currentItemId}
              drillpathSetting={drillpathSetting}
              selectedWidget={this.state.selectedWidgets}
@@ -1512,7 +1509,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
              views={views || []}
              saveDrillPathSetting={this.saveDrillPathSetting}
              cancel={this.hideDrillPathSettingModal}
-          />
+          /> */}
         </Modal>
         <DashboardLinkageConfig
           currentDashboard={currentDashboard}

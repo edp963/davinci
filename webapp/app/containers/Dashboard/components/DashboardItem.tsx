@@ -184,14 +184,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   public componentWillUpdate (nextProps: IDashboardItemProps) {
-    // console.log('---------------- in ------------------')
-    // Object.entries(nextProps).forEach(([k, v]) => {
-    //   if (v !== this.props[k]) {
-    //     console.log(k)
-    //     console.log(v)
-    //     console.log(this.props[k])
-    //   }
-    // })
     const {
       itemId,
       widget,
@@ -409,9 +401,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         onSelectDrillHistory(history, item, itemId, wid)
         return
       }
-
       if (widgetProps.dimetionAxis) {
-        console.log('1')
         if (widgetProps.dimetionAxis === 'col') {
           this.setState({
             widgetProps: {
@@ -540,8 +530,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
     if (onDrillData) {
       onDrillData({
-        row: dimensions === 'row' ? name : void 0,
-        col: dimensions === 'col' ? name : void 0,
+        row: dimensions === 'row' ? name : [],
+        col: dimensions === 'col' ? name : [],
         mode,
         itemId,
         widgetId: widget.id,
@@ -647,14 +637,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
   }
   private selectChartsItems = (selectedItems) => {
-    // console.log('changeRenderType')
-    // const { widgetProps } = this.state
-    // this.setState({
-    //   widgetProps: {
-    //     ...widgetProps,
-    //     renderType: 'select'
-    //   }
-    // })
     const {onSelectChartsItems, itemId} = this.props
     if (onSelectChartsItems) {
       onSelectChartsItems(itemId, 'select', selectedItems)
