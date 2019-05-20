@@ -84,7 +84,7 @@ const ResizableHeader = (props) => {
 }
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
-  private static HeaderSorterWidth = 30
+  private static HeaderSorterWidth = 0
 
   private table = React.createRef<AntTable<any>>()
 
@@ -500,15 +500,15 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         const cellJsx = this.getCellReactNode(cellVal, cellValRange, format, columnConfig, isMerged)
         return !isMerged ? cellJsx : { children: cellJsx, props: { rowSpan: span } }
       }
-      header.sorter = (a, b) => {
-        if (a[expression] === b[expression]) { return 0 }
-        if (typeof a[expression] === 'number') {
-          return a[expression] > b[expression] ? 1 : -1
-        } else if (typeof a[expression] === 'string') {
-          return (a[expression] as string).localeCompare(b[expression])
-        }
-        return 0
-      }
+      // header.sorter = (a, b) => {
+      //   if (a[expression] === b[expression]) { return 0 }
+      //   if (typeof a[expression] === 'number') {
+      //     return a[expression] > b[expression] ? 1 : -1
+      //   } else if (typeof a[expression] === 'string') {
+      //     return (a[expression] as string).localeCompare(b[expression])
+      //   }
+      //   return 0
+      // }
     }
     header.title = (
       <div className={styles.headerCell} style={headerStyle}>{headerText}</div>
@@ -634,7 +634,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       color: fontColor,
       fontStyle,
       backgroundColor,
-      justifyContent
+      alignItems: justifyContent
     }
     return cssStyle
   }
@@ -895,7 +895,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       ...this.basePagination,
       ...pagination
     }
-    // const key = new Date().getTime() // FIXME force to rerender Table to avoid bug by setting changes
+    const key = new Date().getTime() // FIXME force to rerender Table to avoid bug by setting changes
     const scroll = this.getTableScroll(columns, width, headerFixed, tableBodyHeight)
     const style = this.getTableStyle(headerFixed, tableBodyHeight)
 
@@ -914,7 +914,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return (
       <>
         <AntTable
-          // key={key}
+          key={key}
           style={style}
           className={tableCls}
           ref={this.table}

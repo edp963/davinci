@@ -29,7 +29,7 @@ export const DefaultTableCellStyle: ITableCellStyle = {
   fontWeight: PIVOT_CHART_FONT_WEIGHTS[0],
   fontColor: PIVOT_DEFAULT_FONT_COLOR,
   fontStyle: DEFAULT_FONT_STYLE,
-  backgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR,
+  backgroundColor: 'transparent',
   justifyContent: 'flex-start'
 }
 
