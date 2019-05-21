@@ -223,7 +223,6 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
 
 
   private onModalOk = () => {
-    console.log('1')
     const { organizationId, currentOrganization, onAddProject, onEditProject, onLoadOrganizationProjects } = this.props
     const { formType } = this.state
     const targetForm = formType === 'edit' ? this.ProjectEditForm : this.ProjectForm
