@@ -614,12 +614,24 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             break
         }
       } else if (widgetProps.selectedChart === ChartTypes.Table) {
+        const cols = widgetProps.cols
+        const { whichDataDrillBrushed } = this.state
+        const drillData = whichDataDrillBrushed[0][0]
+        const drillKey = drillData[drillData.length - 1]['key']
+        const newWidgetPropCols = cols.reduce((array, col) => {
+          array.push(col)
+          if (col.name === drillKey) {
+            array.push({name})
+          }
+          return array
+        }, [])
         this.setState({
           widgetProps: {
             ...widgetProps,
             ...{
               cols: name && name.length
-              ? widgetProps.cols.concat({name})
+            //  ? widgetProps.cols.concat({name})
+              ? newWidgetPropCols
               : cacheWidgetProps.cols
             }
           }

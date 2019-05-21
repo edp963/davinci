@@ -1050,7 +1050,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
             }
           }
-          currentCol = groups && groups.length ? widgetConfigCols.concat([{name: groups}]) : void 0
+          const drillKey = sourceDataFilter[sourceDataFilter.length - 1]['key']
+          const newWidgetPropCols = widgetConfigCols.reduce((array, col) => {
+            array.push(col)
+            if (col.name === drillKey) {
+              array.push({name: groups})
+            }
+            return array
+          }, [])
+          currentCol = groups && groups.length ? newWidgetPropCols : void 0
         }
       }
       filterSource = sourceDataFilter.map((source) => {
@@ -1116,7 +1124,16 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           sqls = sqls.concat(coustomTableSqls)
         }
         if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
-          currentCol = groups && groups.length ? lastDrillHistory.col.concat({name: groups}) : lastDrillHistory.col
+          const drillKey = sourceDataFilter[sourceDataFilter.length - 1]['key']
+          const cols = lastDrillHistory.col
+          const newWidgetPropCols = cols.reduce((array, col) => {
+            array.push(col)
+            if (col.name === drillKey) {
+              array.push({name: groups})
+            }
+            return array
+          }, [])
+          currentCol = groups && groups.length ? newWidgetPropCols : lastDrillHistory.col
         }
       } else {
         name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
