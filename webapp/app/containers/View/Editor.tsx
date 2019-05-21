@@ -211,6 +211,17 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
       this.goToViewList()
       return
     }
+    const { editingView } = this.props
+    const { name, sourceId, sql } = editingView
+    const errorMessages = ['名称不能为空', '请选择数据源', 'sql 不能为空']
+    const fieldsValue = [name, sourceId, sql]
+    const hasError = fieldsValue.some((val, idx) => {
+      if (!val) {
+        message.error(errorMessages[idx])
+        return true
+      }
+    })
+    if (hasError) { return }
     this.setState({ currentStep: currentStep + step }, () => {
       if (this.state.currentStep > 1) {
         this.saveView()
