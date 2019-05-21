@@ -1,4 +1,5 @@
 import React from 'react'
+import { findDOMNode } from 'react-dom'
 import memoizeOne from 'memoize-one'
 
 import { Table } from 'antd'
@@ -13,12 +14,20 @@ import { getTextWidth } from 'utils/util'
 interface ISqlPreviewProps {
   loading: boolean
   response: IExecuteSqlResponse
+  height: number
+  size: TableProps<any>['size']
 }
 
-export class SqlPreview extends React.PureComponent<ISqlPreviewProps> {
+interface ISqlPreviewStates {
+  tableBodyHeight: number
+}
+
+export class SqlPreview extends React.PureComponent<ISqlPreviewProps, ISqlPreviewStates> {
 
   private static readonly TableCellPaddingWidth = 8
   private static readonly TableCellMaxWidth = 300
+
+  private static ExcludeElems = ['.ant-table-thead', '.ant-pagination.ant-table-pagination']
 
   private static basePagination: PaginationConfig = {
     pageSize: DEFAULT_SQL_PREVIEW_PAGE_SIZE,
@@ -42,8 +51,36 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps> {
     return maxWidth
   })
 
+  private table = React.createRef<Table<any>>()
+  public state: Readonly<ISqlPreviewStates> = { tableBodyHeight: 0 }
+
+  public componentDidMount () {
+    const tableBodyHeight = this.computeTableBody()
+    this.setState({ tableBodyHeight })
+  }
+
+  public componentDidUpdate () {
+    const tableBodyHeight = this.computeTableBody()
+    this.setState({ tableBodyHeight })
+  }
+
+  private computeTableBody = () => {
+    const tableDom = findDOMNode(this.table.current) as Element
+    if (!tableDom) { return 0 }
+    const excludeElemsHeight = SqlPreview.ExcludeElems.reduce((acc, exp) => {
+      const elem = tableDom.querySelector(exp)
+      if (!elem) { return acc }
+      const style = window.getComputedStyle(elem)
+      const { marginTop, marginBottom } = style
+      const height = elem.clientHeight + parseInt(marginTop, 10) + parseInt(marginBottom, 10)
+      return acc + height
+    }, 0)
+    const tableBodyHeight = this.props.height - excludeElemsHeight
+    return tableBodyHeight
+  }
+
   public render () {
-    const { loading, response } = this.props
+    const { loading, response, size } = this.props
     const { totalCount, columns, resultList } = response
     const paginationConfig: PaginationConfig = {
       ...SqlPreview.basePagination,
@@ -59,13 +96,16 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps> {
       }
     })
     const scroll: TableProps<any>['scroll'] = {
-      x: tableColumns.reduce((acc, col) => (col.width as number + acc), 0)
+      x: tableColumns.reduce((acc, col) => (col.width as number + acc), 0),
+      y: this.state.tableBodyHeight
     }
 
     return (
       <Table
+        ref={this.table}
         className={Styles.sqlPreview}
         bordered
+        size={size}
         pagination={paginationConfig}
         dataSource={resultList}
         columns={tableColumns}
