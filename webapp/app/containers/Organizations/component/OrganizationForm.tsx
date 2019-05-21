@@ -72,7 +72,8 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
                       message: 'Name 不能为空'
                     }, {
                       validator: this.props.onCheckUniqueName
-                    }]
+                    }],
+                    validateFirst: true
                   })(
                     <Input placeholder="Name" />
                   )}

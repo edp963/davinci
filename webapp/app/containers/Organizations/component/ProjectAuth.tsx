@@ -134,6 +134,7 @@ export class Auth extends React.Component <IAuthProps, {}> {
               columns={dvColumns}
               dataSource={this.props.vizs}
               pagination={false}
+              defaultExpandAllRows={true}
           />
         </div>
       </div>
