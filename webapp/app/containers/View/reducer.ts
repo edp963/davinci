@@ -99,10 +99,10 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
     case ActionTypes.LOAD_VIEWS_SUCCESS:
       return state
         .set('views', action.payload.views)
+        .set('formedViews', {})
         .set('loading', { ...loading, view: false })
     case ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS:
       const detailedViews = action.payload.views
-
       return state
         .set('editingView', detailedViews[0])
         .set('editingViewInfo', pick(getFormedView(detailedViews[0]), ['model', 'variable', 'roles']))
@@ -166,7 +166,14 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
       return state.set('editingViewInfo', action.payload.viewInfo)
     case ActionTypes.SET_SQL_LIMIT:
       return state.set('sqlLimit', action.payload.limit)
-
+    case ActionTypes.EDIT_VIEW_SUCCESS:
+      return state
+        .set('editingView', emptyView)
+        .set('editingViewInfo', { model: {}, variable: [], roles: [] })
+        .set('formedViews', {
+          ...formedViews,
+          [action.payload.result.id]: getFormedView(action.payload.result)
+        })
     case ActionTypes.LOAD_DAC_CHANNELS_SUCCESS:
       return state.set('channels', action.payload.channels)
     case ActionTypes.LOAD_DAC_TENANTS_SUCCESS:

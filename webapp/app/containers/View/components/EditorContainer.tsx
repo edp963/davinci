@@ -80,11 +80,12 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
   private editor = React.createRef<HTMLDivElement>()
   public static SiderMinWidth = 250
   public static EditorMinHeight = 100
+  public static DefaultPreviewHeight = 300
 
   public state: Readonly<IEditorContainerStates> = {
     editorHeight: 0,
     siderWidth: EditorContainer.SiderMinWidth,
-    previewHeight: 0,
+    previewHeight: EditorContainer.DefaultPreviewHeight,
     variableModalVisible: false,
     editingVariable: null
   }
@@ -100,17 +101,6 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
 
   public componentWillUnmount () {
     window.removeEventListener('resize', this.setEditorHeight, false)
-  }
-
-  public static getDerivedStateFromProps:
-    React.GetDerivedStateFromProps<IEditorContainerProps, IEditorContainerStates>
-  = (props, state) => {
-    const { sqlDataSource } = props
-    const { previewHeight } = state
-    if (previewHeight === 0 && sqlDataSource.columns.length > 0) {
-      return { previewHeight: 200 }
-    }
-    return null
   }
 
   public setEditorHeight = () => {
@@ -287,8 +277,10 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
               </div>
               <div className={Styles.preview} style={{height: previewHeight}}>
                   <SqlPreview
+                    size="small"
                     loading={loadingExecute}
                     response={sqlDataSource}
+                    height={previewHeight}
                   />
               </div>
             </div>
