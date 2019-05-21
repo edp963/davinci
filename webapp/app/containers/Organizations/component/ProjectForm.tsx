@@ -56,6 +56,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
         key="submit"
         size="large"
         type="primary"
+        htmlType="submit"
         onClick={this.props.onModalOk}
         loading={modalLoading}
         disabled={modalLoading}
@@ -163,7 +164,8 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                       message: 'Name 不能为空'
                     }, {
                       validator: onCheckUniqueName
-                    }]
+                    }],
+                    validateFirst: true
                   })(
                     <Input placeholder="Name" />
                   )}
