@@ -38,7 +38,7 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps, ISqlPrevie
 
   private prepareTable = memoizeOne((columns: ISqlColumn[], resultList: any[]) => {
     const rowKey = `rowKey_${new Date().getTime()}`
-    resultList.forEach((record) => record[rowKey] = Object.values(record).join('_'))
+    resultList.forEach((record, idx) => record[rowKey] = Object.values(record).join('_') + idx)
 
     const tableColumns = columns.map<ColumnProps<any>>((col) => {
       const width = SqlPreview.computeColumnWidth(resultList, col.name)
