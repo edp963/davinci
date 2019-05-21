@@ -7,7 +7,7 @@ import { ColumnProps, TableProps } from 'antd/lib/table'
 import { PaginationConfig } from 'antd/lib/pagination'
 import Styles from '../View.less'
 
-import { IExecuteSqlResponse, IExecuteSqlParams } from '../types'
+import { IExecuteSqlResponse, ISqlColumn } from '../types'
 import { DEFAULT_SQL_PREVIEW_PAGE_SIZE, SQL_PREVIEW_PAGE_SIZE_OPTIONS } from '../constants'
 import { getTextWidth } from 'utils/util'
 
@@ -36,11 +36,22 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps, ISqlPrevie
     showSizeChanger: true
   }
 
-  private static computeRowKey (record: object) {
-    return Object.values(record).join('_')
-  }
+  private prepareTable = memoizeOne((columns: ISqlColumn[], resultList: any[]) => {
+    const rowKey = `rowKey_${new Date().getTime()}`
+    resultList.forEach((record) => record[rowKey] = Object.values(record).join('_'))
 
-  private static computeColumnWidth = memoizeOne((resultList: any[], columnName: string) => {
+    const tableColumns = columns.map<ColumnProps<any>>((col) => {
+      const width = SqlPreview.computeColumnWidth(resultList, col.name)
+      return {
+        title: col.name,
+        dataIndex: col.name,
+        width
+      }
+    })
+    return { tableColumns, rowKey }
+  })
+
+  private static computeColumnWidth = (resultList: any[], columnName: string) => {
     let textList = resultList.map((item) => item[columnName])
     textList = textList.filter((text, idx) => textList.indexOf(text) === idx)
     const contentMaxWidth = textList.reduce((maxWidth, text) =>
@@ -49,7 +60,7 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps, ISqlPrevie
     let maxWidth = Math.max(contentMaxWidth, titleWidth) + (2 * SqlPreview.TableCellPaddingWidth) + 2
     maxWidth = Math.min(maxWidth, SqlPreview.TableCellMaxWidth)
     return maxWidth
-  })
+  }
 
   private table = React.createRef<Table<any>>()
   public state: Readonly<ISqlPreviewStates> = { tableBodyHeight: 0 }
@@ -87,14 +98,7 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps, ISqlPrevie
       total: totalCount
 
     }
-    const tableColumns = columns.map<ColumnProps<any>>((col) => {
-      const width = SqlPreview.computeColumnWidth(resultList, col.name)
-      return {
-        title: col.name,
-        dataIndex: col.name,
-        width
-      }
-    })
+    const { tableColumns, rowKey } = this.prepareTable(columns, resultList)
     const scroll: TableProps<any>['scroll'] = {
       x: tableColumns.reduce((acc, col) => (col.width as number + acc), 0),
       y: this.state.tableBodyHeight
@@ -111,7 +115,7 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps, ISqlPrevie
         columns={tableColumns}
         scroll={scroll}
         loading={loading}
-        rowKey={SqlPreview.computeRowKey}
+        rowKey={rowKey}
       />
     )
   }
