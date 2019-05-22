@@ -103,6 +103,7 @@ interface IViewVariableBase {
   valueType: ViewVariableValueTypes
   defaultValues: Array<string | number | boolean>
   channel?: IViewVariableChannel
+  udf: boolean
 }
 
 export interface IViewVariable extends IViewVariableBase {

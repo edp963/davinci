@@ -1,6 +1,7 @@
 import React from 'react'
-import { Modal, Form, Input, InputNumber, Select, Checkbox, Button, Row, Col } from 'antd'
+import { Modal, Form, Input, Select, Checkbox, Button, Row, Col } from 'antd'
 const FormItem = Form.Item
+const TextArea = Input.TextArea
 const { Option } = Select
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { FormComponentProps } from 'antd/lib/form/Form'
@@ -33,6 +34,7 @@ interface IVariableModalStates {
   selectedType: ViewVariableTypes
   selectedValueType: ViewVariableValueTypes
   defaultValues: ConditionValueTypes[]
+  isUdf: boolean
   isFromService: boolean
 }
 
@@ -43,14 +45,15 @@ const defaultVarible: IViewVariable = {
   type: ViewVariableTypes.Query,
   valueType: ViewVariableValueTypes.String,
   defaultValues: [],
+  udf: false,
   fromService: false
 }
 
 export class VariableModal extends React.Component<IVariableModalProps & FormComponentProps, IVariableModalStates> {
 
   private formItemStyle = {
-    labelCol: { span: 5 },
-    wrapperCol: { span: 19 }
+    labelCol: { span: 6 },
+    wrapperCol: { span: 18 }
   }
 
   private viewVariableTypeOptions = Object.entries(ViewVariableTypesLocale).map(([variableType, text]) => (
@@ -66,6 +69,7 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
     selectedType: ViewVariableTypes.Query,
     selectedValueType: ViewVariableValueTypes.String,
     defaultValues: [],
+    isUdf: false,
     isFromService: false
   }
 
@@ -99,8 +103,18 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
     })
   }
 
+  private singleDefaultValuesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    this.defaultValueChange([e.target.value])
+  }
+
   private defaultValueChange = (values: ConditionValueTypes[]) => {
     this.setState({ defaultValues: values })
+  }
+
+  private udfChange = (e: CheckboxChangeEvent) => {
+    const udf = e.target.checked
+    this.setState({ isUdf: udf })
+    this.defaultValueChange([])
   }
 
   private fromServiceChange = (e: CheckboxChangeEvent) => {
@@ -145,6 +159,8 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
         if (updatedVariable.type === ViewVariableTypes.Query) {
           updatedVariable.defaultValues = this.state.defaultValues
         }
+        console.log(updatedVariable)
+        // return
         onSave(updatedVariable)
       }
     })
@@ -157,7 +173,7 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
       onLoadDacTenants
     } = this.props
     const { getFieldDecorator } = form
-    const { operatorType, selectedType, selectedValueType, defaultValues, isFromService } = this.state
+    const { operatorType, selectedType, selectedValueType, defaultValues, isUdf, isFromService } = this.state
 
     const modalButtons = [(
       <Button
@@ -192,6 +208,7 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
           <FormItem label="名称" {...this.formItemStyle}>
             {getFieldDecorator<IViewVariable>('name', {
               rules: [{
+                required: true,
                 validator: this.validateVariableName
               }]
             })(<Input />)}
@@ -215,15 +232,35 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
               }]
             })(<Select onChange={this.valueTypeChange}>{this.viewVariableValueTypeOptions}</Select>)}
           </FormItem>
-          {selectedType === ViewVariableTypes.Query && (
-            <FormItem label="默认值" {...this.formItemStyle}>
-              <ConditionValuesControl
-                visualType={selectedValueType}
-                operatorType={operatorType}
-                conditionValues={defaultValues}
-                onChange={this.defaultValueChange}
-              />
-            </FormItem>)}
+          {selectedType === ViewVariableTypes.Query && selectedValueType !== ViewVariableValueTypes.SqlExpression && (
+            <>
+              <FormItem>
+                <Row>
+                  <Col span={this.formItemStyle.wrapperCol.span} offset={this.formItemStyle.labelCol.span}>
+                    {getFieldDecorator<IViewVariable>('udf', {
+                      valuePropName: 'checked',
+                      initialValue: isUdf
+                    })(
+                      <Checkbox onChange={this.udfChange}>使用表达式</Checkbox>
+                    )}
+                  </Col>
+                </Row>
+              </FormItem>
+              {!isUdf && <FormItem label="默认值" {...this.formItemStyle}>
+                <ConditionValuesControl
+                  visualType={selectedValueType}
+                  operatorType={operatorType}
+                  conditionValues={defaultValues}
+                  onChange={this.defaultValueChange}
+                />
+              </FormItem>}
+            </>
+          )}
+          {selectedType === ViewVariableTypes.Query && (isUdf || selectedValueType === ViewVariableValueTypes.SqlExpression) && (
+            <FormItem label="表达式" {...this.formItemStyle}>
+              <TextArea placeholder="请输入表达式" value={defaultValues[0] as string} onChange={this.singleDefaultValuesChange} rows={3} />
+            </FormItem>
+          )}
           {selectedType === ViewVariableTypes.Authorization && channels.length > 0 && (
             <FormItem>
               <Row>
