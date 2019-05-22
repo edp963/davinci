@@ -44,7 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static edp.core.consts.Consts.comma;
+import static edp.core.consts.Consts.COMMA;
 
 @Slf4j
 @Service("dashboardService")
@@ -246,7 +246,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         if (null != dashboard.getParentId() && dashboard.getParentId() > 0L) {
             String fullParentId = dashboardMapper.getFullParentId(dashboard.getParentId());
-            dashboard.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboard.getParentId().toString() : dashboard.getParentId() + comma + fullParentId);
+            dashboard.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboard.getParentId().toString() : dashboard.getParentId() + COMMA + fullParentId);
         }
 
         int insert = dashboardMapper.insert(dashboard);
@@ -329,7 +329,7 @@ public class DashboardServiceImpl implements DashboardService {
 
             if (null != dashboardDto.getParentId() && dashboardDto.getParentId() > 0L && parentMap.containsKey(dashboardDto.getParentId())) {
                 String fullParentId = parentMap.get(dashboardDto.getParentId());
-                dashboardDto.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboardDto.getParentId().toString() : dashboardDto.getParentId() + comma + fullParentId);
+                dashboardDto.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboardDto.getParentId().toString() : dashboardDto.getParentId() + COMMA + fullParentId);
             }
 
             dashboardList.add(dashboardDto);

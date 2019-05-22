@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static edp.core.consts.Consts.EMPTY;
 import static edp.davinci.core.common.Constants.EXCEL_FORMAT_TYPE_KEY;
 
 @Component
@@ -177,7 +178,7 @@ public class ScriptUtiils {
                                             if (mirror.isArray()) {
                                                 int[] array = new int[4];
                                                 for (int i = 0; i < 4; i++) {
-                                                    array[i] = Integer.parseInt(mirror.get(i + "").toString());
+                                                    array[i] = Integer.parseInt(mirror.get(i + EMPTY).toString());
                                                 }
                                                 header.setRange(array);
                                             }
@@ -185,7 +186,7 @@ public class ScriptUtiils {
                                             if (mirror.isArray()) {
                                                 List<String> list = new ArrayList<>();
                                                 for (int i = 0; i < 4; i++) {
-                                                    list.add(mirror.get(i + "").toString());
+                                                    list.add(mirror.get(i + EMPTY).toString());
                                                 }
                                                 header.setStyle(list);
                                             }

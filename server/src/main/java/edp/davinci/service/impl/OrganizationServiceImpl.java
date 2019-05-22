@@ -346,7 +346,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         //校验邮箱
         if (StringUtils.isEmpty(user.getEmail())) {
-            throw new ServerException("The email address of the invitee is empty");
+            throw new ServerException("The email address of the invitee is EMPTY");
         }
 
         /**
@@ -396,8 +396,8 @@ public class OrganizationServiceImpl implements OrganizationService {
         String tokenPassword = tokenUtils.getPassword(token);
 
         if (StringUtils.isEmpty(tokenUserName) || StringUtils.isEmpty(tokenPassword)) {
-            log.info("confirmInvite error: token detail id empty");
-            throw new ServerException("username or password cannot be empty");
+            log.info("confirmInvite error: token detail id EMPTY");
+            throw new ServerException("username or password cannot be EMPTY");
         }
 
         String[] ids = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
@@ -472,7 +472,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         String tokenPassword = tokenUtils.getPassword(token);
 
         if (StringUtils.isEmpty(tokenUserName) || StringUtils.isEmpty(tokenPassword)) {
-            log.info("confirmInvite error: token detail id empty");
+            log.info("confirmInvite error: token detail id EMPTY");
             throw new ServerException("Invalid Token");
         }
 

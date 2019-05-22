@@ -92,7 +92,7 @@ public class UserController extends BaseController {
                                    HttpServletRequest request) {
 
         if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -121,7 +121,7 @@ public class UserController extends BaseController {
 //                              HttpServletRequest request) {
 //
 //        if (StringUtils.isEmpty(token)) {
-//            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be empty");
+//            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be EMPTY");
 //            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
 //        }
 //
@@ -256,7 +256,7 @@ public class UserController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("avatar file can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("avatar file can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -285,7 +285,7 @@ public class UserController extends BaseController {
                                    @ApiIgnore @CurrentUser User user,
                                    HttpServletRequest request) {
         if (StringUtils.isEmpty(keyword)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("keyword can not empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("keyword can not EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         List<UserBaseInfo> users = userService.getUsersByKeyword(keyword, user, orgId);

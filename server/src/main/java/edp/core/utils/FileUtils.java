@@ -33,6 +33,9 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static edp.core.consts.Consts.EMPTY;
+
+
 @Component
 public class FileUtils {
 
@@ -141,7 +144,7 @@ public class FileUtils {
                     is.read(buffer);
                     response.reset();
                     response.addHeader("Content-Disposition", "attachment;filename=" + new String(file.getName().getBytes(), "UTF-8"));
-                    response.addHeader("Content-Length", "" + file.length());
+                    response.addHeader("Content-Length", EMPTY + file.length());
                     os = new BufferedOutputStream(response.getOutputStream());
                     response.setContentType("application/octet-stream;charset=UTF-8");
                     os.write(buffer);
@@ -208,7 +211,7 @@ public class FileUtils {
      * @return
      */
     public String formatFilePath(String filePath) {
-        return filePath.replace(fileBasePath, "").replaceAll(File.separator + "{2,}", File.separator);
+        return filePath.replace(fileBasePath, EMPTY).replaceAll(File.separator + "{2,}", File.separator);
     }
 
     /**

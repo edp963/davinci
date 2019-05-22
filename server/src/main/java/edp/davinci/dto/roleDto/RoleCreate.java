@@ -29,7 +29,7 @@ import javax.validation.constraints.NotNull;
 @NotNull(message = "role info cannot be null")
 public class RoleCreate {
 
-    @NotBlank(message = "role name cannot be empty")
+    @NotBlank(message = "role name cannot be EMPTY")
     private String name;
 
     private String description;

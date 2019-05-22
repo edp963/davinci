@@ -68,7 +68,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static edp.core.consts.Consts.minus;
+import static edp.core.consts.Consts.MINUS;
 import static edp.davinci.core.enums.SqlVariableTypeEnum.AUTHVARE;
 import static edp.davinci.core.enums.SqlVariableTypeEnum.QUERYVAR;
 
@@ -522,9 +522,9 @@ public class ViewServiceImpl implements ViewService {
 
                         StringBuilder slatBuilder = new StringBuilder();
                         slatBuilder.append(executeParam.getPageNo());
-                        slatBuilder.append(minus);
+                        slatBuilder.append(MINUS);
                         slatBuilder.append(executeParam.getLimit());
-                        slatBuilder.append(minus);
+                        slatBuilder.append(MINUS);
                         slatBuilder.append(executeParam.getPageSize());
                         excludeColumns.forEach(slatBuilder::append);
 

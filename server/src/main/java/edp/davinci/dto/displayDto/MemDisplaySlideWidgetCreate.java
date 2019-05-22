@@ -31,7 +31,7 @@ public class MemDisplaySlideWidgetCreate {
 
     private Long id;
 
-    @NotBlank(message = "name cannot be empty")
+    @NotBlank(message = "name cannot be EMPTY")
     private String name;
 
     @Min(value = 1L, message = "Invalid display slide id")
@@ -46,6 +46,6 @@ public class MemDisplaySlideWidgetCreate {
 
     private Integer index = 0;
 
-    @NotBlank(message = "type cannot be empty")
+    @NotBlank(message = "type cannot be EMPTY")
     private String params;
 }

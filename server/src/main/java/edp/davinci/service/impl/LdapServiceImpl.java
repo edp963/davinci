@@ -41,8 +41,10 @@ import org.springframework.util.StringUtils;
 import javax.naming.directory.DirContext;
 import java.util.List;
 
+import static edp.core.consts.Consts.EMPTY;
 import static edp.davinci.core.common.Constants.LDAP_USER_PASSWORD;
 import static org.springframework.ldap.query.LdapQueryBuilder.query;
+
 
 @Slf4j
 @Service("ldapService")
@@ -86,7 +88,7 @@ public class LdapServiceImpl implements LdapService {
         LdapPerson ldapPerson = null;
 
         if (StringUtils.endsWithIgnoreCase(username, ldapDomainName)) {
-            username = username.replaceAll("(?i)" + ldapDomainName, "");
+            username = username.replaceAll("(?i)" + ldapDomainName, EMPTY);
         }
         String userDn = username + ldapDomainName;
 

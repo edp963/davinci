@@ -619,13 +619,13 @@ public class SqlUtils {
     public void executeBatch(String sql, Set<QueryColumn> headers, List<Map<String, Object>> datas) throws ServerException {
 
         if (StringUtils.isEmpty(sql)) {
-            log.info("execute batch sql is empty");
-            throw new ServerException("execute batch sql is empty");
+            log.info("execute batch sql is EMPTY");
+            throw new ServerException("execute batch sql is EMPTY");
         }
 
         if (null == datas || datas.size() <= 0) {
-            log.info("execute batch data is empty");
-            throw new ServerException("execute batch data is empty");
+            log.info("execute batch data is EMPTY");
+            throw new ServerException("execute batch data is EMPTY");
         }
 
         Connection connection = null;
@@ -741,7 +741,7 @@ public class SqlUtils {
                 keywordPrefix = customDataSource.getKeyword_prefix();
             }
         }
-        return StringUtils.isEmpty(keywordPrefix) ? "" : keywordPrefix;
+        return StringUtils.isEmpty(keywordPrefix) ? EMPTY : keywordPrefix;
     }
 
     public static String getKeywordSuffix(String jdbcUrl) {
@@ -755,7 +755,7 @@ public class SqlUtils {
                 keywordSuffix = customDataSource.getKeyword_suffix();
             }
         }
-        return StringUtils.isEmpty(keywordSuffix) ? "" : keywordSuffix;
+        return StringUtils.isEmpty(keywordSuffix) ? EMPTY : keywordSuffix;
     }
 
     public static String getAliasPrefix(String jdbcUrl) {
@@ -769,7 +769,7 @@ public class SqlUtils {
                 aliasPrefix = customDataSource.getAlias_prefix();
             }
         }
-        return StringUtils.isEmpty(aliasPrefix) ? "" : aliasPrefix;
+        return StringUtils.isEmpty(aliasPrefix) ? EMPTY : aliasPrefix;
     }
 
     public static String getAliasSuffix(String jdbcUrl) {
@@ -783,7 +783,7 @@ public class SqlUtils {
                 aliasSuffix = customDataSource.getAlias_suffix();
             }
         }
-        return StringUtils.isEmpty(aliasSuffix) ? "" : aliasSuffix;
+        return StringUtils.isEmpty(aliasSuffix) ? EMPTY : aliasSuffix;
     }
 
 
@@ -796,7 +796,7 @@ public class SqlUtils {
     public static String filterAnnotate(String sql) {
         Pattern p = Pattern.compile(Consts.REG_SQL_ANNOTATE);
         sql = p.matcher(sql).replaceAll("$1");
-        sql = sql.replaceAll(newLineChar, space).replaceAll("(;+\\s*)+", semicolon);
+        sql = sql.replaceAll(NEW_LINE_CHAR, SPACE).replaceAll("(;+\\s*)+", SEMICOLON);
         return sql;
     }
 

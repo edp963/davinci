@@ -69,8 +69,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static edp.core.consts.Consts.EMPTY;
 import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
+
 
 @Service("widgetService")
 @Slf4j
@@ -378,7 +380,7 @@ public class WidgetServiceImpl implements WidgetService {
 
                     String csvName = widget.getName() + "_" +
                             System.currentTimeMillis() +
-                            UUID.randomUUID().toString().replace("-", "") +
+                            UUID.randomUUID().toString().replace("-", EMPTY) +
                             FileTypeEnum.CSV.getFormat();
 
                     filePath = CsvUtils.formatCsvWithFirstAsHeader(rootPath, csvName, columns, paginate.getResultList());
@@ -387,7 +389,7 @@ public class WidgetServiceImpl implements WidgetService {
 
                 String excelName = widget.getName() + "_" +
                         System.currentTimeMillis() +
-                        UUID.randomUUID().toString().replace("-", "") +
+                        UUID.randomUUID().toString().replace("-", EMPTY) +
                         FileTypeEnum.XLSX.getFormat();
 
 
@@ -425,7 +427,7 @@ public class WidgetServiceImpl implements WidgetService {
                            ProjectDetail projectDetail, Map<Long, ViewExecuteParam> executeParamMap,
                            String filePath, User user, boolean containType) throws Exception {
         if (StringUtils.isEmpty(filePath)) {
-            throw new ServerException("excel file path is empty");
+            throw new ServerException("excel file path is EMPTY");
         }
         if (!filePath.trim().toLowerCase().endsWith(FileTypeEnum.XLSX.getFormat())) {
             throw new ServerException("unknow file format");

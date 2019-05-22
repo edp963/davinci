@@ -61,7 +61,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static edp.core.consts.Consts.semicolon;
+import static edp.core.consts.Consts.SEMICOLON;
 import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
 
@@ -147,11 +147,11 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
                 String[] cc = null, bcc = null;
                 if (!StringUtils.isEmpty(cronJobConfig.getCc())) {
-                    cc = cronJobConfig.getCc().split(semicolon);
+                    cc = cronJobConfig.getCc().split(SEMICOLON);
                 }
 
                 if (!StringUtils.isEmpty(cronJobConfig.getBcc())) {
-                    bcc = cronJobConfig.getBcc().split(semicolon);
+                    bcc = cronJobConfig.getBcc().split(SEMICOLON);
                 }
 
                 mailUtils.sendTemplateAttachmentsEmail(

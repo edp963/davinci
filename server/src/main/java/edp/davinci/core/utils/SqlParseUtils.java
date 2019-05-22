@@ -73,7 +73,7 @@ public class SqlParseUtils {
         }
 
         sqlStr = SqlUtils.filterAnnotate(sqlStr);
-        sqlStr = sqlStr.replaceAll(newLineChar, space).trim();
+        sqlStr = sqlStr.replaceAll(NEW_LINE_CHAR, SPACE).trim();
 
         char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
 
@@ -189,17 +189,17 @@ public class SqlParseUtils {
             return null;
         }
 
-        if (sql.startsWith(semicolon)) {
+        if (sql.startsWith(SEMICOLON)) {
             sql = sql.substring(1);
         }
 
-        if (sql.endsWith(semicolon)) {
+        if (sql.endsWith(SEMICOLON)) {
             sql = sql.substring(0, sql.length() - 1);
         }
 
         List<String> list = null;
 
-        String[] split = sql.split(semicolon);
+        String[] split = sql.split(SEMICOLON);
         if (null != split && split.length > 0) {
             list = new ArrayList<>();
             for (String sqlStr : split) {
@@ -248,7 +248,7 @@ public class SqlParseUtils {
         String originExpression = "";
         if (!StringUtils.isEmpty(srcExpression)) {
             srcExpression = srcExpression.trim();
-            if (srcExpression.startsWith(parenthesesStart) && srcExpression.endsWith(parenthesesEnd)) {
+            if (srcExpression.startsWith(PARENTHESES_START) && srcExpression.endsWith(PARENTHESES_END)) {
                 srcExpression = srcExpression.substring(1, srcExpression.length() - 1);
             }
 
@@ -268,7 +268,7 @@ public class SqlParseUtils {
                 if (null != expList && expList.size() > 0) {
                     String left = operatorMap.get(sqlOperator).get(0);
                     String right = operatorMap.get(sqlOperator).get(expList.size() - 1);
-                    if (right.startsWith(parenthesesStart) && right.endsWith(parenthesesEnd)) {
+                    if (right.startsWith(PARENTHESES_START) && right.endsWith(PARENTHESES_END)) {
                         right = right.substring(1, right.length() - 1);
                     }
                     if (right.startsWith(delimiter) && right.endsWith(delimiter)) {
@@ -283,20 +283,20 @@ public class SqlParseUtils {
                                     switch (sqlOperator) {
                                         case IN:
                                             expBuilder
-                                                    .append(left).append(space)
-                                                    .append(SqlOperatorEnum.IN.getValue()).append(space)
-                                                    .append(list.stream().collect(Collectors.joining(comma, parenthesesStart, parenthesesEnd)));
+                                                    .append(left).append(SPACE)
+                                                    .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
+                                                    .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                             break;
                                         default:
                                             if (list.get(0).split(",").length > 1) {
                                                 expBuilder
-                                                        .append(left).append(space)
-                                                        .append(SqlOperatorEnum.IN.getValue()).append(space)
-                                                        .append(list.stream().collect(Collectors.joining(comma, parenthesesStart, parenthesesEnd)));
+                                                        .append(left).append(SPACE)
+                                                        .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
+                                                        .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                             } else {
                                                 expBuilder
-                                                        .append(left).append(space)
-                                                        .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                                                        .append(left).append(SPACE)
+                                                        .append(sqlOperator.getValue()).append(SPACE).append(list.get(0));
                                             }
                                             break;
                                     }
@@ -308,16 +308,16 @@ public class SqlParseUtils {
                                     case IN:
                                     case EQUALSTO:
                                         expBuilder
-                                                .append(left).append(space)
-                                                .append(SqlOperatorEnum.IN.getValue()).append(space)
-                                                .append(list.stream().collect(Collectors.joining(comma, parenthesesStart, parenthesesEnd)));
+                                                .append(left).append(SPACE)
+                                                .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
+                                                .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                         break;
 
                                     case NOTEQUALSTO:
                                         expBuilder
-                                                .append(left).append(space)
-                                                .append(SqlOperatorEnum.NoTIN.getValue()).append(space)
-                                                .append(list.stream().collect(Collectors.joining(comma, parenthesesStart, parenthesesEnd)));
+                                                .append(left).append(SPACE)
+                                                .append(SqlOperatorEnum.NoTIN.getValue()).append(SPACE)
+                                                .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                         break;
 
                                     case BETWEEN:
@@ -326,8 +326,8 @@ public class SqlParseUtils {
                                     case MINORTHAN:
                                     case MINORTHANEQUALS:
                                         expBuilder.append(list.stream()
-                                                .map(x -> space + left + space + SqlOperatorEnum.BETWEEN.getValue() + space + x + space)
-                                                .collect(Collectors.joining("or", parenthesesStart, parenthesesEnd)));
+                                                .map(x -> SPACE + left + SPACE + SqlOperatorEnum.BETWEEN.getValue() + SPACE + x + SPACE)
+                                                .collect(Collectors.joining("or", PARENTHESES_START, PARENTHESES_END)));
                                         break;
 
                                     default:

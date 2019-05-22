@@ -36,7 +36,7 @@ public class QuartzUtils {
     public void addJob(ScheduleJob scheduleJob) throws ServerException {
 
         if (null == scheduleJob) {
-            throw new ServerException("empty job");
+            throw new ServerException("EMPTY job");
         }
 
         if (System.currentTimeMillis() < scheduleJob.getStartDate().getTime()

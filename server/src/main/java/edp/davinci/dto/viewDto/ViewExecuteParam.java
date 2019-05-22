@@ -120,24 +120,24 @@ public class ViewExecuteParam {
 
     private String formatColumn(String column, String func, String jdbcUrl, boolean isLable) {
         if (isLable) {
-            return String.join("", func.trim(), parenthesesStart, column.trim(), parenthesesEnd);
+            return String.join(EMPTY, func.trim(), PARENTHESES_START, column.trim(), PARENTHESES_END);
         } else {
             StringBuilder sb = new StringBuilder();
             if ("COUNTDISTINCT".equals(func.trim().toUpperCase())) {
-                sb.append("COUNT").append(parenthesesStart).append("DISTINCT").append(space);
+                sb.append("COUNT").append(PARENTHESES_START).append("DISTINCT").append(SPACE);
                 sb.append(getField(column, jdbcUrl));
-                sb.append(parenthesesEnd);
-                sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl)).append("COUNTDISTINCT").append(parenthesesStart);
+                sb.append(PARENTHESES_END);
+                sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl)).append("COUNTDISTINCT").append(PARENTHESES_START);
                 sb.append(column);
-                sb.append(parenthesesEnd).append(SqlUtils.getAliasSuffix(jdbcUrl));
+                sb.append(PARENTHESES_END).append(SqlUtils.getAliasSuffix(jdbcUrl));
             } else {
-                sb.append(func.trim()).append(parenthesesStart);
+                sb.append(func.trim()).append(PARENTHESES_START);
                 sb.append(getField(column, jdbcUrl));
-                sb.append(parenthesesEnd);
+                sb.append(PARENTHESES_END);
                 sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl));
-                sb.append(func.trim()).append(parenthesesStart);
+                sb.append(func.trim()).append(PARENTHESES_START);
                 sb.append(column);
-                sb.append(parenthesesEnd).append(SqlUtils.getAliasSuffix(jdbcUrl));
+                sb.append(PARENTHESES_END).append(SqlUtils.getAliasSuffix(jdbcUrl));
             }
             return sb.toString();
         }

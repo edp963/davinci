@@ -37,7 +37,7 @@ public class MemDisplaySlideWidget extends RecordInfo<MemDisplaySlideWidget> {
 
     private Long widgetId;
 
-    @NotBlank(message = "name cannot be empty")
+    @NotBlank(message = "name cannot be EMPTY")
     private String name;
 
     @Min(value = 0, message = "Invalid slide widget type")
@@ -47,7 +47,7 @@ public class MemDisplaySlideWidget extends RecordInfo<MemDisplaySlideWidget> {
 
     private Integer index = 0;
 
-    @NotBlank(message = "params cannot be empty")
+    @NotBlank(message = "params cannot be EMPTY")
     private String params;
 
 }

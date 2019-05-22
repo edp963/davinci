@@ -31,7 +31,7 @@ public class WidgetUpdate {
     @Min(value = 1L, message = "Invalid id")
     private Long id;
 
-    @NotBlank(message = "widget name cannot be empty")
+    @NotBlank(message = "widget name cannot be EMPTY")
     private String name;
 
     private String description;

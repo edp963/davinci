@@ -26,7 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static edp.core.consts.Consts.apostrophe;
+import static edp.core.consts.Consts.APOSTROPHE;
+import static edp.core.consts.Consts.EMPTY;
 
 public enum SqlVariableValueTypeEnum {
     STRING("string"),
@@ -45,36 +46,49 @@ public enum SqlVariableValueTypeEnum {
             return new ArrayList<>();
         }
 
-        switch (SqlVariableValueTypeEnum.valueOf(valueType.toUpperCase())) {
-            case STRING:
-            case DATE:
-                return values.stream().map(String::valueOf)
-                        .map(s -> s.startsWith(apostrophe) && s.endsWith(apostrophe) ? s : String.join("", apostrophe, s, apostrophe))
-                        .collect(Collectors.toList());
-            case NUMBER:
-                return values.stream().map(String::valueOf).collect(Collectors.toList());
-            case BOOLEAN:
-                return Arrays.asList(String.valueOf(values.get(values.size() - 1)));
+        SqlVariableValueTypeEnum sqlVariableValueTypeEnum = SqlVariableValueTypeEnum.valueTypeOf(valueType.toLowerCase());
+        if (null != sqlVariableValueTypeEnum) {
+            switch (sqlVariableValueTypeEnum) {
+                case STRING:
+                case DATE:
+                    return values.stream().map(String::valueOf)
+                            .map(s -> s.startsWith(APOSTROPHE) && s.endsWith(APOSTROPHE) ? s : String.join(EMPTY, APOSTROPHE, s, APOSTROPHE))
+                            .collect(Collectors.toList());
+                case NUMBER:
+                    return values.stream().map(String::valueOf).collect(Collectors.toList());
+                case BOOLEAN:
+                    return Arrays.asList(String.valueOf(values.get(values.size() - 1)));
+            }
         }
-        return values.stream().map(String::valueOf)
-                .map(s -> s.startsWith(apostrophe) && s.endsWith(apostrophe) ? s : String.join("", apostrophe, s, apostrophe))
-                .collect(Collectors.toList());
+        return values.stream().map(String::valueOf).collect(Collectors.toList());
     }
 
 
     public static Object getValue(String valueType, String value) {
         if (!StringUtils.isEmpty(value)) {
-            switch (SqlVariableValueTypeEnum.valueOf(valueType.toUpperCase())) {
-                case STRING:
-                case DATE:
-                    return String.join("", value.startsWith(apostrophe) ? "" : apostrophe, value, value.endsWith(apostrophe) ? "" : apostrophe);
-                case NUMBER:
-                    return value;
-                case BOOLEAN:
-                    return Boolean.parseBoolean(value);
+            SqlVariableValueTypeEnum valueTypeEnum = SqlVariableValueTypeEnum.valueTypeOf(valueType.toLowerCase());
+            if (null != valueTypeEnum) {
+                switch (valueTypeEnum) {
+                    case STRING:
+                    case DATE:
+                        return String.join(EMPTY, value.startsWith(APOSTROPHE) ? EMPTY : APOSTROPHE, value, value.endsWith(APOSTROPHE) ? EMPTY : APOSTROPHE);
+                    case NUMBER:
+                        return value;
+                    case BOOLEAN:
+                        return Boolean.parseBoolean(value);
+                }
             }
         }
         return value;
+    }
+
+    public static SqlVariableValueTypeEnum valueTypeOf(String valueType) {
+        for (SqlVariableValueTypeEnum valueTypeEnum : values()) {
+            if (valueTypeEnum.valueType.equals(valueType)) {
+                return valueTypeEnum;
+            }
+        }
+        return null;
     }
 
 }

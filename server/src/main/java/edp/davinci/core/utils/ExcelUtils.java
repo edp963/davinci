@@ -83,7 +83,7 @@ public class ExcelUtils {
 
             //前两行表示列名和类型
             if (sheet.getLastRowNum() < 1) {
-                throw new ServerException("empty excel");
+                throw new ServerException("EMPTY excel");
             }
             //列
             Row headerRow = sheet.getRow(0);
@@ -377,7 +377,7 @@ public class ExcelUtils {
                     }
 
                 } else {
-                    cell.setCellValue("");
+                    cell.setCellValue(EMPTY);
                     cell.setCellStyle(cellStyle);
                 }
             }
@@ -417,11 +417,11 @@ public class ExcelUtils {
                     fmtSB.append(fieldCurrency.getPrefix());
                 }
 
-                fmtSB.append(octothorpe);
+                fmtSB.append(OCTOTHORPE);
 
                 if (fieldNumeric.isUseThousandSeparator()) {
-                    fmtSB.append(comma)
-                            .append(makeNTimesString(2, octothorpe))
+                    fmtSB.append(COMMA)
+                            .append(makeNTimesString(2, OCTOTHORPE))
                             .append("0");
                 }
 
@@ -456,7 +456,7 @@ public class ExcelUtils {
                     fmtSB.append(".").append(makeNTimesString(fieldPercentage.getDecimalPlaces(), 0));
 
                 }
-                fmtSB.append(percentSign);
+                fmtSB.append(PERCENT_SIGN);
 
                 formatExpr = fmtSB.toString();
 
@@ -492,14 +492,14 @@ public class ExcelUtils {
                 break;
             case Thousand:
             case TenThousand:
-                unitExpr = comma + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                unitExpr = COMMA + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
                 break;
             case Million:
             case OneHundredMillion:
-                unitExpr = makeNTimesString(2, comma) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                unitExpr = makeNTimesString(2, COMMA) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
                 break;
             case Giga:
-                unitExpr = makeNTimesString(3, comma) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                unitExpr = makeNTimesString(3, COMMA) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
                 break;
 
             default:
@@ -511,7 +511,7 @@ public class ExcelUtils {
 
 
     private static String makeNTimesString(int n, Object s) {
-        return IntStream.range(0, n).mapToObj(i -> String.valueOf(s)).collect(Collectors.joining(""));
+        return IntStream.range(0, n).mapToObj(i -> String.valueOf(s)).collect(Collectors.joining(EMPTY));
     }
 
 

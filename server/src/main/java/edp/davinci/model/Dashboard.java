@@ -34,7 +34,7 @@ public class Dashboard extends RecordInfo<Dashboard> {
     @Min(value = 1L, message = "Invalid dashboard id")
     private Long id;
 
-    @NotBlank(message = "dashboard name cannot be empty")
+    @NotBlank(message = "dashboard name cannot be EMPTY")
     private String name;
 
     @Min(value = 1L, message = "Invalid dashboard portal id")

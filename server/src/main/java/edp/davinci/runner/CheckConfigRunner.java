@@ -61,22 +61,22 @@ public class CheckConfigRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         if (StringUtils.isEmpty(mailHost)) {
-            log.error("**************     Configuration error: mail host connot be empty!      **************");
+            log.error("**************     Configuration error: mail host connot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
 
         if (StringUtils.isEmpty(mailPort)) {
-            log.error("**************     Configuration error: mail port connot be empty!      **************");
+            log.error("**************     Configuration error: mail port connot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
 
         if (StringUtils.isEmpty(mailUserName)) {
-            log.error("**************     Configuration error: mail username connot be empty!      **************");
+            log.error("**************     Configuration error: mail username connot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
 
         if (StringUtils.isEmpty(mailUserName)) {
-            log.error("**************     Configuration error: mail nickname connot be empty!      **************");
+            log.error("**************     Configuration error: mail nickname connot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
 

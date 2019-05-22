@@ -66,8 +66,8 @@ public class ServerUtils {
         }
 
         if (!StringUtils.isEmpty(contextPath)) {
-            contextPath.replaceAll(Consts.Slash, "");
-            sb.append(Consts.Slash);
+            contextPath.replaceAll(Consts.SLASH, EMPTY);
+            sb.append(Consts.SLASH);
             sb.append(contextPath);
         }
 

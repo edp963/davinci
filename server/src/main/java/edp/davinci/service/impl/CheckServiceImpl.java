@@ -46,11 +46,11 @@ public class CheckServiceImpl implements CheckService {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         if (StringUtils.isEmpty(name)) {
-            log.info("the name of entity({}) ie empty", checkEntityEnum.getClazz());
+            log.info("the name of entity({}) ie EMPTY", checkEntityEnum.getClazz());
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
-                return resultMap.fail().message("name is empty");
+                return resultMap.fail().message("name is EMPTY");
             }
-            return resultMap.failAndRefreshToken(request).message("name is empty");
+            return resultMap.failAndRefreshToken(request).message("name is EMPTY");
         }
 
         try {
