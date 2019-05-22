@@ -76,11 +76,12 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
   public componentDidUpdate (prevProps: IVariableModalProps & FormComponentProps) {
     const { form, variable, visible, channels } = this.props
     if (variable !== prevProps.variable || visible !== prevProps.visible) {
-      const { type, valueType, defaultValues, fromService } = variable || defaultVarible
+      const { type, valueType, defaultValues, udf, fromService } = variable || defaultVarible
       this.setState({
         selectedType: type,
         selectedValueType: valueType,
         defaultValues: defaultValues || [],
+        isUdf: udf,
         isFromService: fromService && channels.length > 0
       }, () => {
         form.setFieldsValue(variable || defaultVarible)
@@ -89,8 +90,9 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
   }
 
   private typeChange = (selectedType: ViewVariableTypes) => {
-    this.setState(({ isFromService }) => ({
+    this.setState(({ isUdf, isFromService }) => ({
       selectedType,
+      isUdf: selectedType === ViewVariableTypes.Authorization ? false : isUdf,
       isFromService: selectedType === ViewVariableTypes.Query ? false : isFromService
     }))
   }
