@@ -31,12 +31,12 @@ public class SourceInfo {
     @Min(value = 1L, message = "Invalid source id")
     private Long id;
 
-    @NotBlank(message = "source name cannot be empty")
+    @NotBlank(message = "source name cannot be EMPTY")
     private String name;
 
     private String description;
 
-    @NotBlank(message = "source type cannot be empty")
+    @NotBlank(message = "source type cannot be EMPTY")
     private String type;
 
     @NotNull(message = "source config cannot be null")

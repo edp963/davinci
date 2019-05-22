@@ -196,7 +196,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == displaySlides || displaySlides.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide info cannot be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide info cannot be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -260,7 +260,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == slideWidgetCreates || slideWidgetCreates.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide widget info cannot be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide widget info cannot be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -315,7 +315,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == memDisplaySlideWidgets || memDisplaySlideWidgets.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide widget info cannot be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide widget info cannot be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -523,7 +523,7 @@ public class DisplayController extends BaseController {
 
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("file can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("file can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -554,7 +554,7 @@ public class DisplayController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("file can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("file can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -584,7 +584,7 @@ public class DisplayController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("file can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("file can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 

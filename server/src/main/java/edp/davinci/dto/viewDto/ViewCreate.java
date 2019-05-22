@@ -29,7 +29,7 @@ import java.util.List;
 @NotNull(message = "view cannot be null")
 public class ViewCreate {
 
-    @NotBlank(message = "view name cannot be empty")
+    @NotBlank(message = "view name cannot be EMPTY")
     private String name;
 
     private String description;

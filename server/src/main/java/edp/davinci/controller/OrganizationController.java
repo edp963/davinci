@@ -139,7 +139,7 @@ public class OrganizationController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("avatar file can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("avatar file can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -317,7 +317,7 @@ public class OrganizationController extends BaseController {
 //    public ResponseEntity confirmInvite(@PathVariable("token") String token,
 //                                        HttpServletRequest request) {
 //        if (StringUtils.isEmpty(token)) {
-//            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be empty");
+//            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be EMPTY");
 //            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
 //        }
 //        try {
@@ -344,7 +344,7 @@ public class OrganizationController extends BaseController {
                                         @ApiIgnore @CurrentUser User user,
                                         HttpServletRequest request) {
         if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         OrganizationInfo organizationInfo = organizationService.confirmInvite(token, user);

@@ -32,7 +32,7 @@ public class ViewUpdate {
     @Min(value = 1L, message = "Invalid view Id")
     private Long id;
 
-    @NotBlank(message = "view name cannot be empty")
+    @NotBlank(message = "view name cannot be EMPTY")
     private String name;
 
     private String description;

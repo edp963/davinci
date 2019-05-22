@@ -21,6 +21,8 @@ package edp.core.model;
 import com.alibaba.druid.util.StringUtils;
 import lombok.Data;
 
+import static edp.core.consts.Consts.EMPTY;
+
 @Data
 public class CustomDataSource {
     private String name;
@@ -66,11 +68,11 @@ public class CustomDataSource {
 
     private String getStringValue(String value) {
         if (StringUtils.isEmpty(value)) {
-            return "";
+            return EMPTY;
         }
 
         if (value.indexOf("\\") > -1) {
-            return value.replace("\\", "");
+            return value.replace("\\", EMPTY);
         }
         return value;
     }

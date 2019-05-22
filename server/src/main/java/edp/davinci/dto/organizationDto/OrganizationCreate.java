@@ -26,7 +26,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @NotNull(message = "organzation info cannot be null")
 public class OrganizationCreate {
-    @NotBlank(message = "organzation name cannot be empty")
+    @NotBlank(message = "organzation name cannot be EMPTY")
     private String name;
 
     private String description;

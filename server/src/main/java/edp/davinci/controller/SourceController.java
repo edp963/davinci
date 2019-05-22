@@ -251,7 +251,7 @@ public class SourceController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("upload file can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("upload file can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -303,7 +303,7 @@ public class SourceController extends BaseController {
         }
 
         if (StringUtils.isEmpty(tableName)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Table cannot be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Table cannot be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 

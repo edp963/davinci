@@ -33,7 +33,7 @@ import java.util.Map;
 @NotNull(message = "upload info cannot be null")
 public class SourceDataUpload {
 
-    @NotBlank(message = "uplaod table name cannot be empty")
+    @NotBlank(message = "uplaod table name cannot be EMPTY")
     private String tableName;
 
     private String primaryKeys;

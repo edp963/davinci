@@ -30,7 +30,7 @@ public class SourceConfig {
 
     private String password;
 
-    @NotBlank(message = "connection url cannot be empty")
+    @NotBlank(message = "connection url cannot be EMPTY")
     private String url;
 
     private String parameters;

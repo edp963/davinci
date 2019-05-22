@@ -231,7 +231,7 @@ public class RoleController extends BaseController {
         }
 
         if (null == memberIds || memberIds.length == 0) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("members cannot be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("members cannot be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 

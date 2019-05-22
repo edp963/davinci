@@ -27,7 +27,7 @@ import java.util.List;
 @Data
 @NotNull(message = "request parameter cannot be null")
 public class DistinctParam {
-    @NotEmpty(message = "distinct column cannot be empty")
+    @NotEmpty(message = "distinct column cannot be EMPTY")
     private List<String> columns;
 
     private List<String> filters;

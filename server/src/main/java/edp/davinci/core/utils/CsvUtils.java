@@ -34,6 +34,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.util.*;
 
+import static edp.core.consts.Consts.EMPTY;
+
+
 public class CsvUtils {
 
 
@@ -74,7 +77,7 @@ public class CsvUtils {
             if (null != records && records.size() > 0) {
                 headers = new HashSet<>();
                 for (String key : csvHeaders) {
-                    headers.add(new QueryColumn(key.replace("\uFEFF", ""), SqlUtils.formatSqlType(records.get(0).get(key))));
+                    headers.add(new QueryColumn(key.replace("\uFEFF", EMPTY), SqlUtils.formatSqlType(records.get(0).get(key))));
                 }
                 if (records.size() > 1) {
                     values = new ArrayList<>();

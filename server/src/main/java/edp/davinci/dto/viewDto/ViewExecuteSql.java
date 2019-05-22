@@ -30,7 +30,7 @@ public class ViewExecuteSql {
     @Min(value = 1L, message = "Invalid Source Id")
     private Long sourceId;
 
-    @NotBlank(message = "sql cannot be empty")
+    @NotBlank(message = "sql cannot be EMPTY")
     private String sql;
 
     private List<SqlVariable> variables;

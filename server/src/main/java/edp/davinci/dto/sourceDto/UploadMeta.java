@@ -30,7 +30,7 @@ import javax.validation.constraints.NotNull;
 @NotNull(message = "csv meta cannot be null")
 public class UploadMeta {
 
-    @NotBlank(message = "table name cannot be empty")
+    @NotBlank(message = "table name cannot be EMPTY")
     private String tableName;
 
     @Min(value = (short) 0, message = "Invalid mode")

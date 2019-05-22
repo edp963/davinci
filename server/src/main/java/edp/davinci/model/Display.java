@@ -31,12 +31,12 @@ public class Display extends RecordInfo<Display> {
     @Min(value = 1L, message = "Invalid display id")
     private Long id;
 
-    @NotBlank(message = "display name cannot be empty")
+    @NotBlank(message = "display name cannot be EMPTY")
     private String name;
 
     private String description;
 
-    @Min(value = 1L, message = "project id cannot be empty")
+    @Min(value = 1L, message = "project id cannot be EMPTY")
     private Long projectId;
 
     private String avatar;

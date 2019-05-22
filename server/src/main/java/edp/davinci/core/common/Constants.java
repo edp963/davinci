@@ -145,7 +145,7 @@ public class Constants extends Consts {
 
     public static String getReg(String express, char delimiter) {
         String arg = String.valueOf(delimiter);
-        if (delimiter == dollarDelimiter) {
+        if (delimiter == DOLLAR_DELIMITER) {
             arg = "\\" + arg;
         }
         return String.format(express, arg, arg);

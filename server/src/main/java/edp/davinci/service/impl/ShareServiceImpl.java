@@ -61,6 +61,9 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static edp.core.consts.Consts.EMPTY;
+
+
 @Service
 @Slf4j
 public class ShareServiceImpl implements ShareService {
@@ -403,7 +406,7 @@ public class ShareServiceImpl implements ShareService {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
             String csvName = viewWithSource.getName() + "_" + sdf.format(new Date());
             String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, paginate.getResultList());
-            filePath = fileFullPath.replace(fileUtils.fileBasePath, "");
+            filePath = fileFullPath.replace(fileUtils.fileBasePath, EMPTY);
         }
 
         return serverUtils.getHost() + filePath;
@@ -441,7 +444,7 @@ public class ShareServiceImpl implements ShareService {
                 return resultFail(user, request, null).message("view not found");
             }
 
-            ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(),  shareInfo.getShareUser(), false);
+            ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareInfo.getShareUser(), false);
 
             if (!projectService.allowGetData(projectDetail, shareInfo.getShareUser())) {
                 return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
@@ -481,7 +484,7 @@ public class ShareServiceImpl implements ShareService {
          */
         TokenEntity shareToken = new TokenEntity();
         String tokenUserName = shareEntityId + Constants.SPLIT_CHAR_STRING + userId;
-        String tokenPassword = shareEntityId + "";
+        String tokenPassword = shareEntityId + EMPTY;
         if (!StringUtils.isEmpty(username)) {
             User shareUser = userMapper.selectByUsername(username);
             if (null == shareUser) {
