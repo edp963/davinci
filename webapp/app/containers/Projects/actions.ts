@@ -167,12 +167,13 @@ export function editProjectFail () {
   }
 }
 
-export function transferProject (id, orgId) {
+export function transferProject (id, orgId, resolve) {
   return {
     type: TRANSFER_PROJECT,
     payload: {
       id,
-      orgId
+      orgId,
+      resolve
     }
   }
 }

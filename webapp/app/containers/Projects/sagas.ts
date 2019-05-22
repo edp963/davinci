@@ -211,7 +211,7 @@ export function* getProjectDetail ({ payload }) {
 }
 
 export function* transferProject ({payload}) {
-  const {id, orgId} = payload
+  const {id, orgId, resolve} = payload
   try {
     const asyncData = yield call(request, {
       method: 'put',
@@ -220,6 +220,7 @@ export function* transferProject ({payload}) {
     })
     const result = asyncData.payload
     yield put(projectTransfered(result))
+    resolve()
   } catch (err) {
     yield put(transferProjectFail())
     errorHandler(err)
