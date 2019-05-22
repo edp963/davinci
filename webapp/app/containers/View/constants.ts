@@ -101,14 +101,16 @@ export enum ViewVariableValueTypes {
   String = 'string',
   Number = 'number',
   Boolean = 'boolean',
-  Date = 'date'
+  Date = 'date',
+  SqlExpression = 'sql'
 }
 
 export const ViewVariableValueTypesLocale = {
   [ViewVariableValueTypes.String]: '字符串',
   [ViewVariableValueTypes.Number]: '数字',
   [ViewVariableValueTypes.Boolean]: '布尔',
-  [ViewVariableValueTypes.Date]: '日期'
+  [ViewVariableValueTypes.Date]: '日期',
+  [ViewVariableValueTypes.SqlExpression]: 'SQL表达式'
 }
 
 export enum ViewModelTypes {
