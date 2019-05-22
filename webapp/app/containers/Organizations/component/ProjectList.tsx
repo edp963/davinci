@@ -12,6 +12,7 @@ import ComponentPermission from '../../Account/components/checkMemberPermission'
 import { CREATE_ORGANIZATION_PROJECT } from '../../App/constants'
 import { checkNameUniqueAction } from '../../App/actions'
 import { IStarUser, IProject } from '../../Projects'
+import { loadOrganizations } from '../../Organizations/actions'
 import { createStructuredSelector } from 'reselect'
 import {
   loadOrganizationProjects,
@@ -26,7 +27,8 @@ import {
   makeSelectCurrentOrganizationProjectsDetail,
   makeSelectCurrentOrganizationRole,
   makeSelectCurrentOrganizationMembers,
-  makeSelectInviteMemberList
+  makeSelectInviteMemberList,
+  makeSelectCurrentOrganizationProject
 } from '../selectors'
 import { makeSelectVizs } from '../../Schedule/selectors'
 import {
@@ -39,6 +41,7 @@ import {
   clickCollectProjects,
   loadCollectProjects,
   addProjectAdmin,
+  transferProject,
   deleteProjectAdmin
 } from '../../Projects/actions'
 import injectReducer from '../../../utils/injectReducer'
@@ -50,6 +53,7 @@ import { loadDashboardDetail, loadDashboards } from '../../Dashboard/actions'
 import { makeSelectLoginUser } from '../../App/selectors'
 const styles = require('../Organization.less')
 import { makeSelectStarUserList, makeSelectCollectProjects } from '../../Projects/selectors'
+import { resolve } from 'path';
 
 interface IProjectsState {
   formType?: string
@@ -66,6 +70,8 @@ interface IProjectsState {
 interface IProjectsProps {
   loginUser: any
   organizationId: number
+  organizations: any
+  projectDetail: any
   currentOrganization: Organization.IOrganization
   toProject: (id: number) => any
   deleteProject: (id: number) => any
@@ -82,6 +88,7 @@ interface IProjectsProps {
   onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
   onClickCollectProjects: (formType, project: object, resolve: (id: number) => any) => any
   onLoadCollectProjects: () => any
+  onTransferProject: (id: number, orgId: number, resolve: () => any) => any
   onSetCurrentProject: (option: any) => any
   starUserList: IStarUser[]
   onStarProject: (id: number, resolve: () => any) => any
@@ -90,6 +97,7 @@ interface IProjectsProps {
   currentOrganizationProjects: Organization.IOrganizationProjects[]
   organizationMembers: any[]
   onLoadVizs: (pid: number) => any
+  onLoadOrganizations: () => any
   vizs: any
 }
 
@@ -131,6 +139,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       organizationId,
       onLoadVizs
     } = this.props
+    this.props.onLoadOrganizations()
     onLoadOrganizationProjects({id: Number(organizationId)})
     onLoadCollectProjects()
   }
@@ -320,6 +329,25 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     }
   }
 
+  private onTransfer = () => {
+    this.ProjectForm.props.form.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        this.setState({ modalLoading: true })
+        const {projectDetail: {id}} = this.props
+        const {orgId} = values
+        this.props.onTransferProject(id, Number(orgId), () => {
+          const param = {
+            id: orgId,
+            pageNum: 1,
+            pageSize: 10
+          }
+          this.props.onLoadOrganizationProjects(param)
+        })
+        this.hideProjectForm()
+      }
+    })
+  }
+
   private getStarProjectUserList = (id) => () => {
     const { onGetProjectStarUser } = this.props
     onGetProjectStarUser(id)
@@ -327,7 +355,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
 
   public render () {
     const { formVisible, formType, modalLoading, organizationProjects, editFormVisible, currentProject, adminFormVisible } = this.state
-    const { currentOrganization, organizationProjectsDetail, onCheckUniqueName, collectProjects, starUserList, vizs } = this.props
+    const { currentOrganization, organizationProjectsDetail, onCheckUniqueName, collectProjects, starUserList, vizs, organizations } = this.props
     let CreateButton = void 0
     if (currentOrganization) {
        CreateButton = ComponentPermission(currentOrganization, CREATE_ORGANIZATION_PROJECT)(Button)
@@ -409,8 +437,11 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
             type={formType}
             modalLoading={modalLoading}
             onModalOk={this.onModalOk}
+            organizations={organizations}
+            onTransfer={this.onTransfer}
             onCheckUniqueName={this.checkUniqueName}
             wrappedComponentRef={this.refHandlers.ProjectForm}
+          //  onWidgetTypeChange={this.widgetTypeChange}
           />
         </Modal>
         <Modal
@@ -444,6 +475,7 @@ const mapStateToProps = createStructuredSelector({
   vizs: makeSelectVizs(),
   starUserList: makeSelectStarUserList(),
   loginUser: makeSelectLoginUser(),
+  projectDetail: makeSelectCurrentOrganizationProject(),
   organizations: makeSelectOrganizations(),
   currentOrganization: makeSelectCurrentOrganizations(),
   currentOrganizationProjects: makeSelectCurrentOrganizationProjects(),
@@ -456,7 +488,9 @@ export function mapDispatchToProps (dispatch) {
   return {
     onLoadVizs: (pid) => dispatch(loadVizs(pid)),
     onSetCurrentProject: (option) => dispatch(setCurrentProject(option)),
+    onTransferProject: (id, orgId, resolve) => dispatch(transferProject(id, orgId, resolve)),
     onStarProject: (id, resolve) => dispatch(unStarProject(id, resolve)),
+    onLoadOrganizations: () => dispatch(loadOrganizations()),
     onGetProjectStarUser: (id) => dispatch(getProjectStarUser(id)),
     onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),
     onEditProject: (project, resolve) => dispatch(editProject(project, resolve)),

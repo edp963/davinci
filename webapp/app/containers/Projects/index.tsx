@@ -195,6 +195,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
 
   private stopPPG = (e) => {
     e.stopPropagation()
+    return
   }
   private hideProjectForm = () => {
     this.setState({
@@ -380,7 +381,8 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     onGetProjectStarUser(id)
   }
 
-  private confirmDeleteProject = (type, id) => () => {
+  private confirmDeleteProject = (type, id) => (e) => {
+    this.stopPPG(e)
     if (type === 'collect') {
       this.props.onDeleteProject(id)
     } else {

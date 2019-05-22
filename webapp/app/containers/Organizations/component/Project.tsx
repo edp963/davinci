@@ -188,22 +188,6 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
                         <Input />
                       )}
                     </FormItem>
-                    {/* <FormItem label="组织" {...commonFormItemStyle} className={isShowOrganization}>
-                      {getFieldDecorator('orgId', {
-                        hidden: (this.props.type === 'organizationProject') || (this.props.type === 'edit'),
-                        rules: [{
-                          required: true,
-                          message: 'Name 不能为空'
-                        }]
-                      })(
-                        <Select
-                          placeholder="Please select a organization"
-                          onChange={onWidgetTypeChange}
-                        >
-                          {organizationOptions}
-                        </Select>
-                      )}
-                    </FormItem> */}
                     <FormItem label="名称">
                       {getFieldDecorator('name', {
                       //  hidden: this.props.type === 'transfer',
