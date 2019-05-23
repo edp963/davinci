@@ -138,7 +138,8 @@ public class WidgetServiceImpl implements WidgetService {
 
         if (null != widgets) {
             ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-            if (projectPermission.getWidgetPermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+            if (projectPermission.getVizPermission() == UserPermissionEnum.HIDDEN.getPermission() &&
+                    projectPermission.getWidgetPermission() == UserPermissionEnum.HIDDEN.getPermission()) {
                 return null;
             }
         }
