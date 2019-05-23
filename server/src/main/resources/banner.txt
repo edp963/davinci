@@ -4,4 +4,4 @@
  |___/ \__,_| \_/ |_||_||_|\__||_|
 
  Davinci version: 0.3
- Spring Boot version: 2.0.2.RELEASE
+ Spring Boot version: 2.0.4.RELEASE
