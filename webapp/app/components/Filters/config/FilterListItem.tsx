@@ -63,7 +63,7 @@ class FilterListItem extends PureComponent<IFilterListItemProps, IFilterListItem
       window.removeEventListener('click', this.editFallback, false)
       window.removeEventListener('keydown', this.enterToFinish, false)
     } else {
-      message.error('筛选项名称不能为空')
+      message.error('名称不能为空')
       this.input.current.input.focus()
     }
   }

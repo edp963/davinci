@@ -171,7 +171,7 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
     return (
       <div className={styles.filterList}>
         <div className={styles.title}>
-          <h2>筛选项列表</h2>
+          <h2>控制器列表</h2>
           <Icon type="plus" onClick={this.onAddFilterClick} />
         </div>
         <div className={styles.treeContainer}>

@@ -103,7 +103,7 @@ export class DashboardToolbar extends React.PureComponent<IDashboardToolbarProps
       </Tooltip>
     )
     globalFilterButton = (
-      <Tooltip placement="bottomRight" title="全局筛选器配置">
+      <Tooltip placement="bottomRight" title="全局控制器配置">
         <GlobalFilterButton
           type="primary"
           icon="filter"
