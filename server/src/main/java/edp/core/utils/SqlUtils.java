@@ -31,6 +31,10 @@ import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,8 +176,7 @@ public class SqlUtils {
             final int startRow = (pageNo - 1) * pageSize;
 
             if (pageNo == 1 || totalCount == 0) {
-                String countSql = String.format(Consts.QUERY_COUNT_SQL, sql);
-                totalCount = jdbcTemplate.queryForObject(countSql, Integer.class);
+                totalCount = jdbcTemplate.<Integer>queryForObject(getCountSql(sql), Integer.class);
             }
             if (limit > 0) {
                 limit = limit > resultLimit ? resultLimit : limit;
@@ -215,6 +218,18 @@ public class SqlUtils {
         }
 
         return paginateWithQueryColumns;
+    }
+
+
+    private String getCountSql(String sql) {
+        try {
+            Select select = (Select) CCJSqlParserUtil.parse(sql);
+            PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+            plainSelect.setOrderByElements(null);
+            return String.format(QUERY_COUNT_SQL, select.toString());
+        } catch (JSQLParserException e) {
+        }
+        return String.format(Consts.QUERY_COUNT_SQL, sql);
     }
 
     private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns) {
