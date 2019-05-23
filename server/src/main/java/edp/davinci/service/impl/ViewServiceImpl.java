@@ -142,7 +142,9 @@ public class ViewServiceImpl implements ViewService {
 
         if (null != views) {
             ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-            if (projectPermission.getViewPermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+            if (projectPermission.getVizPermission() == UserPermissionEnum.HIDDEN.getPermission() &&
+                    projectPermission.getWidgetPermission() == UserPermissionEnum.HIDDEN.getPermission() &&
+                    projectPermission.getViewPermission() == UserPermissionEnum.HIDDEN.getPermission()) {
                 return null;
             }
         }
@@ -159,8 +161,10 @@ public class ViewServiceImpl implements ViewService {
 
         ProjectDetail projectDetail = projectService.getProjectDetail(view.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-        if (projectPermission.getViewPermission() == UserPermissionEnum.HIDDEN.getPermission()) {
-            throw new NotFoundException("Insufficient permissions");
+        if (projectPermission.getVizPermission() == UserPermissionEnum.HIDDEN.getPermission() &&
+                projectPermission.getWidgetPermission() == UserPermissionEnum.HIDDEN.getPermission() &&
+                projectPermission.getViewPermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
         List<RelRoleView> relRoleViews = relRoleViewMapper.getByView(view.getId());
