@@ -10,7 +10,6 @@ import Helmet from 'react-helmet'
 import { Link } from 'react-router'
 import Container from '../../components/Container'
 import moment from 'moment'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { createStructuredSelector } from 'reselect'
 
 import { compose } from 'redux'
@@ -20,33 +19,24 @@ import reducer from './reducer'
 import saga from './sagas'
 import widgetReducer from '../Widget/reducer'
 import widgetSaga from '../Widget/sagas'
-// import dashboardReducer from '../Dashboard/reducer'
-// import dashboardSaga from '../Dashboard/sagas'
-import {makeSelectCurrentProject} from '../Projects/selectors'
-import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets, makeSelectTableLoading, makeSelectFormLoading, makeSelectVizs} from './selectors'
+import { makeSelectCurrentProject } from '../Projects/selectors'
+import { makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets, makeSelectTableLoading, makeSelectFormLoading, makeSelectVizs } from './selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import ScheduleForm from './ScheduleForm'
 import ConfigForm from './ConfigForm'
 
-import {loadDashboardDetail, loadDashboards} from '../Dashboard/actions'
+import { loadDashboardDetail, loadDashboards } from '../Dashboard/actions'
 import { loadSchedules, addSchedule, deleteSchedule, changeSchedulesStatus, updateSchedule, loadVizs } from './actions'
-import {loadWidgets} from '../Widget/actions'
+import { loadWidgets } from '../Widget/actions'
 import Box from '../../components/Box'
 
-const Modal =  require ('antd/lib/modal')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
-import {ButtonProps} from 'antd/lib/button/button'
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const utilStyles = require('../../assets/less/util.less')
+import { Modal, Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb } from 'antd'
+import { ButtonProps } from 'antd/lib/button/button'
 import { PaginationProps } from 'antd/lib/pagination'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const utilStyles = require('../../assets/less/util.less')
 import ModulePermission from '../Account/components/checkModulePermission'
-import {IProject} from '../Projects'
+import { IProject } from '../Projects'
 
 interface ICurrentDashboard {
   config: string
@@ -119,6 +109,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     this.props.onLoadWidgets(pid)
     this.props.onLoadVizs(pid)
     this.props.onLoadDashboards().then(() => {
+      console.log('then')
       const {dashboards} = this.props
       const initDashboardTree = (dashboards as any[]).map((dashboard) => ({
         ...dashboard,
@@ -375,10 +366,12 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       configVisible: true,
       configType: 'add'
     }, () => {
-      if (jsonStringify && jsonStringify.length > 2) {
-        const { to, cc, subject, bcc } = emailConfig
-        this.configForm.setFieldsValue({to, cc, subject, bcc})
-      }
+      setTimeout(() => {
+        if (jsonStringify && jsonStringify.length > 2) {
+          const { to, cc, subject, bcc } = emailConfig
+          this.configForm.setFieldsValue({to, cc, subject, bcc})
+        }
+      }, 0)
     })
   }
 
@@ -428,7 +421,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     })
   }
 
-  private onChangeRange = (value) => {
+  private onChangeRange = (value: string) => {
     const rangeArr = ['minute', 'month', 'hour', 'week', 'time']
     this.setState({
       rangeTime: value
@@ -493,7 +486,6 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       formLoading,
       vizs
     } = this.props
-
     const pagination: PaginationProps = {
      // simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 20,
@@ -535,7 +527,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       {
         title: '操作',
         key: 'action',
-        width: 135,
+        width: 150,
         className: `${utilStyles.textAlignCenter}`,
         render: (text, record) => (
           <span className="ant-table-action-column">

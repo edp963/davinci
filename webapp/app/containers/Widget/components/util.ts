@@ -1,3 +1,5 @@
+import moment from 'moment'
+import { message } from 'antd'
 import {
   DEFAULT_SPLITER,
   DEFAULT_FONT_SIZE,
@@ -20,8 +22,12 @@ import {
   PIVOT_CANVAS_AXIS_SIZE_LIMIT,
   PIVOT_DEFAULT_SCATTER_SIZE_TIMES
 } from '../../../globalConstants'
+import { IQueryVariableMap } from '../../Dashboard/Grid'
 import { DimetionType, IChartStyles, IChartInfo } from './Widget'
 import { IChartLine, IChartUnit } from './Pivot/Chart'
+import { IDataParamSource } from './Workbench/Dropbox'
+import { IFieldConfig } from './Workbench/FieldConfig'
+import { IFieldFormatConfig } from './Workbench/FormatConfigModal'
 import widgetlibs from '../config'
 import PivotTypes from '../config/pivot/PivotTypes'
 import ChartTypes from '../config/chart/ChartTypes'
@@ -149,13 +155,15 @@ export function naturalSort (a, b): number {
   return ra.length - rb.length
 }
 
+let utilCanvas = null
+
 export const getTextWidth = (
   text: string,
   fontWeight: string = DEFAULT_FONT_WEIGHT,
   fontSize: string = DEFAULT_FONT_SIZE,
   fontFamily: string = DEFAULT_FONT_FAMILY
 ): number => {
-  const canvas = this.canvas || (this.canvas = document.createElement('canvas'))
+  const canvas = utilCanvas || (utilCanvas = document.createElement('canvas'))
   const context = canvas.getContext('2d')
   context.font = `${fontWeight} ${fontSize} ${fontFamily}`
   const metrics = context.measureText(text)
@@ -303,6 +311,10 @@ export function getPivot (): IChartInfo {
 
 export function getTable (): IChartInfo {
   return chartlibs.find((c) => c.id === ChartTypes.Table)
+}
+
+export function getPivotModeSelectedCharts (items: IDataParamSource[]): IChartInfo[] {
+  return items.length ? items.map((i) => i.chart) : [getPivot()]
 }
 
 export function getStyleConfig (chartStyles: IChartStyles): IChartStyles {
@@ -531,7 +543,7 @@ export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, la
   }, [])
   metricColumns = metricColumns.reduce((arr, mc) => {
     const decodedName = decodeMetricName(mc.name)
-    if (!arr.find((m) => m.name.includes(decodedName) && m.agg === mc.agg)) {
+    if (!arr.find((m) => decodeMetricName(m.name) === decodedName && m.agg === mc.agg)) {
       arr.push(mc)
     }
     return arr
@@ -563,10 +575,10 @@ export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, la
 
 export function getChartTooltipLabel (type, seriesData, options) {
   const { cols, metrics, color, size, scatterXAxis, tip } = options
-  let dimetionColumns = cols
+  let dimentionColumns: any[] = cols
   let metricColumns = [...metrics]
   if (color) {
-    dimetionColumns = dimetionColumns.concat(color.items.map((i) => i.name))
+    dimentionColumns = dimentionColumns.concat(color.items)
   }
   if (size) {
     metricColumns = metricColumns.concat(size.items)
@@ -578,15 +590,12 @@ export function getChartTooltipLabel (type, seriesData, options) {
     metricColumns = metricColumns.concat(tip.items)
   }
 
-  dimetionColumns = dimetionColumns.reduce((arr, dc) => {
-    if (!arr.includes(dc)) {
-      arr.push(dc)
-    }
-    return arr
-  }, [])
+  dimentionColumns = dimentionColumns.filter((dc, idx) =>
+    dimentionColumns.findIndex((c) => c.name === dc.name) === idx)
+
   metricColumns = metricColumns.reduce((arr, mc) => {
     const decodedName = decodeMetricName(mc.name)
-    if (!arr.find((m) => m.name.includes(decodedName) && m.agg === mc.agg)) {
+    if (!arr.find((m) => decodeMetricName(m.name) === decodedName && m.agg === mc.agg)) {
       arr.push(mc)
     }
     return arr
@@ -597,23 +606,25 @@ export function getChartTooltipLabel (type, seriesData, options) {
     const record = (type === 'funnel' || type === 'map')
       ? seriesData[dataIndex]
       : seriesData[seriesIndex][dataIndex]
-    return dimetionColumns
+    return dimentionColumns
       .map((dc) => {
-        const value = record
+        let value = record
           ? Array.isArray(record)
-            ? record[0][dc]
-            : record[dc]
+            ? record[0][dc.name]
+            : record[dc.name]
           : ''
-        return `${dc}: ${value}`
+        value = getFormattedValue(value, dc.format)
+        return `${getFieldAlias(dc.field, {}) || dc.name}: ${value}` // @FIXME dynamic field alias by queryVariable in dashboard
       })
       .concat(metricColumns.map((mc) => {
         const decodedName = decodeMetricName(mc.name)
-        const value = record
+        let value = record
           ? Array.isArray(record)
             ? record.reduce((sum, r) => sum + r[`${mc.agg}(${decodedName})`], 0)
             : record[`${mc.agg}(${decodedName})`]
           : 0
-        return `${decodedName}: ${value}`
+        value = getFormattedValue(value, mc.format)
+        return `${getFieldAlias(mc.field, {}) || mc.name}: ${value}`
       }))
       .join('<br/>')
   }
@@ -656,4 +667,213 @@ export function getSizeValue (value) {
   return value >= PIVOT_DEFAULT_SCATTER_SIZE_TIMES
     ? value - PIVOT_DEFAULT_SCATTER_SIZE_TIMES + 1
     : 1 / Math.pow(2, PIVOT_DEFAULT_SCATTER_SIZE_TIMES - value)
+}
+
+export enum NumericUnit {
+  None = '无',
+  TenThousand = '万',
+  OneHundredMillion = '亿',
+  Thousand = 'k',
+  Million = 'M',
+  Giga = 'G'
+}
+
+export enum FieldFormatTypes {
+  Default = 'default',
+  Numeric = 'numeric',
+  Currency = 'currency',
+  Percentage = 'percentage',
+  ScientificNotation = 'scientificNotation',
+  Date = 'date',
+  Custom = 'custom'
+}
+
+export const AvailableFieldFormatTypes = {
+  [FieldFormatTypes.Default]: '默认',
+  [FieldFormatTypes.Numeric]: '数值',
+  [FieldFormatTypes.Currency]: '货币',
+  [FieldFormatTypes.Percentage]: '百分比',
+  [FieldFormatTypes.ScientificNotation]: '科学型',
+  [FieldFormatTypes.Date]: '日期',
+  [FieldFormatTypes.Custom]: '自定义'
+}
+
+export function getFormattedValue (value: number | string, format: IFieldFormatConfig) {
+  if (!format) { return value }
+
+  const { formatType } = format
+  const config = format[formatType]
+  let formattedValue
+
+  switch (formatType) {
+    case FieldFormatTypes.Numeric:
+    case FieldFormatTypes.Currency:
+      const {
+        decimalPlaces,
+        unit,
+        useThousandSeparator } = config as IFieldFormatConfig['numeric'] | IFieldFormatConfig['currency']
+      formattedValue = formatByUnit(value, unit)
+      formattedValue = formartByDecimalPlaces(formattedValue, decimalPlaces)
+      formattedValue = formatByThousandSeperator(formattedValue, useThousandSeparator)
+      if (unit !== NumericUnit.None) {
+        formattedValue = `${formattedValue}${unit}`
+      }
+      if (formatType === FieldFormatTypes.Currency) {
+        const { prefix, suffix } = config as IFieldFormatConfig['currency']
+        formattedValue = [prefix, formattedValue, suffix].join('')
+      }
+      break
+    case FieldFormatTypes.Percentage:
+      formattedValue = (+value) * 100
+      formattedValue = isNaN(formattedValue) ? value
+        : `${formartByDecimalPlaces(formattedValue, (config as IFieldFormatConfig['percentage']).decimalPlaces)}%`
+      break
+    case FieldFormatTypes.ScientificNotation:
+      formattedValue = (+value).toExponential((config as IFieldFormatConfig['scientificNotation']).decimalPlaces)
+      formattedValue = isNaN(formattedValue) ? value : formattedValue
+      break
+    case FieldFormatTypes.Date:
+      const { format } = config as IFieldFormatConfig['date']
+      formattedValue = moment(value).format(format)
+      break
+    case FieldFormatTypes.Custom:
+      // @TODO
+      break
+    default:
+      formattedValue = value
+      break
+  }
+
+  return formattedValue
+}
+
+function formartByDecimalPlaces (value, decimalPlaces: number) {
+  if (isNaN(value)) { return value }
+  if (decimalPlaces < 0 || decimalPlaces > 100) { return value }
+
+  return (+value).toFixed(decimalPlaces)
+}
+
+function formatByThousandSeperator (value, useThousandSeparator: boolean) {
+  if (isNaN(+value) || !useThousandSeparator) { return value }
+
+  const parts = value.toString().split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  const formatted = parts.join('.')
+  return formatted
+}
+
+function formatByUnit (value, unit: NumericUnit) {
+  const numericValue = +value
+  if (isNaN(numericValue)) { return value }
+
+  let exponent = 0
+  switch (unit) {
+    case NumericUnit.TenThousand:
+      exponent = 4
+      break
+    case NumericUnit.OneHundredMillion:
+      exponent = 8
+      break
+    case NumericUnit.Thousand:
+      exponent = 3
+      break
+    case NumericUnit.Million:
+      exponent = 6
+      break
+    case NumericUnit.Giga:
+      exponent = 9
+      break
+  }
+  return numericValue / Math.pow(10, exponent)
+}
+
+export function extractQueryVariableNames (expression: string, withBoundaryToken: boolean = false) {
+  const names = []
+  if (!expression) { return names }
+  const varReg = /\$(\w+)\$/g
+  expression.replace(varReg, (match: string, p: string) => {
+    const name = withBoundaryToken ? match : p
+    if (!names.includes(name)) {
+      names.push(name)
+    }
+    return name
+  })
+  return names
+}
+
+export function getFieldAlias (fieldConfig: IFieldConfig, queryVariableMap: IQueryVariableMap) {
+  if (!fieldConfig) { return '' }
+
+  const { alias, useExpression } = fieldConfig
+  if (!useExpression) { return alias }
+
+  const queryKeys = extractQueryVariableNames(alias, true)
+  const keys = []
+  const vals = []
+  queryKeys.forEach((queryKey) => {
+    keys.push(queryKey)
+    const queryValue = queryVariableMap[queryKey]
+    if (queryValue === undefined) {
+      vals.push('')
+    } else {
+      vals.push(queryValue)
+    }
+  })
+
+  const Moment = moment
+  let funcBody = alias
+  if (!alias.includes('return')) {
+    funcBody = 'return ' + funcBody
+  }
+  const paramNames = ['Moment', ...keys, funcBody]
+  try {
+    const func = Function.apply(null, paramNames)
+    const params = [Moment, ...vals]
+    const dynamicAlias: string = func(...params)
+    return dynamicAlias
+  } catch (e) {
+    message.error(`字段别名转换错误：${e.message}`)
+  }
+}
+
+export const iconMapping = {
+  line: 'icon-chart-line',
+  bar: 'icon-chart-bar',
+  scatter: 'icon-scatter-chart',
+  pie: 'icon-chartpie',
+  area: 'icon-area-chart',
+  sankey: 'icon-kongjiansangjitu',
+  funnel: 'icon-iconloudoutu',
+  treemap: 'icon-chart-treemap',
+  wordCloud: 'icon-chartwordcloud',
+  table: 'icon-table',
+  scorecard: 'icon-calendar1',
+  text: 'icon-text',
+  map: 'icon-china',
+  doubleYAxis: 'icon-duplex',
+  boxplot: 'icon-508tongji_xiangxiantu',
+  markBoxplot: 'icon-508tongji_xiangxiantu',
+  graph: 'icon-510tongji_guanxitu',
+  waterfall: 'icon-waterfall',
+  gauge: 'icon-gauge',
+  radar: 'icon-radarchart',
+  parallel: 'icon-parallel',
+  confidenceBand: 'icon-confidence-band'
+}
+
+export function getCorrectInputNumber (num: any): number {
+  switch (typeof num) {
+    case 'string':
+      if (!num.trim()) {
+        return null
+      } else {
+        return Number(num) || null
+      }
+      return
+    case 'number':
+      return num
+    default:
+      return null
+  }
 }

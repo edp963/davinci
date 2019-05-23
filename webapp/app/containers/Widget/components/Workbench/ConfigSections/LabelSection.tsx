@@ -1,8 +1,5 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Checkbox = require('antd/lib/checkbox')
-const Select = require('antd/lib/select')
+import { Row, Col, Checkbox, Select } from 'antd'
 const Option = Select.Option
 import ColorPicker from '../../../../../components/ColorPicker'
 import {
@@ -85,7 +82,7 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
       <Option key={f.value} value={f.value}>{f.name}</Option>
     ))
     const fontSizes = PIVOT_CHART_FONT_SIZES.map((f) => (
-      <Option key={f} value={`${f}`}>{f}</Option>
+      <Option key={`${f}`} value={`${f}`}>{f}</Option>
     ))
 
     const labelPositionSetting = positionName !== void 0 && [(

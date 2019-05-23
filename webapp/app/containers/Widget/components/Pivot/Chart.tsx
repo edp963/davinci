@@ -60,6 +60,7 @@ interface IChartProps {
   onDoInteract?: (triggerData: any) => void
   getDataDrillDetail?: (position: string) => void
   isDrilling?: boolean
+  whichDataDrillBrushed?: boolean | object []
   // onHideDrillPanel?: (swtich: boolean) => void
 }
 
@@ -629,7 +630,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           // console.log(xAxis)
           // console.log(yAxis)
           // console.log(series)
-          const { isDrilling } = this.props
+          const { isDrilling, whichDataDrillBrushed, getDataDrillDetail } = this.props
           const brushedOptions = isDrilling === true ? {
             brush: {
               toolbox: ['rect', 'polygon', 'keep', 'clear'],
@@ -667,8 +668,9 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
             })
           }
 
-          const { getDataDrillDetail} = this.props
-          if (isDrilling) {
+
+          // if (isDrilling &&  whichDataDrillBrushed === false) {
+          if (whichDataDrillBrushed === false) {
           //  instance.off('brushselected')
             instance.on('brushselected', brushselected)
             setTimeout(function () {

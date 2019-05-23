@@ -37,16 +37,8 @@ import {
   CLEAR_CURRENT_WIDGET
 } from './constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
-import { ActionTypes } from '../Display/constants'
-import {
-  LOAD_DATA,
-  LOAD_DATA_SUCCESS,
-  LOAD_DATA_FAILURE,
-  CLEAR_BIZDATAS,
-  LOAD_DISTINCT_VALUE,
-  LOAD_DISTINCT_VALUE_SUCCESS,
-  LOAD_DISTINCT_VALUE_FAILURE
-} from '../Bizlogic/constants'
+import { ActionTypes as DisplayActionTypes } from '../Display/constants'
+import { ActionTypes as ViewActionTypes } from '../View/constants'
 import { fromJS } from 'immutable'
 
 const initialState = fromJS({
@@ -112,27 +104,25 @@ function widgetReducer (state = initialState, action) {
       return state.set('loading', false)
     case EDIT_WIDGET_FAILURE:
       return state.set('loading', false)
-    case LOAD_DATA:
+    case ViewActionTypes.LOAD_VIEW_DATA:
       return state.set('dataLoading', true)
-    case LOAD_DATA_SUCCESS:
+    case ViewActionTypes.LOAD_VIEW_DATA_SUCCESS:
       return state.set('dataLoading', false)
-    case LOAD_DATA_FAILURE:
+    case ViewActionTypes.LOAD_VIEW_DATA_FAILURE:
       return state.set('dataLoading', false)
-    case CLEAR_BIZDATAS:
-      return state.set('bizdatas', false)
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
       return state.set('widgets', payload.widgets)
-    case ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
+    case DisplayActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
       return state.set('widgets', payload.widgets)
-    case LOAD_DISTINCT_VALUE:
+    case ViewActionTypes.LOAD_VIEW_DISTINCT_VALUE:
       return state
         .set('columnValueLoading', true)
         .set('distinctColumnValues', null)
-    case LOAD_DISTINCT_VALUE_SUCCESS:
+    case ViewActionTypes.LOAD_VIEW_DISTINCT_VALUE_SUCCESS:
       return state
         .set('columnValueLoading', false)
-        .set('distinctColumnValues', payload.data[payload.fieldName].slice(0, 100))
-    case LOAD_DISTINCT_VALUE_FAILURE:
+        .set('distinctColumnValues', payload.data.slice(0, 100))
+    case ViewActionTypes.LOAD_VIEW_DISTINCT_VALUE_FAILURE:
       return state.set('columnValueLoading', false)
     case CLEAR_CURRENT_WIDGET:
       return state.set('currentWidget', null)

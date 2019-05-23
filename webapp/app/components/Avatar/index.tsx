@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 const styles = require('./Avatar.less')
 const logo = require('../../assets/images/profile.png')
-const Modal = require('antd/lib/modal')
+import { Modal } from 'antd'
 
 interface IAvatarProps {
   path: string

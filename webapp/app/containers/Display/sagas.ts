@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put, all } from 'redux-saga/effects'
+import { call, fork, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
@@ -112,15 +111,15 @@ export function* getDisplayDetail (action): IterableIterator<any> {
   try {
     const result = yield all({
       dashboardDetail: call(request, `${api.display}/${displayId}/slides`),
-      widgets: call(request, `${api.widget}?projectId=${projectId}`),
-      bizlogics: call(request, `${api.bizlogic}?projectId=${projectId}`)
+      widgets: call(request, `${api.widget}?projectId=${projectId}`)
     })
-    const { dashboardDetail, widgets, bizlogics } = result
+    const { dashboardDetail, widgets } = result
     const display = dashboardDetail.payload
     const slide = display.slides[0]
     delete display.slides
-    const layers = yield call(request, `${api.display}/${displayId}/slides/${slide.id}/widgets`)
-    yield put(displayDetailLoaded(display, slide, layers.payload, widgets.payload, bizlogics.payload))
+    const slideDetail = yield call(request, `${api.display}/${displayId}/slides/${slide.id}`)
+    const { widgets: layers, views } = slideDetail.payload
+    yield put(displayDetailLoaded(display, slide, layers, widgets.payload, views))
   } catch (err) {
     yield put(loadDisplaysFail(err))
   }
@@ -371,7 +370,7 @@ export function* redoOperation (action) {
 }
 
 export default function* rootDisplaySaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(ActionTypes.LOAD_DISPLAYS, getDisplays),
     takeEvery(ActionTypes.ADD_DISPLAY, addDisplay),
     takeLatest(ActionTypes.LOAD_DISPLAY_DETAIL, getDisplayDetail),
@@ -387,5 +386,5 @@ export default function* rootDisplaySaga (): IterableIterator<any> {
     takeLatest(ActionTypes.LOAD_DISPLAY_SHARE_LINK, getDisplayShareLink),
     takeEvery(ActionTypes.UNDO_OPERATION, undoOperation),
     takeEvery(ActionTypes.REDO_OPERATION, redoOperation)
-  ]
+  ])
 }

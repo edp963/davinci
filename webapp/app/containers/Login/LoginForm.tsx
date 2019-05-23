@@ -18,9 +18,9 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 
-const Icon = require('antd/lib/icon')
+import { Icon } from 'antd'
 
 const styles = require('./Login.less')
 

@@ -23,13 +23,7 @@ import * as classnames from 'classnames'
 import { uuid } from '../../../../utils/util'
 
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Form = require('antd/lib/form')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
-const Radio = require('antd/lib/radio')
-const Button = require('antd/lib/button')
-const Icon = require('antd/lib/icon')
+import { Form, Input, InputNumber, Select, Radio, Button, Icon } from 'antd'
 const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
@@ -67,17 +61,6 @@ export class ConditionalFilterPanel extends React.PureComponent<IConditionalFilt
         flattenTree: this.initFlattenTree(filterTree, {})
       })
     }
-  }
-
-  private initTree = (props) => {
-    // const filterTreeStr = localStorage.getItem(`${loginUser.id}_${itemId}_filterTree`)
-    // if (filterTreeStr) {
-    //   const filterTree = JSON.parse(filterTreeStr)
-    //   this.setState({
-    //     filterTree,
-    //     flattenTree: this.initFlattenTree(filterTree, {})
-    //   })
-    // }
   }
 
   private initFlattenTree = (tree, flatten) => {

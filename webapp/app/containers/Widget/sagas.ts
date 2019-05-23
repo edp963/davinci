@@ -18,14 +18,14 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_WIDGETS,
   ADD_WIDGET,
   DELETE_WIDGET,
   LOAD_WIDGET_DETAIL,
-  EDIT_WIDGET
+  EDIT_WIDGET,
+  EXECUTE_COMPUTED_SQL
 } from './constants'
 
 import {
@@ -89,7 +89,9 @@ export function* getWidgetDetail (action) {
   const { payload } = action
   try {
     const result = yield call(request, `${api.widget}/${payload.id}`)
-    yield put(widgetDetailLoaded(result.payload))
+    const viewId = result.payload.viewId
+    const view = yield call(request, `${api.view}/${viewId}`)
+    yield put(widgetDetailLoaded(result.payload, view.payload))
   } catch (err) {
     yield put(loadWidgetDetailFail(err))
     errorHandler(err)
@@ -111,12 +113,28 @@ export function* editWidget ({ payload }) {
   }
 }
 
+
+
+export function* executeComputed ({ payload }) {
+  try {
+    const result = yield call(request, {
+      method: 'post',
+    //  url: api.widget,
+      data: payload.sql
+    })
+    // todo  返回sql校验结果
+  } catch (err) {
+    errorHandler(err)
+  }
+}
+
 export default function* rootWidgetSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_WIDGETS, getWidgets as any),
     takeEvery(ADD_WIDGET, addWidget as any),
     takeEvery(DELETE_WIDGET, deleteWidget as any),
     takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail),
-    takeEvery(EDIT_WIDGET, editWidget as any)
-  ]
+    takeEvery(EDIT_WIDGET, editWidget as any),
+    takeEvery(EXECUTE_COMPUTED_SQL, executeComputed as any)
+  ])
 }

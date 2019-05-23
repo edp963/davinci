@@ -48,4 +48,13 @@ public class User extends TokenDetail {
     private Date updateTime;
 
     private Long updateBy;
+
+    public User() {
+    }
+
+    public User(LdapPerson ldapPerson) {
+        this.username = ldapPerson.getSAMAccountName();
+        this.email = ldapPerson.getEmail();
+        this.name = ldapPerson.getName();
+    }
 }

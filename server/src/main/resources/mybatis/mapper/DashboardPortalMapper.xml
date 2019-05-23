@@ -34,7 +34,9 @@
             <if test="avatar != null">
                 avatar,
             </if>
-            publish
+            publish,
+            create_by,
+            create_time
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{name,jdbcType=VARCHAR},
@@ -45,7 +47,9 @@
             <if test="avatar != null">
                 #{avatar,jdbcType=VARCHAR},
             </if>
-            #{publish,jdbcType=BIT}
+            #{publish,jdbcType=BIT},
+            #{createBy,jdbcType=BIGINT},
+            #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
 </mapper>

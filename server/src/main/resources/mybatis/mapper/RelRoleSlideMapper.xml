@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.RelRoleSlideMapper">
+    <insert id="insert" parameterType="edp.davinci.model.RelRoleSlide">
+        insert ignore rel_role_slide
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            role_id,
+            slide_id,
+            visible,
+            create_by,
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{roleId,jdbcType=BIGINT},
+            #{slideId,jdbcType=BIGINT},
+            #{visible,jdbcType=TINYINT},
+            #{createBy,jdbcType=BIGINT},
+            #{createTime,jdbcType=TIMESTAMP}
+        </trim>
+    </insert>
+
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        replace into rel_role_slide
+        (`role_id`, `slide_id`, `visible`, `create_by`, `create_time`)
+        VALUES
+        <foreach collection="list" item="record" index="index" separator=",">
+            (
+            #{record.roleId,jdbcType=BIGINT},
+            #{record.slideId,jdbcType=BIGINT},
+            #{record.visible,jdbcType=TINYINT},
+            #{record.createBy,jdbcType=BIGINT},
+            #{record.createTime,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+</mapper>

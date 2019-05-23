@@ -4,8 +4,7 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
 
-import {call, put} from 'redux-saga/effects'
-import {takeLatest} from 'redux-saga'
+import { call, put, all, takeLatest } from 'redux-saga/effects'
 
 export function* signup (action): IterableIterator<any> {
   const {username, email, password, resolve} = action.payload
@@ -49,8 +48,8 @@ export function* sendMailAgain (action): IterableIterator<any> {
 
 
 export default function* rootGroupSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(SIGNUP, signup as any),
     takeLatest(SEND_MAIL_AGAIN, sendMailAgain as any)
-  ]
+  ])
 }

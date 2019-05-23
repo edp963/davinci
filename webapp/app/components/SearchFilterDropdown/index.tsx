@@ -20,7 +20,7 @@
 
 import * as React from 'react'
 
-const Input = require('antd/lib/input')
+import { Input } from 'antd'
 const Search = Input.Search
 
 const utilStyles = require('../../assets/less/util.less')
@@ -28,8 +28,8 @@ const utilStyles = require('../../assets/less/util.less')
 interface ISearchFilterDropdownProps {
   placeholder: string
   value: string
-  onChange: (e: React.KeyboardEvent<HTMLInputElement>) => void
-  onSearch: () => void
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onSearch: (value: string) => void
 }
 
 export function SearchFilterDropdown (props: ISearchFilterDropdownProps) {

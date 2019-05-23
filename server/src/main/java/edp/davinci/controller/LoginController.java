@@ -18,10 +18,14 @@
 
 package edp.davinci.controller;
 
-import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.ServerException;
+import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.userDto.UserLogin;
+import edp.davinci.dto.userDto.UserLoginResult;
+import edp.davinci.model.LdapPerson;
+import edp.davinci.model.User;
 import edp.davinci.service.LdapService;
 import edp.davinci.service.UserService;
 import io.swagger.annotations.Api;
@@ -55,8 +59,8 @@ public class LoginController {
     @Autowired
     private UserService userService;
 
-    @Autowired(required = false)
-    private LdapService ldapService;
+    @Autowired
+    private TokenUtils tokenUtils;
 
     /**
      * 登录
@@ -72,18 +76,14 @@ public class LoginController {
             ResultMap resultMap = new ResultMap().fail().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            if (null == ldapService) {
-                ResultMap resultMap = userService.userLogin(userLogin);
-                return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-            } else {
-                ResultMap resultMap = ldapService.userLogin(userLogin);
-                return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+
+        User user = userService.userLogin(userLogin);
+        if (!user.getActive()) {
+            log.info("this user is not active： {}", userLogin.getUsername());
+            ResultMap resultMap = new ResultMap().failWithToken(tokenUtils.generateToken(user)).message("this user is not active");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
+
+        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(user)).payload(new UserLoginResult(user)));
     }
 }

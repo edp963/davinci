@@ -27,8 +27,9 @@ import {
   getLegendOption,
   getLabelOption
 } from './util'
+import { EChartOption } from 'echarts'
 
-export default function (chartProps: IChartProps) {
+export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
     width,
     height,
@@ -56,7 +57,7 @@ export default function (chartProps: IChartProps) {
     circle,
     roseType
   } = spec
-
+  const { selectedItems } = drillOptions
   // formatter: '{b}({d}%)'
   const labelOption = {
     label: getLabelOption('pie', label)
@@ -71,7 +72,7 @@ export default function (chartProps: IChartProps) {
   metrics.forEach((m) => {
     const decodedMetricName = decodeMetricName(m.name)
     if (cols.length || color.items.length) {
-      const groupColumns = color.items.map((c) => c.name).concat(cols)
+      const groupColumns = color.items.map((c) => c.name).concat(cols.map((c) => c.name))
       .reduce((distinctColumns, col) => {
         if (!distinctColumns.includes(col)) {
           distinctColumns.push(col)
@@ -101,7 +102,6 @@ export default function (chartProps: IChartProps) {
           seriesData.push(obj)
         })
       })
-
       let leftValue
       let topValue
       const pieLeft = 56 + Math.max(...legendData.map((s) => getTextWidth(s, '', `${fontSize}px`)))
@@ -142,12 +142,25 @@ export default function (chartProps: IChartProps) {
         avoidLabelOverlap: false,
         center: legend.showLegend ? [leftValue, topValue] : [width / 2, height / 2],
         color: colorArr,
-        data: seriesData,
+        data: seriesData.map((data, index) => {
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
+            normal: {
+              opacity: 1
+            }
+          }} : {}
+          return {
+            ...data,
+            ...itemStyleObj
+          }
+        }),
         itemStyle: {
           emphasis: {
               shadowBlur: 10,
               shadowOffsetX: 0,
               shadowColor: 'rgba(0, 0, 0, 0.5)'
+          },
+          normal: {
+            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
           }
         },
         ...labelOption,
@@ -162,9 +175,15 @@ export default function (chartProps: IChartProps) {
         avoidLabelOverlap: false,
         center: [width / 2, height / 2],
         data: data.map((d, index) => {
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
+            normal: {
+              opacity: 1
+            }
+          }} : {}
           return {
             name: decodedMetricName,
-            value: d[`${m.agg}(${decodedMetricName})`]
+            value: d[`${m.agg}(${decodedMetricName})`],
+            ...itemStyleObj
           }
         }),
         itemStyle: {
@@ -172,6 +191,9 @@ export default function (chartProps: IChartProps) {
               shadowBlur: 10,
               shadowOffsetX: 0,
               shadowColor: 'rgba(0, 0, 0, 0.5)'
+          },
+          normal: {
+            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
           }
         },
         ...labelOption,
@@ -182,11 +204,13 @@ export default function (chartProps: IChartProps) {
     seriesArr.push(seriesObj)
   })
 
+  const tooltip: EChartOption.Tooltip = {
+    trigger: 'item',
+    formatter: '{b} <br/>{c} ({d}%)'
+}
+
   return {
-    tooltip : {
-        trigger: 'item',
-        formatter: '{b} <br/>{c} ({d}%)'
-    },
+    tooltip,
     legend: getLegendOption(legend, legendData),
     series: seriesArr
   }

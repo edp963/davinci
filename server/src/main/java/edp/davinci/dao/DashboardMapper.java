@@ -27,6 +27,8 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 public interface DashboardMapper {
@@ -36,7 +38,7 @@ public interface DashboardMapper {
     @Delete({"delete from dashboard where id = #{id}"})
     int deleteById(@Param("id") Long id);
 
-    @Delete({"delete from dashboard where parent_id = #{parentId}"})
+    @Delete({"delete from dashboard where find_in_set(#{parentId}, full_parent_id)"})
     int deleteByParentId(@Param("parentId") Long parentId);
 
     @Delete({"delete from dashboard where dashboard_portal_id = #{portalId}"})
@@ -51,10 +53,6 @@ public interface DashboardMapper {
     Long getByNameWithPortalId(@Param("name") String name, @Param("portalId") Long portalId);
 
 
-    @Select({"SELECT IFNULL(MAX(`index`),0) `index` FROM dashboard WHERE dashboard_portal_id = #{portalId}"})
-    int getMaxIndexByPortalId(@Param("portalId") Long portalId);
-
-
     @Update({
             "update dashboard",
             "set `name` = #{name,jdbcType=VARCHAR},",
@@ -62,7 +60,9 @@ public interface DashboardMapper {
             "`type` = #{type,jdbcType=SMALLINT},",
             "`index` = #{index,jdbcType=INTEGER},",
             "parent_id = #{parentId,jdbcType=BIGINT},",
-            "`config` = #{config,jdbcType=LONGVARCHAR}",
+            "`config` = #{config,jdbcType=LONGVARCHAR},",
+            "update_by = #{updateBy,jdbcType=BIGINT},",
+            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(Dashboard record);
@@ -72,19 +72,9 @@ public interface DashboardMapper {
 
 
     @Select({
-            "select * from dashboard where dashboard_portal_id = #{portalId} ",
-            "and id not in (",
-            "    SELECT dashboard_id FROM exclude_dashboard_team ept",
-            "    LEFT JOIN rel_user_team rut on rut.team_id = ept.team_id",
-            "    LEFT JOIN rel_team_project rtp on rtp.team_id = ept.team_id",
-            "    LEFT JOIN team t on t.id = ept.team_id",
-            "    LEFT JOIN rel_user_organization ruo on ruo.org_id = t.org_id",
-            "    WHERE rut.user_id = #{userId} and rtp.project_id = #{projectId}",
-            "    and (rut.role = 0 and ruo.role = 0)",
-            ")",
-            "order by `index`"
+            "select * from dashboard where dashboard_portal_id = #{portalId} order by `index`"
     })
-    List<Dashboard> getByPortalId(@Param("portalId") Long portalId, @Param("userId") Long userId, @Param("projectId") Long projectId);
+    List<Dashboard> getByPortalId(@Param("portalId") Long portalId);
 
 
     @Select({
@@ -112,4 +102,11 @@ public interface DashboardMapper {
 
     @Delete({"delete from dashboard WHERE dashboard_portal_id in (SELECT id FROM dashboard_portal WHERE project_id = #{projectId})"})
     int deleteByProject(@Param("projectId") Long projectId);
+
+    @Select({"select full_parent_id from dashboard where id = #{id}"})
+    String getFullParentId(Long id);
+
+    Map<Long, String> getFullParentIds(@Param("parentIds") Set<Long> parentIds);
+
+    Set<Long> getIdSetByIds(@Param("set") Set<Long> dashboardIds);
 }

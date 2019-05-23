@@ -18,6 +18,7 @@
 
 package edp.davinci.dto.userDto;
 
+import edp.davinci.model.User;
 import lombok.Data;
 
 @Data
@@ -33,4 +34,18 @@ public class UserLoginResult extends UserBaseInfo {
 
     private String department;
 
+
+    public UserLoginResult(User user) {
+        this.id = user.getId();
+        this.username = user.getUsername();
+        this.email = user.getEmail();
+        this.admin = user.getAdmin();
+        this.name = user.getName();
+        this.description = user.getDescription();
+        this.department = user.getDepartment();
+        this.avatar = user.getAvatar();
+    }
+
+    public UserLoginResult() {
+    }
 }

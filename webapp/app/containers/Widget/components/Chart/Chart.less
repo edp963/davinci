@@ -33,3 +33,136 @@
   flex: 1;
   border: none;
 }
+
+.formattedCell {
+  display: flex;
+  flex-direction: row;
+
+  &.left {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+  &.center {
+    align-items: center;
+    justify-content: center;
+  }
+  &.right {
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+}
+
+.table {
+
+  &.noBorder {
+    :global {
+      .ant-table-thead > tr > th {
+        border: none;
+      }
+
+      .ant-table-tbody > tr > td {
+        border: none;
+      }
+    }
+  }
+
+  :global {
+    .ant-table,
+    .ant-pagination,
+    .ant-select {
+      font-style: 12px;
+    }
+
+    .ant-table-header {
+      // @FIXME
+      margin-right: 15px;
+      margin-bottom: 0 !important;
+      background: transparent !important;
+      .hideScrollbar
+    }
+
+    .ant-table-thead th {
+      padding: 0;
+      height: 1px;
+      background: transparent !important;
+
+      & > div {
+        height: 100%;
+      }
+    }
+
+    .ant-table-header-column {
+      width: 100%;
+    }
+
+    .ant-table-header > tr {
+      background: transparent;
+    }
+
+    .ant-table-body,
+    .ant-table-tbody {
+      background: transparent !important;
+      // remove table hover style
+      // .ant-table-row:hover {
+      //   background: transparent !important;
+      // }
+
+      td {
+        background: transparent !important;
+        padding: 0 !important;
+        height: 1px;
+      }
+    }
+
+    .react-resizable-handle {
+      position: absolute;
+      width: 10px;
+      height: 100%;
+      padding: 0;
+      bottom: 0;
+      right: -5px;
+      cursor: col-resize;
+      background: none;
+    }
+
+    .ant-table-placeholder {
+      display: none;
+    }
+  }
+
+  .mergedCell {
+    background-color: transparent;
+  }
+
+  .headerCell {
+    height: 100%;
+    padding: 10px 8px;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+  }
+
+  .tableCell {
+    height: 100%;
+    padding: 10px 8px;
+    display: flex;
+    // flex-direction: column;
+    // justify-content: center;
+
+    .valCell {
+      flex: 1;
+    }
+    .cdtCell {
+      padding: 4px 0;
+    }
+  }
+  .selectedRow {
+    background-color: #d2eafb;
+   // background-color: transparent;
+
+  }
+  .unSelectedRow {
+    background-color: transparent;
+  }
+}
+

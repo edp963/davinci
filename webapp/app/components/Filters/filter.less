@@ -1,69 +1,52 @@
 @import "../../assets/less/variable";
 
 .filterConfig {
-  flex: 1;
+  height: 480px;
+  margin: -24px;
   display: flex;
-  flex-direction: column;
-
-  .title {
-    display: flex;
-    flex-direction: row;
-    border-bottom: 1px solid @border-color-base;
-    padding: 8px;
-
-    h2 {
-      flex: 1;
-      font-size: 12px;
-      padding-right: 8px;
-    }
-
-    ul {
-      display: flex;
-      flex-direction: row;
-
-      li {
-        width: 16px;
-        height: 16px;
-      }
-    }
-
-    i {
-      font-size: 12px;
-
-      &:hover {
-        cursor: pointer;
-      }
-    }
-  }
-
-  .content {
-    flex: 1;
-    display: flex;
-    flex-direction: row;
-    margin-bottom: 16px;
-  }
+  flex-direction: row;
 
   .left {
-    width: 150px;
-    border: 1px solid @border-color-base;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    background-color: @light-bg;
+    border-right: 1px solid @border-color-split;
   }
 
   .center {
-    border: 1px solid @border-color-base;
-    border-left: none;
     flex: 1;
     display: flex;
-    flex-direction: column;
-  }
+    flex-direction: row;
 
-  .right {
-    border: 1px solid @border-color-base;
-    border-left: none;
-    width: 200px;
-    display: flex;
-    flex-direction: column;
+    .title {
+      flex-shrink: 0;
+      padding: 0 8px;
+      position: relative;
+  
+      h2 {
+        color: @light-text-color;
+        font-size: 14px;
+        line-height: 3em;
+      }
+
+      .rightSide {
+        position: absolute;
+        top: 10px
+      }
+
+      .interactionType {
+        .rightSide;
+        right: 8px;
+      }
+  
+      .checkAll {
+        .rightSide;
+        right: 0;
+        color: @light-text-color;
+        font-weight: normal;
+      }
+    }
   }
 }
 
@@ -71,6 +54,34 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+
+  .title {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-bottom: 1px solid darken(@border-color-split, 2%);
+    padding: 0 8px;
+
+    h2 {
+      flex: 1;
+      padding-left: 8px;
+      font-size: 14px;
+      line-height: 3em;
+      color: @light-text-color;
+    }
+
+    i {
+      margin-left: 8px;
+      font-size: 1.14em;
+      color: @disabled-text-color;
+
+      &:hover {
+        color: @text-color;
+        cursor: pointer;
+      }
+    }
+  }
 
   .list {
     flex: 1;
@@ -82,7 +93,7 @@
       line-height: 24px;
       padding: 0 8px;
       box-sizing: border-box;
-      border-bottom: 1px solid @border-color-base;
+      border-bottom: 1px solid @border-color-split;
       cursor: pointer;
 
       label {
@@ -99,45 +110,239 @@
       }
     }
   }
+
+  .treeContainer {
+    flex: 1;
+    width: 200px;
+    padding: 4px 0;
+    overflow: auto;
+  }
+
+  .tree {
+    // :global(li) {
+    //   padding: 2px 0;
+    // }
+    :global(li span.ant-tree-switcher),
+    :global(li span.ant-tree-iconEle) {
+      height: 28px;
+      line-height: 28px;
+    }
+    :global(li .ant-tree-node-content-wrapper) {
+      height: 28px;
+      line-height: 24px;
+    }
+    :global(.ant-tree-child-tree > li:first-child) {
+      padding-top: 2px;
+    }
+    // :global(li .ant-tree-node-content-wrapper:hover),
+    // :global(li .ant-tree-node-content-wrapper.ant-tree-node-selected) {
+    //   background-color: transparent;
+    // }
+    // :global(li .ant-tree-node-content-wrapper.ant-tree-node-selected) {
+    //   color: @primary-color;
+    //   font-weight: bold;
+    // }
+  }
+}
+
+.treeNodeContent {
+  display: flex;
+  flex-direction: row;
+  align-items: center; 
+  
+  h4 {
+    flex: 1;
+    font-weight: normal;
+    .ellipsis;
+  }
+
+  input {
+    flex: 1;
+    display: none;
+  }
+
+  i {
+    flex-shrink: 0;
+    margin-left: 8px;
+    font-size: 1.14em;
+    color: @disabled-text-color;
+
+    &:hover {
+      color: @text-color; 
+    }
+
+    &.action,
+    &.confirm {
+      display: none;
+    }
+
+    &.action:last-child,
+    &.confirm {
+      margin-right: 3px;
+    }
+  }
+
+  &:hover {
+    i.action {
+      display: block;
+    }
+  }
+
+  &.editing {
+    h4 {
+      display: none;
+    }
+
+    input {
+      display: block;
+    }
+
+    i {
+      &.confirm {
+        display: block;
+      }
+    }
+
+    &:hover {
+      i.action {
+        display: none;
+      }
+    }
+  }
+}
+
+.itemSelector {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  max-width: 280px;
+  border-right: 1px solid @border-color-split;
+
+  .itemList {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    ul {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    li {
+      height: 30px;
+      display: flex;
+      align-items: center;
+    }
+
+    .checkbox {
+      padding: 0 16px;
+      .ellipsis;
+    }
+  }
+
+  .viewSet {
+    flex-shrink: 0;
+    border-top: 1px solid @border-color-split;
+
+    .related {
+      padding: 0 16px 8px;
+    }
+
+    .empty {
+      margin: 8px 0;
+    }
+
+    h4 {
+      position: relative;
+      color: @light-text-color;
+      .ellipsis;
+
+      &.variableSelect {
+        padding-right: 116px;
+      }
+
+      .checkbox {
+        position: absolute;
+        top: 0;
+        right: 0;
+        color: @light-text-color;
+        font-weight: normal;
+      }
+    }
+
+    .formItem {
+      margin: 2px 0 0 0;
+    }
+
+    .selector {
+      width: 100%;
+    }
+    
+    :global(.ant-form-item-label) {
+      line-height: 32px;
+
+      label {
+        color: @light-text-color;
+      }
+    }
+    :global(.ant-form-item-control) {
+      line-height: 32px;
+    }
+  }
+}
+
+.filterFormContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.controlFormAntdOverride {
+  .formBody {
+    padding: 0 16px;
+  }
+
+  :global(.ant-form-item) {
+    margin-bottom: 4px;
+  }
+  :global(.ant-form-item-label) {
+    line-height: 1em;
+  }
+  :global(.ant-form-item-label label) {
+    color: @disabled-text-color;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  :global(.ant-form-item-required:before) {
+    margin-right: 2px;
+    vertical-align: middle;
+  }
+  :global(.ant-form-item-control) {
+    line-height: 32px;
+  }
+}
+
+.baseForm {
+  flex-shrink: 0;
+  .controlFormAntdOverride;
+
+  .selector {
+    width: 100%;
+  }
 }
 
 .filterForm {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  .controlFormAntdOverride;
 
-  .form {
-    padding: 16px;
+  .optionList {
     flex: 1;
+    padding: 0 16px 16px;
     overflow-y: auto;
-  }
-
-  .configItem {
-    display: flex;
-    align-items: center;
-    border: 1px solid @border-color-base;
-
-    .itemList {
-      border-right: 1px solid @border-color-base;
-
-      >div:nth-child(1+n) {
-        border-top: 1px solid @border-color-base;
-      }
-    }
-
-    .viewSet {
-      border-left: 1px solid @border-color-base;
-      margin-left: -1px;
-    }
-
-    .item {
-      margin-top: 8px;
-      margin-bottom: 8px;
-    }
-  }
-
-  .configItem + .configItem {
-    border-top: none;
   }
 }
 
@@ -145,6 +350,12 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+
+  .previewContent {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+  }
 
   ul {
     overflow-y: auto;
@@ -159,13 +370,48 @@
   }
 }
 
-.filterPanel {
+.controlPanel {
   background-color: @white;
-  padding: 8px 8px 0;
+  padding: 4px 8px 8px;
   margin-top: 16px;
   border-radius: 3px;
 
-  .item {
-    margin-bottom: 8px;
+  &.empty {
+    padding: 0;
+    margin: 0;
   }
+}
+
+.controlItem {
+  margin: 2px 0;
+  :global(.ant-form-item) {
+    margin-bottom: 4px;
+  }
+  :global(.ant-form-item-label) {
+    line-height: 1em;
+  }
+  :global(.ant-form-item-label label) {
+    color: @disabled-text-color;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  :global(.ant-form-item-required:before) {
+    margin-right: 2px;
+    vertical-align: middle;
+  }
+}
+
+.optionsModal {
+  .formItem {
+    margin: 0;
+  }
+
+  :global(.ant-modal-header),
+  :global(.ant-modal-body) {
+    padding: 16px;
+  }
+}
+
+.controlComponent {
+  width: 100% !important;
 }

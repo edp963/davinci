@@ -46,7 +46,9 @@ public interface SourceMapper {
             "description = #{description,jdbcType=VARCHAR},",
             "type = #{type,jdbcType=VARCHAR},",
             "project_id = #{projectId,jdbcType=BIGINT},",
-            "config = #{config,jdbcType=LONGVARCHAR}",
+            "config = #{config,jdbcType=LONGVARCHAR},",
+            "update_by = #{updateBy,jdbcType=BIGINT},",
+            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(Source source);

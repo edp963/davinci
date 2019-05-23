@@ -18,17 +18,17 @@
  * >>
  */
 
-import axios, { AxiosRequestConfig, AxiosPromise } from 'axios'
+import axios, { AxiosRequestConfig, AxiosResponse, AxiosPromise } from 'axios'
 
 axios.defaults.validateStatus = function (status) {
   return status < 400
 }
 
-function parseJSON (response) {
+function parseJSON (response: AxiosResponse) {
   return response.data
 }
 
-function refreshToken (response) {
+function refreshToken (response: AxiosResponse) {
   const token = response.data.header && response.data.header.token
   if (token) {
     setToken(token)
@@ -46,7 +46,7 @@ export default function request (url: any, options?: AxiosRequestConfig): AxiosP
     .then(parseJSON)
 }
 
-export function setToken (token) {
+export function setToken (token: string) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 }
 
@@ -56,4 +56,15 @@ export function removeToken () {
 
 export function getToken () {
   return  axios.defaults.headers.common['Authorization']
+}
+
+interface IDavinciResponseHeader {
+  code: number
+  msg: string
+  token: string
+}
+
+export interface IDavinciResponse<T> {
+  header: IDavinciResponseHeader,
+  payload: T
 }

@@ -2,6 +2,7 @@
 
 .workbench {
   background-color: @body-bg;
+  font-size: 12px;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -15,30 +16,32 @@
   }
 
   .body {
+    position: relative;
     min-height: 0;
     flex: 1;
     display: flex;
     flex-direction: row;
 
     .operatingPanel {
-      flex-shrink: 0;
+      flex: 1;
       display: flex;
       flex-direction: row;
+      min-width: 0;
 
       .model {
-        width: 200px;
+        flex: 9;
         background-color: @light-bg;
-        flex-shrink: 0;
         display: flex;
         flex-direction: column;
+        min-width: 0;
       }
-  
+
       .config {
+        flex: 11;
         width: 241px;
         background-color: @white;
         border-left: 1px solid @border-color-base;
         box-shadow: @left-side-box-shadow;
-        flex-shrink: 0;
         display: flex;
         flex-direction: column;
       }
@@ -58,15 +61,19 @@
         box-shadow: @block-box-shadow;
         display: flex;
         flex-direction: column;
+        min-height: 0;
       }
     }
   }
 }
 
 .viewSelect {
+  display: flex;
   padding: 8px;
   line-height: 24px;
   flex-shrink: 0;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .columnContainer {
@@ -100,6 +107,9 @@
         i {
           color: @text-color;
         }
+        .more{
+          display: block;
+        }
       }
 
       i {
@@ -107,6 +117,9 @@
         font-size: 0.8em;
         text-align: center;
         flex-shrink: 0;
+      }
+      .more{
+        display: none;
       }
 
       .iconDate {
@@ -131,6 +144,14 @@
       color: @primary-color;
     }
   }
+  .computed {
+    &:hover {
+      background-color: lighten(orange, 30%);
+    }
+    i {
+      color: orange;
+    }
+  }
 }
 
 .values {
@@ -138,9 +159,16 @@
     &:hover {
       background-color: lighten(@light-green, 30%);
     }
-
     i {
       color: @light-green;
+    }
+  }
+  .computed {
+    &:hover {
+      background-color: lighten(orange, 30%);
+    }
+    i {
+      color: orange;
     }
   }
 }
@@ -154,8 +182,12 @@
   justify-content: center;
   align-items: center;
 
-  .button {
-    color: @disabled-text-color;
+  .radio {
+    font-size: 12px;
+
+    .selected {
+      color: @disabled-text-color;
+    }
   }
 }
 
@@ -252,8 +284,23 @@
         color: @light-text-color;
         line-height: 18px;
         font-weight: bold;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        span {
+          flex: 1;
+        }
+
+        i:hover {
+          cursor: pointer;
+        }
+
+        i + i {
+          margin-left: 8px;
+        }
       }
-      
+
       .blockBody {
 
       }
@@ -265,10 +312,27 @@
       .blockElm {
         width: 100%;
       }
+
+      .noVariable {
+        color: @disabled-text-color;
+
+        i {
+          margin-right: 4px;
+        }
+      }
+
+      .addVariable {
+        text-align: right;
+        cursor: pointer;
+  
+        &:hover {
+          color: @primary-color;
+        }
+      }
     }
 
     .toggleRowsAndCols {
-      right: 10px; 
+      right: 10px;
     }
 
     .switchRowsAndCols {
@@ -293,17 +357,35 @@
       }
     }
 
-    .addVariable {
-      margin-right: 8px;
-      line-height: 32px;
-      color: @light-text-color;
-      font-weight: bold;
-      text-align: center;
-      cursor: pointer;
+    :global(.ant-select),
+    :global(.ant-radio-group),
+    :global(.ant-checkbox-wrapper),
+    :global(.ant-input-number) {
+      font-size: 12px;
+    }
 
-      &:hover {
-        color: @primary-color;
-      }
+    :global(.ant-select-selection--single),
+    :global(.ant-input-number) {
+      height: 28px;
+    }
+
+    :global(.ant-select-selection--multiple) {
+      min-height: 28px;
+      padding-bottom: 2px;
+    }
+    :global(.ant-select-selection--multiple > ul > li),
+    :global(.ant-select-selection--multiple .ant-select-selection__rendered > ul > li) {
+      margin-top: 2px;
+      height: 22px;
+      line-height: 20px;
+    }
+
+    :global(.ant-input-number-input) {
+      height: 26px;
+    }
+
+    :global(.ant-select-selection__rendered){
+      line-height: 26px;
     }
   }
 }
@@ -378,7 +460,7 @@
           background-color: fade(@primary-color, 20);
         }
         &.value {
-          background-color: fade(@light-green, 20); 
+          background-color: fade(@light-green, 20);
         }
       }
 
@@ -389,7 +471,7 @@
           border-color: @primary-color;
         }
         &.value {
-          border-color: @light-green; 
+          border-color: @light-green;
         }
       }
     }
@@ -417,8 +499,8 @@
       border: 1px solid lighten(@primary-color, 5%);
     }
     &.value {
-      background-color: lighten(@light-green, 5%); 
-      border: 1px solid lighten(@light-green, 5%); 
+      background-color: lighten(@light-green, 5%);
+      border: 1px solid lighten(@light-green, 5%);
     }
     &.add {
       background-color: @white;
@@ -588,7 +670,7 @@
         &:hover {
           background-color: color(~`colorPalette("@{primary-color}", 1)`);
         }
-  
+
         &.selected {
           background-color: @light-bg;
           border-right: 2px solid @primary-color;
@@ -618,6 +700,17 @@
 .actOnSettingForm {
   .footer {
     margin-top: 8px;
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+    }
+  }
+}
+
+.fieldSettingForm {
+  .footer {
+    margin-top: 16px;
     text-align: right;
 
     button {

@@ -19,13 +19,13 @@
  */
 
 import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import { call, put, all } from 'redux-saga/effects'
 import {
   LOAD_SHARE_DASHBOARD,
   LOAD_SHARE_WIDGET,
   LOAD_SHARE_RESULTSET,
   LOAD_WIDGET_CSV,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD
+  LOAD_SELECT_OPTIONS
 } from './constants'
 import {
   dashboardGetted,
@@ -34,14 +34,15 @@ import {
   resultsetGetted,
   widgetCsvLoaded,
   loadWidgetCsvFail,
-  cascadeSourceFromDashboardLoaded,
-  loadCascadeSourceFromDashboardFail
+  selectOptionsLoaded,
+  loadSelectOptionsFail
 } from './actions'
 
 import request from '../../../app/utils/request'
 import { errorHandler } from '../../../app/utils/util'
 import api from '../../../app/utils/api'
 import config, { env } from '../../../app/globalConfig'
+import { IDistinctValueReqeustParams } from '../../../app/components/Filters'
 const shareHost = config[env].shareHost
 
 export function* getDashboard (action) {
@@ -72,8 +73,19 @@ export function* getWidget (action) {
 
 export function* getResultset (action) {
   const { payload } = action
-  const { renderType, itemId, dataToken, params: parameters } = payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+  const { renderType, itemId, dataToken, requestParams } = payload
+  const {
+    filters,
+    tempFilters,
+    linkageFilters,
+    globalFilters,
+    variables,
+    linkageVariables,
+    globalVariables,
+    pagination,
+    ...rest
+  } = requestParams
+  const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   try {
     const resultset = yield call(request, {
@@ -81,19 +93,23 @@ export function* getResultset (action) {
       url: `${api.share}/data/${dataToken}`,
       data: {
         ...rest,
-        filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
+        params: variables.concat(linkageVariables).concat(globalVariables),
+        pageSize,
+        pageNo
       }
     })
-    yield put(resultsetGetted(renderType, itemId, resultset.payload))
+    const { resultList } = resultset.payload
+    resultset.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    yield put(resultsetGetted(renderType, itemId, requestParams, resultset.payload))
   } catch (err) {
     errorHandler(err)
   }
 }
 
 export function* getWidgetCsv (action) {
-  const { itemId, params: parameters, token } = action.payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+  const { itemId, requestParams, token } = action.payload
+  const { filters, tempFilters, linkageFilters, globalFilters, variables, linkageVariables, globalVariables, ...rest } = requestParams
 
   try {
     const path = yield call(request, {
@@ -101,8 +117,8 @@ export function* getWidgetCsv (action) {
       url: `${api.share}/csv/${token}`,
       data: {
         ...rest,
-        filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
+        params: variables.concat(linkageVariables).concat(globalVariables)
       }
     })
     yield put(widgetCsvLoaded(itemId))
@@ -114,22 +130,34 @@ export function* getWidgetCsv (action) {
   }
 }
 
-
-
-export function* getCascadeSourceFromDashboard (action) {
+export function* getSelectOptions (action) {
   try {
     const { payload } = action
-    const { controlId, viewId, dataToken, column, parents } = payload
-    const params = { column, parents }
-
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: `${api.share}/data/${dataToken}/distinctvalue/${viewId}`,
-      data: params
+    const { controlKey, dataToken, requestParams, itemId } = payload
+    const requestParamsMap: Array<[string, IDistinctValueReqeustParams]> = Object.entries(requestParams)
+    const requests = requestParamsMap.map(([viewId, params]: [string, IDistinctValueReqeustParams]) => {
+      const { columns, filters, variables } = params
+      return call(request, {
+        method: 'post',
+        url: `${api.share}/data/${dataToken}/distinctvalue/${viewId}`,
+        data: {
+          columns,
+          filters,
+          params: variables
+        }
+      })
     })
-    yield put(cascadeSourceFromDashboardLoaded(controlId, column, asyncData.payload[column]))
+    const results = yield all(requests)
+    const values = results.reduce((payloads, r, index) => {
+      const { columns } = requestParamsMap[index][1]
+      if (columns.length === 1) {
+        return payloads.concat(r.payload.map((obj) => obj[columns[0]]))
+      }
+      return payloads
+    }, [])
+    yield put(selectOptionsLoaded(controlKey, values, itemId))
   } catch (err) {
-    yield put(loadCascadeSourceFromDashboardFail(err))
+    yield put(loadSelectOptionsFail(err))
     errorHandler(err)
   }
 }
@@ -140,6 +168,6 @@ export default function* rootDashboardSaga (): IterableIterator<any> {
     takeEvery(LOAD_SHARE_WIDGET, getWidget),
     takeEvery(LOAD_SHARE_RESULTSET, getResultset),
     takeLatest(LOAD_WIDGET_CSV, getWidgetCsv),
-    takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard)
+    takeEvery(LOAD_SELECT_OPTIONS, getSelectOptions)
   ]
 }

@@ -37,9 +37,12 @@ import {
   LOAD_COLLECT_PROJECTS_FAILURE,
   CLICK_COLLECT_PROJECT,
   CLICK_COLLECT_PROJECT_SUCCESS,
-  CLICK_COLLECT_PROJECT_FAILURE
+  CLICK_COLLECT_PROJECT_FAILURE,
+  RELATION_ROLE_PROJECT_LOADED,
+  UPDATE_RELATION_ROLE_PROJECT_SUCCESS
 } from './constants'
 
+import { LOAD_PROJECT_ROLES_SUCCESS } from '../Organizations/constants'
 
 const initialState = fromJS({
   projects: null,
@@ -47,20 +50,28 @@ const initialState = fromJS({
   currentProjectLoading: false,
   searchProject: false,
   starUserList: false,
-  collectProjects: null
+  collectProjects: null,
+  currentProjectRole: false,
+  projectRoles: false
 })
 
 function projectReducer (state = initialState, action) {
   const { type, payload } = action
   const projects = state.get('projects')
   const collectProjects = state.get('collectProjects')
-
+  const currentProjectRole = state.get('currentProjectRole')
   switch (type) {
     case LOAD_PROJECTS_SUCCESS:
       return state.set('projects', payload.projects)
     case LOAD_PROJECTS_FAILURE:
       return state
-
+    case RELATION_ROLE_PROJECT_LOADED:
+      return state.set('currentProjectRole', payload.result)
+    case UPDATE_RELATION_ROLE_PROJECT_SUCCESS:
+      return state.set('currentProjectRole', {
+        ...currentProjectRole,
+        permission: payload.result
+      })
     case ADD_PROJECT_SUCCESS:
       if (projects) {
         projects.unshift(payload.result)
@@ -111,6 +122,8 @@ function projectReducer (state = initialState, action) {
         collectProjects.push(payload.result.project)
         return state.set('collectProjects', collectProjects.slice())
       }
+    case LOAD_PROJECT_ROLES_SUCCESS:
+      return state.set('projectRoles', payload.result)
     default:
       return state
   }

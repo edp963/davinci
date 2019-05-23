@@ -18,40 +18,45 @@
 
 package edp.davinci.service;
 
-import edp.davinci.core.common.ResultMap;
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.dashboardDto.DashboardCreate;
 import edp.davinci.dto.dashboardDto.DashboardDto;
+import edp.davinci.dto.dashboardDto.DashboardWithMem;
 import edp.davinci.dto.dashboardDto.MemDashboardWidgetCreate;
-import edp.davinci.model.*;
+import edp.davinci.dto.roleDto.VizVisibility;
+import edp.davinci.model.Dashboard;
+import edp.davinci.model.MemDashboardWidget;
+import edp.davinci.model.Role;
+import edp.davinci.model.User;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public interface DashboardService extends CheckEntityService {
 
-    ResultMap getDashboards(Long portalId, User user, HttpServletRequest request);
+    List<Dashboard> getDashboards(Long portalId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap getDashboardMemWidgets(Long portalId, Long dashboardId, User user, HttpServletRequest request);
+    DashboardWithMem getDashboardMemWidgets(Long portalId, Long dashboardId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap createDashboard(DashboardCreate dashboardCreate, User user, HttpServletRequest request);
+    Dashboard createDashboard(DashboardCreate dashboardCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateDashboards(Long portalId, DashboardDto[] dashboards, User user, HttpServletRequest request);
+    void updateDashboards(Long portalId, DashboardDto[] dashboards, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteDashboard(Long id, User user, HttpServletRequest request);
+    boolean deleteDashboard(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate[] memDashboardWidgetCreates, User user, HttpServletRequest request);
+    List<MemDashboardWidget> createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate[] memDashboardWidgetCreates, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateMemDashboardWidgets(MemDashboardWidget[] memDashboardWidgets, User user, HttpServletRequest request);
+    boolean updateMemDashboardWidgets(Long portalId, User user, MemDashboardWidget[] memDashboardWidgets) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteMemDashboardWidget(Long relationId, User user, HttpServletRequest request);
+    boolean deleteMemDashboardWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap shareDashboard(Long dashboardId, String username, User user, HttpServletRequest request);
+    String shareDashboard(Long dashboardId, String username, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     void deleteDashboardAndPortalByProject(Long projectId) throws RuntimeException;
 
+    List<Long> getExcludeRoles(Long id);
 
-    List<Dashboard> getDashboardListByPortal(DashboardPortal portal, User user, Project project);
-
-    List<Long> getExcludeTeams(Long id);
+    boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;;
 }

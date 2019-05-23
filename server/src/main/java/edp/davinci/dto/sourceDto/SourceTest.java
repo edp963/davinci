@@ -29,6 +29,6 @@ public class SourceTest {
     private String username;
     private String password;
 
-    @NotBlank(message = "connection url cannot be empty")
+    @NotBlank(message = "connection url cannot be EMPTY")
     private String url;
 }

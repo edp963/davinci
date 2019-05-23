@@ -18,7 +18,6 @@
  * >>
  */
 
-export const DEFAULT_LOCALE = 'en'
 export const LOGIN = 'davinci/App/LOGIN'
 export const LOGGED = 'davinci/App/LOGGED'
 export const LOGIN_ERROR = 'davinci/App/LOGIN_ERROR'

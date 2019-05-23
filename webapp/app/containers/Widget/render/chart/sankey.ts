@@ -31,7 +31,6 @@ import {
   getMetricAxisOption,
   getLabelOption,
   getLegendOption,
-  getGridPositions,
   getSymbolSize
 } from './util'
 import { EChartOption } from 'echarts'

@@ -19,29 +19,30 @@ file:
   web_resources: ${DAVINCI3_HOME}/davinci-ui/
   phantomJs-path: ${DAVINCI3_HOME}/bin/phantom.js
 
+
 spring:
   servlet:
-      multipart:
-        max-request-size: 1024MB
-        max-file-size: 1024MB
-        enabled: true
+    multipart:
+      max-request-size: 1024MB
+      max-file-size: 1024MB
+      enabled: true
 
   config:
-      location: classpath:/
-      additional-location: file:${DAVINCI3_HOME}/config/
-      name: application
+    location: classpath:/
+    additional-location: file:${DAVINCI3_HOME}/config/
+    name: application
 
   datasource:
-      type: com.alibaba.druid.pool.DruidDataSource
-      time-between-eviction-runs-millis: 30000
-      min-evictable-idle-time-millis: 300000
-      test-while-idle: true
-      test-on-borrow: false
-      test-on-return: false
-      filters: stat
-      break-after-acquire-failure: true
-      connection-error-retry-attempts: 3
-      validation-query: SELECT 1
+    type: com.alibaba.druid.pool.DruidDataSource
+    time-between-eviction-runs-millis: 30000
+    min-evictable-idle-time-millis: 300000
+    test-while-idle: true
+    test-on-borrow: false
+    test-on-return: false
+    filters: stat
+    break-after-acquire-failure: true
+    connection-error-retry-attempts: 3
+    validation-query: SELECT 1
 
   resources:
     static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, file:${file.userfiles-path}, file:${file.web_resources}
@@ -101,7 +102,3 @@ mapper:
 sql_template_delimiter: $
 
 custom-datasource-driver-path: ${DAVINCI3_HOME}/config/datasource_driver.yml
-
-
-
-

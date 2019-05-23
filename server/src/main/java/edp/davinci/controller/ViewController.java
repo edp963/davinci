@@ -19,13 +19,15 @@
 package edp.davinci.controller;
 
 import edp.core.annotation.CurrentUser;
-import edp.core.enums.HttpCodeEnum;
+import edp.core.model.Paginate;
+import edp.core.model.PaginateWithQueryColumns;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
+import edp.davinci.core.utils.DacChannelUtil;
 import edp.davinci.dto.viewDto.*;
+import edp.davinci.model.DacChannel;
 import edp.davinci.model.User;
-import edp.davinci.service.TeamVarService;
 import edp.davinci.service.ViewService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -33,6 +35,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -41,6 +44,9 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 @Api(value = "/views", tags = "views", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "view not found"))
@@ -52,10 +58,8 @@ public class ViewController extends BaseController {
     @Autowired
     private ViewService viewService;
 
-
-    @Autowired(required = false)
-    private TeamVarService teamVarService;
-
+    @Autowired
+    private DacChannelUtil dacChannelUtil;
 
     /**
      * 获取view
@@ -75,82 +79,40 @@ public class ViewController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = viewService.getViews(projectId, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+
+        List<ViewBaseInfo> views = viewService.getViews(projectId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(views));
     }
 
 
     /**
-     * 获取用户可见的当前view对应的team@var
+     * get view info
      *
      * @param id
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "get views")
-    @GetMapping("{id}/config/teamvar")
-    public ResponseEntity getViewTeamVarConfig(@PathVariable Long id,
-                                               @ApiIgnore @CurrentUser User user,
-                                               HttpServletRequest request) {
+    @ApiOperation(value = "get view info")
+    @GetMapping("/{id}")
+    public ResponseEntity getView(@PathVariable Long id,
+                                  @ApiIgnore @CurrentUser User user,
+                                  HttpServletRequest request) {
 
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = viewService.getViewConfigTeamVar(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
-    }
 
-    /**
-     * 获取TeamVar 来源信息及默认值
-     *
-     * @param projectId
-     * @param user
-     * @param request
-     * @return
-     */
-    @ApiOperation(value = "get team variables sources")
-    @GetMapping("/teamvar/source")
-    public ResponseEntity getTeamVarSource(@RequestParam("projectId") Long projectId,
-                                           @ApiIgnore @CurrentUser User user,
-                                           HttpServletRequest request) {
-        if (null == teamVarService) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.NOT_FOUND);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        if (invalidId(projectId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-        try {
-            ResultMap resultMap = teamVarService.getTeamVarSource(projectId, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        ViewWithSourceBaseInfo view = viewService.getView(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(view));
     }
 
 
     /**
      * 新建view
      *
-     * @param viewCreate
+     * @param view
      * @param bindingResult
      * @param user
      * @param request
@@ -158,7 +120,7 @@ public class ViewController extends BaseController {
      */
     @ApiOperation(value = "create view")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity createView(@Valid @RequestBody ViewCreate viewCreate,
+    public ResponseEntity createView(@Valid @RequestBody ViewCreate view,
                                      @ApiIgnore BindingResult bindingResult,
                                      @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
@@ -168,14 +130,9 @@ public class ViewController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = viewService.createView(viewCreate, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        ViewWithSourceBaseInfo viewWithSourceBaseInfo = viewService.createView(view, user);
+
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(viewWithSourceBaseInfo));
     }
 
 
@@ -208,14 +165,8 @@ public class ViewController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = viewService.updateView(viewUpdate, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        viewService.updateView(viewUpdate, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -237,14 +188,9 @@ public class ViewController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = viewService.deleteView(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        viewService.deleteView(id, user);
+
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -264,22 +210,13 @@ public class ViewController extends BaseController {
                                      @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
 
-        long l = System.currentTimeMillis();
         if (bindingResult.hasErrors()) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = viewService.executeSql(executeSql, user, request);
-            long l1 = System.currentTimeMillis();
-            log.info("request getData for: >> {}ms", l1 - l);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        PaginateWithQueryColumns paginateWithQueryColumns = viewService.executeSql(executeSql, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(paginateWithQueryColumns));
     }
 
 
@@ -297,25 +234,16 @@ public class ViewController extends BaseController {
     public ResponseEntity getData(@PathVariable Long id,
                                   @RequestBody(required = false) ViewExecuteParam executeParam,
                                   @ApiIgnore @CurrentUser User user,
-                                  HttpServletRequest request) {
-        long l = System.currentTimeMillis();
+                                  HttpServletRequest request) throws SQLException {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = viewService.getData(id, executeParam, user, request);
-
-            long l1 = System.currentTimeMillis();
-            log.info("request getData for: >> {}ms", l1 - l);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        Paginate<Map<String, Object>> paginate = viewService.getData(id, executeParam, user);
+        return ResponseEntity.ok().cacheControl(CacheControl.noCache()).body(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(paginate));
     }
+
 
     @ApiOperation(value = "get distinct value")
     @PostMapping(value = "/{id}/getdistinctvalue", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -334,13 +262,31 @@ public class ViewController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = viewService.getDistinctValue(id, param, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        List<Map<String, Object>> distinctValue = viewService.getDistinctValue(id, param, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(distinctValue));
+    }
+
+
+    @ApiOperation(value = "get dac channels")
+    @GetMapping("/dac/channels")
+    public ResponseEntity getDacChannels(@ApiIgnore @CurrentUser User user, HttpServletRequest request) {
+        Map<String, DacChannel> dacMap = DacChannelUtil.dacMap;
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(dacMap.keySet()));
+    }
+
+    @ApiOperation(value = "get dac tenants")
+    @GetMapping("/dac/{dacName}/tenants")
+    public ResponseEntity getDacTannets(@PathVariable String dacName, @ApiIgnore @CurrentUser User user, HttpServletRequest request) {
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(dacChannelUtil.getTenants(dacName)));
+    }
+
+
+    @ApiOperation(value = "get dac bizs")
+    @GetMapping("/dac/{dacName}/tenants/{tenantId}/bizs")
+    public ResponseEntity getDacBizs(@PathVariable String dacName,
+                                     @PathVariable String tenantId,
+                                     @ApiIgnore @CurrentUser User user,
+                                     HttpServletRequest request) {
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(dacChannelUtil.getBizs(dacName, tenantId)));
     }
 }

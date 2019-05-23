@@ -1,8 +1,6 @@
 import * as React from 'react'
 import Avatar from '../Avatar'
-const Upload = require('antd/lib/upload')
-const Message = require('antd/lib/message')
-const Button = require('antd/lib/button')
+import { Upload, message as Message, Button } from 'antd'
 const styles = require('./UploadAvatar.less')
 import api from '../../utils/api'
 import { setToken, getToken } from '../../utils/request'
@@ -42,7 +40,7 @@ export class UploadAvatar extends React.PureComponent<IUploadAvatarProps, IUploa
     if (!isLt2M) {
       Message.error('Image must smaller than 1MB!')
     }
-    return isJPG && isLt2M
+    return !!(isJPG && isLt2M)
   }
   private handleChange = (info) => {
     const { xhrParams } = this.props

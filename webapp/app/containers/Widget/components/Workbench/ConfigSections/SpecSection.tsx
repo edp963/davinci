@@ -1,12 +1,6 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Checkbox = require('antd/lib/checkbox')
-const Radio = require('antd/lib/radio/radio')
-const RadioGroup = Radio.Group
-const Select = require('antd/lib/select')
+import { Row, Col, Checkbox, Select, InputNumber } from 'antd'
 const Option = Select.Option
-const InputNumber = require('antd/lib/input-number')
 const styles = require('../Workbench.less')
 import { CHART_SORT_MODES, CHART_ALIGNMENT_MODES, CHART_LAYER_TYPES, CHART_LINES_SYMBOL_TYPE } from '../../../../../globalConstants'
 
@@ -33,6 +27,8 @@ export interface ISpecConfig {
   nodeGap: number,
   orient: 'horizontal' | 'vertical'
   draggable: boolean
+  symbol?: boolean
+  label?: boolean
 }
 
 interface ISpecSectionProps {
@@ -80,7 +76,9 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
       nodeWidth,
       nodeGap,
       orient,
-      draggable
+      draggable,
+      symbol,
+      label
     } = config
 
     const sortModes = CHART_SORT_MODES.map((f) => (
@@ -408,41 +406,59 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
           </div>
         )
         break
-      // case 'doubleYAxis':
-      //   renderHtml = (
-      //     <div className={styles.paneBlock}>
-      //       <h4>{title}</h4>
-      //       <div className={styles.blockBody}>
-      //         <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-      //           <Col span={7}>
-      //             <Checkbox
-      //               checked={smooth}
-      //               onChange={this.checkboxChange('smooth')}
-      //             >
-      //               平滑
-      //             </Checkbox>
-      //           </Col>
-      //           <Col span={7}>
-      //             <Checkbox
-      //               checked={smooth}
-      //               onChange={this.checkboxChange('smooth')}
-      //             >
-      //               阶梯
-      //             </Checkbox>
-      //           </Col>
-      //           <Col span={10}>
-      //             <Checkbox
-      //               checked={smooth}
-      //               onChange={this.checkboxChange('smooth')}
-      //             >
-      //               节点标记
-      //             </Checkbox>
-      //           </Col>
-      //         </Row>
-      //       </div>
-      //     </div>
-      //   )
-      //   break
+      case 'doubleYAxis':
+        renderHtml = (
+          <div className={styles.paneBlock}>
+            <h4>{title}</h4>
+            <div className={styles.blockBody}>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={10}>
+                  <Checkbox
+                    checked={smooth}
+                    onChange={this.checkboxChange('smooth')}
+                  >
+                    平滑
+                  </Checkbox>
+                </Col>
+                <Col span={10}>
+                  <Checkbox
+                    checked={step}
+                    onChange={this.checkboxChange('step')}
+                  >
+                    阶梯
+                  </Checkbox>
+                </Col>
+              </Row>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={10}>
+                  <Checkbox
+                    checked={symbol}
+                    onChange={this.checkboxChange('symbol')}
+                  >
+                    节点标记
+                  </Checkbox>
+                </Col>
+                {/* <Col span={7}>
+                  <Checkbox
+                    checked={stack}
+                    onChange={this.checkboxChange('stack')}
+                  >
+                    堆叠
+                  </Checkbox>
+                </Col> */}
+                <Col span={10}>
+                  <Checkbox
+                    checked={label}
+                    onChange={this.checkboxChange('label')}
+                  >
+                    数值
+                  </Checkbox>
+                </Col>
+                </Row>
+            </div>
+          </div>
+        )
+        break
       default:
         renderHtml = (
           <div />

@@ -27,4 +27,6 @@ public class UserBaseInfo {
     String username;
 
     String avatar;
+
+    String email;
 }

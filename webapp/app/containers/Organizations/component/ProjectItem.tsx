@@ -1,15 +1,10 @@
 import * as React from 'react'
 import * as Organization from '../Organization'
-const Modal = require('antd/lib/modal')
-const Button = require('antd/lib/button')
 const styles = require('../Organization.less')
-const Tag = require('antd/lib/tag')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Tooltip = require('antd/lib/tooltip')
+import { Tag, Icon, Popconfirm, Tooltip } from 'antd'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import Star from '../../../components/StarPanel/Star'
-import {IProject, IStarUser} from '../../Projects'
+import { IProject, IStarUser } from '../../Projects'
 const utilStyles = require('../../../assets/less/util.less')
 
 interface IProjectItemProps {
@@ -158,11 +153,11 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
                 )
             }
             <div className={styles.delete}>
-              <Tooltip title="修改">
+              <Tooltip title="设置">
                 <CreateButton type="setting" onClick={this.showProjectForm('edit', options)} />
               </Tooltip>
             </div>
-            <div className={styles.delete}>
+            {/* <div className={styles.delete}>
               <Popconfirm
                 title="确定删除？"
                 placement="bottom"
@@ -175,7 +170,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
                   />
                 </Tooltip>
               </Popconfirm>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

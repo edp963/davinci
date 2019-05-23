@@ -36,7 +36,7 @@ public class QuartzUtils {
     public void addJob(ScheduleJob scheduleJob) throws ServerException {
 
         if (null == scheduleJob) {
-            throw new ServerException("empty job");
+            throw new ServerException("EMPTY job");
         }
 
         if (System.currentTimeMillis() < scheduleJob.getStartDate().getTime()
@@ -98,7 +98,7 @@ public class QuartzUtils {
                 return;
             }
 
-            String oldExp= trigger.getCronExpression();
+            String oldExp = trigger.getCronExpression();
             if (!oldExp.equalsIgnoreCase(scheduleJob.getCronExpression())) {
                 removeJob(scheduleJob);
                 addJob(scheduleJob);

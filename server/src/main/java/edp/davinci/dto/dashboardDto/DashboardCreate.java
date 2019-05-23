@@ -31,7 +31,7 @@ import java.util.List;
 @NotNull(message = "dashboard cannot be null")
 public class DashboardCreate {
 
-    @NotBlank(message = "dashboard name cannot be empty")
+    @NotBlank(message = "dashboard name cannot be EMPTY")
     private String name;
 
     @Min(value = 1L, message = "Invalid dashboard portal id")
@@ -47,10 +47,5 @@ public class DashboardCreate {
 
     private String config;
 
-    private Long[] teamIds;
-
-
-    public List<Long> getTeamIds() {
-        return null == this.teamIds || this.teamIds.length == 0 ? null : Arrays.asList(this.teamIds);
-    }
+    private List<Long> roleIds;
 }

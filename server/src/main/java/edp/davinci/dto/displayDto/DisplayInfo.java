@@ -30,7 +30,7 @@ import java.util.List;
 @NotNull(message = "display info cannot be null")
 public class DisplayInfo {
 
-    @NotBlank(message = "display name cannot be empty")
+    @NotBlank(message = "display name cannot be EMPTY")
     private String name;
 
     private String description;
@@ -42,9 +42,5 @@ public class DisplayInfo {
 
     private Boolean publish = false;
 
-    private Long[] teamIds;
-
-    public List<Long> getTeamIds() {
-        return null == this.teamIds || this.teamIds.length == 0 ? null : Arrays.asList(this.teamIds);
-    }
+    private List<Long> roleIds;
 }

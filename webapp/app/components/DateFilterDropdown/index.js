@@ -21,9 +21,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import Input from 'antd/lib/input'
-// import Select from 'antd/lib/select'
-import DatePicker from 'antd/lib/date-picker'
+import { Input, DatePicker } from 'antd'
 import { uuid } from '../../utils/util'
 const InputGroup = Input.Group
 const RangePicker = DatePicker.RangePicker

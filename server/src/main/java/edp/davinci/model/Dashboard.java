@@ -18,6 +18,8 @@
 
 package edp.davinci.model;
 
+import com.alibaba.fastjson.annotation.JSONField;
+import edp.davinci.common.model.RecordInfo;
 import lombok.Data;
 
 import javax.validation.constraints.Max;
@@ -27,12 +29,12 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @NotNull(message = "dashboard cannot be null")
-public class Dashboard {
+public class Dashboard extends RecordInfo<Dashboard> {
 
     @Min(value = 1L, message = "Invalid dashboard id")
     private Long id;
 
-    @NotBlank(message = "dashboard name cannot be empty")
+    @NotBlank(message = "dashboard name cannot be EMPTY")
     private String name;
 
     @Min(value = 1L, message = "Invalid dashboard portal id")
@@ -48,4 +50,20 @@ public class Dashboard {
 
     private String config;
 
+    @JSONField(serialize = false)
+    private String fullParentId = null != parentId ? parentId.toString() : null;
+
+    @Override
+    public String toString() {
+        return "Dashboard{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", dashboardPortalId=" + dashboardPortalId +
+                ", type=" + type +
+                ", index=" + index +
+                ", parentId=" + parentId +
+                ", config='" + config + '\'' +
+                ", fullParentId='" + fullParentId + '\'' +
+                '}';
+    }
 }

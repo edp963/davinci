@@ -40,7 +40,7 @@ fi
 
 cd $DAVINCI3_HOME
 TODAY=`date "+%Y-%m-%d"`
-LOG_PATH=$DAVINCI3_HOME/logs/davinci.$TODAY.log
+LOG_PATH=$DAVINCI3_HOME/logs/sys/davinci.$TODAY.log
 nohup java -Dfile.encoding=UTF-8 -cp $JAVA_HOME/lib/*:lib/* edp.DavinciServerApplication > $LOG_PATH  2>&1 &
 
 echo "=========================================="

@@ -78,7 +78,7 @@ export function loadDisplayDetail (projectId, displayId) {
     }
   }
 }
-export function displayDetailLoaded (display, slide, layers, widgets, bizlogics) {
+export function displayDetailLoaded (display, slide, layers, widgets, views) {
   return {
     type: ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS,
     payload: {
@@ -86,7 +86,7 @@ export function displayDetailLoaded (display, slide, layers, widgets, bizlogics)
       slide,
       layers,
       widgets,
-      bizlogics
+      views
     }
   }
 }
@@ -462,5 +462,11 @@ export function displaySecretLinkLoaded (secretInfo) {
 export function loadDisplayShareLinkFail () {
   return {
     type: ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE
+  }
+}
+
+export function resetDisplayState () {
+  return {
+    type: ActionTypes.RESET_DISPLAY_STATE
   }
 }

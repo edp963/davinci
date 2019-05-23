@@ -25,7 +25,7 @@
  */
 
 import React from 'react'
-const Button = require('antd/lib/button')
+import { Button } from 'antd'
 import styles from './NoAuthorization.less'
 
 export default function NoAuthorization () {

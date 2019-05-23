@@ -18,15 +18,10 @@
  * >>
  */
 
-import * as React from 'react'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Button = require('antd/lib/button')
-const Radio = require('antd/lib/radio/radio')
+import React from 'react'
+import { Form, Row, Col, Input, Button } from 'antd'
 const FormItem = Form.Item
-const RadioGroup = Radio.Group
+const TextArea = Input.TextArea
 const styles = require('../Organization.less')
 const utilStyles = require('../../../assets/less/util.less')
 
@@ -48,7 +43,6 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
     const modalButtons = [(
       <Button
         key="submit"
-        size="large"
         type="primary"
         loading={modalLoading}
         disabled={modalLoading}
@@ -78,7 +72,8 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
                       message: 'Name 不能为空'
                     }, {
                       validator: this.props.onCheckUniqueName
-                    }]
+                    }],
+                    validateFirst: true
                   })(
                     <Input placeholder="Name" />
                   )}
@@ -89,9 +84,8 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
                   {getFieldDecorator('description', {
                     initialValue: ''
                   })(
-                    <Input
+                    <TextArea
                       placeholder="Description"
-                      type="textarea"
                       autosize={{minRows: 2, maxRows: 6}}
                     />
                   )}

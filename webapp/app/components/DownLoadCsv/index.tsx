@@ -19,7 +19,7 @@
  */
 
 import * as React from 'react'
-const Icon = require('antd/lib/icon')
+import { Icon } from 'antd'
 
 export interface IDownloadCsvProps {
   id?: number
@@ -28,8 +28,6 @@ export interface IDownloadCsvProps {
   shareInfo: string
   shareInfoLoading?: boolean
   downloadCsvLoading: boolean
-  onLoadDashboardShareLink?: (id: number, authName: string) => void
-  onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
   onDownloadCsv: () => void
 }
 
@@ -43,32 +41,7 @@ export function DownloadCsv (props: IDownloadCsvProps) {
 
 function getShareInfo (props) {
   return function () {
-    const {
-      id,
-      type,
-      itemId,
-      shareInfo,
-      onLoadDashboardShareLink,
-      onLoadWidgetShareLink,
-      onDownloadCsv
-    } = props
-
-    if (!shareInfo) {
-      switch (type) {
-        case 'dashboard':
-          onLoadDashboardShareLink(id, '')
-          break
-        case 'widget':
-          onLoadWidgetShareLink(id, itemId, '', () => {
-            onDownloadCsv()
-          })
-          break
-        default:
-          break
-      }
-    } else {
-      onDownloadCsv()
-    }
+    props.onDownloadCsv()
   }
 }
 

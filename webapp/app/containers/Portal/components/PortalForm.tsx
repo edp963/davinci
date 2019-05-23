@@ -18,28 +18,30 @@
  * >>
  */
 
-import * as React from 'react'
-import { connect } from 'react-redux'
+import React from 'react'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Radio = require('antd/lib/radio/radio')
+import { Form, Row, Col, Input, Radio, Tabs, Tree, Checkbox } from 'antd'
+const TreeNode = Tree.TreeNode
 const FormItem = Form.Item
+const TextArea = Input.TextArea
 const RadioGroup = Radio.Group
+const TabPane = Tabs.TabPane
 
 const utilStyles = require('../../../assets/less/util.less')
+const styles = require('../Portal.less')
+import { IExludeRoles} from './PortalList'
 
-interface IDashboardFormProps {
+interface IProtalListProps {
   projectId: number
   type: string
   form: any
-  params: any
-  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
+  params?: any
+  exludeRoles?: IExludeRoles[]
+  onChangePermission: (scope: object, e: any) => any
+  onCheckUniqueName?: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-export class PortalForm extends React.PureComponent<IDashboardFormProps, {}> {
+export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
   private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckUniqueName, type, form, projectId } = this.props
     const { id } = form.getFieldsValue()
@@ -61,11 +63,21 @@ export class PortalForm extends React.PureComponent<IDashboardFormProps, {}> {
   }
 
   public render () {
+    const {
+      exludeRoles
+    } = this.props
     const { getFieldDecorator } = this.props.form
+    const authControl = exludeRoles && exludeRoles.length ? exludeRoles.map((role) => (
+        <div className={styles.excludeList} key={`${role.name}key`}>
+          <Checkbox checked={role.permission} onChange={this.props.onChangePermission.bind(this, role)}/>
+          <b>{role.name}</b>
+        </div>
+      )) : []
     const commonFormItemStyle = {
       labelCol: { span: 6 },
       wrapperCol: { span: 16 }
     }
+
     return (
       <Form>
         <Row gutter={8}>
@@ -82,43 +94,53 @@ export class PortalForm extends React.PureComponent<IDashboardFormProps, {}> {
                 <Input />
               )}
             </FormItem>
-            <FormItem label="名称" {...commonFormItemStyle} hasFeedback>
-              {getFieldDecorator('name', {
-                rules: [{
-                  required: true,
-                  message: 'Name 不能为空'
-                }, {
-                  validator: this.checkNameUnique
-                }]
-              })(
-                <Input placeholder="Name" />
-              )}
-            </FormItem>
-          </Col>
-          <Col span={24}>
-            <FormItem label="描述" {...commonFormItemStyle}>
-              {getFieldDecorator('description', {
-                initialValue: ''
-              })(
-                <Input
-                  placeholder="Description"
-                  type="textarea"
-                  autosize={{minRows: 2, maxRows: 6}}
-                />
-              )}
-            </FormItem>
-          </Col>
-          <Col span={24}>
-            <FormItem label="是否发布" {...commonFormItemStyle}>
-              {getFieldDecorator('publish', {
-                initialValue: true
-              })(
-                <RadioGroup>
-                  <Radio value>发布</Radio>
-                  <Radio value={false}>编辑</Radio>
-                </RadioGroup>
-              )}
-            </FormItem>
+            <Tabs defaultActiveKey="infomation">
+              <TabPane tab="基本信息" key="infomation">
+              <Col span={24}>
+                <FormItem label="名称" {...commonFormItemStyle} hasFeedback>
+                  {getFieldDecorator('name', {
+                    rules: [{
+                      required: true,
+                      message: 'Name 不能为空'
+                    }, {
+                      validator: this.checkNameUnique
+                    }]
+                  })(
+                    <Input placeholder="Name" />
+                  )}
+                </FormItem>
+              </Col>
+              <Col span={24}>
+                <FormItem label="描述" {...commonFormItemStyle}>
+                  {getFieldDecorator('description', {
+                    initialValue: ''
+                  })(
+                    <TextArea
+                      placeholder="Description"
+                      autosize={{minRows: 2, maxRows: 6}}
+                    />
+                  )}
+                </FormItem>
+              </Col>
+              <Col span={24}>
+                <FormItem label="是否发布" {...commonFormItemStyle}>
+                  {getFieldDecorator('publish', {
+                    initialValue: true
+                  })(
+                    <RadioGroup>
+                      <Radio value>发布</Radio>
+                      <Radio value={false}>编辑</Radio>
+                    </RadioGroup>
+                  )}
+                </FormItem>
+              </Col>
+              </TabPane>
+              <TabPane tab="权限管理" key="control" className={styles.controlTab}>
+                {
+                  authControl
+                }
+              </TabPane>
+            </Tabs>
           </Col>
         </Row>
       </Form>

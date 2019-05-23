@@ -22,14 +22,9 @@ package edp.davinci.dto.dashboardDto;
 import edp.davinci.model.Dashboard;
 import lombok.Data;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Data
 public class DashboardDto extends Dashboard {
-    private Long[] teamIds;
-
-    public List<Long> getTeamIds() {
-        return null == this.teamIds || this.teamIds.length == 0 ? null : Arrays.asList(this.teamIds);
-    }
+    private List<Long> roleIds;
 }

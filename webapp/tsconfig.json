@@ -2,7 +2,7 @@
   "compilerOptions": {
     "noEmit": true,
     "target": "es6",
-    "module": "commonjs",
+    "module": "esnext",
     "noImplicitAny": false,
     "sourceMap": true,
     "preserveConstEnums": true,
@@ -17,21 +17,19 @@
       "*": [
         "*"
       ],
+      "app/*": ["app/*"],
       "utils/*": ["app/utils/*"],
       "assets/*": ["app/assets/*"],
       "components/*": [ "app/components/*" ],
       "containers/*": ["app/containers/*"],
       "libs/*": ["libs/*"]
     }
+    // "strict": true,
+    // "strictFunctionTypes": false
     // "noUnusedLocals": true,
     // "noUnusedParameters": true
   },
   "exclude": [
     "node_modules"
-  ],
-  "awesomeTypescriptLoaderOptions": {
-    "useBabel": true,
-    "forkChecker": true,
-    "useCache": false
-  }
+  ]
 }

@@ -19,30 +19,33 @@
 package edp.davinci.service;
 
 
+import edp.core.exception.ServerException;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
+import edp.davinci.dto.userDto.UserBaseInfo;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.userDto.UserRegist;
 import edp.davinci.model.User;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 public interface UserService extends CheckEntityService {
 
     User getByUsername(String username);
 
-    ResultMap userLogin(UserLogin userLogin);
+    User userLogin(UserLogin userLogin) throws ServerException;
 
-    ResultMap getUsersByKeyword(String keyword, User user, Long orgId, HttpServletRequest request);
+    List<UserBaseInfo> getUsersByKeyword(String keyword, User user, Long orgId);
 
-    ResultMap updateUser(User user, HttpServletRequest request);
+    boolean updateUser(User user) throws ServerException;
 
-    ResultMap regist(UserRegist userRegist);
+    User regist(UserRegist userRegist) throws ServerException;
 
 //    ResultMap activateUser(User user, String token, HttpServletRequest request);
 
-    ResultMap sendMail(String email, User user, HttpServletRequest request);
+    boolean sendMail(String email, User user) throws ServerException;
 
     ResultMap changeUserPassword(User user, String oldPassword, String password, HttpServletRequest request);
 

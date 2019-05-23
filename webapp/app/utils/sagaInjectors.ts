@@ -1,8 +1,8 @@
-import * as isEmpty from 'lodash/isEmpty'
-import * as isFunction from 'lodash/isFunction'
-import * as isString from 'lodash/isString'
-import * as invariant from 'invariant'
-import * as conformsTo from 'lodash/conformsTo'
+import isEmpty from 'lodash/isEmpty'
+import isFunction from 'lodash/isFunction'
+import isString from 'lodash/isString'
+import invariant from 'invariant'
+import conformsTo from 'lodash/conformsTo'
 
 import checkStore from './checkStore'
 import {
@@ -33,7 +33,7 @@ export function injectSagaFactory (store, isValid) {
   return function injectSaga (key, descriptor = {}, args) {
     if (!isValid) {checkStore(store)}
 
-    const newDescriptor = { ...descriptor, mode: (descriptor as any).mode || RESTART_ON_REMOUNT }
+    const newDescriptor = { ...descriptor, mode: (descriptor as any).mode || DAEMON }
     const { saga, mode } = newDescriptor as any
 
     checkKey(key)

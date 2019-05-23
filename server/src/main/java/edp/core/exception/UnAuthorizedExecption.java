@@ -18,6 +18,8 @@
 
 package edp.core.exception;
 
+import edp.core.enums.HttpCodeEnum;
+
 public class UnAuthorizedExecption extends RuntimeException {
 
     public UnAuthorizedExecption(String message, Throwable cause) {
@@ -26,5 +28,10 @@ public class UnAuthorizedExecption extends RuntimeException {
 
     public UnAuthorizedExecption(String message) {
         super(message);
+    }
+
+
+    public UnAuthorizedExecption() {
+        super(HttpCodeEnum.UNAUTHORIZED.getMessage());
     }
 }

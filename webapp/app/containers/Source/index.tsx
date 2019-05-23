@@ -18,13 +18,14 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Link } from 'react-router'
+import memoizeOne from 'memoize-one'
+import { Link, RouteComponentProps } from 'react-router'
 
-import { compose } from 'redux'
+import { compose, Dispatch } from 'redux'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
@@ -35,28 +36,13 @@ import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 import SourceForm from './SourceForm'
 import UploadCsvForm from './UploadCsvForm'
-import AntdFormType from 'antd/lib/form/Form'
+
+import { message, Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb } from 'antd'
 import { ButtonProps } from 'antd/lib/button/button'
+import { ColumnProps, PaginationConfig, SorterResult } from 'antd/lib/table'
+import { UploadProps, UploadChangeParam } from 'antd/lib/upload'
 
-const message = require('antd/lib/message')
-const Modal = require('antd/lib/modal')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Breadcrumb = require('antd/lib/breadcrumb')
-
-import {
-  loadSources,
-  addSource,
-  deleteSource,
-  editSource,
-  testSourceConnection,
-  getCsvMetaId
-} from './actions'
+import { SourceActions, SourceActionType } from './actions'
 import {
   makeSelectSources,
   makeSelectListLoading,
@@ -65,371 +51,153 @@ import {
 } from './selectors'
 const utilStyles = require('../../assets/less/util.less')
 import api from '../../utils/api'
-import { uuid } from '../../utils/util'
 import { checkNameUniqueAction } from '../App/actions'
-import {makeSelectCurrentProject} from '../Projects/selectors'
+import { makeSelectCurrentProject } from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
-import {IProject} from '../Projects'
+import { IRouteParams } from 'app/routes'
+import { IProject } from '../Projects'
+import { ISource, ICSVMetaInfo } from './types'
 
-interface ISourceProps {
-  params: any
-  sources: boolean | any[]
+interface ISourceListStateProps {
+  sources: ISource[]
   listLoading: boolean
   formLoading: boolean
   testLoading: boolean
   currentProject: IProject
+}
+
+interface ISourceListDispatchProps {
   onLoadSources: (projectId: number) => any
   onAddSource: (sourceData: any, resolve: any) => any
   onDeleteSource: (id: number) => any
   onEditSource: (sourceData: any, resolve: any) => any
   onTestSourceConnection: (testSource: any) => any
-  onGetCsvMetaId: (
-    csvMeta: any,
-    resolve: any,
-    reject: any) => any
+  onGetCsvMetaId: (csvMeta: ICSVMetaInfo, resolve: () => void) => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-interface ISourceStates {
-  tableSource: any[]
-  tableSortedInfo: {columnKey?: string, order?: string}
-  nameFilterValue: string
-  nameFilterDropdownVisible: boolean
-  formVisible: boolean
-  formType: string
-  uploadFormVisible: boolean
-  formStep: number
-  metaObj: any
-  isUploadDisabled: boolean
-  newUploadModalKey: string
+type ISourceListProps = ISourceListStateProps & ISourceListDispatchProps & RouteComponentProps<{}, IRouteParams>
+
+interface ISourceListStates {
   screenWidth: number
+  tempFilterSourceName: string
+  filterSourceName: string
+  filterDropdownVisible: boolean
+  tableSorter: SorterResult<ISource>
+  sourceModalVisible: boolean
+  uploadModalVisible: boolean
+  formStep: number
+  uploadDisabled: boolean
+  uploadFileList: UploadChangeParam['fileList']
+  editingSource: ISource
+  editingCsv: ICSVMetaInfo
 }
 
-interface ISourceObject {
-  user: string
-  password: string
-  url: string
+const emptySource: ISource = {
+  id: 0,
+  name: '',
+  type: 'jdbc',
+  description: '',
+  projectId: 0,
+  config: {
+    username: '',
+    password: '',
+    url: '',
+    parameters: ''
+  }
 }
 
-export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
-  constructor (props) {
-    super(props)
-    this.state = {
-      tableSource: [],
-      tableSortedInfo: {},
+const emptyCSVMetaInfo: ICSVMetaInfo = {
+  sourceId: 0,
+  tableName: '',
+  replaceMode: 0,
+  primaryKeys: '',
+  indexKeys: ''
+}
 
-      nameFilterValue: '',
-      nameFilterDropdownVisible: false,
+export class SourceList extends React.PureComponent<ISourceListProps, ISourceListStates> {
 
-      formVisible: false,
-      formType: 'add',
+  public state: Readonly<ISourceListStates> = {
+    screenWidth: document.documentElement.clientWidth,
+    tempFilterSourceName: '',
+    tableSorter: null,
 
-      uploadFormVisible: false,
-      formStep: 0,
-      metaObj: {},
-      isUploadDisabled: false,
+    filterSourceName: '',
+    filterDropdownVisible: false,
 
-      newUploadModalKey: '1',
-      screenWidth: 0
-    }
+    sourceModalVisible: false,
+
+    uploadModalVisible: false,
+    formStep: 0,
+    uploadDisabled: false,
+    uploadFileList: [],
+
+    editingSource: { ...emptySource },
+    editingCsv: { ...emptyCSVMetaInfo }
   }
 
-  private sourceForm: AntdFormType = null
-  private uploadForm: AntdFormType = null
-  private refHandlers = {
-    sourceForm: (ref) => this.sourceForm = ref,
-    uploadForm: (ref) => this.uploadForm = ref
+  private basePagination: PaginationConfig = {
+    defaultPageSize: 20,
+    showSizeChanger: true
   }
 
   public componentWillMount () {
-    this.props.onLoadSources(this.props.params.pid)
+    const { onLoadSources, params } = this.props
+    const { pid: projectId } = params
+    onLoadSources(+projectId)
+    window.addEventListener('resize', this.setScreenWidth, false)
+  }
+
+  public componentWillUnmount () {
+    window.removeEventListener('resize', this.setScreenWidth, false)
+  }
+
+  private setScreenWidth = () => {
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
-  public componentWillReceiveProps (props) {
-    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
+  private getFilterSources = memoizeOne((sourceName: string, sources: ISource[]) => {
+    if (!Array.isArray(sources) || !sources.length) { return [] }
+    const regex = new RegExp(sourceName, 'gi')
+    const filterSources = sources.filter((v) => v.name.match(regex))
+    return filterSources
+  })
 
-    if (props.sources) {
-      this.setState({
-        tableSource: props.sources.map((g) => {
-          g.key = g.id
-          return g
-        })
-      })
-    }
-  }
+  private static getSourcePermission = memoizeOne((project: IProject) => ({
+    sourcePermission: initializePermission(project, 'sourcePermission'),
+    AdminButton: ModulePermission<ButtonProps>(project, 'source', true)(Button),
+    EditButton: ModulePermission<ButtonProps>(project, 'source', false)(Button)
+  }))
 
-  private showAdd = () => {
-    this.setState({
-      formVisible: true,
-      formType: 'add'
-    })
-  }
+  private getTableColumns = (
+    { sourcePermission, AdminButton, EditButton }: ReturnType<typeof SourceList.getSourcePermission>
+  ) => {
+    const { tempFilterSourceName, filterSourceName, filterDropdownVisible, tableSorter } = this.state
 
-  private showDetail = (sourceId) => () => {
-    this.setState({
-      formVisible: true,
-      formType: 'edit'
-    }, () => {
-      const {
-        id,
-        name,
-        type,
-        username,
-        password,
-        jdbcUrl,
-        description,
-        config
-      } = (this.props.sources as any[]).find((g) => g.id === sourceId)
-
-      const configObj = JSON.parse(config)
-      this.sourceForm.props.form.setFieldsValue({
-        id,
-        name,
-        type,
-        user: username,
-        password,
-        url: jdbcUrl,
-        desc: description,
-        config: configObj.parameters
-      })
-    })
-  }
-
-  private showUpload = (sourceId) => () => {
-    const redrawKey = uuid(6, 10)
-    this.setState({
-      newUploadModalKey: redrawKey,
-      uploadFormVisible: true
-    }, () => {
-      this.uploadForm.props.form.setFieldsValue({
-        source_id: sourceId
-      })
-    })
-  }
-
-  private onModalOk = () => {
-    this.sourceForm.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        const { params } = this.props
-        const { id, name, type, url, user, password, desc, config } = values
-        const requestValue = {
-          config: {
-            parameters: config,
-            password,
-            url,
-            username: user
-          },
-          description: desc,
-          name,
-          type,
-          projectId: Number(params.pid)
-        }
-
-        if (this.state.formType === 'add') {
-          this.props.onAddSource({...requestValue}, () => {
-            this.hideForm()
-          })
-        } else {
-          this.props.onEditSource({ ...requestValue, id }, () => {
-            this.hideForm()
-          })
-        }
-      }
-    })
-  }
-
-  private changeFormStep = (step) => () => {
-    const { onGetCsvMetaId } = this.props
-    if (step) {
-      this.uploadForm.props.form.validateFieldsAndScroll((err, values) => {
-        if (!err) {
-          const { table_name, source_id, primary_keys, index_keys, replace_mode } = values
-          const csvMeta = {
-            table_name,
-            source_id,
-            replace_mode
-          }
-          onGetCsvMetaId(csvMeta, () => {
-            this.setState({
-              metaObj: csvMeta,
-              formStep: step
-            })
-          }, (error) => {
-            message.error(error)
-          })
-        }
-      })
-    } else {
-      this.setState({
-        formStep: step
-      })
-    }
-  }
-
-  private hideForm = () => {
-    this.setState({
-      formVisible: false
-    })
-    this.sourceForm.props.form.resetFields()
-  }
-
-  private hideUploadForm = () => {
-    this.setState({
-      uploadFormVisible: false
-    }, () => {
-      this.setState({formStep: 0})
-      this.uploadForm.props.form.resetFields()
-    })
-  }
-
-  private onUploadFile = () => {
-    this.hideUploadForm()
-    this.setState({
-      isUploadDisabled: false
-    })
-  }
-
-  private handleTableChange = (pagination, filters, sorter) => {
-    this.setState({
-      tableSortedInfo: sorter
-    })
-  }
-
-  private onSearchInputChange = (e) => {
-    this.setState({
-      nameFilterValue: e.target.value
-    })
-  }
-
-  private onSearch = () => {
-    const val = this.state.nameFilterValue
-    const reg = new RegExp(val, 'gi')
-
-    this.setState({
-      nameFilterDropdownVisible: false,
-      tableSource: (this.props.sources as any[]).map((record) => {
-        const match = record.name.match(reg)
-        if (!match) {
-          return null
-        }
-        return {
-          ...record,
-          name: (
-            <span>
-              {record.name.split(reg).map((text, i) => (
-                i > 0 ? [<span key={i} className={utilStyles.highlight}>{match[0]}</span>, text] : text
-              ))}
-            </span>
-          )
-        }
-      }).filter((record) => !!record)
-    })
-  }
-
-  private testSourceConnection = () => {
-    const formValues = this.sourceForm.props.form.getFieldsValue() as ISourceObject
-    const { user, password, url } = formValues
-
-    if (url) {
-      this.props.onTestSourceConnection({
-        username: user,
-        password,
-        url
-      })
-    } else {
-      message.error('连接 Url 都不能为空')
-    }
-  }
-
-  private uploadOnchange = (info) => {
-    if (info.file.status !== 'uploading') {
-      const fileLength = info.fileList.length
-      if (fileLength === 0) {
-        this.setState({
-          isUploadDisabled: false
-        })
-      }
-    }
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} file uploaded successfully`)
-      this.setState({
-        formStep: 2,
-        isUploadDisabled: true
-      })
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} file upload failed.`)
-    }
-  }
-
-  public render () {
-    const {
-      tableSource,
-      tableSortedInfo,
-      nameFilterValue,
-      nameFilterDropdownVisible,
-      formVisible,
-      uploadFormVisible,
-      formType,
-      formStep,
-      metaObj,
-      isUploadDisabled,
-      newUploadModalKey,
-      screenWidth
-    } = this.state
-
-    const {
-      params,
-      listLoading,
-      formLoading,
-      testLoading,
-      onDeleteSource,
-      currentProject,
-      onCheckUniqueName
-    } = this.props
-
-    const AdminButton = ModulePermission<ButtonProps>(currentProject, 'source', true)(Button)
-    const EditButton = ModulePermission<ButtonProps>(currentProject, 'source', false)(Button)
-
-    const { table_name, source_id, replace_mode } = metaObj
-    const uploadProps = {
-      name: 'file',
-      disabled: isUploadDisabled,
-      action: `${api.source}/${source_id}/uploadcsv?tableName=${table_name}&mode=${replace_mode}`,
-      onChange: this.uploadOnchange,
-      headers: {
-        authorization: `Bearer ${localStorage.getItem('TOKEN')}`
-      }
-      // onRemove: this.uploadOnRemove
-    }
-
-    const columns = [{
+    const columns: Array<ColumnProps<ISource>> = [{
       title: '名称',
       dataIndex: 'name',
-      key: 'name',
       filterDropdown: (
         <SearchFilterDropdown
-          placeholder="name"
-          value={nameFilterValue}
-          onChange={this.onSearchInputChange}
-          onSearch={this.onSearch}
+          placeholder="名称"
+          value={tempFilterSourceName}
+          onChange={this.filterSourceNameChange}
+          onSearch={this.searchSource}
         />
       ),
-      filterDropdownVisible: nameFilterDropdownVisible,
-      onFilterDropdownVisibleChange: (visible) => this.setState({
-        nameFilterDropdownVisible: visible
+      filterDropdownVisible,
+      onFilterDropdownVisibleChange: (visible: boolean) => this.setState({
+        filterDropdownVisible: visible
       }),
       sorter: (a, b) => a.name > b.name ? -1 : 1,
-      sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
+      sortOrder: tableSorter && tableSorter.columnKey === 'name' ? tableSorter.order : void 0
     }, {
       title: '描述',
-      dataIndex: 'description',
-      key: 'description'
+      dataIndex: 'description'
     }, {
       title: '类型',
       dataIndex: 'type',
-      key: 'type',
       filters: [{
         text: 'JDBC',
         value: 'jdbc'
@@ -439,92 +207,255 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       }],
       filterMultiple: false,
       onFilter: (val, record) => record.type === val,
-      render: (text, record) => {
+      render: (_, record) => {
         const type = record.type
-        switch (type) {
-          case 'jdbc':
-            return 'JDBC'
-          case 'csv':
-            return 'CSV'
-          default:
-            break
-        }
+        return type && type.toUpperCase()
       }
-    }, {
-      title: '操作',
-      key: 'action',
-      width: 135,
-      className: `${initializePermission(currentProject, 'sourcePermission') ? utilStyles.textAlignLeft : utilStyles.hide}`,
-      render: (text, record) => (
-        <span className="ant-table-action-column">
-          <Tooltip title="修改">
-            <EditButton icon="edit" shape="circle" type="ghost" onClick={this.showDetail(record.id)} />
-          </Tooltip>
-          <Popconfirm
-            title="确定删除？"
-            placement="bottom"
-            onConfirm={onDeleteSource(record.id)}
-          >
-            <Tooltip title="删除">
-              <AdminButton icon="delete" shape="circle" type="ghost" />
-            </Tooltip>
-          </Popconfirm>
-          {
-            record && record.type === 'csv' ? <Tooltip title="上传">
-              <EditButton icon="upload" shape="circle" type="ghost" onClick={this.showUpload(record.id)} />
-            </Tooltip> : ''
-          }
-        </span>
-      )
     }]
 
-    const pagination = {
-      simple: screenWidth < 768 || screenWidth === 768,
-      defaultPageSize: 20,
-      showSizeChanger: true
+    if (filterSourceName) {
+      const regex = new RegExp(`(${filterSourceName})`, 'gi')
+      columns[0].render = (text: string) => (
+        <span
+          dangerouslySetInnerHTML={{
+            __html: text.replace(regex, `<span class="${utilStyles.highlight}">$1</span>`)
+          }}
+        />
+      )
     }
 
-    const modalButtons = ([(
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={formLoading}
-        disabled={formLoading}
-        onClick={this.onModalOk}
-      >
-        保 存
-      </Button>),
-      (
-      <Button
-        key="back"
-        size="large"
-        onClick={this.hideForm}
-      >
-        取 消
-      </Button>)
-    ])
-    const uploadFormButtons = formStep
-      ? [(
-      <Button
-          key="submit"
-          size="large"
-          type="primary"
-          onClick={this.onUploadFile}
-      >
-          保 存
-      </Button>)
-      ]
-      : [(
-      <Button
-          key="forward"
-          size="large"
-          type="primary"
-          onClick={this.changeFormStep(1)}
-      >
-          下一步
-      </Button>)
-      ]
+    if (sourcePermission) {
+      columns.push({
+        title: '操作',
+        key: 'action',
+        width: 150,
+        render: (_, record) => (
+          <span className="ant-table-action-column">
+            <Tooltip title="修改">
+              <EditButton icon="edit" shape="circle" type="ghost" onClick={this.editSource(record.id)} />
+            </Tooltip>
+            <Popconfirm
+              title="确定删除？"
+              placement="bottom"
+              onConfirm={this.deleteSource(record.id)}
+            >
+              <Tooltip title="删除">
+                <AdminButton icon="delete" shape="circle" type="ghost" />
+              </Tooltip>
+            </Popconfirm>
+            {
+              record && record.type === 'csv' ? <Tooltip title="上传">
+                <EditButton icon="upload" shape="circle" type="ghost" onClick={this.showUpload(record.id)} />
+              </Tooltip> : ''
+            }
+          </span>
+        )
+      })
+    }
+
+    return columns
+  }
+
+  private addSource = () => {
+    this.setState({
+      editingSource: { ...emptySource, projectId: +this.props.params.pid },
+      sourceModalVisible: true
+    })
+  }
+
+  private editSource = (sourceId: number) => () => {
+    const editingSource = this.props.sources.find((source) => source.id === sourceId)
+    this.setState({
+      editingSource,
+      sourceModalVisible: true
+    })
+  }
+
+  private deleteSource = (sourceId: number) => () => {
+    const { onDeleteSource, onLoadSources, params: { pid: projectId } } = this.props
+    onDeleteSource(sourceId)
+  }
+
+  private showUpload = (sourceId: number) => () => {
+    this.setState({
+      formStep: 0,
+      editingCsv: {
+        ...emptyCSVMetaInfo,
+        sourceId
+      },
+      uploadModalVisible: true
+    })
+  }
+
+  private saveSourceForm = (values: ISource) => {
+    const { params } = this.props
+    const requestValue = {
+      ...values,
+      projectId: Number(params.pid)
+    }
+
+    if (!values.id) {
+      this.props.onAddSource({...requestValue}, () => {
+        this.closeSourceForm()
+      })
+    } else {
+      this.props.onEditSource({ ...requestValue }, () => {
+        this.closeSourceForm()
+      })
+    }
+  }
+
+  private changeUploadFormStep = (step: number, values?: ICSVMetaInfo) => {
+    if (values) {
+      const { onGetCsvMetaId } = this.props
+      onGetCsvMetaId(values, () => {
+        this.setState({
+          editingCsv: { ...values },
+          formStep: step
+        })
+      })
+    } else {
+      this.setState({
+        formStep: step
+      })
+    }
+  }
+
+  private closeSourceForm = () => {
+    this.setState({
+      sourceModalVisible: false
+    })
+  }
+
+  private uploadFile = () => {
+    this.closeUploadForm()
+    this.setState({
+      uploadDisabled: false
+    })
+  }
+
+  private closeUploadForm = () => {
+    this.setState({
+      uploadModalVisible: false
+    })
+  }
+
+  private afterUploadFormClose = () => {
+    this.setState({
+      formStep: 0,
+      uploadFileList: []
+    })
+  }
+
+  private tableChange = (_1, _2, sorter: SorterResult<ISource>) => {
+    this.setState({
+      tableSorter: sorter
+    })
+  }
+
+  private filterSourceNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({
+      tempFilterSourceName: e.target.value,
+      filterSourceName: ''
+    })
+  }
+
+  private searchSource = (value: string) => {
+    this.setState({
+      filterSourceName: value,
+      filterDropdownVisible: false
+    })
+  }
+
+  private testSourceConnection = (username, password, jdbcUrl) => {
+    if (jdbcUrl) {
+      this.props.onTestSourceConnection({
+        username,
+        password,
+        url: jdbcUrl
+      })
+    } else {
+      message.error('连接 Url 都不能为空')
+    }
+  }
+
+  private getCsvUploadProps = memoizeOne((csvMeta: ICSVMetaInfo, uploadDisabled: boolean, uploadFileList: UploadChangeParam['fileList']) => {
+    let uploadUrl = ''
+    if (csvMeta) {
+      const { sourceId, tableName, replaceMode, primaryKeys, indexKeys } = csvMeta
+      uploadUrl = `${api.source}/${sourceId}/uploadcsv?tableName=${tableName}&mode=${replaceMode}`
+      if (primaryKeys) {
+        uploadUrl = `${uploadUrl}&primaryKeys=${primaryKeys}`
+      }
+      if (indexKeys) {
+        uploadUrl = `${uploadUrl}&indexKeys=${indexKeys}`
+      }
+    }
+    const uploadProps: UploadProps = {
+      name: 'file',
+      disabled: uploadDisabled,
+      action: uploadUrl,
+      onChange: this.uploadOnchange,
+      fileList: uploadFileList,
+      headers: {
+        authorization: `Bearer ${localStorage.getItem('TOKEN')}`
+      }
+    }
+    return uploadProps
+  })
+
+  private uploadOnchange = (info: UploadChangeParam) => {
+    this.setState({ uploadFileList: info.fileList.slice(-1) })
+    if (info.file.status !== 'uploading') {
+      const fileLength = info.fileList.length
+      if (fileLength === 0) {
+        this.setState({
+          uploadDisabled: false
+        })
+      }
+    }
+    if (info.file.status === 'done') {
+      message.success(`${info.file.name} 文件上传成功`)
+      this.setState({
+        formStep: 2,
+        uploadDisabled: true
+      })
+    } else if (info.file.status === 'error') {
+      message.error(info.file.response.header.msg)
+    }
+  }
+
+  public render () {
+    const {
+      filterSourceName,
+      sourceModalVisible,
+      uploadModalVisible,
+      formStep,
+      editingCsv,
+      uploadDisabled,
+      uploadFileList,
+      screenWidth,
+      editingSource
+    } = this.state
+
+    const {
+      sources,
+      listLoading,
+      formLoading,
+      testLoading,
+      currentProject,
+      onCheckUniqueName
+    } = this.props
+
+    const uploadProps = this.getCsvUploadProps(editingCsv, uploadDisabled, uploadFileList)
+
+    const { sourcePermission, AdminButton, EditButton } = SourceList.getSourcePermission(currentProject)
+    const tableColumns = this.getTableColumns({ sourcePermission, AdminButton, EditButton })
+    const tablePagination: PaginationConfig = {
+      ...this.basePagination,
+      simple: screenWidth <= 768
+    }
+    const filterSources = this.getFilterSources(filterSourceName, sources)
 
     return (
       <Container>
@@ -548,7 +479,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
               </Box.Title>
               <Box.Tools>
                 <Tooltip placement="bottom" title="新增">
-                  <AdminButton type="primary" icon="plus" onClick={this.showAdd} />
+                  <AdminButton type="primary" icon="plus" onClick={this.addSource} />
                 </Tooltip>
               </Box.Tools>
             </Box.Header>
@@ -556,45 +487,36 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
               <Row>
                 <Col span={24}>
                   <Table
-                    dataSource={tableSource}
-                    columns={columns}
-                    pagination={pagination}
-                    loading={listLoading}
-                    onChange={this.handleTableChange}
                     bordered
+                    rowKey="id"
+                    loading={listLoading}
+                    dataSource={filterSources}
+                    columns={tableColumns}
+                    pagination={tablePagination}
+                    onChange={this.tableChange}
                   />
                 </Col>
               </Row>
-              <Modal
-                title={`${formType === 'add' ? '新增' : '修改'} Source`}
-                wrapClassName="ant-modal-small"
-                visible={formVisible}
-                footer={modalButtons}
-                onCancel={this.hideForm}
-              >
-                <SourceForm
-                  type={formType}
-                  projectId={params.pid}
-                  testLoading={testLoading}
-                  onTestSourceConnection={this.testSourceConnection}
-                  onCheckUniqueName={onCheckUniqueName}
-                  wrappedComponentRef={this.refHandlers.sourceForm}
-                />
-              </Modal>
-              <Modal
-                title="上传CSV"
-                key={newUploadModalKey}
-                visible={uploadFormVisible}
-                wrapClassName="ant-modal-small"
-                footer={uploadFormButtons}
-                onCancel={this.hideUploadForm}
-              >
-                <UploadCsvForm
-                  step={formStep}
-                  uploadProps={uploadProps}
-                  wrappedComponentRef={this.refHandlers.uploadForm}
-                />
-              </Modal>
+              <SourceForm
+                source={editingSource}
+                visible={sourceModalVisible}
+                formLoading={formLoading}
+                testLoading={testLoading}
+                onSave={this.saveSourceForm}
+                onClose={this.closeSourceForm}
+                onTestSourceConnection={this.testSourceConnection}
+                onCheckUniqueName={onCheckUniqueName}
+              />
+              <UploadCsvForm
+                csvMeta={editingCsv}
+                visible={uploadModalVisible}
+                step={formStep}
+                uploadProps={uploadProps}
+                onStepChange={this.changeUploadFormStep}
+                onUpload={this.uploadFile}
+                onClose={this.closeUploadForm}
+                onAfterClose={this.afterUploadFormClose}
+              />
             </Box.Body>
           </Box>
         </Container.Body>
@@ -603,17 +525,15 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
   }
 }
 
-export function mapDispatchToProps (dispatch) {
-  return {
-    onLoadSources: (projectId) => dispatch(loadSources(projectId)),
-    onAddSource: (source, resolve) => dispatch(addSource(source, resolve)),
-    onDeleteSource: (id) => () => dispatch(deleteSource(id)),
-    onEditSource: (source, resolve) => dispatch(editSource(source, resolve)),
-    onTestSourceConnection: (url) => dispatch(testSourceConnection(url)),
-    onGetCsvMetaId: (csvMeta, resolve, reject) => dispatch(getCsvMetaId(csvMeta, resolve, reject)),
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
-  }
-}
+const mapDispatchToProps = (dispatch: Dispatch<SourceActionType | any>) => ({
+  onLoadSources: (projectId) => dispatch(SourceActions.loadSources(projectId)),
+  onAddSource: (source, resolve) => dispatch(SourceActions.addSource(source, resolve)),
+  onDeleteSource: (id) => dispatch(SourceActions.deleteSource(id)),
+  onEditSource: (source, resolve) => dispatch(SourceActions.editSource(source, resolve)),
+  onTestSourceConnection: (url) => dispatch(SourceActions.testSourceConnection(url)),
+  onGetCsvMetaId: (csvMeta, resolve) => dispatch(SourceActions.getCsvMetaId(csvMeta, resolve)),
+  onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+})
 
 const mapStateToProps = createStructuredSelector({
   sources: makeSelectSources(),
@@ -631,4 +551,4 @@ export default compose(
   withReducer,
   withSaga,
   withConnect
-)(Source)
+)(SourceList)

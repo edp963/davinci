@@ -40,12 +40,15 @@ import {
   LOAD_ORGANIZATIONS_PROJECTS,
   LOAD_ORGANIZATIONS_PROJECTS_FAILURE,
   LOAD_ORGANIZATIONS_PROJECTS_SUCCESS,
-  LOAD_ORGANIZATIONS_TEAMS,
-  LOAD_ORGANIZATIONS_TEAMS_FAILURE,
-  LOAD_ORGANIZATIONS_TEAMS_SUCCESS,
-  ADD_TEAM,
-  ADD_TEAM_SUCCESS,
-  ADD_TEAM_FAILURE,
+  LOAD_ORGANIZATIONS_ROLE,
+  LOAD_ORGANIZATIONS_ROLE_SUCCESS,
+  LOAD_ORGANIZATIONS_ROLE_FAILURE,
+  ADD_ROLE,
+  ADD_ROLE_SUCCESS,
+  ADD_ROLE_FAILURE,
+  DELETE_ROLE,
+  DELETE_ROLE_SUCCESS,
+  DELETE_ROLE_FAILURE,
   SEARCH_MEMBER,
   SEARCH_MEMBER_SUCCESS,
   SEARCH_MEMBER_FAILURE,
@@ -57,7 +60,25 @@ import {
   CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS,
   DELETE_ORGANIZATION_MEMBER,
   DELETE_ORGANIZATION_MEMBER_ERROR,
-  DELETE_ORGANIZATION_MEMBER_SUCCESS
+  DELETE_ORGANIZATION_MEMBER_SUCCESS,
+  REL_ROLE_MEMBER,
+  REL_ROLE_MEMBER_SUCCESS,
+  REL_ROLE_MEMBER_FAILURE,
+  EDIT_ROLE,
+  EDIT_ROLE_SUCCESS,
+  EDIT_ROLE_FAILURE,
+  GET_REL_ROLE_MEMBER,
+  GET_REL_ROLE_MEMBER_SUCCESS,
+  GET_REL_ROLE_MEMBER_FAILURE,
+  SET_CURRENT_ORIGANIZATION_PROJECT,
+  LOAD_PROJECT_ADMINS,
+  LOAD_PROJECT_ADMINS_SUCCESS,
+  LOAD_PROJECT_ADMINS_FAIL,
+  LOAD_PROJECT_ROLES,
+  LOAD_PROJECT_ROLES_SUCCESS,
+  LOAD_PROJECT_ROLES_FAIL,
+  GET_VIZ_VISBILITY,
+  POST_VIZ_VISBILITY
 } from './constants'
 
 export function loadOrganizationProjects (param) {
@@ -109,27 +130,27 @@ export function loadOrganizationsMembersFail () {
   }
 }
 
-export function loadOrganizationTeams (id) {
+export function loadOrganizationRole (id) {
   return {
-    type: LOAD_ORGANIZATIONS_TEAMS,
+    type: LOAD_ORGANIZATIONS_ROLE,
     payload: {
       id
     }
   }
 }
 
-export function organizationsTeamsLoaded (teams) {
+export function organizationsRoleLoaded (role) {
   return {
-    type: LOAD_ORGANIZATIONS_TEAMS_SUCCESS,
+    type: LOAD_ORGANIZATIONS_ROLE_SUCCESS,
     payload: {
-      teams
+      role
     }
   }
 }
 
-export function loadOrganizationsTeamsFail () {
+export function loadOrganizationsRoleFail () {
   return {
-    type: LOAD_ORGANIZATIONS_TEAMS_FAILURE
+    type: LOAD_ORGANIZATIONS_ROLE_FAILURE
   }
 }
 
@@ -256,28 +277,79 @@ export function loadOrganizationDetailFail (organization, widgets) {
   }
 }
 
-export function addTeam (team, resolve) {
+export function addRole (name, description, id, resolve) {
   return {
-    type: ADD_TEAM,
+    type: ADD_ROLE,
     payload: {
-      team,
+      name,
+      description,
+      id,
       resolve
     }
   }
 }
 
-export function teamAdded (result) {
+export function roleAdded (result) {
   return {
-    type: ADD_TEAM_SUCCESS,
+    type: ADD_ROLE_SUCCESS,
     payload: {
       result
     }
   }
 }
 
-export function addTeamFail () {
+export function addRoleFail () {
   return {
-    type: ADD_TEAM_FAILURE
+    type: ADD_ROLE_FAILURE
+  }
+}
+
+export function deleteRole (id, resolve) {
+  return {
+    type: DELETE_ROLE,
+    payload: {
+      id,
+      resolve
+    }
+  }
+}
+
+export function roleDeleted (result) {
+  return {
+    type: DELETE_ROLE_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function deleteRoleFail () {
+  return {
+    type: DELETE_ROLE_FAILURE
+  }
+}
+
+export function editRole (name, description, id, resolve) {
+  return {
+    type: EDIT_ROLE,
+    payload: {
+      name, description, id, resolve
+    }
+  }
+}
+
+export function roleEdited (result) {
+  return {
+    type: EDIT_ROLE_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function editRoleFail () {
+  return {
+    type: EDIT_ROLE_FAILURE
   }
 }
 
@@ -383,7 +455,128 @@ export function changeOrganizationMemberRoleFail () {
   }
 }
 
+export function relRoleMember (id, memberIds, resolve) {
+  return {
+    type: REL_ROLE_MEMBER,
+    payload: {
+      id,
+      memberIds,
+      resolve
+    }
+  }
+}
 
+export function relRoleMemberSuccess () {
+  return {
+    type: REL_ROLE_MEMBER_SUCCESS
+  }
+}
+
+export function relRoleMemberFail () {
+  return {
+    type: REL_ROLE_MEMBER_FAILURE
+  }
+}
+
+export function getRelRoleMember (id, resolve) {
+  return {
+    type: GET_REL_ROLE_MEMBER,
+    payload: {
+      id,
+      resolve
+    }
+  }
+}
+
+export function getRelRoleMemberSuccess () {
+  return {
+    type: GET_REL_ROLE_MEMBER_SUCCESS
+  }
+}
+
+export function getRelRoleMemberFail () {
+  return {
+    type: GET_REL_ROLE_MEMBER_FAILURE
+  }
+}
+
+export function  setCurrentProject (option) {
+  return {
+    type: SET_CURRENT_ORIGANIZATION_PROJECT,
+    payload: {
+      option
+    }
+  }
+}
+
+export function loadProjectAdmin (projectId) {
+  return {
+    type: LOAD_PROJECT_ADMINS,
+    payload: {
+      projectId
+    }
+  }
+}
+
+export function projectAdminLoaded (result) {
+  return {
+    type: LOAD_PROJECT_ADMINS_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function loadProjectAdminFail () {
+  return {
+    type: LOAD_PROJECT_ADMINS_FAIL
+  }
+}
+
+
+export function loadProjectRoles (projectId) {
+  return {
+    type: LOAD_PROJECT_ROLES,
+    payload: {
+      projectId
+    }
+  }
+}
+
+export function projectRolesLoaded (result) {
+  return {
+    type: LOAD_PROJECT_ROLES_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function loadProjectRolesFail () {
+  return {
+    type: LOAD_PROJECT_ROLES_FAIL
+  }
+}
+
+export function getVizVisbility (roleId, projectId, resolve) {
+  return {
+    type: GET_VIZ_VISBILITY,
+    payload: {
+      roleId, projectId, resolve
+    }
+  }
+}
+
+export function postVizVisbility (id, permission, resolve) {
+  return {
+    type: POST_VIZ_VISBILITY,
+    payload: {
+      id,
+      resolve,
+      permission
+    }
+  }
+}
 
 
 

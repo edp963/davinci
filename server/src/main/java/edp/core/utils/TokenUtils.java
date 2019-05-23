@@ -33,6 +33,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static edp.core.consts.Consts.EMPTY;
+
+
 @Slf4j
 @Component
 public class TokenUtils {
@@ -64,8 +67,8 @@ public class TokenUtils {
      */
     public String generateToken(TokenDetail tokenDetail) {
         Map<String, Object> claims = new HashMap<String, Object>();
-        claims.put(Consts.TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? "" : tokenDetail.getUsername());
-        claims.put(Consts.TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? "" : tokenDetail.getPassword());
+        claims.put(Consts.TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
+        claims.put(Consts.TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
         claims.put(Consts.TOKEN_CREATE_TIME, System.currentTimeMillis());
         return generate(claims);
     }
@@ -92,11 +95,11 @@ public class TokenUtils {
      */
     public String generateToken(TokenDetail tokenDetail, Long timeOutMillis) {
         Map<String, Object> claims = new HashMap<String, Object>();
-        claims.put(Consts.TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? "" : tokenDetail.getUsername());
-        claims.put(Consts.TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? "" : tokenDetail.getPassword());
+        claims.put(Consts.TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
+        claims.put(Consts.TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
         claims.put(Consts.TOKEN_CREATE_TIME, System.currentTimeMillis());
 
-        Long expiration = Long.parseLong(claims.get(Consts.TOKEN_CREATE_TIME) + "") + timeOutMillis;
+        Long expiration = Long.parseLong(claims.get(Consts.TOKEN_CREATE_TIME) + EMPTY) + timeOutMillis;
 
         try {
             return Jwts.builder()
@@ -128,8 +131,8 @@ public class TokenUtils {
      */
     public String generateContinuousToken(TokenDetail tokenDetail) {
         Map<String, Object> claims = new HashMap<String, Object>();
-        claims.put(Consts.TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? "" : tokenDetail.getUsername());
-        claims.put(Consts.TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? "" : tokenDetail.getPassword());
+        claims.put(Consts.TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
+        claims.put(Consts.TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
         claims.put(Consts.TOKEN_CREATE_TIME, System.currentTimeMillis());
         try {
             return Jwts.builder()
@@ -158,7 +161,7 @@ public class TokenUtils {
      * @return
      */
     private String generate(Map<String, Object> claims) {
-        Long expiration = Long.parseLong(claims.get(Consts.TOKEN_CREATE_TIME) + "") + TIMEOUT;
+        Long expiration = Long.parseLong(claims.get(Consts.TOKEN_CREATE_TIME) + EMPTY) + TIMEOUT;
         try {
             return Jwts.builder()
                     .setClaims(claims)

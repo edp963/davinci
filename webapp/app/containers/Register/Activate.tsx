@@ -5,12 +5,12 @@ import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import {connect} from 'react-redux'
-import {active} from '../App/actions'
-import {createStructuredSelector} from 'reselect'
-import {makeSelectSignupLoading} from './selectors'
-import {InjectedRouter} from 'react-router/lib/Router'
-const Spin = require('antd/lib/spin')
+import { connect } from 'react-redux'
+import { active } from '../App/actions'
+import { createStructuredSelector } from 'reselect'
+import { makeSelectSignupLoading } from './selectors'
+import { InjectedRouter } from 'react-router/lib/Router'
+import { Spin } from 'antd'
 const styles = require('./register.less')
 
 

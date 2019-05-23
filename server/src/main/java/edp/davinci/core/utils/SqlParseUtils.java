@@ -24,42 +24,39 @@ import edp.core.exception.ServerException;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.SqlOperatorEnum;
+import edp.davinci.core.enums.SqlVariableTypeEnum;
+import edp.davinci.core.enums.SqlVariableValueTypeEnum;
 import edp.davinci.core.model.SqlEntity;
+import edp.davinci.model.SqlVariable;
+import edp.davinci.model.SqlVariableChannel;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.stringtemplate.v4.ST;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.*;
+import static edp.davinci.core.common.Constants.*;
 
 @Slf4j
+@Component
 public class SqlParseUtils {
-
-
-    private static final char STStartChar = '{';
-
-    private static final char STEndChar = '}';
-
-    private static final String REG_SQL_STRUCT = "[{].*[}]";
 
     private static final String SELECT = "select";
 
     private static final String WITH = "with";
 
-    private static final String QUERY_VAR_KEY = "query@var";
-
-    private static final String TEAM_VAR_KEY = "team@var";
-
-    private static final String REG_PLACEHOLDER = "\\$.+\\$";
-
-    private static final String REG_TEAMVAR = "\\([a-zA-Z0-9_.-]{1,}\\s?\\w*[<>!=]*\\s?\\(?%s\\w+%s\\)?\\s?\\)";
+    @Autowired
+    private DacChannelUtil dacChannelUtil;
 
     /**
      * 解析sql
@@ -67,82 +64,86 @@ public class SqlParseUtils {
      * @param sqlStr
      * @return
      */
-    public static SqlEntity parseSql(String sqlStr, String sqlTempDelimiter) throws ServerException {
-        if (!StringUtils.isEmpty(sqlStr.trim())) {
-            //过滤注释
-            sqlStr = SqlUtils.filterAnnotate(sqlStr);
-
-            //sql体
-            String sqlStruct = null, queryParam = null;
-            //Pattern.DOTALL+Pattern.MULTILINE : 在正则表达式中的'.'可以代替所有字符，包括换行符\n
-            Pattern p = Pattern.compile(REG_SQL_STRUCT, Pattern.DOTALL + Pattern.MULTILINE);
-            Matcher matcher = p.matcher(sqlStr);
-            if (matcher.find()) {
-                sqlStruct = matcher.group();
-                queryParam = matcher.replaceAll("");
-            } else {
-                throw new ServerException("You have an error in your SQL syntax;");
-            }
-
-            //sql体
-            if (!StringUtils.isEmpty(sqlStruct.trim())) {
-                sqlStruct = sqlStruct.trim();
-
-                if (sqlStruct.startsWith(String.valueOf(STStartChar))) {
-                    sqlStruct = sqlStruct.substring(1);
-                }
-                if (sqlStruct.endsWith(String.valueOf(STEndChar))) {
-                    sqlStruct = sqlStruct.substring(0, sqlStruct.length() - 1);
-                }
-                if (sqlStruct.endsWith(sqlSeparator)) {
-                    sqlStruct = sqlStruct.substring(0, sqlStruct.length() - 1);
-                }
-            }
-
-            Map<String, String> queryParamMap = new HashMap<>();
-            Map<String, List<String>> teamParamMap = new HashMap<>();
-            //参数
-            if (!StringUtils.isEmpty(queryParam)) {
-                queryParam = queryParam.trim().replaceAll(newLineChar, sqlSeparator).trim();
-                queryParam = queryParam.replaceAll(sqlSeparator + "{2,}", sqlSeparator);
-                if (queryParam.endsWith(sqlSeparator)) {
-                    queryParam = queryParam.substring(0, queryParam.length() - 1);
-                }
-                String[] split = queryParam.split(sqlSeparator);
-                if (null != split && split.length > 0) {
-                    for (String param : split) {
-                        param = param.trim();
-                        if (param.startsWith(QUERY_VAR_KEY)) {
-                            param = param.replaceAll(QUERY_VAR_KEY, "");
-                            String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
-                            if (null != paramArray && paramArray.length > 0) {
-                                String k = paramArray[0];
-                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
-                                queryParamMap.put(k.trim().replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
-                            }
-                        } else if (param.startsWith(TEAM_VAR_KEY)) {
-                            param = param.replaceAll(TEAM_VAR_KEY, "").trim();
-                            String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
-                            if (null != paramArray && paramArray.length > 0) {
-                                String k = paramArray[0];
-                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
-                                teamParamMap.put(k.trim(), Arrays.asList(v));
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (StringUtils.isEmpty(sqlStruct)) {
-                throw new ServerException("Invalid Query Sql");
-            }
-
-            sqlStruct = sqlStruct.replaceAll(newLineChar, space).trim();
-
-            SqlEntity sqlEntity = new SqlEntity(sqlStruct, queryParamMap, teamParamMap);
-            return sqlEntity;
+    public SqlEntity parseSql(String sqlStr, List<SqlVariable> variables, String sqlTempDelimiter) throws ServerException {
+        if (StringUtils.isEmpty(sqlStr.trim())) {
+            return null;
         }
-        return null;
+
+        sqlStr = SqlUtils.filterAnnotate(sqlStr);
+        sqlStr = sqlStr.replaceAll(NEW_LINE_CHAR, SPACE).trim();
+
+        char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
+
+        Pattern p = Pattern.compile(getReg(REG_SQL_PLACEHOLDER, delimiter));
+        Matcher matcher = p.matcher(sqlStr);
+
+        if (!matcher.find()) {
+            return new SqlEntity(sqlStr, null, null);
+        }
+
+        Map<String, Object> queryParamMap = new ConcurrentHashMap<>();
+        Map<String, List<String>> authParamMap = new ConcurrentHashMap<>();
+
+        //解析参数
+        if (null != variables && variables.size() > 0) {
+            ExecutorService executorService = Executors.newFixedThreadPool(8);
+            try {
+                CountDownLatch countDownLatch = new CountDownLatch(variables.size());
+                final Future[] future = {null};
+                variables.forEach(variable -> {
+                    future[0] = executorService.submit(() -> {
+                        try {
+                            SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
+                            if (null != typeEnum) {
+                                switch (typeEnum) {
+                                    case QUERYVAR:
+                                        queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf()));
+                                        break;
+                                    case AUTHVARE:
+                                        if (null != variable) {
+                                            List<String> v = getAuthVarValue(variable, null);
+                                            if (null != v) {
+                                                authParamMap.put(variable.getName().trim(), v);
+                                            }
+                                        }
+                                        break;
+                                }
+                            }
+                        } finally {
+                            countDownLatch.countDown();
+                        }
+                    });
+                });
+
+                try {
+                    future[0].get();
+                    countDownLatch.await();
+                } catch (ExecutionException e) {
+                    executorService.shutdownNow();
+                    throw (ServerException) e.getCause();
+                }
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                executorService.shutdown();
+            }
+        }
+        return new SqlEntity(sqlStr, queryParamMap, authParamMap);
+    }
+
+
+    public List<String> getAuthVarValue(SqlVariable variable, String email) {
+        SqlVariableChannel channel = variable.getChannel();
+        if (null == channel) {
+            return SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf());
+        } else if (DacChannelUtil.dacMap.containsKey(channel.getName())) {
+            List<Object> data = dacChannelUtil.getData(channel.getName(), channel.getBizId().toString(), email);
+            if (null != data) {
+                return SqlVariableValueTypeEnum.getValues(variable.getValueType(), data, variable.isUdf());
+            }
+        }
+        return new ArrayList<>();
     }
 
     /**
@@ -150,73 +151,82 @@ public class SqlParseUtils {
      *
      * @param sql
      * @param queryParamMap
-     * @param teamParamMap
+     * @param authParamMap
      * @param sqlTempDelimiter
      * @return
      */
-    public static String replaceParams(String sql, Map<String, String> queryParamMap, Map<String, List<String>> teamParamMap, String sqlTempDelimiter) {
+    public String replaceParams(String sql, Map<String, Object> queryParamMap, Map<String, List<String>> authParamMap, String sqlTempDelimiter) {
         if (StringUtils.isEmpty(sql)) {
             return null;
         }
 
         char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
 
-        //替换team@var
-        if (null != teamParamMap && teamParamMap.size() > 0) {
-            Pattern p = Pattern.compile(getTeamVarReg(delimiter));
-            Set<String> expSet = new HashSet<>();
-            Matcher matcher = p.matcher(sql);
-            while (matcher.find()) {
-                expSet.add(matcher.group());
-            }
-            if (expSet.size() > 0) {
-                Map<String, String> parsedMap = getParsedExpression(expSet, teamParamMap, delimiter);
-                for (String key : parsedMap.keySet()) {
-                    if (sql.indexOf(key) > -1) {
-                        sql = sql.replace(key, parsedMap.get(key));
-                    }
+        //替换auth@var
+        Pattern p = Pattern.compile(getReg(REG_AUTHVAR, delimiter));
+        Matcher matcher = p.matcher(sql);
+
+        Set<String> expSet = new HashSet<>();
+        while (matcher.find()) {
+            expSet.add(matcher.group());
+        }
+        if (expSet.size() > 0) {
+            Map<String, String> parsedMap = getParsedExpression(expSet, authParamMap, delimiter);
+            for (String key : parsedMap.keySet()) {
+                if (sql.indexOf(key) > -1) {
+                    sql = sql.replace(key, parsedMap.get(key));
                 }
             }
         }
 
         ST st = new ST(sql, delimiter, delimiter);
+        if (null != authParamMap && authParamMap.size() > 0) {
+            authParamMap.forEach((k, v) -> st.add(k, true));
+        }
         //替换query@var
         if (null != queryParamMap && queryParamMap.size() > 0) {
-            for (String key : queryParamMap.keySet()) {
-                st.add(key, queryParamMap.get(key));
-            }
+            queryParamMap.forEach(st::add);
         }
         sql = st.render();
         return sql;
     }
 
 
-    public static List<String> getExecuteSqlList(String sql) {
+    public List<String> getSqls(String sql, boolean isQuery) {
         sql = sql.trim();
 
         if (StringUtils.isEmpty(sql)) {
             return null;
         }
 
-        if (sql.startsWith(sqlSeparator)) {
+        if (sql.startsWith(SEMICOLON)) {
             sql = sql.substring(1);
         }
 
-        if (sql.endsWith(sqlSeparator)) {
+        if (sql.endsWith(SEMICOLON)) {
             sql = sql.substring(0, sql.length() - 1);
         }
 
         List<String> list = null;
 
-        String[] split = sql.split(sqlSeparator);
+        String[] split = sql.split(SEMICOLON);
         if (null != split && split.length > 0) {
             list = new ArrayList<>();
             for (String sqlStr : split) {
                 sqlStr = sqlStr.trim();
-                if (sqlStr.toLowerCase().startsWith(SELECT) || sqlStr.toLowerCase().startsWith(WITH)) {
-                    continue;
+                boolean select = sqlStr.toLowerCase().startsWith(SELECT) || sqlStr.toLowerCase().startsWith(WITH);
+                if (isQuery) {
+                    if (select) {
+                        list.add(sqlStr);
+                    } else {
+                        continue;
+                    }
                 } else {
-                    list.add(sqlStr);
+                    if (!select) {
+                        list.add(sqlStr);
+                    } else {
+                        continue;
+                    }
                 }
             }
         }
@@ -224,61 +234,31 @@ public class SqlParseUtils {
     }
 
 
-    public static List<String> getQuerySqlList(String sql) {
-        sql = sql.trim();
-        if (StringUtils.isEmpty(sql)) {
-            return null;
-        }
-
-        if (sql.startsWith(sqlSeparator)) {
-            sql = sql.substring(1);
-        }
-
-        if (sql.endsWith(sqlSeparator)) {
-            sql = sql.substring(0, sql.length() - 1);
-        }
-
-        List<String> list = null;
-        String[] split = sql.split(sqlSeparator);
-        if (null != split && split.length > 0) {
-            list = new ArrayList<>();
-            for (String sqlStr : split) {
-                sqlStr = sqlStr.trim();
-                if (sqlStr.toLowerCase().startsWith(SELECT) || sqlStr.toLowerCase().startsWith(WITH)) {
-                    list.add(sqlStr);
-                } else {
-                    continue;
-                }
-            }
-        }
-        return list;
-    }
-
-
-    private static Map<String, String> getParsedExpression(Set<String> expSet, Map<String, List<String>> teamParamMap, char sqlTempDelimiter) {
+    private static Map<String, String> getParsedExpression(Set<String> expSet, Map<String, List<String>> authParamMap, char sqlTempDelimiter) {
         Iterator<String> iterator = expSet.iterator();
         Map<String, String> map = new HashMap<>();
         while (iterator.hasNext()) {
             String exp = iterator.next().trim();
             try {
-                map.put(exp, getTeamVarExpression(exp, teamParamMap, sqlTempDelimiter));
+                map.put(exp, getAuthVarExpression(exp, authParamMap, sqlTempDelimiter));
             } catch (Exception e) {
                 e.printStackTrace();
                 continue;
             }
         }
-        if (map.size() > 0) {
-            return map;
-        } else {
-            return null;
-        }
+        return map.size() > 0 ? map : null;
     }
 
-    private static String getTeamVarExpression(String srcExpression, Map<String, List<String>> teamParamMap, char sqlTempDelimiter) throws Exception {
+    private static String getAuthVarExpression(String srcExpression, Map<String, List<String>> authParamMap, char sqlTempDelimiter) throws Exception {
+
+        if (null == authParamMap) {
+            return "1=1";
+        }
+
         String originExpression = "";
         if (!StringUtils.isEmpty(srcExpression)) {
             srcExpression = srcExpression.trim();
-            if (srcExpression.startsWith(parenthesesStart) && srcExpression.endsWith(parenthesesEnd)) {
+            if (srcExpression.startsWith(PARENTHESES_START) && srcExpression.endsWith(PARENTHESES_END)) {
                 srcExpression = srcExpression.substring(1, srcExpression.length() - 1);
             }
 
@@ -291,37 +271,42 @@ public class SqlParseUtils {
             where.accept(SqlOperatorEnum.getVisitor(listBuffer));
             Map<SqlOperatorEnum, List<String>> operatorMap = listBuffer.toList().head;
 
+            String delimiter = String.valueOf(sqlTempDelimiter);
+
             for (SqlOperatorEnum sqlOperator : operatorMap.keySet()) {
                 List<String> expList = operatorMap.get(sqlOperator);
                 if (null != expList && expList.size() > 0) {
                     String left = operatorMap.get(sqlOperator).get(0);
                     String right = operatorMap.get(sqlOperator).get(expList.size() - 1);
-                    if (right.startsWith(parenthesesStart) && right.endsWith(parenthesesEnd)) {
+                    if (right.startsWith(PARENTHESES_START) && right.endsWith(PARENTHESES_END)) {
                         right = right.substring(1, right.length() - 1);
                     }
-                    if (teamParamMap.containsKey(right)) {
-                        StringBuilder expBuilder = new StringBuilder();
-                        List<String> list = teamParamMap.get(right);
+                    if (right.startsWith(delimiter) && right.endsWith(delimiter)) {
+                        right = right.substring(1, right.length() - 1);
+                    }
+                    if (authParamMap.containsKey(right.trim())) {
+                        List<String> list = authParamMap.get(right.trim());
                         if (null != list && list.size() > 0) {
+                            StringBuilder expBuilder = new StringBuilder();
                             if (list.size() == 1) {
                                 if (!StringUtils.isEmpty(list.get(0))) {
                                     switch (sqlOperator) {
                                         case IN:
                                             expBuilder
-                                                    .append(left).append(space)
-                                                    .append(SqlOperatorEnum.IN.getValue()).append(space)
-                                                    .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                                    .append(left).append(SPACE)
+                                                    .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
+                                                    .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                             break;
                                         default:
-                                            if (list.get(0).split(",").length > 0) {
+                                            if (list.get(0).split(",").length > 1) {
                                                 expBuilder
-                                                        .append(left).append(space)
-                                                        .append(SqlOperatorEnum.IN.getValue()).append(space)
-                                                        .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                                        .append(left).append(SPACE)
+                                                        .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
+                                                        .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                             } else {
                                                 expBuilder
-                                                        .append(left).append(space)
-                                                        .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                                                        .append(left).append(SPACE)
+                                                        .append(sqlOperator.getValue()).append(SPACE).append(list.get(0));
                                             }
                                             break;
                                     }
@@ -333,16 +318,16 @@ public class SqlParseUtils {
                                     case IN:
                                     case EQUALSTO:
                                         expBuilder
-                                                .append(left).append(space)
-                                                .append(SqlOperatorEnum.IN.getValue()).append(space)
-                                                .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                                .append(left).append(SPACE)
+                                                .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
+                                                .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                         break;
 
                                     case NOTEQUALSTO:
                                         expBuilder
-                                                .append(left).append(space)
-                                                .append(SqlOperatorEnum.NoTIN.getValue()).append(space)
-                                                .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                                .append(left).append(SPACE)
+                                                .append(SqlOperatorEnum.NoTIN.getValue()).append(SPACE)
+                                                .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                         break;
 
                                     case BETWEEN:
@@ -351,8 +336,8 @@ public class SqlParseUtils {
                                     case MINORTHAN:
                                     case MINORTHANEQUALS:
                                         expBuilder.append(list.stream()
-                                                .map(x -> space + left + space + SqlOperatorEnum.BETWEEN.getValue() + space + x + space)
-                                                .collect(Collectors.joining("or", "(", ")")));
+                                                .map(x -> SPACE + left + SPACE + SqlOperatorEnum.BETWEEN.getValue() + SPACE + x + SPACE)
+                                                .collect(Collectors.joining("or", PARENTHESES_START, PARENTHESES_END)));
                                         break;
 
                                     default:
@@ -360,26 +345,16 @@ public class SqlParseUtils {
                                         break;
                                 }
                             }
+                            return expBuilder.toString();
+                        } else {
+                            return "1=1";
                         }
-                        return expBuilder.toString();
+                    } else {
+                        return "1=0";
                     }
                 }
             }
         }
         return originExpression;
-    }
-
-
-    public static char getSqlTempDelimiter(String sqlTempDelimiter) {
-        return sqlTempDelimiter.charAt(sqlTempDelimiter.length() - 1);
-    }
-
-
-    private static String getTeamVarReg(char delimiter) {
-        String arg = String.valueOf(delimiter);
-        if (delimiter == dollarDelimiter) {
-            arg = "\\" + arg;
-        }
-        return String.format(REG_TEAMVAR, arg, arg);
     }
 }

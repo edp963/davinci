@@ -27,7 +27,7 @@ import javax.validation.constraints.NotNull;
 @NotNull(message = "widget cannot be null")
 @Data
 public class WidgetCreate {
-    @NotBlank(message = "widget name cannot be empty")
+    @NotBlank(message = "widget name cannot be EMPTY")
     private String name;
 
     private String description;

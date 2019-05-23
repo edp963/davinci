@@ -1,73 +1,71 @@
 
-import OperatorTypes from './operatorTypes'
+import OperatorTypes from 'utils/operatorTypes'
 
 export enum FilterTypes {
-  InputText = 'inputText',
-  InputNumber = 'inputNumber',
-  NumberRange = 'NumberRange',
   Select = 'select',
-  MultiSelect = 'multiSelect',
-  CascadeSelect = 'cascadeSelect',
-  InputDate = 'inputDate',
-  MultiDate = 'multiDate',
+  Date = 'date',
   DateRange = 'dateRange',
-  Datetime = 'datetime',
-  DatetimeRange = 'datetimeRange'
+  InputText = 'inputText',
+  NumberRange = 'numberRange'
+  // TreeSelect = 'treeSelect'
 }
 
 export const FilterTypeList = [
-  FilterTypes.InputText,
-  FilterTypes.InputNumber,
-  FilterTypes.NumberRange,
   FilterTypes.Select,
-  FilterTypes.MultiSelect,
-  // FilterTypes.CascadeSelect,
-  FilterTypes.InputDate,
-  FilterTypes.MultiDate,
+  FilterTypes.Date,
   FilterTypes.DateRange,
-  FilterTypes.Datetime,
-  FilterTypes.DatetimeRange
+  FilterTypes.InputText,
+  FilterTypes.NumberRange
+  // FilterTypes.TreeSelect
 ]
 
 export const FilterTypesLocale = {
-  [FilterTypes.InputText]: '文本输入框',
-  [FilterTypes.InputNumber]: '数字输入框',
-  [FilterTypes.NumberRange]: '数字范围输入框',
-  [FilterTypes.Select]: '单选下拉菜单',
-  [FilterTypes.MultiSelect]: '多选下拉菜单',
-  [FilterTypes.CascadeSelect]: '级联下拉菜单',
-  [FilterTypes.InputDate]: '日期选择',
-  [FilterTypes.MultiDate]: '日期多选',
+  [FilterTypes.Select]: '下拉菜单',
+  [FilterTypes.Date]: '日期选择',
   [FilterTypes.DateRange]: '日期范围选择',
-  [FilterTypes.Datetime]: '日期时间选择',
-  [FilterTypes.DatetimeRange]: '日期时间范围选择'
+  [FilterTypes.InputText]: '文本输入框',
+  [FilterTypes.NumberRange]: '数字范围输入框'
+  // [FilterTypes.TreeSelect]: '下拉树'
 }
 
-export const FilterTypesViewSetting = {
-  [FilterTypes.InputText]: false,
-  [FilterTypes.InputNumber]: false,
-  [FilterTypes.NumberRange]: false,
+export const SHOULD_LOAD_OPTIONS = {
   [FilterTypes.Select]: true,
-  [FilterTypes.MultiSelect]: true,
-  [FilterTypes.CascadeSelect]: true,
-  [FilterTypes.InputDate]: false,
-  [FilterTypes.MultiDate]: false,
+  [FilterTypes.Date]: false,
   [FilterTypes.DateRange]: false,
-  [FilterTypes.Datetime]: false,
-  [FilterTypes.DatetimeRange]: false
+  [FilterTypes.InputText]: false,
+  [FilterTypes.NumberRange]: false
+  // [FilterTypes.TreeSelect]: true
+}
+
+export const IS_RANGE_TYPE = {
+  [FilterTypes.Select]: false,
+  [FilterTypes.Date]: false,
+  [FilterTypes.DateRange]: true,
+  [FilterTypes.InputText]: false,
+  [FilterTypes.NumberRange]: true
+  // [FilterTypes.TreeSelect]: false
 }
 
 export const FilterTypesOperatorSetting = {
-  [FilterTypes.InputText]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
-  [FilterTypes.InputNumber]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
-  [FilterTypes.NumberRange]: [],
-  [FilterTypes.Select]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
-  [FilterTypes.MultiSelect]: [OperatorTypes.In, OperatorTypes.NotIn],
-  [FilterTypes.InputDate]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
-  [FilterTypes.MultiDate]: [OperatorTypes.In, OperatorTypes.NotIn],
+  [FilterTypes.Select]: {
+    normal: [OperatorTypes.Equal, OperatorTypes.NotEqual],
+    multiple: [OperatorTypes.In, OperatorTypes.NotIn]
+  },
+  [FilterTypes.Date]: {
+    normal: [OperatorTypes.Equal, OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
+    multiple: [OperatorTypes.In, OperatorTypes.NotIn]
+  },
   [FilterTypes.DateRange]: [],
-  [FilterTypes.Datetime]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
-  [FilterTypes.DatetimeRange]: []
+  [FilterTypes.InputText]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
+  [FilterTypes.NumberRange]: []
+  // [FilterTypes.TreeSelect]: [OperatorTypes.In, OperatorTypes.NotIn]
 }
+
+export const CascadeFilterTypes = [
+  FilterTypes.Select
+  // FilterTypes.TreeSelect
+]
+
+export const defaultFilterControlGridProps = { xxl: 3, xl: 4, lg: 6, md: 12}
 
 export default FilterTypes

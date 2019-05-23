@@ -46,7 +46,9 @@ public interface DashboardPortalMapper {
             "description = #{description,jdbcType=VARCHAR},",
             "project_id = #{projectId,jdbcType=BIGINT},",
             "avatar = #{avatar,jdbcType=VARCHAR},",
-            "publish = #{publish,jdbcType=BIT}",
+            "publish = #{publish,jdbcType=BIT},",
+            "update_by = #{updateBy,jdbcType=BIGINT},",
+            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(DashboardPortal dashboardPortal);
@@ -54,19 +56,8 @@ public interface DashboardPortalMapper {
     @Select({"select id from dashboard_portal where project_id = #{projectId} and name = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
 
-    @Select({
-            "select * from dashboard_portal where project_id = #{projectId}",
-            "   and id not in (",
-            "       SELECT portal_id FROM exclude_portal_team ept",
-            "       LEFT JOIN rel_user_team rut on rut.team_id = ept.team_id",
-            "       LEFT JOIN rel_team_project rtp on rtp.team_id = ept.team_id",
-            "       LEFT JOIN team t on t.id = ept.team_id",
-            "       LEFT JOIN rel_user_organization ruo on ruo.org_id = t.org_id",
-            "       WHERE rut.user_id = #{userId} and rtp.project_id = #{projectId}",
-            "       and (rut.role = 0 and ruo.role = 0)",
-            "   )"
-    })
-    List<DashboardPortal> getByProject(@Param("projectId") Long projectId, @Param("userId") Long userId);
+    @Select({"select * from dashboard_portal where project_id = #{projectId}"})
+    List<DashboardPortal> getByProject(@Param("projectId") Long projectId);
 
 
     @Select({

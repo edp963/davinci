@@ -34,7 +34,8 @@ import {
   DELETE_WIDGET,
   DELETE_WIDGET_SUCCESS,
   DELETE_WIDGET_FAILURE,
-  CLEAR_CURRENT_WIDGET
+  CLEAR_CURRENT_WIDGET,
+  EXECUTE_COMPUTED_SQL
 } from './constants'
 
 export function loadWidgets (projectId) {
@@ -95,11 +96,12 @@ export function loadWidgetDetail (id) {
   }
 }
 
-export function widgetDetailLoaded (detail) {
+export function widgetDetailLoaded (detail, view) {
   return {
     type: LOAD_WIDGET_DETAIL_SUCCESS,
     payload: {
-      detail
+      detail,
+      view
     }
   }
 }
@@ -162,5 +164,14 @@ export function deleteWidgetFail () {
 export function clearCurrentWidget () {
   return {
     type: CLEAR_CURRENT_WIDGET
+  }
+}
+
+export function executeComputed (sql) {
+  return {
+    type: EXECUTE_COMPUTED_SQL,
+    payload: {
+      sql
+    }
   }
 }

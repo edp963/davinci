@@ -23,7 +23,6 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.model.User;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Set;
 
 public interface DepartmentService {
 
