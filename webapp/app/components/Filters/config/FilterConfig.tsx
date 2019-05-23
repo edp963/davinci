@@ -617,7 +617,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     return (
       <Modal
         wrapClassName="ant-modal-large ant-modal-center"
-        title="全局筛选配置"
+        title="全局控制器配置"
         maskClosable={false}
         visible={visible}
         footer={modalButtons}

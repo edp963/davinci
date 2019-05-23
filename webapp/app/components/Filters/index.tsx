@@ -117,7 +117,7 @@ export type OnFilterValueChange = (
 export function getDefaultGlobalControl (): IGlobalControl {
   const control: IGlobalControl = {
     key: uuid(8, 16),
-    name: '新建全局筛选',
+    name: '新建控制器',
     type: FilterTypes.Select,
     interactionType: 'column',
     operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],
@@ -134,7 +134,7 @@ export function getDefaultLocalControl (view: IFormedView): ILocalControl {
   const defaultFields = modelList[0]
   const control: ILocalControl = {
     key: uuid(8, 16),
-    name: '新建全局筛选',
+    name: '新建控制器',
     type: FilterTypes.Select,
     interactionType: 'column',
     operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],

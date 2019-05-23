@@ -187,7 +187,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
     return (
       <Form className={styles.filterForm}>
         <div className={styles.title}>
-          <h2>筛选控件配置</h2>
+          <h2>控制器配置</h2>
         </div>
         <Row gutter={8} className={styles.formBody}>
           <Col span={8}>
