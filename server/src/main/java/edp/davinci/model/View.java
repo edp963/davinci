@@ -68,6 +68,11 @@ public class View extends RecordInfo<View> {
             return null;
         }
 
-        return JSONObject.parseArray(variable, SqlVariable.class);
+        try {
+            return JSONObject.parseArray(variable, SqlVariable.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

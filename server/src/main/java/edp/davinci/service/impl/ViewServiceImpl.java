@@ -717,7 +717,7 @@ public class ViewServiceImpl implements ViewService {
                     List<SqlVariable> list = map.get(p.getName());
                     if (null != list && list.size() > 0) {
                         SqlVariable v = list.get(list.size() - 1);
-                        sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue()));
+                        sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue(), v.isUdf()));
                     }
                 }
             });
@@ -734,19 +734,32 @@ public class ViewServiceImpl implements ViewService {
             ExecutorService executorService = Executors.newFixedThreadPool(8);
             CountDownLatch countDownLatch = new CountDownLatch(authVariables.size());
             ConcurrentHashMap<String, Set<String>> map = new ConcurrentHashMap<>();
+            final Future<?>[] future = {null};
             try {
-                authVariables.forEach(sqlVariable -> executorService.execute(() -> {
-                    if (null != sqlVariable) {
-                        List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
-                        if (map.containsKey(sqlVariable.getName().trim())) {
-                            map.get(sqlVariable.getName().trim()).addAll(values);
-                        } else {
-                            map.put(sqlVariable.getName().trim(), new HashSet<>(values));
-                        }
+                authVariables.forEach(sqlVariable -> {
+                    try {
+                        future[0] = executorService.submit(() -> {
+                            if (null != sqlVariable) {
+                                List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
+                                if (map.containsKey(sqlVariable.getName().trim())) {
+                                    map.get(sqlVariable.getName().trim()).addAll(values);
+                                } else {
+                                    map.put(sqlVariable.getName().trim(), new HashSet<>(values));
+                                }
+                            }
+                        });
+                    } finally {
+                        countDownLatch.countDown();
                     }
-                    countDownLatch.countDown();
-                }));
-                countDownLatch.await();
+                });
+
+                try {
+                    future[0].get();
+                    countDownLatch.await();
+                } catch (ExecutionException e) {
+                    executorService.shutdownNow();
+                    throw (ServerException) e.getCause();
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {

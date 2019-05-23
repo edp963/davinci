@@ -19,6 +19,7 @@
 
 package edp.davinci.core.enums;
 
+import edp.core.utils.SqlUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -33,7 +34,8 @@ public enum SqlVariableValueTypeEnum {
     STRING("string"),
     NUMBER("number"),
     BOOLEAN("boolean"),
-    DATE("date");
+    DATE("date"),
+    SQL("sql");
 
     private String valueType;
 
@@ -41,19 +43,27 @@ public enum SqlVariableValueTypeEnum {
         this.valueType = valueType;
     }
 
-    public static List<String> getValues(String valueType, List<Object> values) {
+    public static List<String> getValues(String valueType, List<Object> values, boolean udf) {
         if (null == values || values.size() == 0) {
             return new ArrayList<>();
         }
 
-        SqlVariableValueTypeEnum sqlVariableValueTypeEnum = SqlVariableValueTypeEnum.valueTypeOf(valueType.toLowerCase());
-        if (null != sqlVariableValueTypeEnum) {
-            switch (sqlVariableValueTypeEnum) {
+        SqlVariableValueTypeEnum valueTypeEnum = SqlVariableValueTypeEnum.valueTypeOf(valueType.toLowerCase());
+
+        if (udf && valueTypeEnum != SQL) {
+            return values.stream().map(String::valueOf).collect(Collectors.toList());
+        }
+
+        if (null != valueTypeEnum) {
+            switch (valueTypeEnum) {
                 case STRING:
                 case DATE:
                     return values.stream().map(String::valueOf)
                             .map(s -> s.startsWith(APOSTROPHE) && s.endsWith(APOSTROPHE) ? s : String.join(EMPTY, APOSTROPHE, s, APOSTROPHE))
                             .collect(Collectors.toList());
+                case SQL:
+                    values.stream().map(String::valueOf).forEach(SqlUtils::checkSensitiveSql);
+                    return values.stream().map(String::valueOf).collect(Collectors.toList());
                 case NUMBER:
                     return values.stream().map(String::valueOf).collect(Collectors.toList());
                 case BOOLEAN:
@@ -64,15 +74,22 @@ public enum SqlVariableValueTypeEnum {
     }
 
 
-    public static Object getValue(String valueType, String value) {
+    public static Object getValue(String valueType, String value, boolean udf) {
         if (!StringUtils.isEmpty(value)) {
             SqlVariableValueTypeEnum valueTypeEnum = SqlVariableValueTypeEnum.valueTypeOf(valueType.toLowerCase());
+
+
+            if (udf && valueTypeEnum != SQL) {
+                return value;
+            }
+
             if (null != valueTypeEnum) {
                 switch (valueTypeEnum) {
                     case STRING:
                     case DATE:
                         return String.join(EMPTY, value.startsWith(APOSTROPHE) ? EMPTY : APOSTROPHE, value, value.endsWith(APOSTROPHE) ? EMPTY : APOSTROPHE);
                     case NUMBER:
+                    case SQL:
                         return value;
                     case BOOLEAN:
                         return Boolean.parseBoolean(value);
