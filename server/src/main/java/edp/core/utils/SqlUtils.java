@@ -538,7 +538,7 @@ public class SqlUtils {
      * @param sql
      * @throws ServerException
      */
-    private void checkSensitiveSql(String sql) throws ServerException {
+    public static void checkSensitiveSql(String sql) throws ServerException {
         Pattern pattern = Pattern.compile(Consts.REG_SENSITIVE_SQL);
         Matcher matcher = pattern.matcher(sql.toLowerCase());
         if (matcher.find()) {

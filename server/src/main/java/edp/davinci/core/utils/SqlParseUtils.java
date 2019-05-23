@@ -39,10 +39,7 @@ import org.springframework.stereotype.Component;
 import org.stringtemplate.v4.ST;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -92,27 +89,40 @@ public class SqlParseUtils {
             ExecutorService executorService = Executors.newFixedThreadPool(8);
             try {
                 CountDownLatch countDownLatch = new CountDownLatch(variables.size());
-                variables.forEach(variable -> executorService.execute(() -> {
-                    SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
-                    if (null != typeEnum) {
-                        switch (typeEnum) {
-                            case QUERYVAR:
-                                queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues()));
-                                break;
-                            case AUTHVARE:
-                                if (null != variable) {
-                                    List<String> v = getAuthVarValue(variable, null);
-                                    if (null != v) {
-                                        authParamMap.put(variable.getName().trim(), v);
-                                    }
+                final Future[] future = {null};
+                variables.forEach(variable -> {
+                    future[0] = executorService.submit(() -> {
+                        try {
+                            SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
+                            if (null != typeEnum) {
+                                switch (typeEnum) {
+                                    case QUERYVAR:
+                                        queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf()));
+                                        break;
+                                    case AUTHVARE:
+                                        if (null != variable) {
+                                            List<String> v = getAuthVarValue(variable, null);
+                                            if (null != v) {
+                                                authParamMap.put(variable.getName().trim(), v);
+                                            }
+                                        }
+                                        break;
                                 }
-                                break;
+                            }
+                        } finally {
+                            countDownLatch.countDown();
                         }
-                    }
-                    countDownLatch.countDown();
+                    });
+                });
 
-                }));
-                countDownLatch.await();
+                try {
+                    future[0].get();
+                    countDownLatch.await();
+                } catch (ExecutionException e) {
+                    executorService.shutdownNow();
+                    throw (ServerException) e.getCause();
+                }
+
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
@@ -126,11 +136,11 @@ public class SqlParseUtils {
     public List<String> getAuthVarValue(SqlVariable variable, String email) {
         SqlVariableChannel channel = variable.getChannel();
         if (null == channel) {
-            return SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues());
+            return SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf());
         } else if (DacChannelUtil.dacMap.containsKey(channel.getName())) {
             List<Object> data = dacChannelUtil.getData(channel.getName(), channel.getBizId().toString(), email);
             if (null != data) {
-                return SqlVariableValueTypeEnum.getValues(variable.getValueType(), data);
+                return SqlVariableValueTypeEnum.getValues(variable.getValueType(), data, variable.isUdf());
             }
         }
         return new ArrayList<>();
