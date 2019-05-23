@@ -231,7 +231,7 @@ public class DashboardServiceImpl implements DashboardService {
 
 
         //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (projectPermission.isProjectMaintainer() && isDisable)) {
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && isDisable)) {
             log.info("user {} have not permisson to create dashboard", user.getUsername());
             throw new UnAuthorizedExecption("you have not permission to create dashboard");
         }

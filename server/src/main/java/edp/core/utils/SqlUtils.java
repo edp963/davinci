@@ -747,13 +747,13 @@ public class SqlUtils {
 
     public static String getKeywordPrefix(String jdbcUrl) {
         String keywordPrefix = "";
-        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-        if (null != dataTypeEnum) {
-            keywordPrefix = dataTypeEnum.getKeywordPrefix();
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        if (null != customDataSource) {
+            keywordPrefix = customDataSource.getKeyword_prefix();
         } else {
-            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
-            if (null != customDataSource) {
-                keywordPrefix = customDataSource.getKeyword_prefix();
+            DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+            if (null != dataTypeEnum) {
+                keywordPrefix = dataTypeEnum.getKeywordPrefix();
             }
         }
         return StringUtils.isEmpty(keywordPrefix) ? EMPTY : keywordPrefix;
@@ -761,13 +761,13 @@ public class SqlUtils {
 
     public static String getKeywordSuffix(String jdbcUrl) {
         String keywordSuffix = "";
-        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-        if (null != dataTypeEnum) {
-            keywordSuffix = dataTypeEnum.getKeywordSuffix();
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        if (null != customDataSource) {
+            keywordSuffix = customDataSource.getKeyword_suffix();
         } else {
-            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
-            if (null != customDataSource) {
-                keywordSuffix = customDataSource.getKeyword_suffix();
+            DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+            if (null != dataTypeEnum) {
+                keywordSuffix = dataTypeEnum.getKeywordSuffix();
             }
         }
         return StringUtils.isEmpty(keywordSuffix) ? EMPTY : keywordSuffix;
@@ -775,13 +775,13 @@ public class SqlUtils {
 
     public static String getAliasPrefix(String jdbcUrl) {
         String aliasPrefix = "";
-        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-        if (null != dataTypeEnum) {
-            aliasPrefix = dataTypeEnum.getAliasPrefix();
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        if (null != customDataSource) {
+            aliasPrefix = customDataSource.getAlias_prefix();
         } else {
-            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
-            if (null != customDataSource) {
-                aliasPrefix = customDataSource.getAlias_prefix();
+            DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+            if (null != dataTypeEnum) {
+                aliasPrefix = dataTypeEnum.getAliasPrefix();
             }
         }
         return StringUtils.isEmpty(aliasPrefix) ? EMPTY : aliasPrefix;
@@ -789,13 +789,13 @@ public class SqlUtils {
 
     public static String getAliasSuffix(String jdbcUrl) {
         String aliasSuffix = "";
-        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-        if (null != dataTypeEnum) {
-            aliasSuffix = dataTypeEnum.getAliasSuffix();
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        if (null != customDataSource) {
+            aliasSuffix = customDataSource.getAlias_suffix();
         } else {
-            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
-            if (null != customDataSource) {
-                aliasSuffix = customDataSource.getAlias_suffix();
+            DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+            if (null != dataTypeEnum) {
+                aliasSuffix = dataTypeEnum.getAliasSuffix();
             }
         }
         return StringUtils.isEmpty(aliasSuffix) ? EMPTY : aliasSuffix;
