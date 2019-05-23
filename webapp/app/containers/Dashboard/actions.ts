@@ -37,9 +37,9 @@ import {
   LOAD_DASHBOARD_DETAIL,
   LOAD_DASHBOARD_DETAIL_SUCCESS,
   LOAD_DASHBOARD_DETAIL_FAILURE,
-  ADD_DASHBOARD_ITEM,
-  ADD_DASHBOARD_ITEM_SUCCESS,
-  ADD_DASHBOARD_ITEM_FAILURE,
+  ADD_DASHBOARD_ITEMS,
+  ADD_DASHBOARD_ITEMS_SUCCESS,
+  ADD_DASHBOARD_ITEMS_FAILURE,
   EDIT_DASHBOARD_ITEM,
   EDIT_DASHBOARD_ITEM_SUCCESS,
   EDIT_DASHBOARD_ITEM_FAILURE,
@@ -65,15 +65,21 @@ import {
   RESIZE_DASHBOARDITEM,
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
-  DELETE_DRILL_HISTORY
+  DELETE_DRILL_HISTORY,
+  DRILL_PATH_DASHBOARDITEM,
+  DELETE_DRILL_PATH_HISTORY,
+  DRILL_PATH_SETTING,
+  SELECT_DASHBOARD_ITEM_CHART,
+  SET_SELECT_OPTIONS,
+  SET_CONTROL_FORM_VALUES
 } from './constants'
 
-export function addDashboardItem (portalId, item, resolve) {
+export function addDashboardItems (portalId, items, resolve) {
   return {
-    type: ADD_DASHBOARD_ITEM,
+    type: ADD_DASHBOARD_ITEMS,
     payload: {
       portalId,
-      item,
+      items,
       resolve
     }
   }
@@ -233,14 +239,14 @@ export function loadDashboardDetail (projectId, portalId, dashboardId) {
   }
 }
 
-export function dashboardDetailLoaded (dashboardId, dashboardDetail, widgets, bizlogics) {
+export function dashboardDetailLoaded (dashboardId, dashboardDetail, widgets, views) {
   return {
     type: LOAD_DASHBOARD_DETAIL_SUCCESS,
     payload: {
       dashboardId,
       dashboardDetail,
       widgets,
-      bizlogics
+      views
     }
   }
 }
@@ -251,25 +257,26 @@ export function loadDashboardDetailFail () {
   }
 }
 
-export function dashboardItemAdded (result) {
+export function dashboardItemsAdded (result) {
   return {
-    type: ADD_DASHBOARD_ITEM_SUCCESS,
+    type: ADD_DASHBOARD_ITEMS_SUCCESS,
     payload: {
       result
     }
   }
 }
 
-export function addDashboardItemFail () {
+export function addDashboardItemsFail () {
   return {
-    type: ADD_DASHBOARD_ITEM_FAILURE
+    type: ADD_DASHBOARD_ITEMS_FAILURE
   }
 }
 
-export function editDashboardItem (item, resolve) {
+export function editDashboardItem (portalId, item, resolve) {
   return {
     type: EDIT_DASHBOARD_ITEM,
     payload: {
+      portalId,
       item,
       resolve
     }
@@ -291,10 +298,11 @@ export function editDashboardItemFail () {
   }
 }
 
-export function editDashboardItems (items) {
+export function editDashboardItems (portalId, items) {
   return {
     type: EDIT_DASHBOARD_ITEMS,
     payload: {
+      portalId,
       items
     }
   }
@@ -405,14 +413,13 @@ export function loadWidgetShareLinkFail (itemId) {
   }
 }
 
-export function loadWidgetCsv (itemId, widgetId, params, token) {
+export function loadWidgetCsv (itemId, widgetId, requestParams) {
   return {
     type: LOAD_WIDGET_CSV,
     payload: {
       itemId,
       widgetId,
-      params,
-      token
+      requestParams
     }
   }
 }
@@ -475,6 +482,47 @@ export function deleteDrillHistory (itemId, index) {
     payload: {
       itemId,
       index
+    }
+  }
+}
+
+export function drillPathsetting (itemId, history) {
+  return {
+    type: DRILL_PATH_SETTING,
+    payload: {
+      itemId,
+      history
+    }
+  }
+}
+
+export function selectDashboardItemChart (itemId, renderType, selectedItems) {
+  return {
+    type: SELECT_DASHBOARD_ITEM_CHART,
+    payload: {
+      itemId,
+      renderType,
+      selectedItems
+    }
+  }
+}
+
+export function setSelectOptions (controlKey, options, itemId?) {
+  return {
+    type: SET_SELECT_OPTIONS,
+    payload: {
+      controlKey,
+      options,
+      itemId
+    }
+  }
+}
+
+export function setControlFormValues (formValues) {
+  return {
+    type: SET_CONTROL_FORM_VALUES,
+    payload: {
+      formValues
     }
   }
 }

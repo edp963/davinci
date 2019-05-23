@@ -33,7 +33,6 @@ import {
   getMetricAxisOption,
   getLabelOption,
   getLegendOption,
-  getGridPositions,
   getSymbolSize
 } from './util'
 
@@ -140,7 +139,7 @@ export default function (chartProps: IChartProps) {
     axisDimensions = axisDimensions.concat(cols)
   }
   const dimensionsData = data.map((row) => (
-    axisDimensions.map((name) => row[name])
+    axisDimensions.map(({ name }) => row[name])
   ))
 
   if (color.items.length) {
@@ -198,7 +197,7 @@ export default function (chartProps: IChartProps) {
       lineStyle,
       data: data.map((row) => (
         [
-          ...axisDimensions.map((name) => row[name]),
+          ...axisDimensions.map(({ name }) => row[name]),
           ...metrics.map((m) => row[`${m.agg}(${decodeMetricName(m.name)})`])
         ]
       ))
@@ -206,7 +205,7 @@ export default function (chartProps: IChartProps) {
   }
 
   const parallelAxis = [
-    ...axisDimensions.map((name, idx) => ({
+    ...axisDimensions.map(({ name }, idx) => ({
       dim: idx,
       name: showTitleAndUnit ? name : '',
       type: 'category',

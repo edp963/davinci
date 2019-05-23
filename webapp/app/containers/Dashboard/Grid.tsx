@@ -28,40 +28,36 @@ import { Link } from 'react-router'
 import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
-import reducerWidget from '../Widget/reducer'
-import sagaWidget from '../Widget/sagas'
-import reducerBizlogic from '../Bizlogic/reducer'
-import sagaBizlogic from '../Bizlogic/sagas'
+import widgetReducer from '../Widget/reducer'
+import widgetSaga from '../Widget/sagas'
+import viewReducer from '../View/reducer'
+import viewSaga from '../View/sagas'
+import formReducer from './FormReducer'
+
+import { IViewBase, IFormedViews } from '../View/types'
 
 import Container from '../../components/Container'
 import DashboardToolbar from './components/DashboardToolbar'
 import DashboardItemForm from './components/DashboardItemForm'
+import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
-import { IFilterChangeParam } from 'components/Filters'
-import DashboardFilterPanel from './components/DashboardFilterPanel'
-import DashboardFilterConfig from './components/DashboardFilterConfig'
+import { IMapItemControlRequestParams, IMapControlOptions, IDistinctValueReqeustParams, InteractionType } from 'components/Filters'
+import GlobalControlPanel from '../../components/Filters/FilterPanel'
+import GlobalControlConfig from '../../components/Filters/config/FilterConfig'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 
 import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Modal = require('antd/lib/modal')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const Icon = require('antd/lib/icon')
-const Dropdown = require('antd/lib/dropdown')
-const Menu = require('antd/lib/menu')
-
+import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu } from 'antd'
+import { uuid } from '../../utils/util'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
 import { decodeMetricName } from '../Widget/components/util'
 import { hideNavigator } from '../App/actions'
-import { loadProjectDetail } from '../Projects/actions'
 import {
   loadDashboardDetail,
-  addDashboardItem,
+  addDashboardItems,
   editCurrentDashboard,
   editDashboardItem,
   editDashboardItems,
@@ -74,7 +70,10 @@ import {
   loadDashboardShareLink,
   loadWidgetShareLink,
   drillDashboardItem,
-  deleteDrillHistory
+  deleteDrillHistory,
+  drillPathsetting,
+  selectDashboardItemChart,
+  setSelectOptions
 } from './actions'
 import {
   makeSelectDashboards,
@@ -85,21 +84,16 @@ import {
   makeSelectCurrentDashboardShareInfo,
   makeSelectCurrentDashboardSecretInfo,
   makeSelectCurrentDashboardShareInfoLoading,
-  makeSelectCurrentDashboardCascadeSources,
+  makeSelectCurrentDashboardSelectOptions,
   makeSelectCurrentLinkages
 } from './selectors'
-import {
-  loadDataFromItem,
-  loadCascadeSource,
-  loadBizdataSchema,
-  loadDistinctValue
-} from '../Bizlogic/actions'
+import { ViewActions, ViewActionType } from '../View/actions'
+const { loadViewDataFromVizItem, loadViewsDetail, loadSelectOptions } = ViewActions
 import { makeSelectWidgets } from '../Widget/selectors'
-import { makeSelectBizlogics } from '../Bizlogic/selectors'
+import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 
 import {
-  ECHARTS_RENDERER,
   SQL_NUMBER_TYPES,
   DEFAULT_SPLITER,
   GRID_BREAKPOINTS,
@@ -109,19 +103,84 @@ import {
   KEY_COLUMN
 } from '../../globalConstants'
 import { InjectedRouter } from 'react-router/lib/Router'
-import { IWidgetProps, RenderType } from '../Widget/components/Widget'
+import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
-
+import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
+export type QueryVariable = Array<{name: string, value: string | number}>
+export interface IQueryVariableMap {
+  [key: string]: string | number
+}
+
+export interface IQueryConditions {
+  filters: string[]
+  tempFilters: string[]
+  linkageFilters: string[]
+  globalFilters: string[]
+  variables: QueryVariable
+  linkageVariables: QueryVariable
+  globalVariables: QueryVariable
+  pagination?: {
+    pageNo: number
+    pageSize: number
+  }
+  nativeQuery?: boolean
+  drillStatus?: any
+  drillHistory?: Array<{filter?: any, type?: string, col?: string[], row?: string[], groups?: string[], name: string}>
+  drillpathSetting?: any
+  drillpathInstance?: any
+}
+
+interface IDashboardItemInfo {
+  datasource: {
+    pageNo: number
+    pageSize: number
+    resultList: any[]
+    totalCount: number
+  }
+  loading: boolean
+  queryConditions: IQueryConditions
+  shareInfo: string
+  secretInfo: string
+  shareInfoLoading: boolean
+  downloadCsvLoading: boolean
+  interactId: string
+  rendered: boolean
+  renderType: RenderType
+  controlSelectOptions: IMapControlOptions
+  selectedItems?: number[]
+}
+
+export interface IDataRequestParams {
+  groups: string[]
+  aggregators: Array<{column: string, func: string}>
+  filters: string[]
+  tempFilters?: string[]
+  linkageFilters?: string[]
+  globalFilters?: string[]
+  variables?: QueryVariable
+  linkageVariables?: QueryVariable
+  globalVariables?: QueryVariable
+  orders: Array<{column: string, direction: string}>
+  cache: boolean
+  expired: number
+  pagination?: {
+    pageNo: number
+    pageSize: number
+  }
+  nativeQuery?: boolean
+}
+
 interface IGridProps {
   dashboards: any[]
   widgets: any[]
-  bizlogics: any[]
+  views: IViewBase[]
+  formedViews: IFormedViews
   currentProject: IProject
   router: InjectedRouter
   params: any
@@ -132,109 +191,60 @@ interface IGridProps {
   currentDashboardShareInfoLoading: boolean
   currentItems: any[]
   currentItemsInfo: {
-    [key: string]: {
-      datasource: {
-        pageNo: number
-        pageSize: number
-        resultList: any[]
-        totalCount: number
-      }
-      loading: boolean
-      queryParams: {
-        filters: string
-        linkageFilters: string
-        globalFilters: string
-        params: Array<{name: string, value: string}>
-        linkageParams: Array<{name: string, value: string}>
-        globalParams: Array<{name: string, value: string}>
-        drillHistory?: Array<{filter?: any, type?: string, groups?: string[], name: string}>
-      }
-      shareInfo: string
-      secretInfo: string
-      shareInfoLoading: boolean
-      downloadCsvLoading: boolean
-      interactId: string
-      rendered: boolean
-      renderType: RenderType
-    }
+    [key: string]: IDashboardItemInfo
   }
-  currentDashboardCascadeSources: {
-    [filterKey: string]: {
-      [key: string]: Array<number | string>
-    }
-  }
+  currentDashboardSelectOptions: IMapControlOptions
   currentLinkages: any[]
   onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
-  onAddDashboardItem: (portalId: number, item: [IDashboardItem], resolve: (item: IDashboardItem) => void) => any
+  onAddDashboardItems: (portalId: number, items: IDashboardItem[], resolve: (items: IDashboardItem[]) => void) => any
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
-  onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
-  onEditDashboardItems: (item: IDashboardItem[]) => void
+  onEditDashboardItem: (portalId: number, item: IDashboardItem, resolve: () => void) => void
+  onEditDashboardItems: (portalid: number, item: IDashboardItem[]) => void
   onDeleteDashboardItem: (id: number, resolve?: () => void) => void
   onLoadDataFromItem: (
     renderType: RenderType,
     dashboardItemId: number,
     viewId: number,
-    params: {
-      groups: string[]
-      aggregators: Array<{column: string, func: string}>
-      filters: string[]
-      linkageFilters: string[]
-      globalFilters: string[]
-      params: Array<{name: string, value: string}>
-      linkageParams: Array<{name: string, value: string}>
-      globalParams: Array<{name: string, value: string}>
-      orders: Array<{column: string, direction: string}>
-      cache: boolean
-      expired: number
-    }
+    requestParams: IDataRequestParams
   ) => void
+  onLoadViewsDetail: (viewIds: number[], resolve: () => void) => void
   onLoadWidgetCsv: (
     itemId: number,
     widgetId: number,
-    params: {
-      groups: string[]
-      aggregators: Array<{column: string, func: string}>
-      filters: string[]
-      linkageFilters: string[]
-      globalFilters: string[]
-      params: Array<{name: string, value: string}>
-      linkageParams: Array<{name: string, value: string}>
-      globalParams: Array<{name: string, value: string}>
-      orders: Array<{column: string, direction: string}>
-      cache: boolean
-      expired: number
-    },
-    token: string
+    requestParams: IDataRequestParams
   ) => void
   onClearCurrentDashboard: () => any
-  onLoadCascadeSource: (controlId: number, viewId: number, column: string, parents: Array<{ column: string, value: string }>) => void
-  onLoadBizdataSchema: () => any
-  onLoadDistinctValue: (viewId: number, fieldName: string, resolve: (data) => void) => void
+  onLoadSelectOptions: (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }, itemId?: number) => void
+  onSetSelectOptions: (controlKey: string, options: any[], itemId?: number) => void
   onRenderDashboardItem: (itemId: number) => void
   onResizeDashboardItem: (itemId: number) => void
   onResizeAllDashboardItem: () => void
   onLoadDashboardShareLink: (id: number, authName: string) => void
   onLoadWidgetShareLink: (id: number, itemId: number, authName: string, resolve?: () => void) => void
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
+  onDrillPathSetting: (itemId: number, history: any[]) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
+  onSelectDashboardItemChart: (itemId: number, renderType: string, selectedItems: number[]) => void
 }
 
 interface IGridStates {
   mounted: boolean
-  layoutInitialized: boolean,
+  layoutInitialized: boolean
   allowFullScreen: boolean
   currentDataInFullScreen: object
   dashboardItemFormType: string
   dashboardItemFormVisible: boolean
   dashboardItemFormStep: number
   modalLoading: boolean
-  selectedWidget: any[]
+  selectedWidgets: number[]
+  currentItemId: number | boolean
   polling: boolean
   linkageConfigVisible: boolean
   interactingStatus: { [itemId: number]: boolean }
   globalFilterConfigVisible: boolean
   dashboardSharePanelAuthorized: boolean
   nextMenuTitle: string
+  drillPathSettingVisible: boolean
 }
 
 interface IDashboardItemForm extends AntdFormType {
@@ -253,10 +263,6 @@ interface IDashboardItem {
   frequency?: number
 }
 
-interface IDashboardItemFilters extends AntdFormType {
-  resetTree: () => void
-}
-
 export class Grid extends React.Component<IGridProps, IGridStates> {
   constructor (props) {
     super(props)
@@ -270,10 +276,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
       dashboardItemFormType: '',
       dashboardItemFormVisible: false,
+      drillPathSettingVisible: false,
       dashboardItemFormStep: 0,
       modalLoading: false,
-      selectedWidget: [],
+      selectedWidgets: [],
       polling: false,
+      currentItemId: false,
 
       linkageConfigVisible: false,
       interactingStatus: {},
@@ -290,10 +298,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private interactGlobalFilters: object = {}
   private resizeSign: number
   private dashboardItemForm: IDashboardItemForm = null
-  private dashboardItemFilters: IDashboardItemFilters = null
   private refHandles = {
-    dashboardItemForm: (f) => { this.dashboardItemForm = f },
-    dashboardItemFilters: (f) => { this.dashboardItemFilters = f }
+    dashboardItemForm: (f) => { this.dashboardItemForm = f }
   }
 
   private containerBody: any = null
@@ -318,7 +324,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentItemsInfo,
       params
     } = nextProps
-    const { onLoadDashboardDetail, onLoadCascadeSource } = this.props
+    const { onLoadDashboardDetail } = this.props
     const { layoutInitialized } = this.state
 
     if (params.dashboardId !== this.props.params.dashboardId) {
@@ -383,22 +389,22 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private calcItemTop = (y: number) => Math.round((GRID_ROW_HEIGHT + GRID_ITEM_MARGIN) * y)
 
-  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
     this.getData(
-      (renderType, itemId, widget, queryParams) => {
-        this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, queryParams)
+      (renderType, itemId, widget, requestParams) => {
+        this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, requestParams)
       },
       renderType,
       itemId,
       widgetId,
-      queryParams
+      queryConditions
     )
   }
 
-  private downloadCsv = (itemId: number, widgetId: number, shareInfo: string) => {
+  private downloadCsv = (itemId: number, widgetId: number) => {
     this.getData(
-      (renderType, itemId, widget, queryParams) => {
-        this.props.onLoadWidgetCsv(itemId, widget.id, queryParams, shareInfo)
+      (renderType, itemId, widget, requestParams) => {
+        this.props.onLoadWidgetCsv(itemId, widget.id, requestParams)
       },
       'rerender',
       itemId,
@@ -411,49 +417,66 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       renderType: RenderType,
       itemId: number,
       widget: any,
-      queryParams?: any
+      requestParams?: IDataRequestParams
     ) => void,
     renderType: RenderType,
     itemId: number,
     widgetId: number,
-    queryParams?: any
+    queryConditions?: Partial<IQueryConditions>
   ) => {
     const {
       currentItemsInfo,
       widgets
     } = this.props
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
+    const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
-    const cachedQueryParams = currentItemsInfo[itemId].queryParams
+    const cachedQueryConditions = currentItemsInfo[itemId].queryConditions
+
+    let tempFilters
     let linkageFilters
     let globalFilters
-    let params
-    let linkageParams
-    let globalParams
+    let variables
+    let linkageVariables
+    let globalVariables
     let drillStatus
+    let pagination
+    let nativeQuery
 
-    if (queryParams) {
-      linkageFilters = queryParams.linkageFilters !== void 0 ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
-      globalFilters = queryParams.globalFilters !== void 0 ? queryParams.globalFilters : cachedQueryParams.globalFilters
-      params = queryParams.params || cachedQueryParams.params
-      linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
-      globalParams = queryParams.globalParams || cachedQueryParams.globalParams
-      drillStatus = queryParams.drillStatus || void 0
+    if (queryConditions) {
+      tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
+      linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
+      globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      variables = queryConditions.variables || cachedQueryConditions.variables
+      linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
+      globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
+      drillStatus = queryConditions.drillStatus || void 0
+      pagination = queryConditions.pagination || cachedQueryConditions.pagination
+      nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
     } else {
-      linkageFilters = cachedQueryParams.linkageFilters
-      globalFilters = cachedQueryParams.globalFilters
-      params = cachedQueryParams.params
-      linkageParams = cachedQueryParams.linkageParams
-      globalParams = cachedQueryParams.globalParams
+      tempFilters = cachedQueryConditions.tempFilters
+      linkageFilters = cachedQueryConditions.linkageFilters
+      globalFilters = cachedQueryConditions.globalFilters
+      variables = cachedQueryConditions.variables
+      linkageVariables = cachedQueryConditions.linkageVariables
+      globalVariables = cachedQueryConditions.globalVariables
+      pagination = cachedQueryConditions.pagination
+      nativeQuery = cachedQueryConditions.nativeQuery
     }
 
-    let groups = cols.concat(rows).filter((g) => g !== '指标名称')
+    let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
     }))
+
+    if (secondaryMetrics && secondaryMetrics.length) {
+      aggregators = aggregators.concat(secondaryMetrics.map((second) => ({
+        column: decodeMetricName(second.name),
+        func: second.agg
+      })))
+    }
 
     if (color) {
       groups = groups.concat(color.items.map((c) => c.name))
@@ -490,25 +513,29 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           func: t.agg
         })))
     }
-    // console.log(!!(drillStatus && drillStatus.groups), groups)
-    // console.log(!!(drillStatus && drillStatus.filter), filters.map((i) => i.config.sql))
+
+    const requestParams = {
+      groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
+      aggregators,
+      filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
+      tempFilters,
+      linkageFilters,
+      globalFilters,
+      variables,
+      linkageVariables,
+      globalVariables,
+      orders,
+      cache,
+      expired,
+      pagination,
+      nativeQuery
+    }
+
     callback(
       renderType,
       itemId,
       widget,
-      {
-        groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
-        aggregators,
-        filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
-        linkageFilters,
-        globalFilters,
-        params,
-        linkageParams,
-        globalParams,
-        orders,
-        cache,
-        expired
-      }
+      requestParams
     )
   }
 
@@ -522,7 +549,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private onEditDashboardItemsPosition = (layout) => {
-    const { currentItems, onEditDashboardItems } = this.props
+    const { currentItems, onEditDashboardItems, params } = this.props
+    const portalId = +params.portalId
     const changedItems = currentItems.map((item) => {
       const { x, y, w, h } = layout.find((l) => Number(l.i) === item.id)
       return {
@@ -533,7 +561,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         height: h
       }
     })
-    onEditDashboardItems(changedItems)
+    onEditDashboardItems(portalId, changedItems)
   }
 
   private onWindowResize = () => {
@@ -556,33 +584,46 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private showEditDashboardItemForm = (itemId) => () => {
     const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
-
     this.setState({
       dashboardItemFormType: 'edit',
       dashboardItemFormVisible: true,
       dashboardItemFormStep: 1,
-      selectedWidget: [dashboardItem.widgetId],
+      selectedWidgets: [dashboardItem.widgetId],
       polling: dashboardItem.polling
     }, () => {
-      this.dashboardItemForm.props.form.setFieldsValue({
-        id: dashboardItem.id,
-        polling: dashboardItem.polling ? 'true' : 'false',
-        frequency: dashboardItem.frequency
-      })
+      setTimeout(() => {
+        this.dashboardItemForm.props.form.setFieldsValue({
+          id: dashboardItem.id,
+          polling: dashboardItem.polling ? 'true' : 'false',
+          frequency: dashboardItem.frequency
+        })
+      }, 0)
     })
   }
-
+  private showDrillDashboardItemForm = (itemId) => () => {
+    const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
+    this.setState({
+      drillPathSettingVisible: true,
+      selectedWidgets: [dashboardItem.widgetId],
+      currentItemId: itemId
+    })
+  }
+  private hideDrillPathSettingModal = () => {
+    this.setState({
+      drillPathSettingVisible: false
+    })
+  }
   private hideDashboardItemForm = () => {
     this.setState({
       modalLoading: false,
       dashboardItemFormVisible: false,
-      selectedWidget: []
+      selectedWidgets: []
     })
   }
 
   private afterDashboardItemFormClose = () => {
     this.setState({
-      selectedWidget: [],
+      selectedWidgets: [],
       polling: false,
       dashboardItemFormStep: 0
     })
@@ -592,7 +633,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private widgetSelect = (selectedRowKeys) => {
     this.setState({
-      selectedWidget: selectedRowKeys
+      selectedWidgets: selectedRowKeys
     })
   }
 
@@ -609,8 +650,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private saveDashboardItem = () => {
-    const { params, currentDashboard, currentItems, widgets } = this.props
-    const { selectedWidget, dashboardItemFormType } = this.state
+    const { params, currentDashboard, currentItems, widgets, formedViews } = this.props
+    const portalId = +params.portalId
+    const { selectedWidgets, dashboardItemFormType } = this.state
     const formdata: any = this.dashboardItemForm.props.form.getFieldsValue()
     const cols = GRID_COLS.lg
 
@@ -642,7 +684,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         height: 6
       }
 
-      const newItemsArr = selectedWidget.map((key, index) => {
+      const newItems = selectedWidgets.map((key, index) => {
         const xAxisTemp = index % 2 !== 0 ? 6 : 0
         const yAxisTemp = index % 2 === 0
           ? secondMaxY + 6 * Math.floor(index / 2)
@@ -668,19 +710,31 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         }
         return item
       })
+      const selectedWidgetsViewIds = widgets.filter((w) => selectedWidgets.includes(w.id)).map((w) => w.viewId)
+      const viewIds = selectedWidgetsViewIds
+        .filter((viewId, idx) => selectedWidgetsViewIds.indexOf(viewId) === idx)
+        .filter((viewId) => !formedViews[viewId])
 
-      this.props.onAddDashboardItem(Number(params.portalId), (newItemsArr as any), (dashboardItem: IDashboardItem) => {
-        this.hideDashboardItemForm()
-      })
+      if (viewIds.length) {
+        this.props.onLoadViewsDetail(viewIds, () => {
+          this.props.onAddDashboardItems(portalId, newItems, () => {
+            this.hideDashboardItemForm()
+          })
+        })
+      } else {
+        this.props.onAddDashboardItems(portalId, newItems, () => {
+          this.hideDashboardItemForm()
+        })
+      }
     } else {
       const dashboardItem = currentItems.find((item) => item.id === Number(formdata.id))
       const modifiedDashboardItem = {
         ...dashboardItem,
         ...newItem,
-        widgetId: selectedWidget[0]
+        widgetId: selectedWidgets[0]
       }
 
-      this.props.onEditDashboardItem(modifiedDashboardItem, () => {
+      this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
         this.getChartData('rerender', modifiedDashboardItem.id, modifiedDashboardItem.widgetId)
         this.hideDashboardItemForm()
       })
@@ -736,8 +790,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private checkInteract = (itemId: number) => {
     const { currentLinkages } = this.props
-    const isInteractiveItem = currentLinkages.some((lts) => {
-      const { trigger, linkager, relation } = lts
+    const isInteractiveItem = currentLinkages.some((c) => {
+      const { trigger } = c
       const triggerId = +trigger[0]
       return triggerId === itemId
     })
@@ -746,11 +800,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private doInteract = (itemId: number, triggerData) => {
+    console.log('doInteract')
     const {
       currentItems,
-      currentItemsInfo,
-      currentLinkages,
-      widgets
+      currentLinkages
     } = this.props
 
     const mappingLinkage = getMappingLinkage(itemId, currentLinkages)
@@ -758,10 +811,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     Object.keys(mappingLinkage).forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === +linkagerItemId)
-      const { filters, params } = this.interactingLinkagers[linkagerItemId]
-      this.getChartData('rerender', +linkagerItemId, item.widgetId, {
-        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
-        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+      const { filters, variables } = this.interactingLinkagers[linkagerItemId]
+      this.getChartData('clear', +linkagerItemId, item.widgetId, {
+        linkageFilters: Object.values(filters).reduce<string[]>((arr, f: string[]) => arr.concat(...f), []),
+        linkageVariables: Object.values(variables).reduce<QueryVariable>((arr, p: QueryVariable) => arr.concat(...p), [])
       })
     })
     this.setState({
@@ -773,12 +826,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private clearAllInteracts = () => {
+    console.log('clearAllInteracts')
     const { currentItems } = this.props
     Object.keys(this.interactingLinkagers).forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === +linkagerItemId)
-      this.getChartData('rerender', +linkagerItemId, item.widgetId, {
+      this.getChartData('clear', +linkagerItemId, item.widgetId, {
         linkageFilters: [],
-        linkageParams: []
+        linkageVariables: []
       })
     })
     this.interactingLinkagers = {} // FIXME need remove interact effect
@@ -794,10 +848,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const refreshItemIds = removeLinkage(itemId, currentLinkages, this.interactingLinkagers)
     refreshItemIds.forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === linkagerItemId)
-      const { filters, params } = this.interactingLinkagers[linkagerItemId]
+      const { filters, variables } = this.interactingLinkagers[linkagerItemId]
       this.getChartData('rerender', linkagerItemId, item.widgetId, {
-        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
-        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+        linkageFilters: Object.values(filters).reduce<string[]>((arr, f: string[]) => arr.concat(...f), []),
+        linkageVariables: Object.values(variables).reduce<QueryVariable>((arr, p: QueryVariable) => arr.concat(...p), [])
       })
     })
     this.setState({
@@ -836,16 +890,29 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private getOptions = (controlId, viewId, column, parents) => {
-    this.props.onLoadCascadeSource(controlId, viewId, column, parents)
+  private getOptions = (controlKey: string, useOptions: boolean, paramsOrOptions, itemId?: number) => {
+    if (useOptions) {
+      this.props.onSetSelectOptions(controlKey, paramsOrOptions, itemId)
+    } else {
+      this.props.onLoadSelectOptions(controlKey, paramsOrOptions, itemId)
+    }
   }
 
-  private globalFilterChange = (queryParams: IFilterChangeParam) => {
-    const { currentItems } = this.props
-    Object.entries(queryParams).forEach(([itemId, queryParam]) => {
+  private globalFilterChange = (queryConditions: IMapItemControlRequestParams) => {
+    const { currentItems, currentItemsInfo } = this.props
+    Object.entries(queryConditions).forEach(([itemId, condition]) => {
       const item = currentItems.find((ci) => ci.id === +itemId)
-      const { params: globalParams, filters: globalFilters } = queryParam
-      this.getChartData('rerender', +itemId, item.widgetId, { globalParams, globalFilters })
+      if (item) {
+        let pageNo = 0
+        const { pagination } = currentItemsInfo[itemId].queryConditions
+        if (pagination.pageNo) { pageNo = 1 }
+        const { variables: globalVariables, filters: globalFilters } = condition
+        this.getChartData('rerender', +itemId, item.widgetId, {
+          globalVariables,
+          globalFilters,
+          pagination: { ...pagination, pageNo }
+        })
+      }
     })
   }
 
@@ -860,19 +927,21 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       allowFullScreen: !allowFullScreen
     })
   }
-  private currentWidgetInFullScreen = (id) => {
-    const {currentItems, currentItemsInfo, widgets, bizlogics} = this.props
+  private currentWidgetInFullScreen = (id: number) => {
+    const { currentItems, currentItemsInfo, widgets, formedViews, onRenderDashboardItem } = this.props
     const item = currentItems.find((ci) => ci.id === id)
     const widget = widgets.find((w) => w.id === item.widgetId)
-    const model = JSON.parse(bizlogics.find((b) => b.id === widget.viewId).model)
-    const loading = currentItemsInfo[id].loading
+    const model = formedViews[widget.viewId].model
+    const { rendered } = currentItemsInfo[id]
+    if (!rendered) {
+      onRenderDashboardItem(id)
+    }
     this.setState({
       currentDataInFullScreen: {
         itemId: id,
         widgetId: widget.id,
         widget,
         model,
-        loading,
         onGetChartData: this.getChartData
       }
     })
@@ -893,11 +962,21 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private toWorkbench = (itemId, widgetId) => {
-    const { params } = this.props
-    const { pid, portalId, portalName, dashboardId } = params
+    const { pid, portalId, portalName, dashboardId } = this.props.params
     const editSign = [pid, portalId, portalName, dashboardId, itemId].join(DEFAULT_SPLITER)
     sessionStorage.setItem('editWidgetFromDashboard', editSign)
     this.props.router.push(`/project/${pid}/widget/${widgetId}`)
+  }
+
+  private onDrillPathData = (e) => {
+    const {
+      widgets,
+      currentItemsInfo,
+      onDrillDashboardItem
+    } = this.props
+    const { widgetProps, out, enter, value, itemId, widget, sourceDataFilter, currentDrillStatus } = e
+    const drillHistory = currentItemsInfo[itemId].queryConditions.drillHistory
+    onDrillDashboardItem(itemId, currentDrillStatus)
   }
 
   private dataDrill = (e) => {
@@ -906,15 +985,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentItemsInfo,
       onDrillDashboardItem
     } = this.props
-    const { itemId, groups, widgetId, sourceDataFilter } = e
+    const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
-    const drillHistory = currentItemsInfo[itemId]['queryParams']['drillHistory']
+    const drillHistory = currentItemsInfo[itemId].queryConditions.drillHistory
     let sql = void 0
     let name = void 0
     let filterSource = void 0
-    let widgetConfigGroups = cols.concat(rows).filter((g) => g !== '指标名称')
+    let widgetConfigGroups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
@@ -935,28 +1014,79 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         })))
     }
     let currentDrillStatus = void 0
+    let widgetConfigRows = []
+    let widgetConfigCols = []
+    const coustomTableSqls = []
+    let sqls = widgetConfig.filters.map((i) => i.config.sql)
     if ((!drillHistory) || drillHistory.length === 0) {
+      let currentCol = void 0
       if (widgetConfig) {
         const dimetionAxis = widgetConfig.dimetionAxis
-        if (dimetionAxis === 'col') {
-          const cols = widgetConfig.cols
-          name = cols[cols.length - 1]
-        } else {
-          const rows = widgetConfig.rows
-          name = rows[rows.length - 1]
-        }
-        filterSource = sourceDataFilter.map((source) => {
-          if (source && source[name]) {
-            return source[name]
+        widgetConfigRows = widgetConfig.rows && widgetConfig.rows.length ? widgetConfig.rows : []
+        widgetConfigCols = widgetConfig.cols && widgetConfig.cols.length ? widgetConfig.cols : []
+        const mode = widgetConfig.mode
+        if (mode && mode === 'pivot') {
+          if (cols && cols.length !== 0) {
+            const cols = widgetConfig.cols
+            name = cols[cols.length - 1]['name']
           } else {
-            return source
+            const rows = widgetConfig.rows
+            name = rows[rows.length - 1]['name']
           }
-        })
-        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+        } else if (dimetionAxis === 'col') {
+          const cols = widgetConfig.cols
+          name = cols[cols.length - 1]['name']
+        } else if (dimetionAxis === 'row') {
+          const rows = widgetConfig.rows
+          name = rows[rows.length - 1]['name']
+        } else if (mode === 'chart'  && widgetConfig.selectedChart === ChartTypes.Table) {
+          // todo coustomTable
+          const coustomTable = sourceDataFilter.reduce((a, b) => {
+            a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
+            return a
+          }, {})
+          for (const attr in coustomTable) {
+            if (coustomTable[attr] !== undefined && attr) {
+              coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
+            }
+          }
+          const drillKey = sourceDataFilter[sourceDataFilter.length - 1]['key']
+          const newWidgetPropCols = widgetConfigCols.reduce((array, col) => {
+            array.push(col)
+            if (col.name === drillKey) {
+              array.push({name: groups})
+            }
+            return array
+          }, [])
+          currentCol = groups && groups.length ? newWidgetPropCols : void 0
+        }
       }
-      const sqls = widgetConfig.filters.map((i) => i.config.sql)
-      sqls.push(sql)
+      filterSource = sourceDataFilter.map((source) => {
+        if (source && source[name]) {
+          return source[name]
+        }
+      })
+      if (name && name.length) {
+        currentCol = col && col.length ? widgetConfigCols.concat([{name: col}]) : void 0
+        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+        sqls.push(sql)
+      }
+      if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
+        sqls = sqls.concat(coustomTableSqls)
+      }
       const isDrillUp = widgetConfigGroups.some((cg) => cg === groups)
+      let currentDrillGroups = void 0
+      if (isDrillUp) {
+        currentDrillGroups = widgetConfigGroups.filter((cg) => cg !== groups)
+      } else {
+        if (mode === 'pivot') {
+          currentDrillGroups = widgetConfigGroups.concat([groups])
+        } else if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
+          currentDrillGroups = widgetConfigGroups.concat([groups])
+        } else {
+          currentDrillGroups = [groups]
+        }
+      }
       currentDrillStatus = {
         filter: {
           filterSource,
@@ -966,16 +1096,66 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           visualType: 'string'
         },
         type: isDrillUp ? 'up' : 'down',
-        groups: isDrillUp ? widgetConfigGroups.filter((cg) => cg !== groups) : widgetConfigGroups.concat([groups]),
+        col: currentCol,
+        row: row && row.length ? widgetConfigRows.concat([{name: row}]) : void 0,
+        groups: currentDrillGroups,
+        // groups: isDrillUp
+        //         ? widgetConfigGroups.filter((cg) => cg !== groups)
+        //         : mode === 'pivot' ? widgetConfigGroups.concat([groups])
+        //                           : [groups],
         name: groups
       }
     } else {
       const lastDrillHistory = drillHistory[drillHistory.length - 1]
-      name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
-      filterSource = sourceDataFilter.map((source) => source[name])
-      sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
-      const sqls = lastDrillHistory.filter.sqls.concat(sql)
+      let currentCol = void 0
+      let currentRow = void 0
+     // todo
+      if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
+        const coustomTable = sourceDataFilter.reduce((a, b) => {
+          a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
+          return a
+        }, {})
+        for (const attr in coustomTable) {
+          if (coustomTable[attr] !== undefined && attr) {
+            coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
+          }
+        }
+        if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
+          sqls = sqls.concat(coustomTableSqls)
+        }
+        if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
+          const drillKey = sourceDataFilter[sourceDataFilter.length - 1]['key']
+          const cols = lastDrillHistory.col
+          const newWidgetPropCols = cols.reduce((array, col) => {
+            array.push(col)
+            if (col.name === drillKey) {
+              array.push({name: groups})
+            }
+            return array
+          }, [])
+          currentCol = groups && groups.length ? newWidgetPropCols : lastDrillHistory.col
+        }
+      } else {
+        name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
+        filterSource = sourceDataFilter.map((source) => source[name])
+        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+        sqls = lastDrillHistory.filter.sqls.concat(sql)
+        currentCol = col && col.length ? (lastDrillHistory.col || []).concat({name: col}) : lastDrillHistory.col
+        currentRow = row && row.length ? (lastDrillHistory.row || []).concat({name: row}) : lastDrillHistory.row
+      }
       const isDrillUp = lastDrillHistory.groups.some((cg) => cg === groups)
+      let currentDrillGroups = void 0
+      if (isDrillUp) {
+        currentDrillGroups = lastDrillHistory.groups.filter((cg) => cg !== groups)
+      } else {
+        if (mode === 'pivot') {
+          currentDrillGroups = lastDrillHistory.groups.concat([groups])
+        } else if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
+          currentDrillGroups = lastDrillHistory.groups.concat([groups])
+        } else {
+          currentDrillGroups = [groups]
+        }
+      }
       currentDrillStatus = {
         filter: {
           filterSource,
@@ -984,8 +1164,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           sqls,
           visualType: 'string'
         },
+        col: currentCol,
+        row: currentRow,
         type: isDrillUp ? 'up' : 'down',
-        groups: isDrillUp ? lastDrillHistory.groups.filter((cg) => cg !== groups) : lastDrillHistory.groups.concat([groups]),
+        groups: currentDrillGroups,
         name: groups
       }
     }
@@ -1005,6 +1187,48 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
     onDeleteDrillHistory(itemId, item)
   }
+
+  private saveDrillPathSetting = (flag) => {
+    // const { onDrillPathSetting } = this.props
+    // onDrillPathSetting(currentItemId as number, flag)
+
+    const {currentItems, params, onLoadDashboardDetail} = this.props
+    const portalId = +params.portalId
+    const { currentItemId } = this.state
+    const dashboardItem = currentItems.find((item) => item.id === Number(currentItemId))
+    const config = dashboardItem.config
+    let configObj = null
+    try {
+       configObj = config && config.length > 0 ? JSON.parse(config) : {}
+    } catch (err) {
+      throw new Error(err)
+    }
+
+    if (!configObj) {
+      configObj = {
+        drillpathSetting: flag
+      }
+    }
+    configObj['drillpathSetting'] = flag
+
+    const modifiedDashboardItem = {
+      ...dashboardItem,
+      config: JSON.stringify(configObj)
+    }
+
+    this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
+      if (params.dashboardId && Number(params.dashboardId) !== -1) {
+        onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
+      }
+      this.hideDrillPathSettingModal()
+    })
+  }
+
+  private selectChartsItems = (itemId, renderType, selectedItems) => {
+    const { onSelectDashboardItemChart } = this.props
+    onSelectDashboardItemChart(itemId, renderType, selectedItems)
+  }
+
   public render () {
     const {
       dashboards,
@@ -1016,33 +1240,37 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentDashboardShareInfoLoading,
       currentItems,
       currentItemsInfo,
-      currentDashboardCascadeSources,
-      bizlogics,
+      currentDashboardSelectOptions,
+      views,
+      formedViews,
       onLoadDashboardShareLink,
       onLoadWidgetShareLink,
-      router,
       currentProject,
       currentLinkages
     } = this.props
-
     const {
       mounted,
       dashboardItemFormType,
       dashboardItemFormVisible,
       modalLoading,
-      selectedWidget,
+      selectedWidgets,
       polling,
+      currentItemId,
       dashboardItemFormStep,
       linkageConfigVisible,
       interactingStatus,
       globalFilterConfigVisible,
       allowFullScreen,
-      dashboardSharePanelAuthorized
+      dashboardSharePanelAuthorized,
+      drillPathSettingVisible
     } = this.state
-
     let navDropdown = (<span />)
     let grids = void 0
-
+    //   const drillPanels = []
+    let drillpathSetting = void 0
+    if (currentItemsInfo && currentItemId && currentItemsInfo[Number(currentItemId)]) {
+      drillpathSetting = currentItemsInfo[Number(currentItemId)].queryConditions.drillpathSetting
+    }
     if (dashboards) {
       const navDropdownItems = dashboards.map((d) => (
         <Menu.Item key={d.id}>
@@ -1061,7 +1289,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       const navDropdownItems = currentItems.map((d) => {
         const wid = (widgets.find((widget) => widget.id === d.widgetId))
         return (
-        <Menu.Item key={d.id} widgetId={d.widgetId}>
+        <Menu.Item key={d.id}>
           {d.widgetId ?
               wid && wid.name ? wid.name : ''
               : ''}
@@ -1088,18 +1316,23 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           downloadCsvLoading,
           interactId,
           rendered,
-          renderType
+          renderType,
+          queryConditions,
+          selectedItems,
+          controlSelectOptions
         } = currentItemsInfo[id]
-
         const widget = widgets.find((w) => w.id === widgetId)
-        const view = bizlogics.find((b) => b.id === widget.viewId)
         const interacting = interactingStatus[id] || false
-        const drillHistory = currentItemsInfo[id]['queryParams']['drillHistory'] ? currentItemsInfo[id]['queryParams']['drillHistory'] : void 0
+        const drillHistory = queryConditions.drillHistory
+        const drillpathSetting = queryConditions.drillpathSetting
+        const drillpathInstance = queryConditions.drillpathInstance
+        const view = formedViews[widget.viewId]
 
         itemblocks.push((
           <div key={id}>
             <DashboardItem
               itemId={id}
+              widgets={widgets}
               widget={widget}
               datasource={datasource}
               loading={loading}
@@ -1112,10 +1345,17 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               shareInfoLoading={shareInfoLoading}
               downloadCsvLoading={downloadCsvLoading}
               currentProject={currentProject}
+              rendered={rendered}
+              renderType={renderType}
+              controlSelectOptions={controlSelectOptions}
+              queryConditions={queryConditions}
               drillHistory={drillHistory}
+              drillpathSetting={drillpathSetting}
+              drillpathInstance={drillpathInstance}
               onSelectDrillHistory={this.selectDrillHistory}
               onGetChartData={this.getChartData}
               onShowEdit={this.showEditDashboardItemForm}
+              onShowDrillEdit={this.showDrillDashboardItemForm}
               onDeleteDashboardItem={this.deleteItem}
               onLoadWidgetShareLink={onLoadWidgetShareLink}
               onDownloadCsv={this.downloadCsv}
@@ -1125,14 +1365,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onShowFullScreen={this.visibleFullScreen}
               onEditWidget={this.toWorkbench}
               onDrillData={this.dataDrill}
-              rendered={rendered}
-              renderType={renderType}
-              router={router}
+              onDrillPathData={this.onDrillPathData}
+              onSelectChartsItems={this.selectChartsItems}
+              onGetControlOptions={this.getOptions}
+              selectedItems={selectedItems || []}
               ref={(f) => this[`dashboardItem${id}`] = f}
             />
           </div>
         ))
-
         layouts.lg.push({
           x,
           y,
@@ -1190,7 +1430,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             key="forward"
             size="large"
             type="primary"
-            disabled={selectedWidget.length === 0}
+            disabled={selectedWidgets.length === 0}
             onClick={this.changeDashboardItemFormStep(1)}
           >
             下一步
@@ -1249,11 +1489,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onToggleLinkageVisibility={this.toggleLinkageConfig}
             />
           </Row>
-          <DashboardFilterPanel
+          <GlobalControlPanel
             currentDashboard={currentDashboard}
             currentItems={currentItems}
             onGetOptions={this.getOptions}
-            filterOptions={currentDashboardCascadeSources}
+            mapOptions={currentDashboardSelectOptions}
             onChange={this.globalFilterChange}
           />
         </Container.Title>
@@ -1272,7 +1512,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           <DashboardItemForm
             type={dashboardItemFormType}
             widgets={widgets || []}
-            selectedWidget={selectedWidget}
+            selectedWidgets={selectedWidgets}
             polling={polling}
             step={dashboardItemFormStep}
             onWidgetSelect={this.widgetSelect}
@@ -1280,11 +1520,30 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             wrappedComponentRef={this.refHandles.dashboardItemForm}
           />
         </Modal>
+        <Modal
+          key={`dfd${uuid(8, 16)}`}
+          title="钻取设置"
+          wrapClassName="ant-modal-large"
+          visible={drillPathSettingVisible}
+          footer={null}
+          onCancel={this.hideDrillPathSettingModal}
+        >
+          {/* 临时下架功能，勿删 */}
+          {/* <DrillPathSetting
+             itemId={currentItemId}
+             drillpathSetting={drillpathSetting}
+             selectedWidget={this.state.selectedWidgets}
+             widgets={widgets || []}
+             views={views || []}
+             saveDrillPathSetting={this.saveDrillPathSetting}
+             cancel={this.hideDrillPathSettingModal}
+          /> */}
+        </Modal>
         <DashboardLinkageConfig
           currentDashboard={currentDashboard}
           currentItems={currentItems}
           currentItemsInfo={currentItemsInfo}
-          views={bizlogics}
+          views={formedViews}
           widgets={widgets}
           visible={linkageConfigVisible}
           loading={currentDashboardLoading}
@@ -1293,14 +1552,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           onCancel={this.toggleLinkageConfig(false)}
           linkages={currentLinkages}
         />
-        <DashboardFilterConfig
+        <GlobalControlConfig
           currentDashboard={currentDashboard}
           currentItems={currentItems}
-          views={bizlogics}
+          views={formedViews}
           widgets={widgets}
           visible={globalFilterConfigVisible}
           loading={currentDashboardLoading}
-          filterOptions={currentDashboardCascadeSources}
+          mapOptions={currentDashboardSelectOptions}
           onCancel={this.toggleGlobalFilterConfig(false)}
           onSave={this.saveFilters}
           onGetOptions={this.getOptions}
@@ -1329,50 +1588,56 @@ const mapStateToProps = createStructuredSelector({
   currentDashboardShareInfoLoading: makeSelectCurrentDashboardShareInfoLoading(),
   currentItems: makeSelectCurrentItems(),
   currentItemsInfo: makeSelectCurrentItemsInfo(),
-  currentDashboardCascadeSources: makeSelectCurrentDashboardCascadeSources(),
+  currentDashboardSelectOptions: makeSelectCurrentDashboardSelectOptions(),
   currentLinkages: makeSelectCurrentLinkages(),
   widgets: makeSelectWidgets(),
-  bizlogics: makeSelectBizlogics(),
+  views: makeSelectViews(),
+  formedViews: makeSelectFormedViews(),
   currentProject: makeSelectCurrentProject()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadDashboardDetail: (projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(projectId, portalId, dashboardId)),
-    onAddDashboardItem: (portalId, item, resolve) => dispatch(addDashboardItem(portalId, item, resolve)),
+    onAddDashboardItems: (portalId, items, resolve) => dispatch(addDashboardItems(portalId, items, resolve)),
     onEditCurrentDashboard: (dashboard, resolve) => dispatch(editCurrentDashboard(dashboard, resolve)),
-    onEditDashboardItem: (item, resolve) => dispatch(editDashboardItem(item, resolve)),
-    onEditDashboardItems: (items) => dispatch(editDashboardItems(items)),
+    onEditDashboardItem: (portalId, item, resolve) => dispatch(editDashboardItem(portalId, item, resolve)),
+    onEditDashboardItems: (portalId, items) => dispatch(editDashboardItems(portalId, items)),
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
-    onLoadDataFromItem: (renderType, itemId, viewId, params) =>
-                        dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'dashboard')),
+    onLoadDataFromItem: (renderType, itemId, viewId, requestParams) =>
+                        dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard')),
+    onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
-    onLoadWidgetCsv: (itemId, widgetId, params, token) => dispatch(loadWidgetCsv(itemId, widgetId, params, token)),
-    onLoadCascadeSource: (controlId, viewId, column, parents) => dispatch(loadCascadeSource(controlId, viewId, column, parents)),
-    onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve)),
-    onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadDistinctValue(viewId, fieldName, [], resolve)),
+    onLoadWidgetCsv: (itemId, widgetId, requestParams) => dispatch(loadWidgetCsv(itemId, widgetId, requestParams)),
+    onLoadSelectOptions: (controlKey, requestParams, itemId) => dispatch(loadSelectOptions(controlKey, requestParams, itemId)),
+    onSetSelectOptions: (controlKey, options, itemId) => dispatch(setSelectOptions(controlKey, options, itemId)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),
     onResizeDashboardItem: (itemId) => dispatch(resizeDashboardItem(itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
     onLoadDashboardShareLink: (id, authName) => dispatch(loadDashboardShareLink(id, authName)),
     onLoadWidgetShareLink: (id, itemId, authName, resolve) => dispatch(loadWidgetShareLink(id, itemId, authName, resolve)),
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
-    onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index))
+    onDrillPathSetting: (itemId, history) => dispatch(drillPathsetting(itemId, history)),
+    onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index)),
+    onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems))
   }
 }
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget })
-const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
+const withWidgetReducer = injectReducer({ key: 'widget', reducer: widgetReducer })
+const withWidgetSaga = injectSaga({ key: 'widget', saga: widgetSaga })
 
-const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: reducerBizlogic })
-const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: sagaBizlogic })
+const withViewReducer = injectReducer({ key: 'view', reducer: viewReducer })
+const withViewSaga = injectSaga({ key: 'view', saga: viewSaga })
+
+const withFormReducer = injectReducer({ key: 'form', reducer: formReducer })
 
 export default compose(
-  withReducerWidget,
-  withReducerBizlogic,
-  withSagaWidget,
-  withSagaBizlogic,
+  withWidgetReducer,
+  withViewReducer,
+  withFormReducer,
+  withWidgetSaga,
+  withViewSaga,
   withConnect
 )(Grid)

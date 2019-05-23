@@ -1,10 +1,12 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React, { createRef } from 'react'
+import classnames from 'classnames'
 import Pivot from '../Pivot'
 import Chart from '../Chart'
-const Icon = require('antd/lib/icon')
+import { Icon } from 'antd'
 import { AggregatorType, DragType, IDataParamConfig } from '../Workbench/Dropbox'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
+import { IFieldFormatConfig } from '../Workbench/FormatConfigModal'
+import { IFieldConfig } from '../Workbench/FieldConfig'
 import { IAxisConfig } from '../Workbench/ConfigSections/AxisSection'
 import { ISplitLineConfig } from '../Workbench/ConfigSections/SplitLineSection'
 import { IPivotConfig } from '../Workbench/ConfigSections/PivotSection'
@@ -16,17 +18,41 @@ import { IToolboxConfig } from '../Workbench/ConfigSections/ToolboxSection'
 import { IAreaSelectConfig } from '../Workbench/ConfigSections/AreaSelectSection'
 import { IScorecardConfig } from '../Workbench/ConfigSections/ScorecardSection'
 import { IframeConfig } from '../Workbench/ConfigSections/IframeSection'
+import { ITableConfig } from '../Workbench/ConfigSections/TableSection'
+import { IRichTextConfig, IBarConfig } from '../Workbench/ConfigSections'
+import { IDoubleYAxisConfig } from '../Workbench/ConfigSections/DoubleYAxisSection'
 import { IModel } from '../Workbench/index'
+import { IQueryVariableMap } from '../../../Dashboard/Grid'
+import { getStyleConfig } from '../util'
+import ChartTypes from '../../config/chart/ChartTypes'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
-export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize'
+export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize' | 'loading' | 'select'
 export type WidgetMode = 'pivot' | 'chart'
+
+export interface IWidgetDimension {
+  name: string
+  field: IFieldConfig
+  format: IFieldFormatConfig
+}
 
 export interface IWidgetMetric {
   name: string
   agg: AggregatorType
   chart: IChartInfo
+  field: IFieldConfig
+  format: IFieldFormatConfig
+}
+
+export interface IWidgetSecondaryMetric {
+  name: string
+  agg: AggregatorType
+  field: IFieldConfig
+  format: IFieldFormatConfig
+  from?: string
+  type?: any
+  visualType?: any
 }
 
 export interface IWidgetFilter {
@@ -49,6 +75,10 @@ export interface IChartStyles {
   visualMap?: IVisualMapConfig
   scorecard?: IScorecardConfig
   iframe?: IframeConfig
+  table?: ITableConfig
+  richText?: IRichTextConfig
+  bar?: IBarConfig
+  doubleYAxis?: IDoubleYAxisConfig
 }
 
 export interface IChartInfo {
@@ -64,11 +94,19 @@ export interface IChartInfo {
   style: object
 }
 
+export interface IPaginationParams {
+  pageNo: number
+  pageSize: number
+  totalCount: number
+  withPaging: boolean
+}
+
 export interface IWidgetProps {
   data: object[]
-  cols: string[]
-  rows: string[]
+  cols: IWidgetDimension[]
+  rows: IWidgetDimension[]
   metrics: IWidgetMetric[]
+  secondaryMetrics?: IWidgetSecondaryMetric[]
   filters: IWidgetFilter[]
   chartStyles: IChartStyles
   selectedChart: number
@@ -81,71 +119,132 @@ export interface IWidgetProps {
   dimetionAxis?: DimetionType
   renderType?: RenderType
   orders: Array<{column: string, direction: string}>
-  queryParams: any[]
-  cache: boolean
-  expired: number
   mode: WidgetMode
   model: IModel
+  pagination?: IPaginationParams
+  editing?: boolean
+  queryVariables?: IQueryVariableMap
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
   getDataDrillDetail?: (position: string) => void
+  onPaginationChange?: (pageNo: number, pageSize: number) => void
+  onChartStylesChange?: (propPath: string[], value: string) => void
   isDrilling?: boolean
+  whichDataDrillBrushed?: boolean | object []
+  computed?: any[]
+  selectedItems?: number[]
+  onSelectChartsItems?: (selectedItems: number[]) => void
   // onHideDrillPanel?: (swtich: boolean) => void
+}
+
+export interface IWidgetConfig extends IWidgetProps {
+  controls: any[]
+  cache: boolean
+  expired: number
 }
 
 export interface IWidgetWrapperProps extends IWidgetProps {
   loading: boolean
 }
 
-export class Widget extends React.Component<IWidgetWrapperProps, {}> {
-  private width = 0
-  private height = 0
-  private container: HTMLElement = null
+export interface IWidgetWrapperStates {
+  width: number
+  height: number
+}
+
+export class Widget extends React.Component<IWidgetWrapperProps, IWidgetWrapperStates> {
+
+  public static defaultProps = {
+    editing: false
+  }
+
+  constructor (props) {
+    super(props)
+    this.state = {
+      width: 0,
+      height: 0
+    }
+  }
+
+  private container = createRef<HTMLDivElement>()
 
   public componentDidMount () {
     this.getContainerSize()
   }
 
-  public componentWillUpdate (nextProps: IWidgetProps) {
+  public componentWillReceiveProps (nextProps: IWidgetProps) {
     if (nextProps.renderType === 'resize') {
       this.getContainerSize()
     }
   }
 
   private getContainerSize = () => {
-    const { offsetWidth, offsetHeight } = this.container
-    this.width = offsetWidth
-    this.height = offsetHeight
+    const { offsetWidth, offsetHeight } = this.container.current as HTMLDivElement
+    const { width, height } = this.state
+    if (offsetWidth && offsetHeight && (offsetWidth !== width ||  offsetHeight !== height)) {
+      this.setState({
+        width: offsetWidth,
+        height: offsetHeight
+      })
+    }
+  }
+
+  private needMask = () => {
+    const { selectedChart, cols, rows, metrics } = this.props
+    switch (selectedChart) {
+      case ChartTypes.Iframe:
+        return false
+      case ChartTypes.RichText:
+        return cols.length || rows.length || metrics.length
+      default:
+        return true
+    }
   }
 
   public render () {
-    const { loading, mode } = this.props
-    const combinedProps = {
-      width: this.width,
-      height: this.height,
-      ...this.props
-    }
-    delete combinedProps.loading
+    const { data, loading } = this.props
+    const { width, height } = this.state
+    const empty = !(data.length || !this.needMask())
 
-    return (
-      <div className={styles.wrapper} ref={(f) => this.container = f}>
-        {/* FIXME */}
-        {mode === 'chart'
-          ? (
-            <Chart {...combinedProps} />
-          )
-          : (
-            <Pivot {...combinedProps} />
-          )
-        }
-        <div
-          className={classnames({
-            [styles.mask]: true,
-            [styles.loading]: loading
-          })}
-        >
+    const widgetProps = { width, height, ...this.props }
+
+    delete widgetProps.loading
+
+    const maskClass = classnames({
+      [styles.mask]: true,
+      [styles.active]: loading || empty
+    })
+
+    let widgetContent
+    if (width && height) {
+      // FIXME
+      widgetContent =  widgetProps.mode === 'chart'
+        ? (<Chart {...widgetProps} />)
+        : (<Pivot {...widgetProps} />)
+    }
+
+    let maskContent = null
+    if (loading) {
+      maskContent = (
+        <>
           <Icon type="loading" />
           <p>加载中…</p>
+        </>
+      )
+    } else if (empty) {
+      maskContent = (
+        <>
+          <Icon type="inbox" className={styles.emptyIcon} />
+          <p>暂无数据</p>
+        </>
+      )
+    }
+
+    return (
+      <div className={styles.wrapper} ref={this.container}>
+        {widgetContent}
+        <div className={maskClass}>
+          {maskContent}
         </div>
       </div>
     )

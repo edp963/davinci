@@ -1,4 +1,5 @@
 import * as React from 'react'
+import * as PropTypes from 'prop-types'
 import * as hoistNonReactStatics from 'hoist-non-react-statics'
 import { IStore } from '../store'
 
@@ -25,7 +26,7 @@ export default (descriptor: { key: string, saga: any, mode?: any }) => (WrappedC
   class InjectSaga extends React.PureComponent<IInjectSagaProps, {}> {
     private static WrappedComponent = WrappedComponent
     private static contextTypes = {
-      store: React.PropTypes.object.isRequired
+      store: PropTypes.object.isRequired
     }
     private static displayName = `withSaga(${(WrappedComponent.displayName || WrappedComponent.name || 'Component')})`
 

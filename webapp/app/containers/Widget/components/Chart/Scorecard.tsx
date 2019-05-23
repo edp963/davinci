@@ -21,28 +21,18 @@
 import * as React from 'react'
 import { IChartProps } from './'
 import { IWidgetMetric } from 'containers/Widget/components/Widget'
-import { decodeMetricName, getTextWidth } from 'containers/Widget/components/util'
+import { decodeMetricName, getTextWidth, getFormattedValue } from 'containers/Widget/components/util'
 
 const styles = require('./Chart.less')
 
 export class Scorecard extends React.PureComponent<IChartProps, {}> {
 
-  private prettifyContent = (content) => {
-    if (isNaN(+content)) { return content }
-
-    const parts = content.toString().split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-    const formatted = parts.join('.')
-
-    return formatted
-  }
-
   private getMetricText = (metric: IWidgetMetric, visible: boolean) => {
     if (!metric || !visible) { return '' }
     const { data } = this.props
-    const { name, agg } = metric
+    const { name, agg, format } = metric
     const metricName = `${agg}(${decodeMetricName(name)})`
-    const text = data.length ? this.prettifyContent(data[0][metricName]) : ''
+    const text = data.length ? getFormattedValue(data[0][metricName], format) : ''
     return text
   }
 

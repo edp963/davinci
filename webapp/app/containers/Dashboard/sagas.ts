@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, all, put } from 'redux-saga/effects'
+import { call, all, put, takeLatest, takeEvery } from 'redux-saga/effects'
 
 import {
   LOAD_DASHBOARDS,
@@ -28,7 +27,7 @@ import {
   EDIT_CURRENT_DASHBOARD,
   DELETE_DASHBOARD,
   LOAD_DASHBOARD_DETAIL,
-  ADD_DASHBOARD_ITEM,
+  ADD_DASHBOARD_ITEMS,
   EDIT_DASHBOARD_ITEM,
   EDIT_DASHBOARD_ITEMS,
   DELETE_DASHBOARD_ITEM,
@@ -50,8 +49,8 @@ import {
   deleteDashboardFail,
   dashboardDetailLoaded,
   loadDashboardDetailFail,
-  dashboardItemAdded,
-  addDashboardItemFail,
+  dashboardItemsAdded,
+  addDashboardItemsFail,
   dashboardItemEdited,
   editDashboardItemFail,
   dashboardItemsEdited,
@@ -74,7 +73,8 @@ import api from '../../utils/api'
 import config, { env } from '../../globalConfig'
 const shareHost = config[env].shareHost
 
-export function* getDashboards ({ payload }) {
+export function* getDashboards (action) {
+  const { payload } = action
   try {
     const dashboards = yield call(request, `${api.portal}/${payload.portalId}/dashboards`)
     yield put(dashboardsLoaded(dashboards.payload))
@@ -85,7 +85,8 @@ export function* getDashboards ({ payload }) {
   }
 }
 
-export function* addDashboard ({ payload }) {
+export function* addDashboard (action) {
+  const { payload } = action
   const { dashboard, resolve } = payload
   try {
     const asyncData = yield call(request, {
@@ -101,7 +102,8 @@ export function* addDashboard ({ payload }) {
   }
 }
 
-export function* editDashboard ({ payload }) {
+export function* editDashboard (action) {
+  const { payload } = action
   const { formType, dashboard, resolve } = payload
   try {
     yield call(request, {
@@ -133,7 +135,8 @@ export function* editCurrentDashboard (action) {
   }
 }
 
-export function* deleteDashboard ({ payload }) {
+export function* deleteDashboard (action) {
+  const { payload } = action
   try {
     yield call(request, {
       method: 'delete',
@@ -149,45 +152,47 @@ export function* deleteDashboard ({ payload }) {
   }
 }
 
-export function* getDashboardDetail ({ payload }) {
+export function* getDashboardDetail (action) {
+  const { payload } = action
   const { projectId, portalId, dashboardId } = payload
 
   try {
     const result = yield all({
       dashboardDetail: call(request, `${api.portal}/${portalId}/dashboards/${dashboardId}`),
-      widgets: call(request, `${api.widget}?projectId=${projectId}`),
-      bizlogics: call(request, `${api.bizlogic}?projectId=${projectId}`)
+      widgets: call(request, `${api.widget}?projectId=${projectId}`)
     })
-    yield put(dashboardDetailLoaded(dashboardId, result.dashboardDetail.payload, result.widgets.payload, result.bizlogics.payload))
+    const views = result.dashboardDetail.payload.views
+    delete result.dashboardDetail.payload.views
+    yield put(dashboardDetailLoaded(dashboardId, result.dashboardDetail.payload, result.widgets.payload, views))
   } catch (err) {
     yield put(loadDashboardDetailFail())
     errorHandler(err)
   }
 }
 
-export function* addDashboardItem (action) {
-  const { portalId, item, resolve } = action.payload
+export function* addDashboardItems (action) {
+  const { portalId, items, resolve } = action.payload
 
   try {
     const result = yield call(request, {
       method: 'post',
-      url: `${api.portal}/${portalId}/dashboards/${item[0].dashboardId}/widgets`,
-      data: item
+      url: `${api.portal}/${portalId}/dashboards/${items[0].dashboardId}/widgets`,
+      data: items
     })
-    yield put(dashboardItemAdded(result.payload))
-    resolve(result)
+    yield put(dashboardItemsAdded(result.payload))
+    resolve(result.payload)
   } catch (err) {
-    yield put(addDashboardItemFail())
+    yield put(addDashboardItemsFail())
     errorHandler(err)
   }
 }
 
 export function* editDashboardItem (action) {
-  const { item, resolve } = action.payload
+  const { portalId, item, resolve } = action.payload
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.portal}/dashboards/widgets`,
+      url: `${api.portal}/${portalId}/dashboards/widgets`,
       data: [item]
     })
     yield put(dashboardItemEdited(item))
@@ -199,11 +204,11 @@ export function* editDashboardItem (action) {
 }
 
 export function* editDashboardItems (action) {
-  const { items } = action.payload
+  const { portalId, items } = action.payload
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.portal}/dashboards/widgets`,
+      url: `${api.portal}/${portalId}/dashboards/widgets`,
       data: items
     })
     yield put(dashboardItemsEdited(items))
@@ -272,17 +277,17 @@ export function* getWidgetShareLink (action) {
 }
 
 export function* getWidgetCsv (action) {
-  const { itemId, widgetId, params: parameters, token } = action.payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+  const { itemId, widgetId, requestParams } = action.payload
+  const { filters, tempFilters, linkageFilters, globalFilters, variables, linkageVariables, globalVariables, ...rest } = requestParams
 
   try {
     const path = yield call(request, {
       method: 'post',
-      url: `${api.widget}/${widgetId}/csv`,
+      url: `${api.widget}/${widgetId}/excel`,
       data: {
         ...rest,
-        filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
+        params: variables.concat(linkageVariables).concat(globalVariables)
       }
     })
     yield put(widgetCsvLoaded(itemId))
@@ -295,19 +300,19 @@ export function* getWidgetCsv (action) {
 }
 
 export default function* rootDashboardSaga (): IterableIterator<any> {
-  yield [
-    takeLatest(LOAD_DASHBOARDS, getDashboards as any),
-    takeLatest(ADD_DASHBOARD, addDashboard as any),
-    takeEvery(EDIT_DASHBOARD, editDashboard as any),
+  yield all([
+    takeLatest(LOAD_DASHBOARDS, getDashboards),
+    takeLatest(ADD_DASHBOARD, addDashboard),
+    takeEvery(EDIT_DASHBOARD, editDashboard),
     takeEvery(EDIT_CURRENT_DASHBOARD, editCurrentDashboard),
-    takeEvery(DELETE_DASHBOARD, deleteDashboard as any),
-    takeLatest(LOAD_DASHBOARD_DETAIL, getDashboardDetail as any),
-    takeEvery(ADD_DASHBOARD_ITEM, addDashboardItem as any),
+    takeEvery(DELETE_DASHBOARD, deleteDashboard),
+    takeLatest(LOAD_DASHBOARD_DETAIL, getDashboardDetail),
+    takeEvery(ADD_DASHBOARD_ITEMS, addDashboardItems),
     takeEvery(EDIT_DASHBOARD_ITEM, editDashboardItem),
     takeEvery(EDIT_DASHBOARD_ITEMS, editDashboardItems),
-    takeEvery(DELETE_DASHBOARD_ITEM, deleteDashboardItem as any),
+    takeEvery(DELETE_DASHBOARD_ITEM, deleteDashboardItem),
     takeLatest(LOAD_DASHBOARD_SHARE_LINK, getDashboardShareLink),
     takeLatest(LOAD_WIDGET_SHARE_LINK, getWidgetShareLink),
     takeLatest(LOAD_WIDGET_CSV, getWidgetCsv)
-  ]
+  ])
 }

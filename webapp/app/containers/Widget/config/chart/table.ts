@@ -16,7 +16,24 @@ const table: IChartInfo = {
   coordinate: 'other',
   requireDimetions: [0, 9999],
   requireMetrics: [0, 9999],
-  data: {},
+  data: {
+    cols: {
+      title: '列',
+      type: 'category'
+    },
+    rows: {
+      title: '行',
+      type: 'category'
+    },
+    metrics: {
+      title: '指标',
+      type: 'value'
+    },
+    filters: {
+      title: '筛选',
+      type: 'all'
+    }
+  },
   style: {
     table: {
       fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
@@ -24,7 +41,21 @@ const table: IChartInfo = {
       color: PIVOT_DEFAULT_FONT_COLOR,
       lineStyle: 'solid',
       lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
-      headerBackgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
+      headerBackgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR,
+
+      headerConfig: [],
+      columnsConfig: [],
+      leftFixedColumns: [],
+      rightFixedColumns: [],
+      headerFixed: true,
+      autoMergeCell: true,
+      bordered: true,
+      withPaging: true,
+      pageSize: '20',
+      withNoAggregators: false
+    },
+    spec: {
+
     }
   }
 }

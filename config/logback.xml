@@ -23,27 +23,88 @@
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
     <property name="APP_NAME" value="davinci"/>
+
+    <property name="SYS" value="sys"/>
+    <property name="USER" value="user"/>
+
+    <property name="SQL" value="sql"/>
+    <property name="OPT" value="opt"/>
+
     <property name="LOG_HOME_PATH" value="${DAVINCI3_HOME}/logs"/>
 
-    <property name="FILE_LOG_PATTERN"
+    <property name="SYS_LOG_PATTERN"
               value="${FILE_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
 
-    <appender name="LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <property name="BUSINESS_SQL_LOG_PATTERN"
+              value="${BUSINESS_SQL_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} --- %file:%line : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
+    <property name="BUSINESS_OPERATION_LOG_PATTERN"
+              value="${BUSINESS_OPERATION_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} --- %file:%line : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
+    <appender name="SYS_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>${LOG_HOME_PATH}/${APP_NAME}.%d{yyyy-MM-dd}.log</FileNamePattern>
-            <MaxHistory>60</MaxHistory>
+            <FileNamePattern>${LOG_HOME_PATH}/${SYS}/${APP_NAME}.%d{yyyy-MM-dd}.log</FileNamePattern>
+            <MaxHistory>30</MaxHistory>
         </rollingPolicy>
 
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <pattern>${SYS_LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
+
+    <appender name="BUSINESS_SQL_LOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_HOME_PATH}/${USER}/${SQL}/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <MaxHistory>10</MaxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>${BUSINESS_SQL_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+
+    <appender name="BUSINESS_OPERATION_LOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_HOME_PATH}/${USER}/${OPT}/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <MaxHistory>10</MaxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>${BUSINESS_OPERATION_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+
+    <logger name="BUSINESS_SQL" additivity="false" level="INFO">
+        <appender-ref ref="BUSINESS_SQL_LOG_APPENDER"/>
+    </logger>
+    <logger name="BUSINESS_OPERATION" additivity="false" level="INFO">
+        <appender-ref ref="BUSINESS_OPERATION_LOG_APPENDER"/>
+    </logger>
+
+
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="LOG_FILE"/>
+        <appender-ref ref="SYS_LOG"/>
     </root>
 
 </configuration>

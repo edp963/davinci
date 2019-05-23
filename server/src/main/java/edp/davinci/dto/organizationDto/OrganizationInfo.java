@@ -27,7 +27,7 @@ public class OrganizationInfo extends OrganizationBaseInfo {
 
     private Integer memberNum;
 
-    private Integer teamNum;
+    private Integer roleNum;
 
     private Boolean allowCreateProject;
 

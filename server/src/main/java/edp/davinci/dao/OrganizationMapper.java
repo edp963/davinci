@@ -43,9 +43,6 @@ public interface OrganizationMapper {
     Long getIdByName(@Param("name") String name);
 
 
-    @Select({"select * from organization where name = #{name}"})
-    Organization getByName(@Param("name") String name);
-
     /**
      * 获取组织列表
      * 当前用户创建 + Member（关联表用户是当前用户）
@@ -87,7 +84,7 @@ public interface OrganizationMapper {
 
     int addOneMemberNum(@Param("set") Set<Long> orgIds);
 
-    int updateTeamNum(Organization organization);
+    int updateRoleNum(Organization organization);
 
 
     @Delete({"delete from organization where id = #{id}"})

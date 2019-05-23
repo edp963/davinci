@@ -18,6 +18,7 @@
 
 package edp.davinci.dto.sourceDto;
 
+import edp.davinci.model.Source;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -29,8 +30,26 @@ public class SourceConfig {
 
     private String password;
 
-    @NotBlank(message = "connection url cannot be empty")
+    @NotBlank(message = "connection url cannot be EMPTY")
     private String url;
 
     private String parameters;
+
+
+    public SourceConfig(Source source) {
+        this.username = source.getUsername();
+        this.password = source.getPassword();
+        this.url = source.getJdbcUrl();
+        this.parameters = source.getConfigParams();
+    }
+
+    public SourceConfig(String username, String password, String url, String parameters) {
+        this.username = username;
+        this.password = password;
+        this.url = url;
+        this.parameters = parameters;
+    }
+
+    public SourceConfig() {
+    }
 }

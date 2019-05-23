@@ -20,38 +20,38 @@ package edp.davinci.service.impl;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.PageUtils;
-import edp.core.utils.TokenUtils;
-import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.common.ResultMap;
+import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
+import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.organizationDto.OrganizationInfo;
 import edp.davinci.dto.projectDto.*;
+import edp.davinci.dto.roleDto.RoleProject;
 import edp.davinci.dto.userDto.UserBaseInfo;
 import edp.davinci.model.*;
 import edp.davinci.service.DashboardService;
 import edp.davinci.service.DisplayService;
 import edp.davinci.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service("projectService")
-public class ProjectServiceImpl extends CommonService implements ProjectService {
-
-    @Autowired
-    private TokenUtils tokenUtils;
+public class ProjectServiceImpl implements ProjectService {
+    private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
     private ProjectMapper projectMapper;
@@ -63,10 +63,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
     private RelUserOrganizationMapper relUserOrganizationMapper;
 
     @Autowired
-    private RelTeamProjectMapper relTeamProjectMapper;
-
-    @Autowired
-    private RelTeamProjectMapper teamProjectMapper;
+    public RelProjectAdminMapper relProjectAdminMapper;
 
     @Autowired
     private DashboardService dashboardService;
@@ -87,10 +84,16 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
     private StarMapper starMapper;
 
     @Autowired
-    private RelUserTeamMapper relUserTeamMapper;
+    private FavoriteMapper favoriteMapper;
 
     @Autowired
-    private FavoriteMapper favoriteMapper;
+    private RelRoleProjectMapper relRoleProjectMapper;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private RoleMapper roleMapper;
 
 
     @Override
@@ -104,85 +107,37 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
 
     @Override
-    public ResultMap getProjectInfo(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public ProjectInfo getProjectInfo(Long id, User user) {
 
-        ProjectWithCreateBy project = projectMapper.getProjectWithUserById(id);
-
-        if (null == project) {
-            log.info("project (:{}) is not found", id);
-            return resultMap.failAndRefreshToken(request).message("project is not found");
-        }
-
-        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-
-        if (!isMaintainer(project, user) && null == rel && !project.getVisibility()) {
-            log.info("user[{}] don't have permission to get project info", user.getId(), project.getId());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission");
-        }
-
-        Star star = starMapper.select(user.getId(), project.getId(), Constants.STAR_TARGET_PROJECT);
-        if (null != star) {
-            project.setIsStar(true);
-        }
+        ProjectDetail projectDetail = getProjectDetail(id, user, false);
 
         ProjectInfo projectInfo = new ProjectInfo();
-        BeanUtils.copyProperties(project, projectInfo);
-        setProjectPermission(projectInfo, user);
+        BeanUtils.copyProperties(projectDetail, projectInfo);
+        projectInfo.setPermission(getProjectPermission(projectDetail, user));
 
-        return resultMap.successAndRefreshToken(request).payload(projectInfo);
+        Star star = starMapper.select(user.getId(), projectDetail.getId(), Constants.STAR_TARGET_PROJECT);
+        if (null != star) {
+            projectInfo.setIsStar(true);
+        }
+
+        return projectInfo;
     }
 
     /**
      * 获取项目列表
      *
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getProjects(User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public List<ProjectInfo> getProjects(User user) {
 
+        //当前用户能看到的所有project
         List<ProjectWithCreateBy> projects = projectMapper.getProejctsByUser(user.getId());
-        List<ProjectInfo> projectInfoList = new ArrayList<>();
-        if (null != projects && projects.size() > 0) {
-            for (ProjectWithCreateBy project : projects) {
-                ProjectInfo projectInfo = new ProjectInfo();
-                BeanUtils.copyProperties(project, projectInfo);
-                setProjectPermission(projectInfo, user);
-                projectInfoList.add(projectInfo);
-            }
-        }
-        return resultMap.successAndRefreshToken(request).payloads(projectInfoList);
+        List<ProjectInfo> list = getProjectInfos(user, projects);
+        return list;
     }
 
-    /**
-     * 获取用户对project的权限
-     *
-     * @param projectInfo
-     * @param user
-     * @return
-     */
-    private void setProjectPermission(ProjectInfo projectInfo, User user) {
-        ProjectPermission projectPermission = ProjectPermission.previewPermission();
-        if (isMaintainer(projectInfo, user)) {
-            projectPermission = ProjectPermission.adminPermission();
-            projectInfo.setInTeam(true);
-        } else {
-            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectInfo.getOrgId(), user.getId());
-            if (teamNumOfOrgByUser > 0) {
-                projectInfo.setInTeam(true);
-                List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermissions(user.getId());
-                for (UserMaxProjectPermission maxProjectPermission : permissions) {
-                    if (maxProjectPermission.getProjectId().equals(projectInfo.getId())) {
-                        projectPermission = maxProjectPermission;
-                    }
-                }
-            }
-        }
-        projectInfo.setPermission(projectPermission);
-    }
 
     /**
      * 搜索project
@@ -191,27 +146,23 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
      * @param user
      * @param pageNum
      * @param pageSize
-     * @param request
      * @return
      */
     @Override
-    public ResultMap searchProjects(String keywords, User user, int pageNum, int pageSize, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public PageInfo<ProjectWithCreateBy> searchProjects(String keywords, User user, int pageNum, int pageSize) throws ServerException, UnAuthorizedExecption, NotFoundException {
         if (!PageUtils.checkPageInfo(pageNum, pageSize)) {
-            return resultMap.failAndRefreshToken(request).message("Invalid page info");
+            throw new ServerException("Invalid page info");
         }
 
         List<OrganizationInfo> orgs = organizationMapper.getOrganizationByUser(user.getId());
         if (null == orgs || orgs.size() < 1) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+            throw new UnAuthorizedExecption();
         }
 
         PageHelper.startPage(pageNum, pageSize);
         List<ProjectWithCreateBy> projects = projectMapper.getProjectsByKewordsWithUser(keywords, user.getId(), orgs);
         PageInfo<ProjectWithCreateBy> pageInfo = new PageInfo<>(projects);
-
-        return resultMap.successAndRefreshToken(request).payload(pageInfo);
+        return pageInfo;
     }
 
     /**
@@ -219,28 +170,26 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
      *
      * @param projectCreat
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap createProject(ProjectCreat projectCreat, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public ProjectInfo createProject(ProjectCreat projectCreat, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
         if (isExist(projectCreat.getName(), null, projectCreat.getOrgId())) {
             log.info("the project name {} is already taken in this organization", projectCreat.getName());
-            return resultMap.failAndRefreshToken(request).message("the project name " + projectCreat.getName() + " is already taken in this organization");
+            throw new ServerException("the project name " + projectCreat.getName() + " is already taken in this organization");
         }
 
         Organization organization = organizationMapper.getById(projectCreat.getOrgId());
         //校验组织
         if (null == organization) {
             log.info("not found organization, Id: {}", projectCreat.getOrgId());
-            return resultMap.failAndRefreshToken(request).message("not found organization");
+            throw new NotFoundException("not found organization");
         }
         if (!organization.getAllowCreateProject()) {
             log.info("project are not allowed to be created under the organization named {}", organization.getName());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("project are not allowed to be created under the organization named " + organization.getName());
+            throw new UnAuthorizedExecption("project are not allowed to be created under the organization named " + organization.getName());
         }
 
         Project project = new Project();
@@ -250,6 +199,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
         int insert = projectMapper.insert(project);
         if (insert > 0) {
 
+            optLogger.info("project ({}) is create by user(:{})", project.toString(), user.getId());
             organization.setProjectNum(organization.getProjectNum() + 1);
             organizationMapper.updateProjectNum(organization);
 
@@ -258,10 +208,11 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
             BeanUtils.copyProperties(user, userBaseInfo);
             projectInfo.setCreateBy(userBaseInfo);
             BeanUtils.copyProperties(project, projectInfo);
-            return resultMap.successAndRefreshToken(request).payload(projectInfo);
+
+            return projectInfo;
         } else {
             log.info("create project fail: {}", projectCreat.toString());
-            return resultMap.failAndRefreshToken(request).message("create project fail: unspecified error");
+            throw new ServerException("create project fail: unspecified error");
         }
     }
 
@@ -271,55 +222,42 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
      * @param id
      * @param orgId
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap transferPeoject(Long id, Long orgId, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        Project project = projectMapper.getById(id);
-
-        if (null == project) {
-            log.info("project (:{}) is not found", id);
-            return resultMap.failAndRefreshToken(request).message("project is not found");
-        }
-
-        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-        //项目的创建人 和 当前项目对应组织的owner可以移交
-        if (!isMaintainer(project, user) && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
-            log.info("user[{}] don't have permission to delete transfer[{}]", user.getId(), project.getId());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you don't have permission to transfer this project");
-        }
+    public Project transferPeoject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+        ProjectDetail project = getProjectDetail(id, user, true);
 
         Organization organization = organizationMapper.getById(orgId);
         if (null == organization) {
             log.info("not found organization, name: {}", orgId);
-            return resultMap.failAndRefreshToken(request).message("not found organization");
+            throw new NotFoundException("not found organization");
         }
 
         //不能移交给当前所在组织
         if (organization.getId().equals(project.getOrgId())) {
             log.info("this project cannot be transferred to the current organization, name: {}", orgId);
-            return resultMap.failAndRefreshToken(request).message("the project can only be transferred to the non-current organizations");
+            throw new ServerException("the project can only be transferred to the non-current organizations");
         }
 
         //当前用户在即将移交的组织下才能移交
         RelUserOrganization ucRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
         if (null == ucRel) {
             log.info("user[{}] must be a member of the organization {} that is about to be transfer", user.getId(), orgId);
-            return resultMap.failAndRefreshToken(request).message("you must be a member of the organization " + organization.getName() + " that is about to be transfer");
+            throw new ServerException("you must be a member of the organization " + organization.getName() + " that is about to be transfer");
         }
 
         if (isExist(project.getName(), null, orgId)) {
-            return resultMap.failAndRefreshToken(request).message("the project name \"" + project.getName() + "\" is already in the organization you will transfer");
+            throw new ServerException("the project name \"" + project.getName() + "\" is already in the organization you will transfer");
         }
 
         Long beforeOrgId = project.getOrgId();
         project.setOrgId(organization.getId());
         int i = projectMapper.changeOrganization(project);
         if (i > 0) {
+
+            optLogger.info("project (:{}) transferd from org(:{}) to org(:{})", project.getId(), beforeOrgId, orgId);
 
             boolean isTransfer = true;
             //移交回原组织
@@ -336,10 +274,11 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
             organizationMapper.updateProjectNum(beforeOrg);
             organization.setProjectNum(organization.getProjectNum() + 1);
             organizationMapper.updateProjectNum(organization);
-            return resultMap.successAndRefreshToken(request);
+
+            return project;
         } else {
             log.info("transfer project fail, {} -> {}", project.getOrgId(), organization.getId());
-            return resultMap.failAndRefreshToken(request).message("transfer project fail: unspecified error");
+            throw new ServerException("transfer project fail: unspecified error");
         }
     }
 
@@ -348,30 +287,13 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
      *
      * @param id
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap deleteProject(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public boolean deleteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
-        Project project = projectMapper.getById(id);
-        if (null == project) {
-            log.info("project(:{}) not found", id);
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
-        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-        //项目的创建人 和 当前项目对应组织的owner可以删除
-        if (!isProjectAdmin(project, user) && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
-            log.info("user({}) don't have permission to delete project({})", user.getId(), project.getId());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you don't have permission to delete this project");
-        }
-
-//        if (null != organization && !organization.getAllowDeleteOrTransferProject()) {
-//            log.info("project are not allowed to be deleted under the organization named {}", organization.getName());
-//            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("project are not allowed to be deleted under the organization named " + organization.getName());
-//        }
+        ProjectDetail project = getProjectDetail(id, user, true);
 
         //删除displayslide、display、slide和widget的关联
         displayService.deleteSlideAndDisplayByProject(project.getId());
@@ -388,17 +310,24 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
         //删除source
         sourceMapper.deleteByProject(project.getId());
 
-        //删除team project 关联
-        teamProjectMapper.deleteByProjectId(project.getId());
+        //删除role project 关联
+        relRoleProjectMapper.deleteByProjectId(project.getId());
+
+        //删除project admin
+        relProjectAdminMapper.deleteByProjectId(project.getId());
 
         //删除project
         int i = projectMapper.deleteById(project.getId());
-
-        Organization organization = organizationMapper.getById(project.getOrgId());
-        organization.setProjectNum(organization.getProjectNum() - 1);
-        organizationMapper.updateProjectNum(organization);
-
-        return resultMap.successAndRefreshToken(request);
+        if (i > 0) {
+            optLogger.info("project ({}) delete by user(:{})", project.toString(), user.getId());
+            Organization organization = organizationMapper.getById(project.getOrgId());
+            organization.setProjectNum(organization.getProjectNum() - 1);
+            organizationMapper.updateProjectNum(organization);
+            return true;
+        } else {
+            log.info("delete project(:{}) fail", id);
+            throw new ServerException("delete project fail: unspecified error");
+        }
     }
 
     /**
@@ -407,27 +336,23 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
      * @param id
      * @param projectUpdate
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap updateProject(Long id, ProjectUpdate projectUpdate, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public Project updateProject(Long id, ProjectUpdate projectUpdate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
-        Project project = projectMapper.getById(id);
+        ProjectDetail project = null;
 
-        if (null == project) {
-            log.info("project (:{}) not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
+        try {
+            project = getProjectDetail(id, user, true);
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (UnAuthorizedExecption e) {
+            throw new UnAuthorizedExecption("you have not permission to update this project");
         }
 
-        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-        //项目的创建人 和 当前项目对应组织的owner可以修改
-        if (!isProjectAdmin(project, user) && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
-            log.info("user({}) don't have permission to update project({})", user.getId(), project.getId());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you don't have permission to update this project");
-        }
+        String originInfo = project.baseInfoToString();
 
         project.setName(projectUpdate.getName());
         project.setDescription(projectUpdate.getDescription());
@@ -435,10 +360,11 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
         int i = projectMapper.updateBaseInfo(project);
         if (i > 0) {
-            return resultMap.successAndRefreshToken(request);
+            optLogger.info("project ({}) update to ({}) by user(:{})", originInfo, project.baseInfoToString());
+            return project;
         } else {
             log.info("update project fail, {}", project.toString());
-            return resultMap.failAndRefreshToken(request).message("update project fail: unspecified error");
+            throw new ServerException("update project fail: unspecified error");
         }
     }
 
@@ -447,55 +373,353 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
      *
      * @param id
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap favoriteProject(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        Project project = projectMapper.getById(id);
-
-        if (null == project) {
-            log.info("project (:{}) not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
-
-        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-        if (null == rel || !allowRead(project, user)) {
-            log.info("user({}) cannot favorite project({})", user.getId(), project.getId());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("Unauthorized: you can't favorite this project");
-        }
-
+    public boolean favoriteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+        ProjectDetail project = getProjectDetail(id, user, false);
         int insert = favoriteMapper.insert(new Favorite(user.getId(), project.getId()));
-        return resultMap.successAndRefreshToken(request);
+        return insert > 0;
     }
 
 
+    /**
+     * 获取收藏的proeject
+     *
+     * @param user
+     * @return
+     */
     @Override
-    public ResultMap getFavoriteProjects(User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public List<ProjectInfo> getFavoriteProjects(User user) {
         List<ProjectWithCreateBy> projects = projectMapper.getFavoriteProjects(user.getId());
-        List<ProjectInfo> projectInfoList = new ArrayList<>();
-        if (null != projects && projects.size() > 0) {
-            for (ProjectWithCreateBy project : projects) {
-                ProjectInfo projectInfo = new ProjectInfo();
-                BeanUtils.copyProperties(project, projectInfo);
-                setProjectPermission(projectInfo, user);
-                projectInfoList.add(projectInfo);
-            }
-        }
-        return resultMap.successAndRefreshToken(request).payloads(projectInfoList);
+        return getProjectInfos(user, projects);
     }
 
+
+    /**
+     * 取消收藏
+     *
+     * @param user
+     * @param projectIds
+     * @return
+     */
     @Override
     @Transactional
-    public ResultMap removeFavoriteProjects(User user, Long[] projectIds, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public boolean removeFavoriteProjects(User user, Long[] projectIds) {
         favoriteMapper.deleteBatch(Arrays.asList(projectIds), user.getId());
-        return resultMap.successAndRefreshToken(request);
+        return true;
+    }
+
+
+    /**
+     * 添加project admin
+     *
+     * @param id
+     * @param adminId
+     * @param user
+     * @return
+     * @throws ServerException
+     * @throws UnAuthorizedExecption
+     * @throws NotFoundException
+     */
+    @Override
+    @Transactional
+    public RelProjectAdminDto addAdmin(Long id, Long adminId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+        getProjectDetail(id, user, true);
+
+        RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getByProjectAndUser(id, adminId);
+        if (null != relProjectAdmin) {
+            log.warn("user (:{}) is already admin of project(:{})", adminId, id);
+            throw new ServerException("already exist this admin");
+        }
+
+        User admin = userMapper.getById(adminId);
+
+        if (null == admin) {
+            throw new NotFoundException("user is not found");
+        }
+
+        relProjectAdmin = new RelProjectAdmin(id, adminId).createdBy(user.getId());
+        int insert = relProjectAdminMapper.insert(relProjectAdmin);
+        if (insert > 0) {
+            optLogger.info("relProjectAdmin(:{}) creaty by user(:{})", relProjectAdmin.toString(), user.getId());
+            return new RelProjectAdminDto(relProjectAdmin.getId(), admin);
+        } else {
+            log.error("add project admin fail: (project:{}, admin:{})", id, adminId);
+            throw new ServerException("unspecified error");
+        }
+    }
+
+
+    /**
+     * 移除project Admin
+     *
+     * @param relationId
+     * @param user
+     * @return
+     * @throws ServerException
+     * @throws UnAuthorizedExecption
+     * @throws NotFoundException
+     */
+    @Override
+    @Transactional
+    public boolean removeAdmin(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+
+        relProjectAdminMapper.getById(relationId);
+
+        RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getById(relationId);
+        if (null == relProjectAdmin) {
+            log.warn("dose not exist this project admin (:{})", relationId);
+            throw new ServerException("this admin dose not exist");
+        }
+
+        getProjectDetail(relProjectAdmin.getProjectId(), user, true);
+
+        if (relProjectAdmin.getUserId().equals(user.getId())) {
+            throw new ServerException("you cannot remove yourself");
+        }
+
+        int i = relProjectAdminMapper.deleteById(relationId);
+        if (i > 0) {
+            optLogger.info("relProjectAdmin ({}) delete by user(:{})", relProjectAdmin.toString(), user.getId());
+            return true;
+        } else {
+            log.error("delete rel project admin fail: (relationId:)", relationId);
+            throw new ServerException("unspecified error");
+        }
+    }
+
+
+    /**
+     * 获取Project / project权限校验
+     *
+     * @param id
+     * @param user
+     * @param modify
+     * @return
+     * @throws ServerException
+     * @throws UnAuthorizedExecption
+     * @throws NotFoundException
+     */
+    @Override
+    public ProjectDetail getProjectDetail(Long id, User user, boolean modify) throws NotFoundException, UnAuthorizedExecption {
+        ProjectDetail projectDetail = projectMapper.getProjectDetail(id);
+        if (null == projectDetail) {
+            log.info("project (:{}) is not found", id);
+            throw new NotFoundException("project is not found");
+        }
+
+        boolean isCreater = projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer();
+
+        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
+
+        if (modify) {
+
+            RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getByProjectAndUser(id, user.getId());
+
+            //项目的创建人 和 当前项目对应组织的owner可以修改
+            if (!isCreater && null == relProjectAdmin && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
+                log.info("user(:{}) have not permission to modify project (:{})", user.getId(), id);
+                throw new UnAuthorizedExecption();
+            }
+        } else {
+            if (null == rel) {
+                log.info("user(:{}) have not permission to get project (:{})", user.getId(), id);
+                throw new UnAuthorizedExecption();
+            }
+
+            //project 所在org 对普通成员project不可见
+            if (!isCreater && !projectDetail.getVisibility() && projectDetail.getOrganization().getMemberPermission() < (short) 1) {
+                log.info("user(:{}) have not permission to get project (:{})", user.getId(), id);
+                throw new UnAuthorizedExecption();
+            }
+        }
+
+        return projectDetail;
+    }
+
+
+    /**
+     * 批量添加权限
+     *
+     * @param id
+     * @param roleIds
+     * @param user
+     * @return
+     * @throws ServerException
+     * @throws UnAuthorizedExecption
+     * @throws NotFoundException
+     */
+    @Override
+    @Transactional
+    public List<RoleProject> postRoles(Long id, List<Long> roleIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+        ProjectDetail projectDetail = getProjectDetail(id, user, true);
+
+        List<Role> roleList = roleMapper.selectByIdsAndOrgId(projectDetail.getOrgId(), roleIds);
+
+        List<RelRoleProject> list = roleList.stream().map(role -> new RelRoleProject(projectDetail.getId(), role.getId()).createdBy(user.getId())).collect(Collectors.toList());
+
+        relRoleProjectMapper.deleteByProjectId(id);
+        if (null != list && list.size() > 0) {
+            relRoleProjectMapper.insertBatch(list);
+            List<RoleProject> roleProjects = list.stream().map(r -> {
+                RoleProject roleProject = new RoleProject(projectDetail);
+                BeanUtils.copyProperties(r, roleProject);
+                return roleProject;
+            }).collect(Collectors.toList());
+            return roleProjects;
+        }
+        return null;
+    }
+
+    @Override
+    public PageInfo<ProjectWithCreateBy> getProjectsByOrg(Long orgId, User user, String keyword, int pageNum, int pageSize) {
+        if (!PageUtils.checkPageInfo(pageNum, pageSize)) {
+            throw new ServerException("Invalid page info");
+        }
+        PageHelper.startPage(pageNum, pageSize);
+        List<ProjectWithCreateBy> projects = projectMapper.getProjectsByOrgWithUser(orgId, user.getId(), keyword);
+        PageInfo<ProjectWithCreateBy> pageInfo = new PageInfo<>(projects);
+        return pageInfo;
+    }
+
+    private List<ProjectInfo> getProjectInfos(User user, List<ProjectWithCreateBy> projects) {
+        if (null != projects && projects.size() > 0) {
+            List<ProjectInfo> projectInfoList = new ArrayList<>();
+
+            //管理员
+            Set<Long> idsByAdmin = projectMapper.getProjectIdsByAdmin(user.getId());
+            Set<Long> idsByMember = new HashSet<>();
+            Iterator<ProjectWithCreateBy> iterator = projects.iterator();
+            while (iterator.hasNext()) {
+                ProjectWithCreateBy project = iterator.next();
+                if (null != idsByAdmin && idsByAdmin.contains(project.getId())) {
+                    ProjectInfo projectInfo = new ProjectInfo();
+                    BeanUtils.copyProperties(project, projectInfo);
+                    projectInfo.setPermission(ProjectPermission.adminPermission());
+                    projectInfoList.add(projectInfo);
+
+                    iterator.remove();
+                } else {
+                    idsByMember.add(project.getId());
+                }
+            }
+
+            //普通成员
+            if (null != idsByMember && idsByMember.size() > 0) {
+                List<UserMaxProjectPermission> permissions = relRoleProjectMapper.getMaxPermissions(idsByMember, user.getId());
+                Map<Long, ProjectPermission> permissionMap = new HashMap<>();
+                permissions.forEach(permission -> {
+                    ProjectPermission projectPermission = new ProjectPermission();
+                    BeanUtils.copyProperties(permission, projectPermission);
+                    permissionMap.put(permission.getProjectId(), projectPermission);
+                });
+
+                Iterator<ProjectWithCreateBy> iteratorByMember = projects.iterator();
+                while (iteratorByMember.hasNext()) {
+                    ProjectWithCreateBy project = iteratorByMember.next();
+                    ProjectInfo projectInfo = new ProjectInfo();
+                    BeanUtils.copyProperties(project, projectInfo);
+                    if (permissionMap.containsKey(project.getId())) {
+                        //关联Role的最大权限
+                        projectInfo.setPermission(permissionMap.get(project.getId()));
+                    } else {
+                        //仅有预览权限
+                        projectInfo.setPermission(ProjectPermission.previewPermission());
+                    }
+                    projectInfoList.add(projectInfo);
+                }
+            }
+
+            List<ProjectInfo> list = projectInfoList.stream().sorted(Comparator.comparing(ProjectInfo::getId)).collect(Collectors.toList());
+
+            return list;
+        }
+        return null;
+    }
+
+    /**
+     * 获取用户对project的权限
+     *
+     * @param projectDetail
+     * @param user
+     * @return
+     */
+    public ProjectPermission getProjectPermission(ProjectDetail projectDetail, User user) {
+        if (isMaintainer(projectDetail, user)) {
+            return ProjectPermission.adminPermission();
+        } else {
+            UserMaxProjectPermission permission = relRoleProjectMapper.getMaxPermission(projectDetail.getId(), user.getId());
+            if (null != permission && null != permission.getProjectId()) {
+                return permission;
+            } else if (projectDetail.getVisibility() && projectDetail.getOrganization().getMemberPermission() > (short) 0) {
+                return ProjectPermission.previewPermission();
+            } else {
+                return new ProjectPermission((short) 0);
+            }
+        }
+    }
+
+
+    @Override
+    public boolean allowGetData(ProjectDetail projectDetail, User user) throws NotFoundException {
+        ProjectPermission projectPermission = getProjectPermission(projectDetail, user);
+
+        return projectPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                || projectPermission.getWidgetPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                || projectPermission.getViewPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                || projectPermission.getSourcePermission() > UserPermissionEnum.HIDDEN.getPermission()
+                || projectPermission.getSchedulePermission() > UserPermissionEnum.HIDDEN.getPermission()
+                || projectPermission.getSharePermission()
+                || projectPermission.getDownloadPermission();
+    }
+
+    @Override
+    public List<RelProjectAdminDto> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedExecption {
+        getProjectDetail(id, user, false);
+        return relProjectAdminMapper.getByProject(id);
+    }
+
+
+    /**
+     * user是否project 的维护者
+     *
+     * @param projectDetail
+     * @param user
+     * @return
+     */
+    public boolean isMaintainer(ProjectDetail projectDetail, User user) {
+        if (null == projectDetail || null == user) {
+            return false;
+        }
+
+        //project所在org的creater
+        if (projectDetail.getOrganization().getUserId().equals(user.getId())) {
+            return true;
+        }
+
+        //当前project的creater
+        if (projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer()) {
+            return true;
+        }
+
+        //project 所在org的owner
+        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
+        if (null == orgRel) {
+            return false;
+        }
+
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+            return true;
+        }
+
+        //project 的admin
+        RelProjectAdmin projectAdmin = relProjectAdminMapper.getByProjectAndUser(projectDetail.getId(), user.getId());
+        if (null != projectAdmin) {
+            return true;
+        }
+
+        return false;
     }
 }

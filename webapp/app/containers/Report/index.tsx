@@ -20,25 +20,28 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
+import { compose } from 'redux'
 import { createStructuredSelector } from 'reselect'
 import {InjectedRouter} from 'react-router/lib/Router'
+
+import { Icon } from 'antd'
+import { IProject } from '../Projects'
 import Sidebar from '../../components/Sidebar'
 import SidebarOption from '../../components/SidebarOption/index'
 import { selectSidebar } from './selectors'
 import { loadSidebar } from './actions'
 import { makeSelectLoginUser } from '../App/selectors'
 import { showNavigator } from '../App/actions'
-import {loadProjectDetail, killProjectDetail} from '../Projects/actions'
+import { loadProjectDetail, killProjectDetail } from '../Projects/actions'
+import { loadProjectRoles } from '../Organizations/actions'
 import reducer from '../Projects/reducer'
 import injectReducer from 'utils/injectReducer'
 import saga from '../Projects/sagas'
 import injectSaga from 'utils/injectSaga'
-import {compose} from 'redux'
-import {makeSelectCurrentProject} from '../Projects/selectors'
-import {IProject} from '../Projects'
-const styles = require('./Report.less')
+import { makeSelectCurrentProject } from '../Projects/selectors'
+
 import MenuPermission from '../Account/components/checkMenuPermission'
-import { PermissionLevel } from '../Teams/component/PermissionLevel'
+const styles = require('./Report.less')
 
 interface IReportProps {
   router: InjectedRouter
@@ -50,12 +53,13 @@ interface IReportProps {
   currentProject: IProject
   onPageLoad: () => any
   onShowNavigator: () => any
-  onLoadProjectDetail: (id) => any
+  onLoadProjectDetail: (id: number) => any
   onKillProjectDetail: () => any
+  onLoadProjectRoles: (id: number) => any
 }
 
 interface IsidebarDetail {
-  icon?: string
+  icon?: React.ReactNode
   route?: string[]
   permission?: string
 }
@@ -68,6 +72,7 @@ export class Report extends React.Component<IReportProps, {}> {
     this.props.onShowNavigator()
     if (pid) {
       this.props.onLoadProjectDetail(pid)
+      this.props.onLoadProjectRoles(pid)
     }
   }
   public componentWillReceiveProps (nextProps) {
@@ -81,12 +86,13 @@ export class Report extends React.Component<IReportProps, {}> {
           const pStr = attr.slice(0, -10)
           if (pathname.indexOf(pStr) > 0) {
             permission = projectPermission[attr]
-          } else if (pathname.indexOf('bizlogics') > 0 && pathname.replace('bizlogics', 'view').indexOf(pStr) > 0) {
+          } else if (pathname.indexOf('views') > 0 && pathname.replace('views', 'view').indexOf(pStr) > 0) {
             permission = projectPermission[attr]
           }
         }
       }
     }
+
     if (permission === 0) {
       this.props.router.replace(`/noAuthorization`)
     }
@@ -103,7 +109,6 @@ export class Report extends React.Component<IReportProps, {}> {
     } = this.props
     const sidebarOptions = sidebar && (sidebar as IsidebarDetail[]).map((item) => {
       const isOptionActive = item.route.indexOf(routes[3].name) >= 0
-      const iconClassName = `iconfont ${item.icon}`
       const ProviderSidebar = MenuPermission(currentProject, item.permission)(SidebarOption)
 
       return (
@@ -113,12 +118,12 @@ export class Report extends React.Component<IReportProps, {}> {
           active={isOptionActive}
           params={this.props.params}
         >
-          <i className={iconClassName} />
+          {item.icon}
         </ProviderSidebar>
       )
     })
 
-    const sidebarComponent = currentProject && currentProject.inTeam
+    const sidebarComponent = currentProject && currentProject.permission
       ? (
         <Sidebar>
           {sidebarOptions}
@@ -146,17 +151,18 @@ export function mapDispatchToProps (dispatch) {
   return {
     onPageLoad: () => {
       const sidebarSource = [
-        { icon: 'icon-dashboard', route: ['vizs', 'dashboard'], permission: 'viz' },
-        { icon: 'icon-widget-gallery', route: ['widgets'], permission: 'widget' },
-        { icon: 'icon-custom-business', route: ['bizlogics', 'bizlogic'], permission: 'view' },
-        { icon: 'icon-datasource24', route: ['sources'], permission: 'source' },
-        { icon: 'anticon anticon-clock-circle-o', route: ['schedule'], permission: 'schedule' }
+        { icon: (<i className="iconfont icon-dashboard" />), route: ['vizs', 'dashboard'], permission: 'viz' },
+        { icon: (<i className="iconfont icon-widget-gallery" />), route: ['widgets'], permission: 'widget' },
+        { icon: (<i className="iconfont icon-custom-business" />), route: ['views', 'view'], permission: 'view' },
+        { icon: (<i className="iconfont icon-datasource24" />), route: ['sources'], permission: 'source' },
+        { icon: (<Icon type="clock-circle" />), route: ['schedule'], permission: 'schedule' }
       ]
       dispatch(loadSidebar(sidebarSource))
     },
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onShowNavigator: () => dispatch(showNavigator()),
-    onKillProjectDetail: () => dispatch(killProjectDetail())
+    onKillProjectDetail: () => dispatch(killProjectDetail()),
+    onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id))
   }
 }
 

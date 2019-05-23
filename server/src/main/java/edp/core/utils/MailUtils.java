@@ -123,8 +123,8 @@ public class MailUtils {
                               String content, List<File> files) throws ServerException {
 
         if (StringUtils.isEmpty(from)) {
-            log.info("email address(from) cannot be empty");
-            throw new ServerException("email address(from) cannot be empty");
+            log.info("email address(from) cannot be EMPTY");
+            throw new ServerException("email address(from) cannot be EMPTY");
         }
 
         Pattern pattern = Pattern.compile(Consts.REG_EMAIL_FORMAT);
@@ -136,18 +136,18 @@ public class MailUtils {
         }
 
         if (StringUtils.isEmpty(subject)) {
-            log.info("email subject cannot be empty");
-            throw new ServerException("email subject cannot be empty");
+            log.info("email subject cannot be EMPTY");
+            throw new ServerException("email subject cannot be EMPTY");
         }
 
         if (null == to || to.length < 1) {
-            log.info("email address(to) cannot be empty");
-            throw new ServerException("email address(to) cannot be empty");
+            log.info("email address(to) cannot be EMPTY");
+            throw new ServerException("email address(to) cannot be EMPTY");
         }
 
         if (StringUtils.isEmpty(content)) {
-            log.info("email content cannot be empty");
-            throw new ServerException("email content cannot be empty");
+            log.info("email content cannot be EMPTY");
+            throw new ServerException("email content cannot be EMPTY");
         }
 
         long startTimestamp = System.currentTimeMillis();
@@ -243,8 +243,8 @@ public class MailUtils {
                                   String template, Map<String, Object> content, List<File> files) throws ServerException {
 
         if (StringUtils.isEmpty(from)) {
-            log.info("email address(from) cannot be empty");
-            throw new ServerException("email address(from) cannot be empty");
+            log.info("email address(from) cannot be EMPTY");
+            throw new ServerException("email address(from) cannot be EMPTY");
         }
 
         Pattern pattern = Pattern.compile(Consts.REG_EMAIL_FORMAT);
@@ -256,23 +256,23 @@ public class MailUtils {
         }
 
         if (StringUtils.isEmpty(subject)) {
-            log.info("email subject cannot be empty");
-            throw new ServerException("email subject cannot be empty");
+            log.info("email subject cannot be EMPTY");
+            throw new ServerException("email subject cannot be EMPTY");
         }
 
         if (null == to || to.length < 1) {
-            log.info("email address(to) cannot be empty");
-            throw new ServerException("email address(to) cannot be empty");
+            log.info("email address(to) cannot be EMPTY");
+            throw new ServerException("email address(to) cannot be EMPTY");
         }
 
         if (StringUtils.isEmpty(template)) {
-            log.info("email template path is empty");
-            throw new ServerException("email template path is empty");
+            log.info("email template path is EMPTY");
+            throw new ServerException("email template path is EMPTY");
         }
 
         if (null == content) {
-            log.info("template content is empty");
-            throw new ServerException("template content is empty");
+            log.info("template content is EMPTY");
+            throw new ServerException("template content is EMPTY");
         }
 
         Context context = new Context();

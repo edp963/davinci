@@ -18,26 +18,30 @@
 
 package edp.davinci.service;
 
-import edp.davinci.core.common.ResultMap;
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.cronJobDto.CronJobBaseInfo;
+import edp.davinci.dto.cronJobDto.CronJobInfo;
 import edp.davinci.dto.cronJobDto.CronJobUpdate;
+import edp.davinci.model.CronJob;
 import edp.davinci.model.User;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 public interface CronJobService extends CheckEntityService {
-    ResultMap getCronJobs(Long projectId, User user, HttpServletRequest request);
+    List<CronJob> getCronJobs(Long projectId, User user);
 
-    ResultMap createCronJob(CronJobBaseInfo cronJobBaseInfo, User user, HttpServletRequest request);
+    CronJobInfo createCronJob(CronJobBaseInfo cronJobBaseInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateCronJob(CronJobUpdate cronJobUpdate, User user, HttpServletRequest request);
+    boolean updateCronJob(CronJobUpdate cronJobUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteCronJob(Long id, User user, HttpServletRequest request);
+    boolean deleteCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap startCronJob(Long id, User user, HttpServletRequest request);
+    CronJob startCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap stopCronJob(Long id, User user, HttpServletRequest request);
+    CronJob stopCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     void startAllJobs();
 }

@@ -34,18 +34,9 @@ import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 import GroupForm from './GroupForm'
-const Modal = require('antd/lib/modal')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import { Modal, Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb } from 'antd'
 
 import { PaginationProps } from 'antd/lib/pagination'
-import Column from 'antd/lib/table/Column'
 
 import { loadGroups, addGroup, deleteGroup, editGroup } from './actions'
 import { makeSelectGroups, makeSelectTableLoading, makeSelectFormLoading } from './selectors'

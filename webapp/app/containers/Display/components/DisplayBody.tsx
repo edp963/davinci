@@ -1,28 +1,26 @@
-import * as React from 'react'
-
+import React from 'react'
+import { areComponentsEqual } from 'react-hot-loader'
 import DisplayContainer from './DisplayContainer'
 import DisplayBottom from './DisplayBottom'
 import DisplaySidebar from './DisplaySidebar'
 
 const styles = require('../Display.less')
 
-interface IDisplayBodyProps {
-  children: JSX.Element[],
-}
+export const DisplayBody: React.FunctionComponent = (props) => {
 
-export function DisplayBody (props: IDisplayBodyProps) {
-  let editor
+  let container
   let bottom
   let sidebar
 
-  props.children.forEach((c) => {
-    if (c.type === DisplayContainer) {
-      editor = c
-    }
-    if (c.type === DisplayBottom) {
+  React.Children.forEach(props.children, (c) => {
+    if (!c) { return }
+
+    const type = (c as React.ReactElement<any>).type as React.ComponentClass<any>
+    if (areComponentsEqual(type, DisplayContainer)) {
+      container = c
+    } else if (areComponentsEqual(type, DisplayBottom)) {
       bottom = c
-    }
-    if (c.type === DisplaySidebar) {
+    } else if (areComponentsEqual(type, DisplaySidebar)) {
       sidebar = c
     }
   })
@@ -30,7 +28,7 @@ export function DisplayBody (props: IDisplayBodyProps) {
   return (
     <div className={styles.body}>
       <div className={styles.main}>
-        {editor}
+        {container}
         {bottom}
       </div>
       {sidebar}

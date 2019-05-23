@@ -1,11 +1,8 @@
 import * as React from 'react'
 
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Popover = require('antd/lib/popover')
-const Col = require('antd/lib/col')
-
+import { Button, Tooltip, Popover, Col } from 'antd'
 import { ButtonProps } from 'antd/lib/button/button'
+
 import { IProject } from '../../Projects'
 import { ICurrentDashboard } from '../'
 
@@ -61,7 +58,6 @@ export class DashboardToolbar extends React.PureComponent<IDashboardToolbarProps
     addButton = (
       <Tooltip placement="bottom" title="新增">
         <AddButton
-          size="large"
           type="primary"
           icon="plus"
           style={{marginLeft: '8px'}}
@@ -88,7 +84,6 @@ export class DashboardToolbar extends React.PureComponent<IDashboardToolbarProps
       >
         <Tooltip placement="bottom" title="分享">
           <ShareButton
-            size="large"
             type="primary"
             icon="share-alt"
             style={{marginLeft: '8px'}}
@@ -100,7 +95,6 @@ export class DashboardToolbar extends React.PureComponent<IDashboardToolbarProps
     linkageButton = (
       <Tooltip placement="bottom" title="联动关系配置">
         <LinkageButton
-          size="large"
           type="primary"
           icon="link"
           style={{marginLeft: '8px'}}
@@ -109,9 +103,8 @@ export class DashboardToolbar extends React.PureComponent<IDashboardToolbarProps
       </Tooltip>
     )
     globalFilterButton = (
-      <Tooltip placement="bottomRight" title="全局筛选器配置">
+      <Tooltip placement="bottomRight" title="全局控制器配置">
         <GlobalFilterButton
-          size="large"
           type="primary"
           icon="filter"
           style={{marginLeft: '8px'}}

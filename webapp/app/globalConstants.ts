@@ -38,6 +38,7 @@ export const DASHBOARD_ITEM_FILTER_HEIGHT = 40
 
 export const DEFAULT_TABLE_PAGE = 1
 export const DEFAULT_TABLE_PAGE_SIZE = 20
+export const TABLE_PAGE_SIZES = [10, 20, 30, 40, 50, 100]
 
 export const PIVOT_CELL_PADDING = 4
 export const PIVOT_CELL_BORDER = 1
@@ -80,6 +81,11 @@ export const PIVOT_CHART_LINE_STYLES = [
   { name: '点', value: 'dotted'}
 ]
 export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64]
+export const PIVOT_CHART_FONT_WEIGHTS = ['normal', 'bold', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900']
+export const PIVOT_CHART_FONT_STYLE = [
+  { name: '普通', value: 'normal' },
+  { name: '斜体', value: 'oblique' }
+]
 export const CHART_LABEL_POSITIONS = [
   { name: '上', value: 'top' },
   { name: '左', value: 'left' },
@@ -160,6 +166,11 @@ export const CHART_VISUALMAP_DIRECYTIONS = [
   { name: '水平', value: 'horizontal' }
 ]
 
+export const PIVOT_CHART_YAXIS_OPTIONS = [
+  { name: '折线图', value: 'line' },
+  { name: '柱状图', value: 'bar' }
+]
+
 export const SQL_STRING_TYPES = [
   'CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT',
   'JSON', 'LINESTRING', 'MULTILINESTRING',
@@ -173,15 +184,17 @@ export const SQL_NUMBER_TYPES = [
 ]
 export const SQL_DATE_TYPES = ['DATE', 'DATETIME', 'TIMESTAMP', 'TIME', 'YEAR']
 
+export const SQL_TYPES = SQL_STRING_TYPES.concat(SQL_NUMBER_TYPES).concat(SQL_DATE_TYPES)
+
+export type SqlTypes = typeof SQL_TYPES[number]
+
 export const DEFAULT_SPLITER = '@davinci@'
 export const KEY_COLUMN = 'davinciUniqueId'
 
-export const ECHARTS_RENDERER = 'echarts'
-
 export const DEFAULT_FONT_WEIGHT = 'normal'
 export const DEFAULT_FONT_STYLE = 'normal'
-export const DEFAULT_FONT_SIZE = '12px'
-export const DEFAULT_FONT_FAMILY = '"Helvetica Neue For Number", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif'
+export const DEFAULT_FONT_SIZE = '14px'
+export const DEFAULT_FONT_FAMILY = '"Chinese Quote", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
 
 export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD'
 export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'

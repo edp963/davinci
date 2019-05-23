@@ -18,7 +18,7 @@
 
 package edp.davinci.core.enums;
 
-public enum  CronJobStatusEnum {
+public enum CronJobStatusEnum {
 
     NEW("new"),
     START("started"),

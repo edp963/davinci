@@ -37,7 +37,7 @@ import {
 import {
   DEFAULT_ECHARTS_THEME
 } from '../../../../globalConstants'
-import geoData from '../../../../assets/json/geo'
+import geoData from '../../../../assets/js/geo.js'
 
 const provinceSuffix = ['省', '自治区', '市']
 const citySuffix = ['自治州', '市', '区', '县', '旗', '盟', '镇']
@@ -124,9 +124,9 @@ export default function (chartProps: IChartProps) {
     max = Math.max(max, value)
 
     cols.forEach((col) => {
-      const { visualType } = model[col]
+      const { visualType } = model[col.name]
       if (visualType === 'geoProvince') {
-        areaVal = record[col]
+        areaVal = record[col.name]
         const area = getProvinceArea(areaVal)
         if (area) {
           if (!dataTree[areaVal]) {
@@ -139,7 +139,7 @@ export default function (chartProps: IChartProps) {
           }
         }
       } else if (visualType === 'geoCity') {
-        areaVal = record[col]
+        areaVal = record[col.name]
         const area = getCityArea(areaVal)
         if (area) {
           if (layerType === 'map') {
@@ -303,8 +303,8 @@ export default function (chartProps: IChartProps) {
     }
   }
 
-  const getGeoCity = cols.filter((c) => model[c].visualType === 'geoCity')
-  const getGeoProvince = cols.filter((c) => model[c].visualType === 'geoProvince')
+  const getGeoCity = cols.filter((c) => model[c.name].visualType === 'geoCity')
+  const getGeoProvince = cols.filter((c) => model[c.name].visualType === 'geoProvince')
   const linesSeries = []
   const legendData = []
   let effectScatterType
@@ -314,38 +314,44 @@ export default function (chartProps: IChartProps) {
     let scatterData = []
     const value = d[`${agg}(${metricName})`]
 
-    if (d[getGeoCity[0]] && d[getGeoCity[1]]) {
-      const fromCityInfo = getCityArea(d[getGeoCity[0]])
-      const toCityInfo = getCityArea(d[getGeoCity[1]])
-      legendData.push(d[getGeoCity[0]])
-      linesSeriesData = [{
-        fromName: d[getGeoCity[0]],
-        toName: d[getGeoCity[1]],
-        coords: [[fromCityInfo.lon, fromCityInfo.lat], [toCityInfo.lon, toCityInfo.lat]]
-      }]
-      scatterData = [{
-        name: d[getGeoCity[1]],
-        value: [toCityInfo.lon, toCityInfo.lat, value]
-      }]
-    } else if (d[getGeoProvince[0]] && d[getGeoProvince[1]]) {
-      const fromProvinceInfo = getProvinceArea(d[getGeoProvince[0]])
-      const toProvinceInfo = getProvinceArea(d[getGeoProvince[1]])
-      legendData.push(d[getGeoProvince[0]])
-      linesSeriesData = [{
-        fromName: d[getGeoProvince[0]],
-        toName: d[getGeoProvince[1]],
-        coords: [[fromProvinceInfo.lon, fromProvinceInfo.lat], [toProvinceInfo.lon, toProvinceInfo.lat]]
-      }]
-      scatterData = [{
-        name: d[getGeoProvince[1]],
-        value: [toProvinceInfo.lon, toProvinceInfo.lat, value]
-      }]
+    if (getGeoCity.length > 1 && d[getGeoCity[0].name] && d[getGeoCity[1].name]) {
+      const fromCityInfo = getCityArea(d[getGeoCity[0].name])
+      const toCityInfo = getCityArea(d[getGeoCity[1].name])
+
+      if (fromCityInfo && toCityInfo) {
+        legendData.push(d[getGeoCity[0].name])
+        linesSeriesData = [{
+          fromName: d[getGeoCity[0].name],
+          toName: d[getGeoCity[1].name],
+          coords: [[fromCityInfo.lon, fromCityInfo.lat], [toCityInfo.lon, toCityInfo.lat]]
+        }]
+        scatterData = [{
+          name: d[getGeoCity[1].name],
+          value: [toCityInfo.lon, toCityInfo.lat, value]
+        }]
+      }
+    } else if (getGeoProvince.length > 1 && d[getGeoProvince[0].name] && d[getGeoProvince[1].name]) {
+      const fromProvinceInfo = getProvinceArea(d[getGeoProvince[0].name])
+      const toProvinceInfo = getProvinceArea(d[getGeoProvince[1].name])
+
+      if (fromProvinceInfo && toProvinceInfo) {
+        legendData.push(d[getGeoProvince[0].name])
+        linesSeriesData = [{
+          fromName: d[getGeoProvince[0].name],
+          toName: d[getGeoProvince[1].name],
+          coords: [[fromProvinceInfo.lon, fromProvinceInfo.lat], [toProvinceInfo.lon, toProvinceInfo.lat]]
+        }]
+        scatterData = [{
+          name: d[getGeoProvince[1].name],
+          value: [toProvinceInfo.lon, toProvinceInfo.lat, value]
+        }]
+      }
     } else {
       return
     }
 
     effectScatterType = {
-      name: d[getGeoCity[0]] || d[getGeoProvince[0]],
+      name: '',
       type: 'effectScatter',
       coordinateSystem: 'geo',
       zlevel: index,
@@ -360,7 +366,7 @@ export default function (chartProps: IChartProps) {
     }
 
     linesType = {
-      name: d[getGeoCity[0]] || d[getGeoProvince[0]],
+      name: '',
       type: 'lines',
       zlevel: index,
       symbol: ['none', 'arrow'],

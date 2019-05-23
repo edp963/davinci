@@ -32,8 +32,10 @@
   }
 
   .title {
-    padding: 12px 40px 0 12px;
+    padding: 12px 80px 0 12px;
     color: @white;
+    font-size: 1.15em;
+    font-weight: normal;
 
     .ellipsis;
   }
@@ -41,6 +43,7 @@
   .content {
     padding: 8px 12px 24px;
     color: @white;
+    font-size: .85em;
 
     .ellipsis;
   }
@@ -92,6 +95,13 @@
   }
 }
 
+.excludeList{
+  margin: 8px 8px;
+  b{
+    margin-left: 6px;
+  }
+}
+
 .searchAdmin, .addCol {
   padding: 0 4px;
   text-align: right;
@@ -109,6 +119,11 @@
 
 .searchInputAdmin {
   margin-right: 10px;
+}
+
+.controlTab {
+  overflow: auto;
+  max-height: 400px;
 }
 
 

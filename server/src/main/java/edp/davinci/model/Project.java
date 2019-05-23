@@ -49,4 +49,30 @@ public class Project {
         this.id = id;
         this.userId = userId;
     }
+
+
+    @Override
+    public String toString() {
+        return "Project{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", pic='" + pic + '\'' +
+                ", orgId=" + orgId +
+                ", userId=" + userId +
+                ", starNum=" + starNum +
+                ", visibility=" + visibility +
+                ", isTransfer=" + isTransfer +
+                ", initialOrgId=" + initialOrgId +
+                '}';
+    }
+
+    public String baseInfoToString() {
+        return "Project{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", visibility=" + visibility +
+                '}';
+    }
 }

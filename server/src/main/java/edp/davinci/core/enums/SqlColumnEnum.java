@@ -27,6 +27,8 @@ import javax.sql.rowset.serial.SerialClob;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 
+import static edp.core.consts.Consts.EMPTY;
+
 public enum SqlColumnEnum {
 
     TINYINT("TINYINT", "Short"),
@@ -116,7 +118,7 @@ public enum SqlColumnEnum {
 
             case "DECIMAL":
             case "NUMERIC":
-                if ("".equals(value.trim())) {
+                if (EMPTY.equals(value.trim())) {
                     result = new BigDecimal("0.0").stripTrailingZeros();
                 } else {
                     result = new BigDecimal(value.trim()).stripTrailingZeros();

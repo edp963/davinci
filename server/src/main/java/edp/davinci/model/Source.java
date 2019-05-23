@@ -20,6 +20,7 @@ package edp.davinci.model;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.annotation.JSONField;
 import edp.core.model.BaseSource;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -41,11 +42,13 @@ public class Source extends BaseSource {
 
     /**
      * 从config中获取jdbcUrl
-     *
+     * <p>
      * json key： url
+     *
      * @return
      */
     @Override
+    @JSONField(serialize = false)
     public String getJdbcUrl() {
         String url = null;
         if (null == config) {
@@ -62,11 +65,13 @@ public class Source extends BaseSource {
 
     /**
      * 从config中获取jdbc username
-     *
+     * <p>
      * json key: user
+     *
      * @return
      */
     @Override
+    @JSONField(serialize = false)
     public String getUsername() {
         String username = null;
         if (null == config) {
@@ -83,11 +88,13 @@ public class Source extends BaseSource {
 
     /**
      * 从config中获取 jdbc password
-     *
+     * <p>
      * json key: password
+     *
      * @return
      */
     @Override
+    @JSONField(serialize = false)
     public String getPassword() {
         String password = null;
         if (null == config) {
@@ -102,7 +109,8 @@ public class Source extends BaseSource {
         return password;
     }
 
-    private String getConcigParams() {
+    @JSONField(serialize = false)
+    public String getConfigParams() {
         String params = null;
         if (null == config) {
             return null;
@@ -114,5 +122,18 @@ public class Source extends BaseSource {
             log.error("get jdbc parameters from source config, {}", e.getMessage());
         }
         return params;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Source{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", type='" + type + '\'' +
+                ", projectId=" + projectId +
+                ", config='" + config + '\'' +
+                '}';
     }
 }

@@ -19,7 +19,8 @@
  */
 
 import { removeToken } from './request'
-const message = require('antd/lib/message')
+import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, DEFAULT_FONT_WEIGHT } from 'app/globalConstants'
+import { message } from 'antd'
 
 /**
  * UUID生成器
@@ -99,6 +100,21 @@ export function getBase64 (img, callback) {
   const reader = new FileReader()
   reader.addEventListener('load', () => callback(reader.result))
   reader.readAsDataURL(img)
+}
+
+let utilCanvas = null
+
+export const getTextWidth = (
+  text: string,
+  fontWeight: string = DEFAULT_FONT_WEIGHT,
+  fontSize: string = DEFAULT_FONT_SIZE,
+  fontFamily: string = DEFAULT_FONT_FAMILY
+): number => {
+  const canvas = utilCanvas || (utilCanvas = document.createElement('canvas'))
+  const context = canvas.getContext('2d')
+  context.font = `${fontWeight} ${fontSize} ${fontFamily}`
+  const metrics = context.measureText(text)
+  return Math.ceil(metrics.width)
 }
 
 /**

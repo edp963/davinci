@@ -20,50 +20,44 @@ package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
-import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.FileUtils;
-import edp.core.utils.TokenUtils;
-import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.core.enums.UserOrgRoleEnum;
+import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.displayDto.*;
-import edp.davinci.dto.projectDto.ProjectWithOrganization;
+import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.projectDto.ProjectPermission;
+import edp.davinci.dto.roleDto.VizVisibility;
 import edp.davinci.model.*;
 import edp.davinci.service.DisplayService;
+import edp.davinci.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service("displayService")
-public class DisplayServiceImpl extends CommonService<Display> implements DisplayService {
+public class DisplayServiceImpl implements DisplayService {
+    private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
+
+    @Autowired
+    private ProjectService projectService;
 
     @Autowired
     private DisplayMapper displayMapper;
-
-    @Autowired
-    private ProjectMapper projectMapper;
-
-    @Autowired
-    private RelTeamProjectMapper relTeamProjectMapper;
-
-    @Autowired
-    private RelUserTeamMapper relUserTeamMapper;
-
-    @Autowired
-    private RelUserOrganizationMapper relUserOrganizationMapper;
 
     @Autowired
     private DisplaySlideMapper displaySlideMapper;
@@ -81,10 +75,16 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
     private FileUtils fileUtils;
 
     @Autowired
-    private TokenUtils tokenUtils;
+    private RoleMapper roleMapper;
 
     @Autowired
-    private ExcludeDisplayTeamMapper excludeDisplayTeamMapper;
+    private ViewMapper viewMapper;
+
+    @Autowired
+    private RelRoleDisplayMapper relRoleDisplayMapper;
+
+    @Autowired
+    private RelRoleSlideMapper relRoleSlideMapper;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -101,38 +101,52 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      *
      * @param displayInfo
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap createDisplay(DisplayInfo displayInfo, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public Display createDisplay(DisplayInfo displayInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+
+        ProjectDetail projectDetail = projectService.getProjectDetail(displayInfo.getProjectId(), user, false);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+
+        //校验权限
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
+            log.info("user {} have not permisson to create display", user.getUsername());
+            throw new UnAuthorizedExecption("you have not permission to create display");
+        }
 
         if (isExist(displayInfo.getName(), null, displayInfo.getProjectId())) {
             log.info("the display name {} is already taken", displayInfo.getName());
-            return resultMap.failAndRefreshToken(request).message("the display name " + displayInfo.getName() + " is already taken");
+            throw new ServerException("the display name " + displayInfo.getName() + " is already taken");
         }
 
-        Project project = projectMapper.getById(displayInfo.getProjectId());
-        if (null == project) {
-            return resultMap.failAndRefreshToken(request).message("project is not found");
-        }
 
-        //校验权限
-        if (!allowWrite(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to create a display in this project");
-        }
-
-        Display display = new Display();
+        Display display = new Display().createdBy(user.getId());
         BeanUtils.copyProperties(displayInfo, display);
 
         int insert = displayMapper.insert(display);
         if (insert > 0) {
-            excludeTeamForDisplay(displayInfo.getTeamIds(), display.getId(), user.getId(), null);
-            return resultMap.successAndRefreshToken(request).payload(display);
+            optLogger.info("display ({}) is create by (:{})", display.toString(), user.getId());
+
+            if (null != displayInfo.getRoleIds() && displayInfo.getRoleIds().size() > 0) {
+                List<Role> roles = roleMapper.getRolesByIds(displayInfo.getRoleIds());
+
+                List<RelRoleDisplay> list = roles.stream()
+                        .map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+                        .collect(Collectors.toList());
+
+                if (null != list && list.size() > 0) {
+                    relRoleDisplayMapper.insertBatch(list);
+
+                    optLogger.info("display ({}) limit role ({}) access", display.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                }
+
+            }
+
+            return display;
         } else {
-            return resultMap.failAndRefreshToken(request).message("create display fail");
+            throw new ServerException("create display fail");
         }
     }
 
@@ -142,29 +156,33 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      *
      * @param id
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap deleteDisplay(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public boolean deleteDisplay(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         DisplayWithProject displayWithProject = displayMapper.getDisplayWithProjectById(id);
 
         if (null == displayWithProject) {
-            return resultMap.failAndRefreshToken(request).message("display is not found");
+            log.info("display (:{}) is not found", id);
+            return true;
         }
 
+        ProjectDetail projectDetail = projectService.getProjectDetail(displayWithProject.getProjectId(), user, false);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+
+        boolean disable = relRoleDisplayMapper.isDisable(id, user.getId());
+
         //校验权限
-        Project project = displayWithProject.getProject();
-        if (!allowDelete(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to delete this display");
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
+            log.info("user {} have not permisson to delete display", user.getUsername());
+            throw new UnAuthorizedExecption("you have not permission to delete display");
         }
 
         //删除display实体
         displayMapper.deleteById(id);
 
-        excludeDisplayTeamMapper.deleteByDisplayId(id);
+        relRoleDisplayMapper.deleteByDisplayId(id);
 
         //删除displaySlide
         displaySlideMapper.deleteByDisplayId(id);
@@ -172,7 +190,7 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
         //删除displaySlide和widget的关联
         memDisplaySlideWidgetMapper.deleteByDisplayId(id);
 
-        return resultMap.successAndRefreshToken(request);
+        return true;
     }
 
     /**
@@ -180,81 +198,113 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      *
      * @param slideId
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap deleteDisplaySlide(Long slideId, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public boolean deleteDisplaySlide(Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         DisplaySlide displaySlide = displaySlideMapper.getById(slideId);
         if (null == displaySlide) {
-            return resultMap.failAndRefreshToken(request).message("display slide is not found");
+            log.info("display slide is not found");
+            return true;
         }
 
-        Project project = projectMapper.getByDisplayId(displaySlide.getDisplayId());
-        if (!allowDelete(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to delete this display slide");
+        Display display = displayMapper.getById(displaySlide.getDisplayId());
+        if (null == display) {
+            log.info("display is not found");
+            throw new NotFoundException("display is not found");
+        }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
+
+        boolean disable = relRoleDisplayMapper.isDisable(displaySlide.getDisplayId(), user.getId());
+
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), display.getId());
+
+        //校验权限
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
+            log.info("user {} have not permisson to delete display slide", user.getUsername());
+            throw new UnAuthorizedExecption("you have not permisson to delete this display slide");
         }
 
         //删除displaySlide实体
         displaySlideMapper.deleteById(slideId);
+        optLogger.info("display slide ({}) is delete by (:{})", displaySlide.toString(), user.getId());
+
+        relRoleSlideMapper.deleteBySlideId(slideId);
 
         //删除displaySlide和widget的关联
         memDisplaySlideWidgetMapper.deleteBySlideId(slideId);
 
-        return resultMap.successAndRefreshToken(request);
+        return true;
     }
 
     /**
      * 更新display信息
      *
-     * @param displayUpdateDto
+     * @param displayUpdate
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap updateDisplay(DisplayUpdateDto displayUpdateDto, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public boolean updateDisplay(DisplayUpdate displayUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        Project project = projectMapper.getById(displayUpdateDto.getProjectId());
-        if (null == project) {
-            return resultMap.failAndRefreshToken(request).message("project is not found");
+        Display display = displayMapper.getById(displayUpdate.getId());
+        if (null == display) {
+            throw new NotFoundException("display is not found");
         }
+
+        ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        boolean disable = relRoleDisplayMapper.isDisable(display.getId(), user.getId());
+
 
         //校验权限
-        if (!allowWrite(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to update the display in this project");
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
+            log.info("user {} have not permisson to update display", user.getUsername());
+            throw new UnAuthorizedExecption("you have not permission to update display");
         }
 
-        Display display = displayMapper.getById(displayUpdateDto.getId());
 
         if (!StringUtils.isEmpty(display.getAvatar()) && !display.getAvatar().startsWith(Constants.DISPLAY_AVATAR_PATH)) {
-            return resultMap.failAndRefreshToken(request).message("Invalid cover image");
+            throw new ServerException("Invalid cover image");
         }
 
         //删除原有封面图
-        if (!StringUtils.isEmpty(display.getAvatar())) {
-            Display initial = displayMapper.getById(display.getId());
-            if (!StringUtils.isEmpty(initial.getAvatar()) && !display.getAvatar().equals(initial.getAvatar())) {
-                File file = new File(initial.getAvatar());
-                if (null != file && file.exists() && file.isFile() && fileUtils.isImage(file)) {
-                    file.delete();
-                }
+        if (!StringUtils.isEmpty(display.getAvatar()) && !display.getAvatar().equals(display.getAvatar())) {
+            File file = new File(display.getAvatar());
+            if (null != file && file.exists() && file.isFile() && fileUtils.isImage(file)) {
+                file.delete();
             }
         }
+        String origin = display.toString();
 
-        BeanUtils.copyProperties(displayUpdateDto, display);
+        BeanUtils.copyProperties(displayUpdate, display);
+        display.updatedBy(user.getId());
+
         int update = displayMapper.update(display);
         if (update > 0) {
-            List<Long> excludeTeams = excludeDisplayTeamMapper.selectExcludeTeamsByDisplayId(display.getId());
-            excludeTeamForDisplay(displayUpdateDto.getTeamIds(), display.getId(), user.getId(), excludeTeams);
-        }
+            optLogger.info("display ({}) is update by (:{}), origin: ({})", display.toString(), user.getId(), origin);
+            relRoleDisplayMapper.deleteByDisplayId(display.getId());
+            if (null != displayUpdate.getRoleIds() && displayUpdate.getRoleIds().size() > 0) {
+                List<Role> roles = roleMapper.getRolesByIds(displayUpdate.getRoleIds());
 
-        return resultMap.successAndRefreshToken(request);
+                List<RelRoleDisplay> list = roles.stream()
+                        .map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+                        .collect(Collectors.toList());
+                if (null != list && list.size() > 0) {
+                    relRoleDisplayMapper.insertBatch(list);
+                    optLogger.info("update display ({}) limit role ({}) access", display.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                }
+            }
+
+            return true;
+        } else {
+            throw new ServerException("update display fail");
+        }
     }
 
     /**
@@ -262,33 +312,51 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      *
      * @param displaySlideCreate
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap createDisplaySlide(DisplaySlideCreate displaySlideCreate, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public DisplaySlide createDisplaySlide(DisplaySlideCreate displaySlideCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        DisplayWithProject displayWithProject = displayMapper.getDisplayWithProjectById(displaySlideCreate.getDisplayId());
-        if (null == displayWithProject) {
-            return resultMap.failAndRefreshToken(request).message("display is not found");
+        Display display = displayMapper.getById(displaySlideCreate.getDisplayId());
+        if (null == display) {
+            throw new NotFoundException("display is not found");
         }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(display.getId(), user.getId());
 
         //校验权限
-        Project project = displayWithProject.getProject();
-        if (!allowWrite(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to create displaySlide this display");
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
+            log.info("user {} have not permisson to create displaySlide", user.getUsername());
+            throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
-        DisplaySlide displaySlide = new DisplaySlide();
+
+        DisplaySlide displaySlide = new DisplaySlide().createdBy(user.getId());
         BeanUtils.copyProperties(displaySlideCreate, displaySlide);
 
         int insert = displaySlideMapper.insert(displaySlide);
         if (insert > 0) {
-            return resultMap.successAndRefreshToken(request).payload(displaySlide);
+            optLogger.info("display slide ({}) create by (:{})", displaySlide.toString(), user.getId());
+
+            if (null != displaySlideCreate.getRoleIds() && displaySlideCreate.getRoleIds().size() > 0) {
+                List<Role> roles = roleMapper.getRolesByIds(displaySlideCreate.getRoleIds());
+
+                List<RelRoleSlide> list = roles.stream()
+                        .map(r -> new RelRoleSlide(displaySlide.getId(), r.getId()).createdBy(user.getId()))
+                        .collect(Collectors.toList());
+
+                if (null != list && list.size() > 0) {
+                    relRoleSlideMapper.insertBatch(list);
+
+                    optLogger.info("display slide ({}) limit role ({}) access", displaySlide.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                }
+            }
+
+            return displaySlide;
         } else {
-            return resultMap.failAndRefreshToken(request).message("create display slide fail");
+            throw new ServerException("create display slide fail");
         }
 
     }
@@ -299,35 +367,44 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      * @param displayId
      * @param displaySlides
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap updateDisplaySildes(Long displayId, DisplaySlide[] displaySlides, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public boolean updateDisplaySildes(Long displayId, DisplaySlide[] displaySlides, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        DisplayWithProject displayWithProject = displayMapper.getDisplayWithProjectById(displayId);
-        if (null == displayWithProject) {
-            return resultMap.failAndRefreshToken(request).message("display is not found");
+        Display display = displayMapper.getById(displayId);
+        if (null == display) {
+            throw new NotFoundException("display is not found");
         }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(displayId, user.getId());
 
         //校验权限
-        Project project = displayWithProject.getProject();
-        if (!allowWrite(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to update display slides in this display");
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
+            log.info("user {} have not permisson to update displaySlide", user.getUsername());
+            throw new UnAuthorizedExecption("Insufficient permissions");
         }
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), displayId);
 
+
+        List<DisplaySlide> displaySlideList = new ArrayList<>();
         for (DisplaySlide displaySlide : displaySlides) {
-            if (!displaySlide.getDisplayId().equals(displayId)) {
-                return resultMap.failAndRefreshToken(request).message("Invalid display id");
+
+            if (!projectPermission.isProjectMaintainer() && disableSlides.contains(displaySlide.getId())) {
+                throw new UnAuthorizedExecption("Insufficient permissions");
             }
+
+            if (!displaySlide.getDisplayId().equals(displayId)) {
+                throw new ServerException("Invalid display id");
+            }
+            displaySlide.updatedBy(user.getId());
+            displaySlideList.add(displaySlide);
         }
 
-        List<DisplaySlide> displaySlideList = new ArrayList<>(Arrays.asList(displaySlides));
         displaySlideMapper.updateBatch(displaySlideList);
-
-        return resultMap.successAndRefreshToken(request);
+        return true;
     }
 
 
@@ -338,35 +415,45 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      * @param slideId
      * @param slideWidgetCreates
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap addMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetCreate[] slideWidgetCreates, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public List<MemDisplaySlideWidget> addMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetCreate[] slideWidgetCreates, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(slideId);
 
         if (null == slideWithDisplayAndProject) {
-            return resultMap.failAndRefreshToken(request).message("display slide is not found");
+            throw new NotFoundException("display slide is not found");
         }
 
         if (null == slideWithDisplayAndProject.getDisplay() || !slideWithDisplayAndProject.getDisplayId().equals(displayId)) {
-            return resultMap.failAndRefreshToken(request).message("Invalid display slide");
+            throw new ServerException("Invalid display slide");
         }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(displayId, user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), displayId);
+
+
+        //校验权限
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
+        }
+
 
         Set<Long> ids = new HashSet<>();
         List<MemDisplaySlideWidget> list = new ArrayList<>();
         List<MemDisplaySlideWidget> clist = new ArrayList<>();
         for (MemDisplaySlideWidgetCreate slideWidgetCreate : slideWidgetCreates) {
             ids.add(slideWidgetCreate.getWidgetId());
-            MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget();
+            MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget().createdBy(user.getId());
             BeanUtils.copyProperties(slideWidgetCreate, memDisplaySlideWidget);
             list.add(memDisplaySlideWidget);
             //自定义主键，copy 一份修改内容作为返回值
             if (null != slideWidgetCreate.getId() && slideWidgetCreate.getId().longValue() > 0L) {
-                MemDisplaySlideWidget cMemDisplaySlideWidget = new MemDisplaySlideWidget();
+                MemDisplaySlideWidget cMemDisplaySlideWidget = new MemDisplaySlideWidget().createdBy(user.getId());
                 BeanUtils.copyProperties(slideWidgetCreate, cMemDisplaySlideWidget);
                 clist.add(cMemDisplaySlideWidget);
             }
@@ -374,28 +461,24 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
 
         List<Widget> widgets = widgetMapper.getByIds(ids);
         if (null == widgets) {
-            return resultMap.failAndRefreshToken(request).message("Invalid widget id");
-        }
-
-        //校验权限
-        Project project = slideWithDisplayAndProject.getProject();
-        if (!allowWrite(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to do this operation");
+            throw new ServerException("Invalid widget id");
         }
 
 
         int i = memDisplaySlideWidgetMapper.insertBatch(list);
         if (i > 0) {
             if (null != clist && clist.size() > 1) {
+                optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", clist.toString(), user.getId());
                 //自定义主键
-                return resultMap.successAndRefreshToken(request).payloads(clist);
+                return clist;
             } else {
                 //自增主键
-                return resultMap.successAndRefreshToken(request).payloads(list);
+                optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", list.toString(), user.getId());
+                return list;
             }
         } else {
             log.error("insert batch MemDisplaySlideWidget error");
-            return resultMap.failAndRefreshToken(request).message("unkown fail");
+            throw new ServerException("unkown fail");
         }
     }
 
@@ -406,50 +489,51 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      * @param slideId
      * @param memDisplaySlideWidgets
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidget[] memDisplaySlideWidgets, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public boolean updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidget[] memDisplaySlideWidgets, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(slideId);
 
         if (null == slideWithDisplayAndProject) {
-            return resultMap.failAndRefreshToken(request).message("display slide is not found");
+            throw new NotFoundException("display slide is not found");
         }
 
         if (null == slideWithDisplayAndProject.getDisplay() || !slideWithDisplayAndProject.getDisplayId().equals(displayId)) {
-            return resultMap.failAndRefreshToken(request).message("Invalid display slide");
+            throw new ServerException("Invalid display slide");
         }
 
-        Set<Long> ids = new HashSet<>();
-        for (MemDisplaySlideWidget slideWidget : memDisplaySlideWidgets) {
-            ids.add(slideWidget.getWidgetId());
-        }
+        Set<Long> widgetIds = Arrays.stream(memDisplaySlideWidgets).map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
 
-        List<Widget> widgets = widgetMapper.getByIds(ids);
+        List<Widget> widgets = widgetMapper.getByIds(widgetIds);
         if (null == widgets) {
-            return resultMap.failAndRefreshToken(request).message("Invalid widget id");
+            throw new ServerException("Invalid widget id");
         }
 
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(displayId, user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), displayId);
 
         //校验权限
-        Project project = slideWithDisplayAndProject.getProject();
-        if (!allowWrite(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to do this operation");
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
-
-        ArrayList list = new ArrayList(Arrays.asList(memDisplaySlideWidgets));
+        List<MemDisplaySlideWidget> list = new ArrayList<>();
+        for (MemDisplaySlideWidget memDisplaySlideWidget : memDisplaySlideWidgets) {
+            memDisplaySlideWidget.updatedBy(user.getId());
+            list.add(memDisplaySlideWidget);
+        }
 
         int i = memDisplaySlideWidgetMapper.updateBatch(list);
         if (i > 0) {
-            return resultMap.successAndRefreshToken(request);
+            return true;
         } else {
             log.error("update batch MemDisplaySlideWidget error");
-            return resultMap.failAndRefreshToken(request).message("unkown fail");
+            throw new ServerException("unknown fail");
         }
     }
 
@@ -458,76 +542,94 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      *
      * @param memDisplaySlideWidget
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap updateMemDisplaySlideWidget(MemDisplaySlideWidget memDisplaySlideWidget, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public boolean updateMemDisplaySlideWidget(MemDisplaySlideWidget memDisplaySlideWidget, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(memDisplaySlideWidget.getDisplaySlideId());
 
         if (null == slideWithDisplayAndProject) {
-            return resultMap.failAndRefreshToken(request).message("display slide is not found");
+            throw new NotFoundException("display slide is not found");
         }
 
         if (null == slideWithDisplayAndProject.getDisplay()) {
-            return resultMap.failAndRefreshToken(request).message("Invalid display slide");
+            throw new ServerException("Invalid display slide");
         }
 
         MemDisplaySlideWidget slideWidget = memDisplaySlideWidgetMapper.getById(memDisplaySlideWidget.getId());
         if (null == slideWidget) {
-            return resultMap.failAndRefreshToken(request).message("display slide widget is not found");
+            throw new ServerException("display slide widget is not found");
         }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
 
         //校验权限
-        Project project = slideWithDisplayAndProject.getProject();
-        if (!allowWrite(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to do this operation");
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(memDisplaySlideWidget.getDisplaySlideId())))) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
-        memDisplaySlideWidgetMapper.update(memDisplaySlideWidget);
-        return resultMap.successAndRefreshToken(request);
+        String origin = slideWidget.toString();
+        slideWidget.updatedBy(user.getId());
+        BeanUtils.copyProperties(memDisplaySlideWidget, slideWidget);
+        int update = memDisplaySlideWidgetMapper.update(slideWidget);
+        if (update > 0) {
+            optLogger.info("MemDisplaySlideWidget ({}) is update by (:{}), origin:{}", slideWidget.toString(), user.getId(), origin);
+            return true;
+        } else {
+            log.error("update MemDisplaySlideWidget error");
+            throw new ServerException("unknown fail");
+        }
     }
 
     /**
      * 删除displaySlide下的widget关联信息
      *
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap deleteMemDisplaySlideWidget(Long relationId, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public boolean deleteMemDisplaySlideWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         MemDisplaySlideWidget slideWidget = memDisplaySlideWidgetMapper.getById(relationId);
         if (null == slideWidget) {
-            return resultMap.failAndRefreshToken(request).message("display slide widget is not found");
+            optLogger.info("MemDisplaySlideWidget (:{}) is not found", relationId);
+            return true;
         }
 
 
         SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(slideWidget.getDisplaySlideId());
 
         if (null == slideWithDisplayAndProject) {
-            return resultMap.failAndRefreshToken(request).message("display slide is not found");
+            throw new NotFoundException("display slide is not found");
         }
 
         if (null == slideWithDisplayAndProject.getDisplay()) {
-            return resultMap.failAndRefreshToken(request).message("Invalid display");
+            throw new ServerException("Invalid display");
         }
+
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
 
         //校验权限
-        Project project = slideWithDisplayAndProject.getProject();
-        if (!allowDelete(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to remove the widget in this display slide");
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideWidget.getDisplaySlideId())))) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
-        memDisplaySlideWidgetMapper.deleteById(relationId);
-
-        return resultMap.successAndRefreshToken(request);
+        int i = memDisplaySlideWidgetMapper.deleteById(relationId);
+        if (i > 0) {
+            optLogger.info("MemDisplaySlideWdget ({}) is delete by (:{})", slideWidget.toString(), user.getId());
+            return true;
+        } else {
+            throw new ServerException("unknown fail");
+        }
     }
 
     /**
@@ -535,148 +637,101 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      *
      * @param projectId
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getDisplayListByProject(Long projectId, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public List<Display> getDisplayListByProject(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(projectId);
-
-        if (null == projectWithOrganization) {
-            return resultMap.successAndRefreshToken(request).message("project not found");
+        ProjectDetail projectDetail = null;
+        try {
+            projectDetail = projectService.getProjectDetail(projectId, user, false);
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (UnAuthorizedExecption e) {
+            return null;
         }
 
-        if (!allowRead(projectWithOrganization, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+
+        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission()) {
+            return null;
         }
 
-        List<Display> displays = displayMapper.getByProject(projectId, user.getId());
+        List<Display> displays = displayMapper.getByProject(projectId);
+        if (null == displays || displays.size() == 0) {
+            return null;
+        }
 
-        if (null != displays && displays.size() > 0) {
+        List<Long> disableList = relRoleDisplayMapper.getDisableDisplayByUser(user.getId(), projectId);
 
-            //获取当前用户在organization的role
-            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectWithOrganization.getOrgId());
-
-            //当前用户是project的创建者和organization的owner，直接返回
-            if (!isProjectAdmin(projectWithOrganization, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-                //查询project所属team中当前用户最高角色
-                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
-
-                //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
-                if (maxTeamRole < UserTeamRoleEnum.MAINTAINER.getRole()) {
-                    Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
-                    if (teamNumOfOrgByUser > 0) {
-                        //查询当前用户在的 project所属team对project display的最高权限
-                        short maxVizPermisson = relTeamProjectMapper.getMaxVizPermission(projectId, user.getId());
-                        if (maxVizPermisson == UserPermissionEnum.HIDDEN.getPermission()) {
-                            //隐藏
-                            displays = null;
-                        } else if (maxVizPermisson == UserPermissionEnum.READ.getPermission()) {
-                            //只读, remove未发布的
-                            Iterator<Display> iterator = displays.iterator();
-                            while (iterator.hasNext()) {
-                                Display display = iterator.next();
-                                if (!display.getPublish()) {
-                                    iterator.remove();
-                                }
-                            }
-                        }
-                    } else {
-                        Organization organization = projectWithOrganization.getOrganization();
-                        if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
-                            displays = null;
-                        } else {
-                            Iterator<Display> iterator = displays.iterator();
-                            while (iterator.hasNext()) {
-                                Display display = iterator.next();
-                                if (!display.getPublish()) {
-                                    iterator.remove();
-                                }
-                            }
-                        }
-                    }
-                }
+        Iterator<Display> iterator = displays.iterator();
+        while (iterator.hasNext()) {
+            Display display = iterator.next();
+            if (!projectPermission.isProjectMaintainer() && (disableList.contains(display.getId()) || !display.getPublish())) {
+                iterator.remove();
             }
         }
 
-
-        return resultMap.successAndRefreshToken(request).payloads(displays);
+        return displays;
     }
 
     /**
      * 根据displayId 获取当前用户可见的displaySlide
      *
-     * @param id
+     * @param displayId
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getDisplaySlideList(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        Display display = displayMapper.getById(id);
+    public DisplayWithSlides getDisplaySlideList(Long displayId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Display display = displayMapper.getById(displayId);
         if (null == display) {
-            log.info("display (:{}) not found", id);
-            return resultMap.failAndRefreshToken(request).message("display is not found");
+            log.info("display (:{}) not found", displayId);
+            throw new NotFoundException("display is not found");
         }
 
-        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(display.getProjectId());
-
-        //当前用户不是project创建者且display未发布
-        if (null == projectWithOrganization && !display.getPublish()) {
-            log.info("user (:{}) you have not permisson to view display slides", user.getId());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to view display slides");
+        ProjectDetail projectDetail = null;
+        try {
+            projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (UnAuthorizedExecption e) {
+            return null;
         }
 
-        if (!allowRead(projectWithOrganization, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        boolean isDisable = relRoleDisplayMapper.isDisable(displayId, user.getId());
+
+        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() || (!projectPermission.isProjectMaintainer() && isDisable)) {
+            return null;
         }
 
-        List<DisplaySlide> displaySlides = displaySlideMapper.selectByDisplayId(id);
+        List<DisplaySlide> displaySlides = displaySlideMapper.selectByDisplayId(displayId);
+        if (null == displaySlides || displaySlides.size() == 0) {
+            return null;
+        }
 
-        List<DisplaySlideInfo> displaySlideInfos = new ArrayList<>();
+        List<Long> disableList = relRoleSlideMapper.getDisableSlides(user.getId(), display.getProjectId());
 
-        if (null != displaySlides && displaySlides.size() > 0) {
-
-            RelUserOrganization orgRel = relUserOrganizationMapper.getRelByProject(user.getId(), display.getProjectId());
-
-            //project的创建者 和 当前project的owner直接返回
-            if (null == projectWithOrganization && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-                Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
-                if (teamNumOfOrgByUser > 0) {
-                    //验证team member权限
-                    short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(display.getProjectId(), user.getId());
-                    if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-                        short maxVizPermisson = relTeamProjectMapper.getMaxVizPermission(display.getProjectId(), user.getId());
-                        //用户所在team对display的最高权限是隐藏
-                        if (maxVizPermisson == UserPermissionEnum.HIDDEN.getPermission()) {
-                            log.info("user (:{}) have not permission to view display slides", user.getId());
-                            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to view display slides");
-                        }
-                    }
-                } else {
-                    Organization organization = projectWithOrganization.getOrganization();
-                    if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
-                        log.info("user (:{}) have not permission to view display slides", user.getId());
-                        return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to view display slides");
-                    }
-                }
-            }
-            for (DisplaySlide displaySlide : displaySlides) {
-                DisplaySlideInfo displaySlideInfo = new DisplaySlideInfo();
-                BeanUtils.copyProperties(displaySlide, displaySlideInfo);
-                displaySlideInfos.add(displaySlideInfo);
+        Iterator<DisplaySlide> iterator = displaySlides.iterator();
+        while (iterator.hasNext()) {
+            DisplaySlide displaySlide = iterator.next();
+            if (!projectPermission.isProjectMaintainer() && disableList.contains(displaySlide.getId())) {
+                iterator.remove();
             }
         }
+
+        List<DisplaySlideInfo> displaySlideInfos = displaySlides.stream().map(slide -> {
+            DisplaySlideInfo displaySlideInfo = new DisplaySlideInfo();
+            BeanUtils.copyProperties(slide, displaySlideInfo);
+            return displaySlideInfo;
+        }).collect(Collectors.toList());
 
         DisplayWithSlides displayWithSlides = new DisplayWithSlides();
         BeanUtils.copyProperties(display, displayWithSlides);
         displayWithSlides.setSlides(displaySlideInfos);
 
-        return resultMap.successAndRefreshToken(request).payload(displayWithSlides);
+        return displayWithSlides;
     }
 
 
@@ -686,66 +741,60 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      * @param displayId
      * @param slideId
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getDisplaySlideWidgetList(Long displayId, Long slideId, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public SlideWithMem getDisplaySlideMem(Long displayId, Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         Display display = displayMapper.getById(displayId);
         if (null == display) {
             log.info("display (:{}) not found", displayId);
-            return resultMap.failAndRefreshToken(request).message("display is not found");
+            throw new NotFoundException("display is not found");
         }
 
-        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(display.getProjectId());
-
-        //当前用户不是project创建者且display未发布
-        if (null == projectWithOrganization && !display.getPublish()) {
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
+        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() ||
+                (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && !display.getPublish())) {
             log.info("user (:{}) have not permission to view widgets in this display slide", user.getId());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to view widgets in this display slide");
-        }
-
-        if (!allowRead(projectWithOrganization, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+            throw new UnAuthorizedExecption("you have not permission to view widgets in this display slide");
         }
 
         DisplaySlide displaySlide = displaySlideMapper.getById(slideId);
 
         if (null == displaySlide || !displaySlide.getDisplayId().equals(displayId)) {
             log.info("display slide (:{}) not found", displayId);
-            return resultMap.failAndRefreshToken(request).message("display slide is not found");
+            throw new ServerException("display slide is not found");
         }
 
         List<MemDisplaySlideWidget> widgetList = memDisplaySlideWidgetMapper.getMemDisplaySlideWidgetListBySlideId(slideId);
 
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRelByProject(user.getId(), display.getProjectId());
-        //project创建者和当前project的owner直接返回
-        if (null == projectWithOrganization && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
-            if (teamNumOfOrgByUser > 0) {
-                //验证team member权限
-                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(display.getProjectId(), user.getId());
-                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-                    short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(display.getProjectId(), user.getId());
-                    //所在team 对 widget 拥有的最高全显示隐藏， 直接删除对应
-                    if (maxVizPermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                        log.info("user (:{}) have not permission to view widgets in this display slide", user.getId());
-                        return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to view widgets in this display slide");
-                    }
-                }
-            } else {
-                Organization organization = projectWithOrganization.getOrganization();
-                if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
-                    log.info("user (:{}) have not permission to view widgets in this display slide", user.getId());
-                    return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to view widgets in this display slide");
-                }
-            }
-
+        if (null == widgetList || widgetList.size() == 0) {
+            return null;
         }
 
-        return resultMap.successAndRefreshToken(request).payloads(widgetList);
+        List<Long> disableList = relRoleSlideMapper.getDisableSlides(user.getId(), display.getProjectId());
+
+        Iterator<MemDisplaySlideWidget> iterator = widgetList.iterator();
+
+        while (iterator.hasNext()) {
+            MemDisplaySlideWidget memDisplaySlideWidget = iterator.next();
+            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && disableList.contains(memDisplaySlideWidget.getDisplaySlideId())) {
+                iterator.remove();
+            }
+        }
+
+        Set<Long> widgetIds = widgetList.stream().map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
+        Set<View> views = new HashSet<>();
+        if (null != widgetIds && widgetIds.size() > 0) {
+            views = viewMapper.selectByWidgetIds(widgetIds);
+        }
+
+        SlideWithMem slideWithMem = new SlideWithMem();
+        BeanUtils.copyProperties(displaySlide, slideWithMem);
+        slideWithMem.setWidgets(widgetList);
+        slideWithMem.setViews(views);
+
+        return slideWithMem;
     }
 
     /**
@@ -754,55 +803,54 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      * @param displayId
      * @param slideId
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap deleteDisplaySlideWidgetList(Long displayId, Long slideId, Long[] memIds, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public boolean deleteDisplaySlideWidgetList(Long displayId, Long slideId, Long[] memIds, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(slideId);
 
         if (null == slideWithDisplayAndProject) {
-            return resultMap.failAndRefreshToken(request).message("display slide not found");
+            throw new NotFoundException("display slide is not found");
         }
 
         if (null == slideWithDisplayAndProject.getDisplay()) {
-            return resultMap.failAndRefreshToken(request).message("Invalid display slide");
+            throw new NotFoundException("display is not found");
         }
 
-        if (slideWithDisplayAndProject.getDisplay().getId() != displayId) {
-            return resultMap.failAndRefreshToken(request).message("Invalid display id");
+        if (!displayId.equals(slideWithDisplayAndProject.getDisplay().getId())) {
+            throw new ServerException("Invalid display id");
         }
 
-        //校验权限
-        Project project = slideWithDisplayAndProject.getProject();
-        if (!allowDelete(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to remove this widgets in this display slide");
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+
+        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
+
+        if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
         if (memIds.length > 0) {
             List<Long> idList = new ArrayList<>(Arrays.asList(memIds));
             memDisplaySlideWidgetMapper.deleteBatchById(idList);
         }
-        return resultMap.successAndRefreshToken(request);
+        return true;
     }
 
     /**
      * 上传display封面图
      *
      * @param file
-     * @param request
      * @return
      */
     @Override
-    public ResultMap uploadAvatar(MultipartFile file, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public String uploadAvatar(MultipartFile file) throws ServerException {
         //校验文件是否图片
         if (!fileUtils.isImage(file)) {
-            return resultMap.failAndRefreshToken(request).message("file format error");
+            throw new ServerException("file format error");
         }
 
         //上传文件
@@ -812,10 +860,10 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
             avatar = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
         } catch (Exception e) {
             e.printStackTrace();
-            return resultMap.failAndRefreshToken(request).message("display cover picture upload error");
+            throw new ServerException("display cover picture upload error");
         }
 
-        return resultMap.successAndRefreshToken(request).payload(avatar);
+        return avatar;
     }
 
     /**
@@ -824,34 +872,33 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      * @param slideId
      * @param file
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap uploadSlideBGImage(Long slideId, MultipartFile file, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public String uploadSlideBGImage(Long slideId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         SlideWithDisplayAndProject slideWithDipaly = displaySlideMapper.getSlideWithDipalyAndProjectById(slideId);
 
         if (null == slideWithDipaly) {
-            return resultMap.failAndRefreshToken(request).message("dispaly slide is not found");
+            throw new NotFoundException("dispaly slide is not found");
         }
 
         Display display = slideWithDipaly.getDisplay();
         if (null == display) {
-            return resultMap.failAndRefreshToken(request).message("Invalid display slide");
+            throw new NotFoundException("display is not found");
         }
 
-        //校验权限
-        Project project = slideWithDipaly.getProject();
-        if (!allowWrite(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to change background image of this display");
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(slideWithDipaly.getDisplayId(), user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDipaly.getDisplayId());
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
         //校验文件是否图片
         if (!fileUtils.isImage(file)) {
-            return resultMap.failAndRefreshToken(request).message("file format error");
+            throw new ServerException("file format error");
         }
 
         //上传文件
@@ -862,7 +909,7 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
         try {
             background = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
             if (StringUtils.isEmpty(background)) {
-                return resultMap.failAndRefreshToken(request).message("display slide background upload error");
+                throw new ServerException("display slide background upload error");
             }
 
             if (!StringUtils.isEmpty(slideWithDipaly.getConfig())) {
@@ -896,16 +943,18 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return resultMap.failAndRefreshToken(request).message("display slide background upload error");
+            throw new ServerException("display slide background upload error");
         }
 
         DisplaySlide displaySlide = new DisplaySlide();
         BeanUtils.copyProperties(slideWithDipaly, displaySlide);
 
+        displaySlide.updatedBy(user.getId());
         displaySlide.setConfig(jsonObject.toString());
         displaySlideMapper.update(displaySlide);
+        optLogger.info("displaySlide ({}) update by (:{}), origin: {}", displaySlide.toString(), user.getId(), slideWithDipaly.toString());
 
-        return resultMap.successAndRefreshToken(request).payload(background);
+        return background;
     }
 
 
@@ -915,35 +964,29 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
      * @param relationId
      * @param file
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap uploadSlideSubWidgetBGImage(Long relationId, MultipartFile file, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public String uploadSlideSubWidgetBGImage(Long relationId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         MemDisplaySlideWidget memDisplaySlideWidget = memDisplaySlideWidgetMapper.getById(relationId);
 
         if (null == memDisplaySlideWidget) {
-            return resultMap.failAndRefreshToken(request).message("dispaly slide widget is not found");
+            throw new NotFoundException("dispaly slide widget is not found");
         }
 
         if (2 != memDisplaySlideWidget.getType()) {
-            return resultMap.failAndRefreshToken(request).message("dispaly slide widget is not sub widget");
+            throw new ServerException("dispaly slide widget is not sub widget");
         }
 
         SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(memDisplaySlideWidget.getDisplaySlideId());
 
-        //校验权限
-        Project project = slideWithDisplayAndProject.getProject();
-        if (!allowWrite(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to change background image of this display");
-        }
-
-        //校验文件是否图片
-        if (!fileUtils.isImage(file)) {
-            return resultMap.failAndRefreshToken(request).message("file format error");
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
+        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideWithDisplayAndProject.getId())))) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
         //上传文件
@@ -955,7 +998,7 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
         try {
             background = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
             if (StringUtils.isEmpty(background)) {
-                return resultMap.failAndRefreshToken(request).message("display slide sub widget backgroundImage upload error");
+                throw new NotFoundException("display slide sub widget backgroundImage upload error");
             }
 
             if (!StringUtils.isEmpty(memDisplaySlideWidget.getParams())) {
@@ -976,48 +1019,98 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
             jsonObject.put(key, background);
         } catch (Exception e) {
             e.printStackTrace();
-            return resultMap.failAndRefreshToken(request).message("display slide sub widget backgroundImage upload error");
+            throw new ServerException("display slide sub widget backgroundImage upload error");
         }
 
+        String origin = memDisplaySlideWidget.toString();
         memDisplaySlideWidget.setParams(jsonObject.toString());
+        memDisplaySlideWidget.updatedBy(user.getId());
         memDisplaySlideWidgetMapper.update(memDisplaySlideWidget);
+        optLogger.info("memDisplaySlideWidget ({}) update by (:{}), origin: ({})", memDisplaySlideWidget.toString(), user.getId(), origin);
 
-        return resultMap.successAndRefreshToken(request).payload(background);
+        return background;
     }
 
     @Override
-    public ResultMap shareDisplay(Long id, User user, String username, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public String shareDisplay(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException {
         DisplayWithProject displayWithProject = displayMapper.getDisplayWithProjectById(id);
 
         if (null == displayWithProject) {
             log.info("display (:{}) not found", id);
-            return resultMap.failAndRefreshToken(request).message("display not found");
+            throw new NotFoundException("display is not found");
         }
 
         if (null == displayWithProject.getProject()) {
             log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
+            throw new NotFoundException("project not found");
         }
 
-        //校验权限
-        if (!allowShare(displayWithProject.getProject(), user)) {
-            log.info("user {} have not permisson to share the display {}", user.getUsername(), id);
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to share the display");
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(displayWithProject.getProjectId(), user, false), user);
+        boolean disable = relRoleDisplayMapper.isDisable(id, user.getId());
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
+            throw new UnAuthorizedExecption("you have not permission to share this display");
         }
 
-        try {
-            return resultMap.successAndRefreshToken(request).payload(shareService.generateShareToken(id, username, user.getId()));
-        } catch (ServerException e) {
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
-        }
+        return shareService.generateShareToken(id, username, user.getId());
     }
 
 
     @Override
-    public List<Long> getDisplayExcludeTeams(Long id) {
-        return excludeDisplayTeamMapper.selectExcludeTeamsByDisplayId(id);
+    public List<Long> getDisplayExcludeRoles(Long id) {
+        return relRoleDisplayMapper.getById(id);
+    }
+
+    @Override
+    public List<Long> getSlideExecludeRoles(Long id) {
+        return relRoleSlideMapper.getById(id);
+    }
+
+    @Override
+    @Transactional
+    public boolean postDisplayVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Display display = displayMapper.getById(vizVisibility.getId());
+        if (null == display) {
+            throw new NotFoundException("display is not found");
+        }
+
+        projectService.getProjectDetail(display.getProjectId(), user, true);
+
+        if (vizVisibility.isVisible()) {
+            int delete = relRoleDisplayMapper.delete(display.getId(), role.getId());
+            if (delete > 0) {
+                optLogger.info("display ({}) can be accessed by role ({}), update by (:{})", display, role, user.getId());
+            }
+        } else {
+            RelRoleDisplay relRoleDisplay = new RelRoleDisplay(display.getId(), role.getId());
+            relRoleDisplayMapper.insert(relRoleDisplay);
+            optLogger.info("display ({}) limit role ({}) access, create by (:{})", display, role, user.getId());
+        }
+
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean postSlideVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        SlideWithDisplayAndProject slide = displaySlideMapper.getSlideWithDipalyAndProjectById(vizVisibility.getId());
+        if (null == slide) {
+            throw new NotFoundException("display slide is not found");
+        }
+
+        projectService.getProjectDetail(slide.getProject().getId(), user, true);
+
+        if (vizVisibility.isVisible()) {
+            int delete = relRoleSlideMapper.delete(slide.getId(), role.getId());
+            if (delete > 0) {
+                optLogger.info("display slide ({}) can be accessed by role ({}), update by (:{})", (DisplaySlide) slide, role, user.getId());
+            }
+        } else {
+            RelRoleSlide relRoleSlide = new RelRoleSlide(slide.getId(), role.getId());
+            relRoleSlideMapper.insert(relRoleSlide);
+            optLogger.info("display slide ({}) limit role ({}) access, create by (:{})", (DisplaySlide) slide, role, user.getId());
+        }
+
+        return true;
     }
 
     @Override
@@ -1029,36 +1122,5 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
         displaySlideMapper.deleteByProjectId(projectId);
         //删除display
         displayMapper.deleteByProject(projectId);
-    }
-
-
-    @Transactional
-    protected void excludeTeamForDisplay(List<Long> teamIds, Long displayId, Long userId, List<Long> excludeTeams) {
-
-        if (null != excludeTeams && excludeTeams.size() > 0) {
-            if (null != teamIds && teamIds.size() > 0) {
-                List<Long> rmTeamIds = new ArrayList<>();
-                excludeTeams.forEach(teamId -> {
-                    if (teamId.longValue() > 0L && !teamIds.contains(teamId)) {
-                        rmTeamIds.add(teamId);
-                    }
-                });
-                if (rmTeamIds.size() > 0) {
-                    excludeDisplayTeamMapper.deleteByDisplayIdAndTeamIds(displayId, rmTeamIds);
-                }
-            } else {
-                //删除所有要排除的项
-                excludeDisplayTeamMapper.deleteByDisplayId(displayId);
-            }
-        }
-
-        //添加排除项
-        if (null != teamIds && teamIds.size() > 0) {
-            List<ExcludeDisplayTeam> list = new ArrayList<>();
-            teamIds.forEach(tid -> list.add(new ExcludeDisplayTeam(tid, displayId, userId)));
-            if (list.size() > 0) {
-                excludeDisplayTeamMapper.insertBatch(list);
-            }
-        }
     }
 }

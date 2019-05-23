@@ -1,18 +1,9 @@
-import * as React from 'react'
-import {WrappedFormUtils} from 'antd/lib/form/Form'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tooltip = require('antd/lib/tooltip')
-const Button = require('antd/lib/button')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
-const Popconfirm = require('antd/lib/popconfirm')
-const Modal = require('antd/lib/modal')
-const Table = require('antd/lib/table')
-const Icon = require('antd/lib/icon')
+import React from 'react'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+import { Row, Col, Tooltip, Button, Input, Popconfirm, Modal, Table } from 'antd'
 const styles = require('../Organization.less')
 const utilStyles = require('../../../assets/less/util.less')
-import MemberForm from '../../Teams/component/AddForm'
+import MemberForm from './AddForm'
 import Avatar from '../../../components/Avatar'
 import * as Organization from '../Organization'
 import ChangeRoleForm from './ChangeRoleForm'
@@ -77,8 +68,10 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       changeRoleFormVisible: true,
       changeRoleFormCategory: type
     }, () => {
-      const {user: {role}, id} = obj
-      this.ChangeRoleForm.setFieldsValue({id, role})
+      setTimeout(() => {
+        const {user: {role}, id} = obj
+        this.ChangeRoleForm.setFieldsValue({id, role})
+      }, 0)
     })
   }
 
@@ -87,9 +80,11 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       formKey: this.state.formKey + 10,
       formVisible: false,
       modalLoading: false
-    }, () => {
-      this.MemberForm.resetFields()
     })
+  }
+
+  private afterMemberFormClose = () => {
+    this.MemberForm.resetFields()
   }
 
   private removeMemberForm = (text, obj) => () => {
@@ -163,7 +158,9 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       this.MemberForm.validateFieldsAndScroll((err, values) => {
         if (!err) {
           const { searchValue } = values
-          this.props.handleSearchMember(searchValue)
+          if (searchValue) {
+            this.props.handleSearchMember(searchValue)
+          }
         }
       })
     })
@@ -173,10 +170,13 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     this.setState({
       changeRoleFormVisible: false,
       changeRoleModalLoading: false
-    }, () => {
-      this.ChangeRoleForm.resetFields()
     })
   }
+
+  private afterChangeRoleFormClose = () => {
+    this.ChangeRoleForm.resetFields()
+  }
+
   private toUserProfile = (obj) => () => {
     const {id} = obj
     if (id) {
@@ -208,7 +208,6 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     const addButton =  (
       <Tooltip placement="bottom" title="邀请">
         <CreateButton
-          size="large"
           type="primary"
           icon="plus"
           onClick={this.showMemberForm('member')}
@@ -232,16 +231,12 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         dataIndex: 'user',
         key: 'userKey',
         render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
-      },
-        {
-          title: 'team',
-          dataIndex: 'teamNum',
-          key: 'teamNum'
-        }, {
+      }, {
           title: 'settings',
           dataIndex: 'user',
           className: isHidden ? utilStyles.hide : '',
           key: 'settings',
+          width: 200,
           render: (text, record) => {
             if (text.role === 1) {
               return ''
@@ -279,20 +274,14 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         dataIndex: 'user',
         key: 'userKey',
         render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
-      },
-        {
-          title: 'team',
-          dataIndex: 'teamNum',
-          key: 'teamNum'
-        }]
+      }]
     }
     return (
       <div className={styles.listWrapper}>
         <Row>
           <Col span={16}>
             <Input.Search
-              size="large"
-              placeholder="placeholder"
+              placeholder="搜索成员"
               onChange={this.search}
             />
           </Col>
@@ -315,6 +304,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           visible={formVisible}
           footer={null}
           onCancel={this.hideMemberForm}
+          afterClose={this.afterMemberFormClose}
         >
           <MemberForm
             category={category}
@@ -331,6 +321,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           visible={changeRoleFormVisible}
           footer={null}
           onCancel={this.hideChangeRoleForm}
+          afterClose={this.afterChangeRoleFormClose}
         >
           <ChangeRoleForm
             category={changeRoleFormCategory}

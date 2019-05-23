@@ -1,5 +1,5 @@
-
 import * as React from 'react'
+import * as classnames from 'classnames'
 import Helmet from 'react-helmet'
 import { Link, RouteComponentProps } from 'react-router'
 
@@ -12,6 +12,8 @@ import displayReducer from '../Display/reducer'
 import displaySaga from '../Display/sagas'
 import portalSaga from '../Portal/sagas'
 import portalReducer from '../Portal/reducer'
+import viewReducer from '../View/reducer'
+import viewSaga from '../View/sagas'
 
 import { loadDisplays, addDisplay, editDisplay, deleteDisplay } from '../Display/actions'
 import { loadPortals, addPortal, editPortal, deletePortal } from '../Portal/actions'
@@ -19,23 +21,17 @@ import { makeSelectDisplays } from '../Display/selectors'
 import { makeSelectPortals } from '../Portal/selectors'
 import { checkNameUniqueAction } from '../App/actions'
 
-const Icon = require('antd/lib/icon')
-const Collapse = require('antd/lib/collapse')
-import * as classnames from 'classnames'
+import { Icon, Row, Col, Breadcrumb } from 'antd'
 import Box from '../../components/Box'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const Panel = Collapse.Panel
 const styles = require('./Viz.less')
 const utilStyles = require('../../assets/less/util.less')
 import Container from '../../components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
-import { Portal } from '../Portal'
-import {makeSelectCurrentProject} from '../Projects/selectors'
+import { makeSelectCurrentProject } from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
-import {IProject} from '../Projects'
+import { IProject } from '../Projects'
+import { excludeRoles } from '../Projects/actions'
 
 interface IParams {
   pid: number
@@ -54,6 +50,7 @@ interface IVizProps extends RouteComponentProps<{}, IParams> {
   onEditPortal: (portal, resolve) => void
   onDeletePortal: (portalId: number) => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onExcludeRoles: (type: string, id: number, resolve?: any) => any
 }
 
 interface IVizStates {
@@ -153,6 +150,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 onEdit={onEditPortal}
                 onDelete={onDeletePortal}
                 onCheckUniqueName={onCheckUniqueName}
+                onExcludeRoles={this.props.onExcludeRoles}
               />
             </div>
           </Box>
@@ -177,6 +175,8 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 onEdit={onEditDisplay}
                 onCopy={this.onCopy}
                 onDelete={onDeleteDisplay}
+                onCheckName={onCheckUniqueName}
+                onExcludeRoles={this.props.onExcludeRoles}
               />
             </div>
           </Box>
@@ -202,7 +202,8 @@ export function mapDispatchToProps (dispatch) {
     onAddPortal: (portal, resolve) => dispatch(addPortal(portal, resolve)),
     onEditPortal: (portal, resolve) => dispatch(editPortal(portal, resolve)),
     onDeletePortal: (id) => dispatch(deletePortal(id)),
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
+    onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve))
   }
 }
 
@@ -211,11 +212,15 @@ const withDisplayReducer = injectReducer({ key: 'display', reducer: displayReduc
 const withDisplaySaga = injectSaga({ key: 'display', saga: displaySaga })
 const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
 const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
+const withReducerView = injectReducer({ key: 'view', reducer: viewReducer })
+const withSagaView = injectSaga({ key: 'view', saga: viewSaga })
 
 export default compose(
   withDisplayReducer,
   withDisplaySaga,
   withPortalReducer,
   withPortalSaga,
+  withReducerView,
+  withSagaView,
   withConnect
 )(Viz)

@@ -20,6 +20,9 @@ server:
   address: 127.0.0.1
   port: 8080
 
+  servlet:
+    context-path: /
+
   # Userd for mail and download services, can be empty, careful configuration
   # By default, 'server.address' and 'server.port' is used as the string value.
   # access:
@@ -42,8 +45,11 @@ source:
   max-wait: 6000
   max-active: 10
   break-after-acquire-failure: true
-  connection-error-retry-attempts: 3
+  connection-error-retry-attempts: 0
+  validationQueryTimeout: 30000
+
   enable-query-log: false
+  result-limit: 1000000
 
 
 spring:
@@ -114,3 +120,9 @@ spring:
     domainName:    # domainName 指 企业邮箱后缀，如企业邮箱为：xxx@example.com, 这里值为 '@example.com'
 
 phantomjs_home: $your_phantomjs_path$/phantomjs
+
+data-auth-center:
+  channels:
+    - name:
+      base-url:
+      auth-code:

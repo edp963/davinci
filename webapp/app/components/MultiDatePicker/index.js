@@ -4,7 +4,7 @@ import $ from 'jquery'
 import moment from 'moment'
 import 'bootstrap-datepicker'
 
-import Icon from 'antd/lib/icon'
+import { Icon } from 'antd'
 
 import styles from './MultiDatePicker.less'
 
@@ -25,7 +25,7 @@ export class MultiDatePicker extends Component {
       monthsShort: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
       today: '今天',
       clear: '清除',
-      format: 'yyyy-mm-dd',
+      format: this.props.format.toLowerCase(),
       titleFormat: 'yyyy MM', /* Leverages same syntax as 'format' */
       weekStart: 0
     }
@@ -39,7 +39,7 @@ export class MultiDatePicker extends Component {
         language: 'zh'
       })
       .on('changeDate', (e) => {
-        const val = e.dates.map(d => moment(d).format('YYYY-MM-DD')).join(',')
+        const val = e.dates.map(d => moment(d).format(this.props.format)).join(',')
         this.props.onChange(val)
         this.setState({
           value: val
@@ -66,8 +66,13 @@ export class MultiDatePicker extends Component {
 
 MultiDatePicker.propTypes = {
   value: PropTypes.string,
+  format: PropTypes.string,
   placeholder: PropTypes.string,
   onChange: PropTypes.func
+}
+
+MultiDatePicker.defaultProps = {
+  format: 'YYYY-MM-DD'
 }
 
 export default MultiDatePicker

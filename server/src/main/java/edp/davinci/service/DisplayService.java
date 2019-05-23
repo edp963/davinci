@@ -18,59 +18,62 @@
 
 package edp.davinci.service;
 
-import edp.davinci.core.common.ResultMap;
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
-import edp.davinci.dto.displayDto.DisplayInfo;
-import edp.davinci.dto.displayDto.DisplaySlideCreate;
-import edp.davinci.dto.displayDto.DisplayUpdateDto;
-import edp.davinci.dto.displayDto.MemDisplaySlideWidgetCreate;
-import edp.davinci.model.DisplaySlide;
-import edp.davinci.model.MemDisplaySlideWidget;
-import edp.davinci.model.User;
+import edp.davinci.dto.displayDto.*;
+import edp.davinci.dto.roleDto.VizVisibility;
+import edp.davinci.model.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public interface DisplayService extends CheckEntityService {
 
-    ResultMap getDisplayListByProject(Long projectId, User user, HttpServletRequest request);
+    List<Display> getDisplayListByProject(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap getDisplaySlideList(Long id, User user, HttpServletRequest request);
+    DisplayWithSlides getDisplaySlideList(Long displayId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap getDisplaySlideWidgetList(Long displayId, Long slideId, User user, HttpServletRequest request);
+    SlideWithMem getDisplaySlideMem(Long displayId, Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap createDisplay(DisplayInfo displayInfo, User user, HttpServletRequest request);
+    Display createDisplay(DisplayInfo displayInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateDisplay(DisplayUpdateDto displayUpdateDto, User user, HttpServletRequest request);
+    boolean updateDisplay(DisplayUpdate displayUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteDisplay(Long id, User user, HttpServletRequest request);
+    boolean deleteDisplay(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap createDisplaySlide(DisplaySlideCreate displaySlideCreate, User user, HttpServletRequest request);
+    DisplaySlide createDisplaySlide(DisplaySlideCreate displaySlideCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateDisplaySildes(Long displayId, DisplaySlide[] displaySlides, User user, HttpServletRequest request);
+    boolean updateDisplaySildes(Long displayId, DisplaySlide[] displaySlides, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteDisplaySlide(Long slideId, User user, HttpServletRequest request);
+    boolean deleteDisplaySlide(Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap addMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetCreate[] slideWidgetCreates, User user, HttpServletRequest request);
+    List<MemDisplaySlideWidget> addMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetCreate[] slideWidgetCreates, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateMemDisplaySlideWidget(MemDisplaySlideWidget memDisplaySlideWidget, User user, HttpServletRequest request);
+    boolean updateMemDisplaySlideWidget(MemDisplaySlideWidget memDisplaySlideWidget, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteMemDisplaySlideWidget(Long relationId, User user, HttpServletRequest request);
+    boolean deleteMemDisplaySlideWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteDisplaySlideWidgetList(Long displayId, Long slideId, Long[] memIds, User user, HttpServletRequest request);
+    boolean deleteDisplaySlideWidgetList(Long displayId, Long slideId, Long[] memIds, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidget[] memDisplaySlideWidgets, User user, HttpServletRequest request);
+    boolean updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidget[] memDisplaySlideWidgets, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap uploadAvatar(MultipartFile file, HttpServletRequest request);
+    String uploadAvatar(MultipartFile file) throws ServerException;
 
-    ResultMap uploadSlideBGImage(Long slideId, MultipartFile file, User user, HttpServletRequest request);
+    String uploadSlideBGImage(Long slideId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap shareDisplay(Long id, User user, String username, HttpServletRequest request);
+    String shareDisplay(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException;
 
-    ResultMap uploadSlideSubWidgetBGImage(Long relationId, MultipartFile file, User user, HttpServletRequest request);
+    String uploadSlideSubWidgetBGImage(Long relationId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    List<Long> getDisplayExcludeTeams(Long id);
+    List<Long> getDisplayExcludeRoles(Long id);
+
+    List<Long> getSlideExecludeRoles(Long id);
+
+    boolean postDisplayVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+
+    boolean postSlideVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

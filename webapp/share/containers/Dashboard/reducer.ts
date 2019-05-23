@@ -29,24 +29,25 @@ import {
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
   LOAD_WIDGET_CSV_FAILURE,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
+  LOAD_SELECT_OPTIONS_SUCCESS,
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
-  DELETE_DRILL_HISTORY
+  DELETE_DRILL_HISTORY,
+  SET_SELECT_OPTIONS
 } from './constants'
 
 const initialState = fromJS({
   dashboard: null,
   title: '',
   config: '{}',
-  dashboardCascadeSources: null,
+  dashboardSelectOptions: null,
   widgets: null,
   items: null,
   itemsInfo: null
 })
 
 function shareReducer (state = initialState, { type, payload }) {
-  const dashboardCascadeSources = state.get('dashboardCascadeSources')
+  const dashboardSelectOptions = state.get('dashboardSelectOptions')
   const itemsInfo = state.get('itemsInfo')
   let widgets = state.get('widgets')
 
@@ -56,23 +57,26 @@ function shareReducer (state = initialState, { type, payload }) {
         .set('title', payload.dashboard.name)
         .set('dashboard', payload.dashboard)
         .set('config', payload.dashboard.config)
-        .set('dashboardCascadeSources', {})
+        .set('dashboardSelectOptions', {})
         .set('widgets', payload.dashboard.widgets)
         .set('items', payload.dashboard.relations)
         .set('itemsInfo', payload.dashboard.relations.reduce((obj, item) => {
           obj[item.id] = {
             datasource: { resultList: [] },
             loading: false,
-            queryParams: {
+            queryConditions: {
+              tempFilters: [],
               linkageFilters: [],
               globalFilters: [],
-              params: [],
-              linkageParams: [],
-              globalParams: []
+              variables: [],
+              linkageVariables: [],
+              globalVariables: [],
+              pagination: {}
             },
             downloadCsvLoading: false,
             interactId: '',
-            renderType: 'rerender'
+            renderType: 'rerender',
+            controlSelectOptions: {}
           }
           return obj
         }, {}))
@@ -93,23 +97,25 @@ function shareReducer (state = initialState, { type, payload }) {
           1: {
             datasource: { resultList: [] },
             loading: false,
-            queryParams: {
+            queryConditions: {
+              tempFilters: [],
               linkageFilters: [],
               globalFilters: [],
-              params: [],
-              linkageParams: [],
-              globalParams: []
+              variables: [],
+              linkageVariables: [],
+              globalVariables: [],
+              pagination: {}
             },
             downloadCsvLoading: false,
             interactId: '',
-            renderType: 'rerender'
+            renderType: 'rerender',
+            controlSelectOptions: {}
           }
         })
     case LOAD_SHARE_WIDGET_SUCCESS:
       if (!widgets) {
         widgets = []
       }
-      console.log(widgets.concat(payload.widget))
       return state.set('widgets', widgets.concat(payload.widget))
     case LOAD_SHARE_RESULTSET:
       return state.set('itemsInfo', {
@@ -117,27 +123,30 @@ function shareReducer (state = initialState, { type, payload }) {
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
           loading: true,
-          queryParams: {
-            ...itemsInfo[payload.itemId]['queryParams'],
-            linkageFilters: payload.params.linkageFilters,
-            globalFilters: payload.params.globalFilters,
-            params: payload.params.params,
-            linkageParams: payload.params.linkageParams,
-            globalParams: payload.params.globalParams
+          queryConditions: {
+            ...itemsInfo[payload.itemId].queryConditions,
+            tempFilters: payload.requestParams.tempFilters,
+            linkageFilters: payload.requestParams.linkageFilters,
+            globalFilters: payload.requestParams.globalFilters,
+            variables: payload.requestParams.variables,
+            linkageVariables: payload.requestParams.linkageVariables,
+            globalVariables: payload.requestParams.globalVariables,
+            pagination: payload.requestParams.pagination,
+            nativeQuery: payload.requestParams.nativeQuery
           }
         }
       })
     case DRILL_DASHBOARDITEM:
-      if (!itemsInfo[payload.itemId]['queryParams']['drillHistory']) {
-        itemsInfo[payload.itemId]['queryParams']['drillHistory'] = []
+      if (!itemsInfo[payload.itemId].queryConditions.drillHistory) {
+        itemsInfo[payload.itemId].queryConditions.drillHistory = []
       }
       return state.set('itemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
-          queryParams: {
-            ...itemsInfo[payload.itemId]['queryParams'],
-            drillHistory: itemsInfo[payload.itemId]['queryParams']['drillHistory'].concat(payload.drillHistory)
+          queryConditions: {
+            ...itemsInfo[payload.itemId].queryConditions,
+            drillHistory: itemsInfo[payload.itemId].queryConditions.drillHistory.concat(payload.drillHistory)
           }
         }
       })
@@ -146,9 +155,9 @@ function shareReducer (state = initialState, { type, payload }) {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
-          queryParams: {
-            ...itemsInfo[payload.itemId]['queryParams'],
-            drillHistory: itemsInfo[payload.itemId]['queryParams']['drillHistory'].slice(0, payload.index + 1)
+          queryConditions: {
+            ...itemsInfo[payload.itemId].queryConditions,
+            drillHistory: itemsInfo[payload.itemId].queryConditions.drillHistory.slice(0, payload.index + 1)
           }
         }
       })
@@ -158,7 +167,7 @@ function shareReducer (state = initialState, { type, payload }) {
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
           loading: false,
-          datasource: payload.resultset,
+          datasource: payload.resultset || { resultList: [] },
           renderType: payload.renderType
         }
       })
@@ -179,14 +188,38 @@ function shareReducer (state = initialState, { type, payload }) {
           downloadCsvLoading: false
         }
       })
-    case LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS:
-      return state.set('dashboardCascadeSources', {
-        ...dashboardCascadeSources,
-        [payload.controlId]: {
-          ...dashboardCascadeSources[payload.controlId],
-          [payload.column]: payload.values
-        }
-      })
+    case LOAD_SELECT_OPTIONS_SUCCESS:
+      return payload.itemId
+        ? state.set('itemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            controlSelectOptions: {
+              ...itemsInfo[payload.itemId].controlSelectOptions,
+              [payload.controlKey]: payload.values
+            }
+          }
+        })
+        : state.set('dashboardSelectOptions', {
+          ...dashboardSelectOptions,
+          [payload.controlKey]: payload.values
+        })
+    case SET_SELECT_OPTIONS:
+      return payload.itemId
+        ? state.set('itemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            controlSelectOptions: {
+              ...itemsInfo[payload.itemId].controlSelectOptions,
+              [payload.controlKey]: payload.options
+            }
+          }
+        })
+        : state.set('dashboardSelectOptions', {
+          ...dashboardSelectOptions,
+          [payload.controlKey]: payload.options
+        })
     case RESIZE_ALL_DASHBOARDITEM:
       return state.set(
         'itemsInfo',

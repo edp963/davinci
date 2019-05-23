@@ -18,10 +18,11 @@
 
 package edp.davinci.model;
 
+import edp.davinci.common.model.RecordInfo;
 import lombok.Data;
 
 @Data
-public class Widget {
+public class Widget extends RecordInfo<Widget> {
     private Long id;
 
     private String name;

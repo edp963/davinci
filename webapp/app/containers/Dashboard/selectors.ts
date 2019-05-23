@@ -21,6 +21,7 @@
 import { createSelector } from 'reselect'
 
 const selectDashboard = (state) => state.get('dashboard')
+const selectForm = (state) => state.get('form')
 
 const makeSelectDashboards = () => createSelector(
   selectDashboard,
@@ -47,9 +48,9 @@ const makeSelectCurrentDashboardShareInfoLoading = () => createSelector(
   selectDashboard,
   (dashboardState) => dashboardState.get('currentDashboardShareInfoLoading')
 )
-const makeSelectCurrentDashboardCascadeSources = () => createSelector(
+const makeSelectCurrentDashboardSelectOptions = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboardCascadeSources')
+  (dashboardState) => dashboardState.get('currentDashboardSelectOptions')
 )
 const makeSelectCurrentItems = () => createSelector(
   selectDashboard,
@@ -62,6 +63,11 @@ const makeSelectCurrentItemsInfo = () => createSelector(
 const makeSelectModalLoading = () => createSelector(
   selectDashboard,
   (dashboardState) => dashboardState.get('modalLoading')
+)
+
+const makeSelectControlForm = () => createSelector(
+  selectForm,
+  (formState) => formState.controlForm
 )
 
 const makeSelectCurrentLinkages = () => createSelector(
@@ -84,6 +90,7 @@ const makeSelectCurrentLinkages = () => createSelector(
 
 export {
   selectDashboard,
+  selectForm,
   makeSelectDashboards,
   makeSelectCurrentDashboard,
   makeSelectCurrentDashboardLoading,
@@ -92,7 +99,8 @@ export {
   makeSelectCurrentDashboardShareInfo,
   makeSelectCurrentDashboardSecretInfo,
   makeSelectCurrentDashboardShareInfoLoading,
-  makeSelectCurrentDashboardCascadeSources,
+  makeSelectCurrentDashboardSelectOptions,
   makeSelectModalLoading,
-  makeSelectCurrentLinkages
+  makeSelectCurrentLinkages,
+  makeSelectControlForm
 }

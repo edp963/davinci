@@ -23,11 +23,11 @@ import { ILabelConfig } from '../../components/Workbench/ConfigSections/LabelSec
 import { ILegendConfig } from '../../components/Workbench/ConfigSections/LegendSection'
 import { metricAxisLabelFormatter, decodeMetricName, getTextWidth } from '../../components/util'
 import { CHART_LEGEND_POSITIONS } from '../../../../globalConstants'
-import { dataFromItemLoaded } from 'containers/Bizlogic/actions'
+import { EChartOption } from 'echarts'
 
 interface ISplitLineConfig {
   showLine: boolean
-  lineStyle: string
+  lineStyle: 'solid' | 'dashed' | 'dotted'
   lineSize: string
   lineColor: string
 }
@@ -36,7 +36,7 @@ export function getDimetionAxisOption (
   dimetionAxisConfig: IAxisConfig,
   splitLineConfig: ISplitLineConfig,
   data: string[]
-) {
+): EChartOption.XAxis {
   const {
     inverse,
     showLine: showLineX,
@@ -73,7 +73,7 @@ export function getDimetionAxisOption (
       show: showLabelX,
       color: labelColorX,
       fontFamily: labelFontFamilyX,
-      fontSize: labelFontSizeX,
+      fontSize: Number(labelFontSizeX),
       rotate: xAxisRotate,
       ...intervalOption
     },
@@ -81,7 +81,7 @@ export function getDimetionAxisOption (
       show: showLineX,
       lineStyle: {
         color: lineColorX,
-        width: lineSizeX,
+        width: Number(lineSizeX),
         type: lineStyleX
       }
     },
@@ -95,7 +95,7 @@ export function getDimetionAxisOption (
       show: showLine,
       lineStyle: {
         color: lineColor,
-        width: lineSize,
+        width: Number(lineSize),
         type: lineStyle
       }
     },
@@ -111,7 +111,7 @@ export function getMetricAxisOption (
   title: string,
   axis: 'x' | 'y' = 'y',
   percentage?: boolean
-) {
+): EChartOption.YAxis {
   const {
     inverse,
     showLine: showLineY,
@@ -128,7 +128,9 @@ export function getMetricAxisOption (
     titleColor,
     nameLocation,
     nameRotate,
-    nameGap
+    nameGap,
+    min,
+    max
   } = metricAxisConfig
 
   const {
@@ -141,20 +143,20 @@ export function getMetricAxisOption (
   return {
     type: 'value',
     inverse,
-    min: percentage ? 0 : null,
-    max: percentage ? 100 : null,
+    min: percentage ? 0 : min,
+    max: percentage ? 100 : max,
     axisLabel: {
       show: showLabelY,
       color: labelColorY,
       fontFamily: labelFontFamilyY,
-      fontSize: labelFontSizeY,
+      fontSize: Number(labelFontSizeY),
       formatter: percentage ? '{value}%' : metricAxisLabelFormatter
     },
     axisLine: {
       show: showLineY,
       lineStyle: {
         color: lineColorY,
-        width: lineSizeY,
+        width: Number(lineSizeY),
         type: lineStyleY
       }
     },
@@ -171,13 +173,13 @@ export function getMetricAxisOption (
     nameTextStyle: {
       color: titleColor,
       fontFamily: titleFontFamily,
-      fontSize: titleFontSize
+      fontSize: Number(titleFontSize)
     },
     splitLine: {
       show: showLine,
       lineStyle: {
         color: lineColor,
-        width: lineSize,
+        width: Number(lineSize),
         type: lineStyle
       }
     }
@@ -212,6 +214,7 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, emphasi
     normal: {
       show: type === 'pie' && pieLabelPosition === 'center' ? false : showLabel,
       position: positionVale,
+      distance: 15,
       color: labelColor,
       fontFamily: labelFontFamily,
       fontSize: labelFontSize,
@@ -221,6 +224,7 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, emphasi
       emphasis: {
         show: showLabel,
         position: positionVale,
+        distance: 15,
         color: labelColor,
         fontFamily: labelFontFamily,
         fontSize: labelFontSize,
@@ -270,7 +274,7 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   }
 
   return {
-    show: showLegend,
+    show: showLegend && seriesNames.length > 1,
     data: seriesNames,
     type: 'scroll',
     textStyle: {
@@ -285,30 +289,38 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
 }
 
 export function getGridPositions (
-  legendConfig: Partial<ILegendConfig>, seriesNames, barChart?: boolean, yAxisConfig?: IAxisConfig, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[]
+  legendConfig: Partial<ILegendConfig>,
+  seriesNames,
+  chartName?: string,
+  isHorizontalBar?: boolean,
+  yAxisConfig?: IAxisConfig,
+  dimetionAxisConfig?: IAxisConfig,
+  xAxisData?: string[]
 ) {
   const { showLegend, legendPosition, fontSize } = legendConfig
   return CHART_LEGEND_POSITIONS.reduce((grid, pos) => {
     const val = pos.value
-    grid[val] = getGridBase(val, dimetionAxisConfig, xAxisData, barChart, yAxisConfig)
-    if (showLegend) {
+    grid[val] = getGridBase(val, chartName, dimetionAxisConfig, xAxisData, isHorizontalBar, yAxisConfig)
+    if (showLegend && seriesNames.length > 1) {
       grid[val] += legendPosition === val
         ? ['top', 'bottom'].includes(val)
-          ? 32
-          : 32 + Math.max(...seriesNames.map((s) => getTextWidth(s, '', `${fontSize}px`)))
+          ? 64
+          : 64 + Math.max(...seriesNames.map((s) => getTextWidth(s, '', `${fontSize}px`)))
         : 0
     }
     return grid
   }, {})
 }
 
-function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[], barChart?: boolean, yAxisConfig?: IAxisConfig) {
+function getGridBase (pos, chartName, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[], isHorizontalBar?: boolean, yAxisConfig?: IAxisConfig) {
   const labelFontSize = dimetionAxisConfig ? dimetionAxisConfig.labelFontSize : 12
   const xAxisRotate = dimetionAxisConfig ? dimetionAxisConfig.xAxisRotate : 0
-  const maxWidth = Math.max(...(xAxisData || []).map((s) => getTextWidth(s, '', `${labelFontSize}px`)))
+  const maxWidth = xAxisData && xAxisData.length
+    ? Math.max(...xAxisData.map((s) => getTextWidth(s, '', `${labelFontSize}px`)))
+    : 0
 
   const bottomDistance = dimetionAxisConfig && dimetionAxisConfig.showLabel
-    ? barChart
+    ? isHorizontalBar
       ? 50
       : xAxisRotate
         ? 50 + Math.sin(xAxisRotate * Math.PI / 180) * maxWidth
@@ -317,17 +329,17 @@ function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[
 
   const yAxisConfigLeft = yAxisConfig && !yAxisConfig.showLabel && !yAxisConfig.showTitleAndUnit ? 24 : 64
   const leftDistance = dimetionAxisConfig && dimetionAxisConfig.showLabel
-    ? barChart
-      ? xAxisRotate === undefined
+    ? isHorizontalBar
+      ? xAxisRotate === void 0
         ? 64
         : 24 + Math.cos(xAxisRotate * Math.PI / 180) * maxWidth
       : yAxisConfigLeft
-    : barChart ? 24 : yAxisConfigLeft
+    : isHorizontalBar ? 24 : yAxisConfigLeft
 
   switch (pos) {
     case 'top': return 24
     case 'left': return leftDistance
-    case 'right': return 24
+    case 'right': return chartName === 'doubleYAxis' ? 64 : 24
     case 'bottom': return bottomDistance
   }
 }
@@ -337,7 +349,7 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
 
   data.forEach((d) => {
     const groupingKey = groupColumns.map((col) => d[col]).join(' ')
-    const colKey = d[xAxisColumn]
+    const colKey = d[xAxisColumn] || 'default'
     if (!grouped[groupingKey]) {
       grouped[groupingKey] = {}
     }
@@ -350,13 +362,15 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
   Object.keys(grouped).map((groupingKey) => {
     const currentGroupValues = grouped[groupingKey]
 
-    grouped[groupingKey] = xAxisData.map((xd) => {
-      if (currentGroupValues[xd]) {
-        return currentGroupValues[xd][0]
-      } else {
-        return metrics.reduce((obj, m) => ({ ...obj, [`${m.agg}(${decodeMetricName(m.name)})`]: 0 }), {})
-      }
-    })
+    grouped[groupingKey] = xAxisData.length
+      ? xAxisData.map((xd) => {
+        if (currentGroupValues[xd]) {
+          return currentGroupValues[xd][0]
+        } else {
+          return metrics.reduce((obj, m) => ({ ...obj, [`${m.agg}(${decodeMetricName(m.name)})`]: 0 }), {})
+        }
+      })
+      : [currentGroupValues['default'][0]]
   })
 
   return grouped

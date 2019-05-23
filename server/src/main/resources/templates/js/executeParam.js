@@ -5082,8 +5082,8 @@ function getDefaultValue(filter) {
 // #endregion
 
 function getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, itemId) {
-  var dashboardConfig = JSON.parse(dashboardConfigJson)
-  var widgetConfig = JSON.parse(widgetConfigJson)
+  var dashboardConfig = JSON.parse(dashboardConfigJson || '{}')
+  var widgetConfig = JSON.parse(widgetConfigJson || '{}')
   var globalFilters = getGlobalFilters(dashboardConfig, +itemId)
   var widgetExecuteParam = getWidgetExecuteParam(widgetConfig)
   widgetExecuteParam.filters = widgetExecuteParam.filters.concat(globalFilters.filters)

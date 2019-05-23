@@ -33,7 +33,7 @@ public class DashboardPortalUpdate {
     @Min(value = 1L, message = "Invalid id")
     private Long id;
 
-    @NotBlank(message = "dashboard portal name cannot be empty")
+    @NotBlank(message = "dashboard portal name cannot be EMPTY")
     private String name;
 
     private String description;
@@ -42,9 +42,5 @@ public class DashboardPortalUpdate {
 
     private Boolean publish = true;
 
-    private Long[] teamIds;
-
-    public List<Long> getTeamIds() {
-        return null == this.teamIds || this.teamIds.length == 0 ? null : Arrays.asList(this.teamIds);
-    }
+    private List<Long> roleIds;
 }

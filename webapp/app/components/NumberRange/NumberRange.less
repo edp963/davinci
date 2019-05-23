@@ -1,20 +1,14 @@
 .range {
-  &.group {
-    display: flex !important;
-    flex-direction: row;
+  .numberDivider {
+    width: 20%;
+    border-left: 0;
+    pointer-events: none;
+  }
 
-    .numberDivider {
-      flex-shrink: 0;
-      width: 24px;
-      border-left: 0;
-      pointer-events: none;
-    }
+  .number {
+    width: 40%;
 
-    .number {
-      flex: 1;
-    }
-
-    .to {
+    &:last-child {
       border-left: 0;
     }
   }

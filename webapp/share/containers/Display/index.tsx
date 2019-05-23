@@ -32,20 +32,14 @@ import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import { echartsOptionsGenerator } from '../../../app/containers/Widget/components/chartUtil'
-import {
-  ECHARTS_RENDERER,
-  DEFAULT_PRIMARY_COLOR } from '../../../app/globalConstants'
+import { DEFAULT_PRIMARY_COLOR } from '../../../app/globalConstants'
 import Login from '../../components/Login/index'
 import LayerItem from '../../../app/containers/Display/components/LayerItem'
-import { RenderType, IWidgetProps } from '../../../app/containers/Widget/components/Widget'
+import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
 import { decodeMetricName } from '../../../app/containers/Widget/components/util'
 
 const styles = require('../../../app/containers/Display/Display.less')
 
-import {
-  loadBizlogics,
-  loadBizdataSchema  } from '../../../app/containers/Bizlogic/actions'
 import { loadDisplay, loadLayerData } from './actions'
 import {
   makeSelectTitle,
@@ -55,6 +49,7 @@ import {
   makeSelectWidgets,
   makeSelectLayersInfo
 } from './selectors'
+import { IQueryConditions, IDataRequestParams } from '../../../app/containers/Dashboard/Grid'
 
 interface IDisplayProps extends RouteComponentProps<{}, {}> {
   title: string
@@ -71,14 +66,7 @@ interface IDisplayProps extends RouteComponentProps<{}, {}> {
         totalCount: number
       }
       loading: boolean
-      queryParams: {
-        filters: string
-        linkageFilters: string
-        globalFilters: string
-        params: Array<{name: string, value: string}>
-        linkageParams: Array<{name: string, value: string}>
-        globalParams: Array<{name: string, value: string}>
-      }
+      queryConditions: IQueryConditions
       downloadCsvLoading: boolean
       interactId: string
       renderType: RenderType
@@ -89,19 +77,7 @@ interface IDisplayProps extends RouteComponentProps<{}, {}> {
     renderType: RenderType,
     layerId: number,
     dataToken: string,
-    params: {
-      groups: string[]
-      aggregators: Array<{column: string, func: string}>
-      filters: string[]
-      linkageFilters: string[]
-      globalFilters: string[]
-      params: Array<{name: string, value: string}>
-      linkageParams: Array<{name: string, value: string}>
-      globalParams: Array<{name: string, value: string}>
-      orders: Array<{column: string, direction: string}>
-      cache: boolean
-      expired: number
-    }
+    requestParams: IDataRequestParams
   ) => void
 }
 
@@ -160,7 +136,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     }
   }
 
-  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
     const {
       widgets,
       layersInfo,
@@ -168,36 +144,43 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
+    const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
-    const cachedQueryParams = layersInfo[itemId].queryParams
+    const cachedQueryConditions = layersInfo[itemId].queryConditions
 
     let linkageFilters
     let globalFilters
-    let params
-    let linkageParams
-    let globalParams
+    let variables
+    let linkageVariables
+    let globalVariables
 
-    if (queryParams) {
-      linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
-      globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
-      params = queryParams.params || cachedQueryParams.params
-      linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
-      globalParams = queryParams.globalParams || cachedQueryParams.globalParams
+    if (queryConditions) {
+      linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
+      globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      variables = queryConditions.variables || cachedQueryConditions.variables
+      linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
+      globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
     } else {
-      linkageFilters = cachedQueryParams.linkageFilters
-      globalFilters = cachedQueryParams.globalFilters
-      params = cachedQueryParams.params
-      linkageParams = cachedQueryParams.linkageParams
-      globalParams = cachedQueryParams.globalParams
+      linkageFilters = cachedQueryConditions.linkageFilters
+      globalFilters = cachedQueryConditions.globalFilters
+      variables = cachedQueryConditions.variables
+      linkageVariables = cachedQueryConditions.linkageVariables
+      globalVariables = cachedQueryConditions.globalVariables
     }
 
-    let groups = cols.concat(rows).filter((g) => g !== '指标名称')
+    let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
     }))
+
+    if (secondaryMetrics && secondaryMetrics.length) {
+      aggregators = aggregators.concat(secondaryMetrics.map((second) => ({
+        column: decodeMetricName(second.name),
+        func: second.agg
+      })))
+    }
 
     if (color) {
       groups = groups.concat(color.items.map((c) => c.name))
@@ -245,37 +228,14 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         filters: filters.map((i) => i.config.sql),
         linkageFilters,
         globalFilters,
-        params,
-        linkageParams,
-        globalParams,
+        variables,
+        linkageVariables,
+        globalVariables,
         orders,
         cache,
         expired
       }
     )
-  }
-
-  private renderChart = (itemId, widget, dataSource, chartInfo, interactIndex?): void => {
-    const chartInstance = this.charts[`widget_${itemId}`]
-
-    echartsOptionsGenerator({
-      dataSource,
-      chartInfo,
-      chartParams: {
-        id: widget.id,
-        name: widget.name,
-        desc: widget.desc,
-        flatTable_id: widget.viewId,
-        widgetlib_id: widget.type,
-        ...JSON.parse(widget.config).chartParams
-      },
-      interactIndex
-    })
-      .then((chartOptions) => {
-        chartInstance.setOption(chartOptions)
-        // this.registerChartInteractListener(chartInstance, itemId)
-        chartInstance.hideLoading()
-      })
   }
 
   private getSlideStyle = (slideParams) => {
@@ -397,7 +357,7 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadDisplay: (token, resolve, reject) => dispatch(loadDisplay(token, resolve, reject)),
-    onLoadLayerData: (renderType, layerId, dataToken, params) => dispatch(loadLayerData(renderType, layerId, dataToken, params))
+    onLoadLayerData: (renderType, layerId, dataToken, requestParams) => dispatch(loadLayerData(renderType, layerId, dataToken, requestParams))
   }
 }
 

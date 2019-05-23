@@ -115,28 +115,6 @@ public class CheckController {
 
 
     /**
-     * 检查Team是否存在
-     *
-     * @param request
-     * @return
-     */
-    @ApiOperation(value = "check unique team name")
-    @GetMapping("/team")
-    public ResponseEntity checkTeam(@RequestParam String name,
-                                    @RequestParam(required = false) Long id,
-                                    @RequestParam Long orgId, HttpServletRequest request) {
-        try {
-            ResultMap resultMap = checkService.checkSource(name, id, CheckEntityEnum.TEAM, orgId, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
-    }
-
-
-    /**
      * 检查Disaplay是否存在
      *
      * @param request

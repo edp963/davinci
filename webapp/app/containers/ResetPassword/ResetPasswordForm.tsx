@@ -1,11 +1,7 @@
 import * as React from 'react'
-const Col = require('antd/lib/col')
-const Row = require('antd/lib/row')
-const Input = require('antd/lib/input')
-const Form = require('antd/lib/Form')
+import { Col, Row, Input, Button, Form } from 'antd'
 const FormItem = Form.Item
 const styles = require('../Profile/profile.less')
-const Button = require('antd/lib/button')
 
 
 
@@ -64,7 +60,7 @@ export class ResetPasswordForm extends React.PureComponent<IResetPasswordProps> 
             <FormItem
               label="旧密码"
               {...commonFormItemStyle}
-              validateStatus={oldPassError ? 'error' : ''}
+              validateStatus={oldPassError ? 'error' : 'success'}
               help={oldPassError || ''}
             >
               {getFieldDecorator('oldPassword', {
@@ -81,7 +77,7 @@ export class ResetPasswordForm extends React.PureComponent<IResetPasswordProps> 
             <FormItem
               label="新密码"
               {...commonFormItemStyle}
-              validateStatus={newPassError ? 'error' : ''}
+              validateStatus={newPassError ? 'error' : 'success'}
               help={newPassError || ''}
             >
               {getFieldDecorator('password', {
@@ -104,7 +100,7 @@ export class ResetPasswordForm extends React.PureComponent<IResetPasswordProps> 
             <FormItem
               label="确认新密码"
               {...commonFormItemStyle}
-              validateStatus={confirmPasswordError ? 'error' : ''}
+              validateStatus={confirmPasswordError ? 'error' : 'success'}
               help={confirmPasswordError || ''}
             >
               {getFieldDecorator('confirmPassword', {

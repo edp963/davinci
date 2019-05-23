@@ -1,18 +1,15 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Checkbox = require('antd/lib/checkbox')
-const Select = require('antd/lib/select')
+import { Row, Col, Checkbox, Select, InputNumber } from 'antd'
 const Option = Select.Option
-const InputNumber = require('antd/lib/input-number')
 import ColorPicker from '../../../../../components/ColorPicker'
 import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES } from '../../../../../globalConstants'
+import { getCorrectInputNumber } from '../../util'
 const styles = require('../Workbench.less')
 
 export interface IAxisConfig {
   inverse: boolean
   showLine: boolean
-  lineStyle: string
+  lineStyle: 'solid' | 'dashed' | 'dotted'
   lineSize: string
   lineColor: string
   showLabel: boolean
@@ -32,6 +29,8 @@ export interface IAxisConfig {
   showInterval?: boolean
   xAxisInterval?: number
   xAxisRotate?: number
+  min?: number
+  max?: number
 }
 
 interface IAxisSectionProps {
@@ -50,7 +49,7 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
   }
 
   private inputNumberChange = (prop) => (value) => {
-    this.props.onChange(prop, value)
+    this.props.onChange(prop, getCorrectInputNumber(value))
   }
 
   private colorChange = (prop) => (color) => {
@@ -82,7 +81,9 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
       titleColor,
       showInterval,
       xAxisInterval,
-      xAxisRotate
+      xAxisRotate,
+      min,
+      max
     } = config
 
     const lineStyles = PIVOT_CHART_LINE_STYLES.map((l) => (
@@ -92,7 +93,7 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
       <Option key={f.value} value={f.value}>{f.name}</Option>
     ))
     const fontSizes = PIVOT_CHART_FONT_SIZES.map((f) => (
-      <Option key={f} value={`${f}`}>{f}</Option>
+      <Option key={`${f}`} value={`${f}`}>{f}</Option>
     ))
 
     const xAxisLabel = showTitleAndUnit === void 0 && [(
@@ -209,6 +210,28 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
             />
         </Col>
       </Row>
+    ), (
+      <Row key="min" gutter={8} type="flex" align="middle" className={styles.blockRow}>
+        <Col span={12}>最小值</Col>
+        <Col span={10}>
+            <InputNumber
+              className={styles.blockElm}
+              value={min}
+              onChange={this.inputNumberChange('min')}
+            />
+        </Col>
+      </Row>
+    ), (
+      <Row key="max" gutter={8} type="flex" align="middle" className={styles.blockRow}>
+        <Col span={12}>最大值</Col>
+        <Col span={10}>
+            <InputNumber
+              className={styles.blockElm}
+              value={max}
+              onChange={this.inputNumberChange('max')}
+            />
+        </Col>
+      </Row>
     )]
     return (
       <div className={styles.paneBlock}>
@@ -251,7 +274,7 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
                 onChange={this.selectChange('lineSize')}
               >
                 {Array.from(Array(10), (o, i) => (
-                    <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                    <Option key={`${i}`} value={`${i + 1}`}>{i + 1}</Option>
                   ))}
               </Select>
             </Col>

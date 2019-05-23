@@ -77,6 +77,8 @@
   .title {
     padding: 12px 40px 0 12px;
     color: @white;
+    font-size: 1.15em;
+    font-weight: normal;
 
     .ellipsis;
   }
@@ -84,6 +86,7 @@
   .content {
     padding: 8px 12px 24px;
     color: @white;
+    font-size: .85em;
 
     .ellipsis;
   }
@@ -113,6 +116,8 @@
   width: 100%;
   overflow: auto;
   -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  user-select: none;
 
   &::-webkit-scrollbar {
     display: none;
@@ -141,6 +146,7 @@
   }
 
   .body {
+    min-height: 0;
     flex: 1;
     display: flex;
     flex-direction: row;
@@ -150,11 +156,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-
-      .editor {
-        flex: 1;
-        position: relative;
-      }
+      overflow: hidden;
 
       .bottom {
         height: 40px;
@@ -265,13 +267,13 @@
         display: flex;
         flex-direction: column;
 
+        :global(i.icon-palette) {
+          font-size: 30px;
+        }
+
         .items {
           flex: 1;
           overflow-y: auto;
-
-          i {
-            font-size: 30px;
-          }
         }
 
         .alignList {
@@ -376,36 +378,21 @@
   }
 }
 
-.editorContainer {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  overflow: auto;
-}
-
 .displayContainer {
-  transition: all ease-in 200ms;
+  flex: 1;
 }
 
-.displayPanelWrapper {
-  width: 100%;
-  height: 100%;
+.displayPanel {
+  position: relative;
+  background-color: #3F51B5;
+  box-shadow: @block-active-box-shadow;
+  transform-origin: 0 0;
+  transition: all ease-in 200ms;
 
-  .displayPanel {
-    position: relative;
-    background-color: #3F51B5;
-    box-shadow: @block-active-box-shadow;
-    transform-origin: 0 0;
-    transition: transform ease-in 200ms;
-
-    .baseline {
-      position: absolute;
-      z-index: 999999;
-    }
+  .baseline {
+    position: absolute;
+    z-index: 999999;
   }
-
 }
 
 .formTitle {
@@ -499,14 +486,14 @@
       max-width: 100%;
       max-height: 100%;
     }
+  }
 
-    i {
-      display: none;
-    }
+  i {
+    display: none;
+  }
 
-    &:hover i {
-      display: block;
-    }
+  &:hover i {
+    display: block;
   }
 }
 

@@ -20,5 +20,6 @@
 
 module.exports = {
   'primary-color': '#1B98E0',
-  'icon-url': '"~fonts/antd/antd"'
+  'table-padding-vertical': '10px',
+  'table-padding-horizontal': '8px'
 }

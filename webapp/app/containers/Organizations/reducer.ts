@@ -30,14 +30,20 @@ import {
   LOAD_ORGANIZATION_DETAIL,
   LOAD_ORGANIZATION_DETAIL_SUCCESS,
   LOAD_ORGANIZATION_DETAIL_FAILURE,
-  LOAD_ORGANIZATIONS_TEAMS_SUCCESS,
   LOAD_ORGANIZATIONS_PROJECTS_SUCCESS,
   LOAD_ORGANIZATIONS_MEMBERS_SUCCESS,
   SEARCH_MEMBER_SUCCESS,
   DELETE_ORGANIZATION_MEMBER_SUCCESS,
-  ADD_TEAM,
-  ADD_TEAM_SUCCESS,
-  ADD_TEAM_FAILURE
+  LOAD_ORGANIZATIONS_ROLE,
+  LOAD_ORGANIZATIONS_ROLE_SUCCESS,
+  LOAD_ORGANIZATIONS_ROLE_FAILURE,
+  ADD_ROLE,
+  ADD_ROLE_SUCCESS,
+  ADD_ROLE_FAILURE,
+  SET_CURRENT_ORIGANIZATION_PROJECT,
+  LOAD_PROJECT_ADMINS_SUCCESS,
+  LOAD_PROJECT_ADMINS_FAIL,
+  LOAD_PROJECT_ROLES_SUCCESS
 } from './constants'
 import {ADD_PROJECT_SUCCESS, DELETE_PROJECT_SUCCESS} from '../Projects/constants'
 
@@ -48,10 +54,13 @@ const initialState = fromJS({
   currentOrganizationLoading: false,
   currentOrganizationProjects: [],
   currentOrganizationProjectsDetail: false,
-  currentOrganizationTeams: [],
-  currentOrganizationMembers: [],
-  inviteMemberLists: [],
-  teamModalLoading: false
+  currentOrganizationMembers: null,
+  currentOrganizationRoles: null,
+  inviteMemberLists: null,
+  roleModalLoading: false,
+  projectDetail: false,
+  projectAdmins: false,
+  projectRoles: false
 })
 
 function organizationReducer (state = initialState, action) {
@@ -74,8 +83,8 @@ function organizationReducer (state = initialState, action) {
         .set('currentOrganizationProjectsDetail', payload.projects)
     case LOAD_ORGANIZATIONS_MEMBERS_SUCCESS:
       return state.set('currentOrganizationMembers', payload.members)
-    case LOAD_ORGANIZATIONS_TEAMS_SUCCESS:
-      return state.set('currentOrganizationTeams', payload.teams)
+    case LOAD_ORGANIZATIONS_ROLE_SUCCESS:
+      return state.set('currentOrganizationRole', payload.role)
     case LOAD_ORGANIZATIONS_SUCCESS:
       return state.set('organizations', payload.organizations)
     case ADD_PROJECT_SUCCESS:
@@ -115,24 +124,22 @@ function organizationReducer (state = initialState, action) {
       return state
         .set('currentOrganizationLoading', false)
         .set('currentOrganization', payload.organization)
-    // todo bug 没考虑teams的层级关系
-    // case ADD_TEAM_SUCCESS:
-    //   if (currentOrganizationTeams) {
-    //     currentOrganizationTeams.unshift(payload.result)
-    //     return state.set('currentOrganizationTeams', currentOrganizationTeams.slice())
-    //   } else {
-    //     return state.set('currentOrganizationTeams', [payload.result])
-    //   }
     case LOAD_ORGANIZATION_DETAIL_FAILURE:
       return state
-    case ADD_TEAM:
-      return state.set('teamModalLoading', true)
-    case ADD_TEAM_SUCCESS:
-      return state.set('teamModalLoading', false)
-    case ADD_TEAM_FAILURE:
-      return state.set('teamModalLoading', false)
+    case ADD_ROLE:
+      return state.set('roleModalLoading', true)
+    case ADD_ROLE_SUCCESS:
+      return state.set('roleModalLoading', false)
+    case ADD_ROLE_FAILURE:
+      return state.set('roleModalLoading', false)
     case SEARCH_MEMBER_SUCCESS:
       return state.set('inviteMemberLists', payload.result)
+    case SET_CURRENT_ORIGANIZATION_PROJECT:
+      return state.set('projectDetail', payload.option)
+    case LOAD_PROJECT_ADMINS_SUCCESS:
+      return state.set('projectAdmins', payload.result)
+    case LOAD_PROJECT_ROLES_SUCCESS:
+      return state.set('projectRoles', payload.result)
     default:
       return state
   }

@@ -20,8 +20,7 @@
 package edp.davinci.runner;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.utils.CustomDataSourceUtils;
-import edp.davinci.service.CronJobService;
+import edp.davinci.core.utils.DacChannelUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,27 +54,32 @@ public class CheckConfigRunner implements ApplicationRunner {
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private DacChannelUtil dacChannelUtil;
+
 
     @Override
     public void run(ApplicationArguments args) {
         if (StringUtils.isEmpty(mailHost)) {
-            log.error("**************     Configuration error: mail host connot be empty!      **************");
+            log.error("**************     Configuration error: mail host connot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
 
         if (StringUtils.isEmpty(mailPort)) {
-            log.error("**************     Configuration error: mail port connot be empty!      **************");
+            log.error("**************     Configuration error: mail port connot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
 
         if (StringUtils.isEmpty(mailUserName)) {
-            log.error("**************     Configuration error: mail username connot be empty!      **************");
+            log.error("**************     Configuration error: mail username connot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
 
         if (StringUtils.isEmpty(mailUserName)) {
-            log.error("**************     Configuration error: mail nickname connot be empty!      **************");
+            log.error("**************     Configuration error: mail nickname connot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
+
+        dacChannelUtil.loadDacMap();
     }
 }

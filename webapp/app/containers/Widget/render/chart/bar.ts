@@ -19,10 +19,12 @@
  */
 
 import { IChartProps } from '../../components/Chart'
+import barDefaultConfig from '../../config/chart/bar'
 import {
   decodeMetricName,
   getChartTooltipLabel,
-  getAggregatorLocale
+  getAggregatorLocale,
+  getFormattedValue
 } from '../../components/util'
 import {
   getDimetionAxisOption,
@@ -36,7 +38,7 @@ import {
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
-export default function (chartProps: IChartProps) {
+export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
     data,
     cols,
@@ -48,12 +50,15 @@ export default function (chartProps: IChartProps) {
 
   const {
     spec,
+    bar,
     label,
     legend,
     xAxis,
     yAxis,
     splitLine
   } = chartStyles
+  const { border: barBorder, gap: barGap, width: barWidth } = bar || (barDefaultConfig.style as any).bar
+  const { color: borderColor, width: borderWidth, type: borderType, radius: barBorderRadius } = barBorder
 
   const {
     stack,
@@ -72,16 +77,28 @@ export default function (chartProps: IChartProps) {
     horizontalLineStyle
   } = splitLine
 
+  const { selectedItems } = drillOptions
   const labelOption = {
-    label: getLabelOption('bar', label)
+    label: {
+      ...getLabelOption('bar', label, false, {
+        formatter: (params) => {
+          const { value, seriesName } = params
+          const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
+          const formatted = getFormattedValue(value, m.format)
+          return formatted
+        }
+      })
+    }
   }
 
-  let xAxisData = data.map((d) => d[cols[0]] || '')
+  const xAxisColumnName = cols.length ? cols[0].name : ''
+
+  let xAxisData = data.map((d) => d[xAxisColumnName] || '')
   let grouped = {}
   let percentGrouped = {}
   if (color.items.length) {
-    xAxisData = distinctXaxis(data, cols[0])
-    grouped = makeGrouped(data, color.items.map((c) => c.name), cols[0], metrics, xAxisData)
+    xAxisData = distinctXaxis(data, xAxisColumnName)
+    grouped = makeGrouped(data, color.items.map((c) => c.name), xAxisColumnName, metrics, xAxisData)
 
     const configValue = color.items[0].config.values
     const configKeys = []
@@ -122,17 +139,33 @@ export default function (chartProps: IChartProps) {
               //     }
               //   }
               // } else {
-              if (percentage) {
-                return g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100
-              } else {
-                return g[`${m.agg}(${decodedMetricName})`]
-              }
+              // if (percentage) {
+              //   return g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100
+              // } else {
+              //   return g[`${m.agg}(${decodedMetricName})`]
               // }
+              // }
+               if (selectedItems && selectedItems.length && selectedItems.some((item) => item === index)) {
+                return {
+                  value: percentage ? g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100 : g[`${m.agg}(${decodedMetricName})`],
+                  itemStyle: {
+                    normal: {
+                      opacity: 1
+                    }
+                  }
+                }
+              } else {
+                if (percentage) {
+                  return g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100
+                } else {
+                  return g[`${m.agg}(${decodedMetricName})`]
+                }
+              }
             }),
             itemStyle: {
               normal: {
-                // opacity: interactIndex === undefined ? 1 : 0.25
-                color: color.items[0].config.values[k]
+                opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
+                // color: color.items[0].config.values[k]
               }
             },
             ...labelOption
@@ -162,39 +195,107 @@ export default function (chartProps: IChartProps) {
           //     }
           //   }
           // } else {
-            if (percentage) {
+            // if (percentage) {
+            //   return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
+            // } else {
+            //   return d[`${m.agg}(${decodedMetricName})`]
+            // }
+          // }
+          if (selectedItems && selectedItems.length && selectedItems.some((item) => item === index)) {
+            return {
+              value: percentage ? d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100 : d[`${m.agg}(${decodedMetricName})`],
+              itemStyle: {
+                normal: {
+                  opacity: 1
+                }
+              }
+            }
+          } else {
+             if (percentage) {
               return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
             } else {
               return d[`${m.agg}(${decodedMetricName})`]
             }
-          // }
+          }
         }),
+        itemStyle: {
+          normal: {
+            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1,
+            borderColor,
+            borderWidth,
+            borderType,
+            barBorderRadius,
+            color: color.value[m.name] || defaultThemeColors[i]
+          }
+        },
+        barGap: `${barGap}%`,
+        barWidth: barWidth ? `${barWidth}%` : undefined,
         // lineStyle: {
         //   normal: {
         //     opacity: interactIndex === undefined ? 1 : 0.25
         //   }
         // },
-        itemStyle: {
-          normal: {
+        // itemStyle: {
+        //   normal: {
             // opacity: interactIndex === undefined ? 1 : 0.25
             // color: color.value[m.name] || defaultThemeColors[i]
-          }
-        },
+          // }
+        // },
         ...labelOption
       }
       series.push(serieObj)
       seriesData.push([...data])
     }
   })
-
-  const seriesNames = series.map((s) => s.name)
-
-  let legendOption
-  if (color.items.length || metrics.length > 1) {
-    legendOption = {
-      legend: getLegendOption(legend, seriesNames)
+  const {isDrilling, getDataDrillDetail, instance } = drillOptions
+  const brushedOptions = isDrilling === true ? {
+    brush: {
+      toolbox: ['rect', 'polygon', 'keep', 'clear'],
+      throttleType: 'debounce',
+      throttleDelay: 300,
+      brushStyle: {
+        borderWidth: 1,
+        color: 'rgba(255,255,255,0.2)',
+        borderColor: 'rgba(120,140,180,0.6)'
+      }
+    }
+  } : null
+  // if (isDrilling) {
+  //   //  instance.off('brushselected')
+  //     instance.on('brushselected', brushselected)
+  //     setTimeout(() => {
+  //         instance.dispatchAction({
+  //         type: 'takeGlobalCursor',
+  //         key: 'brush',
+  //         brushOption: {
+  //           brushType: 'rect',
+  //           brushMode: 'multiple'
+  //         }
+  //       })
+  //     }, 0)
+  //   }
+  function brushselected (params) {
+    const brushComponent = params.batch[0]
+    const brushed = []
+    const sourceData = seriesData[0]
+    let range: any[] = []
+    if (brushComponent && brushComponent.areas && brushComponent.areas.length) {
+      brushComponent.areas.forEach((area) => {
+        range = range.concat(area.range)
+      })
+    }
+    if (brushComponent && brushComponent.selected && brushComponent.selected.length) {
+      for (let i = 0; i < brushComponent.selected.length; i++) {
+        const rawIndices = brushComponent.selected[i].dataIndex
+        const seriesIndex = brushComponent.selected[i].seriesIndex
+        brushed.push({[i]: rawIndices})
+      }
+    }
+    if (getDataDrillDetail) {
+      getDataDrillDetail(JSON.stringify({range, brushed, sourceData}))
     }
   }
+  const seriesNames = series.map((s) => s.name)
 
   // dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
   //   dataZoom: [{
@@ -239,8 +340,9 @@ export default function (chartProps: IChartProps) {
     tooltip: {
       formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
     },
-    ...legendOption,
-    grid: getGridPositions(legend, seriesNames, barChart, yAxis, xAxis, xAxisData)
+    legend: getLegendOption(legend, seriesNames),
+    grid: getGridPositions(legend, seriesNames, '', barChart, yAxis, xAxis, xAxisData)
+   // ...brushedOptions
   }
 }
 

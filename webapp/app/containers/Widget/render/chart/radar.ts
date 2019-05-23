@@ -29,7 +29,6 @@ import {
   getMetricAxisOption,
   getLabelOption,
   getLegendOption,
-  getGridPositions,
   getSymbolSize
 } from './util'
 
@@ -81,28 +80,28 @@ export default function (chartProps: IChartProps) {
     [name]: {}
   }), {})
   data.forEach((row) => {
-    if (!indicatorData[row[dimension]]) {
-      indicatorData[row[dimension]] = -Infinity
+    if (!indicatorData[row[dimension.name]]) {
+      indicatorData[row[dimension.name]] = -Infinity
     }
 
     metrics.forEach((m) => {
       const name = decodeMetricName(m.name)
       const cellVal = row[`${m.agg}(${name})`]
       indicatorMax = Math.max(indicatorMax, cellVal)
-      if (!dimensionData[name][row[dimension]]) {
-        dimensionData[name][row[dimension]] = 0
+      if (!dimensionData[name][row[dimension.name]]) {
+        dimensionData[name][row[dimension.name]] = 0
       }
-      dimensionData[name][row[dimension]] += cellVal
+      dimensionData[name][row[dimension.name]] += cellVal
     })
   })
   const indicator = Object.keys(indicatorData).map((name: string) => ({
     name,
     max: indicatorMax + Math.round(indicatorMax * 0.1)
   }))
-  const seriesData = Object.entries(dimensionData).map(([name, value]) => ({
+  const seriesData = data.length > 0 ? Object.entries(dimensionData).map(([name, value]) => ({
     name,
     value: Object.values(value)
-  }))
+  })) : []
 
   const {
     showLabel,

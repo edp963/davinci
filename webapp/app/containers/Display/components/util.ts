@@ -18,12 +18,12 @@
  * >>
  */
 
-import * as slide from 'assets/json/slideSettings/slide.json'
-import * as chart from 'assets/json/slideSettings/chart.json'
-import * as rectangle from 'assets/json/slideSettings/rectangle.json'
-import * as label from 'assets/json/slideSettings/label.json'
-import * as video from 'assets/json/slideSettings/video.json'
-import * as timer from 'assets/json/slideSettings/timer.json'
+import slide from 'assets/json/slideSettings/slide.json'
+import chart from 'assets/json/slideSettings/chart.json'
+import rectangle from 'assets/json/slideSettings/rectangle.json'
+import label from 'assets/json/slideSettings/label.json'
+import video from 'assets/json/slideSettings/video.json'
+import timer from 'assets/json/slideSettings/timer.json'
 
 import { ILayer, ILayerParams, IBaseline, IDeltaPosition, IDeltaSize } from './LayerItem'
 import { ISlideParams, ISlide } from '../'

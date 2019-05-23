@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.DownloadRecordMapper">
+
+    <insert id="insert" parameterType="edp.davinci.model.DownloadRecord">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+        insert into download_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            `name`,
+            user_id,
+            status,
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{name,jdbcType=VARCHAR},
+            #{userId,jdbcType=BIGINT},
+            #{status,jdbcType=SMALLINT},
+            #{createTime,jdbcType=TIMESTAMP}
+        </trim>
+    </insert>
+</mapper>

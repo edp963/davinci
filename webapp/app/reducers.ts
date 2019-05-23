@@ -28,17 +28,8 @@ import { Reducer, ReducersMapObject } from 'redux'
 import { combineReducers } from 'redux-immutable'
 import { LOCATION_CHANGE } from 'react-router-redux'
 
-import globalReducer from './containers/App/reducer'
 import languageProviderReducer from './containers/LanguageProvider/reducer'
 import reportReducer from './containers/Report/reducer'
-// import groupReducer from './containers/Group/reducer'
-// import userReducer from './containers/User/reducer'
-// import sourceReducer from './containers/Source/reducer'
-import bizlogicReducer from './containers/Bizlogic/reducer'
-import widgetReducer from './containers/Widget/reducer'
-// import dashboardReducer from './containers/Dashboard/reducer'
-import scheduleReducer from './containers/Schedule/reducer'
-// import displayReducer from './containers/Display/reducer'
 
 /*
  * routeReducer
@@ -74,17 +65,8 @@ function routeReducer (state = routeInitialState, action) {
 export default function createReducer (injectedReducers: ReducersMapObject = {}): Reducer<any> {
   return combineReducers({
     route: routeReducer,
-  //  global: globalReducer,
     language: languageProviderReducer,
     report: reportReducer,
-    // group: groupReducer,
-    // user: userReducer,
-    // source: sourceReducer,
-    bizlogic: bizlogicReducer,
-    widget: widgetReducer,
-    // dashboard: dashboardReducer,
-  //  schedule: scheduleReducer,
-    // display: displayReducer,
     ...injectedReducers
   })
 }

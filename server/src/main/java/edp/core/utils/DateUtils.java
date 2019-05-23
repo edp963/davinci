@@ -159,6 +159,12 @@ public class DateUtils {
         return timeStr;
     }
 
+    public static String toyyyyMMddHHmmss(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+        String timeStr = sdf.format(date);
+        return timeStr;
+    }
+
     public static Date getUtilDate(String date, String formatter) throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat(formatter);
         return sdf.parse(date);

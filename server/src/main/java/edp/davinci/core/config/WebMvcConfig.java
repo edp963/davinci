@@ -42,6 +42,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import static edp.core.consts.Consts.EMPTY;
+
+
 @Configuration
 public class WebMvcConfig extends WebMvcConfigurationSupport {
 
@@ -154,7 +157,7 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
             if (null != source && (source instanceof Long || source instanceof BigInteger) && source.toString().length() > 15) {
                 return source.toString();
             } else {
-                return null == source ? "" : source;
+                return null == source ? EMPTY : source;
             }
         });
 

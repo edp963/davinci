@@ -18,47 +18,42 @@
 
 package edp.davinci.service.impl;
 
-import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.DateUtils;
 import edp.core.utils.QuartzUtils;
-import edp.core.utils.TokenUtils;
-import edp.davinci.common.service.CommonService;
-import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.CronJobStatusEnum;
-import edp.davinci.core.enums.UserOrgRoleEnum;
+import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.dao.CronJobMapper;
-import edp.davinci.dao.ProjectMapper;
 import edp.davinci.dto.cronJobDto.CronJobBaseInfo;
 import edp.davinci.dto.cronJobDto.CronJobInfo;
 import edp.davinci.dto.cronJobDto.CronJobUpdate;
-import edp.davinci.dto.cronJobDto.CronJobWithProject;
+import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.model.CronJob;
-import edp.davinci.model.Project;
-import edp.davinci.model.RelUserOrganization;
 import edp.davinci.model.User;
 import edp.davinci.service.CronJobService;
+import edp.davinci.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
 
 @Slf4j
 @Service("cronJobService")
-public class CronJobServiceImpl extends CommonService<CronJob> implements CronJobService {
+public class CronJobServiceImpl implements CronJobService {
+    private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
-    private TokenUtils tokenUtils;
-
-    @Autowired
-    private ProjectMapper projectMapper;
+    private ProjectService projectService;
 
     @Autowired
     private CronJobMapper cronJobMapper;
@@ -80,31 +75,23 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
      *
      * @param projectId
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getCronJobs(Long projectId, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        Project project = projectMapper.getById(projectId);
-
-        if (null == project) {
-            log.info("project {} not found", project);
-            return resultMap.successAndRefreshToken(request).message("project not found");
+    public List<CronJob> getCronJobs(Long projectId, User user) {
+        ProjectDetail projectDetail = null;
+        try {
+            projectDetail = projectService.getProjectDetail(projectId, user, false);
+        } catch (NotFoundException e) {
+            return null;
+        } catch (UnAuthorizedExecption e) {
+            return null;
         }
-
-        if (!allowRead(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        if (projectPermission.getSchedulePermission() < UserPermissionEnum.READ.getPermission()) {
+            return null;
         }
-
-        List<CronJob> cronJobs = cronJobMapper.getByProject(projectId);
-
-        if (!allowRead(project, user)) {
-            cronJobs = null;
-        }
-
-        return resultMap.successAndRefreshToken(request).payloads(cronJobs);
+        return cronJobMapper.getByProject(projectId);
     }
 
 
@@ -113,33 +100,26 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
      *
      * @param cronJobBaseInfo
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap createCronJob(CronJobBaseInfo cronJobBaseInfo, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public CronJobInfo createCronJob(CronJobBaseInfo cronJobBaseInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        Project project = projectMapper.getById(cronJobBaseInfo.getProjectId());
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(cronJobBaseInfo.getProjectId(), user, false), user);
+
+        if (projectPermission.getSchedulePermission() < UserPermissionEnum.WRITE.getPermission()) {
+            log.info("user {} have not permisson to create job", user.getUsername());
+            throw new UnAuthorizedExecption("you have not permission to create job");
+        }
+
 
         if (isExist(cronJobBaseInfo.getName(), null, cronJobBaseInfo.getProjectId())) {
             log.info("the job {} name is already taken", cronJobBaseInfo.getName());
-            return resultMap.failAndRefreshToken(request).message("this job name is already taken");
+            throw new ServerException("this job name is already taken");
         }
 
-        if (null == project) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
-
-        //校验权限
-        if (!allowWrite(project, user)) {
-            log.info("user {} have not permisson to create job", user.getUsername());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to create job");
-        }
-
-        CronJob cronJob = new CronJob();
+        CronJob cronJob = new CronJob().createdBy(user.getId());
         BeanUtils.copyProperties(cronJobBaseInfo, cronJob);
         cronJob.setCreateBy(user.getId());
         try {
@@ -151,13 +131,14 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
 
         int insert = cronJobMapper.insert(cronJob);
         if (insert > 0) {
+            optLogger.info("cronJob ({}) is create by (:{})", cronJob.toString(), user.getId());
             CronJobInfo cronJobInfo = new CronJobInfo();
             BeanUtils.copyProperties(cronJobBaseInfo, cronJobInfo);
             cronJobInfo.setId(cronJob.getId());
             cronJobInfo.setJobStatus(CronJobStatusEnum.NEW.getStatus());
-            return resultMap.successAndRefreshToken(request).payload(cronJobInfo);
+            return cronJobInfo;
         } else {
-            return resultMap.failAndRefreshToken(request).message("create cronJob fail");
+            throw new ServerException("create cronJob fail");
         }
     }
 
@@ -166,42 +147,40 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
      *
      * @param cronJobUpdate
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap updateCronJob(CronJobUpdate cronJobUpdate, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        CronJobWithProject cronJobWithProject = cronJobMapper.getCronJobWithProjectById(cronJobUpdate.getId());
-        if (null == cronJobWithProject) {
-            return resultMap.failAndRefreshToken(request).message("cronjob not found");
+    public boolean updateCronJob(CronJobUpdate cronJobUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        CronJob cronJob = cronJobMapper.getById(cronJobUpdate.getId());
+        if (null == cronJob) {
+            throw new NotFoundException("cronjob is not found");
         }
 
-        Project project = cronJobWithProject.getProject();
-        if (null == project) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
+        if (null != cronJob && !cronJob.getProjectId().equals(cronJobUpdate.getProjectId())) {
+            throw new ServerException("Invalid project id");
         }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(cronJob.getProjectId(), user, false), user);
 
         //校验权限
-        if (!allowWrite(project, user)) {
+        if (projectPermission.getSchedulePermission() < UserPermissionEnum.WRITE.getPermission()) {
             log.info("user {} have not permisson to update this job", user.getUsername());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to update this job");
+            throw new UnAuthorizedExecption("you have not permission to update this job");
         }
 
-        if (isExist(cronJobUpdate.getName(), cronJobUpdate.getId(), project.getId())) {
+        if (isExist(cronJobUpdate.getName(), cronJobUpdate.getId(), cronJob.getProjectId())) {
             log.info("the cronjob {} name is already taken", cronJobUpdate.getName());
-            return resultMap.failAndRefreshToken(request).message("the name is already taken");
+            throw new ServerException("the name is already taken");
         }
 
-        if (CronJobStatusEnum.START.getStatus().equals(cronJobWithProject.getJobStatus())) {
-            return resultMap.failAndRefreshToken(request).message("Please stop the job before updating");
+        if (CronJobStatusEnum.START.getStatus().equals(cronJob.getJobStatus())) {
+            throw new ServerException("Please stop the job before updating");
         }
 
-        CronJob cronJob = new CronJob();
+        String origin = cronJob.toString();
         BeanUtils.copyProperties(cronJobUpdate, cronJob);
+        cronJob.updatedBy(user.getId());
         try {
             cronJob.setStartDate(DateUtils.toDate(cronJobUpdate.getStartDate()));
             cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
@@ -209,18 +188,18 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
             cronJob.setUpdateTime(new Date());
             int update = cronJobMapper.update(cronJob);
             if (update > 0) {
+                optLogger.info("cronJob ({}) is update by (:{}), origin: ({})", cronJob.toString(), user.getId(), origin);
                 quartzUtils.modifyJob(cronJob);
             }
         } catch (Exception e) {
             quartzUtils.removeJob(cronJob);
-            cronJobWithProject.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
-            cronJobMapper.update(cronJobWithProject);
+            cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
+            cronJobMapper.update(cronJob);
 
             e.printStackTrace();
         }
 
-
-        return resultMap.successAndRefreshToken(request);
+        return true;
     }
 
     /**
@@ -228,111 +207,95 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
      *
      * @param id
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap deleteCronJob(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public boolean deleteCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        CronJobWithProject cronJobWithProject = cronJobMapper.getCronJobWithProjectById(id);
-        if (null == cronJobWithProject) {
-            return resultMap.failAndRefreshToken(request).message("cronjob not found");
+        CronJob cronJob = cronJobMapper.getById(id);
+        if (null == cronJob) {
+            log.info("cronjob (:{}) is not found", id);
+            throw new NotFoundException("cronjob is not found");
         }
 
-
-        if (null == cronJobWithProject.getProject()) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(cronJob.getProjectId(), user, false), user);
 
         //校验权限
-        if (!allowDelete(cronJobWithProject.getProject(), user)) {
+        if (projectPermission.getSchedulePermission() < UserPermissionEnum.DELETE.getPermission()) {
             log.info("user {} have not permisson to delete the cronjob {}", user.getUsername(), id);
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to delete this job");
+            throw new UnAuthorizedExecption("you have not permission to delete this job");
         }
 
         int i = cronJobMapper.deleteById(id);
         if (i > 0) {
-            quartzUtils.removeJob(cronJobWithProject);
+            optLogger.info("cronjob ({}) is delete by (:{})", cronJob.toString(), user.getId());
+            quartzUtils.removeJob(cronJob);
         }
 
-        return resultMap.successAndRefreshToken(request);
+        return true;
     }
 
     @Override
     @Transactional
-    public ResultMap startCronJob(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        CronJobWithProject cronJobWithProject = cronJobMapper.getCronJobWithProjectById(id);
-        if (null == cronJobWithProject) {
-            return resultMap.failAndRefreshToken(request).message("cronjob not found");
+    public CronJob startCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        CronJob cronJob = cronJobMapper.getById(id);
+        if (null == cronJob) {
+            log.info("cronjob (:{}) is not found", id);
+            throw new NotFoundException("cronjob is not found");
         }
 
-        Project project = cronJobWithProject.getProject();
-        if (null == project) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(cronJob.getProjectId(), user, false), user);
 
         //校验权限
-        if (!allowWrite(project, user)) {
-            log.info("user {} have not permisson to start this job", user.getUsername());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to start this job");
+        if (projectPermission.getSchedulePermission() < UserPermissionEnum.WRITE.getPermission()) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
         try {
-            quartzUtils.addJob(cronJobWithProject);
-            cronJobWithProject.setJobStatus(CronJobStatusEnum.START.getStatus());
-            cronJobWithProject.setUpdateTime(new Date());
-            cronJobMapper.update(cronJobWithProject);
-            return resultMap.successAndRefreshToken(request).payload(cronJobWithProject.toCrobJobInfo());
+            quartzUtils.addJob(cronJob);
+            cronJob.setJobStatus(CronJobStatusEnum.START.getStatus());
+            cronJob.setUpdateTime(new Date());
+            cronJobMapper.update(cronJob);
+            return cronJob;
         } catch (ServerException e) {
-            cronJobWithProject.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
-            cronJobWithProject.setUpdateTime(new Date());
-            cronJobMapper.update(cronJobWithProject);
+            cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
+            cronJob.setUpdateTime(new Date());
+            cronJobMapper.update(cronJob);
 
             e.printStackTrace();
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+            return cronJob;
         }
     }
 
     @Override
     @Transactional
-    public ResultMap stopCronJob(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        CronJobWithProject cronJobWithProject = cronJobMapper.getCronJobWithProjectById(id);
-        if (null == cronJobWithProject) {
-            return resultMap.failAndRefreshToken(request).message("cronjob not found");
+    public CronJob stopCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        CronJob cronJob = cronJobMapper.getById(id);
+        if (null == cronJob) {
+            log.info("cronjob (:{}) is not found", id);
+            throw new NotFoundException("cronjob is not found");
         }
 
-        Project project = cronJobWithProject.getProject();
-        if (null == project) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(cronJob.getProjectId(), user, false), user);
 
         //校验权限
-        if (!allowWrite(project, user)) {
-            log.info("user {} have not permisson to stop this job", user.getUsername());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to stop this job");
+        if (projectPermission.getSchedulePermission() < UserPermissionEnum.WRITE.getPermission()) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
         try {
-            quartzUtils.removeJob(cronJobWithProject);
-            cronJobWithProject.setJobStatus(CronJobStatusEnum.STOP.getStatus());
-            cronJobWithProject.setUpdateTime(new Date());
-            cronJobMapper.update(cronJobWithProject);
-            return resultMap.successAndRefreshToken(request).payload(cronJobWithProject.toCrobJobInfo());
+            quartzUtils.removeJob(cronJob);
+            cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
+            cronJob.setUpdateTime(new Date());
+            cronJobMapper.update(cronJob);
+            return cronJob;
         } catch (ServerException e) {
-            cronJobWithProject.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
-            cronJobMapper.update(cronJobWithProject);
+            cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
+            cronJobMapper.update(cronJob);
 
             e.printStackTrace();
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+            return cronJob;
         }
     }
 
@@ -343,9 +306,14 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
         if (null != jobList && jobList.size() > 0) {
             for (CronJob cronJob : jobList) {
                 if (CronJobStatusEnum.START.getStatus().equals(cronJob.getJobStatus())) {
-                    quartzUtils.addJob(cronJob);
+                    try {
+                        quartzUtils.addJob(cronJob);
+                    } catch (ServerException e) {
+                        log.info(e.getMessage());
+                    }
                 }
             }
+            quartzUtils.startJobs();
         }
     }
 }

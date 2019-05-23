@@ -21,22 +21,13 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
-const Icon = require('antd/lib/icon')
-const Steps = require('antd/lib/steps')
-const Pagination = require('antd/lib/pagination')
+import { Form, Row, Col, Table, Input, InputNumber, Select, Steps } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
+import { SortOrder } from 'antd/lib/table'
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
-const Search = Input.Search
 
-import { iconMapping } from '../../Widget/components/chartUtil'
 import SearchFilterDropdown from '../../../components/SearchFilterDropdown'
 
 const utilStyles = require('../../../assets/less/util.less')
@@ -44,14 +35,13 @@ const widgetStyles = require('../../Widget/Widget.less')
 const styles = require('../Dashboard.less')
 
 interface IDashboardItemFormProps {
-  form: any
   type: string
   widgets: any[]
-  selectedWidget: number
+  selectedWidgets: number[]
   polling: boolean,
   step: number
   onWidgetSelect: (selectedRowKeys: any[]) => void
-  onPollingSelect: () => any
+  onPollingSelect: (val: string) => any
 }
 
 interface IDashboardItemFormStates {
@@ -62,11 +52,14 @@ interface IDashboardItemFormStates {
   screenWidth: number
   nameFilterValue: string
   nameFilterDropdownVisible: boolean
-  tableSortedInfo: {columnKey?: string, order?: string}
+  tableSortedInfo: {
+    columnKey?: string,
+    order?: SortOrder
+  }
   selectedRowKeys: any[]
 }
 
-export class DashboardItemForm extends React.PureComponent<IDashboardItemFormProps, IDashboardItemFormStates> {
+export class DashboardItemForm extends React.PureComponent<IDashboardItemFormProps & FormComponentProps, IDashboardItemFormStates> {
 
   constructor (props) {
     super(props)
@@ -179,13 +172,12 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       widgets,
       type,
       form,
-      selectedWidget,
+      selectedWidgets,
       polling,
       step,
       onWidgetSelect,
       onPollingSelect
     } = this.props
-
     const {
       filteredWidgets,
       pageSize,
@@ -215,7 +207,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
         nameFilterDropdownVisible: visible
       }),
       sorter: (a, b) => a.name > b.name ? -1 : 1,
-      sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
+      sortOrder: tableSortedInfo.columnKey === 'name' ? tableSortedInfo.order : void 0
     }, {
       title: '描述',
       dataIndex: 'description',
@@ -229,7 +221,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     }
 
     const rowSelection = {
-      selectedRowKeys: selectedWidget,
+      selectedRowKeys: selectedWidgets,
       onChange: this.onSelectChange,
       onShowSizeChange: this.onShowSizeChange
     }
@@ -280,9 +272,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
           <Row gutter={8}>
             <Col sm={8}>
               <FormItem className={utilStyles.hide}>
-                {getFieldDecorator('id', {
-                  hidden: type === 'add'
-                })(
+                {getFieldDecorator('id')(
                   <Input />
                 )}
               </FormItem>
@@ -325,4 +315,4 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
   }
 }
 
-export default Form.create()(DashboardItemForm)
+export default Form.create<IDashboardItemFormProps & FormComponentProps>()(DashboardItemForm)

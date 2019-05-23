@@ -33,6 +33,9 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static edp.core.consts.Consts.EMPTY;
+
+
 @Component
 public class FileUtils {
 
@@ -141,7 +144,7 @@ public class FileUtils {
                     is.read(buffer);
                     response.reset();
                     response.addHeader("Content-Disposition", "attachment;filename=" + new String(file.getName().getBytes(), "UTF-8"));
-                    response.addHeader("Content-Length", "" + file.length());
+                    response.addHeader("Content-Length", EMPTY + file.length());
                     os = new BufferedOutputStream(response.getOutputStream());
                     response.setContentType("application/octet-stream;charset=UTF-8");
                     os.write(buffer);
@@ -190,17 +193,15 @@ public class FileUtils {
      * @param dir
      * @return
      */
-    public static boolean deleteDir(File dir) {
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
-                if (!success) {
-                    return false;
-                }
+    public static void deleteDir(File dir) {
+        if (dir.isFile() || dir.list().length == 0) {
+            dir.delete();
+        } else {
+            for (File f : dir.listFiles()) {
+                deleteDir(f);
             }
+            dir.delete();
         }
-        return dir.delete();
     }
 
     /**
@@ -210,7 +211,7 @@ public class FileUtils {
      * @return
      */
     public String formatFilePath(String filePath) {
-        return filePath.replace(fileBasePath, "").replaceAll(File.separator + "{2,}", File.separator);
+        return filePath.replace(fileBasePath, EMPTY).replaceAll(File.separator + "{2,}", File.separator);
     }
 
     /**

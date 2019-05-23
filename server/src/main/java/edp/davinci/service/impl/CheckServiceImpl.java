@@ -42,51 +42,15 @@ public class CheckServiceImpl implements CheckService {
     private TokenUtils tokenUtils;
 
     @Override
-    public ResultMap checkSource(String name, String entity, Long id,Long scopeId, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        if (StringUtils.isEmpty(name)) {
-            log.info("the name of entity({}) ie empty", entity);
-            return resultMap.failAndRefreshToken(request).message("name is empty");
-        }
-
-        if (StringUtils.isEmpty(entity)) {
-            log.info("entity({}) ie empty", entity);
-            return resultMap.failAndRefreshToken(request).message("entity is empty");
-        }
-
-        try {
-            String clazz = Class.forName(CheckEntityEnum.sourceOf(entity.toLowerCase()).getClazz()).getTypeName();
-            if (StringUtils.isEmpty(clazz)) {
-                log.info("not found entity type : {}", entity);
-                return resultMap.failAndRefreshToken(request).message("not supported entity type");
-            }
-        } catch (ClassNotFoundException e) {
-            log.error("not supported entity type : {}", entity);
-            return resultMap.failAndRefreshToken(request).message("not supported entity type");
-        }
-
-        CheckEntityService checkEntityService = (CheckEntityService) beanFactory
-                .getBean(CheckEntityEnum.sourceOf(entity.toLowerCase()).getService());
-        if (checkEntityService.isExist(name, id, scopeId)) {
-            return resultMap.failAndRefreshToken(request)
-                    .message("the current " + entity.toLowerCase() + " name is already taken");
-        } else {
-            return resultMap.successAndRefreshToken(request);
-        }
-    }
-
-
-    @Override
     public ResultMap checkSource(String name, Long id, CheckEntityEnum checkEntityEnum, Long scopeId, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         if (StringUtils.isEmpty(name)) {
-            log.info("the name of entity({}) ie empty", checkEntityEnum.getClazz());
+            log.info("the name of entity({}) ie EMPTY", checkEntityEnum.getClazz());
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
-                return resultMap.fail().message("name is empty");
+                return resultMap.fail().message("name is EMPTY");
             }
-            return resultMap.failAndRefreshToken(request).message("name is empty");
+            return resultMap.failAndRefreshToken(request).message("name is EMPTY");
         }
 
         try {
@@ -107,7 +71,7 @@ public class CheckServiceImpl implements CheckService {
         }
 
         CheckEntityService checkEntityService = (CheckEntityService) beanFactory.getBean(checkEntityEnum.getService());
-        if (checkEntityService.isExist(name, id,scopeId)) {
+        if (checkEntityService.isExist(name, id, scopeId)) {
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
                 return resultMap.fail().message("the current " + checkEntityEnum.getSource() + " name is already taken");
             }

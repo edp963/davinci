@@ -23,13 +23,9 @@ import undoable, { includeAction } from 'redux-undo'
 
 import { ActionTypes } from './constants'
 import { GraphTypes } from './components/util'
-import {
-  LOAD_DATA_FROM_ITEM,
-  LOAD_DATA_FROM_ITEM_SUCCESS,
-  LOAD_DATA_FROM_ITEM_FAILURE
-} from '../Bizlogic/constants'
+import { ActionTypes as ViewActionTypes } from '../View/constants'
 
-const initialState = fromJS({
+const emptyDisplayState = {
   displays: [],
   currentDisplay: null,
   currentDisplayLoading: false,
@@ -37,7 +33,7 @@ const initialState = fromJS({
   currentDisplaySecretInfo: '',
   currentSlide: null,
   currentSlideLoading: false,
-  currentDisplayCascadeSources: {},
+  currentDisplaySelectOptions: {},
 
   currentLayers: [],
   currentLayersInfo: {},
@@ -49,13 +45,15 @@ const initialState = fromJS({
   lastLayers: [],
 
   editorBaselines: []
-})
+}
+
+const initialState = fromJS(emptyDisplayState)
 
 function displayReducer (state = initialState, action) {
   const { type, payload } = action
 
   const displays = state.get('displays')
-  const displayCascadeSources = state.get('currentDisplayCascadeSources')
+  const displaySelectOptions = state.get('currentDisplaySelectOptions')
   const layers = state.get('currentLayers')
   const layersInfo = state.get('currentLayersInfo')
   const layersOperationInfo = state.get('currentLayersOperationInfo')
@@ -112,19 +110,19 @@ function displayReducer (state = initialState, action) {
       return state
         .set('currentDisplayLoading', false)
         .set('currentDisplay', payload.display)
-        .set('currentDisplayCascadeSources', {})
+        .set('currentDisplaySelectOptions', {})
         .set('currentSlide', payload.slide)
         .set('currentLayers', payload.layers || [])
-        .set('currentLayersInfo', payload.layers.reduce((obj, layer) => {
+        .set('currentLayersInfo', (payload.layers || []).reduce((obj, layer) => {
           obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
             datasource: { resultList: [] },
             loading: false,
-            queryParams: {
+            queryConditions: {
               linkageFilters: [],
               globalFilters: [],
-              params: [],
-              linkageParams: [],
-              globalParams: [],
+              variables: [],
+              linkageVariables: [],
+              globalVariables: [],
               pagination: {}
             },
             interactId: '',
@@ -136,7 +134,7 @@ function displayReducer (state = initialState, action) {
           }
           return obj
         }, {}))
-        .set('currentLayersOperationInfo', payload.layers.reduce((obj, layer) => {
+        .set('currentLayersOperationInfo', (payload.layers || []).reduce((obj, layer) => {
           obj[layer.id] = {
             selected: false,
             dragging: false,
@@ -166,12 +164,12 @@ function displayReducer (state = initialState, action) {
             obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
               datasource: { resultList: [] },
               loading: false,
-              queryParams: {
+              queryConditions: {
                 linkageFilters: [],
                 globalFilters: [],
-                params: [],
-                linkageParams: [],
-                globalParams: [],
+                variables: [],
+                linkageVariables: [],
+                globalVariables: [],
                 pagination: {}
               },
               interactId: '',
@@ -224,23 +222,23 @@ function displayReducer (state = initialState, action) {
         .set('lastLayers', lastLayers)
         .set('currentLayers', copyLayers)
 
-    case LOAD_DATA_FROM_ITEM:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
       return payload.vizType !== 'display' ? state : state
         .set('currentLayersInfo', {
           ...layersInfo,
           [payload.itemId]: {
             ...layersInfo[payload.itemId],
             loading: true,
-            queryParams: {
-              linkageFilters: payload.params.linkageFilters,
-              globalFilters: payload.params.globalFilters,
-              params: payload.params.params,
-              linkageParams: payload.params.linkageParams,
-              globalParams: payload.params.globalParams
+            queryConditions: {
+              linkageFilters: payload.requestParams.linkageFilters,
+              globalFilters: payload.requestParams.globalFilters,
+              variables: payload.requestParams.variables,
+              linkageVariables: payload.requestParams.linkageVariables,
+              globalVariables: payload.requestParams.globalVariables
             }
           }
         })
-    case LOAD_DATA_FROM_ITEM_SUCCESS:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS:
       return payload.vizType !== 'display' ? state : state
         .set('currentLayersInfo', {
           ...layersInfo,
@@ -251,7 +249,7 @@ function displayReducer (state = initialState, action) {
             renderType: payload.renderType
           }
         })
-    case LOAD_DATA_FROM_ITEM_FAILURE:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE:
       return payload.vizType !== 'display' ? state : state.set('currentLayersInfo', {
         ...layersInfo,
         [payload.layerId]: {
@@ -350,12 +348,12 @@ function displayReducer (state = initialState, action) {
             obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
               datasource: { resultList: [] },
               loading: false,
-              queryParams: {
+              queryConditions: {
                 linkageFilters: [],
                 globalFilters: [],
-                params: [],
-                linkageParams: [],
-                globalParams: [],
+                variables: [],
+                linkageVariables: [],
+                globalVariables: [],
                 pagination: {}
               },
               interactId: '',
@@ -392,14 +390,18 @@ function displayReducer (state = initialState, action) {
         .set('currentDisplayShareInfoLoading', false)
     case ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE:
       return state.set('currentDisplayShareInfoLoading', false)
-
+    case ActionTypes.RESET_DISPLAY_STATE:
+      return fromJS(emptyDisplayState)
     default:
       return state
   }
 }
 
-export default undoable(displayReducer, {
+const undoableDisplayReducer = undoable(displayReducer, {
+  initTypes: [ActionTypes.LOAD_DISPLAY_DETAIL],
+  ignoreInitialState: true,
   filter: includeAction([
+    ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS,
     ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS,
     ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS,
     ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS,
@@ -409,3 +411,5 @@ export default undoable(displayReducer, {
   undoType: ActionTypes.UNDO_OPERATION_SUCCESS,
   redoType: ActionTypes.REDO_OPERATION_SUCCESS
 })
+
+export default undoableDisplayReducer

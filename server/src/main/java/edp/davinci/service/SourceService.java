@@ -18,32 +18,38 @@
 
 package edp.davinci.service;
 
-import edp.davinci.core.common.ResultMap;
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
+import edp.core.model.TableInfo;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.sourceDto.*;
+import edp.davinci.model.Source;
 import edp.davinci.model.User;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 public interface SourceService extends CheckEntityService {
 
 
-    ResultMap getSources(Long projectId, User user, HttpServletRequest request);
+    List<Source> getSources(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap createSource(SourceCreate sourceCreate, User user, HttpServletRequest request);
+    Source createSource(SourceCreate sourceCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateSource(SourceInfo sourceInfo, User user, HttpServletRequest request);
+    Source updateSource(SourceInfo sourceInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteSrouce(Long id, User user, HttpServletRequest request);
+    boolean deleteSrouce(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap testSource(SourceTest sourceTest, User user, HttpServletRequest request);
+    boolean testSource(SourceTest sourceTest) throws ServerException;
 
-    ResultMap validCsvmeta(Long sourceId, UploadMeta uploadMeta, User user, HttpServletRequest request);
+    void validCsvmeta(Long sourceId, UploadMeta uploadMeta, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user, String type, HttpServletRequest request);
+    Boolean dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user, String type) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap getSourceTables(Long id, User user, HttpServletRequest request);
+    List<String> getSourceTables(Long id, User user) throws NotFoundException;
 
-    ResultMap getTableColumns(Long id, String tableName, User user, HttpServletRequest request);
+    List<TableInfo> getTableColumns(Long id, String tableName, User user) throws NotFoundException;
+
+    boolean isTestConnection(SourceConfig config) throws ServerException;
 }

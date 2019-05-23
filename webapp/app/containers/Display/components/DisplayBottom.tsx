@@ -1,7 +1,6 @@
-import * as React from 'react'
+import React from 'react'
 
-const Slider = require('antd/lib/slider')
-const Icon = require('antd/lib/icon')
+import { Slider, Icon } from 'antd'
 
 const styles = require('../Display.less')
 
@@ -13,7 +12,7 @@ interface IDisplayBottomProps {
   onSliderChange: (val: number) => void
 }
 
-export function DisplayBottom (props: IDisplayBottomProps) {
+export const DisplayBottom: React.FunctionComponent<IDisplayBottomProps> = (props) => {
   const {
     scale,
     onZoomIn,

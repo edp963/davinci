@@ -21,7 +21,7 @@ for %%x in ("%DAVINCI3_HOME%") do set DAVINCI3_HOME=%%~sx
 
 if "%1" == "start" (
     echo start Davinci Server
-    start "Davinci Server" java -Dfile.encoding=UTF-8 -cp .;%JAVA_HOME%\lib\*;%DAVINCI3_HOME%\lib\*;davinci-server_3.01-0.3.0-SNAPSHOT.jar edp.DavinciServerApplication --spring.config.additional-location=file:%DAVINCI3_HOME%\config\application.yml
+    start "Davinci Server" java -Dfile.encoding=UTF-8 -cp .;%JAVA_HOME%\lib\*;%DAVINCI3_HOME%\lib\*; edp.DavinciServerApplication --spring.config.additional-location=file:%DAVINCI3_HOME%\config\application.yml
 ) else if "%1" == "stop" (
     echo stop Davinci Server
     taskkill /fi "WINDOWTITLE eq Davinci Server"

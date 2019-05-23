@@ -18,94 +18,69 @@
  * >>
  */
 
-import {
-  LOAD_SOURCES,
-  LOAD_SOURCES_SUCCESS,
-  LOAD_SOURCES_FAILURE,
-  ADD_SOURCE,
-  ADD_SOURCE_SUCCESS,
-  ADD_SOURCE_FAILURE,
-  DELETE_SOURCE,
-  DELETE_SOURCE_SUCCESS,
-  DELETE_SOURCE_FAILURE,
-  LOAD_SOURCE_DETAIL,
-  LOAD_SOURCE_DETAIL_SUCCESS,
-  EDIT_SOURCE,
-  EDIT_SOURCE_SUCCESS,
-  EDIT_SOURCE_FAILURE,
-  TEST_SOURCE_CONNECTION,
-  TEST_SOURCE_CONNECTION_SUCCESS,
-  TEST_SOURCE_CONNECTION_FAILURE,
-  GET_CSV_META_ID,
-  GET_CSV_META_ID_SUCCESS,
-  GET_CSV_META_ID_FAILURE
-} from './constants'
-import { fromJS } from 'immutable'
+import { Record } from 'immutable'
+import { ISourceState, ISource } from './types'
 
-const initialState = fromJS({
-  sources: false,
+import { ActionTypes } from './constants'
+import { SourceActionType } from './actions'
+
+const SourceRecord = Record<ISourceState>({
+  sources: null,
   listLoading: false,
   formLoading: false,
   testLoading: false
 })
+const initialState = new SourceRecord()
 
-function sourceReducer (state = initialState, action) {
-  const { type, payload } = action
+function sourceReducer (state = initialState, action: SourceActionType) {
   const sources = state.get('sources')
 
-  switch (type) {
-    case LOAD_SOURCES:
+  switch (action.type) {
+    case ActionTypes.LOAD_SOURCES:
       return state.set('listLoading', true)
-    case LOAD_SOURCES_SUCCESS:
+    case ActionTypes.LOAD_SOURCES_SUCCESS:
       return state
         .set('listLoading', false)
-        .set('sources', payload.sources)
-    case LOAD_SOURCES_FAILURE:
+        .set('sources', action.payload.sources.map<ISource>((source) => ({ ...source, config: JSON.parse(source.config) })))
+    case ActionTypes.LOAD_SOURCES_FAILURE:
       return state.set('listLoading', false)
-    case ADD_SOURCE:
+    case ActionTypes.ADD_SOURCE:
       return state.set('formLoading', true)
-    case ADD_SOURCE_SUCCESS:
-      if (sources) {
-        sources.unshift(payload.result)
-        return state
-          .set('formLoading', false)
-          .set('sources', sources.slice())
-      } else {
-        return state
-          .set('formLoading', false)
-          .set('sources', [payload.result])
-      }
-    case ADD_SOURCE_FAILURE:
+    case ActionTypes.ADD_SOURCE_SUCCESS:
+      const updatedSources = (sources || [])
+      updatedSources.unshift({ ...action.payload.result, config: JSON.parse(action.payload.result.config) })
+      return state
+        .set('formLoading', false)
+        .set('sources', updatedSources.slice())
+    case ActionTypes.ADD_SOURCE_FAILURE:
       return state.set('formLoading', false)
-    case DELETE_SOURCE:
+    case ActionTypes.DELETE_SOURCE:
       return state.set('listLoading', true)
-    case DELETE_SOURCE_SUCCESS:
+    case ActionTypes.DELETE_SOURCE_SUCCESS:
       return state
         .set('listLoading', false)
-        .set('sources', sources.filter((g) => g.id !== payload.id))
-    case DELETE_SOURCE_FAILURE:
+        .set('sources', sources.filter((g) => g.id !== action.payload.id))
+    case ActionTypes.DELETE_SOURCE_FAILURE:
       return state.set('listLoading', false)
-    case LOAD_SOURCE_DETAIL:
-      return state
-    case LOAD_SOURCE_DETAIL_SUCCESS:
-      return state
-    case EDIT_SOURCE:
+    case ActionTypes.EDIT_SOURCE:
       return state.set('formLoading', true)
-    case EDIT_SOURCE_SUCCESS:
-      sources.splice(sources.findIndex((g) => g.id === payload.result.id), 1, payload.result)
+    case ActionTypes.EDIT_SOURCE_SUCCESS:
+      sources.splice(sources.findIndex((g) => g.id === action.payload.result.id), 1, action.payload.result)
       return state
         .set('formLoading', false)
         .set('sources', sources.slice())
-    case EDIT_SOURCE_FAILURE:
+    case ActionTypes.EDIT_SOURCE_FAILURE:
       return state.set('formLoading', false)
-    case TEST_SOURCE_CONNECTION:
+    case ActionTypes.TEST_SOURCE_CONNECTION:
       return state.set('testLoading', true)
-    case TEST_SOURCE_CONNECTION_SUCCESS:
-    case TEST_SOURCE_CONNECTION_FAILURE:
+    case ActionTypes.TEST_SOURCE_CONNECTION_SUCCESS:
+    case ActionTypes.TEST_SOURCE_CONNECTION_FAILURE:
       return state.set('testLoading', false)
     default:
       return state
   }
 }
+
+export type SourceStateType = typeof initialState
 
 export default sourceReducer

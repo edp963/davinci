@@ -22,6 +22,7 @@ import lombok.Data;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Data
 @NotNull(message = "display slide cannot be null")
@@ -33,4 +34,6 @@ public class DisplaySlideCreate {
     private Integer index = 0;
 
     private String config;
+
+    private List<Long> roleIds;
 }

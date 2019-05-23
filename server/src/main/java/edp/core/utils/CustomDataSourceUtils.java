@@ -99,7 +99,7 @@ public class CustomDataSourceUtils {
             for (String key : loads.keySet()) {
                 CustomDataSource customDataSource = mapper.convertValue(loads.get(key), CustomDataSource.class);
                 if (StringUtils.isEmpty(customDataSource.getName()) || StringUtils.isEmpty(customDataSource.getDriver())) {
-                    throw new Exception("Load custom datasource error: name or driver cannot be empty" );
+                    throw new Exception("Load custom datasource error: name or driver cannot be EMPTY");
                 }
                 if ("null".equals(customDataSource.getName().trim().toLowerCase())) {
                     throw new Exception("Load custom datasource error: invalid name");
@@ -134,12 +134,12 @@ public class CustomDataSourceUtils {
 
     private static String getDataSourceName(String jdbcUrl) {
         String dataSourceName = null;
-        jdbcUrl = jdbcUrl.replaceAll(newLineChar, "").replaceAll(space, "").trim().toLowerCase();
+        jdbcUrl = jdbcUrl.replaceAll(NEW_LINE_CHAR, EMPTY).replaceAll(SPACE, EMPTY).trim().toLowerCase();
         String reg = "jdbc:\\w+";
         Pattern pattern = Pattern.compile(reg);
         Matcher matcher = pattern.matcher(jdbcUrl);
         if (matcher.find()) {
-            dataSourceName = matcher.group().split(colon)[1];
+            dataSourceName = matcher.group().split(COLON)[1];
         }
         return dataSourceName;
     }

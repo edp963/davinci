@@ -21,9 +21,11 @@
 import { RouteProps } from 'react-router'
 
 import Report from './containers/Report'
-import Source from './containers/Source'
-import Bizlogics from './containers/Bizlogic'
-import Bizlogic from './containers/Bizlogic/Bizlogic'
+import SourceList from './containers/Source'
+
+import ViewIndex from 'containers/View'
+import ViewEditor from 'containers/View/Editor'
+
 import Widget from './containers/Widget'
 import Workbench from './containers/Widget/components/Workbench/index'
 import Viz from './containers/Viz'
@@ -44,8 +46,6 @@ import Profile from './containers/Profile'
 import ResetPassword from './containers/ResetPassword'
 import Organizations from './containers/Organizations/index'
 import Organization from './containers/Organizations/Organization'
-import Teams from './containers/Teams/index'
-import Team from './containers/Teams/Team'
 import UserProfile from './containers/Profile/UserProfile'
 import {replace} from 'react-router-redux'
 import NoAuthorization from './containers/NoAuthorization'
@@ -120,14 +120,14 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               component: Widget
             },
             {
-              path: '/project/:pid/bizlogics',
-              name: 'bizlogics',
-              component: Bizlogics
+              path: '/project/:pid/views',
+              name: 'views',
+              component: ViewIndex
             },
             {
               path: '/project/:pid/sources',
               name: 'sources',
-              component: Source
+              component: SourceList
             },
             {
               path: '/project/:pid/schedule',
@@ -170,28 +170,13 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               path: '/account/organization/:organizationId',
               name: 'organization',
               component: Organization
-            },
-            {
-              path: '/account/teams',
-              name: 'teams',
-              component: Teams
-            },
-            {
-              path: '/account/team/:teamId',
-              name: 'team',
-              component: Team
             }
           ]
         },
         {
-          path: '/project/:pid/bizlogic',
-          name: 'bizlogic',
-          component: Bizlogic
-        },
-        {
-          path: '/project/:pid/bizlogic/:bid',
-          name: 'bizlogic',
-          component: Bizlogic
+          path: '/project/:pid/view(/:viewId)',
+          name: 'viewEditor',
+          component: ViewEditor
         },
         {
           path: '/project/:pid/portal/:portalId/portalName/:portalName',
@@ -237,4 +222,9 @@ export default function createRoutes (store): IExtendedRouteProps[] {
       }
     }
   ]
+}
+
+export interface IRouteParams {
+  pid?: string
+  viewId?: string
 }

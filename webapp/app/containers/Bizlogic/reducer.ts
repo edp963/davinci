@@ -30,15 +30,13 @@ import {
   EDIT_BIZLOGIC,
   EDIT_BIZLOGIC_SUCCESS,
   EDIT_BIZLOGIC_FAILURE,
-  LOAD_SCHEMA,
-  LOAD_SCHEMA_SUCCESS,
-  LOAD_SCHEMA_FAILURE,
   EXECUTE_SQL,
   EXECUTE_SQL_SUCCESS,
   EXECUTE_SQL_FAILURE,
   LOAD_VIEW_TEAM,
   LOAD_VIEW_TEAM_SUCCESS,
-  LOAD_VIEW_TEAM_FAILURE
+  LOAD_VIEW_TEAM_FAILURE,
+  RESET_VIEW_STATE
 } from './constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
 import { ActionTypes } from '../Display/constants'
@@ -51,7 +49,8 @@ const initialState = fromJS({
   tableLoading: false,
   modalLoading: false,
   schemaData: [],
-  viewTeam: []
+  viewTeam: [],
+  executeLoading: false
 })
 
 function bizlogicReducer (state = initialState, action) {
@@ -94,12 +93,6 @@ function bizlogicReducer (state = initialState, action) {
         .set('modalLoading', false)
     case EDIT_BIZLOGIC_FAILURE:
       return state.set('modalLoading', false)
-    case LOAD_SCHEMA:
-      return state
-    case LOAD_SCHEMA_SUCCESS:
-      return state
-    case LOAD_SCHEMA_FAILURE:
-      return state
     case EXECUTE_SQL:
       return state.set('executeLoading', true)
     case EXECUTE_SQL_SUCCESS:
@@ -121,6 +114,8 @@ function bizlogicReducer (state = initialState, action) {
       return state.set('bizlogics', payload.bizlogics)
     case ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
       return state.set('bizlogics', payload.bizlogics)
+    case RESET_VIEW_STATE:
+      return fromJS(initialState)
     default:
       return state
   }

@@ -25,50 +25,56 @@ public class Consts {
     /**
      * 特殊符号定义
      */
-    public static final String conditionSeparator = ",";
+    public static final String COMMA = ",";
 
-    public static final String space = " ";
+    public static final String SLASH = "/";
 
-    public static final String sqlSeparator = ";";
+    public static final String SPACE = " ";
 
-    public static final String sqlUrlSeparator = "&";
+    public static final String EMPTY = "";
 
-    public static final String octothorpe = "#";
+    public static final String SEMICOLON = ";";
 
-    public static final String percentSign = "%";
+    public static final String QUESTION_MARK = "?";
 
-    public static final String newLineChar = "\n";
+    public static final String SQL_URL_SEPARATOR = "&";
 
-    public static final String colon = ":";
+    public static final String OCTOTHORPE = "#";
 
-    public static final String minus = "-";
+    public static final String PERCENT_SIGN = "%";
 
-    public static final String underline = "_";
+    public static final String NEW_LINE_CHAR = "\n";
 
-    public static final char CSVHeaderSeparator = ':';
+    public static final String COLON = ":";
 
-    public static final char delimiterStartChar = '<';
+    public static final String MINUS = "-";
 
-    public static final char delimiterEndChar = '>';
+    public static final String UNDERLINE = "_";
 
-    public static final String parenthesesStart = "(";
+    public static final char CSV_HEADER_SEPARATOR = ':';
 
-    public static final String parenthesesEnd = ")";
+    public static final char DELIMITER_START_CHAR = '<';
 
-    public static final String squareBracketStart = "[";
+    public static final char DELIMITER_END_CHAR = '>';
 
-    public static final String squareBracketEnd = "]";
+    public static final String PARENTHESES_START = "(";
+
+    public static final String PARENTHESES_END = ")";
+
+    public static final String SQUARE_BRACKET_START = "[";
+
+    public static final String SQUARE_BRACKET_END = "]";
 
 
-    public static final char assignmentChar = '=';
+    public static final char ASSIGNMENT_CHAR = '=';
 
-    public static final char dollarDelimiter = '$';
+    public static final char DOLLAR_DELIMITER = '$';
 
-    public static final String mysqlKeyDelimiter = "`";
+    public static final String MYSQL_KEY_DELIMITER = "`";
 
-    public static final String apostrophe = "\'";
+    public static final String APOSTROPHE = "'";
 
-    public static final String doubleQuotes = "\"";
+    public static final String DOUBLE_QUOTES = "\"";
 
 
     /**
@@ -130,7 +136,7 @@ public class Consts {
     /**
      * 敏感sql操作
      */
-    public static final String REG_SENSITIVE_SQL = "drop\\s|alert\\s|grant\\s|delete\\s|truncate\\s|update\\s|remove\\s";
+    public static final String REG_SENSITIVE_SQL = "drop\\s|alter\\s|grant\\s|insert\\s|replace\\s|delete\\s|truncate\\s|update\\s|remove\\s";
 
 
     /**
@@ -145,4 +151,12 @@ public class Consts {
 
     public static final String DIR_TEMPL = File.separator + "tempFiles" + File.separator;
 
+    public static final String HTTP_PROTOCOL = "http";
+
+    public static final String HTTPS_PROTOCOL = "https";
+
+    public static final String PROTOCOL_SEPARATOR = "://";
+
+
+    public static final String QUERY_COUNT_SQL = "SELECT COUNT(*) FROM (%s) CT";
 }

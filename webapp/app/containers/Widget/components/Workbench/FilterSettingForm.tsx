@@ -1,18 +1,14 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import moment, {Moment} from 'moment'
+import moment, { Moment } from 'moment'
 import { IDataParamConfig, IDataParamSource } from './Dropbox'
 import ConditionalFilterForm from './ConditionalFilterForm'
 import { DEFAULT_DATETIME_FORMAT } from '../../../../globalConstants'
 import { decodeMetricName } from '../util'
 import { uuid } from 'utils/util'
-const Transfer = require('antd/lib/transfer')
-const radios = require('antd/lib/radio')
-const Radio = radios.default
-const RadioGroup = radios.Group
-const RadioButton = radios.Button
-const Button = require('antd/lib/button')
-const DatePicker = require('antd/lib/date-picker')
+import { Transfer, Radio, Button, DatePicker } from 'antd'
+const RadioGroup = Radio.Group
+const RadioButton = Radio.Button
 const RangePicker = DatePicker.RangePicker
 const styles = require('./Workbench.less')
 const utilStyles = require('../../../../assets/less/util.less')
@@ -317,10 +313,10 @@ export class FilterSettingForm extends React.PureComponent<IFilterSettingFormPro
       )
     }
 
-    const dateRadios = this.dateRadioSource.map((arr) => {
+    const dateRadios = this.dateRadioSource.map((arr, index) => {
       return arr.map((s) => (
         <Radio key={s.value} value={s.value} className={styles.radio}>{s.name}</Radio>
-      )).concat(<br />)
+      )).concat(<br key={index} />)
     })
 
     let shownBlock
