@@ -12,10 +12,11 @@ import {
   getVariableValue,
   getModelValue,
   getDefaultValue,
-  IGlobalRenderTreeItem,
+  IRenderTreeItem,
   getControlRenderTree,
   getAllChildren,
-  getParents
+  getParents,
+  IGlobalRenderTreeItem
 } from './'
 import { defaultFilterControlGridProps, SHOULD_LOAD_OPTIONS } from './filterTypes'
 import FilterControl from './FilterControl'
@@ -33,9 +34,9 @@ interface IFilterPanelProps {
 }
 
 interface IFilterPanelStates {
-  renderTree: IGlobalRenderTreeItem[],
+  renderTree: IRenderTreeItem[],
   flatTree: {
-    [key: string]: IGlobalRenderTreeItem
+    [key: string]: IRenderTreeItem
   },
   controlValues: {
     [key: string]: any
@@ -92,7 +93,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
         return control
       })
 
-      const { renderTree, flatTree } = getControlRenderTree(controls)
+      const { renderTree, flatTree } = getControlRenderTree<IGlobalControl, IRenderTreeItem>(controls)
 
       Object.values(flatTree).forEach((control) => {
         if (SHOULD_LOAD_OPTIONS[control.type]) {
@@ -138,12 +139,12 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
   }
 
   private loadOptions = (
-    renderControl: IGlobalRenderTreeItem,
-    flatTree: { [key: string]: IGlobalRenderTreeItem },
+    renderControl: IRenderTreeItem,
+    flatTree: { [key: string]: IRenderTreeItem },
     controlValues: { [key: string]: any }
   ) => {
     const { onGetOptions } = this.props
-    const { key, interactionType, relatedViews, parent, customOptions, options } = renderControl
+    const { key, interactionType, relatedViews, parent, customOptions, options } = renderControl as IGlobalRenderTreeItem
 
     if (customOptions) {
       onGetOptions(key, true, options)
@@ -233,14 +234,14 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     this.props.onChange(mapItemControlRequestParams, key)
   }
 
-  private renderFilterControls = (renderTree: IGlobalRenderTreeItem[], parents?: IGlobalControl[]) => {
+  private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: IGlobalControl[]) => {
     const { form, onGetOptions, mapOptions } = this.props
     const { controlValues } = this.state
 
     let components = []
 
     renderTree.forEach((control) => {
-      const { key, width, children, ...rest } = control
+      const { key, width, children, ...rest } = control as IGlobalRenderTreeItem
       const parentsInfo = parents
         ? parents.reduce((values, parentControl) => {
             const parentSelectedValue = controlValues[parentControl.key]

@@ -47,6 +47,7 @@ function displayReducer (state = initialState, { type, payload }) {
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
+              tempFilters: [],
               linkageFilters: [],
               globalFilters: [],
               variables: [],
