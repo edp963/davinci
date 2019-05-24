@@ -7,11 +7,11 @@
         </selectKey>
         insert into role
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            org_id,
+            `org_id`,
             `name`,
-            description,
-            create_by,
-            create_time
+            `description`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{orgId,jdbcType=BIGINT},

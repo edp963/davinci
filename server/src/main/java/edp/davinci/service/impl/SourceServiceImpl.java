@@ -26,6 +26,7 @@ import edp.core.exception.SourceException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
@@ -116,7 +117,7 @@ public class SourceServiceImpl implements SourceService {
 
         List<Source> sources = sourceMapper.getByProject(projectId);
 
-        if (null != sources && sources.size() > 0) {
+        if (!CollectionUtils.isEmpty(sources)) {
             ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
             if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
                 sources = null;
@@ -248,7 +249,7 @@ public class SourceServiceImpl implements SourceService {
         }
 
         List<View> viewList = viewMapper.getBySourceId(id);
-        if (null != viewList && viewList.size() > 0) {
+        if (!CollectionUtils.isEmpty(viewList)) {
             log.warn("There is at least one view using the source({}), it is can not be deleted", id);
             throw new ServerException("There is at least one view using the source, it is can not be deleted");
         }
@@ -385,7 +386,7 @@ public class SourceServiceImpl implements SourceService {
                 dataUploadEntity = ExcelUtils.parseExcelWithFirstAsHeader(file);
             }
 
-            if (null != dataUploadEntity && null != dataUploadEntity.getHeaders() && dataUploadEntity.getHeaders().size() > 0) {
+            if (null != dataUploadEntity && !CollectionUtils.isEmpty(dataUploadEntity.getHeaders())) {
                 //建表
                 createTable(dataUploadEntity.getHeaders(), sourceDataUpload, source);
 
@@ -496,7 +497,7 @@ public class SourceServiceImpl implements SourceService {
      */
     private void createTable(Set<QueryColumn> fileds, SourceDataUpload sourceDataUpload, Source source) throws ServerException {
 
-        if (null == fileds || fileds.size() <= 0) {
+        if (CollectionUtils.isEmpty(fileds)) {
             throw new ServerException("there is have not any fileds");
         }
 
@@ -557,7 +558,7 @@ public class SourceServiceImpl implements SourceService {
      * @param source
      */
     private void insertData(Set<QueryColumn> headers, List<Map<String, Object>> values, SourceDataUpload sourceDataUpload, Source source) throws ServerException {
-        if (null == values || values.size() <= 0) {
+        if (CollectionUtils.isEmpty(values)) {
             return;
         }
 
@@ -595,7 +596,7 @@ public class SourceServiceImpl implements SourceService {
      * @throws ServerException
      */
     private void executeInsert(String tableName, Set<QueryColumn> headers, List<Map<String, Object>> values, SqlUtils sqlUtils) throws ServerException {
-        if (null != values && values.size() > 0) {
+        if (!CollectionUtils.isEmpty(values)) {
             int len = 1000;
             int totalSize = values.size();
             int pageSize = len;

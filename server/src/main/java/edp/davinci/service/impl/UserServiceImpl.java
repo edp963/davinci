@@ -465,7 +465,7 @@ public class UserServiceImpl implements UserService {
             }
             Long[] userIds = {user.getId(), user1.getId()};
             List<OrganizationInfo> jointlyOrganization = organizationMapper.getJointlyOrganization(Arrays.asList(userIds), id);
-            if (null != jointlyOrganization && jointlyOrganization.size() > 0) {
+            if (!CollectionUtils.isEmpty(jointlyOrganization)) {
                 BeanUtils.copyProperties(user1, userProfile);
                 userProfile.setOrganizations(jointlyOrganization);
                 return resultMap.successAndRefreshToken(request).payload(userProfile);

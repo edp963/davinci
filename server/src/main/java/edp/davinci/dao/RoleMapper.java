@@ -27,13 +27,13 @@ public interface RoleMapper {
 
     @Update({
             "update `role`",
-            "set org_id = #{orgId,jdbcType=BIGINT},",
-            "name = #{name,jdbcType=VARCHAR},",
-            "description = #{description,jdbcType=VARCHAR},",
-            "create_by = #{createBy,jdbcType=BIGINT},",
-            "create_time = #{createTime,jdbcType=TIMESTAMP},",
-            "update_by = #{updateBy,jdbcType=BIGINT},",
-            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
+            "set `org_id` = #{orgId,jdbcType=BIGINT},",
+            "`name` = #{name,jdbcType=VARCHAR},",
+            "`description` = #{description,jdbcType=VARCHAR},",
+            "`create_by` = #{createBy,jdbcType=BIGINT},",
+            "`create_time` = #{createTime,jdbcType=TIMESTAMP},",
+            "`update_by` = #{updateBy,jdbcType=BIGINT},",
+            "`update_time` = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(Role record);
@@ -48,6 +48,6 @@ public interface RoleMapper {
     List<Role> selectByIdsAndOrgId(@Param("orgId") Long orgId, @Param("roleIds") List<Long> roleIds);
 
 
-    @Delete({"delete from role where org_id = #{orgId}"})
+    @Delete({"delete from `role` where org_id = #{orgId}"})
     int deleteByOrg(Long orgId);
 }

@@ -24,26 +24,26 @@
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
-        insert user
+        insert `user`
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            email,
-            username,
-            password,
-            admin,
-            active,
-            create_time,
-            create_by,
+            `email`,
+            `username`,
+            `password`,
+            `admin`,
+            `active`,
+            `create_time`,
+            `create_by`,
             <if test='name != null and name != "" '>
                 `name`,
             </if>
             <if test='description != null and description != "" '>
-                description,
+                `description`,
             </if>
             <if test='department != null and department != "" '>
-                department,
+                `department`,
             </if>
             <if test='avatar != null and avatar != "" '>
-                avatar
+                `avatar`
             </if>
         </trim>
         values
@@ -72,16 +72,16 @@
 
 
     <select id="getUsersByKeyword" resultType="edp.davinci.dto.userDto.UserBaseInfo">
-        select DISTINCT u.id, IF(u.`name` is NULL,u.username,u.`name`) as username, u.email, u.avatar
+        select DISTINCT u.id, IF(u.`name` is NULL,u.`username`,u.`name`) as username, u.`email`, u.`avatar`
         from `user` u
         LEFT JOIN rel_user_organization r on r.user_id = u.id
         where
         <if test='orgId != null and orgId > 0 '>
             r.org_id = #{orgId} and
         </if>
-        LOWER(username) like CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
-        or LOWER(name) like CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
-        or LOWER(email) like CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
+        LOWER(`username`) like CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
+        or LOWER(`name`) like CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
+        or LOWER(`email`) like CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
     </select>
 
     <select id="getByIds" resultType="edp.davinci.model.User">

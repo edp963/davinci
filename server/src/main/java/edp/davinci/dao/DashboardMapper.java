@@ -49,7 +49,7 @@ public interface DashboardMapper {
     Dashboard getById(@Param("id") Long id);
 
 
-    @Select({"select id from dashboard where dashboard_portal_id = #{portalId} and name = #{name}"})
+    @Select({"select id from dashboard where dashboard_portal_id = #{portalId} and `name` = #{name}"})
     Long getByNameWithPortalId(@Param("name") String name, @Param("portalId") Long portalId);
 
 

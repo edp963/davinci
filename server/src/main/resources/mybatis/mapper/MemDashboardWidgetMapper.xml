@@ -26,18 +26,18 @@
         </selectKey>
         insert into mem_dashboard_widget
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            dashboard_id,
-            widget_Id,
+            `dashboard_id`,
+            `widget_Id`,
             `x`,
             `y`,
-            width,
-            height,
+            `width`,
+            `height`,
             <if test="frequency != null">
-                frequency,
+                `frequency`,
             </if>
-            polling,
-            create_by,
-            create_time
+            `polling`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{dashboardId,jdbcType=BIGINT},
@@ -58,7 +58,7 @@
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert into mem_dashboard_widget
-        (dashboard_id,widget_Id,`x`,`y`,width,height,frequency,polling,create_by,create_time)
+        (`dashboard_id`,`widget_Id`,`x`,`y`,`width`,`height`,`frequency`,`polling`,`create_by`,`create_time`)
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (
@@ -80,20 +80,20 @@
         <foreach collection="list" item="item" index="index" open="" close="" separator=";">
             update mem_dashboard_widget
             <set>
-                dashboard_id = #{item.dashboardId,jdbcType=BIGINT},
-                widget_Id = #{item.widgetId,jdbcType=BIGINT},
-                x = #{item.x,jdbcType=INTEGER},
-                y = #{item.y,jdbcType=INTEGER},
-                width = #{item.width,jdbcType=INTEGER},
-                height = #{item.height,jdbcType=INTEGER},
-                polling = #{item.polling,jdbcType=BIT},
-                frequency = #{item.frequency,jdbcType=INTEGER},
+                `dashboard_id` = #{item.dashboardId,jdbcType=BIGINT},
+                `widget_Id` = #{item.widgetId,jdbcType=BIGINT},
+                `x` = #{item.x,jdbcType=INTEGER},
+                `y` = #{item.y,jdbcType=INTEGER},
+                `width` = #{item.width,jdbcType=INTEGER},
+                `height` = #{item.height,jdbcType=INTEGER},
+                `polling` = #{item.polling,jdbcType=BIT},
+                `frequency` = #{item.frequency,jdbcType=INTEGER},
                 `config` = #{item.config,jdbcType=LONGVARCHAR},
-                update_by = #{item.updateBy,jdbcType=BIGINT},
-                update_time = #{item.updateTime,jdbcType=TIMESTAMP}
+                `update_by` = #{item.updateBy,jdbcType=BIGINT},
+                `update_time` = #{item.updateTime,jdbcType=TIMESTAMP}
             </set>
             <where>
-                id = #{item.id,jdbcType=BIGINT}
+                `id` = #{item.id,jdbcType=BIGINT}
             </where>
         </foreach>
     </update>

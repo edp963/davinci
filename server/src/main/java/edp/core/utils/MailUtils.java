@@ -173,7 +173,7 @@ public class MailUtils {
             }
             messageHelper.setText(content, true);
 
-            if (null != files && files.size() > 0) {
+            if (!CollectionUtils.isEmpty(files)) {
                 if (files.size() == 1) {
                     File file = files.get(0);
                     String attName = "attachment" + file.getName().substring(file.getName().lastIndexOf("."));
@@ -300,7 +300,7 @@ public class MailUtils {
             String text = templateEngine.process(template, context);
             messageHelper.setText(text, true);
 
-            if (null != files && files.size() > 0) {
+            if (!CollectionUtils.isEmpty(files)) {
                 if (files.size() == 1) {
                     File file = files.get(0);
                     String attName = "Attachment" + file.getName().substring(file.getName().lastIndexOf("."));

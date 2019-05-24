@@ -21,6 +21,7 @@ package edp.davinci.core.utils;
 import com.alibaba.druid.util.StringUtils;
 import com.sun.tools.javac.util.ListBuffer;
 import edp.core.exception.ServerException;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.SqlOperatorEnum;
@@ -85,7 +86,7 @@ public class SqlParseUtils {
         Map<String, List<String>> authParamMap = new ConcurrentHashMap<>();
 
         //解析参数
-        if (null != variables && variables.size() > 0) {
+        if (!CollectionUtils.isEmpty(variables)) {
             ExecutorService executorService = Executors.newFixedThreadPool(8);
             try {
                 CountDownLatch countDownLatch = new CountDownLatch(variables.size());
@@ -170,7 +171,7 @@ public class SqlParseUtils {
         while (matcher.find()) {
             expSet.add(matcher.group());
         }
-        if (expSet.size() > 0) {
+        if (!CollectionUtils.isEmpty(expSet)) {
             Map<String, String> parsedMap = getParsedExpression(expSet, authParamMap, delimiter);
             for (String key : parsedMap.keySet()) {
                 if (sql.indexOf(key) > -1) {
@@ -180,11 +181,11 @@ public class SqlParseUtils {
         }
 
         ST st = new ST(sql, delimiter, delimiter);
-        if (null != authParamMap && authParamMap.size() > 0) {
+        if (!CollectionUtils.isEmpty(authParamMap)) {
             authParamMap.forEach((k, v) -> st.add(k, true));
         }
         //替换query@var
-        if (null != queryParamMap && queryParamMap.size() > 0) {
+        if (!CollectionUtils.isEmpty(queryParamMap)) {
             queryParamMap.forEach(st::add);
         }
         sql = st.render();
@@ -246,7 +247,7 @@ public class SqlParseUtils {
                 continue;
             }
         }
-        return map.size() > 0 ? map : null;
+        return !CollectionUtils.isEmpty(map) ? map : null;
     }
 
     private static String getAuthVarExpression(String srcExpression, Map<String, List<String>> authParamMap, char sqlTempDelimiter) throws Exception {
@@ -275,7 +276,7 @@ public class SqlParseUtils {
 
             for (SqlOperatorEnum sqlOperator : operatorMap.keySet()) {
                 List<String> expList = operatorMap.get(sqlOperator);
-                if (null != expList && expList.size() > 0) {
+                if (!CollectionUtils.isEmpty(expList)) {
                     String left = operatorMap.get(sqlOperator).get(0);
                     String right = operatorMap.get(sqlOperator).get(expList.size() - 1);
                     if (right.startsWith(PARENTHESES_START) && right.endsWith(PARENTHESES_END)) {
@@ -286,7 +287,7 @@ public class SqlParseUtils {
                     }
                     if (authParamMap.containsKey(right.trim())) {
                         List<String> list = authParamMap.get(right.trim());
-                        if (null != list && list.size() > 0) {
+                        if (!CollectionUtils.isEmpty(list)) {
                             StringBuilder expBuilder = new StringBuilder();
                             if (list.size() == 1) {
                                 if (!StringUtils.isEmpty(list.get(0))) {

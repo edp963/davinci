@@ -27,16 +27,16 @@
         insert into cron_job
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `name`,
-            project_id,
-            job_type,
-            job_status,
-            cron_expression,
-            start_date,
-            end_date,
+            `project_id`,
+            `job_type`,
+            `job_status`,
+            `cron_expression`,
+            `start_date`,
+            `end_date`,
             `config`,
-            description,
-            create_by,
-            create_time
+            `description`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{name,jdbcType=VARCHAR},

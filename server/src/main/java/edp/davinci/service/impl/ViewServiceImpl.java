@@ -211,7 +211,7 @@ public class ViewServiceImpl implements ViewService {
             int insert = viewMapper.insert(view);
             if (insert > 0) {
                 optLogger.info("view ({}) is create by user (:{})", view.toString(), user.getId());
-                if (null != viewCreate.getRoles() && viewCreate.getRoles().size() > 0 && !StringUtils.isEmpty(viewCreate.getVariable())) {
+                if (!CollectionUtils.isEmpty(viewCreate.getRoles()) && !StringUtils.isEmpty(viewCreate.getVariable())) {
                     checkAndInsertRoleParam(viewCreate.getVariable(), viewCreate.getRoles(), user, view);
                 }
 
@@ -277,12 +277,10 @@ public class ViewServiceImpl implements ViewService {
             int update = viewMapper.update(viewWithSource);
             if (update > 0) {
                 optLogger.info("view ({}) is updated by user(:{}), origin: ({})", viewWithSource.toString(), user.getId(), originStr);
-                if (null == viewUpdate.getRoles() || viewUpdate.getRoles().size() == 0) {
+                if (CollectionUtils.isEmpty(viewUpdate.getRoles())) {
                     relRoleViewMapper.deleteByViewId(viewUpdate.getId());
-                } else {
-                    if (null != viewUpdate.getRoles() && viewUpdate.getRoles().size() > 0 && !StringUtils.isEmpty(viewUpdate.getVariable())) {
-                        checkAndInsertRoleParam(viewUpdate.getVariable(), viewUpdate.getRoles(), user, viewWithSource);
-                    }
+                } else if (!StringUtils.isEmpty(viewUpdate.getVariable())) {
+                    checkAndInsertRoleParam(viewUpdate.getVariable(), viewUpdate.getRoles(), user, viewWithSource);
                 }
 
                 return true;
@@ -328,7 +326,7 @@ public class ViewServiceImpl implements ViewService {
         }
 
         List<Widget> widgets = widgetMapper.getWidgetsByWiew(id);
-        if (null != widgets && widgets.size() > 0) {
+        if (!CollectionUtils.isEmpty(widgets)) {
             throw new ServerException("The current view has been referenced, please delete the reference and then operate");
         }
 
@@ -385,10 +383,10 @@ public class ViewServiceImpl implements ViewService {
 
                     List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
 
-                    if (null != executeSqlList && executeSqlList.size() > 0) {
+                    if (!CollectionUtils.isEmpty(executeSqlList)) {
                         executeSqlList.forEach(sql -> sqlUtils.execute(sql));
                     }
-                    if (null != querySqlList && querySqlList.size() > 0) {
+                    if (!CollectionUtils.isEmpty(querySqlList)) {
                         for (String sql : querySqlList) {
                             paginateWithQueryColumns = sqlUtils.syncQuery4Paginate(sql, null, null, null, executeSql.getLimit(), null);
                         }
@@ -438,13 +436,6 @@ public class ViewServiceImpl implements ViewService {
     public void buildQuerySql(List<String> querySqlList, Source source, ViewExecuteParam executeParam) {
         if (null != executeParam) {
             //构造参数， 原有的被传入的替换
-            if (null == executeParam.getGroups() || executeParam.getGroups().length < 1) {
-                executeParam.setGroups(null);
-            }
-
-            if (null == executeParam.getFilters() || executeParam.getFilters().length < 1) {
-                executeParam.setFilters(null);
-            }
             STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
             ST st = stg.getInstanceOf("querySql");
             st.add("nativeQuery", executeParam.isNativeQuery());
@@ -510,12 +501,12 @@ public class ViewServiceImpl implements ViewService {
 
 
                 List<String> executeSqlList = sqlParseUtils.getSqls(srcSql, false);
-                if (null != executeSqlList && executeSqlList.size() > 0) {
+                if (!CollectionUtils.isEmpty(executeSqlList)) {
                     executeSqlList.forEach(sql -> sqlUtils.execute(sql));
                 }
 
                 List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
-                if (null != querySqlList && querySqlList.size() > 0) {
+                if (!CollectionUtils.isEmpty(querySqlList)) {
                     buildQuerySql(querySqlList, source, executeParam);
                     executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl());
 
@@ -565,7 +556,7 @@ public class ViewServiceImpl implements ViewService {
                 && null != executeParam.getCache()
                 && executeParam.getCache()
                 && executeParam.getExpired() > 0L
-                && null != paginate && paginate.getResultList().size() > 0) {
+                && null != paginate && !CollectionUtils.isEmpty(paginate.getResultList())) {
             redisUtils.set(cacheKey, paginate, executeParam.getExpired(), TimeUnit.SECONDS);
         }
 
@@ -608,12 +599,12 @@ public class ViewServiceImpl implements ViewService {
                 SqlUtils sqlUtils = this.sqlUtils.init(source);
 
                 List<String> executeSqlList = sqlParseUtils.getSqls(srcSql, false);
-                if (null != executeSqlList && executeSqlList.size() > 0) {
+                if (!CollectionUtils.isEmpty(executeSqlList)) {
                     executeSqlList.forEach(sql -> sqlUtils.execute(sql));
                 }
 
                 List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
-                if (null != querySqlList && querySqlList.size() > 0) {
+                if (!CollectionUtils.isEmpty(querySqlList)) {
                     if (null != param) {
                         STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
                         ST st = stg.getInstanceOf("queryDistinctSql");
@@ -644,7 +635,7 @@ public class ViewServiceImpl implements ViewService {
 
 
     private Set<String> getExcludeColumns(List<RelRoleView> roleViewList) {
-        if (null != roleViewList && roleViewList.size() > 0) {
+        if (!CollectionUtils.isEmpty(roleViewList)) {
             Set<String> columns = new HashSet<>();
             roleViewList.forEach(r -> {
                 if (!StringUtils.isEmpty(r.getColumnAuth())) {
@@ -658,14 +649,14 @@ public class ViewServiceImpl implements ViewService {
 
 
     private List<SqlVariable> getQueryVariables(List<SqlVariable> variables) {
-        if (null != variables && variables.size() > 0) {
+        if (!CollectionUtils.isEmpty(variables)) {
             return variables.stream().filter(v -> QUERYVAR == SqlVariableTypeEnum.typeOf(v.getType())).collect(Collectors.toList());
         }
         return null;
     }
 
     private List<SqlVariable> getAuthVariables(List<RelRoleView> roleViewList, List<SqlVariable> variables) {
-        if (null != roleViewList && roleViewList.size() > 0 && null != variables && variables.size() > 0) {
+        if (!CollectionUtils.isEmpty(roleViewList) && !CollectionUtils.isEmpty(variables)) {
             List<SqlVariable> list = new ArrayList<>();
             Map<String, SqlVariable> map = new HashMap<>();
 
@@ -707,20 +698,23 @@ public class ViewServiceImpl implements ViewService {
             authVariables = getAuthVariables(roleViewList, variables);
             if (null != excludeColumns) {
                 Set<String> eclmns = getExcludeColumns(roleViewList);
-                if (null != eclmns && eclmns.size() > 0) {
+                if (!CollectionUtils.isEmpty(eclmns)) {
                     excludeColumns.addAll(eclmns);
                 }
             }
         }
 
         //查询参数
-        if (null != queryVariables && queryVariables.size() > 0 && null != paramList && paramList.size() > 0) {
+        if (!CollectionUtils.isEmpty(queryVariables) && !CollectionUtils.isEmpty(paramList)) {
             Map<String, List<SqlVariable>> map = queryVariables.stream().collect(Collectors.groupingBy(SqlVariable::getName));
             paramList.forEach(p -> {
                 if (map.containsKey(p.getName())) {
                     List<SqlVariable> list = map.get(p.getName());
-                    if (null != list && list.size() > 0) {
+                    if (!CollectionUtils.isEmpty(list)) {
                         SqlVariable v = list.get(list.size() - 1);
+                        if (null == sqlEntity.getQuaryParams()) {
+                            sqlEntity.setQuaryParams(new HashMap<>());
+                        }
                         sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue(), v.isUdf()));
                     }
                 }
@@ -734,7 +728,7 @@ public class ViewServiceImpl implements ViewService {
         }
 
         //权限参数
-        if (null != authVariables && authVariables.size() > 0) {
+        if (!CollectionUtils.isEmpty(authVariables)) {
             ExecutorService executorService = Executors.newFixedThreadPool(8);
             CountDownLatch countDownLatch = new CountDownLatch(authVariables.size());
             ConcurrentHashMap<String, Set<String>> map = new ConcurrentHashMap<>();
@@ -770,7 +764,7 @@ public class ViewServiceImpl implements ViewService {
                 executorService.shutdown();
             }
 
-            if (map.size() > 0) {
+            if (!CollectionUtils.isEmpty(map)) {
                 if (null == sqlEntity.getAuthParams()) {
                     sqlEntity.setAuthParams(new HashMap<>());
                 }
@@ -785,13 +779,13 @@ public class ViewServiceImpl implements ViewService {
     private void checkAndInsertRoleParam(String sqlVarible, List<RelRoleViewDto> roles, User user, View view) {
         List<SqlVariable> variables = JSONObject.parseArray(sqlVarible, SqlVariable.class);
 
-        if (null == roles && roles.size() == 0) {
+        if (CollectionUtils.isEmpty(roles)) {
             relRoleViewMapper.deleteByViewId(view.getId());
         } else {
             new Thread(() -> {
                 Set<String> vars = null, columns = null;
 
-                if (null != variables && variables.size() > 0) {
+                if (!CollectionUtils.isEmpty(variables)) {
                     vars = variables.stream().map(SqlVariable::getName).collect(Collectors.toSet());
                 }
                 if (!StringUtils.isEmpty(view.getModel())) {
@@ -807,7 +801,7 @@ public class ViewServiceImpl implements ViewService {
                         String rowAuth = null, columnAuth = null;
                         if (!StringUtils.isEmpty(r.getRowAuth())) {
                             JSONArray rowAuthArray = JSONObject.parseArray(r.getRowAuth());
-                            if (null != rowAuthArray && rowAuthArray.size() > 0) {
+                            if (!CollectionUtils.isEmpty(rowAuthArray)) {
                                 JSONArray newArray = new JSONArray();
                                 for (int i = 0; i < rowAuthArray.size(); i++) {
                                     JSONObject jsonObject = rowAuthArray.getJSONObject(i);
@@ -832,7 +826,7 @@ public class ViewServiceImpl implements ViewService {
                         relRoleViews.add(relRoleView);
                     }
                 });
-                if (null != relRoleViews && relRoleViews.size() > 0) {
+                if (!CollectionUtils.isEmpty(relRoleViews)) {
                     relRoleViewMapper.insertBatch(relRoleViews);
                 }
             }).start();

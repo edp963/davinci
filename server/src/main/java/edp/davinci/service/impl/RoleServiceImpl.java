@@ -22,6 +22,7 @@ package edp.davinci.service.impl;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.utils.CollectionUtils;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
@@ -271,13 +272,13 @@ public class RoleServiceImpl implements RoleService {
         }
 
 
-        if (null == memberIds || memberIds.size() == 0) {
+        if (CollectionUtils.isEmpty(memberIds)) {
             relRoleUserMapper.deleteByRoleId(id);
             return null;
         }
 
         List<User> members = userMapper.getByIds(memberIds);
-        if (null == members || members.size() == 0) {
+        if (CollectionUtils.isEmpty(members)) {
             log.info("user ( :{} ) is not found", memberIds);
             throw new NotFoundException("members is not found");
         }
@@ -353,7 +354,7 @@ public class RoleServiceImpl implements RoleService {
         getRole(id, user, true);
 
         List<User> users = userMapper.getByIds(memberIds);
-        if (null == users || users.size() == 0) {
+        if (CollectionUtils.isEmpty(users)) {
             throw new ServerException("members are not found");
         }
 
@@ -365,7 +366,7 @@ public class RoleServiceImpl implements RoleService {
 
         List<RelRoleUser> collect = userIds.stream().map(uId -> new RelRoleUser(uId, id)).collect(Collectors.toList());
 
-        if (null != deleteIds && deleteIds.size() > 0) {
+        if (!CollectionUtils.isEmpty(deleteIds)) {
             relRoleUserMapper.deleteByRoleIdAndMemberIds(id, deleteIds);
         }
         relRoleUserMapper.insertBatch(collect);

@@ -26,13 +26,13 @@
         </selectKey>
         insert into mem_display_slide_widget
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            display_slide_id,
-            widget_id,
+            `display_slide_id`,
+            `widget_id`,
             `name`,
             `type`,
-            params,
+            `params`,
             <if test="subType != null">
-                sub_type,
+                `sub_type`,
             </if>
             `index`
         </trim>
@@ -51,7 +51,7 @@
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert into mem_display_slide_widget
-        (id,display_slide_id, widget_id, `name`, `type`, params,sub_type, `index`)
+        (`id`,`display_slide_id`, `widget_id`, `name`, `type`, `params`,`sub_type`, `index`)
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (
@@ -86,17 +86,17 @@
                 `sub_type` = #{record.subType,jdbcType=SMALLINT},
                 `index` = #{record.index,jdbcType=INTEGER},
                 `params` = #{record.params,jdbcType=LONGVARCHAR},
-                update_by = #{record.updateBy,jdbcType=BIGINT},
-                update_time = #{record.updateTime,jdbcType=TIMESTAMP}
+                `update_by` = #{record.updateBy,jdbcType=BIGINT},
+                `update_time` = #{record.updateTime,jdbcType=TIMESTAMP}
             </set>
-            where id = #{record.id,jdbcType=BIGINT}
+            where `id` = #{record.id,jdbcType=BIGINT}
         </foreach>
     </update>
 
     <delete id="deleteBatchById" parameterType="java.util.List">
         delete from mem_display_slide_widget where
         <if test="list != null and list.size > 0">
-            id in
+            `id` in
             <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>

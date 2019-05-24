@@ -22,6 +22,7 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.utils.CollectionUtils;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.dao.*;
@@ -126,7 +127,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         List<Long> disableDashboards = relRoleDashboardMapper.getDisableByUser(user.getId(), portalId);
 
-        if (null == disableDashboards || disableDashboards.size() == 0) {
+        if (CollectionUtils.isEmpty(disableDashboards)) {
             return dashboardList;
         }
 
@@ -182,7 +183,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         List<Long> disableDashboards = relRoleDashboardMapper.getDisableByUser(user.getId(), portalId);
 
-        if (null != disableDashboards && disableDashboards.size() > 0) {
+        if (!CollectionUtils.isEmpty(disableDashboards)) {
             Iterator<MemDashboardWidget> iterator = memDashboardWidgets.iterator();
             while (iterator.hasNext()) {
                 MemDashboardWidget memDashboardWidget = iterator.next();
@@ -194,7 +195,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         Set<Long> widgetIds = memDashboardWidgets.stream().map(MemDashboardWidget::getWidgetId).collect(Collectors.toSet());
         Set<View> views = new HashSet<>();
-        if (null != widgetIds && widgetIds.size() > 0) {
+        if (!CollectionUtils.isEmpty(widgetIds)) {
             views = viewMapper.selectByWidgetIds(widgetIds);
         }
 
@@ -252,14 +253,14 @@ public class DashboardServiceImpl implements DashboardService {
         int insert = dashboardMapper.insert(dashboard);
         if (insert > 0) {
             optLogger.info("dashboard ({}) is create by (:{})", dashboard.toString(), user.getId());
-            if (null != dashboardCreate.getRoleIds() && dashboardCreate.getRoleIds().size() > 0) {
+            if (!CollectionUtils.isEmpty(dashboardCreate.getRoleIds())) {
                 List<Role> roles = roleMapper.getRolesByIds(dashboardCreate.getRoleIds());
 
                 List<RelRoleDashboard> list = roles.stream()
                         .map(r -> new RelRoleDashboard(dashboard.getId(), r.getId()).createdBy(user.getId()))
                         .collect(Collectors.toList());
 
-                if (null != list && list.size() > 0) {
+                if (!CollectionUtils.isEmpty(list)) {
                     relRoleDashboardMapper.insertBatch(list);
                     optLogger.info("dashboard (:{}) limit role ({}) access", dashboard.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
                 }
@@ -305,7 +306,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         Set<Long> parentIds = Arrays.stream(dashboards).map(Dashboard::getParentId).filter(pId -> pId.longValue() > 0).collect(Collectors.toSet());
         Map<Long, String> parentMap = null;
-        if (null != parentIds && parentIds.size() > 0) {
+        if (!CollectionUtils.isEmpty(parentIds)) {
             parentMap = dashboardMapper.getFullParentIds(parentIds);
         }
 
@@ -341,18 +342,18 @@ public class DashboardServiceImpl implements DashboardService {
         if (i > 0) {
             optLogger.info("dashboard [{}]  is update by (:{}), origin : {}", dashboardList.toString(), user.getId(), dashboards);
 
-            if (null != rolesMap && rolesMap.size() > 0) {
+            if (!CollectionUtils.isEmpty(rolesMap)) {
 
                 Set<Long> ids = rolesMap.keySet();
                 relRoleDashboardMapper.deleteByDashboardIds(ids);
 
                 List<RelRoleDashboard> list = new ArrayList<>();
                 rolesMap.forEach((dashboardId, roles) -> {
-                    if (null != roles && roles.size() > 0) {
+                    if (!CollectionUtils.isEmpty(roles)) {
                         list.addAll(roles.stream().map(roleId -> new RelRoleDashboard(dashboardId, roleId)).collect(Collectors.toList()));
                     }
                 });
-                if (null != list && list.size() > 0) {
+                if (!CollectionUtils.isEmpty(list)) {
                     relRoleDashboardMapper.insertBatch(list);
                 }
             }
