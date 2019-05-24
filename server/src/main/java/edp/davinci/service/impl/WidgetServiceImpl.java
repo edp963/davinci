@@ -24,6 +24,7 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.PaginateWithQueryColumns;
 import edp.core.model.QueryColumn;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.ServerUtils;
 import edp.davinci.core.enums.FileTypeEnum;
@@ -373,7 +374,7 @@ public class WidgetServiceImpl implements WidgetService {
 
                 PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer, viewWithSource, executeParam, user);
                 List<QueryColumn> columns = paginate.getColumns();
-                if (null != columns && columns.size() > 0) {
+                if (!CollectionUtils.isEmpty(columns)) {
                     File file = new File(rootPath);
                     if (!file.exists()) {
                         file.mkdirs();

@@ -58,7 +58,7 @@
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert into mem_dashboard_widget
-        (`dashboard_id`,`widget_Id`,`x`,`y`,`width,height`,`frequency`,`polling`,`create_by`,`create_time`)
+        (`dashboard_id`,`widget_Id`,`x`,`y`,`width`,`height`,`frequency`,`polling`,`create_by`,`create_time`)
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (

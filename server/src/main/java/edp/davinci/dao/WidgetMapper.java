@@ -49,15 +49,15 @@ public interface WidgetMapper {
 
     @Update({
             "update widget",
-            "set name = #{name,jdbcType=VARCHAR},",
-            "description = #{description,jdbcType=VARCHAR},",
-            "view_id = #{viewId,jdbcType=BIGINT},",
-            "project_id = #{projectId,jdbcType=BIGINT},",
-            "type = #{type,jdbcType=BIGINT},",
-            "publish = #{publish,jdbcType=BIT},",
-            "config = #{config,jdbcType=LONGVARCHAR},",
-            "update_by = #{updateBy,jdbcType=BIGINT},",
-            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
+            "set `name` = #{name,jdbcType=VARCHAR},",
+            "`description` = #{description,jdbcType=VARCHAR},",
+            "`view_id` = #{viewId,jdbcType=BIGINT},",
+            "`project_id` = #{projectId,jdbcType=BIGINT},",
+            "`type` = #{type,jdbcType=BIGINT},",
+            "`publish` = #{publish,jdbcType=BIT},",
+            "`config` = #{config,jdbcType=LONGVARCHAR},",
+            "`update_by` = #{updateBy,jdbcType=BIGINT},",
+            "`update_time` = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(Widget widget);
@@ -85,7 +85,7 @@ public interface WidgetMapper {
     })
     Set<ShareWidget> getShareWidgetsByDisplayId(@Param("displayId") Long displayId);
 
-    @Select({"select id from widget where project_id = #{projectId} and name = #{name}"})
+    @Select({"select id from widget where project_id = #{projectId} and `name` = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
 
     @Select({"select * from widget where project_id = #{projectId}"})

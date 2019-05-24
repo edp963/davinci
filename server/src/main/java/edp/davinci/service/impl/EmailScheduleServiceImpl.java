@@ -22,10 +22,7 @@ import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.common.job.ScheduleService;
 import edp.core.exception.ServerException;
-import edp.core.utils.DateUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.MailUtils;
-import edp.core.utils.ServerUtils;
+import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.CronJobMediaType;
@@ -313,7 +310,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     Map<Long, ViewExecuteParam> executeParamMap = new HashMap<>();
                     Set<WidgetWithRelationDashboardId> set = widgetMapper.getByDashboard(dashboard.getId());
                     Set<Widget> widgets = new HashSet<>();
-                    if (null != set && set.size() > 0) {
+                    if (!CollectionUtils.isEmpty(set)) {
                         set.forEach(w -> {
                             Widget widget = new Widget();
                             BeanUtils.copyProperties(w, widget);
@@ -321,7 +318,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                             executeParamMap.put(w.getId(), getViewExecuteParam((engine), dashboard.getConfig(), widget.getConfig(), w.getRelationId()));
                         });
                     }
-                    if (widgets != null && widgets.size() > 0) {
+                    if (!CollectionUtils.isEmpty(widgets)) {
                         String filePath = fileBasePath + baseUrl + DateUtils.getNowDateYYYYMM() + File.separator + dashboard.getName() + "-" + UUID.randomUUID() + FileTypeEnum.XLSX.getFormat();
 
                         filePath = filePath.replaceAll(File.separator + "{2,}", File.separator);
@@ -335,7 +332,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 Display display = displayMapper.getById(cronJobContent.getId());
                 if (display != null) {
                     Set<Widget> widgets = widgetMapper.getByDisplayId(display.getId());
-                    if (widgets != null && widgets.size() > 0) {
+                    if (!CollectionUtils.isEmpty(widgets)) {
                         String filePath = fileBasePath + baseUrl + DateUtils.getNowDateYYYYMM() + File.separator + display.getName() + "-" + UUID.randomUUID() + FileTypeEnum.XLSX.getFormat();
                         filePath = filePath.replaceAll(File.separator + "{2,}", File.separator);
                         ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
