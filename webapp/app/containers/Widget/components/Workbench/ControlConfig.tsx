@@ -24,7 +24,6 @@ import { connect } from 'react-redux'
 import moment from 'moment'
 import {
   getDefaultLocalControl,
-  IGlobalControl,
   IGlobalControlRelatedItem,
   InteractionType,
   IControlRelatedField,

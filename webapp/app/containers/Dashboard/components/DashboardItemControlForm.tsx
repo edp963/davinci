@@ -23,6 +23,7 @@ import { Form, Button, Row, Col } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
 import { QueryVariable } from '../Grid'
 import {
+  IRenderTreeItem,
   ILocalRenderTreeItem,
   IControlRequestParams,
   ILocalControl,
@@ -51,9 +52,9 @@ interface IDashboardItemControlFormProps {
 }
 
 interface IDashboardItemControlFormStates {
-  renderTree: ILocalRenderTreeItem[],
+  renderTree: IRenderTreeItem[],
   flatTree: {
-    [key: string]: ILocalRenderTreeItem
+    [key: string]: IRenderTreeItem
   },
   controlValues: {
     [key: string]: any
@@ -100,7 +101,7 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
       return {...control}
     })
 
-    const { renderTree, flatTree } = getControlRenderTree(replica)
+    const { renderTree, flatTree } = getControlRenderTree<ILocalControl, IRenderTreeItem>(replica)
 
     Object.values(flatTree).forEach((control) => {
       if (SHOULD_LOAD_OPTIONS[control.type]) {
@@ -132,12 +133,12 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
   }
 
   private loadOptions = (
-    renderControl: ILocalRenderTreeItem,
-    flatTree: { [key: string]: ILocalRenderTreeItem },
+    renderControl: IRenderTreeItem,
+    flatTree: { [key: string]: IRenderTreeItem },
     controlValues: { [key: string]: any }
   ) => {
     const { viewId, onGetOptions } = this.props
-    const { key, interactionType, fields, parent, customOptions, options } = renderControl
+    const { key, interactionType, fields, parent, customOptions, options } = renderControl as ILocalRenderTreeItem
 
     if (customOptions) {
       onGetOptions(key, true, options)
@@ -200,7 +201,7 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
 
     Object.entries(formValues).forEach(([controlKey, value]) => {
       const control = flatTree[controlKey]
-      this.setControlRequestParams(control, value)
+      this.setControlRequestParams(control as ILocalRenderTreeItem, value)
     })
 
     const queryConditions = Object.values(this.controlRequestParams).reduce((filterValue, val) => {
@@ -217,14 +218,14 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
     onHide()
   }
 
-  private renderFilterControls = (renderTree: ILocalRenderTreeItem[], parents?: ILocalControl[]) => {
+  private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: ILocalControl[]) => {
     const { form, onGetOptions, mapOptions } = this.props
     const { controlValues } = this.state
 
     let components = []
 
     renderTree.forEach((control) => {
-      const { key, width, children, ...rest } = control
+      const { key, width, children, ...rest } = control as ILocalRenderTreeItem
       const parentsInfo = parents
         ? parents.reduce((values, parentControl) => {
             const parentSelectedValue = controlValues[parentControl.key]
