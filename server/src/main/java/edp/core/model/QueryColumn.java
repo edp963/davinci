@@ -27,6 +27,6 @@ public class QueryColumn {
 
     public QueryColumn(String name, String type) {
         this.name = name;
-        this.type = type;
+        this.type = type.toUpperCase();
     }
 }
