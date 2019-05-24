@@ -27,16 +27,16 @@
         insert into `display`
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `name`,
-            project_id,
+            `project_id`,
             <if test="description != null">
-                description,
+                `description`,
             </if>
             <if test="avatar != null">
-                avatar,
+                `avatar`,
             </if>
-            publish,
-            create_by,
-            create_time
+            `publish`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{name,jdbcType=VARCHAR},

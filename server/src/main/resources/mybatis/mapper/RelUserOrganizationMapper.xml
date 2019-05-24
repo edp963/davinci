@@ -25,9 +25,9 @@
         </selectKey>
         insert ignore rel_user_organization
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            org_id,
-            user_id,
-            role
+            `org_id`,
+            `user_id`,
+            `role`
         </trim>
         values
         <trim prefix=" (" suffix=")" suffixOverrides=",">
@@ -40,7 +40,7 @@
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert ignore into rel_user_organization
-        (org_id,user_id, role)
+        (`org_id`,`user_id`, `role`)
         VALUES
         <foreach collection="set" item="record" index="index" separator=",">
             (

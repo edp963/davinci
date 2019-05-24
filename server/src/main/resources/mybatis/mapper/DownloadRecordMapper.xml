@@ -9,9 +9,9 @@
         insert into download_record
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `name`,
-            user_id,
-            status,
-            create_time
+            `user_id`,
+            `status`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{name,jdbcType=VARCHAR},

@@ -33,41 +33,41 @@ public interface SourceMapper {
 
     int insert(Source source);
 
-    @Delete({"delete from source where id = #{id}"})
+    @Delete({"delete from `source` where id = #{id}"})
     int deleteById(@Param("id") Long id);
 
 
-    @Select({"select * from source where id = #{id}"})
+    @Select({"select * from `source` where id = #{id}"})
     Source getById(@Param("id") Long id);
 
     @Update({
-            "update source",
-            "set name = #{name,jdbcType=VARCHAR},",
-            "description = #{description,jdbcType=VARCHAR},",
-            "type = #{type,jdbcType=VARCHAR},",
-            "project_id = #{projectId,jdbcType=BIGINT},",
-            "config = #{config,jdbcType=LONGVARCHAR},",
-            "update_by = #{updateBy,jdbcType=BIGINT},",
-            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
+            "update `source`",
+            "set `name` = #{name,jdbcType=VARCHAR},",
+            "`description` = #{description,jdbcType=VARCHAR},",
+            "`type` = #{type,jdbcType=VARCHAR},",
+            "`project_id` = #{projectId,jdbcType=BIGINT},",
+            "`config` = #{config,jdbcType=LONGVARCHAR},",
+            "`update_by` = #{updateBy,jdbcType=BIGINT},",
+            "`update_time` = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(Source source);
 
-    @Select({"select id from source where project_id = #{projectId} and name = #{name}"})
+    @Select({"select id from `source` where project_id = #{projectId} and name = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
 
-    @Select({"select * from source where project_id = #{projectId}"})
+    @Select({"select * from `source` where project_id = #{projectId}"})
     List<Source> getByProject(@Param("projectId") Long projectId);
 
     @Select({
-            "SELECT s.id, s.`name`, s.type, s.config,",
+            "SELECT s.id, s.`name`, s.`type`, s.`config`,",
             "	p.id 'project.id',",
             "	p.`name` 'project.name',",
-            "	p.description 'project.description',",
-            "	p.pic 'project.pic',",
-            "	p.user_id 'project.userId',",
-            "	p.org_id 'project.orgId',",
-            "	p.visibility 'p.visibility'",
+            "	p.`description` 'project.description',",
+            "	p.`pic` 'project.pic',",
+            "	p.`user_id` 'project.userId',",
+            "	p.`org_id` 'project.orgId',",
+            "	p.`visibility` 'p.visibility'",
             "FROM source s INNER JOIN project p on p.id = s.project_id",
             "where s.id = #{souceId}"
     })
@@ -75,6 +75,6 @@ public interface SourceMapper {
 
     int insertBatch(@Param("list") List<Source> sourceList);
 
-    @Delete({"delete from source where project_id = #{projectId}"})
+    @Delete({"delete from `source` where project_id = #{projectId}"})
     int deleteByProject(@Param("projectId") Long projectId);
 }

@@ -4,11 +4,11 @@
     <insert id="insert" parameterType="edp.davinci.model.RelRoleDashboard">
         insert ignore rel_role_dashboard
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            role_id,
-            dashboard_id,
-            visible,
-            create_by,
-            create_time
+            `role_id`,
+            `dashboard_id`,
+            `visible`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{roleId,jdbcType=BIGINT},

@@ -26,7 +26,7 @@
         insert into `view`
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `name`,
-            project_id,
+            `project_id`,
             <if test="description != null">
                 description,
             </if>
@@ -34,17 +34,17 @@
                 `sql`,
             </if>
             <if test="model != null">
-                model,
+                `model`,
             </if>
             <if test="variable != null">
-                variable,
+                `variable`,
             </if>
             <if test="config != null">
-                config,
+                `config`,
             </if>
-            source_id,
-            create_by,
-            create_time
+            `source_id`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{name,jdbcType=VARCHAR},
@@ -72,8 +72,8 @@
 
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
-        insert into view
-        (`id`,`name`,description, source_id, `project_id`, `sql`, model,variable,config)
+        insert into `view`
+        (`id`,`name`,description, source_id, `project_id`, `sql`, `model`,`variable`,`config`)
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (
@@ -91,7 +91,7 @@
     </insert>
 
     <select id="selectByWidgetIds" resultType="edp.davinci.model.View">
-        select * from view where id in
+        select * from `view` where id in
         (
         select view_id from widget where
         <if test="widgetIds != null and widgetIds.size > 0">
