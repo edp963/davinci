@@ -22,12 +22,14 @@ import OperatingPanel from './OperatingPanel'
 import Widget, { IWidgetProps } from '../Widget'
 import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
 import EditorHeader from '../../../../components/EditorHeader'
+import WorkbenchSettingForm from './WorkbenchSettingForm'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
 import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
 import { message } from 'antd'
 import 'assets/less/resizer.less'
 import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IWorkbenchSettings, WorkbenchQueryMode } from './types'
 const styles = require('./Workbench.less')
 
 interface IWidget {
@@ -76,6 +78,8 @@ interface IWorkbenchStates {
   originalWidgetProps: IWidgetProps
   originalComputed: any[]
   widgetProps: IWidgetProps
+  settingFormVisible: boolean
+  settings: IWorkbenchSettings
 }
 
 const SplitPane = React.lazy(() => import('react-split-pane'))
@@ -120,7 +124,9 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         mode: 'pivot',
         model: {},
         onPaginationChange: this.paginationChange
-      }
+      },
+      settingFormVisible: false,
+      settings: this.initSettings()
     }
   }
 
@@ -163,6 +169,23 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   public componentWillUnmount () {
     this.props.onClearCurrentWidget()
+  }
+
+  private initSettings = (): IWorkbenchSettings => {
+    let workbenchSettings = {
+      queryMode: WorkbenchQueryMode.Immediately,
+      multiDrag: false
+    }
+    try {
+      const loginUser = JSON.parse(localStorage.getItem('loginUser'))
+      const currentUserWorkbenchSetting = JSON.parse(localStorage.getItem(`${loginUser.id}_workbench_settings`))
+      if (currentUserWorkbenchSetting) {
+        workbenchSettings = currentUserWorkbenchSetting
+      }
+    } catch (err) {
+      throw new Error(err)
+    }
+    return workbenchSettings
   }
 
   private changeName = (e) => {
@@ -410,6 +433,31 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     })
   }
 
+  private openSettingForm = () => {
+    this.setState({
+      settingFormVisible: true
+    })
+  }
+
+  private saveSettingForm = (values: IWorkbenchSettings) => {
+    try {
+      const loginUser = JSON.parse(localStorage.getItem('loginUser'))
+      localStorage.setItem(`${loginUser.id}_workbench_settings`, JSON.stringify(values))
+      this.setState({
+        settings: values
+      })
+    } catch (err) {
+      throw new Error(err)
+    }
+    this.closeSettingForm()
+  }
+
+  private closeSettingForm = () => {
+    this.setState({
+      settingFormVisible: false
+    })
+  }
+
   public render () {
     const {
       views,
@@ -432,10 +480,13 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       splitSize,
       originalWidgetProps,
       originalComputed,
-      widgetProps
+      widgetProps,
+      settingFormVisible,
+      settings
     } = this.state
     const selectedView = formedViews[selectedViewId]
-    console.log({originalComputed})
+    const { queryMode, multiDrag } = settings
+
     return (
       <div className={styles.workbench}>
         <EditorHeader
@@ -448,6 +499,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           onDescriptionChange={this.changeDesc}
           onSave={this.saveWidget}
           onCancel={this.cancel}
+          onSetting={this.openSettingForm}
           loading={loading}
         />
         <div className={styles.body}>
@@ -460,41 +512,49 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
               onChange={this.saveSplitSize}
               onDragFinished={this.resizeChart}
             >
-          <OperatingPanel
-            ref={(f) => this.operatingPanel = f}
-            views={views}
-            originalWidgetProps={originalWidgetProps}
-            originalComputed={originalComputed}
-            selectedView={selectedView}
-            distinctColumnValues={distinctColumnValues}
-            columnValueLoading={columnValueLoading}
-            controls={controls}
-            cache={cache}
-            expired={expired}
-            computed={computed}
-            onViewSelect={this.viewSelect}
-            onSetControls={this.setControls}
-            onCacheChange={this.cacheChange}
-            onExpiredChange={this.expiredChange}
-            onSetWidgetProps={this.setWidgetProps}
-            onSetComputed={this.setComputed}
-            onDeleteComputed={this.deleteComputed}
-            onLoadData={onLoadViewData}
-            onLoadDistinctValue={onLoadViewDistinctValue}
-          />
-          <div className={styles.viewPanel}>
-            <div className={styles.widgetBlock}>
-              <Widget
-                {...widgetProps}
-                loading={dataLoading}
-                editing={true}
-                onPaginationChange={this.paginationChange}
-                onChartStylesChange={this.chartStylesChange}
+              <OperatingPanel
+                ref={(f) => this.operatingPanel = f}
+                views={views}
+                originalWidgetProps={originalWidgetProps}
+                originalComputed={originalComputed}
+                selectedView={selectedView}
+                distinctColumnValues={distinctColumnValues}
+                columnValueLoading={columnValueLoading}
+                controls={controls}
+                cache={cache}
+                expired={expired}
+                queryMode={queryMode}
+                multiDrag={multiDrag}
+                computed={computed}
+                onViewSelect={this.viewSelect}
+                onSetControls={this.setControls}
+                onCacheChange={this.cacheChange}
+                onExpiredChange={this.expiredChange}
+                onSetWidgetProps={this.setWidgetProps}
+                onSetComputed={this.setComputed}
+                onDeleteComputed={this.deleteComputed}
+                onLoadData={onLoadViewData}
+                onLoadDistinctValue={onLoadViewDistinctValue}
               />
-            </div>
-          </div>
+              <div className={styles.viewPanel}>
+                <div className={styles.widgetBlock}>
+                  <Widget
+                    {...widgetProps}
+                    loading={dataLoading}
+                    editing={true}
+                    onPaginationChange={this.paginationChange}
+                    onChartStylesChange={this.chartStylesChange}
+                  />
+                </div>
+              </div>
             </SplitPane>
           </Suspense>
+          <WorkbenchSettingForm
+            visible={settingFormVisible}
+            settings={settings}
+            onSave={this.saveSettingForm}
+            onClose={this.closeSettingForm}
+          />
         </div>
       </div>
     )

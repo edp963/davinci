@@ -1,8 +1,8 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React, { createRef, PureComponent } from 'react'
+import classnames from 'classnames'
 import moment, { Moment } from 'moment'
 import { IDataParamConfig, IDataParamSource } from './Dropbox'
-import ConditionalFilterForm from './ConditionalFilterForm'
+import ConditionalFilterForm, { ConditionalFilterPanel } from './ConditionalFilterForm'
 import { DEFAULT_DATETIME_FORMAT } from '../../../../globalConstants'
 import { decodeMetricName } from '../util'
 import { uuid } from 'utils/util'
@@ -32,7 +32,7 @@ interface IFilterSettingFormStates {
   datepickerValue: [Moment, Moment]
 }
 
-export class FilterSettingForm extends React.PureComponent<IFilterSettingFormProps, IFilterSettingFormStates> {
+export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IFilterSettingFormStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -69,10 +69,7 @@ export class FilterSettingForm extends React.PureComponent<IFilterSettingFormPro
       { name: '自定义', value: 'other' }
     ]
   ]
-  private conditionalFilterForm = null
-  private refHandles = {
-    conditionalFilterForm: (f) => this.conditionalFilterForm = f
-  }
+  private conditionalFilterForm = createRef<ConditionalFilterPanel>()
 
   public componentWillMount () {
     const { item, config } = this.props
@@ -255,13 +252,13 @@ export class FilterSettingForm extends React.PureComponent<IFilterSettingFormPro
       }
     } else if (mode === 'conditional') {
       if (Object.keys(filterTree).length > 0) {
-        this.conditionalFilterForm.props.form.validateFieldsAndScroll((err) => {
+        this.conditionalFilterForm.current.props.form.validateFieldsAndScroll((err) => {
           if (!err) {
             onSave({
               sql: this.getSqlExpresstions(filterTree),
               filterSource: {...filterTree}
             })
-            this.conditionalFilterForm.resetTree()
+            this.conditionalFilterForm.current.resetTree()
           }
         })
       } else {
@@ -342,7 +339,7 @@ export class FilterSettingForm extends React.PureComponent<IFilterSettingFormPro
             onAddRoot={this.initFilterTree}
             onAddTreeNode={this.addTreeNode}
             onDeleteTreeNode={this.deleteTreeNode}
-            wrappedComponentRef={this.refHandles.conditionalFilterForm}
+            wrappedComponentRef={this.conditionalFilterForm}
           />
         </div>
       )

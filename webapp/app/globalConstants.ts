@@ -80,7 +80,7 @@ export const PIVOT_CHART_LINE_STYLES = [
   { name: '虚线', value: 'dashed'},
   { name: '点', value: 'dotted'}
 ]
-export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64]
+export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 96, 128]
 export const PIVOT_CHART_FONT_WEIGHTS = ['normal', 'bold', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900']
 export const PIVOT_CHART_FONT_STYLE = [
   { name: '普通', value: 'normal' },
