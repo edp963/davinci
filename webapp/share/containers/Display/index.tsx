@@ -149,6 +149,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
 
     const cachedQueryConditions = layersInfo[itemId].queryConditions
 
+    let tempFilters
     let linkageFilters
     let globalFilters
     let variables
@@ -156,12 +157,14 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     let globalVariables
 
     if (queryConditions) {
+      tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
       linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
       globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
     } else {
+      tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
       globalFilters = cachedQueryConditions.globalFilters
       variables = cachedQueryConditions.variables
@@ -226,6 +229,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         groups,
         aggregators,
         filters: filters.map((i) => i.config.sql),
+        tempFilters,
         linkageFilters,
         globalFilters,
         variables,
