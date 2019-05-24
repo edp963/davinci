@@ -29,6 +29,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
@@ -66,7 +67,7 @@ public class DacChannelUtil {
                     .filter(c -> !StringUtils.isEmpty(c.getName()) && !StringUtils.isEmpty(c.getBaseUrl()))
                     .collect(groupingBy(DacChannel::getName));
 
-            if (null != map && map.size() > 0) {
+            if (!CollectionUtils.isEmpty(map)) {
                 map.forEach((k, v) -> dacMap.put(k.trim(), v.get(v.size() - 1)));
             }
         }

@@ -37,7 +37,7 @@ public interface ViewMapper {
 
     int insert(View view);
 
-    @Select({"select id from view where project_id = #{projectId} and name = #{name}"})
+    @Select({"select id from `view` where project_id = #{projectId} and `name` = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
 
 
@@ -65,7 +65,7 @@ public interface ViewMapper {
     ViewWithProjectAndSource getViewWithProjectAndSourceById(@Param("id") Long id);
 
 
-    @Delete({"delete from view where id = #{id}"})
+    @Delete({"delete from `view` where id = #{id}"})
     int deleteById(Long id);
 
     @Select({"select * from `view` where id = #{id}"})
@@ -88,7 +88,7 @@ public interface ViewMapper {
     })
     int update(View view);
 
-    @Select({"select * from view where source_id = #{sourceId}"})
+    @Select({"select * from `view` where source_id = #{sourceId}"})
     List<View> getBySourceId(@Param("sourceId") Long sourceId);
 
     @Select({

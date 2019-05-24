@@ -21,6 +21,7 @@ package edp.davinci.service.impl;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.utils.CollectionUtils;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.dao.DashboardMapper;
@@ -108,7 +109,7 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
 
         List<Long> disbalePortals = relRolePortalMapper.getDisablePortalByUser(user.getId(), projectId);
 
-        if (null == disbalePortals || disbalePortals.size() == 0) {
+        if (CollectionUtils.isEmpty(disbalePortals)) {
             return dashboardPortals;
         }
 
@@ -156,14 +157,14 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
         if (insert > 0) {
             optLogger.info("portal ({}) is created by user(:{})", dashboardPortal.toString(), user.getId());
 
-            if (null != dashboardPortalCreate.getRoleIds() && dashboardPortalCreate.getRoleIds().size() > 0) {
+            if (!CollectionUtils.isEmpty(dashboardPortalCreate.getRoleIds())) {
                 List<Role> roles = roleMapper.getRolesByIds(dashboardPortalCreate.getRoleIds());
 
                 List<RelRolePortal> list = roles.stream()
                         .map(r -> new RelRolePortal(dashboardPortal.getId(), r.getId()).createdBy(user.getId()))
                         .collect(Collectors.toList());
 
-                if (null != list && list.size() > 0) {
+                if (!CollectionUtils.isEmpty(list)) {
                     relRolePortalMapper.insertBatch(list);
 
                     optLogger.info("portal ({}) limit role ({}) access", dashboardPortal.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
@@ -220,7 +221,7 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
         if (update > 0) {
             optLogger.info("portal ({}) is update by (:{}), origin: ({})", dashboardPortal.toString(), user.getId(), origin);
             relRolePortalMapper.deleteByProtalId(dashboardPortal.getId());
-            if (null != dashboardPortalUpdate.getRoleIds() && dashboardPortalUpdate.getRoleIds().size() > 0) {
+            if (!CollectionUtils.isEmpty(dashboardPortalUpdate.getRoleIds())) {
 
                 List<Role> roles = roleMapper.getRolesByIds(dashboardPortalUpdate.getRoleIds());
 
@@ -228,7 +229,7 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
                         .map(r -> new RelRolePortal(dashboardPortal.getId(), r.getId()).createdBy(user.getId()))
                         .collect(Collectors.toList());
 
-                if (null != list && list.size() > 0) {
+                if (!CollectionUtils.isEmpty(list)) {
                     relRolePortalMapper.insertBatch(list);
 
                     optLogger.info("update portal ({}) limit role ({}) access", dashboardPortal.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));

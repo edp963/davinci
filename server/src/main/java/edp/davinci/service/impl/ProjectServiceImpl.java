@@ -23,6 +23,7 @@ import com.github.pagehelper.PageInfo;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.PageUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.LogNameEnum;
@@ -155,7 +156,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         List<OrganizationInfo> orgs = organizationMapper.getOrganizationByUser(user.getId());
-        if (null == orgs || orgs.size() < 1) {
+        if (CollectionUtils.isEmpty(orgs)) {
             throw new UnAuthorizedExecption();
         }
 
@@ -561,7 +562,7 @@ public class ProjectServiceImpl implements ProjectService {
         List<RelRoleProject> list = roleList.stream().map(role -> new RelRoleProject(projectDetail.getId(), role.getId()).createdBy(user.getId())).collect(Collectors.toList());
 
         relRoleProjectMapper.deleteByProjectId(id);
-        if (null != list && list.size() > 0) {
+        if (!CollectionUtils.isEmpty(list)) {
             relRoleProjectMapper.insertBatch(list);
             List<RoleProject> roleProjects = list.stream().map(r -> {
                 RoleProject roleProject = new RoleProject(projectDetail);
@@ -585,7 +586,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private List<ProjectInfo> getProjectInfos(User user, List<ProjectWithCreateBy> projects) {
-        if (null != projects && projects.size() > 0) {
+        if (!CollectionUtils.isEmpty(projects)) {
             List<ProjectInfo> projectInfoList = new ArrayList<>();
 
             //管理员
@@ -607,7 +608,7 @@ public class ProjectServiceImpl implements ProjectService {
             }
 
             //普通成员
-            if (null != idsByMember && idsByMember.size() > 0) {
+            if (!CollectionUtils.isEmpty(idsByMember)) {
                 List<UserMaxProjectPermission> permissions = relRoleProjectMapper.getMaxPermissions(idsByMember, user.getId());
                 Map<Long, ProjectPermission> permissionMap = new HashMap<>();
                 permissions.forEach(permission -> {

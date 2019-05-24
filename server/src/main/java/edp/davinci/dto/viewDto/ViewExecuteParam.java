@@ -97,7 +97,7 @@ public class ViewExecuteParam {
 
     public List<Order> getOrders(String jdbcUrl) {
         List<Order> list = null;
-        if (null != this.orders && this.orders.size() > 0) {
+        if (!CollectionUtils.isEmpty(orders)) {
             list = new ArrayList<>();
             Iterator<Order> iterator = this.orders.iterator();
             String regex = "sum\\(.*\\)|avg\\(.*\\)|count\\(.*\\)|COUNTDISTINCT\\(.*\\)|max\\(.*\\)|min\\(.*\\)";
@@ -126,9 +126,9 @@ public class ViewExecuteParam {
     }
 
     public void addExcludeColumn(Set<String> excludeColumns, String jdbcUrl) {
-        if (null != excludeColumns && excludeColumns.size() > 0 && null != this.aggregators && this.aggregators.size() > 0) {
+        if (!CollectionUtils.isEmpty(excludeColumns) && !CollectionUtils.isEmpty(aggregators)) {
             excludeColumns.addAll(this.aggregators.stream()
-                    .filter(a -> null != excludeColumns && excludeColumns.size() > 0 && excludeColumns.contains(a.getColumn()))
+                    .filter(a -> !CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(a.getColumn()))
                     .map(a -> formatColumn(a.getColumn(), a.getFunc(), jdbcUrl, true))
                     .collect(Collectors.toSet())
             );
@@ -136,7 +136,7 @@ public class ViewExecuteParam {
     }
 
     public List<String> getAggregators(String jdbcUrl) {
-        if (null != this.aggregators && this.aggregators.size() > 0) {
+        if (!CollectionUtils.isEmpty(aggregators)) {
             return this.aggregators.stream().map(a -> formatColumn(a.getColumn(), a.getFunc(), jdbcUrl, false)).collect(Collectors.toList());
         }
         return null;

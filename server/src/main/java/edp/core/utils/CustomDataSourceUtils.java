@@ -94,7 +94,7 @@ public class CustomDataSourceUtils {
 
         Yaml yaml = new Yaml();
         HashMap<String, Object> loads = yaml.loadAs(new BufferedReader(fileReader), HashMap.class);
-        if (null != loads && loads.size() > 0) {
+        if (!CollectionUtils.isEmpty(loads)) {
             ObjectMapper mapper = new ObjectMapper();
             for (String key : loads.keySet()) {
                 CustomDataSource customDataSource = mapper.convertValue(loads.get(key), CustomDataSource.class);

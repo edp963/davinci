@@ -27,10 +27,7 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.Paginate;
 import edp.core.model.PaginateWithQueryColumns;
 import edp.core.model.QueryColumn;
-import edp.core.utils.AESUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.ServerUtils;
-import edp.core.utils.TokenUtils;
+import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.model.TokenEntity;
@@ -228,7 +225,7 @@ public class ShareServiceImpl implements ShareService {
 
         List<MemDisplaySlideWidgetWithSlide> memWithSlides = memDisplaySlideWidgetMapper.getMemWithSlideByDisplayId(displayId);
 
-        if (null != memWithSlides && memWithSlides.size() > 0) {
+        if (!CollectionUtils.isEmpty(memWithSlides)) {
             Set<DisplaySlide> displaySlideSet = new HashSet<>();
             Set<MemDisplaySlideWidget> memDisplaySlideWidgetSet = new HashSet<>();
             for (MemDisplaySlideWidgetWithSlide memWithSlide : memWithSlides) {
@@ -238,7 +235,7 @@ public class ShareServiceImpl implements ShareService {
                 memDisplaySlideWidgetSet.add(memDisplaySlideWidget);
             }
 
-            if (null != displaySlideSet && displaySlideSet.size() > 0) {
+            if (!CollectionUtils.isEmpty(displaySlideSet)) {
                 Set<ShareDisplaySlide> shareDisplaySlideSet = new HashSet<>();
                 Iterator<DisplaySlide> slideIterator = displaySlideSet.iterator();
                 while (slideIterator.hasNext()) {
@@ -262,7 +259,7 @@ public class ShareServiceImpl implements ShareService {
         }
 
         Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDisplayId(displayId);
-        if (null != shareWidgets && shareWidgets.size() > 0) {
+        if (!CollectionUtils.isEmpty(shareWidgets)) {
             Iterator<ShareWidget> widgetIterator = shareWidgets.iterator();
             while (widgetIterator.hasNext()) {
                 ShareWidget shareWidget = widgetIterator.next();
@@ -309,7 +306,7 @@ public class ShareServiceImpl implements ShareService {
         shareDashboard.setRelations(memDashboardWidgets);
 
         Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDashboard(dashboardId);
-        if (null != shareWidgets && shareWidgets.size() > 0) {
+        if (!CollectionUtils.isEmpty(shareWidgets)) {
             Iterator<ShareWidget> iterator = shareWidgets.iterator();
             while (iterator.hasNext()) {
                 ShareWidget shareWidget = iterator.next();
@@ -397,7 +394,7 @@ public class ShareServiceImpl implements ShareService {
         }
         List<QueryColumn> columns = paginate.getColumns();
 
-        if (null != columns && columns.size() > 0) {
+        if (!CollectionUtils.isEmpty(columns)) {
             String csvPath = fileUtils.fileBasePath + File.separator + "csv";
             File file = new File(csvPath);
             if (!file.exists()) {

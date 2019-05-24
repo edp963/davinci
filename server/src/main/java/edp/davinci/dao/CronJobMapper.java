@@ -42,19 +42,19 @@ public interface CronJobMapper {
     @Update({
             "update cron_job",
             "set `name` = #{name,jdbcType=VARCHAR},",
-            "project_id = #{projectId,jdbcType=BIGINT},",
-            "job_type = #{jobType,jdbcType=VARCHAR},",
-            "job_status = #{jobStatus,jdbcType=VARCHAR},",
-            "cron_expression = #{cronExpression,jdbcType=VARCHAR},",
-            "start_date = #{startDate,jdbcType=TIMESTAMP},",
-            "end_date = #{endDate,jdbcType=TIMESTAMP},",
-            "description = #{description,jdbcType=VARCHAR},",
-            "update_time = #{updateTime,jdbcType=TIMESTAMP},",
-            "config = #{config,jdbcType=LONGVARCHAR},",
-            "exec_log = #{execLog,jdbcType=LONGVARCHAR},",
-            "update_by = #{updateBy,jdbcType=BIGINT},",
-            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
-            "where id = #{id,jdbcType=BIGINT}"
+            "`project_id` = #{projectId,jdbcType=BIGINT},",
+            "`job_type` = #{jobType,jdbcType=VARCHAR},",
+            "`job_status` = #{jobStatus,jdbcType=VARCHAR},",
+            "`cron_expression` = #{cronExpression,jdbcType=VARCHAR},",
+            "`start_date` = #{startDate,jdbcType=TIMESTAMP},",
+            "`end_date` = #{endDate,jdbcType=TIMESTAMP},",
+            "`description` = #{description,jdbcType=VARCHAR},",
+            "`update_time` = #{updateTime,jdbcType=TIMESTAMP},",
+            "`config` = #{config,jdbcType=LONGVARCHAR},",
+            "`exec_log` = #{execLog,jdbcType=LONGVARCHAR},",
+            "`update_by` = #{updateBy,jdbcType=BIGINT},",
+            "`update_time` = #{updateTime,jdbcType=TIMESTAMP}",
+            "where `id` = #{id,jdbcType=BIGINT}"
     })
     int update(CronJob record);
 
