@@ -263,7 +263,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             config,
             dashboardPortalId: Number(params.portalId),
             name,
-            type: selectType ? 1 : 0
+            type: selectType ? 1 : 0   // todo selectType 更改位置
           }
 
           const addObj = {
@@ -665,7 +665,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       splitSize,
       portalTreeWidth
     } = this.state
-
     const items = searchValue.map((s) => {
       return <li key={s.id} onClick={this.pickSearchDashboard(s.id)}>{s.name}</li>
     })

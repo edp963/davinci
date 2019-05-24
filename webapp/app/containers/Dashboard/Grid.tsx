@@ -1264,6 +1264,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       dashboardSharePanelAuthorized,
       drillPathSettingVisible
     } = this.state
+    let dashboardType: number
+    if (currentDashboard) {
+      dashboardType = currentDashboard.type
+    }
     let navDropdown = (<span />)
     let grids = void 0
     //   const drillPanels = []
@@ -1305,6 +1309,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     if (currentProject && currentItems) {
       const itemblocks = []
       const layouts = { lg: [] }
+
       currentItems.forEach((dashboardItem) => {
         const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
         const {
@@ -1327,7 +1332,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const drillpathSetting = queryConditions.drillpathSetting
         const drillpathInstance = queryConditions.drillpathInstance
         const view = formedViews[widget.viewId]
-
         itemblocks.push((
           <div key={id}>
             <DashboardItem
@@ -1373,6 +1377,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             />
           </div>
         ))
+
         layouts.lg.push({
           x,
           y,
@@ -1381,24 +1386,34 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           i: `${id}`
         })
       })
-      grids = (
-        <ResponsiveReactGridLayout
-          className="layout"
-          style={{marginTop: '-14px'}}
-          rowHeight={GRID_ROW_HEIGHT}
-          margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
-          breakpoints={GRID_BREAKPOINTS}
-          cols={GRID_COLS}
-          layouts={layouts}
-          onDragStop={this.onDragStop}
-          onResizeStop={this.onResizeStop}
-          measureBeforeMount={false}
-          draggableHandle={`.${styles.title}`}
-          useCSSTransforms={mounted}
-        >
-          {itemblocks}
-        </ResponsiveReactGridLayout>
-      )
+      if (dashboardType === 1) {
+        console.log(dashboardType)
+        // report mode
+        grids = (
+          <div className={styles.reportMode}>
+            {itemblocks[0]}
+          </div>
+        )
+      } else {
+        grids = (
+          <ResponsiveReactGridLayout
+            className="layout"
+            style={{marginTop: '-14px'}}
+            rowHeight={GRID_ROW_HEIGHT}
+            margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
+            breakpoints={GRID_BREAKPOINTS}
+            cols={GRID_COLS}
+            layouts={layouts}
+            onDragStop={this.onDragStop}
+            onResizeStop={this.onResizeStop}
+            measureBeforeMount={false}
+            draggableHandle={`.${styles.title}`}
+            useCSSTransforms={mounted}
+          >
+            {itemblocks}
+          </ResponsiveReactGridLayout>
+        )
+      }
     }
 
     const saveDashboardItemButton = (
@@ -1513,6 +1528,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             type={dashboardItemFormType}
             widgets={widgets || []}
             selectedWidgets={selectedWidgets}
+            currentDashboard={this.props.currentDashboard}
             polling={polling}
             step={dashboardItemFormStep}
             onWidgetSelect={this.widgetSelect}
