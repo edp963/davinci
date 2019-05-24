@@ -21,6 +21,7 @@ package edp.davinci.service.impl;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.DateUtils;
 import edp.core.utils.QuartzUtils;
 import edp.davinci.core.enums.CronJobStatusEnum;
@@ -303,7 +304,7 @@ public class CronJobServiceImpl implements CronJobService {
     @Override
     public void startAllJobs() {
         List<CronJob> jobList = cronJobMapper.getStartedJobs();
-        if (null != jobList && jobList.size() > 0) {
+        if (!CollectionUtils.isEmpty(jobList)) {
             for (CronJob cronJob : jobList) {
                 if (CronJobStatusEnum.START.getStatus().equals(cronJob.getJobStatus())) {
                     try {

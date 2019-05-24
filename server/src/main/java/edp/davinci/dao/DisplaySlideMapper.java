@@ -50,9 +50,9 @@ public interface DisplaySlideMapper {
             "update display_slide",
             "set display_id = #{displayId,jdbcType=BIGINT},",
             "`index` = #{index,jdbcType=INTEGER},",
-            "config = #{config,jdbcType=LONGVARCHAR},",
-            "update_by = #{updateBy,jdbcType=BIGINT},",
-            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
+            "`config` = #{config,jdbcType=LONGVARCHAR},",
+            "`update_by` = #{updateBy,jdbcType=BIGINT},",
+            "`update_time` = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(DisplaySlide record);

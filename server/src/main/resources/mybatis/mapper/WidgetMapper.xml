@@ -27,15 +27,15 @@
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `name`,
             <if test="description != null">
-                description,
+                `description`,
             </if>
-            view_id,
-            project_id,
+            `view_id`,
+            `project_id`,
             `type`,
-            publish,
-            config,
-            create_by,
-            create_time
+            `publish`,
+            `config`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{name,jdbcType=VARCHAR},
@@ -55,7 +55,7 @@
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert ignore into widget
-        (`id`,`name`,description, view_id, `project_id`, `type`, publish,config)
+        (`id`,`name`,`description`, view_id, `project_id`, `type`, `publish`,`config`)
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (

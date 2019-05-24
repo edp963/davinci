@@ -19,6 +19,7 @@
 
 package edp.davinci.core.enums;
 
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -44,7 +45,7 @@ public enum SqlVariableValueTypeEnum {
     }
 
     public static List<String> getValues(String valueType, List<Object> values, boolean udf) {
-        if (null == values || values.size() == 0) {
+        if (CollectionUtils.isEmpty(values)) {
             return new ArrayList<>();
         }
 

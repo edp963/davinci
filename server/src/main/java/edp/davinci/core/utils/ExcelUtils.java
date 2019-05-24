@@ -24,6 +24,7 @@ import com.alibaba.fastjson.JSONObject;
 import edp.core.enums.SqlTypeEnum;
 import edp.core.exception.ServerException;
 import edp.core.model.QueryColumn;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.enums.FileTypeEnum;
@@ -221,7 +222,7 @@ public class ExcelUtils {
         Map<String, Integer> columnWidthMap = new HashMap<>();
 
         //header
-        if (isTable && null != excelHeaders && excelHeaders.size() > 0) {
+        if (isTable && !CollectionUtils.isEmpty(excelHeaders)) {
 
             headerFormatMap = new HashMap<>();
             dataUnitMap = new HashMap<>();
@@ -270,7 +271,7 @@ public class ExcelUtils {
                 }
             }
 
-            if (null != columnList && columnList.size() > 0) {
+            if (!CollectionUtils.isEmpty(columnList)) {
                 columns = columnList;
             }
 

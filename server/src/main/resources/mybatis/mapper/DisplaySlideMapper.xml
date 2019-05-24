@@ -25,9 +25,9 @@
         </selectKey>
         insert into display_slide
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            display_id,
+            `display_id`,
             `index`,
-            config
+            `config`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{displayId,jdbcType=BIGINT},
@@ -40,14 +40,14 @@
         <foreach collection="list" item="item" index="index" open="" close="" separator=";">
             update display_slide
             <set>
-                display_id=#{item.displayId,jdbcType=BIGINT},
+                `display_id`=#{item.displayId,jdbcType=BIGINT},
                 `index`=#{item.index,jdbcType=INTEGER},
                 `config`=#{item.config,jdbcType=LONGVARCHAR},
-                update_by = #{item.updateBy,jdbcType=BIGINT},
-                update_time = #{item.updateTime,jdbcType=TIMESTAMP}
+                `update_by` = #{item.updateBy,jdbcType=BIGINT},
+                `update_time` = #{item.updateTime,jdbcType=TIMESTAMP}
             </set>
             <where>
-                id=#{item.id,jdbcType=BIGINT}
+                `id`=#{item.id,jdbcType=BIGINT}
             </where>
         </foreach>
     </update>

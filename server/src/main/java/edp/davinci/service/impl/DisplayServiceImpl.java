@@ -23,6 +23,7 @@ import com.alibaba.fastjson.JSONObject;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.LogNameEnum;
@@ -129,14 +130,14 @@ public class DisplayServiceImpl implements DisplayService {
         if (insert > 0) {
             optLogger.info("display ({}) is create by (:{})", display.toString(), user.getId());
 
-            if (null != displayInfo.getRoleIds() && displayInfo.getRoleIds().size() > 0) {
+            if (!CollectionUtils.isEmpty(displayInfo.getRoleIds())) {
                 List<Role> roles = roleMapper.getRolesByIds(displayInfo.getRoleIds());
 
                 List<RelRoleDisplay> list = roles.stream()
                         .map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
                         .collect(Collectors.toList());
 
-                if (null != list && list.size() > 0) {
+                if (!CollectionUtils.isEmpty(list)) {
                     relRoleDisplayMapper.insertBatch(list);
 
                     optLogger.info("display ({}) limit role ({}) access", display.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
@@ -289,13 +290,13 @@ public class DisplayServiceImpl implements DisplayService {
         if (update > 0) {
             optLogger.info("display ({}) is update by (:{}), origin: ({})", display.toString(), user.getId(), origin);
             relRoleDisplayMapper.deleteByDisplayId(display.getId());
-            if (null != displayUpdate.getRoleIds() && displayUpdate.getRoleIds().size() > 0) {
+            if (!CollectionUtils.isEmpty(displayUpdate.getRoleIds())) {
                 List<Role> roles = roleMapper.getRolesByIds(displayUpdate.getRoleIds());
 
                 List<RelRoleDisplay> list = roles.stream()
                         .map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
                         .collect(Collectors.toList());
-                if (null != list && list.size() > 0) {
+                if (!CollectionUtils.isEmpty(list)) {
                     relRoleDisplayMapper.insertBatch(list);
                     optLogger.info("update display ({}) limit role ({}) access", display.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
                 }
@@ -340,14 +341,14 @@ public class DisplayServiceImpl implements DisplayService {
         if (insert > 0) {
             optLogger.info("display slide ({}) create by (:{})", displaySlide.toString(), user.getId());
 
-            if (null != displaySlideCreate.getRoleIds() && displaySlideCreate.getRoleIds().size() > 0) {
+            if (!CollectionUtils.isEmpty(displaySlideCreate.getRoleIds())) {
                 List<Role> roles = roleMapper.getRolesByIds(displaySlideCreate.getRoleIds());
 
                 List<RelRoleSlide> list = roles.stream()
                         .map(r -> new RelRoleSlide(displaySlide.getId(), r.getId()).createdBy(user.getId()))
                         .collect(Collectors.toList());
 
-                if (null != list && list.size() > 0) {
+                if (!CollectionUtils.isEmpty(list)) {
                     relRoleSlideMapper.insertBatch(list);
 
                     optLogger.info("display slide ({}) limit role ({}) access", displaySlide.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
@@ -658,7 +659,7 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         List<Display> displays = displayMapper.getByProject(projectId);
-        if (null == displays || displays.size() == 0) {
+        if (CollectionUtils.isEmpty(displays)) {
             return null;
         }
 
@@ -707,7 +708,7 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         List<DisplaySlide> displaySlides = displaySlideMapper.selectByDisplayId(displayId);
-        if (null == displaySlides || displaySlides.size() == 0) {
+        if (CollectionUtils.isEmpty(displaySlides)) {
             return null;
         }
 
@@ -768,7 +769,7 @@ public class DisplayServiceImpl implements DisplayService {
 
         List<MemDisplaySlideWidget> widgetList = memDisplaySlideWidgetMapper.getMemDisplaySlideWidgetListBySlideId(slideId);
 
-        if (null == widgetList || widgetList.size() == 0) {
+        if (CollectionUtils.isEmpty(widgetList)) {
             return null;
         }
 
@@ -785,7 +786,7 @@ public class DisplayServiceImpl implements DisplayService {
 
         Set<Long> widgetIds = widgetList.stream().map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
         Set<View> views = new HashSet<>();
-        if (null != widgetIds && widgetIds.size() > 0) {
+        if (!CollectionUtils.isEmpty(widgetIds)) {
             views = viewMapper.selectByWidgetIds(widgetIds);
         }
 

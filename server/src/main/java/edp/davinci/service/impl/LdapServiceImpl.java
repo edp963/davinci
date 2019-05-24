@@ -36,6 +36,7 @@ import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.support.LdapUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.naming.directory.DirContext;
@@ -106,7 +107,7 @@ public class LdapServiceImpl implements LdapService {
                         return person;
                     });
 
-            if (null != search && search.size() > 0) {
+            if (!CollectionUtils.isEmpty(search)) {
                 ldapPerson = search.get(0);
             }
         } catch (Exception e) {

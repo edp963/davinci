@@ -240,7 +240,7 @@ public class SqlUtils {
             List<QueryColumn> queryColumns = new ArrayList<>();
             for (int i = 1; i <= metaData.getColumnCount(); i++) {
                 String key = metaData.getColumnLabel(i);
-                if (null != excludeColumns && excludeColumns.size() > 0 && excludeColumns.contains(key)) {
+                if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
                     continue;
                 }
                 queryColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
@@ -252,7 +252,7 @@ public class SqlUtils {
                 Map<String, Object> map = new LinkedHashMap<>();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
                     String key = metaData.getColumnLabel(i);
-                    if (null != excludeColumns && excludeColumns.size() > 0 && excludeColumns.contains(key)) {
+                    if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
                         continue;
                     }
                     map.put(key, sqlRowSet.getObject(key));
@@ -271,7 +271,7 @@ public class SqlUtils {
             List<QueryColumn> queryColumns = new ArrayList<>();
             for (int i = 1; i <= metaData.getColumnCount(); i++) {
                 String c = metaData.getColumnLabel(i);
-                if (null != excludeColumns && excludeColumns.size() > 0 && excludeColumns.contains(c)) {
+                if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(c)) {
                     continue;
                 }
                 queryColumns.add(new QueryColumn(c, metaData.getColumnTypeName(i)));
@@ -284,7 +284,7 @@ public class SqlUtils {
                 Map<String, Object> map = new HashMap<>();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
                     String c = metaData.getColumnLabel(i);
-                    if (null != excludeColumns && excludeColumns.size() > 0 && excludeColumns.contains(c)) {
+                    if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(c)) {
                         continue;
                     }
                     Object v = resultSet.getObject(c);
@@ -638,7 +638,7 @@ public class SqlUtils {
             throw new ServerException("execute batch sql is EMPTY");
         }
 
-        if (null == datas || datas.size() <= 0) {
+        if (CollectionUtils.isEmpty(datas)) {
             log.info("execute batch data is EMPTY");
             throw new ServerException("execute batch data is EMPTY");
         }

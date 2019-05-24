@@ -84,7 +84,7 @@ public interface MemDisplaySlideWidgetMapper {
             "	s.id 'displaySlide.id',",
             "	s.display_id 'displaySlide.displayId',",
             "	s.`index` 'displaySlide.index',",
-            "	s.config 'displaySlide.config'",
+            "	s.`config` 'displaySlide.config'",
             "FROM mem_display_slide_widget m LEFT JOIN display_slide s on m.display_slide_id = s.id",
             "WHERE s.display_id = #{displayId}",
     })

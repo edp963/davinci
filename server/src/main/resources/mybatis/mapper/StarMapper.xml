@@ -25,10 +25,10 @@
         </selectKey>
         insert into star
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            target,
-            target_id,
-            user_id,
-            star_time,
+            `target`,
+            `target_id`,
+            `user_id`,
+            `star_time`,
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{target,jdbcType=VARCHAR},

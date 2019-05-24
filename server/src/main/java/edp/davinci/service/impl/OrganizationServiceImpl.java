@@ -241,7 +241,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         //校验组织下是否有项目
         List<Project> projectList = projectMapper.getByOrgId(id);
-        if (null != projectList && projectList.size() > 0) {
+        if (!CollectionUtils.isEmpty(projectList)) {
             log.info("There is at least one project under the organization({}), it is can not be deleted", organization.getId());
             throw new ServerException("There is at least one project under this organization, it is can not be deleted");
         }

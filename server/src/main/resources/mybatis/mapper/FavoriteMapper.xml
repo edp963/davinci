@@ -25,9 +25,9 @@
         </selectKey>
         insert ignore into favorite
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            user_id,
-            project_id,
-            create_time
+            `user_id`,
+            `project_id`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{userId,jdbcType=BIGINT},
@@ -38,9 +38,9 @@
 
 
     <delete id="deleteBatch" parameterType="java.util.List">
-        DELETE FROM favorite WHERE user_id = #{userId}
+        DELETE FROM favorite WHERE `user_id` = #{userId}
         <if test="list != null and list.size > 0">
-            and project_id in
+            and `project_id` in
             <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
