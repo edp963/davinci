@@ -4,11 +4,11 @@
     <insert id="insert" parameterType="edp.davinci.model.RelRoleSlide">
         insert ignore rel_role_slide
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            role_id,
-            slide_id,
-            visible,
-            create_by,
-            create_time
+            `role_id`,
+            `slide_id`,
+            `visible`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{roleId,jdbcType=BIGINT},

@@ -19,6 +19,7 @@
 package edp.davinci.dto.viewDto;
 
 import com.alibaba.druid.util.StringUtils;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
 import lombok.Data;
 
@@ -34,10 +35,10 @@ import static edp.core.consts.Consts.*;
 
 @Data
 public class ViewExecuteParam {
-    private String[] groups;
+    private List<String> groups;
     private List<Aggregator> aggregators;
     private List<Order> orders;
-    private String[] filters;
+    private List<String> filters;
     private List<Param> params;
     private Boolean cache;
     private Long expired;
@@ -60,14 +61,38 @@ public class ViewExecuteParam {
                             Boolean cache,
                             Long expired,
                             Boolean nativeQuery) {
-        this.groups = groupList.toArray(new String[0]);
+        this.groups = groupList;
         this.aggregators = aggregators;
         this.orders = orders;
-        this.filters = filterList.toArray(new String[0]);
+        this.filters = filterList;
         this.params = params;
         this.cache = cache;
         this.expired = expired;
         this.nativeQuery = nativeQuery;
+    }
+
+    public List<String> getGroups() {
+        if (!CollectionUtils.isEmpty(this.groups)) {
+            this.groups = groups.stream().filter(g -> !StringUtils.isEmpty(g)).collect(Collectors.toList());
+        }
+
+        if (CollectionUtils.isEmpty(this.groups)) {
+            return null;
+        }
+
+        return this.groups;
+    }
+
+    public List<String> getFilters() {
+        if (!CollectionUtils.isEmpty(this.filters)) {
+            this.filters = filters.stream().filter(f -> !StringUtils.isEmpty(f)).collect(Collectors.toList());
+        }
+
+        if (CollectionUtils.isEmpty(this.filters)) {
+            return null;
+        }
+
+        return this.filters;
     }
 
     public List<Order> getOrders(String jdbcUrl) {

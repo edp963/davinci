@@ -28,16 +28,16 @@
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `name`,
             <if test="description != null">
-                description,
+                `description`,
             </if>
             <if test='pic != null and pic != "" '>
-                pic,
+                `pic`,
             </if>
-            org_id,
-            user_id,
-            visibility,
-            is_transfer,
-            initial_org_id
+            `org_id`,
+            `user_id`,
+            `visibility`,
+            `is_transfer`,
+            `initial_org_id`
         </trim>
         values
         <trim prefix=" (" suffix=")" suffixOverrides=",">
@@ -59,13 +59,13 @@
 
     <sql id="selectProjectByUserBaseSql">
         SELECT p.*,
-        IF(s.id is NULL, FALSE, TRUE) as 'isStar',
-        u.id as 'createBy.id',
-        IF(u.`name` is NULL, u.username, u.`name`) as 'createBy.username',
-        u.avatar as 'createBy.avatar'
+        IF(s.`id` is NULL, FALSE, TRUE) as 'isStar',
+        u.`id` as 'createBy.id',
+        IF(u.`name` is NULL, u.`username`, u.`name`) as 'createBy.username',
+        u.`avatar` as 'createBy.avatar'
         from project p
-        left join `user` u on u.id = p.user_id
-        left join star s on (s.target_id = p.id and s.target = 'project' and s.user_id = #{userId})
+        left join `user` u on u.`id` = p.`user_id`
+        left join star s on (s.target_id = p.id and s.`target` = 'project' and s.user_id = #{userId})
         where p.id in (
         <!-- 当前用户是project的创建者或管理员 -->
         select p.id
@@ -154,27 +154,27 @@
 
     <select id="getProjectDetail" resultType="edp.davinci.dto.projectDto.ProjectDetail">
       SELECT p.*,
-             u.id                                       AS 'createBy.id',
-             IF(u.`name` is NULL, u.username, u.`name`) AS 'createBy.username',
-             u.avatar                                   AS 'createBy.avatar',
-             o.`id`                                     AS 'organization.id',
-             o.`name`                                   AS 'organization.name',
-             o.`description`                            AS 'organization.description',
-             o.`avatar`                                 AS 'organization.avatar',
-             o.`user_id`                                AS 'organization.userId',
-             o.`project_num`                            AS 'organization.projectNum',
-             o.`member_num`                             AS 'organization.memberNum',
-             o.role_num                               AS 'organization.teamNum',
-             o.`allow_create_project`                   AS 'organization.allowCreateProject',
-             o.`member_permission`                      AS 'organization.memberPermission',
-             o.`create_time`                            AS 'organization.createTime',
-             o.`create_by`                              AS 'organization.createBy',
-             o.`update_time`                            AS 'organization.updateTime',
-             o.`update_by`                              AS 'organization.updateBy'
+             u.`id`                                       AS 'createBy.id',
+             IF(u.`name` is NULL, u.`username`, u.`name`) AS 'createBy.username',
+             u.`avatar`                                   AS 'createBy.avatar',
+             o.`id`                                       AS 'organization.id',
+             o.`name`                                     AS 'organization.name',
+             o.`description`                              AS 'organization.description',
+             o.`avatar`                                   AS 'organization.avatar',
+             o.`user_id`                                  AS 'organization.userId',
+             o.`project_num`                              AS 'organization.projectNum',
+             o.`member_num`                               AS 'organization.memberNum',
+             o.`role_num`                                 AS 'organization.teamNum',
+             o.`allow_create_project`                     AS 'organization.allowCreateProject',
+             o.`member_permission`                        AS 'organization.memberPermission',
+             o.`create_time`                              AS 'organization.createTime',
+             o.`create_by`                                AS 'organization.createBy',
+             o.`update_time`                              AS 'organization.updateTime',
+             o.`update_by`                                AS 'organization.updateBy'
       FROM project p
-             LEFT JOIN organization o on o.id = p.org_id
-             LEFT JOIN `user` u on u.id = p.user_id
-      WHERE p.id = #{id}
+             LEFT JOIN organization o on o.`id` = p.`org_id`
+             LEFT JOIN `user` u on u.`id` = p.`user_id`
+      WHERE p.`id` = #{id}
   </select>
 
 </mapper>

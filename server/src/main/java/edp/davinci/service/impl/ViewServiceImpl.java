@@ -438,13 +438,6 @@ public class ViewServiceImpl implements ViewService {
     public void buildQuerySql(List<String> querySqlList, Source source, ViewExecuteParam executeParam) {
         if (null != executeParam) {
             //构造参数， 原有的被传入的替换
-            if (null == executeParam.getGroups() || executeParam.getGroups().length < 1) {
-                executeParam.setGroups(null);
-            }
-
-            if (null == executeParam.getFilters() || executeParam.getFilters().length < 1) {
-                executeParam.setFilters(null);
-            }
             STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
             ST st = stg.getInstanceOf("querySql");
             st.add("nativeQuery", executeParam.isNativeQuery());
@@ -721,6 +714,9 @@ public class ViewServiceImpl implements ViewService {
                     List<SqlVariable> list = map.get(p.getName());
                     if (null != list && list.size() > 0) {
                         SqlVariable v = list.get(list.size() - 1);
+                        if (null == sqlEntity.getQuaryParams()) {
+                            sqlEntity.setQuaryParams(new HashMap<>());
+                        }
                         sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue(), v.isUdf()));
                     }
                 }

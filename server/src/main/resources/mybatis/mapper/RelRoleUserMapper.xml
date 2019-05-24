@@ -7,10 +7,10 @@
         </selectKey>
         insert ignore rel_role_user
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            user_id,
-            role_id,
-            create_by,
-            create_time
+            `user_id`,
+            `role_id`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{userId,jdbcType=BIGINT},
@@ -23,10 +23,10 @@
     <insert id="insertBatch">
         insert ignore rel_role_user
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            user_id,
-            role_id,
-            create_by,
-            create_time
+            `user_id`,
+            `role_id`,
+            `create_by`,
+            `create_time`
         </trim>
         VALUES
         <foreach collection="relRoleUsers" item="record" index="index" separator=",">
