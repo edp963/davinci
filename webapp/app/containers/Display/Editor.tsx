@@ -309,6 +309,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryConditions = currentLayersInfo[itemId].queryConditions
+
+    let tempFilters
     let linkageFilters
     let globalFilters
     let variables
@@ -316,12 +318,14 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     let globalVariables
 
     if (queryConditions) {
+      tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
       linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
       globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
     } else {
+      tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
       globalFilters = cachedQueryConditions.globalFilters
       variables = cachedQueryConditions.variables
@@ -386,6 +390,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         groups,
         aggregators,
         filters: filters.map((i) => i.config.sql),
+        tempFilters,
         linkageFilters,
         globalFilters,
         variables,

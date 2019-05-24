@@ -1,7 +1,14 @@
 import React, { Component } from 'react'
 import { fromJS } from 'immutable'
 
-import { IGlobalControl, IRenderTreeItem, getControlRenderTree, getAllChildren, ILocalControl } from '..'
+import {
+  IGlobalControl,
+  ILocalControl,
+  getControlRenderTree,
+  getAllChildren,
+  IControlBase,
+  IRenderTreeItem
+} from '..'
 import FilterListItem from './FilterListItem'
 
 const styles = require('../filter.less')
@@ -10,8 +17,8 @@ import { Icon, Tree } from 'antd'
 const { TreeNode } = Tree
 
 interface IFilterListProps {
-  list: any[]
-  selectedFilter: IGlobalControl | ILocalControl
+  list: IGlobalControl[] | ILocalControl[]
+  selectedFilter: IControlBase
   onSelectFilter: (key: string) => void
   onAddFilter: () => void
   onDeleteFilter: (keys: string[], selectKey: string) => void
@@ -20,7 +27,7 @@ interface IFilterListProps {
 }
 
 interface IFilterListStates {
-  renderTree: IRenderTreeItem[],
+  renderTree: IRenderTreeItem[]
   flatTree: {
     [key: string]: IRenderTreeItem
   }
@@ -53,12 +60,12 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
     }
   }
 
-  private getRenderTree = (list) => {
+  private getRenderTree = (list: IGlobalControl[] | ILocalControl[]) => {
     const replica = fromJS(list).toJS()
-    this.setState(getControlRenderTree(replica))
+    this.setState(getControlRenderTree<IControlBase, typeof replica>(replica))
   }
 
-  private getSelectedKeys = (selectedFilter: IGlobalControl | ILocalControl) => {
+  private getSelectedKeys = (selectedFilter: IControlBase) => {
     this.setState({
       selectedKeys: selectedFilter ? [selectedFilter.key] : []
     })
@@ -141,30 +148,31 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
     onParentChange(dragKey, parentKey, type, dropNextKey)
   }
 
-  private renderTreeNodes = (renderTree: IRenderTreeItem[]) => renderTree.map((node) => {
-    const { key, name, children } = node
-    const title = (
-      <FilterListItem
-        title={name}
-        onNameChange={this.props.onNameChange(key)}
-        onDelete={this.deleteFilter(key)}
-      />
-    )
-    if (children) {
-      return (
-        <TreeNode title={title} key={key} dataRef={node}>
-          {this.renderTreeNodes(node.children)}
-        </TreeNode>
+  private renderTreeNodes = (renderTree: IRenderTreeItem[]) =>
+    renderTree.map((node) => {
+      const { key, name, children } = node
+      const title = (
+        <FilterListItem
+          title={name}
+          onNameChange={this.props.onNameChange(key)}
+          onDelete={this.deleteFilter(key)}
+        />
       )
-    }
-    return (
-      <TreeNode
-        title={title}
-        key={key}
-        dataRef={node}
-      />
-    )
-  })
+      if (children) {
+        return (
+          <TreeNode title={title} key={key} dataRef={node}>
+            {this.renderTreeNodes(node.children)}
+          </TreeNode>
+        )
+      }
+      return (
+        <TreeNode
+          title={title}
+          key={key}
+          dataRef={node}
+        />
+      )
+    })
 
   public render () {
     const { renderTree, selectedKeys } = this.state

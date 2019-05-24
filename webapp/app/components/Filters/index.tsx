@@ -66,12 +66,21 @@ export interface ILocalControl extends IControlBase {
   fields: IControlRelatedField | IControlRelatedField[]
 }
 
-export interface IGlobalRenderTreeItem extends IGlobalControl {
-  children?: IGlobalRenderTreeItem[]
+export interface IRenderTreeItem extends IControlBase {
+  children?: IRenderTreeItem[]
 }
 
-export interface ILocalRenderTreeItem extends ILocalControl {
-  children?: ILocalRenderTreeItem[]
+export interface IGlobalRenderTreeItem extends IRenderTreeItem {
+  relatedItems: {
+    [itemId: string]: IGlobalControlRelatedItem
+  }
+  relatedViews: {
+    [viewId: string]: IControlRelatedField | IControlRelatedField[]
+  }
+}
+
+export interface ILocalRenderTreeItem extends IRenderTreeItem {
+  fields: IControlRelatedField | IControlRelatedField[]
 }
 
 export interface IControlRequestParams {
@@ -487,7 +496,7 @@ export function getDatePickerFormatOptions (type: FilterTypes, multiple: boolean
   }
 }
 
-export function getControlRenderTree<T extends IControlBase, U extends T> (controls: T[]): {
+export function getControlRenderTree<T extends IControlBase, U extends IControlBase> (controls: T[]): {
   renderTree: U[],
   flatTree: {
     [key: string]: U
@@ -523,7 +532,7 @@ export function getControlRenderTree<T extends IControlBase, U extends T> (contr
 
 export function getAllChildren (
   key: string,
-  flatTree: { [key: string]: IGlobalRenderTreeItem | ILocalRenderTreeItem }
+  flatTree: { [key: string]: IRenderTreeItem }
 ) {
   let keys = []
   if (flatTree[key].children) {
@@ -534,10 +543,10 @@ export function getAllChildren (
   return keys
 }
 
-export function getParents<T extends IGlobalRenderTreeItem | ILocalRenderTreeItem> (
+export function getParents<T extends IControlBase> (
   parentKey: string,
   flatTree: {
-    [key: string]: IGlobalRenderTreeItem | ILocalRenderTreeItem
+    [key: string]: IRenderTreeItem
   }
 ): T[] {
   let parents = []

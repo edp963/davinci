@@ -118,6 +118,7 @@ function displayReducer (state = initialState, action) {
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
+              tempFilters: [],
               linkageFilters: [],
               globalFilters: [],
               variables: [],
@@ -165,6 +166,7 @@ function displayReducer (state = initialState, action) {
               datasource: { resultList: [] },
               loading: false,
               queryConditions: {
+                tempFilters: [],
                 linkageFilters: [],
                 globalFilters: [],
                 variables: [],
@@ -230,6 +232,7 @@ function displayReducer (state = initialState, action) {
             ...layersInfo[payload.itemId],
             loading: true,
             queryConditions: {
+              tempFilters: payload.requestParams.tempFilters,
               linkageFilters: payload.requestParams.linkageFilters,
               globalFilters: payload.requestParams.globalFilters,
               variables: payload.requestParams.variables,

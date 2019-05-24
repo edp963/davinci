@@ -54,6 +54,7 @@ export function* getData (action) {
   const { renderType, layerId, dataToken, requestParams } = payload
   const {
     filters,
+    tempFilters,
     linkageFilters,
     globalFilters,
     variables,
@@ -68,7 +69,7 @@ export function* getData (action) {
       url: `${api.share}/data/${dataToken}`,
       data: {
         ...rest,
-        filters: filters.concat(linkageFilters).concat(globalFilters),
+        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
         params: variables.concat(linkageVariables).concat(globalVariables)
       }
     })
