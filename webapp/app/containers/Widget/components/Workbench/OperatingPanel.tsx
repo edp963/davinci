@@ -389,7 +389,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const { mode, dataParams } = this.state
     const { metrics } = dataParams
 
-    if (mode === 'pivot' && cachedItem.name === '指标名称') {
+    if (mode === 'pivot'
+        && cachedItem.name === '指标名称'
+        && !['cols', 'rows'].includes(name)) {
       resolve(false)
       this.setState({ dragged: null })
       return
