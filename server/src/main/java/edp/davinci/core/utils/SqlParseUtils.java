@@ -91,30 +91,28 @@ public class SqlParseUtils {
             try {
                 CountDownLatch countDownLatch = new CountDownLatch(variables.size());
                 final Future[] future = {null};
-                variables.forEach(variable -> {
-                    future[0] = executorService.submit(() -> {
-                        try {
-                            SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
-                            if (null != typeEnum) {
-                                switch (typeEnum) {
-                                    case QUERYVAR:
-                                        queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf()));
-                                        break;
-                                    case AUTHVARE:
-                                        if (null != variable) {
-                                            List<String> v = getAuthVarValue(variable, null);
-                                            if (null != v) {
-                                                authParamMap.put(variable.getName().trim(), v);
-                                            }
+                variables.forEach(variable -> future[0] = executorService.submit(() -> {
+                    try {
+                        SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
+                        if (null != typeEnum) {
+                            switch (typeEnum) {
+                                case QUERYVAR:
+                                    queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf()));
+                                    break;
+                                case AUTHVARE:
+                                    if (null != variable) {
+                                        List<String> v = getAuthVarValue(variable, null);
+                                        if (null != v) {
+                                            authParamMap.put(variable.getName().trim(), v);
                                         }
-                                        break;
-                                }
+                                    }
+                                    break;
                             }
-                        } finally {
-                            countDownLatch.countDown();
                         }
-                    });
-                });
+                    } finally {
+                        countDownLatch.countDown();
+                    }
+                }));
 
                 try {
                     future[0].get();
