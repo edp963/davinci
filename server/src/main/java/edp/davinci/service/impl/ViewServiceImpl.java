@@ -68,6 +68,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static edp.core.consts.Consts.COMMA;
 import static edp.core.consts.Consts.MINUS;
 import static edp.davinci.core.enums.SqlVariableTypeEnum.AUTHVARE;
 import static edp.davinci.core.enums.SqlVariableTypeEnum.QUERYVAR;
@@ -371,8 +372,17 @@ public class ViewServiceImpl implements ViewService {
             if (null != sqlUtils && null != sqlEntity) {
                 if (!StringUtils.isEmpty(sqlEntity.getSql())) {
 
-                    if (projectService.isMaintainer(projectDetail, user)) {
+                    if (isMaintainer(user, projectDetail)) {
                         sqlEntity.setAuthParams(null);
+                    }
+
+                    if (!CollectionUtils.isEmpty(sqlEntity.getQuaryParams())) {
+                        sqlEntity.getQuaryParams().forEach((k, v) -> {
+                            if (v instanceof List && ((List) v).size() > 0) {
+                                v = ((List) v).stream().collect(Collectors.joining(COMMA)).toString();
+                            }
+                            sqlEntity.getQuaryParams().put(k, v);
+                        });
                     }
 
                     String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
@@ -398,6 +408,10 @@ public class ViewServiceImpl implements ViewService {
             throw new ServerException(e.getMessage());
         }
         return paginateWithQueryColumns;
+    }
+
+    private boolean isMaintainer(User user, ProjectDetail projectDetail) {
+        return projectService.isMaintainer(projectDetail, user);
     }
 
     /**
