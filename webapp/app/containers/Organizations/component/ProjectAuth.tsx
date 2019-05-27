@@ -58,7 +58,7 @@ export class Auth extends React.Component <IAuthProps, {}> {
         render: (text) => text.toUpperCase()
       },
       {
-          title: 'settings',
+          title: 'Permission',
           dataIndex: 'permission',
          // className: isHidden ? utilStyles.hide : '',
           key: 'settings',
@@ -93,7 +93,7 @@ export class Auth extends React.Component <IAuthProps, {}> {
       key: `name${uuid(8, 16)}`
     },
     {
-      title: 'Auth',
+      title: 'Permission',
       dataIndex: 'name',
       key: `key${uuid(8, 16)}`,
       width: '59%',
