@@ -16,6 +16,7 @@ interface IEditorHeaderProps {
   onDescriptionChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   onSave?: () => void
   onCancel: () => void
+  onSetting?: () => void
   loading?: boolean
 }
 
@@ -29,6 +30,7 @@ export function EditorHeader (props: IEditorHeaderProps) {
     onDescriptionChange,
     onSave,
     onCancel,
+    onSetting,
     loading
   } = props
 
@@ -63,6 +65,7 @@ export function EditorHeader (props: IEditorHeaderProps) {
         </div>
       </div>
       <div className={`${currentType === 'dashboard' ? utilStyles.hide : styles.actions}`}>
+        <Button onClick={onSetting}>设置</Button>
         <Button
           type="primary"
           loading={loading}

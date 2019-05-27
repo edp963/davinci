@@ -19,7 +19,7 @@
  */
 
 import * as React from 'react'
-
+import { FormComponentProps } from 'antd/lib/form'
 import { Form, Input, Select, Button, Row, Col, Menu, Tabs } from 'antd'
 const FormItem = Form.Item
 const Option = Select.Option
@@ -58,7 +58,7 @@ interface IComputedConfigFormStates {
   filterFunction: string
   queryInfo: string[]
 }
-export class ComputedConfigForm extends React.Component<IComputedConfigFormProps, IComputedConfigFormStates> {
+export class ComputedConfigForm extends React.Component<IComputedConfigFormProps & FormComponentProps, IComputedConfigFormStates> {
   private Editor: any
   constructor(props) {
     super(props)
@@ -483,5 +483,5 @@ export class ComputedConfigForm extends React.Component<IComputedConfigFormProps
   }
 }
 
-export default Form.create()(ComputedConfigForm)
+export default Form.create<IComputedConfigFormProps & FormComponentProps>()(ComputedConfigForm)
 

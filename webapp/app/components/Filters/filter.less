@@ -375,10 +375,31 @@
   padding: 4px 8px 8px;
   margin-top: 16px;
   border-radius: 3px;
+  display: flex;
+  align-items: flex-end;
 
   &.empty {
     padding: 0;
     margin: 0;
+    display: none;
+  }
+
+  .controls {
+    flex: 1;
+  }
+
+  .actions {
+    flex-shrink: 0;
+    padding: 6px 8px;
+
+    button {
+      // margin-top: 20px;
+      margin-left: 8px;
+
+      &:first-child {
+        margin-left: 0;
+      }
+    }
   }
 }
 

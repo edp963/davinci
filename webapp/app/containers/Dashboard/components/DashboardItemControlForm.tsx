@@ -21,7 +21,7 @@
 import React, { PureComponent, Suspense } from 'react'
 import { Form, Button, Row, Col } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
-import { QueryVariable } from '../Grid'
+import { IQueryConditions } from '../Grid'
 import {
   IRenderTreeItem,
   ILocalRenderTreeItem,
@@ -47,7 +47,7 @@ interface IDashboardItemControlFormProps {
   controls: ILocalControl[]
   mapOptions: IMapControlOptions
   onGetOptions: OnGetControlOptions
-  onSearch: (queayConditions: { variables: QueryVariable }) => void
+  onSearch: (queayConditions: Partial<IQueryConditions>) => void
   onHide: () => void
 }
 
