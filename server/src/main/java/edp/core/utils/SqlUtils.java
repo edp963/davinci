@@ -44,8 +44,6 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 import org.springframework.stereotype.Component;
@@ -120,6 +118,26 @@ public class SqlUtils {
         }
     }
 
+    @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
+    public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer totalCount, Integer limit, Set<String> excludeColumns) throws Exception {
+        if (null == pageNo) {
+            pageNo = -1;
+        }
+        if (null == pageSize) {
+            pageSize = -1;
+        }
+        if (null == totalCount) {
+            totalCount = 0;
+        }
+
+        if (null == limit) {
+            limit = -1;
+        }
+
+        PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit, excludeColumns);
+        return paginate;
+    }
+
     @CachePut(value = "query", key = "#sql")
     public List<Map<String, Object>> query4List(String sql, int limit) throws Exception {
         sql = filterAnnotate(sql);
@@ -164,7 +182,7 @@ public class SqlUtils {
                 sqlLogger.info("{}  >> \n{}", md5, sql);
             }
             jdbcTemplate.setMaxRows(resultLimit);
-            getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns);
+            getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
             paginateWithQueryColumns.setPageNo(1);
             int size = paginateWithQueryColumns.getResultList().size();
             paginateWithQueryColumns.setPageSize(size);
@@ -193,22 +211,14 @@ public class SqlUtils {
                     if (isQueryLogEnable) {
                         sqlLogger.info("{}  >> \n{}", md5, sql);
                     }
-                    getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns);
-                    break;
-                case MOONBOX:
-                    if (isQueryLogEnable) {
-                        sqlLogger.info("{}  >> \n{}", md5, sql);
-                    }
-                    jdbcTemplate.setMaxRows(maxRows);
-                    jdbcTemplate.query(sql, getPaginateResultSetExtractor(paginateWithQueryColumns, startRow, excludeColumns));
+                    getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
                     break;
                 default:
                     if (isQueryLogEnable) {
                         sqlLogger.info("{}  >> \n{}", md5, sql);
                     }
                     jdbcTemplate.setMaxRows(maxRows);
-                    jdbcTemplate.query(new StreamingStatementCreator(sql, this.dataTypeEnum),
-                            getPaginateResultSetExtractor(paginateWithQueryColumns, startRow, excludeColumns));
+                    getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, startRow);
                     break;
             }
         }
@@ -220,19 +230,7 @@ public class SqlUtils {
         return paginateWithQueryColumns;
     }
 
-
-    private String getCountSql(String sql) {
-        try {
-            Select select = (Select) CCJSqlParserUtil.parse(sql);
-            PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
-            plainSelect.setOrderByElements(null);
-            return String.format(QUERY_COUNT_SQL, select.toString());
-        } catch (JSQLParserException e) {
-        }
-        return String.format(Consts.QUERY_COUNT_SQL, sql);
-    }
-
-    private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns) {
+    private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns, int startRow) {
         SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql);
         if (null != sqlRowSet) {
             SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
@@ -248,6 +246,11 @@ public class SqlUtils {
             paginateWithQueryColumns.setColumns(queryColumns);
 
             List<Map<String, Object>> resultList = new ArrayList<>();
+
+            if (startRow > 0) {
+                sqlRowSet.absolute(startRow);
+            }
+
             while (sqlRowSet.next()) {
                 Map<String, Object> map = new LinkedHashMap<>();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
@@ -263,60 +266,15 @@ public class SqlUtils {
         }
     }
 
-    private ResultSetExtractor<PaginateWithQueryColumns> getPaginateResultSetExtractor(PaginateWithQueryColumns paginateWithQueryColumns, int startRow, Set<String> excludeColumns) {
-        return (ResultSet resultSet) -> {
-            final List<Map<String, Object>> resultList = paginateWithQueryColumns.getResultList();
-            ResultSetMetaData metaData = resultSet.getMetaData();
-
-            List<QueryColumn> queryColumns = new ArrayList<>();
-            for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                String c = metaData.getColumnLabel(i);
-                if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(c)) {
-                    continue;
-                }
-                queryColumns.add(new QueryColumn(c, metaData.getColumnTypeName(i)));
-            }
-
-            paginateWithQueryColumns.setColumns(queryColumns);
-
-            resultSet.absolute(startRow);
-            while (resultSet.next()) {
-                Map<String, Object> map = new HashMap<>();
-                for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                    String c = metaData.getColumnLabel(i);
-                    if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(c)) {
-                        continue;
-                    }
-                    Object v = resultSet.getObject(c);
-                    map.put(c, v);
-                }
-                resultList.add(map);
-            }
-
-            resultSet.close();
-            return paginateWithQueryColumns;
-        };
-    }
-
-
-    @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
-    public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer totalCount, Integer limit, Set<String> excludeColumns) throws Exception {
-        if (null == pageNo) {
-            pageNo = -1;
+    private String getCountSql(String sql) {
+        try {
+            Select select = (Select) CCJSqlParserUtil.parse(sql);
+            PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+            plainSelect.setOrderByElements(null);
+            return String.format(QUERY_COUNT_SQL, select.toString());
+        } catch (JSQLParserException e) {
         }
-        if (null == pageSize) {
-            pageSize = -1;
-        }
-        if (null == totalCount) {
-            totalCount = 0;
-        }
-
-        if (null == limit) {
-            limit = -1;
-        }
-
-        PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit, excludeColumns);
-        return paginate;
+        return String.format(Consts.QUERY_COUNT_SQL, sql);
     }
 
     /**
@@ -830,22 +788,4 @@ public class SqlUtils {
         return null;
     }
 
-}
-
-
-class StreamingStatementCreator implements PreparedStatementCreator {
-    private final String sql;
-    private DataTypeEnum dataTypeEnum;
-
-    public StreamingStatementCreator(String sql, DataTypeEnum dataTypeEnum) {
-        this.sql = sql;
-        this.dataTypeEnum = dataTypeEnum;
-    }
-
-    @Override
-    public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
-        final PreparedStatement statement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
-        statement.setFetchSize(1000);
-        return statement;
-    }
 }
