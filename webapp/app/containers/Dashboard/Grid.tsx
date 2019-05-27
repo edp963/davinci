@@ -1312,6 +1312,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
       currentItems.forEach((dashboardItem) => {
         const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
+        console.log(width, height)
         const {
           datasource,
           loading,
@@ -1386,8 +1387,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           i: `${id}`
         })
       })
-      if (dashboardType === 1) {
-        console.log(dashboardType)
+      if (dashboardType === 2) {
         // report mode
         grids = (
           <div className={styles.reportMode}>
