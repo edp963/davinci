@@ -255,7 +255,8 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
           <Box>
             <Box.Header>
               <Box.Title>
-                <Icon type="bars">View List</Icon>
+                <Icon type="bars" />
+                View List
               </Box.Title>
               <Box.Tools>
                 <Tooltip placement="bottom" title="新增">
