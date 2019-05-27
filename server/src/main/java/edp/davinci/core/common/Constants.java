@@ -133,7 +133,7 @@ public class Constants extends Consts {
 
     public static final String REG_SQL_PLACEHOLDER = "%s.+%s";
 
-    public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.-[\\u4e00-\\u9fa5]*]+\\s*\\w*[<>!=]*\\s*\\(?%s\\.+%s\\)?\\s*\\)";
+    public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.-[\\u4e00-\\u9fa5]*]+\\s*[\\w<>!=]*\\s*[a-zA-Z0-9_.-]*\\(?%s[a-zA-Z0-9_]+%s\\)?\\s*\\)";
 
 
     public static final String LDAP_USER_PASSWORD = "LDAP";
