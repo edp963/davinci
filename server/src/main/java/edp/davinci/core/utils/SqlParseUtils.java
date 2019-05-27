@@ -349,7 +349,22 @@ public class SqlParseUtils {
                             return "1=1";
                         }
                     } else {
-                        return "1=0";
+                        Set<String> keySet = authParamMap.keySet();
+                        String finalRight = right.trim();
+                        List<String> keys = keySet.stream().filter(finalRight::contains).collect(Collectors.toList());
+                        if (!CollectionUtils.isEmpty(keys)) {
+                            String k = keys.get(0);
+                            List<String> list = authParamMap.get(k);
+                            String v = "";
+                            if (!CollectionUtils.isEmpty(list)) {
+                                String s = list.stream().collect(Collectors.joining(COMMA));
+                                v = right.replace(delimiter + k + delimiter, s);
+
+                            }
+                            return String.join(EMPTY, left, SPACE, sqlOperator.getValue(), SPACE, v);
+                        } else {
+                            return "1=0";
+                        }
                     }
                 }
             }
