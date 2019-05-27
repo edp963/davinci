@@ -60,7 +60,7 @@ public interface ProjectMapper {
     @Select({"select * from project where id = #{id} and user_id = #{userId}"})
     Project getByProject(Project project);
 
-    @Update({"update project set `name` = #{name}, description = #{description}, visibility = #{visibility}  where id = #{id}"})
+    @Update({"update project set `name` = #{name}, description = #{description}, visibility = #{visibility} `update_time`= now() where id = #{id}"})
     int updateBaseInfo(Project project);
 
     @Update({"update project set `org_id` = #{orgId} where id = #{id}"})

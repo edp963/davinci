@@ -38,6 +38,8 @@
             `visibility`,
             `is_transfer`,
             `initial_org_id`
+            `create_time`,
+            `update_time`
         </trim>
         values
         <trim prefix=" (" suffix=")" suffixOverrides=",">
@@ -52,7 +54,9 @@
             #{userId, jdbcType=BIGINT},
             #{visibility, jdbcType=TINYINT},
             #{isTransfer, jdbcType=TINYINT},
-            #{orgId, jdbcType=BIGINT}
+            #{orgId, jdbcType=BIGINT},
+            now(),
+            now()
         </trim>
     </insert>
 

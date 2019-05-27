@@ -20,6 +20,8 @@ package edp.davinci.model;
 
 import lombok.Data;
 
+import java.util.Date;
+
 @Data
 public class Project {
     private Long id;
@@ -41,6 +43,10 @@ public class Project {
     private Boolean isTransfer = false;
 
     private Long initialOrgId;
+
+    private Date createTime;
+
+    private Date updateTime;
 
     public Project() {
     }
@@ -64,6 +70,8 @@ public class Project {
                 ", visibility=" + visibility +
                 ", isTransfer=" + isTransfer +
                 ", initialOrgId=" + initialOrgId +
+                ", createTime=" + createTime +
+                ", updateTime=" + updateTime +
                 '}';
     }
 
