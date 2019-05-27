@@ -119,8 +119,7 @@ export type OnFilterControlValueChange = (
 ) => void
 
 export type OnFilterValueChange = (
-  mapItemFilterValue: IMapItemControlRequestParams,
-  filterKey: string
+  mapItemFilterValue: IMapItemControlRequestParams
 ) => void
 
 export function getDefaultGlobalControl (): IGlobalControl {
@@ -290,7 +289,9 @@ export function getVariableValue (filter: IControlBase, fields: IControlRelatedF
   let valueType
   let variable = []
 
-  if (value === void 0 || value === null) {
+  if (value === void 0
+    || value === null
+    || typeof value === 'string' && !value.trim()) {
     return variable
   }
 
@@ -357,7 +358,9 @@ export function getModelValue (control: IControlBase, field: IControlRelatedFiel
   const { name, type: sqlType } = field
   const filters = []
 
-  if (value === void 0 || value === null) {
+  if (value === void 0
+      || value === null
+      || typeof value === 'string' && !value.trim()) {
     return filters
   }
 

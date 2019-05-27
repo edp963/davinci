@@ -21,7 +21,8 @@ import {
 import { defaultFilterControlGridProps, SHOULD_LOAD_OPTIONS } from './filterTypes'
 import FilterControl from './FilterControl'
 
-import { Row, Col, Form } from 'antd'
+import { Row, Col, Form, Button } from 'antd'
+import { DashboardTypes } from 'app/containers/Dashboard/types'
 
 const styles = require('./filter.less')
 
@@ -194,7 +195,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
   }
 
   private change = (control: IGlobalControl, val) => {
-    const { currentItems } = this.props
+    const { currentDashboard, currentItems, onChange } = this.props
     const { flatTree } = this.state
     const { key } = control
     const childrenKeys = getAllChildren(key, flatTree)
@@ -205,22 +206,6 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
       [key]: val
     }
 
-    this.setControlRequestParams(control, val, currentItems, (itemId) => {
-      relatedItemIds.push(itemId)
-    })
-
-    const mapItemControlRequestParams: IMapItemControlRequestParams = relatedItemIds.reduce((acc, itemId) => {
-      acc[itemId] = Object.values(this.controlRequestParamsByItem[itemId]).reduce((filterValue, val) => {
-        filterValue.variables = filterValue.variables.concat(val.variables)
-        filterValue.filters = filterValue.filters.concat(val.filters)
-        return filterValue
-      }, {
-        variables: [],
-        filters: []
-      })
-      return acc
-    }, {})
-
     if (childrenKeys.length) {
       childrenKeys.forEach((childKey) => {
         const child = flatTree[childKey]
@@ -230,8 +215,60 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
       })
     }
 
+    this.setControlRequestParams(control, val, currentItems, (itemId) => {
+      relatedItemIds.push(itemId)
+    })
+
     this.setState({ controlValues })
-    this.props.onChange(mapItemControlRequestParams, key)
+
+    if (currentDashboard && currentDashboard.type === DashboardTypes.Dashboard) {
+      const controlRequestParamsByItem: IMapItemControlRequestParams = relatedItemIds.reduce((acc, itemId) => {
+        acc[itemId] = Object.values(this.controlRequestParamsByItem[itemId]).reduce((filterValue, val) => {
+          filterValue.variables = filterValue.variables.concat(val.variables)
+          filterValue.filters = filterValue.filters.concat(val.filters)
+          return filterValue
+        }, {
+          variables: [],
+          filters: []
+        })
+        return acc
+      }, {})
+
+      onChange(controlRequestParamsByItem)
+    }
+  }
+
+  private search = () => {
+    const { currentItems, onChange } = this.props
+    const { flatTree } = this.state
+    const formValues = this.props.form.getFieldsValue()
+
+    Object.entries(formValues).forEach(([controlKey, value]) => {
+      const control = flatTree[controlKey]
+      this.setControlRequestParams(control as IGlobalRenderTreeItem, value, currentItems)
+    })
+
+    const controlRequestParamsByItem = Object
+      .entries(this.controlRequestParamsByItem)
+      .reduce((paramsByItem, [itemId, expsByControl]) => {
+        paramsByItem[itemId] = Object
+          .values(expsByControl)
+          .reduce((params, exps) => {
+            params.variables = params.variables.concat(exps.variables)
+            params.filters = params.filters.concat(exps.filters)
+            return params
+          }, {
+            variables: [],
+            filters: []
+          })
+        return paramsByItem
+      }, {})
+
+    onChange(controlRequestParamsByItem)
+  }
+
+  private reset = () => {
+    this.props.form.resetFields()
   }
 
   private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: IGlobalControl[]) => {
@@ -285,6 +322,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
   }
 
   public render () {
+    const { currentDashboard } = this.props
     const { renderTree } = this.state
     const panelClass = classnames({
       [styles.controlPanel]: true,
@@ -292,13 +330,19 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     })
     return (
       <Form className={panelClass}>
-        <Row gutter={8}>
-          {this.renderFilterControls(renderTree)}
-          {/* <Col span={4}>
-            <Button type="primary" size="small" icon="search">查询</Button>
-            <Button size="small" icon="reload">重置</Button>
-          </Col> */}
-        </Row>
+        <div className={styles.controls}>
+          <Row gutter={8}>
+            {this.renderFilterControls(renderTree)}
+          </Row>
+        </div>
+        {
+          currentDashboard.type === DashboardTypes.Report && (
+            <div className={styles.actions}>
+              <Button type="primary" icon="search" onClick={this.search}>查询</Button>
+              <Button icon="reload" onClick={this.reset}>重置</Button>
+            </div>
+          )
+        }
       </Form>
     )
   }
