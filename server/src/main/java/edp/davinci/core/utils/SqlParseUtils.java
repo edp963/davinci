@@ -91,30 +91,28 @@ public class SqlParseUtils {
             try {
                 CountDownLatch countDownLatch = new CountDownLatch(variables.size());
                 final Future[] future = {null};
-                variables.forEach(variable -> {
-                    future[0] = executorService.submit(() -> {
-                        try {
-                            SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
-                            if (null != typeEnum) {
-                                switch (typeEnum) {
-                                    case QUERYVAR:
-                                        queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf()));
-                                        break;
-                                    case AUTHVARE:
-                                        if (null != variable) {
-                                            List<String> v = getAuthVarValue(variable, null);
-                                            if (null != v) {
-                                                authParamMap.put(variable.getName().trim(), v);
-                                            }
+                variables.forEach(variable -> future[0] = executorService.submit(() -> {
+                    try {
+                        SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
+                        if (null != typeEnum) {
+                            switch (typeEnum) {
+                                case QUERYVAR:
+                                    queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf()));
+                                    break;
+                                case AUTHVARE:
+                                    if (null != variable) {
+                                        List<String> v = getAuthVarValue(variable, null);
+                                        if (null != v) {
+                                            authParamMap.put(variable.getName().trim(), v);
                                         }
-                                        break;
-                                }
+                                    }
+                                    break;
                             }
-                        } finally {
-                            countDownLatch.countDown();
                         }
-                    });
-                });
+                    } finally {
+                        countDownLatch.countDown();
+                    }
+                }));
 
                 try {
                     future[0].get();
@@ -351,7 +349,22 @@ public class SqlParseUtils {
                             return "1=1";
                         }
                     } else {
-                        return "1=0";
+                        Set<String> keySet = authParamMap.keySet();
+                        String finalRight = right.trim();
+                        List<String> keys = keySet.stream().filter(finalRight::contains).collect(Collectors.toList());
+                        if (!CollectionUtils.isEmpty(keys)) {
+                            String k = keys.get(0);
+                            List<String> list = authParamMap.get(k);
+                            String v = "";
+                            if (!CollectionUtils.isEmpty(list)) {
+                                String s = list.stream().collect(Collectors.joining(COMMA));
+                                v = right.replace(delimiter + k + delimiter, s);
+
+                            }
+                            return String.join(EMPTY, left, SPACE, sqlOperator.getValue(), SPACE, v);
+                        } else {
+                            return "1=0";
+                        }
                     }
                 }
             }
