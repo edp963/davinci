@@ -72,7 +72,7 @@ import {
   IControlRelatedField,
   getVariableValue,
   getModelValue,
-  getDefaultValue
+  deserializeDefaultValue
 } from '../../components/Filters'
 
 const initialState = fromJS({
@@ -157,7 +157,7 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
 
       globalControls.forEach((control: IGlobalControl) => {
         const { interactionType, relatedItems, relatedViews } = control
-        const defaultValue = getDefaultValue(control)
+        const defaultValue = deserializeDefaultValue(control)
         if (defaultValue) {
           Object.entries(relatedItems).forEach(([itemId, config]) => {
             Object.entries(relatedViews).forEach(([viewId, fields]) => {
