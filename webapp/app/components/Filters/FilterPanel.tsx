@@ -11,7 +11,7 @@ import {
   IMapControlOptions,
   getVariableValue,
   getModelValue,
-  getDefaultValue,
+  deserializeDefaultValue,
   IRenderTreeItem,
   getControlRenderTree,
   getAllChildren,
@@ -85,7 +85,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
           }
         })
 
-        const defaultFilterValue = getDefaultValue(control)
+        const defaultFilterValue = deserializeDefaultValue(control)
         if (defaultFilterValue) {
           controlValues[control.key] = defaultFilterValue
           this.setControlRequestParams(control, defaultFilterValue, currentItems)

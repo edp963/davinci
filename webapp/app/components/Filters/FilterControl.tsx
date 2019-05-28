@@ -7,7 +7,7 @@ import {
   renderSelect,
   renderDate,
   renderDateRange,
-  getDefaultValue,
+  deserializeDefaultValue,
   IControlBase
 } from './'
 import { FilterTypes } from './filterTypes'
@@ -64,7 +64,7 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
     return (
       <FormItem label={control.name} className={styles.controlItem}>
         {getFieldDecorator(`${control.key}`, {
-          initialValue: getDefaultValue(control)
+          initialValue: deserializeDefaultValue(control)
         })(component)}
       </FormItem>
     )

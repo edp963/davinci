@@ -27,7 +27,6 @@ import {
   ILocalRenderTreeItem,
   IControlRequestParams,
   ILocalControl,
-  getDefaultValue,
   getControlRenderTree,
   getModelValue,
   getVariableValue,
@@ -35,7 +34,8 @@ import {
   OnGetControlOptions,
   IMapControlOptions,
   getParents,
-  getAllChildren
+  getAllChildren,
+  deserializeDefaultValue
 } from 'app/components/Filters'
 import { SHOULD_LOAD_OPTIONS, defaultFilterControlGridProps } from 'app/components/Filters/filterTypes'
 import FilterControl from 'app/components/Filters/FilterControl'
@@ -93,7 +93,7 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
     this.controlRequestParams = {}
 
     const replica = controls.map((control) => {
-      const defaultFilterValue = getDefaultValue(control)
+      const defaultFilterValue = deserializeDefaultValue(control)
       if (defaultFilterValue) {
         controlValues[control.key] = defaultFilterValue
         this.setControlRequestParams(control, defaultFilterValue)

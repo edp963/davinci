@@ -92,15 +92,19 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
                 )}
               </FormItem>
             </Col>
-            <Col span={8} className={classnames({[utilStyles.hide]: !showDefaultValue})}>
-              <FormItem label=" " colon={false}>
-                {getFieldDecorator('defaultValue', {})(
-                  <Suspense fallback={null}>
-                    {renderDate(controlFormValues, () => void 0, {size: 'small'})}
-                  </Suspense>
-                )}
-              </FormItem>
-            </Col>
+            {
+              showDefaultValue && (
+                <Suspense fallback={null}>
+                  <Col span={8}>
+                    <FormItem label=" " colon={false}>
+                      {getFieldDecorator('defaultValue', {})(
+                        renderDate(controlFormValues, null, {size: 'small'})
+                      )}
+                    </FormItem>
+                  </Col>
+                </Suspense>
+              )
+            }
           </>
         )
         break
@@ -323,6 +327,10 @@ const formOptions = {
             }
             break
         }
+      }
+
+      if (changedValues.hasOwnProperty('multiple')) {
+        changedValues.defaultValue = null
       }
 
       if (changedValues.hasOwnProperty('type')) {

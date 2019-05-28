@@ -28,7 +28,9 @@ import {
   InteractionType,
   IControlRelatedField,
   ILocalControl,
-  getRelatedFieldsInfo
+  getRelatedFieldsInfo,
+  serializeDefaultValue,
+  deserializeDefaultValue
 } from 'app/components/Filters'
 import { FilterTypes, IS_RANGE_TYPE} from 'app/components/Filters/filterTypes'
 
@@ -125,12 +127,9 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
   private setFormData = (control: ILocalControl) => {
     if (control) {
       const { type, interactionType, defaultValue, ...rest } = control
-      const isControlDateType = [FilterTypes.Date, FilterTypes.DateRange].includes(type)
       const fieldsValue = {
         type,
-        defaultValue: isControlDateType && defaultValue
-          ? moment(defaultValue)
-          : defaultValue,
+        defaultValue: deserializeDefaultValue(control),
         ...rest
       }
       this.props.onSetControlFormValues(fieldsValue)
@@ -268,17 +267,14 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
         return
       }
 
-      const { type, key, defaultValue, dateFormat } = values
-      const isControlDateType = [FilterTypes.Date, FilterTypes.DateRange].includes(type)
+      const { key, defaultValue } = values
       const cachedControls = controls.map((c) => {
         if (c.key === key) {
           return {
             ...c,
             ...values,
             interactionType: selected.interactionType,
-            defaultValue: isControlDateType
-              ? (defaultValue && defaultValue.format(dateFormat))
-              : defaultValue,
+            defaultValue: serializeDefaultValue(values, defaultValue),
             fields: relatedFields.fields
           }
         } else {
