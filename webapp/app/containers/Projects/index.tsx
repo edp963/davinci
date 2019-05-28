@@ -476,6 +476,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             title="确定删除？"
             placement="bottom"
             onConfirm={this.confirmDeleteProject('collect', d.id)}
+            onCancel={this.stopPPG}
           >
             <Tooltip title="删除">
               <CreateButton className={styles.delete} type="delete" onClick={this.stopPPG}/>
@@ -608,6 +609,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             title="确定删除？"
             placement="bottom"
             onConfirm={this.confirmDeleteProject('onCollect', d.id)}
+            onCancel={this.stopPPG}
           >
             <Tooltip title="删除">
               <CreateButton
