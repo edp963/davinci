@@ -336,7 +336,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
           </Row>
         </div>
         {
-          currentDashboard.type === DashboardTypes.Report && (
+          currentDashboard && currentDashboard.type === DashboardTypes.Report && (
             <div className={styles.actions}>
               <Button type="primary" icon="search" onClick={this.search}>查询</Button>
               <Button icon="reload" onClick={this.reset}>重置</Button>

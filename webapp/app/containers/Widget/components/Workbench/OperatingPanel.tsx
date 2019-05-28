@@ -739,26 +739,54 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     return [dcount, mcount]
   }
 
-  public triggerWidgetRefresh = (pageNo: number, pageSize: number) => {
+  public flipPage = (pageNo: number, pageSize: number) => {
     const { dataParams, styleParams, pagination } = this.state
-    this.setWidgetProps(dataParams, styleParams, 'rerender', {
-      ...pagination,
-      pageNo,
-      pageSize
+    this.setWidgetProps(dataParams, styleParams, {
+      renderType: 'rerender',
+      updatedPagination: {
+        ...pagination,
+        pageNo,
+        pageSize
+      },
+      queryMode: WorkbenchQueryMode.Immediately
+    })
+  }
+
+  private forceSetWidgetProps = () => {
+    const { dataParams, styleParams, pagination } = this.state
+    this.setWidgetProps(dataParams, styleParams, {
+      renderType: 'rerender',
+      updatedPagination: pagination,
+      queryMode: WorkbenchQueryMode.Immediately
     })
   }
 
   private setWidgetProps = (
     dataParams: IDataParams,
     styleParams: IChartStyles,
-    renderType?: RenderType,
-    updatedPagination?: IPaginationParams
+    options?: {
+      renderType?: RenderType,
+      updatedPagination?: IPaginationParams,
+      queryMode?: WorkbenchQueryMode
+    }
   ) => {
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, yAxis } = dataParams
     const { selectedView, onLoadData, onSetWidgetProps } = this.props
     const { mode, chartModeSelectedChart, pagination } = this.state
+
+    let renderType
+    let updatedPagination
+    let queryMode = this.props.queryMode
+
+    if (options) {
+      renderType = options.renderType
+      updatedPagination = options.updatedPagination
+      queryMode = options.queryMode
+    }
+
     const fromPagination = !!updatedPagination
     updatedPagination = { ...pagination, ...updatedPagination }
+
     let groups = cols.items.map((c) => c.name)
       .concat(rows.items.map((r) => r.name))
       .filter((g) => g !== '指标名称')
@@ -884,6 +912,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const needRequest = (groups.length > 0 || aggregators.length > 0)
                        && selectedView
                        && requestParamString !== this.lastRequestParamString
+                       && queryMode === WorkbenchQueryMode.Immediately
 
     if (needRequest) {
       this.lastRequestParamString = requestParamString
@@ -941,32 +970,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         })
         this.setState({
           chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
-          pagination: updatedPagination
-        })
-        // if (data.length) {
-
-        // } else {
-        //   onSetWidgetProps({
-        //     cols: [],
-        //     rows: [],
-        //     metrics: [],
-        //     filters: [],
-        //     data: [],
-        //     pagination: updatedPagination,
-        //     chartStyles: mergedStyleParams,
-        //     selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
-        //     dimetionAxis: this.getDimetionAxis([getPivot()]),
-        //     renderType: 'rerender',
-        //     orders,
-        //     mode,
-        //     model: JSON.parse(selectedView.model)
-        //   })
-        //   this.setState({
-        //     chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
-        //     pagination: updatedPagination
-        //   })
-        // }
-        this.setState({
+          pagination: updatedPagination,
           dataParams: mergedDataParams,
           styleParams: mergedStyleParams
         })
@@ -1144,7 +1148,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           size.value[key] = value
         }
     }
-    this.setWidgetProps(dataParams, styleParams, 'refresh')
+    this.setWidgetProps(dataParams, styleParams, { renderType: 'refresh' })
   }
 
   private styleChange = (name) => (prop, value, propPath?: string[]) => {
@@ -1169,7 +1173,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         renderType = 'clear'
         break
     }
-    this.setWidgetProps(dataParams, styleParams, renderType)
+    this.setWidgetProps(dataParams, styleParams, { renderType })
     // const { layerType } = styleParams.spec
     // chartModeSelectedChart.style.spec.layerType = layerType
   }
@@ -1877,6 +1881,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               />
             ))}
           </div>
+          {
+            queryMode === WorkbenchQueryMode.Manually && (
+              <div className={styles.manualQuery} onClick={this.forceSetWidgetProps}>
+                <Icon type="caret-right" />查询
+              </div>
+            )
+          }
           <div className={styles.params}>
             <ul className={styles.paramsTab}>{tabs}</ul>
             {tabPane}

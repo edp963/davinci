@@ -401,7 +401,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private paginationChange = (pageNo: number, pageSize: number) => {
-    this.operatingPanel.triggerWidgetRefresh(pageNo, pageSize)
+    this.operatingPanel.flipPage(pageNo, pageSize)
   }
 
   private chartStylesChange = (propPath: string[], value: string) => {
