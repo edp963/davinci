@@ -18,6 +18,7 @@
 
 package edp.davinci.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.NotFoundException;
@@ -207,7 +208,11 @@ public class SourceServiceImpl implements SourceService {
         if (testConnection) {
             String origin = source.toString();
 
-            BeanUtils.copyProperties(sourceInfo, source);
+            source.setType(sourceInfo.getType());
+            source.setDescription(sourceInfo.getDescription());
+            source.setName(sourceInfo.getName());
+            source.setConfig(JSON.toJSONString(sourceInfo.getConfig()));
+            source.setId(sourceInfo.getId());
             source.updatedBy(user.getId());
 
             int update = sourceMapper.update(source);
