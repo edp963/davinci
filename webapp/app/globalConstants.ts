@@ -137,6 +137,11 @@ export const CHART_LEGEND_POSITIONS = [
   { name: '左', value: 'left' }
 ]
 
+export const CHART_LEGEND_TYPE = [
+  { name: '普通', value: 'plain' },
+  { name: '翻页滚动', value: 'scroll' }
+]
+
 export const CHART_VISUALMAP_POSITIONS = [
   { name: '左下', value: 'leftBottom' },
   { name: '左上', value: 'leftTop' },

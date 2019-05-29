@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Row, Col, Checkbox, Select } from 'antd'
 const Option = Select.Option
 import ColorPicker from '../../../../../components/ColorPicker'
-import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES, CHART_LEGEND_POSITIONS } from '../../../../../globalConstants'
+import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES, CHART_LEGEND_POSITIONS, CHART_LEGEND_TYPE } from '../../../../../globalConstants'
 const styles = require('../Workbench.less')
 
 export interface ILegendConfig {
@@ -11,7 +11,8 @@ export interface ILegendConfig {
   selectAll: boolean
   fontFamily: string
   fontSize: string
-  color: string
+  color: string,
+  legendType:string
 }
 
 interface ILegendSectionProps {
@@ -42,10 +43,14 @@ export class LegendSection extends React.PureComponent<ILegendSectionProps, {}> 
       selectAll,
       fontFamily,
       fontSize,
-      color
+      color,
+      legendType
     } = config
 
     const positions = CHART_LEGEND_POSITIONS.map((p) => (
+      <Option key={p.value} value={p.value}>{p.name}</Option>
+    ))
+    const legendtypes = CHART_LEGEND_TYPE.map((p) => (
       <Option key={p.value} value={p.value}>{p.name}</Option>
     ))
     const fontFamilies = PIVOT_CHART_FONT_FAMILIES.map((f) => (
@@ -60,13 +65,23 @@ export class LegendSection extends React.PureComponent<ILegendSectionProps, {}> 
         <h4>{title}</h4>
         <div className={styles.blockBody}>
           <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-            <Col span={24}>
+            <Col span={14}>
               <Checkbox
                 checked={showLegend}
                 onChange={this.checkboxChange('showLegend')}
               >
                 显示图例
               </Checkbox>
+            </Col>
+            <Col span={10}>
+              <Select
+                placeholder="类型"
+                className={styles.blockElm}
+                value={legendType}
+                onChange={this.selectChange('legendType')}
+              >
+                {legendtypes}
+              </Select>
             </Col>
           </Row>
           <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>

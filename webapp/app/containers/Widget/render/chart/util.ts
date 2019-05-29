@@ -241,7 +241,8 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
     selectAll,
     fontFamily,
     fontSize,
-    color
+    color,
+    legendType
   } = legendConfig
 
   let orient
@@ -276,7 +277,7 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   return {
     show: showLegend && seriesNames.length > 1,
     data: seriesNames,
-    type: 'scroll',
+    type: legendType,
     textStyle: {
       fontFamily,
       fontSize,
