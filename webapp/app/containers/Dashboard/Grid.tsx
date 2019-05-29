@@ -1312,7 +1312,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
       currentItems.forEach((dashboardItem) => {
         const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
-        console.log(width, height)
         const {
           datasource,
           loading,
@@ -1334,7 +1333,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const drillpathInstance = queryConditions.drillpathInstance
         const view = formedViews[widget.viewId]
         itemblocks.push((
-          <div key={id}>
+          <div key={id} className={styles.authSizeTag}>
             <DashboardItem
               itemId={id}
               widgets={widgets}
@@ -1386,12 +1385,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           h: height,
           i: `${id}`
         })
+
       })
       if (dashboardType === 2) {
         // report mode
         grids = (
           <div className={styles.reportMode}>
-            {itemblocks[0]}
+            {itemblocks[itemblocks.length - 1]}
           </div>
         )
       } else {
@@ -1512,10 +1512,18 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             onChange={this.globalFilterChange}
           />
         </Container.Title>
-        <Container.Body grid ref={(f) => this.containerBody = findDOMNode(f)}>
-          {grids}
-          <div className={styles.gridBottom} />
-        </Container.Body>
+        {
+          dashboardType === 1 ? (
+            <Container.Body grid ref={(f) => this.containerBody = findDOMNode(f)}>
+              {grids}
+              <div className={styles.gridBottom} />
+            </Container.Body>
+          ) : (
+            <Container.Body report ref={(f) => this.containerBody = findDOMNode(f)}>
+              {grids}
+            </Container.Body>
+          )
+        }
         <Modal
           title={`${dashboardItemFormType === 'add' ? '新增' : '修改'} Widget`}
           wrapClassName="ant-modal-large"

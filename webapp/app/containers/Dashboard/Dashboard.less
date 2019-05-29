@@ -517,6 +517,8 @@
 
     .gridClass {
       flex: 1;
+      min-width: 0;
+      min-height: 0;
       border-left: 1px solid #d9d9d9;
     }
   }
@@ -661,7 +663,15 @@
 }
 
 .reportMode {
-  background-color: #fff;
+  display: flex;
+  overflow: auto;
   flex: 1;
-  overflow-y: auto;
+  .authSizeTag {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background-color: #fff;
+  }
 }
+

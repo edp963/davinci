@@ -82,7 +82,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     const { widgets, currentDashboard } = this.props
     const dashboardType = currentDashboard.type
     let tableWidget
-    if (dashboardType === 1) {  //
+    if (dashboardType === 2) {  //
       tableWidget = widgets.filter((widget) => {
         const widgetConfig = JSON.parse(widget.config)
         return widgetConfig['selectedChart'] === 1 && widgetConfig['mode'] === 'chart'
@@ -238,7 +238,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       selectedRowKeys: selectedWidgets,
       onChange: this.onSelectChange,
       onShowSizeChange: this.onShowSizeChange,
-      type: dashboardType === 1 ? 'radio' : 'checkbox'
+      type: dashboardType === 2 ? 'radio' : 'checkbox'
     }
 
     const stepIndicator = type === 'add'
