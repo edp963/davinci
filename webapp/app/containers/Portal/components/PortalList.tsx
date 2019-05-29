@@ -221,6 +221,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
               title="确定删除？"
               placement="bottom"
               onConfirm={this.delegate(onDelete, portal.id)}
+              onCancel={this.stopPPG}
             >
               <Tooltip title="删除">
                 <AdminIcon className={styles.delete} type="delete" onClick={this.stopPPG} />

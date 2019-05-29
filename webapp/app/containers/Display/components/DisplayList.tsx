@@ -214,6 +214,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
                 title="确定删除？"
                 placement="bottom"
                 onConfirm={this.delegate(onDelete, display.id)}
+                onCancel={this.stopPPG}
               >
                 <Tooltip title="删除">
                   <AdminIcon className={styles.delete} type="delete" onClick={this.stopPPG} />
