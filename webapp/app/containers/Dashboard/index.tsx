@@ -263,7 +263,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             config,
             dashboardPortalId: Number(params.portalId),
             name,
-            type: selectType ? 1 : 0   // todo selectType 更改位置
+           // type: selectType ? 1 : 0   // todo selectType 更改位置
+            type: Number(selectType)
           }
 
           const addObj = {
