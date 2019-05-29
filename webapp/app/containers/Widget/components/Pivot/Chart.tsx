@@ -632,17 +632,17 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           // console.log(series)
           const { isDrilling, whichDataDrillBrushed, getDataDrillDetail } = this.props
           const brushedOptions = isDrilling === true ? {
-            brush: {
-              toolbox: ['rect', 'polygon', 'keep', 'clear'],
-            //  toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
-              throttleType: 'debounce',
-              throttleDelay: 300,
-              brushStyle: {
-                borderWidth: 1,
-                color: 'rgba(255,255,255,0.2)',
-                borderColor: 'rgba(120,140,180,0.6)'
-              }
-            }
+            // brush: {
+            //   toolbox: ['rect', 'polygon', 'keep', 'clear'],
+            // //  toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+            //   throttleType: 'debounce',
+            //   throttleDelay: 300,
+            //   brushStyle: {
+            //     borderWidth: 1,
+            //     color: 'rgba(255,255,255,0.2)',
+            //     borderColor: 'rgba(120,140,180,0.6)'
+            //   }
+            // }
           } : null
 
           instance.setOption({
@@ -650,7 +650,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
               position: getTooltipPosition,
               formatter: getPivotTooltipLabel(seriesData, cols, rows, metrics, color, label, size, scatterXAxis, tip)
             },
-            ...brushedOptions,
+          //  ...brushedOptions,
             grid,
             xAxis,
             yAxis,
@@ -672,17 +672,17 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           // if (isDrilling &&  whichDataDrillBrushed === false) {
           if (whichDataDrillBrushed === false) {
           //  instance.off('brushselected')
-            instance.on('brushselected', brushselected)
-            setTimeout(function () {
-              instance.dispatchAction({
-                type: 'takeGlobalCursor',
-                key: 'brush',
-                brushOption: {
-                  brushType: 'rect',
-                  brushMode: 'multiple'
-                }
-              })
-            }, 0)
+          //  instance.on('brushselected', brushselected)
+            // setTimeout(function () {
+            //   instance.dispatchAction({
+            //     type: 'takeGlobalCursor',
+            //     key: 'brush',
+            //     brushOption: {
+            //       brushType: 'rect',
+            //       brushMode: 'multiple'
+            //     }
+            //   })
+            // }, 0)
           }
 
           function brushselected (params) {

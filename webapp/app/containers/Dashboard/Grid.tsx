@@ -1264,6 +1264,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       dashboardSharePanelAuthorized,
       drillPathSettingVisible
     } = this.state
+    let dashboardType: number
+    if (currentDashboard) {
+      dashboardType = currentDashboard.type
+    }
     let navDropdown = (<span />)
     let grids = void 0
     //   const drillPanels = []
@@ -1305,6 +1309,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     if (currentProject && currentItems) {
       const itemblocks = []
       const layouts = { lg: [] }
+
       currentItems.forEach((dashboardItem) => {
         const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
         const {
@@ -1327,9 +1332,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const drillpathSetting = queryConditions.drillpathSetting
         const drillpathInstance = queryConditions.drillpathInstance
         const view = formedViews[widget.viewId]
-
         itemblocks.push((
-          <div key={id}>
+          <div key={id} className={styles.authSizeTag}>
             <DashboardItem
               itemId={id}
               widgets={widgets}
@@ -1373,6 +1377,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             />
           </div>
         ))
+
         layouts.lg.push({
           x,
           y,
@@ -1380,25 +1385,35 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           h: height,
           i: `${id}`
         })
+
       })
-      grids = (
-        <ResponsiveReactGridLayout
-          className="layout"
-          style={{marginTop: '-14px'}}
-          rowHeight={GRID_ROW_HEIGHT}
-          margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
-          breakpoints={GRID_BREAKPOINTS}
-          cols={GRID_COLS}
-          layouts={layouts}
-          onDragStop={this.onDragStop}
-          onResizeStop={this.onResizeStop}
-          measureBeforeMount={false}
-          draggableHandle={`.${styles.title}`}
-          useCSSTransforms={mounted}
-        >
-          {itemblocks}
-        </ResponsiveReactGridLayout>
-      )
+      if (dashboardType === 2) {
+        // report mode
+        grids = (
+          <div className={styles.reportMode}>
+            {itemblocks[itemblocks.length - 1]}
+          </div>
+        )
+      } else {
+        grids = (
+          <ResponsiveReactGridLayout
+            className="layout"
+            style={{marginTop: '-14px'}}
+            rowHeight={GRID_ROW_HEIGHT}
+            margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
+            breakpoints={GRID_BREAKPOINTS}
+            cols={GRID_COLS}
+            layouts={layouts}
+            onDragStop={this.onDragStop}
+            onResizeStop={this.onResizeStop}
+            measureBeforeMount={false}
+            draggableHandle={`.${styles.title}`}
+            useCSSTransforms={mounted}
+          >
+            {itemblocks}
+          </ResponsiveReactGridLayout>
+        )
+      }
     }
 
     const saveDashboardItemButton = (
@@ -1497,10 +1512,18 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             onChange={this.globalFilterChange}
           />
         </Container.Title>
-        <Container.Body grid ref={(f) => this.containerBody = findDOMNode(f)}>
-          {grids}
-          <div className={styles.gridBottom} />
-        </Container.Body>
+        {
+          dashboardType === 1 ? (
+            <Container.Body grid ref={(f) => this.containerBody = findDOMNode(f)}>
+              {grids}
+              <div className={styles.gridBottom} />
+            </Container.Body>
+          ) : (
+            <Container.Body report ref={(f) => this.containerBody = findDOMNode(f)}>
+              {grids}
+            </Container.Body>
+          )
+        }
         <Modal
           title={`${dashboardItemFormType === 'add' ? '新增' : '修改'} Widget`}
           wrapClassName="ant-modal-large"
@@ -1513,6 +1536,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             type={dashboardItemFormType}
             widgets={widgets || []}
             selectedWidgets={selectedWidgets}
+            currentDashboard={this.props.currentDashboard}
             polling={polling}
             step={dashboardItemFormStep}
             onWidgetSelect={this.widgetSelect}

@@ -33,11 +33,13 @@ import SearchFilterDropdown from '../../../components/SearchFilterDropdown'
 const utilStyles = require('../../../assets/less/util.less')
 const widgetStyles = require('../../Widget/Widget.less')
 const styles = require('../Dashboard.less')
+import { ICurrentDashboard } from '../'
 
 interface IDashboardItemFormProps {
   type: string
   widgets: any[]
   selectedWidgets: number[]
+  currentDashboard?: ICurrentDashboard
   polling: boolean,
   step: number
   onWidgetSelect: (selectedRowKeys: any[]) => void
@@ -77,10 +79,21 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
   }
 
   public componentWillMount () {
-    const { widgets } = this.props
+    const { widgets, currentDashboard } = this.props
+    const dashboardType = currentDashboard.type
+    let tableWidget
+    if (dashboardType === 2) {  //
+      tableWidget = widgets.filter((widget) => {
+        const widgetConfig = JSON.parse(widget.config)
+        return widgetConfig['selectedChart'] === 1 && widgetConfig['mode'] === 'chart'
+      })
+    } else {
+      tableWidget = widgets
+    }
+
     if (widgets) {
       this.setState({
-        tableWidget: widgets.map((g) => {
+        tableWidget: tableWidget.map((g) => {
           g.key = g.id
           return g
         })
@@ -176,7 +189,8 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       polling,
       step,
       onWidgetSelect,
-      onPollingSelect
+      onPollingSelect,
+      currentDashboard
     } = this.props
     const {
       filteredWidgets,
@@ -189,7 +203,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       tableSortedInfo,
       selectedRowKeys
     } = this.state
-
+    const dashboardType = currentDashboard.type
     const columns = [{
       title: '名称',
       dataIndex: 'name',
@@ -223,7 +237,8 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     const rowSelection = {
       selectedRowKeys: selectedWidgets,
       onChange: this.onSelectChange,
-      onShowSizeChange: this.onShowSizeChange
+      onShowSizeChange: this.onShowSizeChange,
+      type: dashboardType === 2 ? 'radio' : 'checkbox'
     }
 
     const stepIndicator = type === 'add'

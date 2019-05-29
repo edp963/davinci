@@ -141,7 +141,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
             item.type === 0
               ? <h4 className={styles.dashboardTitle} style={{ width: titleWidth }}>{item.name}</h4>
               : <span className={styles.dashboardTitle} style={{width: titleWidth}} onClick={initChangeDashboard(item.id)}>
-                  <Icon type="dot-chart" />
+                  <Icon type={`${item.type === 2 ? 'table' : 'dot-chart'}`} />
                   <span className={styles.itemName}>{item.name}</span>
                 </span>
           }
