@@ -36,7 +36,8 @@ import {
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
   DELETE_DRILL_HISTORY,
-  SET_SELECT_OPTIONS
+  SET_SELECT_OPTIONS,
+  SELECT_DASHBOARD_ITEM_CHART
 } from './constants'
 
 export function getDashboard (token, reject) {
@@ -212,6 +213,18 @@ export function setSelectOptions (controlKey, options, itemId) {
       controlKey,
       options,
       itemId
+    }
+  }
+}
+
+
+export function selectDashboardItemChart (itemId, renderType, selectedItems) {
+  return {
+    type: SELECT_DASHBOARD_ITEM_CHART,
+    payload: {
+      itemId,
+      renderType,
+      selectedItems
     }
   }
 }

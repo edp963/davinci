@@ -692,6 +692,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     } = this.props
 
     const data = datasource.resultList
+
     const {
       controlPanelVisible,
       sharePanelAuthorized,
