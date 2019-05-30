@@ -493,7 +493,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             folder: parentId ? `${(dashboards as any[]).find((g) => g.id === parentId).id}` : '0',
             config,
             name: formType === 'copy' ? `${name}_copy` : name,
-            selectType: type === 1,
+          //  selectType: type === 1,
+            selectType: type,
             index
           })
         }, 0)
