@@ -781,7 +781,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     if (options) {
       renderType = options.renderType
       updatedPagination = options.updatedPagination
-      queryMode = options.queryMode
+      queryMode = WorkbenchQueryMode[options.queryMode] ? options.queryMode : queryMode
     }
 
     const fromPagination = !!updatedPagination

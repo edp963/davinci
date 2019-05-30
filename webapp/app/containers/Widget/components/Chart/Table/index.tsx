@@ -166,7 +166,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const totalWidth = tableColumns.reduce((acc, col) => acc + Number(col.width), 0)
     const ratio = totalWidth < containerWidth ? containerWidth / totalWidth : 1
     traverseConfig<ColumnProps<any>>(tableColumns, 'children', (column, idx, siblings) => {
-      column.width = Math.floor(ratio * Number(column.width))
+      column.width = ratio * Number(column.width)
       const canResize = siblings === tableColumns
       column.onHeaderCell = (col) => ({
         width: col.width,
@@ -345,7 +345,7 @@ function getTableColumns (props: IChartProps) {
     }
   }
   const { cols, rows, metrics, data, queryVariables } = props
-  const { headerConfig, columnsConfig, autoMergeCell, leftFixedColumns, rightFixedColumns } = chartStyles.table
+  const { headerConfig, columnsConfig, autoMergeCell, leftFixedColumns, rightFixedColumns, withNoAggregators } = chartStyles.table
   const tableColumns: Array<ColumnProps<any>> = []
   const mapTableHeaderConfig: IMapTableHeaderConfig = {}
   cols.concat(rows).forEach((dimension) => {
@@ -380,7 +380,10 @@ function getTableColumns (props: IChartProps) {
   })
   metrics.forEach((metric) => {
     const { name, field, format, agg } = metric
-    const expression = `${agg}(${decodeMetricName(name)})`
+    let expression = decodeMetricName(name)
+    if (!withNoAggregators) {
+      expression = `${agg}(${expression})`
+    }
     const headerText = getFieldAlias(field, queryVariables || {}) || expression
     const column: ColumnProps<any> = {
       key: name,
