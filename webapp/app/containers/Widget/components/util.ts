@@ -700,6 +700,8 @@ export const AvailableFieldFormatTypes = {
 
 export function getFormattedValue (value: number | string, format: IFieldFormatConfig) {
   if (!format) { return value }
+  if (value === null || value === undefined) { return value }
+  if (typeof value === 'string' && (!value || isNaN(+value))) { return value }
 
   const { formatType } = format
   const config = format[formatType]
