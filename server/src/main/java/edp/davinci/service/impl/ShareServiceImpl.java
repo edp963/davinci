@@ -144,10 +144,10 @@ public class ShareServiceImpl implements ShareService {
                 String sharedUserName = tokenInfos[2];
                 Long sharedUserId = Long.parseLong(tokenCrypts[1]);
                 if (!(loginUser.getUsername().equals(sharedUserName) && loginUser.getId().equals(sharedUserId)) && !loginUser.getId().equals(shareUserId)) {
-                    throw new UnAuthorizedExecption("The resource requires authentication, which was not supplied with the request");
+                    throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
                 }
             } catch (NumberFormatException e) {
-                throw new UnAuthorizedExecption("The resource requires authentication, which was not supplied with the request");
+                throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
             }
         }
 

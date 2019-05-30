@@ -298,7 +298,14 @@ public class SqlUtils {
                         schemaPattern = schemaPattern.toUpperCase();
                     }
                 }
-                ResultSet tables = metaData.getTables(null, schemaPattern, "%", null);
+
+                String catalog = null;
+                try {
+                    catalog = connection.getCatalog();
+                } catch (SQLException e) {
+                }
+
+                ResultSet tables = metaData.getTables(catalog, schemaPattern, "%", null);
                 if (null != tables) {
                     tableList = new ArrayList<>();
                     while (tables.next()) {
@@ -437,7 +444,7 @@ public class SqlUtils {
                 primaryKeys.add(rs.getString(4));
             }
         } catch (Exception e) {
-            throw new ServerException(e.getMessage());
+            log.error(e.getMessage());
         } finally {
             closeResult(rs);
         }
