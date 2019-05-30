@@ -82,8 +82,7 @@ export function errorHandler (error) {
         message.error('未登录或会话过期，请重新登录', 1)
         removeToken()
         localStorage.removeItem('TOKEN')
-        const path = `${window.location.protocol}//${window.location.host}${window.location.pathname}${window.location.search}#login`
-        location.replace(path)
+        break
       case 401:
         message.error('您没有权限访问此数据', 2)
         break
