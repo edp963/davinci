@@ -50,7 +50,8 @@ export default function (chartProps: IChartProps) {
     label,
     xAxis,
     yAxis,
-    splitLine
+    splitLine,
+    gridOption
   } = chartStyles
 
   const {
@@ -182,7 +183,7 @@ export default function (chartProps: IChartProps) {
 
   const tooltip: EChartOption.Tooltip = {
     trigger: 'axis',
-    formatter (param: any[]) {
+    formatter(param: any[]) {
       const text = param.map((pa, index) => {
         const data = !index ? parseFloat(sourceData[pa.dataIndex]) : pa.data
         return `${pa.seriesName}: ${data}`
@@ -202,6 +203,6 @@ export default function (chartProps: IChartProps) {
     yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `)),
     series,
     tooltip,
-    grid: getGridPositions({ showLegend: false }, seriesNames, '', false, yAxis, xAxis, xAxisData)
+    grid: gridOption && gridOption.type == 'auto' ? getGridPositions({ showLegend: false }, seriesNames, '', false, yAxis, xAxis, xAxisData) : { ...gridOption }
   }
 }

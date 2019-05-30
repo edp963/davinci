@@ -25,6 +25,7 @@ import { IModel } from '../Workbench/index'
 import { IQueryVariableMap } from '../../../Dashboard/Grid'
 import { getStyleConfig } from '../util'
 import ChartTypes from '../../config/chart/ChartTypes'
+import { IChartPositionConfig } from '../Workbench/ConfigSections/ChartPositionSection';
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
@@ -78,7 +79,8 @@ export interface IChartStyles {
   table?: ITableConfig
   richText?: IRichTextConfig
   bar?: IBarConfig
-  doubleYAxis?: IDoubleYAxisConfig
+  doubleYAxis?: IDoubleYAxisConfig,
+  gridOption?:IChartPositionConfig
 }
 
 export interface IChartInfo {

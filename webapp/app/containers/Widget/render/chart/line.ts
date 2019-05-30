@@ -52,7 +52,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     yAxis,
     splitLine,
     label,
-    legend
+    legend,
+    gridOption
   } = chartStyles
 
   const {
@@ -100,12 +101,14 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
             type: 'line',
             sampling: 'average',
             data: v.map((g, index) => {
-              const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
+              const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {
+                itemStyle: {
                 normal: {
                   opacity: 1,
                   borderWidth: 6
                 }
-              }} : {}
+                }
+              } : {}
               // if (index === interactIndex) {
               //   return {
               //     value: g[m],
@@ -143,12 +146,14 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         type: 'line',
         sampling: 'average',
         data: data.map((g, index) => {
-          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {
+            itemStyle: {
             normal: {
               opacity: 1,
               borderWidth: 8
             }
-          }} : {}
+            }
+          } : {}
           // if (index === interactIndex) {
           //   return {
           //     value: d[m],
@@ -235,6 +240,6 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       formatter: getChartTooltipLabel('line', seriesData, { cols, metrics, color, tip })
     },
     legend: getLegendOption(legend, seriesNames),
-    grid: getGridPositions(legend, seriesNames, '', false, yAxis, xAxis, xAxisData)
+    grid: gridOption && gridOption.type == 'auto' ? getGridPositions(legend, seriesNames, '', false, yAxis, xAxis, xAxisData) : { ...gridOption }
   }
 }

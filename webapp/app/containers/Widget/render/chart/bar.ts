@@ -55,7 +55,8 @@ export default function (chartProps: IChartProps, drillOptions) {
     legend,
     xAxis,
     yAxis,
-    splitLine
+    splitLine,
+    gridOption
   } = chartStyles
   const { border: barBorder, gap: barGap, width: barWidth } = bar || (barDefaultConfig.style as any).bar
   const { color: borderColor, width: borderWidth, type: borderType, radius: barBorderRadius } = barBorder
@@ -84,7 +85,7 @@ export default function (chartProps: IChartProps, drillOptions) {
         formatter: (params) => {
           const { value, seriesName } = params
           const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
-          const formatted = getFormattedValue(value, m.format)
+          const formatted = (m && getFormattedValue(value, m.format)) || value
           return formatted
         }
       })
@@ -145,7 +146,7 @@ export default function (chartProps: IChartProps, drillOptions) {
               //   return g[`${m.agg}(${decodedMetricName})`]
               // }
               // }
-               if (selectedItems && selectedItems.length && selectedItems.some((item) => item === index)) {
+              if (selectedItems && selectedItems.length && selectedItems.some((item) => item === index)) {
                 return {
                   value: percentage ? g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100 : g[`${m.agg}(${decodedMetricName})`],
                   itemStyle: {
@@ -195,11 +196,11 @@ export default function (chartProps: IChartProps, drillOptions) {
           //     }
           //   }
           // } else {
-            // if (percentage) {
-            //   return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
-            // } else {
-            //   return d[`${m.agg}(${decodedMetricName})`]
-            // }
+          // if (percentage) {
+          //   return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
+          // } else {
+          //   return d[`${m.agg}(${decodedMetricName})`]
+          // }
           // }
           if (selectedItems && selectedItems.length && selectedItems.some((item) => item === index)) {
             return {
@@ -211,7 +212,7 @@ export default function (chartProps: IChartProps, drillOptions) {
               }
             }
           } else {
-             if (percentage) {
+            if (percentage) {
               return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
             } else {
               return d[`${m.agg}(${decodedMetricName})`]
@@ -237,9 +238,9 @@ export default function (chartProps: IChartProps, drillOptions) {
         // },
         // itemStyle: {
         //   normal: {
-            // opacity: interactIndex === undefined ? 1 : 0.25
-            // color: color.value[m.name] || defaultThemeColors[i]
-          // }
+        // opacity: interactIndex === undefined ? 1 : 0.25
+        // color: color.value[m.name] || defaultThemeColors[i]
+        // }
         // },
         ...labelOption
       }
@@ -247,7 +248,7 @@ export default function (chartProps: IChartProps, drillOptions) {
       seriesData.push([...data])
     }
   })
-  const {isDrilling, getDataDrillDetail, instance } = drillOptions
+  const { isDrilling, getDataDrillDetail, instance } = drillOptions
   const brushedOptions = isDrilling === true ? {
     brush: {
       toolbox: ['rect', 'polygon', 'keep', 'clear'],
@@ -274,7 +275,7 @@ export default function (chartProps: IChartProps, drillOptions) {
   //       })
   //     }, 0)
   //   }
-  function brushselected (params) {
+  function brushselected(params) {
     const brushComponent = params.batch[0]
     const brushed = []
     const sourceData = seriesData[0]
@@ -288,11 +289,11 @@ export default function (chartProps: IChartProps, drillOptions) {
       for (let i = 0; i < brushComponent.selected.length; i++) {
         const rawIndices = brushComponent.selected[i].dataIndex
         const seriesIndex = brushComponent.selected[i].seriesIndex
-        brushed.push({[i]: rawIndices})
+        brushed.push({ [i]: rawIndices })
       }
     }
     if (getDataDrillDetail) {
-      getDataDrillDetail(JSON.stringify({range, brushed, sourceData}))
+      getDataDrillDetail(JSON.stringify({ range, brushed, sourceData }))
     }
   }
   const seriesNames = series.map((s) => s.name)
@@ -341,12 +342,12 @@ export default function (chartProps: IChartProps, drillOptions) {
       formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
     },
     legend: getLegendOption(legend, seriesNames),
-    grid: getGridPositions(legend, seriesNames, '', barChart, yAxis, xAxis, xAxisData)
-   // ...brushedOptions
+    grid: gridOption && gridOption.type == 'auto' ? getGridPositions(legend, seriesNames, '', barChart, yAxis, xAxis, xAxisData) : { ...gridOption }
+    // ...brushedOptions
   }
 }
 
-export function getDataSum (data, metrics) {
+export function getDataSum(data, metrics) {
   const dataSum = data.map((d, index) => {
     const metricArr = []
     let maSum = 0
@@ -365,7 +366,7 @@ export function getDataSum (data, metrics) {
   return dataSum
 }
 
-export function getColorDataSum (data, metrics) {
+export function getColorDataSum(data, metrics) {
   let maSum = 0
   const dataSum = data.map((d, index) => {
     let metricArr = 0

@@ -86,6 +86,13 @@ const waterfall: IChartInfo = {
       verticalLineStyle: 'dashed',
       verticalLineSize: '1',
       verticalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR
+    },
+    gridOption: {
+      type: 'auto',
+      top: 60,
+      bottom: 60,
+      left: '10%',
+      right: '10%'
     }
   }
 }

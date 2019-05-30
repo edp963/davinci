@@ -180,7 +180,12 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   public componentDidUpdate () {
-    const rect = (findDOMNode(this.refLayer) as Element).getBoundingClientRect()
+    const ele = (findDOMNode(this.refLayer) as Element)
+    console.assert(ele,"Node not found")
+    if (!ele) {
+      return
+    }
+    const rect = ele.getBoundingClientRect()
     const { top, height, right } = rect
     const [ x, y ] = this.state.layerTooltipPosition
     const [newX, newY] = [top + height / 2, right]
@@ -665,6 +670,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const content = this.renderLayer(layer)
     if (pure) { return content }
 
+    console.assert(content, "content should not be null")
+
     const maxConstraints: [number, number] = [slideParams.width - position.x, slideParams.height - position.y]
 
     return (
@@ -689,7 +696,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           handleSize={[20, 20]}
           scale={Math.min(scale[0], scale[1])}
         >
-          {content}
+          {content ? content : <div>content is null!</div>}
         </Resizable>
       </Draggable>
     )

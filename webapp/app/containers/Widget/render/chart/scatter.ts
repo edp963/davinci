@@ -51,7 +51,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     yAxis,
     splitLine,
     label: labelStyleConfig,
-    legend
+    legend,
+    gridOption
   } = chartStyles
 
   const {
@@ -67,7 +68,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   const { selectedItems } = drillOptions
   const labelOption = {
     label: getLabelOption('scatter', labelStyleConfig, true, {
-      formatter (param) {
+      formatter(param) {
         return param.data.value[2]
       }
     })
@@ -116,11 +117,13 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
           const [x, y] = metrics
           const currentSize = size.items.length ? v[sizeItemName] : PIVOT_DEFAULT_SCATTER_SIZE
           const sizeValue = getSizeValue(size.value['all'])
-          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === gIndex) ? {itemStyle: {
-            normal: {
-              opacity: 1
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === gIndex) ? {
+            itemStyle: {
+              normal: {
+                opacity: 1
+              }
             }
-          }} : {}
+          } : {}
           return {
             ...itemStyleObj,
             value: [
@@ -154,11 +157,13 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         const [x, y] = metrics
         const currentSize = size.items.length ? d[sizeItemName] : PIVOT_DEFAULT_SCATTER_SIZE
         const sizeValue = getSizeValue(size.value['all'])
-        const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
-          normal: {
-            opacity: 1
+        const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {
+          itemStyle: {
+            normal: {
+              opacity: 1
+            }
           }
-        }} : {}
+        } : {}
         return {
           ...itemStyleObj,
           value: [
@@ -204,7 +209,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   //     }
   //   }]
   // }
-  const {isDrilling, getDataDrillDetail, instance } = drillOptions
+  const { isDrilling, getDataDrillDetail, instance } = drillOptions
   const brushedOptions = isDrilling === true ? {
     brush: {
       toolbox: ['rect', 'polygon', 'keep', 'clear'],
@@ -219,21 +224,21 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   } : null
   if (isDrilling) {
     //  instance.off('brushselected')
-     // instance.on('brushselected', brushselected)
-      setTimeout(() => {
-          instance.dispatchAction({
-          type: 'takeGlobalCursor',
-          key: 'brush',
-          brushOption: {
-            brushType: 'rect',
-            brushMode: 'multiple'
-          }
-        })
-      }, 0)
-    }
-  function brushselected (params) {
-    console.log({params})
-  //  console.log({seriesData})
+    // instance.on('brushselected', brushselected)
+    setTimeout(() => {
+      instance.dispatchAction({
+        type: 'takeGlobalCursor',
+        key: 'brush',
+        brushOption: {
+          brushType: 'rect',
+          brushMode: 'multiple'
+        }
+      })
+    }, 0)
+  }
+  function brushselected(params) {
+    console.log({ params })
+    //  console.log({seriesData})
     const brushComponent = params.batch[0]
     const brushed = []
     const sourceData = seriesData[0]
@@ -247,12 +252,12 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       for (let i = 0; i < brushComponent.selected.length; i++) {
         const rawIndices = brushComponent.selected[i].dataIndex
         const seriesIndex = brushComponent.selected[i].seriesIndex
-        brushed.push({[i]: rawIndices})
+        brushed.push({ [i]: rawIndices })
       }
     }
-   // console.log({sourceData})
+    // console.log({sourceData})
     if (getDataDrillDetail) {
-      getDataDrillDetail(JSON.stringify({range, brushed, sourceData}))
+      getDataDrillDetail(JSON.stringify({ range, brushed, sourceData }))
     }
   }
   const xAxisSplitLineConfig = {
@@ -277,7 +282,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       formatter: getChartTooltipLabel('scatter', seriesData, { cols, metrics, color, tip })
     },
     legend: getLegendOption(legend, seriesNames),
-    grid: getGridPositions(legend, seriesNames, '', false, yAxis)
+    grid: gridOption && gridOption.type == 'auto' ? getGridPositions(legend, seriesNames, '', false, yAxis) : { ...gridOption }
     // ...brushedOptions
   }
 }

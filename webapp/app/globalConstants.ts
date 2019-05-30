@@ -101,6 +101,10 @@ export const CHART_LABEL_POSITIONS = [
   { name: '内右上', value: 'insideTopRight' },
   { name: '内右下', value: 'insideBottomRight' }
 ]
+export const CHART_POSITION_TYPE = [
+  { name: '自动计算', value: 'auto' },
+  { name: '手工设置', value: 'customize' }
+]
 export const CHART_PIE_LABEL_POSITIONS = [
   { name: '外侧', value: 'outside'},
   { name: '内部', value: 'inside'},

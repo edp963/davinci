@@ -48,7 +48,8 @@ export default function (chartProps: IChartProps, drillOptions) {
     spec,
     doubleYAxis,
     xAxis,
-    splitLine
+    splitLine,
+    gridOption
   } = chartStyles
 
   const {
@@ -134,7 +135,7 @@ export default function (chartProps: IChartProps, drillOptions) {
       legend: getLegendOption(legend, seriesNames)
     }
     gridOptions = {
-      grid: getGridPositions(legend, seriesNames, 'doubleYAxis', false)
+      grid: gridOption && gridOption.type == 'auto' ? getGridPositions(legend, seriesNames, 'doubleYAxis', false) : { ...gridOption }
     }
   }
 

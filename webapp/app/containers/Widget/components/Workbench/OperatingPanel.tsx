@@ -37,6 +37,8 @@ import { uuid } from '../../../../utils/util'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox } from 'antd'
 import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { ChartPositionSection, IChartPositionConfig } from './ConfigSections/ChartPositionSection';
+import chart from '../../render/chart';
 import { WorkbenchQueryMode } from './types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 const MenuItem = Menu.Item
@@ -548,10 +550,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       if (dropType === 'outside') {
         let combinedItem = dragged
         if (name === 'metrics') {
-          combinedItem = {...dragged, chart: dataParams.metrics.items.length ? dataParams.metrics.items[0].chart : getPivot()}
+        combinedItem = { ...dragged, chart: dataParams.metrics.items.length ? dataParams.metrics.items[0].chart : getPivot() }
         }
         if (name === 'secondaryMetrics') {
-          combinedItem = {...dragged, chart: dataParams.secondaryMetrics.items.length ? dataParams.secondaryMetrics.items[0].chart : getPivot()}
+        combinedItem = { ...dragged, chart: dataParams.secondaryMetrics.items.length ? dataParams.secondaryMetrics.items[0].chart : getPivot() }
         }
         destination.items = [...items.slice(0, dropIndex), combinedItem, ...items.slice(dropIndex)]
       } else {
@@ -1434,7 +1436,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const [dimetionsCount, metricsCount] = this.getDimetionsAndMetricsCount()
     const {
       spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend,
-      visualMap, toolbox, areaSelect, scorecard, iframe, table, bar, doubleYAxis } = styleParams
+      visualMap, toolbox, areaSelect, scorecard, iframe, table, bar, doubleYAxis, gridOption } = styleParams
 
     let categoryDragItems = this.state.categoryDragItems
     if (mode === 'pivot'
@@ -1592,6 +1594,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 />
                 : null
             }
+            {gridOption && <ChartPositionSection
+              title="图表位置"
+              config={gridOption as IChartPositionConfig}
+              onChange={this.styleChange('gridOption')}
+            />}
             { mapLegendLayerType
                 ? null
                 : visualMap && <VisualMapSection

@@ -113,6 +113,13 @@ const scatter: IChartInfo = {
       fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       fontSize: '12',
       color: PIVOT_DEFAULT_FONT_COLOR
+    },
+    gridOption: {
+      type: 'auto',
+      top: 60,
+      bottom: 60,
+      left: '10%',
+      right: '10%'
     }
   }
 }
