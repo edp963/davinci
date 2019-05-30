@@ -52,6 +52,7 @@ export function* getDashboard (action) {
     yield put(dashboardGetted(dashboard.payload))
   } catch (err) {
     yield put(loadDashboardFail())
+    errorHandler(err)
     payload.reject(err)
   }
 }
