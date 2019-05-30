@@ -980,6 +980,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private dataDrill = (e) => {
+    console.log(e)
     const {
       widgets,
       currentItemsInfo,
