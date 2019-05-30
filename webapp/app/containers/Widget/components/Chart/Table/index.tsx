@@ -288,7 +288,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   public render () {
     const { data, chartStyles, width } = this.props
-    const { headerFixed, bordered, withPaging } = chartStyles.table
+    const { headerFixed, bordered, withPaging, size } = chartStyles.table
     const { tablePagination, tableColumns, tableBodyHeight, mapTableHeaderConfig } = this.state
     const adjustedTableColumns = this.adjustTableColumns(tableColumns, mapTableHeaderConfig, width)
 
@@ -317,6 +317,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
           style={style}
           className={tableCls}
           ref={this.table}
+          size={size}
           dataSource={data}
           rowKey={this.getRowKey}
           components={tableComponents}
