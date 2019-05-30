@@ -61,7 +61,7 @@ export function resizeTableColumns (columns: Array<ColumnProps<any>>, columnInde
     width
   }
   traverseConfig(resizedColumn.children, 'children', (childColumn) => {
-    childColumn.width = Math.floor(ratio * (+childColumn.width))
+    childColumn.width = ratio * (+childColumn.width)
   })
   return nextColumns
 }
