@@ -71,6 +71,7 @@ export interface ITableConfig {
   rightFixedColumns: string[]
   headerFixed: boolean
   bordered: boolean
+  size: 'default' | 'middle' | 'small'
   autoMergeCell: boolean
   withPaging: boolean
   pageSize: string
@@ -333,7 +334,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   public render () {
     const { config } = this.props
     const {
-      leftFixedColumns, rightFixedColumns, headerFixed, bordered,
+      leftFixedColumns, rightFixedColumns, headerFixed, bordered, size,
       autoMergeCell, withPaging, pageSize, withNoAggregators } = config
     const {
       validColumns, validHeaderConfig, validColumnConfig,
@@ -399,6 +400,20 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
                 >
                   {fixedColumnOptions}
                 </Select>
+              </Col>
+            </Row>
+          </div>
+        </div>
+        <div className={styles.paneBlock}>
+          <h4>大小</h4>
+          <div className={styles.blockBody}>
+            <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+              <Col span={24}>
+                <RadioGroup size="small" value={size} onChange={this.switchChange('size')}>
+                  <RadioButton value="small">小</RadioButton>
+                  <RadioButton value="middle">中</RadioButton>
+                  <RadioButton value="default">大</RadioButton>
+                </RadioGroup>
               </Col>
             </Row>
           </div>
