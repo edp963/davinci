@@ -93,7 +93,7 @@ const styles = require('./Display.less')
 import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
 import { ViewActions } from '../View/actions'
-const { loadViewDataFromVizItem } = ViewActions // @TODO global filter in Display
+const { loadViewDataFromVizItem, loadViewsDetail } = ViewActions // @TODO global filter in Display
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectFormedViews } from '../View/selectors'
 import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR, DEFAULT_SPLITER } from '../../globalConstants'
@@ -168,6 +168,7 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
     viewId: number,
     requestParams: IDataRequestParams
   ) => void
+  onLoadViewsDetail: (viewIds: number[], resolve: () => void) => void
 
   onShowEditorBaselines: (baselines: IBaseline[]) => void
   onClearEditorBaselines: () => void
@@ -558,14 +559,16 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     onEditDisplayLayers(currentDisplay.id, currentSlide.id, layers)
   }
 
-  private addLayers = (layers: any[]) => {
+  private addLayers = (layers: any[], viewIds?: number[]) => {
     if (!Array.isArray(layers)) { return }
 
     const {
       currentDisplay,
       currentSlide,
       currentLayers,
-      onAddDisplayLayers
+      formedViews,
+      onAddDisplayLayers,
+      onLoadViewsDetail
     } = this.props
     const { slideParams } = this.state
     let maxLayerIndex = currentLayers.length === 0 ?
@@ -582,6 +585,15 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         positionY: GRID_ITEM_MARGIN
       })
     })
+    if (viewIds && viewIds.length) {
+      const loadViewIds = viewIds.filter((viewId) => !formedViews[viewId])
+      if (loadViewIds.length) {
+        onLoadViewsDetail(loadViewIds, () => {
+          onAddDisplayLayers(currentDisplay.id, currentSlide.id, layers)
+        })
+        return
+      }
+    }
     onAddDisplayLayers(currentDisplay.id, currentSlide.id, layers)
   }
 
@@ -943,6 +955,7 @@ function mapDispatchToProps (dispatch) {
     onEditCurrentSlide: (displayId, slide, resolve?) => dispatch(editCurrentSlide(displayId, slide, resolve)),
     onUploadCurrentSlideCover: (cover, resolve) => dispatch(uploadCurrentSlideCover(cover, resolve)),
     onLoadViewDataFromVizItem: (renderType, itemId, viewId, requestParams) => dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'display')),
+    onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onSelectLayer: ({ id, selected, exclusive }) => dispatch(selectLayer({ id, selected, exclusive })),
     onClearLayersSelection: () => dispatch(clearLayersSelection()),
     onDragSelectedLayer: (id, deltaX, deltaY) => dispatch(dragSelectedLayer({ id, deltaX, deltaY })),
