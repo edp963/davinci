@@ -18,7 +18,7 @@ import {
 } from './util'
 import { GRID_ITEM_MARGIN } from '../../../globalConstants'
 import { IFormedView } from 'containers/View/types'
-import Widget, { IWidgetConfig, RenderType } from '../../Widget/components/Widget'
+import Widget, { IWidgetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
 import { TextAlignProperty } from 'csstype'
 
 import { Resizable } from 'libs/react-resizable'
@@ -61,6 +61,8 @@ interface ILayerItemProps {
 
 interface ILayerItemStates {
   layerParams: ILayerParams
+  pagination: IPaginationParams
+  nativeQuery: boolean
   layerTooltipPosition: [number, number]
   mousePos: number[]
   widgetProps: IWidgetConfig
@@ -76,6 +78,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const layerParams = JSON.parse(layer.params)
     this.state = {
       layerParams,
+      pagination: null,
+      nativeQuery: false,
       layerTooltipPosition: [0, 0],
       mousePos: [-1, -1],
       widgetProps: null,
@@ -84,24 +88,59 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   public componentWillMount () {
-    const { widget, view } = this.props
+    const { widget, datasource } = this.props
     if (!widget) { return }
 
+    const widgetProps = JSON.parse(widget.config)
+    const pagination = this.getPagination(widgetProps, datasource)
+    const nativeQuery = this.getNativeQuery(widgetProps)
     this.setState({
-      widgetProps: JSON.parse(widget.config)
+      widgetProps,
+      pagination,
+      nativeQuery
     })
   }
 
   public componentDidMount () {
-      const { itemId, layer, widget, onGetChartData } = this.props
-      if (layer.type !== GraphTypes.Chart) { return }
+    const { itemId, layer, widget, onGetChartData } = this.props
+    if (layer.type !== GraphTypes.Chart) { return }
 
-      onGetChartData('clear', itemId, widget.id)
-      this.setFrequent(this.props)
+    const { pagination, nativeQuery } = this.state
+    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
+    this.setFrequent(this.props)
+  }
+
+  private getPagination = (widgetProps: IWidgetConfig, datasource) => {
+    const { chartStyles } = widgetProps
+    const { table } = chartStyles
+    if (!table) { return null }
+
+    const { withPaging, pageSize } = table
+    const pagination: IPaginationParams = {
+      withPaging,
+      pageSize: 0,
+      pageNo: 0,
+      totalCount: datasource.totalCount || 0
+    }
+    if (pagination.withPaging) {
+      pagination.pageSize = datasource.pageSize || +pageSize
+      pagination.pageNo = datasource.pageNo || 1
+    }
+    return pagination
+  }
+
+  private getNativeQuery = (widgetProps: IWidgetConfig) => {
+    let noAggregators = false
+    const { chartStyles } = widgetProps
+    const { table } = chartStyles
+    if (table) {
+      noAggregators = table.withNoAggregators
+    }
+    return noAggregators
   }
 
   public componentWillReceiveProps (nextProps: ILayerItemProps) {
-    const { layer } = this.props
+    const { layer, datasource } = this.props
     if (layer.params !== nextProps.layer.params) {
       const layerParams: ILayerParams = JSON.parse(nextProps.layer.params)
       if (layer.subType === SecondaryGraphTypes.Timer) {
@@ -111,15 +150,18 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           currentTime: moment().format(timeFormat || 'YYYY-MM-dd HH:mm:ss')
         })
       }
-      this.setState({
-        layerParams
-      })
+      this.setState({ layerParams })
     }
 
+    let widgetProps = this.state.widgetProps
     if (this.props.widget !== nextProps.widget) {
-      this.setState({
-        widgetProps: JSON.parse(nextProps.widget.config)
-      })
+      widgetProps = JSON.parse(nextProps.widget.config)
+      this.setState({ widgetProps })
+    }
+
+    if (datasource !== nextProps.datasource) {
+      const pagination = this.getPagination(widgetProps, nextProps.datasource)
+      this.setState({ pagination })
     }
   }
 
@@ -168,10 +210,23 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     clearInterval(this.frequent)
 
     if (polling === 'true' && frequency) {
+      const { pagination, nativeQuery } = this.state
       this.frequent = window.setInterval(() => {
-        onGetChartData('refresh', itemId, widget.id)
+        onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
       }, Number(frequency) * 1000)
     }
+  }
+
+  private paginationChange = (pageNo: number, pageSize: number) => {
+    const { onGetChartData, itemId, widget } = this.props
+    let { pagination } = this.state
+    const { nativeQuery } = this.state
+    pagination = {
+      ...pagination,
+      pageNo,
+      pageSize
+    }
+    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
   }
 
   private dragOnStart = (e, data) => {
@@ -279,6 +334,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     } = this.props
     const {
       layerParams,
+      pagination,
       widgetProps } = this.state
 
     const layerClass = classnames({
@@ -310,9 +366,11 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           (<Widget
             {...widgetProps}
             data={data}
+            pagination={pagination}
             loading={isLoading}
             renderType={renderType}
             model={view.model}
+            onPaginationChange={this.paginationChange}
           />)
         )}
       </div>

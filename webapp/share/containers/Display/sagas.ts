@@ -60,8 +60,10 @@ export function* getData (action) {
     variables,
     linkageVariables,
     globalVariables,
+    pagination,
     ...rest
   } = requestParams
+  const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   try {
     const response = yield call(request, {
@@ -70,7 +72,9 @@ export function* getData (action) {
       data: {
         ...rest,
         filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
-        params: variables.concat(linkageVariables).concat(globalVariables)
+        params: variables.concat(linkageVariables).concat(globalVariables),
+        pageSize,
+        pageNo
       }
     })
     const { resultList } = response.payload
