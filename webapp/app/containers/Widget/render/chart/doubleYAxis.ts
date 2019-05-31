@@ -205,7 +205,7 @@ export function getAixsMetrics (type, axisMetrics, data, stack, labelOption, sel
     seriesNames.push(decodedMetricName)
 
     const itemData = data.map((g, index) => {
-      const itemStyle = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {normal: {opacity: 1}}} : null
+      const itemStyle = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {normal: {opacity: 1, borderWidth: 6}}} : null
       return {
         value: g[`${m.agg}(${decodedMetricName})`],
         ...itemStyle
