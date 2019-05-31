@@ -38,7 +38,7 @@ import {
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
-export default function (chartProps: IChartProps, drillOptions?: any) {
+export default function (chartProps: IChartProps, drillOptions) {
   const {
     data,
     cols,
