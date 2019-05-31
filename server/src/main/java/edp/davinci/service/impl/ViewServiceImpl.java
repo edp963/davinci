@@ -206,6 +206,10 @@ public class ViewServiceImpl implements ViewService {
             context.setQuerySql(querySqlList);
             context.setViewExecuteParam(executeParam);
         }
+        if(!CollectionUtils.isEmpty(excludeColumns)){
+            List<String> excludeList=excludeColumns.stream().collect(Collectors.toList());
+            context.setExcludeColumns(excludeList);
+        }
         return context;
     }
 
