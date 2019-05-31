@@ -179,7 +179,7 @@ public class SqlParseUtils {
         }
 
         ST st = new ST(sql, delimiter, delimiter);
-        if (!CollectionUtils.isEmpty(authParamMap)) {
+        if (!CollectionUtils.isEmpty(authParamMap) && !CollectionUtils.isEmpty(expSet)) {
             authParamMap.forEach((k, v) -> st.add(k, true));
         }
         //替换query@var

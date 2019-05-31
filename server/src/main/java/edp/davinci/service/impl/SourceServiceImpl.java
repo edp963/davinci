@@ -209,6 +209,7 @@ public class SourceServiceImpl implements SourceService {
 
             BeanUtils.copyProperties(sourceInfo, source);
             source.updatedBy(user.getId());
+            source.setConfig(JSONObject.toJSONString(sourceInfo.getConfig()));
 
             int update = sourceMapper.update(source);
             if (update > 0) {

@@ -105,7 +105,7 @@ public class ViewExecuteParam {
             while (iterator.hasNext()) {
                 Order order = iterator.next();
                 String column = order.getColumn().trim();
-                Matcher matcher = pattern.matcher(order.getColumn().trim());
+                Matcher matcher = pattern.matcher(order.getColumn().trim().toLowerCase());
                 if (!matcher.find()) {
                     String prefix = SqlUtils.getKeywordPrefix(jdbcUrl);
                     String suffix = SqlUtils.getKeywordSuffix(jdbcUrl);
