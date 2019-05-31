@@ -27,7 +27,7 @@ import DashboardItemMask, { IDashboardItemMaskProps } from 'containers/Dashboard
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
 import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
-import { message } from 'antd'
+import { message, Row, Col, Switch } from 'antd'
 import 'assets/less/resizer.less'
 import { IDistinctValueReqeustParams } from 'app/components/Filters'
 import { IWorkbenchSettings, WorkbenchQueryMode } from './types'
@@ -81,6 +81,7 @@ interface IWorkbenchStates {
   widgetProps: IWidgetProps
   settingFormVisible: boolean
   settings: IWorkbenchSettings
+  canvasDark: boolean
 }
 
 const SplitPane = React.lazy(() => import('react-split-pane'))
@@ -91,7 +92,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   private defaultSplitSize = 440
   private maxSplitSize = this.defaultSplitSize * 1.5
 
-  constructor (props) {
+  constructor(props) {
     super(props)
     const splitSize = +localStorage.getItem('workbenchSplitSize') || this.defaultSplitSize
     this.state = {
@@ -126,6 +127,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         model: {},
         onPaginationChange: this.paginationChange
       },
+      canvasDark: false,
       settingFormVisible: false,
       settings: this.initSettings()
     }
@@ -136,7 +138,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     description: '请输入描述…'
   }
 
-  public componentWillMount () {
+  public componentWillMount() {
     const { params, onLoadViews, onLoadWidgetDetail } = this.props
     onLoadViews(Number(params.pid), () => {
       if (params.wid !== 'add' && !Number.isNaN(Number(params.wid))) {
@@ -145,11 +147,11 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     })
   }
 
-  public componentDidMount () {
+  public componentDidMount() {
     this.props.onHideNavigator()
   }
 
-  public componentWillReceiveProps (nextProps: IWorkbenchProps) {
+  public componentWillReceiveProps(nextProps: IWorkbenchProps) {
     const { currentWidget } = nextProps
     if (currentWidget && (currentWidget !== this.props.currentWidget)) {
       const { controls, cache, expired, computed, ...rest } = JSON.parse(currentWidget.config)
@@ -161,14 +163,14 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         cache,
         expired,
         selectedViewId: currentWidget.viewId,
-        originalWidgetProps: {...rest},
-        widgetProps: {...rest},
+        originalWidgetProps: { ...rest },
+        widgetProps: { ...rest },
         originalComputed: computed
       })
     }
   }
 
-  public componentWillUnmount () {
+  public componentWillUnmount() {
     this.props.onClearCurrentWidget()
   }
 
@@ -225,7 +227,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private deleteComputed = (computeField) => {
-    console.log({computeField})
+    console.log({ computeField })
     const { from } = computeField
     const { params, onEditWidget } = this.props
     const { id, name, description, selectedViewId, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
@@ -233,7 +235,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       this.setState({
         originalComputed: originalComputed.filter((oc) => oc.id !== computeField.id)
       }, () => {
-        const {originalComputed, computed} = this.state
+        const { originalComputed, computed } = this.state
         const widget = {
           name,
           description,
@@ -251,14 +253,14 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           publish: true
         }
         if (id) {
-          onEditWidget({...widget, id}, () => void 0)
+          onEditWidget({ ...widget, id }, () => void 0)
         }
       })
     } else if (from === 'computed') {
       this.setState({
         computed: computed.filter((cm) => cm.id !== computeField.id)
       }, () => {
-        const {originalComputed, computed} = this.state
+        const { originalComputed, computed } = this.state
         const widget = {
           name,
           description,
@@ -276,21 +278,21 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           publish: true
         }
         if (id) {
-          onEditWidget({...widget, id}, () => void 0)
+          onEditWidget({ ...widget, id }, () => void 0)
         }
       })
     }
   }
 
   private setComputed = (computeField) => {
-    const {computed, originalComputed} = this.state
-    const {from, sqlExpression} = computeField
+    const { computed, originalComputed } = this.state
+    const { from, sqlExpression } = computeField
     // todo  首先做sql合法校验； sqlExpression
     let isEdit = void 0
     let newComputed = null
     if (from === 'originalComputed') {
       isEdit = originalComputed ? originalComputed.some((cm) => cm.id === computeField.id) : false
-      newComputed =  isEdit ? originalComputed.map((cm) => {
+      newComputed = isEdit ? originalComputed.map((cm) => {
         if (cm.id === computeField.id) {
           return computeField
         } else {
@@ -302,7 +304,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       })
     } else if (from === 'computed') {
       isEdit = computed.some((cm) => cm.id === computeField.id)
-      newComputed =  isEdit ? computed.map((cm) => {
+      newComputed = isEdit ? computed.map((cm) => {
         if (cm.id === computeField.id) {
           return computeField
         } else {
@@ -371,7 +373,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       widget
     })
     if (id) {
-      onEditWidget({...widget, id}, () => {
+      onEditWidget({ ...widget, id }, () => {
         message.success('修改成功')
         const editSignDashboard = sessionStorage.getItem('editWidgetFromDashboard')
         const editSignDisplay = sessionStorage.getItem('editWidgetFromDisplay')
@@ -421,7 +423,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     })
   }
 
-  private saveSplitSize (newSize: number) {
+  private saveSplitSize(newSize: number) {
     localStorage.setItem('workbenchSplitSize', newSize.toString())
   }
 
@@ -459,7 +461,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     })
   }
 
-  public render () {
+  public render() {
     const {
       views,
       formedViews,
@@ -481,9 +483,10 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       splitSize,
       originalWidgetProps,
       originalComputed,
-      widgetProps,
       settingFormVisible,
-      settings
+      settings,
+      widgetProps,
+      canvasDark
     } = this.state
     const selectedView = formedViews[selectedViewId]
     const { queryMode, multiDrag } = settings
@@ -547,16 +550,21 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
                 onLoadDistinctValue={onLoadViewDistinctValue}
               />
               <div className={styles.viewPanel}>
-                <div className={styles.widgetBlock}>
+                <div className={styles.widgetBlock} style={{ backgroundColor: canvasDark ? 'black' : 'white' }}>
                   <Widget
                     {...widgetProps}
-                    loading={<DashboardItemMask.Loading {...maskProps}/>}
-                    empty={<DashboardItemMask.Empty {...maskProps}/>}
+                    loading={<DashboardItemMask.Loading {...maskProps} />}
+                    empty={<DashboardItemMask.Empty {...maskProps} />}
                     editing={true}
                     onPaginationChange={this.paginationChange}
                     onChartStylesChange={this.chartStylesChange}
                   />
                 </div>
+                <Row gutter={8} className={styles.formBody}>
+                  <Col span={8}>
+                    <Switch checkedChildren="高亮" unCheckedChildren="纯白" checked={canvasDark} onChange={() => this.setState({ canvasDark: !canvasDark })} />
+                  </Col>
+                </Row>
               </div>
             </SplitPane>
           </Suspense>
@@ -582,7 +590,7 @@ const mapStateToProps = createStructuredSelector({
   columnValueLoading: makeSelectColumnValueLoading()
 })
 
-export function mapDispatchToProps (dispatch) {
+export function mapDispatchToProps(dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadViews: (projectId, resolve) => dispatch(loadViews(projectId, resolve)),
