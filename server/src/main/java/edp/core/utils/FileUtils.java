@@ -27,6 +27,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -239,5 +241,31 @@ public class FileUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public String getFilePath(FileTypeEnum type,Long id){
+        StringBuilder sb=new StringBuilder(this.fileBasePath);
+        if(!sb.toString().endsWith(File.separator)){
+            sb.append(File.separator);
+        }
+        sb.append("download").append(File.separator);
+        sb.append(new SimpleDateFormat("yyyyMMdd").format(new Date())).append(File.separator);
+        sb.append(type.getType()).append(File.separator);
+        File dir=new File(sb.toString());
+        if(!dir.exists()){
+            dir.mkdirs();
+        }
+        sb.append(String.valueOf(id)).append("_").append(String.valueOf(System.currentTimeMillis()))
+                .append(type.getFormat());
+        return sb.toString();
+    }
+
+    public static boolean delete(String filePath) {
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()) {
+            file.delete();
+            return true;
+        }
+        return false;
     }
 }
