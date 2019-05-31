@@ -105,7 +105,7 @@ export default function (chartProps: IChartProps, drillOptions) {
     Object.entries(configValue).forEach(([k, v]: [string, string]) => {
       configKeys.push(k)
     })
-    percentGrouped = makeGrouped(data, cols, color.items[0].name, metrics, configKeys)
+    percentGrouped = makeGrouped(data, cols.map((c) => c.name), color.items[0].name, metrics, configKeys)
   }
 
   const series = []
