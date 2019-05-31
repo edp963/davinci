@@ -20,10 +20,12 @@
 package edp.davinci.core.model;
 
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.List;
 
 @Data
+@ToString
 public class ExcelHeader {
     private String key;
     private String alias;

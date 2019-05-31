@@ -51,6 +51,7 @@ import edp.davinci.model.*;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.SourceService;
 import edp.davinci.service.ViewService;
+import edp.davinci.service.excel.SQLContext;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,6 +172,41 @@ public class ViewServiceImpl implements ViewService {
         view.setRoles(relRoleViews);
 
         return view;
+    }
+
+    @Override
+    public SQLContext getSQLContext(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) {
+        if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
+            return null;
+        }
+        if (null == viewWithSource.getSource()) {
+            throw new NotFoundException("source is not found");
+        }
+        if(StringUtils.isEmpty(viewWithSource.getSql())){
+            throw new NotFoundException("sql is not found");
+        }
+
+        SQLContext context=new SQLContext();
+        //解析变量
+        List<SqlVariable> variables = viewWithSource.getVariables();
+        //解析sql
+        SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
+        //列权限（只记录被限制访问的字段）
+        Set<String> excludeColumns = new HashSet<>();
+
+        packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(), excludeColumns, user);
+
+        String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
+        context.setExecuteSql(sqlParseUtils.getSqls(srcSql, Boolean.FALSE));
+
+        List<String> querySqlList = sqlParseUtils.getSqls(srcSql, Boolean.TRUE);
+        if (!CollectionUtils.isEmpty(querySqlList)) {
+            buildQuerySql(querySqlList, viewWithSource.getSource(), executeParam);
+            executeParam.addExcludeColumn(excludeColumns,viewWithSource.getSource().getJdbcUrl());
+            context.setQuerySql(querySqlList);
+            context.setViewExecuteParam(executeParam);
+        }
+        return context;
     }
 
     /**
