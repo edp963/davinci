@@ -54,7 +54,7 @@ import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu } from 'antd'
 import { uuid } from '../../utils/util'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
 import { decodeMetricName } from '../Widget/components/util'
-import { hideNavigator } from '../App/actions'
+import { initiateDownloadTask } from '../App/actions'
 import {
   loadDashboardDetail,
   addDashboardItems,
@@ -63,7 +63,6 @@ import {
   editDashboardItems,
   deleteDashboardItem,
   clearCurrentDashboard,
-  loadWidgetCsv,
   renderDashboardItem,
   resizeDashboardItem,
   resizeAllDashboardItem,
@@ -107,6 +106,7 @@ import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
 import { ChartTypes } from '../Widget/config/chart/ChartTypes'
+import { DownloadTypes } from '../App/types'
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
 
@@ -208,11 +208,7 @@ interface IGridProps {
     requestParams: IDataRequestParams
   ) => void
   onLoadViewsDetail: (viewIds: number[], resolve: () => void) => void
-  onLoadWidgetCsv: (
-    itemId: number,
-    widgetId: number,
-    requestParams: IDataRequestParams
-  ) => void
+  onInitiateDownloadTask: (id: number, type: DownloadTypes, itemId?: number) => void
   onClearCurrentDashboard: () => any
   onLoadSelectOptions: (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }, itemId?: number) => void
   onSetSelectOptions: (controlKey: string, options: any[], itemId?: number) => void
@@ -401,10 +397,21 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private downloadCsv = (itemId: number, widgetId: number) => {
+  // private downloadCsv = (itemId: number, widgetId: number) => {
+  //   this.getData(
+  //     (renderType, itemId, widget, requestParams) => {
+  //       this.props.onLoadWidgetCsv(itemId, widget.id, requestParams)
+  //     },
+  //     'rerender',
+  //     itemId,
+  //     widgetId
+  //   )
+  // }
+
+  private initiateDownloadTask = (itemId: number, widgetId: number) => {
     this.getData(
       (renderType, itemId, widget, requestParams) => {
-        this.props.onLoadWidgetCsv(itemId, widget.id, requestParams)
+        this.props.onInitiateDownloadTask(widgetId, DownloadTypes.Widget, itemId)
       },
       'rerender',
       itemId,
@@ -1362,7 +1369,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onShowDrillEdit={this.showDrillDashboardItemForm}
               onDeleteDashboardItem={this.deleteItem}
               onLoadWidgetShareLink={onLoadWidgetShareLink}
-              onDownloadCsv={this.downloadCsv}
+              onDownloadCsv={this.initiateDownloadTask}
               onTurnOffInteract={this.turnOffInteract}
               onCheckTableInteract={this.checkInteract}
               onDoTableInteract={this.doInteract}
@@ -1632,7 +1639,7 @@ export function mapDispatchToProps (dispatch) {
                         dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard')),
     onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
-    onLoadWidgetCsv: (itemId, widgetId, requestParams) => dispatch(loadWidgetCsv(itemId, widgetId, requestParams)),
+    onInitiateDownloadTask: (id, type, itemId?) => dispatch(initiateDownloadTask(id, type, itemId)),
     onLoadSelectOptions: (controlKey, requestParams, itemId) => dispatch(loadSelectOptions(controlKey, requestParams, itemId)),
     onSetSelectOptions: (controlKey, options, itemId) => dispatch(setSelectOptions(controlKey, options, itemId)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),
