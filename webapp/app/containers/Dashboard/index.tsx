@@ -36,7 +36,6 @@ import portalSaga from '../Portal/sagas'
 import viewReducer from '../View/reducer'
 import viewSaga from '../View/sagas'
 
-import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
 import DashboardAction from './components/DashboardAction'
 
@@ -57,7 +56,8 @@ import {
   loadDashboardDetail
 } from './actions'
 import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
-import { hideNavigator, checkNameUniqueAction } from '../App/actions'
+import { hideNavigator, checkNameUniqueAction, initiateDownloadTask } from '../App/actions'
+import { DownloadTypes } from '../App/types'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 import { loadPortals } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
@@ -93,6 +93,7 @@ interface IDashboardProps {
   onLoadProjectDetail: (id) => any
   onExcludeRoles: (type: string, id: number, resolve?: any) => any
   onLoadProjectRoles: (id: number) => any
+  onInitiateDownloadTask: (id: number, type: DownloadTypes, itemId?: number) => void
 }
 
 export interface IDashboard {
@@ -516,11 +517,15 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
 
   private onOperateMore = (item, type) => {
-    this.setState({
-      formType: type
-    }, () => {
-      this.onShowDashboardForm(item, this.state.formType)
-    })
+    if (type === 'download') {
+      this.props.onInitiateDownloadTask(item.id, item.type === 0 ? DownloadTypes.Folder : DownloadTypes.Dashboard)
+    } else {
+      this.setState({
+        formType: type
+      }, () => {
+        this.onShowDashboardForm(item, this.state.formType)
+      })
+    }
   }
 
   private searchDashboard = (e) => {
@@ -882,7 +887,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
-    onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id))
+    onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
+    onInitiateDownloadTask: (id, type, itemId?) => dispatch(initiateDownloadTask(id, type, itemId))
   }
 }
 

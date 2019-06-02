@@ -22,6 +22,7 @@ import * as React from 'react'
 import { Icon, Tooltip, Popover } from 'antd'
 const styles = require('../Dashboard.less')
 import {IProject} from '../../Projects'
+import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
 
 interface IDashboardActionProps {
   currentProject: IProject
@@ -82,6 +83,12 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       </li>
     )
 
+    const downloadAction = (
+      <li onClick={this.operateMore(item, 'download')}>
+        <Icon type="download" className={styles.swap} /> 下载
+      </li>
+    )
+
     const moveAction = (
       <li onClick={this.operateMore(item, 'move')}>
         <Icon type="swap" className={styles.swap} /> 移动
@@ -91,6 +98,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     const ulActionAll = (
       <ul className={styles.menu}>
         {editAction}
+        {downloadAction}
         {moveAction}
         <li onClick={this.operateMore(item, 'delete')}>
           <Icon type="delete" /> 删除
@@ -101,6 +109,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     const ulActionPart = (
       <ul className={styles.menu}>
         {editAction}
+        {downloadAction}
         {moveAction}
       </ul>
     )
