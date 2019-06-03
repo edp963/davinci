@@ -579,6 +579,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       getDataDrillDetail,
       isDrilling
     } = this.props
+
     const { legendSelected, renderType } = this.state
     const rowNames = rows.map((r) => r.name)
     const colNames = cols.map((c) => c.name)
@@ -667,6 +668,9 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             isDrilling={isDrilling}
             whichDataDrillBrushed={this.props.whichDataDrillBrushed}
             ifSelectedTdToDrill={this.ifSelectedTdToDrill}
+            onSelectChartsItems={this.props.onSelectChartsItems}
+            selectedItems={this.props.selectedItems}
+            selectedChart={this.props.selectedChart}
             // onHideDrillPanel={onHideDrillPanel}
             ref={(f) => this.tableBody = findDOMNode(f) as HTMLElement}
           />
