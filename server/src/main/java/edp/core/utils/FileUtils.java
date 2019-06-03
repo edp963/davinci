@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static edp.core.consts.Consts.EMPTY;
+import static edp.core.consts.Consts.*;
 
 
 @Component
@@ -243,21 +243,20 @@ public class FileUtils {
         }
     }
 
-    public String getFilePath(FileTypeEnum type,Long id){
-        StringBuilder sb=new StringBuilder(this.fileBasePath);
-        if(!sb.toString().endsWith(File.separator)){
+    public String getFilePath(FileTypeEnum type, Long id) {
+        StringBuilder sb = new StringBuilder(this.fileBasePath);
+        if (!sb.toString().endsWith(File.separator)) {
             sb.append(File.separator);
         }
-        sb.append("download").append(File.separator);
+        sb.append(DIR_DOWNLOAD);
         sb.append(new SimpleDateFormat("yyyyMMdd").format(new Date())).append(File.separator);
         sb.append(type.getType()).append(File.separator);
-        File dir=new File(sb.toString());
-        if(!dir.exists()){
+        File dir = new File(sb.toString());
+        if (!dir.exists()) {
             dir.mkdirs();
         }
-        sb.append(String.valueOf(id)).append("_").append(String.valueOf(System.currentTimeMillis()))
-                .append(type.getFormat());
-        return sb.toString();
+        sb.append(id).append(UNDERLINE).append(System.currentTimeMillis()).append(type.getFormat());
+        return sb.toString().replaceAll(File.separator + "{2,}", File.separator);
     }
 
     public static boolean delete(String filePath) {

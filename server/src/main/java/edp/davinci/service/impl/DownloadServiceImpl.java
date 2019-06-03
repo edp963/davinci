@@ -1,26 +1,23 @@
 package edp.davinci.service.impl;
 
+import com.alibaba.druid.util.StringUtils;
 import com.google.common.collect.Lists;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.CollectionUtils;
-import edp.davinci.common.utils.ScriptUtiils;
+import edp.core.utils.TokenUtils;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.DownloadType;
 import edp.davinci.dao.*;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
-import edp.davinci.dto.viewDto.ViewExecuteParam;
-import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.model.*;
 import edp.davinci.service.DownloadService;
 import edp.davinci.service.ProjectService;
-import edp.davinci.service.ViewService;
 import edp.davinci.service.excel.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 
@@ -50,14 +47,39 @@ public class DownloadServiceImpl implements DownloadService {
     @Autowired
     private DashboardMapper dashboardMapper;
 
+    @Autowired
+    private TokenUtils tokenUtils;
+
+    @Autowired
+    private UserMapper userMapper;
+
     @Override
     public List<DownloadRecord> queryDownloadRecordPage(Long userId) {
         return downloadRecordMapper.getDownloadRecordsByUser(userId);
     }
 
     @Override
-    public DownloadRecord downloadById(Long id) {
+    public DownloadRecord downloadById(Long id, String token) throws UnAuthorizedExecption{
+        if (StringUtils.isEmpty(token)) {
+            throw new UnAuthorizedExecption();
+        }
+
+        String username = tokenUtils.getUsername(token);
+        if (StringUtils.isEmpty(username)){
+            throw new UnAuthorizedExecption();
+        }
+
+        User user = userMapper.selectByUsername(username);
+        if (null == user) {
+            throw new UnAuthorizedExecption();
+        }
+
         DownloadRecord record=downloadRecordMapper.getById(id);
+
+        if (!record.getUserId().equals(user.getId())) {
+            throw new UnAuthorizedExecption();
+        }
+
         record.setLastDownloadTime(new Date());
         downloadRecordMapper.updateById(record);
         return record ;

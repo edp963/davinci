@@ -39,7 +39,9 @@ public class SystemSchedule {
 
     @Scheduled(cron = "0 0 1 * * *")
     public void clearTempDir() {
-        String downloadDir = fileUtils.fileBasePath + Consts.DIR_DOWNLOAD + DateUtils.getTheDayBeforNowDateYYYYMMDD();
+
+        //下载文件保留7天
+        String downloadDir = fileUtils.fileBasePath + Consts.DIR_DOWNLOAD + DateUtils.getTheDayBeforAWeekYYYYMMDD();
         String tempDir = fileUtils.fileBasePath + Consts.DIR_TEMPL + DateUtils.getTheDayBeforNowDateYYYYMMDD();
         String csvDir = fileUtils.fileBasePath + File.separator + FileTypeEnum.CSV.getType();
 

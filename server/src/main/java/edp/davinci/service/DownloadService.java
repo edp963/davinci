@@ -27,9 +27,10 @@ public interface DownloadService {
     /**
      * 下载
      * @param id
+     * @param token
      * @return
      */
-    public DownloadRecord downloadById(Long id);
+    public DownloadRecord downloadById(Long id, String token);
 
 
     /**

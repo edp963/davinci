@@ -132,6 +132,16 @@ public class DateUtils {
         return formatter.format(calendar.getTime());
     }
 
+    public static String getTheDayBeforAWeekYYYYMMDD() {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentData());
+        calendar.add(Calendar.DAY_OF_MONTH, -7);
+
+        return formatter.format(calendar.getTime());
+    }
+
     public static String getNowDateFormatCustom(String format) {
         SimpleDateFormat formatter = new SimpleDateFormat(format);
 
