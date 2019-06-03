@@ -89,6 +89,7 @@ export class Chart extends React.PureComponent<IChartProps> {
     })
     const brushed = [{0: Object.values(resultData)}]
     const sourceData = Object.values(resultData)
+    console.log(sourceData)
     setTimeout(() => {
       getDataDrillDetail(JSON.stringify({range: null, brushed, sourceData}))
     }, 500)

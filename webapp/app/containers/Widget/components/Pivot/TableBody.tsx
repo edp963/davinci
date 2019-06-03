@@ -23,6 +23,8 @@ export interface ITableBodyProps {
   rowKeys: string[][]
   colKeys: string[][]
   rowWidths: number[]
+  selectedChart: number
+  selectedItems?: number[]
   rowTree: object
   colTree: object
   tree: object
@@ -45,6 +47,7 @@ export interface ITableBodyProps {
   ifSelectedTdToDrill: (obj: any) => any
   whichDataDrillBrushed?: boolean | object []
   // onHideDrillPanel?: (swtich: boolean) => void
+  onSelectChartsItems?: (selectedItems: number[]) => void
 }
 
 interface ITableBodyState {
@@ -497,8 +500,11 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
           onDoInteract={onDoInteract}
           getDataDrillDetail={getDataDrillDetail}
           isDrilling={isDrilling}
+          selectedChart={this.props.selectedChart}
           whichDataDrillBrushed={this.props.whichDataDrillBrushed}
           // onHideDrillPanel={onHideDrillPanel}
+          selectedItems={this.props.selectedItems}
+          onSelectChartsItems={this.props.onSelectChartsItems}
         />
       )
     } else {
