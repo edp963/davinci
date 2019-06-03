@@ -128,7 +128,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     onShowDrillEdit: () => void 0,
     onDeleteDashboardItem: () => void 0
   }
-  private frequent: number
+  private pollingTimer: number
   private container: HTMLDivElement = null
 
   public componentWillMount () {
@@ -139,7 +139,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const nativeQuery = this.getNativeQuery(widgetProps)
     if (container === 'share') {
       onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
-      this.setFrequent(this.props)
+      this.initPolling(this.props)
     }
     this.setState({
       widgetProps,
@@ -201,17 +201,17 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       if (!this.props.rendered && rendered) {
         // clear
         onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
-        this.setFrequent(this.props)
+        this.initPolling(this.props)
       }
     }
 
     if (polling !== this.props.polling || frequency !== this.props.frequency) {
-      this.setFrequent(nextProps)
+      this.initPolling(nextProps)
     }
   }
 
   public componentWillUnmount () {
-    clearInterval(this.frequent)
+    clearInterval(this.pollingTimer)
   }
 
   // @FIXME need refactor
@@ -244,7 +244,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     return noAggregators
   }
 
-  private setFrequent = (props: IDashboardItemProps) => {
+  private initPolling = (props: IDashboardItemProps) => {
     const {
       polling,
       frequency,
@@ -253,11 +253,11 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onGetChartData
     } = props
 
-    clearInterval(this.frequent)
+    clearInterval(this.pollingTimer)
 
     if (polling) {
       const { pagination, nativeQuery } = this.state
-      this.frequent = window.setInterval(() => {
+      this.pollingTimer = window.setInterval(() => {
         onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
       }, Number(frequency) * 1000)
     }
