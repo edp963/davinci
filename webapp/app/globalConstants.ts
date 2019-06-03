@@ -198,3 +198,5 @@ export const DEFAULT_FONT_FAMILY = '"Chinese Quote", -apple-system, BlinkMacSyst
 
 export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD'
 export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
+
+export const DOWNLOAD_LIST_POLLING_FREQUENCY = 30000
