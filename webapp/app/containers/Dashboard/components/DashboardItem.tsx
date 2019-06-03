@@ -409,7 +409,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             widgetProps: {
               ...widgetProps,
               ...{
-                cols: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.cols
+                cols: historyGroups && historyGroups.length ? historyGroups.map((history) => ({name: history})) : cacheWidgetProps.cols
               }
             }
           })
@@ -418,7 +418,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             widgetProps: {
               ...widgetProps,
               ...{
-                rows: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.rows
+                rows: historyGroups && historyGroups.length ? historyGroups.map((history) => ({name: history})) : cacheWidgetProps.rows
               }
             }
           })
@@ -434,6 +434,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           })
         }
       } else {
+        console.log(5)
         this.setState({
           widgetProps: {
             ...widgetProps,
