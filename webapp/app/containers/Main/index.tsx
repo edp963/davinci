@@ -48,7 +48,7 @@ interface IMainProps {
 
 export class Main extends React.Component<IMainProps, {}> {
 
-  private downloadListPollingTimer: NodeJS.Timeout
+  private downloadListPollingTimer: number
 
   public componentWillMount () {
     this.checkTokenLink()
@@ -120,7 +120,7 @@ export class Main extends React.Component<IMainProps, {}> {
 
   private initPolling = () => {
     this.props.onLoadDownloadList()
-    this.downloadListPollingTimer = setInterval(() => {
+    this.downloadListPollingTimer = window.setInterval(() => {
       this.props.onLoadDownloadList()
     }, DOWNLOAD_LIST_POLLING_FREQUENCY)
   }

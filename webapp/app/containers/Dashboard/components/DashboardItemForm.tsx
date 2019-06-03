@@ -245,7 +245,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       ? (
         <Steps current={step}>
           <Step title="Widget" />
-          <Step title="Frequent" />
+          <Step title="数据更新" />
           <Step title="完成" />
         </Steps>
       )

@@ -107,7 +107,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     const { pagination, nativeQuery } = this.state
     onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
-    this.setFrequent(this.props)
+    this.initPolling(this.props)
   }
 
   private getPagination = (widgetProps: IWidgetConfig, datasource) => {
@@ -175,7 +175,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       return
     }
     if (polling !== this.props.polling || frequency !== this.props.frequency) {
-      this.setFrequent(nextProps)
+      this.initPolling(nextProps)
     }
   }
 
@@ -192,13 +192,13 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   public componentWillUnmount () {
-    clearInterval(this.frequent)
+    clearInterval(this.pollingTimer)
     clearInterval(this.timer)
   }
 
-  private frequent: number
+  private pollingTimer: number
 
-  private setFrequent = (props: ILayerItemProps) => {
+  private initPolling = (props: ILayerItemProps) => {
     const {
       polling,
       frequency,
@@ -207,11 +207,11 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       onGetChartData
     } = props
 
-    clearInterval(this.frequent)
+    clearInterval(this.pollingTimer)
 
     if (polling === 'true' && frequency) {
       const { pagination, nativeQuery } = this.state
-      this.frequent = window.setInterval(() => {
+      this.pollingTimer = window.setInterval(() => {
         onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
       }, Number(frequency) * 1000)
     }
