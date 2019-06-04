@@ -53,7 +53,9 @@ const table: IChartInfo = {
       size: 'default',
       withPaging: true,
       pageSize: '20',
-      withNoAggregators: false
+      withNoAggregators: false,
+      autoPlay: true,
+      palyInterval: 1000
     },
     spec: {
 
