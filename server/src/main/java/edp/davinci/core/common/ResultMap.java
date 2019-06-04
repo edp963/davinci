@@ -23,9 +23,9 @@ import edp.core.utils.TokenUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 import static edp.core.consts.Consts.EMPTY;
 
@@ -154,7 +154,7 @@ public class ResultMap extends HashMap<String, Object> {
     }
 
     public ResultMap payloads(Collection list) {
-        this.put("payload", null == list ? new ArrayList() : list);
+        this.put("payload", null == list ? new List[0] : list);
         return this;
     }
 

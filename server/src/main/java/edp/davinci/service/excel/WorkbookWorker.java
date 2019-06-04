@@ -136,7 +136,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                     .buildSqlUtils(sqlUtils)
                     .buildIsTable(isTable)
                     .buildHeaders(excelHeaders)
-                    .buildDashboardId(context.getDashboard().getId())
+                    .buildDashboardId(null != context.getDashboard() ? context.getDashboard().getId() : null)
                     .buildWidgetId(context.getWidget().getId())
                     .buildName(context.getWidget().getName())
                     .buildWrapper(this.context.getWrapper())

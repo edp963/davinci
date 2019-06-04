@@ -20,10 +20,12 @@ package edp.core.common.jdbc;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.util.StringUtils;
+import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.SourceException;
 import edp.core.model.CustomDataSource;
 import edp.core.utils.CustomDataSourceUtils;
+import edp.core.utils.MD5Util;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -82,7 +84,18 @@ public class JdbcDataSource extends DruidDataSource {
     }
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
-        if (!map.containsKey(username + "@" + jdbcUrl.trim()) || null == map.get(username + "@" + jdbcUrl.trim())) {
+        StringBuilder sb = new StringBuilder();
+        if (!StringUtils.isEmpty(username)) {
+            sb.append(username);
+        }
+        if (!StringUtils.isEmpty(password)) {
+            sb.append(Consts.COLON).append(password);
+        }
+        sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
+
+        String key = MD5Util.getMD5(sb.toString(), true, 64);
+
+        if (!map.containsKey(key) || null == map.get(key)) {
             DruidDataSource instance = new JdbcDataSource();
             String className = null;
             try {
@@ -133,9 +146,9 @@ public class JdbcDataSource extends DruidDataSource {
                 log.error("Exception during pool initialization", e);
                 throw new SourceException(e.getMessage());
             }
-            map.put(username + "@" + jdbcUrl.trim(), instance);
+            map.put(key, instance);
         }
 
-        return map.get(username + "@" + jdbcUrl.trim());
+        return map.get(key);
     }
 }

@@ -1,10 +1,12 @@
 package edp.davinci.controller;
 
+import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.CurrentUser;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.DownloadType;
+import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.model.DownloadRecord;
 import edp.davinci.model.User;
 import edp.davinci.service.DownloadService;
@@ -17,7 +19,6 @@ import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -54,17 +55,18 @@ public class DownloadController extends BaseController {
 
 
     @ApiOperation(value = "get download record file")
-    @GetMapping(value = "/record/file/{id}",produces=MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/record/file/{id}/{token:.*}",produces=MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @AuthIgnore
     public ResponseEntity getDownloadRecordFile(@PathVariable Long id,
-                                                @ApiIgnore @CurrentUser User user,
+                                                @PathVariable String token,
                                         HttpServletRequest request,
                                         HttpServletResponse response) {
-        DownloadRecord record = downloadService.downloadById(id);
+        DownloadRecord record = downloadService.downloadById(id, token);
         try {
 //            response.addHeader("Content-Disposition", "attachment;filename=" + new String(record.getName().getBytes(), "UTF-8"));
 //            //response.addHeader("Content-Length", EMPTY + file.length());
 //            response.setContentType("application/octet-stream;charset=UTF-8");
-            encodeFileName(request,response,record.getName());
+            encodeFileName(request,response,record.getName() + FileTypeEnum.XLSX.getType());
             Streams.copy(new FileInputStream(new File(record.getPath())), response.getOutputStream(), true);
         } catch (Exception e) {
             log.error("getDownloadRecordFile error,id="+id+",e=",e);
