@@ -20,6 +20,7 @@
 
 import * as React from 'react'
 import { Icon, Tooltip, Popover } from 'antd'
+import {IconProps} from 'antd/lib/icon'
 const styles = require('../Dashboard.less')
 import {IProject} from '../../Projects'
 import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
@@ -83,11 +84,15 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       </li>
     )
 
+    const DownloadButton = ShareDownloadPermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>>(currentProject, 'download')(Li)
+
     const downloadAction = (
-      <li onClick={this.operateMore(item, 'download')}>
+      <DownloadButton style={{cursor: 'pointer'}} onClick={this.operateMore(item, 'download')}>
         <Icon type="download" className={styles.swap} /> 下载
-      </li>
+      </DownloadButton>
     )
+
+
 
     const moveAction = (
       <li onClick={this.operateMore(item, 'move')}>
@@ -159,6 +164,12 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       </span>
     )
   }
+}
+
+function Li (props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>) {
+  return (
+    <span {...props} >{props.children}</span>
+  )
 }
 
 export default DashboardAction
