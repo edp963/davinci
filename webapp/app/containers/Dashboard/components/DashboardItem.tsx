@@ -24,6 +24,7 @@ import classnames from 'classnames'
 
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
+import DashboardItemMask from './DashboardItemMask'
 import SharePanel from '../../../components/SharePanel'
 import DownloadCsv, { IDownloadCsvProps } from '../../../components/DownloadCsv'
 import DataDrill from '../../../components/DataDrill/Panel'
@@ -897,17 +898,30 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         />
       </div>
     )
+
+    const { selectedChart, cols, rows, metrics } = widgetProps
+    const hasDataConfig = !!(cols.length || rows.length || metrics.length)
+    const empty = (
+      <DashboardItemMask.Empty
+        loading={loading}
+        chartType={selectedChart}
+        empty={!data.length}
+        hasDataConfig={hasDataConfig}
+      />
+    )
+
     return (
       <div className={gridItemClass} ref={(f) => this.container = f}>
         <div className={styles.header}>
           <div className={styles.title}>
             {controlPanelHandle}
             <h4>{widget.name}</h4>
+            {loading && <Icon className={styles.control} type="loading" />}
             {descPanelHandle}
           </div>
           <div className={styles.tools}>
             <Tooltip title="同步数据">
-              <Icon type={loading ? 'loading' : 'reload'} onClick={this.onSyncBizdatas} />
+              {!loading && <Icon type="reload" onClick={this.onSyncBizdatas} />}
             </Tooltip>
             {widgetButton}
             <Tooltip title="全屏">
@@ -952,7 +966,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               data={data}
               queryVariables={queryVariables}
               pagination={pagination}
-              loading={loading}
+              empty={empty}
               model={model}
               onCheckTableInteract={this.checkTableInteract}
               onDoInteract={this.doInteract}
