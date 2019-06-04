@@ -87,7 +87,12 @@ export function errorHandler (error) {
         message.error('您没有权限访问此数据', 2)
         break
       default:
-        message.error(error.response.data.header.msg, 3)
+        message.error(
+          error.response.data.header
+            ? error.response.data.header.msg
+            : error.message,
+          3
+        )
         break
     }
   } else {
