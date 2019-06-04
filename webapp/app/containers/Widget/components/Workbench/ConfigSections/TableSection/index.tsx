@@ -6,9 +6,10 @@ import { ViewModelType, IDataParamSource } from '../../Dropbox'
 import { decodeMetricName, getAggregatorLocale, getFieldAlias } from 'containers/Widget/components/util'
 import {
   fontSizeOptions,
-  TableCellStyleTypes, TableConditionStyleTypes, TableConditionStyleFieldTypes, pageSizeOptions } from './util'
+  TableCellStyleTypes, TableConditionStyleTypes, TableConditionStyleFieldTypes, pageSizeOptions
+} from './util'
 
-import { Icon, Row, Col, Select, Radio, Checkbox, Modal } from 'antd'
+import { Icon, Row, Col, Select, Radio, Checkbox, Modal, InputNumber } from 'antd'
 const { Option } = Select
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
@@ -76,6 +77,8 @@ export interface ITableConfig {
   withPaging: boolean
   pageSize: string
   withNoAggregators: boolean
+  autoPlay: boolean
+  palyInterval: number
 }
 
 interface ITableSectionProps {
@@ -97,7 +100,7 @@ import ColumnConfigModal from './ColumnConfigModal'
 
 export class TableSection extends React.PureComponent<ITableSectionProps, ITableSectionStates> {
 
-  public constructor (props) {
+  public constructor(props) {
     super(props)
     const validColumns = this.getCurrentTableColumns(props)
     const validHeaderConfig = this.getValidHeaderConfig(props, validColumns)
@@ -111,7 +114,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     }
   }
 
-  public componentWillReceiveProps (nextProps: ITableSectionProps) {
+  public componentWillReceiveProps(nextProps: ITableSectionProps) {
     const validColumns = this.getCurrentTableColumns(nextProps)
     const validHeaderConfig = this.getValidHeaderConfig(nextProps, validColumns)
     const validColumnConfig = this.getValidColumnConfig(nextProps, validColumns)
@@ -122,7 +125,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     })
   }
 
-  private getCurrentTableColumns (props: ITableSectionProps) {
+  private getCurrentTableColumns(props: ITableSectionProps) {
     const { dataParams } = props
     const keyNames = ['cols', 'metrics', 'rows']
     const validColumns: IDataParamSource[] = Object.entries(dataParams).reduce((acc, [key, value]) => {
@@ -295,7 +298,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     })
   }
 
-  private getColumnDisplayName (column: IDataParamSource) {
+  private getColumnDisplayName(column: IDataParamSource) {
     let displayName = `${decodeMetricName(column.name)}`
     if (column.agg) {
       displayName = `[${getAggregatorLocale(column.agg)}]${displayName}`
@@ -307,7 +310,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     return displayName
   }
 
-  private getValidFixedColumns (headerConfig: ITableHeaderConfig[], columns: IDataParamSource[]) {
+  private getValidFixedColumns(headerConfig: ITableHeaderConfig[], columns: IDataParamSource[]) {
     let options: JSX.Element[]
     if (!headerConfig.length) {
       options = columns.map((c) => {
@@ -331,11 +334,11 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     return options
   }
 
-  public render () {
+  public render() {
     const { config } = this.props
     const {
       leftFixedColumns, rightFixedColumns, headerFixed, bordered, size,
-      autoMergeCell, withPaging, pageSize, withNoAggregators } = config
+      autoMergeCell, withPaging, pageSize, withNoAggregators, autoPlay, palyInterval } = config
     const {
       validColumns, validHeaderConfig, validColumnConfig,
       headerConfigModalVisible, columnConfigModalVisible } = this.state
@@ -453,6 +456,19 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
                   </Select>
                 </Col>}
             </Row>
+            {!withPaging ? null : <Row>
+              <Col span={12}>
+                <Checkbox checked={autoPlay} onChange={this.checkboxChange('autoPlay')}>自动换页</Checkbox>
+              </Col>
+              <Col span={12}>
+                <InputNumber
+                  placeholder={"毫秒"}
+                  min={500}
+                  value={palyInterval}
+                  onChange={this.selectChange('palyInterval')}
+                />
+              </Col>
+            </Row>}
           </div>
         </div>
         <div className={styles.paneBlock}>

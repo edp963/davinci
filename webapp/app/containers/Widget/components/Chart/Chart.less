@@ -53,15 +53,20 @@
 }
 
 .table {
-
   &.noBorder {
     :global {
-      .ant-table-thead > tr > th {
-        border: none;
+      .ant-table-thead,
+      .ant-table-thead * {
+        border: none !important;
       }
 
-      .ant-table-tbody > tr > td {
-        border: none;
+      .ant-table-tbody,
+      .ant-table-tbody * {
+        border: none !important;
+      }
+      .ant-table-small,
+      .ant-table-small * {
+        border: none !important;
       }
     }
   }
@@ -78,7 +83,7 @@
       margin-right: 15px;
       margin-bottom: 0 !important;
       background: transparent !important;
-      .hideScrollbar
+      .hideScrollbar;
     }
 
     // .ant-table-thead th {
@@ -113,7 +118,9 @@
     //     height: 1px;
     //   }
     // }
-
+    .ant-table-body {
+      background-color: transparent !important;
+    }
     .react-resizable-handle {
       position: absolute;
       width: 10px;
@@ -158,11 +165,9 @@
   }
   .selectedRow {
     background-color: #d2eafb;
-   // background-color: transparent;
-
+    // background-color: transparent;
   }
   .unSelectedRow {
     background-color: transparent;
   }
 }
-
