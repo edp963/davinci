@@ -277,8 +277,8 @@ public class ViewController extends BaseController {
     @ApiOperation(value = "get dac tenants")
     @GetMapping("/dac/{dacName}/tenants")
     public ResponseEntity getDacTannets(@PathVariable String dacName, @ApiIgnore @CurrentUser User user, HttpServletRequest request) {
-        Object tenants = dacChannelUtil.getTenants(dacName);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(null == tenants ? new List[0] : tenants));
+
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(dacChannelUtil.getTenants(dacName)));
     }
 
 
@@ -288,7 +288,6 @@ public class ViewController extends BaseController {
                                      @PathVariable String tenantId,
                                      @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
-        Object bizs = dacChannelUtil.getBizs(dacName, tenantId);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(null == bizs ? new List[0] : bizs ));
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(dacChannelUtil.getBizs(dacName, tenantId)));
     }
 }

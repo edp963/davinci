@@ -81,7 +81,7 @@ public class DacChannelUtil {
         this.channels = channels;
     }
 
-    public Object getTenants(String dacName) throws NotFoundException {
+    public List getTenants(String dacName) throws NotFoundException {
         if (!dacMap.containsKey(dacName)) {
             log.error("data-auth-center channel :{} is not found", dacName);
             throw new NotFoundException("Channel " + dacName + " is not found");
@@ -96,7 +96,7 @@ public class DacChannelUtil {
                     ResultMap.class);
             if (result.getStatusCode().equals(HttpStatus.OK)) {
                 ResultMap resultMap = result.getBody();
-                return resultMap.get(PAYLOAD);
+                return (List) resultMap.get(PAYLOAD);
             }
         } catch (RestClientException e) {
             log.error(e.getMessage());
@@ -105,7 +105,7 @@ public class DacChannelUtil {
         return null;
     }
 
-    public Object getBizs(String dacName, String tenantId) throws NotFoundException {
+    public List getBizs(String dacName, String tenantId) throws NotFoundException {
         if (!dacMap.containsKey(dacName)) {
             log.error("data-auth-center channel :{} is not found", dacName);
             throw new NotFoundException("Channel " + dacName + " is not found");
@@ -121,7 +121,7 @@ public class DacChannelUtil {
                     ResultMap.class, tenantId);
             if (result.getStatusCode().equals(HttpStatus.OK)) {
                 ResultMap resultMap = result.getBody();
-                return resultMap.get(PAYLOAD);
+                return (List) resultMap.get(PAYLOAD);
             }
         } catch (RestClientException e) {
             log.error(e.getMessage());

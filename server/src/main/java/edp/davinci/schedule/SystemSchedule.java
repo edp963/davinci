@@ -23,6 +23,7 @@ import edp.core.consts.Consts;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
 import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.dao.DownloadRecordMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -37,10 +38,14 @@ public class SystemSchedule {
     @Autowired
     public FileUtils fileUtils;
 
+    private DownloadRecordMapper downloadRecordMapper;
+
+
     @Scheduled(cron = "0 0 1 * * *")
     public void clearTempDir() {
 
-        //下载文件保留7天
+        //下载内容文件保留7天，记录保留1月
+        downloadRecordMapper.deleteBeforAMonthRecord();
         String downloadDir = fileUtils.fileBasePath + Consts.DIR_DOWNLOAD + DateUtils.getTheDayBeforAWeekYYYYMMDD();
         String tempDir = fileUtils.fileBasePath + Consts.DIR_TEMPL + DateUtils.getTheDayBeforNowDateYYYYMMDD();
         String csvDir = fileUtils.fileBasePath + File.separator + FileTypeEnum.CSV.getType();
