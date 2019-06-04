@@ -23,6 +23,7 @@ import Widget, { IWidgetProps } from '../Widget'
 import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
 import EditorHeader from '../../../../components/EditorHeader'
 import WorkbenchSettingForm from './WorkbenchSettingForm'
+import DashboardItemMask, { IDashboardItemMaskProps } from 'containers/Dashboard/components/DashboardItemMask'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
 import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
@@ -487,6 +488,15 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     const selectedView = formedViews[selectedViewId]
     const { queryMode, multiDrag } = settings
 
+    const { selectedChart, cols, rows, metrics, data } = widgetProps
+    const hasDataConfig = !!(cols.length || rows.length || metrics.length)
+    const maskProps: IDashboardItemMaskProps = {
+      loading: dataLoading,
+      chartType: selectedChart,
+      empty: !data.length,
+      hasDataConfig
+    }
+
     return (
       <div className={styles.workbench}>
         <EditorHeader
@@ -540,7 +550,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
                 <div className={styles.widgetBlock}>
                   <Widget
                     {...widgetProps}
-                    loading={dataLoading}
+                    loading={<DashboardItemMask.Loading {...maskProps}/>}
+                    empty={<DashboardItemMask.Empty {...maskProps}/>}
                     editing={true}
                     onPaginationChange={this.paginationChange}
                     onChartStylesChange={this.chartStylesChange}
