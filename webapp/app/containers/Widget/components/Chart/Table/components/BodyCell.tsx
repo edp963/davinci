@@ -154,7 +154,7 @@ function getNumericBarConditionCellStyle (
       if (cellBarPercentage === void 0) {
         cellBarPercentage = (Math.abs(cellVal) / valRange) * 100
       }
-      barZeroPosition = Math.abs(Math.min(0, minCellVal)) / Math.max(Math.abs(minCellVal), Math.abs(maxCellVal)) * 100
+      barZeroPosition = Math.abs(Math.min(0, minCellVal)) / (Math.abs(minCellVal) + Math.abs(maxCellVal)) * 100
       break
   }
 
@@ -174,6 +174,7 @@ function getNumericBarConditionCellStyle (
   divisions.push(`${backgroundColor} 100%`)
 
   const cssStyle: React.CSSProperties = {
+    color: fore,
     background: `linear-gradient(90deg, ${divisions.join(',')})`
   }
   return cssStyle
