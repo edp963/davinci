@@ -401,6 +401,7 @@ function getTableColumns (props: IChartProps) {
     mapTableHeaderConfig[name] = headerConfigItem
     column.onCell = (record) => ({
       config: columnConfigItem,
+      format,
       cellVal: record[expression],
       cellValRange: getTableCellValueRange(data, expression, columnConfigItem)
     })
