@@ -1,6 +1,6 @@
 import * as React from 'react'
 import {IOrganization} from '../../Organizations/Organization'
-import {IProject} from '../../Projects'
+import {IProject, IProjectPermission} from '../../Projects'
 
 interface IModulePermissionProps {
   size?: string
@@ -58,7 +58,20 @@ export default (project?: IProject, item?: any) => (WrapperComponent) => {
   return MenuPermission
 }
 
-
+export function onlyVizPermission (permission: IProjectPermission) {
+  const {
+    vizPermission,
+    widgetPermission,
+    viewPermission,
+    sourcePermission,
+    schedulePermission
+  } = permission
+  return !widgetPermission
+    && !viewPermission
+    && !sourcePermission
+    && !schedulePermission
+    && vizPermission
+}
 
 
 
