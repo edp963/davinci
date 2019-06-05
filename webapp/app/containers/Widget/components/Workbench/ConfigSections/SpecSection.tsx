@@ -1,8 +1,8 @@
 import * as React from 'react'
-import { Row, Col, Checkbox, Select, InputNumber } from 'antd'
+import { Row, Col, Checkbox, Select, InputNumber, Input } from 'antd'
 const Option = Select.Option
 const styles = require('../Workbench.less')
-import { CHART_SORT_MODES, CHART_ALIGNMENT_MODES, CHART_LAYER_TYPES, CHART_LINES_SYMBOL_TYPE } from '../../../../../globalConstants'
+import { CHART_SORT_MODES, CHART_ALIGNMENT_MODES, CHART_LAYER_TYPES, CHART_LINES_SYMBOL_TYPE, CHART_POSITION_TYPE } from '../../../../../globalConstants'
 
 export interface ISpecConfig {
   smooth?: boolean
@@ -29,6 +29,9 @@ export interface ISpecConfig {
   draggable: boolean
   symbol?: boolean
   label?: boolean
+  centerX?: string
+  centerY?: string
+  centerType?: string
 }
 
 interface ISpecSectionProps {
@@ -40,6 +43,7 @@ interface ISpecSectionProps {
 }
 
 export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
+
   private checkboxChange = (prop) => (e) => {
     this.props.onChange(prop, e.target.checked)
   }
@@ -52,7 +56,11 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
     this.props.onChange(prop, value)
   }
 
-  public render () {
+  private centerChange = (prop) => (e) => {
+    this.props.onChange(prop, e.target.value)
+  }
+
+  public render() {
     const { name, title, config, isLegendSection } = this.props
 
     const {
@@ -78,7 +86,10 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
       orient,
       draggable,
       symbol,
-      label
+      label,
+      centerX,
+      centerY,
+      centerType
     } = config
 
     const sortModes = CHART_SORT_MODES.map((f) => (
@@ -164,6 +175,9 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
         )
         break
       case 'pie':
+        const posTypes = CHART_POSITION_TYPE.map((f) => (
+          <Option key={f.value} value={`${f.value}`}>{f.name}</Option>
+        ))
         renderHtml = (
           <div className={styles.paneBlock}>
             <h4>{title}</h4>
@@ -184,6 +198,37 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
                   >
                     南丁格尔玫瑰
                   </Checkbox>
+                </Col>
+              </Row>
+            </div>
+            <h4><a href="https://www.echartsjs.com/option.html#series-pie.center" target="_blank">圆心</a></h4>
+            <div className={styles.blockBody}>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={10}>
+                  <Select
+                    placeholder="圆心设置"
+                    className={styles.blockElm}
+                    value={centerType}
+                    onChange={this.selectChange('centerType')}
+                  >
+                    {posTypes}
+                  </Select>
+                </Col>
+                <Col span={6}>
+                  <Input
+                    className={styles.blockElm}
+                    placeholder="横坐标"
+                    value={centerX}
+                    onChange={this.centerChange('centerX')}
+                  />
+                </Col>
+                <Col span={6}>
+                  <Input
+                    className={styles.blockElm}
+                    placeholder="纵坐标"
+                    value={centerY}
+                    onChange={this.centerChange('centerY')}
+                  />
                 </Col>
               </Row>
             </div>
@@ -283,36 +328,36 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
                     {layerTypes}
                   </Select>
                 </Col>
-                </Row>
-                {
-                  isLegendSection
-                    ? (
-                        <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                          <Col span={4}>速度</Col>
-                          <Col span={6}>
-                            <InputNumber
-                              placeholder="speed"
-                              className={styles.blockElm}
-                              value={linesSpeed}
-                              min={0}
-                              onChange={this.inputNumberChange('linesSpeed')}
-                            />
-                          </Col>
-                          <Col span={4}>标记</Col>
-                          <Col span={10}>
-                            <Select
-                              placeholder="标记"
-                              className={styles.blockElm}
-                              value={symbolType}
-                              onChange={this.selectChange('symbolType')}
-                            >
-                              {symbolTypes}
-                            </Select>
-                          </Col>
-                        </Row>
-                    )
-                    : null
-                }
+              </Row>
+              {
+                isLegendSection
+                  ? (
+                    <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                      <Col span={4}>速度</Col>
+                      <Col span={6}>
+                        <InputNumber
+                          placeholder="speed"
+                          className={styles.blockElm}
+                          value={linesSpeed}
+                          min={0}
+                          onChange={this.inputNumberChange('linesSpeed')}
+                        />
+                      </Col>
+                      <Col span={4}>标记</Col>
+                      <Col span={10}>
+                        <Select
+                          placeholder="标记"
+                          className={styles.blockElm}
+                          value={symbolType}
+                          onChange={this.selectChange('symbolType')}
+                        >
+                          {symbolTypes}
+                        </Select>
+                      </Col>
+                    </Row>
+                  )
+                  : null
+              }
             </div>
           </div>
         )
@@ -454,7 +499,7 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
                     数值
                   </Checkbox>
                 </Col>
-                </Row>
+              </Row>
             </div>
           </div>
         )

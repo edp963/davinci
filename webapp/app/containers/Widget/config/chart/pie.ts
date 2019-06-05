@@ -59,7 +59,10 @@ const pie: IChartInfo = {
     },
     spec: {
       roseType: false,
-      circle: false
+      circle: false,
+      centerX: '50%',
+      centerY: '50%',
+      centerType: 'auto'
     }
     // toolbox: {
     //   showToolbox: false

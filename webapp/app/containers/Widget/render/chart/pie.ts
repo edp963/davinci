@@ -55,7 +55,10 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   const {
     circle,
-    roseType
+    roseType,
+    centerX,
+    centerY,
+    centerType
   } = spec
   const { selectedItems } = drillOptions
   // formatter: '{b}({d}%)'
@@ -73,12 +76,12 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     const decodedMetricName = decodeMetricName(m.name)
     if (cols.length || color.items.length) {
       const groupColumns = color.items.map((c) => c.name).concat(cols.map((c) => c.name))
-      .reduce((distinctColumns, col) => {
-        if (!distinctColumns.includes(col)) {
-          distinctColumns.push(col)
-        }
-        return distinctColumns
-      }, [])
+        .reduce((distinctColumns, col) => {
+          if (!distinctColumns.includes(col)) {
+            distinctColumns.push(col)
+          }
+          return distinctColumns
+        }, [])
       const grouped = data.reduce((obj, val) => {
         const groupingKey = groupColumns
           .reduce((keyArr, col) => keyArr.concat(val[col]), [])
@@ -140,14 +143,16 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         name: '',
         type: 'pie',
         avoidLabelOverlap: false,
-        center: legend.showLegend ? [leftValue, topValue] : [width / 2, height / 2],
+        center: centerType == 'customize' ? [centerX, centerY] : (legend.showLegend ? [leftValue, topValue] : [width / 2, height / 2]),
         color: colorArr,
         data: seriesData.map((data, index) => {
-          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
-            normal: {
-              opacity: 1
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {
+            itemStyle: {
+              normal: {
+                opacity: 1
+              }
             }
-          }} : {}
+          } : {}
           return {
             ...data,
             ...itemStyleObj
@@ -155,9 +160,9 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         }),
         itemStyle: {
           emphasis: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
           },
           normal: {
             opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
@@ -173,13 +178,15 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         name: decodedMetricName,
         type: 'pie',
         avoidLabelOverlap: false,
-        center: [width / 2, height / 2],
+        center: centerType == 'customize' ? [centerX, centerY] : ([width / 2, height / 2]),
         data: data.map((d, index) => {
-          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
-            normal: {
-              opacity: 1
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {
+            itemStyle: {
+              normal: {
+                opacity: 1
+              }
             }
-          }} : {}
+          } : {}
           return {
             name: decodedMetricName,
             value: d[`${m.agg}(${decodedMetricName})`],
@@ -188,9 +195,9 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         }),
         itemStyle: {
           emphasis: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
           },
           normal: {
             opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
@@ -207,7 +214,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   const tooltip: EChartOption.Tooltip = {
     trigger: 'item',
     formatter: '{b} <br/>{c} ({d}%)'
-}
+  }
 
   return {
     tooltip,
