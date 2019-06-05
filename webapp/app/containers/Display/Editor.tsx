@@ -317,6 +317,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     let variables
     let linkageVariables
     let globalVariables
+    let pagination
+    let nativeQuery
 
     if (queryConditions) {
       tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
@@ -325,6 +327,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
+      pagination = queryConditions.pagination || cachedQueryConditions.pagination
+      nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
     } else {
       tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
@@ -332,6 +336,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       variables = cachedQueryConditions.variables
       linkageVariables = cachedQueryConditions.linkageVariables
       globalVariables = cachedQueryConditions.globalVariables
+      pagination = cachedQueryConditions.pagination
+      nativeQuery = cachedQueryConditions.nativeQuery
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -399,7 +405,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         globalVariables,
         orders,
         cache,
-        expired
+        expired,
+        pagination,
+        nativeQuery
       }
     )
   }
