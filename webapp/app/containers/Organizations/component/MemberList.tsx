@@ -22,6 +22,7 @@ interface IMembersState {
 }
 
 interface IMembersProps {
+  loginUser: any
   organizationId: number
   loadOrganizationsMembers: (id: number) => any
   deleteOrganizationMember: (id: number, resolve: () => any) => any
@@ -185,6 +186,9 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
   }
   public render () {
     const {
+      loginUser
+    } = this.props
+    const {
       formVisible,
       category,
       modalLoading,
@@ -238,7 +242,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           key: 'settings',
           width: 200,
           render: (text, record) => {
-            if (text.role === 1) {
+            if (record.user.id === loginUser.id) {
               return ''
             }
             return (
