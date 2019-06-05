@@ -84,7 +84,9 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     let tableWidget
     if (dashboardType === 2) {  //
       tableWidget = widgets.filter((widget) => {
+        console.log(widget.name)
         const widgetConfig = JSON.parse(widget.config)
+        console.log(widgetConfig)
         return widgetConfig['selectedChart'] === 1 && widgetConfig['mode'] === 'chart'
       })
     } else {

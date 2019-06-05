@@ -24,6 +24,7 @@ import {IconProps} from 'antd/lib/icon'
 const styles = require('../Dashboard.less')
 import {IProject} from '../../Projects'
 import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
+import ModulePermission from '../../Account/components/checkModulePermission'
 
 interface IDashboardActionProps {
   currentProject: IProject
@@ -78,10 +79,11 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     } = this.props
     const { popoverVisible } = this.state
 
+    const EditActionButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>>(currentProject, 'viz')(Li)
     const editAction = (
-      <li onClick={this.operateMore(item, 'edit')}>
+      <EditActionButton onClick={this.operateMore(item, 'edit')}>
         <Icon type="edit" /> 编辑
-      </li>
+      </EditActionButton>
     )
 
     const DownloadButton = ShareDownloadPermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>>(currentProject, 'download')(Li)
@@ -95,27 +97,32 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
 
 
     const moveAction = (
-      <li onClick={this.operateMore(item, 'move')}>
+      <EditActionButton onClick={this.operateMore(item, 'move')}>
         <Icon type="swap" className={styles.swap} /> 移动
-      </li>
+      </EditActionButton>
+    )
+
+    const DeleteActionButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>>(currentProject, 'viz', true)(Li)
+    const deleteAction = (
+      <DeleteActionButton onClick={this.operateMore(item, 'delete')}>
+        <Icon type="delete" /> 删除
+      </DeleteActionButton>
     )
 
     const ulActionAll = (
       <ul className={styles.menu}>
-        {editAction}
-        {downloadAction}
-        {moveAction}
-        <li onClick={this.operateMore(item, 'delete')}>
-          <Icon type="delete" /> 删除
-        </li>
+        <li>{editAction}</li>
+        <li>{downloadAction}</li>
+        <li>{moveAction}</li>
+        <li>{deleteAction}</li>
       </ul>
     )
 
     const ulActionPart = (
       <ul className={styles.menu}>
-        {editAction}
-        {downloadAction}
-        {moveAction}
+        <li>{editAction}</li>
+        <li>{downloadAction}</li>
+        <li>{moveAction}</li>
       </ul>
     )
 
@@ -130,7 +137,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     let ulPopover
     if (currentProject && currentProject.permission) {
       const currentPermission = currentProject.permission.vizPermission
-      if (currentPermission === 0 || currentPermission === 1) {
+      if (currentPermission === 0) {
         ulPopover = null
       } else {
         ulPopover = (
