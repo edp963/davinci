@@ -1,6 +1,5 @@
 package edp.davinci.service.excel;
 
-import edp.davinci.model.DownloadRecord;
 import edp.davinci.model.User;
 
 import java.io.Serializable;

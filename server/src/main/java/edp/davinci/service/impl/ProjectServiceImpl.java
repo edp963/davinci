@@ -135,8 +135,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         //当前用户能看到的所有project
         List<ProjectWithCreateBy> projects = projectMapper.getProejctsByUser(user.getId());
-        List<ProjectInfo> list = getProjectInfos(user, projects);
-        return list;
+        return getProjectInfos(user, projects);
     }
 
 
