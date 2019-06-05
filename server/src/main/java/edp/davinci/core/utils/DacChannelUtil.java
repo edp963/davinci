@@ -132,13 +132,12 @@ public class DacChannelUtil {
 
 
     public List<Object> getData(String dacName, String bizId, String email) {
-        if (dacMap.containsKey(dacName)) {
+        if (dacMap.containsKey(dacName) && !StringUtils.isEmpty(email)) {
             DacChannel channel = dacMap.get(dacName);
 
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add(AUTH_CODE_KEY, channel.getAuthCode());
             params.add(EMAIL_KEY, email);
-
 
             try {
                 ResponseEntity<ResultMap> result = restTemplate.getForEntity(UriComponentsBuilder.

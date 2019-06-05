@@ -188,6 +188,21 @@ CREATE TABLE `role`
   DEFAULT CHARSET = utf8mb4;
 
 
+ALTER TABLE `organization`
+ADD INDEX `idx_user_id`(`user_id`),
+ADD INDEX `idx_allow_create_project`(`allow_create_project`),
+ADD INDEX `idx_member_permisson`(`member_permission`);
+
+ALTER TABLE `project`
+ADD INDEX `idx_org_id`(`org_id`),
+ADD INDEX `idx_user_id`(`user_id`),
+ADD INDEX `idx_visibility`(`visibility`);
+
+ALTER TABLE `rel_user_organization`
+ADD INDEX `idx_role`(`role`);
+
+
+
 SET @s = (SELECT IF(
                        (SELECT COUNT(*)
                         FROM INFORMATION_SCHEMA.COLUMNS
@@ -889,44 +904,32 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 
+
+
+
 SET @s = (SELECT IF(
-                       (SELECT COUNT(*)
-                        FROM INFORMATION_SCHEMA.COLUMNS
-                        WHERE table_schema = @data_base
-                          AND table_name = 'view'
-                          AND column_name = 'parent_id') > 0,
-                       "SELECT 1",
-                       "ALTER TABLE `view` ADD `parent_id` bigint(20) DEFAULT NULL;"
-                   ));
+                             (SELECT COUNT(*)
+                              FROM INFORMATION_SCHEMA.COLUMNS
+                              WHERE table_schema = @data_base
+                                AND table_name = 'view'
+                                AND column_name = 'parent_id') > 0,
+                             "SELECT 1",
+                             "ALTER TABLE `view` ADD `parent_id` bigint(20) DEFAULT NULL;"
+                     ));
 
 PREPARE stmt FROM @s;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 SET @s = (SELECT IF(
-                       (SELECT COUNT(*)
-                        FROM INFORMATION_SCHEMA.COLUMNS
-                        WHERE table_schema = @data_base
-                          AND table_name = 'view'
-                          AND column_name = 'full_parent_id') > 0,
-                       "SELECT 1",
-                       "ALTER TABLE `view` ADD `full_parent_id` varchar(255) DEFAULT NULL;"
-                   ));
-
-PREPARE stmt FROM @s;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
-
-SET @s = (SELECT IF(
-                       (SELECT COUNT(*)
-                        FROM INFORMATION_SCHEMA.COLUMNS
-                        WHERE table_schema = @data_base
-                          AND table_name = 'view'
-                          AND column_name = 'is_folder') > 0,
-                       "SELECT 1",
-                       "ALTER TABLE `view` ADD `is_folder` tinyint(1) DEFAULT NULL;"
-                   ));
+                             (SELECT COUNT(*)
+                              FROM INFORMATION_SCHEMA.COLUMNS
+                              WHERE table_schema = @data_base
+                                AND table_name = 'view'
+                                AND column_name = 'full_parent_id') > 0,
+                             "SELECT 1",
+                             "ALTER TABLE `view` ADD `full_parent_id` varchar(255) DEFAULT NULL;"
+                     ));
 
 PREPARE stmt FROM @s;
 EXECUTE stmt;
@@ -934,14 +937,88 @@ DEALLOCATE PREPARE stmt;
 
 
 SET @s = (SELECT IF(
-                       (SELECT COUNT(*)
-                        FROM INFORMATION_SCHEMA.COLUMNS
-                        WHERE table_schema = @data_base
-                          AND table_name = 'view'
-                          AND column_name = 'index') > 0,
-                       "SELECT 1",
-                       "ALTER TABLE `view` ADD `index` int(5) DEFAULT NULL;"
-                   ));
+                             (SELECT COUNT(*)
+                              FROM INFORMATION_SCHEMA.COLUMNS
+                              WHERE table_schema = @data_base
+                                AND table_name = 'view'
+                                AND column_name = 'is_folder') > 0,
+                             "SELECT 1",
+                             "ALTER TABLE `view` ADD `is_folder` tinyint(1) DEFAULT NULL;"
+                     ));
+
+PREPARE stmt FROM @s;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
+SET @s = (SELECT IF(
+                             (SELECT COUNT(*)
+                              FROM INFORMATION_SCHEMA.COLUMNS
+                              WHERE table_schema = @data_base
+                                AND table_name = 'view'
+                                AND column_name = 'index') > 0,
+                             "SELECT 1",
+                             "ALTER TABLE `view` ADD `index` int(5) DEFAULT NULL;"
+                     ));
+
+PREPARE stmt FROM @s;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
+SET @s = (SELECT IF(
+                             (SELECT COUNT(*)
+                              FROM INFORMATION_SCHEMA.COLUMNS
+                              WHERE table_schema = @data_base
+                                AND table_name = 'rel_user_organization'
+                                AND column_name = 'create_by') > 0,
+                             "SELECT 1",
+                             "ALTER TABLE `rel_user_organization` ADD `create_by` bigint(20) DEFAULT NULL;"
+                     ));
+
+PREPARE stmt FROM @s;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @s = (SELECT IF(
+                             (SELECT COUNT(*)
+                              FROM INFORMATION_SCHEMA.COLUMNS
+                              WHERE table_schema = @data_base
+                                AND table_name = 'rel_user_organization'
+                                AND column_name = 'create_time') > 0,
+                             "SELECT 1",
+                             "ALTER TABLE `rel_user_organization` ADD `create_time` datetime DEFAULT NULL;"
+                     ));
+
+PREPARE stmt FROM @s;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
+SET @s = (SELECT IF(
+                             (SELECT COUNT(*)
+                              FROM INFORMATION_SCHEMA.COLUMNS
+                              WHERE table_schema = @data_base
+                                AND table_name = 'rel_user_organization'
+                                AND column_name = 'update_by') > 0,
+                             "SELECT 1",
+                             "ALTER TABLE `rel_user_organization` ADD `update_by` bigint(20) DEFAULT NULL;"
+                     ));
+
+PREPARE stmt FROM @s;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
+SET @s = (SELECT IF(
+                             (SELECT COUNT(*)
+                              FROM INFORMATION_SCHEMA.COLUMNS
+                              WHERE table_schema = @data_base
+                                AND table_name = 'rel_user_organization'
+                                AND column_name = 'update_time') > 0,
+                             "SELECT 1",
+                             "ALTER TABLE `rel_user_organization` ADD `update_time` datetime DEFAULT NULL;"
+                     ));
 
 PREPARE stmt FROM @s;
 EXECUTE stmt;

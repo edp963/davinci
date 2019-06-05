@@ -86,7 +86,7 @@ public interface RelRoleProjectMapper {
             "       rrp.viz_permission      as 'permission.vizPermission',",
             "       rrp.schedule_permission as 'permission.schedulePermission',",
             "       rrp.share_permission    as 'permission.sharePermission',",
-            "       rrp.download_permission as 'downloadPermission'",
+            "       rrp.download_permission as 'permission.downloadPermission'",
             "from role r",
             "       left join rel_role_project rrp on rrp.role_id = r.id",
             "where rrp.project_id = #{projectId} and rrp.role_id = #{roleId}",

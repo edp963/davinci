@@ -24,7 +24,6 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.util.Arrays;
 import java.util.List;
 
 @Data
@@ -38,7 +37,7 @@ public class DashboardCreate {
     private Long dashboardPortalId;
 
     @Min(value = (short) 0, message = "Invalid dashboard type")
-    @Max(value = (short) 1, message = "Invalid dashboard type")
+    @Max(value = (short) 2, message = "Invalid dashboard type")
     private Short type = 0;
 
     private Integer index = 0;
