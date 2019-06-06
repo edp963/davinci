@@ -350,7 +350,7 @@ function getTableColumns (props: IChartProps) {
   const tableColumns: Array<ColumnProps<any>> = []
   const mapTableHeaderConfig: IMapTableHeaderConfig = {}
   cols.concat(rows).forEach((dimension) => {
-    const { name, field } = dimension
+    const { name, field, format } = dimension
     const headerText = getFieldAlias(field, queryVariables || {}) || name
     const column: ColumnProps<any> = {
       key: name,
@@ -369,7 +369,7 @@ function getTableColumns (props: IChartProps) {
       headerConfigItem = config
     })
     const columnConfigItem = columnsConfig.find((cfg) => cfg.columnName === name)
-    column.width = getDataColumnWidth(name, columnConfigItem, null, data)
+    column.width = getDataColumnWidth(name, columnConfigItem, format, data)
     column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
     mapTableHeaderConfig[name] = headerConfigItem
     column.onCell = (record) => ({
@@ -396,7 +396,7 @@ function getTableColumns (props: IChartProps) {
       headerConfigItem = config
     })
     const columnConfigItem = columnsConfig.find((cfg) => cfg.columnName === name)
-    column.width = getDataColumnWidth(expression, columnConfigItem, null, data)
+    column.width = getDataColumnWidth(expression, columnConfigItem, format, data)
     column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
     mapTableHeaderConfig[name] = headerConfigItem
     column.onCell = (record) => ({
