@@ -204,6 +204,7 @@ export class Organization extends React.PureComponent <IOrganizationProps, {}> {
             </TabPane>
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{memberNum}</span></span>} key="members">
               <MemberList
+                loginUser={loginUser}
                 toThatUserProfile={this.toThatTeam}
                 organizationId={organizationId}
                 loadOrganizationsMembers={this.props.onLoadOrganizationMembers}

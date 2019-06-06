@@ -26,6 +26,7 @@ import edp.core.model.PaginateWithQueryColumns;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.User;
+import edp.davinci.service.excel.SQLContext;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -52,4 +53,6 @@ public interface ViewService extends CheckEntityService {
     List<Map<String, Object>> getDistinctValueData(boolean isMaintainer, ViewWithSource viewWithSource, DistinctParam param, User user) throws ServerException;
 
     ViewWithSourceBaseInfo getView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+
+    SQLContext getSQLContext(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user);
 }

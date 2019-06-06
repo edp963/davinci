@@ -32,4 +32,5 @@ userfiles/
 .vscode
 *yarn.lock
 bin/upgrade.go
-bin/upgrade/
+/davinci-ui/
+bin/upgrade

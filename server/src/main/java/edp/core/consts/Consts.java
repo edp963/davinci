@@ -39,6 +39,8 @@ public class Consts {
 
     public static final String SQL_URL_SEPARATOR = "&";
 
+    public static final String AT_SYMBOL = "@";
+
     public static final String OCTOTHORPE = "#";
 
     public static final String PERCENT_SIGN = "%";

@@ -34,8 +34,13 @@ interface IDataColumn {
 export interface IDataParamSource extends IDataColumn {
   type: DragType
   visualType: ViewModelType
+  title?: string
   chart?: IChartInfo
   config?: IDataParamConfig
+}
+
+export interface IDragItem extends IDataParamSource {
+  checked?: boolean
 }
 
 export interface IDataParamConfig {

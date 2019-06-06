@@ -63,7 +63,11 @@ import {
   SELECT_DASHBOARD_ITEM_CHART,
   SET_SELECT_OPTIONS
 } from './constants'
-
+import {
+  INITIATE_DOWNLOAD_TASK,
+  INITIATE_DOWNLOAD_TASK_SUCCESS,
+  INITIATE_DOWNLOAD_TASK_FAILURE
+} from '../App/constants'
 import { ActionTypes as ViewActionTypes } from '../View/constants'
 import { ViewActionType } from '../View/actions'
 
@@ -72,8 +76,9 @@ import {
   IControlRelatedField,
   getVariableValue,
   getModelValue,
-  getDefaultValue
+  deserializeDefaultValue
 } from '../../components/Filters'
+import { DownloadTypes } from '../App/types';
 
 const initialState = fromJS({
   dashboards: null,
@@ -157,7 +162,7 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
 
       globalControls.forEach((control: IGlobalControl) => {
         const { interactionType, relatedItems, relatedViews } = control
-        const defaultValue = getDefaultValue(control)
+        const defaultValue = deserializeDefaultValue(control)
         if (defaultValue) {
           Object.entries(relatedItems).forEach(([itemId, config]) => {
             Object.entries(relatedViews).forEach(([viewId, fields]) => {
@@ -430,6 +435,27 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
           downloadCsvLoading: false
         }
       })
+    case INITIATE_DOWNLOAD_TASK:
+      return payload.type === DownloadTypes.Widget
+        ? state.set('currentItemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            downloadCsvLoading: true
+          }
+        })
+        : state
+    case INITIATE_DOWNLOAD_TASK_SUCCESS:
+    case INITIATE_DOWNLOAD_TASK_FAILURE:
+      return payload.type === DownloadTypes.Widget
+        ? state.set('currentItemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            downloadCsvLoading: false
+          }
+        })
+        : state
     case ViewActionTypes.LOAD_SELECT_OPTIONS_SUCCESS:
       return payload.itemId
         ?  state.set('currentItemsInfo', {

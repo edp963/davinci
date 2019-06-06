@@ -556,7 +556,7 @@ public class ExcelUtils {
     }
 
 
-    private static boolean isTable(String json) {
+    public static boolean isTable(String json) {
         if (!StringUtils.isEmpty(json)) {
             try {
                 JSONObject jsonObject = JSONObject.parseObject(json);

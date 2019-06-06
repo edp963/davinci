@@ -48,6 +48,6 @@ export default function (type, chartProps: IChartProps, drillOptions?: any): ECh
     case 'map': return map(chartProps)
     case 'wordCloud': return wordCloud(chartProps)
     case 'waterfall': return waterfall(chartProps)
-    case 'doubleYAxis': return doubleYAxis(chartProps)
+    case 'doubleYAxis': return doubleYAxis(chartProps, drillOptions)
   }
 }

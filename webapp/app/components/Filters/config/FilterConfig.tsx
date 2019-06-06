@@ -29,7 +29,9 @@ import {
   IGlobalControlRelatedItem,
   IControlRelatedField,
   getRelatedFieldsInfo,
-  InteractionType
+  InteractionType,
+  serializeDefaultValue,
+  deserializeDefaultValue
 } from '..'
 import { FilterTypes, IS_RANGE_TYPE} from '../filterTypes'
 
@@ -181,12 +183,9 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
   private setFormData = (control: IGlobalControl) => {
     if (control) {
       const { type, interactionType, defaultValue, relatedItems, relatedViews, ...rest } = control
-      const isControlDateType = [FilterTypes.Date, FilterTypes.DateRange].includes(type)
       const fieldsValue = {
         type,
-        defaultValue: isControlDateType && defaultValue
-          ? moment(defaultValue)
-          : defaultValue,
+        defaultValue: deserializeDefaultValue(control),
         ...rest
       }
       this.props.onSetControlFormValues(fieldsValue)
@@ -327,17 +326,14 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
         return
       }
 
-      const { type, key, defaultValue, dateFormat } = values
-      const isControlDateType = [FilterTypes.Date, FilterTypes.DateRange].includes(type)
+      const { key, defaultValue } = values
       const cachedControls = controls.map((c) => {
         if (c.key === key) {
           return {
             ...c,
             ...values,
             interactionType: selected.interactionType,
-            defaultValue: isControlDateType
-              ? (defaultValue && defaultValue.format(dateFormat))
-              : defaultValue,
+            defaultValue: serializeDefaultValue(values, defaultValue),
             relatedItems: itemSelectorSource.reduce((obj, source) => {
               obj[source.id] = {
                 viewId: source.viewId,

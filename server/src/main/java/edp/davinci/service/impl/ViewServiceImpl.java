@@ -51,6 +51,7 @@ import edp.davinci.model.*;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.SourceService;
 import edp.davinci.service.ViewService;
+import edp.davinci.service.excel.SQLContext;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static edp.core.consts.Consts.COMMA;
 import static edp.core.consts.Consts.MINUS;
+import static edp.davinci.core.common.Constants.N0_AUTH_PERMISSION;
 import static edp.davinci.core.enums.SqlVariableTypeEnum.AUTHVARE;
 import static edp.davinci.core.enums.SqlVariableTypeEnum.QUERYVAR;
 
@@ -171,6 +174,45 @@ public class ViewServiceImpl implements ViewService {
         view.setRoles(relRoleViews);
 
         return view;
+    }
+
+    @Override
+    public SQLContext getSQLContext(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) {
+        if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
+            return null;
+        }
+        if (null == viewWithSource.getSource()) {
+            throw new NotFoundException("source is not found");
+        }
+        if (StringUtils.isEmpty(viewWithSource.getSql())) {
+            throw new NotFoundException("sql is not found");
+        }
+
+        SQLContext context = new SQLContext();
+        //解析变量
+        List<SqlVariable> variables = viewWithSource.getVariables();
+        //解析sql
+        SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
+        //列权限（只记录被限制访问的字段）
+        Set<String> excludeColumns = new HashSet<>();
+
+        packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(), excludeColumns, user);
+
+        String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
+        context.setExecuteSql(sqlParseUtils.getSqls(srcSql, Boolean.FALSE));
+
+        List<String> querySqlList = sqlParseUtils.getSqls(srcSql, Boolean.TRUE);
+        if (!CollectionUtils.isEmpty(querySqlList)) {
+            buildQuerySql(querySqlList, viewWithSource.getSource(), executeParam);
+            executeParam.addExcludeColumn(excludeColumns, viewWithSource.getSource().getJdbcUrl());
+            context.setQuerySql(querySqlList);
+            context.setViewExecuteParam(executeParam);
+        }
+        if (!CollectionUtils.isEmpty(excludeColumns)) {
+            List<String> excludeList = excludeColumns.stream().collect(Collectors.toList());
+            context.setExcludeColumns(excludeList);
+        }
+        return context;
     }
 
     /**
@@ -371,8 +413,17 @@ public class ViewServiceImpl implements ViewService {
             if (null != sqlUtils && null != sqlEntity) {
                 if (!StringUtils.isEmpty(sqlEntity.getSql())) {
 
-                    if (projectService.isMaintainer(projectDetail, user)) {
+                    if (isMaintainer(user, projectDetail)) {
                         sqlEntity.setAuthParams(null);
+                    }
+
+                    if (!CollectionUtils.isEmpty(sqlEntity.getQuaryParams())) {
+                        sqlEntity.getQuaryParams().forEach((k, v) -> {
+                            if (v instanceof List && ((List) v).size() > 0) {
+                                v = ((List) v).stream().collect(Collectors.joining(COMMA)).toString();
+                            }
+                            sqlEntity.getQuaryParams().put(k, v);
+                        });
                     }
 
                     String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
@@ -398,6 +449,10 @@ public class ViewServiceImpl implements ViewService {
             throw new ServerException(e.getMessage());
         }
         return paginateWithQueryColumns;
+    }
+
+    private boolean isMaintainer(User user, ProjectDetail projectDetail) {
+        return projectService.isMaintainer(projectDetail, user);
     }
 
     /**
@@ -656,32 +711,41 @@ public class ViewServiceImpl implements ViewService {
     }
 
     private List<SqlVariable> getAuthVariables(List<RelRoleView> roleViewList, List<SqlVariable> variables) {
-        if (!CollectionUtils.isEmpty(roleViewList) && !CollectionUtils.isEmpty(variables)) {
+        if (!CollectionUtils.isEmpty(variables)) {
             List<SqlVariable> list = new ArrayList<>();
-            Map<String, SqlVariable> map = new HashMap<>();
 
-            List<SqlVariable> authVarables = variables.stream().filter(v -> AUTHVARE == SqlVariableTypeEnum.typeOf(v.getType())).collect(Collectors.toList());
-            authVarables.forEach(v -> map.put(v.getName(), v));
-            List<SqlVariable> dacVars = authVarables.stream().filter(v -> null != v.getChannel() && !v.getChannel().getBizId().equals(0L)).collect(Collectors.toList());
-
-            roleViewList.forEach(r -> {
-                if (!StringUtils.isEmpty(r.getRowAuth())) {
-                    List<AuthParamValue> authParamValues = JSONObject.parseArray(r.getRowAuth(), AuthParamValue.class);
-                    authParamValues.forEach(v -> {
-                        if (map.containsKey(v.getName())) {
-                            SqlVariable sqlVariable = map.get(v.getName());
-                            if (v.isEnable()) {
-                                sqlVariable.setDefaultValues(v.getValues());
-                            } else {
-                                sqlVariable.setDefaultValues(null);
-                            }
-                            list.add(sqlVariable);
-                        }
-                    });
-                } else {
-                    dacVars.forEach(v -> list.add(v));
+            variables.forEach(v -> {
+                if (null != v.getChannel()) {
+                    list.add(v);
                 }
             });
+
+            if (!CollectionUtils.isEmpty(roleViewList)) {
+                Map<String, SqlVariable> map = new HashMap<>();
+
+                List<SqlVariable> authVarables = variables.stream().filter(v -> AUTHVARE == SqlVariableTypeEnum.typeOf(v.getType())).collect(Collectors.toList());
+                authVarables.forEach(v -> map.put(v.getName(), v));
+                List<SqlVariable> dacVars = authVarables.stream().filter(v -> null != v.getChannel() && !v.getChannel().getBizId().equals(0L)).collect(Collectors.toList());
+
+                roleViewList.forEach(r -> {
+                    if (!StringUtils.isEmpty(r.getRowAuth())) {
+                        List<AuthParamValue> authParamValues = JSONObject.parseArray(r.getRowAuth(), AuthParamValue.class);
+                        authParamValues.forEach(v -> {
+                            if (map.containsKey(v.getName())) {
+                                SqlVariable sqlVariable = map.get(v.getName());
+                                if (v.isEnable()) {
+                                    sqlVariable.setDefaultValues(v.getValues());
+                                } else {
+                                    sqlVariable.setDefaultValues(null);
+                                }
+                                list.add(sqlVariable);
+                            }
+                        });
+                    } else {
+                        dacVars.forEach(v -> list.add(v));
+                    }
+                });
+            }
             return list;
         }
         return null;
@@ -731,19 +795,28 @@ public class ViewServiceImpl implements ViewService {
         if (!CollectionUtils.isEmpty(authVariables)) {
             ExecutorService executorService = Executors.newFixedThreadPool(8);
             CountDownLatch countDownLatch = new CountDownLatch(authVariables.size());
-            ConcurrentHashMap<String, Set<String>> map = new ConcurrentHashMap<>();
+            Map<String, Set<String>> map = new Hashtable<>();
             final Future<?>[] future = {null};
             try {
                 authVariables.forEach(sqlVariable -> {
                     try {
                         future[0] = executorService.submit(() -> {
                             if (null != sqlVariable) {
-                                List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
+                                Set<String> vSet = null;
                                 if (map.containsKey(sqlVariable.getName().trim())) {
-                                    map.get(sqlVariable.getName().trim()).addAll(values);
+                                    vSet = map.get(sqlVariable.getName().trim());
                                 } else {
-                                    map.put(sqlVariable.getName().trim(), new HashSet<>(values));
+                                    vSet = new HashSet<>();
                                 }
+
+                                List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
+                                if (null != values) {
+                                    vSet.addAll(values);
+                                } else if (vSet.isEmpty()) {
+                                    vSet.add(N0_AUTH_PERMISSION);
+                                }
+
+                                map.put(sqlVariable.getName().trim(), vSet);
                             }
                         });
                     } finally {

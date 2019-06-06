@@ -109,4 +109,10 @@ public interface DashboardMapper {
     Map<Long, String> getFullParentIds(@Param("parentIds") Set<Long> parentIds);
 
     Set<Long> getIdSetByIds(@Param("set") Set<Long> dashboardIds);
+
+
+    @Select({
+            "select * from dashboard where FIND_IN_SET(#{id},full_parent_Id) and type = 1)"
+    })
+    List<Dashboard> getSubDashboardById(@Param("id") Long id);
 }

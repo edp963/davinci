@@ -38,7 +38,7 @@ import {
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
-export default function (chartProps: IChartProps, drillOptions?: any) {
+export default function (chartProps: IChartProps, drillOptions) {
   const {
     data,
     cols,
@@ -105,7 +105,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     Object.entries(configValue).forEach(([k, v]: [string, string]) => {
       configKeys.push(k)
     })
-    percentGrouped = makeGrouped(data, cols, color.items[0].name, metrics, configKeys)
+    percentGrouped = makeGrouped(data, cols.map((c) => c.name), color.items[0].name, metrics, configKeys)
   }
 
   const series = []

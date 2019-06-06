@@ -214,6 +214,7 @@ public class SourceServiceImpl implements SourceService {
             source.setConfig(JSON.toJSONString(sourceInfo.getConfig()));
             source.setId(sourceInfo.getId());
             source.updatedBy(user.getId());
+            source.setConfig(JSONObject.toJSONString(sourceInfo.getConfig()));
 
             int update = sourceMapper.update(source);
             if (update > 0) {

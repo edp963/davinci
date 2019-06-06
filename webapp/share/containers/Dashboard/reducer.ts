@@ -33,7 +33,8 @@ import {
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
   DELETE_DRILL_HISTORY,
-  SET_SELECT_OPTIONS
+  SET_SELECT_OPTIONS,
+  SELECT_DASHBOARD_ITEM_CHART
 } from './constants'
 
 const initialState = fromJS({
@@ -117,11 +118,21 @@ function shareReducer (state = initialState, { type, payload }) {
         widgets = []
       }
       return state.set('widgets', widgets.concat(payload.widget))
+    case SELECT_DASHBOARD_ITEM_CHART:
+      return state.set('itemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          renderType: payload.renderType,
+          selectedItems: payload.selectedItems
+        }
+      })
     case LOAD_SHARE_RESULTSET:
       return state.set('itemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
+          selectedItems: [],
           loading: true,
           queryConditions: {
             ...itemsInfo[payload.itemId].queryConditions,

@@ -71,8 +71,10 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps, ISqlPrevie
   }
 
   public componentDidUpdate () {
-    const tableBodyHeight = this.computeTableBody()
-    this.setState({ tableBodyHeight })
+    const newTableBodyHeight = this.computeTableBody()
+    if (Math.abs(newTableBodyHeight - this.state.tableBodyHeight) > 5) { // FIXED table body compute vibration
+      this.setState({ tableBodyHeight: newTableBodyHeight })
+    }
   }
 
   private computeTableBody = () => {

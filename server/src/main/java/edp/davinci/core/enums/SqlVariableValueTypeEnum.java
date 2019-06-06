@@ -45,7 +45,15 @@ public enum SqlVariableValueTypeEnum {
     }
 
     public static List<String> getValues(String valueType, List<Object> values, boolean udf) {
+<<<<<<< HEAD
         if (CollectionUtils.isEmpty(values)) {
+=======
+        if (null == values) {
+            return null;
+        }
+
+        if (values.isEmpty()) {
+>>>>>>> 2ca0676c9a40a9e0a2837a56d3633dbb5ab58548
             return new ArrayList<>();
         }
 

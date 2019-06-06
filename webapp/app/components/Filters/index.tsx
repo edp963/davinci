@@ -119,8 +119,7 @@ export type OnFilterControlValueChange = (
 ) => void
 
 export type OnFilterValueChange = (
-  mapItemFilterValue: IMapItemControlRequestParams,
-  filterKey: string
+  mapItemFilterValue: IMapItemControlRequestParams
 ) => void
 
 export function getDefaultGlobalControl (): IGlobalControl {
@@ -223,7 +222,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
       <MultiDatePicker
         placeholder="请选择"
         format={filter.dateFormat}
-        onChange={onChange}
+        {...onChange && {onChange}}
       />
     )
   } else {
@@ -233,7 +232,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
           <WeekPicker
             className={styles.controlComponent}
             placeholder="请选择"
-            onChange={onChange}
+            {...onChange && {onChange}}
             {...extraProps}
           />
         )
@@ -244,7 +243,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
             className={styles.controlComponent}
             placeholder="请选择"
             format={filter.dateFormat}
-            onChange={onChange}
+            {...onChange && {onChange}}
             {...extraProps}
           />
         )
@@ -256,8 +255,8 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
             placeholder="请选择"
             showTime={isDatetimePicker}
             format={filter.dateFormat}
-            onChange={isDatetimePicker ? datetimePickerChange(onChange) : onChange}
-            onOk={onChange}
+            {...onChange && {onChange: isDatetimePicker ? datetimePickerChange(onChange) : onChange}}
+            {...onChange && {onOk: onChange}}
             {...extraProps}
           />
         )
@@ -295,7 +294,9 @@ export function getVariableValue (filter: IControlBase, fields: IControlRelatedF
   let valueType
   let variable = []
 
-  if (value === void 0 || value === null) {
+  if (value === void 0
+    || value === null
+    || typeof value === 'string' && !value.trim()) {
     return variable
   }
 
@@ -362,7 +363,9 @@ export function getModelValue (control: IControlBase, field: IControlRelatedFiel
   const { name, type: sqlType } = field
   const filters = []
 
-  if (value === void 0 || value === null) {
+  if (value === void 0
+      || value === null
+      || typeof value === 'string' && !value.trim()) {
     return filters
   }
 
@@ -433,8 +436,8 @@ export function getValidVariableValue (value, valueType: ViewVariableValueTypes)
   }
 }
 
-export function getDefaultValue (control: IControlBase) {
-  const { type, dynamicDefaultValue, defaultValue } = control
+export function deserializeDefaultValue (control: IControlBase) {
+  const { type, dynamicDefaultValue, defaultValue, multiple } = control
   switch (type) {
     case FilterTypes.Date:
       if (dynamicDefaultValue) {
@@ -468,13 +471,25 @@ export function getDefaultValue (control: IControlBase) {
           case DatePickerDefaultValues.LastYear:
             return moment().subtract(90, 'days').startOf('year')
           default:
-            return defaultValue && moment(defaultValue)
+            return multiple ? defaultValue : defaultValue && moment(defaultValue)
         }
       } else {
         return null
       }
     default:
       return defaultValue
+  }
+}
+
+export function serializeDefaultValue (
+  control: IControlBase,
+  value
+) {
+  const { type, dateFormat, multiple } = control
+  if (type === FilterTypes.Date && !multiple) {
+    return value && value.format(dateFormat)
+  } else {
+    return value
   }
 }
 

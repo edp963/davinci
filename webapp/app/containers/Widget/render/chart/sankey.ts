@@ -74,13 +74,13 @@ export default function (chartProps: IChartProps) {
   const nodesValues = []
   const links = []
   data.forEach((row) => {
-    dimensions.forEach((dim, idx) => {
-      if (!nodesValues.includes(row[dim])) {
-        nodesValues.push(row[dim])
+    dimensions.forEach(({ name }, idx) => {
+      if (!nodesValues.includes(row[name])) {
+        nodesValues.push(row[name])
       }
       if (dimensions[idx - 1]) {
-        const source = row[dimensions[idx - 1]]
-        const target = row[dimensions[idx]]
+        const source = row[dimensions[idx - 1].name]
+        const target = row[dimensions[idx].name]
         const value = +row[`${agg}(${metricsName})`]
         if (isNaN(value)) { return }
         const existedLink = links.length && links.find((lnk) => lnk.source === source && lnk.target === target)

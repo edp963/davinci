@@ -21,13 +21,12 @@
 import React, { PureComponent, Suspense } from 'react'
 import { Form, Button, Row, Col } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
-import { QueryVariable } from '../Grid'
+import { IQueryConditions } from '../Grid'
 import {
   IRenderTreeItem,
   ILocalRenderTreeItem,
   IControlRequestParams,
   ILocalControl,
-  getDefaultValue,
   getControlRenderTree,
   getModelValue,
   getVariableValue,
@@ -35,7 +34,8 @@ import {
   OnGetControlOptions,
   IMapControlOptions,
   getParents,
-  getAllChildren
+  getAllChildren,
+  deserializeDefaultValue
 } from 'app/components/Filters'
 import { SHOULD_LOAD_OPTIONS, defaultFilterControlGridProps } from 'app/components/Filters/filterTypes'
 import FilterControl from 'app/components/Filters/FilterControl'
@@ -47,7 +47,7 @@ interface IDashboardItemControlFormProps {
   controls: ILocalControl[]
   mapOptions: IMapControlOptions
   onGetOptions: OnGetControlOptions
-  onSearch: (queayConditions: { variables: QueryVariable }) => void
+  onSearch: (queayConditions: Partial<IQueryConditions>) => void
   onHide: () => void
 }
 
@@ -93,7 +93,7 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
     this.controlRequestParams = {}
 
     const replica = controls.map((control) => {
-      const defaultFilterValue = getDefaultValue(control)
+      const defaultFilterValue = deserializeDefaultValue(control)
       if (defaultFilterValue) {
         controlValues[control.key] = defaultFilterValue
         this.setControlRequestParams(control, defaultFilterValue)

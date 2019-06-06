@@ -83,7 +83,7 @@ public class SqlParseUtils {
         }
 
         Map<String, Object> queryParamMap = new ConcurrentHashMap<>();
-        Map<String, List<String>> authParamMap = new ConcurrentHashMap<>();
+        Map<String, List<String>> authParamMap = new Hashtable<>();
 
         //解析参数
         if (!CollectionUtils.isEmpty(variables)) {
@@ -91,30 +91,26 @@ public class SqlParseUtils {
             try {
                 CountDownLatch countDownLatch = new CountDownLatch(variables.size());
                 final Future[] future = {null};
-                variables.forEach(variable -> {
-                    future[0] = executorService.submit(() -> {
-                        try {
-                            SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
-                            if (null != typeEnum) {
-                                switch (typeEnum) {
-                                    case QUERYVAR:
-                                        queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf()));
-                                        break;
-                                    case AUTHVARE:
-                                        if (null != variable) {
-                                            List<String> v = getAuthVarValue(variable, null);
-                                            if (null != v) {
-                                                authParamMap.put(variable.getName().trim(), v);
-                                            }
-                                        }
-                                        break;
-                                }
+                variables.forEach(variable -> future[0] = executorService.submit(() -> {
+                    try {
+                        SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
+                        if (null != typeEnum) {
+                            switch (typeEnum) {
+                                case QUERYVAR:
+                                    queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf()));
+                                    break;
+                                case AUTHVARE:
+                                    if (null != variable) {
+                                        List<String> v = getAuthVarValue(variable, null);
+                                        authParamMap.put(variable.getName().trim(), null == v ? new ArrayList<>() : v);
+                                    }
+                                    break;
                             }
-                        } finally {
-                            countDownLatch.countDown();
                         }
-                    });
-                });
+                    } finally {
+                        countDownLatch.countDown();
+                    }
+                }));
 
                 try {
                     future[0].get();
@@ -139,10 +135,11 @@ public class SqlParseUtils {
         if (null == channel) {
             return SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf());
         } else if (DacChannelUtil.dacMap.containsKey(channel.getName())) {
-            List<Object> data = dacChannelUtil.getData(channel.getName(), channel.getBizId().toString(), email);
-            if (null != data) {
-                return SqlVariableValueTypeEnum.getValues(variable.getValueType(), data, variable.isUdf());
+            if (StringUtils.isEmpty(email)) {
+                return null;
             }
+            List<Object> data = dacChannelUtil.getData(channel.getName(), channel.getBizId().toString(), email);
+            return SqlVariableValueTypeEnum.getValues(variable.getValueType(), data, variable.isUdf());
         }
         return new ArrayList<>();
     }
@@ -181,7 +178,11 @@ public class SqlParseUtils {
         }
 
         ST st = new ST(sql, delimiter, delimiter);
+<<<<<<< HEAD
         if (!CollectionUtils.isEmpty(authParamMap)) {
+=======
+        if (!CollectionUtils.isEmpty(authParamMap) && !CollectionUtils.isEmpty(expSet)) {
+>>>>>>> 2ca0676c9a40a9e0a2837a56d3633dbb5ab58548
             authParamMap.forEach((k, v) -> st.add(k, true));
         }
         //替换query@var
@@ -290,27 +291,33 @@ public class SqlParseUtils {
                         if (!CollectionUtils.isEmpty(list)) {
                             StringBuilder expBuilder = new StringBuilder();
                             if (list.size() == 1) {
-                                if (!StringUtils.isEmpty(list.get(0))) {
-                                    switch (sqlOperator) {
-                                        case IN:
-                                            expBuilder
-                                                    .append(left).append(SPACE)
-                                                    .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
-                                                    .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
-                                            break;
-                                        default:
-                                            if (list.get(0).split(",").length > 1) {
+                                String v = list.get(0);
+                                if (!StringUtils.isEmpty(v)) {
+                                    if (v.equals(N0_AUTH_PERMISSION)) {
+                                        return "1=0";
+                                    } else {
+                                        switch (sqlOperator) {
+                                            case IN:
                                                 expBuilder
                                                         .append(left).append(SPACE)
                                                         .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
                                                         .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
-                                            } else {
-                                                expBuilder
-                                                        .append(left).append(SPACE)
-                                                        .append(sqlOperator.getValue()).append(SPACE).append(list.get(0));
-                                            }
-                                            break;
+                                                break;
+                                            default:
+                                                if (v.split(",").length > 1) {
+                                                    expBuilder
+                                                            .append(left).append(SPACE)
+                                                            .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
+                                                            .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
+                                                } else {
+                                                    expBuilder
+                                                            .append(left).append(SPACE)
+                                                            .append(sqlOperator.getValue()).append(SPACE).append(v);
+                                                }
+                                                break;
+                                        }
                                     }
+
                                 } else {
                                     return "1=1";
                                 }
@@ -351,7 +358,22 @@ public class SqlParseUtils {
                             return "1=1";
                         }
                     } else {
-                        return "1=0";
+                        Set<String> keySet = authParamMap.keySet();
+                        String finalRight = right.trim();
+                        List<String> keys = keySet.stream().filter(finalRight::contains).collect(Collectors.toList());
+                        if (!CollectionUtils.isEmpty(keys)) {
+                            String k = keys.get(0);
+                            List<String> list = authParamMap.get(k);
+                            String v = "";
+                            if (!CollectionUtils.isEmpty(list)) {
+                                String s = list.stream().collect(Collectors.joining(COMMA));
+                                v = right.replace(delimiter + k + delimiter, s);
+
+                            }
+                            return String.join(EMPTY, left, SPACE, sqlOperator.getValue(), SPACE, v);
+                        } else {
+                            return "1=0";
+                        }
                     }
                 }
             }
