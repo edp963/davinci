@@ -76,7 +76,13 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
   public componentDidUpdate (prevProps: IVariableModalProps & FormComponentProps) {
     const { form, variable, visible, channels } = this.props
     if (variable !== prevProps.variable || visible !== prevProps.visible) {
-      const { type, valueType, defaultValues, udf, fromService } = variable || defaultVarible
+      const { type, valueType, defaultValues, udf, fromService, channel } = variable || defaultVarible
+      if (channel && visible) {
+        const { name: channelName, tenantId } = channel
+        const { onLoadDacTenants, onLoadDacBizs } = this.props
+        onLoadDacTenants(channelName)
+        onLoadDacBizs(channelName, tenantId)
+      }
       this.setState({
         selectedType: type,
         selectedValueType: valueType,
