@@ -241,7 +241,7 @@ export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsPro
             </RadioGroup>
           </div>
         </div>
-        <div className={styles.viewSet}>
+        <div className={styles.viewSet} style={{flex:'1',overflowY: 'auto'}}>
           <div className={styles.title}>
             <h2>关联{interactionTypeContent}</h2>
           </div>
