@@ -165,6 +165,15 @@ export function renderNumberRange (onChange) {
   )
 }
 
+export function getOptions(array) {
+  let optionsSets = Array.from(new Set(array));
+  var options = [];
+  for(let [x,y] of optionsSets.entries()) {
+    options.push(<Option key={x} value={y}>{y}</Option>)
+  }
+  return options;
+}
+
 export function renderSelect (control: IGlobalControl, onChange, options) {
   const { multiple } = control
   return (
@@ -175,11 +184,7 @@ export function renderSelect (control: IGlobalControl, onChange, options) {
       onChange={onChange}
       {...multiple && {mode: 'multiple'}}
     >
-      {options.map((o) => {
-        return typeof o === 'object'
-          ? <Option key={o.value} value={o.value}>{o.text}</Option>
-          : <Option key={o} value={o}>{o}</Option>
-      })}
+    {getOptions(options)} 
     </Select>
   )
 }
