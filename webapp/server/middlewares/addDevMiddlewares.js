@@ -21,8 +21,8 @@ module.exports = function addDevMiddlewares (app, webpackConfig) {
   )
 
   // FIXME
-  app.use(['/api/v3'], proxy({target: 'http://localhost:8080/', changeOrigin: true}))
-  app.use(['/image'], proxy({target: 'http://localhost:8080/', changeOrigin: true}))
+  app.use(['/api/v3'], proxy({target: 'http://localhost:8088/', changeOrigin: true}))
+  app.use(['/image'], proxy({target: 'http://localhost:8088/', changeOrigin: true}))
   app.use(middleware)
   app.use(webpackHotMiddleware(compiler))
 

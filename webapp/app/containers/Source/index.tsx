@@ -174,7 +174,6 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
     { sourcePermission, AdminButton, EditButton }: ReturnType<typeof SourceList.getSourcePermission>
   ) => {
     const { tempFilterSourceName, filterSourceName, filterDropdownVisible, tableSorter } = this.state
-
     const columns: Array<ColumnProps<ISource>> = [{
       title: '名称',
       dataIndex: 'name',
@@ -243,10 +242,10 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
                 <AdminButton icon="delete" shape="circle" type="ghost" />
               </Tooltip>
             </Popconfirm>
-            {
-              record && record.type === 'csv' ? <Tooltip title="上传">
+            {record && record.type === 'csv' ?
+            <Tooltip title="上传">
                 <EditButton icon="upload" shape="circle" type="ghost" onClick={this.showUpload(record.id)} />
-              </Tooltip> : ''
+            </Tooltip> : ''
             }
           </span>
         )

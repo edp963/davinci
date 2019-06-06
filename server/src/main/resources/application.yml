@@ -14,11 +14,13 @@
 #   limitations under the License.
 #  >>
 
+DAVINCI3_HOME:
+  /Users/oyo/apps/davinci
+
 file:
-  userfiles-path: ${DAVINCI3_HOME}/userfiles/
+  userfiles-path: userfiles/
   web_resources: ${DAVINCI3_HOME}/davinci-ui/
   phantomJs-path: ${DAVINCI3_HOME}/bin/phantom.js
-
 
 spring:
   servlet:
@@ -33,7 +35,15 @@ spring:
     name: application
 
   datasource:
+    url: jdbc:mysql://192.168.11.102:3306/davinci0_3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true&useSSL=false
+    username: cat
+    password: 1qaz!QAZ
+    driver-class-name: com.mysql.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
+    initial-size: 2
+    min-idle: 1
+    max-wait: 120000
+    max-active: 10
     time-between-eviction-runs-millis: 30000
     min-evictable-idle-time-millis: 300000
     test-while-idle: true
@@ -47,6 +57,24 @@ spring:
   resources:
     static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, file:${file.userfiles-path}, file:${file.web_resources}
 
+
+  mail:
+    host: smtp.163.com
+    port: 465
+    username: 13301869631@163.com
+    password: 1q2w3e4r
+    nickname: 13301869631@163.com
+
+    properties:
+      smtp:
+        starttls:
+          enable: true
+          required: true
+        auth: true
+      mail:
+        smtp:
+          ssl:
+            enable: true
   mvc:
     static-path-pattern: /**
 
@@ -67,6 +95,9 @@ spring:
   cache:
     caffeine:
       type: caffeine
+
+  ldap:
+    domainName:
 
 
 logging:
@@ -102,3 +133,34 @@ mapper:
 sql_template_delimiter: $
 
 custom-datasource-driver-path: ${DAVINCI3_HOME}/config/datasource_driver.yml
+
+
+server:
+  protocol: http
+  address: 0.0.0.0
+  port: 8088
+  access:
+    address: 0.0.0.0
+    port: 8088
+  # Userd for mail and download services, can be empty, careful configuration
+  # By default, 'server.address' and 'server.port' is used as the string value.
+  # access:
+  #  address:
+  #  port:
+
+phantomjs_home: $your_phantomjs_path$/phantomjs%
+
+oyo:
+  sso:
+    cas:
+      server: http://ali-dev.ahotels.tech/oyo-sso/
+      public:
+        key: MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMA2CVkdqrUqc0Wwz6Er1Zdp+NkY3XncVSG4cP/7zG98Y+3b4SIkSm9soQQHrua0fWl/LC82Fp4Xav3oO23/GTECAwEAAQ==
+    server: https://sso-dev.oyohotels.cn
+    client:
+      logout:
+        path: /api/v3/logout
+
+dubbo:
+  registry:
+    address: dubbo-zk-1.dev.ahotels.tech,dubbo-zk-2.dev.ahotels.tech,dubbo-zk-3.dev.ahotels.tech
