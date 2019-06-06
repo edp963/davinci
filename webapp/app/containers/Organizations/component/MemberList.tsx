@@ -221,7 +221,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     let columns = []
     if (currentOrganization && currentOrganization.role === 1) {
       columns = [{
-        title: 'Name',
+        title: '姓名',
         dataIndex: 'user',
         key: 'user',
         render: (text) => (
@@ -231,12 +231,12 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           </div>
         )
       }, {
-        title: 'role',
+        title: '权限',
         dataIndex: 'user',
         key: 'userKey',
-        render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
+        render: (text) => <span>{text.role === 1 ? '拥有者' : '成员'}</span>
       }, {
-          title: 'settings',
+          title: '设置',
           dataIndex: 'user',
           className: isHidden ? utilStyles.hide : '',
           key: 'settings',
@@ -248,13 +248,11 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
             return (
               <span>
                 <Popconfirm
-                  title="确定删除此成员吗？"
+                  title="确定删除？"
                   placement="bottom"
                   onConfirm={this.removeMemberForm(text, record)}
                 >
-                  <Tooltip title="删除">
-                    <a href="javascript:;">从组织里移除</a>
-                  </Tooltip>
+                  <a href="javascript:;">从组织里移除</a>
                 </Popconfirm>
                 <span className="ant-divider" />
                 <a href="javascript:;" onClick={this.showChangeRoleForm('orgMember', record)}>改变角色</a>
@@ -264,7 +262,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         }]
     } else {
       columns = [{
-        title: 'Name',
+        title: '姓名',
         dataIndex: 'user',
         key: 'user',
         render: (text) => (
@@ -274,10 +272,10 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           </div>
         )
       }, {
-        title: 'role',
+        title: '权限',
         dataIndex: 'user',
         key: 'userKey',
-        render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
+        render: (text) => <span>{text.role === 1 ? '拥有者' : '成员'}</span>
       }]
     }
     return (
