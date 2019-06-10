@@ -75,7 +75,7 @@ public class SqlParseUtils {
 
         char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
 
-        Pattern p = Pattern.compile(getReg(REG_SQL_PLACEHOLDER, delimiter));
+        Pattern p = Pattern.compile(getReg(REG_SQL_PLACEHOLDER, delimiter, false));
         Matcher matcher = p.matcher(sqlStr);
 
         if (!matcher.find()) {
@@ -161,7 +161,7 @@ public class SqlParseUtils {
         char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
 
         //替换auth@var
-        Pattern p = Pattern.compile(getReg(REG_AUTHVAR, delimiter));
+        Pattern p = Pattern.compile(getReg(REG_AUTHVAR, delimiter, true));
         Matcher matcher = p.matcher(sql);
 
         Set<String> expSet = new HashSet<>();

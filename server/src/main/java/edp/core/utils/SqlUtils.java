@@ -231,9 +231,9 @@ public class SqlUtils {
     }
 
     private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns, int startRow) {
-        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql);
-        if (null != sqlRowSet) {
-            SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
+        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql);
+        if (null != rs) {
+            SqlRowSetMetaData metaData = rs.getMetaData();
 
             List<QueryColumn> queryColumns = new ArrayList<>();
             for (int i = 1; i <= metaData.getColumnCount(); i++) {
@@ -247,26 +247,40 @@ public class SqlUtils {
 
             List<Map<String, Object>> resultList = new ArrayList<>();
 
-            if (startRow > 0) {
-                sqlRowSet.absolute(startRow);
+            if (this.dataTypeEnum == DataTypeEnum.MOONBOX) {
+                int currentRow = 0;
+                while (rs.next()) {
+                    if (currentRow >= startRow) {
+                        resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                    }
+                    currentRow++;
+                }
+            } else {
+                if (startRow > 0) {
+                    rs.absolute(startRow);
+                }
+                while (rs.next()) {
+                    resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                }
             }
 
-            while (sqlRowSet.next()) {
-                Map<String, Object> map = new LinkedHashMap<>();
-                for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                    String key = metaData.getColumnLabel(i);
-                    if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
-                        continue;
-                    }
-                    map.put(key, sqlRowSet.getObject(key));
-                }
-                resultList.add(map);
-            }
             paginateWithQueryColumns.setResultList(resultList);
         }
     }
 
-    private String getCountSql(String sql) {
+    private Map<String, Object> getResultObjectMap(Set<String> excludeColumns, SqlRowSet rs, SqlRowSetMetaData metaData) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        for (int i = 1; i <= metaData.getColumnCount(); i++) {
+            String key = metaData.getColumnLabel(i);
+            if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
+                continue;
+            }
+            map.put(key, rs.getObject(key));
+        }
+        return map;
+    }
+
+    public static String getCountSql(String sql) {
         try {
             Select select = (Select) CCJSqlParserUtil.parse(sql);
             PlainSelect plainSelect = (PlainSelect) select.getSelectBody();

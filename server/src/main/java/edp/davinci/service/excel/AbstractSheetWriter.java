@@ -12,6 +12,7 @@ import edp.davinci.core.utils.ExcelUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,17 +37,17 @@ public abstract class AbstractSheetWriter {
 
     private DataFormat format;
 
-    private int nextRowNum=0;
+    private int nextRowNum = 0;
 
     //用于记录表头对应数据格式
-    Map<String,CellStyle> headerFormatMap =new HashMap();
+    Map<String, CellStyle> headerFormatMap = new HashMap();
     //用于标记标记数字格式单位
-    Map<String,NumericUnitEnum> dataUnitMap =new HashMap();
+    Map<String, NumericUnitEnum> dataUnitMap = new HashMap();
     //记录列最大字符数
-    Map<String,Integer> columnWidthMap = new HashMap();
+    Map<String, Integer> columnWidthMap = new HashMap();
 
 
-    protected void init(SheetContext context) throws Exception{
+    protected void init(SheetContext context) throws Exception {
         format = context.getWorkbook().createDataFormat();
         //默认格式
         myDefault = context.getWorkbook().createCellStyle();
@@ -64,11 +65,11 @@ public abstract class AbstractSheetWriter {
         header.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
     }
 
-    protected void writeHeader(SheetContext context) throws Exception{
-        if (context.getTable()&&!CollectionUtils.isEmpty(context.getExcelHeaders())){
+    protected void writeHeader(SheetContext context) throws Exception {
+        if (context.getTable() && !CollectionUtils.isEmpty(context.getExcelHeaders())) {
             int rownum = 0;
             int colnum = 0;
-            Map<String,QueryColumn> columnMap=context.getQueryColumns().stream().collect(Collectors.toMap(x->x.getName(),x->x));
+            Map<String, QueryColumn> columnMap = context.getQueryColumns().stream().collect(Collectors.toMap(x -> x.getName(), x -> x));
             for (ExcelHeader excelHeader : context.getExcelHeaders()) {
                 //计算多级表头行
                 if (excelHeader.getRow() + excelHeader.getRowspan() > rownum) {
@@ -78,11 +79,11 @@ public abstract class AbstractSheetWriter {
                 if (excelHeader.getCol() + excelHeader.getColspan() > colnum) {
                     colnum = excelHeader.getCol() + excelHeader.getColspan();
                 }
-                if(columnMap.containsKey(excelHeader.getKey())){
-                    QueryColumn queryColumn=columnMap.get(excelHeader.getKey());
+                if (columnMap.containsKey(excelHeader.getKey())) {
+                    QueryColumn queryColumn = columnMap.get(excelHeader.getKey());
                     queryColumn.setType(excelHeader.getType());
                     //设置列的最大长度
-                    columnWidthMap.put(queryColumn.getName(),Math.max(queryColumn.getName().getBytes().length,queryColumn.getType().getBytes().length));
+                    columnWidthMap.put(queryColumn.getName(), Math.max(queryColumn.getName().getBytes().length, queryColumn.getType().getBytes().length));
                 }
                 //获取对应数据格式
                 if (null != excelHeader.getFormat()) {
@@ -100,12 +101,12 @@ public abstract class AbstractSheetWriter {
                         CellStyle dataStyle = context.getWorkbook().createCellStyle();
                         DataFormat xssfDataFormat = context.getWorkbook().createDataFormat();
                         dataStyle.setDataFormat(xssfDataFormat.getFormat(dataFormat));
-                        headerFormatMap.put(excelHeader.getKey(),dataStyle);
+                        headerFormatMap.put(excelHeader.getKey(), dataStyle);
                     }
                 }
             }
             //画出表头
-            for (int i = 0; i < rownum ; i++) {
+            for (int i = 0; i < rownum; i++) {
                 Row headerRow = context.getSheet().createRow(i);
                 nextRowNum++;
                 for (int j = 0; j < colnum; j++) {
@@ -129,7 +130,7 @@ public abstract class AbstractSheetWriter {
             Row row = context.getSheet().createRow(nextRowNum++);
             for (int i = 0; i < context.getQueryColumns().size(); i++) {
                 QueryColumn queryColumn = context.getQueryColumns().get(i);
-                columnWidthMap.put(queryColumn.getName(),Math.max(queryColumn.getName().getBytes().length,queryColumn.getType().getBytes().length));
+                columnWidthMap.put(queryColumn.getName(), Math.max(queryColumn.getName().getBytes().length, queryColumn.getType().getBytes().length));
                 Cell cell = row.createCell(i);
                 cell.setCellStyle(header);
                 cell.setCellValue(queryColumn.getName());
@@ -148,7 +149,7 @@ public abstract class AbstractSheetWriter {
         }
     }
 
-    protected void writeLine(SheetContext context,Map<String,Object> dataMap){
+    protected void writeLine(SheetContext context, Map<String, Object> dataMap) {
         Row row = context.getSheet().createRow(nextRowNum++);
         for (int j = 0; j < context.getQueryColumns().size(); j++) {
             QueryColumn queryColumn = context.getQueryColumns().get(j);
@@ -158,16 +159,15 @@ public abstract class AbstractSheetWriter {
             if (null != value) {
                 if (value instanceof Number || queryColumn.getType().equals("value")) {
 
-                    Double v=null;
-                    if(dataUnitMap.get(queryColumn.getName())!=null){
-                        v=formatNumber(value,dataUnitMap.get(queryColumn.getName()));
-                    }
-                    if(v==null){
+                    Double v = formatNumber(value, dataUnitMap.get(queryColumn.getName()));
+
+                    if (v == null) {
                         cell.setCellValue(String.valueOf(value));
-                    }else {
+                    } else {
                         cell.setCellValue(v);
                     }
-                    if (headerFormatMap.containsKey(queryColumn.getName())) {
+
+                    if (null != headerFormatMap && headerFormatMap.containsKey(queryColumn.getName())) {
                         cell.setCellStyle(headerFormatMap.get(queryColumn.getName()));
                     } else {
                         cell.setCellStyle(general);
@@ -188,10 +188,10 @@ public abstract class AbstractSheetWriter {
         }
     }
 
-    protected void writeBody(SheetContext context){
+    protected void writeBody(SheetContext context) {
     }
 
-    protected  Boolean refreshHeightWidth(SheetContext context){
+    protected Boolean refreshHeightWidth(SheetContext context) {
         context.getSheet().setDefaultRowHeight((short) (20 * 20));
         for (int i = 0; i < context.getQueryColumns().size(); i++) {
             context.getSheet().autoSizeColumn(i, true);
@@ -209,9 +209,14 @@ public abstract class AbstractSheetWriter {
     }
 
 
-    private Double formatNumber(Object value,NumericUnitEnum unitEnum){
+    private Double formatNumber(Object value, NumericUnitEnum unitEnum) {
         try {
             Double d = Double.parseDouble(String.valueOf(value));
+
+            if (null == unitEnum) {
+                return d;
+            }
+
             //如果单位为"万"和"亿"，格式按照"k"和"M"，数据上除10计算渲染
             switch (unitEnum) {
                 case TenThousand:
@@ -223,7 +228,7 @@ public abstract class AbstractSheetWriter {
             }
             return d;
         } catch (NumberFormatException e) {
-            log.error("formatNumber error,value="+value.toString());
+            log.error("formatNumber error,value=" + value.toString());
         }
         return null;
     }
