@@ -770,19 +770,28 @@ public class ViewServiceImpl implements ViewService {
         }
 
         //查询参数
-        if (!CollectionUtils.isEmpty(queryVariables) && !CollectionUtils.isEmpty(paramList)) {
-            Map<String, List<SqlVariable>> map = queryVariables.stream().collect(Collectors.groupingBy(SqlVariable::getName));
-            paramList.forEach(p -> {
-                if (map.containsKey(p.getName())) {
-                    List<SqlVariable> list = map.get(p.getName());
-                    if (!CollectionUtils.isEmpty(list)) {
-                        SqlVariable v = list.get(list.size() - 1);
-                        if (null == sqlEntity.getQuaryParams()) {
-                            sqlEntity.setQuaryParams(new HashMap<>());
+        if (!CollectionUtils.isEmpty(queryVariables)) {
+            if (!CollectionUtils.isEmpty(paramList)) {
+                Map<String, List<SqlVariable>> map = queryVariables.stream().collect(Collectors.groupingBy(SqlVariable::getName));
+                paramList.forEach(p -> {
+                    if (map.containsKey(p.getName())) {
+                        List<SqlVariable> list = map.get(p.getName());
+                        if (!CollectionUtils.isEmpty(list)) {
+                            SqlVariable v = list.get(list.size() - 1);
+                            if (null == sqlEntity.getQuaryParams()) {
+                                sqlEntity.setQuaryParams(new HashMap<>());
+                            }
+                            sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue(), v.isUdf()));
                         }
-                        sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue(), v.isUdf()));
                     }
+                });
+            }
+
+            sqlEntity.getQuaryParams().forEach((k, v) -> {
+                if (v instanceof List && ((List) v).size() > 0) {
+                    v = ((List) v).stream().collect(Collectors.joining(COMMA)).toString();
                 }
+                sqlEntity.getQuaryParams().put(k, v);
             });
         }
 
@@ -842,7 +851,11 @@ public class ViewServiceImpl implements ViewService {
                 if (null == sqlEntity.getAuthParams()) {
                     sqlEntity.setAuthParams(new HashMap<>());
                 }
-                map.forEach((k, v) -> sqlEntity.getAuthParams().put(k, new ArrayList<String>(v)));
+                map.forEach((k, v) -> {
+                    sqlEntity.getAuthParams().put(k, new ArrayList<String>(v));
+
+                    log.info("{}:{}", k, v);
+                });
             }
         } else {
             sqlEntity.setAuthParams(new HashMap<>());

@@ -68,7 +68,7 @@ public class DownloadController extends BaseController {
 //            response.addHeader("Content-Disposition", "attachment;filename=" + new String(record.getName().getBytes(), "UTF-8"));
 //            //response.addHeader("Content-Length", EMPTY + file.length());
 //            response.setContentType("application/octet-stream;charset=UTF-8");
-            encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getType());
+            encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
             Streams.copy(new FileInputStream(new File(record.getPath())), response.getOutputStream(), true);
         } catch (Exception e) {
             log.error("getDownloadRecordFile error,id=" + id + ",e=", e);

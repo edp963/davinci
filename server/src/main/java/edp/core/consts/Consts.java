@@ -161,4 +161,6 @@ public class Consts {
 
 
     public static final String QUERY_COUNT_SQL = "SELECT COUNT(*) FROM (%s) CT";
+
+    public static final String QUERY_META_SQL = "SELECT * FROM (%s) MT WHERE 1=0";
 }

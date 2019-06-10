@@ -189,6 +189,70 @@ if (!Array.prototype.forEach) {
   };
 }
 
+// Production steps of ECMA-262, Edition 5, 15.4.4.21
+// Reference: http://es5.github.io/#x15.4.4.21
+// https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+if (!Array.prototype.reduce) {
+  Object.defineProperty(Array.prototype, 'reduce', {
+    value: function (callback /*, initialValue*/) {
+      if (this === null) {
+        throw new TypeError('Array.prototype.reduce ' +
+            'called on null or undefined');
+      }
+      if (typeof callback !== 'function') {
+        throw new TypeError(callback +
+            ' is not a function');
+      }
+
+      // 1. Let O be ? ToObject(this value).
+      var o = Object(this);
+
+      // 2. Let len be ? ToLength(? Get(O, "length")).
+      var len = o.length >>> 0;
+
+      // Steps 3, 4, 5, 6, 7
+      var k = 0;
+      var value;
+
+      if (arguments.length >= 2) {
+        value = arguments[1];
+      } else {
+        while (k < len && !(k in o)) {
+          k++;
+        }
+
+        // 3. If len is 0 and initialValue is not present,
+        //    throw a TypeError exception.
+        if (k >= len) {
+          throw new TypeError('Reduce of empty array ' +
+              'with no initial value');
+        }
+        value = o[k++];
+      }
+
+      // 8. Repeat, while k < len
+      while (k < len) {
+        // a. Let Pk be ! ToString(k).
+        // b. Let kPresent be ? HasProperty(O, Pk).
+        // c. If kPresent is true, then
+        //    i.  Let kValue be ? Get(O, Pk).
+        //    ii. Let accumulator be ? Call(
+        //          callbackfn, undefined,
+        //          « accumulator, kValue, k, O »).
+        if (k in o) {
+          value = callback(value, o[k], k, o);
+        }
+
+        // d. Increase k by 1.
+        k++;
+      }
+
+      // 9. Return accumulator.
+      return value;
+    }
+  });
+}
+
 // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
 if (!Object.keys) {
   Object.keys = (function() {
@@ -4828,20 +4892,29 @@ function decodeMetricName(encodedName) {
   return encodedName.split(DEFAULT_SPLITER)[0]
 }
 
+var ViewVariableValueTypes;
+(function (ViewVariableValueTypes) {
+  ViewVariableValueTypes["String"] = "string";
+  ViewVariableValueTypes["Number"] = "number";
+  ViewVariableValueTypes["Boolean"] = "boolean";
+  ViewVariableValueTypes["Date"] = "date";
+  ViewVariableValueTypes[ViewVariableValueTypes["SqlEx"] = void 0] = "SqlEx";
+})(ViewVariableValueTypes || (ViewVariableValueTypes = {}));
+
+
 var FilterTypes;
-(function(FilterTypes) {
-  FilterTypes["InputText"] = "inputText";
-  // InputNumber = 'inputNumber',
-  FilterTypes["NumberRange"] = "numberRange";
+(function (FilterTypes) {
   FilterTypes["Select"] = "select";
-  FilterTypes["TreeSelect"] = "treeSelect";
   FilterTypes["Date"] = "date";
   FilterTypes["DateRange"] = "dateRange";
-  FilterTypes["MultiDate"] = "multiDate";
+  FilterTypes["InputText"] = "inputText";
+  FilterTypes["NumberRange"] = "numberRange";
+  // TreeSelect = 'treeSelect'
 })(FilterTypes || (FilterTypes = {}));
 
+
 var DatePickerDefaultValues;
-(function(DatePickerDefaultValues) {
+(function (DatePickerDefaultValues) {
   DatePickerDefaultValues["Today"] = "today";
   DatePickerDefaultValues["Yesterday"] = "yesterday";
   DatePickerDefaultValues["Week"] = "week";
@@ -4859,171 +4932,169 @@ var DatePickerDefaultValues;
   DatePickerDefaultValues["Custom"] = "custom";
 })(DatePickerDefaultValues || (DatePickerDefaultValues = {}));
 
+
 var SQL_NUMBER_TYPES = [
   'TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'INTEGER', 'BIGINT',
   'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL', 'DECIMAL',
   'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMERIC'
 ]
 
-function getValidValue(value, sqlType) {
+function getValidVariableValue(value, valueType) {
+  switch (valueType) {
+    case ViewVariableValueTypes.String:
+    case ViewVariableValueTypes.Date:
+      return "'" + value + "'";
+    case ViewVariableValueTypes.Boolean:
+      return !!value;
+    default:
+      return value;
+  }
+}
+
+function getValidColumnValue(value, sqlType) {
   if (!value || !sqlType) {
     return value;
   }
   return SQL_NUMBER_TYPES.indexOf(sqlType) >= 0 ? value : "'" + value + "'";
 }
 
-function getVariableValue(filter, config, value) {
+
+function getVariableValue(filter, fields, value) {
   var moment = global.moment
-  var type = filter.type,
-      dateFormat = filter.dateFormat,
-      multiple = filter.multiple;
-  var key = config.key,
-      sqlType = config.sqlType;
+
+  var type = filter.type, dateFormat = filter.dateFormat, multiple = filter.multiple;
+  var name;
+  var valueType;
   var variable = [];
+  if (value === void 0
+      || value === null
+      || typeof value === 'string' && !value.trim()) {
+    return variable;
+  }
+  if (!Array.isArray(fields)) {
+    name = fields.name;
+    valueType = fields.type;
+  }
   switch (type) {
     case FilterTypes.InputText:
-      // case FilterTypes.InputNumber:
+      variable.push({name: name, value: getValidVariableValue(value, valueType)});
+      break;
     case FilterTypes.Select:
       if (multiple) {
         if (value.length && value.length > 0) {
           variable.push({
-            name: key,
-            value: value.map(function(val) {
-              return getValidValue(val, sqlType);
+            name: name, value: value.map(function (val) {
+              return getValidVariableValue(val, valueType);
             }).join(',')
           });
         }
       } else {
-        if (value !== void 0) {
-          variable.push({
-            name: key,
-            value: getValidValue(value, sqlType)
-          });
-        }
+        variable.push({name: name, value: getValidVariableValue(value, valueType)});
       }
       break;
     case FilterTypes.NumberRange:
-      variable = value.filter(function(val) {
-        return val !== '';
-      }).map(function(val) {
-        return ({
-          name: key,
-          value: getValidValue(val, sqlType)
-        });
-      });
+      variable = value.reduce(function (arr, val, index) {
+        if (val !== '' && !isNaN(val)) {
+          var _a = fields[index], name_1 = _a.name, valueType_1 = _a.type;
+          return arr.concat({name: name_1, value: getValidVariableValue(val, valueType_1)});
+        }
+        return arr;
+      }, []);
       break;
-    case FilterTypes.TreeSelect:
-      if (value.length && value.length > 0) {
-        variable.push({
-          name: key,
-          value: value.map(function(val) {
-            return getValidValue(val, sqlType);
-          }).join(',')
-        });
-      }
-      break;
+      // case FilterTypes.TreeSelect:
+      //   if (value.length && value.length > 0) {
+      //     variable.push({ name, value: value.map((val) => getValidVariableValue(val, valueType)).join(',') })
+      //   }
+      //   break
     case FilterTypes.Date:
-      if (value) {
+      if (multiple) {
         variable.push({
-          name: key,
-          value: "'" + moment(value).format(dateFormat) + "'"
-        });
-      }
-      break;
-    case FilterTypes.MultiDate:
-      if (value) {
-        variable.push({
-          name: key,
-          value: value.split(',').map(function(v) {
+          name: name, value: value.split(',').map(function (v) {
             return "'" + v + "'";
           }).join(',')
         });
+      } else {
+        variable.push({name: name, value: "'" + moment(value).format(dateFormat) + "'"});
       }
       break;
     case FilterTypes.DateRange:
       if (value.length) {
-        variable.push.apply(variable, value.map(function(v) {
-          return ({
-            name: key,
-            value: "'" + moment(v).format(dateFormat) + "'"
-          });
-        }));
+        variable = value
+            .map(function (v, index) {
+              var name = fields[index].name;
+              return {name: name, value: "'" + moment(v).format(dateFormat) + "'"};
+            });
       }
       break;
     default:
       var val = value.target.value.trim();
       if (val) {
-        variable.push({
-          name: key,
-          value: getValidValue(val, sqlType)
-        });
+        variable.push({name: name, value: getValidVariableValue(val, valueType)});
       }
       break;
   }
   return variable;
 }
 
-function getModelValue(filter, config, operator, value) {
+
+function getModelValue(control, field, value) {
   var moment = global.moment
-  var type = filter.type,
-      dateFormat = filter.dateFormat,
-      multiple = filter.multiple;
-  var key = config.key,
-      sqlType = config.sqlType;
+
+  var type = control.type, dateFormat = control.dateFormat, multiple = control.multiple, operator = control.operator;
+  var name = field.name, sqlType = field.type;
   var filters = [];
+  if (value === void 0
+      || value === null
+      || typeof value === 'string' && !value.trim()) {
+    return filters;
+  }
   switch (type) {
     case FilterTypes.InputText:
-      // case FilterTypes.InputNumber:
+      filters.push(name + " " + operator + " " + getValidColumnValue(value, sqlType));
+      break;
     case FilterTypes.Select:
       if (multiple) {
         if (value.length && value.length > 0) {
-          filters.push(key + " " + operator + " (" + value.map(function(val) {
-            return getValidValue(val, sqlType);
+          filters.push(name + " " + operator + " (" + value.map(function (val) {
+            return getValidColumnValue(val, sqlType);
           }).join(',') + ")");
         }
       } else {
-        if (value !== void 0) {
-          filters.push(key + " " + operator + " " + getValidValue(value, sqlType));
-        }
+        filters.push(name + " " + operator + " " + getValidColumnValue(value, sqlType));
       }
       break;
     case FilterTypes.NumberRange:
       if (value[0] !== '' && !isNaN(value[0])) {
-        filters.push(key + " >= " + getValidValue(value[0], sqlType));
+        filters.push(name + " >= " + getValidColumnValue(value[0], sqlType));
       }
       if (value[1] !== '' && !isNaN(value[1])) {
-        filters.push(key + " <= " + getValidValue(value[1], sqlType));
+        filters.push(name + " <= " + getValidColumnValue(value[1], sqlType));
       }
       break;
-    case FilterTypes.TreeSelect:
-      if (value.length && value.length > 0) {
-        filters.push(key + " " + operator + " (" + value.map(function(val) {
-          return getValidValue(val, sqlType);
-        }).join(',') + ")");
-      }
-      break;
+      // case FilterTypes.TreeSelect:
+      //   if (value.length && value.length > 0) {
+      //     filters.push(`${name} ${operator} (${value.map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
+      //   }
+      //   break
     case FilterTypes.Date:
-      if (value) {
-        filters.push(key + " " + operator + " " + getValidValue(moment(value).format(dateFormat), sqlType));
-      }
-      break;
-    case FilterTypes.MultiDate:
-      if (value) {
-        filters.push(key + " " + operator + " (" + value.split(',').map(function(val) {
-          return getValidValue(val, sqlType);
+      if (multiple) {
+        filters.push(name + " " + operator + " (" + value.split(',').map(function (val) {
+          return getValidColumnValue(val, sqlType);
         }).join(',') + ")");
+      } else {
+        filters.push(name + " " + operator + " " + getValidColumnValue(moment(value).format(dateFormat), sqlType));
       }
       break;
     case FilterTypes.DateRange:
       if (value.length) {
-        filters.push(key + " >= " + getValidValue(moment(value[0]).format(dateFormat), sqlType));
-        filters.push(key + " <= " + getValidValue(moment(value[1]).format(dateFormat), sqlType));
+        filters.push(name + " >= " + getValidColumnValue(moment(value[0]).format(dateFormat), sqlType));
+        filters.push(name + " <= " + getValidColumnValue(moment(value[1]).format(dateFormat), sqlType));
       }
       break;
     default:
       var inputValue = value.target.value.trim();
       if (inputValue) {
-        filters.push(key + " " + operator + " " + getValidValue(inputValue, sqlType));
+        filters.push(name + " " + operator + " " + getValidColumnValue(inputValue, sqlType));
       }
       break;
   }
@@ -5114,7 +5185,7 @@ function getGlobalFilters(dashboardConfig, dashboardItemId) {
             config = _a[1]
 
         // omit not the item global filters
-        if (itemId !== dashboardItemId) {
+        if (+itemId !== dashboardItemId) {
           return
         }
 
@@ -5250,7 +5321,7 @@ function getWidgetExecuteParam(widgetConfig) {
 // var fs = require('fs')
 // var dashboardConfigJson = fs.readFileSync('./dashboard.json', 'UTF-8')
 // var widgetConfigJson = fs.readFileSync('./widget.json', 'UTF-8')
-// var result = getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, 412)
+// var result = getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, 704)
 // console.log(JSON.stringify(result))
 // fs.writeFileSync('./globalFilters.json', JSON.stringify(result))
 // // #endregion

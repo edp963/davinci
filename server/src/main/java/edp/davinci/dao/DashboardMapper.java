@@ -112,7 +112,7 @@ public interface DashboardMapper {
 
 
     @Select({
-            "select * from dashboard where FIND_IN_SET(#{id},full_parent_Id) and type = 1)"
+            "select * from dashboard where type = 1 and FIND_IN_SET(#{id},full_parent_Id)"
     })
     List<Dashboard> getSubDashboardById(@Param("id") Long id);
 }

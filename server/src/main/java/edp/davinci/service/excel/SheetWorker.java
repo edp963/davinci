@@ -6,7 +6,6 @@ import edp.core.model.QueryColumn;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
