@@ -90,8 +90,8 @@ public class SqlParseUtils {
             ExecutorService executorService = Executors.newFixedThreadPool(8);
             try {
                 CountDownLatch countDownLatch = new CountDownLatch(variables.size());
-                final Future[] future = {null};
-                variables.forEach(variable -> future[0] = executorService.submit(() -> {
+                List<Future> futures = new ArrayList<>(variables.size());
+                variables.forEach(variable -> futures.add(executorService.submit(() -> {
                     try {
                         SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
                         if (null != typeEnum) {
@@ -110,10 +110,12 @@ public class SqlParseUtils {
                     } finally {
                         countDownLatch.countDown();
                     }
-                }));
+                })));
 
                 try {
-                    future[0].get();
+                    for (Future future : futures) {
+                        future.get();
+                    }
                     countDownLatch.await();
                 } catch (ExecutionException e) {
                     executorService.shutdownNow();
@@ -318,20 +320,21 @@ public class SqlParseUtils {
                                     return "1=1";
                                 }
                             } else {
+                                List<String> collect = list.stream().filter(s -> !N0_AUTH_PERMISSION.equals(s)).collect(Collectors.toList());
                                 switch (sqlOperator) {
                                     case IN:
                                     case EQUALSTO:
                                         expBuilder
                                                 .append(left).append(SPACE)
                                                 .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
-                                                .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
+                                                .append(collect.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                         break;
 
                                     case NOTEQUALSTO:
                                         expBuilder
                                                 .append(left).append(SPACE)
                                                 .append(SqlOperatorEnum.NoTIN.getValue()).append(SPACE)
-                                                .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
+                                                .append(collect.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                         break;
 
                                     case BETWEEN:
@@ -339,7 +342,7 @@ public class SqlParseUtils {
                                     case GREATERTHANEQUALS:
                                     case MINORTHAN:
                                     case MINORTHANEQUALS:
-                                        expBuilder.append(list.stream()
+                                        expBuilder.append(collect.stream()
                                                 .map(x -> SPACE + left + SPACE + SqlOperatorEnum.BETWEEN.getValue() + SPACE + x + SPACE)
                                                 .collect(Collectors.joining("or", PARENTHESES_START, PARENTHESES_END)));
                                         break;
