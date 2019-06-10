@@ -735,7 +735,13 @@ public class ViewServiceImpl implements ViewService {
                             if (map.containsKey(v.getName())) {
                                 SqlVariable sqlVariable = map.get(v.getName());
                                 if (v.isEnable()) {
-                                    sqlVariable.setDefaultValues(v.getValues());
+                                    if (CollectionUtils.isEmpty(v.getValues())) {
+                                        List values = new ArrayList<>();
+                                        values.add(N0_AUTH_PERMISSION);
+                                        sqlVariable.setDefaultValues(values);
+                                    } else {
+                                        sqlVariable.setDefaultValues(v.getValues());
+                                    }
                                 } else {
                                     sqlVariable.setDefaultValues(null);
                                 }
@@ -806,11 +812,11 @@ public class ViewServiceImpl implements ViewService {
             ExecutorService executorService = Executors.newFixedThreadPool(8);
             CountDownLatch countDownLatch = new CountDownLatch(authVariables.size());
             Map<String, Set<String>> map = new Hashtable<>();
-            final Future<?>[] future = {null};
+            List<Future> futures = new ArrayList<>(authVariables.size());
             try {
                 authVariables.forEach(sqlVariable -> {
                     try {
-                        future[0] = executorService.submit(() -> {
+                        futures.add(executorService.submit(() -> {
                             if (null != sqlVariable) {
                                 Set<String> vSet = null;
                                 if (map.containsKey(sqlVariable.getName().trim())) {
@@ -828,14 +834,15 @@ public class ViewServiceImpl implements ViewService {
 
                                 map.put(sqlVariable.getName().trim(), vSet);
                             }
-                        });
+                        }));
                     } finally {
                         countDownLatch.countDown();
                     }
                 });
-
                 try {
-                    future[0].get();
+                    for (Future future : futures) {
+                        future.get();
+                    }
                     countDownLatch.await();
                 } catch (ExecutionException e) {
                     executorService.shutdownNow();
@@ -851,11 +858,7 @@ public class ViewServiceImpl implements ViewService {
                 if (null == sqlEntity.getAuthParams()) {
                     sqlEntity.setAuthParams(new HashMap<>());
                 }
-                map.forEach((k, v) -> {
-                    sqlEntity.getAuthParams().put(k, new ArrayList<String>(v));
-
-                    log.info("{}:{}", k, v);
-                });
+                map.forEach((k, v) -> sqlEntity.getAuthParams().put(k, new ArrayList<String>(v)));
             }
         } else {
             sqlEntity.setAuthParams(new HashMap<>());

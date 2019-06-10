@@ -376,7 +376,7 @@ public class ShareServiceImpl implements ShareService {
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), shareInfo.getShareUser(), false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareInfo.getShareUser());
 
-        if (projectPermission.getDownloadPermission()) {
+        if (!projectPermission.getDownloadPermission()) {
             throw new ForbiddenExecption("ERROR Permission denied");
         }
 
