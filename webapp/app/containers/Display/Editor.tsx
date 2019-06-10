@@ -48,8 +48,7 @@ import {
   makeSelectCanRedo,
   makeSelectCurrentState,
   makeSelectNextState,
-  makeSelectEditorBaselines
-} from './selectors'
+  makeSelectEditorBaselines } from './selectors'
 import { slideSettings, GraphTypes, computeEditorBaselines } from './components/util'
 
 import DisplayHeader from './components/DisplayHeader'
@@ -87,8 +86,7 @@ import {
   loadDisplayShareLink,
   showEditorBaselines,
   clearEditorBaselines,
-  resetDisplayState
-} from './actions'
+  resetDisplayState } from './actions'
 import { message } from 'antd'
 const styles = require('./Display.less')
 
@@ -195,7 +193,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
   private editor = React.createRef<DisplayContainer>()
 
-  constructor(props) {
+  constructor (props) {
     super(props)
     this.state = {
       slideParams: {},
@@ -212,7 +210,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     }
   }
 
-  public componentDidMount() {
+  public componentDidMount () {
     const { params, onLoadDisplayDetail, onHideNavigator } = this.props
     const projectId = +params.pid
     const displayId = +params.displayId
@@ -220,11 +218,11 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     onHideNavigator()
   }
 
-  public componentWillUnmount() {
+  public componentWillUnmount () {
     this.props.onResetDisplayState()
   }
 
-  public componentWillReceiveProps(nextProps: IEditorProps) {
+  public componentWillReceiveProps (nextProps: IEditorProps) {
     const { currentSlide, currentLayers } = nextProps
 
     let { slideParams, currentLocalLayers } = this.state
@@ -401,8 +399,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         globalVariables,
         orders,
         cache,
-        expired,
-        pagination: queryConditions && queryConditions.pagination
+        expired
       }
     )
   }
@@ -777,7 +774,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     this.props.router.push(`/project/${pid}/widget/${widgetId}`)
   }
 
-  public render() {
+  public render () {
     const {
       params,
       currentLayersInfo,
@@ -951,7 +948,7 @@ const mapStateToProps = createStructuredSelector({
   editorBaselines: makeSelectEditorBaselines()
 })
 
-function mapDispatchToProps(dispatch) {
+function mapDispatchToProps (dispatch) {
   return {
     onLoadDisplayDetail: (projectId, displayId) => dispatch(loadDisplayDetail(projectId, displayId)),
     onEditCurrentDisplay: (display, resolve?) => dispatch(editCurrentDisplay(display, resolve)),
