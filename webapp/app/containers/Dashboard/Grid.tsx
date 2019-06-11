@@ -1394,33 +1394,33 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         })
 
       })
-      if (dashboardType === 2) {
-        // report mode
-        grids = (
-          <div className={styles.reportMode}>
-            {itemblocks[itemblocks.length - 1]}
-          </div>
-        )
-      } else {
-        grids = (
-          <ResponsiveReactGridLayout
-            className="layout"
-            style={{marginTop: '-14px'}}
-            rowHeight={GRID_ROW_HEIGHT}
-            margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
-            breakpoints={GRID_BREAKPOINTS}
-            cols={GRID_COLS}
-            layouts={layouts}
-            onDragStop={this.onDragStop}
-            onResizeStop={this.onResizeStop}
-            measureBeforeMount={false}
-            draggableHandle={`.${styles.title}`}
-            useCSSTransforms={mounted}
-          >
-            {itemblocks}
-          </ResponsiveReactGridLayout>
-        )
-      }
+      // if (dashboardType === 2) {
+      //   // report mode
+      //   grids = (
+      //     <div className={styles.reportMode}>
+      //       {itemblocks[itemblocks.length - 1]}
+      //     </div>
+      //   )
+      // } else {
+      grids = (
+        <ResponsiveReactGridLayout
+          className="layout"
+          style={{marginTop: '-14px'}}
+          rowHeight={GRID_ROW_HEIGHT}
+          margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
+          breakpoints={GRID_BREAKPOINTS}
+          cols={GRID_COLS}
+          layouts={layouts}
+          onDragStop={this.onDragStop}
+          onResizeStop={this.onResizeStop}
+          measureBeforeMount={false}
+          draggableHandle={`.${styles.title}`}
+          useCSSTransforms={mounted}
+        >
+          {itemblocks}
+        </ResponsiveReactGridLayout>
+      )
+      // }
     }
 
     const saveDashboardItemButton = (

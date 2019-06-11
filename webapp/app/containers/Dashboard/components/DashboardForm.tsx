@@ -174,7 +174,7 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
                  <RadioGroup disabled={type === 'edit' || type === 'copy' || type === 'move'}>
                     <Radio value={0}>文件夹</Radio>
                     <Radio value={1}>Dashboard</Radio>
-                    <Radio value={2}>Report</Radio>
+                    {/* <Radio value={2}>Report</Radio> */}
                     {/* <Select disabled={type === 'edit' || type === 'copy' || type === 'move'}>
                       <Option key="0" value="0">文件夹</Option>
                       <Option key="Dashboard" value="1">Dashboard</Option>
