@@ -67,6 +67,7 @@ interface IOperatingPanelProps {
   columnValueLoading: boolean
   controls: any[]
   cache: boolean
+  autoLoadData: boolean
   expired: number
   queryMode: WorkbenchQueryMode
   multiDrag: boolean
@@ -75,6 +76,7 @@ interface IOperatingPanelProps {
   onViewSelect: (viewId: number) => void
   onSetControls: (controls: any[]) => void
   onCacheChange: (e: RadioChangeEvent) => void
+  onChangeAutoLoadData: (e: RadioChangeEvent) => void
   onExpiredChange: (expired: number) => void
   onSetComputed: (computesField: any[]) => void
   onDeleteComputed: (computesField: any[]) => void
@@ -1396,11 +1398,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       columnValueLoading,
       controls,
       cache,
+      autoLoadData,
       expired,
       queryMode,
       multiDrag,
       computed,
       onCacheChange,
+      onChangeAutoLoadData,
       onExpiredChange,
       originalWidgetProps,
       originalComputed
@@ -1706,6 +1710,19 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
                   <Col span={24}>
                     <InputNumber value={expired} disabled={!cache} onChange={onExpiredChange} />
+                  </Col>
+                </Row>
+              </div>
+            </div>
+            <div className={styles.paneBlock}>
+              <h4>自动加载数据</h4>
+              <div className={styles.blockBody}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <RadioGroup size="small" value={autoLoadData} onChange={onChangeAutoLoadData}>
+                      <RadioButton value={true}>是</RadioButton>
+                      <RadioButton value={false}>否</RadioButton>
+                    </RadioGroup>
                   </Col>
                 </Row>
               </div>

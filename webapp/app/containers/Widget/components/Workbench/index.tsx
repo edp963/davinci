@@ -73,6 +73,7 @@ interface IWorkbenchStates {
   selectedViewId: number
   controls: any[]
   computed: any[]
+  autoLoadData: boolean
   cache: boolean
   expired: number
   splitSize: number
@@ -103,6 +104,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       computed: [],
       originalComputed: [],
       cache: false,
+      autoLoadData: true,
       expired: 300,
       splitSize,
       originalWidgetProps: null,
@@ -152,13 +154,14 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   public componentWillReceiveProps (nextProps: IWorkbenchProps) {
     const { currentWidget } = nextProps
     if (currentWidget && (currentWidget !== this.props.currentWidget)) {
-      const { controls, cache, expired, computed, ...rest } = JSON.parse(currentWidget.config)
+      const { controls, cache, expired, computed, autoLoadData, ...rest } = JSON.parse(currentWidget.config)
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
         description: currentWidget.description,
         controls,
         cache,
+        autoLoadData: autoLoadData === undefined ? true : autoLoadData,
         expired,
         selectedViewId: currentWidget.viewId,
         originalWidgetProps: {...rest},
@@ -228,7 +231,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     console.log({computeField})
     const { from } = computeField
     const { params, onEditWidget } = this.props
-    const { id, name, description, selectedViewId, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
+    const { id, name, description, selectedViewId, controls, cache, autoLoadData, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
     if (from === 'originalComputed') {
       this.setState({
         originalComputed: originalComputed.filter((oc) => oc.id !== computeField.id)
@@ -245,6 +248,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
             controls,
             computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
             cache,
+            autoLoadData,
             expired,
             data: []
           }),
@@ -270,6 +274,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
             controls,
             computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
             cache,
+            autoLoadData,
             expired,
             data: []
           }),
@@ -342,7 +347,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   private saveWidget = () => {
     const { params, onAddWidget, onEditWidget } = this.props
-    const { id, name, description, selectedViewId, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
+    const { id, name, description, selectedViewId, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed, autoLoadData } = this.state
     if (!name.trim()) {
       message.error('Widget名称不能为空')
       return
@@ -363,6 +368,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
         cache,
         expired,
+        autoLoadData,
         data: []
       }),
       publish: true
@@ -434,6 +440,13 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     })
   }
 
+
+  private changeAutoLoadData = (e) => {
+    this.setState({
+      autoLoadData: e.target.value
+    })
+  }
+
   private openSettingForm = () => {
     this.setState({
       settingFormVisible: true
@@ -476,6 +489,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       selectedViewId,
       controls,
       cache,
+      autoLoadData,
       expired,
       computed,
       splitSize,
@@ -532,11 +546,13 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
                 columnValueLoading={columnValueLoading}
                 controls={controls}
                 cache={cache}
+                autoLoadData={autoLoadData}
                 expired={expired}
                 queryMode={queryMode}
                 multiDrag={multiDrag}
                 computed={computed}
                 onViewSelect={this.viewSelect}
+                onChangeAutoLoadData={this.changeAutoLoadData}
                 onSetControls={this.setControls}
                 onCacheChange={this.cacheChange}
                 onExpiredChange={this.expiredChange}
