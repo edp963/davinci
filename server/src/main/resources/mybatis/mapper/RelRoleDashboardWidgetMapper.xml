@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.RelRoleDashboardWidgetMapper" >
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        replace into rel_role_dashboard_widget
+        (`role_id`, `mem_dashboard_widget_id`, `visible`, `create_by`, `create_time`)
+        VALUES
+        <foreach collection="list" item="record" index="index" separator=",">
+            (
+            #{record.roleId,jdbcType=BIGINT},
+            #{record.memDashboardWidgetId,jdbcType=BIGINT},
+            #{record.visible,jdbcType=TINYINT},
+            #{record.createBy,jdbcType=BIGINT},
+            #{record.createTime,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteByMemDashboardWidgetId" parameterType="java.util.Set">
+        delete from rel_role_dashboard_widget where
+        <if test="memDashboardWidgetIds != null and memDashboardWidgetIds.size > 0">
+            mem_dashboard_widget_id in
+            <foreach collection="memDashboardWidgetIds" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="memDashboardWidgetIds == null or memDashboardWidgetIds.size == 0">
+            1=0
+        </if>
+    </delete>
+
+</mapper>

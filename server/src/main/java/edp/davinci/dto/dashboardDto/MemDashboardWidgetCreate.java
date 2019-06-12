@@ -21,6 +21,7 @@ package edp.davinci.dto.dashboardDto;
 import lombok.Data;
 
 import javax.validation.constraints.Min;
+import java.util.List;
 
 @Data
 public class MemDashboardWidgetCreate {
@@ -46,4 +47,6 @@ public class MemDashboardWidgetCreate {
     private Integer frequency;
 
     private String config;
+
+    private List<Long> roleIds;
 }

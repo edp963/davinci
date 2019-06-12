@@ -407,7 +407,7 @@ public class DashboardController extends BaseController {
     @ApiOperation(value = "update dashboard widget relation")
     @PutMapping(value = "/{portalId}/dashboards/widgets", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateMemDashboardWidget(@PathVariable("portalId") Long portalId,
-                                                   @Valid @RequestBody MemDashboardWidget[] memDashboardWidgets,
+                                                   @Valid @RequestBody MemDashboardWidgetDto[] memDashboardWidgets,
                                                    @ApiIgnore BindingResult bindingResult,
                                                    @ApiIgnore @CurrentUser User user,
                                                    HttpServletRequest request) {
