@@ -35,13 +35,13 @@ import DashboardItem from '../../../app/containers/Dashboard/components/Dashboar
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
 import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
 import { ChartTypes } from '../../../app/containers/Widget/config/chart/ChartTypes'
-import { IMapItemFilterValue, InteractionType, IMapItemControlRequestParams, IMapControlOptions } from '../../../app/components/Filters'
+import { IMapItemControlRequestParams, IMapControlOptions } from '../../../app/components/Filters'
 import GlobalControlPanel from '../../../app/components/Filters/FilterPanel'
 
-import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
+import { RenderType, IWidgetConfig, IWidgetProps } from '../../../app/containers/Widget/components/Widget'
 import { ViewActions } from '../../../app/containers/View/actions'
 const { loadViewsDetail } = ViewActions
-import { Row, Col } from 'antd'
+import { Row, Col, message } from 'antd'
 
 import {
   getDashboard,
@@ -54,7 +54,8 @@ import {
   drillDashboardItem,
   deleteDrillHistory,
   setSelectOptions,
-  selectDashboardItemChart
+  selectDashboardItemChart,
+  globalControlChange
 } from './actions'
 import {
   makeSelectDashboard,
@@ -66,12 +67,14 @@ import {
   makeSelectItemsInfo,
   makeSelectLinkages
 } from './selectors'
-import { decodeMetricName } from '../../../app/containers/Widget/components/util'
+import { decodeMetricName, getTable } from '../../../app/containers/Widget/components/util'
 import {
   GRID_COLS,
   GRID_ROW_HEIGHT,
   GRID_ITEM_MARGIN,
-  GRID_BREAKPOINTS
+  GRID_BREAKPOINTS,
+  DEFAULT_TABLE_PAGE_SIZE,
+  DEFAULT_TABLE_PAGE
 } from '../../../app/globalConstants'
 
 const styles = require('../../../app/containers/Dashboard/Dashboard.less')
@@ -125,6 +128,7 @@ interface IDashboardProps {
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
   onSelectDashboardItemChart: (itemId: number, renderType: string, selectedItems: number[]) => void
+  onGlobalControlChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
 }
 
 interface IDashboardStates {
@@ -512,6 +516,41 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }
   }
 
+  private globalControlChange = (controlRequestParamsByItem: IMapItemControlRequestParams) => {
+    this.props.onGlobalControlChange(controlRequestParamsByItem)
+  }
+
+  private globalControlSearch = (itemIds: number[]) => {
+    const { currentItems, widgets, currentItemsInfo } = this.props
+    itemIds.forEach((itemId) => {
+      const item = currentItems.find((ci) => ci.id === itemId)
+      if (item) {
+        const widget = widgets.find((w) => w.id === item.widgetId)
+        const pagination = currentItemsInfo[itemId].queryConditions.pagination
+        let pageNo = 0
+        let pageSize = DEFAULT_TABLE_PAGE_SIZE
+        let noAggregators = false
+        if (widget.type === getTable().id) {
+          try {
+            const widgetProps: IWidgetProps = JSON.parse(widget.config)
+            if (widgetProps.mode === 'chart') {
+              const table = widgetProps.chartStyles.table
+              pageNo = DEFAULT_TABLE_PAGE
+              pageSize = Number(table.pageSize)
+              noAggregators = table.withNoAggregators
+            }
+          } catch (error) {
+            message.error(error)
+          }
+        }
+        this.getChartData('rerender', itemId, item.widgetId, {
+          pagination: { pageSize, ...pagination, pageNo },
+          nativeQuery: noAggregators
+        })
+      }
+    })
+  }
+
   private globalFilterChange = (queryConditions: IMapItemControlRequestParams) => {
     const { currentItems, currentItemsInfo } = this.props
     Object.entries(queryConditions).forEach(([itemId, condition]) => {
@@ -895,7 +934,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
             currentItems={currentItems}
             onGetOptions={this.getOptions}
             mapOptions={dashboardSelectOptions}
-            onChange={this.globalFilterChange}
+            onChange={this.globalControlChange}
+            onSearch={this.globalControlSearch}
           />
         </Container.Title>
         {grids}
@@ -932,7 +972,8 @@ export function mapDispatchToProps (dispatch) {
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index)),
-    onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems))
+    onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems)),
+    onGlobalControlChange: (controlRequestParamsByItem) => dispatch(globalControlChange(controlRequestParamsByItem))
   }
 }
 

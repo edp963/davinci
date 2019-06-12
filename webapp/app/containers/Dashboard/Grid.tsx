@@ -951,19 +951,23 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const pagination = currentItemsInfo[itemId].queryConditions.pagination
         let pageNo = 0
         let pageSize = DEFAULT_TABLE_PAGE_SIZE
+        let noAggregators = false
         if (widget.type === getTable().id) {
           try {
             const widgetProps: IWidgetProps = JSON.parse(widget.config)
             if (widgetProps.mode === 'chart') {
+              const table = widgetProps.chartStyles.table
               pageNo = DEFAULT_TABLE_PAGE
-              pageSize = Number(widgetProps.chartStyles.table.pageSize)
+              pageSize = Number(table.pageSize)
+              noAggregators = table.withNoAggregators
             }
           } catch (error) {
             message.error(error)
           }
         }
-        this.getChartData('rerender', +itemId, item.widgetId, {
-          pagination: { pageSize, ...pagination, pageNo }
+        this.getChartData('rerender', itemId, item.widgetId, {
+          pagination: { pageSize, ...pagination, pageNo },
+          nativeQuery: noAggregators
         })
       }
     })
