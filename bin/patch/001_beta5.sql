@@ -1152,5 +1152,6 @@ PREPARE stmt FROM @s;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-update organization
-set role_num = 0;
+update organization set role_num = 0;
+
+update download_record set status = 4 where last_download_time is not null and status = 2;
