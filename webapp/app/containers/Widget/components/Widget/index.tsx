@@ -141,6 +141,7 @@ export interface IWidgetConfig extends IWidgetProps {
   controls: any[]
   cache: boolean
   expired: number
+  autoLoadData: boolean
 }
 
 export interface IWidgetWrapperProps extends IWidgetProps {
