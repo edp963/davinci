@@ -428,6 +428,13 @@ function getTableColumns (props: IChartProps) {
 
     mapTableHeaderConfig[key] = currentConfig
 
+    childrenConfig.sort((cfg1, cfg2) => {
+      if (cfg1.isGroup || cfg2.isGroup) { return 0 }
+      const cfg1Idx = tableColumns.findIndex((column) => column.key === cfg1.headerName)
+      const cfg2Idx = tableColumns.findIndex((column) => column.key === cfg2.headerName)
+      return cfg1Idx - cfg2Idx
+    })
+
     let insertIdx = Infinity
     childrenConfig.forEach(({ isGroup, key, headerName }) => {
       const columnIdx = tableColumns.findIndex((column) => column.children ? column.key === key : column.key === headerName)

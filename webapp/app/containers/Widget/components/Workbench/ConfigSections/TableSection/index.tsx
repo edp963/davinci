@@ -196,6 +196,13 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     cursorConfig: ITableHeaderConfig[],
     validColumns: IDataParamSource[]
   ) => {
+    cursorConfig.sort((cfg1, cfg2) => {
+      if (cfg1.isGroup || cfg2.isGroup) { return 0 }
+      const cfg1Idx = validColumns.findIndex((column) => column.name === cfg1.headerName)
+      const cfg2Idx = validColumns.findIndex((column) => column.name === cfg2.headerName)
+      return cfg1Idx - cfg2Idx
+    })
+
     for (let idx = cursorConfig.length - 1; idx >= 0; idx--) {
       const currentConfig = cursorConfig[idx]
       const { isGroup, headerName } = currentConfig
