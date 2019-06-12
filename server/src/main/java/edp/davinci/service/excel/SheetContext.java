@@ -1,10 +1,27 @@
+/*
+ * <<
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
+ */
+
 package edp.davinci.service.excel;
 
 import edp.core.model.QueryColumn;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.model.ExcelHeader;
-import edp.davinci.dto.viewDto.Param;
-import lombok.Data;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
@@ -51,26 +68,26 @@ public class SheetContext implements Serializable {
                          Long widgetId,
                          String name,
                          int sheetNo,
-                         MsgWrapper wrapper){
-        this.executeSql=executeSql;
-        this.querySql=querySql;
-        this.totalColumns=totalColumns;
-        this.queryColumns=queryColumns;
-        this.excludeColumns=excludeColumns;
-        this.sheet=sheet;
-        this.workbook=workbook;
-        this.contain=contain;
-        this.sqlUtils=sqlUtils;
-        this.isTable=isTable;
-        this.excelHeaders=excelHeaders;
-        this.dashboardId=dashboardId;
-        this.widgetId=widgetId;
-        this.name=name;
-        this.sheetNo=sheetNo;
-        this.wrapper=wrapper;
+                         MsgWrapper wrapper) {
+        this.executeSql = executeSql;
+        this.querySql = querySql;
+        this.totalColumns = totalColumns;
+        this.queryColumns = queryColumns;
+        this.excludeColumns = excludeColumns;
+        this.sheet = sheet;
+        this.workbook = workbook;
+        this.contain = contain;
+        this.sqlUtils = sqlUtils;
+        this.isTable = isTable;
+        this.excelHeaders = excelHeaders;
+        this.dashboardId = dashboardId;
+        this.widgetId = widgetId;
+        this.name = name;
+        this.sheetNo = sheetNo;
+        this.wrapper = wrapper;
     }
 
-    public static SheetContextBuilder newSheetContextBuilder(){
+    public static SheetContextBuilder newSheetContextBuilder() {
         return new SheetContext.SheetContextBuilder();
     }
 
@@ -222,7 +239,7 @@ public class SheetContext implements Serializable {
                 '}';
     }
 
-    public static class SheetContextBuilder implements Serializable{
+    public static class SheetContextBuilder implements Serializable {
         private List<String> executeSql;
         private List<String> querySql;
         List<String> excludeColumns;
@@ -238,82 +255,82 @@ public class SheetContext implements Serializable {
         private int sheetNo;
         private MsgWrapper wrapper;
 
-        public SheetContextBuilder(){}
+        public SheetContextBuilder() {
+        }
 
-        public SheetContextBuilder buildExecuteSql(List<String> executeSql){
-            this.executeSql=executeSql;
+        public SheetContextBuilder buildExecuteSql(List<String> executeSql) {
+            this.executeSql = executeSql;
             return this;
         }
 
-        public SheetContextBuilder buildQuerySql(List<String> querySql){
-            this.querySql=querySql;
+        public SheetContextBuilder buildQuerySql(List<String> querySql) {
+            this.querySql = querySql;
             return this;
         }
 
-        public SheetContextBuilder buildExcludeColumns(List<String> excludeColumns){
-            this.excludeColumns=excludeColumns;
-            return this;
-        }
-
-
-        public SheetContextBuilder buildSheet(Sheet sheet){
-            this.sheet=sheet;
-            return this;
-        }
-
-        public SheetContextBuilder buildWorkbook(Workbook workbook){
-            this.workbook=workbook;
-            return this;
-        }
-
-        public SheetContextBuilder buildContain(Boolean contain){
-            this.contain=contain;
-            return this;
-        }
-
-        public SheetContextBuilder buildSqlUtils(SqlUtils sqlUtils){
-            this.sqlUtils=sqlUtils;
-            return this;
-        }
-
-        public SheetContextBuilder buildIsTable(Boolean isTable){
-            this.isTable=isTable;
-            return this;
-        }
-
-        public SheetContextBuilder buildHeaders(List<ExcelHeader> headers){
-            this.excelHeaders=headers;
-            return this;
-        }
-
-        public SheetContextBuilder buildDashboardId(Long dashboardId){
-            this.dashboardId=dashboardId;
-            return this;
-        }
-
-        public SheetContextBuilder buildWidgetId(Long widgetId){
-            this.widgetId=widgetId;
-            return this;
-        }
-
-        public SheetContextBuilder buildName(String name){
-            this.name=name;
-            return this;
-        }
-
-        public SheetContextBuilder buildSheetNo(int sheetNo){
-            this.sheetNo=sheetNo;
-            return this;
-        }
-
-        public SheetContextBuilder buildWrapper(MsgWrapper wrapper){
-            this.wrapper=wrapper;
+        public SheetContextBuilder buildExcludeColumns(List<String> excludeColumns) {
+            this.excludeColumns = excludeColumns;
             return this;
         }
 
 
+        public SheetContextBuilder buildSheet(Sheet sheet) {
+            this.sheet = sheet;
+            return this;
+        }
 
-        public SheetContext build(){
+        public SheetContextBuilder buildWorkbook(Workbook workbook) {
+            this.workbook = workbook;
+            return this;
+        }
+
+        public SheetContextBuilder buildContain(Boolean contain) {
+            this.contain = contain;
+            return this;
+        }
+
+        public SheetContextBuilder buildSqlUtils(SqlUtils sqlUtils) {
+            this.sqlUtils = sqlUtils;
+            return this;
+        }
+
+        public SheetContextBuilder buildIsTable(Boolean isTable) {
+            this.isTable = isTable;
+            return this;
+        }
+
+        public SheetContextBuilder buildHeaders(List<ExcelHeader> headers) {
+            this.excelHeaders = headers;
+            return this;
+        }
+
+        public SheetContextBuilder buildDashboardId(Long dashboardId) {
+            this.dashboardId = dashboardId;
+            return this;
+        }
+
+        public SheetContextBuilder buildWidgetId(Long widgetId) {
+            this.widgetId = widgetId;
+            return this;
+        }
+
+        public SheetContextBuilder buildName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public SheetContextBuilder buildSheetNo(int sheetNo) {
+            this.sheetNo = sheetNo;
+            return this;
+        }
+
+        public SheetContextBuilder buildWrapper(MsgWrapper wrapper) {
+            this.wrapper = wrapper;
+            return this;
+        }
+
+
+        public SheetContext build() {
             return new SheetContext(
                     this.executeSql,
                     this.querySql,

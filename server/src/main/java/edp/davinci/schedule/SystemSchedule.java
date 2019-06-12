@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,25 +20,38 @@
 package edp.davinci.schedule;
 
 import edp.core.consts.Consts;
+import edp.core.exception.ServerException;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
+import edp.core.utils.QuartzUtils;
 import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.dao.CronJobMapper;
 import edp.davinci.dao.DownloadRecordMapper;
+import edp.davinci.model.CronJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.util.List;
 
 @Slf4j
 @Component
 public class SystemSchedule {
 
     @Autowired
-    public FileUtils fileUtils;
+    private FileUtils fileUtils;
 
+    @Autowired
+    private CronJobMapper cronJobMapper;
+
+    @Autowired
     private DownloadRecordMapper downloadRecordMapper;
+
+
+    @Autowired
+    private QuartzUtils quartzUtils;
 
 
     @Scheduled(cron = "0 0 1 * * *")
@@ -57,5 +70,18 @@ public class SystemSchedule {
         new Thread(() -> fileUtils.deleteDir(new File(download))).start();
         new Thread(() -> fileUtils.deleteDir(new File(temp))).start();
         new Thread(() -> fileUtils.deleteDir(new File(csv))).start();
+    }
+
+    @Scheduled(cron = "0 0/2 * * * *")
+    public void stopCronJob() {
+        List<CronJob> jobs = cronJobMapper.getStopedJob();
+        if (null != jobs) {
+            for (CronJob job : jobs) {
+                try {
+                    quartzUtils.removeJob(job);
+                } catch (ServerException e) {
+                }
+            }
+        }
     }
 }
