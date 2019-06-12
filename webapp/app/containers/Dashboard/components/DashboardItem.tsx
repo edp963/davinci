@@ -201,7 +201,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     if (!container) {
       if (!this.props.rendered && rendered) {
         // clear
-        if (autoLoadData) {
+        if (autoLoadData === true || autoLoadData === undefined) {
           onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
         }
         this.initPolling(this.props)
