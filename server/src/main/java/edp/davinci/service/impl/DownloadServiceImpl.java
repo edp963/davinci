@@ -1,3 +1,22 @@
+/*
+ * <<
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2018 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
+ */
+
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
@@ -10,6 +29,8 @@ import edp.davinci.core.enums.DownloadType;
 import edp.davinci.dao.*;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
+import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
+import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.model.*;
 import edp.davinci.service.DownloadService;
 import edp.davinci.service.ProjectService;
@@ -93,18 +114,25 @@ public class DownloadServiceImpl implements DownloadService {
     }
 
     @Override
-    public Boolean submit(DownloadType type, Long id, User user) {
+    public Boolean submit(DownloadType type, Long id, User user, List<DownloadViewExecuteParam> params) {
         try {
             List<WidgetContext> widgetList = Lists.newArrayList();
             switch (type) {
                 case Widget:
                     Widget widget = widgetMapper.getById(id);
                     if (widget != null) {
-                        widgetList.add(new WidgetContext(widget, null, null));
+                        ViewExecuteParam executeParam = null;
+                        if (!CollectionUtils.isEmpty(params)) {
+                            try {
+                                executeParam = params.stream().filter(p -> null != p.getParam() && p.getId().equals(widget.getId())).findFirst().get().getParam();
+                            } catch (Exception e) {
+                            }
+                        }
+                        widgetList.add(new WidgetContext(widget, null, null, executeParam));
                     }
                     break;
                 case DashBoard:
-                    List<WidgetContext> widgets = getWidgetContextListByDashBoardId(Lists.newArrayList(id));
+                    List<WidgetContext> widgets = getWidgetContextListByDashBoardId(Lists.newArrayList(id), params);
                     if (!CollectionUtils.isEmpty(widgets)) {
                         widgetList.addAll(widgets);
                     }
@@ -129,7 +157,7 @@ public class DownloadServiceImpl implements DownloadService {
                     log.info("user {} have not permisson to download the widget {}", user.getUsername(), id);
                     throw new UnAuthorizedExecption("you have not permission to download the widget");
                 }
-                context.setMaintainer(projectService.isMaintainer(projectDetail, user));
+                context.setIsMaintainer(projectService.isMaintainer(projectDetail, user));
             }
             String fileName;
             switch (type) {
@@ -160,7 +188,7 @@ public class DownloadServiceImpl implements DownloadService {
     }
 
 
-    private List<WidgetContext> getWidgetContextListByDashBoardId(List<Long> dashboardIds) {
+    private List<WidgetContext> getWidgetContextListByDashBoardId(List<Long> dashboardIds, List<DownloadViewExecuteParam> params) {
         List<WidgetContext> widgetList = Lists.newArrayList();
         if (CollectionUtils.isEmpty(dashboardIds)) {
             return widgetList;
@@ -182,7 +210,15 @@ public class DownloadServiceImpl implements DownloadService {
             if (!CollectionUtils.isEmpty(widgets)) {
                 Map<Long, MemDashboardWidget> map = mdw.stream().collect(Collectors.toMap(o -> o.getWidgetId(), o -> o));
                 widgets.stream().forEach(t -> {
-                    widgetList.add(new WidgetContext(t, dashboard, map.get(t.getId())));
+                    ViewExecuteParam executeParam = null;
+                    if (!CollectionUtils.isEmpty(params) && map.containsKey(t.getId())) {
+                        MemDashboardWidget memDashboardWidget = map.get(t.getId());
+                        try {
+                            executeParam = params.stream().filter(p -> null != p.getParam() && p.getId().equals(memDashboardWidget.getId())).findFirst().get().getParam();
+                        } catch (Exception e) {
+                        }
+                    }
+                    widgetList.add(new WidgetContext(t, dashboard, map.get(t.getId()), executeParam));
                 });
             }
         }
@@ -202,7 +238,7 @@ public class DownloadServiceImpl implements DownloadService {
         if (CollectionUtils.isEmpty(dashboardIds)) {
             return widgetList;
         }
-        return getWidgetContextListByDashBoardId(dashboardIds);
+        return getWidgetContextListByDashBoardId(dashboardIds, null);
     }
 
 

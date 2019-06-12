@@ -100,7 +100,7 @@
         from project p
         left join rel_user_organization ruo on ruo.org_id = p.org_id
         left join organization o on o.id = p.org_id
-        where ruo.user_id = #{userId} and (ruo.role = 1 or (p.visibility = 1 and o.member_permission > 0))
+        where ruo.user_id = #{userId} and (ruo.role = 1 or (p.visibility = 1 and o.member_permission = 1))
         )
     </sql>
 
