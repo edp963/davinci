@@ -333,12 +333,13 @@ export function changeDownloadStatusFail (error) {
   }
 }
 
-export function initiateDownloadTask (id, type, itemId?) {
+export function initiateDownloadTask (id, type, downloadParams?, itemId?) {
   return {
     type: INITIATE_DOWNLOAD_TASK,
     payload: {
       id,
       type,
+      downloadParams,
       itemId
     }
   }

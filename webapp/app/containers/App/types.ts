@@ -7,7 +7,8 @@ export enum DownloadTypes {
 export enum DownloadStatus {
   Processing = 1,
   Success = 2,
-  Failed = 3
+  Failed = 3,
+  Downloaded = 4
 }
 
 export interface IDownloadRecord {

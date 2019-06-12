@@ -262,9 +262,31 @@ export function* downloadFile (action): IterableIterator<any> {
 export function* initiateDownloadTask (action): IterableIterator<any> {
   const { id, type, itemId } = action.payload
   try {
+    const downloadParams = action.payload.downloadParams.map((params) => {
+      const {
+        id,
+        filters,
+        tempFilters,
+        linkageFilters,
+        globalFilters,
+        variables,
+        linkageVariables,
+        globalVariables,
+        ...rest
+      } = params
+      return {
+        id,
+        param: {
+          ...rest,
+          filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
+          params: variables.concat(linkageVariables).concat(globalVariables)
+        }
+      }
+    })
     yield call(request, {
       method: 'POST',
-      url: `${api.download}/submit/${type}/${id}`
+      url: `${api.download}/submit/${type}/${id}`,
+      data: downloadParams
     })
     message.success('下载任务创建成功！')
     yield put(DownloadTaskInitiated(type, itemId))
