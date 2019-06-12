@@ -38,6 +38,7 @@ import LayerItem from '../../../app/containers/Display/components/LayerItem'
 import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
 import { decodeMetricName } from '../../../app/containers/Widget/components/util'
 
+const mainStyles = require('../../../app/containers/Main/Main.less')
 const styles = require('../../../app/containers/Display/Display.less')
 
 import { loadDisplay, loadLayerData } from './actions'
@@ -250,30 +251,66 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     )
   }
 
-  private getSlideStyle = (slideParams) => {
-    const { scale } = this.state
+  private getPreviewStyle = (slideParams) => {
+    const { scaleMode } = slideParams
+    const previewStyle: React.CSSProperties = {}
+    switch (scaleMode) {
+      case 'scaleWidth':
+        previewStyle.overflowY = 'auto'
+        break
+      case 'scaleHeight':
+        previewStyle.overflowX = 'auto'
+        break
+      case 'noScale':
+        previewStyle.overflow = 'auto'
+        break
+      case 'scaleFull':
+      default:
+        break
+    }
+    return previewStyle
+  }
 
+  private getSlideStyle = (slideParams, scale: [number, number]) => {
     const {
       width,
       height,
+      scaleMode,
       backgroundColor,
-      opacity,
       backgroundImage
     } = slideParams
 
     let slideStyle: React.CSSProperties
+
+    const { clientWidth, clientHeight } = document.body
+    const [scaleX, scaleY] = scale
+
+    let translateX = (scaleX - 1) / 2
+    let translateY = (scaleY - 1) / 2
+    translateX += Math.max(0, (clientWidth - scaleX * width) / (2 * width))
+    translateY += Math.max(0, (clientHeight - scaleY * height) / (2 * height))
+
+    const translate = `translate(${translateX * 100}%, ${translateY * 100}%)`
+
     slideStyle  = {
       overflow: 'visible',
-      width: `${width * scale[0]}px`,
-      height: `${height * scale[1]}px`
+      width,
+      height,
+      transform: `${translate} scale(${scaleX}, ${scaleY})`
     }
+
+    let backgroundStyle: React.CSSProperties | CSSStyleDeclaration = slideStyle
+    if (scaleMode === 'scaleWidth' && screen.width <= 1024) {
+      backgroundStyle = document.body.style
+    }
+    backgroundStyle.backgroundSize = 'cover'
 
     if (backgroundColor) {
       const rgb = backgroundColor.join()
-      slideStyle.backgroundColor = `rgb(${rgb})`
+      backgroundStyle.backgroundColor = `rgba(${rgb})`
     }
     if (backgroundImage) {
-      slideStyle.backgroundImage = `url("${backgroundImage}")`
+      backgroundStyle.backgroundImage = `url("${backgroundImage}")`
     }
     return slideStyle
   }
@@ -312,8 +349,12 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     const loginPanel = showLogin ? <Login shareInfo={shareInfo} legitimateUser={this.handleLegitimateUser} /> : null
 
     let content = null
+    let previewStyle = null
     if (display) {
-      const slideStyle = this.getSlideStyle(JSON.parse(slide.config).slideParams)
+      const { scale } = this.state
+      const slideParams = JSON.parse(slide.config).slideParams
+      previewStyle = this.getPreviewStyle(slideParams)
+      const slideStyle = this.getSlideStyle(slideParams, scale)
       const layerItems =  Array.isArray(widgets) ? layers.map((layer) => {
         const widget = widgets.find((w) => w.id === layer.widgetId)
         const view = { model: widget && widget.model }
@@ -325,7 +366,6 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
           <LayerItem
             key={layer.id}
             pure={true}
-            scale={scale}
             itemId={layerId}
             widget={widget}
             view={view}
@@ -348,10 +388,12 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     }
 
     return (
-      <div className={styles.preview}>
-        <Helmet title={title} />
-        {content}
-        {loginPanel}
+      <div className={mainStyles.container}>
+        <div className={styles.preview} style={previewStyle}>
+          <Helmet title={title} />
+          {content}
+          {loginPanel}
+        </div>
       </div>
     )
   }

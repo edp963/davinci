@@ -39,7 +39,7 @@ export function* getDisplay (action) {
     }
     const display = payload
     const { slides, widgets } = display
-    yield put(displayLoaded(display, slides[0], widgets))
+    yield put(displayLoaded(display, slides[0], widgets || [])) // @FIXME should return empty array in response
     resolve(display, slides[0], widgets)
   } catch (err) {
     message.destroy()
