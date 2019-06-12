@@ -21,6 +21,7 @@ package edp.davinci.schedule;
 
 import edp.core.consts.Consts;
 import edp.core.exception.ServerException;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.QuartzUtils;
@@ -49,7 +50,6 @@ public class SystemSchedule {
     @Autowired
     private DownloadRecordMapper downloadRecordMapper;
 
-
     @Autowired
     private QuartzUtils quartzUtils;
 
@@ -75,7 +75,7 @@ public class SystemSchedule {
     @Scheduled(cron = "0 0/2 * * * *")
     public void stopCronJob() {
         List<CronJob> jobs = cronJobMapper.getStopedJob();
-        if (null != jobs) {
+        if (!CollectionUtils.isEmpty(jobs)) {
             for (CronJob job : jobs) {
                 try {
                     quartzUtils.removeJob(job);
