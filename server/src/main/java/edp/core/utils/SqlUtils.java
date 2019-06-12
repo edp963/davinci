@@ -193,7 +193,8 @@ public class SqlUtils {
             final int startRow = (pageNo - 1) * pageSize;
 
             if (pageNo == 1 || totalCount == 0) {
-                totalCount = jdbcTemplate.<Integer>queryForObject(getCountSql(sql), Integer.class);
+                Object o = jdbcTemplate.queryForObject(getCountSql(sql), Object.class);
+                totalCount = Integer.parseInt(String.valueOf(o));
             }
             if (limit > 0) {
                 limit = limit > resultLimit ? resultLimit : limit;

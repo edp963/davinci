@@ -27,16 +27,17 @@ import edp.core.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
-import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+
+import static edp.core.consts.Consts.QUERY_META_SQL;
 
 /**
  * Created by IntelliJ IDEA.
@@ -107,23 +108,26 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
 
     private void buildQueryColumn(JdbcTemplate template) {
         template.setMaxRows(1);
-        SqlRowSet rowSet = template.queryForRowSet(context.getQuerySql().get(context.getQuerySql().size() - 1));
-        SqlRowSetMetaData metaData = rowSet.getMetaData();
-        List<QueryColumn> totalColumns = new ArrayList<>();
-        List<QueryColumn> queryColumns = new ArrayList<>();
-        for (int i = 1; i <= metaData.getColumnCount(); i++) {
-            String key = metaData.getColumnLabel(i);
-            totalColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
-            if (!CollectionUtils.isEmpty(context.getExcludeColumns()) && context.getExcludeColumns().contains(key)) {
-                continue;
+        String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
+        template.query(String.format(QUERY_META_SQL, sql), rs -> {
+            ResultSetMetaData metaData = rs.getMetaData();
+            List<QueryColumn> totalColumns = new ArrayList<>();
+            List<QueryColumn> queryColumns = new ArrayList<>();
+            for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                String key = metaData.getColumnLabel(i);
+                totalColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
+                if (!CollectionUtils.isEmpty(context.getExcludeColumns()) && context.getExcludeColumns().contains(key)) {
+                    continue;
+                }
+                queryColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
             }
-            queryColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
-        }
-        if (CollectionUtils.isEmpty(totalColumns) || CollectionUtils.isEmpty(queryColumns)) {
-            throw new IllegalArgumentException("can not find any QueryColumn,widgetId=" + context.getWidgetId()
-                    + ",sql=" + context.getQuerySql().get(context.getQuerySql().size() - 1));
-        }
-        context.setTotalColumns(totalColumns);
-        context.setQueryColumns(queryColumns);
+            if (CollectionUtils.isEmpty(totalColumns) || CollectionUtils.isEmpty(queryColumns)) {
+                throw new IllegalArgumentException("can not find any QueryColumn,widgetId=" + context.getWidgetId()
+                        + ",sql=" + context.getQuerySql().get(context.getQuerySql().size() - 1));
+            }
+            context.setTotalColumns(totalColumns);
+            context.setQueryColumns(queryColumns);
+            return context;
+        });
     }
 }
