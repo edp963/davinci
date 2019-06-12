@@ -71,3 +71,4 @@ export const DELETE_DRILL_PATH_HISTORY = 'davinci/Dashboard/DELETE_DRILL_PATH_HI
 export const SELECT_DASHBOARD_ITEM_CHART = 'davinci/Dashboard/SELECT_DASHBOARD_ITEM_CHART'
 export const SET_SELECT_OPTIONS = 'davinci/Dashboard/SET_SELECT_OPTIONS'
 export const SET_CONTROL_FORM_VALUES = 'davinci/Dashboard/SET_CONTROL_FORM_VALUES'
+export const GLOBAL_CONTROL_CHANGE = 'davinci/Dashboard/GLOBAL_CONTROL_CHANGE'

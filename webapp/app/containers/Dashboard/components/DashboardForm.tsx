@@ -169,7 +169,7 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
               className={type === 'move' ? utilStyles.hide : ''}
             >
               {getFieldDecorator('selectType', {
-                initialValue: '0'
+                initialValue: 1
               })(
                  <RadioGroup disabled={type === 'edit' || type === 'copy' || type === 'move'}>
                     <Radio value={0}>文件夹</Radio>

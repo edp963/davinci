@@ -84,11 +84,13 @@ export const DELETE_TEAM = 'davinci/permission/DELETE_TEAM'
 export const DOWNLOAD_STATUS_COLORS = {
   [DownloadStatus.Processing]: 'blue',
   [DownloadStatus.Success]: 'green',
-  [DownloadStatus.Failed]: 'red'
+  [DownloadStatus.Failed]: 'red',
+  [DownloadStatus.Downloaded]: 'grey'
 }
 
 export const DOWNLOAD_STATUS_LOCALE = {
   [DownloadStatus.Processing]: '处理中',
   [DownloadStatus.Success]: '成功',
-  [DownloadStatus.Failed]: '失败'
+  [DownloadStatus.Failed]: '失败',
+  [DownloadStatus.Downloaded]: '已下载'
 }

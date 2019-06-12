@@ -93,7 +93,7 @@ interface IDashboardProps {
   onLoadProjectDetail: (id) => any
   onExcludeRoles: (type: string, id: number, resolve?: any) => any
   onLoadProjectRoles: (id: number) => any
-  onInitiateDownloadTask: (id: number, type: DownloadTypes, itemId?: number) => void
+  onInitiateDownloadTask: (id: number, type: DownloadTypes, downloadParams?: any[]) => void
 }
 
 export interface IDashboard {
@@ -518,7 +518,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
   private onOperateMore = (item, type) => {
     if (type === 'download') {
-      this.props.onInitiateDownloadTask(item.id, item.type === 0 ? DownloadTypes.Folder : DownloadTypes.Dashboard)
+      this.props.onInitiateDownloadTask(item.id, item.type === 0 ? DownloadTypes.Folder : DownloadTypes.Dashboard, [])
     } else {
       this.setState({
         formType: type
@@ -888,7 +888,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
     onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
-    onInitiateDownloadTask: (id, type, itemId?) => dispatch(initiateDownloadTask(id, type, itemId))
+    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(initiateDownloadTask(id, type, downloadParams))
   }
 }
 
