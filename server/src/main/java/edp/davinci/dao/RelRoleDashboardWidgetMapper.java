@@ -19,6 +19,7 @@
 package edp.davinci.dao;
 
 import edp.davinci.model.RelRoleDashboardWidget;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -28,6 +29,12 @@ public interface RelRoleDashboardWidgetMapper {
 
     int insertBatch(List<RelRoleDashboardWidget> list);
 
-    int deleteByMemDashboardWidgetId(@Param("memDashboardWidgetIds") Set<Long> memDashboardWidgetIds);
+    int deleteByMemDashboardWidgetIds(@Param("memDashboardWidgetIds") Set<Long> memDashboardWidgetIds);
+
+    @Delete({"delete from rel_role_dashboard_widget where mem_dashboard_widget_id = #{memDashboardWidgetId}"})
+    int deleteByMemDashboardWidgetId(@Param("memDashboardWidgetId") Long memDashboardWidgetId);
+
+    @Delete({"delete from rel_role_dashboard_widget where role_id = #{roleId}"})
+    int deleteByRoleId(@Param("roleId") Long roleId);
 
 }

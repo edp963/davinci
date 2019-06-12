@@ -19,6 +19,7 @@
 package edp.davinci.dao;
 
 import edp.davinci.model.RelRoleDisplaySlideWidget;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -29,5 +30,11 @@ public interface RelRoleDisplaySlideWidgetMapper {
     int insertBatch(List<RelRoleDisplaySlideWidget> list);
 
     int deleteByMemDisplaySlideWidgetIds(@Param("memDisplaySlideWidgetIds") Set<Long> memDisplaySlideWidgetIds);
+
+    @Delete({"delete from rel_role_display_slide_widget where mem_display_slide_widget_id = #{memDisplaySlideWidgetId}"})
+    int deleteByMemDisplaySlideWidgetId(@Param("memDisplaySlideWidgetId") Long memDisplaySlideWidgetId);
+
+    @Delete({"delete from rel_role_display_slide_widget where role_id = #{roleId}"})
+    int deleteByRoleId(@Param("roleId") Long roleId);
 
 }
