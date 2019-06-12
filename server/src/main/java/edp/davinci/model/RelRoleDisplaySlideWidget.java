@@ -14,40 +14,27 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
- *
  */
 
-package edp.davinci.dto.dashboardDto;
+package edp.davinci.model;
 
+import edp.davinci.common.model.RecordInfo;
 import lombok.Data;
 
-import javax.validation.constraints.Min;
-import java.util.List;
-
 @Data
-public class MemDashboardWidgetCreate {
+public class RelRoleDisplaySlideWidget extends RecordInfo<RelRoleDisplaySlideWidget> {
 
-    @Min(value = 1L, message = "Invalid dashboard id")
-    private Long dashboardId;
+    private Long roleId;
 
-    @Min(value = 1L, message = "Invalid widget id")
-    private Long widgetId;
+    private Long memDisplaySlideWidgetId;
 
-    private Integer x;
+    private Boolean visible = false; // 可见/不可见  true/false
 
-    private Integer y;
+    public RelRoleDisplaySlideWidget() {
+    }
 
-    @Min(value = 0, message = "Invalid width")
-    private Integer width;
-
-    @Min(value = 0, message = "Invalid heidget")
-    private Integer height;
-
-    private Boolean polling = false;
-
-    private Integer frequency;
-
-    private String config;
-
-    private List<Long> roleIds;
+    public RelRoleDisplaySlideWidget(Long roleId, Long memDisplaySlideWidgetId) {
+        this.roleId = roleId;
+        this.memDisplaySlideWidgetId = memDisplaySlideWidgetId;
+    }
 }

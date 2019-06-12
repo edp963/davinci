@@ -23,10 +23,7 @@ import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
-import edp.davinci.dto.dashboardDto.DashboardCreate;
-import edp.davinci.dto.dashboardDto.DashboardDto;
-import edp.davinci.dto.dashboardDto.DashboardWithMem;
-import edp.davinci.dto.dashboardDto.MemDashboardWidgetCreate;
+import edp.davinci.dto.dashboardDto.*;
 import edp.davinci.dto.roleDto.VizVisibility;
 import edp.davinci.model.Dashboard;
 import edp.davinci.model.MemDashboardWidget;
@@ -49,7 +46,7 @@ public interface DashboardService extends CheckEntityService {
 
     List<MemDashboardWidget> createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate[] memDashboardWidgetCreates, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    boolean updateMemDashboardWidgets(Long portalId, User user, MemDashboardWidget[] memDashboardWidgets) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean updateMemDashboardWidgets(Long portalId, User user, MemDashboardWidgetDto[] memDashboardWidgets) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     boolean deleteMemDashboardWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 

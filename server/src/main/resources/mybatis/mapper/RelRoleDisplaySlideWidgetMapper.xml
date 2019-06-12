@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.RelRoleDisplaySlideWidgetMapper" >
+  <resultMap id="BaseResultMap" type="edp.davinci.model.RelRoleDisplaySlideWidget" >
+    <id column="role_id" property="roleId" jdbcType="BIGINT" />
+    <id column="mem_display_slide_widget_id" property="memDisplaySlideWidgetId" jdbcType="BIGINT" />
+    <result column="visible" property="visible" jdbcType="BIT" />
+    <result column="create_by" property="createBy" jdbcType="BIGINT" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="BIGINT" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    role_id, mem_display_slide_widget_id, visible, create_by, create_time, update_by, 
+    update_time
+  </sql>
+  <insert id="insertSelective" parameterType="edp.davinci.model.RelRoleDisplaySlideWidget" >
+    insert into rel_role_display_slide_widget
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="roleId != null" >
+        role_id,
+      </if>
+      <if test="memDisplaySlideWidgetId != null" >
+        mem_display_slide_widget_id,
+      </if>
+      <if test="visible != null" >
+        visible,
+      </if>
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="roleId != null" >
+        #{roleId,jdbcType=BIGINT},
+      </if>
+      <if test="memDisplaySlideWidgetId != null" >
+        #{memDisplaySlideWidgetId,jdbcType=BIGINT},
+      </if>
+      <if test="visible != null" >
+        #{visible,jdbcType=BIT},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=BIGINT},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=BIGINT},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="edp.davinci.model.RelRoleDisplaySlideWidget" >
+    update rel_role_display_slide_widget
+    <set >
+      <if test="visible != null" >
+        visible = #{visible,jdbcType=BIT},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=BIGINT},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=BIGINT},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where role_id = #{roleId,jdbcType=BIGINT}
+      and mem_display_slide_widget_id = #{memDisplaySlideWidgetId,jdbcType=BIGINT}
+  </update>
+</mapper>
