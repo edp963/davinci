@@ -52,7 +52,7 @@ export class ConfigForm extends React.PureComponent<IConfigFormProps> {
       onSelect: treeSelect,
       treeData: vizs,
       value: dashboardTreeValue,
-      loadData: loadTreeData,
+   //   loadData: loadTreeData,
       showCheckedStrategy: TreeSelect.SHOW_PARENT,
       searchPlaceholder: '请选择要发送的 Dashboard 或 Display'
     }
