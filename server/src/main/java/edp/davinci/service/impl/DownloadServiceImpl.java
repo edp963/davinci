@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@ import com.alibaba.druid.util.StringUtils;
 import com.google.common.collect.Lists;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.CollectionUtils;
+import edp.core.utils.DateUtils;
 import edp.core.utils.TokenUtils;
 import edp.davinci.core.enums.ActionEnum;
+import edp.davinci.core.enums.DownloadTaskStatus;
 import edp.davinci.core.enums.DownloadType;
 import edp.davinci.dao.*;
 import edp.davinci.dto.projectDto.ProjectDetail;
@@ -47,6 +49,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static edp.core.consts.Consts.UNDERLINE;
 
 
 /**
@@ -109,6 +113,7 @@ public class DownloadServiceImpl implements DownloadService {
         }
 
         record.setLastDownloadTime(new Date());
+        record.setStatus(DownloadTaskStatus.DOWNLOADED.getStatus());
         downloadRecordMapper.updateById(record);
         return record;
     }
@@ -174,10 +179,10 @@ public class DownloadServiceImpl implements DownloadService {
                     throw new IllegalArgumentException("unsupported DownloadType=" + type.name());
             }
             DownloadRecord record = new DownloadRecord();
-            record.setName(fileName);
+            record.setName(fileName + UNDERLINE + DateUtils.toyyyyMMddHHmmss(System.currentTimeMillis()));
             record.setUserId(user.getId());
             record.setCreateTime(new Date());
-            record.setStatus((short) 1);
+            record.setStatus(DownloadTaskStatus.PROCESSING.getStatus());
             downloadRecordMapper.insert(record);
             ExecutorUtil.submitWorkbookTask(WorkBookContext.newWorkBookContext(new MsgWrapper(record, ActionEnum.DOWNLOAD, record.getId()), widgetList, user));
         } catch (Exception e) {
