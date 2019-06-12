@@ -565,7 +565,7 @@ public class DashboardServiceImpl implements DashboardService {
 
             if (!CollectionUtils.isEmpty(rolesMap)) {
                 Set<Long> memDashboardWidgetIds = rolesMap.keySet();
-                relRoleDashboardWidgetMapper.deleteByMemDashboardWidgetId(memDashboardWidgetIds);
+                relRoleDashboardWidgetMapper.deleteByMemDashboardWidgetIds(memDashboardWidgetIds);
 
                 List<RelRoleDashboardWidget> relRoleDashboardWidgetList = new ArrayList<>();
                 for (MemDashboardWidget memDashboardWidget : memDashboardWidgetList) {
@@ -630,6 +630,8 @@ public class DashboardServiceImpl implements DashboardService {
             log.info("user ({}) have not permission to delete memDashboardWidget ({})", user.getId(), memDashboardWidget.getId());
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
+
+        relRoleDashboardWidgetMapper.deleteByMemDashboardWidgetId(relationId);
 
         int i = memDashboardWidgetMapper.deleteById(relationId);
         if (i > 0) {

@@ -674,6 +674,8 @@ public class DisplayServiceImpl implements DisplayService {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
+        relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetId(relationId);
+
         int i = memDisplaySlideWidgetMapper.deleteById(relationId);
         if (i > 0) {
             optLogger.info("MemDisplaySlideWdget ({}) is delete by (:{})", slideWidget.toString(), user.getId());
@@ -886,6 +888,10 @@ public class DisplayServiceImpl implements DisplayService {
 
         if (memIds.length > 0) {
             List<Long> idList = new ArrayList<>(Arrays.asList(memIds));
+
+            Set<Long> idSet = new HashSet<>(idList);
+            relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetIds(idSet);
+
             memDisplaySlideWidgetMapper.deleteBatchById(idList);
         }
         return true;
