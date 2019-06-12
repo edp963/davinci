@@ -1,8 +1,29 @@
+/*
+ * <<
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2018 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
+ */
+
 package edp.davinci.service.excel;
 
+import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.model.Dashboard;
 import edp.davinci.model.MemDashboardWidget;
 import edp.davinci.model.Widget;
+import lombok.Data;
 
 import java.io.Serializable;
 
@@ -13,6 +34,7 @@ import java.io.Serializable;
  * @Date 19/5/29 11:46
  * To change this template use File | Settings | File Templates.
  */
+@Data
 public class WidgetContext implements Serializable {
 
     private Widget widget;
@@ -23,44 +45,21 @@ public class WidgetContext implements Serializable {
 
     private Boolean isMaintainer;
 
+    private ViewExecuteParam executeParam;
 
-    public WidgetContext(Widget widget,Dashboard dashboard,MemDashboardWidget memDashboardWidget){
-        this.widget=widget;
-        this.dashboard=dashboard;
-        this.memDashboardWidget=memDashboardWidget;
-    }
+    private boolean hasExecuteParam = false;
 
-    public Widget getWidget() {
-        return widget;
-    }
 
-    public void setWidget(Widget widget) {
+    public WidgetContext(Widget widget, Dashboard dashboard, MemDashboardWidget memDashboardWidget, ViewExecuteParam executeParam) {
         this.widget = widget;
-    }
-
-    public Dashboard getDashboard() {
-        return dashboard;
-    }
-
-    public void setDashboard(Dashboard dashboard) {
         this.dashboard = dashboard;
-    }
-
-    public MemDashboardWidget getMemDashboardWidget() {
-        return memDashboardWidget;
-    }
-
-    public void setMemDashboardWidget(MemDashboardWidget memDashboardWidget) {
         this.memDashboardWidget = memDashboardWidget;
+        if (null != executeParam) {
+            this.executeParam = executeParam;
+            this.hasExecuteParam = true;
+        }
     }
 
-    public Boolean getMaintainer() {
-        return isMaintainer;
+    public WidgetContext() {
     }
-
-    public void setMaintainer(Boolean maintainer) {
-        isMaintainer = maintainer;
-    }
-
-
 }

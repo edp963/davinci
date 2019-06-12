@@ -320,7 +320,7 @@ public class SqlParseUtils {
                                     return "1=1";
                                 }
                             } else {
-                                List<String> collect = list.stream().filter(s -> !N0_AUTH_PERMISSION.equals(s)).collect(Collectors.toList());
+                                List<String> collect = list.stream().filter(s -> !s.contains(N0_AUTH_PERMISSION)).collect(Collectors.toList());
                                 switch (sqlOperator) {
                                     case IN:
                                     case EQUALSTO:

@@ -1,3 +1,22 @@
+/*
+ * <<
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2018 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
+ */
+
 package edp.davinci.controller;
 
 import edp.core.annotation.AuthIgnore;
@@ -7,6 +26,7 @@ import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.DownloadType;
 import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
 import edp.davinci.model.DownloadRecord;
 import edp.davinci.model.User;
 import edp.davinci.service.DownloadService;
@@ -24,10 +44,12 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -82,8 +104,10 @@ public class DownloadController extends BaseController {
     public ResponseEntity submitDownloadTask(@PathVariable String type,
                                              @PathVariable Long id,
                                              @ApiIgnore @CurrentUser User user,
+                                             @Valid @RequestBody(required = false) DownloadViewExecuteParam[] params,
                                              HttpServletRequest request) {
-        boolean rst = downloadService.submit(DownloadType.getDownloadType(type), id, user);
+        List<DownloadViewExecuteParam> downloadViewExecuteParams = Arrays.asList(params);
+        boolean rst = downloadService.submit(DownloadType.getDownloadType(type), id, user, downloadViewExecuteParams);
         return ResponseEntity.ok(rst ? new ResultMap(tokenUtils).successAndRefreshToken(request).payload(null) :
                 new ResultMap(tokenUtils).failAndRefreshToken(request).payload(null));
     }
