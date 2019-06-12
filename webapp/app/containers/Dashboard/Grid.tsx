@@ -50,10 +50,10 @@ import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Lin
 
 import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
-import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu } from 'antd'
+import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu, message } from 'antd'
 import { uuid } from '../../utils/util'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
-import { decodeMetricName } from '../Widget/components/util'
+import { decodeMetricName, getTable } from '../Widget/components/util'
 import { initiateDownloadTask } from '../App/actions'
 import {
   loadDashboardDetail,
@@ -100,10 +100,12 @@ import {
   GRID_COLS,
   GRID_ITEM_MARGIN,
   GRID_ROW_HEIGHT,
-  KEY_COLUMN
+  KEY_COLUMN,
+  DEFAULT_TABLE_PAGE,
+  DEFAULT_TABLE_PAGE_SIZE
 } from '../../globalConstants'
 import { InjectedRouter } from 'react-router/lib/Router'
-import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
+import { IWidgetConfig, RenderType, IWidgetProps } from '../Widget/components/Widget'
 import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
 import { ChartTypes } from '../Widget/config/chart/ChartTypes'
@@ -941,15 +943,27 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private globalControlSearch = (itemIds: number[]) => {
-    const { currentItems, currentItemsInfo } = this.props
+    const { currentItems, widgets, currentItemsInfo } = this.props
     itemIds.forEach((itemId) => {
       const item = currentItems.find((ci) => ci.id === itemId)
       if (item) {
+        const widget = widgets.find((w) => w.id === item.widgetId)
+        const pagination = currentItemsInfo[itemId].queryConditions.pagination
         let pageNo = 0
-        const { pagination } = currentItemsInfo[itemId].queryConditions
-        if (pagination.pageNo) { pageNo = 1 }
+        let pageSize = DEFAULT_TABLE_PAGE_SIZE
+        if (widget.type === getTable().id) {
+          try {
+            const widgetProps: IWidgetProps = JSON.parse(widget.config)
+            if (widgetProps.mode === 'chart') {
+              pageNo = DEFAULT_TABLE_PAGE
+              pageSize = Number(widgetProps.chartStyles.table.pageSize)
+            }
+          } catch (error) {
+            message.error(error)
+          }
+        }
         this.getChartData('rerender', +itemId, item.widgetId, {
-          pagination: { ...pagination, pageNo }
+          pagination: { pageSize, ...pagination, pageNo }
         })
       }
     })
