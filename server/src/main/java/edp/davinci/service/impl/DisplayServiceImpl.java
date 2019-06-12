@@ -88,6 +88,9 @@ public class DisplayServiceImpl implements DisplayService {
     @Autowired
     private RelRoleSlideMapper relRoleSlideMapper;
 
+    @Autowired
+    private RelRoleDisplaySlideWidgetMapper relRoleDisplaySlideWidgetMapper;
+
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
         Long displayId = displayMapper.getByNameWithProjectId(name, projectId);
@@ -469,6 +472,25 @@ public class DisplayServiceImpl implements DisplayService {
 
         int i = memDisplaySlideWidgetMapper.insertBatch(list);
         if (i > 0) {
+            List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
+            for (MemDisplaySlideWidget memDisplaySlideWidget : list) {
+                MemDisplaySlideWidgetCreate memDisplaySlideWidgetCreate = Arrays.stream(slideWidgetCreates).filter(
+                        (item -> (item.getDisplaySlideId().longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue()
+                                && item.getWidgetId().longValue() == memDisplaySlideWidget.getWidgetId().longValue()))
+                ).findFirst().get();
+
+                if (!CollectionUtils.isEmpty(memDisplaySlideWidgetCreate.getRoleIds())) {
+                    List<Role> roles = roleMapper.getRolesByIds(memDisplaySlideWidgetCreate.getRoleIds());
+                    relRoleDisplaySlideWidgetList.addAll(roles.stream()
+                            .map(r -> new RelRoleDisplaySlideWidget(r.getId(), memDisplaySlideWidget.getId()).createdBy(user.getId())).collect(Collectors.toList()));
+                }
+            }
+
+            if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
+                relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
+                optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})", relRoleDisplaySlideWidgetList.toString(), user.getId());
+            }
+
             if (null != clist && clist.size() > 1) {
                 optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", clist.toString(), user.getId());
                 //自定义主键
@@ -495,7 +517,7 @@ public class DisplayServiceImpl implements DisplayService {
      */
     @Override
     @Transactional
-    public boolean updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidget[] memDisplaySlideWidgets, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetDto[] memDisplaySlideWidgets, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(slideId);
 
         if (null == slideWithDisplayAndProject) {
@@ -506,7 +528,8 @@ public class DisplayServiceImpl implements DisplayService {
             throw new ServerException("Invalid display slide");
         }
 
-        Set<Long> widgetIds = Arrays.stream(memDisplaySlideWidgets).map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
+        List<MemDisplaySlideWidgetDto> dtoList = Arrays.asList(memDisplaySlideWidgets);
+        Set<Long> widgetIds = dtoList.stream().map(MemDisplaySlideWidgetDto::getWidgetId).collect(Collectors.toSet());
 
         List<Widget> widgets = widgetMapper.getByIds(widgetIds);
         if (null == widgets) {
@@ -524,14 +547,40 @@ public class DisplayServiceImpl implements DisplayService {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
-        List<MemDisplaySlideWidget> list = new ArrayList<>();
-        for (MemDisplaySlideWidget memDisplaySlideWidget : memDisplaySlideWidgets) {
-            memDisplaySlideWidget.updatedBy(user.getId());
-            list.add(memDisplaySlideWidget);
-        }
+        List<MemDisplaySlideWidget> memDisplaySlideWidgetList = new ArrayList<>(dtoList.size());
+        Map<Long, List<Long>> rolesMap = new HashMap<>();
+        dtoList.forEach(m -> {
+            m.updatedBy(user.getId());
+            memDisplaySlideWidgetList.add(m);
+            rolesMap.put(m.getId(), m.getRoleIds());
+        });
 
-        int i = memDisplaySlideWidgetMapper.updateBatch(list);
+        int i = memDisplaySlideWidgetMapper.updateBatch(memDisplaySlideWidgetList);
         if (i > 0) {
+            if (!CollectionUtils.isEmpty(rolesMap)) {
+                Set<Long> memDisplaySlideWidgetIds = rolesMap.keySet();
+                relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetIds(memDisplaySlideWidgetIds);
+
+                List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
+                for (MemDisplaySlideWidget memDisplaySlideWidget : memDisplaySlideWidgetList) {
+                    MemDisplaySlideWidgetDto memDisplaySlideWidgetDto = Arrays.stream(memDisplaySlideWidgets).filter(
+                            (item -> (item.getDisplaySlideId().longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue()
+                                    && item.getWidgetId().longValue() == memDisplaySlideWidget.getWidgetId().longValue()))
+                    ).findFirst().get();
+
+                    if (!CollectionUtils.isEmpty(memDisplaySlideWidgetDto.getRoleIds())) {
+                        List<Role> roles = roleMapper.getRolesByIds(memDisplaySlideWidgetDto.getRoleIds());
+                        relRoleDisplaySlideWidgetList.addAll(roles.stream()
+                                .map(r -> new RelRoleDisplaySlideWidget(r.getId(), memDisplaySlideWidget.getId()).createdBy(user.getId())).collect(Collectors.toList()));
+                    }
+                }
+
+                if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
+                    relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
+                    optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})", relRoleDisplaySlideWidgetList.toString(), user.getId());
+                }
+            }
+
             return true;
         } else {
             log.error("update batch MemDisplaySlideWidget error");

@@ -58,7 +58,7 @@ public interface DisplayService extends CheckEntityService {
 
     boolean deleteDisplaySlideWidgetList(Long displayId, Long slideId, Long[] memIds, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    boolean updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidget[] memDisplaySlideWidgets, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetDto[] memDisplaySlideWidgets, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     String uploadAvatar(MultipartFile file) throws ServerException;
 

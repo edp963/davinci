@@ -25,6 +25,7 @@ import lombok.Data;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Data
 @NotNull(message = "display slide widget info cannot be null")
@@ -49,4 +50,6 @@ public class MemDisplaySlideWidgetCreate {
 
     @NotBlank(message = "type cannot be EMPTY")
     private String params;
+
+    private List<Long> roleIds;
 }
