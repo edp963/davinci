@@ -17,11 +17,12 @@
  *
  */
 
-package edp.davinci.core.model;
+package edp.davinci.dto.viewDto;
 
 import lombok.Data;
 
 @Data
-public class FieldScientificNotation {
-    private int decimalPlaces;
+public class DownloadViewExecuteParam {
+    private Long id;
+    private ViewExecuteParam param;
 }

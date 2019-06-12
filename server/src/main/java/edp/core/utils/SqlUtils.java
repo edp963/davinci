@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.core.utils;
@@ -44,8 +45,6 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
-import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -231,44 +230,50 @@ public class SqlUtils {
     }
 
     private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns, int startRow) {
-        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql);
-        if (null != rs) {
-            SqlRowSetMetaData metaData = rs.getMetaData();
+        jdbcTemplate.query(sql, rs -> {
+            if (null != rs) {
+                ResultSetMetaData metaData = rs.getMetaData();
 
-            List<QueryColumn> queryColumns = new ArrayList<>();
-            for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                String key = metaData.getColumnLabel(i);
-                if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
-                    continue;
-                }
-                queryColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
-            }
-            paginateWithQueryColumns.setColumns(queryColumns);
-
-            List<Map<String, Object>> resultList = new ArrayList<>();
-
-            if (this.dataTypeEnum == DataTypeEnum.MOONBOX) {
-                int currentRow = 0;
-                while (rs.next()) {
-                    if (currentRow >= startRow) {
-                        resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                List<QueryColumn> queryColumns = new ArrayList<>();
+                for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                    String key = metaData.getColumnLabel(i);
+                    if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
+                        continue;
                     }
-                    currentRow++;
+                    queryColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
                 }
-            } else {
-                if (startRow > 0) {
+                paginateWithQueryColumns.setColumns(queryColumns);
+
+                List<Map<String, Object>> resultList = new ArrayList<>();
+
+                if (startRow > 0 && this.dataTypeEnum != DataTypeEnum.MOONBOX) {
                     rs.absolute(startRow);
                 }
-                while (rs.next()) {
-                    resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
-                }
-            }
 
-            paginateWithQueryColumns.setResultList(resultList);
-        }
+                if (this.dataTypeEnum == DataTypeEnum.MOONBOX) {
+                    int currentRow = 0;
+                    while (rs.next()) {
+                        if (currentRow >= startRow) {
+                            resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                        }
+                        currentRow++;
+                    }
+                } else {
+                    if (startRow > 0) {
+                        rs.absolute(startRow);
+                    }
+                    while (rs.next()) {
+                        resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                    }
+                }
+
+                paginateWithQueryColumns.setResultList(resultList);
+            }
+            return paginateWithQueryColumns;
+        });
     }
 
-    private Map<String, Object> getResultObjectMap(Set<String> excludeColumns, SqlRowSet rs, SqlRowSetMetaData metaData) {
+    private Map<String, Object> getResultObjectMap(Set<String> excludeColumns, ResultSet rs, ResultSetMetaData metaData) throws SQLException {
         Map<String, Object> map = new LinkedHashMap<>();
         for (int i = 1; i <= metaData.getColumnCount(); i++) {
             String key = metaData.getColumnLabel(i);

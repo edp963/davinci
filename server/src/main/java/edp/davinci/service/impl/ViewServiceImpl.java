@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -743,7 +743,7 @@ public class ViewServiceImpl implements ViewService {
                                         sqlVariable.setDefaultValues(v.getValues());
                                     }
                                 } else {
-                                    sqlVariable.setDefaultValues(null);
+                                    sqlVariable.setDefaultValues(new ArrayList<>());
                                 }
                                 list.add(sqlVariable);
                             }
@@ -826,12 +826,11 @@ public class ViewServiceImpl implements ViewService {
                                 }
 
                                 List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
-                                if (null != values) {
-                                    vSet.addAll(values);
-                                } else if (vSet.isEmpty()) {
+                                if (null == values) {
                                     vSet.add(N0_AUTH_PERMISSION);
+                                } else if (!values.isEmpty()) {
+                                    vSet.addAll(values);
                                 }
-
                                 map.put(sqlVariable.getName().trim(), vSet);
                             }
                         }));

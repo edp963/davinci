@@ -112,7 +112,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     const ulActionAll = (
       <ul className={styles.menu}>
         <li>{editAction}</li>
-        <li>{downloadAction}</li>
+        {/* <li>{downloadAction}</li> */}
         <li>{moveAction}</li>
         <li>{deleteAction}</li>
       </ul>
@@ -121,7 +121,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     const ulActionPart = (
       <ul className={styles.menu}>
         <li>{editAction}</li>
-        <li>{downloadAction}</li>
+        {/* <li>{downloadAction}</li> */}
         <li>{moveAction}</li>
       </ul>
     )

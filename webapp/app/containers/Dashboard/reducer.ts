@@ -61,7 +61,8 @@ import {
   DELETE_DRILL_HISTORY,
   DRILL_PATH_SETTING,
   SELECT_DASHBOARD_ITEM_CHART,
-  SET_SELECT_OPTIONS
+  SET_SELECT_OPTIONS,
+  GLOBAL_CONTROL_CHANGE
 } from './constants'
 import {
   INITIATE_DOWNLOAD_TASK,
@@ -76,9 +77,11 @@ import {
   IControlRelatedField,
   getVariableValue,
   getModelValue,
-  deserializeDefaultValue
+  deserializeDefaultValue,
+  IMapItemControlRequestParams,
+  IControlRequestParams
 } from '../../components/Filters'
-import { DownloadTypes } from '../App/types';
+import { DownloadTypes } from '../App/types'
 
 const initialState = fromJS({
   dashboards: null,
@@ -310,6 +313,18 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
           }
         }
       })
+    case GLOBAL_CONTROL_CHANGE:
+      const controlRequestParamsByItem: IMapItemControlRequestParams = payload.controlRequestParamsByItem
+      Object.entries(controlRequestParamsByItem)
+        .forEach(([itemId, requestParams]: [string, IControlRequestParams]) => {
+          const { filters: globalFilters, variables: globalVariables } = requestParams
+          itemsInfo[itemId].queryConditions = {
+            ...itemsInfo[itemId].queryConditions,
+            ...globalFilters && { globalFilters },
+            ...globalVariables && { globalVariables }
+          }
+        })
+      return state.set('currentItemsInfo', itemsInfo)
     case SELECT_DASHBOARD_ITEM_CHART:
       return state.set('currentItemsInfo', {
         ...itemsInfo,

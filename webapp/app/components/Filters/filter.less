@@ -46,6 +46,10 @@
         color: @light-text-color;
         font-weight: normal;
       }
+
+      &.subTitle {
+        border-top: 1px solid @border-color-split;
+      }
     }
   }
 }
@@ -220,7 +224,7 @@
   border-right: 1px solid @border-color-split;
 
   .itemList {
-    flex: 1;
+    flex: 2;
     display: flex;
     flex-direction: column;
 
@@ -242,8 +246,8 @@
   }
 
   .viewSet {
-    flex-shrink: 0;
-    border-top: 1px solid @border-color-split;
+    flex: 1;
+    overflow-y: auto;
 
     .related {
       padding: 0 16px 8px;
@@ -435,4 +439,9 @@
 
 .controlComponent {
   width: 100% !important;
+}
+
+.queryMode {
+  margin-top: 4px;
+  float: left;
 }

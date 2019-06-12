@@ -72,7 +72,8 @@ import {
   deleteDrillHistory,
   drillPathsetting,
   selectDashboardItemChart,
-  setSelectOptions
+  setSelectOptions,
+  globalControlChange
 } from './actions'
 import {
   makeSelectDashboards,
@@ -176,6 +177,10 @@ export interface IDataRequestParams {
   nativeQuery?: boolean
 }
 
+export interface IDataDownloadParams extends IDataRequestParams {
+  id: number
+}
+
 interface IGridProps {
   dashboards: any[]
   widgets: any[]
@@ -208,7 +213,7 @@ interface IGridProps {
     requestParams: IDataRequestParams
   ) => void
   onLoadViewsDetail: (viewIds: number[], resolve: () => void) => void
-  onInitiateDownloadTask: (id: number, type: DownloadTypes, itemId?: number) => void
+  onInitiateDownloadTask: (id: number, type: DownloadTypes, downloadParams?: IDataDownloadParams[], itemId?: number) => void
   onClearCurrentDashboard: () => any
   onLoadSelectOptions: (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }, itemId?: number) => void
   onSetSelectOptions: (controlKey: string, options: any[], itemId?: number) => void
@@ -221,6 +226,7 @@ interface IGridProps {
   onDrillPathSetting: (itemId: number, history: any[]) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
   onSelectDashboardItemChart: (itemId: number, renderType: string, selectedItems: number[]) => void
+  onGlobalControlChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
 }
 
 interface IGridStates {
@@ -408,15 +414,39 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   //   )
   // }
 
-  private initiateDownloadTask = (itemId: number, widgetId: number) => {
+  private initiateWidgetDownloadTask = (itemId: number, widgetId: number) => {
     this.getData(
       (renderType, itemId, widget, requestParams) => {
-        this.props.onInitiateDownloadTask(widgetId, DownloadTypes.Widget, itemId)
+        const downloadParams = [{
+          ...requestParams,
+          id: widgetId
+        }]
+        this.props.onInitiateDownloadTask(widgetId, DownloadTypes.Widget, downloadParams, itemId)
       },
       'rerender',
       itemId,
       widgetId
     )
+  }
+
+  private initiateDashboardDownloadTask = () => {
+    const { currentItems, currentDashboard } = this.props
+    const downloadParams = []
+    currentItems.forEach((item) => {
+      const { id, widgetId } = item
+      this.getData(
+        (renderType, itemId, widget, requestParams) => {
+          downloadParams.push({
+            ...requestParams,
+            id
+          })
+        },
+        'rerender',
+        id,
+        widgetId
+      )
+    })
+    this.props.onInitiateDownloadTask(currentDashboard.id, DownloadTypes.Dashboard, downloadParams)
   }
 
   private getData = (
@@ -875,7 +905,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
-  private saveFilters = (filterItems) => {
+  private saveFilters = (filterItems, queryMode) => {
     const {
       currentDashboard,
       onEditCurrentDashboard
@@ -886,7 +916,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         ...currentDashboard,
         config: JSON.stringify({
           ...JSON.parse(currentDashboard.config || '{}'),
-          filters: filterItems
+          filters: filterItems,
+          queryMode
         }),
         // FIXME
         active: true
@@ -905,18 +936,19 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
   }
 
-  private globalFilterChange = (queryConditions: IMapItemControlRequestParams) => {
+  private globalControlChange = (controlRequestParamsByItem: IMapItemControlRequestParams) => {
+    this.props.onGlobalControlChange(controlRequestParamsByItem)
+  }
+
+  private globalControlSearch = (itemIds: number[]) => {
     const { currentItems, currentItemsInfo } = this.props
-    Object.entries(queryConditions).forEach(([itemId, condition]) => {
-      const item = currentItems.find((ci) => ci.id === +itemId)
+    itemIds.forEach((itemId) => {
+      const item = currentItems.find((ci) => ci.id === itemId)
       if (item) {
         let pageNo = 0
         const { pagination } = currentItemsInfo[itemId].queryConditions
         if (pagination.pageNo) { pageNo = 1 }
-        const { variables: globalVariables, filters: globalFilters } = condition
         this.getChartData('rerender', +itemId, item.widgetId, {
-          globalVariables,
-          globalFilters,
           pagination: { ...pagination, pageNo }
         })
       }
@@ -1369,7 +1401,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onShowDrillEdit={this.showDrillDashboardItemForm}
               onDeleteDashboardItem={this.deleteItem}
               onLoadWidgetShareLink={onLoadWidgetShareLink}
-              onDownloadCsv={this.initiateDownloadTask}
+              onDownloadCsv={this.initiateWidgetDownloadTask}
               onTurnOffInteract={this.turnOffInteract}
               onCheckTableInteract={this.checkInteract}
               onDoTableInteract={this.doInteract}
@@ -1394,33 +1426,33 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         })
 
       })
-      if (dashboardType === 2) {
-        // report mode
-        grids = (
-          <div className={styles.reportMode}>
-            {itemblocks[itemblocks.length - 1]}
-          </div>
-        )
-      } else {
-        grids = (
-          <ResponsiveReactGridLayout
-            className="layout"
-            style={{marginTop: '-14px'}}
-            rowHeight={GRID_ROW_HEIGHT}
-            margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
-            breakpoints={GRID_BREAKPOINTS}
-            cols={GRID_COLS}
-            layouts={layouts}
-            onDragStop={this.onDragStop}
-            onResizeStop={this.onResizeStop}
-            measureBeforeMount={false}
-            draggableHandle={`.${styles.title}`}
-            useCSSTransforms={mounted}
-          >
-            {itemblocks}
-          </ResponsiveReactGridLayout>
-        )
-      }
+      // if (dashboardType === 2) {
+      //   // report mode
+      //   grids = (
+      //     <div className={styles.reportMode}>
+      //       {itemblocks[itemblocks.length - 1]}
+      //     </div>
+      //   )
+      // } else {
+      grids = (
+        <ResponsiveReactGridLayout
+          className="layout"
+          style={{marginTop: '-14px'}}
+          rowHeight={GRID_ROW_HEIGHT}
+          margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
+          breakpoints={GRID_BREAKPOINTS}
+          cols={GRID_COLS}
+          layouts={layouts}
+          onDragStop={this.onDragStop}
+          onResizeStop={this.onResizeStop}
+          measureBeforeMount={false}
+          draggableHandle={`.${styles.title}`}
+          useCSSTransforms={mounted}
+        >
+          {itemblocks}
+        </ResponsiveReactGridLayout>
+      )
+      // }
     }
 
     const saveDashboardItemButton = (
@@ -1509,6 +1541,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onLoadDashboardShareLink={onLoadDashboardShareLink}
               onToggleGlobalFilterVisibility={this.toggleGlobalFilterConfig}
               onToggleLinkageVisibility={this.toggleLinkageConfig}
+              onDownloadDashboard={this.initiateDashboardDownloadTask}
             />
           </Row>
           <GlobalControlPanel
@@ -1516,7 +1549,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             currentItems={currentItems}
             onGetOptions={this.getOptions}
             mapOptions={currentDashboardSelectOptions}
-            onChange={this.globalFilterChange}
+            onChange={this.globalControlChange}
+            onSearch={this.globalControlSearch}
           />
         </Container.Title>
         {
@@ -1639,7 +1673,7 @@ export function mapDispatchToProps (dispatch) {
                         dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard')),
     onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
-    onInitiateDownloadTask: (id, type, itemId?) => dispatch(initiateDownloadTask(id, type, itemId)),
+    onInitiateDownloadTask: (id, type, downloadParams?, itemId?) => dispatch(initiateDownloadTask(id, type, downloadParams, itemId)),
     onLoadSelectOptions: (controlKey, requestParams, itemId) => dispatch(loadSelectOptions(controlKey, requestParams, itemId)),
     onSetSelectOptions: (controlKey, options, itemId) => dispatch(setSelectOptions(controlKey, options, itemId)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),
@@ -1650,7 +1684,8 @@ export function mapDispatchToProps (dispatch) {
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
     onDrillPathSetting: (itemId, history) => dispatch(drillPathsetting(itemId, history)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index)),
-    onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems))
+    onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems)),
+    onGlobalControlChange: (controlRequestParamsByItem) => dispatch(globalControlChange(controlRequestParamsByItem))
   }
 }
 
