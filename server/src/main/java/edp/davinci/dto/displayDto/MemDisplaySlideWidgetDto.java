@@ -16,18 +16,16 @@
  *  >>
  */
 
-package edp.davinci.dao;
+package edp.davinci.dto.displayDto;
 
-import edp.davinci.model.RelRoleDisplaySlideWidget;
-import org.apache.ibatis.annotations.Param;
+import edp.davinci.model.MemDisplaySlideWidget;
+import lombok.Data;
 
 import java.util.List;
-import java.util.Set;
 
-public interface RelRoleDisplaySlideWidgetMapper {
+@Data
+public class MemDisplaySlideWidgetDto extends MemDisplaySlideWidget {
 
-    int insertBatch(List<RelRoleDisplaySlideWidget> list);
-
-    int deleteByMemDisplaySlideWidgetIds(@Param("memDisplaySlideWidgetIds") Set<Long> memDisplaySlideWidgetIds);
+    private List<Long> roleIds;
 
 }

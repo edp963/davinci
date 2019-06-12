@@ -300,7 +300,7 @@ public class DisplayController extends BaseController {
     @PutMapping(value = "/{displayId}/slides/{slideId}/widgets", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateMemDisplaySlideWidgets(@PathVariable("displayId") Long displayId,
                                                        @PathVariable("slideId") Long slideId,
-                                                       @Valid @RequestBody MemDisplaySlideWidget[] memDisplaySlideWidgets,
+                                                       @Valid @RequestBody MemDisplaySlideWidgetDto[] memDisplaySlideWidgets,
                                                        @ApiIgnore BindingResult bindingResult,
                                                        @ApiIgnore @CurrentUser User user,
                                                        HttpServletRequest request) {
