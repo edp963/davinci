@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.COMMA;
 import static edp.core.consts.Consts.MINUS;
+import static edp.davinci.core.common.Constants.N0_AUTH_PERMISSION;
 import static edp.davinci.core.enums.SqlVariableTypeEnum.AUTHVARE;
 import static edp.davinci.core.enums.SqlVariableTypeEnum.QUERYVAR;
 
@@ -183,11 +184,11 @@ public class ViewServiceImpl implements ViewService {
         if (null == viewWithSource.getSource()) {
             throw new NotFoundException("source is not found");
         }
-        if(StringUtils.isEmpty(viewWithSource.getSql())){
+        if (StringUtils.isEmpty(viewWithSource.getSql())) {
             throw new NotFoundException("sql is not found");
         }
 
-        SQLContext context=new SQLContext();
+        SQLContext context = new SQLContext();
         //解析变量
         List<SqlVariable> variables = viewWithSource.getVariables();
         //解析sql
@@ -203,12 +204,12 @@ public class ViewServiceImpl implements ViewService {
         List<String> querySqlList = sqlParseUtils.getSqls(srcSql, Boolean.TRUE);
         if (!CollectionUtils.isEmpty(querySqlList)) {
             buildQuerySql(querySqlList, viewWithSource.getSource(), executeParam);
-            executeParam.addExcludeColumn(excludeColumns,viewWithSource.getSource().getJdbcUrl());
+            executeParam.addExcludeColumn(excludeColumns, viewWithSource.getSource().getJdbcUrl());
             context.setQuerySql(querySqlList);
             context.setViewExecuteParam(executeParam);
         }
-        if(!CollectionUtils.isEmpty(excludeColumns)){
-            List<String> excludeList=excludeColumns.stream().collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(excludeColumns)) {
+            List<String> excludeList = excludeColumns.stream().collect(Collectors.toList());
             context.setExcludeColumns(excludeList);
         }
         return context;
@@ -710,32 +711,48 @@ public class ViewServiceImpl implements ViewService {
     }
 
     private List<SqlVariable> getAuthVariables(List<RelRoleView> roleViewList, List<SqlVariable> variables) {
-        if (!CollectionUtils.isEmpty(roleViewList) && !CollectionUtils.isEmpty(variables)) {
+        if (!CollectionUtils.isEmpty(variables)) {
+
             List<SqlVariable> list = new ArrayList<>();
-            Map<String, SqlVariable> map = new HashMap<>();
 
-            List<SqlVariable> authVarables = variables.stream().filter(v -> AUTHVARE == SqlVariableTypeEnum.typeOf(v.getType())).collect(Collectors.toList());
-            authVarables.forEach(v -> map.put(v.getName(), v));
-            List<SqlVariable> dacVars = authVarables.stream().filter(v -> null != v.getChannel() && !v.getChannel().getBizId().equals(0L)).collect(Collectors.toList());
-
-            roleViewList.forEach(r -> {
-                if (!StringUtils.isEmpty(r.getRowAuth())) {
-                    List<AuthParamValue> authParamValues = JSONObject.parseArray(r.getRowAuth(), AuthParamValue.class);
-                    authParamValues.forEach(v -> {
-                        if (map.containsKey(v.getName())) {
-                            SqlVariable sqlVariable = map.get(v.getName());
-                            if (v.isEnable()) {
-                                sqlVariable.setDefaultValues(v.getValues());
-                            } else {
-                                sqlVariable.setDefaultValues(null);
-                            }
-                            list.add(sqlVariable);
-                        }
-                    });
-                } else {
-                    dacVars.forEach(v -> list.add(v));
+            variables.forEach(v -> {
+                if (null != v.getChannel()) {
+                    list.add(v);
                 }
             });
+
+            if (!CollectionUtils.isEmpty(roleViewList)) {
+                Map<String, SqlVariable> map = new HashMap<>();
+
+                List<SqlVariable> authVarables = variables.stream().filter(v -> AUTHVARE == SqlVariableTypeEnum.typeOf(v.getType())).collect(Collectors.toList());
+                authVarables.forEach(v -> map.put(v.getName(), v));
+                List<SqlVariable> dacVars = authVarables.stream().filter(v -> null != v.getChannel() && !v.getChannel().getBizId().equals(0L)).collect(Collectors.toList());
+
+                roleViewList.forEach(r -> {
+                    if (!StringUtils.isEmpty(r.getRowAuth())) {
+                        List<AuthParamValue> authParamValues = JSONObject.parseArray(r.getRowAuth(), AuthParamValue.class);
+                        authParamValues.forEach(v -> {
+                            if (map.containsKey(v.getName())) {
+                                SqlVariable sqlVariable = map.get(v.getName());
+                                if (v.isEnable()) {
+                                    if (CollectionUtils.isEmpty(v.getValues())) {
+                                        List values = new ArrayList<>();
+                                        values.add(N0_AUTH_PERMISSION);
+                                        sqlVariable.setDefaultValues(values);
+                                    } else {
+                                        sqlVariable.setDefaultValues(v.getValues());
+                                    }
+                                } else {
+                                    sqlVariable.setDefaultValues(new ArrayList<>());
+                                }
+                                list.add(sqlVariable);
+                            }
+                        });
+                    } else {
+                        dacVars.forEach(v -> list.add(v));
+                    }
+                });
+            }
             return list;
         }
         return null;
@@ -759,19 +776,28 @@ public class ViewServiceImpl implements ViewService {
         }
 
         //查询参数
-        if (!CollectionUtils.isEmpty(queryVariables) && !CollectionUtils.isEmpty(paramList)) {
-            Map<String, List<SqlVariable>> map = queryVariables.stream().collect(Collectors.groupingBy(SqlVariable::getName));
-            paramList.forEach(p -> {
-                if (map.containsKey(p.getName())) {
-                    List<SqlVariable> list = map.get(p.getName());
-                    if (!CollectionUtils.isEmpty(list)) {
-                        SqlVariable v = list.get(list.size() - 1);
-                        if (null == sqlEntity.getQuaryParams()) {
-                            sqlEntity.setQuaryParams(new HashMap<>());
+        if (!CollectionUtils.isEmpty(queryVariables)) {
+            if (!CollectionUtils.isEmpty(paramList)) {
+                Map<String, List<SqlVariable>> map = queryVariables.stream().collect(Collectors.groupingBy(SqlVariable::getName));
+                paramList.forEach(p -> {
+                    if (map.containsKey(p.getName())) {
+                        List<SqlVariable> list = map.get(p.getName());
+                        if (!CollectionUtils.isEmpty(list)) {
+                            SqlVariable v = list.get(list.size() - 1);
+                            if (null == sqlEntity.getQuaryParams()) {
+                                sqlEntity.setQuaryParams(new HashMap<>());
+                            }
+                            sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue(), v.isUdf()));
                         }
-                        sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue(), v.isUdf()));
                     }
+                });
+            }
+
+            sqlEntity.getQuaryParams().forEach((k, v) -> {
+                if (v instanceof List && ((List) v).size() > 0) {
+                    v = ((List) v).stream().collect(Collectors.joining(COMMA)).toString();
                 }
+                sqlEntity.getQuaryParams().put(k, v);
             });
         }
 
@@ -785,28 +811,37 @@ public class ViewServiceImpl implements ViewService {
         if (!CollectionUtils.isEmpty(authVariables)) {
             ExecutorService executorService = Executors.newFixedThreadPool(8);
             CountDownLatch countDownLatch = new CountDownLatch(authVariables.size());
-            ConcurrentHashMap<String, Set<String>> map = new ConcurrentHashMap<>();
-            final Future<?>[] future = {null};
+            Map<String, Set<String>> map = new Hashtable<>();
+            List<Future> futures = new ArrayList<>(authVariables.size());
             try {
                 authVariables.forEach(sqlVariable -> {
                     try {
-                        future[0] = executorService.submit(() -> {
+                        futures.add(executorService.submit(() -> {
                             if (null != sqlVariable) {
-                                List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
+                                Set<String> vSet = null;
                                 if (map.containsKey(sqlVariable.getName().trim())) {
-                                    map.get(sqlVariable.getName().trim()).addAll(values);
+                                    vSet = map.get(sqlVariable.getName().trim());
                                 } else {
-                                    map.put(sqlVariable.getName().trim(), new HashSet<>(values));
+                                    vSet = new HashSet<>();
                                 }
+
+                                List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
+                                if (null == values) {
+                                    vSet.add(N0_AUTH_PERMISSION);
+                                } else if (!values.isEmpty()) {
+                                    vSet.addAll(values);
+                                }
+                                map.put(sqlVariable.getName().trim(), vSet);
                             }
-                        });
+                        }));
                     } finally {
                         countDownLatch.countDown();
                     }
                 });
-
                 try {
-                    future[0].get();
+                    for (Future future : futures) {
+                        future.get();
+                    }
                     countDownLatch.await();
                 } catch (ExecutionException e) {
                     executorService.shutdownNow();

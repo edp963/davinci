@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -132,13 +132,12 @@ public class DacChannelUtil {
 
 
     public List<Object> getData(String dacName, String bizId, String email) {
-        if (dacMap.containsKey(dacName)) {
+        if (dacMap.containsKey(dacName) && !StringUtils.isEmpty(email)) {
             DacChannel channel = dacMap.get(dacName);
 
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add(AUTH_CODE_KEY, channel.getAuthCode());
             params.add(EMAIL_KEY, email);
-
 
             try {
                 ResponseEntity<ResultMap> result = restTemplate.getForEntity(UriComponentsBuilder.

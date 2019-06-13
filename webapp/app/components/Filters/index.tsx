@@ -113,15 +113,6 @@ export interface IMapControlOptions {
   [controlKey: string]: ControlOptions
 }
 
-export type OnFilterControlValueChange = (
-  control: IControlBase,
-  value: number | string
-) => void
-
-export type OnFilterValueChange = (
-  mapItemFilterValue: IMapItemControlRequestParams
-) => void
-
 export function getDefaultGlobalControl (): IGlobalControl {
   const control: IGlobalControl = {
     key: uuid(8, 16),
@@ -152,9 +143,9 @@ export function getDefaultLocalControl (view: IFormedView): ILocalControl {
   return control
 }
 
-export function renderInputText (onChange) {
+export function renderInputText (onChange, onSearch) {
   return (
-    <Input.Search placeholder="请输入" onPressEnter={onChange} />
+    <Input.Search placeholder="请输入" onBlur={onChange} onPressEnter={onSearch} />
   )
 }
 

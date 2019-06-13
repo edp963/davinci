@@ -253,13 +253,13 @@ export class ProjectRole extends React.Component<IRoleProps, IRoleStates> {
 
     const columns = [
       {
-        title: 'role',
+        title: '角色名称',
         dataIndex: 'name',
         key: 'rolename',
-        // render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
+        // render: (text) => <span>{text.role === 1 ? '拥有者' : '成员'}</span>
       },
       {
-          title: 'settings',
+          title: '设置',
           dataIndex: 'user',
           // className: isHidden ? utilStyles.hide : '',
           key: 'settings',

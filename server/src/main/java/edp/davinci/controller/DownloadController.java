@@ -1,3 +1,22 @@
+/*
+ * <<
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
+ */
+
 package edp.davinci.controller;
 
 import edp.core.annotation.AuthIgnore;
@@ -7,6 +26,7 @@ import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.DownloadType;
 import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
 import edp.davinci.model.DownloadRecord;
 import edp.davinci.model.User;
 import edp.davinci.service.DownloadService;
@@ -24,8 +44,12 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import javax.validation.Valid;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -46,43 +70,45 @@ public class DownloadController extends BaseController {
     private DownloadService downloadService;
 
     @ApiOperation(value = "get download record page")
-    @GetMapping(value = "/page",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity getDownloadRecordPage(@ApiIgnore @CurrentUser User user,
-                                        HttpServletRequest request) {
+                                                HttpServletRequest request) {
         List<DownloadRecord> records = downloadService.queryDownloadRecordPage(user.getId());
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(records));
     }
 
 
     @ApiOperation(value = "get download record file")
-    @GetMapping(value = "/record/file/{id}/{token:.*}",produces=MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/record/file/{id}/{token:.*}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @AuthIgnore
     public ResponseEntity getDownloadRecordFile(@PathVariable Long id,
                                                 @PathVariable String token,
-                                        HttpServletRequest request,
-                                        HttpServletResponse response) {
+                                                HttpServletRequest request,
+                                                HttpServletResponse response) {
         DownloadRecord record = downloadService.downloadById(id, token);
         try {
 //            response.addHeader("Content-Disposition", "attachment;filename=" + new String(record.getName().getBytes(), "UTF-8"));
 //            //response.addHeader("Content-Length", EMPTY + file.length());
 //            response.setContentType("application/octet-stream;charset=UTF-8");
-            encodeFileName(request,response,record.getName() + FileTypeEnum.XLSX.getType());
+            encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
             Streams.copy(new FileInputStream(new File(record.getPath())), response.getOutputStream(), true);
         } catch (Exception e) {
-            log.error("getDownloadRecordFile error,id="+id+",e=",e);
+            log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
         }
         return null;
     }
 
 
     @ApiOperation(value = "get download record file")
-    @PostMapping(value = "/submit/{type}/{id}",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity submitDownloadTask(   @PathVariable String type,
-                                                @PathVariable Long id,
-                                                @ApiIgnore @CurrentUser User user,
-                                                HttpServletRequest request) {
-        boolean rst=downloadService.submit(DownloadType.getDownloadType(type),id,user);
-        return ResponseEntity.ok(rst?new ResultMap(tokenUtils).successAndRefreshToken(request).payload(null):
+    @PostMapping(value = "/submit/{type}/{id}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity submitDownloadTask(@PathVariable String type,
+                                             @PathVariable Long id,
+                                             @ApiIgnore @CurrentUser User user,
+                                             @Valid @RequestBody(required = false) DownloadViewExecuteParam[] params,
+                                             HttpServletRequest request) {
+        List<DownloadViewExecuteParam> downloadViewExecuteParams = Arrays.asList(params);
+        boolean rst = downloadService.submit(DownloadType.getDownloadType(type), id, user, downloadViewExecuteParams);
+        return ResponseEntity.ok(rst ? new ResultMap(tokenUtils).successAndRefreshToken(request).payload(null) :
                 new ResultMap(tokenUtils).failAndRefreshToken(request).payload(null));
     }
 
@@ -92,7 +118,7 @@ public class DownloadController extends BaseController {
         // firefox浏览器
         if (request.getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
             filename = new String(filename.getBytes("UTF-8"), "ISO8859-1");
-        //IE
+            //IE
         } else if (isIE(request)) {
             filename = URLEncoder.encode(filename, "UTF-8");
         } else {

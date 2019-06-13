@@ -21,19 +21,29 @@
 import React from 'react'
 import OperatorTypes from 'utils/operatorTypes'
 import { ITableColumnConfig, ITableConditionStyle } from '../../../Workbench/ConfigSections/TableSection'
+import { IFieldFormatConfig } from '../../../Workbench/FormatConfigModal'
 import { TableConditionStyleTypes } from '../../../Workbench/ConfigSections/TableSection/util'
 import { DefaultTableCellStyle } from '../../../Workbench/ConfigSections/TableSection/HeaderConfigModal'
 import { textAlignAdapter } from '../util'
+import { getFormattedValue } from '../../../util'
 
 interface IBodyCellProps {
+  format: IFieldFormatConfig
   config: ITableColumnConfig
   cellVal: string | number
   cellValRange: [number, number]
+  children: Array<string | number | boolean>
 }
 
 function BodyCell (props: IBodyCellProps) {
-  const { config, cellVal, cellValRange, ...rest } = props
+  const { format, config, cellVal, cellValRange, ...rest } = props
   const cellCssStyle = getBodyCellStyle(config, cellVal, cellValRange)
+  if (format) {
+    const formattedVal = getFormattedValue(cellVal, format)
+    return (
+      <td style={cellCssStyle} {...rest}>{formattedVal}</td>
+    )
+  }
   return (
     <td style={cellCssStyle} {...rest} />
   )
@@ -154,7 +164,7 @@ function getNumericBarConditionCellStyle (
       if (cellBarPercentage === void 0) {
         cellBarPercentage = (Math.abs(cellVal) / valRange) * 100
       }
-      barZeroPosition = Math.abs(Math.min(0, minCellVal)) / Math.max(Math.abs(minCellVal), Math.abs(maxCellVal)) * 100
+      barZeroPosition = Math.abs(Math.min(0, minCellVal)) / (Math.abs(minCellVal) + Math.abs(maxCellVal)) * 100
       break
   }
 
@@ -174,6 +184,7 @@ function getNumericBarConditionCellStyle (
   divisions.push(`${backgroundColor} 100%`)
 
   const cssStyle: React.CSSProperties = {
+    color: fore,
     background: `linear-gradient(90deg, ${divisions.join(',')})`
   }
   return cssStyle

@@ -180,7 +180,7 @@ export class ProjectAdmin extends React.PureComponent<IProjectAdminProps, IProje
     }
 },
 {
-    title: 'settings',
+    title: '设置',
     dataIndex: 'id',
     // className: isHidden ? utilStyles.hide : '',
     key: 'settings',
@@ -188,19 +188,17 @@ export class ProjectAdmin extends React.PureComponent<IProjectAdminProps, IProje
     render: (text, record) => {
         return (
         <span>
-            <Popconfirm
-                title="确定删除此管理员吗？"
-                placement="bottom"
-                onConfirm={this.deleteAdmin({id, relationId: Number(text)})}
-                >
-                <Tooltip title="取删除关">
-                    <a href="javascript:;" onClick={this.stopPPG}>删除管理员</a>
-                </Tooltip>
-            </Popconfirm>
+          <Popconfirm
+            title="确定删除？"
+            placement="bottom"
+            onConfirm={this.deleteAdmin({id, relationId: Number(text)})}
+          >
+            <a href="javascript:;" onClick={this.stopPPG}>删除管理员</a>
+          </Popconfirm>
         </span>
         )
     }
-    }]
+  }]
 
     const adminButton =
     (

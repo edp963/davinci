@@ -123,15 +123,16 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   public componentDidUpdate() {
     const { data, chartStyles, width } = this.props
-    const { headerFixed, bordered, withPaging, size, autoPlay, palyInterval } = chartStyles.table
+    const { headerFixed, bordered, withPaging, size, autoPlay, playInterval } = chartStyles.table
     this.adjustTableCell(headerFixed, withPaging, this.state.tablePagination.total)
 
     const { tablePagination, tableColumns, tableBodyHeight, mapTableHeaderConfig } = this.state
     //自动播放
+    clearInterval(this.timer)
     if (withPaging && tablePagination.total !== -1 && autoPlay) {
       let index = tablePagination.current
       let pageTotal = Math.ceil(tablePagination.total / tablePagination.pageSize)
-      clearInterval(this.timer)
+
       this.timer = setInterval(() => {
         let current = (++index % pageTotal)
         index = current = current == 0 ? pageTotal : current
@@ -140,9 +141,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         } else {
           console.warn(`自动播放出现问题`)
         }
-      }, palyInterval)
-    } else {
-      clearInterval(this.timer)
+      }, playInterval)
     }
   }
 
@@ -312,7 +311,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   public render() {
     const { data, chartStyles, width } = this.props
-    const { headerFixed, bordered, withPaging, size, autoPlay, palyInterval } = chartStyles.table
+    const { headerFixed, bordered, withPaging, size, autoPlay, playInterval } = chartStyles.table
     const { tablePagination, tableColumns, tableBodyHeight, mapTableHeaderConfig } = this.state
     const adjustedTableColumns = this.adjustTableColumns(tableColumns, mapTableHeaderConfig, width)
 
@@ -347,7 +346,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
           components={tableComponents}
           columns={adjustedTableColumns}
           pagination={withPaging && tablePagination.total !== -1 && !autoPlay ? paginationConfig : false}
-          //scroll={scroll}
+          scroll={scroll}
           bordered={bordered}
           rowClassName={this.setRowClassName}
           onRowClick={this.rowClick}
@@ -374,7 +373,7 @@ function getTableColumns(props: IChartProps) {
   const tableColumns: Array<ColumnProps<any>> = []
   const mapTableHeaderConfig: IMapTableHeaderConfig = {}
   cols.concat(rows).forEach((dimension) => {
-    const { name, field } = dimension
+    const { name, field, format } = dimension
     const headerText = getFieldAlias(field, queryVariables || {}) || name
     const column: ColumnProps<any> = {
       key: name,
@@ -393,7 +392,7 @@ function getTableColumns(props: IChartProps) {
       headerConfigItem = config
     })
     const columnConfigItem = columnsConfig.find((cfg) => cfg.columnName === name)
-    column.width = getDataColumnWidth(name, columnConfigItem, null, data)
+    column.width = getDataColumnWidth(name, columnConfigItem, format, data)
     column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
     mapTableHeaderConfig[name] = headerConfigItem
     column.onCell = (record) => ({
@@ -420,11 +419,12 @@ function getTableColumns(props: IChartProps) {
       headerConfigItem = config
     })
     const columnConfigItem = columnsConfig.find((cfg) => cfg.columnName === name)
-    column.width = getDataColumnWidth(expression, columnConfigItem, null, data)
+    column.width = getDataColumnWidth(expression, columnConfigItem, format, data)
     column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
     mapTableHeaderConfig[name] = headerConfigItem
     column.onCell = (record) => ({
       config: columnConfigItem,
+      format,
       cellVal: record[expression],
       cellValRange: getTableCellValueRange(data, expression, columnConfigItem)
     })
@@ -450,6 +450,13 @@ function getTableColumns(props: IChartProps) {
     }
 
     mapTableHeaderConfig[key] = currentConfig
+
+    childrenConfig.sort((cfg1, cfg2) => {
+      if (cfg1.isGroup || cfg2.isGroup) { return 0 }
+      const cfg1Idx = tableColumns.findIndex((column) => column.key === cfg1.headerName)
+      const cfg2Idx = tableColumns.findIndex((column) => column.key === cfg2.headerName)
+      return cfg1Idx - cfg2Idx
+    })
 
     let insertIdx = Infinity
     childrenConfig.forEach(({ isGroup, key, headerName }) => {
