@@ -21,6 +21,7 @@ package edp.davinci.dao;
 import edp.davinci.model.RelRoleDashboardWidget;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 import java.util.Set;
@@ -36,5 +37,13 @@ public interface RelRoleDashboardWidgetMapper {
 
     @Delete({"delete from rel_role_dashboard_widget where role_id = #{roleId}"})
     int deleteByRoleId(@Param("roleId") Long roleId);
+
+    @Select({
+            "SELECT rrdw.mem_dashboard_widget_id " +
+                    "FROM rel_role_dashboard_widget rrdw " +
+                    "INNER JOIN rel_role_user rru ON rru.role_id = rrdw.role_id " +
+                    "WHERE rru.user_id = #{userId} AND rrdw.visible = 0 "
+    })
+    List<Long> getDisableByUser(@Param("userId") Long userId);
 
 }

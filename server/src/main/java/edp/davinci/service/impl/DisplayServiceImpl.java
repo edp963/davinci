@@ -826,12 +826,14 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         List<Long> disableList = relRoleSlideMapper.getDisableSlides(user.getId(), display.getProjectId());
+        List<Long> disableMemDisplaySlideWidgets = relRoleDisplaySlideWidgetMapper.getDisableByUser(user.getId());
 
         Iterator<MemDisplaySlideWidget> iterator = widgetList.iterator();
 
         while (iterator.hasNext()) {
             MemDisplaySlideWidget memDisplaySlideWidget = iterator.next();
-            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && disableList.contains(memDisplaySlideWidget.getDisplaySlideId())) {
+            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() &&
+                    (disableList.contains(memDisplaySlideWidget.getDisplaySlideId()) || disableMemDisplaySlideWidgets.contains(memDisplaySlideWidget.getId()))) {
                 iterator.remove();
             }
         }

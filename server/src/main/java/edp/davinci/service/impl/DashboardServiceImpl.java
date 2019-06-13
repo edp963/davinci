@@ -186,12 +186,14 @@ public class DashboardServiceImpl implements DashboardService {
         List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetMapper.getByDashboardId(dashboardId);
 
         List<Long> disableDashboards = relRoleDashboardMapper.getDisableByUser(user.getId(), portalId);
+        List<Long> disableMemDashboardWidget = relRoleDashboardWidgetMapper.getDisableByUser(user.getId());
 
         if (!CollectionUtils.isEmpty(disableDashboards)) {
             Iterator<MemDashboardWidget> iterator = memDashboardWidgets.iterator();
             while (iterator.hasNext()) {
                 MemDashboardWidget memDashboardWidget = iterator.next();
-                if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && disableDashboards.contains(memDashboardWidget.getDashboardId())) {
+                if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() &&
+                        (disableDashboards.contains(memDashboardWidget.getDashboardId()) || disableMemDashboardWidget.contains(memDashboardWidget.getId()))) {
                     iterator.remove();
                 }
             }
