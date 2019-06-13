@@ -20,7 +20,7 @@
 
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
-import { ISourceRaw, ISource, ISourceTableColumns, ISourceTable, ICSVMetaInfo } from './types'
+import { ISourceBase, ISource, ISourceTableColumns, ISourceTable, ICSVMetaInfo } from './types'
 
 export const SourceActions = {
   loadSources (projectId: number) {
@@ -31,7 +31,7 @@ export const SourceActions = {
       }
     }
   },
-  sourcesLoaded (sources: ISourceRaw[]) {
+  sourcesLoaded (sources: ISourceBase[]) {
     return {
       type: ActionTypes.LOAD_SOURCES_SUCCESS,
       payload: {
@@ -45,6 +45,31 @@ export const SourceActions = {
       payload: {}
     }
   },
+
+  loadSourceDetail (sourceId: number, resolve?: (source: ISource) => void) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DETAIL,
+      payload: {
+        sourceId,
+        resolve
+      }
+    }
+  },
+  sourceDetailLoaded (source: ISource) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DETAIL_SUCCESS,
+      payload: {
+        source
+      }
+    }
+  },
+  loadSourceDetailFail () {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DETAIL_FAIL,
+      payload: {}
+    }
+  },
+
   addSource (source: ISource, resolve: () => void) {
     return {
       type: ActionTypes.ADD_SOURCE,
@@ -54,7 +79,7 @@ export const SourceActions = {
       }
     }
   },
-  sourceAdded (result: ISourceRaw) {
+  sourceAdded (result: ISourceBase) {
     return {
       type: ActionTypes.ADD_SOURCE_SUCCESS,
       payload: {
@@ -99,7 +124,7 @@ export const SourceActions = {
       }
     }
   },
-  sourceEdited (result: ISource) {
+  sourceEdited (result: ISourceBase) {
     return {
       type: ActionTypes.EDIT_SOURCE_SUCCESS,
       payload: {

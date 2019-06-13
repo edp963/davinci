@@ -21,19 +21,20 @@
 import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import { ActionTypes } from './constants'
 import { SourceActions, SourceActionType } from './actions'
+import omit from 'lodash/omit'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
 import { message } from 'antd'
-import { ISourceRaw } from './types'
+import { ISourceBase, ISourceRaw, ISource } from './types'
 
 export function* getSources (action: SourceActionType) {
   if (action.type !== ActionTypes.LOAD_SOURCES) { return }
   const { payload } = action
   try {
     const asyncData = yield call(request, `${api.source}?projectId=${payload.projectId}`)
-    const sources = asyncData.payload as ISourceRaw[]
+    const sources = asyncData.payload as ISourceBase[]
     yield put(SourceActions.sourcesLoaded(sources))
   } catch (err) {
     yield put(SourceActions.loadSourcesFail())
@@ -54,6 +55,21 @@ export function* addSource (action: SourceActionType) {
     yield put(SourceActions.sourceAdded(asyncData.payload))
   } catch (err) {
     yield put(SourceActions.addSourceFail())
+    errorHandler(err)
+  }
+}
+
+export function* getSourceDetail (action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_SOURCE_DETAIL) { return }
+  const { sourceId, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, `${api.source}/${sourceId}`)
+    const sourceRaw = asyncData.payload as ISourceRaw
+    const source: ISource = { ...sourceRaw, config: JSON.parse(sourceRaw.config) }
+    yield put(SourceActions.sourceDetailLoaded(source))
+    if (resolve) { resolve(source) }
+  } catch (err) {
+    yield put(SourceActions.loadSourceDetailFail())
     errorHandler(err)
   }
 }
@@ -83,7 +99,8 @@ export function* editSource (action: SourceActionType) {
       url: `${api.source}/${source.id}`,
       data: source
     })
-    yield put(SourceActions.sourceEdited(source))
+    const sourceBase = omit(source, 'config')
+    yield put(SourceActions.sourceEdited(sourceBase))
     resolve()
   } catch (err) {
     yield put(SourceActions.editSourceFail())
@@ -161,6 +178,7 @@ export function* getTableColumns (action: SourceActionType) {
 export default function* rootSourceSaga (): IterableIterator<any> {
   yield all([
     takeLatest(ActionTypes.LOAD_SOURCES, getSources),
+    takeEvery(ActionTypes.LOAD_SOURCE_DETAIL, getSourceDetail),
     takeEvery(ActionTypes.ADD_SOURCE, addSource),
     takeEvery(ActionTypes.DELETE_SOURCE, deleteSource),
     takeEvery(ActionTypes.EDIT_SOURCE, editSource),

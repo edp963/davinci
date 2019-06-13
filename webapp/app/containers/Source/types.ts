@@ -27,7 +27,7 @@ export interface ISourceSimple {
   name: string
 }
 
-interface ISourceBase extends ISourceSimple {
+export interface ISourceBase extends ISourceSimple {
   type: SourceType
   description: string
   projectId: number
@@ -72,7 +72,7 @@ export interface ICSVMetaInfo {
 }
 
 export interface ISourceState {
-  sources: ISource[]
+  sources: ISourceBase[]
   listLoading: boolean
   formLoading: boolean
   testLoading: boolean
