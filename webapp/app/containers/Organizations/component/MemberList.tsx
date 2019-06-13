@@ -197,13 +197,6 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       changeRoleFormCategory,
       organizationMembers
     } = this.state
-    let isHidden = void 0
-    if (organizationMembers && organizationMembers.length) {
-      isHidden = organizationMembers.every(isAllOwner)
-    }
-    function isAllOwner (m, index, array) {
-      return (m && m.user && m.user.role === 1)
-    }
     const { inviteMemberList, currentOrganization } = this.props
     let CreateButton = void 0
     if (currentOrganization) {
@@ -238,7 +231,6 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       }, {
           title: '设置',
           dataIndex: 'user',
-          className: isHidden ? utilStyles.hide : '',
           key: 'settings',
           width: 200,
           render: (text, record) => {

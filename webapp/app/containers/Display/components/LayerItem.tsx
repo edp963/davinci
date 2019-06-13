@@ -27,7 +27,7 @@ const styles = require('../Display.less')
 
 interface ILayerItemProps {
   pure: boolean
-  scale: [number, number]
+  scale?: [number, number]
   slideParams?: any
   layer: any
   selected?: boolean
@@ -71,6 +71,10 @@ interface ILayerItemStates {
 
 export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemStates> {
   private refLayer
+
+  public static defaultProps: Partial<ILayerItemProps> = {
+    scale: [1, 1]
+  }
 
   constructor (props) {
     super(props)
@@ -159,7 +163,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       this.setState({ widgetProps })
     }
 
-    if (datasource !== nextProps.datasource) {
+    if (widgetProps && datasource !== nextProps.datasource) {
       const pagination = this.getPagination(widgetProps, nextProps.datasource)
       this.setState({ pagination })
     }
@@ -378,7 +382,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   private getLayerStyle = (layer, layerParams) => {
-    const { pure, scale } = this.props
+    const { pure } = this.props
     const {
       width, height,
       backgroundImage, backgroundRepeat, backgroundSize, backgroundColor,
@@ -406,10 +410,10 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       layerStyle = {
         ...layerStyle,
         position: 'absolute',
-        left: `${layerParams.positionX * scale[0]}px`,
-        top: `${layerParams.positionY * scale[1]}px`,
-        width: `${width * scale[0]}px`,
-        height: `${height * scale[1]}px`
+        left: `${layerParams.positionX}px`,
+        top: `${layerParams.positionY}px`,
+        width: `${width}px`,
+        height: `${height}px`
       }
     }
     return layerStyle
@@ -463,7 +467,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
   private renderLabelLayer = (layer) => {
     const { layerParams } = this.state
-    const { pure, scale, selected } = this.props
+    const { pure, selected } = this.props
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -486,22 +490,20 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       paddingRight
     } = layerParams
 
-    const exactScaleWidth = pure ? scale[0] : 1
-    const exactScaleHeight = pure ? scale[1] : 1
     const labelStyle: React.CSSProperties = {
       wordBreak: 'break-all',
       overflow: 'hidden',
       fontWeight,
       fontFamily,
       color: `rgba(${fontColor.join()})`,
-      fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
+      fontSize: `${fontSize}px`,
       textAlign: textAlign as TextAlignProperty,
-      lineHeight: `${lineHeight * exactScaleHeight}px`,
-      textIndent: `${textIndent * exactScaleWidth}px`,
-      paddingTop: `${paddingTop * exactScaleHeight}px`,
-      paddingRight: `${paddingRight * exactScaleWidth}px`,
-      paddingBottom: `${paddingBottom * exactScaleHeight}px`,
-      paddingLeft: `${paddingLeft * exactScaleWidth}px`
+      lineHeight: `${lineHeight}px`,
+      textIndent: `${textIndent}px`,
+      paddingTop: `${paddingTop}px`,
+      paddingRight: `${paddingRight}px`,
+      paddingBottom: `${paddingBottom}px`,
+      paddingLeft: `${paddingLeft}px`
     }
     if (textStyle) {
       labelStyle.fontStyle = textStyle.indexOf('italic') > -1 ? 'italic' : 'normal'
@@ -565,7 +567,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   private timer = null
   private renderTimerLayer = (layer) => {
     const { layerParams, currentTime } = this.state
-    const { pure, scale, selected } = this.props
+    const { pure, selected } = this.props
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -591,22 +593,20 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       timeDuration
     } = layerParams
 
-    const exactScaleWidth = pure ? scale[0] : 1
-    const exactScaleHeight = pure ? scale[1] : 1
     const labelStyle: React.CSSProperties = {
       wordBreak: 'break-all',
       overflow: 'hidden',
       fontWeight,
       fontFamily,
       color: `rgba(${fontColor.join()})`,
-      fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
+      fontSize: `${fontSize}px`,
       textAlign: textAlign as TextAlignProperty,
-      lineHeight: `${lineHeight * exactScaleHeight}px`,
-      textIndent: `${textIndent * exactScaleWidth}px`,
-      paddingTop: `${paddingTop * exactScaleHeight}px`,
-      paddingRight: `${paddingRight * exactScaleWidth}px`,
-      paddingBottom: `${paddingBottom * exactScaleHeight}px`,
-      paddingLeft: `${paddingLeft * exactScaleWidth}px`
+      lineHeight: `${lineHeight}px`,
+      textIndent: `${textIndent}px`,
+      paddingTop: `${paddingTop}px`,
+      paddingRight: `${paddingRight}px`,
+      paddingBottom: `${paddingBottom}px`,
+      paddingLeft: `${paddingLeft}px`
     }
     if (textStyle) {
       labelStyle.fontStyle = textStyle.indexOf('italic') > -1 ? 'italic' : 'normal'

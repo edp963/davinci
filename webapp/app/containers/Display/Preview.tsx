@@ -135,19 +135,11 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           nextScaleWidth = clientWidth / width
       }
       if (scaleHeight !== nextScaleHeight || scaleWidth !== nextScaleWidth) {
-        if (nextScaleHeight === nextScaleWidth) {
-          this.scaleViewport(nextScaleHeight)
-          this.setState({ scale: [1, 1] })
-        } else {
-          this.setState({ scale: [nextScaleWidth, nextScaleHeight] })
-        }
+        this.setState({
+          scale: [nextScaleWidth, nextScaleHeight]
+        })
       }
     }
-  }
-
-  private scaleViewport = (scale: number) => {
-    const viewport = document.querySelector('meta[name=viewport]')
-    viewport.setAttribute('content', `width=device-width, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=0`)
   }
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
@@ -264,9 +256,27 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     )
   }
 
-  private getSlideStyle = (slideParams) => {
-    const { scale } = this.state
+  private getPreviewStyle = (slideParams) => {
+    const { scaleMode } = slideParams
+    const previewStyle: React.CSSProperties = {}
+    switch (scaleMode) {
+      case 'scaleWidth':
+        previewStyle.overflowY = 'auto'
+        break
+      case 'scaleHeight':
+        previewStyle.overflowX = 'auto'
+        break
+      case 'noScale':
+        previewStyle.overflow = 'auto'
+        break
+      case 'scaleFull':
+      default:
+        break
+    }
+    return previewStyle
+  }
 
+  private getSlideStyle = (slideParams, scale: [number, number]) => {
     const {
       width,
       height,
@@ -276,14 +286,26 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     } = slideParams
 
     let slideStyle: React.CSSProperties
+
+    const { clientWidth, clientHeight } = document.body
+    const [scaleX, scaleY] = scale
+
+    let translateX = (scaleX - 1) / 2
+    let translateY = (scaleY - 1) / 2
+    translateX += Math.max(0, (clientWidth - scaleX * width) / (2 * width))
+    translateY += Math.max(0, (clientHeight - scaleY * height) / (2 * height))
+
+    const translate = `translate(${translateX * 100}%, ${translateY * 100}%)`
+
     slideStyle  = {
       overflow: 'visible',
-      width: `${width * scale[0]}px`,
-      height: `${height * scale[1]}px`
+      width,
+      height,
+      transform: `${translate} scale(${scaleX}, ${scaleY})`
     }
 
     let backgroundStyle: React.CSSProperties | CSSStyleDeclaration = slideStyle
-    if (scaleMode === 'scaleWidth' && (document.documentElement.clientWidth / window.devicePixelRatio) < 600) {
+    if (scaleMode === 'scaleWidth' && screen.width <= 1024) {
       backgroundStyle = document.body.style
     }
     backgroundStyle.backgroundSize = 'cover'
@@ -310,7 +332,9 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     if (!currentDisplay) { return null }
 
     const { scale } = this.state
-    const slideStyle = this.getSlideStyle(JSON.parse(currentSlide.config).slideParams)
+    const slideParams = JSON.parse(currentSlide.config).slideParams
+    const previewStyle = this.getPreviewStyle(slideParams)
+    const slideStyle = this.getSlideStyle(slideParams, scale)
     const layerItems =  Array.isArray(widgets) ? currentLayers.map((layer) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
       const view = widget && formedViews[widget.viewId]
@@ -324,7 +348,6 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           key={layer.id}
           ref={(f) => this[`layerId_${layer.id}`]}
           pure={true}
-          scale={scale}
           layer={layer}
           itemId={layerId}
           widget={widget}
@@ -341,7 +364,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       )
     }) : null
     return (
-      <div className={styles.preview}>
+      <div className={styles.preview} style={previewStyle}>
         <div className={styles.board} style={slideStyle}>
           {layerItems}
         </div>

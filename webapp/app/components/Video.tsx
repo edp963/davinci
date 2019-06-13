@@ -11,11 +11,6 @@ interface IVideoProps {
 
 export class Video extends React.PureComponent<IVideoProps, {}> {
 
-  public shouldComponentUpdate (nextProps: IVideoProps) {
-    const hasChanged = Object.keys(this.props).some((key) => this.props[key] !== nextProps[key])
-    return hasChanged
-  }
-
   public render () {
     const { src, autoPlay, loop, controls, start, end } = this.props
     let srcWithParams = src

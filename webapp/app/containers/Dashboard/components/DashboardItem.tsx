@@ -136,10 +136,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const { itemId, widget, view, onGetChartData, container, datasource } = this.props
     const { cacheWidgetProps, cacheWidgetId } = this.state
     const widgetProps = JSON.parse(widget.config)
+    const { autoLoadData } = widgetProps
     const pagination = this.getPagination(widgetProps, datasource)
     const nativeQuery = this.getNativeQuery(widgetProps)
     if (container === 'share') {
-      onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
+      if (autoLoadData === true || autoLoadData === undefined) {
+        onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
+      }
       this.initPolling(this.props)
     }
     this.setState({
@@ -186,7 +189,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     })
   }
 
-  public componentWillUpdate (nextProps: IDashboardItemProps) {
+  public componentWillUpdate (nextProps: IDashboardItemProps, nextState: IDashboardItemStates) {
     const {
       itemId,
       widget,
@@ -197,7 +200,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       container
     } = nextProps
     const { pagination, nativeQuery } = this.state
-    const { autoLoadData } = JSON.parse(widget.config)
+    const { autoLoadData } = nextState.widgetProps
     if (!container) {
       if (!this.props.rendered && rendered) {
         // clear

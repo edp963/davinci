@@ -34,8 +34,10 @@ import {
   DRILL_DASHBOARDITEM,
   DELETE_DRILL_HISTORY,
   SET_SELECT_OPTIONS,
-  SELECT_DASHBOARD_ITEM_CHART
+  SELECT_DASHBOARD_ITEM_CHART,
+  GLOBAL_CONTROL_CHANGE
 } from './constants'
+import { IMapItemControlRequestParams, IControlRequestParams } from 'app/components/Filters';
 
 const initialState = fromJS({
   dashboard: null,
@@ -147,6 +149,18 @@ function shareReducer (state = initialState, { type, payload }) {
           }
         }
       })
+    case GLOBAL_CONTROL_CHANGE:
+      const controlRequestParamsByItem: IMapItemControlRequestParams = payload.controlRequestParamsByItem
+      Object.entries(controlRequestParamsByItem)
+        .forEach(([itemId, requestParams]: [string, IControlRequestParams]) => {
+          const { filters: globalFilters, variables: globalVariables } = requestParams
+          itemsInfo[itemId].queryConditions = {
+            ...itemsInfo[itemId].queryConditions,
+            ...globalFilters && { globalFilters },
+            ...globalVariables && { globalVariables }
+          }
+        })
+      return state.set('itemsInfo', itemsInfo)
     case DRILL_DASHBOARDITEM:
       if (!itemsInfo[payload.itemId].queryConditions.drillHistory) {
         itemsInfo[payload.itemId].queryConditions.drillHistory = []
