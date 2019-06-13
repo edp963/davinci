@@ -396,10 +396,19 @@ public class DashboardServiceImpl implements DashboardService {
             throw new UnAuthorizedExecption("you have not permission to create dashboard");
         }
 
+        //delete rel_role_dashboard_widget
+        relRoleDashboardWidgetMapper.deleteByDashboardId(id);
 
+        //delete mem_dashboard_widget
+        memDashboardWidgetMapper.deleteByDashboardId(id);
+
+        //delete rel_role_dashboard
         relRoleDashboardMapper.deleteByDashboardId(id);
+
+        //delete dashboard
         dashboardMapper.deleteByParentId(id);
         dashboardMapper.deleteById(id);
+
         optLogger.info("dashboard ({}) id delete by (:{})", dashboardWithPortalAndProject, user.getId());
 
         return true;
@@ -686,6 +695,8 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     @Transactional
     public void deleteDashboardAndPortalByProject(Long projectId) throws RuntimeException {
+        //delete rel_role_dashboard_widget
+        relRoleDashboardWidgetMapper.deleteByProjectId(projectId);
         //删除dashboard与widget关联
         memDashboardWidgetMapper.deleteByProject(projectId);
         //删除dashaboard

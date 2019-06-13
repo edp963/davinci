@@ -72,4 +72,15 @@ public interface MemDashboardWidgetMapper {
 
     @Delete("delete from mem_dashboard_widget where widget_Id = #{widgetId}")
     int deleteByWidget(@Param("widgetId") Long widgetId);
+
+    @Delete({"DELETE mdw FROM mem_dashboard_widget mdw WHERE mdw.dashboard_id IN " +
+            "( " +
+            "SELECT d.id " +
+            "FROM dashboard d " +
+            "WHERE d.dashboard_portal_id = #{portalId} " +
+            ") "})
+    int deleteByPortalId(@Param("portalId") Long portalId);
+
+    @Delete("delete from mem_dashboard_widget where dashboard_id = #{dashboardId}")
+    int deleteByDashboardId(@Param("dashboardId") Long dashboardId);
 }
