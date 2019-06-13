@@ -103,7 +103,7 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
   private getFilterViews = memoizeOne((viewName: string, views: IViewBase[]) => {
     if (!Array.isArray(views) || !views.length) { return [] }
     const regex = new RegExp(viewName, 'gi')
-    const filterViews = views.filter((v) => v.name.match(regex))
+    const filterViews = views.filter((v) => v.name.match(regex) || v.description.match(regex))
     return filterViews
   })
 
@@ -202,6 +202,7 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
       filterViewName: value,
       filterDropdownVisible: false
     })
+    window.event.preventDefault()
   }
 
   private basePagination: PaginationConfig = {
