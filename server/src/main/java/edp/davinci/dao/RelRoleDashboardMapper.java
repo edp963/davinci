@@ -74,4 +74,12 @@ public interface RelRoleDashboardMapper {
 
     @Delete({"delete from rel_role_dashboard where role_id = #{roleId}"})
     int deleteByRoleId(Long roleId);
+
+    @Delete({"DELETE rrd FROM rel_role_dashboard rrd WHERE rrd.dashboard_id IN " +
+            "( " +
+            "SELECT d.id " +
+            "FROM dashboard d " +
+            "WHERE d.dashboard_portal_id = #{portalId} " +
+            ") "})
+    int deleteByPortalId(@Param("portalId") Long portalId);
 }

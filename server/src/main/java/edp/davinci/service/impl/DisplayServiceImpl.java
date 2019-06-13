@@ -184,16 +184,23 @@ public class DisplayServiceImpl implements DisplayService {
             throw new UnAuthorizedExecption("you have not permission to delete display");
         }
 
-        //删除display实体
-        displayMapper.deleteById(id);
+        //删除 rel_role_display_slide_widget
+        relRoleDisplaySlideWidgetMapper.deleteByDisplayId(id);
 
-        relRoleDisplayMapper.deleteByDisplayId(id);
+        //删除 mem_display_slide_widget
+        memDisplaySlideWidgetMapper.deleteByDisplayId(id);
 
-        //删除displaySlide
+        //删除 rel_role_slide
+        relRoleSlideMapper.deleteByDisplayId(id);
+
+        //删除 display_slide
         displaySlideMapper.deleteByDisplayId(id);
 
-        //删除displaySlide和widget的关联
-        memDisplaySlideWidgetMapper.deleteByDisplayId(id);
+        //删除 rel_role_display
+        relRoleDisplayMapper.deleteByDisplayId(id);
+
+        //删除 display
+        displayMapper.deleteById(id);
 
         return true;
     }
@@ -234,14 +241,19 @@ public class DisplayServiceImpl implements DisplayService {
             throw new UnAuthorizedExecption("you have not permisson to delete this display slide");
         }
 
-        //删除displaySlide实体
-        displaySlideMapper.deleteById(slideId);
-        optLogger.info("display slide ({}) is delete by (:{})", displaySlide.toString(), user.getId());
+        //delete rel_role_display_slide_widget
+        relRoleDisplaySlideWidgetMapper.deleteBySlideId(slideId);
 
+        //delete mem_display_slide_widget
+        memDisplaySlideWidgetMapper.deleteBySlideId(slideId);
+
+        //delete rel_role_slide
         relRoleSlideMapper.deleteBySlideId(slideId);
 
-        //删除displaySlide和widget的关联
-        memDisplaySlideWidgetMapper.deleteBySlideId(slideId);
+        //delete display_slide
+        displaySlideMapper.deleteById(slideId);
+
+        optLogger.info("display slide ({}) is delete by (:{})", displaySlide.toString(), user.getId());
 
         return true;
     }
@@ -674,6 +686,7 @@ public class DisplayServiceImpl implements DisplayService {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
+        //delete rel_role_display_slide_widget
         relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetId(relationId);
 
         int i = memDisplaySlideWidgetMapper.deleteById(relationId);
@@ -1175,6 +1188,8 @@ public class DisplayServiceImpl implements DisplayService {
     @Override
     @Transactional
     public void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException {
+        //delete rel_role_display_slide_widget
+        relRoleDisplaySlideWidgetMapper.deleteByProjectId(projectId);
         //删除slide与widget的关联
         memDisplaySlideWidgetMapper.deleteByProject(projectId);
         //删除slide
