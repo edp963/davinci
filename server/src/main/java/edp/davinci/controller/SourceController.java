@@ -21,6 +21,7 @@ package edp.davinci.controller;
 
 import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.CurrentUser;
+import edp.core.model.DBTables;
 import edp.core.model.TableInfo;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
@@ -34,6 +35,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -76,6 +78,28 @@ public class SourceController extends BaseController {
         }
         List<Source> sources = sourceService.getSources(projectId, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(sources));
+    }
+
+
+    /**
+     * 获取source 信息
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get source detail")
+    @GetMapping("/{id}")
+    public ResponseEntity getSourceDetail(@PathVariable Long id,
+                                          @ApiIgnore @CurrentUser User user,
+                                          HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+        SourceDetail sourceDetail = sourceService.getSourceDetail(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(sourceDetail));
     }
 
 
@@ -262,25 +286,25 @@ public class SourceController extends BaseController {
 
 
     /**
-     * source 的数据库表
+     * source 的数据库
      *
      * @param id
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "get data tables")
-    @GetMapping("/{id}/tables")
-    public ResponseEntity getSourceTables(@PathVariable Long id,
-                                          @ApiIgnore @CurrentUser User user,
-                                          HttpServletRequest request) {
+    @ApiOperation(value = "get dbs")
+    @GetMapping("/{id}/databases")
+    public ResponseEntity getSourceDbs(@PathVariable Long id,
+                                       @ApiIgnore @CurrentUser User user,
+                                       HttpServletRequest request) {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<String> sourceTables = sourceService.getSourceTables(id, user);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(sourceTables));
+        List<String> dbs = sourceService.getSourceDbs(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(new SourceCatalogInfo(id, dbs)));
     }
 
 
@@ -292,9 +316,37 @@ public class SourceController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "get data table columns")
+    @ApiOperation(value = "get tables")
+    @GetMapping("/{id}/tables")
+    public ResponseEntity getSourceTables(@PathVariable Long id,
+                                          @RequestParam(name = "dbName") String dbName,
+                                          @ApiIgnore @CurrentUser User user,
+                                          HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        DBTables dbTables = sourceService.getSourceTables(id, dbName, user);
+        SourceDBInfo dbTableInfo = new SourceDBInfo();
+        dbTableInfo.setSourceId(id);
+        BeanUtils.copyProperties(dbTables, dbTableInfo);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(dbTableInfo));
+    }
+
+
+    /**
+     * 表字段
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get columns")
     @GetMapping("/{id}/table/columns")
     public ResponseEntity getTableColumns(@PathVariable Long id,
+                                          @RequestParam(name = "dbName") String dbName,
                                           @RequestParam(name = "tableName") String tableName,
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
@@ -308,8 +360,14 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<TableInfo> tableColumns = sourceService.getTableColumns(id, tableName, user);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(tableColumns));
+        TableInfo tableInfo = sourceService.getTableInfo(id, dbName, tableName, user);
+
+        SourceTableInfo sourceTableInfo = new SourceTableInfo();
+        sourceTableInfo.setSourceId(id);
+        sourceTableInfo.setTableName(tableName);
+        BeanUtils.copyProperties(tableInfo, sourceTableInfo);
+
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(sourceTableInfo));
     }
 
 }

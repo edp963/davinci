@@ -17,25 +17,22 @@
  *
  */
 
-package edp.davinci.dto.viewDto;
+package edp.core.model;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
-@NotNull(message = "request parameter cannot be null")
-public class DistinctParam {
-    @NotEmpty(message = "distinct column cannot be EMPTY")
-    private List<String> columns;
+public class DBTables {
+    private String dbName;
+    private List<QueryColumn> tables = new ArrayList<>(0);
 
-    private List<String> filters;
+    public DBTables(String dbName) {
+        this.dbName = dbName;
+    }
 
-    private List<Param> params;
-
-    private Boolean cache;
-
-    private Long expired;
+    public DBTables() {
+    }
 }

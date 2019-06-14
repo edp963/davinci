@@ -22,6 +22,7 @@ package edp.davinci.service;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.model.DBTables;
 import edp.core.model.TableInfo;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.sourceDto.*;
@@ -48,9 +49,13 @@ public interface SourceService extends CheckEntityService {
 
     Boolean dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user, String type) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    List<String> getSourceTables(Long id, User user) throws NotFoundException;
+    List<String> getSourceDbs(Long id, User user) throws NotFoundException, ServerException;
 
-    List<TableInfo> getTableColumns(Long id, String tableName, User user) throws NotFoundException;
+    DBTables getSourceTables(Long id, String dbName, User user) throws NotFoundException;
+
+    TableInfo getTableInfo(Long id, String dbName, String tableName, User user) throws NotFoundException;
 
     boolean isTestConnection(SourceConfig config) throws ServerException;
+
+    SourceDetail getSourceDetail(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

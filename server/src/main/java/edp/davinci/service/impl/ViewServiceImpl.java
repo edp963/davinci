@@ -641,6 +641,7 @@ public class ViewServiceImpl implements ViewService {
 
     @Override
     public List<Map<String, Object>> getDistinctValueData(boolean isMaintainer, ViewWithSource viewWithSource, DistinctParam param, User user) throws ServerException {
+
         try {
             if (!StringUtils.isEmpty(viewWithSource.getSql())) {
                 List<SqlVariable> variables = viewWithSource.getVariables();
@@ -660,6 +661,7 @@ public class ViewServiceImpl implements ViewService {
 
                 List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
                 if (!CollectionUtils.isEmpty(querySqlList)) {
+                    String cacheKey = null;
                     if (null != param) {
                         STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
                         ST st = stg.getInstanceOf("queryDistinctSql");
@@ -669,12 +671,31 @@ public class ViewServiceImpl implements ViewService {
                         st.add("keywordPrefix", SqlUtils.getKeywordPrefix(source.getJdbcUrl()));
                         st.add("keywordSuffix", SqlUtils.getKeywordSuffix(source.getJdbcUrl()));
 
-                        querySqlList.set(querySqlList.size() - 1, st.render());
+                        String sql = st.render();
+                        querySqlList.set(querySqlList.size() - 1, sql);
+
+                        if (null != param.getCache() && param.getCache() && param.getExpired().longValue() > 0L) {
+                            cacheKey = MD5Util.getMD5("DISTINCI" + sql, true, 32);
+
+                            try {
+                                Object object = redisUtils.get(cacheKey);
+                                if (null != object) {
+                                    return (List) object;
+                                }
+                            } catch (Exception e) {
+                                log.warn("get distinct value by cache: {}", e.getMessage());
+                            }
+                        }
                     }
                     List<Map<String, Object>> list = null;
                     for (String sql : querySqlList) {
                         list = sqlUtils.query4List(sql, -1);
                     }
+
+                    if (null != param.getCache() && param.getCache() && param.getExpired().longValue() > 0L) {
+                        redisUtils.set(cacheKey, list, param.getExpired(), TimeUnit.SECONDS);
+                    }
+
                     if (null != list) {
                         return list;
                     }

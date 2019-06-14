@@ -71,6 +71,18 @@ public class SqlUtils {
     @Value("${source.enable-query-log:false}")
     private boolean isQueryLogEnable;
 
+    private static final String TABLE = "TABLE";
+
+    private static final String VIEW = "VIEW";
+
+
+    private static final String[] TABLE_TYPES = new String[]{TABLE, VIEW};
+
+    private static final String TABLE_NAME = "TABLE_NAME";
+
+    private static final String TABLE_TYPE = "TABLE_TYPE";
+
+
     private String jdbcUrl;
 
     private String username;
@@ -251,20 +263,21 @@ public class SqlUtils {
                     rs.absolute(startRow);
                 }
 
-                if (this.dataTypeEnum == DataTypeEnum.MOONBOX) {
+
+                try {
+                    if (startRow > 0) {
+                        rs.absolute(startRow);
+                    }
+                    while (rs.next()) {
+                        resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                    }
+                } catch (Exception e) {
                     int currentRow = 0;
                     while (rs.next()) {
                         if (currentRow >= startRow) {
                             resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
                         }
                         currentRow++;
-                    }
-                } else {
-                    if (startRow > 0) {
-                        rs.absolute(startRow);
-                    }
-                    while (rs.next()) {
-                        resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
                     }
                 }
 
@@ -297,41 +310,65 @@ public class SqlUtils {
         return String.format(Consts.QUERY_COUNT_SQL, sql);
     }
 
+
+    /**
+     * 获取当前连接数据库
+     *
+     * @return
+     * @throws SourceException
+     */
+    public List<String> getDatabases() throws SourceException {
+        List<String> dbList = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = getConnection();
+            if (null != connection) {
+                String catalog = connection.getCatalog();
+                if (!StringUtils.isEmpty(catalog)) {
+                    dbList.add(catalog);
+                } else {
+                    DatabaseMetaData metaData = connection.getMetaData();
+                    ResultSet rs = metaData.getCatalogs();
+                    while (rs.next()) {
+                        dbList.add(rs.getString(1));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
+        } finally {
+            releaseConnection(connection);
+        }
+        return dbList;
+    }
+
     /**
      * 获取当前数据源表结构
      *
      * @return
      * @throws SourceException
      */
-    public List<String> getTableList() throws SourceException {
-        List<String> tableList = null;
+    public List<QueryColumn> getTableList(String dbName) throws SourceException {
+        List<QueryColumn> tableList = null;
         Connection connection = null;
         try {
             connection = getConnection();
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
-                String schemaPattern = null;
-                DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
-                if (null != dataTypeEnum && dataTypeEnum.getFeature().equals(DataTypeEnum.ORACLE.getFeature())) {
-                    schemaPattern = this.username;
-                    if (null != schemaPattern) {
-                        schemaPattern = schemaPattern.toUpperCase();
-                    }
-                }
 
-                String catalog = null;
-                try {
-                    catalog = connection.getCatalog();
-                } catch (SQLException e) {
-                }
-
-                ResultSet tables = metaData.getTables(catalog, schemaPattern, "%", null);
+                ResultSet tables = metaData.getTables(dbName, getDBSchemaPattern(), "%", TABLE_TYPES);
                 if (null != tables) {
                     tableList = new ArrayList<>();
                     while (tables.next()) {
-                        String tableName = tables.getString("TABLE_NAME");
-                        if (!StringUtils.isEmpty(tableName)) {
-                            tableList.add(tableName);
+                        String name = tables.getString(TABLE_NAME);
+                        if (!StringUtils.isEmpty(name)) {
+                            String type = TABLE;
+                            try {
+                                type = tables.getString(TABLE_TYPE);
+                            } catch (Exception e) {
+                            }
+                            tableList.add(new QueryColumn(name, type));
                         }
                     }
                 }
@@ -346,6 +383,26 @@ public class SqlUtils {
         return tableList;
     }
 
+    private String getDBSchemaPattern() {
+        String schemaPattern = null;
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
+        if (null != dataTypeEnum) {
+            switch (dataTypeEnum) {
+                case ORACLE:
+                    schemaPattern = this.username;
+                    if (null != schemaPattern) {
+                        schemaPattern = schemaPattern.toUpperCase();
+                    }
+                    break;
+                case SQLSERVER:
+                    schemaPattern = "dbo";
+                    break;
+            }
+        }
+        return schemaPattern;
+
+    }
+
     /**
      * 获取指定表列信息
      *
@@ -353,18 +410,16 @@ public class SqlUtils {
      * @return
      * @throws SourceException
      */
-    public List<TableInfo> getTableColumns(String tableName) throws SourceException {
-        List<TableInfo> tableInfoList = null;
+    public TableInfo getTableInfo(String dbName, String tableName) throws SourceException {
+        TableInfo tableInfo = null;
         Connection connection = null;
         try {
             connection = getConnection();
             if (null != connection) {
-                tableInfoList = new ArrayList<>();
                 DatabaseMetaData metaData = connection.getMetaData();
-                List<String> primaryKeys = getPrimaryKeys(tableName, metaData);
-                List<QueryColumn> columns = getColumns(tableName, metaData);
-                TableInfo tableInfo = new TableInfo(tableName, primaryKeys, columns);
-                tableInfoList.add(tableInfo);
+                List<String> primaryKeys = getPrimaryKeys(dbName, tableName, metaData);
+                List<QueryColumn> columns = getColumns(dbName, tableName, metaData);
+                tableInfo = new TableInfo(tableName, primaryKeys, columns);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -372,8 +427,7 @@ public class SqlUtils {
         } finally {
             releaseConnection(connection);
         }
-        return tableInfoList;
-
+        return tableInfo;
     }
 
 
@@ -455,11 +509,11 @@ public class SqlUtils {
      * @return
      * @throws ServerException
      */
-    private List<String> getPrimaryKeys(String tableName, DatabaseMetaData metaData) throws ServerException {
+    private List<String> getPrimaryKeys(String dbName, String tableName, DatabaseMetaData metaData) throws ServerException {
         ResultSet rs = null;
         List<String> primaryKeys = new ArrayList<>();
         try {
-            rs = metaData.getPrimaryKeys(null, null, tableName);
+            rs = metaData.getPrimaryKeys(dbName, null, tableName);
             while (rs.next()) {
                 primaryKeys.add(rs.getString(4));
             }
@@ -480,11 +534,11 @@ public class SqlUtils {
      * @return
      * @throws ServerException
      */
-    private List<QueryColumn> getColumns(String tableName, DatabaseMetaData metaData) throws ServerException {
+    private List<QueryColumn> getColumns(String dbName, String tableName, DatabaseMetaData metaData) throws ServerException {
         ResultSet rs = null;
         List<QueryColumn> columnList = new ArrayList<>();
         try {
-            rs = metaData.getColumns(null, null, tableName, "%");
+            rs = metaData.getColumns(dbName, null, tableName, "%");
             while (rs.next()) {
                 columnList.add(new QueryColumn(rs.getString(4), rs.getString(6)));
             }
