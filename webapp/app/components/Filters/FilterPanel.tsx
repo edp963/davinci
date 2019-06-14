@@ -19,6 +19,7 @@ import {
 } from './'
 import { defaultFilterControlGridProps, SHOULD_LOAD_OPTIONS } from './filterTypes'
 import FilterControl from './FilterControl'
+import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 import { Row, Col, Form, Button } from 'antd'
 import { GlobalControlQueryMode } from './types'
@@ -81,6 +82,8 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
       this.controlRequestParamsByItem = {}
 
       const controls: IGlobalControl[] = globalControls.map((control) => {
+        control = globalControlMigrationRecorder(control)
+
         const { relatedItems } = control
         Object.keys(relatedItems).forEach((itemId) => {
           if (!currentItems.find((ci) => ci.id === Number(itemId))) {
@@ -149,7 +152,16 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     controlValues: { [key: string]: any }
   ) => {
     const { onGetOptions } = this.props
-    const { key, interactionType, relatedViews, parent, customOptions, options } = renderControl as IGlobalRenderTreeItem
+    const {
+      key,
+      interactionType,
+      relatedViews,
+      parent,
+      cache,
+      expired,
+      customOptions,
+      options
+    } = renderControl as IGlobalRenderTreeItem
 
     if (customOptions) {
       onGetOptions(key, true, options)
@@ -177,14 +189,18 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
           obj[viewId] = {
             columns: [(fields as IControlRelatedField).name],
             filters,
-            variables
+            variables,
+            cache,
+            expired
           }
         } else {
           if ((fields as IControlRelatedField).optionsFromColumn) {
             obj[viewId] = {
               columns: [(fields as IControlRelatedField).column],
               filters,
-              variables
+              variables,
+              cache,
+              expired
             }
           }
         }
@@ -289,7 +305,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
   }
 
   private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: IGlobalControl[]) => {
-    const { form, onGetOptions, mapOptions } = this.props
+    const { form, mapOptions } = this.props
     const { controlValues } = this.state
 
     let components = []

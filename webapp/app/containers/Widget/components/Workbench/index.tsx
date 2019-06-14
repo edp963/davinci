@@ -24,7 +24,7 @@ import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
 import EditorHeader from '../../../../components/EditorHeader'
 import WorkbenchSettingForm from './WorkbenchSettingForm'
 import DashboardItemMask, { IDashboardItemMaskProps } from 'containers/Dashboard/components/DashboardItemMask'
-import { DEFAULT_SPLITER } from '../../../../globalConstants'
+import { DEFAULT_SPLITER, DEFAULT_CACHE_EXPIRED } from '../../../../globalConstants'
 import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
 import { message } from 'antd'
@@ -105,7 +105,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       originalComputed: [],
       cache: false,
       autoLoadData: true,
-      expired: 300,
+      expired: DEFAULT_CACHE_EXPIRED,
       splitSize,
       originalWidgetProps: null,
       widgetProps: {
@@ -210,7 +210,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       selectedViewId: viewId,
       controls: [],
       cache: false,
-      expired: 300
+      expired: DEFAULT_CACHE_EXPIRED
     }
     if (formedViews[viewId]) {
       this.setState(nextState)
