@@ -39,6 +39,7 @@ public class Source extends BaseSource {
 
     private Long projectId;
 
+    @JSONField(serialize = false)
     private String config;
 
     /**

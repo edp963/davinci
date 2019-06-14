@@ -25,6 +25,7 @@ import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.model.DBTables;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
 import edp.core.utils.CollectionUtils;
@@ -125,6 +126,31 @@ public class SourceServiceImpl implements SourceService {
             }
         }
         return sources;
+    }
+
+    @Override
+    public SourceDetail getSourceDetail(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+
+        Source source = sourceMapper.getById(id);
+
+        if (null == source) {
+            throw new NotFoundException("source is not found");
+        }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(source.getProjectId(), user, false), user);
+
+        if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+            throw new UnAuthorizedExecption();
+        }
+
+        SourceDetail sourceDetail = new SourceDetail();
+        BeanUtils.copyProperties(source, sourceDetail);
+
+        if (projectPermission.getSourcePermission() == UserPermissionEnum.READ.getPermission()) {
+            sourceDetail.setConfig(null);
+        }
+
+        return sourceDetail;
     }
 
     /**
@@ -404,6 +430,45 @@ public class SourceServiceImpl implements SourceService {
 
 
     /**
+     * 获取Source 的 db
+     *
+     * @param id
+     * @param user
+     * @return
+     * @throws NotFoundException
+     * @throws ServerException
+     */
+    @Override
+    public List<String> getSourceDbs(Long id, User user) throws NotFoundException, ServerException {
+        Source source = sourceMapper.getById(id);
+
+        if (null == source) {
+            log.info("source (:{}) not found", id);
+            throw new NotFoundException("source is not found");
+        }
+
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
+
+        List<String> dbList = null;
+
+        try {
+            dbList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getDatabases();
+        } catch (SourceException e) {
+            throw new ServerException(e.getMessage());
+        }
+
+        if (null != dbList) {
+            ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+            if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+                log.info("user (:{}) have not permission to get source(:{}) databases", user.getId(), source.getId());
+                dbList = null;
+            }
+        }
+
+        return dbList;
+    }
+
+    /**
      * 获取Source的data tables
      *
      * @param id
@@ -411,7 +476,10 @@ public class SourceServiceImpl implements SourceService {
      * @return
      */
     @Override
-    public List<String> getSourceTables(Long id, User user) throws NotFoundException {
+    public DBTables getSourceTables(Long id, String dbName, User user) throws NotFoundException {
+
+
+        DBTables dbTable = new DBTables(dbName);
 
         Source source = sourceMapper.getById(id);
 
@@ -422,10 +490,10 @@ public class SourceServiceImpl implements SourceService {
 
         ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
-        List<String> tableList = null;
 
+        List<QueryColumn> tableList = null;
         try {
-            tableList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableList();
+            tableList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableList(dbName);
         } catch (SourceException e) {
             throw new ServerException(e.getMessage());
         }
@@ -438,7 +506,10 @@ public class SourceServiceImpl implements SourceService {
             }
         }
 
-        return tableList;
+        if (null != tableList) {
+            dbTable.setTables(tableList);
+        }
+        return dbTable;
     }
 
 
@@ -450,7 +521,7 @@ public class SourceServiceImpl implements SourceService {
      * @return
      */
     @Override
-    public List<TableInfo> getTableColumns(Long id, String tableName, User user) throws NotFoundException {
+    public TableInfo getTableInfo(Long id, String dbName, String tableName, User user) throws NotFoundException {
 
         Source source = sourceMapper.getById(id);
         if (null == source) {
@@ -460,24 +531,24 @@ public class SourceServiceImpl implements SourceService {
 
         ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
-        List<TableInfo> tableInfoList = null;
+        TableInfo tableInfo = null;
         try {
-            tableInfoList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableColumns(tableName);
+            tableInfo = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableInfo(dbName, tableName);
         } catch (SourceException e) {
             e.printStackTrace();
             throw new ServerException(e.getMessage());
         }
 
-        if (null != tableInfoList) {
+        if (null != tableInfo) {
             ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
             if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
                 log.info("user (:{}) have not permission to get source(:{}) table columns", user.getId(), source.getId());
-                tableInfoList = null;
+                tableInfo = null;
             }
         }
 
 
-        return tableInfoList;
+        return tableInfo;
     }
 
     public boolean isTestConnection(SourceConfig config) throws ServerException {
