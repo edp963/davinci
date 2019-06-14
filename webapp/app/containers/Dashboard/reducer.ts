@@ -82,6 +82,7 @@ import {
   IControlRequestParams
 } from '../../components/Filters'
 import { DownloadTypes } from '../App/types'
+import { globalControlMigrationRecorder } from 'app/utils/MigrationRecorders'
 
 const initialState = fromJS({
   dashboards: null,
@@ -160,7 +161,7 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
       const { dashboardDetail } = payload
       const dashboardConfig = dashboardDetail.config ? JSON.parse(dashboardDetail.config) : {}
-      const globalControls = dashboardConfig.filters || []
+      const globalControls = (dashboardConfig.filters || []).map((c) => globalControlMigrationRecorder(c))
       const globalControlsInitialValue = {}
 
       globalControls.forEach((control: IGlobalControl) => {

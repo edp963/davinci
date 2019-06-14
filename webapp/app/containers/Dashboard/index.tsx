@@ -74,6 +74,8 @@ import EditorHeader from '../../components/EditorHeader'
 const SplitPane = React.lazy(() => import('react-split-pane'))
 import {IProjectRoles} from '../Organizations/component/ProjectRole'
 import { loadProjectRoles } from '../Organizations/actions'
+import { IGlobalControl } from 'app/components/Filters'
+import { GlobalControlQueryMode } from 'app/components/Filters/types'
 
 interface IDashboardProps {
   modalLoading: boolean
@@ -105,6 +107,12 @@ export interface IDashboard {
   index?: number
   type?: number
   children?: any[]
+}
+
+export interface IDashboardConfig {
+  filters?: IGlobalControl[]
+  linkagers?: any[]
+  queryMode?: GlobalControlQueryMode
 }
 
 export interface ICurrentDashboard extends IDashboard {

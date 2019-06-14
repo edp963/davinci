@@ -39,6 +39,7 @@ import {
 } from 'app/components/Filters'
 import { SHOULD_LOAD_OPTIONS, defaultFilterControlGridProps } from 'app/components/Filters/filterTypes'
 import FilterControl from 'app/components/Filters/FilterControl'
+import { localControlMigrationRecorder } from 'app/utils/MigrationRecorders'
 
 const styles = require('../Dashboard.less')
 
@@ -93,6 +94,7 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
     this.controlRequestParams = {}
 
     const replica = controls.map((control) => {
+      control = localControlMigrationRecorder(control)
       const defaultFilterValue = deserializeDefaultValue(control)
       if (defaultFilterValue) {
         controlValues[control.key] = defaultFilterValue
@@ -138,7 +140,16 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
     controlValues: { [key: string]: any }
   ) => {
     const { viewId, onGetOptions } = this.props
-    const { key, interactionType, fields, parent, customOptions, options } = renderControl as ILocalRenderTreeItem
+    const {
+      key,
+      interactionType,
+      fields,
+      parent,
+      cache,
+      expired,
+      customOptions,
+      options
+    } = renderControl as ILocalRenderTreeItem
 
     if (customOptions) {
       onGetOptions(key, true, options)
@@ -164,7 +175,13 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
 
       if (columns) {
         onGetOptions(key, false, {
-          [viewId]: { columns, filters, variables }
+          [viewId]: {
+            columns,
+            filters,
+            variables,
+            cache,
+            expired
+          }
         })
       }
     }
@@ -219,7 +236,7 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
   }
 
   private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: ILocalControl[]) => {
-    const { form, onGetOptions, mapOptions } = this.props
+    const { form, mapOptions } = this.props
     const { controlValues } = this.state
 
     let components = []

@@ -11,7 +11,7 @@ import NumberRange from '../NumberRange'
 const MultiDatePicker = React.lazy(() => import('../MultiDatePicker'))
 import DatePickerFormats, { DatePickerDefaultValues, DatePickerFormatsSelectSetting } from './datePickerFormats'
 const { WeekPicker, MonthPicker, RangePicker } = DatePicker
-import { SQL_NUMBER_TYPES, SqlTypes } from '../../globalConstants'
+import { SQL_NUMBER_TYPES, SqlTypes, DEFAULT_CACHE_EXPIRED } from '../../globalConstants'
 import { ViewVariableValueTypes, ViewVariableTypes } from 'app/containers/View/constants'
 import { IFormedView, IViewModelProps, IViewVariable } from 'app/containers/View/types'
 
@@ -45,6 +45,8 @@ export interface IControlBase {
   operator: OperatorTypes
   dateFormat?: DatePickerFormats
   multiple?: boolean
+  cache: boolean
+  expired: number
   customOptions?: boolean
   options?: IControlSelectOption[]
   width: number
@@ -96,6 +98,8 @@ export interface IDistinctValueReqeustParams {
   columns: string[]
   filters?: string[]
   variables?: Array<{name: string, value: string | number}>
+  cache: boolean
+  expired: number
 }
 
 export type OnGetControlOptions = (
@@ -120,6 +124,8 @@ export function getDefaultGlobalControl (): IGlobalControl {
     type: FilterTypes.Select,
     interactionType: 'column',
     operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],
+    cache: false,
+    expired: DEFAULT_CACHE_EXPIRED,
     width: 0,
     relatedItems: {},
     relatedViews: {}
@@ -137,6 +143,8 @@ export function getDefaultLocalControl (view: IFormedView): ILocalControl {
     type: FilterTypes.Select,
     interactionType: 'column',
     operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],
+    cache: false,
+    expired: DEFAULT_CACHE_EXPIRED,
     width: 0,
     fields: defaultFields && { name: defaultFields[0], type: defaultFields[1].sqlType }
   }

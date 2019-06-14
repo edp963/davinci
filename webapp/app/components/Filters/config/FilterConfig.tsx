@@ -33,6 +33,7 @@ import {
   deserializeDefaultValue
 } from '..'
 import { FilterTypes, IS_RANGE_TYPE} from '../filterTypes'
+import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 import FilterList from './FilterList'
 import FilterFormWithRedux, { FilterForm } from './FilterForm'
@@ -117,6 +118,8 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
 
         let selected
         const controls =  globalControls.map((control) => {
+          control = globalControlMigrationRecorder(control)
+
           const { relatedItems } = control
           Object.keys(relatedItems).forEach((itemId) => {
             if (!currentItems.find((ci) => ci.id === Number(itemId))) {
