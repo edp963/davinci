@@ -147,7 +147,7 @@ export class Organization extends React.PureComponent <IOrganizationProps, {}> {
     onLoadOrganizationDetail(Number(organizationId))
   }
 
-  private deleteOrganization = (id) => () => {
+  private deleteOrganization = (id) => {
     this.props.onDeleteOrganization(id, () => {
       this.props.router.push(`/account/organizations`)
     })
