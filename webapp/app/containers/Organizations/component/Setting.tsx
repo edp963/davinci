@@ -1,6 +1,6 @@
 import React from 'react'
 const styles = require('../Organization.less')
-import { Button, Input, Form, Row, Col, Radio } from 'antd'
+import { Button, Input, Form, Row, Col, Radio, Modal } from 'antd'
 const FormItem = Form.Item
 const RadioButton = Radio.Button
 import UploadAvatar from '../../../components/UploadAvatar'
@@ -11,13 +11,15 @@ interface ISettingProps {
   form: any
   currentOrganization: IOrganization
   editOrganization: (oranization: IOrganization) => () => any
-  deleteOrganization: (id: number) => () => any
+  deleteOrganization: (id: number) => any
 }
 
 export class Setting extends React.PureComponent <ISettingProps> {
+
   public componentWillMount () {
     this.initData()
   }
+
   private initData = () => {
     const { currentOrganization } = this.props
     const {
@@ -41,8 +43,21 @@ export class Setting extends React.PureComponent <ISettingProps> {
       })
     })
   }
+
+  private confirmDelete = () => {
+    const { form, deleteOrganization } = this.props
+    const { id, name } = form.getFieldsValue()
+    Modal.confirm({
+      title: `确定删除组织 “${name}”？`,
+      onOk: () => {
+        deleteOrganization(id)
+      }
+    })
+  }
+
   public render () {
     const { getFieldDecorator } = this.props.form
+
     const commonFormItemStyle = {
       labelCol: { span: 2 },
       wrapperCol: { span: 18 }
@@ -178,7 +193,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 <div className={styles.titleDesc}>
                   <p className={styles.desc}>删除后无法恢复，请确定此次操作</p>
                   <p className={styles.button}>
-                    <Button type="danger" onClick={this.props.deleteOrganization(this.props.form.getFieldsValue().id)}>删除{name}</Button>
+                    <Button type="danger" onClick={this.confirmDelete}>删除{name}</Button>
                   </p>
                 </div>
               </Row>
