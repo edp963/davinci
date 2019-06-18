@@ -29,7 +29,7 @@ import { Link, RouteComponentProps } from 'react-router'
 
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
-import reducer, { ViewStateType } from './reducer'
+import reducer from './reducer'
 import sagas from './sagas'
 
 import { ViewActions, ViewActionType } from './actions'

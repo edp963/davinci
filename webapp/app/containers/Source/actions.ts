@@ -20,7 +20,7 @@
 
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
-import { ISourceBase, ISource, ISourceTableColumns, ISourceTable, ICSVMetaInfo } from './types'
+import { ISourceBase, ISource, ITableColumns, ISourceDatabases, ICSVMetaInfo, IDatabaseTables } from './types'
 
 export const SourceActions = {
   loadSources (projectId: number) {
@@ -181,45 +181,74 @@ export const SourceActions = {
       }
     }
   },
-  loadSourceTables (sourceId: number) {
+
+  loadSourceDatabases (sourceId: number) {
     return {
-      type: ActionTypes.LOAD_SOURCE_TABLES,
+      type: ActionTypes.LOAD_SOURCE_DATABASES,
       payload: {
         sourceId
       }
     }
   },
-  sourceTablesLoaded (tables: ISourceTable[]) {
+  sourceDatabasesLoaded (sourceDatabases: ISourceDatabases) {
     return {
-      type: ActionTypes.LOAD_SOURCE_TABLES_SUCCESS,
+      type: ActionTypes.LOAD_SOURCE_DATABASES_SUCCESS,
       payload: {
-        tables
+        sourceDatabases
       }
     }
   },
-  loadSourceTablesFail (err) {
+  loadSourceDatabasesFail (err) {
     return {
-      type: ActionTypes.LOAD_SOURCE_TABLES_FAILURE,
+      type: ActionTypes.LOAD_SOURCE_DATABASES_FAILURE,
       payload: {
         err
       }
     }
   },
-  loadTableColumns (sourceId: number, tableName: string, resolve?) {
+
+  loadDatabaseTables (sourceId: number, databaseName: string, resolve?) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DATABASE_TABLES,
+      payload: {
+        sourceId,
+        databaseName,
+        resolve
+      }
+    }
+  },
+  databaseTablesLoaded (databaseTables: IDatabaseTables) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DATABASE_TABLES_SUCCESS,
+      payload: {
+        databaseTables
+      }
+    }
+  },
+  loadDatabaseTablesFail (err) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DATABASE_TABLES_FAILURE,
+      payload: {
+        err
+      }
+    }
+  },
+  loadTableColumns (sourceId: number, databaseName: string, tableName: string, resolve?) {
     return {
       type: ActionTypes.LOAD_SOURCE_TABLE_COLUMNS,
       payload: {
         sourceId,
+        databaseName,
         tableName,
         resolve
       }
     }
   },
-  tableColumnsLoaded (sourceId: number, tableColumns: ISourceTableColumns) {
+  tableColumnsLoaded (databaseName: string, tableColumns: ITableColumns) {
     return {
       type: ActionTypes.LOAD_SOURCE_TABLE_COLUMNS_SUCCESS,
       payload: {
-        sourceId,
+        databaseName,
         tableColumns
       }
     }

@@ -19,7 +19,7 @@
  */
 
 import { SqlTypes } from 'app/globalConstants'
-import { ISourceSimple, ISourceTable, IMapTableColumns, ISourceRaw } from 'containers/Source/types'
+import { ISourceSimple, ISourceBase, ISchema } from 'containers/Source/types'
 import { ViewModelTypes, ViewModelVisualTypes, ViewVariableTypes, ViewVariableValueTypes } from './constants'
 
 export interface IViewBase {
@@ -166,9 +166,8 @@ export interface IViewState {
   formedViews: IFormedViews
   editingView: IView
   editingViewInfo: IViewInfo
-  sources: ISourceRaw[]
-  tables: ISourceTable[]
-  mapTableColumns: IMapTableColumns
+  sources: ISourceBase[]
+  schema: ISchema
   sqlValidation: ISqlValidation
   sqlDataSource: IExecuteSqlResponse
   sqlLimit: number
