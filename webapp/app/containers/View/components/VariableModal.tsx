@@ -13,17 +13,17 @@ import {
 import OperatorTypes from 'utils/operatorTypes'
 import { ViewVariableTypes, ViewVariableTypesLocale, ViewVariableValueTypes, ViewVariableValueTypesLocale } from 'containers/View/constants'
 
-interface IVariableModalProps {
-  visible: boolean
-  variable: IViewVariable
+export interface IVariableModalProps {
+  visible?: boolean
+  variable?: IViewVariable
 
   channels: IDacChannel[]
   tenants: IDacTenant[]
   bizs: IDacBiz[]
 
   nameValidator?: (key: string, name: string, callback: (msg?: string) => void) => void
-  onCancel: () => void
-  onSave: (variable: IViewVariable) => void
+  onCancel?: () => void
+  onSave?: (variable: IViewVariable) => void
 
   onLoadDacTenants: (channelName: string) => void
   onLoadDacBizs: (channelName: string, tenantId: number) => void

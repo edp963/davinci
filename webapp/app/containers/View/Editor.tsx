@@ -22,12 +22,13 @@ import React from 'react'
 import { compose, Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
+import memoizeOne from 'memoize-one'
 import Helmet from 'react-helmet'
 import { RouteComponentProps } from 'react-router'
 
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
-import reducer, { ViewStateType } from './reducer'
+import reducer from './reducer'
 import sagas from './sagas'
 import reducerSource from 'containers/Source/reducer'
 import sagasSource from 'containers/Source/sagas'
@@ -42,8 +43,7 @@ import {
   makeSelectEditingView,
   makeSelectEditingViewInfo,
   makeSelectSources,
-  makeSelectSourceTables,
-  makeSelectMapTableColumns,
+  makeSelectSchema,
   makeSelectSqlDataSource,
   makeSelectSqlLimit,
   makeSelectSqlValidation,
@@ -61,13 +61,19 @@ import {
   IView, IViewModel, IViewRoleRaw, IViewRole, IViewVariable, IViewInfo,
   IExecuteSqlParams, IExecuteSqlResponse, IViewLoading, ISqlValidation,
   IDacChannel, IDacTenant, IDacBiz } from './types'
-import { ISource, ISourceTable, IMapTableColumns } from '../Source/types'
+import { ISource, ISchema } from '../Source/types'
 import { ViewVariableTypes } from './constants'
 
 import { message } from 'antd'
 import EditorSteps from './components/EditorSteps'
 import EditorContainer from './components/EditorContainer'
 import ModelAuth from './components/ModelAuth'
+import SourceTable from './components/SourceTable'
+import SqlEditor from './components/SqlEditor'
+import SqlPreview from './components/SqlPreview'
+import EditorBottom from './components/EditorBottom'
+import ViewVariableList from './components/ViewVariableList'
+import VariableModal from './components/VariableModal'
 
 import Styles from './View.less'
 
@@ -75,8 +81,7 @@ interface IViewEditorStateProps {
   editingView: IView
   editingViewInfo: IViewInfo
   sources: ISource[]
-  tables: ISourceTable[]
-  mapTableColumns: IMapTableColumns
+  schema: ISchema
   sqlDataSource: IExecuteSqlResponse
   sqlLimit: number
   sqlValidation: ISqlValidation
@@ -92,8 +97,9 @@ interface IViewEditorDispatchProps {
   onHideNavigator: () => void
   onLoadViewDetail: (viewId: number) => void
   onLoadSources: (projectId: number) => void
-  onLoadSourceTables: (sourceId: number) => void
-  onLoadTableColumns: (sourceId: number, tableName: string) => void
+  onLoadSourceDatabases: (sourceId: number) => void
+  onLoadDatabaseTables: (sourceId: number, databaseName: string) => void
+  onLoadTableColumns: (sourceId: number, databaseName: string, tableName: string) => void
   onExecuteSql: (params: IExecuteSqlParams) => void
   onAddView: (view: IView, resolve: () => void) => void
   onEditView: (view: IView, resolve: () => void) => void
@@ -162,7 +168,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     }
     if (editingView && editingView.id === +viewId) {
       if (init) {
-        props.onLoadSourceTables(editingView.sourceId)
+        props.onLoadSourceDatabases(editingView.sourceId)
         ViewEditor.ExecuteSql(props)
         return {
           init: false,
@@ -276,6 +282,10 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     onUpdateEditingView(updatedView)
   }
 
+  private sqlChange = (sql: string) => {
+    this.viewChange('sql', sql)
+  }
+
   private modelChange = (partialModel: IViewModel) => {
     const { editingViewInfo, onUpdateEditingViewInfo } = this.props
     const { model } = editingViewInfo
@@ -307,20 +317,51 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     onUpdateEditingViewInfo(updatedViewInfo)
   }
 
+  private getSqlHints = memoizeOne((sourceId: number, schema: ISchema, variables: IViewVariable[]) => {
+    if (!sourceId) { return {} }
+
+    const variableHints = variables.reduce((acc, v) => {
+      acc[`$${v.name}$`] = []
+      return acc
+    }, {})
+    const { mapDatabases, mapTables, mapColumns } = schema
+    if (!mapDatabases[sourceId]) { return {} }
+
+    const tableHints: { [tableName: string]: string[] } = Object.values(mapTables).reduce((acc, tablesInfo) => {
+      if (tablesInfo.sourceId !== sourceId) { return acc }
+
+      tablesInfo.tables.forEach(({ name: tableName }) => {
+        acc[tableName] = []
+      })
+      return acc
+    }, {})
+
+    Object.values(mapColumns).forEach((columnsInfo) => {
+      if (columnsInfo.sourceId !== sourceId) { return }
+      const { tableName, columns } = columnsInfo
+      if (tableHints[tableName]) {
+        tableHints[tableName] = tableHints[tableName].concat(columns.map((col) => col.name))
+      }
+    })
+
+    const hints = {
+      ...variableHints,
+      ...tableHints
+    }
+    return hints
+  })
+
   public render () {
     const {
-      sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, projectRoles,
+      sources, schema,
+      sqlDataSource, sqlLimit, loading, projectRoles,
       channels, tenants, bizs,
       editingView, editingViewInfo,
-      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit,
+      onLoadSourceDatabases, onLoadDatabaseTables, onLoadTableColumns, onSetSqlLimit,
       onLoadDacTenants, onLoadDacBizs } = this.props
     const { currentStep, nextDisabled } = this.state
     const { model, variable, roles: viewRoles } = editingViewInfo
-    const containerProps = {
-      view: editingView, variable, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
-      channels, tenants, bizs,
-      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql: this.executeSql,
-      onLoadDacTenants, onLoadDacBizs }
+    const sqlHints = this.getSqlHints(editingView.sourceId, schema, variable)
     const containerVisible = !currentStep
     const modelAuthVisible = !!currentStep
 
@@ -334,12 +375,38 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
             </div>
           </div>
           <EditorContainer
-            {...containerProps}
             visible={containerVisible}
+            variable={variable}
             onVariableChange={this.variableChange}
-            onStepChange={this.stepChange}
-            onViewChange={this.viewChange}
-          />
+          >
+            <SourceTable
+              view={editingView}
+              sources={sources}
+              schema={schema}
+              onViewChange={this.viewChange}
+              onSourceSelect={onLoadSourceDatabases}
+              onDatabaseSelect={onLoadDatabaseTables}
+              onTableSelect={onLoadTableColumns}
+            />
+            <SqlEditor value={editingView.sql} hints={sqlHints} onSqlChange={this.sqlChange} />
+            <SqlPreview size="small" loading={loading.execute} response={sqlDataSource} />
+            <EditorBottom
+              sqlLimit={sqlLimit}
+              loading={loading.execute}
+              nextDisabled={nextDisabled}
+              onSetSqlLimit={onSetSqlLimit}
+              onExecuteSql={this.executeSql}
+              onStepChange={this.stepChange}
+            />
+            <ViewVariableList variables={variable} />
+            <VariableModal
+              channels={channels}
+              tenants={tenants}
+              bizs={bizs}
+              onLoadDacTenants={onLoadDacTenants}
+              onLoadDacBizs={onLoadDacBizs}
+            />
+          </EditorContainer>
           <ModelAuth
             visible={modelAuthVisible}
             model={model}
@@ -361,8 +428,9 @@ const mapDispatchToProps = (dispatch: Dispatch<ViewActionType | SourceActionType
   onHideNavigator: () => dispatch(hideNavigator()),
   onLoadViewDetail: (viewId: number) => dispatch(ViewActions.loadViewsDetail([viewId])),
   onLoadSources: (projectId) => dispatch(SourceActions.loadSources(projectId)),
-  onLoadSourceTables: (sourceId) => dispatch(SourceActions.loadSourceTables(sourceId)),
-  onLoadTableColumns: (sourceId, tableName) => dispatch(SourceActions.loadTableColumns(sourceId, tableName)),
+  onLoadSourceDatabases: (sourceId) => dispatch(SourceActions.loadSourceDatabases(sourceId)),
+  onLoadDatabaseTables: (sourceId, databaseName) => dispatch(SourceActions.loadDatabaseTables(sourceId, databaseName)),
+  onLoadTableColumns: (sourceId, databaseName, tableName) => dispatch(SourceActions.loadTableColumns(sourceId, databaseName, tableName)),
   onExecuteSql: (params) => dispatch(ViewActions.executeSql(params)),
   onAddView: (view, resolve) => dispatch(ViewActions.addView(view, resolve)),
   onEditView: (view, resolve) => dispatch(ViewActions.editView(view, resolve)),
@@ -382,8 +450,7 @@ const mapStateToProps = createStructuredSelector({
   editingView: makeSelectEditingView(),
   editingViewInfo: makeSelectEditingViewInfo(),
   sources: makeSelectSources(),
-  tables: makeSelectSourceTables(),
-  mapTableColumns: makeSelectMapTableColumns(),
+  schema: makeSelectSchema(),
   sqlDataSource: makeSelectSqlDataSource(),
   sqlLimit: makeSelectSqlLimit(),
   sqlValidation: makeSelectSqlValidation(),
