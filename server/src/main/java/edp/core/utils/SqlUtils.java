@@ -55,6 +55,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static edp.core.consts.Consts.*;
+import static edp.core.enums.DataTypeEnum.ORACLE;
 
 @Slf4j
 @Component
@@ -259,11 +260,6 @@ public class SqlUtils {
 
                 List<Map<String, Object>> resultList = new ArrayList<>();
 
-                if (startRow > 0 && this.dataTypeEnum != DataTypeEnum.MOONBOX) {
-                    rs.absolute(startRow);
-                }
-
-
                 try {
                     if (startRow > 0) {
                         rs.absolute(startRow);
@@ -271,7 +267,7 @@ public class SqlUtils {
                     while (rs.next()) {
                         resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
                     }
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     int currentRow = 0;
                     while (rs.next()) {
                         if (currentRow >= startRow) {
@@ -323,16 +319,24 @@ public class SqlUtils {
         try {
             connection = getConnection();
             if (null != connection) {
-                String catalog = connection.getCatalog();
-                if (!StringUtils.isEmpty(catalog)) {
-                    dbList.add(catalog);
-                } else {
-                    DatabaseMetaData metaData = connection.getMetaData();
-                    ResultSet rs = metaData.getCatalogs();
-                    while (rs.next()) {
-                        dbList.add(rs.getString(1));
-                    }
+                switch (this.dataTypeEnum) {
+                    case ORACLE:
+                        dbList.add(this.username);
+                        break;
+                    default:
+                        String catalog = connection.getCatalog();
+                        if (!StringUtils.isEmpty(catalog)) {
+                            dbList.add(catalog);
+                        } else {
+                            DatabaseMetaData metaData = connection.getMetaData();
+                            ResultSet rs = metaData.getCatalogs();
+                            while (rs.next()) {
+                                dbList.add(rs.getString(1));
+                            }
+                        }
+                        break;
                 }
+
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -340,6 +344,8 @@ public class SqlUtils {
         } finally {
             releaseConnection(connection);
         }
+
+
         return dbList;
     }
 
@@ -356,8 +362,13 @@ public class SqlUtils {
             connection = getConnection();
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
+                String schema = null;
+                try {
+                    schema = metaData.getConnection().getSchema();
+                } catch (Throwable t) {
+                }
 
-                ResultSet tables = metaData.getTables(dbName, getDBSchemaPattern(), "%", TABLE_TYPES);
+                ResultSet tables = metaData.getTables(dbName, getDBSchemaPattern(schema), "%", TABLE_TYPES);
                 if (null != tables) {
                     tableList = new ArrayList<>();
                     while (tables.next()) {
@@ -383,7 +394,7 @@ public class SqlUtils {
         return tableList;
     }
 
-    private String getDBSchemaPattern() {
+    private String getDBSchemaPattern(String schema) {
         String schemaPattern = null;
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
         if (null != dataTypeEnum) {
@@ -396,6 +407,11 @@ public class SqlUtils {
                     break;
                 case SQLSERVER:
                     schemaPattern = "dbo";
+
+                case PRESTO:
+                    if (!StringUtils.isEmpty(schema)) {
+                        schemaPattern = schema;
+                    }
                     break;
             }
         }
@@ -538,6 +554,9 @@ public class SqlUtils {
         ResultSet rs = null;
         List<QueryColumn> columnList = new ArrayList<>();
         try {
+            if (this.dataTypeEnum == ORACLE) {
+                dbName = null;
+            }
             rs = metaData.getColumns(dbName, null, tableName, "%");
             while (rs.next()) {
                 columnList.add(new QueryColumn(rs.getString(4), rs.getString(6)));
@@ -582,7 +601,7 @@ public class SqlUtils {
         if (jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase()) > -1) {
             ESDataSource.removeDataSource(jdbcUrl);
         } else {
-            jdbcDataSource.removeDatasource(jdbcUrl, userename);
+            jdbcDataSource.removeDatasource(jdbcUrl, userename, password);
         }
     }
 

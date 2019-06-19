@@ -86,7 +86,7 @@ public class CsvUtils {
                     for (int i = 1; i < records.size(); i++) {
                         Map<String, Object> item = new HashMap<>();
                         for (String key : csvHeaders) {
-                            item.put(key, SqlColumnEnum.formatValue(records.get(0).get(key), records.get(i).get(key)));
+                            item.put(key.replace("\uFEFF", EMPTY), SqlColumnEnum.formatValue(records.get(0).get(key), records.get(i).get(key)));
                         }
                         values.add(item);
                     }
