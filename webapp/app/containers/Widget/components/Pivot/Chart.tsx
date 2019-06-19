@@ -206,7 +206,6 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
       renderType,
       selectedItems
     } = this.props
-
     const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
 
     data.forEach((chunk: IChartChunk) => {
@@ -680,22 +679,26 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
             yAxis,
             series
           })
+
           const { onDoInteract, onCheckTableInteract } = this.props
           if (onDoInteract) {
             instance.off('click')
             instance.on('click', (params) => {
+              this.collectSelectedItems(params, seriesData)
               const isInteractiveChart = onCheckTableInteract()
               if (isInteractiveChart) {
                 const triggerData = getTriggeringRecord(params, seriesData)
+                console.log(triggerData)
                 onDoInteract(triggerData)
               }
             })
           }
+
           // drill
-          instance.off('click')
-          instance.on('click', (params) => {
-            this.collectSelectedItems(params, seriesData)
-          })
+          // instance.off('click')
+          // instance.on('click', (params) => {
+          //   this.collectSelectedItems(params, seriesData)
+          // })
 
 
           // if (isDrilling &&  whichDataDrillBrushed === false) {
