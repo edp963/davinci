@@ -48,18 +48,18 @@ export class Cell extends React.PureComponent <ICellProps, ICellState> {
     }, () => {
       const {isSelected} = this.state
       const key = [colKey, rowKey].join(String.fromCharCode(0))
+      let obj = null
       if (ifSelectedTdToDrill && isSelected) {
-        const obj = {
+        obj = {
           data: {[key]: data && data.length === 1 ? data[0] : data},
           range: [[pagex, pagex], [pagey, pagey]]
         }
-        ifSelectedTdToDrill(obj)
       } else {
-        const obj = {
+        obj = {
           data: {[key]: false}
         }
-        ifSelectedTdToDrill(obj)
       }
+      ifSelectedTdToDrill(obj)
     })
   }
   public render () {
