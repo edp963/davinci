@@ -224,17 +224,17 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private rowClick = (record, row, event) => {
-    const { getDataDrillDetail } = this.props
-    const selectedRow = [...this.state.selectedRow]
+    const { getDataDrillDetail, onCheckTableInteract, onDoInteract } = this.props
+    let selectedRow = [...this.state.selectedRow]
     let filterObj = void 0
     if (event.target && event.target.innerHTML) {
       for (const attr in record) {
-        if (record[attr].toString() === event.target.innerHTML) {
+        if (record[attr].toString() === event.target.innerText) {
           const re = /\(\S+\)/
           const key = re.test(attr) ? attr.match(/\((\S+)\)/)[1] : attr
           filterObj = {
             key,
-            value: event.target.innerHTML
+            value: event.target.innerText
           }
         }
       }
@@ -243,19 +243,24 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       ...record,
       ...filterObj
     }
-    if (selectedRow.length === 0) {
-      selectedRow.push(recordConcatFilter)
+    const isInteractiveChart = onCheckTableInteract()
+    if (isInteractiveChart && onDoInteract) {
+      selectedRow = [recordConcatFilter]
     } else {
-      const isb = selectedRow.some((sr) => this.isSameObj(sr, recordConcatFilter, true))
-      if (isb) {
-        for (let index = 0, l = selectedRow.length; index < l; index++) {
-            if (this.isSameObj(selectedRow[index], recordConcatFilter, true)) {
-              selectedRow.splice(index, 1)
-              break
-            }
-        }
-      } else  {
+      if (selectedRow.length === 0) {
         selectedRow.push(recordConcatFilter)
+      } else {
+        const isb = selectedRow.some((sr) => this.isSameObj(sr, recordConcatFilter, true))
+        if (isb) {
+          for (let index = 0, l = selectedRow.length; index < l; index++) {
+              if (this.isSameObj(selectedRow[index], recordConcatFilter, true)) {
+                selectedRow.splice(index, 1)
+                break
+              }
+          }
+        } else  {
+          selectedRow.push(recordConcatFilter)
+        }
       }
     }
 
@@ -264,6 +269,11 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     }, () => {
       const brushed = [{0: Object.values(this.state.selectedRow)}]
       const sourceData = Object.values(this.state.selectedRow)
+      const isInteractiveChart = onCheckTableInteract()
+      if (isInteractiveChart && onDoInteract) {
+        const triggerData = sourceData
+        onDoInteract(triggerData)
+      }
       setTimeout(() => {
         getDataDrillDetail(JSON.stringify({filterObj, brushed, sourceData}))
       }, 500)

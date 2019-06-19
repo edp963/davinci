@@ -829,6 +829,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private checkInteract = (itemId: number) => {
     const { currentLinkages } = this.props
+    console.log(currentLinkages)
     const isInteractiveItem = currentLinkages.some((c) => {
       const { trigger } = c
       const triggerId = +trigger[0]
@@ -879,6 +880,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private turnOffInteract = (itemId) => {
+    console.log('turnOffinteract')
     const {
       currentLinkages,
       currentItems
@@ -898,6 +900,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         ...this.state.interactingStatus,
         [itemId]: false
       }
+    }, () => {
+      const item = currentItems.find((ci) => ci.id === itemId)
+      this.getChartData('clear', itemId, item.widgetId)
     })
   }
 
