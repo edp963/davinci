@@ -78,23 +78,16 @@ public class JdbcDataSource extends DruidDataSource {
 
     private static volatile Map<String, DruidDataSource> map = new HashMap<>();
 
-    public synchronized void removeDatasource(String jdbcUrl, String username) {
-        if (map.containsKey(username + "@" + jdbcUrl.trim())) {
-            map.remove(username + "@" + jdbcUrl.trim());
+    public synchronized void removeDatasource(String jdbcUrl, String username, String password) {
+        String key = getKey(jdbcUrl, username, password);
+
+        if (map.containsKey(key)) {
+            map.remove(key);
         }
     }
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
-        StringBuilder sb = new StringBuilder();
-        if (!StringUtils.isEmpty(username)) {
-            sb.append(username);
-        }
-        if (!StringUtils.isEmpty(password)) {
-            sb.append(Consts.COLON).append(password);
-        }
-        sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
-
-        String key = MD5Util.getMD5(sb.toString(), true, 64);
+        String key = getKey(jdbcUrl, username, password);
 
         if (!map.containsKey(key) || null == map.get(key)) {
             DruidDataSource instance = new JdbcDataSource();
@@ -151,5 +144,18 @@ public class JdbcDataSource extends DruidDataSource {
         }
 
         return map.get(key);
+    }
+
+    private String getKey(String jdbcUrl, String username, String password) {
+        StringBuilder sb = new StringBuilder();
+        if (!StringUtils.isEmpty(username)) {
+            sb.append(username);
+        }
+        if (!StringUtils.isEmpty(password)) {
+            sb.append(Consts.COLON).append(password);
+        }
+        sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
+
+        return MD5Util.getMD5(sb.toString(), true, 64);
     }
 }
