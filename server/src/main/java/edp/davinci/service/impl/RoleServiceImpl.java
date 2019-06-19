@@ -91,6 +91,12 @@ public class RoleServiceImpl implements RoleService {
     private RelRoleSlideMapper relRoleSlideMapper;
 
     @Autowired
+    private RelRoleDashboardWidgetMapper relRoleDashboardWidgetMapper;
+
+    @Autowired
+    private RelRoleDisplaySlideWidgetMapper relRoleDisplaySlideWidgetMapper;
+
+    @Autowired
     private DisplayService displayService;
 
     @Autowired
@@ -185,6 +191,10 @@ public class RoleServiceImpl implements RoleService {
             relRoleDisplayMapper.deleteByRoleId(id);
 
             relRoleSlideMapper.deleteByRoleId(id);
+
+            relRoleDashboardWidgetMapper.deleteByRoleId(id);
+
+            relRoleDisplaySlideWidgetMapper.deleteByRoleId(id);
 
             return true;
         } else {

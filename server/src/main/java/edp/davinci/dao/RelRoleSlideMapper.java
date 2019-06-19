@@ -64,4 +64,12 @@ public interface RelRoleSlideMapper {
 
     @Delete({"delete from rel_role_slide where role_id = #{roleId}"})
     int deleteByRoleId(Long roleId);
+
+    @Delete({"DELETE rrs FROM rel_role_slide rrs WHERE rrs.slide_id IN " +
+            "( " +
+            "SELECT ds.id " +
+            "FROM display_slide ds " +
+            "WHERE ds.display_id = #{displayId} " +
+            ") "})
+    int deleteByDisplayId(@Param("displayId") Long displayId);
 }

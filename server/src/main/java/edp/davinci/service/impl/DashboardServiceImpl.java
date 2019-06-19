@@ -186,12 +186,14 @@ public class DashboardServiceImpl implements DashboardService {
         List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetMapper.getByDashboardId(dashboardId);
 
         List<Long> disableDashboards = relRoleDashboardMapper.getDisableByUser(user.getId(), portalId);
+        List<Long> disableMemDashboardWidget = relRoleDashboardWidgetMapper.getDisableByUser(user.getId());
 
         if (!CollectionUtils.isEmpty(disableDashboards)) {
             Iterator<MemDashboardWidget> iterator = memDashboardWidgets.iterator();
             while (iterator.hasNext()) {
                 MemDashboardWidget memDashboardWidget = iterator.next();
-                if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && disableDashboards.contains(memDashboardWidget.getDashboardId())) {
+                if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() &&
+                        (disableDashboards.contains(memDashboardWidget.getDashboardId()) || disableMemDashboardWidget.contains(memDashboardWidget.getId()))) {
                     iterator.remove();
                 }
             }
@@ -394,10 +396,19 @@ public class DashboardServiceImpl implements DashboardService {
             throw new UnAuthorizedExecption("you have not permission to create dashboard");
         }
 
+        //delete rel_role_dashboard_widget
+        relRoleDashboardWidgetMapper.deleteByDashboardId(id);
 
+        //delete mem_dashboard_widget
+        memDashboardWidgetMapper.deleteByDashboardId(id);
+
+        //delete rel_role_dashboard
         relRoleDashboardMapper.deleteByDashboardId(id);
+
+        //delete dashboard
         dashboardMapper.deleteByParentId(id);
         dashboardMapper.deleteById(id);
+
         optLogger.info("dashboard ({}) id delete by (:{})", dashboardWithPortalAndProject, user.getId());
 
         return true;
@@ -565,7 +576,7 @@ public class DashboardServiceImpl implements DashboardService {
 
             if (!CollectionUtils.isEmpty(rolesMap)) {
                 Set<Long> memDashboardWidgetIds = rolesMap.keySet();
-                relRoleDashboardWidgetMapper.deleteByMemDashboardWidgetId(memDashboardWidgetIds);
+                relRoleDashboardWidgetMapper.deleteByMemDashboardWidgetIds(memDashboardWidgetIds);
 
                 List<RelRoleDashboardWidget> relRoleDashboardWidgetList = new ArrayList<>();
                 for (MemDashboardWidget memDashboardWidget : memDashboardWidgetList) {
@@ -631,6 +642,8 @@ public class DashboardServiceImpl implements DashboardService {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
+        relRoleDashboardWidgetMapper.deleteByMemDashboardWidgetId(relationId);
+
         int i = memDashboardWidgetMapper.deleteById(relationId);
         if (i > 0) {
             optLogger.info("MemDashboardWidget ({}) is delete by (:{})", memDashboardWidget.toString(), user.getId());
@@ -682,6 +695,8 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     @Transactional
     public void deleteDashboardAndPortalByProject(Long projectId) throws RuntimeException {
+        //delete rel_role_dashboard_widget
+        relRoleDashboardWidgetMapper.deleteByProjectId(projectId);
         //删除dashboard与widget关联
         memDashboardWidgetMapper.deleteByProject(projectId);
         //删除dashaboard
