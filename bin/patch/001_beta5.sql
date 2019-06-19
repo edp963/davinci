@@ -188,6 +188,36 @@ CREATE TABLE `role`
   DEFAULT CHARSET = utf8mb4;
 
 
+DROP TABLE IF EXISTS `rel_role_display_slide_widget`;
+CREATE TABLE `rel_role_display_slide_widget`
+(
+    `role_id`                     bigint(20) NOT NULL,
+    `mem_display_slide_widget_id` bigint(20) NOT NULL,
+    `visible`                     tinyint(1) NOT NULL DEFAULT '0',
+    `create_by`                   bigint(20)          DEFAULT NULL,
+    `create_time`                 datetime            DEFAULT NULL,
+    `update_by`                   bigint(20)          DEFAULT NULL,
+    `update_time`                 datetime            DEFAULT NULL,
+    PRIMARY KEY (`role_id`, `mem_display_slide_widget_id`) USING BTREE
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
+
+
+DROP TABLE IF EXISTS `rel_role_dashboard_widget`;
+CREATE TABLE `rel_role_dashboard_widget`
+(
+    `role_id`                 bigint(20) NOT NULL,
+    `mem_dashboard_widget_id` bigint(20) NOT NULL,
+    `visible`                 tinyint(1) NOT NULL DEFAULT '0',
+    `create_by`               bigint(20)          DEFAULT NULL,
+    `create_time`             datetime            DEFAULT NULL,
+    `update_by`               bigint(20)          DEFAULT NULL,
+    `update_time`             datetime            DEFAULT NULL,
+    PRIMARY KEY (`role_id`, `mem_dashboard_widget_id`) USING BTREE
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
+
+
 ALTER TABLE `organization`
     ADD INDEX `idx_user_id` (`user_id`),
     ADD INDEX `idx_allow_create_project` (`allow_create_project`),
@@ -1152,6 +1182,10 @@ PREPARE stmt FROM @s;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-update organization set role_num = 0;
+update organization
+set role_num = 0;
 
-update download_record set status = 4 where last_download_time is not null and status = 2;
+update download_record
+set status = 4
+where last_download_time is not null
+  and status = 2;
