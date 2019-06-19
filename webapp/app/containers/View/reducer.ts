@@ -193,7 +193,7 @@ const viewReducer = (state = initialState, action: ViewActionType | SourceAction
         draft.bizs = []
         break
       case ActionTypes.RESET_VIEW_STATE:
-        draft = initialState
+        return initialState
         break
       case LOAD_WIDGET_DETAIL_SUCCESS:
         const widgetView = action.payload.view
