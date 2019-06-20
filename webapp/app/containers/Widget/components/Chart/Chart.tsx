@@ -104,15 +104,13 @@ export class Chart extends React.PureComponent<IChartProps> {
     })
     const brushed = [{0: Object.values(resultData)}]
     const sourceData = Object.values(resultData)
+    const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
+    if (isInteractiveChart && onDoInteract) {
+      const triggerData = sourceData
+      onDoInteract(triggerData)
+    }
     setTimeout(() => {
       getDataDrillDetail(JSON.stringify({range: null, brushed, sourceData}))
-      const isInteractiveChart = onCheckTableInteract()
-      if (isInteractiveChart && onDoInteract) {
-       // const triggerData = getTriggeringRecord(params, sourceData)
-        const triggerData = sourceData
-        console.log(triggerData)
-        onDoInteract(triggerData)
-      }
     }, 500)
     if (onSelectChartsItems) {
       onSelectChartsItems(selectedItems)
