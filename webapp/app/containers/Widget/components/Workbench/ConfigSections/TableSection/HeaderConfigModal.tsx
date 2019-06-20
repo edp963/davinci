@@ -449,10 +449,11 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       this.setState({
         currentSelectedKeys: selectedRowKeys
       })
-    },
-    getCheckboxProps: (record) => ({
-      disabled: !record.isGroup
-    })
+    }
+    // @FIXME data columns do not allow check
+    // getCheckboxProps: (record) => ({
+    //   disabled: !record.isGroup
+    // })
   }
 
   public render () {
