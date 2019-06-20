@@ -32,7 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -89,6 +91,7 @@ public abstract class AbstractSheetWriter {
             int rownum = 0;
             int colnum = 0;
             Map<String, QueryColumn> columnMap = context.getQueryColumns().stream().collect(Collectors.toMap(x -> x.getName(), x -> x));
+            List<QueryColumn> queryColumns = new ArrayList<>();
             for (ExcelHeader excelHeader : context.getExcelHeaders()) {
                 //计算多级表头行
                 if (excelHeader.getRow() + excelHeader.getRowspan() > rownum) {
@@ -100,6 +103,7 @@ public abstract class AbstractSheetWriter {
                 }
                 if (columnMap.containsKey(excelHeader.getKey())) {
                     QueryColumn queryColumn = columnMap.get(excelHeader.getKey());
+                    queryColumns.add(queryColumn);
                     queryColumn.setType(excelHeader.getType());
                     //设置列的最大长度
                     columnWidthMap.put(queryColumn.getName(), Math.max(queryColumn.getName().getBytes().length, queryColumn.getType().getBytes().length));
@@ -123,6 +127,9 @@ public abstract class AbstractSheetWriter {
                         headerFormatMap.put(excelHeader.getKey(), dataStyle);
                     }
                 }
+            }
+            if (!CollectionUtils.isEmpty(queryColumns)) {
+                context.setQueryColumns(queryColumns);
             }
             //画出表头
             for (int i = 0; i < rownum; i++) {
