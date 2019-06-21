@@ -39,7 +39,7 @@ import {
 } from 'app/components/Filters'
 import { SHOULD_LOAD_OPTIONS, defaultFilterControlGridProps } from 'app/components/Filters/filterTypes'
 import FilterControl from 'app/components/Filters/FilterControl'
-import { localControlMigrationRecorder } from 'app/utils/MigrationRecorders'
+import { localControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 const styles = require('../Dashboard.less')
 

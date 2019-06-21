@@ -33,7 +33,7 @@ import {
   deserializeDefaultValue
 } from 'app/components/Filters'
 import { FilterTypes, IS_RANGE_TYPE} from 'app/components/Filters/filterTypes'
-import { localControlMigrationRecorder } from 'app/utils/MigrationRecorders'
+import { localControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 import FilterList from 'app/components/Filters/config/FilterList'
 import FilterFormWithRedux, { FilterForm } from 'app/components/Filters/config/FilterForm'
