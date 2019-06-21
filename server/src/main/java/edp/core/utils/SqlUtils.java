@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.core.utils;
@@ -44,8 +45,6 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
-import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -56,6 +55,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static edp.core.consts.Consts.*;
+import static edp.core.enums.DataTypeEnum.ORACLE;
 
 @Slf4j
 @Component
@@ -71,6 +71,18 @@ public class SqlUtils {
 
     @Value("${source.enable-query-log:false}")
     private boolean isQueryLogEnable;
+
+    private static final String TABLE = "TABLE";
+
+    private static final String VIEW = "VIEW";
+
+
+    private static final String[] TABLE_TYPES = new String[]{TABLE, VIEW};
+
+    private static final String TABLE_NAME = "TABLE_NAME";
+
+    private static final String TABLE_TYPE = "TABLE_TYPE";
+
 
     private String jdbcUrl;
 
@@ -194,7 +206,8 @@ public class SqlUtils {
             final int startRow = (pageNo - 1) * pageSize;
 
             if (pageNo == 1 || totalCount == 0) {
-                totalCount = jdbcTemplate.<Integer>queryForObject(getCountSql(sql), Integer.class);
+                Object o = jdbcTemplate.queryForObject(getCountSql(sql), Object.class);
+                totalCount = Integer.parseInt(String.valueOf(o));
             }
             if (limit > 0) {
                 limit = limit > resultLimit ? resultLimit : limit;
@@ -231,42 +244,58 @@ public class SqlUtils {
     }
 
     private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns, int startRow) {
-        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql);
-        if (null != sqlRowSet) {
-            SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
+        jdbcTemplate.query(sql, rs -> {
+            if (null != rs) {
+                ResultSetMetaData metaData = rs.getMetaData();
 
-            List<QueryColumn> queryColumns = new ArrayList<>();
-            for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                String key = metaData.getColumnLabel(i);
-                if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
-                    continue;
-                }
-                queryColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
-            }
-            paginateWithQueryColumns.setColumns(queryColumns);
-
-            List<Map<String, Object>> resultList = new ArrayList<>();
-
-            if (startRow > 0) {
-                sqlRowSet.absolute(startRow);
-            }
-
-            while (sqlRowSet.next()) {
-                Map<String, Object> map = new LinkedHashMap<>();
+                List<QueryColumn> queryColumns = new ArrayList<>();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
                     String key = metaData.getColumnLabel(i);
                     if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
                         continue;
                     }
-                    map.put(key, sqlRowSet.getObject(key));
+                    queryColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
                 }
-                resultList.add(map);
+                paginateWithQueryColumns.setColumns(queryColumns);
+
+                List<Map<String, Object>> resultList = new ArrayList<>();
+
+                try {
+                    if (startRow > 0) {
+                        rs.absolute(startRow);
+                    }
+                    while (rs.next()) {
+                        resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                    }
+                } catch (Throwable e) {
+                    int currentRow = 0;
+                    while (rs.next()) {
+                        if (currentRow >= startRow) {
+                            resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                        }
+                        currentRow++;
+                    }
+                }
+
+                paginateWithQueryColumns.setResultList(resultList);
             }
-            paginateWithQueryColumns.setResultList(resultList);
-        }
+            return paginateWithQueryColumns;
+        });
     }
 
-    private String getCountSql(String sql) {
+    private Map<String, Object> getResultObjectMap(Set<String> excludeColumns, ResultSet rs, ResultSetMetaData metaData) throws SQLException {
+        Map<String, Object> map = new LinkedHashMap<>();
+        for (int i = 1; i <= metaData.getColumnCount(); i++) {
+            String key = metaData.getColumnLabel(i);
+            if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
+                continue;
+            }
+            map.put(key, rs.getObject(key));
+        }
+        return map;
+    }
+
+    public static String getCountSql(String sql) {
         try {
             Select select = (Select) CCJSqlParserUtil.parse(sql);
             PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
@@ -277,34 +306,80 @@ public class SqlUtils {
         return String.format(Consts.QUERY_COUNT_SQL, sql);
     }
 
+
+    /**
+     * 获取当前连接数据库
+     *
+     * @return
+     * @throws SourceException
+     */
+    public List<String> getDatabases() throws SourceException {
+        List<String> dbList = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = getConnection();
+            if (null != connection) {
+                switch (this.dataTypeEnum) {
+                    case ORACLE:
+                        dbList.add(this.username);
+                        break;
+                    default:
+                        String catalog = connection.getCatalog();
+                        if (!StringUtils.isEmpty(catalog)) {
+                            dbList.add(catalog);
+                        } else {
+                            DatabaseMetaData metaData = connection.getMetaData();
+                            ResultSet rs = metaData.getCatalogs();
+                            while (rs.next()) {
+                                dbList.add(rs.getString(1));
+                            }
+                        }
+                        break;
+                }
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
+        } finally {
+            releaseConnection(connection);
+        }
+
+
+        return dbList;
+    }
+
     /**
      * 获取当前数据源表结构
      *
      * @return
      * @throws SourceException
      */
-    public List<String> getTableList() throws SourceException {
-        List<String> tableList = null;
+    public List<QueryColumn> getTableList(String dbName) throws SourceException {
+        List<QueryColumn> tableList = null;
         Connection connection = null;
         try {
             connection = getConnection();
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
-                String schemaPattern = null;
-                DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
-                if (null != dataTypeEnum && dataTypeEnum.getFeature().equals(DataTypeEnum.ORACLE.getFeature())) {
-                    schemaPattern = this.username;
-                    if (null != schemaPattern) {
-                        schemaPattern = schemaPattern.toUpperCase();
-                    }
+                String schema = null;
+                try {
+                    schema = metaData.getConnection().getSchema();
+                } catch (Throwable t) {
                 }
-                ResultSet tables = metaData.getTables(null, schemaPattern, "%", null);
+
+                ResultSet tables = metaData.getTables(dbName, getDBSchemaPattern(schema), "%", TABLE_TYPES);
                 if (null != tables) {
                     tableList = new ArrayList<>();
                     while (tables.next()) {
-                        String tableName = tables.getString("TABLE_NAME");
-                        if (!StringUtils.isEmpty(tableName)) {
-                            tableList.add(tableName);
+                        String name = tables.getString(TABLE_NAME);
+                        if (!StringUtils.isEmpty(name)) {
+                            String type = TABLE;
+                            try {
+                                type = tables.getString(TABLE_TYPE);
+                            } catch (Exception e) {
+                            }
+                            tableList.add(new QueryColumn(name, type));
                         }
                     }
                 }
@@ -319,6 +394,31 @@ public class SqlUtils {
         return tableList;
     }
 
+    private String getDBSchemaPattern(String schema) {
+        String schemaPattern = null;
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
+        if (null != dataTypeEnum) {
+            switch (dataTypeEnum) {
+                case ORACLE:
+                    schemaPattern = this.username;
+                    if (null != schemaPattern) {
+                        schemaPattern = schemaPattern.toUpperCase();
+                    }
+                    break;
+                case SQLSERVER:
+                    schemaPattern = "dbo";
+
+                case PRESTO:
+                    if (!StringUtils.isEmpty(schema)) {
+                        schemaPattern = schema;
+                    }
+                    break;
+            }
+        }
+        return schemaPattern;
+
+    }
+
     /**
      * 获取指定表列信息
      *
@@ -326,18 +426,16 @@ public class SqlUtils {
      * @return
      * @throws SourceException
      */
-    public List<TableInfo> getTableColumns(String tableName) throws SourceException {
-        List<TableInfo> tableInfoList = null;
+    public TableInfo getTableInfo(String dbName, String tableName) throws SourceException {
+        TableInfo tableInfo = null;
         Connection connection = null;
         try {
             connection = getConnection();
             if (null != connection) {
-                tableInfoList = new ArrayList<>();
                 DatabaseMetaData metaData = connection.getMetaData();
-                List<String> primaryKeys = getPrimaryKeys(tableName, metaData);
-                List<QueryColumn> columns = getColumns(tableName, metaData);
-                TableInfo tableInfo = new TableInfo(tableName, primaryKeys, columns);
-                tableInfoList.add(tableInfo);
+                List<String> primaryKeys = getPrimaryKeys(dbName, tableName, metaData);
+                List<QueryColumn> columns = getColumns(dbName, tableName, metaData);
+                tableInfo = new TableInfo(tableName, primaryKeys, columns);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -345,8 +443,7 @@ public class SqlUtils {
         } finally {
             releaseConnection(connection);
         }
-        return tableInfoList;
-
+        return tableInfo;
     }
 
 
@@ -428,16 +525,16 @@ public class SqlUtils {
      * @return
      * @throws ServerException
      */
-    private List<String> getPrimaryKeys(String tableName, DatabaseMetaData metaData) throws ServerException {
+    private List<String> getPrimaryKeys(String dbName, String tableName, DatabaseMetaData metaData) throws ServerException {
         ResultSet rs = null;
         List<String> primaryKeys = new ArrayList<>();
         try {
-            rs = metaData.getPrimaryKeys(null, null, tableName);
+            rs = metaData.getPrimaryKeys(dbName, null, tableName);
             while (rs.next()) {
                 primaryKeys.add(rs.getString(4));
             }
         } catch (Exception e) {
-            throw new ServerException(e.getMessage());
+            log.error(e.getMessage());
         } finally {
             closeResult(rs);
         }
@@ -453,11 +550,14 @@ public class SqlUtils {
      * @return
      * @throws ServerException
      */
-    private List<QueryColumn> getColumns(String tableName, DatabaseMetaData metaData) throws ServerException {
+    private List<QueryColumn> getColumns(String dbName, String tableName, DatabaseMetaData metaData) throws ServerException {
         ResultSet rs = null;
         List<QueryColumn> columnList = new ArrayList<>();
         try {
-            rs = metaData.getColumns(null, null, tableName, "%");
+            if (this.dataTypeEnum == ORACLE) {
+                dbName = null;
+            }
+            rs = metaData.getColumns(dbName, null, tableName, "%");
             while (rs.next()) {
                 columnList.add(new QueryColumn(rs.getString(4), rs.getString(6)));
             }
@@ -501,7 +601,7 @@ public class SqlUtils {
         if (jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase()) > -1) {
             ESDataSource.removeDataSource(jdbcUrl);
         } else {
-            jdbcDataSource.removeDatasource(jdbcUrl, userename);
+            jdbcDataSource.removeDatasource(jdbcUrl, userename, password);
         }
     }
 

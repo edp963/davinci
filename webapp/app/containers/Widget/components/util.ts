@@ -624,7 +624,7 @@ export function getChartTooltipLabel (type, seriesData, options) {
             : record[`${mc.agg}(${decodedName})`]
           : 0
         value = getFormattedValue(value, mc.format)
-        return `${getFieldAlias(mc.field, {}) || mc.name}: ${value}`
+        return `${getFieldAlias(mc.field, {}) || decodedName}: ${value}`
       }))
       .join('<br/>')
   }
@@ -700,6 +700,8 @@ export const AvailableFieldFormatTypes = {
 
 export function getFormattedValue (value: number | string, format: IFieldFormatConfig) {
   if (!format) { return value }
+  if (value === null || value === undefined) { return value }
+  if (typeof value === 'string' && (!value || isNaN(+value))) { return value }
 
   const { formatType } = format
   const config = format[formatType]

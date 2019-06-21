@@ -108,23 +108,23 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     const {pid} = this.props.params
     this.props.onLoadWidgets(pid)
     this.props.onLoadVizs(pid)
-    this.props.onLoadDashboards().then(() => {
-      console.log('then')
-      const {dashboards} = this.props
-      const initDashboardTree = (dashboards as any[]).map((dashboard) => ({
-        ...dashboard,
-        ...{
-          label: dashboard.name,
-          key: dashboard.id,
-          value: `${dashboard.id}(d)`,
-          type: 'dashboard'
-        }
-      }))
-      this.setState({
-        dashboardTree: initDashboardTree,
-        screenWidth: document.documentElement.clientWidth
-      })
-    })
+    // this.props.onLoadDashboards().then(() => {
+    //   console.log('then')
+    //   const {dashboards} = this.props
+    //   const initDashboardTree = (dashboards as any[]).map((dashboard) => ({
+    //     ...dashboard,
+    //     ...{
+    //       label: dashboard.name,
+    //       key: dashboard.id,
+    //       value: `${dashboard.id}(d)`,
+    //       type: 'dashboard'
+    //     }
+    //   }))
+    //   this.setState({
+    //     dashboardTree: initDashboardTree,
+    //     screenWidth: document.documentElement.clientWidth
+    //   })
+    // })
     this.props.onLoadSchedules(pid)
   }
 
@@ -386,6 +386,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   }
 
   private onLoadTreeData = (treeNode) => {
+    console.log('onloadtreedata')
     const eventKey = treeNode.props.eventKey
     return new Promise((resolve) => {
       this.props.onLoadDashboardDetail(eventKey).then(() => {

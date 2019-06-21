@@ -40,7 +40,7 @@ import saga from '../Projects/sagas'
 import injectSaga from 'utils/injectSaga'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 
-import MenuPermission from '../Account/components/checkMenuPermission'
+import MenuPermission, { onlyVizPermission } from '../Account/components/checkMenuPermission'
 const styles = require('./Report.less')
 
 interface IReportProps {
@@ -103,7 +103,6 @@ export class Report extends React.Component<IReportProps, {}> {
   public render () {
     const {
       sidebar,
-      loginUser,
       routes,
       currentProject
     } = this.props
@@ -123,12 +122,14 @@ export class Report extends React.Component<IReportProps, {}> {
       )
     })
 
-    const sidebarComponent = currentProject && currentProject.permission
-      ? (
-        <Sidebar>
-          {sidebarOptions}
-        </Sidebar>
-      ) : ''
+    const sidebarComponent = currentProject
+      && currentProject.permission
+      && !onlyVizPermission(currentProject.permission)
+        ? (
+          <Sidebar>
+            {sidebarOptions}
+          </Sidebar>
+        ) : ''
 
     return (
       <div className={styles.report}>

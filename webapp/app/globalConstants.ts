@@ -80,7 +80,7 @@ export const PIVOT_CHART_LINE_STYLES = [
   { name: '虚线', value: 'dashed'},
   { name: '点', value: 'dotted'}
 ]
-export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64]
+export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 96, 128]
 export const PIVOT_CHART_FONT_WEIGHTS = ['normal', 'bold', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900']
 export const PIVOT_CHART_FONT_STYLE = [
   { name: '普通', value: 'normal' },
@@ -201,3 +201,6 @@ export const DEFAULT_FONT_FAMILY = '"Chinese Quote", -apple-system, BlinkMacSyst
 
 export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD'
 export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
+
+export const DOWNLOAD_LIST_POLLING_FREQUENCY = 30000
+export const DEFAULT_CACHE_EXPIRED = 300

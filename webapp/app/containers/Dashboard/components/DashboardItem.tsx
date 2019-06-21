@@ -24,6 +24,7 @@ import classnames from 'classnames'
 
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
+import DashboardItemMask from './DashboardItemMask'
 import SharePanel from '../../../components/SharePanel'
 import DownloadCsv, { IDownloadCsvProps } from '../../../components/DownloadCsv'
 import DataDrill from '../../../components/DataDrill/Panel'
@@ -128,18 +129,21 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     onShowDrillEdit: () => void 0,
     onDeleteDashboardItem: () => void 0
   }
-  private frequent: number
+  private pollingTimer: number
   private container: HTMLDivElement = null
 
   public componentWillMount () {
     const { itemId, widget, view, onGetChartData, container, datasource } = this.props
     const { cacheWidgetProps, cacheWidgetId } = this.state
     const widgetProps = JSON.parse(widget.config)
+    const { autoLoadData } = widgetProps
     const pagination = this.getPagination(widgetProps, datasource)
     const nativeQuery = this.getNativeQuery(widgetProps)
     if (container === 'share') {
-      onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
-      this.setFrequent(this.props)
+      if (autoLoadData === true || autoLoadData === undefined) {
+        onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
+      }
+      this.initPolling(this.props)
     }
     this.setState({
       widgetProps,
@@ -185,7 +189,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     })
   }
 
-  public componentWillUpdate (nextProps: IDashboardItemProps) {
+  public componentWillUpdate (nextProps: IDashboardItemProps, nextState: IDashboardItemStates) {
     const {
       itemId,
       widget,
@@ -196,22 +200,24 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       container
     } = nextProps
     const { pagination, nativeQuery } = this.state
-
+    const { autoLoadData } = nextState.widgetProps
     if (!container) {
       if (!this.props.rendered && rendered) {
         // clear
-        onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
-        this.setFrequent(this.props)
+        if (autoLoadData === true || autoLoadData === undefined) {
+          onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
+        }
+        this.initPolling(this.props)
       }
     }
 
     if (polling !== this.props.polling || frequency !== this.props.frequency) {
-      this.setFrequent(nextProps)
+      this.initPolling(nextProps)
     }
   }
 
   public componentWillUnmount () {
-    clearInterval(this.frequent)
+    clearInterval(this.pollingTimer)
   }
 
   // @FIXME need refactor
@@ -244,7 +250,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     return noAggregators
   }
 
-  private setFrequent = (props: IDashboardItemProps) => {
+  private initPolling = (props: IDashboardItemProps) => {
     const {
       polling,
       frequency,
@@ -253,11 +259,11 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onGetChartData
     } = props
 
-    clearInterval(this.frequent)
+    clearInterval(this.pollingTimer)
 
     if (polling) {
       const { pagination, nativeQuery } = this.state
-      this.frequent = window.setInterval(() => {
+      this.pollingTimer = window.setInterval(() => {
         onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
       }, Number(frequency) * 1000)
     }
@@ -270,7 +276,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onGetChartData
     } = this.props
     const { pagination, nativeQuery } = this.state
-
     onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
   }
 
@@ -281,7 +286,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onGetChartData
     } = this.props
     const { pagination, nativeQuery } = this.state
-
     onGetChartData('clear', itemId, widget.id, { ...queryConditions, pagination, nativeQuery })
   }
 
@@ -409,7 +413,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             widgetProps: {
               ...widgetProps,
               ...{
-                cols: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.cols
+                cols: historyGroups && historyGroups.length ? historyGroups.map((history) => ({name: history})) : cacheWidgetProps.cols
               }
             }
           })
@@ -418,7 +422,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             widgetProps: {
               ...widgetProps,
               ...{
-                rows: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.rows
+                rows: historyGroups && historyGroups.length ? historyGroups.map((history) => ({name: history})) : cacheWidgetProps.rows
               }
             }
           })
@@ -692,6 +696,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     } = this.props
 
     const data = datasource.resultList
+
     const {
       controlPanelVisible,
       sharePanelAuthorized,
@@ -895,17 +900,30 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         />
       </div>
     )
+
+    const { selectedChart, cols, rows, metrics } = widgetProps
+    const hasDataConfig = !!(cols.length || rows.length || metrics.length)
+    const empty = (
+      <DashboardItemMask.Empty
+        loading={loading}
+        chartType={selectedChart}
+        empty={!data.length}
+        hasDataConfig={hasDataConfig}
+      />
+    )
+
     return (
       <div className={gridItemClass} ref={(f) => this.container = f}>
         <div className={styles.header}>
           <div className={styles.title}>
             {controlPanelHandle}
             <h4>{widget.name}</h4>
+            {loading && <Icon className={styles.control} type="loading" />}
             {descPanelHandle}
           </div>
           <div className={styles.tools}>
             <Tooltip title="同步数据">
-              <Icon type={loading ? 'loading' : 'reload'} onClick={this.onSyncBizdatas} />
+              {!loading && <Icon type="reload" onClick={this.onSyncBizdatas} />}
             </Tooltip>
             {widgetButton}
             <Tooltip title="全屏">
@@ -948,9 +966,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               {...widgetProps}
               renderType={loading ? 'loading' : renderType}
               data={data}
+              interacting={this.props.interacting}
               queryVariables={queryVariables}
               pagination={pagination}
-              loading={loading}
+              empty={empty}
               model={model}
               onCheckTableInteract={this.checkTableInteract}
               onDoInteract={this.doInteract}

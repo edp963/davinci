@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
 
 package edp.davinci.core.enums;
 
-import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -45,7 +44,11 @@ public enum SqlVariableValueTypeEnum {
     }
 
     public static List<String> getValues(String valueType, List<Object> values, boolean udf) {
-        if (CollectionUtils.isEmpty(values)) {
+        if (null == values) {
+            return null;
+        }
+
+        if (values.isEmpty()) {
             return new ArrayList<>();
         }
 

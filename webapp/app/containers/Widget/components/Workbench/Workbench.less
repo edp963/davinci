@@ -84,12 +84,18 @@
   display: flex;
   flex-direction: column;
 
-  h4 {
+  .title {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
     padding: 0 8px;
     margin-top: 4px;
-    color: @light-text-color;
-    line-height: 30px;
-    flex-shrink: 0;
+
+    h4 {
+      flex: 1;
+      color: @light-text-color;
+      line-height: 30px;
+    }
   }
 
   .columnList {
@@ -230,6 +236,31 @@
         background-color: transparent;
       }
     }
+  }
+}
+
+.manualQuery {
+  flex-shrink: 0;
+  height: 48px;
+  background-color: @light-bg;
+  border-bottom: 1px solid @border-color-base;
+  font-size: 1.08em;
+  user-select: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &:hover {
+    background-color: lighten(@primary-color, 40%);
+  }
+  &:active {
+    background-color: lighten(@primary-color, 30%);
+  }
+
+  i {
+    font-size: 1.5em;
+    margin-right: 4px;
   }
 }
 

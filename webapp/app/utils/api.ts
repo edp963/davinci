@@ -45,5 +45,6 @@ export default {
   teams: `${host}/teams`,
   roles: `${host}/roles`,
   portal: `${host}/dashboardPortals`,
-  star: `${host}/star`
+  star: `${host}/star`,
+  download: `${host}/download`
 }

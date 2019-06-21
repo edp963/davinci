@@ -72,17 +72,20 @@ interface IProjectsState {
   pageSize: number
   isDisableCollect: boolean
 }
+
+export interface IProjectPermission {
+  downloadPermission: boolean
+  schedulePermission: number
+  sharePermission: boolean
+  sourcePermission: number
+  viewPermission: number
+  vizPermission: number
+  widgetPermission: number
+}
+
 export interface IProject {
   createBy?: { avatar?: string, id?: number, username?: string}
-  permission?: {
-    downloadPermission: boolean
-    schedulePermission: number
-    sharePermission: boolean
-    sourcePermission: number
-    viewPermission: number
-    vizPermission: number
-    widgetPermission: number
-  }
+  permission?: IProjectPermission
   inTeam?: boolean
   isStar?: boolean
   type?: string

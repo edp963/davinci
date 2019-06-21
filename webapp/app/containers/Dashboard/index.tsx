@@ -36,7 +36,6 @@ import portalSaga from '../Portal/sagas'
 import viewReducer from '../View/reducer'
 import viewSaga from '../View/sagas'
 
-import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
 import DashboardAction from './components/DashboardAction'
 
@@ -57,7 +56,8 @@ import {
   loadDashboardDetail
 } from './actions'
 import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
-import { hideNavigator, checkNameUniqueAction } from '../App/actions'
+import { hideNavigator, checkNameUniqueAction, initiateDownloadTask } from '../App/actions'
+import { DownloadTypes } from '../App/types'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 import { loadPortals } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
@@ -74,6 +74,8 @@ import EditorHeader from '../../components/EditorHeader'
 const SplitPane = React.lazy(() => import('react-split-pane'))
 import {IProjectRoles} from '../Organizations/component/ProjectRole'
 import { loadProjectRoles } from '../Organizations/actions'
+import { IGlobalControl } from 'app/components/Filters'
+import { GlobalControlQueryMode } from 'app/components/Filters/types'
 
 interface IDashboardProps {
   modalLoading: boolean
@@ -93,6 +95,7 @@ interface IDashboardProps {
   onLoadProjectDetail: (id) => any
   onExcludeRoles: (type: string, id: number, resolve?: any) => any
   onLoadProjectRoles: (id: number) => any
+  onInitiateDownloadTask: (id: number, type: DownloadTypes, downloadParams?: any[]) => void
 }
 
 export interface IDashboard {
@@ -104,6 +107,12 @@ export interface IDashboard {
   index?: number
   type?: number
   children?: any[]
+}
+
+export interface IDashboardConfig {
+  filters?: IGlobalControl[]
+  linkagers?: any[]
+  queryMode?: GlobalControlQueryMode
 }
 
 export interface ICurrentDashboard extends IDashboard {
@@ -263,7 +272,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             config,
             dashboardPortalId: Number(params.portalId),
             name,
-            type: selectType ? 1 : 0
+           // type: selectType ? 1 : 0   // todo selectType 更改位置
+            type: Number(selectType)
           }
 
           const addObj = {
@@ -492,7 +502,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             folder: parentId ? `${(dashboards as any[]).find((g) => g.id === parentId).id}` : '0',
             config,
             name: formType === 'copy' ? `${name}_copy` : name,
-            selectType: type === 1,
+          //  selectType: type === 1,
+            selectType: type,
             index
           })
         }, 0)
@@ -514,11 +525,15 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
 
   private onOperateMore = (item, type) => {
-    this.setState({
-      formType: type
-    }, () => {
-      this.onShowDashboardForm(item, this.state.formType)
-    })
+    if (type === 'download') {
+      this.props.onInitiateDownloadTask(item.id, item.type === 0 ? DownloadTypes.Folder : DownloadTypes.Dashboard, [])
+    } else {
+      this.setState({
+        formType: type
+      }, () => {
+        this.onShowDashboardForm(item, this.state.formType)
+      })
+    }
   }
 
   private searchDashboard = (e) => {
@@ -665,7 +680,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       splitSize,
       portalTreeWidth
     } = this.state
-
     const items = searchValue.map((s) => {
       return <li key={s.id} onClick={this.pickSearchDashboard(s.id)}>{s.name}</li>
     })
@@ -881,7 +895,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
-    onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id))
+    onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
+    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(initiateDownloadTask(id, type, downloadParams))
   }
 }
 

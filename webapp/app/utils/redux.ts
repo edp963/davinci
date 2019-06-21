@@ -3,11 +3,13 @@ type ReturnTypes<EnumTypes> = {
 }
 
 export function createTypes<EnumTypes> (enumTypes: EnumTypes): ReturnTypes<EnumTypes> {
-  return new Proxy(enumTypes as any, {
-    get (_, property: any) {
-      return property
-    }
-  })
+  // @FIXME temporarily not use Proxy to avoid PhantomJS screenshot error for not support ES6 Proxy
+  // return new Proxy(enumTypes as any, {
+  //   get (_, property: any) {
+  //     return enumTypes[property]
+  //   }
+  // })
+  return Object.entries(enumTypes as any).reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {}) as ReturnTypes<EnumTypes>
 }
 
 type ActionCreatorMap<ActionMap> = {

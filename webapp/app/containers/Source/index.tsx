@@ -69,6 +69,7 @@ interface ISourceListStateProps {
 
 interface ISourceListDispatchProps {
   onLoadSources: (projectId: number) => any
+  onLoadSourceDetail: (sourceId: number, resolve: (source: ISource) => void) => any
   onAddSource: (sourceData: any, resolve: any) => any
   onDeleteSource: (id: number) => any
   onEditSource: (sourceData: any, resolve: any) => any
@@ -160,7 +161,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
   private getFilterSources = memoizeOne((sourceName: string, sources: ISource[]) => {
     if (!Array.isArray(sources) || !sources.length) { return [] }
     const regex = new RegExp(sourceName, 'gi')
-    const filterSources = sources.filter((v) => v.name.match(regex))
+    const filterSources = sources.filter((v) => v.name.match(regex) || v.description.match(regex))
     return filterSources
   })
 
@@ -264,10 +265,11 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
   }
 
   private editSource = (sourceId: number) => () => {
-    const editingSource = this.props.sources.find((source) => source.id === sourceId)
-    this.setState({
-      editingSource,
-      sourceModalVisible: true
+    this.props.onLoadSourceDetail(sourceId, (editingSource) => {
+      this.setState({
+        editingSource,
+        sourceModalVisible: true
+      })
     })
   }
 
@@ -527,6 +529,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
 
 const mapDispatchToProps = (dispatch: Dispatch<SourceActionType | any>) => ({
   onLoadSources: (projectId) => dispatch(SourceActions.loadSources(projectId)),
+  onLoadSourceDetail: (sourceId, resolve) => dispatch(SourceActions.loadSourceDetail(sourceId, resolve)),
   onAddSource: (source, resolve) => dispatch(SourceActions.addSource(source, resolve)),
   onDeleteSource: (id) => dispatch(SourceActions.deleteSource(id)),
   onEditSource: (source, resolve) => dispatch(SourceActions.editSource(source, resolve)),

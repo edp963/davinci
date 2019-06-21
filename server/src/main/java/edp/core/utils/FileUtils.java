@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.core.utils;
@@ -27,13 +28,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static edp.core.consts.Consts.EMPTY;
+import static edp.core.consts.Consts.*;
 
 
 @Component
@@ -239,5 +242,30 @@ public class FileUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public String getFilePath(FileTypeEnum type, Long id) {
+        StringBuilder sb = new StringBuilder(this.fileBasePath);
+        if (!sb.toString().endsWith(File.separator)) {
+            sb.append(File.separator);
+        }
+        sb.append(DIR_DOWNLOAD);
+        sb.append(new SimpleDateFormat("yyyyMMdd").format(new Date())).append(File.separator);
+        sb.append(type.getType()).append(File.separator);
+        File dir = new File(sb.toString());
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        sb.append(id).append(UNDERLINE).append(System.currentTimeMillis()).append(type.getFormat());
+        return sb.toString().replaceAll(File.separator + "{2,}", File.separator);
+    }
+
+    public static boolean delete(String filePath) {
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()) {
+            file.delete();
+            return true;
+        }
+        return false;
     }
 }

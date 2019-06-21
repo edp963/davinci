@@ -18,13 +18,17 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 import classnames from 'classnames'
+import DownloadList from '../DownloadList'
 
-import { makeSelectLoginUser } from '../../containers/App/selectors'
+import {
+  makeSelectLoginUser
+} from '../../containers/App/selectors'
+
 import { Dropdown, Menu, Icon } from 'antd'
 
 const styles = require('./Navigator.less')
@@ -39,9 +43,13 @@ interface INavigatorProps {
 }
 
 export function Navigator (props: INavigatorProps) {
+  const {
+    show,
+    onLogout
+  } = props
   const headerClass = classnames({
     [styles.header]: true,
-    [styles.hide]: !props.show
+    [styles.hide]: !show
   })
   const menu = (
     <Menu>
@@ -52,7 +60,7 @@ export function Navigator (props: INavigatorProps) {
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="3">
-        <a href="javascript:;" onClick={props.onLogout}>
+        <a href="javascript:;" onClick={onLogout}>
           退出登录
         </a>
       </Menu.Item>
@@ -77,13 +85,16 @@ export function Navigator (props: INavigatorProps) {
       </div>
       <ul className={styles.tools}>
         <li>
+          <DownloadList />
+        </li>
+        <li>
           <Icon type="file-text" onClick={goDoc} />
         </li>
         <li>
           <Icon type="github" onClick={goGithub}/>
         </li>
         <li>
-          <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+          <Dropdown overlay={menu} trigger={['click']} placement="bottomCenter">
             <Icon type="user" />
           </Dropdown>
         </li>

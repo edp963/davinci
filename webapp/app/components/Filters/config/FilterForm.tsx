@@ -23,10 +23,12 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import classnames from 'classnames'
 
-import { Form, Row, Col, Input, Checkbox, Select, Button, Table } from 'antd'
+import { Form, Row, Col, Input, InputNumber, Radio, Checkbox, Select, Button, Table } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
 const FormItem = Form.Item
 const Option = Select.Option
+const RadioGroup = Radio.Group
+const RadioButton = Radio.Button
 
 import { FilterTypeList, FilterTypesLocale, FilterTypes } from '../filterTypes'
 import {
@@ -92,15 +94,19 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
                 )}
               </FormItem>
             </Col>
-            <Col span={8} className={classnames({[utilStyles.hide]: !showDefaultValue})}>
-              <FormItem label=" " colon={false}>
-                {getFieldDecorator('defaultValue', {})(
-                  <Suspense fallback={null}>
-                    {renderDate(controlFormValues, () => void 0, {size: 'small'})}
-                  </Suspense>
-                )}
-              </FormItem>
-            </Col>
+            {
+              showDefaultValue && (
+                <Suspense fallback={null}>
+                  <Col span={8}>
+                    <FormItem label=" " colon={false}>
+                      {getFieldDecorator('defaultValue', {})(
+                        renderDate(controlFormValues, null, {size: 'small'})
+                      )}
+                    </FormItem>
+                  </Col>
+                </Suspense>
+              )
+            }
           </>
         )
         break
@@ -244,6 +250,29 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
               )}
             </FormItem>
           </Col>
+          {
+            type === FilterTypes.Select && (
+              <>
+                <Col key="cache" span={6}>
+                  <FormItem label="缓存">
+                    {getFieldDecorator('cache', {})(
+                      <RadioGroup size="small">
+                        <RadioButton value={true}>开启</RadioButton>
+                        <RadioButton value={false}>关闭</RadioButton>
+                      </RadioGroup>
+                    )}
+                  </FormItem>
+                </Col>
+                <Col key="expired" span={8}>
+                  <FormItem label="有效期（秒）">
+                    {getFieldDecorator('expired', {})(
+                      <InputNumber size="small" />
+                    )}
+                  </FormItem>
+                </Col>
+              </>
+            )
+          }
         </Row>
         <Row gutter={8} className={styles.formBody}>
           {this.renderDefaultValueComponent()}
@@ -251,7 +280,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
         {
           type === FilterTypes.Select && (
             <Row gutter={8} className={styles.formBody}>
-              <Col span={6}>
+              <Col span={7}>
                 <FormItem label="选项">
                   {getFieldDecorator('customOptions', {
                     valuePropName: 'checked'
@@ -323,6 +352,10 @@ const formOptions = {
             }
             break
         }
+      }
+
+      if (changedValues.hasOwnProperty('multiple')) {
+        changedValues.defaultValue = null
       }
 
       if (changedValues.hasOwnProperty('type')) {

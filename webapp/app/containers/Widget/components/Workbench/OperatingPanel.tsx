@@ -4,7 +4,7 @@ import classnames from 'classnames'
 import widgetlibs from '../../config'
 import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
 import { IViewBase, IFormedView, IViewModel } from 'containers/View/types'
-import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType} from './Dropbox'
+import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType, IDragItem} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, IPaginationParams, WidgetMode, RenderType, DimetionType } from '../Widget'
 import FieldConfigModal, { IFieldConfig, getDefaultFieldConfig } from './FieldConfig'
 import FormatConfigModal, { IFieldFormatConfig, getDefaultFieldFormatConfig } from './FormatConfigModal'
@@ -35,8 +35,10 @@ import PivotTypes from '../../config/pivot/PivotTypes'
 import { uuid } from '../../../../utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
-import { Row, Col, Icon, Menu, Table, Button, Radio, InputNumber, Dropdown, Modal, Popconfirm, Empty } from 'antd'
+import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox } from 'antd'
 import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { WorkbenchQueryMode } from './types'
+import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 const MenuItem = Menu.Item
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
@@ -65,12 +67,16 @@ interface IOperatingPanelProps {
   columnValueLoading: boolean
   controls: any[]
   cache: boolean
+  autoLoadData: boolean
   expired: number
+  queryMode: WorkbenchQueryMode
+  multiDrag: boolean
   computed: any[]
   originalComputed: any[]
   onViewSelect: (viewId: number) => void
   onSetControls: (controls: any[]) => void
   onCacheChange: (e: RadioChangeEvent) => void
+  onChangeAutoLoadData: (e: RadioChangeEvent) => void
   onExpiredChange: (expired: number) => void
   onSetComputed: (computesField: any[]) => void
   onDeleteComputed: (computesField: any[]) => void
@@ -107,6 +113,9 @@ interface IOperatingPanelStates {
   filterModalVisible: boolean
   controlConfigVisible: boolean
 
+  categoryDragItems: IDragItem[],
+  valueDragItems: IDragItem[],
+
   computedConfigModalVisible: boolean
   selectedComputed: object
 }
@@ -141,7 +150,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList: null,
       filterModalVisible: false,
       controlConfigVisible: false,
-
+      categoryDragItems: [],
+      valueDragItems: [],
       computedConfigModalVisible: false,
       selectedComputed: null
     }
@@ -174,12 +184,42 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   public componentWillReceiveProps (nextProps: IOperatingPanelProps) {
     const { selectedView, originalWidgetProps } = nextProps
+    if (selectedView && selectedView !== this.props.selectedView) {
+      const model = selectedView.model
+      const categoryDragItems = []
+      const valueDragItems = []
+
+      Object.entries(model).forEach(([key, m]) => {
+        if (m.modelType === 'category') {
+          categoryDragItems.push({
+            name: key,
+            type: 'category',
+            visualType: m.visualType,
+            checked: false
+          })
+        } else {
+          valueDragItems.push({
+            name: key,
+            type: 'value',
+            visualType: m.visualType,
+            checked: false
+          })
+        }
+      })
+
+      this.setState({
+        categoryDragItems,
+        valueDragItems
+      })
+    }
+
     if ((originalWidgetProps && selectedView) &&
       (originalWidgetProps !== this.props.originalWidgetProps || selectedView !== this.props.selectedView)) {
       const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, chartStyles, mode, selectedChart } = originalWidgetProps
       const { dataParams } = this.state
       const model = selectedView.model
       const currentWidgetlibs = widgetlibs[mode || 'pivot'] // FIXME 兼容 0.3.0-beta.1 之前版本
+
       cols.forEach((c) => {
         const modelColumn = model[c.name]
         if (modelColumn) {
@@ -191,6 +231,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           })
         }
       })
+
       rows.forEach((r) => {
         const modelColumn = model[r.name]
         if (modelColumn) {
@@ -447,43 +488,83 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private drop = (name: string, dropIndex: number, dropType: DropType, changedItems: IDataParamSource[], config?: IDataParamConfig) => {
-    const { dragged: stateDragged, dataParams, styleParams, modalCachedData } = this.state
+    const { multiDrag } = this.props
+    const {
+      dragged: stateDragged,
+      dataParams,
+      styleParams,
+      modalCachedData,
+      categoryDragItems,
+      valueDragItems
+    } = this.state
     const dragged = stateDragged || modalCachedData
     const from = dragged.from && dragged.from !== name && dataParams[dragged.from]
     const destination = dataParams[name]
     const { items } = destination
 
-    if (config) {
-      dragged.config = config
-      if (['color', 'label', 'size'].includes(name)) {
-        const actingOnItemIndex = items.findIndex((i) => i.config.actOn === config.actOn)
-        if (actingOnItemIndex >= 0) {
-          items.splice(actingOnItemIndex, 1)
-          dropIndex = dropIndex <= actingOnItemIndex ? dropIndex : dropIndex - 1
+    const multiDragCategoryDropboxNames = ['cols', 'rows']
+    const multiDragValueDropboxNames = ['metrics', 'secondaryMetrics']
+
+    if (multiDrag
+        && dropType === 'outside'
+        && multiDragCategoryDropboxNames.concat(multiDragValueDropboxNames).includes(name)) {
+      let selectedItems = []
+      if (multiDragCategoryDropboxNames.includes(name)) {
+        selectedItems = selectedItems.concat(
+          categoryDragItems
+            .filter((item) => item.checked && item.name !== dragged.name && !items.find((i) => i.name === item.name))
+            .map(({ checked, ...rest }) => ({...rest}))
+            .concat(dragged)
+        )
+        this.setState({
+          categoryDragItems: categoryDragItems.map((item) => ({ ...item, checked: false }))
+        })
+      } else if (multiDragValueDropboxNames.includes(name)) {
+        selectedItems = selectedItems.concat(
+          valueDragItems
+            .filter((item) => item.checked && item.name !== decodeMetricName(dragged.name))
+            .map(({ checked, ...rest }): IDataParamSource => ({...rest, name: encodeMetricName(rest.name), agg: 'sum', chart: getPivot()}))
+            .concat({...dragged, chart: getPivot()})
+          )
+        this.setState({
+          valueDragItems: valueDragItems.map((item) => ({ ...item, checked: false }))
+        })
+      }
+      destination.items = [...items.slice(0, dropIndex), ...selectedItems, ...items.slice(dropIndex)]
+    } else {
+      if (config) {
+        dragged.config = config
+        if (['color', 'label', 'size'].includes(name)) {
+          const actingOnItemIndex = items.findIndex((i) => i.config.actOn === config.actOn)
+          if (actingOnItemIndex >= 0) {
+            items.splice(actingOnItemIndex, 1)
+            dropIndex = dropIndex <= actingOnItemIndex ? dropIndex : dropIndex - 1
+          }
+        }
+        if (name === 'xAxis') {
+          items.splice(0, 1)
+          dropIndex = 0
         }
       }
-      if (name === 'xAxis') {
-        items.splice(0, 1)
-        dropIndex = 0
-      }
-    }
 
-    if (dropType === 'outside') {
-      let combinedItem = dragged
-      if (name === 'metrics') {
-        combinedItem = {...dragged, chart: dataParams.metrics.items.length ? dataParams.metrics.items[0].chart : getPivot()}
+      if (dropType === 'outside') {
+        let combinedItem = dragged
+        if (name === 'metrics') {
+          combinedItem = {...dragged, chart: dataParams.metrics.items.length ? dataParams.metrics.items[0].chart : getPivot()}
+        }
+        if (name === 'secondaryMetrics') {
+          combinedItem = {...dragged, chart: dataParams.secondaryMetrics.items.length ? dataParams.secondaryMetrics.items[0].chart : getPivot()}
+        }
+        destination.items = [...items.slice(0, dropIndex), combinedItem, ...items.slice(dropIndex)]
+      } else {
+        destination.items = [...changedItems]
       }
-      if (name === 'secondaryMetrics') {
-        combinedItem = {...dragged, chart: dataParams.secondaryMetrics.items.length ? dataParams.secondaryMetrics.items[0].chart : getPivot()}
-      }
-      destination.items = [...items.slice(0, dropIndex), combinedItem, ...items.slice(dropIndex)]
-    } else {
-      destination.items = [...changedItems]
     }
 
     if (from) {
       from.items = from.items.filter((i) => i.name !== dragged.name)
     }
+
     this.setState({
       dragged: null,
       modalCachedData: null
@@ -660,21 +741,54 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     return [dcount, mcount]
   }
 
-  public triggerWidgetRefresh = (pageNo: number, pageSize: number) => {
+  public flipPage = (pageNo: number, pageSize: number) => {
     const { dataParams, styleParams, pagination } = this.state
-    this.setWidgetProps(dataParams, styleParams, 'rerender', {
-      ...pagination,
-      pageNo,
-      pageSize
+    this.setWidgetProps(dataParams, styleParams, {
+      renderType: 'rerender',
+      updatedPagination: {
+        ...pagination,
+        pageNo,
+        pageSize
+      },
+      queryMode: WorkbenchQueryMode.Immediately
     })
   }
 
-  private setWidgetProps = (dataParams: IDataParams, styleParams: IChartStyles, renderType?: RenderType, updatedPagination?: IPaginationParams) => {
+  private forceSetWidgetProps = () => {
+    const { dataParams, styleParams, pagination } = this.state
+    this.setWidgetProps(dataParams, styleParams, {
+      renderType: 'rerender',
+      updatedPagination: pagination,
+      queryMode: WorkbenchQueryMode.Immediately
+    })
+  }
+
+  private setWidgetProps = (
+    dataParams: IDataParams,
+    styleParams: IChartStyles,
+    options?: {
+      renderType?: RenderType,
+      updatedPagination?: IPaginationParams,
+      queryMode?: WorkbenchQueryMode
+    }
+  ) => {
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, yAxis } = dataParams
     const { selectedView, onLoadData, onSetWidgetProps } = this.props
     const { mode, chartModeSelectedChart, pagination } = this.state
+
+    let renderType
+    let updatedPagination
+    let queryMode = this.props.queryMode
+
+    if (options) {
+      renderType = options.renderType
+      updatedPagination = options.updatedPagination
+      queryMode = WorkbenchQueryMode[options.queryMode] ? options.queryMode : queryMode
+    }
+
     const fromPagination = !!updatedPagination
     updatedPagination = { ...pagination, ...updatedPagination }
+
     let groups = cols.items.map((c) => c.name)
       .concat(rows.items.map((r) => r.name))
       .filter((g) => g !== '指标名称')
@@ -796,9 +910,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       expired: 0
     }
 
-    let needRequest = groups.length > 0 || aggregators.length > 0
     const requestParamString = JSON.stringify(requestParams)
-    needRequest = needRequest && (selectedView && requestParamString !== this.lastRequestParamString)
+    const needRequest = (groups.length > 0 || aggregators.length > 0)
+                       && selectedView
+                       && requestParamString !== this.lastRequestParamString
+                       && queryMode === WorkbenchQueryMode.Immediately
 
     if (needRequest) {
       this.lastRequestParamString = requestParamString
@@ -856,32 +972,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         })
         this.setState({
           chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
-          pagination: updatedPagination
-        })
-        // if (data.length) {
-
-        // } else {
-        //   onSetWidgetProps({
-        //     cols: [],
-        //     rows: [],
-        //     metrics: [],
-        //     filters: [],
-        //     data: [],
-        //     pagination: updatedPagination,
-        //     chartStyles: mergedStyleParams,
-        //     selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
-        //     dimetionAxis: this.getDimetionAxis([getPivot()]),
-        //     renderType: 'rerender',
-        //     orders,
-        //     mode,
-        //     model: JSON.parse(selectedView.model)
-        //   })
-        //   this.setState({
-        //     chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
-        //     pagination: updatedPagination
-        //   })
-        // }
-        this.setState({
+          pagination: updatedPagination,
           dataParams: mergedDataParams,
           styleParams: mergedStyleParams
         })
@@ -1059,7 +1150,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           size.value[key] = value
         }
     }
-    this.setWidgetProps(dataParams, styleParams, 'refresh')
+    this.setWidgetProps(dataParams, styleParams, { renderType: 'refresh' })
   }
 
   private styleChange = (name) => (prop, value, propPath?: string[]) => {
@@ -1084,7 +1175,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         renderType = 'clear'
         break
     }
-    this.setWidgetProps(dataParams, styleParams, renderType)
+    this.setWidgetProps(dataParams, styleParams, { renderType })
     // const { layerType } = styleParams.spec
     // chartModeSelectedChart.style.spec.layerType = layerType
   }
@@ -1182,6 +1273,46 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.closeControlConfig()
   }
 
+  private checkAllDragItem = (type: DragType) => (e: CheckboxChangeEvent) => {
+    const { categoryDragItems, valueDragItems } = this.state
+    const checked = e.target.checked
+    if (type === 'category') {
+      this.setState({
+        categoryDragItems: categoryDragItems.map((item) => ({ ...item, checked }))
+      })
+    } else {
+      this.setState({
+        valueDragItems: valueDragItems.map((item) => ({ ...item, checked }))
+      })
+    }
+  }
+
+  private checkDragItem = (type: DragType, name: string) => (e: CheckboxChangeEvent) => {
+    const { categoryDragItems, valueDragItems } = this.state
+    const checked = e.target.checked
+    if (type === 'category') {
+      this.setState({
+        categoryDragItems: categoryDragItems.map((item) => {
+          if (item.name === name) {
+            return { ...item, checked }
+          } else {
+            return item
+          }
+        })
+      })
+    } else {
+      this.setState({
+        valueDragItems: valueDragItems.map((item) => {
+          if (item.name === name) {
+            return { ...item, checked }
+          } else {
+            return item
+          }
+        })
+      })
+    }
+  }
+
   private coustomFieldSelect = (event) => {
     const {key} = event
     switch (key) {
@@ -1258,6 +1389,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       </span>
     )
   }
+
   public render () {
     const {
       views,
@@ -1266,9 +1398,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       columnValueLoading,
       controls,
       cache,
+      autoLoadData,
       expired,
+      queryMode,
+      multiDrag,
       computed,
       onCacheChange,
+      onChangeAutoLoadData,
       onExpiredChange,
       originalWidgetProps,
       originalComputed
@@ -1293,6 +1429,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList,
       filterModalVisible,
       controlConfigVisible,
+      valueDragItems,
       computedConfigModalVisible,
       selectedComputed
     } = this.state
@@ -1302,6 +1439,18 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const {
       spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend,
       visualMap, toolbox, areaSelect, scorecard, iframe, table, bar, doubleYAxis } = styleParams
+
+    let categoryDragItems = this.state.categoryDragItems
+    if (mode === 'pivot'
+      && valueDragItems.length
+      && dataParams.metrics.items.every((item) => item.chart.id === getPivot().id)) {
+      categoryDragItems = categoryDragItems.concat({
+        name: '指标名称',
+        type: 'category',
+        visualType: 'string',
+        checked: false
+      })
+    }
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -1316,37 +1465,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         <MenuItem key="computed">计算字段</MenuItem>
       </Menu>
     )
-    const categories = []
-    const values = []
-
-    if (selectedView) {
-      const model = selectedView.model
-      const pivot = getPivot()
-      Object.entries(model).forEach(([key, m]) => {
-        if (m.modelType === 'category') {
-          categories.push({
-            name: key,
-            type: 'category',
-            visualType: m.visualType
-          })
-        } else {
-          values.push({
-            name: key,
-            type: 'value',
-            visualType: m.visualType
-          })
-        }
-      })
-      if (mode === 'pivot'
-          && values.length
-          && metrics.items.every((item) => item.chart.id === pivot.id)) {
-        categories.push({
-          name: '指标名称',
-          type: 'category',
-          visualType: 'string'
-        })
-      }
-    }
 
     const dropboxes = Object.entries(dataParams)
       .map(([k, v]) => {
@@ -1596,6 +1714,19 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 </Row>
               </div>
             </div>
+            <div className={styles.paneBlock}>
+              <h4>自动加载数据</h4>
+              <div className={styles.blockBody}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <RadioGroup size="small" value={autoLoadData} onChange={onChangeAutoLoadData}>
+                      <RadioButton value={true}>是</RadioButton>
+                      <RadioButton value={false}>否</RadioButton>
+                    </RadioGroup>
+                  </Col>
+                </Row>
+              </div>
+            </div>
           </div>
         )
         break
@@ -1629,13 +1760,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     ? [...computedAddFrom, ...originalWidgetPropsAddFrom]
     : [...computedAddFrom]
 
-    combineComputedFields.forEach((compute) => {
-      if (compute.visualType === 'number') {
-        values.push(compute)
-      } else if (compute.visualType === 'string') {
-        categories.push(compute)
-      }
-    })
+    // combineComputedFields.forEach((compute) => {
+    //   if (compute.visualType === 'number') {
+    //     values.push(compute)
+    //   } else if (compute.visualType === 'string') {
+    //     categories.push(compute)
+    //   }
+    // })
 
     return (
       <div className={styles.operatingPanel}>
@@ -1649,39 +1780,83 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             </Dropdown> */}
           </div>
           <div className={styles.columnContainer}>
-            <h4>分类型</h4>
+            <div className={styles.title}>
+              <h4>分类型</h4>
+              {
+                multiDrag && (
+                  <Checkbox
+                    checked={categoryDragItems.length && categoryDragItems.every((item) => item.checked)}
+                    onChange={this.checkAllDragItem('category')}
+                  />
+                )
+              }
+            </div>
             <ul className={`${styles.columnList} ${styles.categories}`}>
-              {categories.map((cat) => (
-                <li
-                  className={`${cat.title === 'computedField' ? styles.computed : ''}`}
-                  key={cat.name}
-                  onDragStart={this.dragStart(cat)}
-                  onDragEnd={this.dragEnd}
-                  draggable
-                >
-                  <i className={`iconfont ${this.getDragItemIconClass(cat.visualType)}`} />
-                  <p>{cat.name}</p>
-                  {cat.title === 'computedField' ? this.bootstrapMorePanel(cat) : null}
-                </li>
-              ))}
+              {categoryDragItems.map((item) => {
+                const { name, title, visualType, checked, ...rest } = item
+                const data = { name, title, visualType, ...rest }
+                return (
+                  <li
+                    className={`${title === 'computedField' ? styles.computed : ''}`}
+                    key={name}
+                    onDragStart={this.dragStart(data)}
+                    onDragEnd={this.dragEnd}
+                    draggable
+                  >
+                    <i className={`iconfont ${this.getDragItemIconClass(visualType)}`} />
+                    <p>{name}</p>
+                    {title === 'computedField' ? this.bootstrapMorePanel(data) : null}
+                    {
+                      multiDrag && (
+                        <Checkbox
+                          checked={checked}
+                          onChange={this.checkDragItem('category', name)}
+                        />
+                      )
+                    }
+                  </li>
+                )
+              })}
             </ul>
           </div>
           <div className={styles.columnContainer}>
-            <h4>数值型</h4>
+            <div className={styles.title}>
+              <h4>数值型</h4>
+              {
+                multiDrag && (
+                  <Checkbox
+                    checked={valueDragItems.length && valueDragItems.every((item) => item.checked)}
+                    onChange={this.checkAllDragItem('value')}
+                  />
+                )
+              }
+            </div>
             <ul className={`${styles.columnList} ${styles.values}`}>
-              {values.map((v) => (
-                <li
-                  className={`${v.title === 'computedField' ? styles.computed : ''}`}
-                  key={v.name}
-                  onDragStart={this.dragStart({...v, name: encodeMetricName(v.name), agg: 'sum'})}
-                  onDragEnd={this.dragEnd}
-                  draggable
-                >
-                  <i className={`iconfont ${this.getDragItemIconClass(v.visualType)}`} />
-                  <p>{v.name}</p>
-                  {v.title === 'computedField' ? this.bootstrapMorePanel(v) : null}
-                </li>
-              ))}
+              {valueDragItems.map((item) => {
+                const { name, title, visualType, checked, ...rest } = item
+                const data = { name, title, visualType, ...rest }
+                return (
+                  <li
+                    className={`${title === 'computedField' ? styles.computed : ''}`}
+                    key={name}
+                    onDragStart={this.dragStart({...data, name: encodeMetricName(name), agg: 'sum'})}
+                    onDragEnd={this.dragEnd}
+                    draggable
+                  >
+                    <i className={`iconfont ${this.getDragItemIconClass(visualType)}`} />
+                    <p>{name}</p>
+                    {title === 'computedField' ? this.bootstrapMorePanel(data) : null}
+                    {
+                      multiDrag && (
+                        <Checkbox
+                          checked={checked}
+                          onChange={this.checkDragItem('value', name)}
+                        />
+                      )
+                    }
+                  </li>
+                )
+              })}
             </ul>
           </div>
         </div>
@@ -1723,6 +1898,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               />
             ))}
           </div>
+          {
+            queryMode === WorkbenchQueryMode.Manually && (
+              <div className={styles.manualQuery} onClick={this.forceSetWidgetProps}>
+                <Icon type="caret-right" />查询
+              </div>
+            )
+          }
           <div className={styles.params}>
             <ul className={styles.paramsTab}>{tabs}</ul>
             {tabPane}
@@ -1833,7 +2015,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         >
           <ComputedConfigForm
             queryInfo={queryInfo}
-            categories={categories}
+            categories={categoryDragItems}
             onSave={this.saveComputedConfig}
             onClose={this.hideComputedConfigModal}
             selectedComputed={selectedComputed}
