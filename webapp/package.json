@@ -141,6 +141,7 @@
     "babel-plugin-react-intl": "3.0.1",
     "babel-plugin-react-transform": "3.0.0",
     "babel-plugin-transform-react-remove-prop-types": "0.4.19",
+    "case-sensitive-paths-webpack-plugin": "^2.2.0",
     "circular-dependency-plugin": "5.0.2",
     "compare-versions": "3.4.0",
     "compression-webpack-plugin": "2.0.0",
