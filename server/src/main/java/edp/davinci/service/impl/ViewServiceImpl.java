@@ -797,7 +797,7 @@ public class ViewServiceImpl implements ViewService {
         }
 
         //查询参数
-        if (!CollectionUtils.isEmpty(queryVariables)) {
+        if (!CollectionUtils.isEmpty(queryVariables) && !CollectionUtils.isEmpty(sqlEntity.getQuaryParams())) {
             if (!CollectionUtils.isEmpty(paramList)) {
                 Map<String, List<SqlVariable>> map = queryVariables.stream().collect(Collectors.groupingBy(SqlVariable::getName));
                 paramList.forEach(p -> {
