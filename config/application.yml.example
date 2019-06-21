@@ -60,8 +60,8 @@ spring:
   ## davinci datasouce config
   datasource:
     url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
-    username:
-    password:
+    username: root
+    password: root
     driver-class-name: com.mysql.jdbc.Driver
     initial-size: 2
     min-idle: 1
