@@ -12,6 +12,7 @@ interface ICellProps {
   rowKey?: string
   width: number
   height?: number
+  interacting?: boolean
   metrics: IWidgetMetric[]
   chartStyles: IChartStyles
   color: IDataParamProperty
@@ -36,7 +37,10 @@ export class Cell extends React.PureComponent <ICellProps, ICellState> {
     if (nextProps.isDrilling === false) {
       this.setState({
         isSelected: false
-      }, () => console.log(this.state.isSelected))
+      })
+    }
+    if (this.props.interacting !== nextProps.interacting && !nextProps.interacting) {
+      this.setState({isSelected: false})
     }
   }
   private selectTd  = (event) => {

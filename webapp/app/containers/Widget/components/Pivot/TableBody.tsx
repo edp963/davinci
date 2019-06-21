@@ -28,6 +28,7 @@ export interface ITableBodyProps {
   rowTree: object
   colTree: object
   tree: object
+  interacting?: boolean
   metrics: IWidgetMetric[]
   metricAxisConfig: IMetricAxisConfig
   chartStyles: IChartStyles
@@ -527,6 +528,7 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
                 colKey={flatColKey}
                 rowKey={flatRowKey}
                 width={cellWidth}
+                interacting={this.props.interacting}
                 height={getPivotCellHeight(height)}
                 metrics={metrics}
                 data={records}
@@ -558,6 +560,7 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
               key={flatColKey}
               colKey={flatColKey}
               width={cellWidth}
+              interacting={this.props.interacting}
               height={getPivotCellHeight(height)}
               metrics={metrics}
               data={records}
@@ -593,6 +596,7 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
               height={getPivotCellHeight(height)}
               metrics={metrics}
               data={records}
+              interacting={this.props.interacting}
               chartStyles={chartStyles}
               color={color}
               legend={legend}
@@ -626,6 +630,7 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
                 height={height}
                 metrics={metrics}
                 data={records}
+                interacting={this.props.interacting}
                 chartStyles={chartStyles}
                 color={color}
                 legend={legend}
@@ -650,7 +655,6 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
       [styles.bodyCollapsed]: tableBodyCollapsed,
       [styles.raw]: !dimetionAxis
     })
-
     return (
       <div className={containerClass}>
         {tableBody}

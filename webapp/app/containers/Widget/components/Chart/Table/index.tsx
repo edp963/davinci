@@ -243,7 +243,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       ...record,
       ...filterObj
     }
-    const isInteractiveChart = onCheckTableInteract()
+    const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
     if (isInteractiveChart && onDoInteract) {
       selectedRow = [recordConcatFilter]
     } else {

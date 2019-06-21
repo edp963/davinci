@@ -966,6 +966,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               {...widgetProps}
               renderType={loading ? 'loading' : renderType}
               data={data}
+              interacting={this.props.interacting}
               queryVariables={queryVariables}
               pagination={pagination}
               empty={empty}

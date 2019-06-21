@@ -829,7 +829,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private checkInteract = (itemId: number) => {
     const { currentLinkages } = this.props
-    console.log(currentLinkages)
     const isInteractiveItem = currentLinkages.some((c) => {
       const { trigger } = c
       const triggerId = +trigger[0]
@@ -840,7 +839,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private doInteract = (itemId: number, triggerData) => {
-    console.log('doInteract')
     const {
       currentItems,
       currentLinkages
@@ -866,7 +864,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private clearAllInteracts = () => {
-    console.log('clearAllInteracts')
     const { currentItems } = this.props
     Object.keys(this.interactingLinkagers).forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === +linkagerItemId)
@@ -880,7 +877,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private turnOffInteract = (itemId) => {
-    console.log('turnOffinteract')
     const {
       currentLinkages,
       currentItems
