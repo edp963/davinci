@@ -167,9 +167,16 @@ public class SqlParseUtils {
         Pattern p = Pattern.compile(getReg(REG_AUTHVAR, delimiter, true));
         Matcher matcher = p.matcher(sql);
 
+        Map<String, List<SqlOperatorEnum>> operatorMap = Arrays.stream(SqlOperatorEnum.values()).collect(Collectors.groupingBy(e -> e.getValue()));
+
         Set<String> expSet = new HashSet<>();
         while (matcher.find()) {
-            expSet.add(matcher.group());
+            String group = matcher.group();
+            for (String key : operatorMap.keySet()) {
+                if (group.toUpperCase().contains(key)) {
+                    expSet.add(group);
+                }
+            }
         }
         if (!CollectionUtils.isEmpty(expSet)) {
             Map<String, String> parsedMap = getParsedExpression(expSet, authParamMap, delimiter);
