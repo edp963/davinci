@@ -19,12 +19,14 @@
  */
 
 import { IChartProps } from '../../components/Chart'
+import { IFieldFormatConfig } from 'containers/Widget/components/Workbench/FormatConfigModal'
 import barDefaultConfig from '../../config/chart/bar'
 import {
   decodeMetricName,
   getChartTooltipLabel,
   getAggregatorLocale,
-  getFormattedValue
+  getFormattedValue,
+  FieldFormatTypes
 } from '../../components/util'
 import {
   getDimetionAxisOption,
@@ -84,7 +86,18 @@ export default function (chartProps: IChartProps, drillOptions) {
         formatter: (params) => {
           const { value, seriesName } = params
           const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
-          const formatted = getFormattedValue(value, m.format)
+          let format: IFieldFormatConfig = m.format
+          let formattedValue = value
+          if (percentage) {
+            format = {
+              formatType: FieldFormatTypes.Percentage,
+              [FieldFormatTypes.Percentage]: {
+                decimalPlaces: 0
+              }
+            }
+            formattedValue /= 100
+          }
+          const formatted = getFormattedValue(formattedValue, format)
           return formatted
         }
       })

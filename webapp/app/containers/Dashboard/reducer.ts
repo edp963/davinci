@@ -82,7 +82,7 @@ import {
   IControlRequestParams
 } from '../../components/Filters'
 import { DownloadTypes } from '../App/types'
-import { globalControlMigrationRecorder } from 'app/utils/MigrationRecorders'
+import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 const initialState = fromJS({
   dashboards: null,
