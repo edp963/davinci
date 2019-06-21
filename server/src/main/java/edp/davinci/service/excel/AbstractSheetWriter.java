@@ -254,7 +254,6 @@ public abstract class AbstractSheetWriter {
             }
             return d;
         } catch (NumberFormatException e) {
-            log.error("formatNumber error,value=" + value.toString());
         }
         return null;
     }
