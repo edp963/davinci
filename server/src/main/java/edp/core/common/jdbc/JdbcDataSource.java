@@ -1,29 +1,32 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.core.common.jdbc;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.util.StringUtils;
+import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.SourceException;
 import edp.core.model.CustomDataSource;
 import edp.core.utils.CustomDataSourceUtils;
+import edp.core.utils.MD5Util;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -75,14 +78,18 @@ public class JdbcDataSource extends DruidDataSource {
 
     private static volatile Map<String, DruidDataSource> map = new HashMap<>();
 
-    public synchronized void removeDatasource(String jdbcUrl, String username) {
-        if (map.containsKey(username + "@" + jdbcUrl.trim())) {
-            map.remove(username + "@" + jdbcUrl.trim());
+    public synchronized void removeDatasource(String jdbcUrl, String username, String password) {
+        String key = getKey(jdbcUrl, username, password);
+
+        if (map.containsKey(key)) {
+            map.remove(key);
         }
     }
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
-        if (!map.containsKey(username + "@" + jdbcUrl.trim()) || null == map.get(username + "@" + jdbcUrl.trim())) {
+        String key = getKey(jdbcUrl, username, password);
+
+        if (!map.containsKey(key) || null == map.get(key)) {
             DruidDataSource instance = new JdbcDataSource();
             String className = null;
             try {
@@ -133,9 +140,22 @@ public class JdbcDataSource extends DruidDataSource {
                 log.error("Exception during pool initialization", e);
                 throw new SourceException(e.getMessage());
             }
-            map.put(username + "@" + jdbcUrl.trim(), instance);
+            map.put(key, instance);
         }
 
-        return map.get(username + "@" + jdbcUrl.trim());
+        return map.get(key);
+    }
+
+    private String getKey(String jdbcUrl, String username, String password) {
+        StringBuilder sb = new StringBuilder();
+        if (!StringUtils.isEmpty(username)) {
+            sb.append(username);
+        }
+        if (!StringUtils.isEmpty(password)) {
+            sb.append(Consts.COLON).append(password);
+        }
+        sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
+
+        return MD5Util.getMD5(sb.toString(), true, 64);
     }
 }

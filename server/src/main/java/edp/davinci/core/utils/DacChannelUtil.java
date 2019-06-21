@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class DacChannelUtil {
         this.channels = channels;
     }
 
-    public Object getTenants(String dacName) throws NotFoundException {
+    public List getTenants(String dacName) throws NotFoundException {
         if (!dacMap.containsKey(dacName)) {
             log.error("data-auth-center channel :{} is not found", dacName);
             throw new NotFoundException("Channel " + dacName + " is not found");
@@ -96,7 +96,7 @@ public class DacChannelUtil {
                     ResultMap.class);
             if (result.getStatusCode().equals(HttpStatus.OK)) {
                 ResultMap resultMap = result.getBody();
-                return resultMap.get(PAYLOAD);
+                return (List) resultMap.get(PAYLOAD);
             }
         } catch (RestClientException e) {
             log.error(e.getMessage());
@@ -105,7 +105,7 @@ public class DacChannelUtil {
         return null;
     }
 
-    public Object getBizs(String dacName, String tenantId) throws NotFoundException {
+    public List getBizs(String dacName, String tenantId) throws NotFoundException {
         if (!dacMap.containsKey(dacName)) {
             log.error("data-auth-center channel :{} is not found", dacName);
             throw new NotFoundException("Channel " + dacName + " is not found");
@@ -121,7 +121,7 @@ public class DacChannelUtil {
                     ResultMap.class, tenantId);
             if (result.getStatusCode().equals(HttpStatus.OK)) {
                 ResultMap resultMap = result.getBody();
-                return resultMap.get(PAYLOAD);
+                return (List) resultMap.get(PAYLOAD);
             }
         } catch (RestClientException e) {
             log.error(e.getMessage());
@@ -132,13 +132,12 @@ public class DacChannelUtil {
 
 
     public List<Object> getData(String dacName, String bizId, String email) {
-        if (dacMap.containsKey(dacName)) {
+        if (dacMap.containsKey(dacName) && !StringUtils.isEmpty(email)) {
             DacChannel channel = dacMap.get(dacName);
 
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add(AUTH_CODE_KEY, channel.getAuthCode());
             params.add(EMAIL_KEY, email);
-
 
             try {
                 ResponseEntity<ResultMap> result = restTemplate.getForEntity(UriComponentsBuilder.

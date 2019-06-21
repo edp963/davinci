@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.service.impl;
@@ -86,6 +87,9 @@ public class DisplayServiceImpl implements DisplayService {
 
     @Autowired
     private RelRoleSlideMapper relRoleSlideMapper;
+
+    @Autowired
+    private RelRoleDisplaySlideWidgetMapper relRoleDisplaySlideWidgetMapper;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -180,16 +184,23 @@ public class DisplayServiceImpl implements DisplayService {
             throw new UnAuthorizedExecption("you have not permission to delete display");
         }
 
-        //删除display实体
-        displayMapper.deleteById(id);
+        //删除 rel_role_display_slide_widget
+        relRoleDisplaySlideWidgetMapper.deleteByDisplayId(id);
 
-        relRoleDisplayMapper.deleteByDisplayId(id);
+        //删除 mem_display_slide_widget
+        memDisplaySlideWidgetMapper.deleteByDisplayId(id);
 
-        //删除displaySlide
+        //删除 rel_role_slide
+        relRoleSlideMapper.deleteByDisplayId(id);
+
+        //删除 display_slide
         displaySlideMapper.deleteByDisplayId(id);
 
-        //删除displaySlide和widget的关联
-        memDisplaySlideWidgetMapper.deleteByDisplayId(id);
+        //删除 rel_role_display
+        relRoleDisplayMapper.deleteByDisplayId(id);
+
+        //删除 display
+        displayMapper.deleteById(id);
 
         return true;
     }
@@ -230,14 +241,19 @@ public class DisplayServiceImpl implements DisplayService {
             throw new UnAuthorizedExecption("you have not permisson to delete this display slide");
         }
 
-        //删除displaySlide实体
-        displaySlideMapper.deleteById(slideId);
-        optLogger.info("display slide ({}) is delete by (:{})", displaySlide.toString(), user.getId());
+        //delete rel_role_display_slide_widget
+        relRoleDisplaySlideWidgetMapper.deleteBySlideId(slideId);
 
+        //delete mem_display_slide_widget
+        memDisplaySlideWidgetMapper.deleteBySlideId(slideId);
+
+        //delete rel_role_slide
         relRoleSlideMapper.deleteBySlideId(slideId);
 
-        //删除displaySlide和widget的关联
-        memDisplaySlideWidgetMapper.deleteBySlideId(slideId);
+        //delete display_slide
+        displaySlideMapper.deleteById(slideId);
+
+        optLogger.info("display slide ({}) is delete by (:{})", displaySlide.toString(), user.getId());
 
         return true;
     }
@@ -468,6 +484,25 @@ public class DisplayServiceImpl implements DisplayService {
 
         int i = memDisplaySlideWidgetMapper.insertBatch(list);
         if (i > 0) {
+            List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
+            for (MemDisplaySlideWidget memDisplaySlideWidget : list) {
+                MemDisplaySlideWidgetCreate memDisplaySlideWidgetCreate = Arrays.stream(slideWidgetCreates).filter(
+                        (item -> (item.getDisplaySlideId().longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue()
+                                && item.getWidgetId().longValue() == memDisplaySlideWidget.getWidgetId().longValue()))
+                ).findFirst().get();
+
+                if (!CollectionUtils.isEmpty(memDisplaySlideWidgetCreate.getRoleIds())) {
+                    List<Role> roles = roleMapper.getRolesByIds(memDisplaySlideWidgetCreate.getRoleIds());
+                    relRoleDisplaySlideWidgetList.addAll(roles.stream()
+                            .map(r -> new RelRoleDisplaySlideWidget(r.getId(), memDisplaySlideWidget.getId()).createdBy(user.getId())).collect(Collectors.toList()));
+                }
+            }
+
+            if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
+                relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
+                optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})", relRoleDisplaySlideWidgetList.toString(), user.getId());
+            }
+
             if (null != clist && clist.size() > 1) {
                 optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", clist.toString(), user.getId());
                 //自定义主键
@@ -494,7 +529,7 @@ public class DisplayServiceImpl implements DisplayService {
      */
     @Override
     @Transactional
-    public boolean updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidget[] memDisplaySlideWidgets, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetDto[] memDisplaySlideWidgets, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(slideId);
 
         if (null == slideWithDisplayAndProject) {
@@ -505,7 +540,8 @@ public class DisplayServiceImpl implements DisplayService {
             throw new ServerException("Invalid display slide");
         }
 
-        Set<Long> widgetIds = Arrays.stream(memDisplaySlideWidgets).map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
+        List<MemDisplaySlideWidgetDto> dtoList = Arrays.asList(memDisplaySlideWidgets);
+        Set<Long> widgetIds = dtoList.stream().map(MemDisplaySlideWidgetDto::getWidgetId).collect(Collectors.toSet());
 
         List<Widget> widgets = widgetMapper.getByIds(widgetIds);
         if (null == widgets) {
@@ -523,14 +559,40 @@ public class DisplayServiceImpl implements DisplayService {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
-        List<MemDisplaySlideWidget> list = new ArrayList<>();
-        for (MemDisplaySlideWidget memDisplaySlideWidget : memDisplaySlideWidgets) {
-            memDisplaySlideWidget.updatedBy(user.getId());
-            list.add(memDisplaySlideWidget);
-        }
+        List<MemDisplaySlideWidget> memDisplaySlideWidgetList = new ArrayList<>(dtoList.size());
+        Map<Long, List<Long>> rolesMap = new HashMap<>();
+        dtoList.forEach(m -> {
+            m.updatedBy(user.getId());
+            memDisplaySlideWidgetList.add(m);
+            rolesMap.put(m.getId(), m.getRoleIds());
+        });
 
-        int i = memDisplaySlideWidgetMapper.updateBatch(list);
+        int i = memDisplaySlideWidgetMapper.updateBatch(memDisplaySlideWidgetList);
         if (i > 0) {
+            if (!CollectionUtils.isEmpty(rolesMap)) {
+                Set<Long> memDisplaySlideWidgetIds = rolesMap.keySet();
+                relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetIds(memDisplaySlideWidgetIds);
+
+                List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
+                for (MemDisplaySlideWidget memDisplaySlideWidget : memDisplaySlideWidgetList) {
+                    MemDisplaySlideWidgetDto memDisplaySlideWidgetDto = Arrays.stream(memDisplaySlideWidgets).filter(
+                            (item -> (item.getDisplaySlideId().longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue()
+                                    && item.getWidgetId().longValue() == memDisplaySlideWidget.getWidgetId().longValue()))
+                    ).findFirst().get();
+
+                    if (!CollectionUtils.isEmpty(memDisplaySlideWidgetDto.getRoleIds())) {
+                        List<Role> roles = roleMapper.getRolesByIds(memDisplaySlideWidgetDto.getRoleIds());
+                        relRoleDisplaySlideWidgetList.addAll(roles.stream()
+                                .map(r -> new RelRoleDisplaySlideWidget(r.getId(), memDisplaySlideWidget.getId()).createdBy(user.getId())).collect(Collectors.toList()));
+                    }
+                }
+
+                if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
+                    relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
+                    optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})", relRoleDisplaySlideWidgetList.toString(), user.getId());
+                }
+            }
+
             return true;
         } else {
             log.error("update batch MemDisplaySlideWidget error");
@@ -623,6 +685,9 @@ public class DisplayServiceImpl implements DisplayService {
                 || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideWidget.getDisplaySlideId())))) {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
+
+        //delete rel_role_display_slide_widget
+        relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetId(relationId);
 
         int i = memDisplaySlideWidgetMapper.deleteById(relationId);
         if (i > 0) {
@@ -774,12 +839,14 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         List<Long> disableList = relRoleSlideMapper.getDisableSlides(user.getId(), display.getProjectId());
+        List<Long> disableMemDisplaySlideWidgets = relRoleDisplaySlideWidgetMapper.getDisableByUser(user.getId());
 
         Iterator<MemDisplaySlideWidget> iterator = widgetList.iterator();
 
         while (iterator.hasNext()) {
             MemDisplaySlideWidget memDisplaySlideWidget = iterator.next();
-            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && disableList.contains(memDisplaySlideWidget.getDisplaySlideId())) {
+            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() &&
+                    (disableList.contains(memDisplaySlideWidget.getDisplaySlideId()) || disableMemDisplaySlideWidgets.contains(memDisplaySlideWidget.getId()))) {
                 iterator.remove();
             }
         }
@@ -836,6 +903,10 @@ public class DisplayServiceImpl implements DisplayService {
 
         if (memIds.length > 0) {
             List<Long> idList = new ArrayList<>(Arrays.asList(memIds));
+
+            Set<Long> idSet = new HashSet<>(idList);
+            relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetIds(idSet);
+
             memDisplaySlideWidgetMapper.deleteBatchById(idList);
         }
         return true;
@@ -1117,6 +1188,8 @@ public class DisplayServiceImpl implements DisplayService {
     @Override
     @Transactional
     public void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException {
+        //delete rel_role_display_slide_widget
+        relRoleDisplaySlideWidgetMapper.deleteByProjectId(projectId);
         //删除slide与widget的关联
         memDisplaySlideWidgetMapper.deleteByProject(projectId);
         //删除slide

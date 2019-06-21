@@ -33,8 +33,11 @@ import {
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
   DELETE_DRILL_HISTORY,
-  SET_SELECT_OPTIONS
+  SET_SELECT_OPTIONS,
+  SELECT_DASHBOARD_ITEM_CHART,
+  GLOBAL_CONTROL_CHANGE
 } from './constants'
+import { IMapItemControlRequestParams, IControlRequestParams } from 'app/components/Filters';
 
 const initialState = fromJS({
   dashboard: null,
@@ -117,11 +120,21 @@ function shareReducer (state = initialState, { type, payload }) {
         widgets = []
       }
       return state.set('widgets', widgets.concat(payload.widget))
+    case SELECT_DASHBOARD_ITEM_CHART:
+      return state.set('itemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          renderType: payload.renderType,
+          selectedItems: payload.selectedItems
+        }
+      })
     case LOAD_SHARE_RESULTSET:
       return state.set('itemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
+          selectedItems: [],
           loading: true,
           queryConditions: {
             ...itemsInfo[payload.itemId].queryConditions,
@@ -136,6 +149,18 @@ function shareReducer (state = initialState, { type, payload }) {
           }
         }
       })
+    case GLOBAL_CONTROL_CHANGE:
+      const controlRequestParamsByItem: IMapItemControlRequestParams = payload.controlRequestParamsByItem
+      Object.entries(controlRequestParamsByItem)
+        .forEach(([itemId, requestParams]: [string, IControlRequestParams]) => {
+          const { filters: globalFilters, variables: globalVariables } = requestParams
+          itemsInfo[itemId].queryConditions = {
+            ...itemsInfo[itemId].queryConditions,
+            ...globalFilters && { globalFilters },
+            ...globalVariables && { globalVariables }
+          }
+        })
+      return state.set('itemsInfo', itemsInfo)
     case DRILL_DASHBOARDITEM:
       if (!itemsInfo[payload.itemId].queryConditions.drillHistory) {
         itemsInfo[payload.itemId].queryConditions.drillHistory = []

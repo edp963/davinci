@@ -1,4 +1,25 @@
-import * as React from 'react'
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+import React from 'react'
+import DownloadList from '../DownloadList'
 import { Icon, Button } from 'antd'
 const styles = require('./EditorHeader.less')
 const utilStyles = require('../../assets/less/util.less')
@@ -16,6 +37,7 @@ interface IEditorHeaderProps {
   onDescriptionChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   onSave?: () => void
   onCancel: () => void
+  onSetting?: () => void
   loading?: boolean
 }
 
@@ -29,6 +51,7 @@ export function EditorHeader (props: IEditorHeaderProps) {
     onDescriptionChange,
     onSave,
     onCancel,
+    onSetting,
     loading
   } = props
 
@@ -62,16 +85,29 @@ export function EditorHeader (props: IEditorHeaderProps) {
           <span>{description || placeholder.description}</span>
         </div>
       </div>
-      <div className={`${currentType === 'dashboard' ? utilStyles.hide : styles.actions}`}>
-        <Button
-          type="primary"
-          loading={loading}
-          disabled={loading}
-          onClick={onSave}
-        >
-          保存
-        </Button>
-      </div>
+      {
+        currentType === 'dashboard'
+          ? (
+            <ul className={styles.tools}>
+              <li>
+                <DownloadList />
+              </li>
+            </ul>
+          )
+          : (
+            <div className={`${currentType === 'dashboard' ? utilStyles.hide : styles.actions}`}>
+              <Button onClick={onSetting}>设置</Button>
+              <Button
+                type="primary"
+                loading={loading}
+                disabled={loading}
+                onClick={onSave}
+              >
+                保存
+              </Button>
+            </div>
+          )
+      }
     </div>
   )
 }

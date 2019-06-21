@@ -52,13 +52,11 @@ export class Auth extends React.Component <IAuthProps, {}> {
     })
     const columns = [
       {
-        title: 'role',
         dataIndex: 'user',
         key: 'user',
         render: (text) => text.toUpperCase()
       },
       {
-          title: 'Permission',
           dataIndex: 'permission',
          // className: isHidden ? utilStyles.hide : '',
           key: 'settings',
@@ -88,12 +86,10 @@ export class Auth extends React.Component <IAuthProps, {}> {
 
     const dvColumns = [
     {
-      title: 'Name',
       dataIndex: 'key',
       key: `name${uuid(8, 16)}`
     },
     {
-      title: 'Permission',
       dataIndex: 'name',
       key: `key${uuid(8, 16)}`,
       width: '59%',
@@ -115,10 +111,11 @@ export class Auth extends React.Component <IAuthProps, {}> {
       <div className={styles.auth}>
         <div className={styles.module}>
           <div className={styles.title}>
-            模块
+            功能权限设置
           </div>
           <Table
               bordered
+              showHeader={false}
               columns={columns}
               pagination={false}
               dataSource={organizationMembers}
@@ -126,11 +123,12 @@ export class Auth extends React.Component <IAuthProps, {}> {
         </div>
         <div className={styles.dv}>
           <div className={styles.title}>
-            可视化
+            可视化权限设置
           </div>
           <Table
               bordered
               rowKey="key"
+              showHeader={false}
               columns={dvColumns}
               dataSource={this.props.vizs}
               pagination={false}

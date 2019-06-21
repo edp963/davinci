@@ -19,76 +19,71 @@
  */
 
 import { createSelector } from 'reselect'
-import { ViewStateType } from './reducer'
+import { IViewState } from './types'
 
 const selectView = (state) => state.get('view')
 
 const makeSelectViews = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('views')
+  (viewState: IViewState) => viewState.views
 )
 
 const makeSelectEditingView = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('editingView')
+  (viewState: IViewState) => viewState.editingView
 )
 
 const makeSelectEditingViewInfo = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('editingViewInfo')
+  (viewState: IViewState) => viewState.editingViewInfo
 )
 
 const makeSelectFormedViews = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('formedViews')
+  (viewState: IViewState) => viewState.formedViews
 )
 
 const makeSelectSources = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('sources')
+  (viewState: IViewState) => viewState.sources
 )
 
-const makeSelectSourceTables = () => createSelector(
+const makeSelectSchema = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('tables')
-)
-
-const makeSelectMapTableColumns = () => createSelector(
-  selectView,
-  (viewState: ViewStateType) => viewState.get('mapTableColumns')
+  (viewState: IViewState) => viewState.schema
 )
 
 const makeSelectSqlValidation = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('sqlValidation')
+  (viewState: IViewState) => viewState.sqlValidation
 )
 
 const makeSelectSqlDataSource = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('sqlDataSource')
+  (viewState: IViewState) => viewState.sqlDataSource
 )
 
 const makeSelectSqlLimit = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('sqlLimit')
+  (viewState: IViewState) => viewState.sqlLimit
 )
 
 const makeSelectLoading = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('loading')
+  (viewState: IViewState) => viewState.loading
 )
 
 const makeSelectChannels = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('channels')
+  (viewState: IViewState) => viewState.channels
 )
 const makeSelectTenants = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('tenants')
+  (viewState: IViewState) => viewState.tenants
 )
 const makeSelectBizs = () => createSelector(
   selectView,
-  (viewState: ViewStateType) => viewState.get('bizs')
+  (viewState: IViewState) => viewState.bizs
 )
 
 export {
@@ -98,8 +93,7 @@ export {
   makeSelectEditingViewInfo,
   makeSelectFormedViews,
   makeSelectSources,
-  makeSelectSourceTables,
-  makeSelectMapTableColumns,
+  makeSelectSchema,
   makeSelectSqlValidation,
   makeSelectSqlDataSource,
   makeSelectSqlLimit,

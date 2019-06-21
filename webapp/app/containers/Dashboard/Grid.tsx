@@ -50,11 +50,11 @@ import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Lin
 
 import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
-import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu } from 'antd'
+import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu, message } from 'antd'
 import { uuid } from '../../utils/util'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
-import { decodeMetricName } from '../Widget/components/util'
-import { hideNavigator } from '../App/actions'
+import { decodeMetricName, getTable } from '../Widget/components/util'
+import { initiateDownloadTask } from '../App/actions'
 import {
   loadDashboardDetail,
   addDashboardItems,
@@ -63,7 +63,6 @@ import {
   editDashboardItems,
   deleteDashboardItem,
   clearCurrentDashboard,
-  loadWidgetCsv,
   renderDashboardItem,
   resizeDashboardItem,
   resizeAllDashboardItem,
@@ -73,7 +72,8 @@ import {
   deleteDrillHistory,
   drillPathsetting,
   selectDashboardItemChart,
-  setSelectOptions
+  setSelectOptions,
+  globalControlChange
 } from './actions'
 import {
   makeSelectDashboards,
@@ -100,13 +100,16 @@ import {
   GRID_COLS,
   GRID_ITEM_MARGIN,
   GRID_ROW_HEIGHT,
-  KEY_COLUMN
+  KEY_COLUMN,
+  DEFAULT_TABLE_PAGE,
+  DEFAULT_TABLE_PAGE_SIZE
 } from '../../globalConstants'
 import { InjectedRouter } from 'react-router/lib/Router'
-import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
+import { IWidgetConfig, RenderType, IWidgetProps } from '../Widget/components/Widget'
 import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
 import { ChartTypes } from '../Widget/config/chart/ChartTypes'
+import { DownloadTypes } from '../App/types'
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
 
@@ -176,6 +179,10 @@ export interface IDataRequestParams {
   nativeQuery?: boolean
 }
 
+export interface IDataDownloadParams extends IDataRequestParams {
+  id: number
+}
+
 interface IGridProps {
   dashboards: any[]
   widgets: any[]
@@ -208,11 +215,7 @@ interface IGridProps {
     requestParams: IDataRequestParams
   ) => void
   onLoadViewsDetail: (viewIds: number[], resolve: () => void) => void
-  onLoadWidgetCsv: (
-    itemId: number,
-    widgetId: number,
-    requestParams: IDataRequestParams
-  ) => void
+  onInitiateDownloadTask: (id: number, type: DownloadTypes, downloadParams?: IDataDownloadParams[], itemId?: number) => void
   onClearCurrentDashboard: () => any
   onLoadSelectOptions: (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }, itemId?: number) => void
   onSetSelectOptions: (controlKey: string, options: any[], itemId?: number) => void
@@ -225,6 +228,7 @@ interface IGridProps {
   onDrillPathSetting: (itemId: number, history: any[]) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
   onSelectDashboardItemChart: (itemId: number, renderType: string, selectedItems: number[]) => void
+  onGlobalControlChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
 }
 
 interface IGridStates {
@@ -401,15 +405,50 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private downloadCsv = (itemId: number, widgetId: number) => {
+  // private downloadCsv = (itemId: number, widgetId: number) => {
+  //   this.getData(
+  //     (renderType, itemId, widget, requestParams) => {
+  //       this.props.onLoadWidgetCsv(itemId, widget.id, requestParams)
+  //     },
+  //     'rerender',
+  //     itemId,
+  //     widgetId
+  //   )
+  // }
+
+  private initiateWidgetDownloadTask = (itemId: number, widgetId: number) => {
     this.getData(
       (renderType, itemId, widget, requestParams) => {
-        this.props.onLoadWidgetCsv(itemId, widget.id, requestParams)
+        const downloadParams = [{
+          ...requestParams,
+          id: widgetId
+        }]
+        this.props.onInitiateDownloadTask(widgetId, DownloadTypes.Widget, downloadParams, itemId)
       },
       'rerender',
       itemId,
       widgetId
     )
+  }
+
+  private initiateDashboardDownloadTask = () => {
+    const { currentItems, currentDashboard } = this.props
+    const downloadParams = []
+    currentItems.forEach((item) => {
+      const { id, widgetId } = item
+      this.getData(
+        (renderType, itemId, widget, requestParams) => {
+          downloadParams.push({
+            ...requestParams,
+            id
+          })
+        },
+        'rerender',
+        id,
+        widgetId
+      )
+    })
+    this.props.onInitiateDownloadTask(currentDashboard.id, DownloadTypes.Dashboard, downloadParams)
   }
 
   private getData = (
@@ -800,7 +839,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private doInteract = (itemId: number, triggerData) => {
-    console.log('doInteract')
     const {
       currentItems,
       currentLinkages
@@ -826,7 +864,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private clearAllInteracts = () => {
-    console.log('clearAllInteracts')
     const { currentItems } = this.props
     Object.keys(this.interactingLinkagers).forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === +linkagerItemId)
@@ -859,6 +896,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         ...this.state.interactingStatus,
         [itemId]: false
       }
+    }, () => {
+      const item = currentItems.find((ci) => ci.id === itemId)
+      this.getChartData('clear', itemId, item.widgetId)
     })
   }
 
@@ -868,7 +908,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
-  private saveFilters = (filterItems) => {
+  private saveFilters = (filterItems, queryMode) => {
     const {
       currentDashboard,
       onEditCurrentDashboard
@@ -879,7 +919,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         ...currentDashboard,
         config: JSON.stringify({
           ...JSON.parse(currentDashboard.config || '{}'),
-          filters: filterItems
+          filters: filterItems,
+          queryMode
         }),
         // FIXME
         active: true
@@ -898,19 +939,36 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
   }
 
-  private globalFilterChange = (queryConditions: IMapItemControlRequestParams) => {
-    const { currentItems, currentItemsInfo } = this.props
-    Object.entries(queryConditions).forEach(([itemId, condition]) => {
-      const item = currentItems.find((ci) => ci.id === +itemId)
+  private globalControlChange = (controlRequestParamsByItem: IMapItemControlRequestParams) => {
+    this.props.onGlobalControlChange(controlRequestParamsByItem)
+  }
+
+  private globalControlSearch = (itemIds: number[]) => {
+    const { currentItems, widgets, currentItemsInfo } = this.props
+    itemIds.forEach((itemId) => {
+      const item = currentItems.find((ci) => ci.id === itemId)
       if (item) {
+        const widget = widgets.find((w) => w.id === item.widgetId)
+        const pagination = currentItemsInfo[itemId].queryConditions.pagination
         let pageNo = 0
-        const { pagination } = currentItemsInfo[itemId].queryConditions
-        if (pagination.pageNo) { pageNo = 1 }
-        const { variables: globalVariables, filters: globalFilters } = condition
-        this.getChartData('rerender', +itemId, item.widgetId, {
-          globalVariables,
-          globalFilters,
-          pagination: { ...pagination, pageNo }
+        let pageSize = DEFAULT_TABLE_PAGE_SIZE
+        let noAggregators = false
+        if (widget.type === getTable().id) {
+          try {
+            const widgetProps: IWidgetProps = JSON.parse(widget.config)
+            if (widgetProps.mode === 'chart') {
+              const table = widgetProps.chartStyles.table
+              pageNo = DEFAULT_TABLE_PAGE
+              pageSize = Number(table.pageSize)
+              noAggregators = table.withNoAggregators
+            }
+          } catch (error) {
+            message.error(error)
+          }
+        }
+        this.getChartData('rerender', itemId, item.widgetId, {
+          pagination: { pageSize, ...pagination, pageNo },
+          nativeQuery: noAggregators
         })
       }
     })
@@ -1264,6 +1322,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       dashboardSharePanelAuthorized,
       drillPathSettingVisible
     } = this.state
+    let dashboardType: number
+    if (currentDashboard) {
+      dashboardType = currentDashboard.type
+    }
     let navDropdown = (<span />)
     let grids = void 0
     //   const drillPanels = []
@@ -1305,6 +1367,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     if (currentProject && currentItems) {
       const itemblocks = []
       const layouts = { lg: [] }
+
       currentItems.forEach((dashboardItem) => {
         const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
         const {
@@ -1327,9 +1390,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const drillpathSetting = queryConditions.drillpathSetting
         const drillpathInstance = queryConditions.drillpathInstance
         const view = formedViews[widget.viewId]
-
         itemblocks.push((
-          <div key={id}>
+          <div key={id} className={styles.authSizeTag}>
             <DashboardItem
               itemId={id}
               widgets={widgets}
@@ -1358,7 +1420,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onShowDrillEdit={this.showDrillDashboardItemForm}
               onDeleteDashboardItem={this.deleteItem}
               onLoadWidgetShareLink={onLoadWidgetShareLink}
-              onDownloadCsv={this.downloadCsv}
+              onDownloadCsv={this.initiateWidgetDownloadTask}
               onTurnOffInteract={this.turnOffInteract}
               onCheckTableInteract={this.checkInteract}
               onDoTableInteract={this.doInteract}
@@ -1373,6 +1435,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             />
           </div>
         ))
+
         layouts.lg.push({
           x,
           y,
@@ -1380,7 +1443,16 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           h: height,
           i: `${id}`
         })
+
       })
+      // if (dashboardType === 2) {
+      //   // report mode
+      //   grids = (
+      //     <div className={styles.reportMode}>
+      //       {itemblocks[itemblocks.length - 1]}
+      //     </div>
+      //   )
+      // } else {
       grids = (
         <ResponsiveReactGridLayout
           className="layout"
@@ -1399,6 +1471,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           {itemblocks}
         </ResponsiveReactGridLayout>
       )
+      // }
     }
 
     const saveDashboardItemButton = (
@@ -1487,6 +1560,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onLoadDashboardShareLink={onLoadDashboardShareLink}
               onToggleGlobalFilterVisibility={this.toggleGlobalFilterConfig}
               onToggleLinkageVisibility={this.toggleLinkageConfig}
+              onDownloadDashboard={this.initiateDashboardDownloadTask}
             />
           </Row>
           <GlobalControlPanel
@@ -1494,13 +1568,22 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             currentItems={currentItems}
             onGetOptions={this.getOptions}
             mapOptions={currentDashboardSelectOptions}
-            onChange={this.globalFilterChange}
+            onChange={this.globalControlChange}
+            onSearch={this.globalControlSearch}
           />
         </Container.Title>
-        <Container.Body grid ref={(f) => this.containerBody = findDOMNode(f)}>
-          {grids}
-          <div className={styles.gridBottom} />
-        </Container.Body>
+        {
+          dashboardType === 1 ? (
+            <Container.Body grid ref={(f) => this.containerBody = findDOMNode(f)}>
+              {grids}
+              <div className={styles.gridBottom} />
+            </Container.Body>
+          ) : (
+            <Container.Body report ref={(f) => this.containerBody = findDOMNode(f)}>
+              {grids}
+            </Container.Body>
+          )
+        }
         <Modal
           title={`${dashboardItemFormType === 'add' ? '新增' : '修改'} Widget`}
           wrapClassName="ant-modal-large"
@@ -1513,6 +1596,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             type={dashboardItemFormType}
             widgets={widgets || []}
             selectedWidgets={selectedWidgets}
+            currentDashboard={this.props.currentDashboard}
             polling={polling}
             step={dashboardItemFormStep}
             onWidgetSelect={this.widgetSelect}
@@ -1608,7 +1692,7 @@ export function mapDispatchToProps (dispatch) {
                         dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard')),
     onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
-    onLoadWidgetCsv: (itemId, widgetId, requestParams) => dispatch(loadWidgetCsv(itemId, widgetId, requestParams)),
+    onInitiateDownloadTask: (id, type, downloadParams?, itemId?) => dispatch(initiateDownloadTask(id, type, downloadParams, itemId)),
     onLoadSelectOptions: (controlKey, requestParams, itemId) => dispatch(loadSelectOptions(controlKey, requestParams, itemId)),
     onSetSelectOptions: (controlKey, options, itemId) => dispatch(setSelectOptions(controlKey, options, itemId)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),
@@ -1619,7 +1703,8 @@ export function mapDispatchToProps (dispatch) {
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
     onDrillPathSetting: (itemId, history) => dispatch(drillPathsetting(itemId, history)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index)),
-    onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems))
+    onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems)),
+    onGlobalControlChange: (controlRequestParamsByItem) => dispatch(globalControlChange(controlRequestParamsByItem))
   }
 }
 

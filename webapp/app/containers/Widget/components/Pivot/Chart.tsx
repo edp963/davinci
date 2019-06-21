@@ -61,6 +61,9 @@ interface IChartProps {
   getDataDrillDetail?: (position: string) => void
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object []
+  selectedChart: number
+  selectedItems?: string[]
+  onSelectChartsItems?: (selectedItems: number[]) => void
   // onHideDrillPanel?: (swtich: boolean) => void
 }
 
@@ -95,6 +98,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
   public componentWillUnmount () {
     // dispose chart instances
   }
+
 
   private getChartPieceData = (data, pieces) => {
     const dataLength = data.length
@@ -199,9 +203,9 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
       xAxis: scatterXAxis,
       tip,
       legend,
-      renderType
+      renderType,
+      selectedItems
     } = this.props
-
     const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
 
     data.forEach((chunk: IChartChunk) => {
@@ -492,7 +496,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                       })
                     } else {
                       series.push({
-                        data: records.map((recordCollection) => {
+                        data: records.map((recordCollection, i) => {
                           if (m.chart.id === PivotTypes.Scatter) {
                             const result = recordCollection.value
                               ? recordCollection.value.reduce(([value, size], record) => [
@@ -500,18 +504,37 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                                   currentSizeItem ? size + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : 0
                                 ], [0, 0])
                               : [0, 0]
+                            const itemStyle = selectedItems && selectedItems.length &&
+                            selectedItems.some((item) => Number(item.split('&')[0]) === i && Number(item.split('&')[1]) === index)
+                            ? {itemStyle: {normal: {opacity: 1, borderWidth: 6}}} : null
                             return {
                               value: result[0],
+                              ...itemStyle,
                               symbolSize: currentSizeItem
                                 ? getSymbolSize(m.name, result[1]) * currentSizeValue
                                 : PIVOT_DEFAULT_SCATTER_SIZE * currentSizeValue
                             }
                           } else {
+                            // bar line scatter
+                            const itemStyle = selectedItems && selectedItems.length &&
+                            selectedItems.some((item) => Number(item.split('&')[0]) === i && Number(item.split('&')[1]) === index)
+                             ? {itemStyle: {normal: {opacity: 1, borderWidth: 6}}} : null
                             return recordCollection.value
-                              ? recordCollection.value.reduce((sum, record) => sum + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0), 0)
-                              : 0
+                              ? {
+                                value: recordCollection.value.reduce((sum, record) => sum + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0), 0),
+                                ...itemStyle
+                              }
+                              : {
+                                value: 0,
+                                ...itemStyle
+                              }
                           }
                         }),
+                        itemStyle: {
+                          normal: {
+                            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
+                          }
+                        },
                         color: color.value[m.name] || color.value['all'],
                         ...currentLabelItem && {
                           label: {
@@ -656,17 +679,25 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
             yAxis,
             series
           })
+
           const { onDoInteract, onCheckTableInteract } = this.props
           if (onDoInteract) {
             instance.off('click')
             instance.on('click', (params) => {
-              const isInteractiveChart = onCheckTableInteract()
+              this.collectSelectedItems(params, seriesData)
+              const isInteractiveChart =onCheckTableInteract && onCheckTableInteract()
               if (isInteractiveChart) {
                 const triggerData = getTriggeringRecord(params, seriesData)
                 onDoInteract(triggerData)
               }
             })
           }
+
+          // drill
+          // instance.off('click')
+          // instance.on('click', (params) => {
+          //   this.collectSelectedItems(params, seriesData)
+          // })
 
 
           // if (isDrilling &&  whichDataDrillBrushed === false) {
@@ -721,6 +752,53 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
     })
   }
 
+
+  public collectSelectedItems = (params, seriesData) => {
+    const { data, onSelectChartsItems, selectedChart } = this.props
+    // 透视驱动下的 selectedChart 均为1
+    let selectedItems = []
+    if (this.props.selectedItems && this.props.selectedItems.length) {
+      selectedItems = [...this.props.selectedItems]
+    }
+    const { getDataDrillDetail } = this.props
+    const dataIndex = params.dataIndex
+    const seriesIndex = params.seriesIndex
+    const formatterIndex = `${dataIndex}&${seriesIndex}`
+    if (selectedItems.length === 0) {
+      selectedItems.push(formatterIndex)
+    } else {
+      const isb = selectedItems.some((item) => item === formatterIndex)
+      if (isb) {
+        for (let index = 0, l = selectedItems.length; index < l; index++) {
+          if (selectedItems[index] === formatterIndex) {
+            selectedItems.splice(index, 1)
+            break
+          }
+        }
+      } else {
+        selectedItems.push(formatterIndex)
+      }
+    }
+
+    const resultData = selectedItems.map((item) => {
+      return data[item]
+    })
+    const brushed = [{0: Object.values(resultData)}]
+    setTimeout(() => {
+      let sourceData = []
+      selectedItems.forEach((item) => {
+        const [dataIndex, seriesIndex] = item.split('&')
+        sourceData = sourceData.concat(getTriggeringRecord({
+          dataIndex, seriesIndex
+        }, seriesData))
+      })
+      getDataDrillDetail(JSON.stringify({range: null, brushed, sourceData}))
+    }, 500)
+    if (onSelectChartsItems) {
+      onSelectChartsItems(selectedItems)
+    }
+  }
+
   public render () {
     const { width, height, data } = this.props
 
@@ -751,7 +829,6 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
         </div>
       )
     })
-
     return (
       <div className={styles.chartContainer} style={{width, height}}>
         {chunks}

@@ -34,12 +34,14 @@ import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Lin
 import DashboardItem from '../../../app/containers/Dashboard/components/DashboardItem'
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
 import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
-
-import { IMapItemFilterValue, InteractionType, IMapItemControlRequestParams, IMapControlOptions } from '../../../app/components/Filters'
+import { ChartTypes } from '../../../app/containers/Widget/config/chart/ChartTypes'
+import { IMapItemControlRequestParams, IMapControlOptions } from '../../../app/components/Filters'
 import GlobalControlPanel from '../../../app/components/Filters/FilterPanel'
 
-import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
-import { Row, Col } from 'antd'
+import { RenderType, IWidgetConfig, IWidgetProps } from '../../../app/containers/Widget/components/Widget'
+import { ViewActions } from '../../../app/containers/View/actions'
+const { loadViewsDetail } = ViewActions
+import { Row, Col, message } from 'antd'
 
 import {
   getDashboard,
@@ -51,7 +53,9 @@ import {
   resizeAllDashboardItem,
   drillDashboardItem,
   deleteDrillHistory,
-  setSelectOptions
+  setSelectOptions,
+  selectDashboardItemChart,
+  globalControlChange
 } from './actions'
 import {
   makeSelectDashboard,
@@ -63,12 +67,14 @@ import {
   makeSelectItemsInfo,
   makeSelectLinkages
 } from './selectors'
-import { decodeMetricName } from '../../../app/containers/Widget/components/util'
+import { decodeMetricName, getTable } from '../../../app/containers/Widget/components/util'
 import {
   GRID_COLS,
   GRID_ROW_HEIGHT,
   GRID_ITEM_MARGIN,
-  GRID_BREAKPOINTS
+  GRID_BREAKPOINTS,
+  DEFAULT_TABLE_PAGE_SIZE,
+  DEFAULT_TABLE_PAGE
 } from '../../../app/globalConstants'
 
 const styles = require('../../../app/containers/Dashboard/Dashboard.less')
@@ -91,6 +97,7 @@ interface IDashboardProps {
         resultList: any[]
         totalCount: number
       }
+      selectedItems?: number[]
       loading: boolean
       queryConditions: IQueryConditions
       downloadCsvLoading: boolean
@@ -120,6 +127,8 @@ interface IDashboardProps {
   onResizeAllDashboardItem: () => void
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
+  onSelectDashboardItemChart: (itemId: number, renderType: string, selectedItems: number[]) => void
+  onGlobalControlChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
 }
 
 interface IDashboardStates {
@@ -232,7 +241,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     //   const config = JSON.parse(dashboard.config || '{}')
     //   const globalControls = config.filters || []
     //   const controlTokenMapping = globalControls.map((control) => {
-        
     //   })
     // }
   }
@@ -508,6 +516,41 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }
   }
 
+  private globalControlChange = (controlRequestParamsByItem: IMapItemControlRequestParams) => {
+    this.props.onGlobalControlChange(controlRequestParamsByItem)
+  }
+
+  private globalControlSearch = (itemIds: number[]) => {
+    const { currentItems, widgets, currentItemsInfo } = this.props
+    itemIds.forEach((itemId) => {
+      const item = currentItems.find((ci) => ci.id === itemId)
+      if (item) {
+        const widget = widgets.find((w) => w.id === item.widgetId)
+        const pagination = currentItemsInfo[itemId].queryConditions.pagination
+        let pageNo = 0
+        let pageSize = DEFAULT_TABLE_PAGE_SIZE
+        let noAggregators = false
+        if (widget.type === getTable().id) {
+          try {
+            const widgetProps: IWidgetProps = JSON.parse(widget.config)
+            if (widgetProps.mode === 'chart') {
+              const table = widgetProps.chartStyles.table
+              pageNo = DEFAULT_TABLE_PAGE
+              pageSize = Number(table.pageSize)
+              noAggregators = table.withNoAggregators
+            }
+          } catch (error) {
+            message.error(error)
+          }
+        }
+        this.getChartData('rerender', itemId, item.widgetId, {
+          pagination: { pageSize, ...pagination, pageNo },
+          nativeQuery: noAggregators
+        })
+      }
+    })
+  }
+
   private globalFilterChange = (queryConditions: IMapItemControlRequestParams) => {
     const { currentItems, currentItemsInfo } = this.props
     Object.entries(queryConditions).forEach(([itemId, condition]) => {
@@ -526,13 +569,14 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     })
   }
 
+
   private dataDrill = (e) => {
     const {
       widgets,
       currentItemsInfo,
       onDrillDashboardItem
     } = this.props
-    const { itemId, groups, widgetId, sourceDataFilter } = e
+    const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
@@ -561,28 +605,79 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         })))
     }
     let currentDrillStatus = void 0
+    let widgetConfigRows = []
+    let widgetConfigCols = []
+    const coustomTableSqls = []
+    let sqls = widgetConfig.filters.map((i) => i.config.sql)
     if ((!drillHistory) || drillHistory.length === 0) {
+      let currentCol = void 0
       if (widgetConfig) {
         const dimetionAxis = widgetConfig.dimetionAxis
-        if (dimetionAxis === 'col') {
-          const cols = widgetConfig.cols
-          name = cols[cols.length - 1]
-        } else {
-          const rows = widgetConfig.rows
-          name = rows[rows.length - 1]
-        }
-        filterSource = sourceDataFilter.map((source) => {
-          if (source && source[name]) {
-            return source[name]
+        widgetConfigRows = widgetConfig.rows && widgetConfig.rows.length ? widgetConfig.rows : []
+        widgetConfigCols = widgetConfig.cols && widgetConfig.cols.length ? widgetConfig.cols : []
+        const mode = widgetConfig.mode
+        if (mode && mode === 'pivot') {
+          if (cols && cols.length !== 0) {
+            const cols = widgetConfig.cols
+            name = cols[cols.length - 1]['name']
           } else {
-            return source
+            const rows = widgetConfig.rows
+            name = rows[rows.length - 1]['name']
           }
-        })
-        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+        } else if (dimetionAxis === 'col') {
+          const cols = widgetConfig.cols
+          name = cols[cols.length - 1]['name']
+        } else if (dimetionAxis === 'row') {
+          const rows = widgetConfig.rows
+          name = rows[rows.length - 1]['name']
+        } else if (mode === 'chart'  && widgetConfig.selectedChart === ChartTypes.Table) {
+          // todo coustomTable
+          const coustomTable = sourceDataFilter.reduce((a, b) => {
+            a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
+            return a
+          }, {})
+          for (const attr in coustomTable) {
+            if (coustomTable[attr] !== undefined && attr) {
+              coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
+            }
+          }
+          const drillKey = sourceDataFilter[sourceDataFilter.length - 1]['key']
+          const newWidgetPropCols = widgetConfigCols.reduce((array, col) => {
+            array.push(col)
+            if (col.name === drillKey) {
+              array.push({name: groups})
+            }
+            return array
+          }, [])
+          currentCol = groups && groups.length ? newWidgetPropCols : void 0
+        }
       }
-      const sqls = widgetConfig.filters.map((i) => i.config.sql)
-      sqls.push(sql)
+      filterSource = sourceDataFilter.map((source) => {
+        if (source && source[name]) {
+          return source[name]
+        }
+      })
+      if (name && name.length) {
+        currentCol = col && col.length ? widgetConfigCols.concat([{name: col}]) : void 0
+        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+        sqls.push(sql)
+      }
+      if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
+        sqls = sqls.concat(coustomTableSqls)
+      }
       const isDrillUp = widgetConfigGroups.some((cg) => cg === groups)
+      let currentDrillGroups = void 0
+      if (isDrillUp) {
+        currentDrillGroups = widgetConfigGroups.filter((cg) => cg !== groups)
+      } else {
+        if (mode === 'pivot') {
+          currentDrillGroups = widgetConfigGroups.concat([groups])
+        } else if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
+          currentDrillGroups = widgetConfigGroups.concat([groups])
+        } else {
+          currentDrillGroups = [groups]
+        }
+      }
       currentDrillStatus = {
         filter: {
           filterSource,
@@ -592,16 +687,66 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           visualType: 'string'
         },
         type: isDrillUp ? 'up' : 'down',
-        groups: isDrillUp ? widgetConfigGroups.filter((cg) => cg !== groups) : widgetConfigGroups.concat([groups]),
+        col: currentCol,
+        row: row && row.length ? widgetConfigRows.concat([{name: row}]) : void 0,
+        groups: currentDrillGroups,
+        // groups: isDrillUp
+        //         ? widgetConfigGroups.filter((cg) => cg !== groups)
+        //         : mode === 'pivot' ? widgetConfigGroups.concat([groups])
+        //                           : [groups],
         name: groups
       }
     } else {
       const lastDrillHistory = drillHistory[drillHistory.length - 1]
-      name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
-      filterSource = sourceDataFilter.map((source) => source[name])
-      sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
-      const sqls = lastDrillHistory.filter.sqls.concat(sql)
+      let currentCol = void 0
+      let currentRow = void 0
+     // todo
+      if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
+        const coustomTable = sourceDataFilter.reduce((a, b) => {
+          a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
+          return a
+        }, {})
+        for (const attr in coustomTable) {
+          if (coustomTable[attr] !== undefined && attr) {
+            coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
+          }
+        }
+        if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
+          sqls = sqls.concat(coustomTableSqls)
+        }
+        if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
+          const drillKey = sourceDataFilter[sourceDataFilter.length - 1]['key']
+          const cols = lastDrillHistory.col
+          const newWidgetPropCols = cols.reduce((array, col) => {
+            array.push(col)
+            if (col.name === drillKey) {
+              array.push({name: groups})
+            }
+            return array
+          }, [])
+          currentCol = groups && groups.length ? newWidgetPropCols : lastDrillHistory.col
+        }
+      } else {
+        name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
+        filterSource = sourceDataFilter.map((source) => source[name])
+        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+        sqls = lastDrillHistory.filter.sqls.concat(sql)
+        currentCol = col && col.length ? (lastDrillHistory.col || []).concat({name: col}) : lastDrillHistory.col
+        currentRow = row && row.length ? (lastDrillHistory.row || []).concat({name: row}) : lastDrillHistory.row
+      }
       const isDrillUp = lastDrillHistory.groups.some((cg) => cg === groups)
+      let currentDrillGroups = void 0
+      if (isDrillUp) {
+        currentDrillGroups = lastDrillHistory.groups.filter((cg) => cg !== groups)
+      } else {
+        if (mode === 'pivot') {
+          currentDrillGroups = lastDrillHistory.groups.concat([groups])
+        } else if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
+          currentDrillGroups = lastDrillHistory.groups.concat([groups])
+        } else {
+          currentDrillGroups = [groups]
+        }
+      }
       currentDrillStatus = {
         filter: {
           filterSource,
@@ -610,8 +755,10 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           sqls,
           visualType: 'string'
         },
+        col: currentCol,
+        row: currentRow,
         type: isDrillUp ? 'up' : 'down',
-        groups: isDrillUp ? lastDrillHistory.groups.filter((cg) => cg !== groups) : lastDrillHistory.groups.concat([groups]),
+        groups: currentDrillGroups,
         name: groups
       }
     }
@@ -620,6 +767,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         drillStatus: currentDrillStatus
       })
   }
+
   private selectDrillHistory = (history, item, itemId, widgetId) => {
     const { currentItemsInfo, onDeleteDrillHistory } = this.props
     if (history) {
@@ -627,10 +775,14 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         drillStatus: history
       })
     } else {
-      console.log('callback')
       this.getChartData('rerender', itemId, widgetId)
     }
     onDeleteDrillHistory(itemId, item)
+  }
+
+  private selectChartsItems = (itemId, renderType, selectedItems) => {
+    const { onSelectDashboardItemChart } = this.props
+    onSelectDashboardItemChart(itemId, renderType, selectedItems)
   }
 
   public render () {
@@ -667,14 +819,21 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           downloadCsvLoading,
           renderType,
           queryConditions,
-          controlSelectOptions
+          controlSelectOptions,
+          selectedItems
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
-        const view = { model: widget.model }
+        let view = { model: widget.model }
+        try {
+          view = {
+            model: JSON.parse(widget.model)
+          }
+        } catch (error) {
+          throw new Error(error)
+        }
         const interacting = interactingStatus[id] || false
         const drillHistory = queryConditions.drillHistory
-
         itemblocks.push((
           <div key={id}>
             <DashboardItem
@@ -703,6 +862,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               onShowFullScreen={this.visibleFullScreen}
               onGetControlOptions={this.getOptions}
               container="share"
+              selectedItems={selectedItems || []}
+              onSelectChartsItems={this.selectChartsItems}
             />
           </div>
         ))
@@ -773,7 +934,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
             currentItems={currentItems}
             onGetOptions={this.getOptions}
             mapOptions={dashboardSelectOptions}
-            onChange={this.globalFilterChange}
+            onChange={this.globalControlChange}
+            onSearch={this.globalControlSearch}
           />
         </Container.Title>
         {grids}
@@ -799,6 +961,7 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
+    onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onLoadDashboard: (token, reject) => dispatch(getDashboard(token, reject)),
     onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
     onLoadResultset: (renderType, itemid, dataToken, requestParams) => dispatch(getResultset(renderType, itemid, dataToken, requestParams)),
@@ -808,7 +971,9 @@ export function mapDispatchToProps (dispatch) {
     onSetSelectOptions: (controlKey, options, itemId) => dispatch(setSelectOptions(controlKey, options, itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
-    onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index))
+    onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index)),
+    onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems)),
+    onGlobalControlChange: (controlRequestParamsByItem) => dispatch(globalControlChange(controlRequestParamsByItem))
   }
 }
 

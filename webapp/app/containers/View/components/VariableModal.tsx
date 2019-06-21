@@ -13,17 +13,17 @@ import {
 import OperatorTypes from 'utils/operatorTypes'
 import { ViewVariableTypes, ViewVariableTypesLocale, ViewVariableValueTypes, ViewVariableValueTypesLocale } from 'containers/View/constants'
 
-interface IVariableModalProps {
-  visible: boolean
-  variable: IViewVariable
+export interface IVariableModalProps {
+  visible?: boolean
+  variable?: IViewVariable
 
   channels: IDacChannel[]
   tenants: IDacTenant[]
   bizs: IDacBiz[]
 
   nameValidator?: (key: string, name: string, callback: (msg?: string) => void) => void
-  onCancel: () => void
-  onSave: (variable: IViewVariable) => void
+  onCancel?: () => void
+  onSave?: (variable: IViewVariable) => void
 
   onLoadDacTenants: (channelName: string) => void
   onLoadDacBizs: (channelName: string, tenantId: number) => void
@@ -76,7 +76,13 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
   public componentDidUpdate (prevProps: IVariableModalProps & FormComponentProps) {
     const { form, variable, visible, channels } = this.props
     if (variable !== prevProps.variable || visible !== prevProps.visible) {
-      const { type, valueType, defaultValues, udf, fromService } = variable || defaultVarible
+      const { type, valueType, defaultValues, udf, fromService, channel } = variable || defaultVarible
+      if (channel && visible) {
+        const { name: channelName, tenantId } = channel
+        const { onLoadDacTenants, onLoadDacBizs } = this.props
+        onLoadDacTenants(channelName)
+        onLoadDacBizs(channelName, tenantId)
+      }
       this.setState({
         selectedType: type,
         selectedValueType: valueType,
@@ -131,7 +137,7 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
   }
 
   private validateVariableName = (_: any, name: string, callback: (msg?: string) => void) => {
-    const isValidName = /[\w]+/.test(name)
+    const isValidName = /^[\w]+$/.test(name)
     if (!isValidName) {
       callback('变量名称由字母、数字及下划线组成')
       return

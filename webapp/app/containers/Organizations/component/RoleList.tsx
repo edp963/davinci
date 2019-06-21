@@ -1,6 +1,5 @@
 import React from 'react'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-import { makeSelectLoginUser } from '../../App/selectors'
 import { createStructuredSelector } from 'reselect'
 import RoleForm from './RoleForm'
 import debounce from 'lodash/debounce'
@@ -9,6 +8,7 @@ import { connect } from 'react-redux'
 import { InjectedRouter } from 'react-router/lib/Router'
 
 import { Row, Col, Tooltip, Button, Input, Table, Modal, Icon, Popconfirm, Divider, message} from 'antd'
+import { ColumnProps } from 'antd/lib/table'
 const styles = require('../Organization.less')
 import * as Organization from '../Organization'
 import {checkNameUniqueAction} from '../../App/actions'
@@ -32,6 +32,7 @@ interface IRoleState {
 }
 
 interface IRoleProps {
+  isLoginUserOwner: boolean
   router?: InjectedRouter
   onAddRole?: (name: string, desc: string, id: number, resolve: () => any) => any
   onEditRole?: (name: string, desc: string, id: number, resolve: () => any) => any
@@ -239,14 +240,15 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
 
   public render () {
     const { formVisible, relFormVisible, searchValue, filteredTableSource, formType, groupTransfer, currentOrganizationRole } = this.state
-    const { currentOrganization, currentOrganization: {id}, roleModalLoading, organizationMembers } = this.props
+    const { isLoginUserOwner, currentOrganization, currentOrganization: {id}, roleModalLoading, organizationMembers } = this.props
     const roleModalTitle = formType === 'add' ? '新增角色' : '修改角色信息'
     const relRoleModalTitle = '关联成员'
     let CreateButton = void 0
     if (currentOrganization) {
       CreateButton = ComponentPermission(currentOrganization, '')(Button)
     }
-    const columns = [
+
+    let columns: Array<ColumnProps<any>> = [
       {
         title: '角色名',
         dataIndex: 'name',
@@ -256,24 +258,27 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
         title: '描述',
         dataIndex: 'description',
         key: 'description'
-      },
-      {
+      }
+    ]
+
+    if (isLoginUserOwner) {
+      columns = columns.concat({
         title: '操作',
         dataIndex: 'setting',
         key: 'setting',
         render: (text, record) => (
           <span>
-              <a href="javascript:;" onClick={this.showRelRoleForm('add', record.id)}>member</a>
+              <a href="javascript:;" onClick={this.showRelRoleForm('add', record.id)}>关联成员</a>
               <Divider type="vertical" />
-              <a href="javascript:;" onClick={this.showRoleForm('edit', record.id)}>edit</a>
+              <a href="javascript:;" onClick={this.showRoleForm('edit', record.id)}>编辑</a>
               <Divider type="vertical" />
-              <Popconfirm title="Sure to delete?" onConfirm={this.handleDelete(record.id)}>
-                    <a href="javascript:;">delete</a>
+              <Popconfirm title="确定删除？" onConfirm={this.handleDelete(record.id)}>
+                    <a href="javascript:;">删除</a>
               </Popconfirm>
           </span>
         )
-      }
-    ]
+      })
+    }
 
     const addModalButtons =
     (
@@ -327,7 +332,6 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
               bordered
               columns={columns}
               dataSource={currentOrganizationRole}
-              pagination={false}
             />
           </div>
         </Row>
@@ -369,7 +373,6 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
 
 
 const mapStateToProps = createStructuredSelector({
-  loginUser: makeSelectLoginUser(),
   roleModalLoading: makeSelectRoleModalLoading(),
   currentOrganizationRole: makeSelectCurrentOrganizationRole()
 })

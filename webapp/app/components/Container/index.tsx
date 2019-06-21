@@ -29,6 +29,7 @@ import Body from './Body'
 interface IContainerProps {
   grid?: boolean
   card?: boolean
+  report?: boolean
   children: React.ReactNode
 }
 

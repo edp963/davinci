@@ -11,7 +11,7 @@ import NumberRange from '../NumberRange'
 const MultiDatePicker = React.lazy(() => import('../MultiDatePicker'))
 import DatePickerFormats, { DatePickerDefaultValues, DatePickerFormatsSelectSetting } from './datePickerFormats'
 const { WeekPicker, MonthPicker, RangePicker } = DatePicker
-import { SQL_NUMBER_TYPES, SqlTypes } from '../../globalConstants'
+import { SQL_NUMBER_TYPES, SqlTypes, DEFAULT_CACHE_EXPIRED } from '../../globalConstants'
 import { ViewVariableValueTypes, ViewVariableTypes } from 'app/containers/View/constants'
 import { IFormedView, IViewModelProps, IViewVariable } from 'app/containers/View/types'
 
@@ -45,6 +45,8 @@ export interface IControlBase {
   operator: OperatorTypes
   dateFormat?: DatePickerFormats
   multiple?: boolean
+  cache: boolean
+  expired: number
   customOptions?: boolean
   options?: IControlSelectOption[]
   width: number
@@ -96,6 +98,8 @@ export interface IDistinctValueReqeustParams {
   columns: string[]
   filters?: string[]
   variables?: Array<{name: string, value: string | number}>
+  cache: boolean
+  expired: number
 }
 
 export type OnGetControlOptions = (
@@ -113,16 +117,6 @@ export interface IMapControlOptions {
   [controlKey: string]: ControlOptions
 }
 
-export type OnFilterControlValueChange = (
-  control: IControlBase,
-  value: number | string
-) => void
-
-export type OnFilterValueChange = (
-  mapItemFilterValue: IMapItemControlRequestParams,
-  filterKey: string
-) => void
-
 export function getDefaultGlobalControl (): IGlobalControl {
   const control: IGlobalControl = {
     key: uuid(8, 16),
@@ -130,6 +124,8 @@ export function getDefaultGlobalControl (): IGlobalControl {
     type: FilterTypes.Select,
     interactionType: 'column',
     operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],
+    cache: false,
+    expired: DEFAULT_CACHE_EXPIRED,
     width: 0,
     relatedItems: {},
     relatedViews: {}
@@ -147,15 +143,17 @@ export function getDefaultLocalControl (view: IFormedView): ILocalControl {
     type: FilterTypes.Select,
     interactionType: 'column',
     operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],
+    cache: false,
+    expired: DEFAULT_CACHE_EXPIRED,
     width: 0,
     fields: defaultFields && { name: defaultFields[0], type: defaultFields[1].sqlType }
   }
   return control
 }
 
-export function renderInputText (onChange) {
+export function renderInputText (onChange, onSearch) {
   return (
-    <Input.Search placeholder="请输入" onPressEnter={onChange} />
+    <Input.Search placeholder="请输入" onBlur={onChange} onPressEnter={onSearch} />
   )
 }
 
@@ -218,7 +216,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
       <MultiDatePicker
         placeholder="请选择"
         format={filter.dateFormat}
-        onChange={onChange}
+        {...onChange && {onChange}}
       />
     )
   } else {
@@ -228,7 +226,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
           <WeekPicker
             className={styles.controlComponent}
             placeholder="请选择"
-            onChange={onChange}
+            {...onChange && {onChange}}
             {...extraProps}
           />
         )
@@ -239,7 +237,7 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
             className={styles.controlComponent}
             placeholder="请选择"
             format={filter.dateFormat}
-            onChange={onChange}
+            {...onChange && {onChange}}
             {...extraProps}
           />
         )
@@ -251,8 +249,8 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
             placeholder="请选择"
             showTime={isDatetimePicker}
             format={filter.dateFormat}
-            onChange={isDatetimePicker ? datetimePickerChange(onChange) : onChange}
-            onOk={onChange}
+            {...onChange && {onChange: isDatetimePicker ? datetimePickerChange(onChange) : onChange}}
+            {...onChange && {onOk: onChange}}
             {...extraProps}
           />
         )
@@ -290,7 +288,9 @@ export function getVariableValue (filter: IControlBase, fields: IControlRelatedF
   let valueType
   let variable = []
 
-  if (value === void 0 || value === null) {
+  if (value === void 0
+    || value === null
+    || typeof value === 'string' && !value.trim()) {
     return variable
   }
 
@@ -357,7 +357,9 @@ export function getModelValue (control: IControlBase, field: IControlRelatedFiel
   const { name, type: sqlType } = field
   const filters = []
 
-  if (value === void 0 || value === null) {
+  if (value === void 0
+      || value === null
+      || typeof value === 'string' && !value.trim()) {
     return filters
   }
 
@@ -428,8 +430,8 @@ export function getValidVariableValue (value, valueType: ViewVariableValueTypes)
   }
 }
 
-export function getDefaultValue (control: IControlBase) {
-  const { type, dynamicDefaultValue, defaultValue } = control
+export function deserializeDefaultValue (control: IControlBase) {
+  const { type, dynamicDefaultValue, defaultValue, multiple } = control
   switch (type) {
     case FilterTypes.Date:
       if (dynamicDefaultValue) {
@@ -463,13 +465,25 @@ export function getDefaultValue (control: IControlBase) {
           case DatePickerDefaultValues.LastYear:
             return moment().subtract(90, 'days').startOf('year')
           default:
-            return defaultValue && moment(defaultValue)
+            return multiple ? defaultValue : defaultValue && moment(defaultValue)
         }
       } else {
         return null
       }
     default:
       return defaultValue
+  }
+}
+
+export function serializeDefaultValue (
+  control: IControlBase,
+  value
+) {
+  const { type, dateFormat, multiple } = control
+  if (type === FilterTypes.Date && !multiple) {
+    return value && value.format(dateFormat)
+  } else {
+    return value
   }
 }
 
