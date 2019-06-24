@@ -432,10 +432,24 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private initiateDashboardDownloadTask = () => {
-    const { currentItems, currentDashboard } = this.props
+    const { currentItems, currentDashboard, widgets } = this.props
     const downloadParams = []
     currentItems.forEach((item) => {
       const { id, widgetId } = item
+      const widget = widgets.find((w) => w.id === widgetId)
+      const queryConditions: Partial<IQueryConditions> = {
+        nativeQuery: false
+      }
+      if (widget.type === getTable().id) {
+        try {
+          const widgetProps: IWidgetProps = JSON.parse(widget.config)
+          if (widgetProps.mode === 'chart') {
+            queryConditions.nativeQuery = widgetProps.chartStyles.table.withNoAggregators
+          }
+        } catch (error) {
+          message.error(error)
+        }
+      }
       this.getData(
         (renderType, itemId, widget, requestParams) => {
           downloadParams.push({
@@ -445,7 +459,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         },
         'rerender',
         id,
-        widgetId
+        widgetId,
+        queryConditions
       )
     })
     this.props.onInitiateDownloadTask(currentDashboard.id, DownloadTypes.Dashboard, downloadParams)
@@ -492,7 +507,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
       drillStatus = queryConditions.drillStatus || void 0
       pagination = queryConditions.pagination || cachedQueryConditions.pagination
-      nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
+      nativeQuery = queryConditions.nativeQuery !== void 0 ? queryConditions.nativeQuery : cachedQueryConditions.nativeQuery
     } else {
       tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
