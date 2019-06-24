@@ -49,6 +49,7 @@ interface IDashboardItemProps {
   widget: any
   widgets: any
   view?: Partial<IFormedView>
+  isTrigger?: boolean
   datasource: any
   loading: boolean
   polling: string
@@ -837,6 +838,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       [styles.gridItem]: true,
       [styles.interact]: interacting
     })
+
+    const triggerClass = classnames({
+      [styles.trigger]: true,
+      [utilStyles.hide]: this.props.isTrigger === false
+    })
+
     let isSelectedData = false
     if (this.state.whichDataDrillBrushed) {
       (this.state.whichDataDrillBrushed as object[]).forEach((brushed, index) => {
@@ -911,7 +918,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         hasDataConfig={hasDataConfig}
       />
     )
-
+    console.log(widgetProps)
     return (
       <div className={gridItemClass} ref={(f) => this.container = f}>
         <div className={styles.header}>
@@ -933,6 +940,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             {downloadButton}
             {dropdownMenu}
           </div>
+        </div>
+
+        <div className={triggerClass}>
+          <i className="iconfont icon-icon_linkage"/>
         </div>
 
         <div

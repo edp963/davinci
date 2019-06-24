@@ -795,6 +795,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       currentItems,
       currentItemsInfo,
       widgets,
+      linkages,
       dashboardSelectOptions
     } = this.props
 
@@ -837,6 +838,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         }
         const interacting = interactingStatus[id] || false
         const drillHistory = queryConditions.drillHistory
+        const isTrigger = linkages && linkages.length ? linkages.map((linkage) => linkage.trigger[0]
+        ).some((tr) => tr === String(id)) : false
+
         itemblocks.push((
           <div key={id}>
             <DashboardItem
@@ -844,6 +848,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               widget={widget}
               widgets={widgets}
               view={view}
+              isTrigger={isTrigger}
               datasource={datasource}
               loading={loading}
               polling={polling}
