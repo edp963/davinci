@@ -685,7 +685,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
             instance.off('click')
             instance.on('click', (params) => {
               this.collectSelectedItems(params, seriesData)
-              const isInteractiveChart =onCheckTableInteract && onCheckTableInteract()
+              const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
               if (isInteractiveChart) {
                 const triggerData = getTriggeringRecord(params, seriesData)
                 onDoInteract(triggerData)

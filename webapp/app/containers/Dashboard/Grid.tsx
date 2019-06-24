@@ -1321,6 +1321,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentProject,
       currentLinkages
     } = this.props
+
     const {
       mounted,
       dashboardItemFormType,
@@ -1405,12 +1406,16 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const drillpathSetting = queryConditions.drillpathSetting
         const drillpathInstance = queryConditions.drillpathInstance
         const view = formedViews[widget.viewId]
+        const isTrigger = currentLinkages && currentLinkages.length ? currentLinkages.map((linkage) => linkage.trigger[0]
+        ).some((tr) => tr === String(id)) : false
+
         itemblocks.push((
           <div key={id} className={styles.authSizeTag}>
             <DashboardItem
               itemId={id}
               widgets={widgets}
               widget={widget}
+              isTrigger={isTrigger}
               datasource={datasource}
               loading={loading}
               polling={polling}
