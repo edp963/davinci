@@ -52,6 +52,7 @@ export function* getDashboard (action) {
     yield put(dashboardGetted(dashboard.payload))
   } catch (err) {
     yield put(loadDashboardFail())
+    errorHandler(err)
     payload.reject(err)
   }
 }
@@ -155,7 +156,7 @@ export function* getSelectOptions (action) {
       }
       return payloads
     }, [])
-    yield put(selectOptionsLoaded(controlKey, values, itemId))
+    yield put(selectOptionsLoaded(controlKey, Array.from(new Set(values)), itemId))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
     errorHandler(err)

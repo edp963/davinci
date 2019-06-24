@@ -147,7 +147,7 @@ export class Organization extends React.PureComponent <IOrganizationProps, {}> {
     onLoadOrganizationDetail(Number(organizationId))
   }
 
-  private deleteOrganization = (id) => () => {
+  private deleteOrganization = (id) => {
     this.props.onDeleteOrganization(id, () => {
       this.props.router.push(`/account/organizations`)
     })
@@ -173,6 +173,8 @@ export class Organization extends React.PureComponent <IOrganizationProps, {}> {
 
     const {avatar, name, memberNum, roleNum} = currentOrganization as IOrganization
     const projectNum = currentOrganizationProjects && currentOrganizationProjects.length ? currentOrganizationProjects.length : 0
+    const memeberOfLoginUser = currentOrganizationMembers && currentOrganizationMembers.find((m) => m.user.id === loginUser.id)
+    const isLoginUserOwner = !!memeberOfLoginUser && memeberOfLoginUser.user.role === 1
     return (
       <Box>
         <Box.Header>
@@ -204,6 +206,7 @@ export class Organization extends React.PureComponent <IOrganizationProps, {}> {
             </TabPane>
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{memberNum}</span></span>} key="members">
               <MemberList
+                loginUser={loginUser}
                 toThatUserProfile={this.toThatTeam}
                 organizationId={organizationId}
                 loadOrganizationsMembers={this.props.onLoadOrganizationMembers}
@@ -218,6 +221,7 @@ export class Organization extends React.PureComponent <IOrganizationProps, {}> {
             </TabPane>
             <TabPane tab={<span><Icon type="usergroup-add" />角色<span className={styles.badge}>{roleNum}</span></span>} key="roles">
               <RoleList
+                isLoginUserOwner={isLoginUserOwner}
                 onLoadOrganizationDetail={this.props.onLoadOrganizationDetail}
                 organizations={organizations}
                 organizationMembers={currentOrganizationMembers}

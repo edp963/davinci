@@ -42,6 +42,16 @@ const makeSelectNavigator = () => createSelector(
   (globalState) => globalState.get('navigator')
 )
 
+const makeSelectDownloadList = () => createSelector(
+  selectGlobal,
+  (globalState) => globalState.get('downloadList')
+)
+
+const makeSelectDownloadListLoading = () => createSelector(
+  selectGlobal,
+  (globalState) => globalState.get('downloadListLoading')
+)
+
 const makeSelectLocationState = () => {
   let prevRoutingState
   let prevRoutingStateJS
@@ -64,5 +74,7 @@ export {
   makeSelectLoginUser,
   makeSelectLoginLoading,
   makeSelectNavigator,
-  makeSelectLocationState
+  makeSelectLocationState,
+  makeSelectDownloadList,
+  makeSelectDownloadListLoading
 }

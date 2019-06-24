@@ -4,6 +4,7 @@ import chartlibs from '../../config/chart'
 import * as echarts from 'echarts/lib/echarts'
 import { ECharts } from 'echarts'
 import chartOptionGenerator from '../../render/chart'
+import { getTriggeringRecord } from '../util'
 const styles = require('./Chart.less')
 
 
@@ -22,7 +23,8 @@ export class Chart extends React.PureComponent<IChartProps> {
   }
 
   private renderChart = (props: IChartProps) => {
-    const { selectedChart, renderType, getDataDrillDetail, isDrilling, onSelectChartsItems } = props
+    const { selectedChart, renderType, getDataDrillDetail, isDrilling, onSelectChartsItems, onDoInteract, onCheckTableInteract } = props
+
     if (renderType === 'loading') {
       return
     }
@@ -50,6 +52,19 @@ export class Chart extends React.PureComponent<IChartProps> {
         }
       )
     )
+
+
+    // if (onDoInteract) {
+    //   this.instance.off('click')
+    //   this.instance.on('click', (params) => {
+    //     const isInteractiveChart = onCheckTableInteract()
+    //     if (isInteractiveChart) {
+    //       const triggerData = getTriggeringRecord(params, seriesData)
+    //       onDoInteract(triggerData)
+    //     }
+    //   })
+    // }
+
     this.instance.off('click')
     this.instance.on('click', (params) => {
       this.collectSelectedItems(params)
@@ -58,7 +73,7 @@ export class Chart extends React.PureComponent<IChartProps> {
   }
 
   public collectSelectedItems = (params) => {
-    const { data, onSelectChartsItems, selectedChart } = this.props
+    const { data, onSelectChartsItems, selectedChart, onDoInteract, onCheckTableInteract } = this.props
     let selectedItems = []
     if (this.props.selectedItems && this.props.selectedItems.length) {
       selectedItems = [...this.props.selectedItems]
@@ -89,8 +104,15 @@ export class Chart extends React.PureComponent<IChartProps> {
     })
     const brushed = [{0: Object.values(resultData)}]
     const sourceData = Object.values(resultData)
+    const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
+    if (isInteractiveChart && onDoInteract) {
+      const triggerData = sourceData
+      onDoInteract(triggerData)
+    }
     setTimeout(() => {
-      getDataDrillDetail(JSON.stringify({range: null, brushed, sourceData}))
+      if (getDataDrillDetail) {
+        getDataDrillDetail(JSON.stringify({range: null, brushed, sourceData}))
+      }
     }, 500)
     if (onSelectChartsItems) {
       onSelectChartsItems(selectedItems)

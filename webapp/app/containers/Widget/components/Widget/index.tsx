@@ -110,6 +110,7 @@ export interface IWidgetProps {
   filters: IWidgetFilter[]
   chartStyles: IChartStyles
   selectedChart: number
+  interacting?: boolean
   color?: IDataParamProperty
   label?: IDataParamProperty
   size?: IDataParamProperty
@@ -141,10 +142,12 @@ export interface IWidgetConfig extends IWidgetProps {
   controls: any[]
   cache: boolean
   expired: number
+  autoLoadData: boolean
 }
 
 export interface IWidgetWrapperProps extends IWidgetProps {
-  loading: boolean
+  loading?: boolean | JSX.Element
+  empty?: boolean | JSX.Element
 }
 
 export interface IWidgetWrapperStates {
@@ -189,33 +192,15 @@ export class Widget extends React.Component<IWidgetWrapperProps, IWidgetWrapperS
     }
   }
 
-  private needMask = () => {
-    const { selectedChart, cols, rows, metrics } = this.props
-    switch (selectedChart) {
-      case ChartTypes.Iframe:
-        return false
-      case ChartTypes.RichText:
-        return cols.length || rows.length || metrics.length
-      default:
-        return true
-    }
-  }
-
   public render () {
-    const { data, loading } = this.props
+    const { loading, empty } = this.props
     const { width, height } = this.state
-    const empty = !(data.length || !this.needMask())
 
     const widgetProps = { width, height, ...this.props }
 
     delete widgetProps.loading
 
-    const maskClass = classnames({
-      [styles.mask]: true,
-      [styles.active]: loading || empty
-    })
-
-    let widgetContent
+    let widgetContent: JSX.Element
     if (width && height) {
       // FIXME
       widgetContent =  widgetProps.mode === 'chart'
@@ -223,29 +208,11 @@ export class Widget extends React.Component<IWidgetWrapperProps, IWidgetWrapperS
         : (<Pivot {...widgetProps} />)
     }
 
-    let maskContent = null
-    if (loading) {
-      maskContent = (
-        <>
-          <Icon type="loading" />
-          <p>加载中…</p>
-        </>
-      )
-    } else if (empty) {
-      maskContent = (
-        <>
-          <Icon type="inbox" className={styles.emptyIcon} />
-          <p>暂无数据</p>
-        </>
-      )
-    }
-
     return (
       <div className={styles.wrapper} ref={this.container}>
         {widgetContent}
-        <div className={maskClass}>
-          {maskContent}
-        </div>
+        {loading}
+        {empty}
       </div>
     )
   }

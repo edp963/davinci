@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.service.impl;
@@ -24,10 +25,7 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.CollectionUtils;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.dao.DashboardMapper;
-import edp.davinci.dao.DashboardPortalMapper;
-import edp.davinci.dao.RelRolePortalMapper;
-import edp.davinci.dao.RoleMapper;
+import edp.davinci.dao.*;
 import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
 import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
 import edp.davinci.dto.projectDto.ProjectDetail;
@@ -70,6 +68,15 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
 
     @Autowired
     private RelRolePortalMapper relRolePortalMapper;
+
+    @Autowired
+    private RelRoleDashboardWidgetMapper relRoleDashboardWidgetMapper;
+
+    @Autowired
+    private MemDashboardWidgetMapper memDashboardWidgetMapper;
+
+    @Autowired
+    private RelRoleDashboardMapper relRoleDashboardMapper;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -301,7 +308,19 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
             throw new UnAuthorizedExecption("you have not permission to delete portal");
         }
 
+        //delete rel_role_dashboard_widget
+        relRoleDashboardWidgetMapper.deleteByPortalId(id);
+
+        //delete mem_dashboard_widget
+        memDashboardWidgetMapper.deleteByPortalId(id);
+
+        //delete rel_role_dashboard
+        relRoleDashboardMapper.deleteByPortalId(id);
+
+        //delete dashboard
         dashboardMapper.deleteByPortalId(id);
+
+        //delete dashboard_portal
         int i = dashboardPortalMapper.deleteById(id);
         if (i > 0) {
             relRolePortalMapper.deleteByProtalId(dashboardPortal.getId());

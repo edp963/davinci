@@ -16,6 +16,18 @@
       "default": 240
     }]
   }, {
+    "name": "position",
+    "title": "视频位置",
+    "items": [{
+      "name": "positionX",
+      "title": "x轴位置（像素）",
+      "component": "inputnumber"
+    }, {
+      "name": "positionY",
+      "title": "y轴位置（像素）",
+      "component": "inputnumber"
+    }]
+  }, {
     "name": "address",
     "title": "视频地址",
     "items": [{

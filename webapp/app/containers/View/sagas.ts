@@ -176,14 +176,16 @@ export function* getSelectOptions (action: ViewActionType) {
     const { controlKey, requestParams, itemId } = payload
     const requestParamsMap: Array<[string, IDistinctValueReqeustParams]> = Object.entries(requestParams)
     const requests = requestParamsMap.map(([viewId, params]: [string, IDistinctValueReqeustParams]) => {
-      const { columns, filters, variables } = params
+      const { columns, filters, variables, cache, expired } = params
       return call(request, {
         method: 'post',
         url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
         data: {
           columns,
           filters,
-          params: variables
+          params: variables,
+          cache,
+          expired
         }
       })
     })
@@ -195,7 +197,7 @@ export function* getSelectOptions (action: ViewActionType) {
       }
       return payloads
     }, [])
-    yield put(selectOptionsLoaded(controlKey, values, itemId))
+    yield put(selectOptionsLoaded(controlKey, Array.from(new Set(values)), itemId))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
     errorHandler(err)
@@ -215,7 +217,7 @@ export function* getViewDistinctValue (action: ViewActionType) {
     const list = params.columns.reduce((arr, col) => {
       return arr.concat(result.payload.map((item) => item[col]))
     }, [])
-    yield put(viewDistinctValueLoaded(list))
+    yield put(viewDistinctValueLoaded(Array.from(new Set(list))))
     if (resolve) {
       resolve(result.payload)
     }

@@ -6,14 +6,14 @@ import { ViewVariableTypes } from '../constants'
 
 import Styles from '../View.less'
 
-interface IViewVariableProps {
+export interface IViewVariableListProps {
   variables: IViewVariable[]
-  onAdd: () => void
-  onDelete: (key: string) => void
-  onEdit: (variable: IViewVariable) => void
+  onAdd?: () => void
+  onDelete?: (key: string) => void
+  onEdit?: (variable: IViewVariable) => void
 }
 
-export class ViewVariableList extends React.Component<IViewVariableProps> {
+export class ViewVariableList extends React.Component<IViewVariableListProps> {
 
   private editItem = (variable: IViewVariable) => () => {
     this.props.onEdit({ ...variable })

@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.core.utils;
@@ -75,7 +76,7 @@ public class SqlParseUtils {
 
         char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
 
-        Pattern p = Pattern.compile(getReg(REG_SQL_PLACEHOLDER, delimiter));
+        Pattern p = Pattern.compile(getReg(REG_SQL_PLACEHOLDER, delimiter, false));
         Matcher matcher = p.matcher(sqlStr);
 
         if (!matcher.find()) {
@@ -83,15 +84,15 @@ public class SqlParseUtils {
         }
 
         Map<String, Object> queryParamMap = new ConcurrentHashMap<>();
-        Map<String, List<String>> authParamMap = new ConcurrentHashMap<>();
+        Map<String, List<String>> authParamMap = new Hashtable<>();
 
         //解析参数
         if (!CollectionUtils.isEmpty(variables)) {
             ExecutorService executorService = Executors.newFixedThreadPool(8);
             try {
                 CountDownLatch countDownLatch = new CountDownLatch(variables.size());
-                final Future[] future = {null};
-                variables.forEach(variable -> future[0] = executorService.submit(() -> {
+                List<Future> futures = new ArrayList<>(variables.size());
+                variables.forEach(variable -> futures.add(executorService.submit(() -> {
                     try {
                         SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
                         if (null != typeEnum) {
@@ -102,9 +103,7 @@ public class SqlParseUtils {
                                 case AUTHVARE:
                                     if (null != variable) {
                                         List<String> v = getAuthVarValue(variable, null);
-                                        if (null != v) {
-                                            authParamMap.put(variable.getName().trim(), v);
-                                        }
+                                        authParamMap.put(variable.getName().trim(), null == v ? new ArrayList<>() : v);
                                     }
                                     break;
                             }
@@ -112,10 +111,12 @@ public class SqlParseUtils {
                     } finally {
                         countDownLatch.countDown();
                     }
-                }));
+                })));
 
                 try {
-                    future[0].get();
+                    for (Future future : futures) {
+                        future.get();
+                    }
                     countDownLatch.await();
                 } catch (ExecutionException e) {
                     executorService.shutdownNow();
@@ -137,10 +138,11 @@ public class SqlParseUtils {
         if (null == channel) {
             return SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf());
         } else if (DacChannelUtil.dacMap.containsKey(channel.getName())) {
-            List<Object> data = dacChannelUtil.getData(channel.getName(), channel.getBizId().toString(), email);
-            if (null != data) {
-                return SqlVariableValueTypeEnum.getValues(variable.getValueType(), data, variable.isUdf());
+            if (StringUtils.isEmpty(email)) {
+                return null;
             }
+            List<Object> data = dacChannelUtil.getData(channel.getName(), channel.getBizId().toString(), email);
+            return SqlVariableValueTypeEnum.getValues(variable.getValueType(), data, variable.isUdf());
         }
         return new ArrayList<>();
     }
@@ -162,12 +164,19 @@ public class SqlParseUtils {
         char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
 
         //替换auth@var
-        Pattern p = Pattern.compile(getReg(REG_AUTHVAR, delimiter));
+        Pattern p = Pattern.compile(getReg(REG_AUTHVAR, delimiter, true));
         Matcher matcher = p.matcher(sql);
+
+        Map<String, List<SqlOperatorEnum>> operatorMap = Arrays.stream(SqlOperatorEnum.values()).collect(Collectors.groupingBy(e -> e.getValue()));
 
         Set<String> expSet = new HashSet<>();
         while (matcher.find()) {
-            expSet.add(matcher.group());
+            String group = matcher.group();
+            for (String key : operatorMap.keySet()) {
+                if (group.toUpperCase().contains(key)) {
+                    expSet.add(group);
+                }
+            }
         }
         if (!CollectionUtils.isEmpty(expSet)) {
             Map<String, String> parsedMap = getParsedExpression(expSet, authParamMap, delimiter);
@@ -179,7 +188,7 @@ public class SqlParseUtils {
         }
 
         ST st = new ST(sql, delimiter, delimiter);
-        if (!CollectionUtils.isEmpty(authParamMap)) {
+        if (!CollectionUtils.isEmpty(authParamMap) && !CollectionUtils.isEmpty(expSet)) {
             authParamMap.forEach((k, v) -> st.add(k, true));
         }
         //替换query@var
@@ -288,45 +297,52 @@ public class SqlParseUtils {
                         if (!CollectionUtils.isEmpty(list)) {
                             StringBuilder expBuilder = new StringBuilder();
                             if (list.size() == 1) {
-                                if (!StringUtils.isEmpty(list.get(0))) {
-                                    switch (sqlOperator) {
-                                        case IN:
-                                            expBuilder
-                                                    .append(left).append(SPACE)
-                                                    .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
-                                                    .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
-                                            break;
-                                        default:
-                                            if (list.get(0).split(",").length > 1) {
+                                String v = list.get(0);
+                                if (!StringUtils.isEmpty(v)) {
+                                    if (v.equals(N0_AUTH_PERMISSION)) {
+                                        return "1=0";
+                                    } else {
+                                        switch (sqlOperator) {
+                                            case IN:
                                                 expBuilder
                                                         .append(left).append(SPACE)
                                                         .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
                                                         .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
-                                            } else {
-                                                expBuilder
-                                                        .append(left).append(SPACE)
-                                                        .append(sqlOperator.getValue()).append(SPACE).append(list.get(0));
-                                            }
-                                            break;
+                                                break;
+                                            default:
+                                                if (v.split(",").length > 1) {
+                                                    expBuilder
+                                                            .append(left).append(SPACE)
+                                                            .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
+                                                            .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
+                                                } else {
+                                                    expBuilder
+                                                            .append(left).append(SPACE)
+                                                            .append(sqlOperator.getValue()).append(SPACE).append(v);
+                                                }
+                                                break;
+                                        }
                                     }
+
                                 } else {
                                     return "1=1";
                                 }
                             } else {
+                                List<String> collect = list.stream().filter(s -> !s.contains(N0_AUTH_PERMISSION)).collect(Collectors.toList());
                                 switch (sqlOperator) {
                                     case IN:
                                     case EQUALSTO:
                                         expBuilder
                                                 .append(left).append(SPACE)
                                                 .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
-                                                .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
+                                                .append(collect.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                         break;
 
                                     case NOTEQUALSTO:
                                         expBuilder
                                                 .append(left).append(SPACE)
                                                 .append(SqlOperatorEnum.NoTIN.getValue()).append(SPACE)
-                                                .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
+                                                .append(collect.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                         break;
 
                                     case BETWEEN:
@@ -334,7 +350,7 @@ public class SqlParseUtils {
                                     case GREATERTHANEQUALS:
                                     case MINORTHAN:
                                     case MINORTHANEQUALS:
-                                        expBuilder.append(list.stream()
+                                        expBuilder.append(collect.stream()
                                                 .map(x -> SPACE + left + SPACE + SqlOperatorEnum.BETWEEN.getValue() + SPACE + x + SPACE)
                                                 .collect(Collectors.joining("or", PARENTHESES_START, PARENTHESES_END)));
                                         break;

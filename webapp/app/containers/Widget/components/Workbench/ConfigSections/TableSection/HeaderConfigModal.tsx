@@ -12,7 +12,7 @@ import { uuid } from 'utils/util'
 import { fontWeightOptions, fontStyleOptions, fontFamilyOptions, fontSizeOptions } from './util'
 import { ITableHeaderConfig, ITableCellStyle } from './'
 
-import { Icon, Row, Col, Modal, Input, Button, Radio, Select, Table, message } from 'antd'
+import { Icon, Row, Col, Modal, Input, Button, Radio, Select, Table, message, Tooltip } from 'antd'
 const ButtonGroup = Button.Group
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
@@ -450,6 +450,10 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
         currentSelectedKeys: selectedRowKeys
       })
     }
+    // @FIXME data columns do not allow check
+    // getCheckboxProps: (record) => ({
+    //   disabled: !record.isGroup
+    // })
   }
 
   public render () {
@@ -475,16 +479,25 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
         onOk={this.save}
       >
         <div className={styles.rows}>
-          <Row gutter={8} className={styles.rowBlock}>
+          <Row gutter={8} className={styles.rowBlock} type="flex" align="middle">
             <Col span={4}>
               <Button type="primary" onClick={this.mergeColumns}>合并</Button>
             </Col>
-            <Col span={20}>
-              <Row type="flex" justify="end">
+            <Col span={19}>
+              <Row gutter={8} type="flex" justify="end" align="middle">
                 <ButtonGroup>
                   <Button onClick={this.moveUp}><Icon type="arrow-up" />上移</Button>
                   <Button onClick={this.moveDown}>下移<Icon type="arrow-down" /></Button>
                 </ButtonGroup>
+              </Row>
+            </Col>
+            <Col span={1}>
+              <Row type="flex" justify="end">
+                <Tooltip
+                  title="表格数据列请在外部拖拽以更改顺序"
+                >
+                  <Icon type="info-circle" />
+                </Tooltip>
               </Row>
             </Col>
           </Row>

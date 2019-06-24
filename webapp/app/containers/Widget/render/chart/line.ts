@@ -103,7 +103,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
               const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
                 normal: {
                   opacity: 1,
-                  borderWidth: 8
+                  borderWidth: 6
                 }
               }} : {}
               // if (index === interactIndex) {

@@ -27,7 +27,7 @@ export interface ISourceSimple {
   name: string
 }
 
-interface ISourceBase extends ISourceSimple {
+export interface ISourceBase extends ISourceSimple {
   type: SourceType
   description: string
   projectId: number
@@ -46,21 +46,53 @@ export interface ISource extends ISourceBase {
   }
 }
 
-export type ISourceTable = string
+export type IDatabase = string
 
-export interface ISourceColumn {
+export interface ITable {
+  name: string,
+  type: 'TABLE' | 'VIEW'
+}
+
+export interface IColumn {
   name: string
   type: SqlTypes
 }
 
-export interface ISourceTableColumns {
-  columns: ISourceColumn[]
+export interface ISourceDatabases {
+  databases: IDatabase[]
+  sourceId: number
+}
+
+export interface IMapSourceDatabases {
+  [sourceId: number]: IDatabase[]
+}
+
+export interface IDatabaseTables {
+  tables: ITable[]
+  dbName: IDatabase
+  sourceId: number
+}
+
+export interface IMapDatabaseTables {
+  [mapKey: string]: IDatabaseTables
+}
+
+export interface ITableColumns {
+  columns: IColumn[]
   primaryKeys: string[]
-  tableName: ISourceTable
+  tableName: string
+  sourceId: number
+  dbName: string
 }
 
 export interface IMapTableColumns {
-  [tableName: string]: ISourceTableColumns
+  [mapKey: string]: ITableColumns
+}
+
+export interface ISchema {
+  mapDatabases: IMapSourceDatabases
+  mapTables: IMapDatabaseTables
+  mapColumns: IMapTableColumns
 }
 
 export interface ICSVMetaInfo {
@@ -72,7 +104,7 @@ export interface ICSVMetaInfo {
 }
 
 export interface ISourceState {
-  sources: ISource[]
+  sources: ISourceBase[]
   listLoading: boolean
   formLoading: boolean
   testLoading: boolean

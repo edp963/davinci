@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.service.impl;
@@ -46,8 +47,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
-
-import static edp.davinci.core.common.Constants.LDAP_USER_PASSWORD;
 
 
 @Slf4j
@@ -195,20 +194,10 @@ public class UserServiceImpl implements UserService {
                         ldapPerson.setSAMAccountName(ldapPerson.getEmail());
                     }
                     user = ldapService.registPerson(ldapPerson);
+                } else if (user.getEmail().toLowerCase().equals(ldapPerson.getEmail().toLowerCase())) {
+                    return user;
                 } else {
-                    if (user.getPassword().equals(LDAP_USER_PASSWORD) && user.getEmail().equals(ldapPerson.getEmail())) {
-                        return user;
-                    } else if (!user.getEmail().equals(ldapPerson.getEmail())) {
-                        if (userMapper.existEmail(ldapPerson.getEmail()) || userMapper.existUsername(ldapPerson.getEmail())) {
-                            throw new ServerException("password is wrong");
-                        }
-                        if (userMapper.existUsername(ldapPerson.getSAMAccountName())) {
-                            ldapPerson.setSAMAccountName(ldapPerson.getEmail());
-                        }
-                        user = ldapService.registPerson(ldapPerson);
-                    } else {
-                        throw e;
-                    }
+                    throw e;
                 }
             }
         }
