@@ -505,6 +505,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         ...this.state.interactingStatus,
         [itemId]: false
       }
+    }, () => {
+      const item = currentItems.find((ci) => ci.id === itemId)
+      this.getChartData('clear', itemId, item.widgetId)
     })
   }
 
