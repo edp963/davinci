@@ -28,14 +28,14 @@ module.exports = options => ({
     rules: [
       {
         test: /\.tsx?$/,
+        exclude: /node_modules/,
         use: options.tsLoaders
       },
       {
         test: /\.js$/, // Transform all .js files required somewhere with Babel
         exclude: /node_modules(?!\/quill-image-drop-module|quill-image-resize-module)/,
         use: {
-          loader: 'babel-loader',
-          options: options.babelQuery
+          loader: 'babel-loader'
         }
       },
       {
