@@ -78,6 +78,7 @@
   flex-direction: column;
   box-shadow: @block-box-shadow;
   transition: all 350ms ease;
+  position: relative;
 
   .header {
     width: 100%;
@@ -141,6 +142,15 @@
       .tools {
         opacity: 1;
       }
+    }
+  }
+
+  .trigger {
+    position: absolute;
+    top: 24px;
+    left: 10px;
+    i{
+      color: @blue;
     }
   }
 
