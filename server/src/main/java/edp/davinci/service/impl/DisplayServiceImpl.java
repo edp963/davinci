@@ -487,8 +487,7 @@ public class DisplayServiceImpl implements DisplayService {
             List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
             for (MemDisplaySlideWidget memDisplaySlideWidget : list) {
                 MemDisplaySlideWidgetCreate memDisplaySlideWidgetCreate = Arrays.stream(slideWidgetCreates).filter(
-                        (item -> (item.getDisplaySlideId().longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue()
-                                && item.getWidgetId().longValue() == memDisplaySlideWidget.getWidgetId().longValue()))
+                        (item -> (item.getDisplaySlideId().longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue()))
                 ).findFirst().get();
 
                 if (!CollectionUtils.isEmpty(memDisplaySlideWidgetCreate.getRoleIds())) {
@@ -576,8 +575,7 @@ public class DisplayServiceImpl implements DisplayService {
                 List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
                 for (MemDisplaySlideWidget memDisplaySlideWidget : memDisplaySlideWidgetList) {
                     MemDisplaySlideWidgetDto memDisplaySlideWidgetDto = Arrays.stream(memDisplaySlideWidgets).filter(
-                            (item -> (item.getDisplaySlideId().longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue()
-                                    && item.getWidgetId().longValue() == memDisplaySlideWidget.getWidgetId().longValue()))
+                            (item -> (item.getDisplaySlideId().longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue()))
                     ).findFirst().get();
 
                     if (!CollectionUtils.isEmpty(memDisplaySlideWidgetDto.getRoleIds())) {
