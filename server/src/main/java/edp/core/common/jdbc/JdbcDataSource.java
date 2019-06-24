@@ -113,14 +113,14 @@ public class JdbcDataSource extends DruidDataSource {
                     throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
                 }
 
-                instance.setDriverClassName(StringUtils.isEmpty(dataTypeEnum.getDriver()) ? customDataSource.getDriver().trim() : dataTypeEnum.getDriver());
+                instance.setDriverClassName(null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver()) ? dataTypeEnum.getDriver() : customDataSource.getDriver().trim());
             } else {
                 instance.setDriverClassName(className);
             }
 
             instance.setUrl(jdbcUrl.trim());
-            instance.setUsername(jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1 ? null : username);
-            instance.setPassword((jdbcUrl.toLowerCase().indexOf(DataTypeEnum.PRESTO.getFeature()) > -1 || jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1) ?
+            instance.setUsername(jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getFeature()) ? null : username);
+            instance.setPassword((jdbcUrl.toLowerCase().contains(DataTypeEnum.PRESTO.getFeature()) || jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getFeature())) ?
                     null : password);
             instance.setInitialSize(initialSize);
             instance.setMinIdle(minIdle);
