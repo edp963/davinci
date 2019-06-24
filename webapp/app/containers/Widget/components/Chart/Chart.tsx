@@ -110,7 +110,9 @@ export class Chart extends React.PureComponent<IChartProps> {
       onDoInteract(triggerData)
     }
     setTimeout(() => {
-      getDataDrillDetail(JSON.stringify({range: null, brushed, sourceData}))
+      if (getDataDrillDetail) {
+        getDataDrillDetail(JSON.stringify({range: null, brushed, sourceData}))
+      }
     }, 500)
     if (onSelectChartsItems) {
       onSelectChartsItems(selectedItems)
