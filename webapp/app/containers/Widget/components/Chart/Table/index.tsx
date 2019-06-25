@@ -275,7 +275,9 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         onDoInteract(triggerData)
       }
       setTimeout(() => {
-        getDataDrillDetail(JSON.stringify({filterObj, brushed, sourceData}))
+        if (getDataDrillDetail) {
+          getDataDrillDetail(JSON.stringify({filterObj, brushed, sourceData}))
+        }
       }, 500)
     })
   }
