@@ -269,7 +269,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     }, () => {
       const brushed = [{0: Object.values(this.state.selectedRow)}]
       const sourceData = Object.values(this.state.selectedRow)
-      const isInteractiveChart = onCheckTableInteract()
+      const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
       if (isInteractiveChart && onDoInteract) {
         const triggerData = sourceData
         onDoInteract(triggerData)
