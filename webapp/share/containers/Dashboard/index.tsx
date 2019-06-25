@@ -901,6 +901,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       fullScreenComponent = (
         <FullScreenPanel
           widgets={widgets}
+          currentItems={currentItems}
           currentDashboard={{ widgets: currentItems }}
           currentItemsInfo={currentItemsInfo}
           visible={allowFullScreen}
