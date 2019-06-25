@@ -918,7 +918,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         hasDataConfig={hasDataConfig}
       />
     )
-    console.log(widgetProps)
+
     return (
       <div className={gridItemClass} ref={(f) => this.container = f}>
         <div className={styles.header}>
