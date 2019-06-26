@@ -455,6 +455,16 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
                   </Checkbox>
                 </Col>
                 </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={10}>
+                    <Checkbox
+                      checked={stack}
+                      onChange={this.checkboxChange('stack')}
+                    >
+                      堆叠
+                    </Checkbox>
+                  </Col>
+                </Row>
             </div>
           </div>
         )
