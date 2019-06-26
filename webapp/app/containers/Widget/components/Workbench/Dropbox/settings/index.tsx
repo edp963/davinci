@@ -64,6 +64,7 @@ export const MapSettingTypes = {
   cols: SettingTypes.Dimension,
   rows: SettingTypes.Dimension,
   metrics: SettingTypes.Indicator,
+  secondaryMetrics: SettingTypes.Indicator,
   filters: SettingTypes.Filters,
   color: SettingTypes.Color,
   tip: SettingTypes.Tip
