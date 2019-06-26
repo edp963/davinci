@@ -203,7 +203,7 @@ export function getAixsMetrics (type, axisMetrics, data, stack, labelOption, sel
     const decodedMetricName = decodeMetricName(m.name)
     const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
     seriesNames.push(decodedMetricName)
-
+    const stackOption = stack ? { stack: 'stack' } : null
     const itemData = data.map((g, index) => {
       const itemStyle = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {normal: {opacity: 1, borderWidth: 6}}} : null
       return {
@@ -215,6 +215,7 @@ export function getAixsMetrics (type, axisMetrics, data, stack, labelOption, sel
     seriesAxis.push({
       name: decodedMetricName,
       type: axisPosition ? axisPosition : type === 'metrics' ? 'line' : 'bar',
+      ...stackOption,
       yAxisIndex: type === 'metrics' ? 1 : 0,
       data: itemData,
       ...labelOption,
