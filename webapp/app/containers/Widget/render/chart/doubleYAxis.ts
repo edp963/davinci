@@ -110,7 +110,10 @@ export default function (chartProps: IChartProps, drillOptions) {
   const { selectedItems } = drillOptions
   const { secondaryMetrics } = chartProps
 
+<<<<<<< HEAD
   const xAxisData = showLabel ? data.map((d) => d[cols[0].name]) : []
+=======
+>>>>>>> fix doubleAxis stack
   const seriesData = secondaryMetrics
     ? getAixsMetrics('metrics', metrics, data, stack, labelOption, selectedItems, {key: 'yAxisLeft', type: yAxisLeft})
       .concat(getAixsMetrics('secondaryMetrics', secondaryMetrics, data, stack, labelOption, selectedItems, {key: 'yAxisRight', type: yAxisRight}))
@@ -221,7 +224,11 @@ export function getAixsMetrics (type, axisMetrics, data, stack, labelOption, sel
     const decodedMetricName = decodeMetricName(m.name)
     const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
     seriesNames.push(decodedMetricName)
+<<<<<<< HEAD
     const stackOption = stack && axisPosition.type === 'bar' && axisMetrics.length > 1 ? { stack: axisPosition.key } : null
+=======
+    const stackOption = stack && axisPosition.type === 'bar' && axisMetrics.length > 1 ? { stack: 'stack' } : null
+>>>>>>> fix doubleAxis stack
     const itemData = data.map((g, index) => {
       const itemStyle = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {normal: {opacity: 1, borderWidth: 6}}} : null
       return {
