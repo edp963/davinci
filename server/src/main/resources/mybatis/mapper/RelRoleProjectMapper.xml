@@ -89,6 +89,15 @@
         </foreach>
     </insert>
 
+    <delete id="deleteByIds">
+        <if test="list != null">
+            delete from rel_role_project where id in
+            <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </delete>
+
 
     <sql id="userMaxPermissionBaseSql">
         SELECT rrp.project_id                          as projectId,
@@ -100,7 +109,7 @@
                IFNULL(max(rrp.share_permission), 0)    as sharePermission,
                IFNULL(max(rrp.download_permission), 0) as downloadPermission
         FROM rel_role_project rrp
-               left join rel_role_user rru on rru.role_id = rrp.role_id
+                 left join rel_role_user rru on rru.role_id = rrp.role_id
     </sql>
 
     <select id="getMaxPermissions" resultType="edp.davinci.dto.projectDto.UserMaxProjectPermission">
@@ -116,5 +125,11 @@
     <select id="getMaxPermission" resultType="edp.davinci.dto.projectDto.UserMaxProjectPermission">
         <include refid="userMaxPermissionBaseSql"></include>
         WHERE rru.user_id = #{userId} and rrp.project_id = #{projectId}
+    </select>
+
+    <select id="getByProject" resultType="edp.davinci.model.RelRoleProject">
+        select *
+        from rel_role_project
+        where project_id = #{projectId}
     </select>
 </mapper>

@@ -19,12 +19,11 @@
 
 package edp.davinci.service.impl;
 
+import edp.core.consts.Consts;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.DateUtils;
-import edp.core.utils.QuartzUtils;
+import edp.core.utils.*;
 import edp.davinci.core.enums.CronJobStatusEnum;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
@@ -48,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service("cronJobService")
@@ -62,6 +62,11 @@ public class CronJobServiceImpl implements CronJobService {
 
     @Autowired
     private QuartzUtils quartzUtils;
+
+    @Autowired
+    private RedisUtils redisUtils;
+
+    private static final String CRONJOB_KEY = "CRONJOB";
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -307,9 +312,14 @@ public class CronJobServiceImpl implements CronJobService {
         List<CronJob> jobList = cronJobMapper.getStartedJobs();
         if (!CollectionUtils.isEmpty(jobList)) {
             for (CronJob cronJob : jobList) {
-                if (CronJobStatusEnum.START.getStatus().equals(cronJob.getJobStatus())) {
+                String md5 = MD5Util.getMD5(CRONJOB_KEY + Consts.UNDERLINE + cronJob.getId(), true, 32);
+
+                if (CronJobStatusEnum.START.getStatus().equals(cronJob.getJobStatus()) && null == redisUtils.get(md5)) {
                     try {
                         quartzUtils.addJob(cronJob);
+
+                        redisUtils.set(md5, 1, 5L, TimeUnit.MINUTES);
+
                     } catch (ServerException e) {
                         log.info(e.getMessage());
                     }
