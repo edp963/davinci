@@ -123,17 +123,16 @@ public class DashboardServiceImpl implements DashboardService {
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         boolean isDisable = relRolePortalMapper.isDisable(dashboardPortal.getId(), user.getId());
 
-        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() || (!projectPermission.isProjectMaintainer() && isDisable)) {
+        boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
+        boolean noRublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
+
+        if (hidden || (!projectPermission.isProjectMaintainer() && isDisable) || noRublish) {
             return null;
         }
 
         List<Dashboard> dashboardList = dashboardMapper.getByPortalId(portalId);
 
         List<Long> disableDashboards = relRoleDashboardMapper.getDisableByUser(user.getId(), portalId);
-
-        if (CollectionUtils.isEmpty(disableDashboards)) {
-            return dashboardList;
-        }
 
         Iterator<Dashboard> iterator = dashboardList.iterator();
         while (iterator.hasNext()) {

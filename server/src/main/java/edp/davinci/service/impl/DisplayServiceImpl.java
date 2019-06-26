@@ -731,7 +731,11 @@ public class DisplayServiceImpl implements DisplayService {
         Iterator<Display> iterator = displays.iterator();
         while (iterator.hasNext()) {
             Display display = iterator.next();
-            if (!projectPermission.isProjectMaintainer() && (disableList.contains(display.getId()) || !display.getPublish())) {
+
+            boolean disable = !projectPermission.isProjectMaintainer() && disableList.contains(display.getId());
+            boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !display.getPublish();
+
+            if (disable || noPublish) {
                 iterator.remove();
             }
         }
@@ -766,7 +770,10 @@ public class DisplayServiceImpl implements DisplayService {
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         boolean isDisable = relRoleDisplayMapper.isDisable(displayId, user.getId());
 
-        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() || (!projectPermission.isProjectMaintainer() && isDisable)) {
+        boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !display.getPublish();
+
+        if (hidden || (!projectPermission.isProjectMaintainer() && isDisable) || noPublish) {
             return null;
         }
 
