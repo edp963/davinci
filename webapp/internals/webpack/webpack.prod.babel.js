@@ -28,9 +28,9 @@ module.exports = require('./webpack.base.babel')({
     chunkFilename: '[name].[chunkhash].chunk.js'
   },
 
-  tsLoaders: {
+  tsLoaders: [{
     loader: 'babel-loader'
-  },
+  }],
 
   optimization: {
     minimize: true,
