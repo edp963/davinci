@@ -122,7 +122,7 @@ interface IViewEditorStates {
   sqlValidationCode: number
   init: boolean
   currentStep: number
-  nextDisabled: boolean
+  lastSuccessExecutedSql: string
 }
 
 
@@ -133,7 +133,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     currentStep: 0,
     sqlValidationCode: null,
     init: true,
-    nextDisabled: true
+    lastSuccessExecutedSql: null
   }
 
   public constructor (props: IViewEditorProps) {
@@ -156,7 +156,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     const { params, editingView, sqlValidation } = props
     const { viewId } = params
     const { init, sqlValidationCode } = state
-    let nextDisabled = state.nextDisabled
+    let lastSuccessExecutedSql = state.lastSuccessExecutedSql
     if (sqlValidationCode !== sqlValidation.code && sqlValidation.code) {
       message.destroy()
       message.open({
@@ -164,25 +164,22 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
         type: sqlValidation.code === 200 ? 'success' : 'error',
         duration: 5
       })
-      nextDisabled = (sqlValidation.code !== 200)
+      if (sqlValidation.code === 200) {
+        lastSuccessExecutedSql = editingView.sql
+      }
     }
     if (editingView && editingView.id === +viewId) {
       if (init) {
         props.onLoadSourceDatabases(editingView.sourceId)
-        ViewEditor.ExecuteSql(props)
+        lastSuccessExecutedSql = editingView.sql
         return {
           init: false,
           sqlValidationCode: sqlValidation.code,
-          nextDisabled
+          lastSuccessExecutedSql
         }
       }
-    } else {
-      return {
-        sqlValidationCode: sqlValidation.code,
-        nextDisabled
-      }
     }
-    return { sqlValidationCode: sqlValidation.code, nextDisabled }
+    return { sqlValidationCode: sqlValidation.code, lastSuccessExecutedSql }
   }
 
   public componentDidMount () {
@@ -271,10 +268,6 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
 
   private viewChange = (propName: keyof IView, value: string | number) => {
     const { editingView, onUpdateEditingView } = this.props
-    const nextDisabled = (propName === 'sql' && value !== editingView.sql)
-      ? true
-      : this.state.nextDisabled
-    this.setState({ nextDisabled })
     const updatedView = {
       ...editingView,
       [propName]: value
@@ -359,11 +352,12 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
       editingView, editingViewInfo,
       onLoadSourceDatabases, onLoadDatabaseTables, onLoadTableColumns, onSetSqlLimit,
       onLoadDacTenants, onLoadDacBizs } = this.props
-    const { currentStep, nextDisabled } = this.state
+    const { currentStep, lastSuccessExecutedSql } = this.state
     const { model, variable, roles: viewRoles } = editingViewInfo
     const sqlHints = this.getSqlHints(editingView.sourceId, schema, variable)
     const containerVisible = !currentStep
     const modelAuthVisible = !!currentStep
+    const nextDisabled = (editingView.sql !== lastSuccessExecutedSql)
 
     return (
       <>
