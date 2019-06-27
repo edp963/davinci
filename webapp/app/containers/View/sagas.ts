@@ -54,12 +54,12 @@ export function* getViewsDetail (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS_DETAIL) { return }
   const { payload } = action
   const { viewsDetailLoaded, loadViewsDetailFail } = ViewActions
-  const { viewIds, resolve } = payload
+  const { viewIds, resolve, isEditing } = payload
   try {
     // @FIXME make it be a single request
     const asyncData = yield all(viewIds.map((viewId) => (call(request, `${api.view}/${viewId}`))))
     const views: IView[] = asyncData.map((item) => item.payload)
-    yield put(viewsDetailLoaded(views))
+    yield put(viewsDetailLoaded(views, isEditing))
     if (resolve) { resolve() }
   } catch (err) {
     yield put(loadViewsDetailFail())

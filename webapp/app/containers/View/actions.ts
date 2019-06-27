@@ -54,19 +54,21 @@ export const ViewActions = {
     }
   },
 
-  viewsDetailLoaded (views: IView[]) {
+  viewsDetailLoaded (views: IView[], isEditing: boolean) {
     return {
       type: ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS,
       payload: {
-        views
+        views,
+        isEditing
       }
     }
   },
-  loadViewsDetail (viewIds: number[], resolve?: () => void) {
+  loadViewsDetail (viewIds: number[], resolve?: () => void, isEditing: boolean = false) {
     return {
       type: ActionTypes.LOAD_VIEWS_DETAIL,
       payload: {
         viewIds,
+        isEditing,
         resolve
       }
     }
