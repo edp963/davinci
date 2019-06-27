@@ -1,82 +1,24 @@
-import * as React from 'react'
+import React from 'react'
 import { uuid } from 'utils/util'
-import OperatorTypes from 'utils/operatorTypes'
 import { IDataParams } from '../../OperatingPanel'
-import { ViewModelType, IDataParamSource } from '../../Dropbox'
-import { decodeMetricName, getAggregatorLocale, getFieldAlias } from 'containers/Widget/components/util'
+import { IDataParamSource } from '../../Dropbox'
+import { getFieldAlias } from 'containers/Widget/components/Config/Field'
+import { decodeMetricName, getAggregatorLocale } from 'containers/Widget/components/util'
+
 import {
-  fontSizeOptions,
-  TableCellStyleTypes, TableConditionStyleTypes, TableConditionStyleFieldTypes, pageSizeOptions } from './util'
+  ITableConfig, ITableHeaderConfig, ITableColumnConfig,
+  TableCellStyleTypes, DefaultTableCellStyle } from 'containers/Widget/components/Config/Table'
+import { pageSizeOptions } from './constants'
 
 import { Icon, Row, Col, Select, Radio, Checkbox, Modal } from 'antd'
 const { Option } = Select
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 
+import HeaderConfigModal from 'containers/Widget/components/Config/Table/Header/HeaderConfigModal'
+import ColumnConfigModal from 'containers/Widget/components/Config/Table/Column/ColumnConfigModal'
+
 const styles = require('../../Workbench.less')
-
-export interface ITableCellStyle {
-  fontSize: string
-  fontFamily: string
-  fontWeight: string
-  fontColor: string
-  fontStyle: 'normal' | 'oblique'
-  backgroundColor: string
-  justifyContent: 'flex-start' | 'center' | 'flex-end'
-}
-
-export interface ITableHeaderConfig {
-  key: string
-  headerName: string
-  alias: string
-  visualType: ViewModelType
-  isGroup: boolean
-  style: ITableCellStyle
-  children: ITableHeaderConfig[]
-}
-
-export interface ITableConditionStyle {
-  key: string
-  type: TableConditionStyleTypes,
-  operatorType: OperatorTypes
-  conditionValues: Array<string | number>
-  colors: {
-    background?: string
-    fore: string
-    positive?: string
-    negative?: string
-  },
-  bar: {
-    mode: 'auto' | 'fixed',
-    min?: number,
-    max?: number
-  },
-  zeroPosition?: 'auto' | 'center'
-  customTemplate?: string
-}
-
-export interface ITableColumnConfig {
-  columnName: string
-  alias: string
-  visualType: ViewModelType
-  styleType: TableCellStyleTypes
-  style: ITableCellStyle
-  conditionStyles: ITableConditionStyle[]
-}
-
-export interface ITableConfig {
-  headerConfig: ITableHeaderConfig[]
-  columnsConfig: ITableColumnConfig[]
-  leftFixedColumns: string[]
-  rightFixedColumns: string[]
-  headerFixed: boolean
-  bordered: boolean
-  size: 'default' | 'middle' | 'small'
-  autoMergeCell: boolean
-  withPaging: boolean
-  pageSize: string
-  withNoAggregators: boolean
-}
 
 interface ITableSectionProps {
   dataParams: IDataParams
@@ -91,9 +33,6 @@ interface ITableSectionStates {
   validHeaderConfig: ITableHeaderConfig[]
   validColumnConfig: ITableColumnConfig[]
 }
-
-import HeaderConfigModal, { DefaultTableCellStyle } from './HeaderConfigModal'
-import ColumnConfigModal from './ColumnConfigModal'
 
 export class TableSection extends React.PureComponent<ITableSectionProps, ITableSectionStates> {
 

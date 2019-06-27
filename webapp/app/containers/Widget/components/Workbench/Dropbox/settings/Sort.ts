@@ -3,8 +3,11 @@ import { SettingTypes, ItemTypes, ISettingItem } from './type'
 const Sort: ISettingItem = {
   key: 'sort',
   name: '排序',
-  settingType: SettingTypes.Dimension | SettingTypes.Indicator,
-  itemType: ItemTypes.Category | ItemTypes.Value,
+  constrants: [{
+    settingType: SettingTypes.Dimension | SettingTypes.Indicator | SettingTypes.Color | SettingTypes.Tip,
+    itemType: ItemTypes.Category | ItemTypes.Value,
+    itemValueType: null
+  }],
   sub: true,
   items: [{
     default: '默认排序',

@@ -22,8 +22,7 @@ import React from 'react'
 import { ColumnProps } from 'antd/lib/table'
 import { Resizable } from 'libs/react-resizable'
 import { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
-import { ITableHeaderConfig } from '../../../Workbench/ConfigSections/TableSection'
-import { DefaultTableCellStyle } from '../../../Workbench/ConfigSections/TableSection/HeaderConfigModal'
+import { ITableHeaderConfig, DefaultTableCellStyle } from 'containers/Widget/components/Config/Table'
 import { textAlignAdapter, traverseConfig } from '../util'
 
 interface IHeadCellProps {

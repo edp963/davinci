@@ -1,14 +1,14 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
-
+import React from 'react'
+import classnames from 'classnames'
+import { ViewModelVisualTypes } from 'containers/View/constants'
 
 import DropboxItem from './DropboxItem'
 import DropboxContent from './DropboxContent'
 import ColorPanel from '../ColorPanel'
 import SizePanel from '../SizePanel'
 import { IChartInfo, WidgetMode } from '../../Widget'
-import { IFieldConfig } from '../FieldConfig'
-import { IFieldFormatConfig } from '../FormatConfigModal'
+import { IFieldConfig } from '../../Config/Field'
+import { IFieldFormatConfig } from '../../Config/Format'
 import { decodeMetricName } from '../../util'
 import { Popover, Icon } from 'antd'
 
@@ -17,7 +17,6 @@ const styles = require('../Workbench.less')
 export type DragType = 'category' | 'value'
 export type DropboxType = DragType | 'all'
 export type DropboxItemType = DragType | 'add'
-export type ViewModelType = 'string' | 'number' | 'date' | 'geoCountry' | 'geoProvince' | 'geoCity'
 export type DropType = 'outside' | 'inside' | 'unmoved'
 export type SortType = 'asc' | 'desc'
 export type AggregatorType = 'sum' | 'avg' | 'count' | 'COUNTDISTINCT' | 'max' | 'min' | 'median' | 'var' | 'dev'
@@ -33,7 +32,7 @@ interface IDataColumn {
 
 export interface IDataParamSource extends IDataColumn {
   type: DragType
-  visualType: ViewModelType
+  visualType: ViewModelVisualTypes
   title?: string
   chart?: IChartInfo
   config?: IDataParamConfig
@@ -58,7 +57,7 @@ export interface IDataParamConfig {
 
 export interface IDataParamSourceInBox extends IDataColumn {
   type: DropboxItemType
-  visualType?: ViewModelType
+  visualType?: ViewModelVisualTypes
   chart?: IChartInfo
   config?: IDataParamConfig
 }

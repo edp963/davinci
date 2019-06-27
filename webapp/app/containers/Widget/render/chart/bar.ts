@@ -19,14 +19,12 @@
  */
 
 import { IChartProps } from '../../components/Chart'
-import { IFieldFormatConfig } from 'containers/Widget/components/Workbench/FormatConfigModal'
+import { IFieldFormatConfig, getFormattedValue, FieldFormatTypes } from 'containers/Widget/components/Config/Format'
 import barDefaultConfig from '../../config/chart/bar'
 import {
   decodeMetricName,
   getChartTooltipLabel,
-  getAggregatorLocale,
-  getFormattedValue,
-  FieldFormatTypes
+  getAggregatorLocale
 } from '../../components/util'
 import {
   getDimetionAxisOption,

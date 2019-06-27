@@ -1,20 +1,20 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { fromJS } from 'immutable'
 import { uuid } from 'utils/util'
-import {
-  fontWeightOptions, fontStyleOptions, fontFamilyOptions, fontSizeOptions,
-  getColumnIconByType } from '../util'
-import { ITableColumnConfig, ITableConditionStyle } from '../'
+import { fontWeightOptions, fontStyleOptions, fontFamilyOptions, fontSizeOptions } from '../constants'
+import { defaultConditionStyle, AvailableTableConditionStyleTypes } from './constants'
+import { getColumnIconByType } from './util'
+import { ITableColumnConfig, ITableConditionStyle } from './types'
 import ColorPicker from 'components/ColorPicker'
-import ConditionStyleConfigModal,
-  { defaultConditionStyle, AvailableTableConditionStyleTypes } from './ConditionStyleConfigModal'
+import ConditionStyleConfigModal from './ConditionStyleConfigModal'
 
 import { Row, Col, Tooltip, Select, Button, Radio, Table, Modal } from 'antd'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 
-const styles = require('../TableSection.less')
+import styles from './styles.less'
+import stylesConfig from '../styles.less'
 
 interface IColumnStyleConfigProps {
   visible: boolean
@@ -229,18 +229,18 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
           </div>
           <div className={styles.right}>
               <div className={styles.title}><h2>基础样式</h2></div>
-              <div className={styles.rows}>
-                <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+              <div className={stylesConfig.rows}>
+                <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
                   <Col span={4}>背景色</Col>
                   <Col span={2}>
                     <ColorPicker
-                      className={styles.color}
+                      className={stylesConfig.color}
                       value={backgroundColor}
                       onChange={this.propChange('backgroundColor')}
                     />
                   </Col>
                 </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+                <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
                   <Col span={4}>对齐</Col>
                   <Col span={20}>
                     <RadioGroup size="small" value={justifyContent} onChange={this.propChange('justifyContent')}>
@@ -250,12 +250,12 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                     </RadioGroup>
                   </Col>
                 </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+                <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
                   <Col span={4}>字体</Col>
                   <Col span={12}>
                     <Select
                       size="small"
-                      className={styles.colControl}
+                      className={stylesConfig.colControl}
                       placeholder="字体"
                       value={fontFamily}
                       onChange={this.propChange('fontFamily')}
@@ -266,7 +266,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                   <Col span={5}>
                     <Select
                       size="small"
-                      className={styles.colControl}
+                      className={stylesConfig.colControl}
                       placeholder="文字大小"
                       value={fontSize}
                       onChange={this.propChange('fontSize')}
@@ -276,18 +276,18 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                   </Col>
                   <Col span={3}>
                     <ColorPicker
-                      className={styles.color}
+                      className={stylesConfig.color}
                       value={fontColor}
                       onChange={this.propChange('fontColor')}
                     />
                   </Col>
                 </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+                <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
                   <Col span={4}>样式</Col>
                   <Col span={6}>
                     <Select
                       size="small"
-                      className={styles.colControl}
+                      className={stylesConfig.colControl}
                       value={fontStyle}
                       onChange={this.propChange('fontStyle')}
                     >
@@ -297,7 +297,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                   <Col span={13}>
                     <Select
                       size="small"
-                      className={styles.colControl}
+                      className={stylesConfig.colControl}
                       value={fontWeight}
                       onChange={this.propChange('fontWeight')}
                     >

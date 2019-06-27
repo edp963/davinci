@@ -23,7 +23,7 @@ import { findDOMNode } from 'react-dom'
 import * as classnames from 'classnames'
 import { IChartProps } from '../'
 import { IChartStyles, IPaginationParams } from '../../Widget'
-import { ITableHeaderConfig } from '../../Workbench/ConfigSections/TableSection'
+import { ITableHeaderConfig } from 'containers/Widget/components/Config/Table'
 
 import { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
 import { Table as AntTable } from 'antd'
@@ -35,7 +35,8 @@ import NumberFilterDropdown from '../../../../../components/NumberFilterDropdown
 import DateFilterDropdown from '../../../../../components/DateFilterDropdown/index'
 
 import { TABLE_PAGE_SIZES } from 'app/globalConstants'
-import { decodeMetricName, getFieldAlias } from 'containers/Widget/components/util'
+import { getFieldAlias } from 'containers/Widget/components/Config/Field'
+import { decodeMetricName } from 'containers/Widget/components/util'
 import styles from '../Chart.less'
 
 import {
@@ -386,6 +387,7 @@ function getTableColumns (props: IChartProps) {
     mapTableHeaderConfig[name] = headerConfigItem
     column.onCell = (record) => ({
       config: columnConfigItem,
+      format,
       cellVal: record[name],
       cellValRange: null
     })

@@ -18,11 +18,9 @@
  * >>
  */
 
-import { ITableCellStyle, ITableColumnConfig } from '../../Workbench/ConfigSections/TableSection'
+import { ITableCellStyle, ITableColumnConfig, DefaultTableCellStyle } from 'containers/Widget/components/Config/Table'
 import { getTextWidth } from 'utils/util'
-import { IFieldFormatConfig } from '../../Workbench/FormatConfigModal'
-import { DefaultTableCellStyle } from '../../Workbench/ConfigSections/TableSection/HeaderConfigModal'
-import { getFormattedValue } from '../../util'
+import { IFieldFormatConfig, getFormattedValue } from 'containers/Widget/components/Config/Format'
 
 export function traverseConfig<T> (config: T[], childrenName: keyof T, callback: (currentConfig: T, idx: number, siblings: T[]) => any) {
   if (!Array.isArray(config)) { return }

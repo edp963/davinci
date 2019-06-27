@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import classnames from 'classnames'
 import { findDOMNode } from 'react-dom'
 
@@ -20,22 +20,18 @@ require('codemirror/addon/hint/show-hint')
 require('codemirror/addon/hint/javascript-hint')
 require('codemirror/addon/display/placeholder')
 
-const utilStyles = require('assets/less/util.less')
-import { extractQueryVariableNames, getFieldAlias } from 'containers/Widget/components/util'
+import { IFieldConfig } from './types'
+import { getDefaultFieldConfig, extractQueryVariableNames, getFieldAlias } from './util'
 import { IQueryVariableMap } from '../../../../Dashboard/Grid'
 import AliasExpressionTestModal from './AliasExpressionTest'
 
-export interface IFieldConfig {
-  alias: string
-  useExpression: boolean
-  desc: string
-}
+const utilStyles = require('assets/less/util.less')
 
 interface IFieldConfigProps extends FormComponentProps {
   visible: boolean
   fieldConfig: IFieldConfig
   queryInfo: string[]
-  onSave: (config) => void
+  onSave: (config: IFieldConfig) => void
   onCancel: () => void
 }
 
@@ -46,7 +42,7 @@ interface IFieldConfigStates {
   testModalVisible: boolean
 }
 
-export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldConfigStates> {
+class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldConfigStates> {
 
   private codeEditor = React.createRef<any>()
   private codeMirrorInst: any
@@ -348,12 +344,4 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
   }
 }
 
-export function getDefaultFieldConfig (): IFieldConfig {
-  return {
-    alias: '',
-    desc: '',
-    useExpression: false
-  }
-}
-
-export default Form.create()(FieldConfig)
+export default Form.create<IFieldConfigProps>()(FieldConfig)

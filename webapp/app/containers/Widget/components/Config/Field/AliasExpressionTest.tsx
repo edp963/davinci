@@ -80,4 +80,4 @@ export class AliasExpressionTest extends React.PureComponent<IAliasExpressionTes
 
 }
 
-export default Form.create()(AliasExpressionTest)
+export default Form.create<IAliasExpressionTestProps>()(AliasExpressionTest)

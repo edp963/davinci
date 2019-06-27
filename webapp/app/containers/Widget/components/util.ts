@@ -1,5 +1,3 @@
-import moment from 'moment'
-import { message } from 'antd'
 import {
   DEFAULT_SPLITER,
   DEFAULT_FONT_SIZE,
@@ -22,12 +20,11 @@ import {
   PIVOT_CANVAS_AXIS_SIZE_LIMIT,
   PIVOT_DEFAULT_SCATTER_SIZE_TIMES
 } from '../../../globalConstants'
-import { IQueryVariableMap } from '../../Dashboard/Grid'
 import { DimetionType, IChartStyles, IChartInfo } from './Widget'
 import { IChartLine, IChartUnit } from './Pivot/Chart'
 import { IDataParamSource } from './Workbench/Dropbox'
-import { IFieldConfig } from './Workbench/FieldConfig'
-import { IFieldFormatConfig } from './Workbench/FormatConfigModal'
+import { getFieldAlias } from '../components/Config/Field'
+import { getFormattedValue } from '../components/Config/Format'
 import widgetlibs from '../config'
 import PivotTypes from '../config/pivot/PivotTypes'
 import ChartTypes from '../config/chart/ChartTypes'
@@ -667,176 +664,6 @@ export function getSizeValue (value) {
   return value >= PIVOT_DEFAULT_SCATTER_SIZE_TIMES
     ? value - PIVOT_DEFAULT_SCATTER_SIZE_TIMES + 1
     : 1 / Math.pow(2, PIVOT_DEFAULT_SCATTER_SIZE_TIMES - value)
-}
-
-export enum NumericUnit {
-  None = '无',
-  TenThousand = '万',
-  OneHundredMillion = '亿',
-  Thousand = 'k',
-  Million = 'M',
-  Giga = 'G'
-}
-
-export enum FieldFormatTypes {
-  Default = 'default',
-  Numeric = 'numeric',
-  Currency = 'currency',
-  Percentage = 'percentage',
-  ScientificNotation = 'scientificNotation',
-  Date = 'date',
-  Custom = 'custom'
-}
-
-export const AvailableFieldFormatTypes = {
-  [FieldFormatTypes.Default]: '默认',
-  [FieldFormatTypes.Numeric]: '数值',
-  [FieldFormatTypes.Currency]: '货币',
-  [FieldFormatTypes.Percentage]: '百分比',
-  [FieldFormatTypes.ScientificNotation]: '科学型',
-  [FieldFormatTypes.Date]: '日期',
-  [FieldFormatTypes.Custom]: '自定义'
-}
-
-export function getFormattedValue (value: number | string, format: IFieldFormatConfig) {
-  if (!format) { return value }
-  if (value === null || value === undefined) { return value }
-  if (typeof value === 'string' && (!value || isNaN(+value))) { return value }
-
-  const { formatType } = format
-  const config = format[formatType]
-  let formattedValue
-
-  switch (formatType) {
-    case FieldFormatTypes.Numeric:
-    case FieldFormatTypes.Currency:
-      const {
-        decimalPlaces,
-        unit,
-        useThousandSeparator } = config as IFieldFormatConfig['numeric'] | IFieldFormatConfig['currency']
-      formattedValue = formatByUnit(value, unit)
-      formattedValue = formartByDecimalPlaces(formattedValue, decimalPlaces)
-      formattedValue = formatByThousandSeperator(formattedValue, useThousandSeparator)
-      if (unit !== NumericUnit.None) {
-        formattedValue = `${formattedValue}${unit}`
-      }
-      if (formatType === FieldFormatTypes.Currency) {
-        const { prefix, suffix } = config as IFieldFormatConfig['currency']
-        formattedValue = [prefix, formattedValue, suffix].join('')
-      }
-      break
-    case FieldFormatTypes.Percentage:
-      formattedValue = (+value) * 100
-      formattedValue = isNaN(formattedValue) ? value
-        : `${formartByDecimalPlaces(formattedValue, (config as IFieldFormatConfig['percentage']).decimalPlaces)}%`
-      break
-    case FieldFormatTypes.ScientificNotation:
-      formattedValue = (+value).toExponential((config as IFieldFormatConfig['scientificNotation']).decimalPlaces)
-      formattedValue = isNaN(formattedValue) ? value : formattedValue
-      break
-    case FieldFormatTypes.Date:
-      const { format } = config as IFieldFormatConfig['date']
-      formattedValue = moment(value).format(format)
-      break
-    case FieldFormatTypes.Custom:
-      // @TODO
-      break
-    default:
-      formattedValue = value
-      break
-  }
-
-  return formattedValue
-}
-
-function formartByDecimalPlaces (value, decimalPlaces: number) {
-  if (isNaN(value)) { return value }
-  if (decimalPlaces < 0 || decimalPlaces > 100) { return value }
-
-  return (+value).toFixed(decimalPlaces)
-}
-
-function formatByThousandSeperator (value, useThousandSeparator: boolean) {
-  if (isNaN(+value) || !useThousandSeparator) { return value }
-
-  const parts = value.toString().split('.')
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-  const formatted = parts.join('.')
-  return formatted
-}
-
-function formatByUnit (value, unit: NumericUnit) {
-  const numericValue = +value
-  if (isNaN(numericValue)) { return value }
-
-  let exponent = 0
-  switch (unit) {
-    case NumericUnit.TenThousand:
-      exponent = 4
-      break
-    case NumericUnit.OneHundredMillion:
-      exponent = 8
-      break
-    case NumericUnit.Thousand:
-      exponent = 3
-      break
-    case NumericUnit.Million:
-      exponent = 6
-      break
-    case NumericUnit.Giga:
-      exponent = 9
-      break
-  }
-  return numericValue / Math.pow(10, exponent)
-}
-
-export function extractQueryVariableNames (expression: string, withBoundaryToken: boolean = false) {
-  const names = []
-  if (!expression) { return names }
-  const varReg = /\$(\w+)\$/g
-  expression.replace(varReg, (match: string, p: string) => {
-    const name = withBoundaryToken ? match : p
-    if (!names.includes(name)) {
-      names.push(name)
-    }
-    return name
-  })
-  return names
-}
-
-export function getFieldAlias (fieldConfig: IFieldConfig, queryVariableMap: IQueryVariableMap) {
-  if (!fieldConfig) { return '' }
-
-  const { alias, useExpression } = fieldConfig
-  if (!useExpression) { return alias }
-
-  const queryKeys = extractQueryVariableNames(alias, true)
-  const keys = []
-  const vals = []
-  queryKeys.forEach((queryKey) => {
-    keys.push(queryKey)
-    const queryValue = queryVariableMap[queryKey]
-    if (queryValue === undefined) {
-      vals.push('')
-    } else {
-      vals.push(queryValue)
-    }
-  })
-
-  const Moment = moment
-  let funcBody = alias
-  if (!alias.includes('return')) {
-    funcBody = 'return ' + funcBody
-  }
-  const paramNames = ['Moment', ...keys, funcBody]
-  try {
-    const func = Function.apply(null, paramNames)
-    const params = [Moment, ...vals]
-    const dynamicAlias: string = func(...params)
-    return dynamicAlias
-  } catch (e) {
-    message.error(`字段别名转换错误：${e.message}`)
-  }
 }
 
 export const iconMapping = {

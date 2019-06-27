@@ -1,36 +1,4 @@
-@import "../../../../../../assets/less/variable";
-
-.color {
-  width: 28px;
-}
-
-.colControl {
-  width: 100%;
-}
-
-.colColor {
-  display: flex;
-  flex-direction: row;
-  line-height: 28px;
-
-  label {
-    padding-left: 8px;
-  }
-}
-
-.rows {
-  padding: 8px;
-
-  .rowBlock {
-    min-height: 40px;
-  }
-}
-
-.btns {
-  button + button {
-    margin-left: 8px;
-  }
-}
+@import '../../../../../../assets/less/variable';
 
 .columnStyleConfig {
   display: flex;
@@ -127,22 +95,18 @@
   }
 }
 
-.tableInput {
-  // width: calc(~"100% - 32px");
-  width: 80px; // @FIXME auto size according to tree node depth
-}
-
-.tableEditCell {
-  i {
+.btns {
+  button + button {
     margin-left: 8px;
-
-    &:hover {
-      cursor: pointer;
-    }
   }
 }
 
-.headerTable {
-  max-height: 600px;
-  overflow-y: scroll;
+.colColor {
+  display: flex;
+  flex-direction: row;
+  line-height: 28px;
+
+  label {
+    padding-left: 8px;
+  }
 }

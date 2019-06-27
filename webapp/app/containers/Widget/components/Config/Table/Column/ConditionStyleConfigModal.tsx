@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import { fromJS } from 'immutable'
 
 import { Icon, Row, Col, Modal, InputNumber, Button, Radio, Select } from 'antd'
@@ -8,43 +8,12 @@ const Option = Select.Option
 import ColorPicker from 'components/ColorPicker'
 import ConditionValuesControl from 'components/ConditionValuesControl'
 
-import OperatorTypes, { OperatorTypesLocale, TableCellConditionOperatorTypes } from 'utils/operatorTypes'
-import { ITableConditionStyle } from '../'
-import { TableConditionStyleTypes } from '../util'
+import { OperatorTypesLocale, TableCellConditionOperatorTypes } from 'utils/operatorTypes'
+import { ITableConditionStyle } from './types'
+import { TableConditionStyleTypes, AvailableTableConditionStyleTypes, TableConditionStyleTypesSetting } from './constants'
 
-const styles = require('../TableSection.less')
-
-export const AvailableTableConditionStyleTypes = {
-  [TableConditionStyleTypes.BackgroundColor]: '背景颜色',
-  [TableConditionStyleTypes.TextColor]: '字体颜色',
-  [TableConditionStyleTypes.NumericBar]: '条形图',
-  [TableConditionStyleTypes.Custom]: '自定义'
-}
-
-const TableConditionStyleTypesSetting = {
-  [TableConditionStyleTypes.BackgroundColor]: ['string', 'geoCountry', 'geoProvince', 'geoCity', 'number', 'date'],
-  [TableConditionStyleTypes.TextColor]: ['string', 'geoCountry', 'geoProvince', 'geoCity', 'number', 'date'],
-  [TableConditionStyleTypes.NumericBar]: ['number'],
-  [TableConditionStyleTypes.Custom]: ['string', 'geoCountry', 'geoProvince', 'geoCity', 'number', 'date']
-}
-
-export const defaultConditionStyle: ITableConditionStyle = {
-  key: '',
-  type: TableConditionStyleTypes.BackgroundColor,
-  operatorType: OperatorTypes.Equal,
-  conditionValues: [],
-  colors: {
-    background: '#000',
-    fore: '#fff',
-    positive: '#008fff',
-    negative: '#5cc504'
-  },
-  zeroPosition: 'auto',
-  bar: {
-    mode: 'auto'
-  },
-  customTemplate: ''
-}
+import styles from './styles.less'
+import stylesConfig from '../styles.less'
 
 interface IConditionStyleConfigModalProps {
   visible: boolean
@@ -58,7 +27,7 @@ interface IConditionStyleConfigModalStates {
   localStyle: ITableConditionStyle
 }
 
-export class ConditionStyleConfigModal extends React.PureComponent<IConditionStyleConfigModalProps, IConditionStyleConfigModalStates> {
+class ConditionStyleConfigModal extends React.PureComponent<IConditionStyleConfigModalProps, IConditionStyleConfigModalStates> {
 
   public constructor (props) {
     super(props)
@@ -125,18 +94,18 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
     const { colors } = localStyle
     const { background, fore } = colors
     return (
-      <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+      <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
         <Col span={8}>颜色：</Col>
         <Col span={4} className={styles.colColor}>
           <ColorPicker
-            className={styles.color}
+            className={stylesConfig.color}
             value={background}
             onChange={this.propChange('background', 'colors')}
           /><label>背景</label>
         </Col>
         <Col span={4} className={styles.colColor}>
           <ColorPicker
-            className={styles.color}
+            className={stylesConfig.color}
             value={fore}
             onChange={this.propChange('fore', 'colors')}
           /><label>文字</label>
@@ -150,11 +119,11 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
     const { colors } = localStyle
     const { fore } = colors
     return (
-      <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+      <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
         <Col span={8}>颜色：</Col>
         <Col span={4} className={styles.colColor}>
           <ColorPicker
-            className={styles.color}
+            className={stylesConfig.color}
             value={fore}
             onChange={this.propChange('fore', 'colors')}
           /><label>文字</label>
@@ -173,37 +142,37 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
     const { mode: barMode, max: barMax, min: barMin } = bar
     return (
       <>
-        <Row key="zeroPosition" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+        <Row key="zeroPosition" gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
           <Col span={8}>坐标轴位置：</Col>
           <Col span={16}>
             <RadioGroup options={this.zeroPositionOptions} onChange={this.propChange('zeroPosition')} value={zeroPosition} />
           </Col>
         </Row>
-        <Row key="zeroPositionValues" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+        <Row key="zeroPositionValues" gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
           <Col span={8}>颜色：</Col>
           <Col span={4} className={styles.colColor}>
             <ColorPicker
-              className={styles.color}
+              className={stylesConfig.color}
               value={positive}
               onChange={this.propChange('positive', 'colors')}
             /><label>正值</label>
           </Col>
           <Col span={4} className={styles.colColor}>
             <ColorPicker
-              className={styles.color}
+              className={stylesConfig.color}
               value={negative}
               onChange={this.propChange('negative', 'colors')}
             /><label>负值</label>
           </Col>
           <Col span={4} className={styles.colColor}>
             <ColorPicker
-              className={styles.color}
+              className={stylesConfig.color}
               value={fore}
               onChange={this.propChange('fore', 'colors')}
             /><label>文字</label>
           </Col>
         </Row>
-        <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+        <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
           <Col span={8}>最大(小)值：</Col>
           <Col span={16}>
             <RadioGroup options={this.barModeOptions} onChange={this.propChange('mode', 'bar')} value={barMode} />
@@ -211,13 +180,13 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
         </Row>
         {barMode === 'fixed' && (
           <>
-            <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+            <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
               <Col offset={13} span={4}>最小值：</Col>
-              <Col span={7}><InputNumber size="small" className={styles.colControl} value={barMin} onChange={this.propChange('min', 'bar')} /></Col>
+              <Col span={7}><InputNumber size="small" className={stylesConfig.colControl} value={barMin} onChange={this.propChange('min', 'bar')} /></Col>
             </Row>
-            <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+            <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
               <Col offset={13} span={4}>最大值：</Col>
-              <Col span={7}><InputNumber size="small" className={styles.colControl} value={barMax} onChange={this.propChange('max', 'bar')} /></Col>
+              <Col span={7}><InputNumber size="small" className={stylesConfig.colControl} value={barMax} onChange={this.propChange('max', 'bar')} /></Col>
             </Row>
           </>
         )}
@@ -227,7 +196,7 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
 
   private renderCustom = () => {
     return (
-      <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+      <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
         <Col span={6}>编辑文本：</Col>
         <Col span={3}>
           <Icon type="edit" />
@@ -298,13 +267,13 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
         onCancel={this.cancel}
         onOk={this.save}
       >
-        <div className={styles.rows}>
-          <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+        <div className={stylesConfig.rows}>
+          <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
             <Col span={8}>样式类型：</Col>
             <Col span={16}>
               <Select
                 size="small"
-                className={styles.colControl}
+                className={stylesConfig.colControl}
                 value={type}
                 onChange={this.propChange('type')}
               >
@@ -312,12 +281,12 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
               </Select>
             </Col>
           </Row>
-          <Row key="operatorType" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+          <Row key="operatorType" gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
             <Col span={8}>关系：</Col>
             <Col span={16}>
               <Select
                 size="small"
-                className={styles.colControl}
+                className={stylesConfig.colControl}
                 value={operatorType}
                 onChange={this.propChange('operatorType')}
               >
@@ -325,7 +294,7 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
               </Select>
             </Col>
           </Row>
-          <Row key="valueControls" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+          <Row key="valueControls" gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
             <Col span={8}>值：</Col>
             <Col span={16}>
               <ConditionValuesControl

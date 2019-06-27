@@ -1,6 +1,9 @@
-import * as React from 'react'
+import React from 'react'
 import { fromJS } from 'immutable'
-import { NumericUnit, FieldFormatTypes, AvailableFieldFormatTypes } from '../util'
+import { IFieldFormatConfig } from './types'
+import { getDefaultFieldFormatConfig } from './util'
+import { ViewModelVisualTypes } from 'containers/View/constants'
+import { NumericUnitList, FieldFormatTypes, FieldFormatTypesLocale, FieldFormatTypesSetting, defaultFormatConfig } from './constants'
 
 import { FormComponentProps } from 'antd/lib/form/Form'
 import { Form, Input, InputNumber, Radio, Checkbox, Select, Button, Modal } from 'antd'
@@ -8,74 +11,9 @@ const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const { Option } = Select
 
-export const NumericUnitList = [
-  NumericUnit.None,
-  NumericUnit.TenThousand,
-  NumericUnit.OneHundredMillion,
-  NumericUnit.Thousand,
-  NumericUnit.Million,
-  NumericUnit.Giga
-]
-
-export interface IFieldFormatConfig {
-  formatType: FieldFormatTypes
-  [FieldFormatTypes.Numeric]?: {
-    decimalPlaces: number
-    unit: NumericUnit
-    useThousandSeparator: boolean
-  }
-  [FieldFormatTypes.Currency]?: {
-    decimalPlaces: number
-    unit: NumericUnit
-    useThousandSeparator: boolean
-    prefix: string
-    suffix: string
-  }
-  [FieldFormatTypes.Percentage]?: {
-    decimalPlaces: number
-  }
-  [FieldFormatTypes.ScientificNotation]?: {
-    decimalPlaces: number
-  }
-  [FieldFormatTypes.Date]?: {
-    format: string
-  }
-  [FieldFormatTypes.Custom]?: {
-    format: string
-  }
-}
-
-const defaultFormatConfig: IFieldFormatConfig = {
-  formatType: FieldFormatTypes.Default,
-  [FieldFormatTypes.Numeric]: {
-    decimalPlaces: 2,
-    unit: NumericUnit.None,
-    useThousandSeparator: true
-  },
-  [FieldFormatTypes.Currency]: {
-    decimalPlaces: 2,
-    unit: NumericUnit.None,
-    useThousandSeparator: true,
-    prefix: '',
-    suffix: ''
-  },
-  [FieldFormatTypes.Percentage]: {
-    decimalPlaces: 2
-  },
-  [FieldFormatTypes.ScientificNotation]: {
-    decimalPlaces: 2
-  },
-  [FieldFormatTypes.Date]: {
-    format: 'YYYY-MM-DD'
-  },
-  [FieldFormatTypes.Custom]: {
-    format: ''
-  }
-}
-
-interface IFormatConfigFormProps {
+interface IFormatConfigFormProps extends FormComponentProps {
   visible: boolean
-  visualType: string
+  visualType: ViewModelVisualTypes
   formatConfig: IFieldFormatConfig
   onCancel: () => void
   onSave: (config: IFieldFormatConfig) => void
@@ -85,13 +23,13 @@ interface IFormatConfigFormStates {
   localConfig: IFieldFormatConfig
 }
 
-export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps & FormComponentProps, IFormatConfigFormStates> {
+class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps, IFormatConfigFormStates> {
 
   private numericUnitOptions = NumericUnitList.map((item) => (
     <Option key={item} value={item}>{item}</Option>
   ))
 
-  public constructor (props: IFormatConfigFormProps & FormComponentProps) {
+  public constructor (props: IFormatConfigFormProps) {
     super(props)
     const { formatConfig } = props
     this.state = {
@@ -103,7 +41,7 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
     this.props.form.setFieldsValue(this.state.localConfig)
   }
 
-  public componentWillReceiveProps (nextProps: IFormatConfigFormProps & FormComponentProps) {
+  public componentWillReceiveProps (nextProps: IFormatConfigFormProps) {
     const { formatConfig, form } = nextProps
     if (formatConfig === this.props.formatConfig) { return }
     this.setState({
@@ -132,7 +70,7 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
   }
 
   private renderFormatTypes () {
-    const { form } = this.props
+    const { form, visualType } = this.props
     const { getFieldDecorator } = form
     const { localConfig } = this.state
     const formatTypesGroup = (
@@ -141,8 +79,8 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
           initialValue: localConfig.formatType
         })(
           <RadioGroup onChange={this.onFormatTypeChange}>
-            {Object.entries(AvailableFieldFormatTypes).map(([key, value]) => (
-              <Radio key={key} value={key}>{value}</Radio>
+            {FieldFormatTypesSetting[visualType].map((formatType) => (
+              <Radio key={formatType} value={formatType}>{FieldFormatTypesLocale[formatType]}</Radio>
             ))}
           </RadioGroup>
         )}
@@ -404,10 +342,4 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
   }
 }
 
-export function getDefaultFieldFormatConfig (): IFieldFormatConfig {
-  return {
-    formatType: FieldFormatTypes.Default
-  }
-}
-
-export default Form.create()(FormatConfigForm)
+export default Form.create<IFormatConfigFormProps>()(FormatConfigForm)

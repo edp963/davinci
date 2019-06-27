@@ -1,16 +1,8 @@
-import * as React from 'react'
+import React from 'react'
 import classnames from 'classnames'
-import {
-  PIVOT_DEFAULT_FONT_COLOR,
-  PIVOT_CHART_FONT_FAMILIES,
-  PIVOT_CHART_FONT_SIZES,
-  PIVOT_CHART_FONT_WEIGHTS,
-  PIVOT_CHART_FONT_STYLE,
-  DEFAULT_FONT_STYLE,
-  PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR } from '../../../../../../../app/globalConstants'
 import { uuid } from 'utils/util'
-import { fontWeightOptions, fontStyleOptions, fontFamilyOptions, fontSizeOptions } from './util'
-import { ITableHeaderConfig, ITableCellStyle } from './'
+import { fontWeightOptions, fontStyleOptions, fontFamilyOptions, fontSizeOptions, DefaultTableCellStyle } from '../constants'
+import { ITableHeaderConfig } from './types'
 
 import { Icon, Row, Col, Modal, Input, Button, Radio, Select, Table, message, Tooltip } from 'antd'
 const ButtonGroup = Button.Group
@@ -21,17 +13,8 @@ import { TableRowSelection, ColumnProps } from 'antd/lib/table'
 import ColorPicker from 'components/ColorPicker'
 import { fromJS } from 'immutable'
 
-const styles = require('./TableSection.less')
-
-export const DefaultTableCellStyle: ITableCellStyle = {
-  fontSize: '12',
-  fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
-  fontWeight: PIVOT_CHART_FONT_WEIGHTS[0],
-  fontColor: PIVOT_DEFAULT_FONT_COLOR,
-  fontStyle: DEFAULT_FONT_STYLE,
-  backgroundColor: 'transparent',
-  justifyContent: 'flex-start'
-}
+import styles from './styles.less'
+import stylesConfig from '../styles.less'
 
 interface IHeaderConfigModalProps {
   visible: boolean
@@ -48,7 +31,7 @@ interface IHeaderConfigModalStates {
   mapHeaderParent: { [key: string]: ITableHeaderConfig }
 }
 
-export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalProps, IHeaderConfigModalStates> {
+class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalProps, IHeaderConfigModalStates> {
 
   private headerNameInput = React.createRef<Input>()
 
@@ -332,7 +315,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
         <Row type="flex" justify="center">
           <Col>
             <ColorPicker
-              className={styles.color}
+              className={stylesConfig.color}
               value={backgroundColor}
               onChange={this.propChange(record, 'backgroundColor')}
             />
@@ -350,11 +333,11 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       const { fontSize, fontFamily, fontColor, fontStyle, fontWeight } = style
       return (
         <>
-          <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+          <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
             <Col span={14}>
               <Select
                 size="small"
-                className={styles.colControl}
+                className={stylesConfig.colControl}
                 placeholder="字体"
                 value={fontFamily}
                 onChange={this.propChange(record, 'fontFamily')}
@@ -365,7 +348,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
             <Col span={6}>
               <Select
                 size="small"
-                className={styles.colControl}
+                className={stylesConfig.colControl}
                 placeholder="文字大小"
                 value={fontSize}
                 onChange={this.propChange(record, 'fontSize')}
@@ -375,17 +358,17 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
             </Col>
             <Col span={4}>
               <ColorPicker
-                className={styles.color}
+                className={stylesConfig.color}
                 value={fontColor}
                 onChange={this.propChange(record, 'fontColor')}
               />
             </Col>
           </Row>
-          <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+          <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
             <Col span={12}>
               <Select
                 size="small"
-                className={styles.colControl}
+                className={stylesConfig.colControl}
                 value={fontStyle}
                 onChange={this.propChange(record, 'fontStyle')}
               >
@@ -395,7 +378,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
             <Col span={12}>
               <Select
                 size="small"
-                className={styles.colControl}
+                className={stylesConfig.colControl}
                 value={fontWeight}
                 onChange={this.propChange(record, 'fontWeight')}
               >
@@ -464,7 +447,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       selectedRowKeys: currentSelectedKeys
     }
     const wrapTableCls = classnames({
-      [styles.rows]: true,
+      [stylesConfig.rows]: true,
       [styles.headerTable]: true
     })
 
@@ -478,8 +461,8 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
         onCancel={this.cancel}
         onOk={this.save}
       >
-        <div className={styles.rows}>
-          <Row gutter={8} className={styles.rowBlock} type="flex" align="middle">
+        <div className={stylesConfig.rows}>
+          <Row gutter={8} className={stylesConfig.rowBlock} type="flex" align="middle">
             <Col span={4}>
               <Button type="primary" onClick={this.mergeColumns}>合并</Button>
             </Col>
@@ -503,7 +486,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
           </Row>
         </div>
         <div className={wrapTableCls}>
-          <Row gutter={8} className={styles.rowBlock}>
+          <Row gutter={8} className={stylesConfig.rowBlock}>
             <Col span={24}>
               <Table
                 bordered={true}
