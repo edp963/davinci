@@ -116,14 +116,14 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
 
         List<Long> disbalePortals = relRolePortalMapper.getDisablePortalByUser(user.getId(), projectId);
 
-        if (CollectionUtils.isEmpty(disbalePortals)) {
-            return dashboardPortals;
-        }
-
         Iterator<DashboardPortal> iterator = dashboardPortals.iterator();
         while (iterator.hasNext()) {
             DashboardPortal portal = iterator.next();
-            if (!projectPermission.isProjectMaintainer() && (disbalePortals.contains(portal.getId()) || !portal.getPublish())) {
+
+            boolean disable = !projectPermission.isProjectMaintainer() && disbalePortals.contains(portal.getId());
+            boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !portal.getPublish();
+
+            if (disable || noPublish) {
                 iterator.remove();
             }
         }

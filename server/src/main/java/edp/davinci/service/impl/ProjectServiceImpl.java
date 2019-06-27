@@ -559,9 +559,29 @@ public class ProjectServiceImpl implements ProjectService {
 
         List<Role> roleList = roleMapper.selectByIdsAndOrgId(projectDetail.getOrgId(), roleIds);
 
-        List<RelRoleProject> list = roleList.stream().map(role -> new RelRoleProject(projectDetail.getId(), role.getId()).createdBy(user.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(roleList)) {
+            relRoleProjectMapper.deleteByProjectId(id);
+            return null;
+        }
 
-        relRoleProjectMapper.deleteByProjectId(id);
+        List<RelRoleProject> originRels = relRoleProjectMapper.getByProject(id);
+
+        List<Long> invariantRoleIds = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(originRels)) {
+            invariantRoleIds.addAll(originRels.stream().map(RelRoleProject::getRoleId).filter(roleIds::contains).collect(Collectors.toList()));
+
+            if (!CollectionUtils.isEmpty(invariantRoleIds)) {
+                List<Long> delList = originRels.stream().filter(r -> !invariantRoleIds.contains(r.getRoleId())).map(RelRoleProject::getId).collect(Collectors.toList());
+                if (!CollectionUtils.isEmpty(delList)) {
+                    relRoleProjectMapper.deleteByIds(delList);
+                }
+            }
+        }
+
+        List<RelRoleProject> list = roleList.stream()
+                .filter(r -> !invariantRoleIds.contains(r.getId()))
+                .map(role -> new RelRoleProject(projectDetail.getId(), role.getId()).createdBy(user.getId())).collect(Collectors.toList());
+
         if (!CollectionUtils.isEmpty(list)) {
             relRoleProjectMapper.insertBatch(list);
             List<RoleProject> roleProjects = list.stream().map(r -> {
