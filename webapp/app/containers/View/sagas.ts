@@ -173,7 +173,7 @@ export function* getSelectOptions (action: ViewActionType) {
   const { payload } = action
   const { selectOptionsLoaded, loadSelectOptionsFail } = ViewActions
   try {
-    const { controlKey, requestParams, itemId } = payload
+    const { controlKey, requestParams, itemId, cancelTokenSource } = payload
     const requestParamsMap: Array<[string, IDistinctValueReqeustParams]> = Object.entries(requestParams)
     const requests = requestParamsMap.map(([viewId, params]: [string, IDistinctValueReqeustParams]) => {
       const { columns, filters, variables, cache, expired } = params
@@ -186,7 +186,8 @@ export function* getSelectOptions (action: ViewActionType) {
           params: variables,
           cache,
           expired
-        }
+        },
+        cancelToken: cancelTokenSource.token
       })
     })
     const results = yield all(requests)
@@ -229,7 +230,7 @@ export function* getViewDistinctValue (action: ViewActionType) {
 
 export function* getViewDataFromVizItem (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM) { return }
-  const { renderType, itemId, viewId, requestParams, vizType } = action.payload
+  const { renderType, itemId, viewId, requestParams, vizType, cancelTokenSource } = action.payload
   const { viewDataFromVizItemLoaded, loadViewDataFromVizItemFail } = ViewActions
   const {
     filters,
@@ -254,7 +255,8 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
         params: variables.concat(linkageVariables).concat(globalVariables),
         pageSize,
         pageNo
-      }
+      },
+      cancelToken: cancelTokenSource.token
     })
     const { resultList } = asyncData.payload
     asyncData.payload.resultList = (resultList && resultList.slice(0, 500)) || []

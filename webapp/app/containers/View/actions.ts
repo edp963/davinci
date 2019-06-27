@@ -18,6 +18,7 @@
  * >>
  */
 
+import axios from 'axios'
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
 import { IDavinciResponse } from 'utils/request'
@@ -28,6 +29,7 @@ import {
 import { IDataRequestParams } from 'containers/Dashboard/Grid'
 import { RenderType } from 'containers/Widget/components/Widget'
 import { IDistinctValueReqeustParams } from 'app/components/Filters'
+const CancelToken = axios.CancelToken
 
 export const ViewActions = {
   viewsLoaded (views: IViewBase[]) {
@@ -287,7 +289,8 @@ export const ViewActions = {
       payload: {
         controlKey,
         requestParams,
-        itemId
+        itemId,
+        cancelTokenSource: CancelToken.source()
       }
     }
   },
@@ -375,7 +378,8 @@ export const ViewActions = {
         itemId,
         viewId,
         requestParams,
-        vizType
+        vizType,
+        cancelTokenSource: CancelToken.source()
       }
     }
   },
