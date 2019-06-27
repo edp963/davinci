@@ -15,8 +15,8 @@ const { Option } = Select
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 
-import HeaderConfigModal from 'containers/Widget/components/Config/Table/Header/HeaderConfigModal'
-import ColumnConfigModal from 'containers/Widget/components/Config/Table/Column/ColumnConfigModal'
+const HeaderConfigModal = React.lazy(() => import('containers/Widget/components/Config/Table/Header/HeaderConfigModal'))
+const ColumnConfigModal = React.lazy(() => import('containers/Widget/components/Config/Table/Column/ColumnConfigModal'))
 
 const styles = require('../../Workbench.less')
 
@@ -414,20 +414,20 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
             </Row>
           </div>
         </div>
-
-        <HeaderConfigModal
-          visible={headerConfigModalVisible}
-          config={validHeaderConfig}
-          onCancel={this.closeHeaderConfig}
-          onSave={this.saveHeaderConfig}
-        />
-
-        <ColumnConfigModal
-          visible={columnConfigModalVisible}
-          config={validColumnConfig}
-          onCancel={this.closeColumnConfig}
-          onSave={this.saveColumnConfig}
-        />
+        <React.Suspense fallback={null}>
+          <HeaderConfigModal
+            visible={headerConfigModalVisible}
+            config={validHeaderConfig}
+            onCancel={this.closeHeaderConfig}
+            onSave={this.saveHeaderConfig}
+          />
+          <ColumnConfigModal
+            visible={columnConfigModalVisible}
+            config={validColumnConfig}
+            onCancel={this.closeColumnConfig}
+            onSave={this.saveColumnConfig}
+          />
+        </React.Suspense>
       </div>
     )
   }
