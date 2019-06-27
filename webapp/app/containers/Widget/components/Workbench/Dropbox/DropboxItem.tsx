@@ -2,9 +2,10 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { SortType, AggregatorType, IDataParamSource, IDataParamSourceInBox, IDataParamConfig } from '../Dropbox'
 import PivotChartSelector from '../PivotChartSelector'
-import { getAggregatorLocale, decodeMetricName, getFieldAlias } from '../../util'
+import { getFieldAlias } from '../../Config/Field'
+import { getAggregatorLocale, decodeMetricName } from '../../util'
 import { IChartInfo } from '../../Widget'
-import { getAvailableSettings, getSettingsDropdownList, getSettingKeyByDropItem, MapSettingTypes, MapItemTypes } from './settings'
+import { getAvailableSettings, getSettingsDropdownList, getSettingKeyByDropItem, MapSettingTypes, MapItemTypes, MapItemValueTypes } from './settings'
 
 import { Icon, Menu, Dropdown, Tooltip } from 'antd'
 const { Item: MenuItem, SubMenu, Divider: MenuDivider } = Menu
@@ -147,7 +148,7 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
     if (type === 'add') {
       contentWithDropdownList = content
     } else {
-      const availableSettings =  getAvailableSettings(MapSettingTypes[container], MapItemTypes[item.type])
+      const availableSettings =  getAvailableSettings(MapSettingTypes[container], MapItemTypes[item.type], MapItemValueTypes[item.visualType])
       const dropdownList = getSettingsDropdownList(availableSettings)
       let menuClass = ''
       if (type === 'value') {

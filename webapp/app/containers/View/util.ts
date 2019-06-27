@@ -1,7 +1,7 @@
 import { IViewModel, ISqlColumn, IView, IFormedView, IViewRoleRaw, IViewRole } from './types'
 
 import { SqlTypes } from 'app/globalConstants'
-import { ModelTypeSqlTypeSetting, VisualTypeSqlTypeSetting } from './constants'
+import { ModelTypeSqlTypeSetting, VisualTypeSqlTypeSetting, ViewModelVisualTypes, ViewModelTypes } from './constants'
 
 export function getFormedView (view: IView): IFormedView {
   const { model, variable, roles } = view
@@ -38,8 +38,8 @@ export function getValidModel (model: IViewModel, sqlColumns: ISqlColumn[]) {
     if (!modelItem) {
       accModel[columnName] = {
         sqlType: columnType,
-        visualType: getMapKeyByValue(columnType, VisualTypeSqlTypeSetting),
-        modelType: getMapKeyByValue(columnType, ModelTypeSqlTypeSetting)
+        visualType: getMapKeyByValue(columnType, VisualTypeSqlTypeSetting) || ViewModelVisualTypes.String,
+        modelType: getMapKeyByValue(columnType, ModelTypeSqlTypeSetting) || ViewModelTypes.Category
       }
     } else {
       accModel[columnName] = { ...modelItem }

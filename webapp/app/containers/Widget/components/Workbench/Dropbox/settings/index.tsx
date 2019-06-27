@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import Aggregator from './Aggregator'
 import Field from './Field'
 import Sort from './Sort'
@@ -6,8 +6,9 @@ import Format from './Format'
 import Color from './Color'
 import Filters from './Filters'
 
+import { ViewModelTypes, ViewModelVisualTypes } from 'containers/View/constants'
 import ChartTypes from 'containers/Widget/config/chart/ChartTypes'
-import { SettingTypes, ItemTypes } from './type'
+import { SettingTypes, ItemTypes, ItemValueTypes } from './type'
 
 import { Menu } from 'antd'
 const { Item: MenuItem, SubMenu, Divider: MenuDivider } = Menu
@@ -24,9 +25,14 @@ export function getSettingKeyByDropItem (itemKey: string): 'aggregator' | 'field
   return settingKey
 }
 
-export function getAvailableSettings (settingType: SettingTypes, itemType: ItemTypes) {
-  const availableSettings = SettingsList.filter((s) => {
-    const byType = (s.settingType & settingType) && (s.itemType & itemType)
+export function getAvailableSettings (settingType: SettingTypes, itemType: ItemTypes, itemValueType: ItemValueTypes) {
+  const availableSettings = SettingsList.filter((settingItem) => {
+    const { constrants } = settingItem
+    const byType = constrants.some((constrant) => (
+      (!constrant.settingType || (constrant.settingType & settingType))
+        && (!constrant.itemType || (constrant.itemType & itemType))
+        && (!constrant.itemValueType || (constrant.itemValueType & itemValueType))
+    ))
     return byType
   })
   const result = availableSettings.reduce((acc, setting) => {
@@ -71,8 +77,17 @@ export const MapSettingTypes = {
 }
 
 export const MapItemTypes = {
-  category: ItemTypes.Category,
-  value: ItemTypes.Value
+  [ViewModelTypes.Category]: ItemTypes.Category,
+  [ViewModelTypes.Value]: ItemTypes.Value
+}
+
+export const MapItemValueTypes = {
+  [ViewModelVisualTypes.Date]: ItemValueTypes.Date,
+  [ViewModelVisualTypes.GeoCity]: ItemValueTypes.GeoCity,
+  [ViewModelVisualTypes.GeoCountry]: ItemValueTypes.GeoCountry,
+  [ViewModelVisualTypes.GeoProvince]: ItemValueTypes.GeoProvince,
+  [ViewModelVisualTypes.Number]: ItemValueTypes.Number,
+  [ViewModelVisualTypes.String]: ItemValueTypes.String
 }
 
 export default SettingsList

@@ -19,7 +19,7 @@
  */
 
 import React from 'react'
-import { getFormattedValue } from '../../util'
+import { getFormattedValue } from '../../Config/Format'
 const Styles = require('./RichText.less')
 
 interface IRichTextPreviewProps {

@@ -20,12 +20,10 @@
 
 import React from 'react'
 import OperatorTypes from 'utils/operatorTypes'
-import { ITableColumnConfig, ITableConditionStyle } from '../../../Workbench/ConfigSections/TableSection'
-import { IFieldFormatConfig } from '../../../Workbench/FormatConfigModal'
-import { TableConditionStyleTypes } from '../../../Workbench/ConfigSections/TableSection/util'
-import { DefaultTableCellStyle } from '../../../Workbench/ConfigSections/TableSection/HeaderConfigModal'
+import { ITableColumnConfig, ITableConditionStyle, DefaultTableCellStyle } from 'containers/Widget/components/Config/Table'
+import { IFieldFormatConfig, getFormattedValue } from 'containers/Widget/components/Config/Format'
+import { TableConditionStyleTypes } from 'containers/Widget/components/Config/Table/Column'
 import { textAlignAdapter } from '../util'
-import { getFormattedValue } from '../../../util'
 
 interface IBodyCellProps {
   format: IFieldFormatConfig

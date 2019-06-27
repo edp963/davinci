@@ -33,6 +33,7 @@ import {
   makeGrouped,
   distinctXaxis
 } from './util'
+import { getFormattedValue } from '../../components/Config/Format'
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
@@ -74,7 +75,14 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   const { selectedItems } = drillOptions
 
   const labelOption = {
-    label: getLabelOption('line', label)
+    label: getLabelOption('line', label, false, {
+      formatter: (params) => {
+        const { value, seriesName } = params
+        const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
+        const formatted = getFormattedValue(value, m.format)
+        return formatted
+      }
+    })
   }
 
   const xAxisColumnName = cols[0].name

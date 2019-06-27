@@ -3,11 +3,12 @@ import classnames from 'classnames'
 
 import widgetlibs from '../../config'
 import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
-import { IViewBase, IFormedView, IViewModel } from 'containers/View/types'
-import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType, IDragItem} from './Dropbox'
+import { IViewBase, IFormedView } from 'containers/View/types'
+import { ViewModelVisualTypes } from 'containers/View/constants'
+import Dropbox, { DropboxType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType, IDragItem} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, IPaginationParams, WidgetMode, RenderType, DimetionType } from '../Widget'
-import FieldConfigModal, { IFieldConfig, getDefaultFieldConfig } from './FieldConfig'
-import FormatConfigModal, { IFieldFormatConfig, getDefaultFieldFormatConfig } from './FormatConfigModal'
+import { IFieldConfig, getDefaultFieldConfig, FieldConfigModal } from '../Config/Field'
+import { IFieldFormatConfig, getDefaultFieldFormatConfig, FormatConfigModal } from '../Config/Format'
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
@@ -27,7 +28,8 @@ import DoubleYAxisSection, { IDoubleYAxisConfig } from './ConfigSections/DoubleY
 import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelectSection'
 import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
 import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
-import TableSection, { ITableConfig } from './ConfigSections/TableSection'
+import TableSection from './ConfigSections/TableSection'
+import { ITableConfig } from '../Config/Table'
 import BarSection from './ConfigSections/BarSection'
 import { encodeMetricName, decodeMetricName, getPivot, getTable, getPivotModeSelectedCharts, checkChartEnable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
@@ -105,7 +107,6 @@ interface IOperatingPanelStates {
   fieldModalVisible: boolean
 
   formatModalVisible: boolean
-  selectedFormatVisualType: string
 
   colorModalVisible: boolean
   actOnModalVisible: boolean
@@ -144,7 +145,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       currentEditingItem: null,
       fieldModalVisible: false,
       formatModalVisible: false,
-      selectedFormatVisualType: '',
       colorModalVisible: false,
       actOnModalVisible: false,
       actOnModalList: null,
@@ -227,7 +227,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ...c,
             from: 'cols',
             type: 'category' as DragType,
-            visualType: c.name === '指标名称' ? 'string' : modelColumn.visualType
+            visualType: c.name === '指标名称' ? ViewModelVisualTypes.String : modelColumn.visualType
           })
         }
       })
@@ -239,7 +239,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ...r,
             from: 'rows',
             type: 'category' as DragType,
-            visualType: r.name === '指标名称' ? 'string' :  modelColumn.visualType
+            visualType: r.name === '指标名称' ? ViewModelVisualTypes.String :  modelColumn.visualType
           })
         }
       })
@@ -379,13 +379,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
   }
 
-  private getDragItemIconClass = (type: ViewModelType) => {
+  private getDragItemIconClass = (type: ViewModelVisualTypes) => {
     switch (type) {
-      case 'number': return 'icon-values'
-      case 'date': return `icon-calendar ${styles.iconDate}`
-      case 'geoCountry':
-      case 'geoProvince':
-      case 'geoCity': return 'icon-map'
+      case ViewModelVisualTypes.Number: return 'icon-values'
+      case ViewModelVisualTypes.Date: return `icon-calendar ${styles.iconDate}`
+      case ViewModelVisualTypes.GeoCountry:
+      case ViewModelVisualTypes.GeoProvince:
+      case ViewModelVisualTypes.GeoCity: return 'icon-map'
       default: return 'icon-categories'
     }
   }
@@ -1422,7 +1422,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       modalDataFrom,
       fieldModalVisible,
       formatModalVisible,
-      selectedFormatVisualType,
       currentEditingItem,
       colorModalVisible,
       actOnModalVisible,
@@ -1447,7 +1446,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       categoryDragItems = categoryDragItems.concat({
         name: '指标名称',
         type: 'category',
-        visualType: 'string',
+        visualType: ViewModelVisualTypes.String,
         checked: false
       })
     }
@@ -1997,7 +1996,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           <FormatConfigModal
             key="formatConfigModal"
             visible={formatModalVisible}
-            visualType={selectedFormatVisualType}
+            visualType={currentEditingItem.visualType}
             formatConfig={currentEditingItem.format}
             onSave={this.saveFormatConfig}
             onCancel={this.cancelFormatConfig}
