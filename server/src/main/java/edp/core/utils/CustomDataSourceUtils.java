@@ -31,7 +31,6 @@ import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static edp.core.consts.Consts.*;
 
@@ -136,9 +135,7 @@ public class CustomDataSourceUtils {
     private static String getDataSourceName(String jdbcUrl) {
         String dataSourceName = null;
         jdbcUrl = jdbcUrl.replaceAll(NEW_LINE_CHAR, EMPTY).replaceAll(SPACE, EMPTY).trim().toLowerCase();
-        String reg = "jdbc:\\w+";
-        Pattern pattern = Pattern.compile(reg);
-        Matcher matcher = pattern.matcher(jdbcUrl);
+        Matcher matcher = PATTERN_JDBC_TYPE.matcher(jdbcUrl);
         if (matcher.find()) {
             dataSourceName = matcher.group().split(COLON)[1];
         }

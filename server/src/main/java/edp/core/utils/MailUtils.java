@@ -20,7 +20,6 @@
 package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.consts.Consts;
 import edp.core.exception.ServerException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +39,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static edp.core.consts.Consts.PATTERN_EMAIL_FORMAT;
 
 @Component
 @Slf4j
@@ -57,7 +57,6 @@ public class MailUtils {
 
     @Value("${spring.mail.nickname}")
     private String nickName;
-
 
     /**
      * 发送简单邮件
@@ -128,8 +127,7 @@ public class MailUtils {
             throw new ServerException("email address(from) cannot be EMPTY");
         }
 
-        Pattern pattern = Pattern.compile(Consts.REG_EMAIL_FORMAT);
-        Matcher matcher = pattern.matcher(from);
+        Matcher matcher = PATTERN_EMAIL_FORMAT.matcher(from);
 
         if (!matcher.find()) {
             log.info("unknow email address(from): {}", from);
@@ -248,8 +246,7 @@ public class MailUtils {
             throw new ServerException("email address(from) cannot be EMPTY");
         }
 
-        Pattern pattern = Pattern.compile(Consts.REG_EMAIL_FORMAT);
-        Matcher matcher = pattern.matcher(from);
+        Matcher matcher = PATTERN_EMAIL_FORMAT.matcher(from);
 
         if (!matcher.find()) {
             log.info("unknow email address(from): {}", from);

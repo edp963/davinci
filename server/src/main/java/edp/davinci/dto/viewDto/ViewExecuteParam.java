@@ -29,7 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.*;
@@ -49,7 +48,6 @@ public class ViewExecuteParam {
     private int totalCount = 0;
 
     private boolean nativeQuery = false;
-
 
     public ViewExecuteParam() {
     }
@@ -101,12 +99,10 @@ public class ViewExecuteParam {
         if (!CollectionUtils.isEmpty(orders)) {
             list = new ArrayList<>();
             Iterator<Order> iterator = this.orders.iterator();
-            String regex = "sum\\(.*\\)|avg\\(.*\\)|count\\(.*\\)|COUNTDISTINCT\\(.*\\)|max\\(.*\\)|min\\(.*\\)";
-            Pattern pattern = Pattern.compile(regex);
             while (iterator.hasNext()) {
                 Order order = iterator.next();
                 String column = order.getColumn().trim();
-                Matcher matcher = pattern.matcher(order.getColumn().trim().toLowerCase());
+                Matcher matcher = PATTERN_SQL_AGGREGATE.matcher(order.getColumn().trim().toLowerCase());
                 if (!matcher.find()) {
                     String prefix = SqlUtils.getKeywordPrefix(jdbcUrl);
                     String suffix = SqlUtils.getKeywordSuffix(jdbcUrl);

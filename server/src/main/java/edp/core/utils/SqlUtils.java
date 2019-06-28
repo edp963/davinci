@@ -52,7 +52,6 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static edp.core.consts.Consts.*;
 import static edp.core.enums.DataTypeEnum.ORACLE;
@@ -612,8 +611,7 @@ public class SqlUtils {
      * @throws ServerException
      */
     public static void checkSensitiveSql(String sql) throws ServerException {
-        Pattern pattern = Pattern.compile(Consts.REG_SENSITIVE_SQL);
-        Matcher matcher = pattern.matcher(sql.toLowerCase());
+        Matcher matcher = PATTERN_SENSITIVE_SQL.matcher(sql.toLowerCase());
         if (matcher.find()) {
             String group = matcher.group();
             log.warn("Sensitive SQL operations are not allowed: {}", group.toUpperCase());
@@ -867,8 +865,7 @@ public class SqlUtils {
      * @return
      */
     public static String filterAnnotate(String sql) {
-        Pattern p = Pattern.compile(Consts.REG_SQL_ANNOTATE);
-        sql = p.matcher(sql).replaceAll("$1");
+        sql = PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1");
         sql = sql.replaceAll(NEW_LINE_CHAR, SPACE).replaceAll("(;+\\s*)+", SEMICOLON);
         return sql;
     }
@@ -876,9 +873,7 @@ public class SqlUtils {
     public static String formatSqlType(String type) throws ServerException {
         if (!StringUtils.isEmpty(type.trim())) {
             type = type.trim().toUpperCase();
-            String reg = "^.*\\s*\\(.*\\)$";
-            Pattern pattern = Pattern.compile(reg);
-            Matcher matcher = pattern.matcher(type);
+            Matcher matcher = PATTERN_DB_COLUMN_TYPE.matcher(type);
             if (!matcher.find()) {
                 return SqlTypeEnum.getType(type);
             } else {

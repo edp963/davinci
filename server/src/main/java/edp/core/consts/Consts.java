@@ -20,6 +20,7 @@
 package edp.core.consts;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 public class Consts {
 
@@ -130,22 +131,36 @@ public class Consts {
      * 常用图片格式
      */
     public static final String REG_IMG_FORMAT = "^.+(.JPEG|.jpeg|.JPG|.jpg|.PNG|.png|.GIF|.gif)$";
+    public static final Pattern PATTERN_IMG_FROMAT = Pattern.compile(REG_IMG_FORMAT);
 
     /**
      * 邮箱格式
      */
     public static final String REG_EMAIL_FORMAT = "^[a-z_0-9.-]{1,64}@([a-z0-9-]{1,200}.){1,5}[a-z]{1,6}$";
+    public static final Pattern PATTERN_EMAIL_FORMAT = Pattern.compile(Consts.REG_EMAIL_FORMAT);
+
 
     /**
      * 敏感sql操作
      */
     public static final String REG_SENSITIVE_SQL = "drop\\s|alter\\s|grant\\s|insert\\s|replace\\s|delete\\s|truncate\\s|update\\s|remove\\s";
-
+    public static final Pattern PATTERN_SENSITIVE_SQL = Pattern.compile(REG_SENSITIVE_SQL);
 
     /**
      * 匹配多行sql注解正则
      */
     public static final String REG_SQL_ANNOTATE = "(?ms)('(?:''|[^'])*')|--.*?$|/\\*[^+]*?\\*/";
+    public static final Pattern PATTERN_SQL_ANNOTATE = Pattern.compile(REG_SQL_ANNOTATE);
+
+    /**
+     * sql 常见聚合函数
+     */
+    public static final String REGEX_SQL_AGGREGATE = "sum\\(.*\\)|avg\\(.*\\)|count\\(.*\\)|COUNTDISTINCT\\(.*\\)|max\\(.*\\)|min\\(.*\\)";
+    public static final Pattern PATTERN_SQL_AGGREGATE = Pattern.compile(REGEX_SQL_AGGREGATE);
+
+    public static final Pattern PATTERN_DB_COLUMN_TYPE = Pattern.compile("^.*\\s*\\(.*\\)$");
+
+    public static final Pattern PATTERN_JDBC_TYPE = Pattern.compile("jdbc:\\w+");
 
 
     public static final String DIR_DOWNLOAD = File.separator + "download" + File.separator;

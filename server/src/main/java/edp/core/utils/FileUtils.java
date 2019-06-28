@@ -20,7 +20,6 @@
 package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.consts.Consts;
 import edp.davinci.core.enums.FileTypeEnum;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -32,7 +31,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -46,7 +44,6 @@ public class FileUtils {
     @Value("${file.userfiles-path}")
     public String fileBasePath;
 
-
     /**
      * 校验MultipartFile 是否图片
      *
@@ -54,18 +51,12 @@ public class FileUtils {
      * @return
      */
     public boolean isImage(MultipartFile file) {
-
-        Pattern pattern = Pattern.compile(Consts.REG_IMG_FORMAT);
-        Matcher matcher = pattern.matcher(file.getOriginalFilename());
-
+        Matcher matcher = PATTERN_IMG_FROMAT.matcher(file.getOriginalFilename());
         return matcher.find();
     }
 
     public boolean isImage(File file) {
-
-        Pattern pattern = Pattern.compile(Consts.REG_IMG_FORMAT);
-        Matcher matcher = pattern.matcher(file.getName());
-
+        Matcher matcher = PATTERN_IMG_FROMAT.matcher(file.getName());
         return matcher.find();
     }
 
