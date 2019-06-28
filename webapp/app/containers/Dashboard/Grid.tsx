@@ -417,6 +417,21 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   // }
 
   private initiateWidgetDownloadTask = (itemId: number, widgetId: number) => {
+    const { widgets } = this.props
+    const widget = widgets.find((w) => w.id === widgetId)
+    const queryConditions: Partial<IQueryConditions> = {
+      nativeQuery: false
+    }
+    if (widget.type === getTable().id) {
+      try {
+        const widgetProps: IWidgetProps = JSON.parse(widget.config)
+        if (widgetProps.mode === 'chart') {
+          queryConditions.nativeQuery = widgetProps.chartStyles.table.withNoAggregators
+        }
+      } catch (error) {
+        message.error(error)
+      }
+    }
     this.getData(
       (renderType, itemId, widget, requestParams) => {
         const downloadParams = [{
@@ -427,7 +442,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       },
       'rerender',
       itemId,
-      widgetId
+      widgetId,
+      queryConditions
     )
   }
 
