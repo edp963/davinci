@@ -21,6 +21,7 @@
 import { SqlTypes } from 'app/globalConstants'
 import { ISourceSimple, ISourceBase, ISchema } from 'containers/Source/types'
 import { ViewModelTypes, ViewModelVisualTypes, ViewVariableTypes, ViewVariableValueTypes } from './constants'
+import { CancelTokenSource } from 'axios'
 
 export interface IViewBase {
   id: number
@@ -176,4 +177,6 @@ export interface IViewState {
   channels: IDacChannel[]
   tenants: IDacTenant[]
   bizs: IDacBiz[]
+
+  cancelTokenSources: CancelTokenSource[]
 }
