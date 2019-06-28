@@ -225,6 +225,12 @@
 .sqlPreview {
   background: #f7f7f7;
   padding-top: 1px;
+
+  :global {
+    .ant-table-tbody > tr > td {
+      word-break: break-all;
+    }
+  }
 }
 
 .modelAuth {
