@@ -23,7 +23,8 @@ import {
   decodeMetricName,
   getChartTooltipLabel,
   getTextWidth,
-  getAggregatorLocale
+  getAggregatorLocale,
+  metricAxisLabelFormatter
 } from '../../components/util'
 import {
   getLegendOption,
@@ -107,6 +108,7 @@ export default function (chartProps: IChartProps, drillOptions) {
   const { selectedItems } = drillOptions
   const { secondaryMetrics } = chartProps
 
+  const xAxisData = showLabel ? data.map((d) => d[cols[0].name]) : []
   const seriesData = secondaryMetrics
     ? getAixsMetrics('metrics', metrics, data, stack, labelOption, selectedItems, {key: 'yAxisLeft', type: yAxisLeft})
       .concat(getAixsMetrics('secondaryMetrics', secondaryMetrics, data, stack, labelOption, selectedItems, {key: 'yAxisRight', type: yAxisRight}))
@@ -135,7 +137,7 @@ export default function (chartProps: IChartProps, drillOptions) {
       legend: getLegendOption(legend, seriesNames)
     }
     gridOptions = {
-      grid: getGridPositions(legend, seriesNames, 'doubleYAxis', false)
+      grid: getGridPositions(legend, seriesNames, 'doubleYAxis', false, null, xAxis, xAxisData)
     }
   }
 
@@ -161,7 +163,6 @@ export default function (chartProps: IChartProps, drillOptions) {
     lineSize: verticalLineSize,
     lineStyle: verticalLineStyle
   }
-  const xAxisData = showLabel ? data.map((d) => d[cols[0].name]) : []
 
   const option = {
     tooltip: {
@@ -264,7 +265,7 @@ export function getDoubleYAxis (doubleYAxis) {
       color: labelColor,
       fontFamily: labelFontFamily,
       fontSize: Number(labelFontSize),
-      formatter: '{value}'
+      formatter: metricAxisLabelFormatter
     }
   }
 }
