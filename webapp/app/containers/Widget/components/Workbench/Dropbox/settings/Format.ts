@@ -7,11 +7,13 @@ const Format: ISettingItem = {
     settingType: SettingTypes.Indicator | SettingTypes.Tip,
     itemType: ItemTypes.Value,
     itemValueType: ItemValueTypes.Number
-  }, {
-    settingType: SettingTypes.Dimension | SettingTypes.Color,
-    itemType: ItemTypes.Category,
-    itemValueType: ItemValueTypes.Date
   }],
+  // @TODO date dimension format support
+  // , {
+  //   settingType: SettingTypes.Dimension | SettingTypes.Color,
+  //   itemType: ItemTypes.Category,
+  //   itemValueType: ItemValueTypes.Date
+  // }],
   sub: false,
   items: [{
     format: '格式设置'

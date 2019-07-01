@@ -73,7 +73,7 @@ class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps, IForm
     const { form, visualType } = this.props
     const { getFieldDecorator } = form
     const { localConfig } = this.state
-    const formatTypesGroup = (
+    const formatTypesGroup = FieldFormatTypesSetting[visualType] && (
       <FormItem>
         {getFieldDecorator('formatType', {
           initialValue: localConfig.formatType
