@@ -33,6 +33,7 @@ import { IFormedView, IViewModel } from 'containers/View/types'
 
 import Widget, { IWidgetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
 import { ChartTypes } from '../../Widget/config/chart/ChartTypes'
+import { DrillableChart } from '../../Widget/config/chart/DrillableChart'
 import { IconProps } from 'antd/lib/icon'
 import { Icon, Tooltip, Popconfirm, Popover, Dropdown, Menu } from 'antd'
 
@@ -838,7 +839,11 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       [styles.gridItem]: true,
       [styles.interact]: interacting
     })
-
+    const isDrillableChart = DrillableChart.some((drillable) => drillable === widgetProps.selectedChart)
+    const drillInteractIcon = this.props.isTrigger === false ? isDrillableChart
+                                                                ? (<Tooltip title="可钻取"><i className="iconfont icon-xiazuan"/></Tooltip>)
+                                                                : void 0
+                                                              : (<Tooltip title="可联动"><i className="iconfont icon-liandong1"/></Tooltip>)
     const triggerClass = classnames({
       [styles.trigger]: true,
       [utilStyles.hide]: this.props.isTrigger === false
@@ -942,10 +947,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           </div>
         </div>
 
-        <div className={triggerClass}>
+        {/* <div className={triggerClass}>
           <i className="iconfont icon-icon_linkage"/>
-        </div>
+        </div> */}
 
+        <div className={styles.trigger}>
+          {drillInteractIcon}
+        </div>
         <div
           className={styles.offInteract}
           onClick={this.turnOffInteract}
