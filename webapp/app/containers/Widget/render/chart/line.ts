@@ -33,7 +33,9 @@ import {
   makeGrouped,
   distinctXaxis
 } from './util'
-import { getFormattedValue } from '../../components/Config/Format'
+import { getFormattedValue, IFieldFormatConfig } from '../../components/Config/Format'
+import { IFieldConfig, getFieldAlias } from '../../components/Config/Field'
+import { IWidgetMetric, IWidgetDimension } from '../../components/Widget'
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
@@ -43,6 +45,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     cols,
     metrics,
     chartStyles,
+    queryVariables,
     color,
     tip
   } = chartProps
@@ -74,132 +77,85 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   const { selectedItems } = drillOptions
 
-  const labelOption = {
+  // only 1 dimension and multiple metrics, maybe with 1 color dimension
+
+  let datasetSource = data
+
+  const dimensions = [...cols, ...color.items]
+  const dimension = cols[0]
+  const { name: xAxisName, format: dimensionFormat } = dimension
+
+  const metricNames = metrics.map((m) => {
+    const name = decodeMetricName(m.name)
+    const expression = `${m.agg}(${name})`
+    const text = `[${getAggregatorLocale(m.agg)}]${name}`
+    return { expression, text }
+  })
+
+  let seriesNames: string[]
+  let mapSeriesNames: { [key: string]: { metricIdx: number, categoryValue?: number | string } }
+
+  if (color.items.length) {
+    const seriesNamesSet = new Set<string>()
+    mapSeriesNames = {}
+    const categoryName = color.items[0].name
+    const mapDatasetSource = data.reduce((map, record) => {
+      const dimValue = record[xAxisName]
+      if (!map[dimValue]) { map[dimValue] = { [xAxisName]: dimValue } }
+      const categoryValue = record[categoryName]
+      metricNames.forEach(({ expression, text }, metricIdx) => {
+        const groupKey = [categoryValue, text].join(' ')
+        seriesNamesSet.add(groupKey)
+        if (!mapSeriesNames[groupKey]) {
+          mapSeriesNames[groupKey] = { metricIdx, categoryValue }
+        }
+        const metricValue = record[expression] || 0
+        const groupValue = map[dimValue][groupKey] || 0
+        map[dimValue][groupKey] = groupValue + metricValue
+      })
+      return map
+    }, {})
+    seriesNames = Array.from(seriesNamesSet)
+    datasetSource = Object.values(mapDatasetSource)
+    datasetSource.forEach((row) => {
+      seriesNames.forEach((seriesName) => {
+        if (!row[seriesName]) {
+          row[seriesName] = 0
+        }
+      })
+    })
+  } else {
+    seriesNames = metricNames.map(({ expression }) => expression)
+    mapSeriesNames = metricNames.reduce<typeof mapSeriesNames>((map, { expression }, metricIdx) => {
+      map[expression] = { metricIdx }
+      return map
+    }, {})
+  }
+
+  const series = seriesNames.map((seriesName, idx) => ({
+    name: seriesName,
+    type: 'line',
+    sampling: 'average',
+    dimensions: [xAxisName].concat(seriesNames),
+    itemStyle: {
+      normal: {
+        color: color.items.length
+          ? color.items[0].config.values[mapSeriesNames[seriesName].categoryValue]
+          : color.value[seriesName] || defaultThemeColors[idx],
+        opacity: selectedItems && selectedItems.length > 0 ? 0.7 : 1
+      }
+    },
+    smooth,
+    step,
     label: getLabelOption('line', label, false, {
       formatter: (params) => {
-        const { value, seriesName } = params
-        const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
-        const formatted = getFormattedValue(value, m.format)
+        const { value } = params
+        const { format } = metrics[mapSeriesNames[seriesName].metricIdx]
+        const formatted = getFormattedValue(value, format)
         return formatted
       }
     })
-  }
-
-  const xAxisColumnName = cols[0].name
-  let xAxisData = data.map((d) => d[xAxisColumnName] || '')
-  let grouped = {}
-  if (color.items.length) {
-    xAxisData = distinctXaxis(data, xAxisColumnName)
-    grouped = makeGrouped(data, color.items.map((c) => c.name), xAxisColumnName, metrics, xAxisData)
-  }
-
-  const series = []
-  const seriesData = []
-
-  metrics.forEach((m, i) => {
-    const decodedMetricName = decodeMetricName(m.name)
-    const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
-    if (color.items.length) {
-      Object
-        .entries(grouped)
-        .forEach(([k, v]: [string, any[]]) => {
-          const serieObj = {
-            name: `${k} ${localeMetricName}`,
-            type: 'line',
-            sampling: 'average',
-            data: v.map((g, index) => {
-              const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
-                normal: {
-                  opacity: 1,
-                  borderWidth: 6
-                }
-              }} : {}
-              // if (index === interactIndex) {
-              //   return {
-              //     value: g[m],
-              //     itemStyle: {
-              //       normal: {
-              //         opacity: 1
-              //       }
-              //     }
-              //   }
-              // } else {
-              // return g[`${m.agg}(${decodedMetricName})`]
-              return {
-                value: g[`${m.agg}(${decodedMetricName})`],
-                ...itemStyleObj
-              }
-              // }
-            }),
-            itemStyle: {
-              normal: {
-                // opacity: interactIndex === undefined ? 1 : 0.25
-                color: color.items[0].config.values[k],
-                opacity: selectedItems && selectedItems.length > 0 ? 0.7 : 1
-              }
-            },
-            smooth,
-            step,
-            ...labelOption
-          }
-          series.push(serieObj)
-          seriesData.push(grouped[k])
-        })
-    } else {
-      const serieObj = {
-        name: decodedMetricName,
-        type: 'line',
-        sampling: 'average',
-        data: data.map((g, index) => {
-          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
-            normal: {
-              opacity: 1,
-              borderWidth: 8
-            }
-          }} : {}
-          // if (index === interactIndex) {
-          //   return {
-          //     value: d[m],
-          //     lineStyle: {
-          //       normal: {
-          //         opacity: 1
-          //       }
-          //     },
-          //     itemStyle: {
-          //       normal: {
-          //         opacity: 1
-          //       }
-          //     }
-          //   }
-          // } else {
-          return {
-            value: g[`${m.agg}(${decodedMetricName})`],
-            ...itemStyleObj
-          }
-          // }
-        }),
-        // lineStyle: {
-        //   normal: {
-        //     opacity: interactIndex === undefined ? 1 : 0.25
-        //   }
-        // },
-        itemStyle: {
-          normal: {
-            // opacity: interactIndex === undefined ? 1 : 0.25
-            color: color.value[m.name] || defaultThemeColors[i],
-            opacity: selectedItems && selectedItems.length > 0 ? 0.7 : 1
-          }
-        },
-        smooth,
-        step,
-        ...labelOption
-      }
-      series.push(serieObj)
-      seriesData.push([...data])
-    }
-  })
-
-  const seriesNames = series.map((s) => s.name)
+  }))
 
   // dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
   //   dataZoom: [{
@@ -235,14 +191,49 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     lineStyle: horizontalLineStyle
   }
 
-  return {
-    xAxis: getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData),
+  const options = {
+    xAxis: getDimetionAxisOption(xAxis, xAxisSplitLineConfig),
     yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `)),
+    dataset: {
+      source: datasetSource
+    },
     series,
+    // tooltip: {},
+    // tooltip: {
+    //   formatter: getChartTooltipLabel('line', datasetSource, { cols, metrics, color, tip })
+    // },
     tooltip: {
-      formatter: getChartTooltipLabel('line', seriesData, { cols, metrics, color, tip })
+      formatter (params) {
+        let tooltipItems = []
+        const { seriesName, data, dataIndex } = params
+        const { metricIdx, categoryValue } = mapSeriesNames[seriesName]
+
+        tooltipItems = tooltipItems.concat(cols.map((dim) => {
+          const dimensionAlias = getFieldAlias(dim.field, queryVariables) || dim.name
+          const dimensionText = data[dim.name]
+          return `${dimensionAlias}: ${dimensionText}`
+        }))
+
+        if (color.items.length) {
+          tooltipItems = tooltipItems.concat(color.items.map((category) => {
+            const categoryAlias = getFieldAlias(category.field, queryVariables) || category.name
+            return `${categoryAlias}: ${categoryValue}`
+          }))
+        }
+
+        const { field, format } = metrics[metricIdx]
+        const metricAlias = getFieldAlias(field, queryVariables) || metricNames[metricIdx].text
+        const formattedValue = getFormattedValue(data[seriesName], format)
+        tooltipItems = tooltipItems.concat(`${metricAlias}: ${formattedValue}`)
+
+        return tooltipItems.join('<br/>')
+      }
     },
     legend: getLegendOption(legend, seriesNames),
-    grid: getGridPositions(legend, seriesNames, '', false, yAxis, xAxis, xAxisData)
+    grid: getGridPositions(legend, seriesNames, '', false, yAxis, xAxis)
   }
+
+  options.xAxis.type = 'category'
+
+  return options
 }

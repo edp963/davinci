@@ -610,6 +610,7 @@ export function getChartTooltipLabel (type, seriesData, options) {
             ? record[0][dc.name]
             : record[dc.name]
           : ''
+        value = typeof value === 'undefined' ? 0 : value
         value = getFormattedValue(value, dc.format)
         return `${getFieldAlias(dc.field, {}) || dc.name}: ${value}` // @FIXME dynamic field alias by queryVariable in dashboard
       })

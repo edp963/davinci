@@ -24,6 +24,7 @@ import { ILegendConfig } from '../../components/Workbench/ConfigSections/LegendS
 import { metricAxisLabelFormatter, decodeMetricName, getTextWidth } from '../../components/util'
 import { CHART_LEGEND_POSITIONS } from '../../../../globalConstants'
 import { EChartOption } from 'echarts'
+import { IWidgetMetric } from '../../components/Widget'
 
 interface ISplitLineConfig {
   showLine: boolean
@@ -35,7 +36,7 @@ interface ISplitLineConfig {
 export function getDimetionAxisOption (
   dimetionAxisConfig: IAxisConfig,
   splitLineConfig: ISplitLineConfig,
-  data: string[]
+  data?: string[]
 ): EChartOption.XAxis {
   const {
     inverse,
@@ -344,7 +345,7 @@ function getGridBase (pos, chartName, dimetionAxisConfig?: IAxisConfig, xAxisDat
   }
 }
 
-export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData) {
+export function makeGrouped (data: object[], groupColumns: string[], xAxisColumn: string, metrics: IWidgetMetric[], xAxisData) {
   const grouped = {}
 
   data.forEach((d) => {
@@ -376,7 +377,7 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
   return grouped
 }
 
-export function distinctXaxis (data, xAxisColumn) {
+export function distinctXaxis (data: object[], xAxisColumn: string) {
   return xAxisColumn
     ? Object.keys(data.reduce((distinct, ds) => {
       if (!distinct[ds[xAxisColumn]]) {
