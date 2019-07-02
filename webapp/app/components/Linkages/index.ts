@@ -65,10 +65,10 @@ export function processLinkage (itemId: number, triggerData, mappingLinkage: IMa
 
     linkage.forEach((l) => {
       const { triggerKey, triggerSqlType, triggerType, linkagerKey, linkagerSqlType, linkagerType, relation } = l
-
+      const actuallyData = Array.isArray(triggerData) ? triggerData[0][triggerKey] : triggerData[triggerKey]
       const interactValue = SQL_NUMBER_TYPES.includes(triggerSqlType)
-        ? triggerData[0][triggerKey]
-        : `'${triggerData[0][triggerKey]}'`
+        ? actuallyData
+        : `'${actuallyData}'`
 
       if (linkagerType === 'column') {
         const validLinkagerKey = SQL_NUMBER_TYPES.includes(linkagerSqlType)
