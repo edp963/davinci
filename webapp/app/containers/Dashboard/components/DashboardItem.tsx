@@ -728,7 +728,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         </Tooltip>
       )
 
-      const ShareButton = ShareDownloadPermission<IconProps>(currentProject, 'download')(Icon)
+      const ShareButton = ShareDownloadPermission<IconProps>(currentProject, 'share')(Icon)
       shareButton = (
         <Tooltip title="分享">
           <Popover
@@ -753,9 +753,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         </Tooltip>
       )
 
+      const EditButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>>(currentProject, 'viz', false)(Span)
       widgetButton = (
         <Tooltip title="编辑widget">
-          <i className="iconfont icon-edit-2" onClick={this.toWorkbench} />
+          {/* <i className="iconfont icon-edit-2" onClick={this.toWorkbench} /> */}
+          <i>
+            <EditButton className="iconfont icon-edit-2" onClick={this.toWorkbench} />
+          </i>
         </Tooltip>
       )
     }
