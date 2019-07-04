@@ -13,7 +13,7 @@ export default function<T> (project?: IProject, type?: string) {
           const projectPermission = project.permission
           for (const attr in projectPermission) {
             if (`${type}Permission` === attr) {
-              permission = projectPermission [attr]
+              permission = projectPermission[attr]
               break
             }
           }
