@@ -95,8 +95,8 @@ export function errorHandler (error) {
         )
         break
     }
-  } else {
-    message.error(error, 3)
+  } else if (error.message) {
+    message.error(error.message, 3)
   }
 }
 

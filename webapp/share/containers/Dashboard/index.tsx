@@ -73,7 +73,6 @@ import {
   GRID_ROW_HEIGHT,
   GRID_ITEM_MARGIN,
   GRID_BREAKPOINTS,
-  DEFAULT_TABLE_PAGE_SIZE,
   DEFAULT_TABLE_PAGE
 } from '../../../app/globalConstants'
 
@@ -529,25 +528,24 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       const item = currentItems.find((ci) => ci.id === itemId)
       if (item) {
         const widget = widgets.find((w) => w.id === item.widgetId)
-        const pagination = currentItemsInfo[itemId].queryConditions.pagination
-        let pageNo = 0
-        let pageSize = DEFAULT_TABLE_PAGE_SIZE
+        let pagination = currentItemsInfo[itemId].queryConditions.pagination
         let noAggregators = false
-        if (widget.type === getTable().id) {
-          try {
-            const widgetProps: IWidgetProps = JSON.parse(widget.config)
-            if (widgetProps.mode === 'chart') {
-              const table = widgetProps.chartStyles.table
-              pageNo = DEFAULT_TABLE_PAGE
-              pageSize = Number(table.pageSize)
-              noAggregators = table.withNoAggregators
+        try {
+          const widgetProps: IWidgetProps = JSON.parse(widget.config)
+          const { mode, selectedChart, chartStyles } = widgetProps
+          if (mode === 'chart' && selectedChart === getTable().id) {
+            pagination = {
+              pageSize: Number(chartStyles.table.pageSize),
+              ...pagination,
+              pageNo: DEFAULT_TABLE_PAGE
             }
-          } catch (error) {
-            message.error(error)
+            noAggregators = chartStyles.table.withNoAggregators
           }
+        } catch (error) {
+          message.error(error)
         }
         this.getChartData('rerender', itemId, item.widgetId, {
-          pagination: { pageSize, ...pagination, pageNo },
+          pagination,
           nativeQuery: noAggregators
         })
       }
