@@ -58,7 +58,6 @@ public class SystemSchedule {
     public void clearTempDir() {
 
         //下载内容文件保留7天，记录保留1月
-        downloadRecordMapper.deleteBeforAMonthRecord();
         String downloadDir = fileUtils.fileBasePath + Consts.DIR_DOWNLOAD + DateUtils.getTheDayBeforAWeekYYYYMMDD();
         String tempDir = fileUtils.fileBasePath + Consts.DIR_TEMPL + DateUtils.getTheDayBeforNowDateYYYYMMDD();
         String csvDir = fileUtils.fileBasePath + File.separator + FileTypeEnum.CSV.getType();
@@ -67,9 +66,9 @@ public class SystemSchedule {
         final String temp = fileUtils.formatFilePath(tempDir);
         final String csv = fileUtils.formatFilePath(csvDir);
 
-        new Thread(() -> fileUtils.deleteDir(new File(download))).start();
-        new Thread(() -> fileUtils.deleteDir(new File(temp))).start();
-        new Thread(() -> fileUtils.deleteDir(new File(csv))).start();
+        new Thread(() -> FileUtils.deleteDir(new File(download))).start();
+        new Thread(() -> FileUtils.deleteDir(new File(temp))).start();
+        new Thread(() -> FileUtils.deleteDir(new File(csv))).start();
     }
 
     @Scheduled(cron = "0 0/2 * * * *")
