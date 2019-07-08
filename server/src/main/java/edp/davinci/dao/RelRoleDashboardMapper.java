@@ -34,11 +34,12 @@ public interface RelRoleDashboardMapper {
     int insertBatch(List<RelRoleDashboard> list);
 
     @Select({
-            "select rrd.dashboard_id",
+            "select rrd.dashboard_id as a",
             "from rel_role_dashboard rrd",
             "   inner join rel_role_user rru on rru.role_id = rrd.role_id",
             "   inner join dashboard d on d.id  = rrd.dashboard_id",
-            "where rru.user_id = #{userId} and rrd.visible = 0 and d.dashboard_portal_id = #{portalId}"
+            "where rru.user_id = #{userId} and rrd.visible = 0 and d.dashboard_portal_id = #{portalId}",
+            "group by rrd.dashboard_id having count(a) > 1"
     })
     List<Long> getDisableByUser(@Param("userId") Long userId, @Param("portalId") Long portalId);
 

@@ -761,7 +761,9 @@ public class ViewServiceImpl implements ViewService {
                                         values.add(N0_AUTH_PERMISSION);
                                         sqlVariable.setDefaultValues(values);
                                     } else {
-                                        sqlVariable.setDefaultValues(v.getValues());
+                                        List<Object> values = sqlVariable.getDefaultValues() == null ? new ArrayList<>() : sqlVariable.getDefaultValues();
+                                        values.addAll(v.getValues());
+                                        sqlVariable.setDefaultValues(values);
                                     }
                                 } else {
                                     sqlVariable.setDefaultValues(new ArrayList<>());

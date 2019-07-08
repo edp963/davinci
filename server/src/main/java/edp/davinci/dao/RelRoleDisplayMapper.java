@@ -37,11 +37,12 @@ public interface RelRoleDisplayMapper {
     int deleteByDisplayId(Long id);
 
     @Select({
-            "select rrd.display_id",
+            "select rrd.display_id as a",
             "from rel_role_display rrd",
             "       inner join rel_role_user rru on rru.role_id = rrd.role_id",
             "       inner join display d on d.id = rrd.display_id",
             "where rru.user_id = #{userId} and rrd.visible = 0 and d.project_id = #{projectId}",
+            "group by rrd.display_id having count(a) > 1"
     })
     List<Long> getDisableDisplayByUser(@Param("userId") Long userId, @Param("projectId") Long projectId);
 
