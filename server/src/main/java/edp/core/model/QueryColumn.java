@@ -25,6 +25,9 @@ import lombok.Data;
 public class QueryColumn {
     private String name;
     private String type;
+    
+    public QueryColumn(){
+    }
 
     public QueryColumn(String name, String type) {
         this.name = name;
