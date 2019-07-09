@@ -36,12 +36,13 @@ public interface RelRoleSlideMapper {
     int deleteBySlideId(Long slideId);
 
     @Select({
-            "select rrs.slide_id",
+            "select rrs.slide_id as a",
             "from rel_role_slide rrs",
             "inner join rel_role_user rru on rru.role_id = rrs.role_id",
             "inner join display_slide s on s.id = rrs.slide_id",
             "inner join display d on d.id = s.display_id",
-            "where rru.user_id = #{userId} and rrs.visible = 0 and d.project_id = #{projectId}"
+            "where rru.user_id = #{userId} and rrs.visible = 0 and d.project_id = #{projectId}",
+            "group by rrs.slide_id having count(a) > 1"
     })
     List<Long> getDisableSlides(@Param("userId") Long userId, @Param("projectId") Long projectId);
 

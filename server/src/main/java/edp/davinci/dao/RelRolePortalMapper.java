@@ -34,11 +34,12 @@ public interface RelRolePortalMapper {
     int insertBatch(@Param("list") List<RelRolePortal> relRolePortals);
 
     @Select({
-            "select rrp.portal_id",
+            "select rrp.portal_id as a",
             "from rel_role_portal rrp",
             "       inner join rel_role_user rru on rru.role_id = rrp.role_id",
             "       inner join dashboard_portal p on p.id = rrp.portal_id",
             "where rru.user_id = #{userId} and rrp.visible = 0 and p.project_id = #{projectId}",
+            "group by rrp.portal_id having count(a) > 1"
     })
     List<Long> getDisablePortalByUser(@Param("userId") Long userId, @Param("projectId") Long projectId);
 
