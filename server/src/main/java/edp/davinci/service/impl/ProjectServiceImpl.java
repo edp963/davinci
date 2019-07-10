@@ -97,7 +97,6 @@ public class ProjectServiceImpl implements ProjectService {
     @Autowired
     private RoleMapper roleMapper;
 
-
     @Override
     public synchronized boolean isExist(String name, Long id, Long orgId) {
         Long projectId = projectMapper.getByNameWithOrgId(name, orgId);
