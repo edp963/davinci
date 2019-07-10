@@ -50,6 +50,8 @@ import static edp.core.consts.Consts.QUERY_META_SQL;
 public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
     private SheetContext context;
 
+    private int maxRows = 1000000;
+
     public SheetWorker(SheetContext context) {
         this.context = context;
     }
@@ -64,7 +66,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             buildQueryColumn(template);
             super.init(context);
             super.writeHeader(context);
-            template.setMaxRows(-1);
+            template.setMaxRows(context.getResultLimit() > 0 && context.getResultLimit() <= maxRows ? context.getResultLimit() : maxRows);
             template.setFetchSize(500);
             template.query(context.getQuerySql().get(context.getQuerySql().size() - 1), new RowCallbackHandler() {
                 @Override

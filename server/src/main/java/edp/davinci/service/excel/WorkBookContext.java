@@ -39,15 +39,18 @@ public class WorkBookContext implements Serializable {
 
     private User user;
 
+    private int resultLimit;
 
-    public static WorkBookContext newWorkBookContext(MsgWrapper wrapper, List<WidgetContext> widgets, User user) {
-        return new WorkBookContext(wrapper,widgets,user);
+
+    public static WorkBookContext newWorkBookContext(MsgWrapper wrapper, List<WidgetContext> widgets, User user, int resultLimit) {
+        return new WorkBookContext(wrapper, widgets, user, resultLimit);
     }
 
-    private WorkBookContext(MsgWrapper wrapper, List<WidgetContext> widgets, User user){
-        this.wrapper=wrapper;
-        this.widgets=widgets;
-        this.user=user;
+    private WorkBookContext(MsgWrapper wrapper, List<WidgetContext> widgets, User user, int resultLimit) {
+        this.wrapper = wrapper;
+        this.widgets = widgets;
+        this.user = user;
+        this.resultLimit = resultLimit;
     }
 
     public MsgWrapper getWrapper() {
@@ -72,5 +75,13 @@ public class WorkBookContext implements Serializable {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public int getResultLimit() {
+        return resultLimit;
+    }
+
+    public void setResultLimit(int resultLimit) {
+        this.resultLimit = resultLimit;
     }
 }

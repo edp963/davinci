@@ -42,6 +42,7 @@ import edp.davinci.service.excel.WidgetContext;
 import edp.davinci.service.excel.WorkBookContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -84,6 +85,9 @@ public class DownloadServiceImpl implements DownloadService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Value("${source.result-limit:1000000}")
+    private int resultLimit;
 
     @Override
     public List<DownloadRecord> queryDownloadRecordPage(Long userId) {
@@ -184,7 +188,7 @@ public class DownloadServiceImpl implements DownloadService {
             record.setCreateTime(new Date());
             record.setStatus(DownloadTaskStatus.PROCESSING.getStatus());
             downloadRecordMapper.insert(record);
-            ExecutorUtil.submitWorkbookTask(WorkBookContext.newWorkBookContext(new MsgWrapper(record, ActionEnum.DOWNLOAD, record.getId()), widgetList, user));
+            ExecutorUtil.submitWorkbookTask(WorkBookContext.newWorkBookContext(new MsgWrapper(record, ActionEnum.DOWNLOAD, record.getId()), widgetList, user, resultLimit));
         } catch (Exception e) {
             log.error("submit download task error,e=", e);
             return false;
