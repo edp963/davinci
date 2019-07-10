@@ -163,6 +163,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                     .buildWidgetId(context.getWidget().getId())
                     .buildName(context.getWidget().getName())
                     .buildWrapper(this.context.getWrapper())
+                    .buildResultLimist(this.context.getResultLimit())
                     .build();
             sheetContextList.add(sheetContext);
         }
