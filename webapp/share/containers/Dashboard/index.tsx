@@ -138,7 +138,7 @@ interface IDashboardStates {
   allowFullScreen: boolean,
   currentDataInFullScreen: any,
   showLogin: boolean,
-  phantomRenderSign: boolean
+  headlessBrowserRenderSign: boolean
   controlTokenMapping: {
     [key: string]: string
   }
@@ -157,7 +157,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       currentDataInFullScreen: {},
       showLogin: false,
 
-      phantomRenderSign: false,
+      headlessBrowserRenderSign: false,
 
       controlTokenMapping: {}
     }
@@ -223,16 +223,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         // FIXME
         setTimeout(() => {
           this.setState({
-            phantomRenderSign: true
+            headlessBrowserRenderSign: true
           })
-
-          // html2canvas(document.body, { useCORS: true }).then((canvas) => {
-          //   const b64 = canvas.toDataURL("image/jpeg")
-          //   const img = document.createElement('img')
-          //   img.src = b64
-          //   document.body.appendChild(img)
-          // })
-
         }, 5000)
       }
     }
@@ -802,7 +794,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       showLogin,
       interactingStatus,
       allowFullScreen,
-      phantomRenderSign
+      headlessBrowserRenderSign
     } = this.state
 
     let grids = null
@@ -925,7 +917,17 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
 
-    const phantomDOM = phantomRenderSign && (<div id="phantomRenderSign" />)
+    let headlessBrowserIdentifier
+    if (headlessBrowserRenderSign) {
+      const { offsetWidth, offsetHeight } = document.getElementById('app')
+      headlessBrowserIdentifier = (
+        <>
+          <input id="headlessBrowserRenderSign" type="hidden" />
+          <input id="width" type="hidden" value={offsetWidth} />
+          <input id="height" type="hidden" value={offsetHeight} />
+        </>
+      )
+    }
 
     return (
       <Container>
@@ -949,7 +951,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         <div className={styles.gridBottom} />
         {fullScreenComponent}
         {loginPanel}
-        {phantomDOM}
+        {headlessBrowserIdentifier}
       </Container>
     )
   }
