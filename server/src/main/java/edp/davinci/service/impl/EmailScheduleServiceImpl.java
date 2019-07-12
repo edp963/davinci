@@ -67,12 +67,6 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     @Autowired
     private MailUtils mailUtils;
 
-    @Value("${file.phantomJs-path}")
-    private String phantomJsFile;
-
-    @Value("${screenhot.phantomjs_path}")
-    private String phantomJsHome;
-
     @Value("${file.userfiles-path}")
     private String fileBasePath;
 
