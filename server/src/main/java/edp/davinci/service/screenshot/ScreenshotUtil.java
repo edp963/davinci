@@ -45,13 +45,13 @@ import static edp.davinci.service.screenshot.BrowserEnum.valueOf;
 @Component
 public class ScreenshotUtil {
 
-    @Value("${screenhot.default_browser:CHROME}")
+    @Value("${screenshot.default_browser:PHANTOMJS}")
     private String DEFAULT_BROWSER;
 
-    @Value("${screenhot.chromedriver_path:}")
+    @Value("${screenshot.chromedriver_path:}")
     private String CHROME_DRIVER_PATH;
 
-    @Value("${screenhot.phantomjs_path:}")
+    @Value("${screenshot.phantomjs_path:}")
     private String PHANTOMJS_PATH;
 
 
