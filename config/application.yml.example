@@ -119,7 +119,10 @@ spring:
     base:
     domainName:    # domainName 指 企业邮箱后缀，如企业邮箱为：xxx@example.com, 这里值为 '@example.com'
 
-phantomjs_home: $your_phantomjs_path$/phantomjs
+screenhot:
+  default_browser: PHANTOMJS                    #PHANTOMJS CHROME
+  phantomjs_path: $your_phantomjs_path$
+  chromedriver_path: $your_chromedriver_path$
 
 data-auth-center:
   channels:
