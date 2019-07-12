@@ -175,6 +175,7 @@ public class Consts {
 
     public static final String PROTOCOL_SEPARATOR = "://";
 
+    public static final String SCREENSHOT_BASE64_CONTENT_PNG_HEAD = "data:image/png;base64, ";
 
     public static final String QUERY_COUNT_SQL = "SELECT COUNT(*) FROM (%s) CT";
 

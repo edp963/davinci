@@ -313,13 +313,10 @@ public class CronJobServiceImpl implements CronJobService {
         if (!CollectionUtils.isEmpty(jobList)) {
             for (CronJob cronJob : jobList) {
                 String md5 = MD5Util.getMD5(CRONJOB_KEY + Consts.UNDERLINE + cronJob.getId(), true, 32);
-
                 if (CronJobStatusEnum.START.getStatus().equals(cronJob.getJobStatus()) && null == redisUtils.get(md5)) {
                     try {
                         quartzUtils.addJob(cronJob);
-
                         redisUtils.set(md5, 1, 5L, TimeUnit.MINUTES);
-
                     } catch (ServerException e) {
                         log.info(e.getMessage());
                     }

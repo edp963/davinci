@@ -73,4 +73,8 @@ public class ServerUtils {
 
         return sb.toString();
     }
+
+    public String getLocalHost() {
+        return protocol + PROTOCOL_SEPARATOR + "localhost:" + port;
+    }
 }
