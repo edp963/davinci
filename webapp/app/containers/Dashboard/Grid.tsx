@@ -295,8 +295,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
       nextMenuTitle: ''
     }
-  }
 
+  }
   private interactCallbacks: object = {}
   private interactingLinkagers: object = {}
   private interactGlobalFilters: object = {}
@@ -1479,14 +1479,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         })
 
       })
-      // if (dashboardType === 2) {
-      //   // report mode
-      //   grids = (
-      //     <div className={styles.reportMode}>
-      //       {itemblocks[itemblocks.length - 1]}
-      //     </div>
-      //   )
-      // } else {
       grids = (
         <ResponsiveReactGridLayout
           className="layout"
@@ -1505,7 +1497,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           {itemblocks}
         </ResponsiveReactGridLayout>
       )
-      // }
     }
 
     const saveDashboardItemButton = (
