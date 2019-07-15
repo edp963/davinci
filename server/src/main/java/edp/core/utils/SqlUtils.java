@@ -628,8 +628,8 @@ public class SqlUtils {
             connection = null;
         }
         try {
-            if (null == connection || connection.isClosed() || !connection.isValid(5)) {
-                log.info("connection is closed or invalid, retry get connection!");
+            if (null == connection || connection.isClosed()) {
+                log.info("connection is closed, retry get connection!");
                 releaseDataSource(this.jdbcUrl, this.username, this.password);
                 connection = dataSource.getConnection();
             }
@@ -637,6 +637,19 @@ public class SqlUtils {
             log.error("create connection error, jdbcUrl: {}", jdbcUrl);
             throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
         }
+
+        try {
+            if (!connection.isValid(5)) {
+                log.info("connection is invalid, retry get connection!");
+                releaseDataSource(this.jdbcUrl, this.username, this.password);
+                connection = dataSource.getConnection();
+            }
+        } catch (SQLFeatureNotSupportedException e) {
+        } catch (SQLException e) {
+            log.error("create connection error, jdbcUrl: {}", jdbcUrl);
+            throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
+        }
+
         return connection;
     }
 
