@@ -27,7 +27,6 @@ import edp.core.utils.FileUtils;
 import edp.core.utils.QuartzUtils;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.dao.CronJobMapper;
-import edp.davinci.dao.DownloadRecordMapper;
 import edp.davinci.model.CronJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,9 +45,6 @@ public class SystemSchedule {
 
     @Autowired
     private CronJobMapper cronJobMapper;
-
-    @Autowired
-    private DownloadRecordMapper downloadRecordMapper;
 
     @Autowired
     private QuartzUtils quartzUtils;
