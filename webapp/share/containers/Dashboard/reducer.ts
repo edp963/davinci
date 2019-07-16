@@ -37,7 +37,16 @@ import {
   SELECT_DASHBOARD_ITEM_CHART,
   GLOBAL_CONTROL_CHANGE
 } from './constants'
-import { IMapItemControlRequestParams, IControlRequestParams } from 'app/components/Filters';
+import {
+  IMapItemControlRequestParams,
+  IControlRequestParams,
+  IGlobalControl,
+  deserializeDefaultValue,
+  IControlRelatedField,
+  getModelValue,
+  getVariableValue
+} from 'app/components/Filters'
+import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 const initialState = fromJS({
   dashboard: null,
@@ -56,6 +65,37 @@ function shareReducer (state = initialState, { type, payload }) {
 
   switch (type) {
     case LOAD_SHARE_DASHBOARD_SUCCESS:
+      const dashboardConfig = payload.dashboard.config ? JSON.parse(payload.dashboard.config) : {}
+      const globalControls = (dashboardConfig.filters || []).map((c) => globalControlMigrationRecorder(c))
+      const globalControlsInitialValue = {}
+
+      globalControls.forEach((control: IGlobalControl) => {
+        const { interactionType, relatedItems, relatedViews } = control
+        const defaultValue = deserializeDefaultValue(control)
+        if (defaultValue) {
+          Object.entries(relatedItems).forEach(([itemId, config]) => {
+            Object.entries(relatedViews).forEach(([viewId, fields]) => {
+              if (config.checked && config.viewId === Number(viewId)) {
+                const filterValue = interactionType === 'column'
+                  ? getModelValue(control, fields as IControlRelatedField, defaultValue)
+                  : getVariableValue(control, fields, defaultValue)
+                if (!globalControlsInitialValue[itemId]) {
+                  globalControlsInitialValue[itemId] = {
+                    filters: [],
+                    variables: []
+                  }
+                }
+                if (interactionType === 'column') {
+                  globalControlsInitialValue[itemId].filters = globalControlsInitialValue[itemId].filters.concat(filterValue)
+                } else {
+                  globalControlsInitialValue[itemId].variables = globalControlsInitialValue[itemId].variables.concat(filterValue)
+                }
+              }
+            })
+          })
+        }
+      })
+
       return state
         .set('title', payload.dashboard.name)
         .set('dashboard', payload.dashboard)
@@ -70,10 +110,10 @@ function shareReducer (state = initialState, { type, payload }) {
             queryConditions: {
               tempFilters: [],
               linkageFilters: [],
-              globalFilters: [],
+              globalFilters: globalControlsInitialValue[item.id] ? globalControlsInitialValue[item.id].filters : [],
               variables: [],
               linkageVariables: [],
-              globalVariables: [],
+              globalVariables: globalControlsInitialValue[item.id] ? globalControlsInitialValue[item.id].variables : [],
               pagination: {}
             },
             downloadCsvLoading: false,
