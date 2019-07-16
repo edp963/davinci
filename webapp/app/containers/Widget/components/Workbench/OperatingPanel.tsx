@@ -38,7 +38,7 @@ import { uuid } from '../../../../utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox } from 'antd'
-import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { WorkbenchQueryMode } from './types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 const MenuItem = Menu.Item

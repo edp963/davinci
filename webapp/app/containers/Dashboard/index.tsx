@@ -74,8 +74,7 @@ import EditorHeader from '../../components/EditorHeader'
 const SplitPane = React.lazy(() => import('react-split-pane'))
 import {IProjectRoles} from '../Organizations/component/ProjectRole'
 import { loadProjectRoles } from '../Organizations/actions'
-import { IGlobalControl } from 'app/components/Filters'
-import { GlobalControlQueryMode } from 'app/components/Filters/types'
+import { IGlobalControl, GlobalControlQueryMode } from 'app/components/Filters/types'
 
 interface IDashboardProps {
   modalLoading: boolean

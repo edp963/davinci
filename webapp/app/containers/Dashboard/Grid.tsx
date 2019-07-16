@@ -43,7 +43,7 @@ import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
-import { IMapItemControlRequestParams, IMapControlOptions, IDistinctValueReqeustParams, InteractionType } from 'components/Filters'
+import { IMapItemControlRequestParams, IMapControlOptions, IDistinctValueReqeustParams } from 'components/Filters/types'
 import GlobalControlPanel from '../../components/Filters/FilterPanel'
 import GlobalControlConfig from '../../components/Filters/config/FilterConfig'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'

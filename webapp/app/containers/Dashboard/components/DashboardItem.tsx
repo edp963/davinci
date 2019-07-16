@@ -41,7 +41,7 @@ import ModulePermission from '../../Account/components/checkModulePermission'
 import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
 import { IProject } from '../../Projects'
 import { IQueryConditions, IQueryVariableMap } from '../Grid'
-import { IMapControlOptions, OnGetControlOptions, IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IMapControlOptions, OnGetControlOptions, IDistinctValueReqeustParams } from 'app/components/Filters/types'
 const styles = require('../Dashboard.less')
 const utilStyles = require('../../../assets/less/util.less')
 

@@ -42,7 +42,7 @@ import request from '../../../app/utils/request'
 import { errorHandler } from '../../../app/utils/util'
 import api from '../../../app/utils/api'
 import config, { env } from '../../../app/globalConfig'
-import { IDistinctValueReqeustParams } from '../../../app/components/Filters'
+import { IDistinctValueReqeustParams } from '../../../app/components/Filters/types'
 const shareHost = config[env].shareHost
 
 export function* getDashboard (action) {
