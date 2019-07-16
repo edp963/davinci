@@ -8,21 +8,23 @@ import {
   IMapItemControlRequestParams,
   OnGetControlOptions,
   IMapControlOptions,
+  IRenderTreeItem,
+  IGlobalRenderTreeItem,
+  GlobalControlQueryMode
+} from './types'
+import {
   getVariableValue,
   getModelValue,
   deserializeDefaultValue,
-  IRenderTreeItem,
   getControlRenderTree,
   getAllChildren,
-  getParents,
-  IGlobalRenderTreeItem
-} from './'
+  getParents
+} from './util'
 import { defaultFilterControlGridProps, SHOULD_LOAD_OPTIONS } from './filterTypes'
 import FilterControl from './FilterControl'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 import { Row, Col, Form, Button } from 'antd'
-import { GlobalControlQueryMode } from './types'
 
 const styles = require('./filter.less')
 

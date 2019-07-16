@@ -1,4 +1,4 @@
-import { ILocalControl } from 'app/components/Filters'
+import { ILocalControl } from 'app/components/Filters/types'
 import { DEFAULT_CACHE_EXPIRED } from 'app/globalConstants'
 import { IMigrationRecorder } from '.'
 

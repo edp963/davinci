@@ -41,11 +41,13 @@ import {
   IMapItemControlRequestParams,
   IControlRequestParams,
   IGlobalControl,
-  deserializeDefaultValue,
-  IControlRelatedField,
+  IControlRelatedField
+} from 'app/components/Filters/types'
+import {
+  getVariableValue,
   getModelValue,
-  getVariableValue
-} from 'app/components/Filters'
+  deserializeDefaultValue
+} from 'app/components/Filters/util'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 const initialState = fromJS({

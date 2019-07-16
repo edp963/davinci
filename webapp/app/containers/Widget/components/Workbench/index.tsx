@@ -29,7 +29,7 @@ import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
 import { message } from 'antd'
 import 'assets/less/resizer.less'
-import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { IWorkbenchSettings, WorkbenchQueryMode } from './types'
 const styles = require('./Workbench.less')
 

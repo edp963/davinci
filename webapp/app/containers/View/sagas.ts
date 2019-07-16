@@ -29,7 +29,7 @@ import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 
 import { IViewBase, IView, IExecuteSqlResponse, IExecuteSqlParams, IViewVariable } from './types'
-import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 
 export function* getViews (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS) { return }

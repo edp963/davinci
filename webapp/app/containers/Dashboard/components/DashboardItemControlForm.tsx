@@ -27,16 +27,18 @@ import {
   ILocalRenderTreeItem,
   IControlRequestParams,
   ILocalControl,
-  getControlRenderTree,
-  getModelValue,
-  getVariableValue,
   IControlRelatedField,
   OnGetControlOptions,
-  IMapControlOptions,
-  getParents,
+  IMapControlOptions
+} from 'app/components/Filters/types'
+import {
+  getVariableValue,
+  getModelValue,
+  deserializeDefaultValue,
+  getControlRenderTree,
   getAllChildren,
-  deserializeDefaultValue
-} from 'app/components/Filters'
+  getParents
+} from 'app/components/Filters/util'
 import { SHOULD_LOAD_OPTIONS, defaultFilterControlGridProps } from 'app/components/Filters/filterTypes'
 import FilterControl from 'app/components/Filters/FilterControl'
 import { localControlMigrationRecorder } from 'app/utils/migrationRecorders'

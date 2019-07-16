@@ -21,17 +21,20 @@
 import React, { createRef } from 'react'
 import { connect } from 'react-redux'
 import {
-  getDefaultGlobalControl,
   OnGetControlOptions,
   IMapControlOptions,
   IGlobalControl,
   IGlobalControlRelatedItem,
   IControlRelatedField,
-  getRelatedFieldsInfo,
   InteractionType,
+  GlobalControlQueryMode
+} from '../types'
+import {
+  getDefaultGlobalControl,
+  deserializeDefaultValue,
   serializeDefaultValue,
-  deserializeDefaultValue
-} from '..'
+  getRelatedFieldsInfo
+} from '../util'
 import { FilterTypes, IS_RANGE_TYPE} from '../filterTypes'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
@@ -45,7 +48,6 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { ICurrentDashboard } from '../../../containers/Dashboard'
 import { setControlFormValues } from '../../../containers/Dashboard/actions'
 import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
-import { GlobalControlQueryMode } from '../types'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 

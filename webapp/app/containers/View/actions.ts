@@ -28,7 +28,7 @@ import {
 } from './types'
 import { IDataRequestParams } from 'containers/Dashboard/Grid'
 import { RenderType } from 'containers/Widget/components/Widget'
-import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 const CancelToken = axios.CancelToken
 
 export const ViewActions = {
