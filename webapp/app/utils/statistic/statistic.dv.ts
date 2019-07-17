@@ -1,11 +1,12 @@
+import UAParser from 'ua-parser-js'
 
 export interface IUserData {
-    id?: number
     user_id?: number
     email?: string
 }
 
 export interface IOperation extends IUserData {
+    id?: number
     action: 'login' | 'visit' | 'initial' | 'sync' | 'search' | 'linkage' | 'drill' | 'download' | 'print'
     org_id: number
     project_id: number
@@ -19,11 +20,13 @@ export interface IOperation extends IUserData {
 }
 
 export interface IDuration extends IUserData {
+    id?: number
     start_time: string
     end_time: string
 }
 
 export interface ITerminal extends IUserData {
+    id?: number
     browser_name: string
     browser_version: string
     engine_name: string
@@ -37,25 +40,27 @@ export interface ITerminal extends IUserData {
 }
 
 
-
+6
 class Statistic {
     public constructor () {
-       this.getUserDate({
-        id: void 0,
-        user_id: void 0,
-        email: ''
+       const uaParser = new UAParser().getResult()
+       const {browser, cpu, device, engine, os, ua} = uaParser
+       const loginUser = this.parse(this.getItemByLocalStorage('loginUser'))
+       this.setUserDate({
+        user_id: loginUser ? loginUser.id : void 0,
+        email: loginUser ? loginUser.email : ''
        })
        this.setTerminal({
-        browser_name: '',
-        browser_version: '',
-        engine_name: '',
-        engine_version: '',
-        os_name: '',
-        os_version: '',
-        device_model: '',
-        device_type: '',
-        device_vendor: '',
-        cpu_architecture: ''
+        browser_name: browser.name,
+        browser_version: browser.version,
+        engine_name: engine.name,
+        engine_version: engine.version,
+        os_name: os.name,
+        os_version: os.version,
+        device_model: device.model,
+        device_type: device.type,
+        device_vendor: device.vendor,
+        cpu_architecture: cpu.architecture
        })
        this.setDuration({
         start_time: '',
@@ -74,15 +79,16 @@ class Statistic {
         create_time: ''
        })
     }
+    private startTime: Date
+    private endTimd: Date
     private userData: IUserData
     private terminalRecord: ITerminal
     private durationRecord: IDuration
     private operationRecord: IOperation
 
-    private getUserDate = (options?: IUserData) => {
-        const {id, user_id, email} = options
+    private setUserDate = (options?: IUserData) => {
+        const {user_id, email} = options
         this.userData = {
-            id: id || void 0,
             user_id: user_id || void 0,
             email: email || ''
         }
@@ -115,10 +121,13 @@ class Statistic {
         }
     }
 
-    public updateSingleFleld = <T>(flag: 'terminal' | 'duration' | 'operation', fleld: keyof T, value) => {
+    public updateSingleFleld = <T>(flag: 'terminal' | 'duration' | 'operation', fleld: keyof T, value, callback?: (data: T) => any) => {
         this[`${flag}Record`] = {
             ...this[`${flag}Record`],
             [fleld]: value
+        }
+        if (typeof callback === 'function') {
+            callback(this[`${flag}Record`])
         }
     }
 
@@ -160,6 +169,17 @@ class Statistic {
         }
     }
 
+    // options?: { [P in keyof IOperation] ?: IOperation[P]}
+    public setOperations = (options?: Partial<IOperation>, callback?: (data: IOperation) => any) => {
+        this.operationRecord = {
+            ...this.operationRecord,
+            ...options
+        }
+        if (typeof callback === 'function') {
+            callback(this.operationRecord)
+        }
+    }
+
     private makeRequest = (src) => new Promise((resolve, reject) => {
         const img = new Image()
         img.src = src
@@ -174,13 +194,31 @@ class Statistic {
         }, '?')
     }
 
-    private cacheLocalStorage = (list) => {
-        const userBehaviordata = 'USERBEHAVIORDATA'
-        const cacheLogList = localStorage.getItem(userBehaviordata)
+    private getItemByLocalStorage = (item: string) => {
         try {
-            const parseList = JSON.parse(cacheLogList)
-            parseList.push(list)
-            localStorage.setItem(userBehaviordata, JSON.stringify(parseList))
+            if (item) {
+              return localStorage.getItem(item)
+            }
+        } catch (err) {
+            throw new Error(err)
+        }
+    }
+
+    private parse (str: string) {
+        try {
+          if (str) {
+            return JSON.parse(str)
+          }
+        } catch (err) {
+          throw new Error(err)
+        }
+    }
+
+    private stringify (data) {
+        try {
+            if (data) {
+            return JSON.stringify(data)
+            }
         } catch (err) {
             throw new Error(err)
         }

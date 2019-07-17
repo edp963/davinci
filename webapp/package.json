@@ -101,6 +101,7 @@
     "redux-undo": "1.0.0-beta9-9-7",
     "reselect": "4.0.0",
     "three": "^0.101.1",
+    "ua-parser-js": "^0.7.20",
     "warning": "4.0.2"
   },
   "devDependencies": {

@@ -73,7 +73,10 @@ import {
   drillPathsetting,
   selectDashboardItemChart,
   setSelectOptions,
-  globalControlChange
+  globalControlChange,
+  monitoredSyncDataAction,
+  monitoredSearchDataAction,
+  monitoredLinkageDataAction
 } from './actions'
 import {
   makeSelectDashboards,
@@ -92,7 +95,7 @@ const { loadViewDataFromVizItem, loadViewsDetail, loadSelectOptions } = ViewActi
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
 import { makeSelectCurrentProject } from '../Projects/selectors'
-
+import moment, { Moment } from 'moment'
 import {
   SQL_NUMBER_TYPES,
   DEFAULT_SPLITER,
@@ -111,7 +114,7 @@ import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 import { DownloadTypes } from '../App/types'
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
-
+import { statistic } from '../../utils/statistic/statistic.dv'
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
 export type QueryVariable = Array<{name: string, value: string | number}>
@@ -229,6 +232,9 @@ interface IGridProps {
   onDeleteDrillHistory: (itemId: number, index: number) => void
   onSelectDashboardItemChart: (itemId: number, renderType: string, selectedItems: number[]) => void
   onGlobalControlChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
+  onMonitoredSyncDataAction: () => any
+  onMonitoredSearchDataAction: () => any
+  onMonitoredLinkageDataAction: () => any
 }
 
 interface IGridStates {
@@ -331,6 +337,28 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { onLoadDashboardDetail } = this.props
     const { layoutInitialized } = this.state
 
+    const { params: {pid, portalId, portalName, dashboardId}, currentProject} = this.props
+    if (currentProject && this.props.currentDashboard) {
+      statistic.setOperations({
+        project_id: pid,
+        project_name: currentProject.name,
+      //  action: 'visit', //  因为visit会污染 initial，login， download， download_task 同理
+        org_id: currentProject.orgId,
+        viz_type: 'dashboard',
+        viz_id: portalId,
+        viz_name: portalName,
+        sub_viz_id: dashboardId,
+        sub_viz_name: this.props.currentDashboard['name'],
+        create_time:  moment().format('YYYY-MM-DD HH:mm:ss')
+      }, (data) => {
+        const loginRecord = {
+          ...data,
+          action: 'visit'
+        }
+       // console.log(loginRecord) // todo  这里只上传一次
+      })
+    }
+
     if (params.dashboardId !== this.props.params.dashboardId) {
       this.setState({
         nextMenuTitle: ''
@@ -339,6 +367,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       if (params.dashboardId && Number(params.dashboardId) !== -1) {
         onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
       }
+
+      statistic.setOperations({
+        action: 'visit',
+        sub_viz_id: params.dashboardId,
+        sub_viz_name: this.props.currentDashboard['name'],
+        create_time:  moment().format('YYYY-MM-DD HH:mm:ss')
+      }, (data) => {
+       // console.log(data)
+      })
     }
 
     if (!currentDashboardLoading) {
@@ -871,7 +908,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private doInteract = (itemId: number, triggerData) => {
     const {
       currentItems,
-      currentLinkages
+      currentLinkages,
+      onMonitoredLinkageDataAction
     } = this.props
 
     const mappingLinkage = getMappingLinkage(itemId, currentLinkages)
@@ -891,6 +929,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         [itemId]: true
       }
     })
+    if (onMonitoredLinkageDataAction) {
+      onMonitoredLinkageDataAction()
+    }
   }
 
   private clearAllInteracts = () => {
@@ -909,7 +950,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private turnOffInteract = (itemId) => {
     const {
       currentLinkages,
-      currentItems
+      currentItems,
+      onMonitoredLinkageDataAction
     } = this.props
 
     const refreshItemIds = removeLinkage(itemId, currentLinkages, this.interactingLinkagers)
@@ -930,6 +972,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       const item = currentItems.find((ci) => ci.id === itemId)
       this.getChartData('clear', itemId, item.widgetId)
     })
+    if (onMonitoredLinkageDataAction) {
+      onMonitoredLinkageDataAction()
+    }
   }
 
   private toggleGlobalFilterConfig = (visible) => () => {
@@ -974,7 +1019,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private globalControlSearch = (itemIds: number[]) => {
-    const { currentItems, widgets, currentItemsInfo } = this.props
+    const { currentItems, widgets, currentItemsInfo, onMonitoredSearchDataAction } = this.props
     itemIds.forEach((itemId) => {
       const item = currentItems.find((ci) => ci.id === itemId)
       if (item) {
@@ -1001,6 +1046,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         })
       }
     })
+    if (onMonitoredSearchDataAction) {
+      onMonitoredSearchDataAction()
+    }
   }
 
   private visibleFullScreen = (currentChartData) => {
@@ -1465,6 +1513,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onSelectChartsItems={this.selectChartsItems}
               onGetControlOptions={this.getOptions}
               selectedItems={selectedItems || []}
+              monitoredSyncDataAction={this.props.onMonitoredSyncDataAction}
               ref={(f) => this[`dashboardItem${id}`] = f}
             />
           </div>
@@ -1729,7 +1778,10 @@ export function mapDispatchToProps (dispatch) {
     onDrillPathSetting: (itemId, history) => dispatch(drillPathsetting(itemId, history)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index)),
     onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems)),
-    onGlobalControlChange: (controlRequestParamsByItem) => dispatch(globalControlChange(controlRequestParamsByItem))
+    onGlobalControlChange: (controlRequestParamsByItem) => dispatch(globalControlChange(controlRequestParamsByItem)),
+    onMonitoredSyncDataAction: () => dispatch(monitoredSyncDataAction()),
+    onMonitoredSearchDataAction: () => dispatch(monitoredSearchDataAction()),
+    onMonitoredLinkageDataAction: () => dispatch(monitoredLinkageDataAction())
   }
 }
 
