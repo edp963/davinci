@@ -137,14 +137,16 @@ export function* getSelectOptions (action) {
     const { controlKey, dataToken, requestParams, itemId } = payload
     const requestParamsMap: Array<[string, IDistinctValueReqeustParams]> = Object.entries(requestParams)
     const requests = requestParamsMap.map(([viewId, params]: [string, IDistinctValueReqeustParams]) => {
-      const { columns, filters, variables } = params
+      const { columns, filters, variables, cache, expired } = params
       return call(request, {
         method: 'post',
         url: `${api.share}/data/${dataToken}/distinctvalue/${viewId}`,
         data: {
           columns,
           filters,
-          params: variables
+          params: variables,
+          cache,
+          expired
         }
       })
     })

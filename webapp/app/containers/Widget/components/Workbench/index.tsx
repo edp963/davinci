@@ -61,7 +61,7 @@ interface IWorkbenchProps {
   onLoadViewData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
   onAddWidget: (widget: IWidget, resolve: () => void) => void
   onEditWidget: (widget: IWidget, resolve: () => void) => void
-  onLoadViewDistinctValue: (viewId: number, params: IDistinctValueReqeustParams) => void
+  onLoadViewDistinctValue: (viewId: number, params: Partial<IDistinctValueReqeustParams>) => void
   onClearCurrentWidget: () => void
   onExecuteComputed: (sql: string) => void
 }

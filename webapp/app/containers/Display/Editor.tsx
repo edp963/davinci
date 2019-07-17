@@ -406,6 +406,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         orders,
         cache,
         expired,
+        flush: renderType === 'refresh',
         pagination,
         nativeQuery
       }

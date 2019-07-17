@@ -84,7 +84,7 @@ interface IOperatingPanelProps {
   onDeleteComputed: (computesField: any[]) => void
   onSetWidgetProps: (widgetProps: IWidgetProps) => void
   onLoadData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
-  onLoadDistinctValue: (viewId: number, params: IDistinctValueReqeustParams) => void
+  onLoadDistinctValue: (viewId: number, params: Partial<IDistinctValueReqeustParams>) => void
 }
 
 interface IOperatingPanelStates {
@@ -907,7 +907,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       pageSize: updatedPagination.pageSize,
       nativeQuery: noAggregators,
       cache: false,
-      expired: 0
+      expired: 0,
+      flush: false
     }
 
     const requestParamString = JSON.stringify(requestParams)
