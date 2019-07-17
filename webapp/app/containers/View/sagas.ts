@@ -213,7 +213,11 @@ export function* getViewDistinctValue (action: ViewActionType) {
     const result = yield call(request, {
       method: 'post',
       url: `${api.view}/${viewId}/getdistinctvalue`,
-      data: params
+      data: {
+        cache: false,
+        expired: 0,
+        ...params
+      }
     })
     const list = params.columns.reduce((arr, col) => {
       return arr.concat(result.payload.map((item) => item[col]))

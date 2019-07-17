@@ -337,7 +337,7 @@ export const ViewActions = {
     }
   },
 
-  loadViewDistinctValue (viewId: number, params: IDistinctValueReqeustParams, resolve?: any) {
+  loadViewDistinctValue (viewId: number, params: Partial<IDistinctValueReqeustParams>, resolve?: any) {
     return {
       type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE,
       payload: {

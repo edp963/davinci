@@ -250,6 +250,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         orders,
         cache,
         expired,
+        flush: renderType === 'refresh',
         pagination,
         nativeQuery
       }

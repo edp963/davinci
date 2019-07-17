@@ -171,6 +171,7 @@ export interface IDataRequestParams {
   orders: Array<{column: string, direction: string}>
   cache: boolean
   expired: number
+  flush: boolean
   pagination?: {
     pageNo: number
     pageSize: number
@@ -594,6 +595,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       orders,
       cache,
       expired,
+      flush: renderType === 'refresh',
       pagination,
       nativeQuery
     }

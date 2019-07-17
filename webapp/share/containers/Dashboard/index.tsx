@@ -384,6 +384,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         orders,
         cache,
         expired,
+        flush: renderType === 'refresh',
         pagination,
         nativeQuery
       }
