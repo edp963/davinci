@@ -1,9 +1,7 @@
-import { statistic, ITerminal } from './statistic.dv'
-
-
+import {monitoreAction} from './monitoredAction'
 
 export const apiInterceptorMiddleware = ({dispatch, getState}) => (next) => (action) => {
-    // console.log(`type =${action.type}`)
+    monitoreAction(action.type)
     const nextAction = next(action)
     return nextAction
 }
