@@ -57,21 +57,3 @@ export default (project?: IProject, item?: any) => (WrapperComponent) => {
   }
   return MenuPermission
 }
-
-export function onlyVizPermission (permission: IProjectPermission) {
-  const {
-    vizPermission,
-    widgetPermission,
-    viewPermission,
-    sourcePermission,
-    schedulePermission
-  } = permission
-  return !widgetPermission
-    && !viewPermission
-    && !sourcePermission
-    && !schedulePermission
-    && vizPermission
-}
-
-
-

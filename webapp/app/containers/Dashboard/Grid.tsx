@@ -46,6 +46,7 @@ import { IMapItemControlRequestParams, IMapControlOptions, IDistinctValueReqeust
 import GlobalControlPanel from '../../components/Filters/FilterPanel'
 import GlobalControlConfig from '../../components/Filters/config/FilterConfig'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
+import { hasVizEditPermission } from '../Account/components/checkUtilPermission'
 
 import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
@@ -1522,6 +1523,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     if (currentProject && currentItems) {
       const itemblocks = []
       const layouts = { lg: [] }
+      const gridEditable = hasVizEditPermission(currentProject.permission)
 
       currentItems.forEach((dashboardItem) => {
         const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
@@ -1619,6 +1621,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           measureBeforeMount={false}
           draggableHandle={`.${styles.title}`}
           useCSSTransforms={mounted}
+          isDraggable={gridEditable}
+          isResizable={gridEditable}
         >
           {itemblocks}
         </ResponsiveReactGridLayout>
