@@ -245,6 +245,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         orders,
         cache,
         expired,
+        flush: renderType === 'refresh',
         pagination,
         nativeQuery
       }

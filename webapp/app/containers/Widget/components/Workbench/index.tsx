@@ -29,7 +29,7 @@ import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
 import { message } from 'antd'
 import 'assets/less/resizer.less'
-import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { IWorkbenchSettings, WorkbenchQueryMode } from './types'
 const styles = require('./Workbench.less')
 
@@ -61,7 +61,7 @@ interface IWorkbenchProps {
   onLoadViewData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
   onAddWidget: (widget: IWidget, resolve: () => void) => void
   onEditWidget: (widget: IWidget, resolve: () => void) => void
-  onLoadViewDistinctValue: (viewId: number, params: IDistinctValueReqeustParams) => void
+  onLoadViewDistinctValue: (viewId: number, params: Partial<IDistinctValueReqeustParams>) => void
   onClearCurrentWidget: () => void
   onExecuteComputed: (sql: string) => void
 }

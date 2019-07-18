@@ -42,6 +42,7 @@ public class ViewExecuteParam {
     private List<Param> params;
     private Boolean cache;
     private Long expired;
+    private Boolean flush = false;
     private int limit = 0;
     private int pageNo = -1;
     private int pageSize = -1;

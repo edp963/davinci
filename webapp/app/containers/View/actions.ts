@@ -28,7 +28,7 @@ import {
 } from './types'
 import { IDataRequestParams } from 'containers/Dashboard/Grid'
 import { RenderType } from 'containers/Widget/components/Widget'
-import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 const CancelToken = axios.CancelToken
 
 export const ViewActions = {
@@ -337,7 +337,7 @@ export const ViewActions = {
     }
   },
 
-  loadViewDistinctValue (viewId: number, params: IDistinctValueReqeustParams, resolve?: any) {
+  loadViewDistinctValue (viewId: number, params: Partial<IDistinctValueReqeustParams>, resolve?: any) {
     return {
       type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE,
       payload: {

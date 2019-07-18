@@ -38,7 +38,7 @@ import { uuid } from '../../../../utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox } from 'antd'
-import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { WorkbenchQueryMode } from './types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 const MenuItem = Menu.Item
@@ -84,7 +84,7 @@ interface IOperatingPanelProps {
   onDeleteComputed: (computesField: any[]) => void
   onSetWidgetProps: (widgetProps: IWidgetProps) => void
   onLoadData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
-  onLoadDistinctValue: (viewId: number, params: IDistinctValueReqeustParams) => void
+  onLoadDistinctValue: (viewId: number, params: Partial<IDistinctValueReqeustParams>) => void
 }
 
 interface IOperatingPanelStates {
@@ -907,7 +907,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       pageSize: updatedPagination.pageSize,
       nativeQuery: noAggregators,
       cache: false,
-      expired: 0
+      expired: 0,
+      flush: false
     }
 
     const requestParamString = JSON.stringify(requestParams)

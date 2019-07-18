@@ -29,7 +29,7 @@ import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 
 import { IViewBase, IView, IExecuteSqlResponse, IExecuteSqlParams, IViewVariable } from './types'
-import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 
 export function* getViews (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS) { return }
@@ -213,7 +213,11 @@ export function* getViewDistinctValue (action: ViewActionType) {
     const result = yield call(request, {
       method: 'post',
       url: `${api.view}/${viewId}/getdistinctvalue`,
-      data: params
+      data: {
+        cache: false,
+        expired: 0,
+        ...params
+      }
     })
     const list = params.columns.reduce((arr, col) => {
       return arr.concat(result.payload.map((item) => item[col]))

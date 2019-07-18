@@ -580,14 +580,16 @@ public class ViewServiceImpl implements ViewService {
 
                         cacheKey = MD5Util.getMD5(slatBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true, 32);
 
-                        try {
-                            Object object = redisUtils.get(cacheKey);
-                            if (null != object && executeParam.getCache()) {
-                                paginate = (PaginateWithQueryColumns) object;
-                                return paginate;
+                        if (!executeParam.getFlush()) {
+                            try {
+                                Object object = redisUtils.get(cacheKey);
+                                if (null != object && executeParam.getCache()) {
+                                    paginate = (PaginateWithQueryColumns) object;
+                                    return paginate;
+                                }
+                            } catch (Exception e) {
+                                log.warn("get data by cache: {}", e.getMessage());
                             }
-                        } catch (Exception e) {
-                            log.warn("get data by cache: {}", e.getMessage());
                         }
                     }
 

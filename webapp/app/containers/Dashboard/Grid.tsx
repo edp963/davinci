@@ -43,7 +43,7 @@ import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
-import { IMapItemControlRequestParams, IMapControlOptions, IDistinctValueReqeustParams, InteractionType } from 'components/Filters'
+import { IMapItemControlRequestParams, IMapControlOptions, IDistinctValueReqeustParams } from 'components/Filters/types'
 import GlobalControlPanel from '../../components/Filters/FilterPanel'
 import GlobalControlConfig from '../../components/Filters/config/FilterConfig'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
@@ -171,6 +171,7 @@ export interface IDataRequestParams {
   orders: Array<{column: string, direction: string}>
   cache: boolean
   expired: number
+  flush: boolean
   pagination?: {
     pageNo: number
     pageSize: number
@@ -594,6 +595,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       orders,
       cache,
       expired,
+      flush: renderType === 'refresh',
       pagination,
       nativeQuery
     }

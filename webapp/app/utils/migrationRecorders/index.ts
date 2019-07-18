@@ -1,4 +1,4 @@
-import { IGlobalControl, ILocalControl } from 'app/components/Filters'
+import { IGlobalControl, ILocalControl } from 'app/components/Filters/types'
 import globalControl from './globalControl'
 import localControl from './localControl'
 

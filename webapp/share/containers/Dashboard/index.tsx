@@ -35,7 +35,7 @@ import DashboardItem from '../../../app/containers/Dashboard/components/Dashboar
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
 import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
 import { ChartTypes } from '../../../app/containers/Widget/config/chart/ChartTypes'
-import { IMapItemControlRequestParams, IMapControlOptions } from '../../../app/components/Filters'
+import { IMapItemControlRequestParams, IMapControlOptions } from '../../../app/components/Filters/types'
 import GlobalControlPanel from '../../../app/components/Filters/FilterPanel'
 
 import { RenderType, IWidgetConfig, IWidgetProps } from '../../../app/containers/Widget/components/Widget'
@@ -384,6 +384,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         orders,
         cache,
         expired,
+        flush: renderType === 'refresh',
         pagination,
         nativeQuery
       }

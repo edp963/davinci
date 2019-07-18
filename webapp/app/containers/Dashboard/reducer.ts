@@ -75,12 +75,14 @@ import { ViewActionType } from '../View/actions'
 import {
   IGlobalControl,
   IControlRelatedField,
-  getVariableValue,
-  getModelValue,
-  deserializeDefaultValue,
   IMapItemControlRequestParams,
   IControlRequestParams
-} from '../../components/Filters'
+} from '../../components/Filters/types'
+import {
+  getVariableValue,
+  getModelValue,
+  deserializeDefaultValue
+} from '../../components/Filters/util'
 import { DownloadTypes } from '../App/types'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
