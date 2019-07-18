@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +37,7 @@ public class ElasticConfigration {
         }
 
         Settings settings = Settings.builder()
-                .put("client.transport.sniff", true)
+                .put("client.transport.sniff", false)
                 .put("client.transport.ignore_cluster_name", true)
                 .build();
 
@@ -46,7 +45,7 @@ public class ElasticConfigration {
         String[] addressArr = elastic_urls.split(",");
         TransportAddress[] transportAddresses = new TransportAddress[addressArr.length];
         for(int i=0 ; i<transportAddresses.length; i++){
-            transportAddresses[i] = new InetSocketTransportAddress(InetAddress.getByName(addressArr[i].split(":")[0]),
+            transportAddresses[i] = new TransportAddress(InetAddress.getByName(addressArr[i].split(":")[0]),
                     Integer.parseInt(addressArr[i].split(":")[1]));
         }
 

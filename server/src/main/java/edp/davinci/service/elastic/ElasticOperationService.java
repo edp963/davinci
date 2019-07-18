@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
 import java.util.List;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -27,7 +28,9 @@ public class ElasticOperationService extends ElasticConfigration {
                 String[] fileNames = getFiledName(object);
                 for(String fileName : fileNames){
                     Object value = getFieldValueByName(fileName, object);
-
+                    if(value instanceof Timestamp){
+                        value = ((Timestamp) value).toLocalDateTime();
+                    }
                     builder.field(fileName, value);
                 }
                 builder.endObject();
