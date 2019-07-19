@@ -21,6 +21,8 @@ package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.ServerException;
+import edp.davinci.core.enums.CronJobMediaType;
+import edp.davinci.service.screenshot.ImageContent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +38,8 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -239,7 +243,7 @@ public class MailUtils {
      * @throws ServerException
      */
     public void sendTemplateEmail(String from, String nickName, String subject, String[] to, String[] cc, String[] bcc,
-                                  String template, Map<String, Object> content, List<File> files) throws ServerException {
+                                  String template, Map<String, Object> content, List<File> files, List<ImageContent> images) throws ServerException {
 
         if (StringUtils.isEmpty(from)) {
             log.info("email address(from) cannot be EMPTY");
@@ -295,6 +299,23 @@ public class MailUtils {
             if (null != bcc && bcc.length > 0) {
                 messageHelper.setBcc(bcc);
             }
+
+            Map<String, File> imageFileMap = new HashMap<>();
+            List<String> imageContentIds = new ArrayList<>();
+            if (!CollectionUtils.isEmpty(images)) {
+                images.forEach(imageContent -> {
+                    if (imageContent.getImageFile() != null) {
+                        String contentId = CronJobMediaType.IMAGE.getType() + imageContent.getOrder();
+                        imageContentIds.add(contentId);
+                        imageFileMap.put(contentId, imageContent.getImageFile());
+                    }
+                });
+            }
+
+            if (!imageFileMap.isEmpty()) {
+                context.setVariable("images", imageContentIds);
+            }
+
             String text = templateEngine.process(template, context);
             messageHelper.setText(text, true);
 
@@ -310,6 +331,15 @@ public class MailUtils {
                         messageHelper.addAttachment(attName, file);
                     }
                 }
+            }
+
+            if (!imageFileMap.isEmpty()) {
+                imageFileMap.forEach((contentId, file) -> {
+                    try {
+                        messageHelper.addInline(contentId, file);
+                    } catch (MessagingException e) {
+                    }
+                });
             }
 
             javaMailSender.send(message);
@@ -335,7 +365,7 @@ public class MailUtils {
      * @throws ServerException
      */
     public void sendTemplateEmail(String to, String subject, String template, Map<String, Object> content) throws ServerException {
-        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, template, content, null);
+        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, template, content, null, null);
     }
 
     /**
@@ -348,10 +378,11 @@ public class MailUtils {
      * @param template 模板地址
      * @param content  模板内容
      * @param files    附件
+     * @param images
      * @throws ServerException
      */
-    public void sendTemplateAttachmentsEmail(String subject, String to, String[] cc, String[] bcc, String template, Map<String, Object> content, List<File> files) throws ServerException {
-        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, cc, bcc, template, content, files);
+    public void sendTemplateAttachmentsEmail(String subject, String to, String[] cc, String[] bcc, String template, Map<String, Object> content, List<File> files, List<ImageContent> images) throws ServerException {
+        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, cc, bcc, template, content, files, images);
     }
 
 }

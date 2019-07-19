@@ -129,15 +129,6 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     attachments.addAll(generateExcels(cronJobConfig, user));
                 }
 
-                if (!CollectionUtils.isEmpty(images)) {
-                    if (attachments == null) {
-                        attachments = new ArrayList<>();
-                    }
-                    for (ImageContent img : images) {
-                        attachments.add(img.getImageFile());
-                    }
-                }
-
                 String[] cc = null, bcc = null;
                 if (!StringUtils.isEmpty(cronJobConfig.getCc())) {
                     cc = cronJobConfig.getCc().split(SEMICOLON);
@@ -154,7 +145,8 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                         bcc,
                         Constants.SCHEDULE_MAIL_TEMPLATE,
                         content,
-                        attachments);
+                        attachments,
+                        images);
             }
         }
     }
