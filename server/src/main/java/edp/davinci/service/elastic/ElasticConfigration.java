@@ -13,6 +13,7 @@ import org.springframework.core.env.Environment;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 
 @Configuration
@@ -41,11 +42,19 @@ public class ElasticConfigration {
                 .put("client.transport.ignore_cluster_name", true)
                 .build();
 
+        Class transportaddress;
+        try{
+            transportaddress = Class.forName("org.elasticsearch.common.transport.InetSocketTransportAddress");
+        }catch (ClassNotFoundException e){
+            transportaddress = Class.forName("org.elasticsearch.common.transport.TransportAddress");
+        }
+        Constructor constructor = transportaddress.getConstructor(InetAddress.class, int.class);
+
         // 初始化地址
         String[] addressArr = elastic_urls.split(",");
         TransportAddress[] transportAddresses = new TransportAddress[addressArr.length];
         for(int i=0 ; i<transportAddresses.length; i++){
-            transportAddresses[i] = new TransportAddress(InetAddress.getByName(addressArr[i].split(":")[0]),
+            transportAddresses[i] = (TransportAddress) constructor.newInstance(InetAddress.getByName(addressArr[i].split(":")[0]),
                     Integer.parseInt(addressArr[i].split(":")[1]));
         }
 
