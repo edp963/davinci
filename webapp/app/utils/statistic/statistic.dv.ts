@@ -1,4 +1,7 @@
 import UAParser from 'ua-parser-js'
+import moment, { Moment } from 'moment'
+import request from '../../utils/request'
+import api from '../../utils/api'
 
 export interface IUserData {
     user_id?: number
@@ -40,7 +43,6 @@ export interface ITerminal extends IUserData {
 }
 
 
-6
 class Statistic {
     public constructor () {
        const uaParser = new UAParser().getResult()
@@ -78,14 +80,37 @@ class Statistic {
         sub_viz_name: '',
         create_time: ''
        })
+     //  this.onceSetDurations = this.__once__(this.setDurations)
+       const that = this
+       Reflect.defineProperty(that.clock, 'checkTime', {
+           configurable: true,
+           set (value) {
+               console.log(value)
+               const time = that.getClock()
+               if (time >= 12) {
+                   // todo 会执行多次
+                   that.onceSetDurations({
+                       end_time: that.getCurrentDateTime()
+                   }, (data) => {
+                       console.log(data)
+                   })
+                //    that.sendDuration(this.durationRecord).then((data) => {
+                //       console.log(data)
+                //    })
+               }
+           }
+       })
     }
+    private onceSetDurations: any
+    private clock: {time: number} = {time: 0}
+    private clocker: any
     private startTime: Date
     private endTimd: Date
     private userData: IUserData
     private terminalRecord: ITerminal
     private durationRecord: IDuration
     private operationRecord: IOperation
-
+    private prevDurationRecord: string = 'PREVDURATIONRECORD'
     private setUserDate = (options?: IUserData) => {
         const {user_id, email} = options
         this.userData = {
@@ -93,6 +118,64 @@ class Statistic {
             email: email || ''
         }
     }
+
+    private __once__ (fn) {
+        let tag = true
+        return (...args) => {
+          if (tag) {
+            tag = !tag
+            return fn.apply(this, args)
+          } else {
+            return void 0
+          }
+        }
+      }
+
+    public startClock = () => {
+        this.resetClock()
+        this.clocker = setInterval(() => {
+            this.clock['time'] += 1
+            this.clock['checkTime'] = this.clock['time']
+        }, 1000)
+        this.onceSetDurations = this.__once__(this.setDurations)
+    }
+
+    public resetClock = () => {
+        if (this.clocker) {
+            clearTimeout(this.clocker)
+        }
+        this.clock['time'] = 0
+    }
+
+    public isTimeout = (callback?: (data: IDuration) => any) => {
+        const time =  this.getClock()
+        if (time > 12) {
+           this.setDurations({
+               start_time: this.getCurrentDateTime()
+           })
+        }
+        this.startClock()
+        if (typeof callback === 'function') {
+            callback(this.durationRecord)
+        }
+    }
+
+    public sendDuration = (body) => {
+        const url = `${api.buriedPoints}/duration`
+        return request(url, body)
+    }
+
+    public sendTerminal = (body) => {
+        const url = `${api.buriedPoints}/terminal`
+        return request(url, body)
+    }
+
+    public sendOperation = (body) => {
+        const url = `${api.buriedPoints}/operation`
+        return request(url, body)
+    }
+
+    public getClock = () => this.clock['time']
 
     private setTerminal = (options?: ITerminal) => {
         const {
@@ -131,6 +214,27 @@ class Statistic {
         }
     }
 
+    public getPrevDurationRecord = () => {
+        const pr = this.parse(localStorage.getItem(this.prevDurationRecord))
+        if (pr && pr.length) {
+            return pr
+        }
+        return []
+    }
+
+    public setPrevDurationRecord = (record: IDuration, callback?: (data: IDuration) => any) => {
+        let prevDRecord = this.parse(localStorage.getItem(this.prevDurationRecord))
+        prevDRecord = prevDRecord && Array.isArray(prevDRecord) ? prevDRecord.concat(record) : [record]
+        localStorage.setItem(this.prevDurationRecord, this.stringify(prevDRecord))
+        if (typeof callback === 'function') {
+            callback(this.durationRecord)
+        }
+    }
+
+    public clearPrevDurationRecord = () => {
+        localStorage.setItem(this.prevDurationRecord, this.stringify([]))
+    }
+
     public getRecord = (flag: 'terminal' | 'duration' | 'operation') => {
         return this[`${flag}Record`]
     }
@@ -142,6 +246,8 @@ class Statistic {
             end_time: end_time || ''
         }
     }
+
+    public getCurrentDateTime = () =>  moment().format('YYYY-MM-DD HH:mm:ss')
 
     private setOperation = (options?: IOperation) => {
         const {
@@ -169,7 +275,6 @@ class Statistic {
         }
     }
 
-    // options?: { [P in keyof IOperation] ?: IOperation[P]}
     public setOperations = (options?: Partial<IOperation>, callback?: (data: IOperation) => any) => {
         this.operationRecord = {
             ...this.operationRecord,
@@ -177,6 +282,16 @@ class Statistic {
         }
         if (typeof callback === 'function') {
             callback(this.operationRecord)
+        }
+    }
+
+    public setDurations = (options?: Partial<IDuration>, callback?: (data: IDuration) => any) => {
+        this.durationRecord = {
+            ...this.durationRecord,
+            ...options
+        }
+        if (typeof callback === 'function') {
+            callback(this.durationRecord)
         }
     }
 
