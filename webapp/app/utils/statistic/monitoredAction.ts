@@ -25,52 +25,24 @@ const {
 import { statistic, IOperation } from './statistic.dv'
 //  console.log(statistic.getRecord('terminal'))
 
-export const monitoreAction = (action: string) => {
-
-    const actionType = mapMonitoreToAction(action, statistic.getRecord('operation')['action'])
-    if (actionType && actionType.length) {
-        statistic.updateSingleFleld<IOperation>('operation', 'action', actionType, (record) => {
-            const isDataRequestAction = ['login', 'download_task', 'download'].some((action) => actionType === action)
-            if (isDataRequestAction) {
-                console.log(record)
-            } else {
-                console.log(record)
-                if (action === LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS) {
-                   // console.log(record.action)
-                    // if (!(record.action && record.action.length)) {
-                    //     const newRecord = {
-                    //         ...record,
-                    //         action: 'initial'
-                    //     }
-                    //     console.log(newRecord)
-                    //     return // send request
-                    // }
-                   // console.log(record)
-                }
-            }
-        })
-    } else {
-        if (action === LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS) {
-            console.log(`actionType = ${actionType}`)
-        }
-    }
-}
-
-
-
 const dataAction = {
-    DRILL_DASHBOARDITEM: 'drill',
-    DELETE_DRILL_HISTORY: 'drill',
-    MONITORED_SYNC_DATA_ACTION: 'sync',
-    MONITORED_SEARCH_DATA_ACTION: 'search',
-    MONITORED_LINKAGE_DATA_ACTION: 'linkage'
+    [DRILL_DASHBOARDITEM]: 'drill',
+    [DELETE_DRILL_HISTORY]: 'drill',
+    [MONITORED_SYNC_DATA_ACTION]: 'sync',
+    [MONITORED_SEARCH_DATA_ACTION]: 'search',
+    [MONITORED_LINKAGE_DATA_ACTION]: 'linkage'
 }
 
 const otherAction = {
-    LOGGED: 'login',
-    INITIATE_DOWNLOAD_TASK_SUCCESS: 'download_task',
-    DOWNLOAD_FILE: 'download'
+    [LOGGED]: 'login',
+    [INITIATE_DOWNLOAD_TASK_SUCCESS]: 'download_task',
+    [DOWNLOAD_FILE]: 'download'
 }
+
+export const monitoreAction = (action: string) => {
+    const actionType = mapMonitoreToAction(action, statistic.getRecord('operation')['action'])
+}
+
 
 function mapMonitoreToAction (action: string, initialType: string) {
     let actionType = initialType
@@ -78,46 +50,35 @@ function mapMonitoreToAction (action: string, initialType: string) {
     const isDataAction =  Object.entries(dataAction).map(([k, v]) => k).some((other) => other === action)
     if (isOtherAction) {
         actionType = otherAction[action]
-        statistic.updateSingleFleld<IOperation>('operation', 'action', actionType)
+      //  statistic.updateSingleFleld<IOperation>('operation', 'action', actionType)
+      // todo 避免与initial混淆，此三种状态不update operationRecord  的action值
+    }
+    if (action === LOGGED) {
+        // todo 从localstorege拿上一次时长数据 send server
+        const record = statistic.getPrevDurationRecord()
+        if (record && record.length) {
+            // send server
+            // callback
+            // 记得 statistic.clearPrevDurationRecord()
+        }
+    }
+    if (action === LOGIN) {
+        console.log(statistic.getRecord('terminal'))
     }
     if (isDataAction) {
         actionType = dataAction[action]
-        statistic.updateSingleFleld<IOperation>('operation', 'action', actionType)
+        statistic.updateSingleFleld<IOperation>('operation', 'action', actionType, (data) => {
+            const newData = {
+                ...data,
+                create_time: statistic.getCurrentDateTime()
+            }
+            console.log(newData)
+        })
     }
     if (action === LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS) {
         console.log(actionType)
-    }
-
-    switch (action) {
-       case LOGGED:
-            actionType = 'login'
-            break
-       case INITIATE_DOWNLOAD_TASK_SUCCESS:
-            actionType = 'download_task'
-            break
-       case DOWNLOAD_FILE:
-            actionType = 'download'
-            break
-       case DRILL_DASHBOARDITEM:
-            actionType = 'drill'
-            break
-       case DELETE_DRILL_HISTORY:
-            actionType = 'drill'
-            break
-       case MONITORED_SYNC_DATA_ACTION:
-            actionType = 'sync'
-            break
-       case MONITORED_SEARCH_DATA_ACTION:
-            actionType = 'search'
-            break
-       case MONITORED_LINKAGE_DATA_ACTION:
-            actionType = 'linkage'
-            break
-        case LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS:
-            console.log(actionType)
-            break
-        default:
-            break
+        // todo 重启定时器
+        statistic.isTimeout()
     }
 }
 

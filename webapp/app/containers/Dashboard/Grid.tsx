@@ -24,7 +24,6 @@ import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
-
 import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
@@ -95,7 +94,7 @@ const { loadViewDataFromVizItem, loadViewsDetail, loadSelectOptions } = ViewActi
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
 import { makeSelectCurrentProject } from '../Projects/selectors'
-import moment, { Moment } from 'moment'
+
 import {
   SQL_NUMBER_TYPES,
   DEFAULT_SPLITER,
@@ -121,7 +120,6 @@ export type QueryVariable = Array<{name: string, value: string | number}>
 export interface IQueryVariableMap {
   [key: string]: string | number
 }
-
 export interface IQueryConditions {
   filters: string[]
   tempFilters: string[]
@@ -326,6 +324,20 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
   }
 
+  private __once__ (fn) {
+    let tag = true
+    return (...args) => {
+      if (tag) {
+        tag = !tag
+        return fn.apply(this, args)
+      } else {
+        return void 0
+      }
+    }
+  }
+
+  private statisticFirstVisit: any
+
   public componentWillReceiveProps (nextProps: IGridProps) {
     const {
       currentDashboard,
@@ -339,24 +351,23 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     const { params: {pid, portalId, portalName, dashboardId}, currentProject} = this.props
     if (currentProject && this.props.currentDashboard) {
-      statistic.setOperations({
-        project_id: pid,
-        project_name: currentProject.name,
-      //  action: 'visit', //  因为visit会污染 initial，login， download， download_task 同理
-        org_id: currentProject.orgId,
-        viz_type: 'dashboard',
-        viz_id: portalId,
-        viz_name: portalName,
-        sub_viz_id: dashboardId,
-        sub_viz_name: this.props.currentDashboard['name'],
-        create_time:  moment().format('YYYY-MM-DD HH:mm:ss')
-      }, (data) => {
-        const loginRecord = {
-          ...data,
-          action: 'visit'
-        }
-       // console.log(loginRecord) // todo  这里只上传一次
-      })
+        this.statisticFirstVisit({
+          project_id: pid,
+          project_name: currentProject.name,
+          org_id: currentProject.orgId,
+          viz_type: 'dashboard',
+          viz_id: portalId,
+          viz_name: portalName,
+          sub_viz_id: dashboardId,
+          sub_viz_name: this.props.currentDashboard['name'],
+          create_time: statistic.getCurrentDateTime()
+        }, (data) => {
+          const visitRecord = {
+            ...data,
+            action: 'visit'
+          }
+          console.log(visitRecord) // 已解决
+        })
     }
 
     if (params.dashboardId !== this.props.params.dashboardId) {
@@ -369,12 +380,27 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       }
 
       statistic.setOperations({
-        action: 'visit',
+      //  action: 'visit',
         sub_viz_id: params.dashboardId,
         sub_viz_name: this.props.currentDashboard['name'],
-        create_time:  moment().format('YYYY-MM-DD HH:mm:ss')
+        create_time:  statistic.getCurrentDateTime()
       }, (data) => {
-       // console.log(data)
+        const loginRecord = {
+          ...data,
+          action: 'visit'
+        }
+        console.log(data)
+        statistic.updateSingleFleld('operation', 'action', 'initial') // todo fix 回滚action
+      })
+
+      statistic.setDurations({
+        end_time: statistic.getCurrentDateTime()
+      }, (data) => {
+        // send Durations
+        console.log(data)
+        statistic.setDurations({
+          start_time: statistic.getCurrentDateTime()  // 初始化下一时段
+        })
       })
     }
 
@@ -390,15 +416,41 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       }
     }
   }
-
+  private statisticTimeFuc = () => {
+    statistic.isTimeout()
+  }
   public componentDidMount () {
     window.addEventListener('resize', this.onWindowResize, false)
+    window.addEventListener('beforeunload', function (event) {
+      console.log('beforeunload')
+      statistic.setDurations({
+        end_time: statistic.getCurrentDateTime()
+      }, (data) => {
+        statistic.setPrevDurationRecord(data, () => {
+          statistic.setDurations({
+            start_time: '',
+            end_time: ''
+          })
+        })
+      })
+    }, false)
+    this.statisticFirstVisit = this.__once__(statistic.setOperations)
+    statistic.setDurations({
+      start_time: statistic.getCurrentDateTime()
+    })
+    statistic.startClock()
+    window.addEventListener('mousemove', this.statisticTimeFuc, false)
+
+    window.addEventListener('keydown', this.statisticTimeFuc, false)
   }
 
   public componentWillUnmount () {
     window.removeEventListener('resize', this.onWindowResize, false)
+    window.removeEventListener('mousemove', this.statisticTimeFuc, false)
+    window.removeEventListener('keydown', this.statisticTimeFuc, false)
     this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
     this.props.onClearCurrentDashboard()
+    statistic.resetClock()
   }
 
   private lazyLoad = () => {
