@@ -195,6 +195,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = new Project();
         BeanUtils.copyProperties(projectCreat, project);
         project.setUserId(user.getId());
+        project.setCreateUserId(user.getId());
 
         int insert = projectMapper.insert(project);
         if (insert > 0) {
@@ -357,6 +358,8 @@ public class ProjectServiceImpl implements ProjectService {
         project.setName(projectUpdate.getName());
         project.setDescription(projectUpdate.getDescription());
         project.setVisibility(projectUpdate.getVisibility());
+        project.setUpdateTime(new Date());
+        project.setUpdateBy(user.getId());
 
         int i = projectMapper.updateBaseInfo(project);
         if (i > 0) {
