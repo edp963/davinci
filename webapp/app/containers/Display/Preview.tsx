@@ -141,7 +141,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     })
     statistic.startClock()
     window.addEventListener('mousemove', this.statisticTimeFuc, false)
-
+    window.addEventListener('visibilitychange', this.onVisibilityChanged, false)
     window.addEventListener('keydown', this.statisticTimeFuc, false)
   }
 
@@ -154,7 +154,6 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     const { scale } = this.state
     const [scaleWidth, scaleHeight] = scale
     const { params: {pid, displayId}, currentDisplay, currentProject} = this.props
-    console.log(currentProject)
     if (this.props.currentSlide) {
       this.statisticFirstVisit({
         org_id: currentProject.orgId,
@@ -392,6 +391,23 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     return slideStyle
   }
 
+  private onVisibilityChanged (event) {
+    const flag = event.target.webkitHidden
+    if (flag) {
+      statistic.setDurations({
+        end_time: statistic.getCurrentDateTime()
+      }, (data) => {
+        statistic.sendDuration([data]).then((res) => {
+          statistic.setDurations({
+            start_time: statistic.getCurrentDateTime()  // 初始化下一时段
+          })
+        })
+      })
+    } else {
+      statistic.isResetTime()
+    }
+  }
+
   public componentWillUnmount () {
     statistic.setDurations({
       end_time: statistic.getCurrentDateTime()
@@ -400,6 +416,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     })
     window.removeEventListener('mousemove', this.statisticTimeFuc, false)
     window.removeEventListener('keydown', this.statisticTimeFuc, false)
+    window.removeEventListener('visibilitychange', this.onVisibilityChanged, false)
     statistic.resetClock()
   }
 

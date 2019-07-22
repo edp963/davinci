@@ -397,7 +397,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       statistic.setDurations({
         end_time: statistic.getCurrentDateTime()
       }, (data) => {
-        statistic.sendDuration(data).then((res) => {
+        statistic.sendDuration([data]).then((res) => {
           statistic.setDurations({
             start_time: statistic.getCurrentDateTime()  // 初始化下一时段
           })
@@ -440,8 +440,25 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
     statistic.startClock()
     window.addEventListener('mousemove', this.statisticTimeFuc, false)
-
+    window.addEventListener('visibilitychange', this.onVisibilityChanged, false)
     window.addEventListener('keydown', this.statisticTimeFuc, false)
+  }
+
+  private onVisibilityChanged (event) {
+    const flag = event.target.webkitHidden
+    if (flag) {
+      statistic.setDurations({
+        end_time: statistic.getCurrentDateTime()
+      }, (data) => {
+        statistic.sendDuration([data]).then((res) => {
+          statistic.setDurations({
+            start_time: statistic.getCurrentDateTime()  // 初始化下一时段
+          })
+        })
+      })
+    } else {
+      statistic.isResetTime()
+    }
   }
 
   public componentWillUnmount () {
@@ -452,6 +469,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
     window.removeEventListener('resize', this.onWindowResize, false)
     window.removeEventListener('mousemove', this.statisticTimeFuc, false)
+    window.removeEventListener('visibilitychange', this.onVisibilityChanged, false)
     window.removeEventListener('keydown', this.statisticTimeFuc, false)
     this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
     this.props.onClearCurrentDashboard()
