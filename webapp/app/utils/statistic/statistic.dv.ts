@@ -87,7 +87,7 @@ class Statistic {
            set (value) {
                console.log(value)
                const time = that.getClock()
-               if (time >= 60) {
+               if (time >= 30) {
                    // 只执行1次
                    that.onceSetDurations({
                        end_time: that.getCurrentDateTime()
@@ -146,7 +146,7 @@ class Statistic {
 
     public isTimeout = (callback?: (data: IDuration) => any) => {
         const time =  this.getClock()
-        if (time > 60) {
+        if (time > 30) {
            this.setDurations({
                start_time: this.getCurrentDateTime()
            })
