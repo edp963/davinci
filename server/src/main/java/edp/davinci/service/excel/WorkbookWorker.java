@@ -26,6 +26,7 @@ import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.common.utils.ScriptUtiils;
 import edp.davinci.core.config.SpringContextHolder;
+import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.model.ExcelHeader;
 import edp.davinci.core.utils.ExcelUtils;
@@ -92,7 +93,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 rst = future.get();
             }
             if (rst) {
-                filePath = ((FileUtils) SpringContextHolder.getBean(FileUtils.class)).getFilePath(FileTypeEnum.XLSX, this.context.getWrapper().getxId());
+                filePath = ((FileUtils) SpringContextHolder.getBean(FileUtils.class)).getFilePath(FileTypeEnum.XLSX, this.context.getWrapper());
                 FileOutputStream out = null;
                 try {
                     out = new FileOutputStream(filePath);
@@ -119,8 +120,13 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
         } finally {
             wb = null;
         }
-        Object[] args = {StringUtils.isNotEmpty(filePath), context.getWrapper().getAction(), context.getWrapper().getxId(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
-        log.info("workbook worker complete status={},action={},xid={},filePath={},cost={}ms", args);
+        if (context.getWrapper().getAction() == ActionEnum.DOWNLOAD) {
+            Object[] args = {StringUtils.isNotEmpty(filePath), context.getWrapper().getAction(), context.getWrapper().getxId(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
+            log.info("workbook worker complete status={},action={},xid={},filePath={},cost={}ms", args);
+        } else if (context.getWrapper().getAction() == ActionEnum.SHAREDOWNLOAD) {
+            Object[] args = {StringUtils.isNotEmpty(filePath), context.getWrapper().getAction(), context.getWrapper().getxUUID(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
+            log.info("workbook worker complete status={},action={},xUUID={},filePath={},cost={}ms", args);
+        }
         return (T) filePath;
     }
 

@@ -17,18 +17,25 @@
  *
  */
 
-package edp.davinci.core.enums;
+package edp.davinci.model;
 
-/**
- * Created by IntelliJ IDEA.
- *
- * @Author daemon
- * @Date 19/5/30 16:38
- * To change this template use File | Settings | File Templates.
- */
-public enum ActionEnum {
-    DOWNLOAD,
-    MAIL,
-    SHAREDOWNLOAD
-    ;
+import edp.davinci.core.enums.DownloadTaskStatus;
+import lombok.Data;
+
+import java.util.Date;
+import java.util.UUID;
+
+import static edp.core.consts.Consts.EMPTY;
+import static edp.core.consts.Consts.MINUS;
+
+@Data
+public class ShareDownloadRecord extends DownloadRecordBaseInfo {
+    private String id;
+
+    public ShareDownloadRecord() {
+        UUID uuid = UUID.randomUUID();
+        this.id = uuid.toString().replace(MINUS, EMPTY);
+        this.setCreateTime(new Date());
+        this.setStatus(DownloadTaskStatus.PROCESSING.getStatus());
+    }
 }

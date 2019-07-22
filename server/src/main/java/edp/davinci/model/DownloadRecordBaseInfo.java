@@ -17,18 +17,22 @@
  *
  */
 
-package edp.davinci.core.enums;
+package edp.davinci.model;
 
-/**
- * Created by IntelliJ IDEA.
- *
- * @Author daemon
- * @Date 19/5/30 16:38
- * To change this template use File | Settings | File Templates.
- */
-public enum ActionEnum {
-    DOWNLOAD,
-    MAIL,
-    SHAREDOWNLOAD
-    ;
+import lombok.Data;
+
+import java.util.Date;
+
+
+@Data
+public class DownloadRecordBaseInfo {
+    private String name;
+
+    private String path;
+
+    private Short status;
+
+    private Date createTime;
+
+    private Date lastDownloadTime;
 }
