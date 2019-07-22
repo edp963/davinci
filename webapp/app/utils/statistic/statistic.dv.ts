@@ -80,23 +80,20 @@ class Statistic {
         sub_viz_name: '',
         create_time: ''
        })
-     //  this.onceSetDurations = this.__once__(this.setDurations)
+
        const that = this
        Reflect.defineProperty(that.clock, 'checkTime', {
            configurable: true,
            set (value) {
                console.log(value)
                const time = that.getClock()
-               if (time >= 12) {
-                   // todo 会执行多次
+               if (time >= 60) {
+                   // 只执行1次
                    that.onceSetDurations({
                        end_time: that.getCurrentDateTime()
                    }, (data) => {
-                       console.log(data)
+                        that.sendDuration([that.durationRecord])
                    })
-                //    that.sendDuration(this.durationRecord).then((data) => {
-                //       console.log(data)
-                //    })
                }
            }
        })
@@ -106,10 +103,10 @@ class Statistic {
     private clocker: any
     private startTime: Date
     private endTimd: Date
-    private userData: IUserData
-    private terminalRecord: ITerminal
-    private durationRecord: IDuration
-    private operationRecord: IOperation
+    public userData: IUserData
+    public terminalRecord: ITerminal
+    public durationRecord: IDuration
+    public operationRecord: IOperation
     private prevDurationRecord: string = 'PREVDURATIONRECORD'
     private setUserDate = (options?: IUserData) => {
         const {user_id, email} = options
@@ -119,7 +116,7 @@ class Statistic {
         }
     }
 
-    private __once__ (fn) {
+    public __once__ (fn) {
         let tag = true
         return (...args) => {
           if (tag) {
@@ -149,7 +146,7 @@ class Statistic {
 
     public isTimeout = (callback?: (data: IDuration) => any) => {
         const time =  this.getClock()
-        if (time > 12) {
+        if (time > 60) {
            this.setDurations({
                start_time: this.getCurrentDateTime()
            })
@@ -160,19 +157,36 @@ class Statistic {
         }
     }
 
+    public isResetTime = () => {
+        const time = this.getClock()
+        if (time && this.clocker) {
+            this.isTimeout()
+        }
+        return
+    }
+
     public sendDuration = (body) => {
         const url = `${api.buriedPoints}/duration`
-        return request(url, body)
+        return request(url, {
+            method: 'post',
+            data: body
+        })
     }
 
     public sendTerminal = (body) => {
         const url = `${api.buriedPoints}/terminal`
-        return request(url, body)
+        return request(url, {
+            method: 'post',
+            data: [body]
+        })
     }
 
     public sendOperation = (body) => {
-        const url = `${api.buriedPoints}/operation`
-        return request(url, body)
+        const url = `${api.buriedPoints}/visitorOperation`
+        return request(url, {
+            method: 'post',
+            data: [body]
+        })
     }
 
     public getClock = () => this.clock['time']
@@ -200,7 +214,8 @@ class Statistic {
             device_model:  device_model || '',
             device_type:  device_type || '',
             device_vendor:  device_vendor || '',
-            cpu_architecture:  cpu_architecture || ''
+            cpu_architecture:  cpu_architecture || '',
+            ...this.userData
         }
     }
 
@@ -223,6 +238,10 @@ class Statistic {
     }
 
     public setPrevDurationRecord = (record: IDuration, callback?: (data: IDuration) => any) => {
+        record = {
+            ...record,
+            ...this.userData
+        }
         let prevDRecord = this.parse(localStorage.getItem(this.prevDurationRecord))
         prevDRecord = prevDRecord && Array.isArray(prevDRecord) ? prevDRecord.concat(record) : [record]
         localStorage.setItem(this.prevDurationRecord, this.stringify(prevDRecord))
@@ -278,7 +297,8 @@ class Statistic {
     public setOperations = (options?: Partial<IOperation>, callback?: (data: IOperation) => any) => {
         this.operationRecord = {
             ...this.operationRecord,
-            ...options
+            ...options,
+            ...this.userData
         }
         if (typeof callback === 'function') {
             callback(this.operationRecord)
@@ -288,19 +308,13 @@ class Statistic {
     public setDurations = (options?: Partial<IDuration>, callback?: (data: IDuration) => any) => {
         this.durationRecord = {
             ...this.durationRecord,
-            ...options
+            ...options,
+            ...this.userData
         }
         if (typeof callback === 'function') {
             callback(this.durationRecord)
         }
     }
-
-    private makeRequest = (src) => new Promise((resolve, reject) => {
-        const img = new Image()
-        img.src = src
-        img.onload =  (res) => resolve(res)
-        img.onerror = (err) => reject(err)
-    })
 
     private obj2url = (obj) => {
         return Object.keys(obj).reduce((a, b, currentIndex, array) => {

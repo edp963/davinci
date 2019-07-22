@@ -366,7 +366,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             ...data,
             action: 'visit'
           }
-          console.log(visitRecord) // 已解决
+          statistic.sendOperation(visitRecord)
         })
     }
 
@@ -385,21 +385,22 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         sub_viz_name: this.props.currentDashboard['name'],
         create_time:  statistic.getCurrentDateTime()
       }, (data) => {
-        const loginRecord = {
+        const visitRecord = {
           ...data,
           action: 'visit'
         }
-        console.log(data)
-        statistic.updateSingleFleld('operation', 'action', 'initial') // todo fix 回滚action
+        statistic.sendOperation(visitRecord).then((res) => {
+          statistic.updateSingleFleld('operation', 'action', 'initial') // todo fix 回滚action
+        })
       })
 
       statistic.setDurations({
         end_time: statistic.getCurrentDateTime()
       }, (data) => {
-        // send Durations
-        console.log(data)
-        statistic.setDurations({
-          start_time: statistic.getCurrentDateTime()  // 初始化下一时段
+        statistic.sendDuration(data).then((res) => {
+          statistic.setDurations({
+            start_time: statistic.getCurrentDateTime()  // 初始化下一时段
+          })
         })
       })
     }
@@ -422,13 +423,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   public componentDidMount () {
     window.addEventListener('resize', this.onWindowResize, false)
     window.addEventListener('beforeunload', function (event) {
-      console.log('beforeunload')
       statistic.setDurations({
         end_time: statistic.getCurrentDateTime()
       }, (data) => {
         statistic.setPrevDurationRecord(data, () => {
           statistic.setDurations({
-            start_time: '',
+            start_time: statistic.getCurrentDateTime(),
             end_time: ''
           })
         })
@@ -445,6 +445,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   public componentWillUnmount () {
+    statistic.setDurations({
+      end_time: statistic.getCurrentDateTime()
+    }, (data) => {
+      statistic.sendDuration([data])
+    })
     window.removeEventListener('resize', this.onWindowResize, false)
     window.removeEventListener('mousemove', this.statisticTimeFuc, false)
     window.removeEventListener('keydown', this.statisticTimeFuc, false)

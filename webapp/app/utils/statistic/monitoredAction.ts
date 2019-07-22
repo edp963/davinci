@@ -23,7 +23,6 @@ const {
 } = ActionTypes
 
 import { statistic, IOperation } from './statistic.dv'
-//  console.log(statistic.getRecord('terminal'))
 
 const dataAction = {
     [DRILL_DASHBOARDITEM]: 'drill',
@@ -50,21 +49,21 @@ function mapMonitoreToAction (action: string, initialType: string) {
     const isDataAction =  Object.entries(dataAction).map(([k, v]) => k).some((other) => other === action)
     if (isOtherAction) {
         actionType = otherAction[action]
-      //  statistic.updateSingleFleld<IOperation>('operation', 'action', actionType)
-      // todo 避免与initial混淆，此三种状态不update operationRecord  的action值
+      // 避免与initial混淆，此三种状态不update operationRecord  的action值
     }
+
     if (action === LOGGED) {
-        // todo 从localstorege拿上一次时长数据 send server
+        // 从localstorege拿上一次时长数据 send server
         const record = statistic.getPrevDurationRecord()
         if (record && record.length) {
-            // send server
-            // callback
-            // 记得 statistic.clearPrevDurationRecord()
+            statistic.sendDuration(record).then((data) => {
+                statistic.clearPrevDurationRecord()
+            })
         }
+        const terminalRecord = statistic.getRecord('terminal')
+        statistic.sendTerminal(terminalRecord).then()
     }
-    if (action === LOGIN) {
-        console.log(statistic.getRecord('terminal'))
-    }
+
     if (isDataAction) {
         actionType = dataAction[action]
         statistic.updateSingleFleld<IOperation>('operation', 'action', actionType, (data) => {
@@ -72,13 +71,20 @@ function mapMonitoreToAction (action: string, initialType: string) {
                 ...data,
                 create_time: statistic.getCurrentDateTime()
             }
-            console.log(newData)
+            statistic.sendOperation(newData)
         })
     }
     if (action === LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS) {
-        console.log(actionType)
         // todo 重启定时器
-        statistic.isTimeout()
+        statistic.isResetTime()
+        if (actionType === 'initial') {
+            const newData = {
+                ...statistic.operationRecord,
+                ...statistic.userData,
+                create_time: statistic.getCurrentDateTime()
+            }
+            statistic.sendOperation(newData)
+        }
     }
 }
 

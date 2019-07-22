@@ -66,7 +66,8 @@ import {
 
   displaySecretLinkLoaded,
   displayShareLinkLoaded,
-  loadDisplayShareLinkFail
+  loadDisplayShareLinkFail,
+  projectLoaded
 } from './actions'
 
 export function* getDisplays (action): IterableIterator<any> {
@@ -369,6 +370,17 @@ export function* redoOperation (action) {
   }
 }
 
+
+export function* loadProjectDetail ({ payload }) {
+  try {
+    const asyncData = yield  call(request, `${api.projects}/${payload.pid}`)
+    const project = asyncData.payload
+    yield put(projectLoaded(project))
+  } catch (err) {
+    errorHandler(err)
+  }
+}
+
 export default function* rootDisplaySaga (): IterableIterator<any> {
   yield all([
     takeLatest(ActionTypes.LOAD_DISPLAYS, getDisplays),
@@ -385,6 +397,7 @@ export default function* rootDisplaySaga (): IterableIterator<any> {
     takeEvery(ActionTypes.PASTE_SLIDE_LAYERS, pasteSlideLayers),
     takeLatest(ActionTypes.LOAD_DISPLAY_SHARE_LINK, getDisplayShareLink),
     takeEvery(ActionTypes.UNDO_OPERATION, undoOperation),
-    takeEvery(ActionTypes.REDO_OPERATION, redoOperation)
+    takeEvery(ActionTypes.REDO_OPERATION, redoOperation),
+    takeEvery(ActionTypes.LOAD_CURRENT_PROJECT, loadProjectDetail as any)
   ])
 }
