@@ -44,8 +44,8 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
 
     boolean statisticOpen = false;  //是否开启埋点统计
 
-    @Value("${buried_points.elastic_index:davinci_statistic}")
-    private String elasticIndex;
+    @Value("${buried_points.elastic_index_prefix:''}")
+    private String elasticIndexPrefix;
 
     @PostConstruct
     public void init(){
@@ -70,7 +70,8 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
 
         String elastic_urls = environment.getProperty("buried_points.elastic_urls");
         if(StringUtils.isNotBlank(elastic_urls)){
-            elasticOperationService.batchInsert(elasticIndex, tableName, infoList);
+            String index = StringUtils.isBlank(elasticIndexPrefix) ? tableName : elasticIndexPrefix + "_" + tableName;
+            elasticOperationService.batchInsert(index, index, infoList);
         }else{
             List<Map<String, Object>> values = EntityConvertMap(infoList);
             Set<QueryColumn> headers = getHeaders(tableName);
