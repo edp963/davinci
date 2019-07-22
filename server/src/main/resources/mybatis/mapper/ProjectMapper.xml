@@ -38,7 +38,9 @@
             `user_id`,
             `visibility`,
             `is_transfer`,
-            `initial_org_id`
+            `initial_org_id`,
+            `create_time`,
+            `create_by`
         </trim>
         values
         <trim prefix=" (" suffix=")" suffixOverrides=",">
@@ -53,7 +55,9 @@
             #{userId, jdbcType=BIGINT},
             #{visibility, jdbcType=TINYINT},
             #{isTransfer, jdbcType=TINYINT},
-            #{orgId, jdbcType=BIGINT}
+            #{orgId, jdbcType=BIGINT},
+            #{createTime, jdbcType=TIMESTAMP},
+            #{createUserId, jdbcType=BIGINT}
         </trim>
     </insert>
 
