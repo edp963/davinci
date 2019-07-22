@@ -398,13 +398,11 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         end_time: statistic.getCurrentDateTime()
       }, (data) => {
         statistic.sendDuration([data]).then((res) => {
-          statistic.setDurations({
-            start_time: statistic.getCurrentDateTime()  // 初始化下一时段
-          })
+          statistic.resetClock()
         })
       })
     } else {
-      statistic.isResetTime()
+      statistic.startClock()
     }
   }
 
