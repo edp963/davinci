@@ -72,7 +72,10 @@ import {
   SELECT_DASHBOARD_ITEM_CHART,
   SET_SELECT_OPTIONS,
   SET_CONTROL_FORM_VALUES,
-  GLOBAL_CONTROL_CHANGE
+  GLOBAL_CONTROL_CHANGE,
+  MONITORED_SYNC_DATA_ACTION,
+  MONITORED_SEARCH_DATA_ACTION,
+  MONITORED_LINKAGE_DATA_ACTION
 } from './constants'
 
 export function addDashboardItems (portalId, items, resolve) {
@@ -534,5 +537,23 @@ export function globalControlChange (controlRequestParamsByItem) {
     payload: {
       controlRequestParamsByItem
     }
+  }
+}
+
+export function monitoredSyncDataAction () {
+  return {
+    type: MONITORED_SYNC_DATA_ACTION
+  }
+}
+
+export function monitoredSearchDataAction () {
+  return {
+    type: MONITORED_SEARCH_DATA_ACTION
+  }
+}
+
+export function monitoredLinkageDataAction () {
+  return {
+    type: MONITORED_LINKAGE_DATA_ACTION
   }
 }

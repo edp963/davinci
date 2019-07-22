@@ -28,6 +28,8 @@ import { routerMiddleware } from 'react-router-redux'
 import createSagaMiddleware, { Task, SagaIterator } from 'redux-saga'
 import createReducer from './reducers'
 import sagas from './sagas'
+import { apiInterceptorMiddleware } from './utils/statistic/apiInterceptorMiddleware'
+
 
 const sagaMiddleware = createSagaMiddleware()
 
@@ -49,6 +51,7 @@ export default function configureStore<T> (initialState: object = {}, history): 
   // 1. sagaMiddleware: Makes redux-sagas work
   // 2. routerMiddleware: Syncs the location/URL path to the state
   const middlewares = [
+    apiInterceptorMiddleware,
     sagaMiddleware,
     routerMiddleware(history)
   ]

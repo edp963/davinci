@@ -44,6 +44,7 @@ const emptyDisplayState = {
   lastOperationType: '',
   lastLayers: [],
 
+  currentProject: null,
   editorBaselines: []
 }
 
@@ -393,6 +394,9 @@ function displayReducer (state = initialState, action) {
         .set('currentDisplayShareInfoLoading', false)
     case ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE:
       return state.set('currentDisplayShareInfoLoading', false)
+    case ActionTypes.LOAD_CURRENT_PROJECT_SUCCESS:
+      return state
+        .set('currentProject', payload.result)
     case ActionTypes.RESET_DISPLAY_STATE:
       return fromJS(emptyDisplayState)
     default:
