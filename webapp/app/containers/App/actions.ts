@@ -23,7 +23,6 @@ import {
   LOGGED,
   LOGIN_ERROR,
   LOGOUT,
-  SET_LOGIN_USER,
   GET_LOGIN_USER,
   GET_LOGIN_USER_ERROR,
   SHOW_NAVIGATOR,
@@ -56,14 +55,6 @@ import {
   INITIATE_DOWNLOAD_TASK_FAILURE
 } from './constants'
 
-import { promiseActionCreator } from '../../utils/reduxPromisation'
-
-
-
-export const logout = promiseActionCreator(LOGOUT)
-
-export const setLoginUser = promiseActionCreator(SET_LOGIN_USER, ['user'])
-
 export function login (username, password, resolve) {
   return {
     type: LOGIN,
@@ -87,6 +78,12 @@ export function logged (user) {
 export function loginError () {
   return {
     type: LOGIN_ERROR
+  }
+}
+
+export function logout () {
+  return {
+    type: LOGOUT
   }
 }
 

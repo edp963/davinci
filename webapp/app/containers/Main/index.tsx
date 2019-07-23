@@ -24,7 +24,7 @@ import { createStructuredSelector } from 'reselect'
 
 import Navigator from '../../components/Navigator'
 
-import { logged, logout, setLoginUser, getLoginUser, loadDownloadList } from '../App/actions'
+import { logged, logout, getLoginUser, loadDownloadList } from '../App/actions'
 import { makeSelectLogged, makeSelectNavigator } from '../App/selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import checkLogin from '../../utils/checkLogin'
@@ -39,9 +39,8 @@ interface IMainProps {
   router: any
   logged: boolean
   navigator: boolean
-  onLogged: () => any
-  onLogout: () => any
-  onSetLoginUser: (user: object) => any
+  onLogged: (user) => void
+  onLogout: () => void
   onGetLoginUser: (resolve: () => void) => any
   onLoadDownloadList: () => void
 }
@@ -94,8 +93,7 @@ export class Main extends React.Component<IMainProps, {}> {
       const token = localStorage.getItem('TOKEN')
       const loginUser = localStorage.getItem('loginUser')
       setToken(token)
-      this.props.onLogged()
-      this.props.onSetLoginUser(JSON.parse(loginUser))
+      this.props.onLogged(JSON.parse(loginUser))
       this.initPolling()
     } else {
       this.props.router.replace('/login')
@@ -126,13 +124,8 @@ export class Main extends React.Component<IMainProps, {}> {
   }
 
   private logout = () => {
-    const {
-      router,
-      onLogout
-    } = this.props
+    const { router, onLogout } = this.props
     onLogout()
-    localStorage.removeItem('TOKEN')
-    localStorage.removeItem('TOKEN_EXPIRE')
     router.replace('/login')
   }
 
@@ -162,9 +155,8 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLogged: () => promiseDispatcher(dispatch, logged),
-    onLogout: () => promiseDispatcher(dispatch, logout),
-    onSetLoginUser: (user) => promiseDispatcher(dispatch, setLoginUser, user),
+    onLogged: (user) => dispatch(logged(user)),
+    onLogout: () => dispatch(logout()),
     onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve)),
     onLoadDownloadList: () => dispatch(loadDownloadList())
   }

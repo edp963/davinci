@@ -23,6 +23,7 @@ import { call, put, all, takeLatest, throttle, takeEvery } from 'redux-saga/effe
 import { message } from 'antd'
 import {
   LOGIN,
+  LOGOUT,
   GET_LOGIN_USER,
   CHECK_NAME,
   ACTIVE,
@@ -71,7 +72,6 @@ export function* login (action): IterableIterator<any> {
     })
 
     const loginUser = asyncData.payload
-    yield put(logged(loginUser))
     localStorage.setItem('loginUser', JSON.stringify(loginUser))
     resolve()
   } catch (err) {
@@ -80,6 +80,15 @@ export function* login (action): IterableIterator<any> {
   }
 }
 
+export function* logout (): IterableIterator<any> {
+  try {
+    localStorage.removeItem('TOKEN')
+    localStorage.removeItem('TOKEN_EXPIRE')
+    localStorage.removeItem('loginUser')
+  } catch (err) {
+    errorHandler(err)
+  }
+}
 
 export function* activeUser (action): IterableIterator<any> {
   const {token, resolve} = action.payload
@@ -302,6 +311,7 @@ export default function* rootGroupSaga (): IterableIterator<any> {
     takeLatest(GET_LOGIN_USER, getLoginUser as any),
     takeLatest(ACTIVE, activeUser as any),
     takeLatest(LOGIN, login as any),
+    takeLatest(LOGOUT, logout),
     takeLatest(UPDATE_PROFILE, updateProfile as any),
     takeLatest(CHANGE_USER_PASSWORD, changeUserPassword as any),
     takeLatest(JOIN_ORGANIZATION, joinOrganization as any),
