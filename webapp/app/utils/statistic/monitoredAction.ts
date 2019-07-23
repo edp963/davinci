@@ -52,18 +52,6 @@ function mapMonitoreToAction (action: string, initialType: string) {
       // 避免与initial混淆，此三种状态不update operationRecord  的action值
     }
 
-    if (action === LOGGED) {
-        // 从localstorege拿上一次时长数据 send server
-        const record = statistic.getPrevDurationRecord()
-        if (record && record.length) {
-            statistic.sendDuration(record).then((data) => {
-                statistic.clearPrevDurationRecord()
-            })
-        }
-        const terminalRecord = statistic.getRecord('terminal')
-        statistic.sendTerminal(terminalRecord).then()
-    }
-
     if (isDataAction) {
         actionType = dataAction[action]
         statistic.updateSingleFleld<IOperation>('operation', 'action', actionType, (data) => {

@@ -455,7 +455,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         })
       })
     } else {
-      statistic.startClock()
+      statistic.setDurations({
+        start_time: statistic.getCurrentDateTime()
+      }, (data) => {
+        statistic.startClock()
+      })
     }
   }
 
