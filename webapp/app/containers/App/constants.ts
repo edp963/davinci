@@ -32,7 +32,6 @@ export const JOIN_ORGANIZATION_SUCCESS = 'davinci/App/JOIN_ORGANIZATION_SUCCESS'
 export const JOIN_ORGANIZATION_ERROR = 'davinci/App/JOIN_ORGANIZATION_ERROR'
 
 export const LOGOUT = 'davinci/App/LOGOUT'
-export const SET_LOGIN_USER = 'davinci/App/SET_LOGIN_USER'
 export const GET_LOGIN_USER = 'davinci/App/GET_LOGIN_USER'
 export const GET_LOGIN_USER_ERROR = 'davinci/App/GET_LOGIN_USER_ERROR'
 export const SHOW_NAVIGATOR = 'davinci/App/SHOW_NAVIGATOR'

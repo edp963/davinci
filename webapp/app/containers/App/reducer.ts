@@ -23,7 +23,6 @@ import {
   LOGGED,
   LOGIN_ERROR,
   LOGOUT,
-  SET_LOGIN_USER,
   SHOW_NAVIGATOR,
   HIDE_NAVIGATOR,
   ACTIVE_SUCCESS,
@@ -70,9 +69,6 @@ function appReducer (state = initialState, action) {
       return state
         .set('logged', false)
         .set('loginUser', null)
-    case SET_LOGIN_USER:
-      return state
-        .set('loginUser', payload.user)
     case UPLOAD_AVATAR_SUCCESS:
       const newLoginUser = {...loginUser, ...{avatar: payload.path}}
       localStorage.setItem('loginUser', JSON.stringify(newLoginUser))
