@@ -18,6 +18,7 @@
 package edp.davinci.controller;
 
 import edp.core.utils.TokenUtils;
+import edp.davinci.common.model.ValidList;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.buriedPoints.DurationInfo;
@@ -39,7 +40,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.util.List;
 
 @Api(value = "/buriedPoints", tags = "buriedPoints", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "buriedPoint not found"))
@@ -56,7 +56,7 @@ public class BuriedPointsController {
 
     @ApiOperation(value = "collect duration info ")
     @PostMapping(value = "/duration", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity collectDurationInfo(@Valid @RequestBody List<DurationInfo> durationInfos,
+    public ResponseEntity collectDurationInfo(@Valid @RequestBody ValidList<DurationInfo> durationInfos,
                                               HttpServletRequest request){
 
         buriedPointsService.insert(durationInfos, DurationInfo.class);
@@ -66,7 +66,7 @@ public class BuriedPointsController {
 
     @ApiOperation(value = "collect terminal info ")
     @PostMapping(value = "/terminal", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity collectTerminalInfo(@Valid @RequestBody List<TerminalInfo> terminalInfoInfos,
+    public ResponseEntity collectTerminalInfo(@Valid @RequestBody ValidList<TerminalInfo> terminalInfoInfos,
                                               HttpServletRequest request){
 
         buriedPointsService.insert(terminalInfoInfos, TerminalInfo.class);
@@ -76,7 +76,7 @@ public class BuriedPointsController {
 
     @ApiOperation(value = "collect visitor operation info ")
     @PostMapping(value = "/visitorOperation", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity collectVisitorOperationInfo(@Valid @RequestBody List<VisitorOperationInfo> visitorOperationInfos,
+    public ResponseEntity collectVisitorOperationInfo(@Valid @RequestBody ValidList<VisitorOperationInfo> visitorOperationInfos,
                                               HttpServletRequest request){
 
         buriedPointsService.insert(visitorOperationInfos, VisitorOperationInfo.class);

@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 @NotNull(message = "terminal info cannot be null")
 public class TerminalInfo {
 
-    @NotBlank
+    @NotNull
     @Min(value = 1L)
     private Long user_id;
 

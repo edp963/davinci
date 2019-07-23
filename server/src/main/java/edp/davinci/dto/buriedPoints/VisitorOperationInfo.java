@@ -1,19 +1,17 @@
 package edp.davinci.dto.buriedPoints;
 
-import edp.core.utils.DateUtils;
 import lombok.Data;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import java.sql.Timestamp;
 
 @Data
 @NotNull(message = "visitor operation info cannot be null")
 public class VisitorOperationInfo {
 
-    @NotBlank
+    @NotNull
     @Min(value = 1L)
     private Long user_id;
 
@@ -43,8 +41,7 @@ public class VisitorOperationInfo {
 
     private String sub_viz_name;
 
-    @NotBlank
-    @Pattern(regexp = DateUtils.DATE_HMS_REGEX, message = "Unparseable create_time format")
+    @NotNull
     private Timestamp create_time;
 
 }
