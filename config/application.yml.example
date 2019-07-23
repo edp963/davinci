@@ -121,6 +121,7 @@ spring:
 
 screenshot:
   default_browser: PHANTOMJS                    #PHANTOMJS CHROME
+  timeout_second: 600
   phantomjs_path: $your_phantomjs_path$
   chromedriver_path: $your_chromedriver_path$
 

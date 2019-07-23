@@ -120,11 +120,11 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 List<File> attachments = null;
                 List<ImageContent> images = null;
                 if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-                    images = generateImages(cronJobConfig, cronJob.getCreateBy());
+                    images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
                     attachments = generateExcels(cronJobConfig, user);
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
-                    images = generateImages(cronJobConfig, cronJob.getCreateBy());
+                    images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
                     attachments = new ArrayList<>();
                     attachments.addAll(generateExcels(cronJobConfig, user));
                 }
@@ -155,21 +155,23 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     /**
      * 根据job配置截取图片
      *
+     *
+     * @param jobId
      * @param cronJobConfig
      * @param userId
      * @return
      * @throws Exception
      */
-    private List<ImageContent> generateImages(CronJobConfig cronJobConfig, Long userId) throws Exception {
+    private List<ImageContent> generateImages(long jobId, CronJobConfig cronJobConfig, Long userId) throws Exception {
         int order = 0;
         List<ImageContent> imageContents = new ArrayList<>();
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
             String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId());
-            imageContents.add(new ImageContent(order, cronJobContent.getContentType(), url));
+            imageContents.add(new ImageContent(order, cronJobContent.getId(), cronJobContent.getContentType(), url));
             order++;
         }
         if (!CollectionUtils.isEmpty(imageContents)) {
-            screenshotUtil.screenshot(imageContents);
+            screenshotUtil.screenshot(jobId, imageContents);
         }
         return imageContents;
     }

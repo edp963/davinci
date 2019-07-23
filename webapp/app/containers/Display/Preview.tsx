@@ -20,7 +20,6 @@ import { GraphTypes, SecondaryGraphTypes } from './components/util'
 
 import Container from '../../components/Container'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
 import {
@@ -28,7 +27,9 @@ import {
   makeSelectCurrentSlide,
   makeSelectDisplays,
   makeSelectCurrentLayers,
-  makeSelectCurrentLayersInfo } from './selectors'
+  makeSelectCurrentLayersInfo,
+  makeSelectCurrentProject
+   } from './selectors'
 
 import { hideNavigator } from '../App/actions'
 import { ViewActions } from '../View/actions'
@@ -39,18 +40,22 @@ import {
   selectLayer,
   addDisplayLayers,
   deleteDisplayLayers,
-  editDisplayLayers } from './actions'
+  editDisplayLayers,
+  monitoredSyncDataAction,
+  monitoredSearchDataAction,
+  loadProjectDetail,
+  monitoredLinkageDataAction } from './actions'
 import { DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
 import LayerItem from './components/LayerItem'
 
 const styles = require('./Display.less')
 const stylesDashboard = require('../Dashboard/Dashboard.less')
-
 import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
 import { IQueryConditions, IDataRequestParams } from '../Dashboard/Grid'
 import { IFormedViews } from '../View/types'
-
+import { statistic } from '../../utils/statistic/statistic.dv'
+import {IProject} from '../Projects'
 interface IPreviewProps {
   params: any
   widgets: any[]
@@ -82,6 +87,11 @@ interface IPreviewProps {
     viewId: number,
     requestParams: IDataRequestParams
   ) => void
+  onMonitoredSyncDataAction: () => any
+  onMonitoredSearchDataAction: () => any
+  onMonitoredLinkageDataAction: () => any
+  currentProject: IProject
+  onloadProjectDetail: (pid) => any
 }
 
 interface IPreviewStates {
@@ -102,21 +112,66 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
   public componentWillMount () {
     const {
       params,
-      onLoadDisplayDetail
+      onLoadDisplayDetail,
+      onloadProjectDetail
     } = this.props
     const projectId = +params.pid
     const displayId = +params.displayId
     onLoadDisplayDetail(projectId, displayId)
+    onloadProjectDetail(projectId)
   }
 
   public componentDidMount () {
     this.props.onHideNavigator()
+    window.addEventListener('beforeunload', function (event) {
+      statistic.setDurations({
+        end_time: statistic.getCurrentDateTime()
+      }, (data) => {
+        statistic.setPrevDurationRecord(data, () => {
+          statistic.setDurations({
+            start_time: statistic.getCurrentDateTime(),
+            end_time: ''
+          })
+        })
+      })
+    }, false)
+    this.statisticFirstVisit = this.__once__(statistic.setOperations)
+    statistic.setDurations({
+      start_time: statistic.getCurrentDateTime()
+    })
+    statistic.startClock()
+    window.addEventListener('mousemove', this.statisticTimeFuc, false)
+    window.addEventListener('visibilitychange', this.onVisibilityChanged, false)
+    window.addEventListener('keydown', this.statisticTimeFuc, false)
+  }
+
+  private statisticTimeFuc = () => {
+    statistic.isTimeout()
   }
 
   public componentWillReceiveProps (nextProps: IPreviewProps) {
     const { currentSlide } = nextProps
     const { scale } = this.state
     const [scaleWidth, scaleHeight] = scale
+    const { params: {pid, displayId}, currentDisplay, currentProject} = this.props
+    if (this.props.currentSlide) {
+      this.statisticFirstVisit({
+        org_id: currentProject.orgId,
+        project_name: currentProject.name,
+        project_id: pid,
+        viz_type: 'display',
+        viz_id: displayId,
+        viz_name: currentDisplay['name'],
+        create_time:  statistic.getCurrentDateTime()
+      }, (data) => {
+        const visitRecord = {
+          ...data,
+          action: 'visit'
+        }
+        statistic.sendOperation(visitRecord)
+      })
+    }
+
     if (currentSlide && this.props.currentSlide !== currentSlide) {
       const { slideParams } = JSON.parse(currentSlide.config)
       const { scaleMode, width, height } = slideParams
@@ -139,8 +194,23 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           scale: [nextScaleWidth, nextScaleHeight]
         })
       }
+
     }
   }
+
+  private __once__ (fn) {
+    let tag = true
+    return (...args) => {
+      if (tag) {
+        tag = !tag
+        return fn.apply(this, args)
+      } else {
+        return void 0
+      }
+    }
+  }
+
+  private statisticFirstVisit: any
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
     const {
@@ -321,6 +391,33 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     return slideStyle
   }
 
+  private onVisibilityChanged (event) {
+    const flag = event.target.webkitHidden
+    if (flag) {
+      statistic.setDurations({
+        end_time: statistic.getCurrentDateTime()
+      }, (data) => {
+        statistic.sendDuration([data]).then((res) => {
+          statistic.resetClock()
+        })
+      })
+    } else {
+      statistic.startClock()
+    }
+  }
+
+  public componentWillUnmount () {
+    statistic.setDurations({
+      end_time: statistic.getCurrentDateTime()
+    }, (data) => {
+      statistic.sendDuration([data])
+    })
+    window.removeEventListener('mousemove', this.statisticTimeFuc, false)
+    window.removeEventListener('keydown', this.statisticTimeFuc, false)
+    window.removeEventListener('visibilitychange', this.onVisibilityChanged, false)
+    statistic.resetClock()
+  }
+
   public render () {
     const {
       widgets,
@@ -382,14 +479,19 @@ const mapStateToProps = createStructuredSelector({
   currentSlide: makeSelectCurrentSlide(),
   displays: makeSelectDisplays(),
   currentLayers: makeSelectCurrentLayers(),
-  currentLayersInfo: makeSelectCurrentLayersInfo()
+  currentLayersInfo: makeSelectCurrentLayersInfo(),
+  currentProject: makeSelectCurrentProject()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadDisplayDetail: (projectId, displayId) => dispatch(loadDisplayDetail(projectId, displayId)),
-    onLoadViewDataFromVizItem: (renderType, itemId, viewId, requestParams) => dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'display'))
+    onLoadViewDataFromVizItem: (renderType, itemId, viewId, requestParams) => dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'display')),
+    onMonitoredSyncDataAction: () => dispatch(monitoredSyncDataAction()),
+    onMonitoredSearchDataAction: () => dispatch(monitoredSearchDataAction()),
+    onMonitoredLinkageDataAction: () => dispatch(monitoredLinkageDataAction()),
+    onloadProjectDetail: (pid) => dispatch(loadProjectDetail(pid))
   }
 }
 
@@ -401,6 +503,7 @@ const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
 
 const withReducerView = injectReducer({ key: 'view', reducer: reducerView })
 const withSagaView = injectSaga({ key: 'view', saga: sagaView })
+
 
 const withConnect = connect<{}, {}, IPreviewProps>(mapStateToProps, mapDispatchToProps)
 
