@@ -97,7 +97,9 @@ class Statistic {
                }
            }
        })
+       this.onceSendTerminal = this.__once__(this.whenSendTerminal)
     }
+    public onceSendTerminal: any
     private onceSetDurations: any
     private clock: {time: number} = {time: 0}
     private clocker: any
@@ -142,6 +144,18 @@ class Statistic {
             clearTimeout(this.clocker)
         }
         this.clock['time'] = 0
+    }
+
+    public whenSendTerminal = () => {
+        // 从localstorege拿上一次时长数据 send server
+        const record = this.getPrevDurationRecord()
+        if (record && record.length) {
+            this.sendDuration(record).then((data) => {
+                this.clearPrevDurationRecord()
+            })
+        }
+        const terminalRecord = this.getRecord('terminal')
+        this.sendTerminal(terminalRecord)
     }
 
     public isTimeout = (callback?: (data: IDuration) => any) => {

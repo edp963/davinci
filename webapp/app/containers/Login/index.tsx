@@ -37,7 +37,7 @@ import { makeSelectLoginLoading } from '../App/selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import checkLogin from '../../utils/checkLogin'
 import { setToken } from '../../utils/request'
-
+import { statistic } from '../../utils/statistic/statistic.dv'
 
 const styles = require('./Login.less')
 
@@ -101,7 +101,10 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     const { username, password } = this.state
 
     if (username && password) {
-      onLogin(username, password, () => { router.replace('/')})
+      onLogin(username, password, () => {
+        router.replace('/')
+        statistic.onceSendTerminal()
+      })
     }
   }
 

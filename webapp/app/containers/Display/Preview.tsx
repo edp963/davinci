@@ -402,7 +402,11 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         })
       })
     } else {
-      statistic.startClock()
+      statistic.setDurations({
+        start_time: statistic.getCurrentDateTime()
+      }, (data) => {
+        statistic.startClock()
+      })
     }
   }
 
