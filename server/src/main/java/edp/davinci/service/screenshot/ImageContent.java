@@ -28,11 +28,14 @@ public class ImageContent {
     private int order;
 
 
+    private Long cId;
+
     private String desc;
     private File imageFile;
     private String url;
 
-    public ImageContent(int order, String desc, String url) {
+    public ImageContent(int order, Long cid, String desc, String url) {
+        this.cId = cid;
         this.order = order;
         this.desc = desc;
         this.url = url;
