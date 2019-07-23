@@ -32,6 +32,7 @@ import {
   loadDashboardFail,
   widgetGetted,
   resultsetGetted,
+  getResultsetFail,
   widgetCsvLoaded,
   loadWidgetCsvFail,
   selectOptionsLoaded,
@@ -105,6 +106,7 @@ export function* getResultset (action) {
     yield put(resultsetGetted(renderType, itemId, requestParams, resultset.payload))
   } catch (err) {
     errorHandler(err)
+    getResultsetFail(itemId, err)
   }
 }
 
