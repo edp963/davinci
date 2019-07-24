@@ -20,7 +20,9 @@
 package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
+import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.service.excel.MsgWrapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -235,19 +237,28 @@ public class FileUtils {
         }
     }
 
-    public String getFilePath(FileTypeEnum type, Long id) {
+    public String getFilePath(FileTypeEnum type, MsgWrapper msgWrapper) {
         StringBuilder sb = new StringBuilder(this.fileBasePath);
         if (!sb.toString().endsWith(File.separator)) {
             sb.append(File.separator);
         }
-        sb.append(DIR_DOWNLOAD);
+        if (msgWrapper.getAction() == ActionEnum.DOWNLOAD) {
+            sb.append(DIR_DOWNLOAD);
+        } else if (msgWrapper.getAction() == ActionEnum.SHAREDOWNLOAD) {
+            sb.append(DIR_SHARE_DOWNLOAD);
+        }
         sb.append(new SimpleDateFormat("yyyyMMdd").format(new Date())).append(File.separator);
         sb.append(type.getType()).append(File.separator);
         File dir = new File(sb.toString());
         if (!dir.exists()) {
             dir.mkdirs();
         }
-        sb.append(id).append(UNDERLINE).append(System.currentTimeMillis()).append(type.getFormat());
+        if (msgWrapper.getAction() == ActionEnum.DOWNLOAD) {
+            sb.append(msgWrapper.getxId());
+        } else if (msgWrapper.getAction() == ActionEnum.SHAREDOWNLOAD) {
+            sb.append(msgWrapper.getxUUID());
+        }
+        sb.append(UNDERLINE).append(System.currentTimeMillis()).append(type.getFormat());
         return sb.toString().replaceAll(File.separator + "{2,}", File.separator);
     }
 

@@ -187,7 +187,7 @@ public class ShareServiceImpl implements ShareService {
             throw new NotFoundException("widget not found");
         }
 
-        String dateToken = generateShareToken(shareWidget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
+        String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
         shareWidget.setDataToken(dateToken);
         return shareWidget;
     }
@@ -264,7 +264,7 @@ public class ShareServiceImpl implements ShareService {
             Iterator<ShareWidget> widgetIterator = shareWidgets.iterator();
             while (widgetIterator.hasNext()) {
                 ShareWidget shareWidget = widgetIterator.next();
-                String dateToken = generateShareToken(shareWidget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
+                String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
                 shareWidget.setDataToken(dateToken);
             }
             shareDisplay.setWidgets(shareWidgets);
@@ -311,7 +311,7 @@ public class ShareServiceImpl implements ShareService {
             Iterator<ShareWidget> iterator = shareWidgets.iterator();
             while (iterator.hasNext()) {
                 ShareWidget shareWidget = iterator.next();
-                String dateToken = generateShareToken(shareWidget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
+                String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
                 shareWidget.setDataToken(dateToken);
             }
         }
@@ -341,7 +341,7 @@ public class ShareServiceImpl implements ShareService {
             }
         }
 
-        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(shareInfo.getShareId());
+        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceByWidgetId(shareInfo.getShareId());
 
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareInfo.getShareUser(), false);
         boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
@@ -373,7 +373,7 @@ public class ShareServiceImpl implements ShareService {
             }
         }
 
-        ViewWithSource viewWithSource = viewMapper.getViewWithSource(shareInfo.getShareId());
+        ViewWithSource viewWithSource = viewMapper.getViewWithProjectAndSourceByWidgetId(shareInfo.getShareId());
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), shareInfo.getShareUser(), false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareInfo.getShareUser());
 
@@ -507,7 +507,7 @@ public class ShareServiceImpl implements ShareService {
      * @throws ServerException
      * @throws UnAuthorizedExecption
      */
-    private ShareInfo getShareInfo(String token, User user) throws ServerException, UnAuthorizedExecption {
+    public ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption {
 
         if (StringUtils.isEmpty(token)) {
             throw new ServerException("Invalid share token");
