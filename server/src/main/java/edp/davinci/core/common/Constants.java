@@ -146,6 +146,8 @@ public class Constants extends Consts {
 
     public static final String N0_AUTH_PERMISSION = "@DAVINCI_DATA_ACCESS_DENIED@";
 
+    public static final String TOPIC_PATTERN = "DAVINCI_TOPIC";
+
 
     public static char getSqlTempDelimiter(String sqlTempDelimiter) {
         return sqlTempDelimiter.charAt(sqlTempDelimiter.length() - 1);

@@ -132,13 +132,13 @@ public class SqlUtils {
 
     @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
     public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer totalCount, Integer limit, Set<String> excludeColumns) throws Exception {
-        if (null == pageNo) {
-            pageNo = -1;
+        if (null == pageNo || pageNo < 1) {
+            pageNo = 0;
         }
-        if (null == pageSize) {
-            pageSize = -1;
+        if (null == pageSize || pageSize < 1) {
+            pageSize = 0;
         }
-        if (null == totalCount) {
+        if (null == totalCount || totalCount < 1) {
             totalCount = 0;
         }
 
