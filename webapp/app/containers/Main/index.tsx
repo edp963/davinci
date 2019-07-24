@@ -30,7 +30,7 @@ import { promiseDispatcher } from '../../utils/reduxPromisation'
 import checkLogin from '../../utils/checkLogin'
 import { setToken } from '../../utils/request'
 import { DOWNLOAD_LIST_POLLING_FREQUENCY } from 'app/globalConstants'
-
+import { statistic } from '../../utils/statistic/statistic.dv'
 const styles = require('./Main.less')
 
 interface IMainProps {
@@ -94,6 +94,7 @@ export class Main extends React.Component<IMainProps, {}> {
       const loginUser = localStorage.getItem('loginUser')
       setToken(token)
       this.props.onLogged(JSON.parse(loginUser))
+      statistic.sendPrevDurationRecord()
       this.initPolling()
     } else {
       this.props.router.replace('/login')
