@@ -165,6 +165,8 @@ public class Consts {
 
     public static final String DIR_DOWNLOAD = File.separator + "download" + File.separator;
 
+    public static final String DIR_SHARE_DOWNLOAD = File.separator + "share" + File.separator + "download" + File.separator;
+
     public static final String DIR_EMAIL = File.separator + "email" + File.separator;
 
     public static final String DIR_TEMPL = File.separator + "tempFiles" + File.separator;

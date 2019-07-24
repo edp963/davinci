@@ -24,6 +24,7 @@ import com.google.common.collect.Maps;
 import edp.core.model.QueryColumn;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
+import edp.davinci.core.enums.ActionEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -83,10 +84,19 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             log.error("sheet worker error,context=" + context.toString(), e);
             rst = false;
         }
-        Object[] args = {rst, context.getWrapper().getAction(), context.getWrapper().getxId(),
-                context.getSheet().getSheetName(), context.getDashboardId(), context.getWidgetId()
-                , watch.elapsed(TimeUnit.MILLISECONDS)};
-        log.info("sheet worker complete status={},action={},xid={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+
+        if (context.getWrapper().getAction() == ActionEnum.DOWNLOAD) {
+            Object[] args = {rst, context.getWrapper().getAction(), context.getWrapper().getxId(),
+                    context.getSheet().getSheetName(), context.getDashboardId(), context.getWidgetId()
+                    , watch.elapsed(TimeUnit.MILLISECONDS)};
+            log.info("sheet worker complete status={},action={},xid={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+        } else if (context.getWrapper().getAction() == ActionEnum.SHAREDOWNLOAD) {
+            Object[] args = {rst, context.getWrapper().getAction(), context.getWrapper().getxUUID(),
+                    context.getSheet().getSheetName(), context.getDashboardId(), context.getWidgetId()
+                    , watch.elapsed(TimeUnit.MILLISECONDS)};
+            log.info("sheet worker complete status={},action={},xUUID={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+        }
+
         return (T) rst;
     }
 
