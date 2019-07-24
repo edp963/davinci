@@ -113,10 +113,10 @@ export class ProjectAdmin extends React.PureComponent<IProjectAdminProps, IProje
   }
 
   private deleteAdmin = (option) => () => {
-    const { onDeleteProjectAdmin } = this.props
+    const { projectDetail, onDeleteProjectAdmin } = this.props
     const {id, relationId} = option
     onDeleteProjectAdmin(id, relationId, () => {
-      this.loadAdmins()
+      this.loadAdmins(projectDetail.id)
       this.setState({ adminTargetKeys: []})
     })
   }

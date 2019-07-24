@@ -54,6 +54,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 
 import static edp.core.consts.Consts.*;
+import static edp.core.enums.DataTypeEnum.MYSQL;
 import static edp.core.enums.DataTypeEnum.ORACLE;
 
 @Slf4j
@@ -216,22 +217,19 @@ public class SqlUtils {
             paginateWithQueryColumns.setTotalCount(totalCount);
             int maxRows = limit > 0 && limit < pageSize * pageNo ? limit : pageSize * pageNo;
 
-            switch (this.dataTypeEnum) {
-                case MYSQL:
-                    sql = sql + " LIMIT " + startRow + ", " + pageSize;
-                    md5 = MD5Util.getMD5(sql, true, 16);
-                    if (isQueryLogEnable) {
-                        sqlLogger.info("{}  >> \n{}", md5, sql);
-                    }
-                    getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
-                    break;
-                default:
-                    if (isQueryLogEnable) {
-                        sqlLogger.info("{}  >> \n{}", md5, sql);
-                    }
-                    jdbcTemplate.setMaxRows(maxRows);
-                    getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, startRow);
-                    break;
+            if (this.dataTypeEnum == MYSQL) {
+                sql = sql + " LIMIT " + startRow + ", " + pageSize;
+                md5 = MD5Util.getMD5(sql, true, 16);
+                if (isQueryLogEnable) {
+                    sqlLogger.info("{}  >> \n{}", md5, sql);
+                }
+                getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
+            } else {
+                if (isQueryLogEnable) {
+                    sqlLogger.info("{}  >> \n{}", md5, sql);
+                }
+                jdbcTemplate.setMaxRows(maxRows);
+                getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, startRow);
             }
         }
 
@@ -318,22 +316,19 @@ public class SqlUtils {
         try {
             connection = getConnection();
             if (null != connection) {
-                switch (this.dataTypeEnum) {
-                    case ORACLE:
-                        dbList.add(this.username);
-                        break;
-                    default:
-                        String catalog = connection.getCatalog();
-                        if (!StringUtils.isEmpty(catalog)) {
-                            dbList.add(catalog);
-                        } else {
-                            DatabaseMetaData metaData = connection.getMetaData();
-                            ResultSet rs = metaData.getCatalogs();
-                            while (rs.next()) {
-                                dbList.add(rs.getString(1));
-                            }
+                if (this.dataTypeEnum == ORACLE) {
+                    dbList.add(this.username);
+                } else {
+                    String catalog = connection.getCatalog();
+                    if (!StringUtils.isEmpty(catalog)) {
+                        dbList.add(catalog);
+                    } else {
+                        DatabaseMetaData metaData = connection.getMetaData();
+                        ResultSet rs = metaData.getCatalogs();
+                        while (rs.next()) {
+                            dbList.add(rs.getString(1));
                         }
-                        break;
+                    }
                 }
 
             }

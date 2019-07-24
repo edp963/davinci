@@ -26,6 +26,7 @@ import {
   SET_INDIVIDUAL_DASHBOARD,
   LOAD_SHARE_RESULTSET,
   LOAD_SHARE_RESULTSET_SUCCESS,
+  LOAD_SHARE_RESULTSET_FAILURE,
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
   LOAD_WIDGET_CSV_FAILURE,
@@ -49,6 +50,7 @@ import {
   deserializeDefaultValue
 } from 'app/components/Filters/util'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
+import { DashboardItemStatus } from '.'
 
 const initialState = fromJS({
   dashboard: null,
@@ -107,6 +109,7 @@ function shareReducer (state = initialState, { type, payload }) {
         .set('items', payload.dashboard.relations)
         .set('itemsInfo', payload.dashboard.relations.reduce((obj, item) => {
           obj[item.id] = {
+            status: DashboardItemStatus.Initial,
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
@@ -140,6 +143,7 @@ function shareReducer (state = initialState, { type, payload }) {
         }])
         .set('itemsInfo', {
           1: {
+            status: DashboardItemStatus.Initial,
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
@@ -233,9 +237,19 @@ function shareReducer (state = initialState, { type, payload }) {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
+          status: DashboardItemStatus.Fulfilled,
           loading: false,
           datasource: payload.resultset || { resultList: [] },
           renderType: payload.renderType
+        }
+      })
+    case LOAD_SHARE_RESULTSET_FAILURE:
+      return state.set('itemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          status: DashboardItemStatus.Error,
+          loading: false
         }
       })
     case LOAD_WIDGET_CSV:

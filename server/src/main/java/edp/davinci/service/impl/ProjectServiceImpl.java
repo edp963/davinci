@@ -195,6 +195,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = new Project();
         BeanUtils.copyProperties(projectCreat, project);
         project.setUserId(user.getId());
+        project.setCreateUserId(user.getId());
 
         int insert = projectMapper.insert(project);
         if (insert > 0) {
@@ -357,6 +358,8 @@ public class ProjectServiceImpl implements ProjectService {
         project.setName(projectUpdate.getName());
         project.setDescription(projectUpdate.getDescription());
         project.setVisibility(projectUpdate.getVisibility());
+        project.setUpdateTime(new Date());
+        project.setUpdateBy(user.getId());
 
         int i = projectMapper.updateBaseInfo(project);
         if (i > 0) {
@@ -513,11 +516,9 @@ public class ProjectServiceImpl implements ProjectService {
         boolean isCreater = projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer();
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
+        RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getByProjectAndUser(id, user.getId());
 
         if (modify) {
-
-            RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getByProjectAndUser(id, user.getId());
-
             //项目的创建人 和 当前项目对应组织的owner可以修改
             if (!isCreater && null == relProjectAdmin && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
                 log.info("user(:{}) have not permission to modify project (:{})", user.getId(), id);
@@ -530,7 +531,12 @@ public class ProjectServiceImpl implements ProjectService {
             }
 
             //project 所在org 对普通成员project不可见
-            if (!isCreater && !projectDetail.getVisibility() && projectDetail.getOrganization().getMemberPermission() < (short) 1) {
+            if (!isCreater
+                    && rel.getRole() != UserOrgRoleEnum.OWNER.getRole()
+                    && null == relProjectAdmin
+                    && projectDetail.getOrganization().getMemberPermission() < (short) 1
+                    && !projectDetail.getVisibility()) {
+
                 log.info("user(:{}) have not permission to get project (:{})", user.getId(), id);
                 throw new UnAuthorizedExecption();
             }

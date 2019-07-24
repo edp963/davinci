@@ -26,6 +26,7 @@ import {
   LOAD_SHARE_WIDGET_SUCCESS,
   LOAD_SHARE_RESULTSET,
   LOAD_SHARE_RESULTSET_SUCCESS,
+  LOAD_SHARE_RESULTSET_FAILURE,
   SET_INDIVIDUAL_DASHBOARD,
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
@@ -106,6 +107,16 @@ export function resultsetGetted (renderType, itemId, requestParams, resultset) {
       itemId,
       requestParams,
       resultset
+    }
+  }
+}
+
+export function getResultsetFail (itemId, error) {
+  return {
+    type: LOAD_SHARE_RESULTSET_FAILURE,
+    payload: {
+      itemId,
+      error
     }
   }
 }

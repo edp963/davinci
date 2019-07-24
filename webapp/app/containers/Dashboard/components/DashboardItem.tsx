@@ -21,7 +21,6 @@
 import React from 'react'
 import Animate from 'rc-animate'
 import classnames from 'classnames'
-
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
 import DashboardItemMask from './DashboardItemMask'
@@ -86,6 +85,7 @@ interface IDashboardItemProps {
   onDrillPathData?: (e: object) => void
   onSelectChartsItems?: (itemId: number, renderType: string, selectedItems: number[]) => void
   onGetControlOptions: OnGetControlOptions
+  monitoredSyncDataAction?: () => any
 }
 
 interface IDashboardItemStates {
@@ -275,10 +275,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const {
       itemId,
       widget,
-      onGetChartData
+      onGetChartData,
+      monitoredSyncDataAction
     } = this.props
     const { pagination, nativeQuery } = this.state
     onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
+    if (monitoredSyncDataAction) {
+      monitoredSyncDataAction()
+    }
   }
 
   private onControlSearch = (queryConditions: Partial<IQueryConditions>) => {

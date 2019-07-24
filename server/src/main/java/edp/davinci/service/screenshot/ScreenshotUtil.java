@@ -54,17 +54,23 @@ public class ScreenshotUtil {
     @Value("${screenshot.phantomjs_path:}")
     private String PHANTOMJS_PATH;
 
+    @Value("${screenshot.timeout_second:600}")
+    private int timeOutSecond;
+
 
     private static final int DEFAULT_SCREENSHOT_WIDTH = 1920;
     private static final int DEFAULT_SCREENSHOT_HEIGHT = 1080;
 
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(8);
 
-    public void screenshot(List<ImageContent> imageContents) {
-        ExecutorService executorService = Executors.newFixedThreadPool(8);
+
+    public void screenshot(long jobId, List<ImageContent> imageContents) {
+        log.info("start screenshot for job: {}", jobId);
         try {
             CountDownLatch countDownLatch = new CountDownLatch(imageContents.size());
             List<Future> futures = new ArrayList<>(imageContents.size());
             imageContents.forEach(content -> futures.add(executorService.submit(() -> {
+                log.info("thread for screenshot start, type: {}, id: {}", content.getDesc(), content.getCId());
                 try {
                     File image = doScreenshot(content.getUrl());
                     content.setContent(image);
@@ -73,6 +79,7 @@ public class ScreenshotUtil {
                     e.printStackTrace();
                 } finally {
                     countDownLatch.countDown();
+                    log.info("thread for screenshot finish, type: {}, id: {}", content.getDesc(), content.getCId());
                 }
             })));
 
@@ -82,7 +89,6 @@ public class ScreenshotUtil {
                 }
                 countDownLatch.await();
             } catch (ExecutionException e) {
-                executorService.shutdownNow();
             }
 
             imageContents.sort(Comparator.comparing(ImageContent::getOrder));
@@ -90,7 +96,7 @@ public class ScreenshotUtil {
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            executorService.shutdown();
+            log.info("finish screenshot for job: {}", jobId);
         }
     }
 
@@ -98,10 +104,9 @@ public class ScreenshotUtil {
     private File doScreenshot(String url) throws Exception {
         WebDriver driver = generateWebDriver();
         driver.get(url);
-
-        System.out.println("getting... " + url);
+        log.info("getting... {}", url);
         try {
-            WebDriverWait wait = new WebDriverWait(driver, 60000);
+            WebDriverWait wait = new WebDriverWait(driver, timeOutSecond);
 
             ExpectedCondition<WebElement> ConditionOfSign = ExpectedConditions.presenceOfElementLocated(By.id("headlessBrowserRenderSign"));
             ExpectedCondition<WebElement> ConditionOfWidth = ExpectedConditions.presenceOfElementLocated(By.id("width"));
@@ -128,6 +133,7 @@ public class ScreenshotUtil {
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
+            log.info("finish get {}, webdriver will quit soon", url);
             driver.quit();
         }
         return null;
@@ -155,8 +161,11 @@ public class ScreenshotUtil {
 
 
     private WebDriver generateChromeDriver() throws ExecutionException {
-        if (!new File(CHROME_DRIVER_PATH).setExecutable(true)) {
-            throw new ExecutionException(new Exception(CHROME_DRIVER_PATH + "is not executable!"));
+        File file = new File(CHROME_DRIVER_PATH);
+        if (!file.canExecute()) {
+            if (!file.setExecutable(true)) {
+                throw new ExecutionException(new Exception(CHROME_DRIVER_PATH + "is not executable!"));
+            }
         }
 
         log.info("Generating Chrome driver ({})...", CHROME_DRIVER_PATH);
@@ -175,8 +184,11 @@ public class ScreenshotUtil {
     }
 
     private WebDriver generatePhantomJsDriver() throws ExecutionException {
-        if (!new File(PHANTOMJS_PATH).setExecutable(true)) {
-            throw new ExecutionException(new Exception(PHANTOMJS_PATH + "is not executable!"));
+        File file = new File(PHANTOMJS_PATH);
+        if (!file.canExecute()) {
+            if (!file.setExecutable(true)) {
+                throw new ExecutionException(new Exception(PHANTOMJS_PATH + "is not executable!"));
+            }
         }
         log.info("Generating PhantomJs driver ({})...", PHANTOMJS_PATH);
         System.setProperty(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY, PHANTOMJS_PATH);

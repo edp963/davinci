@@ -83,6 +83,12 @@ import { IQueryConditions, IDataRequestParams, QueryVariable } from '../../../ap
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
+export enum DashboardItemStatus {
+  Initial,
+  Fulfilled,
+  Error
+}
+
 interface IDashboardProps {
   dashboard: any
   title: string
@@ -96,6 +102,7 @@ interface IDashboardProps {
         resultList: any[]
         totalCount: number
       }
+      status: DashboardItemStatus,
       selectedItems?: number[]
       loading: boolean
       queryConditions: IQueryConditions
@@ -219,7 +226,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   public componentWillReceiveProps (nextProps: IDashboardProps) {
     const { currentItems, currentItemsInfo, dashboard, widgets } = nextProps
     if (currentItemsInfo) {
-      if (Object.values(currentItemsInfo).filter((info) => !!info.datasource.resultList.length).length === currentItems.length) {
+      const initialedItems = Object.values(currentItemsInfo)
+        .filter((info) => [DashboardItemStatus.Fulfilled, DashboardItemStatus.Error].includes(info.status))
+      if (initialedItems.length === currentItems.length) {
         // FIXME
         setTimeout(() => {
           this.setState({

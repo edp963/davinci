@@ -32,12 +32,12 @@ import injectSaga from '../../utils/injectSaga'
 // import reducer from '../App/reducer'
 // import saga from '../App/sagas'
 
-import { login, logged, setLoginUser } from '../App/actions'
+import { login, logged } from '../App/actions'
 import { makeSelectLoginLoading } from '../App/selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import checkLogin from '../../utils/checkLogin'
 import { setToken } from '../../utils/request'
-
+import { statistic } from '../../utils/statistic/statistic.dv'
 
 const styles = require('./Login.less')
 
@@ -45,8 +45,7 @@ interface ILoginProps {
   router: any
   loginLoading: boolean
   onLogin: (username: string, password: string, resolve: () => any) => any
-  onLogged: () => any
-  onSetLoginUser: (user: object) => any
+  onLogged: (user) => void
 }
 
 interface ILoginStates {
@@ -73,8 +72,7 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
       const loginUser = localStorage.getItem('loginUser')
 
       setToken(token)
-      this.props.onLogged()
-      this.props.onSetLoginUser(JSON.parse(loginUser))
+      this.props.onLogged(JSON.parse(loginUser))
       this.props.router.replace('/')
     }
   }
@@ -101,7 +99,10 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     const { username, password } = this.state
 
     if (username && password) {
-      onLogin(username, password, () => { router.replace('/')})
+      onLogin(username, password, () => {
+        router.replace('/')
+        statistic.onceSendTerminal()
+      })
     }
   }
 
@@ -145,8 +146,7 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onLogin: (username, password, resolve) => dispatch(login(username, password, resolve)),
-    onLogged: () => promiseDispatcher(dispatch, logged),
-    onSetLoginUser: (user) => promiseDispatcher(dispatch, setLoginUser, user)
+    onLogged: (user) => dispatch(logged(user))
   }
 }
 

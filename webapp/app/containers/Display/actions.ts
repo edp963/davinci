@@ -470,3 +470,40 @@ export function resetDisplayState () {
     type: ActionTypes.RESET_DISPLAY_STATE
   }
 }
+
+
+export function monitoredSyncDataAction () {
+  return {
+    type: ActionTypes.MONITORED_SYNC_DATA_ACTION
+  }
+}
+
+export function monitoredSearchDataAction () {
+  return {
+    type: ActionTypes.MONITORED_SEARCH_DATA_ACTION
+  }
+}
+
+export function monitoredLinkageDataAction () {
+  return {
+    type: ActionTypes.MONITORED_LINKAGE_DATA_ACTION
+  }
+}
+
+export function loadProjectDetail (pid) {
+  return {
+    type: ActionTypes.LOAD_CURRENT_PROJECT,
+    payload: {
+      pid
+    }
+  }
+}
+
+export function projectLoaded (result) {
+  return {
+    type: ActionTypes.LOAD_CURRENT_PROJECT_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
