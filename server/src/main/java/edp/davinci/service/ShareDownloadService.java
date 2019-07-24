@@ -19,13 +19,13 @@
 
 package edp.davinci.service;
 
+import edp.core.utils.FixSizeLinkedList;
 import edp.davinci.core.enums.DownloadType;
 import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
 import edp.davinci.model.ShareDownloadRecord;
 import edp.davinci.model.User;
 
 import java.util.List;
-import java.util.Queue;
 
 public interface ShareDownloadService {
 
@@ -33,14 +33,13 @@ public interface ShareDownloadService {
      * 提交分享下载任务
      *
      * @param downloadType
-     * @param id
      * @param uuid
      * @param token
      * @param user
      * @param downloadViewExecuteParams
      * @return
      */
-    boolean submit(DownloadType downloadType, Long id, String uuid, String token, User user, List<DownloadViewExecuteParam> downloadViewExecuteParams);
+    boolean submit(DownloadType downloadType, String uuid, String token, User user, List<DownloadViewExecuteParam> downloadViewExecuteParams);
 
     /**
      * 获取分享下载列表
@@ -50,7 +49,7 @@ public interface ShareDownloadService {
      * @param user
      * @return
      */
-    Queue<ShareDownloadRecord> queryDownloadRecordPage(String uuid, String token, User user);
+    FixSizeLinkedList<ShareDownloadRecord> queryDownloadRecordPage(String uuid, String token, User user);
 
 
     /**

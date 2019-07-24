@@ -19,6 +19,7 @@
 
 package edp.davinci.model;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
 import java.util.Date;
@@ -28,6 +29,7 @@ import java.util.Date;
 public class DownloadRecordBaseInfo {
     private String name;
 
+    @JSONField(serialize = false)
     private String path;
 
     private Short status;

@@ -373,7 +373,7 @@ public class ShareServiceImpl implements ShareService {
             }
         }
 
-        ViewWithSource viewWithSource = viewMapper.getViewWithSource(shareInfo.getShareId());
+        ViewWithSource viewWithSource = viewMapper.getViewWithProjectAndSourceByWidgetId(shareInfo.getShareId());
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), shareInfo.getShareUser(), false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareInfo.getShareUser());
 

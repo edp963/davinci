@@ -22,6 +22,7 @@ package edp.davinci.controller;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.CurrentUser;
+import edp.core.utils.FixSizeLinkedList;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -54,7 +55,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Queue;
 
 /**
  * Created by IntelliJ IDEA.
@@ -118,30 +118,25 @@ public class DownloadController extends BaseController {
 
 
     @ApiOperation(value = "submit share download")
-    @PostMapping(value = "/share/submit/{type}/{id}/{uuid}/{token:.*}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @PostMapping(value = "/share/submit/{type}/{uuid}/{dataToken:.*}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @AuthIgnore
     public ResponseEntity submitShareDownloadTask(@PathVariable(name = "type") String type,
-                                                  @PathVariable(name = "id") Long id,
                                                   @PathVariable(name = "uuid") String uuid,
-                                                  @PathVariable(name = "token") String token,
+                                                  @PathVariable(name = "dataToken") String dataToken,
                                                   @Valid @RequestBody(required = false) DownloadViewExecuteParam[] params,
                                                   @ApiIgnore @CurrentUser User user,
                                                   HttpServletRequest request) {
 
 
-        if (StringUtils.isEmpty(token)) {
+        if (StringUtils.isEmpty(dataToken)) {
             ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
         List<DownloadViewExecuteParam> downloadViewExecuteParams = Arrays.asList(params);
-        boolean rst = shareDownloadService.submit(DownloadType.getDownloadType(type), id, uuid, token, user, downloadViewExecuteParams);
+        boolean rst = shareDownloadService.submit(DownloadType.getDownloadType(type), uuid, dataToken, user, downloadViewExecuteParams);
 
-        if (null == user) {
-            return ResponseEntity.ok(rst ? new ResultMap().success() : new ResultMap().fail());
-        } else {
-            return ResponseEntity.ok(rst ? new ResultMap(tokenUtils).successAndRefreshToken(request) : new ResultMap(tokenUtils).failAndRefreshToken(request));
-        }
+        return ResponseEntity.ok(rst ? new ResultMap().success() : new ResultMap().fail());
     }
 
 
@@ -157,7 +152,7 @@ public class DownloadController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        Queue<ShareDownloadRecord> records = shareDownloadService.queryDownloadRecordPage(uuid, token, user);
+        FixSizeLinkedList<ShareDownloadRecord> records = shareDownloadService.queryDownloadRecordPage(uuid, token, user);
 
         if (null == user) {
             return ResponseEntity.ok(new ResultMap(tokenUtils).payloads(records));
