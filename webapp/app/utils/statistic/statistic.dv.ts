@@ -146,7 +146,7 @@ class Statistic {
         this.clock['time'] = 0
     }
 
-    public whenSendTerminal = () => {
+    public sendPrevDurationRecord = () => {
         // 从localstorege拿上一次时长数据 send server
         const record = this.getPrevDurationRecord()
         if (record && record.length) {
@@ -154,6 +154,10 @@ class Statistic {
                 this.clearPrevDurationRecord()
             })
         }
+    }
+
+    public whenSendTerminal = () => {
+        this.sendPrevDurationRecord()
         const loginUser = this.parse(this.getItemByLocalStorage('loginUser'))
         this.setUserDate({
             user_id: loginUser ? loginUser.id : void 0,
