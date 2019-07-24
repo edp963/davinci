@@ -101,7 +101,16 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     if (username && password) {
       onLogin(username, password, () => {
         router.replace('/')
-        statistic.onceSendTerminal()
+        statistic.whenSendTerminal()
+        statistic.setOperations({
+            create_time:  statistic.getCurrentDateTime()
+          }, (data) => {
+            const loginRecord = {
+              ...data,
+              action: 'login'
+            }
+            statistic.sendOperation(loginRecord)
+        })
       })
     }
   }
