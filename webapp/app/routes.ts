@@ -102,12 +102,12 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           path: '/project/:pid',
           name: 'project',
           component: Report,
-          indexRoute: {
-            onEnter: (_, replace) => {
-              const { params } = _
-              replace(`/project/${params.pid}/vizs`)
-            }
-          },
+          // indexRoute: {
+          //   onEnter: (_, replace) => {
+          //     const { params } = _
+          //     replace(`/project/${params.pid}/vizs`)
+          //   }
+          // },
           childRoutes: [
             {
               path: '/project/:pid/vizs',
