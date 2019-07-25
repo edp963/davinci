@@ -21,8 +21,8 @@ public interface ShareDownloadRecordMapper {
             "        SELECT a.uuid, a.`create_time`\n" +
             "        FROM share_download_record a\n" +
             "        LEFT JOIN share_download_record b ON a.uuid = b.uuid AND a.create_time <= b.create_time\n" +
-            "        WHERE a.create_time > DATE_FORMAT((NOW() - INTERVAL 3 DAY),'%Y%m%d')\n" +
-            "        AND b.create_time > DATE_FORMAT((NOW() - INTERVAL 3 DAY),'%Y%m%d')\n" +
+            "        WHERE a.create_time > DATE_FORMAT((NOW() - INTERVAL 2 DAY),'%Y%m%d')\n" +
+            "        AND b.create_time > DATE_FORMAT((NOW() - INTERVAL 2 DAY),'%Y%m%d')\n" +
             "        GROUP BY a.uuid, a.create_time\n" +
             "        HAVING COUNT(b.create_time)<=10\n" +
             "        ) b1\n" +
@@ -35,7 +35,7 @@ public interface ShareDownloadRecordMapper {
     int insertSelective(ShareDownloadRecord record);
 
     @Select({
-            "SELECT * FROM share_download_record WHERE `uuid` = #{uuid, jdbcType=VARCHAR} and create_time > DATE_FORMAT((NOW() - INTERVAL 3 DAY),'%Y%m%d') order by create_time desc limit 10"
+            "SELECT * FROM share_download_record WHERE `uuid` = #{uuid, jdbcType=VARCHAR} and create_time > DATE_FORMAT((NOW() - INTERVAL 2 DAY),'%Y%m%d') order by create_time desc limit 10"
     })
     List<ShareDownloadRecord> getShareDownloadRecordsByUuid(String uuid);
 
@@ -60,8 +60,8 @@ public interface ShareDownloadRecordMapper {
             "        SELECT a.uuid, a.`create_time`\n" +
             "        FROM share_download_record a\n" +
             "        LEFT JOIN share_download_record b ON a.uuid = b.uuid AND a.create_time <= b.create_time\n" +
-            "        WHERE a.create_time > DATE_FORMAT((NOW() - INTERVAL 3 DAY),'%Y%m%d')\n" +
-            "        AND b.create_time > DATE_FORMAT((NOW() - INTERVAL 3 DAY),'%Y%m%d')\n" +
+            "        WHERE a.create_time > DATE_FORMAT((NOW() - INTERVAL 2 DAY),'%Y%m%d')\n" +
+            "        AND b.create_time > DATE_FORMAT((NOW() - INTERVAL 2 DAY),'%Y%m%d')\n" +
             "        GROUP BY a.uuid, a.create_time\n" +
             "        HAVING COUNT(b.create_time)<=10\n" +
             "        ) b1\n" +
