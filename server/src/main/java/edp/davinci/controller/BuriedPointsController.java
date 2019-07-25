@@ -41,11 +41,11 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
-@Api(value = "/buriedPoints", tags = "buriedPoints", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@Api(value = "/statistic", tags = "buriedPoints", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "buriedPoint not found"))
 @Slf4j
 @RestController
-@RequestMapping(value = Constants.BASE_API_PATH + "/buriedPoints", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@RequestMapping(value = Constants.BASE_API_PATH + "/statistic", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class BuriedPointsController {
 
     @Autowired
@@ -75,7 +75,7 @@ public class BuriedPointsController {
     }
 
     @ApiOperation(value = "collect visitor operation info ")
-    @PostMapping(value = "/visitorOperation", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/visitoroperation", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity collectVisitorOperationInfo(@Valid @RequestBody ValidList<VisitorOperationInfo> visitorOperationInfos,
                                               HttpServletRequest request){
 
