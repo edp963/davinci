@@ -19,7 +19,6 @@
 
 package edp.davinci.service;
 
-import edp.core.utils.FixSizeLinkedList;
 import edp.davinci.core.enums.DownloadType;
 import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
 import edp.davinci.model.ShareDownloadRecord;
@@ -49,7 +48,7 @@ public interface ShareDownloadService {
      * @param user
      * @return
      */
-    FixSizeLinkedList<ShareDownloadRecord> queryDownloadRecordPage(String uuid, String token, User user);
+    List<ShareDownloadRecord> queryDownloadRecordPage(String uuid, String token, User user);
 
 
     /**

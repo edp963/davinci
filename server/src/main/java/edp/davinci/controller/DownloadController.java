@@ -22,7 +22,6 @@ package edp.davinci.controller;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.CurrentUser;
-import edp.core.utils.FixSizeLinkedList;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -152,7 +151,7 @@ public class DownloadController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        FixSizeLinkedList<ShareDownloadRecord> records = shareDownloadService.queryDownloadRecordPage(uuid, token, user);
+        List<ShareDownloadRecord> records = shareDownloadService.queryDownloadRecordPage(uuid, token, user);
 
         if (null == user) {
             return ResponseEntity.ok(new ResultMap(tokenUtils).payloads(records));

@@ -19,18 +19,14 @@
 
 package edp.davinci.service.excel;
 
-import edp.core.common.cache.Caches;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.FixSizeLinkedList;
 import edp.davinci.core.config.SpringContextHolder;
 import edp.davinci.core.enums.DownloadTaskStatus;
 import edp.davinci.dao.DownloadRecordMapper;
+import edp.davinci.dao.ShareDownloadRecordMapper;
 import edp.davinci.model.DownloadRecord;
 import edp.davinci.model.ShareDownloadRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 
 /**
  * Created by IntelliJ IDEA.
@@ -70,32 +66,19 @@ public abstract class MsgNotifier {
 
             case SHAREDOWNLOAD:
                 ShareDownloadRecord shareDownloadRecord = (ShareDownloadRecord) wrapper.getMsg();
-                CacheManager cacheManager = SpringContextHolder.getBean(CacheManager.class);
-                Cache cache = cacheManager.getCache(Caches.shareDownloadRecord.name());
-                FixSizeLinkedList<ShareDownloadRecord> list = cache.get(wrapper.getxUUID(), FixSizeLinkedList.class);
-
-                if (!CollectionUtils.isEmpty(list)) {
-                    int index = list.indexOf(shareDownloadRecord);
-
-                    if (shareDownloadRecord == null) {
-                        log.error("ShareDownloadAction record is null,nothing to do");
-                        break;
-                    }
-
-                    if (StringUtils.isNotEmpty(wrapper.getRst())) {
-                        shareDownloadRecord.setStatus(DownloadTaskStatus.SUCCESS.getStatus());
-                        shareDownloadRecord.setPath(wrapper.getRst());
-                    } else {
-                        shareDownloadRecord.setStatus(DownloadTaskStatus.FAILED.getStatus());
-                    }
-
-                    list.set(index, shareDownloadRecord);
-                    cache.put(shareDownloadRecord.getId(), shareDownloadRecord);
-                    log.info("ShareDownloadAction record is updated status=" + shareDownloadRecord.getStatus());
-                } else {
-                    log.info("ShareDownloadAction record is not found");
+                if (shareDownloadRecord == null){
+                    log.error("ShareDownloadAction record is null,nothing to do");
+                    break;
                 }
 
+                if (StringUtils.isNotEmpty(wrapper.getRst())) {
+                    shareDownloadRecord.setStatus(DownloadTaskStatus.SUCCESS.getStatus());
+                    shareDownloadRecord.setPath(wrapper.getRst());
+                } else {
+                    shareDownloadRecord.setStatus(DownloadTaskStatus.FAILED.getStatus());
+                }
+                ((ShareDownloadRecordMapper) SpringContextHolder.getBean(ShareDownloadRecordMapper.class)).updateById(shareDownloadRecord);
+                log.info("ShareDownloadAction record is updated status=" + shareDownloadRecord.getStatus());
                 break;
         }
     }

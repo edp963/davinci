@@ -57,6 +57,7 @@
 
         <!--<table tableName="rel_role_dashboard_widget" domainObjectName="RelRoleDashboardWidget" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>-->
         <!--<table tableName="rel_role_display_slide_widget" domainObjectName="RelRoleDisplaySlideWidget" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>-->
+        <!--<table tableName="share_download_record" domainObjectName="ShareDownloadRecord" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>-->
 
 
     </context>
