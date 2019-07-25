@@ -50,6 +50,14 @@ function mapMonitoreToAction (action: string, initialType: string) {
     if (isOtherAction) {
         actionType = otherAction[action]
       // 避免与initial混淆，此三种状态不update operationRecord  的action值
+        if (actionType === 'download_task' || actionType === 'download') {
+            const newData = {
+                ...statistic.operationRecord,
+                action: actionType,
+                create_time: statistic.getCurrentDateTime()
+            }
+            statistic.sendOperation(newData)
+        }
     }
 
     if (isDataAction) {

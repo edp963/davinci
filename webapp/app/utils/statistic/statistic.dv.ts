@@ -146,7 +146,7 @@ class Statistic {
         this.clock['time'] = 0
     }
 
-    public whenSendTerminal = () => {
+    public sendPrevDurationRecord = () => {
         // 从localstorege拿上一次时长数据 send server
         const record = this.getPrevDurationRecord()
         if (record && record.length) {
@@ -154,8 +154,18 @@ class Statistic {
                 this.clearPrevDurationRecord()
             })
         }
-        const terminalRecord = this.getRecord('terminal')
-        this.sendTerminal(terminalRecord)
+    }
+
+    public whenSendTerminal = () => {
+        this.sendPrevDurationRecord()
+        const loginUser = this.parse(this.getItemByLocalStorage('loginUser'))
+        this.setUserDate({
+            user_id: loginUser ? loginUser.id : void 0,
+            email: loginUser ? loginUser.email : ''
+        })
+        this.setTerminals({}, (data) => {
+            this.sendTerminal(data)
+        })
     }
 
     public isTimeout = (callback?: (data: IDuration) => any) => {
@@ -316,6 +326,17 @@ class Statistic {
         }
         if (typeof callback === 'function') {
             callback(this.operationRecord)
+        }
+    }
+
+    public setTerminals = (options?: Partial<ITerminal>, callback?: (data: ITerminal) => any) => {
+        this.terminalRecord = {
+            ...this.terminalRecord,
+            ...options,
+            ...this.userData
+        }
+        if (typeof callback === 'function') {
+            callback(this.terminalRecord)
         }
     }
 
