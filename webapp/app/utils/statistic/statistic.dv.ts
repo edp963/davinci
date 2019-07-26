@@ -206,7 +206,7 @@ class Statistic {
     }
 
     public sendOperation = (body) => {
-        const url = `${api.buriedPoints}/visitorOperation`
+        const url = `${api.buriedPoints}/visitoroperation`
         return request(url, {
             method: 'post',
             data: [body]
