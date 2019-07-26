@@ -21,6 +21,7 @@ package edp.core.utils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -34,6 +35,13 @@ public class RedisUtils {
     @Autowired(required = false)
     @Qualifier("InitRedisTemplate")
     private RedisTemplate<String, Object> redisTemplate;
+
+    @Value("${spring.redis.isEnable:false}")
+    private boolean isRedisEnable;
+
+    public boolean isRedisEnable() {
+        return isRedisEnable;
+    }
 
     public boolean set(String key, Object value) {
         if (null != redisTemplate) {

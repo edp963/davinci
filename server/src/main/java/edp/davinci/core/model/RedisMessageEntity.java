@@ -17,28 +17,29 @@
  *
  */
 
-package edp.davinci.core.config;
+package edp.davinci.core.model;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import lombok.Getter;
 
-import java.util.concurrent.CountDownLatch;
+import java.io.Serializable;
 
-import static edp.davinci.core.common.Constants.TOPIC_PATTERN;
+@Getter
+public class RedisMessageEntity implements Serializable {
+    private static final long serialVersionUID = 7958963558520404281L;
 
-@Component
-@Slf4j
-public class RedisMessageReceiver {
 
-    private CountDownLatch countDownLatch;
+    private Class clazz;
 
-    public RedisMessageReceiver(CountDownLatch countDownLatch) {
-        this.countDownLatch = countDownLatch;
+    private Object message;
+
+    private String flag;
+
+    public RedisMessageEntity() {
     }
 
-    public void receive(Object message) {
-        log.info("[{} received message, start spending......]", TOPIC_PATTERN);
-        log.info("{}", message);
-        countDownLatch.countDown();
+    public RedisMessageEntity(Class clazz, Object message, String flag) {
+        this.clazz = clazz;
+        this.message = message;
+        this.flag = flag;
     }
 }

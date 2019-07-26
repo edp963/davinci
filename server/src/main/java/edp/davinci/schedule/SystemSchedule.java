@@ -21,10 +21,7 @@ package edp.davinci.schedule;
 
 import edp.core.consts.Consts;
 import edp.core.exception.ServerException;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.DateUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.QuartzUtils;
+import edp.core.utils.*;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.dao.CronJobMapper;
 import edp.davinci.model.CronJob;
@@ -49,6 +46,9 @@ public class SystemSchedule {
     @Autowired
     private QuartzUtils quartzUtils;
 
+    @Autowired
+    private RedisUtils redisUtils;
+
 
     @Scheduled(cron = "0 0 1 * * *")
     public void clearTempDir() {
@@ -69,6 +69,11 @@ public class SystemSchedule {
 
     @Scheduled(cron = "0 0/2 * * * *")
     public void stopCronJob() {
+
+//        if (redisUtils.isRedisEnable()) {
+//            return;
+//        }
+//
         List<CronJob> jobs = cronJobMapper.getStopedJob();
         if (!CollectionUtils.isEmpty(jobs)) {
             for (CronJob job : jobs) {

@@ -19,30 +19,38 @@
 
 package edp.davinci.core.config;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import edp.core.config.RedisEnableCondition;
+import edp.davinci.core.service.RedisMessageReceiver;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import java.util.concurrent.CountDownLatch;
+import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 
-import static edp.davinci.core.common.Constants.TOPIC_PATTERN;
-
+@Slf4j
 @Configuration
+@Conditional(RedisEnableCondition.class)
 public class RedisMessageListener {
 
+    @Autowired(required = false)
+    @Qualifier("InitRedisTemplate")
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Bean
-    @ConditionalOnProperty("${spring.redis.isEnable}")
-    public RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory, MessageListenerAdapter messageListenerAdapter) {
+    public RedisMessageListenerContainer container(MessageListenerAdapter messageListenerAdapter) {
+        log.info("Registering bean for RedisMessageListenerContainer...");
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
-        container.addMessageListener(messageListenerAdapter, new PatternTopic(TOPIC_PATTERN));
+        container.setConnectionFactory(redisTemplate.getConnectionFactory());
+        container.addMessageListener(messageListenerAdapter, new PatternTopic(DAVINCI_TOPIC_CHANNEL));
         return container;
     }
 
@@ -57,13 +65,8 @@ public class RedisMessageListener {
 
 
     @Bean
-    RedisMessageReceiver redisMessageReceiver(CountDownLatch countDownLatch) {
-        return new RedisMessageReceiver(countDownLatch);
-    }
-
-
-    @Bean
-    CountDownLatch countDownLatch() {
-        return new CountDownLatch(1);
+    RedisMessageReceiver redisMessageReceiver() {
+        return new RedisMessageReceiver();
     }
 }
+
