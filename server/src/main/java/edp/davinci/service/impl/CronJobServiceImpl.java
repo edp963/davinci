@@ -27,6 +27,7 @@ import edp.core.utils.*;
 import edp.davinci.core.enums.CronJobStatusEnum;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
+import edp.davinci.core.model.RedisMessageEntity;
 import edp.davinci.dao.CronJobMapper;
 import edp.davinci.dto.cronJobDto.CronJobBaseInfo;
 import edp.davinci.dto.cronJobDto.CronJobInfo;
@@ -47,7 +48,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 
 @Slf4j
 @Service("cronJobService")
@@ -67,6 +72,7 @@ public class CronJobServiceImpl implements CronJobService {
     private RedisUtils redisUtils;
 
     private static final String CRONJOB_KEY = "CRONJOB";
+
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -270,8 +276,7 @@ public class CronJobServiceImpl implements CronJobService {
             cronJob.setUpdateTime(new Date());
             cronJobMapper.update(cronJob);
 
-            e.printStackTrace();
-            return cronJob;
+            throw e;
         }
     }
 
@@ -291,18 +296,59 @@ public class CronJobServiceImpl implements CronJobService {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
-        try {
-            quartzUtils.removeJob(cronJob);
-            cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
-            cronJob.setUpdateTime(new Date());
-            cronJobMapper.update(cronJob);
-            return cronJob;
-        } catch (ServerException e) {
-            cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
-            cronJobMapper.update(cronJob);
+        if (redisUtils.isRedisEnable()) {
+            String flag = MD5Util.getMD5(UUID.randomUUID().toString() + id, true, 32);
+            redisUtils.convertAndSend(DAVINCI_TOPIC_CHANNEL, new RedisMessageEntity(CronJobHandler.class, id, flag));
 
-            e.printStackTrace();
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+
+            long l = System.currentTimeMillis();
+
+            Thread stopJobThread = new Thread(() -> {
+                boolean result = false;
+                do {
+                    Object o = redisUtils.get(flag);
+                    if (o != null) {
+                        result = (boolean) o;
+                        if (result) {
+                            cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
+                            countDownLatch.countDown();
+                            break;
+                        }
+                    }
+                } while (!result);
+            });
+
+            stopJobThread.start();
+
+            if ((System.currentTimeMillis() - l) >= 10000L) {
+                stopJobThread.interrupt();
+                countDownLatch.countDown();
+            }
+
+            try {
+                countDownLatch.await(15L, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                countDownLatch.countDown();
+            }
+
             return cronJob;
+        } else {
+            try {
+                quartzUtils.removeJob(cronJob);
+                cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
+                cronJob.setUpdateTime(new Date());
+                cronJobMapper.update(cronJob);
+                return cronJob;
+            } catch (ServerException e) {
+                cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
+                cronJobMapper.update(cronJob);
+
+                e.printStackTrace();
+                return cronJob;
+            }
         }
     }
 

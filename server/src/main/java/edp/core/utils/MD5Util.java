@@ -21,6 +21,7 @@ package edp.core.utils;
 
 import sun.misc.BASE64Encoder;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 public class MD5Util {
@@ -40,11 +41,11 @@ public class MD5Util {
             MessageDigest md = MessageDigest.getInstance("md5");
             if (bit == 64) {
                 BASE64Encoder bw = new BASE64Encoder();
-                String bsB64 = bw.encode(md.digest(src.getBytes("utf-8")));
+                String bsB64 = bw.encode(md.digest(src.getBytes(StandardCharsets.UTF_8)));
                 md5 = bsB64;
             } else {
                 // 计算MD5函数
-                md.update(src.getBytes());
+                md.update(src.getBytes(StandardCharsets.UTF_8));
                 byte b[] = md.digest();
                 int i;
                 StringBuffer sb = new StringBuffer("");
@@ -75,5 +76,4 @@ public class MD5Util {
         }
         return md5;
     }
-
 }
