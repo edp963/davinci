@@ -535,7 +535,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         try {
           const widgetProps: IWidgetProps = JSON.parse(widget.config)
           const { mode, selectedChart, chartStyles } = widgetProps
-          if (mode === 'chart' && selectedChart === getTable().id) {
+          if (mode === 'chart'
+              && selectedChart === getTable().id
+              && chartStyles.table.withPaging) {
             pagination = {
               pageSize: Number(chartStyles.table.pageSize),
               ...pagination,

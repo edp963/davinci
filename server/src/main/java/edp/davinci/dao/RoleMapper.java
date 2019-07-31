@@ -92,7 +92,7 @@ public interface RoleMapper {
             "SELECT DISTINCT r.id FROM role r",
             "INNER JOIN rel_role_project rrp on rrp.role_id = r.id",
             "INNER JOIN rel_role_user rru on rru.role_id = r.id",
-            "WHERE rrp.project_id = #{projectId} and rru.id = #{userId}"
+            "WHERE rrp.project_id = #{projectId} and rru.user_id = #{userId}"
     })
     List<Long> getRolesByUserAndProject(@Param("userId") Long userId, @Param("projectId") Long projectId);
 }
