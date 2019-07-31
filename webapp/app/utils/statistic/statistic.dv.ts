@@ -85,7 +85,7 @@ class Statistic {
        Reflect.defineProperty(that.clock, 'checkTime', {
            configurable: true,
            set (value) {
-               console.log(value)
+            //    console.log(value)
                const time = that.getClock()
                if (time >= 30) {
                    // 只执行1次

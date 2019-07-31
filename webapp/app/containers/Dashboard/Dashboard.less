@@ -102,18 +102,14 @@
         margin-left: 8px;
       }
 
-      .control, .desc {
-        font-weight: normal;
+      .toggle {
+        font-size: 16px;
+        margin-left: 8px;
         cursor: pointer;
       }
 
-      .control {
-        font-size: 16px;
-        margin-left: 8px;
-      }
-
-      .desc {
-        margin-left: 8px;
+      .error {
+        color: @error-color;
       }
     }
 
@@ -267,8 +263,10 @@
   }
 }
 
-.descPanel {
-  max-width: 256px;
+.widgetInfoContent {
+  max-width: 480px;
+  max-height: 360px;
+  overflow-y: auto;
 }
 
 .gridBottom {

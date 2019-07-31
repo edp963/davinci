@@ -69,6 +69,7 @@ interface IDashboardItemProps {
   currentProject?: IProject
   queryConditions: IQueryConditions
   container?: string
+  errorMessage: string
   onSelectDrillHistory?: (history?: any, item?: number, itemId?: number, widgetId?: number) => void
   onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: any) => void
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
@@ -698,7 +699,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onSelectDrillHistory,
       onDeleteDashboardItem,
       onLoadWidgetShareLink,
-      container
+      container,
+      errorMessage
     } = this.props
 
     const data = datasource.resultList
@@ -813,23 +815,44 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
 
     const controls = widgetProps.controls
-    const controlPanelHandle = controls.length
-      ? (
-        <Tooltip title="选择参数">
+    const controlToggle = !!controls.length && (
+      <Tooltip title="选择参数">
+        <Icon
+          className={styles.toggle}
+          type={controlPanelVisible ? 'up-square-o' : 'down-square-o'}
+          onClick={this.toggleControlPanel}
+        />
+      </Tooltip>
+    )
+
+    const loadingIcon = loading && <Icon className={styles.toggle} type="loading" />
+
+    const descToggle = widget.description && (
+      <Popover
+        placement="bottomLeft"
+        content={widget.description}
+        overlayClassName={styles.widgetInfoContent}
+      >
+        <Tooltip title="描述">
+          <Icon className={styles.toggle} type="info-circle" />
+        </Tooltip>
+      </Popover>
+    )
+
+    const errorToggle = errorMessage && (
+      <Popover
+        placement="bottomLeft"
+        content={errorMessage}
+        overlayClassName={styles.widgetInfoContent}
+      >
+        <Tooltip title="错误信息">
           <Icon
-            className={styles.control}
-            type={controlPanelVisible ? 'up-square-o' : 'down-square-o'}
-            onClick={this.toggleControlPanel}
+            className={`${styles.toggle} ${styles.error}`}
+            type="warning"
           />
         </Tooltip>
-      ) : ''
-
-    const descPanelHandle = widget.desc
-      ? (
-        <Popover placement="bottom" content={<p className={styles.descPanel}>{widget.desc}</p>}>
-          <Icon className={styles.desc} type="question-circle-o" />
-        </Popover>
-      ) : ''
+      </Popover>
+    )
 
     const controlPanelTransitionName = {
       enter: styles.controlPanelEnter,
@@ -936,10 +959,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       <div className={gridItemClass} ref={(f) => this.container = f}>
         <div className={styles.header}>
           <div className={styles.title}>
-            {controlPanelHandle}
+            {controlToggle}
             <h4>{widget.name}</h4>
-            {loading && <Icon className={styles.control} type="loading" />}
-            {descPanelHandle}
+            {loadingIcon}
+            {descToggle}
+            {errorToggle}
+            {}
           </div>
           <div className={styles.tools}>
             <Tooltip title="同步数据">

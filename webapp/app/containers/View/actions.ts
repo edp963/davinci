@@ -313,13 +313,19 @@ export const ViewActions = {
     }
   },
 
-  loadViewData (id: number, requestParams: IDataRequestParams, resolve: (data: any[]) => void) {
+  loadViewData (
+    id: number,
+    requestParams: IDataRequestParams,
+    resolve: (data: any[]) => void,
+    reject: (error) => void
+  ) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA,
       payload: {
         id,
         requestParams,
-        resolve
+        resolve,
+        reject
       }
     }
   },
@@ -401,12 +407,13 @@ export const ViewActions = {
       }
     }
   },
-  loadViewDataFromVizItemFail (itemId: number, vizType: 'dashboard' | 'display') {
+  loadViewDataFromVizItemFail (itemId: number, vizType: 'dashboard' | 'display', errorMessage: string) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE,
       payload: {
         itemId,
-        vizType
+        vizType,
+        errorMessage
       }
     }
   }
