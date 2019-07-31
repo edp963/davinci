@@ -153,7 +153,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       }
     }
 
-    const titleWidth = `${splitWidth - 60 - 18 * depth}px`
+    const titleWidth = `${splitWidth - 60 - 18 * depth - 6 }px`
 
     return (
       <span className={styles.portalTreeItem}>
