@@ -64,7 +64,7 @@ import {
 import { ISource, ISchema } from '../Source/types'
 import { ViewVariableTypes } from './constants'
 
-import { message } from 'antd'
+import { message, notification, Popover } from 'antd'
 import EditorSteps from './components/EditorSteps'
 import EditorContainer from './components/EditorContainer'
 import ModelAuth from './components/ModelAuth'
@@ -158,12 +158,26 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     const { init, sqlValidationCode } = state
     let lastSuccessExecutedSql = state.lastSuccessExecutedSql
     if (sqlValidationCode !== sqlValidation.code && sqlValidation.code) {
-      message.destroy()
-      message.open({
-        content: `Syntax check ${sqlValidation.message}`,
-        type: sqlValidation.code === 200 ? 'success' : 'error',
-        duration: 5
-      })
+      notification.destroy()
+      sqlValidation.code === 200
+        ? notification.success({
+          message: '执行成功',
+          duration: 3
+        })
+        : notification.error({
+          message: '执行失败',
+          description: (
+            <Popover
+              placement="bottom"
+              trigger="click"
+              content={sqlValidation.message}
+              overlayClassName={Styles.errorMessage}
+            >
+              <a>点击查看错误信息</a>
+            </Popover>
+          ),
+          duration: null
+        })
       if (sqlValidation.code === 200) {
         lastSuccessExecutedSql = editingView.sql
       }
@@ -189,6 +203,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
 
   public componentWillUnmount () {
     this.props.onResetState()
+    notification.destroy()
   }
 
   private executeSql = () => {

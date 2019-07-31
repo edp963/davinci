@@ -220,7 +220,8 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
             interactId: '',
             rendered: false,
             renderType: 'rerender',
-            controlSelectOptions: {}
+            controlSelectOptions: {},
+            errorMessage: ''
           }
           return obj
         }, {}))
@@ -253,7 +254,8 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
               interactId: '',
               rendered: false,
               renderType: 'rerender',
-              controlSelectOptions: {}
+              controlSelectOptions: {},
+              errorMessage: ''
             }
             return obj
           }, {})
@@ -290,7 +292,8 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
           ...itemsInfo,
           [payload.itemId]: {
             ...itemsInfo[payload.itemId],
-            loading: true
+            loading: true,
+            errorMessage: ''
           }
         })
 
@@ -378,13 +381,18 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
         }
       })
     case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE:
-      return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
-        ...itemsInfo,
-        [payload.itemId]: {
-          ...itemsInfo[payload.itemId],
-          loading: false
-        }
-      })
+      return payload.vizType === 'dashboard'
+        ? !!itemsInfo
+          ? state.set('currentItemsInfo', {
+            ...itemsInfo,
+            [payload.itemId]: {
+              ...itemsInfo[payload.itemId],
+              loading: false,
+              errorMessage: payload.errorMessage
+            }
+          })
+          : state
+        : state
 
     case LOAD_DASHBOARD_SHARE_LINK:
       return state.set('currentDashboardShareInfoLoading', true)

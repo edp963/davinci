@@ -158,6 +158,7 @@ interface IDashboardItemInfo {
   renderType: RenderType
   controlSelectOptions: IMapControlOptions
   selectedItems?: number[]
+  errorMessage: string
 }
 
 export interface IDataRequestParams {
@@ -1541,7 +1542,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           renderType,
           queryConditions,
           selectedItems,
-          controlSelectOptions
+          controlSelectOptions,
+          errorMessage
         } = currentItemsInfo[id]
         const widget = widgets.find((w) => w.id === widgetId)
         const interacting = interactingStatus[id] || false
@@ -1574,6 +1576,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               renderType={renderType}
               controlSelectOptions={controlSelectOptions}
               queryConditions={queryConditions}
+              errorMessage={errorMessage}
               drillHistory={drillHistory}
               drillpathSetting={drillpathSetting}
               drillpathInstance={drillpathInstance}
