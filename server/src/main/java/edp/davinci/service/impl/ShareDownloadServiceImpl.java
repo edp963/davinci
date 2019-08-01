@@ -85,6 +85,10 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
         shareService.getShareInfo(token, user);
 
         List<ShareDownloadRecord> list = shareDownloadRecordMapper.getShareDownloadRecordsByUuid(uuid);
+        if(list.isEmpty()){
+            return null;
+        }
+
         ShareDownloadRecord record = list.stream().filter(item -> item.getId().equals(id)).findFirst().get();
         if(record != null){
             record.setLastDownloadTime(new Date());

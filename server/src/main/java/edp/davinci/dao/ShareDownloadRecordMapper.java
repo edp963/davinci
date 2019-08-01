@@ -2,6 +2,7 @@ package edp.davinci.dao;
 
 import edp.davinci.model.ShareDownloadRecord;
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
@@ -37,7 +38,7 @@ public interface ShareDownloadRecordMapper {
     @Select({
             "SELECT * FROM share_download_record WHERE `uuid` = #{uuid, jdbcType=VARCHAR} and create_time > DATE_FORMAT((NOW() - INTERVAL 2 DAY),'%Y%m%d') order by create_time desc limit 10"
     })
-    List<ShareDownloadRecord> getShareDownloadRecordsByUuid(String uuid);
+    List<ShareDownloadRecord> getShareDownloadRecordsByUuid(@Param("uuid") String uuid);
 
     @Update({
             "update share_download_record",
