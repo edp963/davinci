@@ -56,8 +56,15 @@ import {
   loadDashboardDetail
 } from './actions'
 import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
-import { hideNavigator, checkNameUniqueAction, initiateDownloadTask } from '../App/actions'
-import { DownloadTypes } from '../App/types'
+import {
+  hideNavigator,
+  checkNameUniqueAction,
+  initiateDownloadTask,
+  loadDownloadList,
+  downloadFile
+} from '../App/actions'
+import { makeSelectDownloadList, makeSelectDownloadListLoading } from '../App/selectors'
+import { DownloadTypes, IDownloadRecord } from '../App/types'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 import { loadPortals } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
@@ -84,6 +91,7 @@ interface IDashboardProps {
   currentProject: IProject
   portals: any[]
   projectRoles: IProjectRoles[]
+  downloadList: IDownloadRecord[]
   onLoadDashboards: (portalId: number, resolve: any) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
@@ -95,6 +103,8 @@ interface IDashboardProps {
   onExcludeRoles: (type: string, id: number, resolve?: any) => any
   onLoadProjectRoles: (id: number) => any
   onInitiateDownloadTask: (id: number, type: DownloadTypes, downloadParams?: any[]) => void
+  onLoadDownloadList: () => void
+  onDownloadFile: (id) => void
 }
 
 export interface IDashboard {
@@ -664,8 +674,11 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       modalLoading,
       children,
       currentProject,
+      portals,
+      downloadList,
       onCheckUniqueName,
-      portals
+      onLoadDownloadList,
+      onDownloadFile
     } = this.props
 
     const {
@@ -757,7 +770,10 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           currentType="dashboard"
           name={params.portalName}
           description={portalDec}
+          downloadList={downloadList}
           onCancel={this.cancel}
+          onLoadDownloadList={onLoadDownloadList}
+          onDownloadFile={onDownloadFile}
         />
         <Helmet title={params.portalName} />
         <div className={styles.portalBody}>
@@ -880,7 +896,8 @@ const mapStateToProps = createStructuredSelector({
   modalLoading: makeSelectModalLoading(),
   currentProject: makeSelectCurrentProject(),
   portals: makeSelectPortals(),
-  projectRoles: makeSelectProjectRoles()
+  projectRoles: makeSelectProjectRoles(),
+  downloadList: makeSelectDownloadList()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -895,7 +912,9 @@ export function mapDispatchToProps (dispatch) {
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
     onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
-    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(initiateDownloadTask(id, type, downloadParams))
+    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(initiateDownloadTask(id, type, downloadParams)),
+    onLoadDownloadList: () => dispatch(loadDownloadList()),
+    onDownloadFile: (id) => dispatch(downloadFile(id))
   }
 }
 

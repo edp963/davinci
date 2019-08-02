@@ -37,7 +37,7 @@ import PivotTypes from '../../config/pivot/PivotTypes'
 import { uuid } from '../../../../utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
-import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox, notification, Popover } from 'antd'
+import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox, notification, Tooltip } from 'antd'
 import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { WorkbenchQueryMode } from './types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
@@ -991,14 +991,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         notification.error({
           message: '执行失败',
           description: (
-            <Popover
+            <Tooltip
               placement="bottom"
               trigger="click"
-              content={error.msg}
+              title={error.msg}
               overlayClassName={styles.errorMessage}
             >
               <a>点击查看错误信息</a>
-            </Popover>
+            </Tooltip>
           ),
           duration: null
         })
