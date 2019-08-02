@@ -88,8 +88,14 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
         if(list.isEmpty()){
             return null;
         }
+        ShareDownloadRecord record = null;
+        for(ShareDownloadRecord item : list){
+            if(item.getId().longValue() == Long.valueOf(id).longValue()){
+                record = item;
+                break;
+            }
+        }
 
-        ShareDownloadRecord record = list.stream().filter(item -> item.getId().equals(id)).findFirst().get();
         if(record != null){
             record.setLastDownloadTime(new Date());
             record.setStatus(DownloadTaskStatus.DOWNLOADED.getStatus());
