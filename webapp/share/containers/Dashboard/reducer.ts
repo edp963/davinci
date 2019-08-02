@@ -40,7 +40,8 @@ import {
   LOAD_DOWNLOAD_LIST,
   LOAD_DOWNLOAD_LIST_SUCCESS,
   LOAD_DOWNLOAD_LIST_FAILURE,
-  DOWNLOAD_FILE_SUCCESS
+  DOWNLOAD_FILE_SUCCESS,
+  SEND_SHARE_PARAMS
 } from './constants'
 import {
   IMapItemControlRequestParams,
@@ -67,7 +68,8 @@ const initialState = fromJS({
   itemsInfo: null,
   downloadListLoading: false,
   downloadList: null,
-  downloadListInfo: null
+  downloadListInfo: null,
+  shareParams: null
 })
 
 function shareReducer (state = initialState, { type, payload }) {
@@ -75,13 +77,15 @@ function shareReducer (state = initialState, { type, payload }) {
   const itemsInfo = state.get('itemsInfo')
   let widgets = state.get('widgets')
   const downloadList = state.get('downloadList')
-
+  const shareParams = state.get('shareParams')
   switch (type) {
+    case SEND_SHARE_PARAMS:
+      return state.set('shareParams', payload.params)
+      break
     case LOAD_SHARE_DASHBOARD_SUCCESS:
       const dashboardConfig = payload.dashboard.config ? JSON.parse(payload.dashboard.config) : {}
       const globalControls = (dashboardConfig.filters || []).map((c) => globalControlMigrationRecorder(c))
       const globalControlsInitialValue = {}
-
       globalControls.forEach((control: IGlobalControl) => {
         const { interactionType, relatedItems, relatedViews } = control
         const defaultValue = deserializeDefaultValue(control)
@@ -92,6 +96,30 @@ function shareReducer (state = initialState, { type, payload }) {
                 const filterValue = interactionType === 'column'
                   ? getModelValue(control, fields as IControlRelatedField, defaultValue)
                   : getVariableValue(control, fields, defaultValue)
+                if (!globalControlsInitialValue[itemId]) {
+                  globalControlsInitialValue[itemId] = {
+                    filters: [],
+                    variables: []
+                  }
+                }
+                if (interactionType === 'column') {
+                  globalControlsInitialValue[itemId].filters = globalControlsInitialValue[itemId].filters.concat(filterValue)
+                } else {
+                  globalControlsInitialValue[itemId].variables = globalControlsInitialValue[itemId].variables.concat(filterValue)
+                }
+              }
+            })
+          })
+        }
+        if (shareParams && Object.keys(shareParams).length) {
+
+          Object.entries(relatedItems).forEach(([itemId, config]) => {
+            Object.entries(relatedViews).forEach(([viewId, fields]) => {
+              if (config.checked && config.viewId === Number(viewId)) {
+                const shareParamValue = shareParams[fields['name']]
+                const filterValue = interactionType === 'column' && shareParamValue
+                  ? getModelValue(control, fields as IControlRelatedField, shareParamValue)
+                  : getVariableValue(control, fields, shareParamValue)
                 if (!globalControlsInitialValue[itemId]) {
                   globalControlsInitialValue[itemId] = {
                     filters: [],

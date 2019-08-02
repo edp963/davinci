@@ -85,7 +85,6 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
 
       const controls: IGlobalControl[] = globalControls.map((control) => {
         control = globalControlMigrationRecorder(control)
-
         const { relatedItems } = control
         Object.keys(relatedItems).forEach((itemId) => {
           if (!currentItems.find((ci) => ci.id === Number(itemId))) {
@@ -94,7 +93,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
         })
 
         const defaultFilterValue = deserializeDefaultValue(control)
-        if (defaultFilterValue) {
+        if (defaultFilterValue) {   // 默认参数
           controlValues[control.key] = defaultFilterValue
           this.setControlRequestParams(control, defaultFilterValue, currentItems)
         }
@@ -119,6 +118,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     }
   }
 
+  // save defaultFilterValue
   private setControlRequestParams = (control: IGlobalControl, val, currentItems, callback?) => {
     const { key, interactionType, relatedItems, relatedViews } = control
 
