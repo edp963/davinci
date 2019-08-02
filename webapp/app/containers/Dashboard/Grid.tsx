@@ -533,7 +533,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
 
     if (color) {
-      groups = groups.concat(color.items.map((c) => c.name))
+      // groups = groups.concat(color.items.map((c) => c.name))
+      color.items.map(c => c.name).forEach(name => {
+        if (groups.indexOf(name) < 0) {
+          groups.push(name)
+        }
+      })
     }
     if (label) {
       groups = groups.concat(label.items
