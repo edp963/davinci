@@ -58,6 +58,9 @@ public class MailUtils {
     @Value("${spring.mail.nickname}")
     private String nickName;
 
+    @Value("{spring.mail.fromAddress}")
+    private String fromAddress;
+
 
     /**
      * 发送简单邮件
@@ -338,7 +341,8 @@ public class MailUtils {
      * @throws ServerException
      */
     public void sendTemplateEmail(String to, String subject, String template, Map<String, Object> content) throws ServerException {
-        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, template, content, null);
+//        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, template, content, null);
+        sendTemplateEmail(fromAddress, nickName, subject, new String[]{to}, null, null, template, content, null);
     }
 
     /**

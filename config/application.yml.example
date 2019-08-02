@@ -97,7 +97,8 @@ spring:
   mail:
     host:
     port:
-    username:
+    username: example/example@***.com
+    fromAddress: example@***.com
     password:
     nickname:
 
