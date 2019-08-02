@@ -24,7 +24,9 @@ import edp.core.exception.ServerException;
 import edp.core.utils.*;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.dao.CronJobMapper;
+import edp.davinci.dao.ShareDownloadRecordMapper;
 import edp.davinci.model.CronJob;
+import edp.davinci.model.ShareDownloadRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -48,6 +50,9 @@ public class SystemSchedule {
 
     @Autowired
     private RedisUtils redisUtils;
+
+    @Autowired
+    private ShareDownloadRecordMapper shareDownloadRecordMapper;
 
 
     @Scheduled(cron = "0 0 1 * * *")
@@ -84,4 +89,47 @@ public class SystemSchedule {
             }
         }
     }
+
+    @Scheduled(cron = "0 0 1 * * *")
+    public void clearShareDownloadRecord() {
+
+        List<ShareDownloadRecord> records = shareDownloadRecordMapper.getShareDownloadRecords();    //deleting
+        for(ShareDownloadRecord record : records){
+            deleteFile(new File(record.getPath()));
+        }
+
+        shareDownloadRecordMapper.deleteByCondition();
+    }
+
+    private void deleteFile(File file){
+        if(file == null || !file.exists()){
+            return;
+        }
+
+        if(file.isDirectory()){
+            String fileName = file.getName();
+            if("download".equals(fileName)){
+                return;
+            }
+
+            File[] childs = file.listFiles();
+            if(childs.length == 0){
+                file.delete();
+                deleteFile(file.getParentFile());
+            }else{
+                return;
+            }
+
+        }else{
+            File parentDir = file.getParentFile();
+            File[] childs = parentDir.listFiles();
+            if(childs.length == 1){
+                file.delete();
+                deleteFile(parentDir);
+            }else{
+                file.delete();
+            }
+        }
+    }
+
 }

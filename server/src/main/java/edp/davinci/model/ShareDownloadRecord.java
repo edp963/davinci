@@ -19,23 +19,13 @@
 
 package edp.davinci.model;
 
-import edp.davinci.core.enums.DownloadTaskStatus;
 import lombok.Data;
-
-import java.util.Date;
-import java.util.UUID;
-
-import static edp.core.consts.Consts.EMPTY;
-import static edp.core.consts.Consts.MINUS;
 
 @Data
 public class ShareDownloadRecord extends DownloadRecordBaseInfo {
-    private String id;
 
-    public ShareDownloadRecord() {
-        UUID uuid = UUID.randomUUID();
-        this.id = uuid.toString().replace(MINUS, EMPTY);
-        this.setCreateTime(new Date());
-        this.setStatus(DownloadTaskStatus.PROCESSING.getStatus());
-    }
+    private Long id;
+
+    private String uuid;
+
 }
