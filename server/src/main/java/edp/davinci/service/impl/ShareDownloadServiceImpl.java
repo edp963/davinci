@@ -19,11 +19,10 @@
 
 package edp.davinci.service.impl;
 
-import edp.core.common.cache.Caches;
-import edp.core.utils.FixSizeLinkedList;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.DownloadTaskStatus;
 import edp.davinci.core.enums.DownloadType;
+import edp.davinci.dao.ShareDownloadRecordMapper;
 import edp.davinci.dto.shareDto.ShareInfo;
 import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
 import edp.davinci.model.ShareDownloadRecord;
@@ -36,8 +35,6 @@ import edp.davinci.service.excel.WidgetContext;
 import edp.davinci.service.excel.WorkBookContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -48,7 +45,7 @@ import java.util.List;
 public class ShareDownloadServiceImpl extends DownloadCommonService implements ShareDownloadService {
 
     @Autowired
-    private CacheManager cacheManager;
+    private ShareDownloadRecordMapper shareDownloadRecordMapper;
 
     @Autowired
     private ShareService shareService;
@@ -61,15 +58,11 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
             List<WidgetContext> widgetList = getWidgetContexts(downloadType, shareInfo.getShareId(), user == null ? shareInfo.getShareUser() : user, params);
 
             ShareDownloadRecord record = new ShareDownloadRecord();
+            record.setUuid(uuid);
             record.setName(getDownloadFileName(downloadType, shareInfo.getShareId()));
-
-            Cache cache = cacheManager.getCache(Caches.shareDownloadRecord.name());
-            FixSizeLinkedList<ShareDownloadRecord> list = cache.get(uuid, FixSizeLinkedList.class);
-            if (list == null) {
-                list = new FixSizeLinkedList<ShareDownloadRecord>(10);
-            }
-            list.addFirst(record);
-            cache.put(uuid, list);
+            record.setStatus(DownloadTaskStatus.PROCESSING.getStatus());
+            record.setCreateTime(new Date());
+            shareDownloadRecordMapper.insertSelective(record);
 
             ExecutorUtil.submitWorkbookTask(WorkBookContext.newWorkBookContext(new MsgWrapper(record, ActionEnum.SHAREDOWNLOAD, uuid), widgetList, user, resultLimit));
             return true;
@@ -81,28 +74,35 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
 
 
     @Override
-    public FixSizeLinkedList<ShareDownloadRecord> queryDownloadRecordPage(String uuid, String token, User user) {
+    public List<ShareDownloadRecord> queryDownloadRecordPage(String uuid, String token, User user) {
         shareService.getShareInfo(token, user);
 
-        Cache cache = cacheManager.getCache(Caches.shareDownloadRecord.name());
-        return cache.get(uuid, FixSizeLinkedList.class);
+        return shareDownloadRecordMapper.getShareDownloadRecordsByUuid(uuid);
     }
 
     @Override
     public ShareDownloadRecord downloadById(String id, String uuid, String token, User user) {
         shareService.getShareInfo(token, user);
-        Cache cache = cacheManager.getCache(Caches.shareDownloadRecord.name());
 
-        FixSizeLinkedList<ShareDownloadRecord> queue = cache.get(uuid, FixSizeLinkedList.class);
-        if (queue != null) {
-            for (ShareDownloadRecord record : queue) {
-                if (record.getId().equals(id)) {
-                    record.setLastDownloadTime(new Date());
-                    record.setStatus(DownloadTaskStatus.DOWNLOADED.getStatus());
-                    return record;
-                }
+        List<ShareDownloadRecord> list = shareDownloadRecordMapper.getShareDownloadRecordsByUuid(uuid);
+        if(list.isEmpty()){
+            return null;
+        }
+        ShareDownloadRecord record = null;
+        for(ShareDownloadRecord item : list){
+            if(item.getId().longValue() == Long.valueOf(id).longValue()){
+                record = item;
+                break;
             }
         }
-        return null;
+
+        if(record != null){
+            record.setLastDownloadTime(new Date());
+            record.setStatus(DownloadTaskStatus.DOWNLOADED.getStatus());
+            shareDownloadRecordMapper.updateById(record);
+            return record;
+        }else{
+            return null;
+        }
     }
 }
