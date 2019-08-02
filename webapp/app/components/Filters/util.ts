@@ -238,19 +238,19 @@ export function deserializeDefaultValue (control: IControlBase) {
           case DatePickerDefaultValues.Day30:
             return moment().subtract(30, 'days')
           case DatePickerDefaultValues.LastMonth:
-            return moment().subtract(30, 'days').startOf('month')
+            return moment().subtract(1, 'months').startOf('month')
           case DatePickerDefaultValues.Quarter:
-            return moment().startOf('month')
+            return moment().startOf('quarter')
           case DatePickerDefaultValues.Day90:
             return moment().subtract(90, 'days')
           case DatePickerDefaultValues.LastQuarter:
-            return moment().subtract(90, 'days').startOf('quarter')
+            return moment().subtract(1, 'quarters').startOf('quarter')
           case DatePickerDefaultValues.Year:
             return moment().startOf('year')
           case DatePickerDefaultValues.Day365:
             return moment().subtract(365, 'days')
           case DatePickerDefaultValues.LastYear:
-            return moment().subtract(90, 'days').startOf('year')
+            return moment().subtract(1, 'years').startOf('year')
           default:
             return multiple ? defaultValue : defaultValue && moment(defaultValue)
         }

@@ -26,7 +26,7 @@ import omit from 'lodash/omit'
 import { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import request, { IDavinciResponse } from 'utils/request'
 import api from 'utils/api'
-import { errorHandler } from 'utils/util'
+import { errorHandler, getErrorMessage } from 'utils/util'
 
 import { IViewBase, IView, IExecuteSqlResponse, IExecuteSqlParams, IViewVariable } from './types'
 import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
@@ -150,7 +150,7 @@ export function* executeSql (action: ViewActionType) {
 /** View sagas for external usages */
 export function* getViewData (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEW_DATA) { return }
-  const { id, requestParams, resolve } = action.payload
+  const { id, requestParams, resolve, reject } = action.payload
   const { viewDataLoaded, loadViewDataFail } = ViewActions
   try {
     const asyncData = yield call(request, {
@@ -163,8 +163,10 @@ export function* getViewData (action: ViewActionType) {
     asyncData.payload.resultList = (resultList && resultList.slice(0, 500)) || []
     resolve(asyncData.payload)
   } catch (err) {
+    const { response } = err as AxiosError
+    const { data } = response as AxiosResponse<IDavinciResponse<any>>
     yield put(loadViewDataFail(err))
-    errorHandler(err)
+    reject(data.header)
   }
 }
 
@@ -266,8 +268,7 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
     asyncData.payload.resultList = (resultList && resultList.slice(0, 500)) || []
     yield put(viewDataFromVizItemLoaded(renderType, itemId, requestParams, asyncData.payload, vizType))
   } catch (err) {
-    yield put(loadViewDataFromVizItemFail(itemId, vizType))
-    errorHandler(err)
+    yield put(loadViewDataFromVizItemFail(itemId, vizType, getErrorMessage(err)))
   }
 }
 /** */

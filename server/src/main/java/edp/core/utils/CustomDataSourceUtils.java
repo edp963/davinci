@@ -26,7 +26,6 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,18 +81,8 @@ public class CustomDataSourceUtils {
             return;
         }
 
-        FileReader fileReader = null;
-        try {
-            fileReader = new FileReader(yamlFile);
-        } catch (FileNotFoundException e) {
-            return;
-        }
-        if (null == fileReader) {
-            return;
-        }
-
         Yaml yaml = new Yaml();
-        HashMap<String, Object> loads = yaml.loadAs(new BufferedReader(fileReader), HashMap.class);
+        HashMap<String, Object> loads = yaml.loadAs(new BufferedReader(new FileReader(yamlFile)), HashMap.class);
         if (!CollectionUtils.isEmpty(loads)) {
             ObjectMapper mapper = new ObjectMapper();
             for (String key : loads.keySet()) {
@@ -126,7 +115,6 @@ public class CustomDataSourceUtils {
                         throw new Exception("Load custom datasource error: alias prefixes and suffixes must be configured in pairs.");
                     }
                 }
-
                 map.put(key.toLowerCase(), customDataSource);
             }
         }

@@ -58,7 +58,12 @@ interface IWorkbenchProps {
   onLoadViews: (projectId: number, resolve?: any) => void
   onLoadViewDetail: (viewId: number, resolve: () => void) => void
   onLoadWidgetDetail: (id: number) => void
-  onLoadViewData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
+  onLoadViewData: (
+    viewId: number,
+    requestParams: IDataRequestParams,
+    resolve: (data) => void,
+    reject: (error) => void
+  ) => void
   onAddWidget: (widget: IWidget, resolve: () => void) => void
   onEditWidget: (widget: IWidget, resolve: () => void) => void
   onLoadViewDistinctValue: (viewId: number, params: Partial<IDistinctValueReqeustParams>) => void
@@ -604,7 +609,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadViews: (projectId, resolve) => dispatch(loadViews(projectId, resolve)),
     onLoadViewDetail: (viewId, resolve) => dispatch(loadViewsDetail([viewId], resolve)),
     onLoadWidgetDetail: (id) => dispatch(loadWidgetDetail(id)),
-    onLoadViewData: (viewId, requestParams, resolve) => dispatch(loadViewData(viewId, requestParams, resolve)),
+    onLoadViewData: (viewId, requestParams, resolve, reject) => dispatch(loadViewData(viewId, requestParams, resolve, reject)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),
     onEditWidget: (widget, resolve) => dispatch(editWidget(widget, resolve)),
     onLoadViewDistinctValue: (viewId, params) => dispatch(loadViewDistinctValue(viewId, params)),
