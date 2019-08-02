@@ -64,7 +64,7 @@ import {
 import { ISource, ISchema } from '../Source/types'
 import { ViewVariableTypes } from './constants'
 
-import { message, notification, Popover } from 'antd'
+import { message, notification, Tooltip } from 'antd'
 import EditorSteps from './components/EditorSteps'
 import EditorContainer from './components/EditorContainer'
 import ModelAuth from './components/ModelAuth'
@@ -167,14 +167,14 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
         : notification.error({
           message: '执行失败',
           description: (
-            <Popover
+            <Tooltip
               placement="bottom"
               trigger="click"
-              content={sqlValidation.message}
+              title={sqlValidation.message}
               overlayClassName={Styles.errorMessage}
             >
               <a>点击查看错误信息</a>
-            </Popover>
+            </Tooltip>
           ),
           duration: null
         })

@@ -833,25 +833,26 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         content={widget.description}
         overlayClassName={styles.widgetInfoContent}
       >
-        <Tooltip title="描述">
-          <Icon className={styles.toggle} type="info-circle" />
-        </Tooltip>
+        <Icon className={styles.toggle} type="info-circle" />
       </Popover>
     )
 
     const errorToggle = errorMessage && (
-      <Popover
+      <Tooltip
+        title={(
+          <>
+            <p>错误信息：</p>
+            <p>{errorMessage}</p>
+          </>
+        )}
         placement="bottomLeft"
-        content={errorMessage}
         overlayClassName={styles.widgetInfoContent}
       >
-        <Tooltip title="错误信息">
-          <Icon
-            className={`${styles.toggle} ${styles.error}`}
-            type="warning"
-          />
-        </Tooltip>
-      </Popover>
+        <Icon
+          className={`${styles.toggle} ${styles.error}`}
+          type="warning"
+        />
+      </Tooltip>
     )
 
     const controlPanelTransitionName = {

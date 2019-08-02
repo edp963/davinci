@@ -203,7 +203,7 @@ export function* getSelectOptions (action: ViewActionType) {
     yield put(selectOptionsLoaded(controlKey, Array.from(new Set(values)), itemId))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
-    errorHandler(err)
+    // errorHandler(err)
   }
 }
 

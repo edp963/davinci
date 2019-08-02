@@ -30,9 +30,10 @@ import {
   LOAD_DOWNLOAD_LIST,
   LOAD_DOWNLOAD_LIST_SUCCESS,
   LOAD_DOWNLOAD_LIST_FAILURE,
-  CHANGE_DOWNLOAD_STATUS_SUCCESS
+  DOWNLOAD_FILE_SUCCESS
 } from './constants'
 import { fromJS } from 'immutable'
+import { DownloadStatus } from './types'
 
 
 const initialState = fromJS({
@@ -92,10 +93,10 @@ function appReducer (state = initialState, action) {
         }, {}))
     case LOAD_DOWNLOAD_LIST_FAILURE:
       return state.set('downloadListLoading', false)
-    case CHANGE_DOWNLOAD_STATUS_SUCCESS:
+    case DOWNLOAD_FILE_SUCCESS:
       return state.set('downloadList', downloadList.map((item) => {
         return item.id === payload.id
-          ? { ...item, status: 3 }
+          ? { ...item, status: DownloadStatus.Downloaded }
           : item
       }))
     default:

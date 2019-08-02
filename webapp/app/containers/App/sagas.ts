@@ -262,6 +262,7 @@ export function* downloadFile (action): IterableIterator<any> {
   const { id } = action.payload
   try {
     location.href = `${api.download}/record/file/${id}/${getToken()}`
+    yield put(fileDownloaded(id))
   } catch (err) {
     yield put(downloadFileFail(err))
     errorHandler(err)
