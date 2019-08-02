@@ -46,6 +46,7 @@ source:
   max-active: 10
   break-after-acquire-failure: true
   connection-error-retry-attempts: 0
+  query-timeout: 600000
   validationQueryTimeout: 30000
 
   enable-query-log: false
