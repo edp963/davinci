@@ -84,17 +84,7 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
     public ShareDownloadRecord downloadById(String id, String uuid, String token, User user) {
         shareService.getShareInfo(token, user);
 
-        List<ShareDownloadRecord> list = shareDownloadRecordMapper.getShareDownloadRecordsByUuid(uuid);
-        if(list.isEmpty()){
-            return null;
-        }
-        ShareDownloadRecord record = null;
-        for(ShareDownloadRecord item : list){
-            if(item.getId().longValue() == Long.valueOf(id).longValue()){
-                record = item;
-                break;
-            }
-        }
+        ShareDownloadRecord record = shareDownloadRecordMapper.getShareDownloadRecordBy(Long.valueOf(id), uuid);
 
         if(record != null){
             record.setLastDownloadTime(new Date());
