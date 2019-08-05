@@ -17,7 +17,7 @@ import {
   SecondaryGraphTypes
 } from './util'
 import { GRID_ITEM_MARGIN } from '../../../globalConstants'
-import { IFormedView } from 'containers/View/types'
+import { IViewModel } from 'containers/View/types'
 import Widget, { IWidgetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
 import { TextAlignProperty } from 'csstype'
 
@@ -35,7 +35,7 @@ interface ILayerItemProps {
   dragging?: boolean
   itemId: number
   widget: any
-  view: IFormedView
+  model: IViewModel
   datasource: {
     pageNo: number
     pageSize: number
@@ -328,7 +328,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       selected,
       itemId,
       widget,
-      view,
+      model,
       datasource,
       loading,
       renderType,
@@ -373,7 +373,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
             pagination={pagination}
             loading={isLoading}
             renderType={renderType}
-            model={view.model}
+            model={model}
             onPaginationChange={this.paginationChange}
           />)
         )}

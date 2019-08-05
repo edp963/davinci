@@ -33,7 +33,7 @@ import { SketchPicker } from 'react-color'
 
 const styles = require('../Display.less')
 
-interface ISettingFormProps {
+interface ISettingFormProps extends FormComponentProps {
   id: number
   settingInfo: any
   settingParams: any
@@ -47,11 +47,11 @@ interface ISettingFormStates {
   collapse: boolean
 }
 
-export class SettingForm extends React.Component<ISettingFormProps & FormComponentProps, ISettingFormStates> {
+export class SettingForm extends React.Component<ISettingFormProps, ISettingFormStates> {
 
   private debounceFormItemChange = null
 
-  constructor (props: ISettingFormProps & FormComponentProps) {
+  constructor (props: ISettingFormProps) {
     super(props)
     this.state = {
       loading: {},
@@ -380,5 +380,5 @@ export class SettingForm extends React.Component<ISettingFormProps & FormCompone
   }
 }
 
-export default Form.create()(SettingForm)
+export default Form.create<ISettingFormProps>()(SettingForm)
 

@@ -65,28 +65,7 @@ import LayerAlign from './components/LayerAlign'
 
 import { hideNavigator } from '../App/actions'
 import { loadWidgets } from '../Widget/actions'
-import {
-  editCurrentDisplay,
-  editCurrentSlide,
-  uploadCurrentSlideCover,
-  loadDisplayDetail,
-  selectLayer,
-  clearLayersSelection,
-  dragSelectedLayer,
-  resizeLayers,
-  toggleLayersResizingStatus,
-  toggleLayersDraggingStatus,
-  addDisplayLayers,
-  deleteDisplayLayers,
-  editDisplayLayers,
-  copySlideLayers,
-  pasteSlideLayers,
-  undoOperation,
-  redoOperation,
-  loadDisplayShareLink,
-  showEditorBaselines,
-  clearEditorBaselines,
-  resetDisplayState } from './actions'
+import DisplayActions from './actions'
 import { message } from 'antd'
 const styles = require('./Display.less')
 
@@ -99,7 +78,7 @@ import { makeSelectFormedViews } from '../View/selectors'
 import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR, DEFAULT_SPLITER } from '../../globalConstants'
 // import { LayerContextMenu } from './components/LayerContextMenu'
 
-import { ISlideParams, ISlide } from './'
+import { ISlideParams } from './types'
 import { IQueryConditions, IDataRequestParams } from '../Dashboard/Grid'
 import { IFormedViews } from 'containers/View/types'
 
@@ -811,7 +790,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     const layerItems = !Array.isArray(widgets) ? null : currentLocalLayers.map((layer, idx) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
-      const view = widget && formedViews[widget.viewId]
+      const model = widget && formedViews[widget.viewId].model
       const layerId = layer.id
 
       const { polling, frequency } = JSON.parse(layer.params)
@@ -831,7 +810,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           dragging={dragging}
           itemId={layerId}
           widget={widget}
-          view={view}
+          model={model}
           datasource={datasource}
           loading={loading}
           polling={polling}
@@ -959,31 +938,31 @@ const mapStateToProps = createStructuredSelector({
 
 function mapDispatchToProps (dispatch) {
   return {
-    onLoadDisplayDetail: (projectId, displayId) => dispatch(loadDisplayDetail(projectId, displayId)),
-    onEditCurrentDisplay: (display, resolve?) => dispatch(editCurrentDisplay(display, resolve)),
-    onEditCurrentSlide: (displayId, slide, resolve?) => dispatch(editCurrentSlide(displayId, slide, resolve)),
-    onUploadCurrentSlideCover: (cover, resolve) => dispatch(uploadCurrentSlideCover(cover, resolve)),
+    onLoadDisplayDetail: (projectId, displayId) => dispatch(DisplayActions.loadDisplayDetail(projectId, displayId)),
+    onEditCurrentDisplay: (display, resolve?) => dispatch(DisplayActions.editCurrentDisplay(display, resolve)),
+    onEditCurrentSlide: (displayId, slide, resolve?) => dispatch(DisplayActions.editCurrentSlide(displayId, slide, resolve)),
+    onUploadCurrentSlideCover: (cover, resolve) => dispatch(DisplayActions.uploadCurrentSlideCover(cover, resolve)),
     onLoadViewDataFromVizItem: (renderType, itemId, viewId, requestParams) => dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'display')),
     onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
-    onSelectLayer: ({ id, selected, exclusive }) => dispatch(selectLayer({ id, selected, exclusive })),
-    onClearLayersSelection: () => dispatch(clearLayersSelection()),
-    onDragSelectedLayer: (id, deltaX, deltaY) => dispatch(dragSelectedLayer({ id, deltaX, deltaY })),
-    onResizeLayers: (layerIds) => dispatch(resizeLayers(layerIds)),
-    toggleLayersResizingStatus: (layerIds, resizing) => dispatch(toggleLayersResizingStatus(layerIds, resizing)),
-    toggleLayersDraggingStatus: (layerIds, dragging) => dispatch(toggleLayersDraggingStatus(layerIds, dragging)),
-    onAddDisplayLayers: (displayId, slideId, layers) => dispatch(addDisplayLayers(displayId, slideId, layers)),
-    onDeleteDisplayLayers: (displayId, slideId, ids) => dispatch(deleteDisplayLayers(displayId, slideId, ids)),
-    onEditDisplayLayers: (displayId, slideId, layers) => dispatch(editDisplayLayers(displayId, slideId, layers)),
-    onCopySlideLayers: (slideId, layers) => dispatch(copySlideLayers(slideId, layers)),
-    onPasteSlideLayers: (displayId, slideId, layers) => dispatch(pasteSlideLayers(displayId, slideId, layers)),
-    onLoadDisplayShareLink: (id, authName) => dispatch(loadDisplayShareLink(id, authName)),
-    onUndo: (currentState) => dispatch(undoOperation(currentState)),
-    onRedo: (nextState) => dispatch(redoOperation(nextState)),
+    onSelectLayer: ({ id, selected, exclusive }) => dispatch(DisplayActions.selectLayer({ id, selected, exclusive })),
+    onClearLayersSelection: () => dispatch(DisplayActions.clearLayersSelection()),
+    onDragSelectedLayer: (id, deltaX, deltaY) => dispatch(DisplayActions.dragSelectedLayer({ id, deltaX, deltaY })),
+    onResizeLayers: (layerIds) => dispatch(DisplayActions.resizeLayers(layerIds)),
+    toggleLayersResizingStatus: (layerIds, resizing) => dispatch(DisplayActions.toggleLayersResizingStatus(layerIds, resizing)),
+    toggleLayersDraggingStatus: (layerIds, dragging) => dispatch(DisplayActions.toggleLayersDraggingStatus(layerIds, dragging)),
+    onAddDisplayLayers: (displayId, slideId, layers) => dispatch(DisplayActions.addDisplayLayers(displayId, slideId, layers)),
+    onDeleteDisplayLayers: (displayId, slideId, ids) => dispatch(DisplayActions.deleteDisplayLayers(displayId, slideId, ids)),
+    onEditDisplayLayers: (displayId, slideId, layers) => dispatch(DisplayActions.editDisplayLayers(displayId, slideId, layers)),
+    onCopySlideLayers: (slideId, layers) => dispatch(DisplayActions.copySlideLayers(slideId, layers)),
+    onPasteSlideLayers: (displayId, slideId, layers) => dispatch(DisplayActions.pasteSlideLayers(displayId, slideId, layers)),
+    onLoadDisplayShareLink: (id, authName) => dispatch(DisplayActions.loadDisplayShareLink(id, authName)),
+    onUndo: (currentState) => dispatch(DisplayActions.undoOperation(currentState)),
+    onRedo: (nextState) => dispatch(DisplayActions.redoOperation(nextState)),
     onHideNavigator: () => dispatch(hideNavigator()),
 
-    onShowEditorBaselines: (baselines) => dispatch(showEditorBaselines(baselines)),
-    onClearEditorBaselines: () => dispatch(clearEditorBaselines()),
-    onResetDisplayState: () => dispatch(resetDisplayState())
+    onShowEditorBaselines: (baselines) => dispatch(DisplayActions.showEditorBaselines(baselines)),
+    onClearEditorBaselines: () => dispatch(DisplayActions.clearEditorBaselines()),
+    onResetDisplayState: () => dispatch(DisplayActions.resetDisplayState())
   }
 }
 
