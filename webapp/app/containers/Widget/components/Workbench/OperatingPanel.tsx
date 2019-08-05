@@ -37,7 +37,7 @@ import PivotTypes from '../../config/pivot/PivotTypes'
 import { uuid } from '../../../../utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
-import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox } from 'antd'
+import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox, notification, Tooltip } from 'antd'
 import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { WorkbenchQueryMode } from './types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
@@ -83,7 +83,12 @@ interface IOperatingPanelProps {
   onSetComputed: (computesField: any[]) => void
   onDeleteComputed: (computesField: any[]) => void
   onSetWidgetProps: (widgetProps: IWidgetProps) => void
-  onLoadData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
+  onLoadData: (
+    viewId: number,
+    requestParams: IDataRequestParams,
+    resolve: (data) => void,
+    reject: (error) => void
+  ) => void
   onLoadDistinctValue: (viewId: number, params: Partial<IDistinctValueReqeustParams>) => void
 }
 
@@ -311,6 +316,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         this.setWidgetProps(mergedDataParams, chartStyles)
       })
     }
+  }
+
+  public componentWillUnmount () {
+    notification.destroy()
   }
 
   private getChartDataConfig = (selectedCharts: IChartInfo[]) => {
@@ -976,6 +985,22 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           pagination: updatedPagination,
           dataParams: mergedDataParams,
           styleParams: mergedStyleParams
+        })
+      }, (error) => {
+        notification.destroy()
+        notification.error({
+          message: '执行失败',
+          description: (
+            <Tooltip
+              placement="bottom"
+              trigger="click"
+              title={error.msg}
+              overlayClassName={styles.errorMessage}
+            >
+              <a>点击查看错误信息</a>
+            </Tooltip>
+          ),
+          duration: null
         })
       })
     } else {

@@ -100,6 +100,14 @@ export function errorHandler (error) {
   }
 }
 
+export function getErrorMessage (error) {
+  return error.response
+    ? error.response.data.header
+      ? error.response.data.header.msg
+      : error.message
+    : error.message
+}
+
 export function getBase64 (img, callback) {
   const reader = new FileReader()
   reader.addEventListener('load', () => callback(reader.result))

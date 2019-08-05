@@ -36,6 +36,11 @@ public interface ShareDownloadRecordMapper {
     int insertSelective(ShareDownloadRecord record);
 
     @Select({
+            "SELECT * FROM share_download_record WHERE id = #{id, jdbcType=BIGINT} and `uuid` = #{uuid, jdbcType=VARCHAR}"
+    })
+    ShareDownloadRecord getShareDownloadRecordBy(@Param("id") Long id,  @Param("uuid") String uuid);
+
+    @Select({
             "SELECT * FROM share_download_record WHERE `uuid` = #{uuid, jdbcType=VARCHAR} and create_time > DATE_FORMAT((NOW() - INTERVAL 2 DAY),'%Y%m%d') order by create_time desc limit 10"
     })
     List<ShareDownloadRecord> getShareDownloadRecordsByUuid(@Param("uuid") String uuid);

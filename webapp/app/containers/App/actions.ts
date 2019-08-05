@@ -47,9 +47,6 @@ import {
   DOWNLOAD_FILE,
   DOWNLOAD_FILE_FAILURE,
   DOWNLOAD_FILE_SUCCESS,
-  CHANGE_DOWNLOAD_STATUS,
-  CHANGE_DOWNLOAD_STATUS_SUCCESS,
-  CHANGE_DOWNLOAD_STATUS_FAILURE,
   INITIATE_DOWNLOAD_TASK,
   INITIATE_DOWNLOAD_TASK_SUCCESS,
   INITIATE_DOWNLOAD_TASK_FAILURE
@@ -288,42 +285,18 @@ export function downloadFile (id) {
   }
 }
 
-export function fileDownloaded () {
+export function fileDownloaded (id) {
   return {
-    type: DOWNLOAD_FILE_SUCCESS
+    type: DOWNLOAD_FILE_SUCCESS,
+    payload: {
+      id
+    }
   }
 }
 
 export function downloadFileFail (error) {
   return {
     type: DOWNLOAD_FILE_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
-
-export function changeDownloadStatus (id) {
-  return {
-    type: CHANGE_DOWNLOAD_STATUS,
-    payload: {
-      id
-    }
-  }
-}
-
-export function downloadStatusChanged (id) {
-  return {
-    type: CHANGE_DOWNLOAD_STATUS_SUCCESS,
-    payload: {
-      id
-    }
-  }
-}
-
-export function changeDownloadStatusFail (error) {
-  return {
-    type: CHANGE_DOWNLOAD_STATUS_FAILURE,
     payload: {
       error
     }

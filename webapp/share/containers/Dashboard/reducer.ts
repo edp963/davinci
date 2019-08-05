@@ -36,7 +36,11 @@ import {
   DELETE_DRILL_HISTORY,
   SET_SELECT_OPTIONS,
   SELECT_DASHBOARD_ITEM_CHART,
-  GLOBAL_CONTROL_CHANGE
+  GLOBAL_CONTROL_CHANGE,
+  LOAD_DOWNLOAD_LIST,
+  LOAD_DOWNLOAD_LIST_SUCCESS,
+  LOAD_DOWNLOAD_LIST_FAILURE,
+  DOWNLOAD_FILE_SUCCESS
 } from './constants'
 import {
   IMapItemControlRequestParams,
@@ -51,6 +55,7 @@ import {
 } from 'app/components/Filters/util'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 import { DashboardItemStatus } from '.'
+import { DownloadStatus } from 'app/containers/App/types'
 
 const initialState = fromJS({
   dashboard: null,
@@ -59,13 +64,17 @@ const initialState = fromJS({
   dashboardSelectOptions: null,
   widgets: null,
   items: null,
-  itemsInfo: null
+  itemsInfo: null,
+  downloadListLoading: false,
+  downloadList: null,
+  downloadListInfo: null
 })
 
 function shareReducer (state = initialState, { type, payload }) {
   const dashboardSelectOptions = state.get('dashboardSelectOptions')
   const itemsInfo = state.get('itemsInfo')
   let widgets = state.get('widgets')
+  const downloadList = state.get('downloadList')
 
   switch (type) {
     case LOAD_SHARE_DASHBOARD_SUCCESS:
@@ -124,7 +133,8 @@ function shareReducer (state = initialState, { type, payload }) {
             downloadCsvLoading: false,
             interactId: '',
             renderType: 'rerender',
-            controlSelectOptions: {}
+            controlSelectOptions: {},
+            errorMessage: ''
           }
           return obj
         }, {}))
@@ -158,7 +168,8 @@ function shareReducer (state = initialState, { type, payload }) {
             downloadCsvLoading: false,
             interactId: '',
             renderType: 'rerender',
-            controlSelectOptions: {}
+            controlSelectOptions: {},
+            errorMessage: ''
           }
         })
     case LOAD_SHARE_WIDGET_SUCCESS:
@@ -182,6 +193,7 @@ function shareReducer (state = initialState, { type, payload }) {
           ...itemsInfo[payload.itemId],
           selectedItems: [],
           loading: true,
+          errorMessage: '',
           queryConditions: {
             ...itemsInfo[payload.itemId].queryConditions,
             tempFilters: payload.requestParams.tempFilters,
@@ -249,7 +261,8 @@ function shareReducer (state = initialState, { type, payload }) {
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
           status: DashboardItemStatus.Error,
-          loading: false
+          loading: false,
+          errorMessage: payload.errorMessage
         }
       })
     case LOAD_WIDGET_CSV:
@@ -313,6 +326,26 @@ function shareReducer (state = initialState, { type, payload }) {
           return info
         }, {})
       )
+    case LOAD_DOWNLOAD_LIST:
+      return state.set('downloadListLoading', true)
+    case LOAD_DOWNLOAD_LIST_SUCCESS:
+      return state
+        .set('downloadListLoading', false)
+        .set('downloadList', payload.list)
+        .set('downloadListInfo', payload.list.reduce((info, item) => {
+          info[item.id] = {
+            loading: false
+          }
+          return info
+        }, {}))
+    case LOAD_DOWNLOAD_LIST_FAILURE:
+      return state.set('downloadListLoading', false)
+    case DOWNLOAD_FILE_SUCCESS:
+        return state.set('downloadList', downloadList.map((item) => {
+          return item.id === payload.id
+            ? { ...item, status: DownloadStatus.Downloaded }
+            : item
+        }))
     default:
       return state
   }
