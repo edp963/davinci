@@ -29,22 +29,12 @@ import {
   makeSelectCurrentLayers,
   makeSelectCurrentLayersInfo,
   makeSelectCurrentProject
-   } from './selectors'
+} from './selectors'
 
 import { hideNavigator } from '../App/actions'
 import { ViewActions } from '../View/actions'
 const { loadViewDataFromVizItem } = ViewActions // @TODO global filter in Display Preview
-import {
-  editCurrentDisplay,
-  loadDisplayDetail,
-  selectLayer,
-  addDisplayLayers,
-  deleteDisplayLayers,
-  editDisplayLayers,
-  monitoredSyncDataAction,
-  monitoredSearchDataAction,
-  loadProjectDetail,
-  monitoredLinkageDataAction } from './actions'
+import DisplayActions from './actions'
 import { DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
 import LayerItem from './components/LayerItem'
 
@@ -439,7 +429,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     const slideStyle = this.getSlideStyle(slideParams, scale)
     const layerItems =  Array.isArray(widgets) ? currentLayers.map((layer) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
-      const view = widget && formedViews[widget.viewId]
+      const model = widget && formedViews[widget.viewId].model
       const layerId = layer.id
 
       const { polling, frequency } = JSON.parse(layer.params)
@@ -453,7 +443,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           layer={layer}
           itemId={layerId}
           widget={widget}
-          view={view}
+          model={model}
           datasource={datasource}
           loading={loading}
           polling={polling}
@@ -490,12 +480,12 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
-    onLoadDisplayDetail: (projectId, displayId) => dispatch(loadDisplayDetail(projectId, displayId)),
+    onLoadDisplayDetail: (projectId, displayId) => dispatch(DisplayActions.loadDisplayDetail(projectId, displayId)),
     onLoadViewDataFromVizItem: (renderType, itemId, viewId, requestParams) => dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'display')),
-    onMonitoredSyncDataAction: () => dispatch(monitoredSyncDataAction()),
-    onMonitoredSearchDataAction: () => dispatch(monitoredSearchDataAction()),
-    onMonitoredLinkageDataAction: () => dispatch(monitoredLinkageDataAction()),
-    onloadProjectDetail: (pid) => dispatch(loadProjectDetail(pid))
+    onMonitoredSyncDataAction: () => dispatch(DisplayActions.monitoredSyncDataAction()),
+    onMonitoredSearchDataAction: () => dispatch(DisplayActions.monitoredSearchDataAction()),
+    onMonitoredLinkageDataAction: () => dispatch(DisplayActions.monitoredLinkageDataAction()),
+    onloadProjectDetail: (pid) => dispatch(DisplayActions.loadProjectDetail(pid))
   }
 }
 

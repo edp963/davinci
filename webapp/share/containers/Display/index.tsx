@@ -21,10 +21,8 @@
 import * as React from 'react'
 import { RouteComponentProps } from 'react-router'
 import Helmet from 'react-helmet'
-import * as echarts from 'echarts/lib/echarts'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import * as classnames from 'classnames'
 
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -32,7 +30,6 @@ import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import { DEFAULT_PRIMARY_COLOR } from '../../../app/globalConstants'
 import Login from '../../components/Login/index'
 import LayerItem from '../../../app/containers/Display/components/LayerItem'
 import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
@@ -41,7 +38,8 @@ import { decodeMetricName } from '../../../app/containers/Widget/components/util
 const mainStyles = require('../../../app/containers/Main/Main.less')
 const styles = require('../../../app/containers/Display/Display.less')
 
-import { loadDisplay, loadLayerData } from './actions'
+import ShareDisplayActions from './actions'
+const { loadDisplay, loadLayerData } = ShareDisplayActions
 import {
   makeSelectTitle,
   makeSelectDisplay,
@@ -358,7 +356,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       const slideStyle = this.getSlideStyle(slideParams, scale)
       const layerItems =  Array.isArray(widgets) ? layers.map((layer) => {
         const widget = widgets.find((w) => w.id === layer.widgetId)
-        const view = { model: widget && widget.model }
+        const model = widget && widget.model
         const layerId = layer.id
         const { polling, frequency } = JSON.parse(layer.params)
         const { datasource, loading, interactId, renderType } = layersInfo[layerId]
@@ -369,7 +367,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
             pure={true}
             itemId={layerId}
             widget={widget}
-            view={view}
+            model={model}
             datasource={datasource}
             layer={layer}
             loading={loading}

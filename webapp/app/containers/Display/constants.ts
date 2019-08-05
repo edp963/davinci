@@ -18,7 +18,9 @@
  * >>
  */
 
-export enum ActionTypes {
+import { createTypes } from 'utils/redux'
+
+enum Types {
   LOAD_DISPLAYS = 'davinci/Display/LOAD_DISPLAYS',
   LOAD_DISPLAYS_SUCCESS = 'davinci/Display/LOAD_DISPLAYS_SUCCESS',
   LOAD_DISPLAYS_FAILURE = 'davinci/Display/LOAD_DISPLAYS_FAILURE',
@@ -100,3 +102,5 @@ export enum ActionTypes {
   LOAD_CURRENT_PROJECT = 'davinci/Display/LOAD_CURRENT_PROJECT',
   LOAD_CURRENT_PROJECT_SUCCESS = 'davinci/Display/LOAD_CURRENT_PROJECT_SUCCESS'
 }
+
+export const ActionTypes = createTypes(Types)

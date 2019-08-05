@@ -15,7 +15,7 @@ import portalReducer from '../Portal/reducer'
 import viewReducer from '../View/reducer'
 import viewSaga from '../View/sagas'
 
-import { loadDisplays, addDisplay, editDisplay, deleteDisplay } from '../Display/actions'
+import DisplayActions from '../Display/actions'
 import { loadPortals, addPortal, editPortal, deletePortal } from '../Portal/actions'
 import { makeSelectDisplays } from '../Display/selectors'
 import { makeSelectPortals } from '../Portal/selectors'
@@ -197,10 +197,10 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadDisplays: (projectId) => dispatch(loadDisplays(projectId)),
-    onAddDisplay: (display: IDisplay, resolve) => dispatch(addDisplay(display, resolve)),
-    onEditDisplay: (display: IDisplay, resolve) => dispatch(editDisplay(display, resolve)),
-    onDeleteDisplay: (id) => dispatch(deleteDisplay(id)),
+    onLoadDisplays: (projectId) => dispatch(DisplayActions.loadDisplays(projectId)),
+    onAddDisplay: (display: IDisplay, resolve) => dispatch(DisplayActions.addDisplay(display, resolve)),
+    onEditDisplay: (display: IDisplay, resolve) => dispatch(DisplayActions.editDisplay(display, resolve)),
+    onDeleteDisplay: (id) => dispatch(DisplayActions.deleteDisplay(id)),
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
     onAddPortal: (portal, resolve) => dispatch(addPortal(portal, resolve)),
     onEditPortal: (portal, resolve) => dispatch(editPortal(portal, resolve)),
