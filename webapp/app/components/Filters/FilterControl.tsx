@@ -38,7 +38,7 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
     let component
     switch (filter.type) {
       case FilterTypes.InputText:
-        component = renderInputText(this.inputChange, this.inputSearch)
+        component = renderInputText(this.inputChange, this.change)
         break
       case FilterTypes.NumberRange:
         component = renderNumberRange(this.change)
