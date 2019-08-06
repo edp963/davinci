@@ -20,6 +20,7 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSON;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
@@ -375,27 +376,39 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
         List<Long> disableDashboards = getDisableVizs(user.getId(), dashboardWithPortalAndProject.getDashboardPortalId(), null, VizEnum.DASHBOARD);
 
-
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disableDashboards.contains(id))) {
             log.info("user {} have not permisson to create dashboard", user.getUsername());
             throw new UnAuthorizedExecption("you have not permission to create dashboard");
         }
 
-        //delete rel_role_dashboard_widget
-        relRoleDashboardWidgetMapper.deleteByDashboardId(id);
+        List<Dashboard> deletingDashboards ;
+        if(0 == dashboardWithPortalAndProject.getType()){   //folder
+            deletingDashboards = dashboardMapper.getByParentId(dashboardWithPortalAndProject.getId());
+        }else{
+            deletingDashboards = new ArrayList<Dashboard>(1){
+                {add(dashboardWithPortalAndProject);}
+            };
+        }
 
-        //delete mem_dashboard_widget
-        memDashboardWidgetMapper.deleteByDashboardId(id);
+        if(deletingDashboards.isEmpty()){
+            return true;
+        }
+        for(Dashboard deletingDashboard : deletingDashboards){
+            //delete rel_role_dashboard_widget
+            relRoleDashboardWidgetMapper.deleteByDashboardId(deletingDashboard.getId());
 
-        //delete rel_role_dashboard
-        relRoleDashboardMapper.deleteByDashboardId(id);
+            //delete mem_dashboard_widget
+            memDashboardWidgetMapper.deleteByDashboardId(deletingDashboard.getId());
 
-        //delete dashboard
-        dashboardMapper.deleteByParentId(id);
-        dashboardMapper.deleteById(id);
+            //delete rel_role_dashboard
+            relRoleDashboardMapper.deleteByDashboardId(deletingDashboard.getId());
 
-        optLogger.info("dashboard ({}) id delete by (:{})", dashboardWithPortalAndProject, user.getId());
+            //delete dashboard
+            dashboardMapper.deleteById(deletingDashboard.getId());
+        }
+
+        optLogger.info("dashboard ({}) id delete by (:{})", JSON.toJSON(deletingDashboards), user.getId());
 
         return true;
     }
