@@ -48,7 +48,8 @@ import {
   DOWNLOAD_FILE_SUCCESS,
   INITIATE_DOWNLOAD_TASK,
   INITIATE_DOWNLOAD_TASK_SUCCESS,
-  INITIATE_DOWNLOAD_TASK_FAILURE
+  INITIATE_DOWNLOAD_TASK_FAILURE,
+  SEND_SHARE_PARAMS
 } from './constants'
 
 export function getDashboard (token, reject) {
@@ -344,6 +345,14 @@ export function initiateDownloadTaskFail (error) {
     type: INITIATE_DOWNLOAD_TASK_FAILURE,
     payload: {
       error
+    }
+  }
+}
+export function sendShareParams (params) {
+  return {
+    type: SEND_SHARE_PARAMS,
+    payload: {
+      params
     }
   }
 }
