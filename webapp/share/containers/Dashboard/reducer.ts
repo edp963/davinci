@@ -92,7 +92,7 @@ function shareReducer (state = initialState, { type, payload }) {
             if (defaultValue && defaultValue.length) {
                newCtrl = {
                  ...ctrl,
-                 defaultValue
+                 defaultValue: decodeURI(defaultValue)
                }
             }
           })
