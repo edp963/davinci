@@ -242,7 +242,7 @@ function shareReducer (state = initialState, { type, payload }) {
           const { filters: globalFilters, variables: globalVariables } = requestParams
           itemsInfo[itemId].queryConditions = {
             ...itemsInfo[itemId].queryConditions,
-            ...globalFilters && { globalFilters }, // todo 这里不能直接覆盖
+            ...globalFilters && { globalFilters },
             ...globalVariables && { globalVariables }
           }
         })
