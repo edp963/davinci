@@ -602,9 +602,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }
   }
 
-  // 默认值操作
+
   private globalControlChange = (controlRequestParamsByItem: IMapItemControlRequestParams) => {
-    console.log(controlRequestParamsByItem)
     this.props.onGlobalControlChange(controlRequestParamsByItem)
   }
 

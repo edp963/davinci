@@ -93,6 +93,8 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
         })
 
         const defaultFilterValue = deserializeDefaultValue(control)
+        console.log(control)
+        console.log(defaultFilterValue)
         if (defaultFilterValue) {   // 默认参数
           controlValues[control.key] = defaultFilterValue
           this.setControlRequestParams(control, defaultFilterValue, currentItems)
@@ -217,12 +219,15 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
   }
 
   private change = (control: IGlobalControl, val, isInputChange?: boolean) => {
+
     const { currentItems, onChange } = this.props
     const { flatTree, queryMode } = this.state
     const { key } = control
     const childrenKeys = getAllChildren(key, flatTree)
     const relatedItemIds = []
 
+    console.log(control)
+    console.log(currentItems)
     const controlValues = {
       ...this.state.controlValues,
       [key]: val
