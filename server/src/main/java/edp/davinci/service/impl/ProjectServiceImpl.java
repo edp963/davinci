@@ -419,7 +419,7 @@ public class ProjectServiceImpl implements ProjectService {
      * 添加project admin
      *
      * @param id
-     * @param adminId
+     * @param adminIds
      * @param user
      * @return
      * @throws ServerException
@@ -428,30 +428,45 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Override
     @Transactional
-    public RelProjectAdminDto addAdmin(Long id, Long adminId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public List<RelProjectAdminDto> addAdmins(Long id, List<Long> adminIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         getProjectDetail(id, user, true);
 
-        RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getByProjectAndUser(id, adminId);
-        if (null != relProjectAdmin) {
-            log.warn("user (:{}) is already admin of project(:{})", adminId, id);
-            throw new ServerException("already exist this admin");
-        }
+        List<User> admins = userMapper.getByIds(adminIds);
 
-        User admin = userMapper.getById(adminId);
-
-        if (null == admin) {
+        if (null == admins && admins.isEmpty()) {
             throw new NotFoundException("user is not found");
         }
 
-        relProjectAdmin = new RelProjectAdmin(id, adminId).createdBy(user.getId());
-        int insert = relProjectAdminMapper.insert(relProjectAdmin);
-        if (insert > 0) {
-            optLogger.info("relProjectAdmin(:{}) creaty by user(:{})", relProjectAdmin.toString(), user.getId());
-            return new RelProjectAdminDto(relProjectAdmin.getId(), admin);
-        } else {
-            log.error("add project admin fail: (project:{}, admin:{})", id, adminId);
-            throw new ServerException("unspecified error");
+        admins.forEach(u -> {
+            if (!adminIds.contains(u.getId())) {
+                throw new NotFoundException("user is not found");
+            }
+        });
+
+        List<Long> oAdminIds = relProjectAdminMapper.getAdminIds(id);
+
+        admins.removeIf(u -> oAdminIds.contains(u.getId()));
+
+
+        if (!CollectionUtils.isEmpty(admins)) {
+            List<RelProjectAdmin> relProjectAdmins = new ArrayList<>();
+            admins.forEach(u -> relProjectAdmins.add(new RelProjectAdmin(id, u.getId()).createdBy(user.getId())));
+            int insert = relProjectAdminMapper.insertBatch(relProjectAdmins);
+            if (insert > 0) {
+                Map<Long, User> userMap = new HashMap<>();
+                admins.forEach(u -> userMap.put(u.getId(), u));
+
+                List<RelProjectAdminDto> list = new ArrayList<>();
+                relProjectAdmins.forEach(r -> {
+                    list.add(new RelProjectAdminDto(r.getId(), userMap.get(r.getUserId())));
+                });
+
+                return list;
+            } else {
+                throw new ServerException("unspecified error");
+            }
         }
+        return null;
     }
 
 

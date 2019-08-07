@@ -67,4 +67,15 @@ public interface RelProjectAdminMapper {
             "where r.project_id = #{projectId}"
     })
     List<RelProjectAdminDto> getByProject(Long projectId);
+
+
+    @Select({
+            "select r.user_id",
+            "from rel_project_admin r",
+            "    left join `user` u on u.id = r.user_id",
+            "where r.project_id = #{projectId}"
+    })
+    List<Long> getAdminIds(Long projectId);
+
+    int insertBatch(List<RelProjectAdmin> list);
 }
