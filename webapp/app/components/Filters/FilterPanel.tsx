@@ -93,8 +93,6 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
         })
 
         const defaultFilterValue = deserializeDefaultValue(control)
-        console.log(control)
-        console.log(defaultFilterValue)
         if (defaultFilterValue) {   // 默认参数
           controlValues[control.key] = defaultFilterValue
           this.setControlRequestParams(control, defaultFilterValue, currentItems)
