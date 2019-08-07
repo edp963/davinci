@@ -80,14 +80,26 @@ function shareReducer (state = initialState, { type, payload }) {
   const shareParams = state.get('shareParams')
   switch (type) {
     case SEND_SHARE_PARAMS:
-      // todo 将该值写成currentDashboard中成为 默认值即可
       return state.set('shareParams', payload.params)
-      break
     case LOAD_SHARE_DASHBOARD_SUCCESS:
       const dashboardConfig = payload.dashboard.config ? JSON.parse(payload.dashboard.config) : {}
-      const globalControls = (dashboardConfig.filters || []).map((c) => globalControlMigrationRecorder(c))
-      console.log(dashboardConfig)
-      console.log(globalControls)
+      const globalControls = (dashboardConfig.filters || []).map((c) => globalControlMigrationRecorder(c)).map((ctrl) => {
+        const {relatedViews} = ctrl
+        let newCtrl = {...ctrl}
+        if (shareParams) {
+          Object.entries(relatedViews).forEach(([key, value]) => {
+            const defaultValue = shareParams[value['name']]
+            if (defaultValue && defaultValue.length) {
+               newCtrl = {
+                 ...ctrl,
+                 defaultValue
+               }
+            }
+          })
+        }
+        return newCtrl
+      })
+
       const globalControlsInitialValue = {}
       globalControls.forEach((control: IGlobalControl) => {
         const { interactionType, relatedItems, relatedViews } = control
@@ -114,36 +126,21 @@ function shareReducer (state = initialState, { type, payload }) {
             })
           })
         }
-        // if (shareParams && Object.keys(shareParams).length) {
-
-        //   Object.entries(relatedItems).forEach(([itemId, config]) => {
-        //     Object.entries(relatedViews).forEach(([viewId, fields]) => {
-        //       if (config.checked && config.viewId === Number(viewId)) {
-        //         const shareParamValue = shareParams[fields['name']]
-        //         const filterValue = interactionType === 'column' && shareParamValue
-        //           ? getModelValue(control, fields as IControlRelatedField, shareParamValue)
-        //           : getVariableValue(control, fields, shareParamValue)
-        //         if (!globalControlsInitialValue[itemId]) {
-        //           globalControlsInitialValue[itemId] = {
-        //             filters: [],
-        //             variables: []
-        //           }
-        //         }
-        //         if (interactionType === 'column') {
-        //           globalControlsInitialValue[itemId].filters = globalControlsInitialValue[itemId].filters.concat(filterValue)
-        //         } else {
-        //           globalControlsInitialValue[itemId].variables = globalControlsInitialValue[itemId].variables.concat(filterValue)
-        //         }
-        //       }
-        //     })
-        //   })
-        // }
       })
 
       return state
         .set('title', payload.dashboard.name)
-        .set('dashboard', payload.dashboard)
-        .set('config', payload.dashboard.config)
+        .set('dashboard', {
+          ...payload.dashboard,
+          config: JSON.stringify({
+            ...dashboardConfig,
+            filters: globalControls
+          })
+        })
+        .set('config', JSON.stringify({
+          ...dashboardConfig,
+          filters: globalControls
+        }))
         .set('dashboardSelectOptions', {})
         .set('widgets', payload.dashboard.widgets)
         .set('items', payload.dashboard.relations)
@@ -245,7 +242,7 @@ function shareReducer (state = initialState, { type, payload }) {
           const { filters: globalFilters, variables: globalVariables } = requestParams
           itemsInfo[itemId].queryConditions = {
             ...itemsInfo[itemId].queryConditions,
-            ...globalFilters && { globalFilters },
+            ...globalFilters && { globalFilters }, // todo 这里不能直接覆盖
             ...globalVariables && { globalVariables }
           }
         })
