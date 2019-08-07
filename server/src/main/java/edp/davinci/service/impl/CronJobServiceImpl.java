@@ -332,6 +332,7 @@ public class CronJobServiceImpl implements CronJobService {
                 e.printStackTrace();
             } finally {
                 countDownLatch.countDown();
+                redisUtils.delete(flag);
             }
 
             return cronJob;
