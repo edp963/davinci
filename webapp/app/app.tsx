@@ -160,9 +160,3 @@ if (process.env.NODE_ENV === 'production') {
     window.__REACT_DEVTOOLS_GLOBAL_HOOK__.inject = () => void 0
   }
 }
-
-// if (process.env.NODE_ENV !== 'production') {
-//   const { whyDidYouUpdate } = require('why-did-you-update')
-//   whyDidYouUpdate(React)
-// }
-

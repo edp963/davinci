@@ -23,7 +23,9 @@
       "components/*": [ "app/components/*" ],
       "containers/*": ["app/containers/*"],
       "libs/*": ["libs/*"]
-    }
+    },
+    // https://github.com/Microsoft/TypeScript/wiki/Breaking-Changes#keyof-now-includes-string-number-and-symbol-keys
+    "keyofStringsOnly": true
     // "strict": true,
     // "strictFunctionTypes": false
     // "noUnusedLocals": true,
