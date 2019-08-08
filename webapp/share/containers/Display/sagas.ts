@@ -25,10 +25,13 @@ import { message } from 'antd'
 import request from 'utils/request'
 import api from 'utils/api'
 import { ActionTypes } from './constants'
-import { displayLoaded, loadDisplayFail, layerDataLoaded, loadLayerDataFail } from './actions'
+import ShareDisplayActions, { ShareDisplayActionType } from './actions'
 
-export function* getDisplay (action) {
+export function* getDisplay (action: ShareDisplayActionType) {
+  if (action.type !== ActionTypes.LOAD_SHARE_DISPLAY) { return }
+
   const { token, resolve, reject } = action.payload
+  const { loadDisplayFail, displayLoaded } = ShareDisplayActions
   try {
     const asyncData = yield call(request, `${api.share}/display/${token}`)
     const { header, payload } = asyncData
@@ -49,9 +52,10 @@ export function* getDisplay (action) {
   }
 }
 
-export function* getData (action) {
-  const { payload } = action
-  const { renderType, layerId, dataToken, requestParams } = payload
+export function* getData (action: ShareDisplayActionType) {
+  if (action.type !== ActionTypes.LOAD_LAYER_DATA) { return }
+
+  const { renderType, layerId, dataToken, requestParams } = action.payload
   const {
     filters,
     tempFilters,
@@ -64,6 +68,7 @@ export function* getData (action) {
     ...rest
   } = requestParams
   const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
+  const { layerDataLoaded, loadLayerDataFail } = ShareDisplayActions
 
   try {
     const response = yield call(request, {

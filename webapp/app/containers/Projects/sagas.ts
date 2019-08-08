@@ -151,12 +151,12 @@ export function* deleteProject (action) {
 
 
 export function* addProjectAdmin (action) {
-  const { id, adminId, resolve } = action.payload
+  const { id, adminIds, resolve } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.projects}/${id}/admin/${adminId}`,
-      data: {id, adminId}
+      url: `${api.projects}/${id}/admins`,
+      data: adminIds
     })
     const result = asyncData.payload
   //  yield put(projectAdded(result))

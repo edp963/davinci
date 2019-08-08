@@ -85,7 +85,6 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
 
       const controls: IGlobalControl[] = globalControls.map((control) => {
         control = globalControlMigrationRecorder(control)
-
         const { relatedItems } = control
         Object.keys(relatedItems).forEach((itemId) => {
           if (!currentItems.find((ci) => ci.id === Number(itemId))) {
@@ -94,6 +93,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
         })
 
         const defaultFilterValue = deserializeDefaultValue(control)
+        console.log(defaultFilterValue)
         if (defaultFilterValue) {
           controlValues[control.key] = defaultFilterValue
           this.setControlRequestParams(control, defaultFilterValue, currentItems)
@@ -119,6 +119,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     }
   }
 
+  // save defaultFilterValue
   private setControlRequestParams = (control: IGlobalControl, val, currentItems, callback?) => {
     const { key, interactionType, relatedItems, relatedViews } = control
 
@@ -217,12 +218,15 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
   }
 
   private change = (control: IGlobalControl, val, isInputChange?: boolean) => {
+
     const { currentItems, onChange } = this.props
     const { flatTree, queryMode } = this.state
     const { key } = control
     const childrenKeys = getAllChildren(key, flatTree)
     const relatedItemIds = []
 
+    console.log(control)
+    console.log(currentItems)
     const controlValues = {
       ...this.state.controlValues,
       [key]: val

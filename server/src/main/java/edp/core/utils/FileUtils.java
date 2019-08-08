@@ -246,6 +246,8 @@ public class FileUtils {
             sb.append(DIR_DOWNLOAD);
         } else if (msgWrapper.getAction() == ActionEnum.SHAREDOWNLOAD) {
             sb.append(DIR_SHARE_DOWNLOAD);
+        } else if (msgWrapper.getAction() == ActionEnum.MAIL) {
+            sb.append(DIR_EMAIL);
         }
         sb.append(new SimpleDateFormat("yyyyMMdd").format(new Date())).append(File.separator);
         sb.append(type.getType()).append(File.separator);
@@ -255,7 +257,7 @@ public class FileUtils {
         }
         if (msgWrapper.getAction() == ActionEnum.DOWNLOAD) {
             sb.append(msgWrapper.getxId());
-        } else if (msgWrapper.getAction() == ActionEnum.SHAREDOWNLOAD) {
+        } else if (msgWrapper.getAction() == ActionEnum.SHAREDOWNLOAD || msgWrapper.getAction() == ActionEnum.MAIL) {
             sb.append(msgWrapper.getxUUID());
         }
         sb.append(UNDERLINE).append(System.currentTimeMillis()).append(type.getFormat());

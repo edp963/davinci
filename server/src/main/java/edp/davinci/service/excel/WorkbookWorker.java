@@ -123,7 +123,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
         if (context.getWrapper().getAction() == ActionEnum.DOWNLOAD) {
             Object[] args = {StringUtils.isNotEmpty(filePath), context.getWrapper().getAction(), context.getWrapper().getxId(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
             log.info("workbook worker complete status={},action={},xid={},filePath={},cost={}ms", args);
-        } else if (context.getWrapper().getAction() == ActionEnum.SHAREDOWNLOAD) {
+        } else if (context.getWrapper().getAction() == ActionEnum.SHAREDOWNLOAD || context.getWrapper().getAction() == ActionEnum.MAIL) {
             Object[] args = {StringUtils.isNotEmpty(filePath), context.getWrapper().getAction(), context.getWrapper().getxUUID(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
             log.info("workbook worker complete status={},action={},xUUID={},filePath={},cost={}ms", args);
         }

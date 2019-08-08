@@ -76,8 +76,8 @@ export function getVariableValue (filter: IControlBase, fields: IControlRelatedF
   let variable = []
 
   if (value === void 0
-    || value === null
-    || typeof value === 'string' && !value.trim()) {
+      || value === null
+      || typeof value === 'string' && !value.trim()) {
     return variable
   }
 

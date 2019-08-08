@@ -46,6 +46,16 @@ public class WorkBookContext implements Serializable {
         return new WorkBookContext(wrapper, widgets, user, resultLimit);
     }
 
+    public static WorkBookContext newWorkBookContext(List<WidgetContext> widgets, User user, int resultLimit) {
+        return new WorkBookContext(widgets, user, resultLimit);
+    }
+
+    public WorkBookContext(List<WidgetContext> widgets, User user, int resultLimit) {
+        this.widgets = widgets;
+        this.user = user;
+        this.resultLimit = resultLimit;
+    }
+
     private WorkBookContext(MsgWrapper wrapper, List<WidgetContext> widgets, User user, int resultLimit) {
         this.wrapper = wrapper;
         this.widgets = widgets;

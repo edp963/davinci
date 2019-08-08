@@ -1,5 +1,6 @@
 import React from 'react'
 import { Input, Select, TreeSelect, DatePicker } from 'antd'
+const Search = Input.Search
 const Option = Select.Option
 import NumberRange from '../NumberRange'
 const MultiDatePicker = React.lazy(() => import('../MultiDatePicker'))
@@ -11,7 +12,7 @@ const styles = require('./filter.less')
 
 export function renderInputText (onChange, onSearch) {
   return (
-    <Input.Search placeholder="请输入" onBlur={onChange} onPressEnter={onSearch} />
+    <Search placeholder="请输入" onBlur={onChange} onSearch={onSearch} />
   )
 }
 

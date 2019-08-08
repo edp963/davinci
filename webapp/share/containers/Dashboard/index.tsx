@@ -59,7 +59,8 @@ import {
   globalControlChange,
   loadDownloadList,
   downloadFile,
-  initiateDownloadTask
+  initiateDownloadTask,
+  sendShareParams
 } from './actions'
 import {
   makeSelectDashboard,
@@ -70,7 +71,8 @@ import {
   makeSelectItems,
   makeSelectItemsInfo,
   makeSelectLinkages,
-  makeSelectDownloadList
+  makeSelectDownloadList,
+  makeSelectShareParams
 } from './selectors'
 import { decodeMetricName, getTable } from 'app/containers/Widget/components/util'
 import {
@@ -123,6 +125,7 @@ interface IDashboardProps {
   widgets: any[],
   dashboardSelectOptions: any,
   linkages: any[]
+  shareParams: object
   downloadList: IDownloadRecord[]
   onLoadDashboard: (shareInfo: any, error: (err) => void) => void,
   onLoadWidget: (aesStr: string, success?: (widget) => void, error?: (err) => void) => void,
@@ -148,6 +151,7 @@ interface IDashboardProps {
   onInitiateDownloadTask: (shareClientId: string, dataToken: string, type: DownloadTypes, downloadParams?: IDataDownloadParams[], itemId?: number) => void
   onLoadDownloadList: (shareClientId: string, token: string) => void
   onDownloadFile: (id: number, shareClientId: string, token: string) => void
+  onSendShareParams: (params: object) => void
 }
 
 interface IDashboardStates {
@@ -230,6 +234,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }
   }
   public componentWillMount () {
+    // urlparse
     const qs = this.getQs(location.href.substr(location.href.indexOf('?') + 1))
     this.setState({
       type: qs.type,
@@ -237,6 +242,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     })
     this.loadShareContent(qs)
     this.initPolling(qs.shareInfo)
+    delete qs.type
+    delete qs.shareInfo
+    this.props.onSendShareParams(qs)
   }
 
   public componentDidMount () {
@@ -593,6 +601,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       this.props.onLoadSelectOptions(controlKey, this.state.shareInfo, paramsOrOptions, itemId)
     }
   }
+
 
   private globalControlChange = (controlRequestParamsByItem: IMapItemControlRequestParams) => {
     this.props.onGlobalControlChange(controlRequestParamsByItem)
@@ -1064,7 +1073,8 @@ const mapStateToProps = createStructuredSelector({
   currentItemsInfo: makeSelectItemsInfo(),
   dashboardSelectOptions: makeSelectDashboardSelectOptions(),
   linkages: makeSelectLinkages(),
-  downloadList: makeSelectDownloadList()
+  downloadList: makeSelectDownloadList(),
+  shareParams: makeSelectShareParams()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -1084,7 +1094,8 @@ export function mapDispatchToProps (dispatch) {
     onGlobalControlChange: (controlRequestParamsByItem) => dispatch(globalControlChange(controlRequestParamsByItem)),
     onInitiateDownloadTask: (shareClientId, id, type, downloadParams?) => dispatch(initiateDownloadTask(shareClientId, id, type, downloadParams)),
     onLoadDownloadList: (shareClinetId, token) => dispatch(loadDownloadList(shareClinetId, token)),
-    onDownloadFile: (id, shareClientId, token) => dispatch(downloadFile(id, shareClientId, token))
+    onDownloadFile: (id, shareClientId, token) => dispatch(downloadFile(id, shareClientId, token)),
+    onSendShareParams: (params) => dispatch(sendShareParams(params))
   }
 }
 

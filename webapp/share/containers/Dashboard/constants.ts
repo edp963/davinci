@@ -39,6 +39,8 @@ export const DELETE_DRILL_HISTORY = 'davinci/Share/DELETE_DRILL_HISTORY'
 export const SET_SELECT_OPTIONS = 'davinci/Share/SET_SELECT_OPTIONS'
 export const SELECT_DASHBOARD_ITEM_CHART = 'davinci/Share/SELECT_DASHBOARD_ITEM_CHART'
 export const GLOBAL_CONTROL_CHANGE = 'davinci/Share/GLOBAL_CONTROL_CHANGE'
+export const SEND_SHARE_PARAMS = 'davinci/Share/SEND_SHARE_PARAMS'
+
 
 export const LOAD_DOWNLOAD_LIST = 'davinci/Share/LOAD_DOWNLOAD_LIST'
 export const LOAD_DOWNLOAD_LIST_SUCCESS = 'davinci/Share/LOAD_DOWNLOAD_LIST_SUCCESS'

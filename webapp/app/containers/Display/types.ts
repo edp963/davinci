@@ -18,16 +18,31 @@
  * >>
  */
 
-import { createTypes } from 'utils/redux'
+import { ISlideParams } from './components/types'
 
-enum Types {
-  LOAD_SHARE_DISPLAY = 'davinci/Share/LOAD_SHARE_DISPLAY',
-  LOAD_SHARE_DISPLAY_SUCCESS = 'davinci/Share/LOAD_SHARE_DISPLAY_SUCCESS',
-  LOAD_SHARE_DISPLAY_FAILURE = 'davinci/Share/LOAD_SHARE_DISPLAY_FAILURE',
+export { ISlideParams } from './components/types'
 
-  LOAD_LAYER_DATA = 'davinci/Share/LOAD_LAYER_DATA',
-  LOAD_LAYER_DATA_SUCCESS = 'davinci/Share/LOAD_LAYER_DATA_SUCCESS',
-  LOAD_LAYER_DATA_FAILURE = 'davinci/Share/LOAD_LAYER_DATA_FAILURE'
+export interface IDisplay {
+  id: number
+  name: string
+  avatar: string
+  description: string
+  projectId: number
+  publish: boolean
 }
 
-export const ActionTypes = createTypes(Types)
+interface ISlideBase {
+  id: number
+  displayId: number
+  index: number
+}
+
+export interface ISlideRaw extends ISlideBase {
+  config: string
+}
+
+export interface ISlide extends ISlideBase {
+  config: {
+    slideParams: ISlideParams
+  }
+}
