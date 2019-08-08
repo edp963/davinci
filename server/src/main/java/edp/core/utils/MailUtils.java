@@ -22,6 +22,8 @@ package edp.core.utils;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.ServerException;
 import edp.davinci.core.enums.CronJobMediaType;
+import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.dto.cronJobDto.ExcelContent;
 import edp.davinci.service.screenshot.ImageContent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -239,11 +241,11 @@ public class MailUtils {
      * @param bcc      加密抄送
      * @param template 模板地址
      * @param content  模板内容
-     * @param files    附件
+     * @param excels   附件
      * @throws ServerException
      */
     public void sendTemplateEmail(String from, String nickName, String subject, String[] to, String[] cc, String[] bcc,
-                                  String template, Map<String, Object> content, List<File> files, List<ImageContent> images) throws ServerException {
+                                  String template, Map<String, Object> content, List<ExcelContent> excels, List<ImageContent> images) throws ServerException {
 
         if (StringUtils.isEmpty(from)) {
             log.info("email address(from) cannot be EMPTY");
@@ -319,18 +321,13 @@ public class MailUtils {
             String text = templateEngine.process(template, context);
             messageHelper.setText(text, true);
 
-            if (!CollectionUtils.isEmpty(files)) {
-                if (files.size() == 1) {
-                    File file = files.get(0);
-                    String attName = "Attachment" + file.getName().substring(file.getName().lastIndexOf("."));
-                    messageHelper.addAttachment(attName, file);
-                } else {
-                    for (int i = 0; i < files.size(); i++) {
-                        File file = files.get(i);
-                        String attName = "Attachment-" + (i + 1) + file.getName().substring(file.getName().lastIndexOf("."));
-                        messageHelper.addAttachment(attName, file);
+            if (!CollectionUtils.isEmpty(excels)) {
+                excels.forEach(excel -> {
+                    try {
+                        messageHelper.addAttachment(excel.getName() + FileTypeEnum.XLSX.getFormat(), excel.getFile());
+                    } catch (MessagingException e) {
                     }
-                }
+                });
             }
 
             if (!imageFileMap.isEmpty()) {
@@ -377,12 +374,12 @@ public class MailUtils {
      * @param bcc      加密抄送
      * @param template 模板地址
      * @param content  模板内容
-     * @param files    附件
+     * @param excels   附件
      * @param images
      * @throws ServerException
      */
-    public void sendTemplateAttachmentsEmail(String subject, String to, String[] cc, String[] bcc, String template, Map<String, Object> content, List<File> files, List<ImageContent> images) throws ServerException {
-        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, cc, bcc, template, content, files, images);
+    public void sendTemplateAttachmentsEmail(String subject, String to, String[] cc, String[] bcc, String template, Map<String, Object> content, List<ExcelContent> excels, List<ImageContent> images) throws ServerException {
+        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, cc, bcc, template, content, excels, images);
     }
 
 }

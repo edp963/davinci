@@ -60,6 +60,13 @@ public class WidgetContext implements Serializable {
         }
     }
 
+    public WidgetContext(Widget widget, boolean isMaintainer, ViewExecuteParam executeParam) {
+        this.widget = widget;
+        this.isMaintainer = isMaintainer;
+        this.executeParam = executeParam;
+        this.hasExecuteParam = true;
+    }
+
     public WidgetContext() {
     }
 }
