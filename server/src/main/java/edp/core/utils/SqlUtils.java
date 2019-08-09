@@ -642,12 +642,18 @@ public class SqlUtils {
             if (!connection.isValid(5)) {
                 log.info("connection is invalid, retry get connection!");
                 releaseDataSource(this.jdbcUrl, this.username, this.password);
-                connection = dataSource.getConnection();
+                connection = null;
             }
-        } catch (SQLFeatureNotSupportedException e) {
-        } catch (SQLException e) {
-            log.error("create connection error, jdbcUrl: {}", jdbcUrl);
-            throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
+        } catch (Exception e) {
+        }
+
+        if (null == connection) {
+            try {
+                connection = dataSource.getConnection();
+            } catch (SQLException e) {
+                log.error("create connection error, jdbcUrl: {}", jdbcUrl);
+                throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
+            }
         }
 
         return connection;
