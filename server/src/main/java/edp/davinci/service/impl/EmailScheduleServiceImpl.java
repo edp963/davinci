@@ -157,15 +157,17 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     bcc = cronJobConfig.getBcc().split(SEMICOLON);
                 }
 
-                mailUtils.sendTemplateAttachmentsEmail(
-                        cronJobConfig.getSubject(),
-                        cronJobConfig.getTo(),
-                        cc,
-                        bcc,
-                        Constants.SCHEDULE_MAIL_TEMPLATE,
-                        content,
-                        excels,
-                        images);
+                if (!CollectionUtils.isEmpty(excels) || !CollectionUtils.isEmpty(images)) {
+                    mailUtils.sendTemplateAttachmentsEmail(
+                            cronJobConfig.getSubject(),
+                            cronJobConfig.getTo(),
+                            cc,
+                            bcc,
+                            Constants.SCHEDULE_MAIL_TEMPLATE,
+                            content,
+                            excels,
+                            images);
+                }
             }
         }
     }
@@ -282,7 +284,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
         CountDownLatch countDownLatch = new CountDownLatch(workBookContextMap.size());
 
-        List<ExcelContent> files = new CopyOnWriteArrayList<>();
+        List<ExcelContent> excelContents = new CopyOnWriteArrayList<>();
 
         workBookContextMap.forEach((name, context) -> executorService.submit(() -> {
             try {
@@ -293,8 +295,8 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 context.setWrapper(new MsgWrapper(msgMailExcel, ActionEnum.MAIL, uuid));
                 ExecutorUtil.submitWorkbookTask(context);
                 condition.await();
+                excelContents.add(new ExcelContent(name, msgMailExcel.getFilePath()));
                 countDownLatch.countDown();
-                files.add(new ExcelContent(name, msgMailExcel.getFilePath()));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
@@ -303,7 +305,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         }));
 
         countDownLatch.await();
-        return files.size() > 1 ? files : null;
+        return excelContents.isEmpty() ? null : excelContents;
     }
 
 }
