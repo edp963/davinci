@@ -167,8 +167,11 @@ public class ScriptUtiils {
                         ScriptObjectMirror vsom = (ScriptObjectMirror) v;
                         for (String key : vsom.keySet()) {
                             if (!StringUtils.isEmpty(key)) {
-                                String setter = "set" + String.valueOf(key.charAt(0)).toUpperCase() + key.substring(1);
                                 Object o = vsom.get(key);
+                                if (null == o) {
+                                    continue;
+                                }
+                                String setter = "set" + String.valueOf(key.charAt(0)).toUpperCase() + key.substring(1);
                                 Class clazz = o.getClass();
 
                                 try {
