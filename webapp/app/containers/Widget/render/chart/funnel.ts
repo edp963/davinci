@@ -60,7 +60,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   } = spec
 
   const labelOption = {
-    label: getLabelOption('funnel', label)
+    label: getLabelOption('funnel', label, metrics)
   }
 
   const { selectedItems } = drillOptions

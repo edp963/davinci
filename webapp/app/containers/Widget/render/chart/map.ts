@@ -97,12 +97,7 @@ export default function (chartProps: IChartProps) {
   }
 
   const labelOptionLines = {
-    label: getLabelOption('lines', label, true, {
-      formatter (param) {
-        const { name, data } = param
-        return `${name}(${data.value[2]})`
-      }
-    })
+    label: getLabelOption('lines', label, metrics, true)
   }
 
   let metricOptions

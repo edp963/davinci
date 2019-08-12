@@ -65,7 +65,7 @@ export default function (chartProps: IChartProps) {
   } = splitLine
 
   const labelOption = {
-    label: getLabelOption('bar', label)
+    label: getLabelOption('waterfall', label, metrics)
   }
 
   const xAxisData = data.map((d) => d[cols[0].name] || '')

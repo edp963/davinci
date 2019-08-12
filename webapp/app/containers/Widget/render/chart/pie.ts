@@ -60,7 +60,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   const { selectedItems } = drillOptions
   // formatter: '{b}({d}%)'
   const labelOption = {
-    label: getLabelOption('pie', label)
+    label: getLabelOption('pie', label, metrics)
   }
 
   const roseTypeValue = roseType ? 'radius' : ''

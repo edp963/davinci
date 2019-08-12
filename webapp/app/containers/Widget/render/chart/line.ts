@@ -38,23 +38,9 @@ const defaultTheme = require('../../../../assets/json/echartsThemes/default.proj
 const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
-  const {
-    data,
-    cols,
-    metrics,
-    chartStyles,
-    color,
-    tip
-  } = chartProps
+  const { data, cols, metrics, chartStyles, color, tip } = chartProps
 
-  const {
-    spec,
-    xAxis,
-    yAxis,
-    splitLine,
-    label,
-    legend
-  } = chartStyles
+  const { spec, xAxis, yAxis, splitLine, label, legend } = chartStyles
 
   const {
     showVerticalLine,
@@ -67,22 +53,12 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     horizontalLineStyle
   } = splitLine
 
-  const {
-    smooth,
-    step
-  } = spec
+  const { smooth, step } = spec
 
   const { selectedItems } = drillOptions
 
   const labelOption = {
-    label: getLabelOption('line', label, false, {
-      formatter: (params) => {
-        const { value, seriesName } = params
-        const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
-        const formatted = getFormattedValue(value, m.format)
-        return formatted
-      }
-    })
+    label: getLabelOption('line', label, metrics)
   }
 
   const xAxisColumnName = cols[0].name
@@ -90,7 +66,13 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   let grouped = {}
   if (color.items.length) {
     xAxisData = distinctXaxis(data, xAxisColumnName)
-    grouped = makeGrouped(data, color.items.map((c) => c.name), xAxisColumnName, metrics, xAxisData)
+    grouped = makeGrouped(
+      data,
+      color.items.map((c) => c.name),
+      xAxisColumnName,
+      metrics,
+      xAxisData
+    )
   }
 
   const series = []
@@ -98,65 +80,79 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   metrics.forEach((m, i) => {
     const decodedMetricName = decodeMetricName(m.name)
-    const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
+    const localeMetricName = `[${getAggregatorLocale(
+      m.agg
+    )}] ${decodedMetricName}`
     if (color.items.length) {
-      Object
-        .entries(grouped)
-        .forEach(([k, v]: [string, any[]]) => {
-          const serieObj = {
-            name: `${k} ${localeMetricName}`,
-            type: 'line',
-            sampling: 'average',
-            data: v.map((g, index) => {
-              const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
-                normal: {
-                  opacity: 1,
-                  borderWidth: 6
-                }
-              }} : {}
-              // if (index === interactIndex) {
-              //   return {
-              //     value: g[m],
-              //     itemStyle: {
-              //       normal: {
-              //         opacity: 1
-              //       }
-              //     }
-              //   }
-              // } else {
-              // return g[`${m.agg}(${decodedMetricName})`]
-              return {
-                value: g[`${m.agg}(${decodedMetricName})`],
-                ...itemStyleObj
-              }
-              // }
-            }),
-            itemStyle: {
-              normal: {
-                // opacity: interactIndex === undefined ? 1 : 0.25
-                color: color.items[0].config.values[k],
-                opacity: selectedItems && selectedItems.length > 0 ? 0.7 : 1
-              }
-            },
-            smooth,
-            step,
-            ...labelOption
-          }
-          series.push(serieObj)
-          seriesData.push(grouped[k])
-        })
+      Object.entries(grouped).forEach(([k, v]: [string, any[]]) => {
+        const serieObj = {
+          name: `${k} ${localeMetricName}`,
+          type: 'line',
+          sampling: 'average',
+          data: v.map((g, index) => {
+            const itemStyleObj =
+              selectedItems &&
+              selectedItems.length &&
+              selectedItems.some((item) => item === index)
+                ? {
+                    itemStyle: {
+                      normal: {
+                        opacity: 1,
+                        borderWidth: 6
+                      }
+                    }
+                  }
+                : {}
+            // if (index === interactIndex) {
+            //   return {
+            //     value: g[m],
+            //     itemStyle: {
+            //       normal: {
+            //         opacity: 1
+            //       }
+            //     }
+            //   }
+            // } else {
+            // return g[`${m.agg}(${decodedMetricName})`]
+            return {
+              value: g[`${m.agg}(${decodedMetricName})`],
+              ...itemStyleObj
+            }
+            // }
+          }),
+          itemStyle: {
+            normal: {
+              // opacity: interactIndex === undefined ? 1 : 0.25
+              color: color.items[0].config.values[k],
+              opacity: selectedItems && selectedItems.length > 0 ? 0.7 : 1
+            }
+          },
+          smooth,
+          step,
+          ...labelOption
+        }
+        series.push(serieObj)
+        seriesData.push(grouped[k])
+      })
     } else {
       const serieObj = {
         name: decodedMetricName,
         type: 'line',
         sampling: 'average',
         data: data.map((g, index) => {
-          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
-            normal: {
-              opacity: 1,
-              borderWidth: 8
-            }
-          }} : {}
+          const itemStyleObj =
+            selectedItems &&
+            selectedItems.length &&
+            selectedItems.some((item) => item === index)
+              ? {
+                  itemStyle: {
+                    normal: {
+                      opacity: 1,
+                      borderWidth: 8
+                    }
+                  }
+                }
+              : {}
           // if (index === interactIndex) {
           //   return {
           //     value: d[m],
@@ -237,12 +233,29 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   return {
     xAxis: getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData),
-    yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `)),
+    yAxis: getMetricAxisOption(
+      yAxis,
+      yAxisSplitLineConfig,
+      metrics.map((m) => decodeMetricName(m.name)).join(` / `)
+    ),
     series,
     tooltip: {
-      formatter: getChartTooltipLabel('line', seriesData, { cols, metrics, color, tip })
+      formatter: getChartTooltipLabel('line', seriesData, {
+        cols,
+        metrics,
+        color,
+        tip
+      })
     },
     legend: getLegendOption(legend, seriesNames),
-    grid: getGridPositions(legend, seriesNames, '', false, yAxis, xAxis, xAxisData)
+    grid: getGridPositions(
+      legend,
+      seriesNames,
+      '',
+      false,
+      yAxis,
+      xAxis,
+      xAxisData
+    )
   }
 }

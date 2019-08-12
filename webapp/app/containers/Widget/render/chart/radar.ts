@@ -25,6 +25,8 @@ import {
   getSizeValue,
   getSizeRate
 } from '../../components/util'
+import { getFieldAlias } from '../../components/Config/Field'
+import { getFormattedValue } from '../../components/Config/Format'
 import {
   getMetricAxisOption,
   getLabelOption,
@@ -55,6 +57,10 @@ export default function (chartProps: IChartProps) {
     legendPosition,
     fontSize
   } = legend
+
+  const labelOption = {
+    label: getLabelOption('radar', label, metrics)
+  }
 
   let dimensions = []
   if (cols.length) {
@@ -97,22 +103,16 @@ export default function (chartProps: IChartProps) {
     value: Object.values(value)
   })) : []
 
-  const {
-    showLabel,
-    labelColor,
-    labelFontFamily,
-    labelFontSize
-  } = label
-
-  const radarName = {
-    show: showLabel,
-    color: labelColor,
-    fontFamily: labelFontFamily,
-    fontSize: labelFontSize
-  }
-
   return {
-    tooltip : {},
+    tooltip : {
+      formatter (params) {
+        const { dataIndex, data } = params
+        const metric = metrics[dataIndex]
+        let tooltipLabels = [getFieldAlias(metric.field, {}) || decodeMetricName(metric.name)]
+        tooltipLabels = tooltipLabels.concat(indicator.map(({ name }, idx) => (`${name}: ${getFormattedValue(data.value[idx], metric.format)}`)))
+        return tooltipLabels.join('<br/>')
+      }
+    },
     legend: getLegendOption(legend, legendData),
     radar: {
       // type: 'log',
@@ -122,7 +122,8 @@ export default function (chartProps: IChartProps) {
     series: [{
       name: '',
       type: 'radar',
-      data: seriesData
+      data: seriesData,
+      ...labelOption
     }]
   }
 }
