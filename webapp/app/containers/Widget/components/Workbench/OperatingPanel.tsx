@@ -1,5 +1,6 @@
 import React from 'react'
 import classnames from 'classnames'
+import set from 'lodash/set'
 
 import widgetlibs from '../../config'
 import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
@@ -31,6 +32,7 @@ import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
 import TableSection from './ConfigSections/TableSection'
 import { ITableConfig } from '../Config/Table'
 import BarSection from './ConfigSections/BarSection'
+import RadarSection from './ConfigSections/RadarSection'
 import { encodeMetricName, decodeMetricName, getPivot, getTable, getPivotModeSelectedCharts, checkChartEnable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
@@ -1206,6 +1208,19 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     // chartModeSelectedChart.style.spec.layerType = layerType
   }
 
+  // @FIXME refactor function styleChange2
+  private styleChange2 = (value: string | number, propPath: string[]) => {
+    const { dataParams, styleParams } = this.state
+    set(styleParams, propPath, value)
+    let renderType: RenderType = 'clear'
+    if (propPath.includes('layerType')) {
+      renderType = 'rerender'
+    } else if (propPath.includes('smooth')) {
+      renderType = 'clear'
+    }
+    this.setWidgetProps(dataParams, styleParams, { renderType })
+  }
+
   private confirmColorModal = (config) => {
     this.state.modalCallback(config)
     this.closeColorModal()
@@ -1463,7 +1478,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const [dimetionsCount, metricsCount] = this.getDimetionsAndMetricsCount()
     const {
       spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend,
-      visualMap, toolbox, areaSelect, scorecard, iframe, table, bar, doubleYAxis } = styleParams
+      visualMap, toolbox, areaSelect, scorecard, iframe, table, bar, radar, doubleYAxis } = styleParams
 
     let categoryDragItems = this.state.categoryDragItems
     if (mode === 'pivot'
@@ -1597,13 +1612,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               name={chartModeSelectedChart.name}
               title={chartModeSelectedChart.title}
               config={spec as ISpecConfig}
-              onChange={this.styleChange('spec')}
+              onChange={this.styleChange2}
               isLegendSection={mapLegendLayerType}
             />}
             {bar && <BarSection
               onChange={this.styleChange('bar')}
               config={bar}
             />}
+            {radar && <RadarSection config={radar} onChange={this.styleChange2} />}
             { mapLabelLayerType
                 ? label && <LabelSection
                   title="标签"

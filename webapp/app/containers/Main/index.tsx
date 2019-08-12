@@ -72,8 +72,6 @@ export class Main extends React.Component<IMainProps, {}> {
 
     if (token) {
       setToken(token)
-      localStorage.setItem('TOKEN', token)
-      localStorage.setItem('TOKEN_EXPIRE', `${new Date().getTime() + 3600000}`)
       onGetLoginUser(() => {
         router.replace('/projects')
         // if (dashboard) {

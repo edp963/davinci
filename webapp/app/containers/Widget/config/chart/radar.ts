@@ -46,7 +46,8 @@ const radar: IChartInfo = {
       showLabel: true,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_FONT_COLOR
+      labelColor: PIVOT_DEFAULT_FONT_COLOR,
+      labelParts: ['indicatorName', 'indicatorValue']
     },
     legend: {
       showLegend: true,
@@ -56,9 +57,18 @@ const radar: IChartInfo = {
       fontSize: '12',
       color: PIVOT_DEFAULT_FONT_COLOR
     },
-    spec: {
-      shape: 'polygon' // 'polygon' | 'circle'
-    }
+    radar: {
+      shape: 'polygon', // 'polygon' | 'circle'
+      name: {
+        show: true,
+        fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+        fontSize: '12',
+        color: PIVOT_DEFAULT_FONT_COLOR
+      },
+      nameGap: 15,
+      splitNumber: 5
+    },
+    spec: {}
     // toolbox: {
     //   showToolbox: false
     // }

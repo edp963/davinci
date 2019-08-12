@@ -47,7 +47,8 @@ const pie: IChartInfo = {
       pieLabelPosition: CHART_PIE_LABEL_POSITIONS[0].value,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_FONT_COLOR
+      labelColor: PIVOT_DEFAULT_FONT_COLOR,
+      labelParts: ['dimensionValue', 'indicatorValue', 'percentage']
     },
     legend: {
       showLegend: true,

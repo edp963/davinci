@@ -80,7 +80,7 @@ export default function (chartProps: IChartProps, drillOptions) {
   const { selectedItems } = drillOptions
   const labelOption = {
     label: {
-      ...getLabelOption('bar', label, false, {
+      ...getLabelOption('bar', label, metrics, false, {
         formatter: (params) => {
           const { value, seriesName } = params
           const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)

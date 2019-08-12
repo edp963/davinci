@@ -60,7 +60,7 @@ export default function (chartProps: IChartProps) {
   } = spec
 
   const labelOption = {
-    label: getLabelOption('sankey', label)
+    label: getLabelOption('sankey', label, metrics)
   }
 
   let dimensions = []
