@@ -18,6 +18,8 @@
  * >>
  */
 
+import { removeToken } from 'utils/request'
+
 export default function () {
   const token = localStorage.getItem('TOKEN')
   if (token) {
@@ -27,8 +29,7 @@ export default function () {
     if (Number(expire) > timestamp) {
       return true
     } else {
-      localStorage.removeItem('TOKEN')
-      localStorage.removeItem('TOKEN_EXPIRE')
+      removeToken()
       return false
     }
   } else {

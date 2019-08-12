@@ -56,7 +56,6 @@ export class UploadAvatar extends React.PureComponent<IUploadAvatarProps, IUploa
           xhrParams.callback(avatar)
         }
         setToken(token)
-        localStorage.setItem('TOKEN', token)
       }
     }
   }
