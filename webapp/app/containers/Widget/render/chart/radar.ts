@@ -47,7 +47,7 @@ export default function (chartProps: IChartProps) {
   const {
     label,
     legend,
-    spec,
+    radar,
     toolbox
   } = chartStyles
 
@@ -55,12 +55,6 @@ export default function (chartProps: IChartProps) {
     legendPosition,
     fontSize
   } = legend
-
-  const { shape } = spec
-
-  const labelOption = {
-    label: getLabelOption('radar', label)
-  }
 
   let dimensions = []
   if (cols.length) {
@@ -122,9 +116,8 @@ export default function (chartProps: IChartProps) {
     legend: getLegendOption(legend, legendData),
     radar: {
       // type: 'log',
-      shape,
       indicator,
-      name: radarName
+      ...radar
     },
     series: [{
       name: '',
