@@ -34,6 +34,7 @@ import {
   distinctXaxis
 } from './util'
 import { EChartOption } from 'echarts'
+import { getFormattedValue } from '../../components/Config/Format'
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
@@ -182,16 +183,24 @@ export default function (chartProps: IChartProps) {
 
   const tooltip: EChartOption.Tooltip = {
     trigger: 'axis',
-    formatter (param: any[]) {
+    formatter (param: EChartOption.Tooltip.Format[]) {
+      let color
       const text = param.map((pa, index) => {
         const data = !index ? parseFloat(sourceData[pa.dataIndex]) : pa.data
-        return `${pa.seriesName}: ${data}`
+        if (typeof data === 'number') {
+          color = pa.color
+        }
+        const formattedValue = getFormattedValue(data, metrics[0].format)
+        return `${pa.seriesName}: ${formattedValue}`
       })
       const xAxis = param[0]['axisValue']
       if (xAxis === '累计') {
         return ''
       } else {
         text.unshift(xAxis)
+        if (color) {
+          text[0] = `<span class="widget-tooltip-circle" style="background: ${color}"></span>` + text[0]
+        }
         return text.join('<br/>')
       }
     }

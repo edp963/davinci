@@ -599,12 +599,14 @@ export function getChartTooltipLabel (type, seriesData, options) {
   }, [])
 
   return function (params) {
-    const { seriesIndex, dataIndex } = params
+    const { seriesIndex, dataIndex, color } = params
     const record = (type === 'funnel' || type === 'map')
       ? seriesData[dataIndex]
       : seriesData[seriesIndex][dataIndex]
-    return dimentionColumns
-      .map((dc) => {
+    let tooltipLabels = []
+
+    tooltipLabels = tooltipLabels.concat(
+      dimentionColumns.map((dc) => {
         let value = record
           ? Array.isArray(record)
             ? record[0][dc.name]
@@ -613,7 +615,10 @@ export function getChartTooltipLabel (type, seriesData, options) {
         value = getFormattedValue(value, dc.format)
         return `${getFieldAlias(dc.field, {}) || dc.name}: ${value}` // @FIXME dynamic field alias by queryVariable in dashboard
       })
-      .concat(metricColumns.map((mc) => {
+    )
+
+    tooltipLabels = tooltipLabels.concat(
+      metricColumns.map((mc) => {
         const decodedName = decodeMetricName(mc.name)
         let value = record
           ? Array.isArray(record)
@@ -622,8 +627,19 @@ export function getChartTooltipLabel (type, seriesData, options) {
           : 0
         value = getFormattedValue(value, mc.format)
         return `${getFieldAlias(mc.field, {}) || decodedName}: ${value}`
-      }))
-      .join('<br/>')
+      })
+    )
+
+    if (color) {
+      const circle = `<span class="widget-tooltip-circle" style="background: ${color}"></span>`
+      if (!dimentionColumns.length) {
+        tooltipLabels.unshift(circle)
+      } else {
+        tooltipLabels[0] = circle + tooltipLabels[0]
+      }
+    }
+
+    return tooltipLabels.join('<br/>')
   }
 }
 

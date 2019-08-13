@@ -19,6 +19,7 @@
  */
 
 import { IChartProps } from '../../components/Chart'
+import { EChartOption } from 'echarts'
 import {
   decodeMetricName,
   getChartTooltipLabel,
@@ -103,16 +104,22 @@ export default function (chartProps: IChartProps) {
     value: Object.values(value)
   })) : []
 
-  return {
-    tooltip : {
-      formatter (params) {
-        const { dataIndex, data } = params
-        const metric = metrics[dataIndex]
-        let tooltipLabels = [getFieldAlias(metric.field, {}) || decodeMetricName(metric.name)]
-        tooltipLabels = tooltipLabels.concat(indicator.map(({ name }, idx) => (`${name}: ${getFormattedValue(data.value[idx], metric.format)}`)))
-        return tooltipLabels.join('<br/>')
+  const tooltip: EChartOption.Tooltip = {
+    formatter (params: EChartOption.Tooltip.Format) {
+      const { dataIndex, data, color } = params
+      const metric = metrics[dataIndex]
+      let tooltipLabels = []
+      tooltipLabels.push(getFieldAlias(metric.field, {}) || decodeMetricName(metric.name))
+      tooltipLabels = tooltipLabels.concat(indicator.map(({ name }, idx) => (`${name}: ${getFormattedValue(data.value[idx], metric.format)}`)))
+      if (color) {
+        tooltipLabels[0] = `<span class="widget-tooltip-circle" style="background: ${color}"></span>` + tooltipLabels[0]
       }
-    },
+      return tooltipLabels.join('<br/>')
+    }
+  }
+
+  return {
+    tooltip,
     legend: getLegendOption(legend, legendData),
     radar: {
       // type: 'log',
