@@ -31,10 +31,9 @@ function SpecSectionSankey (props: ISpecSectionSankeyProps) {
             </Checkbox>
           </Col>
         </Row>
-        {/* TODO feature in echarts@4.2.0 */}
         <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
           <Col span={10}>节点布局方向</Col>
-          <Col span={10}>
+          <Col span={14}>
             <Select
               placeholder="排列"
               className={styles.blockElm}
