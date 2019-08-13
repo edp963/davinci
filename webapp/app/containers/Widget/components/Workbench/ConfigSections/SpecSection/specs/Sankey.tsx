@@ -1,5 +1,6 @@
 import React from 'react'
-import { Row, Col, Checkbox, InputNumber } from 'antd'
+import { Row, Col, Select, Checkbox, InputNumber } from 'antd'
+const Option = Select.Option
 
 import { onSectionChange } from './util'
 import { ISpecConfig } from '../types'
@@ -14,7 +15,7 @@ interface ISpecSectionSankeyProps {
 
 function SpecSectionSankey (props: ISpecSectionSankeyProps) {
   const { spec, title, onChange } = props
-  const { draggable, nodeWidth, nodeGap } = spec
+  const { draggable, nodeWidth, nodeGap, orient } = spec
 
   return (
     <div className={styles.paneBlock}>
@@ -31,20 +32,20 @@ function SpecSectionSankey (props: ISpecSectionSankeyProps) {
           </Col>
         </Row>
         {/* TODO feature in echarts@4.2.0 */}
-        {/* <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-        <Col span={10}>节点布局方向</Col>
-        <Col span={10}>
-          <Select
-            placeholder="排列"
-            className={styles.blockElm}
-            value={orient}
-            onChange={this.selectChange('orient')}
-          >
-            <Option key="horizontal" value="horizontal">水平排列</Option>
-            <Option key="vertical" value="vertical">垂直排列</Option>
-          </Select>
-        </Col>
-      </Row> */}
+        <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+          <Col span={10}>节点布局方向</Col>
+          <Col span={10}>
+            <Select
+              placeholder="排列"
+              className={styles.blockElm}
+              value={orient}
+              onChange={onSectionChange(onChange, 'orient')}
+            >
+              <Option key="horizontal" value="horizontal">水平排列</Option>
+              <Option key="vertical" value="vertical">垂直排列</Option>
+            </Select>
+          </Col>
+        </Row>
         <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
           <Col span={6}>节点宽度</Col>
           <Col span={6}>
