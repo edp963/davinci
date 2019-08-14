@@ -81,7 +81,6 @@ export function errorHandler (error) {
       case 403:
         message.error('未登录或会话过期，请重新登录', 1)
         removeToken()
-        localStorage.removeItem('TOKEN')
         break
       case 401:
         message.error('您没有权限访问此数据', 2)

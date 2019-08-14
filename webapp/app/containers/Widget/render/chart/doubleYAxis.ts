@@ -31,6 +31,8 @@ import {
   getGridPositions,
   getDimetionAxisOption
 } from './util'
+import { getFormattedValue } from '../../components/Config/Format'
+import { getFieldAlias } from '../../components/Config/Field'
 
 export default function (chartProps: IChartProps, drillOptions) {
   const {
@@ -164,10 +166,24 @@ export default function (chartProps: IChartProps, drillOptions) {
     lineStyle: verticalLineStyle
   }
 
+  const allMetrics = secondaryMetrics ? [].concat(metrics).concat(secondaryMetrics) : metrics
   const option = {
     tooltip: {
       trigger: 'axis',
-      axisPointer: {type: 'cross'}
+      axisPointer: {type: 'cross'},
+      formatter (params) {
+        const tooltipLabels = [getFormattedValue(params[0].name, cols[0].format), '<br/>']
+        params.reduce((acc, param) => {
+          const { color, value, seriesIndex } = param
+          if (color) {
+            acc.push(`<span class="widget-tooltip-circle" style="background: ${color}"></span>`)
+          }
+          acc.push(getFieldAlias(allMetrics[seriesIndex].field, {}) || decodeMetricName(allMetrics[seriesIndex].name))
+          acc.push(': ', getFormattedValue(value, allMetrics[seriesIndex].format), '<br/>')
+          return acc
+        }, tooltipLabels)
+        return tooltipLabels.join('')
+      }
     },
     xAxis: getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData),
     yAxis: [

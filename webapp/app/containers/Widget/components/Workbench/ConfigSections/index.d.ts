@@ -12,3 +12,15 @@ export interface IBarConfig {
   gap: number
   width: number
 }
+
+export interface IRadarConfig {
+  shape: 'polygon' | 'circle'
+  name: {
+    show: boolean
+    fontFamily: string
+    fontSize: string
+    color: string
+  }
+  nameGap: number
+  splitNumber: number
+}

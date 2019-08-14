@@ -38,12 +38,12 @@ export class RichTextPreview extends React.PureComponent<IRichTextPreviewProps> 
 
     const formattedText = content.replace(fieldRegx, (_, p1: string) => {
       if (!data.length || data[0][p1] === null) { return '' }
-      let text = data.map((item) => item[p1]).join(', ')
+      let text = data.map((item) => item[p1])
       if (mapFields[p1]) {
         const config = mapFields[p1]
-        text = getFormattedValue(text, config.format)
+        text = text.map((item) => getFormattedValue(item, config.format))
       }
-      return text
+      return text.join(', ')
     })
     return formattedText
   }

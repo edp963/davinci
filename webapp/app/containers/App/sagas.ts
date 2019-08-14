@@ -82,8 +82,7 @@ export function* login (action): IterableIterator<any> {
 
 export function* logout (): IterableIterator<any> {
   try {
-    localStorage.removeItem('TOKEN')
-    localStorage.removeItem('TOKEN_EXPIRE')
+    removeToken()
     localStorage.removeItem('loginUser')
   } catch (err) {
     errorHandler(err)
@@ -235,7 +234,6 @@ export function* joinOrganization (action): IterableIterator<any> {
       switch (error.response.status) {
         case 403:
           removeToken()
-          localStorage.removeItem('TOKEN')
           break
         case 400:
           console.log({error})

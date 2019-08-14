@@ -28,6 +28,7 @@ import {
   getLabelOption
 } from './util'
 import { EChartOption } from 'echarts'
+import { getFormattedValue } from '../../components/Config/Format'
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
@@ -60,7 +61,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   const { selectedItems } = drillOptions
   // formatter: '{b}({d}%)'
   const labelOption = {
-    label: getLabelOption('pie', label)
+    label: getLabelOption('pie', label, metrics)
   }
 
   const roseTypeValue = roseType ? 'radius' : ''
@@ -206,7 +207,15 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   const tooltip: EChartOption.Tooltip = {
     trigger: 'item',
-    formatter: '{b} <br/>{c} ({d}%)'
+    formatter (params: EChartOption.Tooltip.Format) {
+      const { color, name, value, percent } = params
+      const tooltipLabels = []
+      if (color) {
+        tooltipLabels.push(`<span class="widget-tooltip-circle" style="background: ${color}"></span>`)
+      }
+      tooltipLabels.push(`${name}<br/>${getFormattedValue(value as number, metrics[0].format)}（${percent}%）`)
+      return tooltipLabels.join('')
+    }
 }
 
   return {
