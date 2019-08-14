@@ -187,14 +187,6 @@ class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldConfigSta
     form.validateFieldsAndScroll((err) => {
       if (err) { return }
       const config = this.getFieldsValue(form)
-      if (!config.alias) {
-        message.error('字段别名不能为空')
-        return
-      }
-
-      const testResult = this.testExpressionResult()
-      if (testResult === undefined) { return }
-
       onSave(config)
     })
   }
