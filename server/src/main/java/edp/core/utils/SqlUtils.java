@@ -31,11 +31,13 @@ import edp.core.exception.SourceException;
 import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
-import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.select.*;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +74,7 @@ public class SqlUtils {
     @Value("${source.enable-query-log:false}")
     private boolean isQueryLogEnable;
 
+    @Getter
     @Value("${source.query-timeout:600000}")
     private int queryTimeout;
 
@@ -94,6 +97,8 @@ public class SqlUtils {
     private String password;
 
     private DataTypeEnum dataTypeEnum;
+
+    private static volatile Map<Integer, JdbcTemplate> map = new HashMap<>();
 
     public SqlUtils init(BaseSource source) {
         SqlUtils sqlUtils = new SqlUtils();
@@ -246,13 +251,13 @@ public class SqlUtils {
     }
 
     private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns, int startRow) {
+        Set<String> queryFromsAndJoins = getQueryFromsAndJoins(sql);
         jdbcTemplate.query(sql, rs -> {
             if (null != rs) {
                 ResultSetMetaData metaData = rs.getMetaData();
-
                 List<QueryColumn> queryColumns = new ArrayList<>();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                    String key = metaData.getColumnLabel(i);
+                    String key = getColumnLabel(queryFromsAndJoins, metaData.getColumnLabel(i));
                     if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
                         continue;
                     }
@@ -267,13 +272,13 @@ public class SqlUtils {
                         rs.absolute(startRow);
                     }
                     while (rs.next()) {
-                        resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                        resultList.add(getResultObjectMap(excludeColumns, rs, metaData, queryFromsAndJoins));
                     }
                 } catch (Throwable e) {
                     int currentRow = 0;
                     while (rs.next()) {
                         if (currentRow >= startRow) {
-                            resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                            resultList.add(getResultObjectMap(excludeColumns, rs, metaData, queryFromsAndJoins));
                         }
                         currentRow++;
                     }
@@ -285,14 +290,17 @@ public class SqlUtils {
         });
     }
 
-    private Map<String, Object> getResultObjectMap(Set<String> excludeColumns, ResultSet rs, ResultSetMetaData metaData) throws SQLException {
+    private Map<String, Object> getResultObjectMap(Set<String> excludeColumns, ResultSet rs, ResultSetMetaData metaData, Set<String> queryFromsAndJoins) throws SQLException {
         Map<String, Object> map = new LinkedHashMap<>();
+
         for (int i = 1; i <= metaData.getColumnCount(); i++) {
             String key = metaData.getColumnLabel(i);
-            if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
+            String label = getColumnLabel(queryFromsAndJoins, key);
+
+            if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(label)) {
                 continue;
             }
-            map.put(key, rs.getObject(key));
+            map.put(label, rs.getObject(key));
         }
         return map;
     }
@@ -308,6 +316,49 @@ public class SqlUtils {
         return String.format(Consts.QUERY_COUNT_SQL, sql);
     }
 
+
+    public static Set<String> getQueryFromsAndJoins(String sql) {
+        Set<String> columnPrefixs = new HashSet<>();
+        try {
+            Select select = (Select) CCJSqlParserUtil.parse(sql);
+            PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+            getFromItemName(columnPrefixs, plainSelect.getFromItem());
+            List<Join> joins = plainSelect.getJoins();
+            if (!CollectionUtils.isEmpty(joins)) {
+                joins.forEach(join -> getFromItemName(columnPrefixs, join.getRightItem()));
+            }
+        } catch (JSQLParserException e) {
+        }
+        return columnPrefixs;
+    }
+
+    private static void getFromItemName(Set<String> columnPrefixs, FromItem fromItem) {
+        Alias alias = fromItem.getAlias();
+        if (alias != null) {
+            if (alias.isUseAs()) {
+                columnPrefixs.add(alias.getName().trim() + DOT);
+            } else {
+                columnPrefixs.add(alias.toString().trim() + DOT);
+            }
+        } else {
+            fromItem.accept(getFromItemTableName(columnPrefixs));
+        }
+    }
+
+    public static String getColumnLabel(Set<String> columnPrefixs, String columnLable) {
+        if (!CollectionUtils.isEmpty(columnPrefixs)) {
+            for (String prefix : columnPrefixs) {
+                if (columnLable.startsWith(prefix)) {
+                    return columnLable.replaceFirst(prefix, EMPTY);
+                } else if (columnLable.startsWith(prefix.toLowerCase())) {
+                    return columnLable.replaceFirst(prefix.toLowerCase(), EMPTY);
+                } else if (columnLable.startsWith(prefix.toUpperCase())) {
+                    return columnLable.replaceFirst(prefix.toUpperCase(), EMPTY);
+                }
+            }
+        }
+        return columnLable;
+    }
 
     /**
      * 获取当前连接数据库
@@ -701,9 +752,13 @@ public class SqlUtils {
 
     public JdbcTemplate jdbcTemplate() throws SourceException {
         DataSource dataSource = getDataSource(this.jdbcUrl, this.username, this.password);
+        getConnection();
+        if (map.containsKey(dataSource.hashCode())) {
+            return map.get(dataSource.hashCode());
+        }
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.setQueryTimeout(queryTimeout / 1000);
         jdbcTemplate.setFetchSize(1000);
+        map.put(dataSource.hashCode(), jdbcTemplate);
         return jdbcTemplate;
     }
 
@@ -901,6 +956,39 @@ public class SqlUtils {
             }
         }
         return null;
+    }
+
+    private static FromItemVisitor getFromItemTableName(Set<String> set) {
+        return new FromItemVisitor() {
+            @Override
+            public void visit(Table tableName) {
+                set.add(tableName.getName() + DOT);
+            }
+
+            @Override
+            public void visit(SubSelect subSelect) {
+            }
+
+            @Override
+            public void visit(SubJoin subjoin) {
+            }
+
+            @Override
+            public void visit(LateralSubSelect lateralSubSelect) {
+            }
+
+            @Override
+            public void visit(ValuesList valuesList) {
+            }
+
+            @Override
+            public void visit(TableFunction tableFunction) {
+            }
+
+            @Override
+            public void visit(ParenthesisFromItem aThis) {
+            }
+        };
     }
 
 }

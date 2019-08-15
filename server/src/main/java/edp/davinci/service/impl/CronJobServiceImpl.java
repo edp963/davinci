@@ -313,6 +313,8 @@ public class CronJobServiceImpl implements CronJobService {
                         if (result) {
                             cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
                             countDownLatch.countDown();
+                            redisUtils.delete(flag);
+                            log.info("CronJob (:{}) is stoped,  and Flag (:{}) is deleted", id, flag);
                             break;
                         }
                     }
@@ -332,7 +334,6 @@ public class CronJobServiceImpl implements CronJobService {
                 e.printStackTrace();
             } finally {
                 countDownLatch.countDown();
-                redisUtils.delete(flag);
             }
 
             return cronJob;
