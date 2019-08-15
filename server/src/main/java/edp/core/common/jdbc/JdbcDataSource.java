@@ -146,7 +146,7 @@ public class JdbcDataSource extends DruidDataSource {
         return map.get(key);
     }
 
-    private String getKey(String jdbcUrl, String username, String password) {
+    public static String getKey(String jdbcUrl, String username, String password) {
         StringBuilder sb = new StringBuilder();
         if (!StringUtils.isEmpty(username)) {
             sb.append(username);

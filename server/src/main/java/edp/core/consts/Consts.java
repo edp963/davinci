@@ -80,6 +80,8 @@ public class Consts {
 
     public static final String DOUBLE_QUOTES = "\"";
 
+    public static final String DOT = ".";
+
 
     /**
      * 当前用户
