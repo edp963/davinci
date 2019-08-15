@@ -47,6 +47,7 @@ public class CronJobHandler implements RedisMessageHandler {
 
     @Override
     public void handle(Object message, String flag) {
+        log.info("CronJobHandler received stop message (:{}), and Flag is (:{})", message, flag);
         if (message instanceof Long) {
             Long id = (Long) message;
             if (id > 0L) {
