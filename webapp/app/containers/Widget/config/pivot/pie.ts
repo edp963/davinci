@@ -14,8 +14,7 @@ const pie: IChartInfo = {
   title: '饼图',
   icon: 'icon-chartpie',
   coordinate: 'polar',
-  requireDimetions: [0, 9999],
-  requireMetrics: [1, 9999],
+  rules: [{ dimension: [0, 9999], metric: [1, 9999] }],
   data: {
     cols: {
       title: '列',

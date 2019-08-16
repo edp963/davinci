@@ -14,8 +14,7 @@ const doubleYAxis: IChartInfo = {
   title: '双Y轴图',
   icon: 'icon-duplex',
   coordinate: 'cartesian',
-  requireDimetions: 1,
-  requireMetrics: [2, 9999],
+  rules: [{ dimension: 1, metric: [2, 9999] }],
   dimetionAxis: 'col',
   data: {
     cols: {

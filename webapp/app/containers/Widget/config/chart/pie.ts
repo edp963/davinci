@@ -12,8 +12,7 @@ const pie: IChartInfo = {
   title: '饼图',
   icon: 'icon-chartpie',
   coordinate: 'cartesian',
-  requireDimetions: [0, 9999],
-  requireMetrics: 1,
+  rules: [{ dimension: [0, 9999], metric: 1 }],
   dimetionAxis: 'col',
   data: {
     cols: {

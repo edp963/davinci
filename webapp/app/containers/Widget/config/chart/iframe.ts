@@ -27,8 +27,7 @@ const iframe: IChartInfo = {
   title: '内嵌网页',
   icon: 'icon-iframe',
   coordinate: 'other',
-  requireDimetions: 0,
-  requireMetrics: 0,
+  rules: [{ dimension: 0, metric: 0 }],
   data: {
     cols: {
       title: '列',

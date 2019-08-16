@@ -240,30 +240,33 @@ export function getChartUnitMetricHeight (tableBodyHeight, rowKeyCount: number, 
   return realContainerHeight / rowKeyCount / metricCount
 }
 
-export function checkChartEnable (dimetionsCount: number, metricsCount: number, charts: IChartInfo | IChartInfo[]): boolean {
+export function checkChartEnable (dimensionCount: number, metricCount: number, charts: IChartInfo | IChartInfo[]): boolean {
   const chartArr = Array.isArray(charts) ? charts : [charts]
-  for (const chart of chartArr) {
-    const { requireDimetions, requireMetrics } = chart
-    if (Array.isArray(requireDimetions)) {
-      if (dimetionsCount < requireDimetions[0] || dimetionsCount > requireDimetions[1]) {
+
+  const enabled = chartArr.every(({ rules }) => {
+    const currentRulesChecked = rules.some(({ dimension, metric }) => {
+      if (Array.isArray(dimension)) {
+        if (dimensionCount < dimension[0] || dimensionCount > dimension[1]) {
+          return false
+        }
+      } else if (dimensionCount !== dimension) {
         return false
       }
-    } else {
-      if (dimetionsCount !== requireDimetions) {
+
+      if (Array.isArray(metric)) {
+        if (metricCount < metric[0] || metricCount > metric[1]) {
+          return false
+        }
+      } else if (metricCount !== metric) {
         return false
       }
-    }
-    if (Array.isArray(requireMetrics)) {
-      if (metricsCount < requireMetrics[0] || metricsCount > requireMetrics[1]) {
-        return false
-      }
-    } else {
-      if (metricsCount !== requireMetrics) {
-        return false
-      }
-    }
-  }
-  return true
+
+      return true
+    })
+    return currentRulesChecked
+  })
+
+  return enabled
 }
 
 export function getAxisInterval (max, splitNumber) {

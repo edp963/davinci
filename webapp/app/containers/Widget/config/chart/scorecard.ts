@@ -34,8 +34,7 @@ const scorecard: IChartInfo = {
   title: '翻牌器',
   icon: 'icon-calendar1',
   coordinate: 'other',
-  requireDimetions: 0,
-  requireMetrics: [1, 3],
+  rules: [{ dimension: 0, metric: [1, 3] }],
   data: {
     cols: {
       title: '列',

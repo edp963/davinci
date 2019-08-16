@@ -14,8 +14,7 @@ const waterfall: IChartInfo = {
   title: '瀑布图',
   icon: 'icon-waterfall',
   coordinate: 'cartesian',
-  requireDimetions: 1,
-  requireMetrics: 1,
+  rules: [{ dimension: 1, metric: 1 }],
   dimetionAxis: 'col',
   data: {
     cols: {

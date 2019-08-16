@@ -17,8 +17,7 @@ const map: IChartInfo = {
   title: '地图',
   icon: 'icon-china',
   coordinate: 'cartesian',
-  requireDimetions: [0, 9999],
-  requireMetrics: 1,
+  rules: [{ dimension: [0, 9999], metric: 1 }],
   dimetionAxis: 'col',
   data: {
     cols: {

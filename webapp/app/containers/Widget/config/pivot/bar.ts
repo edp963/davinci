@@ -14,8 +14,7 @@ const bar: IChartInfo = {
   title: '柱状图',
   icon: 'icon-chart-bar',
   coordinate: 'cartesian',
-  requireDimetions: [0, 9999],
-  requireMetrics: [1, 9999],
+  rules: [{ dimension: [0, 9999], metric: [1, 9999] }],
   dimetionAxis: 'col',
   data: {
     cols: {

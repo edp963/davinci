@@ -14,8 +14,7 @@ const scatter: IChartInfo = {
   title: '散点图',
   icon: 'icon-scatter-chart',
   coordinate: 'cartesian',
-  requireDimetions: [0, 9999],
-  requireMetrics: [1, 9999],
+  rules: [{ dimension: [0, 9999], metric: [1, 9999] }],
   data: {
     cols: {
       title: '列',

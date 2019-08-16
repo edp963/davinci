@@ -12,8 +12,7 @@ const sankey: IChartInfo = {
   title: '桑基图',
   icon: 'icon-kongjiansangjitu',
   coordinate: 'cartesian',
-  requireDimetions: [2, 9999],
-  requireMetrics: 1,
+  rules: [{ dimension: [2, 9999], metric: 1 }],
   dimetionAxis: 'col',
   data: {
     cols: {

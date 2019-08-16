@@ -92,14 +92,18 @@ export interface IChartStyles {
   doubleYAxis?: IDoubleYAxisConfig
 }
 
+export interface IChartRule {
+  dimension: number | [number, number]
+  metric: number | [number, number]
+}
+
 export interface IChartInfo {
   id: number
   name: string
   title: string
   icon: string
   coordinate: 'cartesian' | 'polar' | 'other'
-  requireDimetions: number | number[]
-  requireMetrics: number | number[]
+  rules: IChartRule[]
   dimetionAxis?: DimetionType
   data: object
   style: object

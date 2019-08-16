@@ -14,8 +14,7 @@ const table: IChartInfo = {
   title: '表格',
   icon: 'icon-table',
   coordinate: 'other',
-  requireDimetions: [0, 9999],
-  requireMetrics: [0, 9999],
+  rules: [{ dimension: [0, 9999], metric: [0, 9999] }],
   data: {
     cols: {
       title: '列',

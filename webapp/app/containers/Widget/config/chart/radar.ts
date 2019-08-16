@@ -12,8 +12,7 @@ const radar: IChartInfo = {
   title: '雷达图',
   icon: 'icon-radarchart',
   coordinate: 'cartesian',
-  requireDimetions: 1,
-  requireMetrics: [1, 9999],
+  rules: [{ dimension: 1, metric: [1, 9999] }],
   dimetionAxis: 'col',
   data: {
     cols: {
