@@ -32,14 +32,14 @@ export function ChartIndicator (props: IChartIndicatorProps) {
     if (rules.length > 1) {
       return (<p key={ruleIdx}>{subContents.join('，')}</p>)
     }
-    return (<p key={ruleIdx}>{subContents.map((item, idx) => (<p key={idx}>{item}</p>))}</p>)
+    return (subContents.map((item, idx) => (<p key={`${ruleIdx}_${idx}`}>{item}</p>)))
   })
 
   const overlay = (
-    <p>
-      {title}<br />
+    <>
+      <p>{title}</p>
       {contents}
-    </p>
+    </>
   )
 
   const iconClass = classnames({

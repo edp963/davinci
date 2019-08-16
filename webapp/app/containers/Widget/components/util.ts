@@ -324,12 +324,6 @@ export function getStyleConfig (chartStyles: IChartStyles): IChartStyles {
   }
 }
 
-export function getChartViewMetrics (metrics, requireMetrics) {
-  const auxiliaryMetrics = Math.max((Array.isArray(requireMetrics) ? requireMetrics[0] : requireMetrics) - 1, 0)
-  metrics.slice().splice(1, auxiliaryMetrics)
-  return metrics
-}
-
 export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree, tree, metrics, drawingData, dimetionAxis) {
   const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
   const data: IChartLine[] = []
