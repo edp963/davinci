@@ -31,7 +31,6 @@ import edp.core.exception.SourceException;
 import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
@@ -74,10 +73,6 @@ public class SqlUtils {
     @Value("${source.enable-query-log:false}")
     private boolean isQueryLogEnable;
 
-    @Getter
-    @Value("${source.query-timeout:600000}")
-    private int queryTimeout;
-
     private static final String TABLE = "TABLE";
 
     private static final String VIEW = "VIEW";
@@ -108,7 +103,6 @@ public class SqlUtils {
         sqlUtils.password = source.getPassword();
         sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
         sqlUtils.resultLimit = this.resultLimit;
-        sqlUtils.queryTimeout = this.queryTimeout;
         sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(source.getJdbcUrl());
         return sqlUtils;
     }
@@ -121,7 +115,6 @@ public class SqlUtils {
         sqlUtils.password = password;
         sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
         sqlUtils.resultLimit = this.resultLimit;
-        sqlUtils.queryTimeout = this.queryTimeout;
         sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
         return sqlUtils;
     }
@@ -752,7 +745,6 @@ public class SqlUtils {
 
     public JdbcTemplate jdbcTemplate() throws SourceException {
         DataSource dataSource = getDataSource(this.jdbcUrl, this.username, this.password);
-        getConnection();
         if (map.containsKey(dataSource.hashCode())) {
             return map.get(dataSource.hashCode());
         }

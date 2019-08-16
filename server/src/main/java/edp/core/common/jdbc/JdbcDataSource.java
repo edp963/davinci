@@ -76,74 +76,89 @@ public class JdbcDataSource extends DruidDataSource {
     @Value("${source.connection-error-retry-attempts:0}")
     private int connectionErrorRetryAttempts;
 
+    @Value("${source.query-timeout:600000}")
+    private int queryTimeout;
+
     private static volatile Map<String, DruidDataSource> map = new HashMap<>();
 
     public synchronized void removeDatasource(String jdbcUrl, String username, String password) {
         String key = getKey(jdbcUrl, username, password);
 
         if (map.containsKey(key)) {
-            map.remove(key);
+            DruidDataSource druidDataSource = map.get(key);
+            if (!druidDataSource.isEnable()) {
+                druidDataSource.close();
+                map.remove(key);
+            }
         }
     }
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
         String key = getKey(jdbcUrl, username, password);
 
-        if (!map.containsKey(key) || null == map.get(key)) {
-            DruidDataSource instance = new JdbcDataSource();
-            String className = null;
-            try {
-                className = DriverManager.getDriver(jdbcUrl.trim()).getClass().getName();
-            } catch (SQLException e) {
-            }
-
-            if (StringUtils.isEmpty(className)) {
-                DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-
-                CustomDataSource customDataSource = null;
-                if (null == dataTypeEnum) {
-                    try {
-                        customDataSource = CustomDataSourceUtils.getCustomDataSource(jdbcUrl);
-                    } catch (Exception e) {
-                        throw new SourceException(e.getMessage());
-                    }
-                }
-
-                if (null == dataTypeEnum && null == customDataSource) {
-                    throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
-                }
-
-                instance.setDriverClassName(null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver()) ? dataTypeEnum.getDriver() : customDataSource.getDriver().trim());
+        if (map.containsKey(key) && map.get(key) != null) {
+            DruidDataSource druidDataSource = map.get(key);
+            if (druidDataSource.isEnable()) {
+                return druidDataSource;
             } else {
-                instance.setDriverClassName(className);
+                druidDataSource.close();
+                map.remove(key);
             }
-
-            instance.setUrl(jdbcUrl.trim());
-            instance.setUsername(jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getFeature()) ? null : username);
-            instance.setPassword((jdbcUrl.toLowerCase().contains(DataTypeEnum.PRESTO.getFeature()) || jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getFeature())) ?
-                    null : password);
-            instance.setInitialSize(initialSize);
-            instance.setMinIdle(minIdle);
-            instance.setMaxActive(maxActive);
-            instance.setMaxWait(maxWait);
-            instance.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
-            instance.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
-            instance.setTestWhileIdle(false);
-            instance.setTestOnBorrow(testOnBorrow);
-            instance.setTestOnReturn(testOnReturn);
-            instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
-            instance.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
-
-            try {
-                instance.init();
-            } catch (Exception e) {
-                log.error("Exception during pool initialization", e);
-                throw new SourceException(e.getMessage());
-            }
-            map.put(key, instance);
         }
 
-        return map.get(key);
+        DruidDataSource instance = new JdbcDataSource();
+        String className = null;
+        try {
+            className = DriverManager.getDriver(jdbcUrl.trim()).getClass().getName();
+        } catch (SQLException e) {
+        }
+
+        if (StringUtils.isEmpty(className)) {
+            DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+
+            CustomDataSource customDataSource = null;
+            if (null == dataTypeEnum) {
+                try {
+                    customDataSource = CustomDataSourceUtils.getCustomDataSource(jdbcUrl);
+                } catch (Exception e) {
+                    throw new SourceException(e.getMessage());
+                }
+            }
+
+            if (null == dataTypeEnum && null == customDataSource) {
+                throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
+            }
+
+            instance.setDriverClassName(null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver()) ? dataTypeEnum.getDriver() : customDataSource.getDriver().trim());
+        } else {
+            instance.setDriverClassName(className);
+        }
+
+        instance.setUrl(jdbcUrl.trim());
+        instance.setUsername(jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getFeature()) ? null : username);
+        instance.setPassword((jdbcUrl.toLowerCase().contains(DataTypeEnum.PRESTO.getFeature()) || jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getFeature())) ?
+                null : password);
+        instance.setInitialSize(initialSize);
+        instance.setMinIdle(minIdle);
+        instance.setMaxActive(maxActive);
+        instance.setMaxWait(maxWait);
+        instance.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
+        instance.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
+        instance.setTestWhileIdle(false);
+        instance.setTestOnBorrow(testOnBorrow);
+        instance.setTestOnReturn(testOnReturn);
+        instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
+        instance.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
+//        instance.setQueryTimeout(queryTimeout / 1000);
+
+        try {
+            instance.init();
+        } catch (Exception e) {
+            log.error("Exception during pool initialization", e);
+            throw new SourceException(e.getMessage());
+        }
+        map.put(key, instance);
+        return instance;
     }
 
     public static String getKey(String jdbcUrl, String username, String password) {
