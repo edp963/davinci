@@ -24,7 +24,6 @@ import com.google.common.collect.Maps;
 import edp.core.model.QueryColumn;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
-import edp.davinci.core.config.SpringContextHolder;
 import edp.davinci.core.enums.ActionEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -69,7 +68,6 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             template.setMaxRows(context.getResultLimit() > 0 && context.getResultLimit() <= maxRows ? context.getResultLimit() : maxRows);
             template.setFetchSize(500);
 
-            int queryTimeout = ((SqlUtils) SpringContextHolder.getBean(SqlUtils.class)).getQueryTimeout();
             String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
             Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
             template.query(sql, rs -> {
