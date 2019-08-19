@@ -45,7 +45,6 @@ const TreeNode = Tree.TreeNode
 import { IconProps } from 'antd/lib/icon/index'
 import AntdFormType from 'antd/lib/form/Form'
 
-
 const Search = Input.Search
 
 import {
@@ -763,6 +762,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     if (portals) {
       portalDec = portals.find((p) => p.id === Number(params.portalId)).description
     }
+
     return (
       <div className={styles.portal}>
         <EditorHeader
