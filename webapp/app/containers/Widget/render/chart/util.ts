@@ -238,10 +238,9 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, metrics
       break
     case 'pie':
     case 'funnel':
-    // case 'scatter':
       formatter = (params) => {
-        const { name, value, percent } = params
-        const formattedValue = getFormattedValue(value, metrics[0].format)
+        const { name, value, percent, dataIndex } = params
+        const formattedValue = getFormattedValue(value, metrics[metrics.length > 1 ? dataIndex : 0].format)
         const { labelParts } = labelConfig
         if (!labelParts) {
           return `${name}\n${formattedValue}（${percent}%）`

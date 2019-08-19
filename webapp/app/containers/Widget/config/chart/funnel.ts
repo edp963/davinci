@@ -14,7 +14,7 @@ const funnel: IChartInfo = {
   title: '漏斗图',
   icon: 'icon-iconloudoutu',
   coordinate: 'cartesian',
-  rules: [{ dimension: [0, 9999], metric: 1 }],
+  rules: [{ dimension: [0, 9999], metric: 1 }, { dimension: 0, metric: [2, 9999] }],
   dimetionAxis: 'col',
   data: {
     cols: {
