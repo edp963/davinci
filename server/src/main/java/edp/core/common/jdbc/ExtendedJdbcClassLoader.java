@@ -33,7 +33,7 @@ public class ExtendedJdbcClassLoader extends URLClassLoader {
 
     private static final String JAR_FILE_SUFFIX = ".jar";
 
-    private Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
+    private static volatile Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
     private static volatile Map<String, ExtendedJdbcClassLoader> classLoaderMap = new HashMap<String, ExtendedJdbcClassLoader>();
 
     private ExtendedJdbcClassLoader(URL[] urls) {

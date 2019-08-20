@@ -19,7 +19,7 @@
 
 package edp.core.enums;
 
-import edp.core.common.jdbc.ExtendedJdbcClassLoader;
+import edp.core.consts.Consts;
 import edp.core.exception.SourceException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -65,8 +65,6 @@ public enum DataTypeEnum {
     private String aliasPrefix;
     private String aliasSuffix;
 
-    private static final String jdbcUrlPrefix = "jdbc:";
-
     DataTypeEnum(String feature, String desc, String driver, String keywordPrefix, String keywordSuffix, String aliasPrefix, String aliasSuffix) {
         this.feature = feature;
         this.desc = desc;
@@ -77,28 +75,10 @@ public enum DataTypeEnum {
         this.aliasSuffix = aliasSuffix;
     }
 
-    //TODO 适配自定义ClassLoader时需应根据是否选中版本修改
     public static DataTypeEnum urlOf(String jdbcUrl) throws SourceException {
         String url = jdbcUrl.toLowerCase().trim();
         for (DataTypeEnum dataTypeEnum : values()) {
-            if (url.startsWith(jdbcUrlPrefix + dataTypeEnum.feature)) {
-                try {
-                    Class<?> aClass = Class.forName(dataTypeEnum.getDriver());
-                    if (null == aClass) {
-                        throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
-                    }
-                } catch (ClassNotFoundException e) {
-                    String path = "/Users/shan/.m2/repository/com/microsoft/sqlserver/mssql-jdbc/6.4.0.jre8/";
-                    ExtendedJdbcClassLoader extJdbcClassLoader = ExtendedJdbcClassLoader.getExtJdbcClassLoader(path);
-                    try {
-                        Class<?> aClass = extJdbcClassLoader.loadClass(dataTypeEnum.getDriver());
-                        if (null == aClass) {
-                            throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
-                        }
-                    } catch (ClassNotFoundException ex) {
-                        throw new SourceException("Unable to get driver instance: " + jdbcUrl);
-                    }
-                }
+            if (url.startsWith(String.format(Consts.JDBC_PREFIX_FOMATER, dataTypeEnum.feature))) {
                 return dataTypeEnum;
             }
         }

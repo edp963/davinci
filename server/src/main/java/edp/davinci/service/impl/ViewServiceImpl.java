@@ -45,7 +45,6 @@ import edp.davinci.dao.WidgetMapper;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.sourceDto.SourceBaseInfo;
-import edp.davinci.dto.sourceDto.SourceConfig;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.*;
 import edp.davinci.service.ProjectService;
@@ -244,7 +243,7 @@ public class ViewServiceImpl implements ViewService {
         }
 
         //测试连接
-        boolean testConnection = sourceService.isTestConnection(new SourceConfig(source));
+        boolean testConnection = sqlUtils.init(source).testConnection();
 
         if (testConnection) {
             View view = new View().createdBy(user.getId());
@@ -308,7 +307,7 @@ public class ViewServiceImpl implements ViewService {
         }
 
         //测试连接
-        boolean testConnection = sourceService.isTestConnection(new SourceConfig(source));
+        boolean testConnection = sqlUtils.init(source).testConnection();
 
         if (testConnection) {
 
@@ -428,7 +427,7 @@ public class ViewServiceImpl implements ViewService {
 
                     String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
-                    SqlUtils sqlUtils = this.sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword());
+                    SqlUtils sqlUtils = this.sqlUtils.init(source);
 
                     List<String> executeSqlList = sqlParseUtils.getSqls(srcSql, false);
 

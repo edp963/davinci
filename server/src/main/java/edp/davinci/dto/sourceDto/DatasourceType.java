@@ -14,27 +14,30 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
+ *
  */
 
-package edp.davinci.model;
+package edp.davinci.dto.sourceDto;
 
-import edp.core.model.RecordInfo;
-import lombok.Data;
+import edp.core.consts.Consts;
+import lombok.Getter;
 
-@Data
-public class RelRoleDisplaySlideWidget extends RecordInfo<RelRoleDisplaySlideWidget> {
+import java.util.List;
 
-    private Long roleId;
+@Getter
+public class DatasourceType {
+    private String name;
+    private String prefix;
+    private List<String> versions;
 
-    private Long memDisplaySlideWidgetId;
-
-    private Boolean visible = false; // 可见/不可见  true/false
-
-    public RelRoleDisplaySlideWidget() {
+    public DatasourceType(String name) {
+        this.name = name;
+        this.prefix = String.format(Consts.JDBC_PREFIX_FOMATER, name);
     }
 
-    public RelRoleDisplaySlideWidget(Long roleId, Long memDisplaySlideWidgetId) {
-        this.roleId = roleId;
-        this.memDisplaySlideWidgetId = memDisplaySlideWidgetId;
+    public DatasourceType(String name, List<String> versions) {
+        this.name = name;
+        this.prefix = String.format(Consts.JDBC_PREFIX_FOMATER, name);
+        this.versions = versions;
     }
 }
