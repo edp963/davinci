@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -21,6 +21,8 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 public class ElasticOperationService extends ElasticConfigration {
 
     public final static ZoneId zone = ZoneId.systemDefault();
+
+    public final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
     public void batchInsert(String index, String type, List<?> objects) {
         try{
@@ -33,7 +35,7 @@ public class ElasticOperationService extends ElasticConfigration {
                 for(String fileName : fileNames){
                     Object value = getFieldValueByName(fileName, object);
                     if(value instanceof Timestamp){
-                        value = Date.from(((Timestamp) value).toLocalDateTime().atZone(zone).toInstant());
+                        value = sdf.format(value);
                     }
                     builder.field(fileName, value);
                 }

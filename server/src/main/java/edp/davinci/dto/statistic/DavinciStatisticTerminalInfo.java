@@ -1,14 +1,15 @@
-package edp.davinci.dto.buriedPoints;
+package edp.davinci.dto.statistic;
 
 import lombok.Data;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.sql.Timestamp;
 
 @Data
 @NotNull(message = "terminal info cannot be null")
-public class TerminalInfo {
+public class DavinciStatisticTerminalInfo {
 
     @NotNull
     @Min(value = 1L)
@@ -36,5 +37,8 @@ public class TerminalInfo {
     private String device_vendor ;
 
     private String cpu_architecture;
+
+    @NotNull
+    private Timestamp start_time;
     
 }

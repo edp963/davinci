@@ -1,4 +1,4 @@
-package edp.davinci.dto.buriedPoints;
+package edp.davinci.dto.statistic;
 
 import lombok.Data;
 
@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 
 @Data
 @NotNull(message = "visitor operation info cannot be null")
-public class VisitorOperationInfo {
+public class DavinciStatisticVisitorOperationInfo {
 
     @NotNull
     @Min(value = 1L)
@@ -40,6 +40,13 @@ public class VisitorOperationInfo {
     private Long sub_viz_id;
 
     private String sub_viz_name;
+
+    @Min(value = 1L)
+    private Long widget_id;
+
+    private String widget_name;
+
+    private String parameters;
 
     @NotNull
     private Timestamp create_time;

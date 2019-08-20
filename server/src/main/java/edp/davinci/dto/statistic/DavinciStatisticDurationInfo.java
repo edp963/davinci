@@ -1,4 +1,4 @@
-package edp.davinci.dto.buriedPoints;
+package edp.davinci.dto.statistic;
 
 import lombok.Data;
 
@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 
 @Data
 @NotNull(message = "duration info cannot be null")
-public class DurationInfo {
+public class DavinciStatisticDurationInfo {
 
     @NotNull
     @Min(value = 1L)

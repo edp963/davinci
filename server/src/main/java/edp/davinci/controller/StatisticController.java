@@ -21,9 +21,9 @@ import edp.core.utils.TokenUtils;
 import edp.davinci.common.model.ValidList;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
-import edp.davinci.dto.buriedPoints.DurationInfo;
-import edp.davinci.dto.buriedPoints.TerminalInfo;
-import edp.davinci.dto.buriedPoints.VisitorOperationInfo;
+import edp.davinci.dto.statistic.DavinciStatisticDurationInfo;
+import edp.davinci.dto.statistic.DavinciStatisticTerminalInfo;
+import edp.davinci.dto.statistic.DavinciStatisticVisitorOperationInfo;
 import edp.davinci.service.BuriedPointsService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -41,12 +41,12 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
-@Api(value = "/statistic", tags = "buriedPoints", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-@ApiResponses(@ApiResponse(code = 404, message = "buriedPoint not found"))
+@Api(value = "/statistic", tags = "statistic", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@ApiResponses(@ApiResponse(code = 404, message = "statistic not found"))
 @Slf4j
 @RestController
 @RequestMapping(value = Constants.BASE_API_PATH + "/statistic", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class BuriedPointsController {
+public class StatisticController {
 
     @Autowired
     private BuriedPointsService buriedPointsService;
@@ -56,30 +56,30 @@ public class BuriedPointsController {
 
     @ApiOperation(value = "collect duration info ")
     @PostMapping(value = "/duration", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity collectDurationInfo(@Valid @RequestBody ValidList<DurationInfo> durationInfos,
+    public ResponseEntity collectDurationInfo(@Valid @RequestBody ValidList<DavinciStatisticDurationInfo> durationInfos,
                                               HttpServletRequest request){
 
-        buriedPointsService.insert(durationInfos, DurationInfo.class);
+        buriedPointsService.insert(durationInfos, DavinciStatisticDurationInfo.class);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
     @ApiOperation(value = "collect terminal info ")
     @PostMapping(value = "/terminal", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity collectTerminalInfo(@Valid @RequestBody ValidList<TerminalInfo> terminalInfoInfos,
+    public ResponseEntity collectTerminalInfo(@Valid @RequestBody ValidList<DavinciStatisticTerminalInfo> terminalInfoInfos,
                                               HttpServletRequest request){
 
-        buriedPointsService.insert(terminalInfoInfos, TerminalInfo.class);
+        buriedPointsService.insert(terminalInfoInfos, DavinciStatisticTerminalInfo.class);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
     @ApiOperation(value = "collect visitor operation info ")
     @PostMapping(value = "/visitoroperation", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity collectVisitorOperationInfo(@Valid @RequestBody ValidList<VisitorOperationInfo> visitorOperationInfos,
+    public ResponseEntity collectVisitorOperationInfo(@Valid @RequestBody ValidList<DavinciStatisticVisitorOperationInfo> visitorOperationInfos,
                                               HttpServletRequest request){
 
-        buriedPointsService.insert(visitorOperationInfos, VisitorOperationInfo.class);
+        buriedPointsService.insert(visitorOperationInfos, DavinciStatisticVisitorOperationInfo.class);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
