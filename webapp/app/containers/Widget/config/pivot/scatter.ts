@@ -4,7 +4,7 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 

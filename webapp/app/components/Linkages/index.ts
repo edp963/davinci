@@ -1,5 +1,5 @@
 import { QueryVariable } from '../../containers/Dashboard/Grid'
-import { DEFAULT_SPLITER, SQL_NUMBER_TYPES } from '../../globalConstants'
+import { DEFAULT_SPLITER, SQL_NUMBER_TYPES } from 'app/globalConstants'
 import OperatorType from 'utils/operatorTypes'
 
 export type LinkageType = 'column' | 'variable'

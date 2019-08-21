@@ -38,7 +38,7 @@ import { hideNavigator } from '../App/actions'
 import { ViewActions } from '../View/actions'
 const { loadViewDataFromVizItem } = ViewActions // @TODO global filter in Display Preview
 import DisplayActions from './actions'
-import { DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
+import { DEFAULT_PRIMARY_COLOR } from 'app/globalConstants'
 import LayerItem from './components/LayerItem'
 
 const styles = require('./Display.less')

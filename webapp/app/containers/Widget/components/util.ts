@@ -19,7 +19,7 @@ import {
   PIVOT_XAXIS_TICK_SIZE,
   PIVOT_CANVAS_AXIS_SIZE_LIMIT,
   PIVOT_DEFAULT_SCATTER_SIZE_TIMES
-} from '../../../globalConstants'
+} from 'app/globalConstants'
 import { DimetionType, IChartStyles, IChartInfo } from './Widget'
 import { IChartLine, IChartUnit } from './Pivot/Chart'
 import { IDataParamSource } from './Workbench/Dropbox'

@@ -108,7 +108,7 @@ import {
   GRID_ROW_HEIGHT,
   KEY_COLUMN,
   DEFAULT_TABLE_PAGE
-} from '../../globalConstants'
+} from 'app/globalConstants'
 import { InjectedRouter } from 'react-router/lib/Router'
 import { IWidgetConfig, RenderType, IWidgetProps } from '../Widget/components/Widget'
 import { IProject } from '../Projects'

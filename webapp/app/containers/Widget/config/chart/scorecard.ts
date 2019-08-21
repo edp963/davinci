@@ -24,7 +24,7 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 

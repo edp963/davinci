@@ -35,7 +35,7 @@ import { ITableConfig } from '../Config/Table'
 import BarSection from './ConfigSections/BarSection'
 import RadarSection from './ConfigSections/RadarSection'
 import { encodeMetricName, decodeMetricName, getPivot, getTable, getPivotModeSelectedCharts, checkChartEnable } from '../util'
-import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
+import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from 'app/globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
 import { uuid } from '../../../../utils/util'
 

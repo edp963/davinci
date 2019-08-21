@@ -5,7 +5,7 @@ import {
   CHART_FUNNEL_LABEL_POSITIONS,
   CHART_SORT_MODES,
   CHART_ALIGNMENT_MODES
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 const funnel: IChartInfo = {

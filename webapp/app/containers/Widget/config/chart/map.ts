@@ -6,7 +6,7 @@ import {
   CHART_VISUALMAP_POSITIONS,
   CHART_LEGEND_POSITIONS,
   CHART_LINES_SYMBOL_TYPE
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 

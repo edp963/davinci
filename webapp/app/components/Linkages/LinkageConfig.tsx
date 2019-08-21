@@ -6,7 +6,7 @@ import LinkageForm, { ILinkageForm } from './LinkageForm'
 import AntdFormType from 'antd/lib/form/Form'
 import { Table, Row, Col, Button, Modal } from 'antd'
 
-import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from '../../globalConstants'
+import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from 'app/globalConstants'
 import { uuid } from 'utils/util'
 const utilStyles = require('assets/less/util.less')
 const styles = require('./Linkage.less')

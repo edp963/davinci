@@ -21,7 +21,7 @@
 import * as React from 'react'
 import { Button, Modal } from 'antd'
 
-import { SQL_NUMBER_TYPES, DEFAULT_SPLITER } from '../../../globalConstants'
+import { SQL_NUMBER_TYPES, DEFAULT_SPLITER } from 'app/globalConstants'
 import { decodeMetricName, getAggregatorLocale } from '../../Widget/components/util'
 import { IFormedViews } from 'containers/View/types'
 import { IWidgetConfig } from '../../Widget/components/Widget'

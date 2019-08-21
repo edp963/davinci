@@ -10,7 +10,7 @@ import {
   CHART_LABEL_POSITIONS,
   CHART_PIE_LABEL_POSITIONS,
   CHART_FUNNEL_LABEL_POSITIONS
-} from '../../../../../globalConstants'
+} from 'app/globalConstants'
 const styles = require('../Workbench.less')
 
 export interface IScorecardConfig {

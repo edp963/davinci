@@ -27,7 +27,7 @@ import Box from '../../components/Box'
 import Star from '../../components/StarPanel/Star'
 const utilStyles = require('assets/less/util.less')
 import HistoryStack from '../Organizations/component/historyStack'
-import { DEFAULT_ECHARTS_THEME } from '../../globalConstants'
+import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
 const historyStack = new HistoryStack()
 
 interface IProjectsProps {

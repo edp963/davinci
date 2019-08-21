@@ -2,7 +2,7 @@ import React from 'react'
 import { Row, Col, InputNumber, Select } from 'antd'
 const Option = Select.Option
 import ColorPicker from 'components/ColorPicker'
-import { PIVOT_CHART_LINE_STYLES } from '../../../../../../app/globalConstants'
+import { PIVOT_CHART_LINE_STYLES } from 'app/globalConstants'
 import { IBarConfig } from './'
 
 const styles = require('../Workbench.less')

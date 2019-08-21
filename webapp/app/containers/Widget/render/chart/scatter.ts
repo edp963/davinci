@@ -32,7 +32,7 @@ import {
   getGridPositions,
   getSymbolSize
 } from './util'
-import { PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
+import { PIVOT_DEFAULT_SCATTER_SIZE } from 'app/globalConstants'
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
   const {

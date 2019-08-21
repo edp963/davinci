@@ -52,7 +52,7 @@ import {
 import request from '../../../app/utils/request'
 import { errorHandler, getErrorMessage } from '../../../app/utils/util'
 import api from '../../../app/utils/api'
-import config, { env } from '../../../app/globalConfig'
+import config, { env } from 'app/globalConfig'
 import { IDistinctValueReqeustParams } from '../../../app/components/Filters/types'
 import { message } from 'antd'
 const shareHost = config[env].shareHost

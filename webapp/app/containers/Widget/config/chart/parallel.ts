@@ -7,7 +7,7 @@ import {
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_PIE_LABEL_POSITIONS,
   DEFAULT_FONT_STYLE
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
 import {
   IChartInfo

@@ -78,7 +78,7 @@ import { ViewActions } from '../View/actions'
 const { loadViewDataFromVizItem, loadViewsDetail } = ViewActions // @TODO global filter in Display
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectFormedViews } from '../View/selectors'
-import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR, DEFAULT_SPLITER } from '../../globalConstants'
+import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR, DEFAULT_SPLITER } from 'app/globalConstants'
 // import { LayerContextMenu } from './components/LayerContextMenu'
 
 import { ISlideParams } from './types'

@@ -37,7 +37,7 @@ import {
 
 import {
   DEFAULT_ECHARTS_THEME
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 import geoData from 'assets/js/geo.js'
 import { getFormattedValue } from '../../components/Config/Format'
 
