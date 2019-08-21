@@ -75,7 +75,7 @@ export class SourceForm extends React.PureComponent<ISourceFormProps & FormCompo
   private testSourceConnection = () => {
     const { datasourceInfo, config } = this.props.form.getFieldsValue() as ISourceFormValues
     const { username, password, url } = config
-    const version = datasourceInfo[1] || ''
+    const version = datasourceInfo[1] === 'Default' ? '' : (datasourceInfo[1] || '')
     this.props.onTestSourceConnection(
       username,
       password,
