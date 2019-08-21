@@ -7,7 +7,7 @@ import {
   CHART_LEGEND_POSITIONS,
   CHART_LINES_SYMBOL_TYPE
 } from '../../../../globalConstants'
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'

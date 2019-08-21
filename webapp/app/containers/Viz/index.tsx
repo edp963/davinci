@@ -24,7 +24,7 @@ import { checkNameUniqueAction } from '../App/actions'
 import { Icon, Row, Col, Breadcrumb } from 'antd'
 import Box from '../../components/Box'
 const styles = require('./Viz.less')
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 import Container from '../../components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'

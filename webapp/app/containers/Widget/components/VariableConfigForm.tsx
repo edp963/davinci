@@ -30,7 +30,7 @@ const RadioGroup = Radio.Group
 import { uuid } from '../../../utils/util'
 // import { FilterTypeList, FilterTypesLocale } from '../../../components/Filters/filterTypes'
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const styles = require('../Widget.less')
 
 interface IVariableConfigFormProps  {

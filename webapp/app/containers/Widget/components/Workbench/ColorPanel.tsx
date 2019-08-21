@@ -3,10 +3,10 @@ import * as classnames from 'classnames'
 import { SketchPicker } from 'react-color'
 import { IDataParamSource } from './Dropbox'
 import { getAggregatorLocale, decodeMetricName } from '../util'
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 const styles = require('./Workbench.less')
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IColorPanelProps {
   list: IDataParamSource[]

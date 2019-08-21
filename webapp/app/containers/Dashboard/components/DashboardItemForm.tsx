@@ -30,7 +30,7 @@ const Step = Steps.Step
 
 import SearchFilterDropdown from '../../../components/SearchFilterDropdown'
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const widgetStyles = require('../../Widget/Widget.less')
 const styles = require('../Dashboard.less')
 import { ICurrentDashboard } from '../'

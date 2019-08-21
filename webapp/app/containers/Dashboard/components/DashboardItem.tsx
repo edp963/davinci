@@ -42,7 +42,7 @@ import { IProject } from '../../Projects'
 import { IQueryConditions, IQueryVariableMap } from '../Grid'
 import { IMapControlOptions, OnGetControlOptions, IDistinctValueReqeustParams } from 'app/components/Filters/types'
 const styles = require('../Dashboard.less')
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IDashboardItemProps {
   itemId: number

@@ -12,7 +12,7 @@ import { createStructuredSelector } from 'reselect'
 import { makeSelectOrganizations } from './selectors'
 const styles = require('./Organization.less')
 import OrganizationForm from './component/OrganizationForm'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 import Avatar from '../../components/Avatar'
 import { checkNameUniqueAction } from '../App/actions'
 

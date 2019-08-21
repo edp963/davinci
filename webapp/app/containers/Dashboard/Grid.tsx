@@ -115,7 +115,7 @@ import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
 import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 import { DownloadTypes } from '../App/types'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const styles = require('./Dashboard.less')
 import { statistic } from '../../utils/statistic/statistic.dv'
 const ResponsiveReactGridLayout = WidthProvider(Responsive)

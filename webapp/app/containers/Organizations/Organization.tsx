@@ -8,7 +8,7 @@ import MemberList from './component/MemberList'
 import ProjectList from './component/ProjectList'
 import Setting from './component/Setting'
 import RoleList from './component/RoleList'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const TabPane = Tabs.TabPane
 import Avatar from '../../components/Avatar'
 import { connect } from 'react-redux'

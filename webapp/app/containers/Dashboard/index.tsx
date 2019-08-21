@@ -70,7 +70,7 @@ import { loadPortals } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
 import { loadProjectDetail, excludeRoles } from '../Projects/actions'
 import {IExludeRoles} from '../Portal/components/PortalList'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const styles = require('./Dashboard.less')
 const widgetStyles = require('../Widget/Widget.less')
 import {makeSelectCurrentProject, makeSelectProjectRoles} from '../Projects/selectors'
@@ -859,7 +859,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
                   ? children
                   : (
                     <div className={styles.noDashboard}>
-                      <img src={require('../../assets/images/noDashboard.png')} onClick={this.onAddItem}/>
+                      <img src={require('assets/images/noDashboard.png')} onClick={this.onAddItem}/>
                       <p>请创建文件夹或 Dashboard</p>
                     </div>
                   )

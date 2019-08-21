@@ -85,14 +85,14 @@ export function Navigator (props: INavigatorProps) {
       <div className={styles.logoPc}>
         <div className={styles.logo}>
           <Link to="/projects">
-            <img src={require('../../assets/images/logo.svg')} />
+            <img src={require('assets/images/logo.svg')} />
           </Link>
         </div>
       </div>
       <div className={styles.logoMobile}>
         <div className={styles.logo}>
           <Link to="/projects">
-            <img src={require('../../assets/images/logo_mobile.svg')} />
+            <img src={require('assets/images/logo_mobile.svg')} />
           </Link>
         </div>
       </div>

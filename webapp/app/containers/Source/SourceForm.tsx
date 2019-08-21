@@ -27,7 +27,7 @@ const TextArea = Input.TextArea
 const Option = Select.Option
 import { FormComponentProps } from 'antd/lib/form/Form'
 
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface ISourceFormProps {
   visible: boolean

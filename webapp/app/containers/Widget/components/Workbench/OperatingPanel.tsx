@@ -49,9 +49,9 @@ const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 const confirm = Modal.confirm
 const styles = require('./Workbench.less')
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 export interface IDataParamProperty {
   title: string

@@ -11,7 +11,7 @@ const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 const RangePicker = DatePicker.RangePicker
 const styles = require('./Workbench.less')
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IFilterSettingFormProps {
   item: IDataParamSource

@@ -14,7 +14,7 @@ import { getUserProfile } from './actions'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IProfileProps {
   form: any

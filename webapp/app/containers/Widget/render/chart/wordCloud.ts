@@ -22,7 +22,7 @@ import { IChartProps } from '../../components/Chart'
 import { EChartOption } from 'echarts'
 import { decodeMetricName } from '../../components/util'
 import { getFormattedValue } from '../../components/Config/Format'
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps) {

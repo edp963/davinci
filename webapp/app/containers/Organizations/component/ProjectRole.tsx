@@ -31,7 +31,7 @@ import Auth from './ProjectAuth'
 import AntdFormType from 'antd/lib/form/Form'
 import { loadOrganizationRole, loadProjectRoles, getVizVisbility, postVizVisbility } from '../actions'
 const styles = require('../Project.less')
-const utilStyles =  require('../../../assets/less/util.less')
+const utilStyles =  require('assets/less/util.less')
 import {createStructuredSelector} from 'reselect'
 import { addProjectRole, addProjectRoleFail, loadRelRoleProject, updateRelRoleProject, deleteRelRoleProject} from '../../Projects/actions'
 import {makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationRole, makeSelectCurrentOrganizationProjectRoles, makeSelectCurrentOrganizations } from '../selectors'

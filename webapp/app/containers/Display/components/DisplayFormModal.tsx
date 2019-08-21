@@ -28,7 +28,7 @@ const TabPane = Tabs.TabPane
 import { IDisplay } from './DisplayList'
 const styles = require('../../Portal/Portal.less')
 import {IExludeRoles} from '../../Portal/components/PortalList'
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IDisplayFormModalProps {
   projectId: number

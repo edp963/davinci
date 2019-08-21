@@ -38,7 +38,7 @@ import {
 import {
   DEFAULT_ECHARTS_THEME
 } from '../../../../globalConstants'
-import geoData from '../../../../assets/js/geo.js'
+import geoData from 'assets/js/geo.js'
 import { getFormattedValue } from '../../components/Config/Format'
 
 const provinceSuffix = ['省', '自治区', '市']

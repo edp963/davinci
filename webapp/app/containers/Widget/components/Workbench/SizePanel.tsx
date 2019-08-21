@@ -6,7 +6,7 @@ import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 import { Tabs, Slider } from 'antd'
 const TabPane = Tabs.TabPane
 const styles = require('./Workbench.less')
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface ISizePanelProps {
   list: IDataParamSource[]

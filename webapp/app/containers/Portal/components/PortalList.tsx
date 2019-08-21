@@ -203,7 +203,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
       >
         <div
           className={itemClass}
-          style={{ backgroundImage: `url(${require(`../../../assets/images/bg${portal.avatar}.png`)}` }}
+          style={{ backgroundImage: `url(${require(`assets/images/bg${portal.avatar}.png`)}` }}
         >
           <header>
             <h3 className={styles.title}>

@@ -28,7 +28,7 @@ const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IDashboardFormProps {
   portalId: number

@@ -6,7 +6,7 @@ import { Button, Form, Input, Icon } from 'antd'
 const FormItem = Form.Item
 const InputGroup = Input.Group
 const styles = require('../Team.less')
-const utilStyles =  require('../../../assets/less/util.less')
+const utilStyles =  require('assets/less/util.less')
 
 
 interface IAddFormProps {

@@ -26,7 +26,7 @@ import { uuid } from '../../utils/util'
 const InputGroup = Input.Group
 const RangePicker = DatePicker.RangePicker
 
-import utilStyles from '../../assets/less/util.less'
+import utilStyles from 'assets/less/util.less'
 
 export function DateFilterDropdown (props) {
   const key = `dfd${uuid(8, 16)}`

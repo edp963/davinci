@@ -40,7 +40,7 @@ import { PaginationProps } from 'antd/lib/pagination'
 
 import { loadGroups, addGroup, deleteGroup, editGroup } from './actions'
 import { makeSelectGroups, makeSelectTableLoading, makeSelectFormLoading } from './selectors'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IGroupProps {
   groups: boolean | any[]

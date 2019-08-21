@@ -39,7 +39,7 @@ import AntdFormType from 'antd/lib/form/Form'
 import { loadPortals, addPortal, editPortal, deletePortal } from './actions'
 import { makeSelectPortals } from './selectors'
 
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const styles = require('./Portal.less')
 const widgetStyles = require('../Widget/Widget.less')
 
@@ -227,7 +227,7 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
             >
               <div
                 className={itemClass}
-                style={{backgroundImage: `url(${require(`../../assets/images/bg${d.avatar}.png`)})`}}
+                style={{backgroundImage: `url(${require(`assets/images/bg${d.avatar}.png`)})`}}
                 onClick={this.toDashboard(d)}
               >
                 <header>

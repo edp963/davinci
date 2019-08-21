@@ -46,7 +46,7 @@ import { loadUsers, addUser, deleteUser, loadUserGroups, editUserInfo, changeUse
 import { loadGroups, addGroup } from '../Group/actions'
 import { makeSelectUsers, makeSelectTableLoading, makeSelectFormLoading } from './selectors'
 import { makeSelectGroups } from '../Group/selectors'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IUserProps {
   users: any[]

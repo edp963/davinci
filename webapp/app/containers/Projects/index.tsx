@@ -25,7 +25,7 @@ import ComponentPermission from '../Account/components/checkMemberPermission'
 import Avatar from '../../components/Avatar'
 import Box from '../../components/Box'
 import Star from '../../components/StarPanel/Star'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 import HistoryStack from '../Organizations/component/historyStack'
 import { DEFAULT_ECHARTS_THEME } from '../../globalConstants'
 const historyStack = new HistoryStack()
@@ -504,7 +504,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             >
               <div
                 className={itemClass}
-                style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
+                style={{backgroundImage: `url(${require(`assets/images/bg${d.pic}.png`)})`}}
                 onClick={this.toProject(d)}
               >
                 <header>
@@ -636,7 +636,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           >
             <div
               className={itemClass}
-              style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
+              style={{backgroundImage: `url(${require(`assets/images/bg${d.pic}.png`)})`}}
               onClick={this.toProject(d)}
             >
               <header>
@@ -717,7 +717,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         >
           <div
             className={itemClass}
-            style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
+            style={{backgroundImage: `url(${require(`assets/images/bg${d.pic}.png`)})`}}
             onClick={this.toProject(d)}
           >
             <header>
@@ -742,7 +742,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     const historyBrowserAll = historyStack.getAll()
     const history = historyBrowserAll
       ? historyBrowserAll.map((d: IProject) => {
-        const path = require(`../../assets/images/bg${d.pic}.png`)
+        const path = require(`assets/images/bg${d.pic}.png`)
         const colItems = (
           <div className={styles.groupList} key={d.id} onClick={this.toProject(d)}>
             <div className={styles.orgHeader}>
@@ -760,7 +760,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       }) : ''
 
     const projectSearchItems = searchProject && searchProject.list && searchProject.list.length ? searchProject.list.map((d: IProject) => {
-      const path = require(`../../assets/images/bg${d.pic}.png`)
+      const path = require(`assets/images/bg${d.pic}.png`)
       let StarPanel = void 0
       if (d && d.id) {
         StarPanel = <Star d={d} starUser={starUserList} unStar={this.starProject} userList={this.getStarProjectUserList}/>

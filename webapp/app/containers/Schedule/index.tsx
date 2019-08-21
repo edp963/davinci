@@ -34,7 +34,7 @@ import { Modal, Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb }
 import { ButtonProps } from 'antd/lib/button/button'
 import { PaginationProps } from 'antd/lib/pagination'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 import ModulePermission from '../Account/components/checkModulePermission'
 import { IProject } from '../Projects'
 

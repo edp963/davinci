@@ -5,7 +5,7 @@ const FormItem = Form.Item
 const RadioButton = Radio.Button
 import UploadAvatar from '../../../components/UploadAvatar'
 import { IOrganization } from '../Organization'
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface ISettingProps {
   form: any

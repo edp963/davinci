@@ -23,7 +23,7 @@ import DownloadList from '../DownloadList'
 import { Icon, Button } from 'antd'
 import { IDownloadRecord } from 'app/containers/App/types'
 const styles = require('./EditorHeader.less')
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IEditorHeaderProps {
   currentType: string

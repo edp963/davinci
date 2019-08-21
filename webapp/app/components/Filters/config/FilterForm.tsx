@@ -45,7 +45,7 @@ import DatePickerFormats, {
 import { setControlFormValues } from '../../../containers/Dashboard/actions'
 import { makeSelectControlForm } from '../../../containers/Dashboard/selectors'
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const styles = require('../filter.less')
 
 interface IFilterFormProps {

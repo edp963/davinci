@@ -31,7 +31,7 @@ import { FormComponentProps } from 'antd/lib/form/Form'
 // import { iconMapping } from '../../Widget/components/chartUtil'
 import WidgetSelector from '../../Widget/components/WidgetSelector'
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface ILayerSelectorProps extends FormComponentProps {
   visible: boolean

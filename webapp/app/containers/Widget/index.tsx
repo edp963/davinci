@@ -54,7 +54,7 @@ import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects'
 
 const styles = require('./Widget.less')
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IWidgetProps {
   widgets: any[]

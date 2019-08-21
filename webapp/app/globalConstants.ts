@@ -18,7 +18,7 @@
  * >>
  */
 
-const defaultEchartsTheme = require('./assets/json/echartsThemes/default.project.json')
+const defaultEchartsTheme = require('assets/json/echartsThemes/default.project.json')
 export const DEFAULT_ECHARTS_THEME = defaultEchartsTheme.theme
 export const DEFAULT_PRIMARY_COLOR = '#1B98E0'
 export const DEFAULT_SECONDARY_COLOR = '#223151'

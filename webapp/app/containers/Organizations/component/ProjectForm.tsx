@@ -26,7 +26,7 @@ const Option = Select.Option
 const FormItem = Form.Item
 const styles = require('../Project.less')
 import Avatar from '../../../components/Avatar'
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IProjectsFormProps {
   type: string

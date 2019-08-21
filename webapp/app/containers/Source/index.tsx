@@ -49,7 +49,7 @@ import {
   makeSelectFormLoading,
   makeSelectTestLoading
 } from './selectors'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 import api from '../../utils/api'
 import { checkNameUniqueAction } from '../App/actions'
 import { makeSelectCurrentProject } from '../Projects/selectors'

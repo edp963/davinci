@@ -28,10 +28,10 @@ const TabPane = Tabs.TabPane
 
 import { uuid } from '../../../utils/util'
 const codeMirror = require('codemirror/lib/codemirror')
-const utilStyles = require('../../../assets/less/util.less')
-import sqlFunctions from '../../../assets/sqlFunctionName/sqlFns'
+const utilStyles = require('assets/less/util.less')
+import sqlFunctions from 'assets/sqlFunctionName/sqlFns'
 import 'codemirror/lib/codemirror.css'
-import '../../../assets/override/codemirror_theme.css'
+import 'assets/override/codemirror_theme.css'
 require('codemirror/mode/javascript/javascript')
 import 'codemirror/addon/lint/lint.css'
 require('codemirror/addon/hint/javascript-hint')

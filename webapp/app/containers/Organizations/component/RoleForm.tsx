@@ -26,7 +26,7 @@ const RadioGroup = Radio.Group
 const Step = Steps.Step
 
 // import { checkNameAction } from '../App/actions'
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IRoleFormProps {
   form: any
