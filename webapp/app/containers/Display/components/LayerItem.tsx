@@ -18,7 +18,7 @@ import {
 } from './util'
 import { GRID_ITEM_MARGIN } from 'app/globalConstants'
 import { IViewModel } from 'containers/View/types'
-import Widget, { IWidgetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
+import Widget, { IWidgetConfig, IPaginationParams, RenderType } from 'containers/Widget/components/Widget'
 import { TextAlignProperty } from 'csstype'
 
 import { Resizable } from 'libs/react-resizable'

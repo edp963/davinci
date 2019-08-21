@@ -77,12 +77,12 @@ import {
   IControlRelatedField,
   IMapItemControlRequestParams,
   IControlRequestParams
-} from '../../components/Filters/types'
+} from 'components/Filters/types'
 import {
   getVariableValue,
   getModelValue,
   deserializeDefaultValue
-} from '../../components/Filters/util'
+} from 'components/Filters/util'
 import { DownloadTypes } from '../App/types'
 import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'

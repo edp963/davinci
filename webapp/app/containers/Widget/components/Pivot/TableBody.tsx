@@ -12,7 +12,7 @@ import {
   getChartPieces,
   decodeMetricName
 } from '../util'
-import { uuid } from '../../../../utils/util'
+import { uuid } from 'utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 
 const styles = require('./Pivot.less')

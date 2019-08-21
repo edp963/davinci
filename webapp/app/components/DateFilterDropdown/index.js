@@ -22,7 +22,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 import { Input, DatePicker } from 'antd'
-import { uuid } from '../../utils/util'
+import { uuid } from 'utils/util'
 const InputGroup = Input.Group
 const RangePicker = DatePicker.RangePicker
 

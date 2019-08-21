@@ -33,7 +33,7 @@ import {
 } from './util'
 import {
   safeAddition
-} from '../../../../utils/util'
+} from 'utils/util'
 
 import {
   DEFAULT_ECHARTS_THEME

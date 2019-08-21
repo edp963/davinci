@@ -53,10 +53,9 @@ import {
   DownloadTaskInitiated,
   initiateDownloadTaskFail
 } from './actions'
-import request, { removeToken, getToken } from '../../utils/request'
-// import request from '../../utils/request'
-import api from '../../utils/api'
-import { errorHandler } from '../../utils/util'
+import request, { removeToken, getToken } from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
 
 export function* login (action): IterableIterator<any> {
   const { username, password, resolve } = action.payload

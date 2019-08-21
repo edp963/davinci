@@ -32,8 +32,8 @@ import reducerWidget from '../Widget/reducer'
 import sagaWidget from '../Widget/sagas'
 import reducerView from '../View/reducer'
 import sagaView from '../View/sagas'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 
 import {
   makeSelectCurrentDisplay,

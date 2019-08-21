@@ -1,16 +1,16 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
-import reducer from '../Organizations/reducer'
-import saga from '../Organizations/sagas'
-import Avatar from '../../components/Avatar'
-import Box from '../../components/Box'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
+import reducer from 'containers/Organizations/reducer'
+import saga from 'containers/Organizations/sagas'
+import Avatar from 'components/Avatar'
+import Box from 'components/Box'
 import Menus from './components/Menus'
 import { Tooltip } from 'antd'
 import { createStructuredSelector } from 'reselect'
-import { makeSelectLoginUser } from '../App/selectors'
+import { makeSelectLoginUser } from 'containers/App/selectors'
 
 interface IAccountProps {
   loginUser: any,

@@ -28,8 +28,8 @@ const Step = Steps.Step
 import { FormComponentProps } from 'antd/lib/form/Form'
 
 // TODO widgets icon display
-// import { iconMapping } from '../../Widget/components/chartUtil'
-import WidgetSelector from '../../Widget/components/WidgetSelector'
+// import { iconMapping } from 'containers/Widget/components/chartUtil'
+import WidgetSelector from 'containers/Widget/components/WidgetSelector'
 
 const utilStyles = require('assets/less/util.less')
 

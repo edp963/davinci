@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Row, Col, InputNumber } from 'antd'
-import ColorPicker from '../../../../../components/ColorPicker'
+import ColorPicker from 'components/ColorPicker'
 const styles = require('../Workbench.less')
 
 export interface IAreaSelectConfig {

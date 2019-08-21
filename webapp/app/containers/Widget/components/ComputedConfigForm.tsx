@@ -26,7 +26,7 @@ const Option = Select.Option
 const Search = Input.Search
 const TabPane = Tabs.TabPane
 
-import { uuid } from '../../../utils/util'
+import { uuid } from 'utils/util'
 const codeMirror = require('codemirror/lib/codemirror')
 const utilStyles = require('assets/less/util.less')
 import sqlFunctions from 'assets/sqlFunctionName/sqlFns'

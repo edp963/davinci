@@ -26,12 +26,12 @@ import { Link, InjectedRouter } from 'react-router'
 import * as classnames from 'classnames'
 
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import Container from '../../components/Container'
+import Container from 'components/Container'
 import { Row, Col, Button, Icon, Tooltip, Modal, Breadcrumb, Popconfirm, Input, Pagination } from 'antd'
 const Search = Input.Search
 import AntdFormType from 'antd/lib/form/Form'

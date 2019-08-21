@@ -25,7 +25,7 @@ const TextArea = Input.TextArea
 const Option = Select.Option
 const FormItem = Form.Item
 const styles = require('../Project.less')
-import Avatar from '../../../components/Avatar'
+import Avatar from 'components/Avatar'
 const utilStyles = require('assets/less/util.less')
 import ProjectRole from './ProjectRole'
 import ProjectAdmin from './ProjectAdmin'

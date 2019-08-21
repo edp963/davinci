@@ -27,7 +27,7 @@ import { ITableConfig } from '../Config/Table'
 import { IRichTextConfig, IBarConfig, IRadarConfig } from '../Workbench/ConfigSections'
 import { IDoubleYAxisConfig } from '../Workbench/ConfigSections/DoubleYAxisSection'
 import { IModel } from '../Workbench/index'
-import { IQueryVariableMap } from '../../../Dashboard/Grid'
+import { IQueryVariableMap } from 'containers/Dashboard/Grid'
 import { getStyleConfig } from '../util'
 import ChartTypes from '../../config/chart/ChartTypes'
 const styles = require('../Pivot/Pivot.less')

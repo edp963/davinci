@@ -5,7 +5,7 @@ import { IWidgetMetric, DimetionType, RenderType, IChartStyles } from '../Widget
 import chartOptionGenerator from '../../render/pivot'
 import { PIVOT_DEFAULT_SCATTER_SIZE } from 'app/globalConstants'
 import { decodeMetricName, getTooltipPosition, getPivotTooltipLabel, getSizeValue, getChartLabel, getTriggeringRecord } from '../util'
-import { uuid } from '../../../../utils/util'
+import { uuid } from 'utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import PivotTypes from '../../config/pivot/PivotTypes'
 const styles = require('./Pivot.less')

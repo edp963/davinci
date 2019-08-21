@@ -9,12 +9,12 @@ import AntdFormType from 'antd/lib/form/Form'
 const styles = require('../Portal.less')
 
 import PortalForm from './PortalForm'
-import ModulePermission from '../../Account/components/checkModulePermission'
-import { IProject } from '../../Projects'
-import { IPortal } from '../../Portal'
-import { makeSelectProjectRoles } from '../../Projects/selectors'
-import {IProjectRoles} from '../../Organizations/component/ProjectRole'
-import { roleAdded } from 'app/containers/Organizations/actions'
+import ModulePermission from 'containers/Account/components/checkModulePermission'
+import { IProject } from 'containers/Projects'
+import { IPortal } from 'containers/Portal'
+import { makeSelectProjectRoles } from 'containers/Projects/selectors'
+import {IProjectRoles} from 'containers/Organizations/component/ProjectRole'
+
 interface IPortalListProps {
   projectId: number
   portals: IPortal[]

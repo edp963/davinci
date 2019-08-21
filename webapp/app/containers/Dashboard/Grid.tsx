@@ -25,17 +25,17 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
-import widgetReducer from '../Widget/reducer'
-import widgetSaga from '../Widget/sagas'
-import viewReducer from '../View/reducer'
-import viewSaga from '../View/sagas'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
+import widgetReducer from 'containers/Widget/reducer'
+import widgetSaga from 'containers/Widget/sagas'
+import viewReducer from 'containers/View/reducer'
+import viewSaga from 'containers/View/sagas'
 import formReducer from './FormReducer'
 
-import { IViewBase, IFormedViews } from '../View/types'
+import { IViewBase, IFormedViews } from 'containers/View/types'
 
-import Container from '../../components/Container'
+import Container from 'components/Container'
 import DashboardToolbar from './components/DashboardToolbar'
 import DashboardItemForm from './components/DashboardItemForm'
 import DrillPathSetting from './components/DrillPathSetting'
@@ -43,18 +43,18 @@ import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
 import { IMapItemControlRequestParams, IMapControlOptions, IDistinctValueReqeustParams } from 'components/Filters/types'
-import GlobalControlPanel from '../../components/Filters/FilterPanel'
-import GlobalControlConfig from '../../components/Filters/config/FilterConfig'
+import GlobalControlPanel from 'components/Filters/FilterPanel'
+import GlobalControlConfig from 'components/Filters/config/FilterConfig'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 import { hasVizEditPermission } from '../Account/components/checkUtilPermission'
 
 import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
 import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu, message } from 'antd'
-import { uuid } from '../../utils/util'
+import { uuid } from 'utils/util'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
-import { decodeMetricName, getTable } from '../Widget/components/util'
-import { initiateDownloadTask } from '../App/actions'
+import { decodeMetricName, getTable } from 'containers/Widget/components/util'
+import { initiateDownloadTask } from 'containers/App/actions'
 import {
   loadDashboardDetail,
   addDashboardItems,
@@ -90,11 +90,11 @@ import {
   makeSelectCurrentDashboardSelectOptions,
   makeSelectCurrentLinkages
 } from './selectors'
-import { ViewActions, ViewActionType } from '../View/actions'
+import { ViewActions, ViewActionType } from 'containers/View/actions'
 const { loadViewDataFromVizItem, loadViewsDetail, loadSelectOptions } = ViewActions
-import { makeSelectWidgets } from '../Widget/selectors'
-import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
-import { makeSelectCurrentProject } from '../Projects/selectors'
+import { makeSelectWidgets } from 'containers/Widget/selectors'
+import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
+import { makeSelectCurrentProject } from 'containers/Projects/selectors'
 
 import { IFieldSortDescriptor, FieldSortTypes } from 'containers/Widget/components/Config/Sort'
 import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
@@ -117,7 +117,7 @@ import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 import { DownloadTypes } from '../App/types'
 const utilStyles = require('assets/less/util.less')
 const styles = require('./Dashboard.less')
-import { statistic } from '../../utils/statistic/statistic.dv'
+import { statistic } from 'utils/statistic/statistic.dv'
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
 export type QueryVariable = Array<{name: string, value: string | number}>

@@ -30,7 +30,7 @@ import PivotTypes from '../config/pivot/PivotTypes'
 import ChartTypes from '../config/chart/ChartTypes'
 const pivotlibs = widgetlibs['pivot']
 const chartlibs = widgetlibs['chart']
-import { uuid } from '../../../utils/util'
+import { uuid } from 'utils/util'
 
 export function getAggregatorLocale (agg) {
   switch (agg) {
