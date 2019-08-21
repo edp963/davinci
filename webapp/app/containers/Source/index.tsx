@@ -318,15 +318,13 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
   private saveSourceForm = (values: ISourceFormValues) => {
     const { params } = this.props
     const { datasourceInfo, config, ...rest } = values
-    const version = datasourceInfo[1]
+    const version = datasourceInfo[1] === 'Default' ? '' : (datasourceInfo[1] || '')
     const requestValue = {
       ...rest,
       config: {
         ...config,
-        ...version && {
-          ext: true,
-          version
-        }
+        ext: !!version,
+        version
       },
       projectId: Number(params.pid)
     }
