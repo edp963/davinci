@@ -30,6 +30,9 @@ import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
+import { FieldSortTypes } from 'containers/Widget/components/Config/Sort'
+import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
+
 import Login from '../../components/Login/index'
 import LayerItem from '../../../app/containers/Display/components/LayerItem'
 import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
@@ -145,6 +148,11 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
+    const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
+    const customOrders = updatedCols.concat(updatedRows)
+      .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+      .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
 
     const cachedQueryConditions = layersInfo[itemId].queryConditions
 
@@ -245,7 +253,8 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         expired,
         flush: renderType === 'refresh',
         pagination,
-        nativeQuery
+        nativeQuery,
+        customOrders
       }
     )
   }

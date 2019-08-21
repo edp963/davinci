@@ -18,6 +18,7 @@
  * >>
  */
 
+import omit from 'lodash/omit'
 import { takeLatest, takeEvery } from 'redux-saga'
 import { call, put, all } from 'redux-saga/effects'
 import {
@@ -51,7 +52,7 @@ import {
 import request from '../../../app/utils/request'
 import { errorHandler, getErrorMessage } from '../../../app/utils/util'
 import api from '../../../app/utils/api'
-import config, { env } from '../../../app/globalConfig'
+import config, { env } from 'app/globalConfig'
 import { IDistinctValueReqeustParams } from '../../../app/components/Filters/types'
 import { message } from 'antd'
 const shareHost = config[env].shareHost
@@ -104,7 +105,7 @@ export function* getResultset (action) {
       method: 'post',
       url: `${api.share}/data/${dataToken}`,
       data: {
-        ...rest,
+        ...omit(rest, 'customOrders'),
         filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
         params: variables.concat(linkageVariables).concat(globalVariables),
         pageSize,

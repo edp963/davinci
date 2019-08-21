@@ -22,7 +22,7 @@ require('codemirror/addon/display/placeholder')
 
 import { IFieldConfig } from './types'
 import { getDefaultFieldConfig, extractQueryVariableNames, getFieldAlias } from './util'
-import { IQueryVariableMap } from '../../../../Dashboard/Grid'
+import { IQueryVariableMap } from 'containers/Dashboard/Grid'
 import AliasExpressionTestModal from './AliasExpressionTest'
 
 const utilStyles = require('assets/less/util.less')
@@ -187,14 +187,6 @@ class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldConfigSta
     form.validateFieldsAndScroll((err) => {
       if (err) { return }
       const config = this.getFieldsValue(form)
-      if (!config.alias) {
-        message.error('字段别名不能为空')
-        return
-      }
-
-      const testResult = this.testExpressionResult()
-      if (testResult === undefined) { return }
-
       onSave(config)
     })
   }

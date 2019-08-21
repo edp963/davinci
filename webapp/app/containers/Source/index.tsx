@@ -26,14 +26,14 @@ import memoizeOne from 'memoize-one'
 import { Link, RouteComponentProps } from 'react-router'
 
 import { compose, Dispatch } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import Container from '../../components/Container'
-import Box from '../../components/Box'
-import SearchFilterDropdown from '../../components/SearchFilterDropdown'
+import Container from 'components/Container'
+import Box from 'components/Box'
+import SearchFilterDropdown from 'components/SearchFilterDropdown'
 import SourceForm from './SourceForm'
 import UploadCsvForm from './UploadCsvForm'
 
@@ -49,8 +49,8 @@ import {
   makeSelectFormLoading,
   makeSelectTestLoading
 } from './selectors'
-const utilStyles = require('../../assets/less/util.less')
-import api from '../../utils/api'
+const utilStyles = require('assets/less/util.less')
+import api from 'utils/api'
 import { checkNameUniqueAction } from '../App/actions'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'

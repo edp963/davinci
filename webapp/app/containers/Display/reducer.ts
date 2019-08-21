@@ -25,6 +25,8 @@ import { ActionTypes } from './constants'
 import { GraphTypes } from './components/util'
 import { ActionTypes as ViewActionTypes } from '../View/constants'
 
+import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
+
 const emptyDisplayState = {
   displays: [],
   currentDisplay: null,
@@ -243,6 +245,7 @@ function displayReducer (state = initialState, action) {
           }
         })
     case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS:
+      fieldGroupedSort(payload.result.resultList, payload.requestParams.customOrders)
       return payload.vizType !== 'display' ? state : state
         .set('currentLayersInfo', {
           ...layersInfo,

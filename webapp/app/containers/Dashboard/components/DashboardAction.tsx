@@ -22,9 +22,9 @@ import * as React from 'react'
 import { Icon, Tooltip, Popover } from 'antd'
 import {IconProps} from 'antd/lib/icon'
 const styles = require('../Dashboard.less')
-import {IProject} from '../../Projects'
-import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
-import ModulePermission from '../../Account/components/checkModulePermission'
+import {IProject} from 'containers/Projects'
+import ShareDownloadPermission from 'containers/Account/components/checkShareDownloadPermission'
+import ModulePermission from 'containers/Account/components/checkModulePermission'
 
 interface IDashboardActionProps {
   currentProject: IProject

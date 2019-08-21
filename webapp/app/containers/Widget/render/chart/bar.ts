@@ -35,7 +35,7 @@ import {
   makeGrouped,
   distinctXaxis
 } from './util'
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps, drillOptions) {

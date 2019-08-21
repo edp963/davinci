@@ -3,7 +3,7 @@ import classnames from 'classnames'
 import moment, { Moment } from 'moment'
 import { IDataParamConfig, IDataParamSource } from './Dropbox'
 import ConditionalFilterForm, { ConditionalFilterPanel } from './ConditionalFilterForm'
-import { DEFAULT_DATETIME_FORMAT } from '../../../../globalConstants'
+import { DEFAULT_DATETIME_FORMAT } from 'app/globalConstants'
 import { decodeMetricName } from '../util'
 import { uuid } from 'utils/util'
 import { Transfer, Radio, Button, DatePicker } from 'antd'
@@ -11,7 +11,7 @@ const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 const RangePicker = DatePicker.RangePicker
 const styles = require('./Workbench.less')
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IFilterSettingFormProps {
   item: IDataParamSource

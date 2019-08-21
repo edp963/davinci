@@ -179,6 +179,7 @@ module.exports = options => ({
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.react.js'],
     mainFields: ['browser', 'jsnext:main', 'main'],
     alias: {
+      'react-dom': '@hot-loader/react-dom', // https://github.com/gaearon/react-hot-loader/issues/1227
       app: path.resolve(process.cwd(), 'app'),
       libs: path.resolve(process.cwd(), 'libs'),
       assets: path.resolve(process.cwd(), 'app/assets')

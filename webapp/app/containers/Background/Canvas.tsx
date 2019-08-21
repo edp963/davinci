@@ -19,7 +19,7 @@
  */
 
 import React from 'react'
-import { DEFAULT_SECONDARY_COLOR } from '../../globalConstants'
+import { DEFAULT_SECONDARY_COLOR } from 'app/globalConstants'
 const styles = require('./Background.less')
 
 export class Canvas extends React.Component<{}, {}> {

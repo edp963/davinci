@@ -26,18 +26,18 @@ import { IChartStyles, IPaginationParams } from '../../Widget'
 import { ITableHeaderConfig } from 'containers/Widget/components/Config/Table'
 
 import { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
-import { Table as AntTable } from 'antd'
+import { Table as AntTable, Tooltip, Icon } from 'antd'
 import { TableProps, ColumnProps } from 'antd/lib/table'
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
-import PaginationWithoutTotal from '../../../../../components/PaginationWithoutTotal'
-import SearchFilterDropdown from '../../../../../components/SearchFilterDropdown/index'
-import NumberFilterDropdown from '../../../../../components/NumberFilterDropdown/index'
-import DateFilterDropdown from '../../../../../components/DateFilterDropdown/index'
+import PaginationWithoutTotal from 'components/PaginationWithoutTotal'
+import SearchFilterDropdown from 'components/SearchFilterDropdown/index'
+import NumberFilterDropdown from 'components/NumberFilterDropdown/index'
+import DateFilterDropdown from 'components/DateFilterDropdown/index'
 
 import { TABLE_PAGE_SIZES } from 'app/globalConstants'
 import { getFieldAlias } from 'containers/Widget/components/Config/Field'
 import { decodeMetricName } from 'containers/Widget/components/util'
-import styles from '../Chart.less'
+import Styles from './Table.less'
 
 import {
   findChildConfig, traverseConfig,
@@ -284,7 +284,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private setRowClassName = (record, row) =>
-   this.state.selectedRow.some((sr) => this.isSameObj(sr, record, true)) ? styles.selectedRow : styles.unSelectedRow
+   this.state.selectedRow.some((sr) => this.isSameObj(sr, record, true)) ? Styles.selectedRow : Styles.unSelectedRow
 
 
   private getTableStyle (
@@ -320,8 +320,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       />
     ) : null
     const tableCls = classnames({
-      [styles.table]: true,
-      [styles.noBorder]: bordered !== undefined && !bordered
+      [Styles.table]: true,
+      [Styles.noBorder]: bordered !== undefined && !bordered
     })
 
     return (
@@ -367,7 +367,17 @@ function getTableColumns (props: IChartProps) {
     const headerText = getFieldAlias(field, queryVariables || {}) || name
     const column: ColumnProps<any> = {
       key: name,
-      title: headerText,
+      title: (field && field.desc) ? (
+        <>
+          {headerText}
+          <Tooltip
+            title={field.desc}
+            placement="top"
+          >
+            <Icon className={Styles.headerIcon} type="info-circle" />
+          </Tooltip>
+        </>
+      ) : headerText,
       dataIndex: name
     }
     if (autoMergeCell) {
@@ -402,7 +412,17 @@ function getTableColumns (props: IChartProps) {
     const headerText = getFieldAlias(field, queryVariables || {}) || expression
     const column: ColumnProps<any> = {
       key: name,
-      title: headerText,
+      title: (field && field.desc) ? (
+        <>
+          {headerText}
+          <Tooltip
+            title={field.desc}
+            placement="top"
+          >
+            <Icon className={Styles.headerIcon} type="info-circle" />
+          </Tooltip>
+        </>
+      ) : headerText,
       dataIndex: expression
     }
     let headerConfigItem: ITableHeaderConfig = null

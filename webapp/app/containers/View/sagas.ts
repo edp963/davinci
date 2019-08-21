@@ -256,7 +256,7 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
       method: 'post',
       url: `${api.view}/${viewId}/getdata`,
       data: {
-        ...rest,
+        ...omit(rest, 'customOrders'),
         filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
         params: variables.concat(linkageVariables).concat(globalVariables),
         pageSize,

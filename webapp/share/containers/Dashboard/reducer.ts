@@ -58,6 +58,8 @@ import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 import { DashboardItemStatus } from '.'
 import { DownloadStatus } from 'app/containers/App/types'
 
+import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
+
 const initialState = fromJS({
   dashboard: null,
   title: '',
@@ -273,6 +275,7 @@ function shareReducer (state = initialState, { type, payload }) {
         }
       })
     case LOAD_SHARE_RESULTSET_SUCCESS:
+      fieldGroupedSort(payload.resultset.resultList, payload.requestParams.customOrders)
       return state.set('itemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {

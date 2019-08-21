@@ -6,10 +6,11 @@ import widgetlibs from '../../config'
 import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
 import { IViewBase, IFormedView } from 'containers/View/types'
 import { ViewModelVisualTypes } from 'containers/View/constants'
-import Dropbox, { DropboxType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType, IDragItem} from './Dropbox'
+import Dropbox, { DropboxType, DropType, AggregatorType, IDataParamSource, IDataParamConfig, DragType, IDragItem} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, IPaginationParams, WidgetMode, RenderType, DimetionType } from '../Widget'
 import { IFieldConfig, getDefaultFieldConfig, FieldConfigModal } from '../Config/Field'
 import { IFieldFormatConfig, getDefaultFieldFormatConfig, FormatConfigModal } from '../Config/Format'
+import { IFieldSortConfig, FieldSortTypes, SortConfigModal } from '../Config/Sort'
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
@@ -34,9 +35,9 @@ import { ITableConfig } from '../Config/Table'
 import BarSection from './ConfigSections/BarSection'
 import RadarSection from './ConfigSections/RadarSection'
 import { encodeMetricName, decodeMetricName, getPivot, getTable, getPivotModeSelectedCharts, checkChartEnable } from '../util'
-import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
+import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from 'app/globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
-import { uuid } from '../../../../utils/util'
+import { uuid } from 'utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox, notification, Tooltip } from 'antd'
@@ -48,9 +49,9 @@ const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 const confirm = Modal.confirm
 const styles = require('./Workbench.less')
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 export interface IDataParamProperty {
   title: string
@@ -114,6 +115,7 @@ interface IOperatingPanelStates {
   fieldModalVisible: boolean
 
   formatModalVisible: boolean
+  sortModalVisible: boolean
 
   colorModalVisible: boolean
   actOnModalVisible: boolean
@@ -152,6 +154,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       currentEditingItem: null,
       fieldModalVisible: false,
       formatModalVisible: false,
+      sortModalVisible: false,
       colorModalVisible: false,
       actOnModalVisible: false,
       actOnModalList: null,
@@ -617,12 +620,22 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.setWidgetProps(dataParams, styleParams)
   }
 
-  private getDropboxItemSortDirection = (from: string) => (item: IDataParamSource, sort: SortType) => {
+  private getDropboxItemSortDirection = (from: string) => (item: IDataParamSource, sortType: FieldSortTypes) => {
     const { dataParams, styleParams } = this.state
     const prop = dataParams[from]
-    item.sort = ['asc', 'desc'].indexOf(sort) >= 0 ? sort : void 0
-    prop.items = [...prop.items]
-    this.setWidgetProps(dataParams, styleParams)
+    if (sortType !== FieldSortTypes.Custom) {
+      item.sort = { sortType }
+      prop.items = [...prop.items]
+      this.setWidgetProps(dataParams, styleParams)
+    } else {
+      const { selectedView, onLoadDistinctValue } = this.props
+      onLoadDistinctValue(selectedView.id, { columns: [item.name] })
+      this.setState({
+        currentEditingCommonParamKey: from,
+        currentEditingItem: item,
+        sortModalVisible: true
+      })
+    }
   }
 
   private getDropboxItemAggregator = (from: string) => (item: IDataParamSource, agg: AggregatorType) => {
@@ -690,6 +703,25 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.setState({
       formatModalVisible: false
     })
+  }
+
+  private saveSortConfig = (sortConfig: IFieldSortConfig) => {
+    const {
+      currentEditingCommonParamKey,
+      currentEditingItem,
+      dataParams,
+      styleParams
+    } = this.state
+    const item = dataParams[currentEditingCommonParamKey].items.find((i) => i.name === currentEditingItem.name)
+    item.sort = sortConfig
+    this.setWidgetProps(dataParams, styleParams)
+    this.setState({
+      sortModalVisible: false
+    })
+  }
+
+  private cancelSortConfig = () => {
+    this.setState({ sortModalVisible: false })
   }
 
   private dropboxItemChangeColorConfig = (item: IDataParamSource) => {
@@ -862,10 +894,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       .reduce<IDataParamSource[]>((items, param: IDataParamProperty) => items.concat(param.items), [])
       .forEach((item) => {
         const column = item.type === 'category' ? item.name : `${item.agg}(${decodeMetricName(item.name)})`
-        if (item.sort) {
+        if (item.sort && [FieldSortTypes.Asc, FieldSortTypes.Desc].includes(item.sort.sortType)) {
           orders.push({
             column,
-            direction: item.sort
+            direction: item.sort.sortType
           })
         }
       })
@@ -942,12 +974,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           cols: cols.items.map((item) => ({
             ...item,
             field: item.field || getDefaultFieldConfig(),
-            format: item.format || getDefaultFieldFormatConfig()
+            format: item.format || getDefaultFieldFormatConfig(),
+            sort: item.sort
           })),
           rows: rows.items.map((item) => ({
             ...item,
             field: item.field || getDefaultFieldConfig(),
-            format: item.format || getDefaultFieldFormatConfig()
+            format: item.format || getDefaultFieldFormatConfig(),
+            sort: item.sort
           })),
           metrics: metrics.items.map((item) => ({
             ...item,
@@ -1011,12 +1045,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         cols: cols.items.map((item) => ({
           ...item,
           field: item.field || getDefaultFieldConfig(),
-          format: item.format || getDefaultFieldFormatConfig()
+          format: item.format || getDefaultFieldFormatConfig(),
+          sort: item.sort
         })),
         rows: rows.items.map((item) => ({
           ...item,
           field: item.field || getDefaultFieldConfig(),
-          format: item.format || getDefaultFieldFormatConfig()
+          format: item.format || getDefaultFieldFormatConfig(),
+          sort: item.sort
         })),
         metrics: metrics.items.map((item) => ({
           ...item,
@@ -1463,6 +1499,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       modalDataFrom,
       fieldModalVisible,
       formatModalVisible,
+      sortModalVisible,
       currentEditingItem,
       colorModalVisible,
       actOnModalVisible,
@@ -2042,6 +2079,15 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             formatConfig={currentEditingItem.format}
             onSave={this.saveFormatConfig}
             onCancel={this.cancelFormatConfig}
+          />
+        ), (
+          <SortConfigModal
+            key="sortConfigModal"
+            visible={sortModalVisible}
+            config={currentEditingItem.sort}
+            list={distinctColumnValues}
+            onSave={this.saveSortConfig}
+            onCancel={this.cancelSortConfig}
           />
         )
         ]}

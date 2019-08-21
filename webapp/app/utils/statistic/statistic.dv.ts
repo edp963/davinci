@@ -1,7 +1,7 @@
 import UAParser from 'ua-parser-js'
 import moment, { Moment } from 'moment'
-import request from '../../utils/request'
-import api from '../../utils/api'
+import request from 'utils/request'
+import api from 'utils/api'
 
 export interface IUserData {
     user_id?: number

@@ -3,17 +3,16 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_PIE_LABEL_POSITIONS
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 const sankey: IChartInfo = {
   id: ChartTypes.Sankey,
   name: 'sankey',
   title: '桑基图',
   icon: 'icon-kongjiansangjitu',
   coordinate: 'cartesian',
-  requireDimetions: [2, 9999],
-  requireMetrics: 1,
+  rules: [{ dimension: [2, 9999], metric: 1 }],
   dimetionAxis: 'col',
   data: {
     cols: {

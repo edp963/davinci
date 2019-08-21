@@ -62,13 +62,14 @@ export const ShareDisplayActions = {
       }
     }
   },
-  layerDataLoaded (renderType, layerId, data) {
+  layerDataLoaded (renderType, layerId, data, requestParams) {
     return {
       type: ActionTypes.LOAD_LAYER_DATA_SUCCESS,
       payload: {
         renderType,
         layerId,
-        data
+        data,
+        requestParams
       }
     }
   },

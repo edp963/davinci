@@ -3,7 +3,7 @@ import { Form, Input, Radio, Button } from 'antd'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const styles = require('../Organization.less')
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 
 interface IChangeRoleProps {

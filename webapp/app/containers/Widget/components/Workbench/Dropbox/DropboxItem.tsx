@@ -1,8 +1,9 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { SortType, AggregatorType, IDataParamSource, IDataParamSourceInBox, IDataParamConfig } from '../Dropbox'
+import { AggregatorType, IDataParamSource, IDataParamSourceInBox } from '../Dropbox'
 import PivotChartSelector from '../PivotChartSelector'
 import { getFieldAlias } from '../../Config/Field'
+import { FieldSortTypes } from '../../Config/Sort'
 import { getAggregatorLocale, decodeMetricName } from '../../util'
 import { IChartInfo } from '../../Widget'
 import { getAvailableSettings, getSettingsDropdownList, getSettingKeyByDropItem, MapSettingTypes, MapItemTypes, MapItemValueTypes } from './settings'
@@ -18,7 +19,7 @@ interface IDropboxItemProps {
   metricsCount: number
   onDragStart: (item: IDataParamSource, e: React.DragEvent<HTMLLIElement | HTMLParagraphElement>) => void
   onDragEnd: () => void
-  onSort: (item: IDataParamSource, sort: SortType) => void
+  onSort: (item: IDataParamSource, sort: FieldSortTypes) => void
   onChangeAgg: (item: IDataParamSource, agg: AggregatorType) => void
   onChangeFieldConfig: (item: IDataParamSource) => void
   onChangeFormatConfig: (item: IDataParamSource) => void
@@ -91,7 +92,7 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
         onChangeFormatConfig(item as IDataParamSource)
         break
       case 'sort':
-        onSort(item as IDataParamSource, key as SortType)
+        onSort(item as IDataParamSource, key as FieldSortTypes)
         break
     }
   }
@@ -125,8 +126,8 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
     const sortClass = classnames({
       'iconfont': true,
       [styles.sort]: true,
-      'icon-sortascending': sort === 'asc',
-      'icon-sortdescending': sort === 'desc'
+      'icon-sortascending': sort && sort.sortType === FieldSortTypes.Asc,
+      'icon-sortdescending': sort && sort.sortType === FieldSortTypes.Desc
     })
 
     const desc = field ? field.desc : ''

@@ -6,19 +6,18 @@ import {
   CHART_VISUALMAP_POSITIONS,
   CHART_LEGEND_POSITIONS,
   CHART_LINES_SYMBOL_TYPE
-} from '../../../../globalConstants'
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+} from 'app/globalConstants'
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 const map: IChartInfo = {
   id: ChartTypes.CMap,
   name: 'map',
   title: '地图',
   icon: 'icon-china',
   coordinate: 'cartesian',
-  requireDimetions: [0, 9999],
-  requireMetrics: 1,
+  rules: [{ dimension: [0, 9999], metric: 1 }],
   dimetionAxis: 'col',
   data: {
     cols: {

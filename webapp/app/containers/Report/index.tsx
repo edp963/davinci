@@ -26,8 +26,8 @@ import {InjectedRouter} from 'react-router/lib/Router'
 
 import { Icon } from 'antd'
 import { IProject } from '../Projects'
-import Sidebar from '../../components/Sidebar'
-import SidebarOption from '../../components/SidebarOption/index'
+import Sidebar from 'components/Sidebar'
+import SidebarOption from 'components/SidebarOption/index'
 import { selectSidebar } from './selectors'
 import { loadSidebar } from './actions'
 import { makeSelectLoginUser } from '../App/selectors'
@@ -42,7 +42,6 @@ import { makeSelectCurrentProject } from '../Projects/selectors'
 
 import MenuPermission from '../Account/components/checkMenuPermission'
 import { hasOnlyVizPermission } from '../Account/components/checkUtilPermission'
-import { routerShape } from 'react-router';
 const styles = require('./Report.less')
 
 interface IReportProps {

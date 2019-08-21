@@ -22,14 +22,13 @@ import { makeSelectPortals } from '../Portal/selectors'
 import { checkNameUniqueAction } from '../App/actions'
 
 import { Icon, Row, Col, Breadcrumb } from 'antd'
-import Box from '../../components/Box'
+import Box from 'components/Box'
 const styles = require('./Viz.less')
-const utilStyles = require('../../assets/less/util.less')
-import Container from '../../components/Container'
+const utilStyles = require('assets/less/util.less')
+import Container from 'components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
 import { makeSelectCurrentProject } from '../Projects/selectors'
-import ModulePermission from '../Account/components/checkModulePermission'
 import { IProject } from '../Projects'
 import { excludeRoles } from '../Projects/actions'
 

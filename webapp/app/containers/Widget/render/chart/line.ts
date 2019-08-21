@@ -34,7 +34,7 @@ import {
   distinctXaxis
 } from './util'
 import { getFormattedValue } from '../../components/Config/Format'
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
@@ -231,7 +231,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     lineStyle: horizontalLineStyle
   }
 
-  return {
+  const options = {
     xAxis: getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData),
     yAxis: getMetricAxisOption(
       yAxis,
@@ -258,4 +258,6 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       xAxisData
     )
   }
+
+  return options
 }

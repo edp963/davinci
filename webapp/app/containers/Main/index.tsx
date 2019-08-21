@@ -22,15 +22,14 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 
-import Navigator from '../../components/Navigator'
+import Navigator from 'components/Navigator'
 
 import { logged, logout, getLoginUser, loadDownloadList } from '../App/actions'
 import { makeSelectLogged, makeSelectNavigator } from '../App/selectors'
-import { promiseDispatcher } from '../../utils/reduxPromisation'
-import checkLogin from '../../utils/checkLogin'
-import { setToken } from '../../utils/request'
+import checkLogin from 'utils/checkLogin'
+import { setToken } from 'utils/request'
 import { DOWNLOAD_LIST_POLLING_FREQUENCY } from 'app/globalConstants'
-import { statistic } from '../../utils/statistic/statistic.dv'
+import { statistic } from 'utils/statistic/statistic.dv'
 const styles = require('./Main.less')
 
 interface IMainProps {

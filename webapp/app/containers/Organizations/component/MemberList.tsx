@@ -2,12 +2,12 @@ import React from 'react'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { Row, Col, Tooltip, Button, Input, Popconfirm, Modal, Table } from 'antd'
 const styles = require('../Organization.less')
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 import MemberForm from './AddForm'
-import Avatar from '../../../components/Avatar'
+import Avatar from 'components/Avatar'
 import * as Organization from '../Organization'
 import ChangeRoleForm from './ChangeRoleForm'
-import ComponentPermission from '../../Account/components/checkMemberPermission'
+import ComponentPermission from 'containers/Account/components/checkMemberPermission'
 
 interface IMembersState {
   category?: string

@@ -1,19 +1,19 @@
 import React from 'react'
 import { Link } from 'react-router'
 import { Icon, Tabs, Breadcrumb } from 'antd'
-import Box from '../../components/Box'
+import Box from 'components/Box'
 const styles = require('./Organization.less')
 import { InjectedRouter } from 'react-router/lib/Router'
 import MemberList from './component/MemberList'
 import ProjectList from './component/ProjectList'
 import Setting from './component/Setting'
 import RoleList from './component/RoleList'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const TabPane = Tabs.TabPane
-import Avatar from '../../components/Avatar'
+import Avatar from 'components/Avatar'
 import { connect } from 'react-redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducerProject from '../Projects/reducer'
 import sagaProject from '../Projects/sagas'
 import { compose } from 'redux'
@@ -29,7 +29,7 @@ import {
   deleteOrganizationMember,
   changeOrganizationMemberRole
 } from './actions'
-import { makeSelectLoginUser } from '../App/selectors'
+import { makeSelectLoginUser } from 'containers/App/selectors'
 import {
   makeSelectOrganizations,
   makeSelectCurrentOrganizations,
@@ -40,7 +40,7 @@ import {
   makeSelectInviteMemberList
 } from './selectors'
 import { createStructuredSelector } from 'reselect'
-import { addProject, editProject, deleteProject, getProjectStarUser, loadProjects, unStarProject, clickCollectProjects, loadCollectProjects } from '../Projects/actions'
+import { addProject, editProject, deleteProject, getProjectStarUser, loadProjects, unStarProject, clickCollectProjects, loadCollectProjects } from 'containers/Projects/actions'
 import { makeSelectStarUserList, makeSelectCollectProjects } from '../Projects/selectors'
 import { IStarUser, IProject } from '../Projects'
 

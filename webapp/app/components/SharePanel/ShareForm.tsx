@@ -1,7 +1,7 @@
 import React, { createRef } from 'react'
 
 import { Input, Row, Col} from 'antd'
-import config, { env } from '../../globalConfig'
+import config, { env } from 'app/globalConfig'
 // FIXME
 const apiHost = `${location.origin}${config[env].host}`
 const shareHost = `${location.origin}${config[env].shareHost}`

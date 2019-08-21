@@ -23,9 +23,9 @@ import { ActionTypes } from './constants'
 import { SourceActions, SourceActionType } from './actions'
 import omit from 'lodash/omit'
 
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { errorHandler } from '../../utils/util'
+import request from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
 import { message } from 'antd'
 import { ISourceBase, ISourceRaw, ISource, ISourceDatabases, IDatabaseTables, ITableColumns } from './types'
 

@@ -11,7 +11,7 @@ import { InjectedRouter } from 'react-router/lib/Router'
 import { makeSelectLoginLoading } from '../App/selectors'
 
 const styles = require('../Login/Login.less')
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const registerStyles = require('./register.less')
 
 interface IJoinOrganizationProps {

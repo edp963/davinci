@@ -25,16 +25,16 @@ import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 import viewReducer from '../View/reducer'
 import viewSaga from '../View/sagas'
 
 import CopyWidgetForm from './components/CopyWidgetForm'
-import Container from '../../components/Container'
-import Box from '../../components/Box'
+import Container from 'components/Container'
+import Box from 'components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { ButtonProps } from 'antd/lib/button/button'
@@ -54,7 +54,7 @@ import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects'
 
 const styles = require('./Widget.less')
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IWidgetProps {
   widgets: any[]

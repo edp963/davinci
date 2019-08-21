@@ -18,6 +18,7 @@
  * >>
  */
 
+import omit from 'lodash/omit'
 import { takeLatest, takeEvery } from 'redux-saga'
 import { call, fork, put } from 'redux-saga/effects'
 
@@ -75,7 +76,7 @@ export function* getData (action: ShareDisplayActionType) {
       method: 'post',
       url: `${api.share}/data/${dataToken}`,
       data: {
-        ...rest,
+        ...omit(rest, 'customOrders'),
         filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
         params: variables.concat(linkageVariables).concat(globalVariables),
         pageSize,
@@ -84,7 +85,7 @@ export function* getData (action: ShareDisplayActionType) {
     })
     const { resultList } = response.payload
     response.payload.resultList = (resultList && resultList.slice(0, 500)) || []
-    yield put(layerDataLoaded(renderType, layerId, response.payload))
+    yield put(layerDataLoaded(renderType, layerId, response.payload, requestParams))
   } catch (err) {
     yield put(loadLayerDataFail(err))
   }

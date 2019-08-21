@@ -1,9 +1,9 @@
 import React, { lazy, Suspense } from 'react'
 
-function loadable<P extends React.ComponentType<any>> (importFunc: () => Promise<{default: P}>, { fallback = null } = { fallback: null }) {
-  const LazyComponent = lazy<P>(importFunc)
+function loadable<P> (importFunc: () => Promise<{default: React.ComponentType<P>}>, { fallback = null } = { fallback: null }) {
+  const LazyComponent = lazy<React.ComponentType<P>>(importFunc)
 
-  return (props) => (
+  return (props: React.ComponentPropsWithRef<React.ComponentClass<P>>) => (
     <Suspense fallback={fallback}>
       <LazyComponent {...props} />
     </Suspense>
