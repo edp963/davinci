@@ -1,11 +1,11 @@
-import {ActionTypes} from '../../containers/View/constants'
+import {ActionTypes} from 'containers/View/constants'
 import {
     LOGIN,
     LOGGED,
     INITIATE_DOWNLOAD_TASK,
     INITIATE_DOWNLOAD_TASK_SUCCESS,
     DOWNLOAD_FILE
-} from '../../containers/App/constants'
+} from 'containers/App/constants'
 
 import {
     DRILL_DASHBOARDITEM,
@@ -15,7 +15,7 @@ import {
     GLOBAL_CONTROL_CHANGE,
     MONITORED_SEARCH_DATA_ACTION,
     MONITORED_LINKAGE_DATA_ACTION
-} from '../../containers/Dashboard/constants'
+} from 'containers/Dashboard/constants'
 
 const {
     LOAD_VIEW_DATA_FROM_VIZ_ITEM,

@@ -20,35 +20,35 @@
 
 import { RouteProps } from 'react-router'
 
-import Report from './containers/Report'
-import SourceList from './containers/Source'
+import Report from 'containers/Report'
+import SourceList from 'containers/Source'
 
 import ViewIndex from 'containers/View'
 import ViewEditor from 'containers/View/Editor'
 
-import Widget from './containers/Widget'
-import Workbench from './containers/Widget/components/Workbench/index'
-import Viz from './containers/Viz'
-import Dashboard from './containers/Dashboard'
-import Grid from './containers/Dashboard/Grid'
-import Register from './containers/Register'
-import Activate from './containers/Register/Activate'
-import JoinOrganization from './containers/Register/JoinOrganization'
-import Background from './containers/Background'
-import Login from './containers/Login'
-import Main from './containers/Main'
-import Schedule from './containers/Schedule'
-import Editor from './containers/Display/Editor'
-import Preview from './containers/Display/Preview'
-import Account from './containers/Account'
-import Projects from './containers/Projects/index'
-import Profile from './containers/Profile'
-import ResetPassword from './containers/ResetPassword'
-import Organizations from './containers/Organizations/index'
-import Organization from './containers/Organizations/Organization'
-import UserProfile from './containers/Profile/UserProfile'
+import Widget from 'containers/Widget'
+import Workbench from 'containers/Widget/components/Workbench/index'
+import Viz from 'containers/Viz'
+import Dashboard from 'containers/Dashboard'
+import Grid from 'containers/Dashboard/Grid'
+import Register from 'containers/Register'
+import Activate from 'containers/Register/Activate'
+import JoinOrganization from 'containers/Register/JoinOrganization'
+import Background from 'containers/Background'
+import Login from 'containers/Login'
+import Main from 'containers/Main'
+import Schedule from 'containers/Schedule'
+import Editor from 'containers/Display/Editor'
+import Preview from 'containers/Display/Preview'
+import Account from 'containers/Account'
+import Projects from 'containers/Projects/index'
+import Profile from 'containers/Profile'
+import ResetPassword from 'containers/ResetPassword'
+import Organizations from 'containers/Organizations/index'
+import Organization from 'containers/Organizations/Organization'
+import UserProfile from 'containers/Profile/UserProfile'
 import {replace} from 'react-router-redux'
-import NoAuthorization from './containers/NoAuthorization'
+import NoAuthorization from 'containers/NoAuthorization'
 
 const errorLoading = (err) => {
   console.error('Dynamic page loading failed', err) // eslint-disable-line no-console
@@ -216,7 +216,7 @@ export default function createRoutes (store): IExtendedRouteProps[] {
       path: '*',
       name: 'notfound',
       getComponent (nextState, cb) {
-        import('./containers/NotFoundPage')
+        import('containers/NotFoundPage')
           .then(loadModule(cb))
           .catch(errorLoading)
       }

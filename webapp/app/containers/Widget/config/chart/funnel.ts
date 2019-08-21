@@ -7,7 +7,7 @@ import {
   CHART_ALIGNMENT_MODES
 } from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 const funnel: IChartInfo = {
   id: ChartTypes.Funnel,
   name: 'funnel',

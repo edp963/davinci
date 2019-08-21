@@ -6,7 +6,7 @@ import {
   PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
 } from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const line: IChartInfo = {
   id: PivotTypes.Line,

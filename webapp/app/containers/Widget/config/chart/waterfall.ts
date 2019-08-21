@@ -6,7 +6,7 @@ import {
   CHART_LABEL_POSITIONS
 } from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const waterfall: IChartInfo = {
   id: ChartTypes.Waterfall,

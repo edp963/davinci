@@ -45,8 +45,8 @@ import RelatedInfoSelectors from './RelatedInfoSelectors'
 import { Button, Modal, Radio } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
-import { ICurrentDashboard } from '../../../containers/Dashboard'
-import { setControlFormValues } from '../../../containers/Dashboard/actions'
+import { ICurrentDashboard } from 'containers/Dashboard'
+import { setControlFormValues } from 'containers/Dashboard/actions'
 import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button

@@ -1,5 +1,5 @@
 import ChartTypes from './ChartTypes'
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 const wordCloud: IChartInfo = {
   id: ChartTypes.WordCloud,
   name: 'wordCloud',

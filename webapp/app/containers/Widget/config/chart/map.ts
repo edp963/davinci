@@ -10,7 +10,7 @@ import {
 const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 const map: IChartInfo = {
   id: ChartTypes.CMap,
   name: 'map',

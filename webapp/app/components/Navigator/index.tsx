@@ -28,12 +28,12 @@ import DownloadList from '../DownloadList'
 import {
   loadDownloadList,
   downloadFile
-} from '../../containers/App/actions'
+} from 'containers/App/actions'
 import {
   makeSelectLoginUser,
   makeSelectDownloadList,
   makeSelectDownloadListLoading
-} from '../../containers/App/selectors'
+} from 'containers/App/selectors'
 
 import { Dropdown, Menu, Icon } from 'antd'
 import { IDownloadRecord } from 'app/containers/App/types'

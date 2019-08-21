@@ -26,7 +26,7 @@ import {
   CHART_LABEL_POSITIONS
 } from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const scorecard: IChartInfo = {
   id: ChartTypes.Scorecard,

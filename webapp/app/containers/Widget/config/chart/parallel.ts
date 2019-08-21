@@ -11,7 +11,7 @@ import {
 
 import {
   IChartInfo
-} from '../../../../containers/Widget/components/Widget'
+} from 'containers/Widget/components/Widget'
 
 const parallel: IChartInfo = {
   id: ChartTypes.Parallel,

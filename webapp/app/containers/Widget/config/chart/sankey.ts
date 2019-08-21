@@ -5,7 +5,7 @@ import {
   CHART_PIE_LABEL_POSITIONS
 } from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 const sankey: IChartInfo = {
   id: ChartTypes.Sankey,
   name: 'sankey',

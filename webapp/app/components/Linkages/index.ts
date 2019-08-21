@@ -1,4 +1,4 @@
-import { QueryVariable } from '../../containers/Dashboard/Grid'
+import { QueryVariable } from 'containers/Dashboard/Grid'
 import { DEFAULT_SPLITER, SQL_NUMBER_TYPES } from 'app/globalConstants'
 import OperatorType from 'utils/operatorTypes'
 

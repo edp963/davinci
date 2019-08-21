@@ -20,7 +20,7 @@
 
 import ChartTypes from './ChartTypes'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const richText: IChartInfo = {
   id: ChartTypes.RichText,

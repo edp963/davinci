@@ -19,7 +19,7 @@
  */
 
 import ChartTypes from './ChartTypes'
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const iframe: IChartInfo = {
   id: ChartTypes.Iframe,
