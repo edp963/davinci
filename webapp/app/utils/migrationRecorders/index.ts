@@ -1,6 +1,8 @@
 import { IGlobalControl, ILocalControl } from 'app/components/Filters/types'
+import { IWidgetDimension } from 'app/containers/Widget/components/Widget'
 import globalControl from './globalControl'
 import localControl from './localControl'
+import widgetDimension from './widgetDimension'
 
 export interface IMigrationRecorder<T> {
   versions: string[]
@@ -17,8 +19,10 @@ function executeMigration<T> (data: T, migrationRecorder: IMigrationRecorder<T>)
 
 const globalControlMigrationRecorder = (data: IGlobalControl) => executeMigration<IGlobalControl>(data, globalControl)
 const localControlMigrationRecorder = (data: ILocalControl) => executeMigration<ILocalControl>(data, localControl)
+const widgetDimensionMigrationRecorder = (data: IWidgetDimension) => executeMigration<IWidgetDimension>(data, widgetDimension)
 
 export {
   globalControlMigrationRecorder,
-  localControlMigrationRecorder
+  localControlMigrationRecorder,
+  widgetDimensionMigrationRecorder
 }
