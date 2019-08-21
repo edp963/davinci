@@ -20,9 +20,12 @@
 package edp.davinci.dto.sourceDto;
 
 import edp.core.consts.Consts;
+import edp.core.enums.DataTypeEnum;
 import lombok.Getter;
 
 import java.util.List;
+
+import static edp.core.consts.Consts.ORACLE_JDBC_PREFIX;
 
 @Getter
 public class DatasourceType {
@@ -30,14 +33,9 @@ public class DatasourceType {
     private String prefix;
     private List<String> versions;
 
-    public DatasourceType(String name) {
-        this.name = name;
-        this.prefix = String.format(Consts.JDBC_PREFIX_FOMATER, name);
-    }
-
     public DatasourceType(String name, List<String> versions) {
         this.name = name;
-        this.prefix = String.format(Consts.JDBC_PREFIX_FOMATER, name);
+        this.prefix = name.equalsIgnoreCase(DataTypeEnum.ORACLE.getFeature()) ? ORACLE_JDBC_PREFIX : String.format(Consts.JDBC_PREFIX_FORMATER, name);
         this.versions = versions;
     }
 }

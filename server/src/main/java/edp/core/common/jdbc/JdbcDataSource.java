@@ -24,19 +24,18 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.SourceException;
-import edp.core.model.CustomDataSource;
-import edp.core.utils.CustomDataSourceUtils;
 import edp.core.utils.MD5Util;
 import edp.core.utils.ServerUtils;
+import edp.core.utils.SourceUtils;
 import edp.davinci.core.config.SpringContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+
+import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
 @Slf4j
 @Component
@@ -110,33 +109,19 @@ public class JdbcDataSource extends DruidDataSource {
 
         DruidDataSource instance = new JdbcDataSource();
 
-
-        if (StringUtils.isEmpty(version) || !isExt) {
-            String className = null;
+        if (StringUtils.isEmpty(version) || !isExt || JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
+            String className = SourceUtils.getDriverClassName(jdbcUrl, null);
             try {
-                className = DriverManager.getDriver(jdbcUrl.trim()).getClass().getName();
-            } catch (SQLException e) {
-            }
-            if (StringUtils.isEmpty(className)) {
-                DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-
-                CustomDataSource customDataSource = null;
-                if (null == dataTypeEnum) {
-                    try {
-                        customDataSource = CustomDataSourceUtils.getCustomDataSource(jdbcUrl);
-                    } catch (Exception e) {
-                        throw new SourceException(e.getMessage());
-                    }
+                Class<?> aClass = Class.forName(className);
+                if (null == aClass) {
+                    throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
                 }
-
-                if (null == dataTypeEnum && null == customDataSource) {
-                    throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
-                }
-
-                instance.setDriverClassName(null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver()) ? dataTypeEnum.getDriver() : customDataSource.getDriver().trim());
-            } else {
-                instance.setDriverClassName(className);
+            } catch (ClassNotFoundException e) {
+                throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
             }
+
+            instance.setDriverClassName(className);
+
         } else {
             String path = ((ServerUtils) SpringContextHolder.getBean(ServerUtils.class)).getBasePath()
                     + String.format(Consts.PATH_EXT_FORMATER, database, version);

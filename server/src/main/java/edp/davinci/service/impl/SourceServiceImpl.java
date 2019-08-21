@@ -69,6 +69,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
+
 
 @Slf4j
 @Service("sourceService")
@@ -236,8 +238,16 @@ public class SourceServiceImpl implements SourceService {
             throw new ServerException("the source name is already taken");
         }
 
+        SourceConfig sourceConfig = sourceInfo.getConfig();
         //测试连接
-        boolean testConnection = sqlUtils.init(source).testConnection();
+        boolean testConnection = sqlUtils
+                .init(
+                        sourceConfig.getUrl(),
+                        sourceConfig.getUsername(),
+                        sourceConfig.getPassword(),
+                        sourceConfig.getVersion(),
+                        sourceConfig.isExt()
+                ).testConnection();
 
         if (testConnection) {
             String origin = source.toString();
@@ -309,6 +319,13 @@ public class SourceServiceImpl implements SourceService {
     public boolean testSource(SourceTest sourceTest) throws ServerException {
         boolean testConnection = false;
         try {
+            if (!sourceTest.isExt()) {
+                sourceTest.setVersion(null);
+            }
+            if (StringUtils.isEmpty(sourceTest.getVersion()) || JDBC_DATASOURCE_DEFAULT_VERSION.equals(sourceTest.getVersion())) {
+                sourceTest.setVersion(null);
+                sourceTest.setExt(false);
+            }
             testConnection = sqlUtils
                     .init(
                             sourceTest.getUrl(),

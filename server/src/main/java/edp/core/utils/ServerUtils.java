@@ -84,6 +84,6 @@ public class ServerUtils {
     }
 
     public String getBasePath() {
-        return basePath.replaceAll("/", File.pathSeparator);
+        return basePath.replaceAll("/", File.separator).replaceAll(File.separator + "{2,}", File.separator);
     }
 }

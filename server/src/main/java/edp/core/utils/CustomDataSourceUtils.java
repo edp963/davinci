@@ -21,7 +21,7 @@ package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edp.core.exception.ServerException;
+import edp.core.consts.Consts;
 import edp.core.model.CustomDataSource;
 import lombok.Getter;
 import org.yaml.snakeyaml.Yaml;
@@ -29,10 +29,9 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
 
 public class CustomDataSourceUtils {
@@ -42,29 +41,14 @@ public class CustomDataSourceUtils {
     @Getter
     private static volatile Map<String, List<String>> dataSourceVersoin = new HashMap<String, List<String>>();
 
-    public static CustomDataSource getInstance(String url) {
-        String dataSourceName = SourceUtils.getDataSourceName(url);
-        if (map.containsKey(dataSourceName) && null != map.get(dataSourceName)) {
-            CustomDataSource customDataSource = map.get(dataSourceName);
+    public static CustomDataSource getInstance(String jdbcUrl, String version) {
+        String dataSourceName = SourceUtils.getDataSourceName(jdbcUrl);
+        String key = getKey(dataSourceName, version);
+        if (map.containsKey(key) && null != map.get(key)) {
+            CustomDataSource customDataSource = map.get(key);
             if (null != customDataSource) {
                 return customDataSource;
             }
-        }
-        return null;
-    }
-
-    public static CustomDataSource getCustomDataSource(String url) throws ServerException {
-        CustomDataSource customDataSource = getInstance(url);
-        if (null != customDataSource) {
-            try {
-                Class<?> aClass = Class.forName(customDataSource.getDriver());
-                if (null == aClass) {
-                    throw new ServerException("Unable to get driver instance for jdbcUrl: " + url);
-                }
-            } catch (ClassNotFoundException e) {
-                throw new ServerException("Unable to get driver instance: " + url);
-            }
-            return customDataSource;
         }
         return null;
     }
@@ -121,20 +105,23 @@ public class CustomDataSourceUtils {
                 }
 
                 List<String> versoins = null;
-                if (!StringUtils.isEmpty(customDataSource.getVersion())) {
-                    if (dataSourceVersoin.containsKey(customDataSource.getName())
-                            && dataSourceVersoin.get(customDataSource.getName()) != null) {
-                        versoins = dataSourceVersoin.get(customDataSource.getName());
-                    } else {
-                        versoins = new ArrayList<String>();
-                    }
+                if (dataSourceVersoin.containsKey(customDataSource.getName())) {
+                    versoins = dataSourceVersoin.get(customDataSource.getName());
+                } else {
+                    versoins = new ArrayList<>();
+                }
+                if (StringUtils.isEmpty(customDataSource.getVersion())) {
+                    versoins.add(0, JDBC_DATASOURCE_DEFAULT_VERSION);
+                } else {
                     versoins.add(customDataSource.getVersion());
                 }
-
                 dataSourceVersoin.put(customDataSource.getName(), versoins);
-
-                map.put(key.toLowerCase(), customDataSource);
+                map.put(getKey(customDataSource.getName(), customDataSource.getVersion()), customDataSource);
             }
         }
+    }
+
+    private static String getKey(String database, String version) {
+        return database + Consts.COLON + (StringUtils.isEmpty(version) ? Consts.EMPTY : version);
     }
 }

@@ -95,7 +95,7 @@ public class ViewExecuteParam {
         return this.filters;
     }
 
-    public List<Order> getOrders(String jdbcUrl) {
+    public List<Order> getOrders(String jdbcUrl, String dbVersion) {
         List<Order> list = null;
         if (!CollectionUtils.isEmpty(orders)) {
             list = new ArrayList<>();
@@ -105,8 +105,8 @@ public class ViewExecuteParam {
                 String column = order.getColumn().trim();
                 Matcher matcher = PATTERN_SQL_AGGREGATE.matcher(order.getColumn().trim().toLowerCase());
                 if (!matcher.find()) {
-                    String prefix = SqlUtils.getKeywordPrefix(jdbcUrl);
-                    String suffix = SqlUtils.getKeywordSuffix(jdbcUrl);
+                    String prefix = SqlUtils.getKeywordPrefix(jdbcUrl, dbVersion);
+                    String suffix = SqlUtils.getKeywordSuffix(jdbcUrl, dbVersion);
                     StringBuilder columnBuilder = new StringBuilder();
                     if (!column.startsWith(prefix)) {
                         columnBuilder.append(prefix);
@@ -123,52 +123,52 @@ public class ViewExecuteParam {
         return list;
     }
 
-    public void addExcludeColumn(Set<String> excludeColumns, String jdbcUrl) {
+    public void addExcludeColumn(Set<String> excludeColumns, String jdbcUrl, String dbVersion) {
         if (!CollectionUtils.isEmpty(excludeColumns) && !CollectionUtils.isEmpty(aggregators)) {
             excludeColumns.addAll(this.aggregators.stream()
                     .filter(a -> !CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(a.getColumn()))
-                    .map(a -> formatColumn(a.getColumn(), a.getFunc(), jdbcUrl, true))
+                    .map(a -> formatColumn(a.getColumn(), a.getFunc(), jdbcUrl, dbVersion, true))
                     .collect(Collectors.toSet())
             );
         }
     }
 
-    public List<String> getAggregators(String jdbcUrl) {
+    public List<String> getAggregators(String jdbcUrl, String dbVersion) {
         if (!CollectionUtils.isEmpty(aggregators)) {
-            return this.aggregators.stream().map(a -> formatColumn(a.getColumn(), a.getFunc(), jdbcUrl, false)).collect(Collectors.toList());
+            return this.aggregators.stream().map(a -> formatColumn(a.getColumn(), a.getFunc(), jdbcUrl, dbVersion, false)).collect(Collectors.toList());
         }
         return null;
     }
 
 
-    private String formatColumn(String column, String func, String jdbcUrl, boolean isLable) {
+    private String formatColumn(String column, String func, String jdbcUrl, String dbVersion, boolean isLable) {
         if (isLable) {
             return String.join(EMPTY, func.trim(), PARENTHESES_START, column.trim(), PARENTHESES_END);
         } else {
             StringBuilder sb = new StringBuilder();
             if ("COUNTDISTINCT".equals(func.trim().toUpperCase())) {
                 sb.append("COUNT").append(PARENTHESES_START).append("DISTINCT").append(SPACE);
-                sb.append(getField(column, jdbcUrl));
+                sb.append(getField(column, jdbcUrl, dbVersion));
                 sb.append(PARENTHESES_END);
-                sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl)).append("COUNTDISTINCT").append(PARENTHESES_START);
+                sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl, dbVersion)).append("COUNTDISTINCT").append(PARENTHESES_START);
                 sb.append(column);
-                sb.append(PARENTHESES_END).append(SqlUtils.getAliasSuffix(jdbcUrl));
+                sb.append(PARENTHESES_END).append(SqlUtils.getAliasSuffix(jdbcUrl, dbVersion));
             } else {
                 sb.append(func.trim()).append(PARENTHESES_START);
-                sb.append(getField(column, jdbcUrl));
+                sb.append(getField(column, jdbcUrl, dbVersion));
                 sb.append(PARENTHESES_END);
-                sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl));
+                sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl, dbVersion));
                 sb.append(func.trim()).append(PARENTHESES_START);
                 sb.append(column);
-                sb.append(PARENTHESES_END).append(SqlUtils.getAliasSuffix(jdbcUrl));
+                sb.append(PARENTHESES_END).append(SqlUtils.getAliasSuffix(jdbcUrl, dbVersion));
             }
             return sb.toString();
         }
     }
 
-    public static String getField(String field, String jdbcUrl) {
-        String keywordPrefix = SqlUtils.getKeywordPrefix(jdbcUrl);
-        String keywordSuffix = SqlUtils.getKeywordSuffix(jdbcUrl);
+    public static String getField(String field, String jdbcUrl, String dbVersion) {
+        String keywordPrefix = SqlUtils.getKeywordPrefix(jdbcUrl, dbVersion);
+        String keywordSuffix = SqlUtils.getKeywordSuffix(jdbcUrl, dbVersion);
         if (!StringUtils.isEmpty(keywordPrefix) && !StringUtils.isEmpty(keywordSuffix)) {
             return keywordPrefix + field + keywordSuffix;
         }

@@ -48,7 +48,6 @@ import edp.davinci.dto.sourceDto.SourceBaseInfo;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.*;
 import edp.davinci.service.ProjectService;
-import edp.davinci.service.SourceService;
 import edp.davinci.service.ViewService;
 import edp.davinci.service.excel.SQLContext;
 import lombok.extern.slf4j.Slf4j;
@@ -100,9 +99,6 @@ public class ViewServiceImpl implements ViewService {
 
     @Autowired
     private ProjectService projectService;
-
-    @Autowired
-    private SourceService sourceService;
 
     @Autowired
     private SqlParseUtils sqlParseUtils;
@@ -202,8 +198,9 @@ public class ViewServiceImpl implements ViewService {
 
         List<String> querySqlList = sqlParseUtils.getSqls(srcSql, Boolean.TRUE);
         if (!CollectionUtils.isEmpty(querySqlList)) {
-            buildQuerySql(querySqlList, viewWithSource.getSource(), executeParam);
-            executeParam.addExcludeColumn(excludeColumns, viewWithSource.getSource().getJdbcUrl());
+            Source source = viewWithSource.getSource();
+            buildQuerySql(querySqlList, source, executeParam);
+            executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl(), source.getDbVersion());
             context.setQuerySql(querySqlList);
             context.setViewExecuteParam(executeParam);
         }
@@ -498,12 +495,12 @@ public class ViewServiceImpl implements ViewService {
             if (executeParam.isNativeQuery()) {
                 st.add("aggregators", executeParam.getAggregators());
             } else {
-                st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
+                st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl(), source.getDbVersion()));
             }
-            st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
+            st.add("orders", executeParam.getOrders(source.getJdbcUrl(), source.getDbVersion()));
             st.add("filters", executeParam.getFilters());
-            st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
-            st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
+            st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl(), source.getDbVersion()));
+            st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl(), source.getDbVersion()));
 
             for (int i = 0; i < querySqlList.size(); i++) {
                 st.add("sql", querySqlList.get(i));
@@ -562,7 +559,7 @@ public class ViewServiceImpl implements ViewService {
                 List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
                 if (!CollectionUtils.isEmpty(querySqlList)) {
                     buildQuerySql(querySqlList, source, executeParam);
-                    executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl());
+                    executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl(), source.getDbVersion());
 
                     if (null != executeParam
                             && null != executeParam.getCache()
@@ -669,8 +666,8 @@ public class ViewServiceImpl implements ViewService {
                         st.add("columns", param.getColumns());
                         st.add("filters", param.getFilters());
                         st.add("sql", querySqlList.get(querySqlList.size() - 1));
-                        st.add("keywordPrefix", SqlUtils.getKeywordPrefix(source.getJdbcUrl()));
-                        st.add("keywordSuffix", SqlUtils.getKeywordSuffix(source.getJdbcUrl()));
+                        st.add("keywordPrefix", SqlUtils.getKeywordPrefix(source.getJdbcUrl(), source.getDbVersion()));
+                        st.add("keywordSuffix", SqlUtils.getKeywordSuffix(source.getJdbcUrl(), source.getDbVersion()));
 
                         String sql = st.render();
                         querySqlList.set(querySqlList.size() - 1, sql);

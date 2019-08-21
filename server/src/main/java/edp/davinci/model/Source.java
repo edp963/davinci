@@ -130,7 +130,7 @@ public class Source extends BaseSource {
         }
         try {
             JSONObject jsonObject = JSONObject.parseObject(this.config);
-            versoin = jsonObject.getString("versoin");
+            versoin = jsonObject.getString("version");
             if (JDBC_DATASOURCE_DEFAULT_VERSION.equals(versoin)) {
                 return null;
             }

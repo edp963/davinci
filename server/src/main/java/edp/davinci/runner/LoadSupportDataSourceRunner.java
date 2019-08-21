@@ -19,6 +19,7 @@
 
 package edp.davinci.runner;
 
+import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
 import edp.core.utils.CustomDataSourceUtils;
 import edp.davinci.dto.sourceDto.DatasourceType;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
+import static edp.core.consts.Consts.ORACLE_JDBC_PREFIX;
 
 @Order(3)
 @Component
@@ -40,7 +42,7 @@ public class LoadSupportDataSourceRunner implements ApplicationRunner {
     private static final List<DatasourceType> supportDatasourceList = new ArrayList<>();
 
     @Getter
-    private static final Map<String, Boolean> supportDatasourceMap = new HashMap<>();
+    private static final Map<String, String> supportDatasourceMap = new HashMap<>();
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -49,7 +51,7 @@ public class LoadSupportDataSourceRunner implements ApplicationRunner {
         for (DataTypeEnum dataTypeEnum : DataTypeEnum.values()) {
             if (dataSourceVersoins.containsKey(dataTypeEnum.getFeature())) {
                 List<String> versions = dataSourceVersoins.get(dataTypeEnum.getFeature());
-                if (!versions.isEmpty()) {
+                if (!versions.isEmpty() && !versions.contains(JDBC_DATASOURCE_DEFAULT_VERSION)) {
                     versions.add(0, JDBC_DATASOURCE_DEFAULT_VERSION);
                 }
             } else {
@@ -57,11 +59,12 @@ public class LoadSupportDataSourceRunner implements ApplicationRunner {
             }
         }
 
-        dataSourceVersoins.forEach((name, versions) -> {
-            supportDatasourceList.add(new DatasourceType(name, versions));
-        });
+        dataSourceVersoins.forEach((name, versions) -> supportDatasourceList.add(new DatasourceType(name, versions)));
 
-        supportDatasourceList.forEach(s -> supportDatasourceMap.put(s.getName(), true));
+        supportDatasourceList.forEach(s -> supportDatasourceMap.put(
+                s.getName(),
+                s.getName().equalsIgnoreCase(DataTypeEnum.ORACLE.getFeature()) ? ORACLE_JDBC_PREFIX : String.format(Consts.JDBC_PREFIX_FORMATER, s.getName())
+        ));
 
         supportDatasourceList.sort(Comparator.comparing(DatasourceType::getName));
     }

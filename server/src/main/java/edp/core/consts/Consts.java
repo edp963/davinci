@@ -185,10 +185,12 @@ public class Consts {
 
     public static final String QUERY_META_SQL = "SELECT * FROM (%s) MT WHERE 1=0";
 
-    public static final String JDBC_PREFIX_FOMATER = "jdbc:%s://";
+    public static final String JDBC_PREFIX_FORMATER = "jdbc:%s:";
+
+    public static final String ORACLE_JDBC_PREFIX = "jdbc:oracle:thin:";
 
     public static final String JDBC_DATASOURCE_DEFAULT_VERSION = "Default";
 
-    public static final String PATH_EXT_FORMATER = "ext" + File.pathSeparator + "%s" + File.pathSeparator + "%s" + File.pathSeparator;
+    public static final String PATH_EXT_FORMATER = "ext" + File.separator + "%s" + File.separator + "%s" + File.separator;
 
 }

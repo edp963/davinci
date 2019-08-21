@@ -781,9 +781,9 @@ public class SqlUtils {
         }
     }
 
-    public static String getKeywordPrefix(String jdbcUrl) {
+    public static String getKeywordPrefix(String jdbcUrl, String dbVersion) {
         String keywordPrefix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             keywordPrefix = customDataSource.getKeyword_prefix();
         } else {
@@ -795,9 +795,9 @@ public class SqlUtils {
         return StringUtils.isEmpty(keywordPrefix) ? EMPTY : keywordPrefix;
     }
 
-    public static String getKeywordSuffix(String jdbcUrl) {
+    public static String getKeywordSuffix(String jdbcUrl, String dbVersion) {
         String keywordSuffix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             keywordSuffix = customDataSource.getKeyword_suffix();
         } else {
@@ -809,9 +809,9 @@ public class SqlUtils {
         return StringUtils.isEmpty(keywordSuffix) ? EMPTY : keywordSuffix;
     }
 
-    public static String getAliasPrefix(String jdbcUrl) {
+    public static String getAliasPrefix(String jdbcUrl, String dbVersion) {
         String aliasPrefix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             aliasPrefix = customDataSource.getAlias_prefix();
         } else {
@@ -823,9 +823,9 @@ public class SqlUtils {
         return StringUtils.isEmpty(aliasPrefix) ? EMPTY : aliasPrefix;
     }
 
-    public static String getAliasSuffix(String jdbcUrl) {
+    public static String getAliasSuffix(String jdbcUrl, String dbVersion) {
         String aliasSuffix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             aliasSuffix = customDataSource.getAlias_suffix();
         } else {
