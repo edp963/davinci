@@ -11,6 +11,7 @@ import {
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { IFieldFormatConfig } from '../Config/Format'
 import { IFieldConfig } from '../Config/Field'
+import { IFieldSortConfig } from '../Config/Sort'
 import { IAxisConfig } from '../Workbench/ConfigSections/AxisSection'
 import { ISplitLineConfig } from '../Workbench/ConfigSections/SplitLineSection'
 import { IPivotConfig } from '../Workbench/ConfigSections/PivotSection'
@@ -45,6 +46,7 @@ export interface IWidgetDimension {
   name: string
   field: IFieldConfig
   format: IFieldFormatConfig
+  sort: IFieldSortConfig
 }
 
 export interface IWidgetMetric {

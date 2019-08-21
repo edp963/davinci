@@ -27,10 +27,14 @@ import DashboardItemMask, { IDashboardItemMaskProps } from 'containers/Dashboard
 import { DEFAULT_SPLITER, DEFAULT_CACHE_EXPIRED } from '../../../../globalConstants'
 import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
+import { FieldSortTypes, fieldGroupedSort } from '../Config/Sort'
 import { message } from 'antd'
 import 'assets/less/resizer.less'
 import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { IWorkbenchSettings, WorkbenchQueryMode } from './types'
+
+import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
+
 const styles = require('./Workbench.less')
 
 interface IWidget {
@@ -159,7 +163,9 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   public componentWillReceiveProps (nextProps: IWorkbenchProps) {
     const { currentWidget } = nextProps
     if (currentWidget && (currentWidget !== this.props.currentWidget)) {
-      const { controls, cache, expired, computed, autoLoadData, ...rest } = JSON.parse(currentWidget.config)
+      const { controls, cache, expired, computed, autoLoadData, cols, rows, ...rest } = JSON.parse(currentWidget.config)
+      const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
+      const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
@@ -169,8 +175,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         autoLoadData: autoLoadData === undefined ? true : autoLoadData,
         expired,
         selectedViewId: currentWidget.viewId,
-        originalWidgetProps: {...rest},
-        widgetProps: {...rest},
+        originalWidgetProps: { cols: updatedCols, rows: updatedRows, ...rest },
+        widgetProps: { cols: updatedCols, rows: updatedRows, ...rest },
         originalComputed: computed
       })
     }
@@ -342,10 +348,16 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private setWidgetProps = (widgetProps: IWidgetProps) => {
+    const { cols, rows } = widgetProps
+    const data = [...(widgetProps.data || this.state.widgetProps.data)]
+    const customOrders = cols.concat(rows)
+      .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+      .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
+    fieldGroupedSort(data, customOrders)
     this.setState({
       widgetProps: {
         ...widgetProps,
-        data: widgetProps.data || this.state.widgetProps.data
+        data
       }
     })
   }

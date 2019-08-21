@@ -96,6 +96,9 @@ import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 
+import { IFieldSortDescriptor, FieldSortTypes } from 'containers/Widget/components/Config/Sort'
+import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
+
 import {
   SQL_NUMBER_TYPES,
   DEFAULT_SPLITER,
@@ -180,6 +183,7 @@ export interface IDataRequestParams {
     pageSize: number
   }
   nativeQuery?: boolean
+  customOrders?: IFieldSortDescriptor[]
 }
 
 export interface IDataDownloadParams extends IDataRequestParams {
@@ -615,6 +619,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
+    const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
+    const customOrders = updatedCols.concat(updatedRows)
+      .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+      .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
 
     const cachedQueryConditions = currentItemsInfo[itemId].queryConditions
 
@@ -713,7 +722,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       expired,
       flush: renderType === 'refresh',
       pagination,
-      nativeQuery
+      nativeQuery,
+      customOrders
     }
 
     callback(

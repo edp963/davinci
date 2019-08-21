@@ -29,6 +29,9 @@ import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
+import { FieldSortTypes } from 'containers/Widget/components/Config/Sort'
+import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
+
 import Container from 'app/components/Container'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 import DashboardItem from 'app/containers/Dashboard/components/DashboardItem'
@@ -375,6 +378,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
+    const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
+    const customOrders = updatedCols.concat(updatedRows)
+      .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+      .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
 
     const cachedQueryConditions = currentItemsInfo[itemId].queryConditions
 
@@ -477,7 +485,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         expired,
         flush: renderType === 'refresh',
         pagination,
-        nativeQuery
+        nativeQuery,
+        customOrders
       }
     )
   }

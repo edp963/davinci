@@ -51,6 +51,9 @@ import {
   makeSelectEditorBaselines } from './selectors'
 import { slideSettings, GraphTypes, computeEditorBaselines } from './components/util'
 
+import { FieldSortTypes } from 'containers/Widget/components/Config/Sort'
+import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
+
 import DisplayHeader from './components/DisplayHeader'
 import DisplayBody from './components/DisplayBody'
 import LayerList from './components/LayerList'
@@ -287,6 +290,11 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
+    const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
+    const customOrders = updatedCols.concat(updatedRows)
+      .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+      .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
 
     const cachedQueryConditions = currentLayersInfo[itemId].queryConditions
 
@@ -387,7 +395,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         expired,
         flush: renderType === 'refresh',
         pagination,
-        nativeQuery
+        nativeQuery,
+        customOrders
       }
     )
   }
