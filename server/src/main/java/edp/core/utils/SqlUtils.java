@@ -20,7 +20,6 @@
 package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.common.jdbc.ESDataSource;
 import edp.core.common.jdbc.JdbcDataSource;
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
@@ -91,32 +90,44 @@ public class SqlUtils {
 
     private String password;
 
+    private String database;
+
+    private String dbVersion;
+
+    private boolean isExt;
+
     private DataTypeEnum dataTypeEnum;
+
+    private SourceUtils sourceUtils;
 
     private static volatile Map<Integer, JdbcTemplate> map = new HashMap<>();
 
     public SqlUtils init(BaseSource source) {
-        SqlUtils sqlUtils = new SqlUtils();
-        sqlUtils.jdbcDataSource = jdbcDataSource;
-        sqlUtils.jdbcUrl = source.getJdbcUrl();
-        sqlUtils.username = source.getUsername();
-        sqlUtils.password = source.getPassword();
-        sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
-        sqlUtils.resultLimit = this.resultLimit;
-        sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(source.getJdbcUrl());
-        return sqlUtils;
+        return SqlUtilsBuilder
+                .SqlUtils()
+                .withJdbcUrl(source.getJdbcUrl())
+                .withUsername(source.getUsername())
+                .withPassword(source.getPassword())
+                .withDbVersion(source.getDbVersion())
+                .withIsExt(source.isExt())
+                .withJdbcDataSource(this.jdbcDataSource)
+                .withResultLimit(this.resultLimit)
+                .withIsQueryLogEnable(this.isQueryLogEnable)
+                .build();
     }
 
-    public SqlUtils init(String jdbcUrl, String username, String password) {
-        SqlUtils sqlUtils = new SqlUtils();
-        sqlUtils.jdbcDataSource = jdbcDataSource;
-        sqlUtils.jdbcUrl = jdbcUrl;
-        sqlUtils.username = username;
-        sqlUtils.password = password;
-        sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
-        sqlUtils.resultLimit = this.resultLimit;
-        sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-        return sqlUtils;
+    public SqlUtils init(String jdbcUrl, String username, String password, String dbVersion, boolean ext) {
+        return SqlUtilsBuilder
+                .SqlUtils()
+                .withJdbcUrl(jdbcUrl)
+                .withUsername(username)
+                .withPassword(password)
+                .withDbVersion(dbVersion)
+                .withIsExt(ext)
+                .withJdbcDataSource(this.jdbcDataSource)
+                .withResultLimit(this.resultLimit)
+                .withIsQueryLogEnable(this.isQueryLogEnable)
+                .build();
     }
 
     public void execute(String sql) throws ServerException {
@@ -363,7 +374,7 @@ public class SqlUtils {
         List<String> dbList = new ArrayList<>();
         Connection connection = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 if (this.dataTypeEnum == ORACLE) {
                     dbList.add(this.username);
@@ -385,7 +396,7 @@ public class SqlUtils {
             e.printStackTrace();
             throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
 
 
@@ -402,7 +413,7 @@ public class SqlUtils {
         List<QueryColumn> tableList = null;
         Connection connection = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
                 String schema = null;
@@ -432,7 +443,7 @@ public class SqlUtils {
             e.printStackTrace();
             throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
         return tableList;
     }
@@ -473,7 +484,7 @@ public class SqlUtils {
         TableInfo tableInfo = null;
         Connection connection = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
                 List<String> primaryKeys = getPrimaryKeys(dbName, tableName, metaData);
@@ -484,7 +495,7 @@ public class SqlUtils {
             e.printStackTrace();
             throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
         return tableInfo;
     }
@@ -501,7 +512,7 @@ public class SqlUtils {
         boolean result = false;
         Connection connection = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 ResultSet tables = connection.getMetaData().getTables(null, null, tableName, null);
                 if (null != tables && tables.next()) {
@@ -514,7 +525,7 @@ public class SqlUtils {
         } catch (Exception e) {
             throw new SourceException("Get connection meta data error, jdbcUrl=" + this.jdbcUrl);
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
 
         return result;
@@ -533,7 +544,7 @@ public class SqlUtils {
         Connection connection = null;
         List<QueryColumn> columnList = new ArrayList<>();
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 Statement statement = connection.createStatement();
                 statement.setMaxRows(1);
@@ -552,7 +563,7 @@ public class SqlUtils {
         } catch (Exception e) {
             throw new ServerException(e.getMessage());
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
         long l1 = System.currentTimeMillis();
         log.info("get columns for >>> {} ms", l1 - l);
@@ -579,7 +590,7 @@ public class SqlUtils {
         } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
-            closeResult(rs);
+            sourceUtils.closeResult(rs);
         }
         return primaryKeys;
     }
@@ -607,46 +618,11 @@ public class SqlUtils {
         } catch (Exception e) {
             throw new ServerException(e.getMessage());
         } finally {
-            closeResult(rs);
+            sourceUtils.closeResult(rs);
         }
         return columnList;
     }
 
-
-    /**
-     * 获取数据源
-     *
-     * @param jdbcUrl
-     * @param userename
-     * @param password
-     * @return
-     * @throws SourceException
-     */
-    private DataSource getDataSource(String jdbcUrl, String userename, String password) throws SourceException {
-        if (jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase()) > -1) {
-            return ESDataSource.getDataSource(jdbcUrl);
-        } else {
-            return jdbcDataSource.getDataSource(jdbcUrl, userename, password);
-        }
-    }
-
-
-    /**
-     * 释放失效数据源
-     *
-     * @param jdbcUrl
-     * @param userename
-     * @param password
-     * @return
-     * @throws SourceException
-     */
-    private void releaseDataSource(String jdbcUrl, String userename, String password) throws SourceException {
-        if (jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase()) > -1) {
-            ESDataSource.removeDataSource(jdbcUrl);
-        } else {
-            jdbcDataSource.removeDatasource(jdbcUrl, userename, password);
-        }
-    }
 
     /**
      * 检查敏感操作
@@ -663,74 +639,22 @@ public class SqlUtils {
         }
     }
 
-    private Connection getConnection() throws SourceException {
-        DataSource dataSource = getDataSource(this.jdbcUrl, this.username, this.password);
-        Connection connection = null;
-        try {
-            connection = dataSource.getConnection();
-        } catch (Exception e) {
-            connection = null;
-        }
-        try {
-            if (null == connection || connection.isClosed()) {
-                log.info("connection is closed, retry get connection!");
-                releaseDataSource(this.jdbcUrl, this.username, this.password);
-                connection = dataSource.getConnection();
-            }
-        } catch (Exception e) {
-            log.error("create connection error, jdbcUrl: {}", jdbcUrl);
-            throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
-        }
 
-        try {
-            if (!connection.isValid(5)) {
-                log.info("connection is invalid, retry get connection!");
-                releaseDataSource(this.jdbcUrl, this.username, this.password);
-                connection = null;
-            }
-        } catch (Exception e) {
+    public JdbcTemplate jdbcTemplate() throws SourceException {
+        DataSource dataSource = sourceUtils.getDataSource(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
+        if (map.containsKey(dataSource.hashCode())) {
+            return map.get(dataSource.hashCode());
         }
-
-        if (null == connection) {
-            try {
-                connection = dataSource.getConnection();
-            } catch (SQLException e) {
-                log.error("create connection error, jdbcUrl: {}", jdbcUrl);
-                throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
-            }
-        }
-
-        return connection;
-    }
-
-    private void releaseConnection(Connection connection) {
-        if (null != connection) {
-            try {
-                connection.close();
-                connection = null;
-            } catch (Exception e) {
-                e.printStackTrace();
-                log.error("connection close error", e.getMessage());
-            }
-        }
-    }
-
-
-    public static void closeResult(ResultSet rs) {
-        if (rs != null) {
-            try {
-                rs.close();
-                rs = null;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        jdbcTemplate.setFetchSize(1000);
+        map.put(dataSource.hashCode(), jdbcTemplate);
+        return jdbcTemplate;
     }
 
     public boolean testConnection() throws SourceException {
         Connection connection = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 return true;
             } else {
@@ -739,19 +663,8 @@ public class SqlUtils {
         } catch (SourceException sourceException) {
             throw sourceException;
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
-    }
-
-    public JdbcTemplate jdbcTemplate() throws SourceException {
-        DataSource dataSource = getDataSource(this.jdbcUrl, this.username, this.password);
-        if (map.containsKey(dataSource.hashCode())) {
-            return map.get(dataSource.hashCode());
-        }
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.setFetchSize(1000);
-        map.put(dataSource.hashCode(), jdbcTemplate);
-        return jdbcTemplate;
     }
 
     public void executeBatch(String sql, Set<QueryColumn> headers, List<Map<String, Object>> datas) throws ServerException {
@@ -769,7 +682,7 @@ public class SqlUtils {
         Connection connection = null;
         PreparedStatement pstmt = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 connection.setAutoCommit(false);
                 pstmt = connection.prepareStatement(sql);
@@ -864,13 +777,13 @@ public class SqlUtils {
                     throw new ServerException(e.getMessage());
                 }
             }
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
     }
 
-    public static String getKeywordPrefix(String jdbcUrl) {
+    public static String getKeywordPrefix(String jdbcUrl, String dbVersion) {
         String keywordPrefix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             keywordPrefix = customDataSource.getKeyword_prefix();
         } else {
@@ -882,9 +795,9 @@ public class SqlUtils {
         return StringUtils.isEmpty(keywordPrefix) ? EMPTY : keywordPrefix;
     }
 
-    public static String getKeywordSuffix(String jdbcUrl) {
+    public static String getKeywordSuffix(String jdbcUrl, String dbVersion) {
         String keywordSuffix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             keywordSuffix = customDataSource.getKeyword_suffix();
         } else {
@@ -896,9 +809,9 @@ public class SqlUtils {
         return StringUtils.isEmpty(keywordSuffix) ? EMPTY : keywordSuffix;
     }
 
-    public static String getAliasPrefix(String jdbcUrl) {
+    public static String getAliasPrefix(String jdbcUrl, String dbVersion) {
         String aliasPrefix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             aliasPrefix = customDataSource.getAlias_prefix();
         } else {
@@ -910,9 +823,9 @@ public class SqlUtils {
         return StringUtils.isEmpty(aliasPrefix) ? EMPTY : aliasPrefix;
     }
 
-    public static String getAliasSuffix(String jdbcUrl) {
+    public static String getAliasSuffix(String jdbcUrl, String dbVersion) {
         String aliasSuffix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             aliasSuffix = customDataSource.getAlias_suffix();
         } else {
@@ -983,4 +896,89 @@ public class SqlUtils {
         };
     }
 
+
+    public SqlUtils() {
+    }
+
+    public SqlUtils(String jdbcUrl, String username, String password, String dbVersion, boolean isExt) {
+        this.jdbcUrl = jdbcUrl;
+        this.username = username;
+        this.password = password;
+        this.dbVersion = dbVersion;
+        this.isExt = isExt;
+    }
+
+    public static final class SqlUtilsBuilder {
+        private JdbcDataSource jdbcDataSource;
+        private int resultLimit;
+        private boolean isQueryLogEnable;
+        private String jdbcUrl;
+        private String username;
+        private String password;
+        private String dbVersion;
+        private boolean isExt;
+
+        private SqlUtilsBuilder() {
+        }
+
+        public static SqlUtilsBuilder SqlUtils() {
+            return new SqlUtilsBuilder();
+        }
+
+        public SqlUtilsBuilder withJdbcDataSource(JdbcDataSource jdbcDataSource) {
+            this.jdbcDataSource = jdbcDataSource;
+            return this;
+        }
+
+        public SqlUtilsBuilder withResultLimit(int resultLimit) {
+            this.resultLimit = resultLimit;
+            return this;
+        }
+
+        public SqlUtilsBuilder withIsQueryLogEnable(boolean isQueryLogEnable) {
+            this.isQueryLogEnable = isQueryLogEnable;
+            return this;
+        }
+
+        public SqlUtilsBuilder withJdbcUrl(String jdbcUrl) {
+            this.jdbcUrl = jdbcUrl;
+            return this;
+        }
+
+        public SqlUtilsBuilder withUsername(String username) {
+            this.username = username;
+            return this;
+        }
+
+        public SqlUtilsBuilder withPassword(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public SqlUtilsBuilder withDbVersion(String dbVersion) {
+            this.dbVersion = dbVersion;
+            return this;
+        }
+
+        public SqlUtilsBuilder withIsExt(boolean isExt) {
+            this.isExt = isExt;
+            return this;
+        }
+
+        public SqlUtils build() throws ServerException {
+            String datasource = SourceUtils.isSupportedDatasource(jdbcUrl);
+            SourceUtils.checkDriver(datasource, jdbcUrl, dbVersion, isExt);
+
+            SqlUtils sqlUtils = new SqlUtils(jdbcUrl, username, password, dbVersion, isExt);
+            sqlUtils.jdbcDataSource = this.jdbcDataSource;
+            sqlUtils.resultLimit = this.resultLimit;
+            sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
+            sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+            sqlUtils.database = datasource;
+            sqlUtils.sourceUtils = new SourceUtils(this.jdbcDataSource);
+
+            return sqlUtils;
+        }
+    }
 }
+

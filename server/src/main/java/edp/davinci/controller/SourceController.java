@@ -22,6 +22,7 @@ package edp.davinci.controller;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.CurrentUser;
 import edp.core.model.DBTables;
+import edp.davinci.dto.sourceDto.DatasourceType;
 import edp.core.model.TableInfo;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
@@ -368,6 +369,21 @@ public class SourceController extends BaseController {
         BeanUtils.copyProperties(tableInfo, sourceTableInfo);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(sourceTableInfo));
+    }
+
+
+    /**
+     * 获取系统支持jdbc数据源
+     *
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get jdbc datasources")
+    @GetMapping("/jdbc/datasources")
+    public ResponseEntity getJdbcDataSources(@ApiIgnore @CurrentUser User user, HttpServletRequest request) {
+        List<DatasourceType> list = sourceService.getDatasources();
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(list));
     }
 
 }

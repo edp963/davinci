@@ -17,7 +17,7 @@
  *
  */
 
-package edp.davinci.common.model;
+package edp.core.model;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;

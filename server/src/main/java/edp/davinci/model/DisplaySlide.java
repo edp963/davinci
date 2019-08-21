@@ -20,7 +20,7 @@
 package edp.davinci.model;
 
 
-import edp.davinci.common.model.RecordInfo;
+import edp.core.model.RecordInfo;
 import lombok.Data;
 
 import javax.validation.constraints.Min;

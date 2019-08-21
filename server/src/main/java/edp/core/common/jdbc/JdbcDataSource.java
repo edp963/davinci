@@ -24,17 +24,18 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.SourceException;
-import edp.core.model.CustomDataSource;
-import edp.core.utils.CustomDataSourceUtils;
 import edp.core.utils.MD5Util;
+import edp.core.utils.ServerUtils;
+import edp.core.utils.SourceUtils;
+import edp.davinci.core.config.SpringContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+
+import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
 @Slf4j
 @Component
@@ -81,8 +82,8 @@ public class JdbcDataSource extends DruidDataSource {
 
     private static volatile Map<String, DruidDataSource> map = new HashMap<>();
 
-    public synchronized void removeDatasource(String jdbcUrl, String username, String password) {
-        String key = getKey(jdbcUrl, username, password);
+    public synchronized void removeDatasource(String jdbcUrl, String username, String password, String version, boolean isExt) {
+        String key = getKey(jdbcUrl, username, password, version, isExt);
 
         if (map.containsKey(key)) {
             DruidDataSource druidDataSource = map.get(key);
@@ -93,8 +94,8 @@ public class JdbcDataSource extends DruidDataSource {
         }
     }
 
-    public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
-        String key = getKey(jdbcUrl, username, password);
+    public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password, String database, String version, boolean isExt) throws SourceException {
+        String key = getKey(jdbcUrl, username, password, version, isExt);
 
         if (map.containsKey(key) && map.get(key) != null) {
             DruidDataSource druidDataSource = map.get(key);
@@ -107,31 +108,24 @@ public class JdbcDataSource extends DruidDataSource {
         }
 
         DruidDataSource instance = new JdbcDataSource();
-        String className = null;
-        try {
-            className = DriverManager.getDriver(jdbcUrl.trim()).getClass().getName();
-        } catch (SQLException e) {
-        }
 
-        if (StringUtils.isEmpty(className)) {
-            DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-
-            CustomDataSource customDataSource = null;
-            if (null == dataTypeEnum) {
-                try {
-                    customDataSource = CustomDataSourceUtils.getCustomDataSource(jdbcUrl);
-                } catch (Exception e) {
-                    throw new SourceException(e.getMessage());
+        if (StringUtils.isEmpty(version) || !isExt || JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
+            String className = SourceUtils.getDriverClassName(jdbcUrl, null);
+            try {
+                Class<?> aClass = Class.forName(className);
+                if (null == aClass) {
+                    throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
                 }
+            } catch (ClassNotFoundException e) {
+                throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
             }
 
-            if (null == dataTypeEnum && null == customDataSource) {
-                throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
-            }
-
-            instance.setDriverClassName(null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver()) ? dataTypeEnum.getDriver() : customDataSource.getDriver().trim());
-        } else {
             instance.setDriverClassName(className);
+
+        } else {
+            String path = ((ServerUtils) SpringContextHolder.getBean(ServerUtils.class)).getBasePath()
+                    + String.format(Consts.PATH_EXT_FORMATER, database, version);
+            instance.setDriverClassLoader(ExtendedJdbcClassLoader.getExtJdbcClassLoader(path));
         }
 
         instance.setUrl(jdbcUrl.trim());
@@ -161,7 +155,7 @@ public class JdbcDataSource extends DruidDataSource {
         return instance;
     }
 
-    public static String getKey(String jdbcUrl, String username, String password) {
+    public static String getKey(String jdbcUrl, String username, String password, String version, boolean isExt) {
         StringBuilder sb = new StringBuilder();
         if (!StringUtils.isEmpty(username)) {
             sb.append(username);
@@ -170,6 +164,9 @@ public class JdbcDataSource extends DruidDataSource {
             sb.append(Consts.COLON).append(password);
         }
         sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
+        if (isExt && !StringUtils.isEmpty(version)) {
+            sb.append(Consts.COLON).append(version);
+        }
 
         return MD5Util.getMD5(sb.toString(), true, 64);
     }
