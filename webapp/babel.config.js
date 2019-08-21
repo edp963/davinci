@@ -10,6 +10,7 @@ module.exports = {
     '@babel/preset-typescript'
   ],
   plugins: [
+    'react-hot-loader/babel',
     '@babel/plugin-proposal-class-properties',
     '@babel/plugin-syntax-dynamic-import',
     ["import", {
