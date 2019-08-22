@@ -375,7 +375,8 @@ export const ViewActions = {
     itemId: number,
     viewId: number,
     requestParams: IDataRequestParams,
-    vizType: 'dashboard' | 'display'
+    vizType: 'dashboard' | 'display',
+    statistic
   ) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM,
@@ -386,7 +387,8 @@ export const ViewActions = {
         requestParams,
         vizType,
         cancelTokenSource: CancelToken.source()
-      }
+      },
+      statistic
     }
   },
   viewDataFromVizItemLoaded (
@@ -394,7 +396,8 @@ export const ViewActions = {
     itemId: number,
     requestParams: IDataRequestParams,
     result: any[],
-    vizType: 'dashboard' | 'display'
+    vizType: 'dashboard' | 'display',
+    statistic
   ) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS,
@@ -404,7 +407,8 @@ export const ViewActions = {
         requestParams,
         result,
         vizType
-      }
+      },
+      statistic
     }
   },
   loadViewDataFromVizItemFail (itemId: number, vizType: 'dashboard' | 'display', errorMessage: string) {
