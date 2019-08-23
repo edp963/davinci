@@ -100,8 +100,6 @@ public class SqlUtils {
 
     private SourceUtils sourceUtils;
 
-    private static volatile Map<Integer, JdbcTemplate> map = new HashMap<>();
-
     public SqlUtils init(BaseSource source) {
         return SqlUtilsBuilder
                 .SqlUtils()
@@ -642,12 +640,8 @@ public class SqlUtils {
 
     public JdbcTemplate jdbcTemplate() throws SourceException {
         DataSource dataSource = sourceUtils.getDataSource(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
-        if (map.containsKey(dataSource.hashCode())) {
-            return map.get(dataSource.hashCode());
-        }
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.setFetchSize(1000);
-        map.put(dataSource.hashCode(), jdbcTemplate);
         return jdbcTemplate;
     }
 
