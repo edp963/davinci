@@ -323,15 +323,33 @@ public class SqlUtils {
         Set<String> columnPrefixs = new HashSet<>();
         try {
             Select select = (Select) CCJSqlParserUtil.parse(sql);
-            PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
-            getFromItemName(columnPrefixs, plainSelect.getFromItem());
-            List<Join> joins = plainSelect.getJoins();
-            if (!CollectionUtils.isEmpty(joins)) {
-                joins.forEach(join -> getFromItemName(columnPrefixs, join.getRightItem()));
+            SelectBody selectBody = select.getSelectBody();
+            if (selectBody instanceof PlainSelect) {
+                PlainSelect plainSelect = (PlainSelect) selectBody;
+                columnPrefixExtractor(columnPrefixs, plainSelect);
+            } else if (selectBody instanceof SetOperationList) {
+                SetOperationList setOperationList = (SetOperationList) selectBody;
+                List<SelectBody> selects = setOperationList.getSelects();
+                for (SelectBody optSelectBody : selects) {
+                    PlainSelect plainSelect = (PlainSelect) optSelectBody;
+                    columnPrefixExtractor(columnPrefixs, plainSelect);
+                }
+            } else if (selectBody instanceof WithItem) {
+                WithItem withItem = (WithItem) selectBody;
+                PlainSelect plainSelect = (PlainSelect) withItem.getSelectBody();
+                columnPrefixExtractor(columnPrefixs, plainSelect);
             }
         } catch (JSQLParserException e) {
         }
         return columnPrefixs;
+    }
+
+    private static void columnPrefixExtractor(Set<String> columnPrefixs, PlainSelect plainSelect) {
+        getFromItemName(columnPrefixs, plainSelect.getFromItem());
+        List<Join> joins = plainSelect.getJoins();
+        if (!CollectionUtils.isEmpty(joins)) {
+            joins.forEach(join -> getFromItemName(columnPrefixs, join.getRightItem()));
+        }
     }
 
     private static void getFromItemName(Set<String> columnPrefixs, FromItem fromItem) {
@@ -346,6 +364,7 @@ public class SqlUtils {
             fromItem.accept(getFromItemTableName(columnPrefixs));
         }
     }
+
 
     public static String getColumnLabel(Set<String> columnPrefixs, String columnLable) {
         if (!CollectionUtils.isEmpty(columnPrefixs)) {
