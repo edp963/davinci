@@ -1655,6 +1655,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             {bar && <BarSection
               onChange={this.styleChange('bar')}
               config={bar}
+              dataParams={dataParams}
             />}
             {radar && <RadarSection config={radar} onChange={this.styleChange2} />}
             { mapLabelLayerType
