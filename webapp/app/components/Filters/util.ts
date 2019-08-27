@@ -31,7 +31,7 @@ import { uuid } from 'app/utils/util'
 import FilterTypes, { FilterTypesOperatorSetting, IS_RANGE_TYPE } from './filterTypes'
 import { DEFAULT_CACHE_EXPIRED, SQL_NUMBER_TYPES } from 'app/globalConstants'
 import { IFormedView, IViewModelProps, IViewVariable } from 'app/containers/View/types'
-import { ViewVariableValueTypes, ViewVariableTypes } from 'app/containers/View/constants'
+import { ViewVariableValueTypes, ViewVariableTypes, ViewModelTypes } from 'app/containers/View/constants'
 import DatePickerFormats, { DatePickerDefaultValues, DatePickerFormatsSelectSetting } from './datePickerFormats'
 import OperatorTypes from 'app/utils/operatorTypes'
 
@@ -372,7 +372,11 @@ export function getRelatedFieldsInfo (
   fields: IControlRelatedField | IControlRelatedField[]
 } {
   const model = Object.entries(view.model)
-    .filter(([k, v]: [string, IViewModelProps]) => v.modelType === 'category')
+    .filter(([k, v]: [string, IViewModelProps]) => {
+      return type === FilterTypes.NumberRange
+        ? v.modelType === ViewModelTypes.Value
+        : v.modelType === ViewModelTypes.Category
+    })
     .map(([k, v]: [string, IViewModelProps]) => ({
       name: k,
       ...v
