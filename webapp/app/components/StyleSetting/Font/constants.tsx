@@ -70,7 +70,7 @@ export const fontSelect = {
 }
 
 export const EmptyFontSetting: IFontSetting = {
-  fontFamily: DEFAULT_FONT_FAMILY,
+  fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
   fontStyle: DEFAULT_FONT_STYLE,
   fontSize: DEFAULT_FONT_SIZE,
   fontWeight: DEFAULT_FONT_WEIGHT,
