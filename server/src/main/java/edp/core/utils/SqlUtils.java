@@ -708,22 +708,22 @@ public class SqlUtils {
                         Object obj = map.get(queryColumn.getName());
                         switch (SqlColumnEnum.toJavaType(queryColumn.getType())) {
                             case "Short":
-                                pstmt.setShort(i, null == obj ? (short) 0 : Short.parseShort(String.valueOf(obj).trim()));
+                                pstmt.setShort(i, null == obj || String.valueOf(obj).equals(EMPTY) ? (short) 0 : Short.parseShort(String.valueOf(obj).trim()));
                                 break;
                             case "Integer":
-                                pstmt.setInt(i, null == obj ? 0 : Integer.parseInt(String.valueOf(obj).trim()));
+                                pstmt.setInt(i, null == obj || String.valueOf(obj).equals(EMPTY) ? 0 : Integer.parseInt(String.valueOf(obj).trim()));
                                 break;
                             case "Long":
-                                pstmt.setLong(i, null == obj ? 0L : Long.parseLong(String.valueOf(obj).trim()));
+                                pstmt.setLong(i, null == obj || String.valueOf(obj).equals(EMPTY) ? 0L : Long.parseLong(String.valueOf(obj).trim()));
                                 break;
                             case "BigDecimal":
-                                pstmt.setBigDecimal(i, (BigDecimal) obj);
+                                pstmt.setBigDecimal(i, null == obj || String.valueOf(obj).equals(EMPTY) ? null : (BigDecimal) obj);
                                 break;
                             case "Float":
-                                pstmt.setFloat(i, null == obj ? 0.0F : Float.parseFloat(String.valueOf(obj).trim()));
+                                pstmt.setFloat(i, null == obj || String.valueOf(obj).equals(EMPTY) ? 0.0F : Float.parseFloat(String.valueOf(obj).trim()));
                                 break;
                             case "Double":
-                                pstmt.setDouble(i, null == obj ? 0.0D : Double.parseDouble(String.valueOf(obj).trim()));
+                                pstmt.setDouble(i, null == obj || String.valueOf(obj).equals(EMPTY) ? 0.0D : Double.parseDouble(String.valueOf(obj).trim()));
                                 break;
                             case "String":
                                 pstmt.setString(i, (String) obj);
@@ -735,21 +735,29 @@ public class SqlUtils {
                                 pstmt.setBytes(i, (byte[]) obj);
                                 break;
                             case "Date":
-                                java.util.Date date = (java.util.Date) obj;
-                                pstmt.setDate(i, DateUtils.toSqlDate(date));
+                                if (obj == null) {
+                                    pstmt.setDate(i, null);
+                                } else {
+                                    java.util.Date date = (java.util.Date) obj;
+                                    pstmt.setDate(i, DateUtils.toSqlDate(date));
+                                }
                                 break;
                             case "DateTime":
-                                DateTime dateTime = (DateTime) obj;
-                                pstmt.setTimestamp(i, DateUtils.toTimestamp(dateTime));
+                                if (obj == null) {
+                                    pstmt.setTimestamp(i, null);
+                                } else {
+                                    DateTime dateTime = (DateTime) obj;
+                                    pstmt.setTimestamp(i, DateUtils.toTimestamp(dateTime));
+                                }
                                 break;
                             case "Timestamp":
-                                pstmt.setTimestamp(i, (Timestamp) obj);
+                                pstmt.setTimestamp(i, null == obj ? null : (Timestamp) obj);
                                 break;
                             case "Blob":
-                                pstmt.setBlob(i, (Blob) obj);
+                                pstmt.setBlob(i, null == obj ? null : (Blob) obj);
                                 break;
                             case "Clob":
-                                pstmt.setClob(i, (Clob) obj);
+                                pstmt.setClob(i, null == obj ? null : (Clob) obj);
                                 break;
                             default:
                                 pstmt.setObject(i, obj);

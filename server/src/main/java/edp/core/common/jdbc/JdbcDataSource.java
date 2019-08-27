@@ -28,6 +28,7 @@ import edp.core.utils.MD5Util;
 import edp.core.utils.ServerUtils;
 import edp.core.utils.SourceUtils;
 import edp.davinci.core.config.SpringContextHolder;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -45,39 +46,51 @@ public class JdbcDataSource extends DruidDataSource {
     private String type;
 
     @Value("${source.max-active:10}")
+    @Getter
     private int maxActive;
 
     @Value("${source.initial-size:1}")
+    @Getter
     private int initialSize;
 
     @Value("${source.min-idle:3}")
+    @Getter
     private int minIdle;
 
     @Value("${source.max-wait:30000}")
-    private int maxWait;
+    @Getter
+    private long maxWait;
 
     @Value("${spring.datasource.time-between-eviction-runs-millis}")
-    private int timeBetweenEvictionRunsMillis;
+    @Getter
+    private long timeBetweenEvictionRunsMillis;
 
     @Value("${spring.datasource.min-evictable-idle-time-millis}")
-    private int minEvictableIdleTimeMillis;
+    @Getter
+    private long minEvictableIdleTimeMillis;
 
     @Value("${spring.datasource.test-while-idle}")
+    @Getter
     private boolean testWhileIdle;
 
     @Value("${spring.datasource.test-on-borrow}")
+    @Getter
     private boolean testOnBorrow;
 
     @Value("${spring.datasource.test-on-return}")
+    @Getter
     private boolean testOnReturn;
 
     @Value("${source.break-after-acquire-failure:true}")
+    @Getter
     private boolean breakAfterAcquireFailure;
 
     @Value("${source.connection-error-retry-attempts:0}")
+    @Getter
     private int connectionErrorRetryAttempts;
 
     @Value("${source.query-timeout:600000}")
+    @Getter
     private int queryTimeout;
 
     private static volatile Map<String, DruidDataSource> map = new HashMap<>();
