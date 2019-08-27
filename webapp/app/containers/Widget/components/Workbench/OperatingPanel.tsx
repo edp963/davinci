@@ -893,7 +893,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     Object.values(dataParams)
       .reduce<IDataParamSource[]>((items, param: IDataParamProperty) => items.concat(param.items), [])
       .forEach((item) => {
-        const column = item.type === 'category' ? item.name : `${item.agg}(${decodeMetricName(item.name)})`
+        let column = item.name
+        if (item.type === 'value') {
+          column = decodeMetricName(item.name)
+          if (!styleParams.table || !styleParams.table.withNoAggregators) {
+            column = `${item.agg}(${column})`
+          }
+        }
         if (item.sort && [FieldSortTypes.Asc, FieldSortTypes.Desc].includes(item.sort.sortType)) {
           orders.push({
             column,
