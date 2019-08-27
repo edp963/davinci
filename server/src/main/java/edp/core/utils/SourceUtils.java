@@ -64,7 +64,7 @@ public class SourceUtils {
      */
     DataSource getDataSource(String jdbcUrl, String userename, String password, String database, String version, boolean isExt) throws SourceException {
         if (jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
-            return ESDataSource.getDataSource(jdbcUrl);
+            return ESDataSource.getDataSource(jdbcUrl, userename, password, jdbcDataSource);
         } else {
             return jdbcDataSource.getDataSource(jdbcUrl, userename, password, database, version, isExt);
         }
@@ -153,14 +153,18 @@ public class SourceUtils {
                     throw new SourceException("Unable to get driver instance: " + jdbcUrl);
                 }
             } else {
-                try {
-                    String className = getDriverClassName(jdbcUrl, null);
-                    Class<?> aClass = Class.forName(className);
-                    if (null == aClass) {
-                        throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
+                if (DataTypeEnum.ELASTICSEARCH.getDesc().equals(dataSourceName)) {
+                    return true;
+                } else {
+                    try {
+                        String className = getDriverClassName(jdbcUrl, null);
+                        Class<?> aClass = Class.forName(className);
+                        if (null == aClass) {
+                            throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
+                        }
+                    } catch (Exception e) {
+                        throw new SourceException("Unable to get driver instance: " + jdbcUrl);
                     }
-                } catch (Exception e) {
-                    throw new SourceException("Unable to get driver instance: " + jdbcUrl);
                 }
             }
             return true;

@@ -20,6 +20,7 @@
 package edp.core.common.jdbc;
 
 import com.alibaba.druid.pool.ElasticSearchDruidDataSourceFactory;
+import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.SourceException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,8 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_CONNECTIONPROPERTIES;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_URL;
+import static com.alibaba.druid.pool.DruidDataSourceFactory.*;
 
 @Slf4j
 public class ESDataSource {
@@ -41,10 +41,25 @@ public class ESDataSource {
 
     private static volatile Map<String, DataSource> map = new HashMap<>();
 
-    public static synchronized DataSource getDataSource(String jdbcUrl) throws SourceException {
+    public static synchronized DataSource getDataSource(String jdbcUrl, String userename, String password, JdbcDataSource jdbcDataSource) throws SourceException {
         if (!map.containsKey(jdbcUrl.trim()) || null == map.get(jdbcUrl.trim())) {
             Properties properties = new Properties();
             properties.setProperty(PROP_URL, jdbcUrl.trim());
+            if (!StringUtils.isEmpty(userename)) {
+                properties.setProperty(PROP_USERNAME, userename);
+            }
+            if (!StringUtils.isEmpty(password)) {
+                properties.setProperty(PROP_PASSWORD, password);
+            }
+            properties.setProperty(PROP_INITIALSIZE, String.valueOf(jdbcDataSource.getInitialSize()));
+            properties.setProperty(PROP_MINIDLE, String.valueOf(jdbcDataSource.getMinIdle()));
+            properties.setProperty(PROP_MAXWAIT, String.valueOf(jdbcDataSource.getMaxActive()));
+            properties.setProperty(PROP_MAXWAIT, String.valueOf(jdbcDataSource.getMaxWait()));
+            properties.setProperty(PROP_TIMEBETWEENEVICTIONRUNSMILLIS, String.valueOf(jdbcDataSource.getTimeBetweenEvictionRunsMillis()));
+            properties.setProperty(PROP_MINEVICTABLEIDLETIMEMILLIS, String.valueOf(jdbcDataSource.getMinEvictableIdleTimeMillis()));
+            properties.setProperty(PROP_TESTWHILEIDLE, String.valueOf(false));
+            properties.setProperty(PROP_TESTONBORROW, String.valueOf(jdbcDataSource.isTestOnBorrow()));
+            properties.setProperty(PROP_TESTONRETURN, String.valueOf(jdbcDataSource.isTestOnReturn()));
             properties.put(PROP_CONNECTIONPROPERTIES, "client.transport.ignore_cluster_name=true");
             try {
                 dataSource = ElasticSearchDruidDataSourceFactory.createDataSource(properties);

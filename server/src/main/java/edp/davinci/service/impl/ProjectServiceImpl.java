@@ -276,6 +276,9 @@ public class ProjectServiceImpl implements ProjectService {
             organization.setProjectNum(organization.getProjectNum() + 1);
             organizationMapper.updateProjectNum(organization);
 
+            projectMapper.deleteBeforOrgRole(project.getId(), beforeOrgId);
+
+
             return project;
         } else {
             log.info("transfer project fail, {} -> {}", project.getOrgId(), organization.getId());
