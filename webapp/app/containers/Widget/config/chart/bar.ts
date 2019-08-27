@@ -7,6 +7,7 @@ import {
 } from 'app/globalConstants'
 
 import { IChartInfo } from 'containers/Widget/components/Widget'
+import { EmptyStack } from 'app/containers/Widget/components/Config/Stack/constants'
 
 const bar: IChartInfo = {
   id: ChartTypes.Bar,
@@ -49,6 +50,7 @@ const bar: IChartInfo = {
       percentage: false
     },
     bar: {
+      barChart: false,
       border: {
         color: '#000',
         width: 0,
@@ -56,7 +58,8 @@ const bar: IChartInfo = {
         radius: 0
       },
       gap: 30,
-      width: null
+      width: null,
+      stack: EmptyStack
     },
     label: {
       showLabel: false,
