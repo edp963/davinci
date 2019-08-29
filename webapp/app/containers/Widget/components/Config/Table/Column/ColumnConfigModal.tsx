@@ -1,6 +1,7 @@
 import React from 'react'
 import classnames from 'classnames'
-import { fromJS } from 'immutable'
+import produce from 'immer'
+import set from 'lodash/set'
 import { uuid } from 'utils/util'
 import { fontWeightOptions, fontStyleOptions, fontFamilyOptions, fontSizeOptions } from '../constants'
 import { defaultConditionStyle, AvailableTableConditionStyleTypes } from './constants'
@@ -9,7 +10,7 @@ import { ITableColumnConfig, ITableConditionStyle } from './types'
 import ColorPicker from 'components/ColorPicker'
 import ConditionStyleConfigModal from './ConditionStyleConfigModal'
 
-import { Row, Col, Tooltip, Select, Button, Radio, Table, Modal } from 'antd'
+import { Row, Col, Tooltip, Select, Button, Radio, Checkbox, Table, Modal } from 'antd'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 
@@ -32,9 +33,9 @@ interface IColumnStyleConfigStates {
 
 export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigProps, IColumnStyleConfigStates> {
 
-  public constructor (props) {
+  public constructor (props: IColumnStyleConfigProps) {
     super(props)
-    const localConfig: ITableColumnConfig[] = fromJS(props.config).toJS()
+    const localConfig = props.config
     this.state = {
       localConfig,
       selectedColumnName: localConfig.length > 0 ? localConfig[0].columnName : '',
@@ -45,7 +46,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
 
   public componentWillReceiveProps (nextProps: IColumnStyleConfigProps) {
     if (nextProps.config === this.props.config) { return }
-    const localConfig: ITableColumnConfig[] = fromJS(nextProps.config).toJS()
+    const localConfig = nextProps.config
     this.setState({
       localConfig,
       selectedColumnName: localConfig.length > 0 ? localConfig[0].columnName : '',
@@ -77,17 +78,18 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
     })
   }
 
-  private propChange = (propName: string) => (e) => {
-    const value = e.target ? e.target.value : e
+  private propChange = (
+    propPath: Exclude<keyof(ITableColumnConfig), 'style'> | ['style', keyof ITableColumnConfig['style']]
+  ) => (e) => {
+    const value = e.target ? (e.target.value || e.target.checked) : e
     const { localConfig, selectedColumnName } = this.state
+    const nextLocalConfig = produce(localConfig, (draft) => {
+      const selectedColumn = draft.find(({ columnName }) => columnName === selectedColumnName)
+      set(selectedColumn, propPath, value)
+      return draft
+    })
     this.setState({
-      localConfig: localConfig.map((c) => c.columnName !== selectedColumnName ? c : {
-        ...c,
-        style: {
-          ...c.style,
-          [propName]: value
-        }
-      })
+      localConfig: nextLocalConfig
     })
   }
 
@@ -137,17 +139,14 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
     })
   }
 
-  private deleteConditionStyle = (key) => () => {
+  private deleteConditionStyle = (deletedKey: string) => () => {
     const { localConfig, selectedColumnName } = this.state
-    this.setState({
-      localConfig: localConfig.map((c) => {
-        if (c.columnName !== selectedColumnName) { return c }
-        return {
-          ...c,
-          conditionStyles: c.conditionStyles.filter((cs) => cs.key !== key)
-        }
-      })
+    const nextLocalConfig = produce(localConfig, (draft) => {
+      const selectedColumn = draft.find(({ columnName }) => columnName === selectedColumnName)
+      const idx = selectedColumn.conditionStyles.findIndex(({ key }) => key === deletedKey)
+      selectedColumn.conditionStyles.splice(idx, 1)
     })
+    this.setState({ localConfig: nextLocalConfig })
   }
 
   private closeConditionStyleConfig = () => {
@@ -159,17 +158,17 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
 
   private saveConditionStyleConfig = (conditionStyle: ITableConditionStyle) => {
     const { localConfig, selectedColumnName } = this.state
-    const newLocalConfig = localConfig.map((c) => {
-      if (c.columnName !== selectedColumnName) { return c }
-      return {
-        ...c,
-        conditionStyles: conditionStyle.key
-          ? c.conditionStyles.map((cs) => (cs.key === conditionStyle.key ? conditionStyle : cs))
-          : [...c.conditionStyles, { ...conditionStyle, key: uuid(5) }]
+    const nextLocalConfig = produce(localConfig, (draft) => {
+      const selectedColumn = draft.find(({ columnName }) => columnName === selectedColumnName)
+      if (conditionStyle.key) {
+        const idx = selectedColumn.conditionStyles.findIndex(({ key }) => key === conditionStyle.key)
+        selectedColumn.conditionStyles.splice(idx, 1, conditionStyle)
+      } else {
+        selectedColumn.conditionStyles.push({ ...conditionStyle, key: uuid(5) })
       }
     })
     this.setState({
-      localConfig: newLocalConfig,
+      localConfig: nextLocalConfig,
       conditionStyleConfigModalVisible: false,
       currentConditionStyle: null
     })
@@ -203,12 +202,12 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
       return (<div />)
     }
 
-    const { style, visualType, conditionStyles } = localConfig.find((c) => c.columnName === selectedColumnName)
+    const { style, visualType, sort, conditionStyles } = localConfig.find((c) => c.columnName === selectedColumnName)
     const { fontSize, fontFamily, fontWeight, fontColor, fontStyle, backgroundColor, justifyContent } = style
 
     return (
       <Modal
-        title="单元格样式"
+        title="数据列设置"
         wrapClassName="ant-modal-large"
         maskClosable={false}
         footer={this.modalFooter}
@@ -228,6 +227,14 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
             </div>
           </div>
           <div className={styles.right}>
+              <div className={styles.title}><h2>排序与过滤</h2></div>
+              <div className={stylesConfig.rows}>
+                <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
+                  <Col span={12}>
+                    <Checkbox checked={sort} onChange={this.propChange('sort')}>开启列排序</Checkbox>
+                  </Col>
+                </Row>
+              </div>
               <div className={styles.title}><h2>基础样式</h2></div>
               <div className={stylesConfig.rows}>
                 <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
@@ -236,14 +243,14 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                     <ColorPicker
                       className={stylesConfig.color}
                       value={backgroundColor}
-                      onChange={this.propChange('backgroundColor')}
+                      onChange={this.propChange(['style', 'backgroundColor'])}
                     />
                   </Col>
                 </Row>
                 <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
                   <Col span={4}>对齐</Col>
                   <Col span={20}>
-                    <RadioGroup size="small" value={justifyContent} onChange={this.propChange('justifyContent')}>
+                    <RadioGroup size="small" value={justifyContent} onChange={this.propChange(['style', 'justifyContent'])}>
                       <RadioButton value="flex-start">左对齐</RadioButton>
                       <RadioButton value="center">居中</RadioButton>
                       <RadioButton value="flex-end">右对齐</RadioButton>
@@ -258,7 +265,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                       className={stylesConfig.colControl}
                       placeholder="字体"
                       value={fontFamily}
-                      onChange={this.propChange('fontFamily')}
+                      onChange={this.propChange(['style', 'fontFamily'])}
                     >
                       {fontFamilyOptions}
                     </Select>
@@ -269,7 +276,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                       className={stylesConfig.colControl}
                       placeholder="文字大小"
                       value={fontSize}
-                      onChange={this.propChange('fontSize')}
+                      onChange={this.propChange(['style', 'fontSize'])}
                     >
                       {fontSizeOptions}
                     </Select>
@@ -278,7 +285,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                     <ColorPicker
                       className={stylesConfig.color}
                       value={fontColor}
-                      onChange={this.propChange('fontColor')}
+                      onChange={this.propChange(['style', 'fontColor'])}
                     />
                   </Col>
                 </Row>
@@ -289,7 +296,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                       size="small"
                       className={stylesConfig.colControl}
                       value={fontStyle}
-                      onChange={this.propChange('fontStyle')}
+                      onChange={this.propChange(['style', 'fontStyle'])}
                     >
                       {fontStyleOptions}
                     </Select>
@@ -299,7 +306,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                       size="small"
                       className={stylesConfig.colControl}
                       value={fontWeight}
-                      onChange={this.propChange('fontWeight')}
+                      onChange={this.propChange(['style', 'fontWeight'])}
                     >
                       {fontWeightOptions}
                     </Select>

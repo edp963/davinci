@@ -427,8 +427,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     this.props.router.goBack()
   }
 
-  private paginationChange = (pageNo: number, pageSize: number) => {
-    this.operatingPanel.flipPage(pageNo, pageSize)
+  private paginationChange = (pageNo: number, pageSize: number, orders) => {
+    this.operatingPanel.flipPage(pageNo, pageSize, orders)
   }
 
   private chartStylesChange = (propPath: string[], value: string) => {

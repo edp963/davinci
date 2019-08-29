@@ -784,7 +784,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     return [dcount, mcount]
   }
 
-  public flipPage = (pageNo: number, pageSize: number) => {
+  public flipPage = (pageNo: number, pageSize: number, orders) => {
     const { dataParams, styleParams, pagination } = this.state
     this.setWidgetProps(dataParams, styleParams, {
       renderType: 'rerender',
@@ -793,7 +793,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         pageNo,
         pageSize
       },
-      queryMode: WorkbenchQueryMode.Immediately
+      queryMode: WorkbenchQueryMode.Immediately,
+      orders
     })
   }
 
@@ -812,7 +813,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     options?: {
       renderType?: RenderType,
       updatedPagination?: IPaginationParams,
-      queryMode?: WorkbenchQueryMode
+      queryMode?: WorkbenchQueryMode,
+      orders?
     }
   ) => {
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, yAxis } = dataParams
@@ -958,6 +960,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       cache: false,
       expired: 0,
       flush: false
+    }
+
+    if (options) {
+      if (options.orders) {
+        requestParams.orders = requestParams.orders.concat(options.orders)
+      }
     }
 
     const requestParamString = JSON.stringify(requestParams)

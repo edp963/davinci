@@ -129,6 +129,7 @@ export interface IQueryConditions {
   tempFilters: string[]
   linkageFilters: string[]
   globalFilters: string[]
+  orders: { column: string, direction: string }
   variables: QueryVariable
   linkageVariables: QueryVariable
   globalVariables: QueryVariable
@@ -630,6 +631,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let tempFilters
     let linkageFilters
     let globalFilters
+    let tempOrders
     let variables
     let linkageVariables
     let globalVariables
@@ -641,6 +643,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
       linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
       globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      tempOrders = queryConditions.orders !== void 0 ? queryConditions.orders : cachedQueryConditions.orders
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
@@ -651,6 +654,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
       globalFilters = cachedQueryConditions.globalFilters
+      tempOrders = cachedQueryConditions.orders
       variables = cachedQueryConditions.variables
       linkageVariables = cachedQueryConditions.linkageVariables
       globalVariables = cachedQueryConditions.globalVariables
@@ -724,6 +728,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       pagination,
       nativeQuery,
       customOrders
+    }
+
+    if (tempOrders) {
+      requestParams.orders = requestParams.orders.concat(tempOrders)
     }
 
     callback(

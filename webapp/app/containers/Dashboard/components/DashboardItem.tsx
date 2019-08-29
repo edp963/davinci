@@ -345,7 +345,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     onDoTableInteract(itemId, triggerData)
   }
 
-  private paginationChange = (pageNo: number, pageSize: number) => {
+  private paginationChange = (pageNo: number, pageSize: number, orders) => {
     const { onGetChartData, itemId, widget } = this.props
     let { pagination } = this.state
     const { nativeQuery } = this.state
@@ -354,7 +354,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       pageNo,
       pageSize
     }
-    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
+    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery, orders })
   }
 
   private turnOffInteract = () => {
