@@ -16,9 +16,9 @@ export function renderInputText (onChange, onSearch) {
   )
 }
 
-export function renderNumberRange (onChange) {
+export function renderNumberRange (onChange, onSearch) {
   return (
-    <NumberRange onSearch={onChange} />
+    <NumberRange onChange={onChange} onSearch={onSearch} />
   )
 }
 
