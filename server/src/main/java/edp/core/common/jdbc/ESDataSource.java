@@ -22,6 +22,7 @@ package edp.core.common.jdbc;
 import com.alibaba.druid.pool.ElasticSearchDruidDataSourceFactory;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.SourceException;
+import edp.core.utils.SourceUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.sql.DataSource;
@@ -39,10 +40,11 @@ public class ESDataSource {
 
     private static volatile DataSource dataSource = null;
 
-    private static volatile Map<String, DataSource> map = new HashMap<>();
+    private static volatile Map<String, DataSource> esDataSourceMap = new HashMap<>();
 
     public static synchronized DataSource getDataSource(String jdbcUrl, String userename, String password, JdbcDataSource jdbcDataSource) throws SourceException {
-        if (!map.containsKey(jdbcUrl.trim()) || null == map.get(jdbcUrl.trim())) {
+        String key = SourceUtils.getKey(jdbcUrl, userename, password, null, false);
+        if (!esDataSourceMap.containsKey(key) || null == esDataSourceMap.get(key)) {
             Properties properties = new Properties();
             properties.setProperty(PROP_URL, jdbcUrl.trim());
             if (!StringUtils.isEmpty(userename)) {
@@ -63,18 +65,19 @@ public class ESDataSource {
             properties.put(PROP_CONNECTIONPROPERTIES, "client.transport.ignore_cluster_name=true");
             try {
                 dataSource = ElasticSearchDruidDataSourceFactory.createDataSource(properties);
-                map.put(jdbcUrl.trim(), dataSource);
+                esDataSourceMap.put(key, dataSource);
             } catch (Exception e) {
                 log.error("Exception during pool initialization, ", e);
                 throw new SourceException(e.getMessage());
             }
         }
-        return map.get(jdbcUrl.trim());
+        return esDataSourceMap.get(key);
     }
 
-    public static void removeDataSource(String jdbcUrl) {
-        if (map.containsKey(map.containsKey(jdbcUrl.trim()))) {
-            map.remove(jdbcUrl.trim());
+    public static void removeDataSource(String jdbcUrl, String userename, String password) {
+        String key = SourceUtils.getKey(jdbcUrl, userename, password, null, false);
+        if (esDataSourceMap.containsKey(key)) {
+            esDataSourceMap.remove(key);
         }
     }
 }
