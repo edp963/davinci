@@ -145,7 +145,7 @@ export interface IWidgetProps {
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
   getDataDrillDetail?: (position: string) => void
-  onPaginationChange?: (pageNo: number, pageSize: number) => void
+  onPaginationChange?: (pageNo: number, pageSize: number, order?: { column: string, direction: string }) => void
   onChartStylesChange?: (propPath: string[], value: string) => void
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object[]

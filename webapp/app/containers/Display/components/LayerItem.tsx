@@ -221,7 +221,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     }
   }
 
-  private paginationChange = (pageNo: number, pageSize: number) => {
+  private paginationChange = (pageNo: number, pageSize: number, orders) => {
     const { onGetChartData, itemId, widget } = this.props
     let { pagination } = this.state
     const { nativeQuery } = this.state
@@ -230,7 +230,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       pageNo,
       pageSize
     }
-    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
+    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery, orders })
   }
 
   private dragOnStart = (e, data) => {

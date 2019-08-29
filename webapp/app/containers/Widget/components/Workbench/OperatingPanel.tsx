@@ -784,7 +784,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     return [dcount, mcount]
   }
 
-  public flipPage = (pageNo: number, pageSize: number) => {
+  public flipPage = (pageNo: number, pageSize: number, orders) => {
     const { dataParams, styleParams, pagination } = this.state
     this.setWidgetProps(dataParams, styleParams, {
       renderType: 'rerender',
@@ -793,7 +793,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         pageNo,
         pageSize
       },
-      queryMode: WorkbenchQueryMode.Immediately
+      queryMode: WorkbenchQueryMode.Immediately,
+      orders
     })
   }
 
@@ -812,7 +813,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     options?: {
       renderType?: RenderType,
       updatedPagination?: IPaginationParams,
-      queryMode?: WorkbenchQueryMode
+      queryMode?: WorkbenchQueryMode,
+      orders?
     }
   ) => {
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, yAxis } = dataParams
@@ -893,7 +895,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     Object.values(dataParams)
       .reduce<IDataParamSource[]>((items, param: IDataParamProperty) => items.concat(param.items), [])
       .forEach((item) => {
-        const column = item.type === 'category' ? item.name : `${item.agg}(${decodeMetricName(item.name)})`
+        let column = item.name
+        if (item.type === 'value') {
+          column = decodeMetricName(item.name)
+          if (!styleParams.table || !styleParams.table.withNoAggregators) {
+            column = `${item.agg}(${column})`
+          }
+        }
         if (item.sort && [FieldSortTypes.Asc, FieldSortTypes.Desc].includes(item.sort.sortType)) {
           orders.push({
             column,
@@ -952,6 +960,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       cache: false,
       expired: 0,
       flush: false
+    }
+
+    if (options) {
+      if (options.orders) {
+        requestParams.orders = requestParams.orders.concat(options.orders)
+      }
     }
 
     const requestParamString = JSON.stringify(requestParams)
@@ -1655,6 +1669,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             {bar && <BarSection
               onChange={this.styleChange('bar')}
               config={bar}
+              dataParams={dataParams}
             />}
             {radar && <RadarSection config={radar} onChange={this.styleChange2} />}
             { mapLabelLayerType

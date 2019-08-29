@@ -389,6 +389,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let tempFilters
     let linkageFilters
     let globalFilters
+    let tempOrders
     let variables
     let linkageVariables
     let globalVariables
@@ -400,6 +401,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
       linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
       globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      tempOrders = queryConditions.orders !== void 0 ? queryConditions.orders : cachedQueryConditions.orders
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
@@ -410,6 +412,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
       globalFilters = cachedQueryConditions.globalFilters
+      tempOrders = cachedQueryConditions.orders
       variables = cachedQueryConditions.variables
       linkageVariables = cachedQueryConditions.linkageVariables
       globalVariables = cachedQueryConditions.globalVariables
@@ -466,28 +469,34 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         })))
     }
 
+    const requestParams = {
+      groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
+      aggregators,
+      filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
+      tempFilters,
+      linkageFilters,
+      globalFilters,
+      variables,
+      linkageVariables,
+      globalVariables,
+      orders,
+      cache,
+      expired,
+      flush: renderType === 'refresh',
+      pagination,
+      nativeQuery,
+      customOrders
+    }
+
+    if (tempOrders) {
+      requestParams.orders = requestParams.orders.concat(tempOrders)
+    }
+
     callback(
       renderType,
       itemId,
       widget.dataToken,
-      {
-        groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
-        aggregators,
-        filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
-        tempFilters,
-        linkageFilters,
-        globalFilters,
-        variables,
-        linkageVariables,
-        globalVariables,
-        orders,
-        cache,
-        expired,
-        flush: renderType === 'refresh',
-        pagination,
-        nativeQuery,
-        customOrders
-      }
+      requestParams
     )
   }
 
