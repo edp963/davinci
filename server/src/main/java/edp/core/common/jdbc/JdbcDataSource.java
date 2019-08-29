@@ -24,7 +24,6 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.SourceException;
-import edp.core.utils.MD5Util;
 import edp.core.utils.ServerUtils;
 import edp.core.utils.SourceUtils;
 import edp.davinci.core.config.SpringContextHolder;
@@ -93,30 +92,30 @@ public class JdbcDataSource extends DruidDataSource {
     @Getter
     private int queryTimeout;
 
-    private static volatile Map<String, DruidDataSource> map = new HashMap<>();
+    private static volatile Map<String, DruidDataSource> dataSourceMap = new HashMap<>();
 
     public synchronized void removeDatasource(String jdbcUrl, String username, String password, String version, boolean isExt) {
-        String key = getKey(jdbcUrl, username, password, version, isExt);
+        String key = SourceUtils.getKey(jdbcUrl, username, password, version, isExt);
 
-        if (map.containsKey(key)) {
-            DruidDataSource druidDataSource = map.get(key);
+        if (dataSourceMap.containsKey(key)) {
+            DruidDataSource druidDataSource = dataSourceMap.get(key);
             if (!druidDataSource.isEnable()) {
                 druidDataSource.close();
-                map.remove(key);
+                dataSourceMap.remove(key);
             }
         }
     }
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password, String database, String version, boolean isExt) throws SourceException {
-        String key = getKey(jdbcUrl, username, password, version, isExt);
+        String key = SourceUtils.getKey(jdbcUrl, username, password, version, isExt);
 
-        if (map.containsKey(key) && map.get(key) != null) {
-            DruidDataSource druidDataSource = map.get(key);
+        if (dataSourceMap.containsKey(key) && dataSourceMap.get(key) != null) {
+            DruidDataSource druidDataSource = dataSourceMap.get(key);
             if (druidDataSource.isEnable()) {
                 return druidDataSource;
             } else {
                 druidDataSource.close();
-                map.remove(key);
+                dataSourceMap.remove(key);
             }
         }
 
@@ -164,23 +163,7 @@ public class JdbcDataSource extends DruidDataSource {
             log.error("Exception during pool initialization", e);
             throw new SourceException(e.getMessage());
         }
-        map.put(key, instance);
+        dataSourceMap.put(key, instance);
         return instance;
-    }
-
-    public static String getKey(String jdbcUrl, String username, String password, String version, boolean isExt) {
-        StringBuilder sb = new StringBuilder();
-        if (!StringUtils.isEmpty(username)) {
-            sb.append(username);
-        }
-        if (!StringUtils.isEmpty(password)) {
-            sb.append(Consts.COLON).append(password);
-        }
-        sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
-        if (isExt && !StringUtils.isEmpty(version)) {
-            sb.append(Consts.COLON).append(version);
-        }
-
-        return MD5Util.getMD5(sb.toString(), true, 64);
     }
 }

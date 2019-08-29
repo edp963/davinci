@@ -82,6 +82,7 @@ public class SourceUtils {
             if (null == connection || connection.isClosed()) {
                 log.info("connection is closed, retry get connection!");
                 releaseDataSource(jdbcUrl, username, password, version, isExt);
+                dataSource = getDataSource(jdbcUrl, username, password, database, version, isExt);
                 connection = dataSource.getConnection();
             }
         } catch (Exception e) {
@@ -100,6 +101,7 @@ public class SourceUtils {
 
         if (null == connection) {
             try {
+                dataSource = getDataSource(jdbcUrl, username, password, database, version, isExt);
                 connection = dataSource.getConnection();
             } catch (SQLException e) {
                 log.error("create connection error, jdbcUrl: {}", jdbcUrl);
@@ -233,9 +235,25 @@ public class SourceUtils {
      */
     private void releaseDataSource(String jdbcUrl, String userename, String password, String dbVersion, boolean isExt) throws SourceException {
         if (jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
-            ESDataSource.removeDataSource(jdbcUrl);
+            ESDataSource.removeDataSource(jdbcUrl, userename, password);
         } else {
             jdbcDataSource.removeDatasource(jdbcUrl, userename, password, dbVersion, isExt);
         }
+    }
+
+    public static String getKey(String jdbcUrl, String username, String password, String version, boolean isExt) {
+        StringBuilder sb = new StringBuilder();
+        if (!StringUtils.isEmpty(username)) {
+            sb.append(username);
+        }
+        if (!StringUtils.isEmpty(password)) {
+            sb.append(Consts.COLON).append(password);
+        }
+        sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
+        if (isExt && !StringUtils.isEmpty(version)) {
+            sb.append(Consts.COLON).append(version);
+        }
+
+        return MD5Util.getMD5(sb.toString(), true, 64);
     }
 }
