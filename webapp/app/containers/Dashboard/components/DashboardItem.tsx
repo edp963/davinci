@@ -87,6 +87,7 @@ interface IDashboardItemProps {
   onSelectChartsItems?: (itemId: number, renderType: string, selectedItems: number[]) => void
   onGetControlOptions: OnGetControlOptions
   monitoredSyncDataAction?: () => any
+  monitoredSearchDataAction?: () => any
 }
 
 interface IDashboardItemStates {
@@ -290,10 +291,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const {
       itemId,
       widget,
-      onGetChartData
+      onGetChartData,
+      monitoredSearchDataAction
     } = this.props
     const { pagination, nativeQuery } = this.state
     onGetChartData('clear', itemId, widget.id, { ...queryConditions, pagination, nativeQuery })
+    if (monitoredSearchDataAction) {
+      monitoredSearchDataAction()
+    }
   }
 
   private toggleControlPanel = () => {

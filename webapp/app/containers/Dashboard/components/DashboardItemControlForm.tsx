@@ -231,10 +231,10 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
       variables: [],
       tempFilters: []
     })
-
     onSearch({ ...queryConditions })
 
     onHide()
+
   }
 
   private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: ILocalControl[]) => {

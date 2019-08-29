@@ -16,6 +16,33 @@ import {
     MONITORED_SEARCH_DATA_ACTION,
     MONITORED_LINKAGE_DATA_ACTION
 } from 'containers/Dashboard/constants'
+import {uuid} from 'utils/util'
+
+interface IDownloadFields {
+    action: 'download'
+    email: string
+    org_id: number
+    project_id: string
+    project_name: string
+    sub_viz_id: number
+    sub_viz_name: string
+    user_id: number
+    viz_id: number
+    viz_name: string
+    viz_type: 'dashboard' | 'display'
+    task_id: number   // 当下载一个dashboard时候， 其下每个widget的单条数据 task_id是一致的
+    task_type: 'dashboard' | 'widget'
+    widget_id: number
+    widget_name: string
+    dashboard_rel_widget: number
+    groups: string[]
+    filters: object[] // 按重构之后的对象数组记录
+    variables: string[]
+    create_time: string
+}
+
+
+
 
 const {
     LOAD_VIEW_DATA_FROM_VIZ_ITEM,
@@ -23,6 +50,7 @@ const {
 } = ActionTypes
 
 import { statistic, IOperation } from './statistic.dv'
+
 
 const dataAction = {
     [DRILL_DASHBOARDITEM]: 'drill',
@@ -34,51 +62,84 @@ const dataAction = {
 
 const otherAction = {
     [LOGGED]: 'login',
-    [INITIATE_DOWNLOAD_TASK_SUCCESS]: 'download_task',
-    [DOWNLOAD_FILE]: 'download'
+    [INITIATE_DOWNLOAD_TASK_SUCCESS]: 'download'
+  //  [DOWNLOAD_FILE]: 'download'
 }
 
-export const monitoreAction = (action: string) => {
+export const monitoreAction = (action: {type: string, payload: object}) => {
     const actionType = mapMonitoreToAction(action, statistic.getRecord('operation')['action'])
 }
 
+const reportAction = ['initial', 'drill', 'sync', 'search', 'linkage']
 
-function mapMonitoreToAction (action: string, initialType: string) {
+function getWidgetDetailFieldsbyDownload (action) {
+    const taskType = action.payload.type
+    const taskId = uuid(8, 16)
+    const downloadDetails: IDownloadFields[] = action.statistic && action.statistic.length ? action.statistic.map((statistic) => {
+        const {widget: {id, name}, filters, tempFilters, params, groups, itemId} = statistic.param
+        return {
+            widget_id: id,
+            widget_name: name,
+            variables: params,
+            groups,
+            filters: tempFilters ? filters.concat(tempFilters) : filters,
+            dashboard_rel_widget: itemId,
+            task_type: taskType,
+            task_id: taskId
+        }
+    }) : []
+    return downloadDetails
+}
+
+function getWidgetDetailFieldsByOthers (action) {
+    const { groups, filters, variables, tempFilters, widget: {id, name}} = action.statistic
+    return {
+        widget_id: id,
+        widget_name: name,
+        variables,
+        groups,
+        filters: tempFilters ? filters.concat(tempFilters) : filters
+    }
+}
+
+function mapMonitoreToAction (action: {type: string, payload: object}, initialType: string) {
     let actionType = initialType
-    const isOtherAction = Object.entries(otherAction).map(([k, v]) => k).some((other) => other === action)
-    const isDataAction =  Object.entries(dataAction).map(([k, v]) => k).some((other) => other === action)
+    const isOtherAction = Object.entries(otherAction).map(([k, v]) => k).some((other) => other === action.type)
+    const isDataAction =  Object.entries(dataAction).map(([k, v]) => k).some((other) => other === action.type)
     if (isOtherAction) {
-        actionType = otherAction[action]
+        actionType = otherAction[action.type]
       // 避免与initial混淆，此三种状态不update operationRecord  的action值
-        if (actionType === 'download_task' || actionType === 'download') {
-            const newData = {
+        if (actionType === 'download') {
+            const widgetDetailFields = getWidgetDetailFieldsbyDownload(action)
+            const newData = widgetDetailFields.map((widget, index) => ({
+                ...widget,
                 ...statistic.operationRecord,
                 action: actionType,
                 create_time: statistic.getCurrentDateTime()
-            }
+            }))
             statistic.sendOperation(newData)
         }
     }
 
     if (isDataAction) {
-        actionType = dataAction[action]
-        statistic.updateSingleFleld<IOperation>('operation', 'action', actionType, (data) => {
-            const newData = {
-                ...data,
-                create_time: statistic.getCurrentDateTime()
-            }
-            statistic.sendOperation(newData)
-        })
+        actionType = dataAction[action.type]
+        console.log(actionType)
+        // change action type
+        statistic.updateSingleFleld<IOperation>('operation', 'action', actionType)
     }
-    if (action === LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS) {
+
+
+    if (action.type === LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS) {
         // todo 重启定时器
         statistic.isResetTime()
-        if (actionType === 'initial') {
-            const newData = {
-                ...statistic.operationRecord,
-                ...statistic.userData,
-                create_time: statistic.getCurrentDateTime()
-            }
+        const widgetDetailFields = getWidgetDetailFieldsByOthers(action)
+        const newData = {
+            ...widgetDetailFields,
+            ...statistic.operationRecord,
+            ...statistic.userData,
+            create_time: statistic.getCurrentDateTime()
+        }
+        if (reportAction.some((report) => report === actionType)) {
             statistic.sendOperation(newData)
         }
     }

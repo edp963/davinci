@@ -220,7 +220,8 @@ interface IGridProps {
     renderType: RenderType,
     dashboardItemId: number,
     viewId: number,
-    requestParams: IDataRequestParams
+    requestParams: IDataRequestParams,
+    statistic: any
   ) => void
   onLoadViewsDetail: (viewIds: number[], resolve: () => void) => void
   onInitiateDownloadTask: (id: number, type: DownloadTypes, downloadParams?: IDataDownloadParams[], itemId?: number) => void
@@ -331,20 +332,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
   }
 
-  private __once__ (fn) {
-    let tag = true
-    return (...args) => {
-      if (tag) {
-        tag = !tag
-        return fn.apply(this, args)
-      } else {
-        return void 0
-      }
-    }
-  }
-
-  private statisticFirstVisit: any
-
   public componentWillReceiveProps (nextProps: IGridProps) {
     const {
       currentDashboard,
@@ -357,24 +344,30 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { layoutInitialized } = this.state
 
     const { params: {pid, portalId, portalName, dashboardId}, currentProject} = this.props
-    if (currentProject && this.props.currentDashboard) {
-        this.statisticFirstVisit({
+
+    if (params.dashboardId === this.props.params.dashboardId) {
+      if (nextProps.currentDashboard !== this.props.currentDashboard) {
+        statistic.setOperations({
           project_id: pid,
           project_name: currentProject.name,
           org_id: currentProject.orgId,
           viz_type: 'dashboard',
           viz_id: portalId,
           viz_name: portalName,
-          sub_viz_id: dashboardId,
-          sub_viz_name: this.props.currentDashboard['name'],
-          create_time: statistic.getCurrentDateTime()
+          sub_viz_id: params.dashboardId,
+          sub_viz_name: currentDashboard['name'],
+          create_time:  statistic.getCurrentDateTime()
         }, (data) => {
           const visitRecord = {
             ...data,
             action: 'visit'
           }
-          statistic.sendOperation(visitRecord)
+          statistic.sendOperation(visitRecord).then((res) => {
+            console.log('......reload........')
+            statistic.updateSingleFleld('operation', 'action', 'initial')
+          })
         })
+      }
     }
 
     if (params.dashboardId !== this.props.params.dashboardId) {
@@ -385,21 +378,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       if (params.dashboardId && Number(params.dashboardId) !== -1) {
         onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
       }
-
-      statistic.setOperations({
-      //  action: 'visit',
-        sub_viz_id: params.dashboardId,
-        sub_viz_name: this.props.currentDashboard['name'],
-        create_time:  statistic.getCurrentDateTime()
-      }, (data) => {
-        const visitRecord = {
-          ...data,
-          action: 'visit'
-        }
-        statistic.sendOperation(visitRecord).then((res) => {
-          statistic.updateSingleFleld('operation', 'action', 'initial') // todo fix 回滚action
-        })
-      })
 
       statistic.setDurations({
         end_time: statistic.getCurrentDateTime()
@@ -441,7 +419,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         })
       })
     }, false)
-    this.statisticFirstVisit = this.__once__(statistic.setOperations)
     statistic.setDurations({
       start_time: statistic.getCurrentDateTime()
     })
@@ -517,7 +494,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
     this.getData(
       (renderType, itemId, widget, requestParams) => {
-        this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, requestParams)
+        this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, requestParams, {...requestParams, widget})
       },
       renderType,
       itemId,
@@ -556,7 +533,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       (renderType, itemId, widget, requestParams) => {
         const downloadParams = [{
           ...requestParams,
-          id: widgetId
+          id: widgetId,
+          itemId,
+          widget
         }]
         this.props.onInitiateDownloadTask(widgetId, DownloadTypes.Widget, downloadParams, itemId)
       },
@@ -589,7 +568,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         (renderType, itemId, widget, requestParams) => {
           downloadParams.push({
             ...requestParams,
-            id
+            id,
+            itemId: id,
+            widget
           })
         },
         'rerender',
@@ -1616,6 +1597,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onGetControlOptions={this.getOptions}
               selectedItems={selectedItems || []}
               monitoredSyncDataAction={this.props.onMonitoredSyncDataAction}
+              monitoredSearchDataAction={this.props.onMonitoredSearchDataAction}
               ref={(f) => this[`dashboardItem${id}`] = f}
             />
           </div>
@@ -1866,8 +1848,8 @@ export function mapDispatchToProps (dispatch) {
     onEditDashboardItem: (portalId, item, resolve) => dispatch(editDashboardItem(portalId, item, resolve)),
     onEditDashboardItems: (portalId, items) => dispatch(editDashboardItems(portalId, items)),
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
-    onLoadDataFromItem: (renderType, itemId, viewId, requestParams) =>
-                        dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard')),
+    onLoadDataFromItem: (renderType, itemId, viewId, requestParams, statistic) =>
+                        dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard', statistic)),
     onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onInitiateDownloadTask: (id, type, downloadParams?, itemId?) => dispatch(initiateDownloadTask(id, type, downloadParams, itemId)),
