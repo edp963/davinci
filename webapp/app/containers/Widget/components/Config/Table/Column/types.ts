@@ -26,6 +26,7 @@ export interface ITableConditionStyle {
 export interface ITableColumnConfig {
   columnName: string
   alias: string
+  sort?: boolean
   visualType: ViewModelVisualTypes
   styleType: TableCellStyleTypes
   style: ITableCellStyle
