@@ -105,6 +105,15 @@ export interface IMapControlOptions {
   [controlKey: string]: ControlOptions
 }
 
+export interface IFilters {
+  name: string
+  type: string
+  value: any
+  operator: string
+  sqlType: string
+  children?: IFilters
+}
+
 export enum GlobalControlQueryMode {
   Immediately,
   Manually

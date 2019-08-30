@@ -511,6 +511,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       categoryDragItems,
       valueDragItems
     } = this.state
+
     const dragged = stateDragged || modalCachedData
     const from = dragged.from && dragged.from !== name && dataParams[dragged.from]
     const destination = dataParams[name]
@@ -583,6 +584,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       dragged: null,
       modalCachedData: null
     })
+
     this.setWidgetProps(dataParams, styleParams)
   }
 
@@ -820,7 +822,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, yAxis } = dataParams
     const { selectedView, onLoadData, onSetWidgetProps } = this.props
     const { mode, chartModeSelectedChart, pagination } = this.state
-
     let renderType
     let updatedPagination
     let queryMode = this.props.queryMode
@@ -948,11 +949,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
       updatedPagination.withPaging = withPaging
     }
-
+    // 生成filter
+    let requestParamsFilters = []
+    filters.items.forEach((item) => {
+      requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
+    })
     const requestParams = {
       groups,
       aggregators,
-      filters: filters.items.map((i) => i.config.sql),
+     // filters: filters.items.map((i) => [].concat(i.config.sql)),
+      filters: requestParamsFilters,
       orders,
       pageNo: updatedPagination.pageNo,
       pageSize: updatedPagination.pageSize,
@@ -1228,6 +1234,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           size.value[key] = value
         }
     }
+    console.log('dropboxValueChange')
     this.setWidgetProps(dataParams, styleParams, { renderType: 'refresh' })
   }
 

@@ -40,9 +40,10 @@ import ModulePermission from 'containers/Account/components/checkModulePermissio
 import ShareDownloadPermission from 'containers/Account/components/checkShareDownloadPermission'
 import { IProject } from 'containers/Projects'
 import { IQueryConditions, IQueryVariableMap } from '../Grid'
-import { IMapControlOptions, OnGetControlOptions, IDistinctValueReqeustParams } from 'app/components/Filters/types'
+import { IMapControlOptions, OnGetControlOptions, IDistinctValueReqeustParams, IFilters } from 'app/components/Filters/types'
 const styles = require('../Dashboard.less')
 const utilStyles = require('assets/less/util.less')
+
 
 interface IDashboardItemProps {
   itemId: number
@@ -491,6 +492,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     })
     const nextWidget = widgets.find((w) => w.id === Number(widget))
     const widgetProps = JSON.parse(nextWidget.config)
+    // todo  filter 重构
     const sql = `${enter} in (${value.map((key) => `'${key}'`).join(',')})`
     let sqls = widgetProps.filters.map((i) => i.config.sql)
     sqls.push(sql)
@@ -960,6 +962,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         hasDataConfig={hasDataConfig}
       />
     )
+
 
     return (
       <div className={gridItemClass} ref={(f) => this.container = f}>
