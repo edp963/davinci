@@ -946,42 +946,42 @@ public class SqlUtils {
             return new SqlUtilsBuilder();
         }
 
-        public SqlUtilsBuilder withJdbcDataSource(JdbcDataSource jdbcDataSource) {
+        SqlUtilsBuilder withJdbcDataSource(JdbcDataSource jdbcDataSource) {
             this.jdbcDataSource = jdbcDataSource;
             return this;
         }
 
-        public SqlUtilsBuilder withResultLimit(int resultLimit) {
+        SqlUtilsBuilder withResultLimit(int resultLimit) {
             this.resultLimit = resultLimit;
             return this;
         }
 
-        public SqlUtilsBuilder withIsQueryLogEnable(boolean isQueryLogEnable) {
+        SqlUtilsBuilder withIsQueryLogEnable(boolean isQueryLogEnable) {
             this.isQueryLogEnable = isQueryLogEnable;
             return this;
         }
 
-        public SqlUtilsBuilder withJdbcUrl(String jdbcUrl) {
+        SqlUtilsBuilder withJdbcUrl(String jdbcUrl) {
             this.jdbcUrl = jdbcUrl;
             return this;
         }
 
-        public SqlUtilsBuilder withUsername(String username) {
+        SqlUtilsBuilder withUsername(String username) {
             this.username = username;
             return this;
         }
 
-        public SqlUtilsBuilder withPassword(String password) {
+        SqlUtilsBuilder withPassword(String password) {
             this.password = password;
             return this;
         }
 
-        public SqlUtilsBuilder withDbVersion(String dbVersion) {
+        SqlUtilsBuilder withDbVersion(String dbVersion) {
             this.dbVersion = dbVersion;
             return this;
         }
 
-        public SqlUtilsBuilder withIsExt(boolean isExt) {
+        SqlUtilsBuilder withIsExt(boolean isExt) {
             this.isExt = isExt;
             return this;
         }

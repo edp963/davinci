@@ -39,7 +39,7 @@ import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
 @Slf4j
 @Component
-public class JdbcDataSource extends DruidDataSource {
+public class JdbcDataSource {
 
     @Value("${spring.datasource.type}")
     private String type;
@@ -99,10 +99,8 @@ public class JdbcDataSource extends DruidDataSource {
 
         if (dataSourceMap.containsKey(key)) {
             DruidDataSource druidDataSource = dataSourceMap.get(key);
-            if (!druidDataSource.isEnable()) {
-                druidDataSource.close();
-                dataSourceMap.remove(key);
-            }
+            druidDataSource.close();
+            dataSourceMap.remove(key);
         }
     }
 
@@ -111,15 +109,14 @@ public class JdbcDataSource extends DruidDataSource {
 
         if (dataSourceMap.containsKey(key) && dataSourceMap.get(key) != null) {
             DruidDataSource druidDataSource = dataSourceMap.get(key);
-            if (druidDataSource.isEnable()) {
+            if (!druidDataSource.isClosed()) {
                 return druidDataSource;
             } else {
-                druidDataSource.close();
                 dataSourceMap.remove(key);
             }
         }
 
-        DruidDataSource instance = new JdbcDataSource();
+        DruidDataSource instance = new DruidDataSource();
 
         if (StringUtils.isEmpty(version) || !isExt || JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
             String className = SourceUtils.getDriverClassName(jdbcUrl, null);
