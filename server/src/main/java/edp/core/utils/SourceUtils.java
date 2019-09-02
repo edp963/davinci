@@ -226,18 +226,17 @@ public class SourceUtils {
      * 释放失效数据源
      *
      * @param jdbcUrl
-     * @param userename
+     * @param username
      * @param password
      * @param dbVersion
      * @param isExt
      * @return
-     * @throws SourceException
      */
-    private void releaseDataSource(String jdbcUrl, String userename, String password, String dbVersion, boolean isExt) throws SourceException {
+    void releaseDataSource(String jdbcUrl, String username, String password, String dbVersion, boolean isExt) {
         if (jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
-            ESDataSource.removeDataSource(jdbcUrl, userename, password);
+            ESDataSource.removeDataSource(jdbcUrl, username, password);
         } else {
-            jdbcDataSource.removeDatasource(jdbcUrl, userename, password, dbVersion, isExt);
+            jdbcDataSource.removeDatasource(jdbcUrl, username, password, dbVersion, isExt);
         }
     }
 
