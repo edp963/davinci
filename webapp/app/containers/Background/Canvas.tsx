@@ -22,6 +22,15 @@ import React from 'react'
 import { DEFAULT_SECONDARY_COLOR } from 'app/globalConstants'
 const styles = require('./Background.less')
 
+import { PerspectiveCamera } from 'three/src/cameras/PerspectiveCamera'
+import { Scene } from 'three/src/scenes/Scene'
+import { BufferAttribute } from 'three/src/core/BufferAttribute'
+import { BufferGeometry } from 'three/src/core/BufferGeometry'
+import { Color } from 'three/src/math/Color'
+import { Points } from 'three/src/objects/Points'
+import { ShaderMaterial } from 'three/src/materials/ShaderMaterial'
+import { WebGLRenderer } from 'three/src/renderers/WebGLRenderer'
+
 export class Canvas extends React.Component<{}, {}> {
   constructor (props) {
     super(props)
@@ -32,18 +41,7 @@ export class Canvas extends React.Component<{}, {}> {
 
   public componentDidMount () {
     // TODO to verify the performance under one or multiple chunks
-    Promise.all([
-      import('three/src/cameras/PerspectiveCamera'),
-      import('three/src/scenes/Scene'),
-      import('three/src/core/BufferAttribute'),
-      import('three/src/core/BufferGeometry'),
-      import('three/src/math/Color'),
-      import('three/src/objects/Points'),
-      import('three/src/materials/ShaderMaterial'),
-      import('three/src/renderers/WebGLRenderer')
-    ]).then(([...args]) => {
-      this.drawBackground(args)
-    })
+    this.drawBackground()
   }
 
   public componentWillUnmount () {
@@ -52,8 +50,7 @@ export class Canvas extends React.Component<{}, {}> {
     }
   }
 
-  private drawBackground = (modules: any[]) => {
-    const [{ PerspectiveCamera }, { Scene }, { BufferAttribute }, { BufferGeometry }, { Color }, { Points }, { ShaderMaterial }, { WebGLRenderer }] = modules
+  private drawBackground = () => {
     const SEPARATION = 100
     const AMOUNTX = 50
     const AMOUNTY = 50

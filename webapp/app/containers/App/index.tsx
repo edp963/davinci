@@ -18,8 +18,11 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import Helmet from 'react-helmet'
+import { connect } from 'react-redux'
+import { createStructuredSelector } from 'reselect'
+import { Route, HashRouter as Router, Switch, Redirect } from 'react-router-dom'
 
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -27,21 +30,43 @@ import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
+import { makeSelectLogged } from './selectors'
+
+import { Background } from 'containers/Background/Loadable'
+import { Activate } from 'containers/Register/Loadable'
+import { Main } from 'containers/Main/Loadable'
+
 interface IAppProps {
-  children: React.ReactNode
+  logged: boolean
 }
 
-export function App (props: IAppProps) {
+export const App: React.FC<IAppProps> = (props) => {
+  const { logged } = props
+
   return (
     <div>
       <Helmet
         titleTemplate="%s - Davinci"
         defaultTitle="Davinci Web Application"
         meta={[
-          { name: 'description', content: 'Davinci web application built for data visualization' }
+          {
+            name: 'description',
+            content: 'Davinci web application built for data visualization'
+          }
         ]}
       />
-      {React.Children.toArray(props.children)}
+      <Router>
+        <React.Suspense fallback={null}>
+          <Switch>
+            {logged ? (
+              <Route component={Main} />
+            ) : (
+              <Route component={Background} />
+            )}
+            <Route path="/activate" component={Activate} />
+          </Switch>
+        </React.Suspense>
+      </Router>
     </div>
   )
 }
@@ -49,7 +74,17 @@ export function App (props: IAppProps) {
 const withReducer = injectReducer({ key: 'global', reducer })
 const withSaga = injectSaga({ key: 'global', saga })
 
+const mapStateToProps = createStructuredSelector({
+  logged: makeSelectLogged()
+})
+
+const withConnect = connect(
+  mapStateToProps,
+  null
+)
+
 export default compose(
   withReducer,
-  withSaga
+  withSaga,
+  withConnect
 )(App)

@@ -20,16 +20,14 @@
 
 import '@babel/polyfill'
 
-import * as React from 'react'
-import * as ReactDOM from 'react-dom'
+import React from 'react'
+import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
-import { applyRouterMiddleware, Router, hashHistory } from 'react-router'
-import { syncHistoryWithStore } from 'react-router-redux'
-import { useScroll } from 'react-router-scroll'
-import { hot } from 'react-hot-loader'
+import { ConnectedRouter } from 'connected-react-router'
+import history from 'utils/history'
 
 import App from 'containers/App'
-import { makeSelectLocationState } from 'containers/App/selectors'
+
 import { LocaleProvider } from 'antd'
 import zh_CN from 'antd/lib/locale-provider/zh_CN'
 import LanguageProvider from 'containers/LanguageProvider'
@@ -84,45 +82,27 @@ import 'assets/js/china.js'
 import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
 echarts.registerTheme('default', DEFAULT_ECHARTS_THEME)
 
-import configureStore from './store'
-import createRoutes from './routes'
+import configureStore from './configureStore'
 
 const initialState = {}
-const store = configureStore(initialState, hashHistory)
+const store = configureStore(initialState, history)
 const MOUNT_NODE = document.getElementById('app')
-const history = syncHistoryWithStore(hashHistory, store, {
-  selectLocationState: makeSelectLocationState()
-})
-
-const rootRoute = {
-  path: '/',
-  component: hot(module)(App),
-  childRoutes: createRoutes(store),
-  indexRoute: {
-    onEnter: (_, replace) => {
-    //  replace('/report')
-      replace('/projects')
-    }
-  }
-}
 
 const render = (messages) => {
   ReactDOM.render(
     <Provider store={store}>
       <LanguageProvider messages={messages}>
         <LocaleProvider locale={zh_CN}>
-          <Router
-            history={history}
-            routes={rootRoute}
-            render={applyRouterMiddleware(useScroll())}
-          />
+          <ConnectedRouter history={history}>
+            <App />
+          </ConnectedRouter>
         </LocaleProvider>
       </LanguageProvider>
     </Provider>,
     MOUNT_NODE
   )
 }
-// declare const module: any
+
 if (module.hot) {
   module.hot.accept(['./i18n', 'containers/App'], () => {
     ReactDOM.unmountComponentAtNode(MOUNT_NODE)

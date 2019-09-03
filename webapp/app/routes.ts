@@ -47,7 +47,6 @@ import ResetPassword from 'containers/ResetPassword'
 import Organizations from 'containers/Organizations/index'
 import Organization from 'containers/Organizations/Organization'
 import UserProfile from 'containers/Profile/UserProfile'
-import {replace} from 'react-router-redux'
 import NoAuthorization from 'containers/NoAuthorization'
 
 const errorLoading = (err) => {

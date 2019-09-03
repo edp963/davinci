@@ -24,8 +24,8 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
 import { applyRouterMiddleware, Router, hashHistory } from 'react-router'
-import { syncHistoryWithStore } from 'react-router-redux'
-import { useScroll } from 'react-router-scroll'
+// import { syncHistoryWithStore } from 'react-router-redux'
+// import { useScroll } from 'react-router-scroll'
 import { hot } from 'react-hot-loader'
 
 import App from './containers/App/index'
@@ -89,9 +89,9 @@ const initialState = {}
 const store = configureStore(initialState, hashHistory)
 const MOUNT_NODE = document.getElementById('app')
 
-const history = syncHistoryWithStore(hashHistory, store, {
-  selectLocationState: makeSelectLocationState()
-})
+// const history = syncHistoryWithStore(hashHistory, store, {
+//   selectLocationState: makeSelectLocationState()
+// })
 
 const rootRoute = {
   path: '/',
@@ -109,13 +109,13 @@ const render = (messages) => {
     <Provider store={store}>
       <LanguageProvider messages={messages}>
         <Router
-          history={history}
+          // history={history}
           routes={rootRoute}
-          render={
-            // Scroll to top when going to a new page, imitating default browser
-            // behaviour
-            applyRouterMiddleware(useScroll())
-          }
+          // render={
+          //   // Scroll to top when going to a new page, imitating default browser
+          //   // behaviour
+          //   // applyRouterMiddleware(useScroll())
+          // }
         />
       </LanguageProvider>
     </Provider>,

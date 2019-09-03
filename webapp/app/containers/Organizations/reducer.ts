@@ -18,131 +18,152 @@
  * >>
  */
 
-import { fromJS } from 'immutable'
+import produce from 'immer'
 
-import {
-  LOAD_ORGANIZATIONS_SUCCESS,
-  LOAD_ORGANIZATIONS_FAILURE,
-  ADD_ORGANIZATION_SUCCESS,
-  ADD_ORGANIZATION_FAILURE,
-  EDIT_ORGANIZATION_SUCCESS,
-  DELETE_ORGANIZATION_SUCCESS,
-  LOAD_ORGANIZATION_DETAIL,
-  LOAD_ORGANIZATION_DETAIL_SUCCESS,
-  LOAD_ORGANIZATION_DETAIL_FAILURE,
-  LOAD_ORGANIZATIONS_PROJECTS_SUCCESS,
-  LOAD_ORGANIZATIONS_MEMBERS_SUCCESS,
-  SEARCH_MEMBER_SUCCESS,
-  DELETE_ORGANIZATION_MEMBER_SUCCESS,
-  LOAD_ORGANIZATIONS_ROLE,
-  LOAD_ORGANIZATIONS_ROLE_SUCCESS,
-  LOAD_ORGANIZATIONS_ROLE_FAILURE,
-  ADD_ROLE,
-  ADD_ROLE_SUCCESS,
-  ADD_ROLE_FAILURE,
-  SET_CURRENT_ORIGANIZATION_PROJECT,
-  LOAD_PROJECT_ADMINS_SUCCESS,
-  LOAD_PROJECT_ADMINS_FAIL,
-  LOAD_PROJECT_ROLES_SUCCESS
-} from './constants'
-import {ADD_PROJECT_SUCCESS, DELETE_PROJECT_SUCCESS} from '../Projects/constants'
+import { IOrganizationState } from './types'
+import { ActionTypes } from './constants'
+import { ActionTypes as ProjectActionTypes } from 'containers/Projects/constants'
 
+import { OrganizationActionType } from './actions'
+import { ProjectActionType } from 'containers/Projects/actions'
 
-const initialState = fromJS({
+const initialState: IOrganizationState = {
   organizations: [],
-  currentOrganization: {},
+  currentOrganization: null,
   currentOrganizationLoading: false,
   currentOrganizationProjects: [],
-  currentOrganizationProjectsDetail: false,
+  currentOrganizationProjectsDetail: null,
   currentOrganizationMembers: null,
-  currentOrganizationRoles: null,
+  currentOrganizationRole: null,
   inviteMemberLists: null,
   roleModalLoading: false,
-  projectDetail: false,
-  projectAdmins: false,
-  projectRoles: false
-})
-
-function organizationReducer (state = initialState, action) {
-  const { type, payload } = action
-  const organizations = state.get('organizations')
-  const currentOrganizationMembers = state.get('currentOrganizationMembers')
-  const currentOrganizationProjects = state.get('currentOrganizationProjects')
-  switch (type) {
-    case DELETE_ORGANIZATION_MEMBER_SUCCESS:
-      if (currentOrganizationMembers) {
-        return state.set('currentTeamMembers', currentOrganizationMembers.filter((d) => d.id !== payload.id))
-      }
-      return state
-    // case CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS:
-    //   return state
-      // currentOrganizationMembers.splice(currentOrganizationMembers.findIndex((d) => d.id === payload.result.id), 1, payload.result)
-      // return state.set('currentTeamMembers', currentOrganizationMembers.slice())
-    case LOAD_ORGANIZATIONS_PROJECTS_SUCCESS:
-      return state.set('currentOrganizationProjects', payload.projects.list)
-        .set('currentOrganizationProjectsDetail', payload.projects)
-    case LOAD_ORGANIZATIONS_MEMBERS_SUCCESS:
-      return state.set('currentOrganizationMembers', payload.members)
-    case LOAD_ORGANIZATIONS_ROLE_SUCCESS:
-      return state.set('currentOrganizationRole', payload.role)
-    case LOAD_ORGANIZATIONS_SUCCESS:
-      return state.set('organizations', payload.organizations)
-    case ADD_PROJECT_SUCCESS:
-      if (currentOrganizationProjects) {
-        currentOrganizationProjects.unshift(payload.result)
-        return state.set('currentOrganizationProjects', currentOrganizationProjects.slice())
-      } else {
-        return state.set('currentOrganizationProjects', [payload.result])
-      }
-    case DELETE_PROJECT_SUCCESS:
-      if (currentOrganizationProjects) {
-        return state.set('currentOrganizationProjects', currentOrganizationProjects.filter((d) => d.id !== payload.id))
-      }
-      return state
-    case LOAD_ORGANIZATIONS_FAILURE:
-      return state
-    case ADD_ORGANIZATION_SUCCESS:
-      if (organizations) {
-        organizations.unshift(payload.result)
-        return state.set('organizations', organizations.slice())
-      } else {
-        return state.set('organizations', [payload.result])
-      }
-    case ADD_ORGANIZATION_FAILURE:
-      return state
-    case EDIT_ORGANIZATION_SUCCESS:
-      organizations.splice(organizations.findIndex((d) => d.id === payload.result.id), 1, payload.result)
-      return state.set('organizations', organizations.slice())
-
-    case DELETE_ORGANIZATION_SUCCESS:
-      return state.set('organizations', organizations.filter((d) => d.id !== payload.id))
-
-    case LOAD_ORGANIZATION_DETAIL:
-      return state.set('currentOrganizationLoading', true)
-
-    case LOAD_ORGANIZATION_DETAIL_SUCCESS:
-      return state
-        .set('currentOrganizationLoading', false)
-        .set('currentOrganization', payload.organization)
-    case LOAD_ORGANIZATION_DETAIL_FAILURE:
-      return state
-    case ADD_ROLE:
-      return state.set('roleModalLoading', true)
-    case ADD_ROLE_SUCCESS:
-      return state.set('roleModalLoading', false)
-    case ADD_ROLE_FAILURE:
-      return state.set('roleModalLoading', false)
-    case SEARCH_MEMBER_SUCCESS:
-      return state.set('inviteMemberLists', payload.result)
-    case SET_CURRENT_ORIGANIZATION_PROJECT:
-      return state.set('projectDetail', payload.option)
-    case LOAD_PROJECT_ADMINS_SUCCESS:
-      return state.set('projectAdmins', payload.result)
-    case LOAD_PROJECT_ROLES_SUCCESS:
-      return state.set('projectRoles', payload.result)
-    default:
-      return state
-  }
+  projectDetail: null,
+  projectAdmins: null,
+  projectRoles: null
 }
+
+const organizationReducer = (
+  state = initialState,
+  action: OrganizationActionType | ProjectActionType
+) =>
+  produce(state, (draft) => {
+    switch (action.type) {
+      case ActionTypes.DELETE_ORGANIZATION_MEMBER_SUCCESS:
+        if (draft.currentOrganizationMembers) {
+          draft.currentTeamMembers = draft.currentOrganizationMembers.filter(
+            (d) => d.id !== action.payload.id
+          )
+        }
+        break
+
+      // case ActionTypes.CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS:
+      //   return state
+      //   currentOrganizationMembers.splice(currentOrganizationMembers.findIndex((d) => d.id === payload.result.id), 1, payload.result)
+      //   return state.set('currentTeamMembers', currentOrganizationMembers.slice())
+
+      case ActionTypes.LOAD_ORGANIZATIONS_PROJECTS_SUCCESS:
+        draft.currentOrganizationProjects = action.payload.projects.list
+        draft.currentOrganizationProjectsDetail = action.payload.projects
+        break
+
+      case ActionTypes.LOAD_ORGANIZATIONS_MEMBERS_SUCCESS:
+        draft.currentOrganizationMembers = action.payload.members
+        break
+
+      case ActionTypes.LOAD_ORGANIZATIONS_ROLE_SUCCESS:
+        draft.currentOrganizationRole = action.payload.role
+        break
+
+      case ActionTypes.LOAD_ORGANIZATIONS_SUCCESS:
+        draft.organizations = action.payload.organizations
+        break
+
+      case ProjectActionTypes.ADD_PROJECT_SUCCESS:
+        if (draft.currentOrganizationProjects) {
+          draft.currentOrganizationProjects.unshift(action.payload.result)
+        } else {
+          draft.currentOrganizationProjects = [action.payload.result]
+        }
+        break
+
+      case ProjectActionTypes.DELETE_PROJECT_SUCCESS:
+        if (draft.currentOrganizationProjects) {
+          draft.currentOrganizationProjects = draft.currentOrganizationProjects.filter(
+            (d) => d.id !== action.payload.id
+          )
+        }
+        break
+
+      case ActionTypes.LOAD_ORGANIZATIONS_FAILURE:
+        break
+
+      case ActionTypes.ADD_ORGANIZATION_SUCCESS:
+        if (draft.organizations) {
+          draft.organizations.unshift(action.payload.result)
+        } else {
+          draft.organizations = [action.payload.result]
+        }
+        break
+
+      case ActionTypes.ADD_ORGANIZATION_FAILURE:
+        break
+
+      case ActionTypes.EDIT_ORGANIZATION_SUCCESS:
+        draft.organizations.splice(
+          draft.organizations.findIndex(
+            (d) => d.id === action.payload.result.id
+          ),
+          1,
+          action.payload.result
+        )
+        break
+
+      case ActionTypes.DELETE_ORGANIZATION_SUCCESS:
+        draft.organizations = draft.organizations.filter(
+          (d) => d.id !== action.payload.id
+        )
+        break
+
+      case ActionTypes.LOAD_ORGANIZATION_DETAIL:
+        draft.currentOrganizationLoading = true
+        break
+
+      case ActionTypes.LOAD_ORGANIZATION_DETAIL_SUCCESS:
+        draft.currentOrganizationLoading = false
+        draft.currentOrganization = action.payload.organization
+        break
+
+      case ActionTypes.LOAD_ORGANIZATION_DETAIL_FAILURE:
+        break
+
+      case ActionTypes.ADD_ROLE:
+        draft.roleModalLoading = true
+        break
+
+      case ActionTypes.ADD_ROLE_SUCCESS:
+        draft.roleModalLoading = false
+        break
+
+      case ActionTypes.ADD_ROLE_FAILURE:
+        draft.roleModalLoading = false
+        break
+
+      case ActionTypes.SEARCH_MEMBER_SUCCESS:
+        draft.inviteMemberLists = action.payload.result
+        break
+
+      case ActionTypes.SET_CURRENT_ORIGANIZATION_PROJECT:
+        draft.projectDetail = action.payload.option
+        break
+
+      case ActionTypes.LOAD_PROJECT_ADMINS_SUCCESS:
+        draft.projectAdmins = action.payload.result
+        break
+
+      case ActionTypes.LOAD_PROJECT_ROLES_SUCCESS:
+        draft.projectRoles = action.payload.result
+        break
+    }
+  })
 
 export default organizationReducer
