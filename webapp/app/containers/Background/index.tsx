@@ -20,15 +20,25 @@
 
 import * as React from 'react'
 import Canvas from './Canvas'
+import { Route, HashRouter as Router, Redirect } from 'react-router-dom'
+
+import Login from 'containers/Login'
+import Register from 'containers/Register'
+import JoinOrganization from 'containers/Register/JoinOrganization'
 
 const styles = require('./Background.less')
 
-export function Background (props) {
+export function Background () {
   return (
     <div className={styles.container}>
       <Canvas />
-      <img className={styles.logo} src={require('assets/images/logo_light.svg')} />
-      {props.children}
+      <img className={styles.logo} src={require('../../assets/images/logo_light.svg')} />
+      <Router>
+        <Redirect exact from="/" to="/login" />
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
+        <Route path="/joinOrganization" component={JoinOrganization} />
+      </Router>
     </div>
   )
 }

@@ -20,6 +20,8 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
+import { Route, HashRouter as Router } from 'react-router-dom'
+import { RouteComponentWithParams } from 'utils/types'
 import { createStructuredSelector } from 'reselect'
 
 import Navigator from 'components/Navigator'
@@ -30,12 +32,13 @@ import checkLogin from 'utils/checkLogin'
 import { setToken } from 'utils/request'
 import { DOWNLOAD_LIST_POLLING_FREQUENCY } from 'app/globalConstants'
 import { statistic } from 'utils/statistic/statistic.dv'
+
+const Projects = React.lazy(() => import('containers/Projects'))
+
 const styles = require('./Main.less')
 
 interface IMainProps {
   params: {pid?: number}
-  children: React.ReactNode
-  router: any
   logged: boolean
   navigator: boolean
   onLogged: (user) => void
@@ -44,7 +47,7 @@ interface IMainProps {
   onLoadDownloadList: () => void
 }
 
-export class Main extends React.Component<IMainProps, {}> {
+export class Main extends React.Component<IMainProps & RouteComponentWithParams, {}> {
 
   private downloadListPollingTimer: number
 
@@ -60,7 +63,7 @@ export class Main extends React.Component<IMainProps, {}> {
 
   private checkTokenLink = () => {
     const {
-      router,
+      history,
       onGetLoginUser
     } = this.props
 
@@ -72,7 +75,7 @@ export class Main extends React.Component<IMainProps, {}> {
     if (token) {
       setToken(token)
       onGetLoginUser(() => {
-        router.replace('/projects')
+        history.replace('/projects')
         // if (dashboard) {
         //   router.replace(`/project/${this.props.params.pid}/dashboard/${dashboard}`)
         // } else {
@@ -94,7 +97,7 @@ export class Main extends React.Component<IMainProps, {}> {
       statistic.sendPrevDurationRecord()
       this.initPolling()
     } else {
-      this.props.router.replace('/login')
+      this.props.history.replace('/login')
     }
   }
 
@@ -122,13 +125,13 @@ export class Main extends React.Component<IMainProps, {}> {
   }
 
   private logout = () => {
-    const { router, onLogout } = this.props
+    const { history, onLogout } = this.props
     onLogout()
-    router.replace('/login')
+    history.replace('/login')
   }
 
   public render () {
-    const { logged, navigator, children } = this.props
+    const { logged, navigator } = this.props
 
     return logged
       ? (
@@ -137,7 +140,11 @@ export class Main extends React.Component<IMainProps, {}> {
             show={navigator}
             onLogout={this.logout}
           />
-          {children}
+          <Router>
+            <React.Suspense fallback={null}>
+              <Route path="/projects/" component={Projects} />
+            </React.Suspense>
+          </Router>
         </div>
       )
       : (

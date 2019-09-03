@@ -24,7 +24,7 @@
 
 import { createStore, applyMiddleware, compose, Store, Middleware, ReducersMapObject } from 'redux'
 import { fromJS } from 'immutable'
-import { routerMiddleware } from 'react-router-redux'
+// import { routerMiddleware } from 'react-router-redux'
 import createSagaMiddleware, { Task, SagaIterator } from 'redux-saga'
 import createReducer from './reducers'
 
@@ -48,7 +48,7 @@ export default function configureStore<T> (initialState: object = {}, history): 
   // 2. routerMiddleware: Syncs the location/URL path to the state
   const middlewares = [
     sagaMiddleware,
-    routerMiddleware(history)
+    // routerMiddleware(history)
   ]
 
   // If Redux DevTools Extension is installed use it, otherwise use Redux compose
