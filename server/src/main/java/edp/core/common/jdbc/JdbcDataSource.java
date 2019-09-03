@@ -24,10 +24,10 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.SourceException;
-import edp.core.utils.MD5Util;
 import edp.core.utils.ServerUtils;
 import edp.core.utils.SourceUtils;
 import edp.davinci.core.config.SpringContextHolder;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -39,75 +39,84 @@ import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
 @Slf4j
 @Component
-public class JdbcDataSource extends DruidDataSource {
+public class JdbcDataSource {
 
     @Value("${spring.datasource.type}")
     private String type;
 
     @Value("${source.max-active:10}")
+    @Getter
     private int maxActive;
 
     @Value("${source.initial-size:1}")
+    @Getter
     private int initialSize;
 
     @Value("${source.min-idle:3}")
+    @Getter
     private int minIdle;
 
     @Value("${source.max-wait:30000}")
-    private int maxWait;
+    @Getter
+    private long maxWait;
 
     @Value("${spring.datasource.time-between-eviction-runs-millis}")
-    private int timeBetweenEvictionRunsMillis;
+    @Getter
+    private long timeBetweenEvictionRunsMillis;
 
     @Value("${spring.datasource.min-evictable-idle-time-millis}")
-    private int minEvictableIdleTimeMillis;
+    @Getter
+    private long minEvictableIdleTimeMillis;
 
     @Value("${spring.datasource.test-while-idle}")
+    @Getter
     private boolean testWhileIdle;
 
     @Value("${spring.datasource.test-on-borrow}")
+    @Getter
     private boolean testOnBorrow;
 
     @Value("${spring.datasource.test-on-return}")
+    @Getter
     private boolean testOnReturn;
 
     @Value("${source.break-after-acquire-failure:true}")
+    @Getter
     private boolean breakAfterAcquireFailure;
 
     @Value("${source.connection-error-retry-attempts:0}")
+    @Getter
     private int connectionErrorRetryAttempts;
 
     @Value("${source.query-timeout:600000}")
+    @Getter
     private int queryTimeout;
 
-    private static volatile Map<String, DruidDataSource> map = new HashMap<>();
+    private static volatile Map<String, DruidDataSource> dataSourceMap = new HashMap<>();
 
     public synchronized void removeDatasource(String jdbcUrl, String username, String password, String version, boolean isExt) {
-        String key = getKey(jdbcUrl, username, password, version, isExt);
+        String key = SourceUtils.getKey(jdbcUrl, username, password, version, isExt);
 
-        if (map.containsKey(key)) {
-            DruidDataSource druidDataSource = map.get(key);
-            if (!druidDataSource.isEnable()) {
-                druidDataSource.close();
-                map.remove(key);
-            }
+        if (dataSourceMap.containsKey(key)) {
+            DruidDataSource druidDataSource = dataSourceMap.get(key);
+            druidDataSource.close();
+            dataSourceMap.remove(key);
         }
     }
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password, String database, String version, boolean isExt) throws SourceException {
-        String key = getKey(jdbcUrl, username, password, version, isExt);
+        String key = SourceUtils.getKey(jdbcUrl, username, password, version, isExt);
 
-        if (map.containsKey(key) && map.get(key) != null) {
-            DruidDataSource druidDataSource = map.get(key);
-            if (druidDataSource.isEnable()) {
+        if (dataSourceMap.containsKey(key) && dataSourceMap.get(key) != null) {
+            DruidDataSource druidDataSource = dataSourceMap.get(key);
+            if (!druidDataSource.isClosed()) {
                 return druidDataSource;
             } else {
-                druidDataSource.close();
-                map.remove(key);
+                dataSourceMap.remove(key);
             }
         }
 
-        DruidDataSource instance = new JdbcDataSource();
+        DruidDataSource instance = new DruidDataSource();
 
         if (StringUtils.isEmpty(version) || !isExt || JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
             String className = SourceUtils.getDriverClassName(jdbcUrl, null);
@@ -151,23 +160,7 @@ public class JdbcDataSource extends DruidDataSource {
             log.error("Exception during pool initialization", e);
             throw new SourceException(e.getMessage());
         }
-        map.put(key, instance);
+        dataSourceMap.put(key, instance);
         return instance;
-    }
-
-    public static String getKey(String jdbcUrl, String username, String password, String version, boolean isExt) {
-        StringBuilder sb = new StringBuilder();
-        if (!StringUtils.isEmpty(username)) {
-            sb.append(username);
-        }
-        if (!StringUtils.isEmpty(password)) {
-            sb.append(Consts.COLON).append(password);
-        }
-        sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
-        if (isExt && !StringUtils.isEmpty(version)) {
-            sb.append(Consts.COLON).append(version);
-        }
-
-        return MD5Util.getMD5(sb.toString(), true, 64);
     }
 }

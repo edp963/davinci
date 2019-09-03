@@ -1,4 +1,5 @@
 import React from 'react'
+import produce from 'immer'
 import { uuid } from 'utils/util'
 import { IDataParams } from '../../OperatingPanel'
 import { IDataParamSource } from '../../Dropbox'
@@ -64,15 +65,19 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   private getCurrentTableColumns (props: ITableSectionProps) {
     const { dataParams } = props
     const keyNames = ['cols', 'metrics', 'rows']
-    const validColumns: IDataParamSource[] = Object.entries(dataParams).reduce((acc, [key, value]) => {
-      if (!~keyNames.indexOf(key)) { return acc }
-      if (key !== 'metrics') { return acc.concat(value.items) }
 
-      return acc.concat(value.items.map((item) => ({
-        ...item,
-        alias: this.getColumnDisplayName(item)
-      })))
-    }, [])
+    const validColumns: IDataParamSource[] = produce(dataParams, (draft) => {
+      const columns = Object.entries(draft).reduce((acc, [key, value]) => {
+        if (!~keyNames.indexOf(key)) { return acc }
+        if (key !== 'metrics') { return acc.concat(value.items) }
+
+        return acc.concat(value.items.map((item) => ({
+          ...item,
+          alias: this.getColumnDisplayName(item)
+        })))
+      }, [])
+      return columns
+    })
     return validColumns
   }
 
@@ -80,54 +85,58 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     const { config } = props
     const columns = [...validColumns]
 
-    const localHeaderConfig: ITableHeaderConfig[] = [...config.headerConfig]
+    const localHeaderConfig = produce(config.headerConfig, (draft) => {
+      this.traverseHeaderConfig(draft, columns)
 
-    this.traverseHeaderConfig(localHeaderConfig, columns)
+      let dimensionIdx = 0
+      columns.forEach((c) => {
+        const cfg = {
+          key: uuid(5),
+          headerName: c.name,
+          alias: this.getColumnDisplayName(c),
+          visualType: c.visualType,
+          isGroup: false,
+          style: { ...DefaultTableCellStyle },
+          children: null
+        }
 
-    let dimensionIdx = 0
-    columns.forEach((c) => {
-      const cfg = {
-        key: uuid(5),
-        headerName: c.name,
-        alias: this.getColumnDisplayName(c),
-        visualType: c.visualType,
-        isGroup: false,
-        style: { ...DefaultTableCellStyle },
-        children: null
-      }
+        if (c.agg) {
+          draft.push(cfg)
+        } else {
+          draft.splice(dimensionIdx++, 0, cfg)
+        }
+      })
 
-      if (c.agg) {
-        localHeaderConfig.push(cfg)
-      } else {
-        localHeaderConfig.splice(dimensionIdx++, 0, cfg)
-      }
     })
-
     return localHeaderConfig
   }
 
   private getValidColumnConfig = (props: ITableSectionProps, validColumns: IDataParamSource[]) => {
     const { config } = props
-    const validColumnConfig: ITableColumnConfig[] = []
 
-    validColumns.forEach((column) => {
-      const existedConfig = config.columnsConfig.find((item) => item.columnName === column.name)
-      if (existedConfig) {
-        existedConfig.alias = this.getColumnDisplayName(column)
-        existedConfig.visualType = column.visualType
-        validColumnConfig.push(existedConfig)
-      } else {
-        validColumnConfig.push({
-          columnName: column.name,
-          alias: this.getColumnDisplayName(column),
-          visualType: column.visualType,
-          styleType: TableCellStyleTypes.Column,
-          style: { ...DefaultTableCellStyle },
-          conditionStyles: []
-        })
-      }
+    const validColumnConfig = produce(config.columnsConfig, (draft) => {
+      const config: ITableColumnConfig[] = []
+
+      validColumns.forEach((column) => {
+        const existedConfig = draft.find((item) => item.columnName === column.name)
+        if (existedConfig) {
+          existedConfig.alias = this.getColumnDisplayName(column)
+          existedConfig.visualType = column.visualType
+          config.push(existedConfig)
+        } else {
+          config.push({
+            columnName: column.name,
+            alias: this.getColumnDisplayName(column),
+            visualType: column.visualType,
+            styleType: TableCellStyleTypes.Column,
+            style: { ...DefaultTableCellStyle },
+            conditionStyles: []
+          })
+        }
+      })
+
+      return config
     })
-
     return validColumnConfig
   }
 
@@ -214,7 +223,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   private deleteColumnConfig = () => {
     const { onChange } = this.props
     Modal.confirm({
-      title: '确认删除单元格样式与条件？',
+      title: '确认删除表格数据列设置？',
       onOk: () => {
         onChange('columnsConfig', [])
       }
@@ -299,7 +308,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
         </div>
         <div className={styles.paneBlock}>
           <h4>
-            <span>单元格样式与条件</span>
+            <span>表格数据列</span>
             <Icon type="delete" onClick={this.deleteColumnConfig} />
             <Icon type="edit" onClick={this.showColumnConfig} />
           </h4>

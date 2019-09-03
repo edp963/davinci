@@ -511,6 +511,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       categoryDragItems,
       valueDragItems
     } = this.state
+
     const dragged = stateDragged || modalCachedData
     const from = dragged.from && dragged.from !== name && dataParams[dragged.from]
     const destination = dataParams[name]
@@ -583,6 +584,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       dragged: null,
       modalCachedData: null
     })
+
     this.setWidgetProps(dataParams, styleParams)
   }
 
@@ -784,7 +786,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     return [dcount, mcount]
   }
 
-  public flipPage = (pageNo: number, pageSize: number) => {
+  public flipPage = (pageNo: number, pageSize: number, orders) => {
     const { dataParams, styleParams, pagination } = this.state
     this.setWidgetProps(dataParams, styleParams, {
       renderType: 'rerender',
@@ -793,7 +795,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         pageNo,
         pageSize
       },
-      queryMode: WorkbenchQueryMode.Immediately
+      queryMode: WorkbenchQueryMode.Immediately,
+      orders
     })
   }
 
@@ -812,13 +815,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     options?: {
       renderType?: RenderType,
       updatedPagination?: IPaginationParams,
-      queryMode?: WorkbenchQueryMode
+      queryMode?: WorkbenchQueryMode,
+      orders?
     }
   ) => {
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, yAxis } = dataParams
     const { selectedView, onLoadData, onSetWidgetProps } = this.props
     const { mode, chartModeSelectedChart, pagination } = this.state
-
     let renderType
     let updatedPagination
     let queryMode = this.props.queryMode
@@ -893,7 +896,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     Object.values(dataParams)
       .reduce<IDataParamSource[]>((items, param: IDataParamProperty) => items.concat(param.items), [])
       .forEach((item) => {
-        const column = item.type === 'category' ? item.name : `${item.agg}(${decodeMetricName(item.name)})`
+        let column = item.name
+        if (item.type === 'value') {
+          column = decodeMetricName(item.name)
+          if (!styleParams.table || !styleParams.table.withNoAggregators) {
+            column = `${item.agg}(${column})`
+          }
+        }
         if (item.sort && [FieldSortTypes.Asc, FieldSortTypes.Desc].includes(item.sort.sortType)) {
           orders.push({
             column,
@@ -940,11 +949,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
       updatedPagination.withPaging = withPaging
     }
-
+    // 生成filter
+    let requestParamsFilters = []
+    filters.items.forEach((item) => {
+      requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
+    })
     const requestParams = {
       groups,
       aggregators,
-      filters: filters.items.map((i) => i.config.sql),
+     // filters: filters.items.map((i) => [].concat(i.config.sql)),
+      filters: requestParamsFilters,
       orders,
       pageNo: updatedPagination.pageNo,
       pageSize: updatedPagination.pageSize,
@@ -952,6 +966,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       cache: false,
       expired: 0,
       flush: false
+    }
+
+    if (options) {
+      if (options.orders) {
+        requestParams.orders = requestParams.orders.concat(options.orders)
+      }
     }
 
     const requestParamString = JSON.stringify(requestParams)
@@ -1214,6 +1234,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           size.value[key] = value
         }
     }
+    console.log('dropboxValueChange')
     this.setWidgetProps(dataParams, styleParams, { renderType: 'refresh' })
   }
 
@@ -1655,6 +1676,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             {bar && <BarSection
               onChange={this.styleChange('bar')}
               config={bar}
+              dataParams={dataParams}
             />}
             {radar && <RadarSection config={radar} onChange={this.styleChange2} />}
             { mapLabelLayerType

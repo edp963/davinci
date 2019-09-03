@@ -3,7 +3,6 @@ import React from 'react'
 import { ISpecConfig } from './types'
 import {
   LineSection,
-  BarSection,
   PieSection,
   FunnelSection,
   MapSection,
@@ -36,9 +35,6 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
     switch (name) {
       case 'line':
         renderHtml = <LineSection spec={config} title={title} onChange={this.specChange} />
-        break
-      case 'bar':
-        renderHtml = <BarSection spec={config} title={title} onChange={this.specChange} />
         break
       case 'pie':
         renderHtml = <PieSection spec={config} title={title} onChange={this.specChange} />

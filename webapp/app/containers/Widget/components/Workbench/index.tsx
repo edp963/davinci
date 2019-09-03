@@ -33,7 +33,7 @@ import 'assets/less/resizer.less'
 import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { IWorkbenchSettings, WorkbenchQueryMode } from './types'
 
-import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
+import { widgetDimensionMigrationRecorder, barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
 
 const styles = require('./Workbench.less')
 
@@ -166,6 +166,9 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       const { controls, cache, expired, computed, autoLoadData, cols, rows, ...rest } = JSON.parse(currentWidget.config)
       const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
       const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
+      if (rest.selectedChart === ChartTypes.Bar) {
+        rest.chartStyles = barChartStylesMigrationRecorder(rest.chartStyles)
+      }
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
@@ -424,8 +427,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     this.props.router.goBack()
   }
 
-  private paginationChange = (pageNo: number, pageSize: number) => {
-    this.operatingPanel.flipPage(pageNo, pageSize)
+  private paginationChange = (pageNo: number, pageSize: number, orders) => {
+    this.operatingPanel.flipPage(pageNo, pageSize, orders)
   }
 
   private chartStylesChange = (propPath: string[], value: string) => {

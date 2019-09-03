@@ -64,7 +64,7 @@ public class SourceUtils {
      */
     DataSource getDataSource(String jdbcUrl, String userename, String password, String database, String version, boolean isExt) throws SourceException {
         if (jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
-            return ESDataSource.getDataSource(jdbcUrl);
+            return ESDataSource.getDataSource(jdbcUrl, userename, password, jdbcDataSource);
         } else {
             return jdbcDataSource.getDataSource(jdbcUrl, userename, password, database, version, isExt);
         }
@@ -82,6 +82,7 @@ public class SourceUtils {
             if (null == connection || connection.isClosed()) {
                 log.info("connection is closed, retry get connection!");
                 releaseDataSource(jdbcUrl, username, password, version, isExt);
+                dataSource = getDataSource(jdbcUrl, username, password, database, version, isExt);
                 connection = dataSource.getConnection();
             }
         } catch (Exception e) {
@@ -100,6 +101,7 @@ public class SourceUtils {
 
         if (null == connection) {
             try {
+                dataSource = getDataSource(jdbcUrl, username, password, database, version, isExt);
                 connection = dataSource.getConnection();
             } catch (SQLException e) {
                 log.error("create connection error, jdbcUrl: {}", jdbcUrl);
@@ -153,14 +155,18 @@ public class SourceUtils {
                     throw new SourceException("Unable to get driver instance: " + jdbcUrl);
                 }
             } else {
-                try {
-                    String className = getDriverClassName(jdbcUrl, null);
-                    Class<?> aClass = Class.forName(className);
-                    if (null == aClass) {
-                        throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
+                if (DataTypeEnum.ELASTICSEARCH.getDesc().equals(dataSourceName)) {
+                    return true;
+                } else {
+                    try {
+                        String className = getDriverClassName(jdbcUrl, null);
+                        Class<?> aClass = Class.forName(className);
+                        if (null == aClass) {
+                            throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
+                        }
+                    } catch (Exception e) {
+                        throw new SourceException("Unable to get driver instance: " + jdbcUrl);
                     }
-                } catch (Exception e) {
-                    throw new SourceException("Unable to get driver instance: " + jdbcUrl);
                 }
             }
             return true;
@@ -220,18 +226,33 @@ public class SourceUtils {
      * 释放失效数据源
      *
      * @param jdbcUrl
-     * @param userename
+     * @param username
      * @param password
      * @param dbVersion
      * @param isExt
      * @return
-     * @throws SourceException
      */
-    private void releaseDataSource(String jdbcUrl, String userename, String password, String dbVersion, boolean isExt) throws SourceException {
+    void releaseDataSource(String jdbcUrl, String username, String password, String dbVersion, boolean isExt) {
         if (jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
-            ESDataSource.removeDataSource(jdbcUrl);
+            ESDataSource.removeDataSource(jdbcUrl, username, password);
         } else {
-            jdbcDataSource.removeDatasource(jdbcUrl, userename, password, dbVersion, isExt);
+            jdbcDataSource.removeDatasource(jdbcUrl, username, password, dbVersion, isExt);
         }
+    }
+
+    public static String getKey(String jdbcUrl, String username, String password, String version, boolean isExt) {
+        StringBuilder sb = new StringBuilder();
+        if (!StringUtils.isEmpty(username)) {
+            sb.append(username);
+        }
+        if (!StringUtils.isEmpty(password)) {
+            sb.append(Consts.COLON).append(password);
+        }
+        sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
+        if (isExt && !StringUtils.isEmpty(version)) {
+            sb.append(Consts.COLON).append(version);
+        }
+
+        return MD5Util.getMD5(sb.toString(), true, 64);
     }
 }

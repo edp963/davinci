@@ -87,4 +87,6 @@ public interface ProjectMapper {
 
 
     Set<Long> getProjectIdsByAdmin(@Param("userId") Long userId);
+
+    int deleteBeforOrgRole(@Param("projectId") Long projectId, @Param("orgId") Long orgId);
 }

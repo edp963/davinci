@@ -315,13 +315,14 @@ export function initiateDownloadTask (id, type, downloadParams?, itemId?) {
   }
 }
 
-export function DownloadTaskInitiated (type, itemId?) {
+export function DownloadTaskInitiated (type, itemId?, statistic?) {
   return {
     type: INITIATE_DOWNLOAD_TASK_SUCCESS,
     payload: {
       type,
       itemId
-    }
+    },
+    statistic
   }
 }
 

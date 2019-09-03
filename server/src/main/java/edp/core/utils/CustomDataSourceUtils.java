@@ -36,7 +36,7 @@ import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
 public class CustomDataSourceUtils {
 
-    private static volatile Map<String, CustomDataSource> map = new HashMap<>();
+    private static volatile Map<String, CustomDataSource> customDataSourceMap = new HashMap<>();
 
     @Getter
     private static volatile Map<String, List<String>> dataSourceVersoin = new HashMap<String, List<String>>();
@@ -44,8 +44,8 @@ public class CustomDataSourceUtils {
     public static CustomDataSource getInstance(String jdbcUrl, String version) {
         String dataSourceName = SourceUtils.getDataSourceName(jdbcUrl);
         String key = getKey(dataSourceName, version);
-        if (map.containsKey(key) && null != map.get(key)) {
-            CustomDataSource customDataSource = map.get(key);
+        if (customDataSourceMap.containsKey(key) && null != customDataSourceMap.get(key)) {
+            CustomDataSource customDataSource = customDataSourceMap.get(key);
             if (null != customDataSource) {
                 return customDataSource;
             }
@@ -116,7 +116,7 @@ public class CustomDataSourceUtils {
                     versoins.add(customDataSource.getVersion());
                 }
                 dataSourceVersoin.put(customDataSource.getName(), versoins);
-                map.put(getKey(customDataSource.getName(), customDataSource.getVersion()), customDataSource);
+                customDataSourceMap.put(getKey(customDataSource.getName(), customDataSource.getVersion()), customDataSource);
             }
         }
     }
