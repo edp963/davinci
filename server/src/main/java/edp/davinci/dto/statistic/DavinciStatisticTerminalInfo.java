@@ -39,6 +39,6 @@ public class DavinciStatisticTerminalInfo {
     private String cpu_architecture;
 
     @NotNull
-    private Timestamp start_time;
+    private Timestamp create_time;
     
 }

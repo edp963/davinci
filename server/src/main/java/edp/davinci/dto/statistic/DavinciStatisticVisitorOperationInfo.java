@@ -6,6 +6,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Data
 @NotNull(message = "visitor operation info cannot be null")
@@ -46,7 +47,11 @@ public class DavinciStatisticVisitorOperationInfo {
 
     private String widget_name;
 
-    private String parameters;
+    private List<Object> variables;
+
+    private List<Object> filters;
+
+    private List<Object> groups;
 
     @NotNull
     private Timestamp create_time;
