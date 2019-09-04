@@ -30,7 +30,7 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
     @Autowired
     private ElasticOperationService elasticOperationService;
 
-    @Autowired
+//    @Autowired
     private SqlUtils sqlUtils;
 
     @Value("${spring.datasource.url}")
@@ -53,16 +53,16 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
         if("true".equalsIgnoreCase(statistic_open)){
             this.statisticOpen = true;
         }
-
-        String elastic_urls = environment.getProperty("buried_points.elastic_urls");
-        if(StringUtils.isBlank(elastic_urls)){
-            this.sqlUtils = this.sqlUtils.init(durl, username, password);
-        }
     }
 
     @Override
     public <T> void insert(List<T> infoList, Class clz){
-        if(!statisticOpen){
+        if(statisticOpen){
+            String elastic_urls = environment.getProperty("buried_points.elastic_urls");
+            if(StringUtils.isBlank(elastic_urls) && null == this.sqlUtils){
+                this.sqlUtils = new SqlUtils().init(durl, username, password, null, false);
+            }
+        }else{
             return;
         }
 
