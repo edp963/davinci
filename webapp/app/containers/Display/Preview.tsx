@@ -11,8 +11,8 @@ import reducer from './reducer'
 import reducerWidget from '../Widget/reducer'
 import saga from './sagas'
 import sagaWidget from '../Widget/sagas'
-import reducerBizlogic from '../Bizlogic/reducer'
-import sagaBizlogic from '../Bizlogic/sagas'
+import reducerView from '../View/reducer'
+import sagaView from '../View/sagas'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 
@@ -22,7 +22,7 @@ import Container from '../../components/Container'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 
 import { makeSelectWidgets } from '../Widget/selectors'
-import { makeSelectBizlogics } from '../Bizlogic/selectors'
+import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
 import {
   makeSelectCurrentDisplay,
   makeSelectCurrentSlide,
@@ -31,10 +31,8 @@ import {
   makeSelectCurrentLayersInfo } from './selectors'
 
 import { hideNavigator } from '../App/actions'
-import {
-  loadDataFromItem,
-  loadCascadeSource // TODO global filter in Display Preview
-} from '../Bizlogic/actions'
+import { ViewActions } from '../View/actions'
+const { loadViewDataFromVizItem } = ViewActions // @TODO global filter in Display Preview
 import {
   editCurrentDisplay,
   loadDisplayDetail,
@@ -51,16 +49,13 @@ const stylesDashboard = require('../Dashboard/Dashboard.less')
 import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
 import { IQueryConditions, IDataRequestParams } from '../Dashboard/Grid'
-
-interface IBizdataIncomeParamObject {
-  k: string
-  v: string
-}
+import { IFormedViews } from '../View/types'
 
 interface IPreviewProps {
   params: any
   widgets: any[]
-  bizlogics: any[]
+  views: any[]
+  formedViews: IFormedViews
   currentDisplay: any
   currentSlide: any
   currentLayers: any[]
@@ -81,7 +76,7 @@ interface IPreviewProps {
   }
   onHideNavigator: () => void
   onLoadDisplayDetail: (projectId: number, displayId: number) => void
-  onLoadDataFromItem: (
+  onLoadViewDataFromVizItem: (
     renderType: RenderType,
     layerItemId: number,
     viewId: number,
@@ -140,51 +135,53 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           nextScaleWidth = clientWidth / width
       }
       if (scaleHeight !== nextScaleHeight || scaleWidth !== nextScaleWidth) {
-        if (nextScaleHeight === nextScaleWidth) {
-          this.scaleViewport(nextScaleHeight)
-          this.setState({ scale: [1, 1] })
-        } else {
-          this.setState({ scale: [nextScaleWidth, nextScaleHeight] })
-        }
+        this.setState({
+          scale: [nextScaleWidth, nextScaleHeight]
+        })
       }
     }
-  }
-
-  private scaleViewport = (scale: number) => {
-    const viewport = document.querySelector('meta[name=viewport]')
-    viewport.setAttribute('content', `width=device-width, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=0`)
   }
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
     const {
       currentLayersInfo,
       widgets,
-      onLoadDataFromItem
+      onLoadViewDataFromVizItem
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryConditions = currentLayersInfo[itemId].queryConditions
+
+    let tempFilters
     let linkageFilters
     let globalFilters
     let variables
     let linkageVariables
     let globalVariables
+    let pagination
+    let nativeQuery
 
     if (queryConditions) {
+      tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
       linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
       globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
+      pagination = queryConditions.pagination || cachedQueryConditions.pagination
+      nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
     } else {
+      tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
       globalFilters = cachedQueryConditions.globalFilters
       variables = cachedQueryConditions.variables
       linkageVariables = cachedQueryConditions.linkageVariables
       globalVariables = cachedQueryConditions.globalVariables
+      pagination = cachedQueryConditions.pagination
+      nativeQuery = cachedQueryConditions.nativeQuery
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -192,6 +189,13 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       column: decodeMetricName(m.name),
       func: m.agg
     }))
+
+    if (secondaryMetrics && secondaryMetrics.length) {
+      aggregators = aggregators.concat(secondaryMetrics.map((second) => ({
+        column: decodeMetricName(second.name),
+        func: second.agg
+      })))
+    }
 
     if (color) {
       groups = groups.concat(color.items.map((c) => c.name))
@@ -229,7 +233,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         })))
     }
 
-    onLoadDataFromItem(
+    onLoadViewDataFromVizItem(
       renderType,
       itemId,
       widget.viewId,
@@ -237,6 +241,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         groups,
         aggregators,
         filters: filters.map((i) => i.config.sql),
+        tempFilters,
         linkageFilters,
         globalFilters,
         variables,
@@ -244,35 +249,73 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         globalVariables,
         orders,
         cache,
-        expired
+        expired,
+        pagination,
+        nativeQuery
       }
     )
   }
 
-  private getSlideStyle = (slideParams) => {
-    const { scale } = this.state
+  private getPreviewStyle = (slideParams) => {
+    const { scaleMode } = slideParams
+    const previewStyle: React.CSSProperties = {}
+    switch (scaleMode) {
+      case 'scaleWidth':
+        previewStyle.overflowY = 'auto'
+        break
+      case 'scaleHeight':
+        previewStyle.overflowX = 'auto'
+        break
+      case 'noScale':
+        previewStyle.overflow = 'auto'
+        break
+      case 'scaleFull':
+      default:
+        break
+    }
+    return previewStyle
+  }
 
+  private getSlideStyle = (slideParams, scale: [number, number]) => {
     const {
       width,
       height,
+      scaleMode,
       backgroundColor,
       backgroundImage
     } = slideParams
 
     let slideStyle: React.CSSProperties
+
+    const { clientWidth, clientHeight } = document.body
+    const [scaleX, scaleY] = scale
+
+    let translateX = (scaleX - 1) / 2
+    let translateY = (scaleY - 1) / 2
+    translateX += Math.max(0, (clientWidth - scaleX * width) / (2 * width))
+    translateY += Math.max(0, (clientHeight - scaleY * height) / (2 * height))
+
+    const translate = `translate(${translateX * 100}%, ${translateY * 100}%)`
+
     slideStyle  = {
       overflow: 'visible',
-      width: `${width * scale[0]}px`,
-      height: `${height * scale[1]}px`,
-      backgroundSize: 'cover'
+      width,
+      height,
+      transform: `${translate} scale(${scaleX}, ${scaleY})`
     }
+
+    let backgroundStyle: React.CSSProperties | CSSStyleDeclaration = slideStyle
+    if (scaleMode === 'scaleWidth' && screen.width <= 1024) {
+      backgroundStyle = document.body.style
+    }
+    backgroundStyle.backgroundSize = 'cover'
 
     if (backgroundColor) {
       const rgb = backgroundColor.join()
-      slideStyle.backgroundColor = `rgba(${rgb})`
+      backgroundStyle.backgroundColor = `rgba(${rgb})`
     }
     if (backgroundImage) {
-      slideStyle.backgroundImage = `url("${backgroundImage}")`
+      backgroundStyle.backgroundImage = `url("${backgroundImage}")`
     }
     return slideStyle
   }
@@ -280,7 +323,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
   public render () {
     const {
       widgets,
-      bizlogics,
+      views,
+      formedViews,
       currentDisplay,
       currentSlide,
       currentLayers,
@@ -288,10 +332,12 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     if (!currentDisplay) { return null }
 
     const { scale } = this.state
-    const slideStyle = this.getSlideStyle(JSON.parse(currentSlide.config).slideParams)
+    const slideParams = JSON.parse(currentSlide.config).slideParams
+    const previewStyle = this.getPreviewStyle(slideParams)
+    const slideStyle = this.getSlideStyle(slideParams, scale)
     const layerItems =  Array.isArray(widgets) ? currentLayers.map((layer) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
-      const view = widget && bizlogics.find((b) => b.id === widget.viewId)
+      const view = widget && formedViews[widget.viewId]
       const layerId = layer.id
 
       const { polling, frequency } = JSON.parse(layer.params)
@@ -302,7 +348,6 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           key={layer.id}
           ref={(f) => this[`layerId_${layer.id}`]}
           pure={true}
-          scale={scale}
           layer={layer}
           itemId={layerId}
           widget={widget}
@@ -319,7 +364,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       )
     }) : null
     return (
-      <div className={styles.preview}>
+      <div className={styles.preview} style={previewStyle}>
         <div className={styles.board} style={slideStyle}>
           {layerItems}
         </div>
@@ -330,7 +375,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
 
 const mapStateToProps = createStructuredSelector({
   widgets: makeSelectWidgets(),
-  bizlogics: makeSelectBizlogics(),
+  views: makeSelectViews(),
+  formedViews: makeSelectFormedViews(),
   currentDisplay: makeSelectCurrentDisplay(),
   currentSlide: makeSelectCurrentSlide(),
   displays: makeSelectDisplays(),
@@ -342,7 +388,7 @@ export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadDisplayDetail: (projectId, displayId) => dispatch(loadDisplayDetail(projectId, displayId)),
-    onLoadDataFromItem: (renderType, itemId, viewId, requestParams) => dispatch(loadDataFromItem(renderType, itemId, viewId, requestParams, 'display'))
+    onLoadViewDataFromVizItem: (renderType, itemId, viewId, requestParams) => dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'display'))
   }
 }
 
@@ -352,16 +398,16 @@ const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget 
 const withSaga = injectSaga({ key: 'display', saga })
 const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
 
-const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: reducerBizlogic })
-const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: sagaBizlogic })
+const withReducerView = injectReducer({ key: 'view', reducer: reducerView })
+const withSagaView = injectSaga({ key: 'view', saga: sagaView })
 
 const withConnect = connect<{}, {}, IPreviewProps>(mapStateToProps, mapDispatchToProps)
 
 export default compose(
   withReducer,
   withReducerWidget,
-  withReducerBizlogic,
+  withReducerView,
   withSaga,
   withSagaWidget,
-  withSagaBizlogic,
+  withSagaView,
   withConnect)(Preview)

@@ -39,7 +39,7 @@ export function* getDisplay (action) {
     }
     const display = payload
     const { slides, widgets } = display
-    yield put(displayLoaded(display, slides[0], widgets))
+    yield put(displayLoaded(display, slides[0], widgets || [])) // @FIXME should return empty array in response
     resolve(display, slides[0], widgets)
   } catch (err) {
     message.destroy()
@@ -54,13 +54,16 @@ export function* getData (action) {
   const { renderType, layerId, dataToken, requestParams } = payload
   const {
     filters,
+    tempFilters,
     linkageFilters,
     globalFilters,
     variables,
     linkageVariables,
     globalVariables,
+    pagination,
     ...rest
   } = requestParams
+  const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   try {
     const response = yield call(request, {
@@ -68,8 +71,10 @@ export function* getData (action) {
       url: `${api.share}/data/${dataToken}`,
       data: {
         ...rest,
-        filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: variables.concat(linkageVariables).concat(globalVariables)
+        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
+        params: variables.concat(linkageVariables).concat(globalVariables),
+        pageSize,
+        pageNo
       }
     })
     const { resultList } = response.payload

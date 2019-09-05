@@ -1,48 +1,56 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import edp.core.enums.DataTypeEnum;
-import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
+import edp.core.exception.UnAuthorizedExecption;
+import edp.core.model.DBTables;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
-import edp.core.utils.TokenUtils;
-import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.*;
 import edp.davinci.core.model.DataUploadEntity;
 import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.core.utils.ExcelUtils;
-import edp.davinci.dao.ProjectMapper;
 import edp.davinci.dao.SourceMapper;
 import edp.davinci.dao.ViewMapper;
+import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.sourceDto.*;
-import edp.davinci.model.*;
+import edp.davinci.model.Source;
+import edp.davinci.model.User;
+import edp.davinci.model.View;
+import edp.davinci.service.ProjectService;
 import edp.davinci.service.SourceService;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +60,6 @@ import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,25 +71,24 @@ import java.util.concurrent.Future;
 
 @Slf4j
 @Service("sourceService")
-public class SourceServiceImpl extends CommonService<Source> implements SourceService {
+public class SourceServiceImpl implements SourceService {
+
+    private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
-    private TokenUtils tokenUtils;
+    private SourceMapper sourceMapper;
 
     @Autowired
-    SourceMapper sourceMapper;
+    private SqlUtils sqlUtils;
 
     @Autowired
-    SqlUtils sqlUtils;
+    private ViewMapper viewMapper;
 
     @Autowired
-    ProjectMapper projectMapper;
+    private FileUtils fileUtils;
 
     @Autowired
-    ViewMapper viewMapper;
-
-    @Autowired
-    FileUtils fileUtils;
+    private ProjectService projectService;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -98,52 +104,53 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      *
      * @param projectId
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getSources(Long projectId, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        Project project = projectMapper.getById(projectId);
-
-        if (null == project) {
-            log.info("project {} not found", project);
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
-
-        if (!allowRead(project, user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+    public List<Source> getSources(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        ProjectDetail projectDetail = null;
+        try {
+            projectDetail = projectService.getProjectDetail(projectId, user, false);
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (UnAuthorizedExecption e) {
+            return null;
         }
 
         List<Source> sources = sourceMapper.getByProject(projectId);
 
-        if (null != sources && sources.size() > 0) {
-
-            //获取当前用户在organization的role
-            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-
-            //当前用户是project的创建者和organization的owner，直接返回
-            if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-                //查询project所属team中当前用户最高角色
-                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
-
-                //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
-                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-
-                    //查询当前用户在的 project所属team对project source的最高权限
-                    short maxSourcePermission = relTeamProjectMapper.getMaxSourcePermission(projectId, user.getId());
-
-                    if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                        //隐藏
-                        sources = null;
-                    }
-                }
+        if (!CollectionUtils.isEmpty(sources)) {
+            ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+            if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+                sources = null;
             }
         }
+        return sources;
+    }
 
+    @Override
+    public SourceDetail getSourceDetail(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        return resultMap.successAndRefreshToken(request).payloads(sources);
+        Source source = sourceMapper.getById(id);
+
+        if (null == source) {
+            throw new NotFoundException("source is not found");
+        }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(source.getProjectId(), user, false), user);
+
+        if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+            throw new UnAuthorizedExecption();
+        }
+
+        SourceDetail sourceDetail = new SourceDetail();
+        BeanUtils.copyProperties(source, sourceDetail);
+
+        if (projectPermission.getSourcePermission() == UserPermissionEnum.READ.getPermission()) {
+            sourceDetail.setConfig(null);
+        }
+
+        return sourceDetail;
     }
 
     /**
@@ -151,62 +158,44 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      *
      * @param sourceCreate
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap createSource(SourceCreate sourceCreate, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public Source createSource(SourceCreate sourceCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        ProjectDetail projectDetail = projectService.getProjectDetail(sourceCreate.getProjectId(), user, false);
 
-        Project project = projectMapper.getById(sourceCreate.getProjectId());
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        if (projectPermission.getSourcePermission() < UserPermissionEnum.WRITE.getPermission()) {
+            throw new UnAuthorizedExecption("you have not permission to create source");
+        }
 
         if (isExist(sourceCreate.getName(), null, sourceCreate.getProjectId())) {
             log.info("the source {} name is already taken", sourceCreate.getName());
-            return resultMap.failAndRefreshToken(request).message("the source name is already taken");
-        }
-
-        if (null == project) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
-
-        //校验权限
-        if (!allowWrite(project, user)) {
-            log.info("user {} have not permisson to create source", user.getUsername());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to create source");
+            throw new ServerException("the source name is already taken");
         }
 
         if (null == SourceTypeEnum.typeOf(sourceCreate.getType())) {
-            return resultMap.failAndRefreshToken(request).message("Invalid source type");
+            throw new ServerException("Invalid source type");
         }
 
         //测试连接
-        SourceConfig config = sourceCreate.getConfig();
-        boolean testConnection = false;
-        try {
-            testConnection = sqlUtils.init(config.getUrl(), config.getUsername(), config.getPassword()).testConnection();
-        } catch (SourceException e) {
-            log.error(e.getMessage());
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
-        }
+        boolean testConnection = isTestConnection(sourceCreate.getConfig());
 
         if (testConnection) {
-            Source source = new Source();
-            source.setName(sourceCreate.getName());
-            source.setDescription(sourceCreate.getDescription());
-            source.setType(sourceCreate.getType());
-            source.setProjectId(sourceCreate.getProjectId());
+            Source source = new Source().createdBy(user.getId());
+            BeanUtils.copyProperties(sourceCreate, source);
             source.setConfig(JSONObject.toJSONString(sourceCreate.getConfig()));
 
             int insert = sourceMapper.insert(source);
             if (insert > 0) {
-                return resultMap.successAndRefreshToken(request).payload(source);
+                optLogger.info("source ({}) create by user (:{})", source.toString(), user.getId());
+                return source;
             } else {
-                return resultMap.failAndRefreshToken(request).message("create source fail");
+                throw new ServerException("create source fail");
             }
         } else {
-            return resultMap.failAndRefreshToken(request).message("get source connection fail");
+            throw new ServerException("get source connection fail");
         }
     }
 
@@ -215,63 +204,50 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      *
      * @param sourceInfo
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap updateSource(SourceInfo sourceInfo, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        SourceWithProject sourceWithProject = sourceMapper.getSourceWithProjectById(sourceInfo.getId());
-
-        if (null == sourceWithProject) {
-            return resultMap.failAndRefreshToken(request).message("source not found");
+    public Source updateSource(SourceInfo sourceInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Source source = sourceMapper.getById(sourceInfo.getId());
+        if (null == source) {
+            log.warn("source (:{}) is not found", sourceInfo.getId());
+            throw new NotFoundException("this source is not found");
         }
 
-        Project project = sourceWithProject.getProject();
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
-        if (isExist(sourceInfo.getName(), sourceInfo.getId(), project.getId())) {
+        if (projectPermission.getSourcePermission() < UserPermissionEnum.WRITE.getPermission()) {
+            throw new UnAuthorizedExecption("you have not permission to update this source");
+        }
+
+        if (isExist(sourceInfo.getName(), sourceInfo.getId(), projectDetail.getId())) {
             log.info("the source {} name is already taken", sourceInfo.getName());
-            return resultMap.failAndRefreshToken(request).message("the source name is already taken");
-        }
-
-
-        if (null == project) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
-
-        //校验权限
-        if (!allowWrite(project, user)) {
-            log.info("user {} have not permisson to update the source {}", user.getUsername(), sourceInfo.getId());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to update the source");
+            throw new ServerException("the source name is already taken");
         }
 
         //测试连接
-        SourceConfig config = sourceInfo.getConfig();
-        boolean testConnection = false;
-        try {
-            testConnection = sqlUtils.init(config.getUrl(), config.getUsername(), config.getPassword()).testConnection();
-        } catch (SourceException e) {
-            log.error(e.getMessage());
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
-        }
+        boolean testConnection = isTestConnection(sourceInfo.getConfig());
 
         if (testConnection) {
-            Source source = new Source();
-            source.setId(sourceInfo.getId());
-            source.setName(sourceInfo.getName());
-            source.setDescription(sourceInfo.getDescription());
-            source.setType(sourceInfo.getType());
-            source.setProjectId(project.getId());
+            String origin = source.toString();
+
+            BeanUtils.copyProperties(sourceInfo, source);
+            source.updatedBy(user.getId());
             source.setConfig(JSONObject.toJSONString(sourceInfo.getConfig()));
 
-            sourceMapper.update(source);
-            return resultMap.successAndRefreshToken(request);
+            int update = sourceMapper.update(source);
+            if (update > 0) {
+                optLogger.info("source ({}) update by user(:{}), origin ( {} )", source.toString(), user.getId(), origin);
+                return source;
+            } else {
+                log.info("update source fail: {}", source.toString());
+                throw new ServerException("update source fail: unspecified error");
+            }
         } else {
-            return resultMap.failAndRefreshToken(request).message("get source connection fail");
+            throw new ServerException("get source connection fail");
         }
     }
 
@@ -280,66 +256,60 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      *
      * @param id
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap deleteSrouce(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public boolean deleteSrouce(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        SourceWithProject sourceWithProject = sourceMapper.getSourceWithProjectById(id);
-
-        if (null == sourceWithProject) {
-            log.info("source {} not found", id);
-            return resultMap.failAndRefreshToken(request).message("source not found");
+        Source source = sourceMapper.getById(id);
+        if (null == source) {
+            log.info("source (:{}) is not found", id);
+            throw new NotFoundException("this source is not found");
         }
 
-        if (null == sourceWithProject.getProject()) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
-        //校验权限
-        if (!allowDelete(sourceWithProject.getProject(), user)) {
-            log.info("user {} have not permisson to delete the source {}", user.getUsername(), id);
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to delete the source");
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+
+        if (projectPermission.getSourcePermission() < UserPermissionEnum.DELETE.getPermission()) {
+            throw new UnAuthorizedExecption("you have not permission to delete this source");
         }
 
         List<View> viewList = viewMapper.getBySourceId(id);
-        if (null != viewList && viewList.size() > 0) {
-            log.info("There is at least one view using the source({}), it is can not be deleted", id);
-            return resultMap.failAndRefreshToken(request).message("There is at least one view using the source, it is can not be deleted");
+        if (!CollectionUtils.isEmpty(viewList)) {
+            log.warn("There is at least one view using the source({}), it is can not be deleted", id);
+            throw new ServerException("There is at least one view using the source, it is can not be deleted");
         }
 
-        sourceMapper.deleteById(id);
-
-        return resultMap.successAndRefreshToken(request);
+        int i = sourceMapper.deleteById(id);
+        if (i > 0) {
+            optLogger.info("source ({}) delete by user(:{})", source.toString(), user.getId());
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
      * 测试连接
      *
      * @param sourceTest
-     * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap testSource(SourceTest sourceTest, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public boolean testSource(SourceTest sourceTest) throws ServerException {
         boolean testConnection = false;
         try {
             testConnection = sqlUtils.init(sourceTest.getUrl(), sourceTest.getUsername(), sourceTest.getPassword()).testConnection();
         } catch (SourceException e) {
             log.error(e.getMessage());
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+            throw new ServerException(e.getMessage());
         }
         if (testConnection) {
-            return resultMap.successAndRefreshToken(request);
+            return true;
         } else {
-            return resultMap.failAndRefreshToken(request).message("get source connection fail");
+            throw new ServerException("get source connection fail");
         }
     }
 
@@ -349,31 +319,22 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      * @param sourceId
      * @param uploadMeta
      * @param user
-     * @param request
      * @return
      */
     @Override
-    @Transactional
-    public ResultMap validCsvmeta(Long sourceId, UploadMeta uploadMeta, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public void validCsvmeta(Long sourceId, UploadMeta uploadMeta, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         Source source = sourceMapper.getById(sourceId);
         if (null == source) {
-            log.info("source ({}) not found", sourceId);
-            return resultMap.failAndRefreshToken(request).message("source not found");
+            log.info("source (:{}) not found", sourceId);
+            throw new ServerException("source not found");
         }
 
-        Project project = projectMapper.getById(source.getProjectId());
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
-        if (null == project) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("Invalid source");
-        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
-        //校验权限
-        if (!allowWrite(project, user)) {
-            log.info("user {} have not permisson to upload csv file in this source {}", user.getUsername(), source.getId());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to upload csv file in this source");
+        if (projectPermission.getSourcePermission() < UserPermissionEnum.WRITE.getPermission()) {
+            throw new UnAuthorizedExecption("you have not permisson to upload csv file in this source");
         }
 
         if (uploadMeta.getMode() != UploadModeEnum.REPLACE.getMode()) {
@@ -381,19 +342,18 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
                 boolean tableIsExist = sqlUtils.init(source).tableIsExist(uploadMeta.getTableName());
                 if (uploadMeta.getMode() == UploadModeEnum.NEW.getMode()) {
                     if (tableIsExist) {
-                        return resultMap.failAndRefreshToken(request).message("table " + uploadMeta.getTableName() + " is already exist");
+                        throw new ServerException("table " + uploadMeta.getTableName() + " is already exist");
                     }
                 } else {
                     if (!tableIsExist) {
-                        return resultMap.failAndRefreshToken(request).message("table " + uploadMeta.getTableName() + " is not exist");
+                        throw new ServerException("table " + uploadMeta.getTableName() + " is not exist");
                     }
                 }
             } catch (SourceException e) {
                 log.error(e.getMessage());
-                return resultMap.failAndRefreshToken(request).message(e.getMessage());
+                throw new ServerException(e.getMessage());
             }
         }
-        return resultMap.successAndRefreshToken(request);
     }
 
     /**
@@ -404,51 +364,43 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      * @param file
      * @param user
      * @param type
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user, String type, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public Boolean dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user, String type) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
+        Source source = sourceMapper.getById(sourceId);
+        if (null == source) {
+            log.info("source (:{}) not found", sourceId);
+            throw new NotFoundException("source is not found");
+        }
+
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+
+        if (projectPermission.getSourcePermission() < UserPermissionEnum.WRITE.getPermission()) {
+            throw new UnAuthorizedExecption("you have not permission to upload data in this source");
+        }
 
         if (!type.equals(FileTypeEnum.CSV.getType()) && !type.equals(FileTypeEnum.XLSX.getType()) && !type.equals(FileTypeEnum.XLS.getType())) {
-            return resultMap.failAndRefreshToken(request).message("Unsupported file format");
+            throw new ServerException("Unsupported file format");
         }
 
         //校验文件是否csv文件
         if (type.equals(FileTypeEnum.CSV.getType()) && !fileUtils.isCsv(file)) {
-            return resultMap.failAndRefreshToken(request).message("Please upload csv file");
+            throw new ServerException("Please upload csv file");
         }
 
         if (type.equals(FileTypeEnum.XLSX.getType()) && !fileUtils.isExcel(file)) {
-            return resultMap.failAndRefreshToken(request).message("Please upload excel file");
-        }
-
-        Source source = sourceMapper.getById(sourceId);
-        if (null == source) {
-            log.info("source ({}) not found", sourceId);
-            return resultMap.failAndRefreshToken(request).message("source not found");
-        }
-
-        Project project = projectMapper.getById(source.getProjectId());
-
-        if (null == project) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("Invalid source");
-        }
-
-        //校验权限
-        if (!allowWrite(project, user)) {
-            log.info("user {} have not permisson to upload csv file in this source {}", user.getUsername(), source.getId());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to upload csv file in this source");
+            throw new ServerException("Please upload excel file");
         }
 
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(source.getJdbcUrl());
         if (dataTypeEnum != DataTypeEnum.MYSQL) {
             log.info("Unsupported data source， {}", source.getJdbcUrl());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("Unsupported data source: " + source.getJdbcUrl());
+            throw new ServerException("Unsupported data source: " + source.getJdbcUrl());
         }
 
 
@@ -462,7 +414,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
                 dataUploadEntity = ExcelUtils.parseExcelWithFirstAsHeader(file);
             }
 
-            if (null != dataUploadEntity && null != dataUploadEntity.getHeaders() && dataUploadEntity.getHeaders().size() > 0) {
+            if (null != dataUploadEntity && !CollectionUtils.isEmpty(dataUploadEntity.getHeaders())) {
                 //建表
                 createTable(dataUploadEntity.getHeaders(), sourceDataUpload, source);
 
@@ -470,71 +422,95 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
                 insertData(dataUploadEntity.getHeaders(), dataUploadEntity.getValues(), sourceDataUpload, source);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+            throw new ServerException(e.getMessage());
         }
 
-        return resultMap.successAndRefreshToken(request);
+        return true;
     }
 
 
     /**
-     * 获取Source的data tables
+     * 获取Source 的 db
      *
      * @param id
      * @param user
-     * @param request
      * @return
+     * @throws NotFoundException
+     * @throws ServerException
      */
     @Override
-    public ResultMap getSourceTables(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public List<String> getSourceDbs(Long id, User user) throws NotFoundException, ServerException {
+        Source source = sourceMapper.getById(id);
 
-        SourceWithProject sourceWithProject = sourceMapper.getSourceWithProjectById(id);
-        if (null == sourceWithProject) {
+        if (null == source) {
             log.info("source (:{}) not found", id);
-            return resultMap.failAndRefreshToken(request).message("source not found");
+            throw new NotFoundException("source is not found");
         }
 
-        Project project = sourceWithProject.getProject();
-        if (null == project) {
-            log.info("project (:{}) not found", sourceWithProject.getProjectId());
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
-        //获取当前用户在organization的role
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-
-        List<String> tableList = null;
+        List<String> dbList = null;
 
         try {
-            tableList = sqlUtils.init(sourceWithProject.getJdbcUrl(), sourceWithProject.getUsername(), sourceWithProject.getPassword()).getTableList();
+            dbList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getDatabases();
         } catch (SourceException e) {
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+            throw new ServerException(e.getMessage());
         }
 
-        if (null != tableList) {
-            //当前用户是project的创建者和organization的owner，直接返回
-            if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-                //查询project所属team中当前用户最高角色
-                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-
-                //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
-                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-
-                    //查询当前用户在的 project所属team对project source的最高权限
-                    short maxSourcePermission = relTeamProjectMapper.getMaxSourcePermission(project.getId(), user.getId());
-
-                    if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                        tableList = null;
-                    }
-                }
+        if (null != dbList) {
+            ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+            if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+                log.info("user (:{}) have not permission to get source(:{}) databases", user.getId(), source.getId());
+                dbList = null;
             }
         }
 
-        return resultMap.successAndRefreshToken(request).payloads(tableList);
+        return dbList;
     }
 
+    /**
+     * 获取Source的data tables
+     *
+     * @param id
+     * @param user
+     * @return
+     */
+    @Override
+    public DBTables getSourceTables(Long id, String dbName, User user) throws NotFoundException {
+
+
+        DBTables dbTable = new DBTables(dbName);
+
+        Source source = sourceMapper.getById(id);
+
+        if (null == source) {
+            log.info("source (:{}) not found", id);
+            throw new NotFoundException("source is not found");
+        }
+
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
+
+
+        List<QueryColumn> tableList = null;
+        try {
+            tableList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableList(dbName);
+        } catch (SourceException e) {
+            throw new ServerException(e.getMessage());
+        }
+
+        if (null != tableList) {
+            ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+            if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+                log.info("user (:{}) have not permission to get source(:{}) tables", user.getId(), source.getId());
+                tableList = null;
+            }
+        }
+
+        if (null != tableList) {
+            dbTable.setTables(tableList);
+        }
+        return dbTable;
+    }
 
 
     /**
@@ -542,28 +518,46 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      *
      * @param id
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getTableColumns(Long id, String tableName,User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public TableInfo getTableInfo(Long id, String dbName, String tableName, User user) throws NotFoundException {
 
         Source source = sourceMapper.getById(id);
         if (null == source) {
-            log.info("source (:{}) not found", id);
-            return resultMap.failAndRefreshToken(request).message("source not found");
+            log.info("source (:{}) is not found", id);
+            throw new NotFoundException("source is not found");
         }
 
-        List<TableInfo> tableInfoList = null;
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
+        TableInfo tableInfo = null;
         try {
-            tableInfoList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableColumns(tableName);
+            tableInfo = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableInfo(dbName, tableName);
         } catch (SourceException e) {
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+            e.printStackTrace();
+            throw new ServerException(e.getMessage());
         }
 
-        return resultMap.successAndRefreshToken(request).payloads(tableInfoList);
+        if (null != tableInfo) {
+            ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+            if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+                log.info("user (:{}) have not permission to get source(:{}) table columns", user.getId(), source.getId());
+                tableInfo = null;
+            }
+        }
+
+
+        return tableInfo;
+    }
+
+    public boolean isTestConnection(SourceConfig config) throws ServerException {
+        try {
+            return sqlUtils.init(config.getUrl(), config.getUsername(), config.getPassword()).testConnection();
+        } catch (SourceException e) {
+            log.error(e.getMessage());
+            throw new ServerException(e.getMessage());
+        }
     }
 
     /**
@@ -576,7 +570,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      */
     private void createTable(Set<QueryColumn> fileds, SourceDataUpload sourceDataUpload, Source source) throws ServerException {
 
-        if (null == fileds || fileds.size() <= 0) {
+        if (CollectionUtils.isEmpty(fileds)) {
             throw new ServerException("there is have not any fileds");
         }
 
@@ -637,7 +631,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      * @param source
      */
     private void insertData(Set<QueryColumn> headers, List<Map<String, Object>> values, SourceDataUpload sourceDataUpload, Source source) throws ServerException {
-        if (null == values || values.size() <= 0) {
+        if (CollectionUtils.isEmpty(values)) {
             return;
         }
 
@@ -675,7 +669,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      * @throws ServerException
      */
     private void executeInsert(String tableName, Set<QueryColumn> headers, List<Map<String, Object>> values, SqlUtils sqlUtils) throws ServerException {
-        if (null != values && values.size() > 0) {
+        if (!CollectionUtils.isEmpty(values)) {
             int len = 1000;
             int totalSize = values.size();
             int pageSize = len;
@@ -687,7 +681,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
                 }
             }
 
-//            ExecutorService executorService = Executors.newCachedThreadPool();
+            ExecutorService executorService = Executors.newFixedThreadPool(8);
 
             STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
             ST st = stg.getInstanceOf("insertData");
@@ -724,7 +718,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
                 e.printStackTrace();
                 throw new ServerException(e.getMessage());
             } finally {
-//                executorService.shutdown();
+                executorService.shutdown();
             }
         }
     }

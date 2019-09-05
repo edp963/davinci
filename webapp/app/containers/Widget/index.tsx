@@ -29,8 +29,8 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
-import bizlogicReducer from '../Bizlogic/reducer'
-import bizlogicSaga from '../Bizlogic/sagas'
+import viewReducer from '../View/reducer'
+import viewSaga from '../View/sagas'
 
 import CopyWidgetForm from './components/CopyWidgetForm'
 import Container from '../../components/Container'
@@ -42,29 +42,30 @@ import { SortOrder } from 'antd/lib/table'
 import { Row, Col, Table, Button, Tooltip, Icon, Modal, Popconfirm, Breadcrumb } from 'antd'
 
 import { loadWidgets, deleteWidget, addWidget } from './actions'
-import { loadBizlogics } from '../Bizlogic/actions'
+import { ViewActions } from '../View/actions'
+const { loadViews } = ViewActions
 import { makeSelectWidgets, makeSelectLoading } from './selectors'
-import { makeSelectBizlogics } from '../Bizlogic/selectors'
+import { makeSelectViews } from '../View/selectors'
 import { makeSelectLoginUser } from '../App/selectors'
 import { checkNameUniqueAction } from '../App/actions'
 import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
-import {IProject} from '../Projects'
+import { IProject } from '../Projects'
 
 const styles = require('./Widget.less')
 const utilStyles = require('../../assets/less/util.less')
 
 interface IWidgetProps {
   widgets: any[]
-  bizlogics: any[]
+  views: any[]
   loginUser: any
   loading: boolean
   router: any
   params: any
   currentProject: IProject
   onLoadWidgets: (projectId: number) => void
-  onLoadBizlogics: (projectId: number, resolve?: any) => void
+  onLoadViews: (projectId: number, resolve?: any) => void
   onDeleteWidget: (id: any) => () => void
   onAddWidget: (widget: object, resolve: any) => Promise<any>
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
@@ -119,12 +120,12 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
   public componentWillMount () {
     const {
       onLoadWidgets,
-      onLoadBizlogics,
+      onLoadViews,
       params
     } = this.props
 
     onLoadWidgets(params.pid)
-    onLoadBizlogics(params.pid)
+    onLoadViews(params.pid)
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
@@ -429,7 +430,7 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
 
 const mapStateToProps = createStructuredSelector({
   widgets: makeSelectWidgets(),
-  bizlogics: makeSelectBizlogics(),
+  views: makeSelectViews(),
   loginUser: makeSelectLoginUser(),
   loading: makeSelectLoading(),
   currentProject: makeSelectCurrentProject()
@@ -438,7 +439,7 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadWidgets: (projectId) => dispatch(loadWidgets(projectId)),
-    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
+    onLoadViews: (projectId, resolve) => dispatch(loadViews(projectId, resolve)),
     onDeleteWidget: (id) => () => dispatch(deleteWidget(id)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
@@ -450,13 +451,13 @@ const withConnect = connect<{}, {}, IWidgetProps>(mapStateToProps, mapDispatchTo
 const withReducerWidget = injectReducer({ key: 'widget', reducer })
 const withSagaWidget = injectSaga({ key: 'widget', saga })
 
-const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: bizlogicReducer })
-const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
+const withReducerView = injectReducer({ key: 'view', reducer: viewReducer })
+const withSagaView = injectSaga({ key: 'view', saga: viewSaga })
 
 export default compose(
   withReducerWidget,
-  withReducerBizlogic,
-  withSagaBizlogic,
+  withReducerView,
+  withSagaView,
   withSagaWidget,
   withConnect
 )(WidgetList)

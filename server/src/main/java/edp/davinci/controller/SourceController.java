@@ -1,30 +1,33 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.controller;
 
 import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.CurrentUser;
-import edp.core.enums.HttpCodeEnum;
+import edp.core.model.DBTables;
+import edp.core.model.TableInfo;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.sourceDto.*;
+import edp.davinci.model.Source;
 import edp.davinci.model.User;
 import edp.davinci.service.SourceService;
 import io.swagger.annotations.Api;
@@ -32,6 +35,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +46,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
 
 @Api(value = "/sources", tags = "sources", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "sources not found"))
@@ -71,21 +76,37 @@ public class SourceController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = sourceService.getSources(projectId, user, request);
+        List<Source> sources = sourceService.getSources(projectId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(sources));
+    }
+
+
+    /**
+     * 获取source 信息
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get source detail")
+    @GetMapping("/{id}")
+    public ResponseEntity getSourceDetail(@PathVariable Long id,
+                                          @ApiIgnore @CurrentUser User user,
+                                          HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
+        SourceDetail sourceDetail = sourceService.getSourceDetail(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(sourceDetail));
     }
 
 
     /**
      * 创建source
      *
-     * @param sourceCreate
+     * @param source
      * @param bindingResult
      * @param user
      * @param request
@@ -93,7 +114,7 @@ public class SourceController extends BaseController {
      */
     @ApiOperation(value = "create source", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity createSource(@Valid @RequestBody SourceCreate sourceCreate,
+    public ResponseEntity createSource(@Valid @RequestBody SourceCreate source,
                                        @ApiIgnore BindingResult bindingResult,
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) {
@@ -103,14 +124,8 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = sourceService.createSource(sourceCreate, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        Source record = sourceService.createSource(source, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(record));
     }
 
 
@@ -118,7 +133,7 @@ public class SourceController extends BaseController {
      * 更新source
      *
      * @param id
-     * @param sourceInfo
+     * @param source
      * @param bindingResult
      * @param user
      * @param request
@@ -127,7 +142,7 @@ public class SourceController extends BaseController {
     @ApiOperation(value = "update a source", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateSource(@PathVariable Long id,
-                                       @Valid @RequestBody SourceInfo sourceInfo,
+                                       @Valid @RequestBody SourceInfo source,
                                        @ApiIgnore BindingResult bindingResult,
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) {
@@ -138,19 +153,13 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        if (invalidId(id) || !id.equals(sourceInfo.getId())) {
+        if (invalidId(id) || !id.equals(source.getId())) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid source id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = sourceService.updateSource(sourceInfo, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        sourceService.updateSource(source, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
     /**
@@ -172,14 +181,8 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = sourceService.deleteSrouce(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        sourceService.deleteSrouce(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -204,14 +207,8 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = sourceService.testSource(sourceTest, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        sourceService.testSource(sourceTest);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -243,14 +240,8 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = sourceService.validCsvmeta(id, uploadMeta, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        sourceService.validCsvmeta(id, uploadMeta, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
     /**
@@ -264,15 +255,15 @@ public class SourceController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "upload csv file")
+    @ApiOperation(value = "upload csv/excel file")
     @PostMapping("{id}/upload{type}")
-    public ResponseEntity uploadCsv(@PathVariable Long id,
-                                    @PathVariable String type,
-                                    @Valid @ModelAttribute(value = "sourceDataUpload") SourceDataUpload sourceDataUpload,
-                                    @ApiIgnore BindingResult bindingResult,
-                                    @RequestParam("file") MultipartFile file,
-                                    @ApiIgnore @CurrentUser User user,
-                                    HttpServletRequest request) {
+    public ResponseEntity uploadData(@PathVariable Long id,
+                                     @PathVariable String type,
+                                     @Valid @ModelAttribute(value = "sourceDataUpload") SourceDataUpload sourceDataUpload,
+                                     @ApiIgnore BindingResult bindingResult,
+                                     @RequestParam("file") MultipartFile file,
+                                     @ApiIgnore @CurrentUser User user,
+                                     HttpServletRequest request) {
 
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid source id");
@@ -285,18 +276,35 @@ public class SourceController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("upload file can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("upload file can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = sourceService.dataUpload(id, sourceDataUpload, file, user, type, request);
+        sourceService.dataUpload(id, sourceDataUpload, file, user, type);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
+    }
+
+
+    /**
+     * source 的数据库
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get dbs")
+    @GetMapping("/{id}/databases")
+    public ResponseEntity getSourceDbs(@PathVariable Long id,
+                                       @ApiIgnore @CurrentUser User user,
+                                       HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
+
+        List<String> dbs = sourceService.getSourceDbs(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(new SourceCatalogInfo(id, dbs)));
     }
 
 
@@ -308,9 +316,10 @@ public class SourceController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "get data tables")
+    @ApiOperation(value = "get tables")
     @GetMapping("/{id}/tables")
     public ResponseEntity getSourceTables(@PathVariable Long id,
+                                          @RequestParam(name = "dbName") String dbName,
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
         if (invalidId(id)) {
@@ -318,28 +327,26 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = sourceService.getSourceTables(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        DBTables dbTables = sourceService.getSourceTables(id, dbName, user);
+        SourceDBInfo dbTableInfo = new SourceDBInfo();
+        dbTableInfo.setSourceId(id);
+        BeanUtils.copyProperties(dbTables, dbTableInfo);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(dbTableInfo));
     }
 
 
     /**
-     * source 的数据库表
+     * 表字段
      *
      * @param id
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "get data table columns")
+    @ApiOperation(value = "get columns")
     @GetMapping("/{id}/table/columns")
     public ResponseEntity getTableColumns(@PathVariable Long id,
+                                          @RequestParam(name = "dbName") String dbName,
                                           @RequestParam(name = "tableName") String tableName,
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
@@ -349,18 +356,18 @@ public class SourceController extends BaseController {
         }
 
         if (StringUtils.isEmpty(tableName)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Table cannot be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Table cannot be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = sourceService.getTableColumns(id, tableName, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        TableInfo tableInfo = sourceService.getTableInfo(id, dbName, tableName, user);
+
+        SourceTableInfo sourceTableInfo = new SourceTableInfo();
+        sourceTableInfo.setSourceId(id);
+        sourceTableInfo.setTableName(tableName);
+        BeanUtils.copyProperties(tableInfo, sourceTableInfo);
+
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(sourceTableInfo));
     }
 
 }

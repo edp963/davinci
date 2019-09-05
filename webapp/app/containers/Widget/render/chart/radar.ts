@@ -29,7 +29,6 @@ import {
   getMetricAxisOption,
   getLabelOption,
   getLegendOption,
-  getGridPositions,
   getSymbolSize
 } from './util'
 
@@ -99,10 +98,10 @@ export default function (chartProps: IChartProps) {
     name,
     max: indicatorMax + Math.round(indicatorMax * 0.1)
   }))
-  const seriesData = Object.entries(dimensionData).map(([name, value]) => ({
+  const seriesData = data.length > 0 ? Object.entries(dimensionData).map(([name, value]) => ({
     name,
     value: Object.values(value)
-  }))
+  })) : []
 
   const {
     showLabel,

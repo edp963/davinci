@@ -1,25 +1,27 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.model;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.annotation.JSONField;
 import edp.core.model.BaseSource;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -37,15 +39,18 @@ public class Source extends BaseSource {
 
     private Long projectId;
 
+    @JSONField(serialize = false)
     private String config;
 
     /**
      * 从config中获取jdbcUrl
-     *
+     * <p>
      * json key： url
+     *
      * @return
      */
     @Override
+    @JSONField(serialize = false)
     public String getJdbcUrl() {
         String url = null;
         if (null == config) {
@@ -62,11 +67,13 @@ public class Source extends BaseSource {
 
     /**
      * 从config中获取jdbc username
-     *
+     * <p>
      * json key: user
+     *
      * @return
      */
     @Override
+    @JSONField(serialize = false)
     public String getUsername() {
         String username = null;
         if (null == config) {
@@ -83,11 +90,13 @@ public class Source extends BaseSource {
 
     /**
      * 从config中获取 jdbc password
-     *
+     * <p>
      * json key: password
+     *
      * @return
      */
     @Override
+    @JSONField(serialize = false)
     public String getPassword() {
         String password = null;
         if (null == config) {
@@ -102,7 +111,8 @@ public class Source extends BaseSource {
         return password;
     }
 
-    private String getConcigParams() {
+    @JSONField(serialize = false)
+    public String getConfigParams() {
         String params = null;
         if (null == config) {
             return null;
@@ -114,5 +124,18 @@ public class Source extends BaseSource {
             log.error("get jdbc parameters from source config, {}", e.getMessage());
         }
         return params;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Source{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", type='" + type + '\'' +
+                ", projectId=" + projectId +
+                ", config='" + config + '\'' +
+                '}';
     }
 }

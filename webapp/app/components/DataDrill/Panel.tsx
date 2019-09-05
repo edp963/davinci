@@ -19,9 +19,9 @@
  */
 
 import * as React from 'react'
-import { Menu } from 'antd'
+import { Menu, Icon } from 'antd'
 import { getPivot } from '../../containers/Widget/components/util'
-
+const styles = require('./datadrill.less')
 export interface IDataDrillProps {
   key?: string | number
   widgetMode?: string
@@ -79,6 +79,7 @@ export function DataDrill (props: IDataDrillProps) {
     })
   }
   if (drillHistory && drillHistory.length) {
+    const drillHistoryCol = drillHistory[drillHistory.length - 1]['groups']
     drillOtherCategories = categoriesCol.filter((cate) => {
       let vaildate = void 0
       drillHistory.some((data) => {
@@ -91,7 +92,7 @@ export function DataDrill (props: IDataDrillProps) {
     }).map((down) => {
       return {
         ...down,
-        drillType: 'down'
+        drillType: drillHistoryCol.some((col) => col === down.name) ? 'up' : 'down'
       }
     })
   } else {
@@ -130,9 +131,17 @@ export function DataDrill (props: IDataDrillProps) {
           key="sub3"
           disabled={drillOtherCategories.length < 1}
           title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan">
-          <span style={{marginLeft: '8px'}}>下钻</span></span>}
+          <span style={{marginLeft: '8px'}}>钻取</span></span>}
         >
-          {drillOtherCategories ? drillOtherCategories.map((col) => <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
+          {drillOtherCategories ?
+            drillOtherCategories.map((col) =>
+            <Menu.Item key={col.name}>
+              <span className={styles.items}>
+                <span>{col.name}</span>
+                <span><Icon type={`${col.drillType === 'up' ? 'arrow-up' : 'arrow-down'}`} /></span>
+              </span>
+            </Menu.Item>)
+            : ''}
         </Menu.SubMenu>
       }
       {
@@ -156,7 +165,6 @@ export function DataDrill (props: IDataDrillProps) {
 
   function drill (e) {
     const path = e.keyPath
-    // console.log(path)   // row name sub1
     if (path && path.length > 2) {
       onDataDrill(path[1], path[0])
     } else {

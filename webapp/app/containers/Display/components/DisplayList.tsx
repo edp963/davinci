@@ -1,6 +1,9 @@
 import React from 'react'
 import classnames from 'classnames'
-
+import {createStructuredSelector} from 'reselect'
+import { makeSelectProjectRoles } from '../../Projects/selectors'
+import {connect} from 'react-redux'
+import {compose} from 'redux'
 import { Col, Tooltip, Icon, Popconfirm, Row } from 'antd'
 import { IconProps } from 'antd/lib/icon'
 const styles = require('../Display.less')
@@ -8,8 +11,8 @@ const styles = require('../Display.less')
 import DisplayFormModal from './DisplayFormModal'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import { IProject } from '../../Projects'
-import { toListBF } from '../../Bizlogic/components/viewUtil'
-
+import {IExludeRoles} from '../../Portal/components/PortalList'
+import {IProjectRoles} from '../../Organizations/component/ProjectRole'
 export interface IDisplay {
   id: number
   name: string
@@ -17,7 +20,6 @@ export interface IDisplay {
   publish: boolean
   avatar: string
   description: string
-  teamIds: any[]
 }
 
 export interface IDisplayEvent {
@@ -32,11 +34,9 @@ interface IDisplayListProps extends IDisplayEvent {
   projectId: number
   displays: IDisplay[],
   currentProject?: IProject
-  viewTeam: any[]
-  selectTeams: any[]
+  projectRoles: IProjectRoles[]
   onCheckName: (type, data, resolve, reject) => void
-  onLoadViewTeam: (projectId: number, resolve?: any) => any
-  onLoadSelectTeams: (type: string, id: number, resolve?: any) => any
+  onExcludeRoles: (type: string, id: number, resolve?: any) => any
 }
 
 interface IDisplayListStates {
@@ -44,7 +44,7 @@ interface IDisplayListStates {
   modalLoading: boolean
   formType: 'edit' | 'add'
   formVisible: boolean
-  checkedKeys: any[]
+  exludeRoles: IExludeRoles[]
 }
 
 export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplayListStates> {
@@ -56,7 +56,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       modalLoading: false,
       formType: 'add',
       formVisible: false,
-      checkedKeys: []
+      exludeRoles: []
     }
   }
 
@@ -64,18 +64,34 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     e.stopPropagation()
   }
 
+  public componentWillReceiveProps (nextProps) {
+    if (nextProps && nextProps.projectRoles) {
+      this.setState({
+        exludeRoles: nextProps.projectRoles.map((role) => {
+          return {
+            ...role,
+            permission: false
+          }
+        })
+      })
+    }
+  }
+
+
   private saveDisplay = (display: IDisplay, type: 'edit' | 'add') => {
     this.setState({ modalLoading: true })
-    const { onAdd, onEdit, viewTeam } = this.props
-    const { checkedKeys } = this.state
-    const teamIds = toListBF(viewTeam).map((t) => t.id).filter((item) => !checkedKeys.includes(item))
+    const { onAdd, onEdit } = this.props
+    const val = {
+      ...display,
+      roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id)
+    }
     if (type === 'add') {
       onAdd({
-        ...display, teamIds
+        ...val
       }, () => { this.hideDisplayFormModal() })
     } else {
       onEdit({
-        ...display, teamIds
+        ...val
       }, () => { this.hideDisplayFormModal() })
     }
   }
@@ -83,8 +99,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   private cancel = () => {
     this.setState({
       formVisible: false,
-      modalLoading: false,
-      checkedKeys: []
+      modalLoading: false
     })
   }
 
@@ -94,30 +109,26 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       editingDisplay: display,
       formType,
       formVisible: true
-    }, () => {
-      const { onLoadViewTeam, projectId } = this.props
-      const { formType } = this.state
-      if (formType === 'edit') {
-        const { onLoadSelectTeams } = this.props
-        new Promise((resolve) => {
-          onLoadViewTeam(projectId, (teams) => {
-            resolve(teams)
-          })
-        }).then((teams) => {
-          onLoadSelectTeams('display', display.id, (result) => {
-            this.setState({
-              checkedKeys: toListBF(teams).map((t) => t.id).filter((item) => !result.includes(item))
-            })
-          })
-        })
-      } else if (formType === 'add') {
-        onLoadViewTeam(projectId, (result) => {
-          this.setState({
-            checkedKeys: toListBF(result).map((t) => t.id)
-          })
-        })
-      }
     })
+    const { onExcludeRoles, projectRoles } = this.props
+    if (onExcludeRoles && display) {
+      onExcludeRoles('display', display.id, (result: number[]) => {
+        this.setState({
+          exludeRoles:  projectRoles.map((role) => {
+            return result.some((re) => re === role.id) ? role : {...role, permission: true}
+          })
+        })
+      })
+    } else {
+      this.setState({
+        exludeRoles: this.state.exludeRoles.map((role) => {
+          return {
+            ...role,
+            permission: true
+          }
+        })
+      })
+    }
   }
 
   private hideDisplayFormModal = () => {
@@ -132,9 +143,10 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     e.stopPropagation()
   }
 
-  private initCheckNodes = (checkedKeys) => {
+  private changePermission = (scope: IExludeRoles, event) => {
+    scope.permission = event.target.checked
     this.setState({
-      checkedKeys
+      exludeRoles: this.state.exludeRoles.map((role) => role && role.id === scope.id ? scope : role)
     })
   }
 
@@ -215,8 +227,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   }
 
   public render () {
-    const { displays, projectId, currentProject, onCheckName, viewTeam } = this.props
-    const { checkedKeys } = this.state
+    const { displays, projectId, currentProject, onCheckName } = this.props
     if (!Array.isArray(displays)) { return null }
 
     const { editingDisplay, formType, formVisible, modalLoading } = this.state
@@ -231,9 +242,6 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
 
     return (
       <div>
-        {/* <EllipsisList rows={2}>
-          {addAction}
-        </EllipsisList> */}
         <Row
           gutter={20}
         >
@@ -244,17 +252,26 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
           display={editingDisplay}
           visible={formVisible}
           loading={modalLoading}
+          exludeRoles={this.state.exludeRoles}
+          onChangePermission={this.changePermission}
           type={formType}
           onCheckName={onCheckName}
           onSave={this.saveDisplay}
           onCancel={this.cancel}
-          viewTeam={viewTeam}
-          checkedKeys={checkedKeys}
-          initCheckNodes={this.initCheckNodes}
         />
       </div>
     )
   }
 }
 
-export default DisplayList
+
+const mapStateToProps = createStructuredSelector({
+  projectRoles: makeSelectProjectRoles()
+})
+
+const withConnect = connect(mapStateToProps, null)
+
+
+export default compose(
+  withConnect
+)(DisplayList)

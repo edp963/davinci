@@ -150,14 +150,12 @@ module.exports = options => ({
       }
     }),
     new webpack.ContextReplacementPlugin(/^\.\/locale$/, (context) => {
-      if (!/\/(.[a-zA-Z0-9.\-_@]+)moment\//.test(context.context)) { return }
-      // context needs to be modified in place
+      if (!/\/moment\//.test(context.context)) return;
+
       Object.assign(context, {
-        // include only CJK
-        regExp: /^\.\/(ja|ko|zh)/,
-        // point to the locale data folder relative to moment's src/lib/locale
-        request: '../../locale'
-      })
+          regExp: /^\.\/\w+/,
+          request: '../../locale', // resolved relatively
+      });
     }),
     new webpack.ProvidePlugin({
       'window.Quill': 'quill'
@@ -168,6 +166,7 @@ module.exports = options => ({
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.react.js'],
     mainFields: ['browser', 'jsnext:main', 'main'],
     alias: {
+      app: path.resolve(process.cwd(), 'app'),
       libs: path.resolve(process.cwd(), 'libs'),
       assets: path.resolve(process.cwd(), 'app/assets')
       // fonts: path.resolve(process.cwd(), 'app/assets/fonts')

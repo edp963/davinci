@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.core.utils;
@@ -27,9 +28,9 @@ public class MD5Util {
     /**
      * MD5加密
      *
-     * @param src       需要加密的字符串
-     * @param isUpper   大小写
-     * @param bit       加密长度（16,32,64）
+     * @param src     需要加密的字符串
+     * @param isUpper 大小写
+     * @param bit     加密长度（16,32,64）
      * @return
      */
     public static String getMD5(String src, boolean isUpper, Integer bit) {
@@ -56,7 +57,7 @@ public class MD5Util {
                     sb.append(Integer.toHexString(i));
                 }
                 md5 = sb.toString();
-                if(bit == 16) {
+                if (bit == 16) {
                     //截取32位md5为16位
                     String md16 = md5.substring(8, 24);
                     md5 = md16;

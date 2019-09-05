@@ -129,8 +129,8 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
           {...widgetProps}
           data={itemInfo && itemInfo.datasource ? itemInfo.datasource.resultList : []}
           model={currentDataInFullScreen.model}
-          renderType={itemInfo.loading ? 'loading' : 'rerender'}
-          loading={itemInfo.loading}
+          renderType={itemInfo && itemInfo.loading ? 'loading' : 'rerender'}
+          loading={itemInfo && itemInfo.loading ? itemInfo.loading : false}
         />
       )
     }

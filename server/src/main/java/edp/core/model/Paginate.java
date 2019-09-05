@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,5 +31,5 @@ public class Paginate<T> implements Serializable {
     private int pageNo = -1;
     private int pageSize = -1;
     private long totalCount = -1;
-    private List<T> resultList = new ArrayList<>();
+    private List<T> resultList = new ArrayList<T>();
 }

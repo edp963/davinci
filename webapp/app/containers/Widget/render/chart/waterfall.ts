@@ -202,6 +202,6 @@ export default function (chartProps: IChartProps) {
     yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `)),
     series,
     tooltip,
-    grid: getGridPositions({ showLegend: false }, seriesNames, false, yAxis, xAxis, xAxisData)
+    grid: getGridPositions({ showLegend: false }, seriesNames, '', false, yAxis, xAxis, xAxisData)
   }
 }

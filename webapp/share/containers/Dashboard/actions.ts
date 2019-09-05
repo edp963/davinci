@@ -30,12 +30,15 @@ import {
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
   LOAD_WIDGET_CSV_FAILURE,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE,
+  LOAD_SELECT_OPTIONS,
+  LOAD_SELECT_OPTIONS_SUCCESS,
+  LOAD_SELECT_OPTIONS_FAILURE,
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
-  DELETE_DRILL_HISTORY
+  DELETE_DRILL_HISTORY,
+  SET_SELECT_OPTIONS,
+  SELECT_DASHBOARD_ITEM_CHART,
+  GLOBAL_CONTROL_CHANGE
 } from './constants'
 
 export function getDashboard (token, reject) {
@@ -146,33 +149,32 @@ export function loadWidgetCsvFail (itemId) {
   }
 }
 
-export function loadCascadeSourceFromDashboard (controlId, viewId, dataToken, columns, parents) {
+export function loadSelectOptions (controlKey, dataToken, requestParams, itemId) {
   return {
-    type: LOAD_CASCADESOURCE_FROM_DASHBOARD,
+    type: LOAD_SELECT_OPTIONS,
     payload: {
-      controlId,
-      viewId,
+      controlKey,
       dataToken,
-      columns,
-      parents
+      requestParams,
+      itemId
     }
   }
 }
 
-export function cascadeSourceFromDashboardLoaded (controlId, columns, values) {
+export function selectOptionsLoaded (controlKey, values, itemId) {
   return {
-    type: LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
+    type: LOAD_SELECT_OPTIONS_SUCCESS,
     payload: {
-      controlId,
-      columns,
-      values
+      controlKey,
+      values,
+      itemId
     }
   }
 }
 
-export function loadCascadeSourceFromDashboardFail (error) {
+export function loadSelectOptionsFail (error) {
   return {
-    type: LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE,
+    type: LOAD_SELECT_OPTIONS_FAILURE,
     payload: {
       error
     }
@@ -201,6 +203,38 @@ export function deleteDrillHistory (itemId, index) {
     payload: {
       itemId,
       index
+    }
+  }
+}
+
+export function setSelectOptions (controlKey, options, itemId) {
+  return {
+    type: SET_SELECT_OPTIONS,
+    payload: {
+      controlKey,
+      options,
+      itemId
+    }
+  }
+}
+
+
+export function selectDashboardItemChart (itemId, renderType, selectedItems) {
+  return {
+    type: SELECT_DASHBOARD_ITEM_CHART,
+    payload: {
+      itemId,
+      renderType,
+      selectedItems
+    }
+  }
+}
+
+export function globalControlChange (controlRequestParamsByItem) {
+  return {
+    type: GLOBAL_CONTROL_CHANGE,
+    payload: {
+      controlRequestParamsByItem
     }
   }
 }

@@ -52,8 +52,33 @@ import {
   LOAD_COLLECT_PROJECTS_FAILURE,
   CLICK_COLLECT_PROJECT,
   CLICK_COLLECT_PROJECT_SUCCESS,
-  CLICK_COLLECT_PROJECT_FAILURE
+  CLICK_COLLECT_PROJECT_FAILURE,
+  ADD_PROJECT_ADMIN,
+  ADD_PROJECT_ADMIN_SUCCESS,
+  ADD_PROJECT_ADMIN_FAIL,
+  DELETE_PROJECT_ADMIN,
+  DELETE_PROJECT_ADMIN_SUCCESS,
+  DELETE_PROJECT_ADMIN_FAIL,
+  ADD_PROJECT_ROLE,
+  ADD_PROJECT_ROLE_SUCCESS,
+  ADD_PROJECT_ROLE_FAIL,
+  DELETE_PROJECT_ROLE,
+  DELETE_PROJECT_ROLE_SUCCESS,
+  DELETE_PROJECT_ROLE_FAIL,
+  UPDATE_RELATION_ROLE_PROJECT,
+  UPDATE_RELATION_ROLE_PROJECT_SUCCESS,
+  UPDATE_RELATION_ROLE_PROJECT_FAIL,
+  LOAD_RELATION_ROLE_PROJECT,
+  RELATION_ROLE_PROJECT_LOADED,
+  LOAD_RELATION_ROLE_PROJECT_FAIL,
+  DELETE_RELATION_ROLE_PROJECT,
+  DELETE_RELATION_ROLE_PROJECT_FAIL,
+  DELETE_RELATION_ROLE_PROJECT_SUCCESS,
+  EXCLUDE_ROLES,
+  EXCLUDE_ROLES_SUCCESS,
+  EXCLUDE_ROLES_FAIL
 } from './constants'
+
 
 export function loadProjectDetail (id) {
   return {
@@ -142,12 +167,13 @@ export function editProjectFail () {
   }
 }
 
-export function transferProject (id, orgId) {
+export function transferProject (id, orgId, resolve) {
   return {
     type: TRANSFER_PROJECT,
     payload: {
       id,
-      orgId
+      orgId,
+      resolve
     }
   }
 }
@@ -325,6 +351,206 @@ export function collectProjectClicked (result) {
 export function clickCollectProjectFail () {
   return {
     type: CLICK_COLLECT_PROJECT_FAILURE
+  }
+}
+
+export function addProjectAdmin (id, adminId, resolve) {
+  return {
+    type: ADD_PROJECT_ADMIN,
+    payload: {
+      id, adminId, resolve
+    }
+  }
+}
+
+export function projectAdminAdded (result) {
+  return {
+    type: ADD_PROJECT_ADMIN_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function addProjectAdminFail () {
+  return {
+    type: ADD_PROJECT_ADMIN_FAIL
+  }
+}
+
+export function deleteProjectAdmin (id, relationId , resolve) {
+  return {
+    type: DELETE_PROJECT_ADMIN,
+    payload: {
+      id, relationId , resolve
+    }
+  }
+}
+
+export function projectAdminDeleted (result) {
+  return {
+    type: DELETE_PROJECT_ADMIN_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function deleteProjectAdminFail () {
+  return {
+    type: DELETE_PROJECT_ADMIN_FAIL
+  }
+}
+
+export function addProjectRole (projectId, roleIds, resolve) {
+  return {
+    type: ADD_PROJECT_ROLE,
+    payload: {
+      projectId, roleIds, resolve
+    }
+  }
+}
+
+export function projectRoleAdded (result) {
+  return {
+    type: ADD_PROJECT_ROLE_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function addProjectRoleFail () {
+  return {
+    type: ADD_PROJECT_ROLE_FAIL
+  }
+}
+
+export function deleteProjectRole (id, relationId , resolve) {
+  return {
+    type: DELETE_PROJECT_ROLE,
+    payload: {
+      id, relationId , resolve
+    }
+  }
+}
+
+export function projectRoleDeleted (result) {
+  return {
+    type: DELETE_PROJECT_ROLE_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function deleteProjectRoleFail () {
+  return {
+    type: DELETE_PROJECT_ROLE_FAIL
+  }
+}
+
+export function updateRelRoleProject (roleId, projectId, projectRole) {
+  return {
+    type: UPDATE_RELATION_ROLE_PROJECT,
+    payload: {
+      roleId,
+      projectId,
+      projectRole
+    }
+  }
+}
+
+export function relRoleProjectUpdated (result) {
+  return {
+    type: UPDATE_RELATION_ROLE_PROJECT_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function updateRelRoleProjectFail () {
+  return {
+    type: UPDATE_RELATION_ROLE_PROJECT_FAIL
+  }
+}
+
+export function deleteRelRoleProject (roleId, projectId, resolve) {
+  return {
+    type: DELETE_RELATION_ROLE_PROJECT,
+    payload: {
+      roleId,
+      projectId,
+      resolve
+    }
+  }
+}
+
+export function relRoleProjectDeleted (result) {
+  return {
+    type: DELETE_RELATION_ROLE_PROJECT_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function deleteRelRoleProjectFail () {
+  return {
+    type: DELETE_RELATION_ROLE_PROJECT_FAIL
+  }
+}
+
+export function loadRelRoleProject (id, roleId) {
+  return {
+    type: LOAD_RELATION_ROLE_PROJECT,
+    payload: {
+      id,
+      roleId
+    }
+  }
+}
+
+export function relRoleProjectLoaded (result) {
+  return {
+    type: RELATION_ROLE_PROJECT_LOADED,
+    payload: {
+      result
+    }
+  }
+}
+
+export function loadRelRoleProjectFail () {
+  return {
+    type: LOAD_RELATION_ROLE_PROJECT_FAIL
+  }
+}
+
+
+export function excludeRoles (type, id, resolve) {
+  return {
+    type: EXCLUDE_ROLES,
+    payload: {type, id, resolve}
+  }
+}
+
+export function rolesExcluded (result) {
+  return {
+    type: EXCLUDE_ROLES_SUCCESS,
+    payload: {
+      result
+    }
+  }
+
+}
+
+export function excludeRolesFail (err) {
+  return {
+    type: EXCLUDE_ROLES_FAIL,
+    payload: {
+      err
+    }
   }
 }
 

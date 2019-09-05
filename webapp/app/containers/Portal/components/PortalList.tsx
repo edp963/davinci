@@ -1,6 +1,8 @@
 import React from 'react'
 import classnames from 'classnames'
-
+import { createStructuredSelector } from 'reselect'
+import { compose } from 'redux'
+import { connect } from 'react-redux'
 import { Icon, Col, Button, Tooltip, Popconfirm, Modal, Row } from 'antd'
 import { IconProps } from 'antd/lib/icon'
 import AntdFormType from 'antd/lib/form/Form'
@@ -10,28 +12,31 @@ import PortalForm from './PortalForm'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import { IProject } from '../../Projects'
 import { IPortal } from '../../Portal'
-import { toListBF } from '../../Bizlogic/components/viewUtil'
-
+import { makeSelectProjectRoles } from '../../Projects/selectors'
+import {IProjectRoles} from '../../Organizations/component/ProjectRole'
+import { roleAdded } from 'app/containers/Organizations/actions'
 interface IPortalListProps {
   projectId: number
   portals: IPortal[]
+  projectRoles: IProjectRoles[]
   currentProject: IProject
-  viewTeam: any[]
-  selectTeams: any[]
   onPortalClick: (portal: any) => () => void
   onAdd: (portal, resolve) => void
   onEdit: (portal, resolve) => void
   onDelete: (portalId: number) => void
+  onExcludeRoles: (type: string, id: number, resolve?: any) => any
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
-  onLoadViewTeam: (projectId: number, resolve?: any) => any
-  onLoadSelectTeams: (type: string, projectId: number, resolve?: any) => any
+}
+
+export interface IExludeRoles extends IProjectRoles {
+  permission?: boolean
 }
 
 interface IPortalListStates {
   modalLoading: boolean
   formType: 'edit' | 'add'
   formVisible: boolean
-  checkedKeys: any[]
+  exludeRoles: IExludeRoles[]
 }
 
 export class PortalList extends React.Component<IPortalListProps, IPortalListStates> {
@@ -47,7 +52,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
       modalLoading: false,
       formType: 'add',
       formVisible: false,
-      checkedKeys: []
+      exludeRoles: []
     }
   }
 
@@ -60,11 +65,23 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     e.stopPropagation()
   }
 
+  public componentWillReceiveProps (nextProps) {
+    if (nextProps && nextProps.projectRoles) {
+      this.setState({
+        exludeRoles: nextProps.projectRoles.map((role) => {
+          return {
+            ...role,
+            permission: false
+          }
+        })
+      })
+    }
+  }
+
   private hidePortalForm = () => {
     this.setState({
       formVisible: false,
-      modalLoading: false,
-      checkedKeys: []
+      modalLoading: false
     }, () => {
       this.portalForm.props.form.resetFields()
     })
@@ -73,15 +90,15 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   private onModalOk = () => {
     this.portalForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const {  projectId, onAdd, onEdit, viewTeam } = this.props
-        const { formType, checkedKeys } = this.state
+        const {  projectId, onAdd, onEdit } = this.props
+        const { formType } = this.state
         const { id, name, description, publish, avatar } = values
         const val = {
           description,
           name,
           publish,
-          avatar: formType === 'add' ? `${Math.ceil(Math.random() * 19)}` : avatar,
-          teamIds: toListBF(viewTeam).map((t) => t.id).filter((item) => !checkedKeys.includes(item))
+          roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id),
+          avatar: formType === 'add' ? `${Math.ceil(Math.random() * 19)}` : avatar
         }
 
         if (formType === 'add') {
@@ -114,28 +131,32 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
           this.portalForm.props.form.setFieldsValue(portal)
         }
       }, 0)
-      const { onLoadViewTeam, projectId } = this.props
-      const { formType } = this.state
-      if (formType === 'edit') {
-        const { onLoadSelectTeams } = this.props
-        new Promise((resolve) => {
-          onLoadViewTeam(projectId, (teams) => {
-            resolve(teams)
-          })
-        }).then((teams) => {
-          onLoadSelectTeams('portal', portal.id, (result) => {
-            this.setState({
-              checkedKeys: toListBF(teams).map((t) => t.id).filter((item) => !result.includes(item))
+      const { onExcludeRoles, projectRoles } = this.props
+      if (onExcludeRoles && portal) {
+        onExcludeRoles('portal', portal.id, (result: number[]) => {
+          this.setState({
+            exludeRoles:  projectRoles.map((role) => {
+              return result.some((re) => re === role.id) ? role : {...role, permission: true}
             })
           })
         })
-      } else if (formType === 'add') {
-        onLoadViewTeam(projectId, (result) => {
-          this.setState({
-            checkedKeys: toListBF(result).map((t) => t.id)
+      } else {
+        this.setState({
+          exludeRoles: this.state.exludeRoles.map((role) => {
+            return {
+              ...role,
+              permission: true
+            }
           })
         })
       }
+    })
+  }
+
+  private changePermission = (scope: IExludeRoles, event) => {
+    scope.permission = event.target.checked
+    this.setState({
+      exludeRoles: this.state.exludeRoles.map((role) => role && role.id === scope.id ? scope : role)
     })
   }
 
@@ -211,28 +232,19 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     )
   }
 
-  private initCheckNodes = (checkedKeys) => {
-    this.setState({
-      checkedKeys
-    })
-  }
-
   public render () {
     const {
       projectId,
       portals,
       currentProject,
-      onCheckUniqueName,
-      viewTeam,
-      selectTeams
+      onCheckUniqueName
     } = this.props
     if (!Array.isArray(portals)) { return null }
 
     const {
       formType,
       formVisible,
-      modalLoading,
-      checkedKeys
+      modalLoading
     } = this.state
 
     const modalButtons = [(
@@ -266,9 +278,6 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
 
     return (
       <div>
-        {/* <EllipsisList rows={2}>
-          {addAction}
-        </EllipsisList> */}
         <Row
           gutter={20}
         >
@@ -282,13 +291,11 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
           onCancel={this.hidePortalForm}
         >
           <PortalForm
+            type={formType}
             onCheckUniqueName={onCheckUniqueName}
             projectId={projectId}
-            type={formType}
-            initCheckNodes={this.initCheckNodes}
-            checkedKeys={checkedKeys}
-            selectTeams={selectTeams}
-            viewTeam={viewTeam}
+            exludeRoles={this.state.exludeRoles}
+            onChangePermission={this.changePermission}
             wrappedComponentRef={this.refHandlers.portalForm}
           />
         </Modal>
@@ -297,4 +304,14 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   }
 }
 
-export default PortalList
+const mapStateToProps = createStructuredSelector({
+  projectRoles: makeSelectProjectRoles()
+})
+
+const withConnect = connect(mapStateToProps, null)
+
+
+export default compose(
+  withConnect
+)(PortalList)
+

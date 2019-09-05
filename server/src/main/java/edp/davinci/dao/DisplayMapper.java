@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.dao;
@@ -50,8 +51,10 @@ public interface DisplayMapper {
             "description = #{description,jdbcType=VARCHAR},",
             "project_id = #{projectId,jdbcType=BIGINT},",
             "avatar = #{avatar,jdbcType=VARCHAR},",
-            "publish = #{publish,jdbcType=BIT}",
-            "where id = #{id,jdbcType=INTEGER}"
+            "publish = #{publish,jdbcType=BIT},",
+            "update_by = #{updateBy,jdbcType=BIGINT},",
+            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
+            "where id = #{id,jdbcType=BIGINT}"
     })
     int update(Display display);
 
@@ -73,19 +76,8 @@ public interface DisplayMapper {
     })
     DisplayWithProject getDisplayWithProjectById(@Param("id") Long id);
 
-    @Select({
-            "select * from display where project_id = #{projectId}",
-            "   and id not in (",
-            "       SELECT display_id FROM exclude_display_team ept",
-            "       LEFT JOIN rel_user_team rut on rut.team_id = ept.team_id",
-            "       LEFT JOIN rel_team_project rtp on rtp.team_id = ept.team_id",
-            "       LEFT JOIN team t on t.id = ept.team_id",
-            "       LEFT JOIN rel_user_organization ruo on ruo.org_id = t.org_id",
-            "       WHERE rut.user_id = #{userId} and rtp.project_id = #{projectId}",
-            "       and (rut.role = 0 and ruo.role = 0)",
-            "   )"
-    })
-    List<Display> getByProject(@Param("projectId") Long projectId, @Param("userId") Long userId);
+    @Select({"select * from display where project_id = #{projectId}"})
+    List<Display> getByProject(@Param("projectId") Long projectId);
 
     @Select({"select id from display where project_id = #{projectId} and `name` = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);

@@ -20,7 +20,7 @@
 
 import React from 'react'
 
-import { Form, Row, Col, Input, Radio, Tabs, Tree } from 'antd'
+import { Form, Row, Col, Input, Radio, Tabs, Tree, Checkbox } from 'antd'
 const TreeNode = Tree.TreeNode
 const FormItem = Form.Item
 const TextArea = Input.TextArea
@@ -29,17 +29,15 @@ const TabPane = Tabs.TabPane
 
 const utilStyles = require('../../../assets/less/util.less')
 const styles = require('../Portal.less')
-import AuthControl from './AuthControl'
+import { IExludeRoles} from './PortalList'
 
 interface IProtalListProps {
   projectId: number
   type: string
   form: any
   params?: any
-  checkedKeys: any[]
-  selectTeams: any[]
-  viewTeam: any[]
-  initCheckNodes: (checkedKeys: any[]) => any
+  exludeRoles?: IExludeRoles[]
+  onChangePermission: (scope: object, e: any) => any
   onCheckUniqueName?: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
@@ -64,27 +62,17 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
       })
   }
 
-  private renderTreeNodes = (data) => data.map((item) => {
-    if (item.children) {
-      return (
-        <TreeNode title={item.title} key={item.key} dataRef={item}>
-          {this.renderTreeNodes(item.children)}
-        </TreeNode>
-      )
-    }
-    return <TreeNode {...item} key={item.key} />
-  })
-
   public render () {
     const {
-      type,
-      checkedKeys,
-      initCheckNodes,
-      viewTeam,
-      selectTeams
+      exludeRoles
     } = this.props
     const { getFieldDecorator } = this.props.form
-
+    const authControl = exludeRoles && exludeRoles.length ? exludeRoles.map((role) => (
+        <div className={styles.excludeList} key={`${role.name}key`}>
+          <Checkbox checked={role.permission} onChange={this.props.onChangePermission.bind(this, role)}/>
+          <b>{role.name}</b>
+        </div>
+      )) : []
     const commonFormItemStyle = {
       labelCol: { span: 6 },
       wrapperCol: { span: 16 }
@@ -148,11 +136,9 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
               </Col>
               </TabPane>
               <TabPane tab="权限管理" key="control" className={styles.controlTab}>
-              <AuthControl
-                initCheckNodes={initCheckNodes}
-                checkedKeys={checkedKeys}
-                viewTeam={viewTeam}
-              />
+                {
+                  authControl
+                }
               </TabPane>
             </Tabs>
           </Col>

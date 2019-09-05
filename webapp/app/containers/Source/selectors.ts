@@ -19,37 +19,28 @@
  */
 
 import { createSelector } from 'reselect'
+import { SourceStateType } from './reducer'
 
 const selectSource = (state) => state.get('source')
 
 const makeSelectSources = () => createSelector(
   selectSource,
-  (sourceState) => sourceState.get('sources')
+  (sourceState: SourceStateType) => sourceState.get('sources')
 )
 
 const makeSelectListLoading = () => createSelector(
   selectSource,
-  (sourceState) => sourceState.get('listLoading')
+  (sourceState: SourceStateType) => sourceState.get('listLoading')
 )
 
 const makeSelectFormLoading = () => createSelector(
   selectSource,
-  (sourceState) => sourceState.get('formLoading')
+  (sourceState: SourceStateType) => sourceState.get('formLoading')
 )
 
 const makeSelectTestLoading = () => createSelector(
   selectSource,
-  (sourceState) => sourceState.get('testLoading')
-)
-
-const makeSelectSourceFormValues = () => createSelector(
-  selectSource,
-  (sourceState) => sourceState.get('sourceFormValues')
-)
-
-const makeSelectUploadFormValues = () => createSelector(
-  selectSource,
-  (sourceState) => sourceState.get('uploadFormValues')
+  (sourceState: SourceStateType) => sourceState.get('testLoading')
 )
 
 export {
@@ -57,7 +48,5 @@ export {
   makeSelectSources,
   makeSelectListLoading,
   makeSelectFormLoading,
-  makeSelectTestLoading,
-  makeSelectSourceFormValues,
-  makeSelectUploadFormValues
+  makeSelectTestLoading
 }

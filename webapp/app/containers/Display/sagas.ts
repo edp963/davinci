@@ -111,15 +111,15 @@ export function* getDisplayDetail (action): IterableIterator<any> {
   try {
     const result = yield all({
       dashboardDetail: call(request, `${api.display}/${displayId}/slides`),
-      widgets: call(request, `${api.widget}?projectId=${projectId}`),
-      bizlogics: call(request, `${api.bizlogic}?projectId=${projectId}`)
+      widgets: call(request, `${api.widget}?projectId=${projectId}`)
     })
-    const { dashboardDetail, widgets, bizlogics } = result
+    const { dashboardDetail, widgets } = result
     const display = dashboardDetail.payload
     const slide = display.slides[0]
     delete display.slides
-    const layers = yield call(request, `${api.display}/${displayId}/slides/${slide.id}/widgets`)
-    yield put(displayDetailLoaded(display, slide, layers.payload, widgets.payload, bizlogics.payload))
+    const slideDetail = yield call(request, `${api.display}/${displayId}/slides/${slide.id}`)
+    const { widgets: layers, views } = slideDetail.payload
+    yield put(displayDetailLoaded(display, slide, layers, widgets.payload, views))
   } catch (err) {
     yield put(loadDisplaysFail(err))
   }

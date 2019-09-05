@@ -19,12 +19,14 @@
  */
 
 import { IChartProps } from '../../components/Chart'
+import { IFieldFormatConfig } from 'containers/Widget/components/Workbench/FormatConfigModal'
 import barDefaultConfig from '../../config/chart/bar'
 import {
   decodeMetricName,
   getChartTooltipLabel,
   getAggregatorLocale,
-  getFormattedValue
+  getFormattedValue,
+  FieldFormatTypes
 } from '../../components/util'
 import {
   getDimetionAxisOption,
@@ -38,7 +40,7 @@ import {
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
-export default function (chartProps: IChartProps, drillOptions?: any) {
+export default function (chartProps: IChartProps, drillOptions) {
   const {
     data,
     cols,
@@ -84,7 +86,18 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         formatter: (params) => {
           const { value, seriesName } = params
           const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
-          const formatted = getFormattedValue(value, m.format)
+          let format: IFieldFormatConfig = m.format
+          let formattedValue = value
+          if (percentage) {
+            format = {
+              formatType: FieldFormatTypes.Percentage,
+              [FieldFormatTypes.Percentage]: {
+                decimalPlaces: 0
+              }
+            }
+            formattedValue /= 100
+          }
+          const formatted = getFormattedValue(formattedValue, format)
           return formatted
         }
       })
@@ -105,7 +118,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     Object.entries(configValue).forEach(([k, v]: [string, string]) => {
       configKeys.push(k)
     })
-    percentGrouped = makeGrouped(data, cols, color.items[0].name, metrics, configKeys)
+    percentGrouped = makeGrouped(data, cols.map((c) => c.name), color.items[0].name, metrics, configKeys)
   }
 
   const series = []
@@ -145,7 +158,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
               //   return g[`${m.agg}(${decodedMetricName})`]
               // }
               // }
-               if (selectedItems.some((item) => item === index)) {
+               if (selectedItems && selectedItems.length && selectedItems.some((item) => item === index)) {
                 return {
                   value: percentage ? g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100 : g[`${m.agg}(${decodedMetricName})`],
                   itemStyle: {
@@ -201,7 +214,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
             //   return d[`${m.agg}(${decodedMetricName})`]
             // }
           // }
-          if (selectedItems.some((item) => item === index)) {
+          if (selectedItems && selectedItems.length && selectedItems.some((item) => item === index)) {
             return {
               value: percentage ? d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100 : d[`${m.agg}(${decodedMetricName})`],
               itemStyle: {
@@ -341,7 +354,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
     },
     legend: getLegendOption(legend, seriesNames),
-    grid: getGridPositions(legend, seriesNames, barChart, yAxis, xAxis, xAxisData)
+    grid: getGridPositions(legend, seriesNames, '', barChart, yAxis, xAxis, xAxisData)
    // ...brushedOptions
   }
 }

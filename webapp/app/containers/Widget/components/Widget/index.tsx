@@ -20,6 +20,7 @@ import { IScorecardConfig } from '../Workbench/ConfigSections/ScorecardSection'
 import { IframeConfig } from '../Workbench/ConfigSections/IframeSection'
 import { ITableConfig } from '../Workbench/ConfigSections/TableSection'
 import { IRichTextConfig, IBarConfig } from '../Workbench/ConfigSections'
+import { IDoubleYAxisConfig } from '../Workbench/ConfigSections/DoubleYAxisSection'
 import { IModel } from '../Workbench/index'
 import { IQueryVariableMap } from '../../../Dashboard/Grid'
 import { getStyleConfig } from '../util'
@@ -27,7 +28,7 @@ import ChartTypes from '../../config/chart/ChartTypes'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
-export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize' | 'loading'
+export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize' | 'loading' | 'select'
 export type WidgetMode = 'pivot' | 'chart'
 
 export interface IWidgetDimension {
@@ -49,6 +50,9 @@ export interface IWidgetSecondaryMetric {
   agg: AggregatorType
   field: IFieldConfig
   format: IFieldFormatConfig
+  from?: string
+  type?: any
+  visualType?: any
 }
 
 export interface IWidgetFilter {
@@ -74,6 +78,7 @@ export interface IChartStyles {
   table?: ITableConfig
   richText?: IRichTextConfig
   bar?: IBarConfig
+  doubleYAxis?: IDoubleYAxisConfig
 }
 
 export interface IChartInfo {
@@ -105,6 +110,7 @@ export interface IWidgetProps {
   filters: IWidgetFilter[]
   chartStyles: IChartStyles
   selectedChart: number
+  interacting?: boolean
   color?: IDataParamProperty
   label?: IDataParamProperty
   size?: IDataParamProperty
@@ -127,6 +133,8 @@ export interface IWidgetProps {
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object []
   computed?: any[]
+  selectedItems?: number[]
+  onSelectChartsItems?: (selectedItems: number[]) => void
   // onHideDrillPanel?: (swtich: boolean) => void
 }
 
@@ -134,10 +142,12 @@ export interface IWidgetConfig extends IWidgetProps {
   controls: any[]
   cache: boolean
   expired: number
+  autoLoadData: boolean
 }
 
 export interface IWidgetWrapperProps extends IWidgetProps {
-  loading: boolean
+  loading?: boolean | JSX.Element
+  empty?: boolean | JSX.Element
 }
 
 export interface IWidgetWrapperStates {
@@ -182,33 +192,15 @@ export class Widget extends React.Component<IWidgetWrapperProps, IWidgetWrapperS
     }
   }
 
-  private needMask = () => {
-    const { selectedChart, cols, rows, metrics } = this.props
-    switch (selectedChart) {
-      case ChartTypes.Iframe:
-        return false
-      case ChartTypes.RichText:
-        return cols.length || rows.length || metrics.length
-      default:
-        return true
-    }
-  }
-
   public render () {
-    const { data, loading } = this.props
+    const { loading, empty } = this.props
     const { width, height } = this.state
-    const empty = !(data.length || !this.needMask())
 
     const widgetProps = { width, height, ...this.props }
 
     delete widgetProps.loading
 
-    const maskClass = classnames({
-      [styles.mask]: true,
-      [styles.active]: loading || empty
-    })
-
-    let widgetContent
+    let widgetContent: JSX.Element
     if (width && height) {
       // FIXME
       widgetContent =  widgetProps.mode === 'chart'
@@ -216,29 +208,11 @@ export class Widget extends React.Component<IWidgetWrapperProps, IWidgetWrapperS
         : (<Pivot {...widgetProps} />)
     }
 
-    let maskContent = null
-    if (loading) {
-      maskContent = (
-        <>
-          <Icon type="loading" />
-          <p>加载中…</p>
-        </>
-      )
-    } else if (empty) {
-      maskContent = (
-        <>
-          <Icon type="inbox" className={styles.emptyIcon} />
-          <p>暂无数据</p>
-        </>
-      )
-    }
-
     return (
       <div className={styles.wrapper} ref={this.container}>
         {widgetContent}
-        <div className={maskClass}>
-          {maskContent}
-        </div>
+        {loading}
+        {empty}
       </div>
     )
   }

@@ -75,34 +75,23 @@
 
     .ant-table-header {
       // @FIXME
-      margin-right: 15px;
       margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
       background: transparent !important;
-      .hideScrollbar
+      overflow-x: hidden !important;
+      overflow-y: scroll !important;
     }
 
-    .ant-table-thead th {
-      padding: 0;
-      height: 1px;
+    .ant-table-thead > tr {
       background: transparent !important;
-
-      & > div {
-        height: 100%;
-      }
     }
 
-    .ant-table-body,
-    .ant-table-tbody {
+    .ant-table-header-column {
+      width: 100%;
+    }
+
+    .ant-table-body {
       background: transparent !important;
-
-      .ant-table-row:hover {
-        background: transparent !important;
-      }
-
-      td {
-        padding: 0 !important;
-        height: 1px;
-      }
     }
 
     .react-resizable-handle {
@@ -115,36 +104,16 @@
       cursor: col-resize;
       background: none;
     }
-  }
 
-  .mergedCell {
-    background-color: transparent;
-  }
-
-  .headerCell {
-    height: 100%;
-    padding: 10px 8px;
-    background-color: transparent;
-    display: flex;
-    align-items: center;
-  }
-
-  .tableCell {
-    height: 100%;
-    padding: 10px 8px;
-    display: flex;
-
-    .valCell {
-      flex: 1;
-      display: flex;
-      // align-items: center;
-    }
-    .cdtCell {
-      padding: 4px 0;
+    .ant-table-placeholder {
+      display: none;
     }
   }
+
   .selectedRow {
     background-color: #d2eafb;
+   // background-color: transparent;
+
   }
   .unSelectedRow {
     background-color: transparent;

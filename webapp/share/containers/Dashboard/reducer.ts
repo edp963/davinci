@@ -29,24 +29,28 @@ import {
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
   LOAD_WIDGET_CSV_FAILURE,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
+  LOAD_SELECT_OPTIONS_SUCCESS,
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
-  DELETE_DRILL_HISTORY
+  DELETE_DRILL_HISTORY,
+  SET_SELECT_OPTIONS,
+  SELECT_DASHBOARD_ITEM_CHART,
+  GLOBAL_CONTROL_CHANGE
 } from './constants'
+import { IMapItemControlRequestParams, IControlRequestParams } from 'app/components/Filters';
 
 const initialState = fromJS({
   dashboard: null,
   title: '',
   config: '{}',
-  dashboardCascadeSources: null,
+  dashboardSelectOptions: null,
   widgets: null,
   items: null,
   itemsInfo: null
 })
 
 function shareReducer (state = initialState, { type, payload }) {
-  const dashboardCascadeSources = state.get('dashboardCascadeSources')
+  const dashboardSelectOptions = state.get('dashboardSelectOptions')
   const itemsInfo = state.get('itemsInfo')
   let widgets = state.get('widgets')
 
@@ -56,7 +60,7 @@ function shareReducer (state = initialState, { type, payload }) {
         .set('title', payload.dashboard.name)
         .set('dashboard', payload.dashboard)
         .set('config', payload.dashboard.config)
-        .set('dashboardCascadeSources', {})
+        .set('dashboardSelectOptions', {})
         .set('widgets', payload.dashboard.widgets)
         .set('items', payload.dashboard.relations)
         .set('itemsInfo', payload.dashboard.relations.reduce((obj, item) => {
@@ -64,6 +68,7 @@ function shareReducer (state = initialState, { type, payload }) {
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
+              tempFilters: [],
               linkageFilters: [],
               globalFilters: [],
               variables: [],
@@ -73,7 +78,8 @@ function shareReducer (state = initialState, { type, payload }) {
             },
             downloadCsvLoading: false,
             interactId: '',
-            renderType: 'rerender'
+            renderType: 'rerender',
+            controlSelectOptions: {}
           }
           return obj
         }, {}))
@@ -95,6 +101,7 @@ function shareReducer (state = initialState, { type, payload }) {
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
+              tempFilters: [],
               linkageFilters: [],
               globalFilters: [],
               variables: [],
@@ -104,7 +111,8 @@ function shareReducer (state = initialState, { type, payload }) {
             },
             downloadCsvLoading: false,
             interactId: '',
-            renderType: 'rerender'
+            renderType: 'rerender',
+            controlSelectOptions: {}
           }
         })
     case LOAD_SHARE_WIDGET_SUCCESS:
@@ -112,14 +120,25 @@ function shareReducer (state = initialState, { type, payload }) {
         widgets = []
       }
       return state.set('widgets', widgets.concat(payload.widget))
+    case SELECT_DASHBOARD_ITEM_CHART:
+      return state.set('itemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          renderType: payload.renderType,
+          selectedItems: payload.selectedItems
+        }
+      })
     case LOAD_SHARE_RESULTSET:
       return state.set('itemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
+          selectedItems: [],
           loading: true,
           queryConditions: {
             ...itemsInfo[payload.itemId].queryConditions,
+            tempFilters: payload.requestParams.tempFilters,
             linkageFilters: payload.requestParams.linkageFilters,
             globalFilters: payload.requestParams.globalFilters,
             variables: payload.requestParams.variables,
@@ -130,6 +149,18 @@ function shareReducer (state = initialState, { type, payload }) {
           }
         }
       })
+    case GLOBAL_CONTROL_CHANGE:
+      const controlRequestParamsByItem: IMapItemControlRequestParams = payload.controlRequestParamsByItem
+      Object.entries(controlRequestParamsByItem)
+        .forEach(([itemId, requestParams]: [string, IControlRequestParams]) => {
+          const { filters: globalFilters, variables: globalVariables } = requestParams
+          itemsInfo[itemId].queryConditions = {
+            ...itemsInfo[itemId].queryConditions,
+            ...globalFilters && { globalFilters },
+            ...globalVariables && { globalVariables }
+          }
+        })
+      return state.set('itemsInfo', itemsInfo)
     case DRILL_DASHBOARDITEM:
       if (!itemsInfo[payload.itemId].queryConditions.drillHistory) {
         itemsInfo[payload.itemId].queryConditions.drillHistory = []
@@ -182,11 +213,38 @@ function shareReducer (state = initialState, { type, payload }) {
           downloadCsvLoading: false
         }
       })
-    case LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS:
-      return state.set('dashboardCascadeSources', {
-        ...dashboardCascadeSources,
-        [payload.controlId]: payload.values
-      })
+    case LOAD_SELECT_OPTIONS_SUCCESS:
+      return payload.itemId
+        ? state.set('itemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            controlSelectOptions: {
+              ...itemsInfo[payload.itemId].controlSelectOptions,
+              [payload.controlKey]: payload.values
+            }
+          }
+        })
+        : state.set('dashboardSelectOptions', {
+          ...dashboardSelectOptions,
+          [payload.controlKey]: payload.values
+        })
+    case SET_SELECT_OPTIONS:
+      return payload.itemId
+        ? state.set('itemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            controlSelectOptions: {
+              ...itemsInfo[payload.itemId].controlSelectOptions,
+              [payload.controlKey]: payload.options
+            }
+          }
+        })
+        : state.set('dashboardSelectOptions', {
+          ...dashboardSelectOptions,
+          [payload.controlKey]: payload.options
+        })
     case RESIZE_ALL_DASHBOARDITEM:
       return state.set(
         'itemsInfo',

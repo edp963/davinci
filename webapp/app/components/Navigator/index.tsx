@@ -18,18 +18,23 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 import classnames from 'classnames'
+import DownloadList from '../DownloadList'
 
-import { makeSelectLoginUser } from '../../containers/App/selectors'
-import { Dropdown, Menu } from 'antd'
+import {
+  makeSelectLoginUser
+} from '../../containers/App/selectors'
+
+import { Dropdown, Menu, Icon } from 'antd'
 
 const styles = require('./Navigator.less')
 
 const goGithub = () => window.open('https://github.com/edp963/davinci')
+const goDoc = () => window.open('https://edp963.github.io/davinci/')
 
 interface INavigatorProps {
   show: boolean
@@ -38,9 +43,13 @@ interface INavigatorProps {
 }
 
 export function Navigator (props: INavigatorProps) {
+  const {
+    show,
+    onLogout
+  } = props
   const headerClass = classnames({
     [styles.header]: true,
-    [styles.hide]: !props.show
+    [styles.hide]: !show
   })
   const menu = (
     <Menu>
@@ -51,7 +60,7 @@ export function Navigator (props: INavigatorProps) {
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="3">
-        <a href="javascript:;" onClick={props.onLogout}>
+        <a href="javascript:;" onClick={onLogout}>
           退出登录
         </a>
       </Menu.Item>
@@ -62,7 +71,6 @@ export function Navigator (props: INavigatorProps) {
     <nav className={headerClass}>
       <div className={styles.logoPc}>
         <div className={styles.logo}>
-          {/*<Link to="/report/dashboards">*/}
           <Link to="/projects">
             <img src={require('../../assets/images/logo.svg')} />
           </Link>
@@ -76,17 +84,18 @@ export function Navigator (props: INavigatorProps) {
         </div>
       </div>
       <ul className={styles.tools}>
-        {/*<li className={styles.emailHide}>*/}
-          {/*<p>{props.loginUser.email}</p>*/}
-        {/*</li>*/}
         <li>
-          {/*<Icon type="github" onClick={goGithub}/>*/}
-          <i className="iconfont icon-GitHub" onClick={goGithub} style={{lineHeight: '38px'}}/>
+          <DownloadList />
         </li>
         <li>
-          <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
-            {/*<Icon type="user" />*/}
-            <i className="iconfont icon-user_circle" style={{fontSize: '26px'}}/>
+          <Icon type="file-text" onClick={goDoc} />
+        </li>
+        <li>
+          <Icon type="github" onClick={goGithub}/>
+        </li>
+        <li>
+          <Dropdown overlay={menu} trigger={['click']} placement="bottomCenter">
+            <Icon type="user" />
           </Dropdown>
         </li>
       </ul>

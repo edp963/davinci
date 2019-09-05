@@ -111,17 +111,21 @@ export function* updateSchedule ({ payload }) {
 export function* getVizsData ({ payload }) {
   const { pid } = payload
   try {
-    const displayData = yield call(request, `${api.display}?projectId=${pid}`)
     const portalsData = yield call(request, `${api.portal}?projectId=${pid}`)
     const portalsList = portalsData.payload
+
+
+    const displayData = yield call(request, `${api.display}?projectId=${pid}`)
     const displayList = displayData.payload.map((display) => ({
       ...display,
+      vizType: 'display',
       contentType: 'display',
       title: `${display.name}`,
       key: display.name,
       value: `${display.id}(d)`,
       isLeaf: true
     }))
+
     const list = yield all(portalsList.map((portals, index) => {
       return call(request, `${api.portal}/${portals.id}/dashboards`)
     }))
@@ -129,6 +133,7 @@ export function* getVizsData ({ payload }) {
       portal.children =  buildTree(list[index].payload)
       return {
         ...portal,
+        vizType: 'portal',
         contentType: 'portal',
         title: `${portal.name}`,
         key: portal.name,
@@ -139,15 +144,17 @@ export function* getVizsData ({ payload }) {
     const result = [{
       contentType: 'display',
       title: `Display`,
-      key: 'display',
+      key: 'DISPLAYS',
       value: 'display',
+      isTitle: true,
       children: displayList
     },
     {
       contentType: 'portal',
       title: `Dashboard`,
-      key: 'portal',
+      key: 'DASHBOARDS',
       value: 'portal',
+      isTitle: true,
       children: portals
     }]
     yield put(vizsLoaded(result))
@@ -177,6 +184,7 @@ export function* getVizsData ({ payload }) {
           tree[attr] = {
             ...tree[attr],
             ...{
+                vizType: 'dashboard',
                 contentType: 'portal',
                 label: `${tree[attr].name}`,
                 key: tree[attr].name,
@@ -192,6 +200,7 @@ export function* getVizsData ({ payload }) {
           tree[attr] = {
             ...tree[attr],
             ...{
+                vizType: 'dashboard',
                 contentType: 'portal',
                 label: `${tree[attr].name}`,
                 key: tree[attr].name,

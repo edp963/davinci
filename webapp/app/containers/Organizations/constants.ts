@@ -68,3 +68,41 @@ export const DELETE_ORGANIZATION_MEMBER_ERROR = 'davinci/Organization/DELETE_ORG
 export const CHANGE_MEMBER_ROLE_ORGANIZATION = 'davinci/Organization/CHANGE_MEMBER_ROLE_ORGANIZATION'
 export const CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS = 'davinci/Organization/CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS'
 export const CHANGE_MEMBER_ROLE_ORGANIZATION_ERROR = 'davinci/Organization/CHANGE_MEMBER_ROLE_ORGANIZATION_ERROR'
+
+
+export const LOAD_ORGANIZATIONS_ROLE = 'davinci/Organization/LOAD_ORGANIZATIONS_ROLE'
+export const LOAD_ORGANIZATIONS_ROLE_SUCCESS = 'davinci/Organization/LOAD_ORGANIZATIONS_ROLE_SUCCESS'
+export const LOAD_ORGANIZATIONS_ROLE_FAILURE = 'davinci/Organization/LOAD_ORGANIZATIONS_ROLE_FAILURE'
+
+export const ADD_ROLE = 'davinci/Organization/ADD_ROLE'
+export const ADD_ROLE_SUCCESS = 'davinci/Organization/ADD_ROLE_SUCCESS'
+export const ADD_ROLE_FAILURE = 'davinci/Organization/ADD_ROLE_FAILURE'
+
+export const DELETE_ROLE = 'davinci/Organization/DELETE_ROLE'
+export const DELETE_ROLE_SUCCESS = 'davinci/Organization/DELETE_ROLE_SUCCESS'
+export const DELETE_ROLE_FAILURE = 'davinci/Organization/DELETE_ROLE_FAILURE'
+
+export const EDIT_ROLE = 'davinci/Organization/EDIT_ROLE'
+export const EDIT_ROLE_SUCCESS = 'davinci/Organization/DEIT_ROLE_SUCCESS'
+export const EDIT_ROLE_FAILURE = 'davinci/Organization/EDIT_ROLE_FAILURE'
+
+export const REL_ROLE_MEMBER = 'davinci/Organization/DELETE_ROLE/REL_ROLE_MEMBER'
+export const REL_ROLE_MEMBER_SUCCESS = 'davinci/Organization/DELETE_ROLE/REL_ROLE_MEMBER_SUCCESS'
+export const REL_ROLE_MEMBER_FAILURE = 'davinci/Organization/DELETE_ROLE/REL_ROLE_MEMBER_FAILURE'
+
+export const GET_REL_ROLE_MEMBER = 'davinci/Organization/DELETE_ROLE/GET_REL_ROLE_MEMBER'
+export const GET_REL_ROLE_MEMBER_SUCCESS = 'davinci/Organization/DELETE_ROLE/GET_REL_ROLE_MEMBER_SUCCESS'
+export const GET_REL_ROLE_MEMBER_FAILURE = 'davinci/Organization/DELETE_ROLE/GET_REL_ROLE_MEMBER_FAILURE'
+
+export const SET_CURRENT_ORIGANIZATION_PROJECT = 'davinci/Organization//GET_REL_ROLE_MEMBER'
+
+export const LOAD_PROJECT_ADMINS = 'davinci/Organization//LOAD_PROJECT_ADMINS'
+export const LOAD_PROJECT_ADMINS_SUCCESS = 'davinci/Organization//LOAD_PROJECT_ADMINS_SUCCESS'
+export const LOAD_PROJECT_ADMINS_FAIL = 'davinci/Organization//LOAD_PROJECT_ADMINS_FAIL'
+
+export const LOAD_PROJECT_ROLES = 'davinci/Project/LOAD_PROJECT_ROLES'
+export const LOAD_PROJECT_ROLES_SUCCESS = 'davinci/Project/LOAD_PROJECT_ROLES_SUCCESS'
+export const LOAD_PROJECT_ROLES_FAIL = 'davinci/Project/LOAD_PROJECT_ROLES_FAIL'
+
+export const GET_VIZ_VISBILITY = 'davinci/Project/GET_VIZ_VISBILITY'
+export const POST_VIZ_VISBILITY = 'davinci/Project/POST_VIZ_VISBILITY'

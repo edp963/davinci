@@ -159,10 +159,11 @@ export function* getDashboardDetail (action) {
   try {
     const result = yield all({
       dashboardDetail: call(request, `${api.portal}/${portalId}/dashboards/${dashboardId}`),
-      widgets: call(request, `${api.widget}?projectId=${projectId}`),
-      bizlogics: call(request, `${api.bizlogic}?projectId=${projectId}`)
+      widgets: call(request, `${api.widget}?projectId=${projectId}`)
     })
-    yield put(dashboardDetailLoaded(dashboardId, result.dashboardDetail.payload, result.widgets.payload, result.bizlogics.payload))
+    const views = result.dashboardDetail.payload.views
+    delete result.dashboardDetail.payload.views
+    yield put(dashboardDetailLoaded(dashboardId, result.dashboardDetail.payload, result.widgets.payload, views))
   } catch (err) {
     yield put(loadDashboardDetailFail())
     errorHandler(err)
@@ -187,11 +188,11 @@ export function* addDashboardItems (action) {
 }
 
 export function* editDashboardItem (action) {
-  const { item, resolve } = action.payload
+  const { portalId, item, resolve } = action.payload
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.portal}/dashboards/widgets`,
+      url: `${api.portal}/${portalId}/dashboards/widgets`,
       data: [item]
     })
     yield put(dashboardItemEdited(item))
@@ -203,11 +204,11 @@ export function* editDashboardItem (action) {
 }
 
 export function* editDashboardItems (action) {
-  const { items } = action.payload
+  const { portalId, items } = action.payload
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.portal}/dashboards/widgets`,
+      url: `${api.portal}/${portalId}/dashboards/widgets`,
       data: items
     })
     yield put(dashboardItemsEdited(items))
@@ -277,7 +278,7 @@ export function* getWidgetShareLink (action) {
 
 export function* getWidgetCsv (action) {
   const { itemId, widgetId, requestParams } = action.payload
-  const { filters, linkageFilters, globalFilters, variables, linkageVariables, globalVariables, ...rest } = requestParams
+  const { filters, tempFilters, linkageFilters, globalFilters, variables, linkageVariables, globalVariables, ...rest } = requestParams
 
   try {
     const path = yield call(request, {
@@ -285,7 +286,7 @@ export function* getWidgetCsv (action) {
       url: `${api.widget}/${widgetId}/excel`,
       data: {
         ...rest,
-        filters: filters.concat(linkageFilters).concat(globalFilters),
+        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
         params: variables.concat(linkageVariables).concat(globalVariables)
       }
     })

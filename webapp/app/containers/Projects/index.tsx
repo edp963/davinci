@@ -3,7 +3,7 @@ import * as classnames from 'classnames'
 import { connect } from 'react-redux'
 import { Row, Col, Tooltip, Popconfirm, Icon, Modal, Button, Pagination } from 'antd'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const styles = require('./Project.less')
+const styles = require('../Organizations/Project.less')
 import { InjectedRouter } from 'react-router/lib/Router'
 import { addProject, deleteProject, editProject, loadProjects, loadProjectDetail,
   transferProject, searchProject, unStarProject, getProjectStarUser, loadCollectProjects, clickCollectProjects } from './actions'
@@ -13,7 +13,7 @@ import { makeSelectProjects, makeSelectSearchProject, makeSelectStarUserList, ma
 import injectReducer from '../../utils/injectReducer'
 import { createStructuredSelector } from 'reselect'
 import injectSaga from '../../utils/injectSaga'
-import ProjectsForm from './ProjectForm'
+import ProjectsForm from '../Organizations/component/ProjectForm'
 import saga from './sagas'
 import reducer from './reducer'
 import reducerOrganization from '../Organizations/reducer'
@@ -26,7 +26,7 @@ import Avatar from '../../components/Avatar'
 import Box from '../../components/Box'
 import Star from '../../components/StarPanel/Star'
 const utilStyles = require('../../assets/less/util.less')
-import HistoryStack from './historyStack'
+import HistoryStack from '../Organizations/component/historyStack'
 import { DEFAULT_ECHARTS_THEME } from '../../globalConstants'
 const historyStack = new HistoryStack()
 
@@ -72,17 +72,20 @@ interface IProjectsState {
   pageSize: number
   isDisableCollect: boolean
 }
+
+export interface IProjectPermission {
+  downloadPermission: boolean
+  schedulePermission: number
+  sharePermission: boolean
+  sourcePermission: number
+  viewPermission: number
+  vizPermission: number
+  widgetPermission: number
+}
+
 export interface IProject {
   createBy?: { avatar?: string, id?: number, username?: string}
-  permission?: {
-    downloadPermission: boolean
-    schedulePermission: number
-    sharePermission: boolean
-    sourcePermission: number
-    viewPermission: number
-    vizPermission: number
-    widgetPermission: number
-  }
+  permission?: IProjectPermission
   inTeam?: boolean
   isStar?: boolean
   type?: string
@@ -195,6 +198,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
 
   private stopPPG = (e) => {
     e.stopPropagation()
+    return
   }
   private hideProjectForm = () => {
     this.setState({
@@ -380,7 +384,8 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     onGetProjectStarUser(id)
   }
 
-  private confirmDeleteProject = (type, id) => () => {
+  private confirmDeleteProject = (type, id) => (e) => {
+    this.stopPPG(e)
     if (type === 'collect') {
       this.props.onDeleteProject(id)
     } else {
@@ -1052,14 +1057,9 @@ const withSaga = injectSaga({ key: 'project', saga })
 const withOrganizationReducer = injectReducer({ key: 'organization', reducer: reducerOrganization })
 const withOrganizationSaga = injectSaga({ key: 'organization', saga: sagaOrganization })
 
-// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
-
 export default compose(
   withReducer,
   withOrganizationReducer,
-  // withAppReducer,
-  // withAppSaga,
   withSaga,
   withOrganizationSaga,
   withConnect

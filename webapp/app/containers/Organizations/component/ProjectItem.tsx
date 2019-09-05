@@ -153,11 +153,11 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
                 )
             }
             <div className={styles.delete}>
-              <Tooltip title="修改">
+              <Tooltip title="设置">
                 <CreateButton type="setting" onClick={this.showProjectForm('edit', options)} />
               </Tooltip>
             </div>
-            <div className={styles.delete}>
+            {/* <div className={styles.delete}>
               <Popconfirm
                 title="确定删除？"
                 placement="bottom"
@@ -170,7 +170,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
                   />
                 </Tooltip>
               </Popconfirm>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

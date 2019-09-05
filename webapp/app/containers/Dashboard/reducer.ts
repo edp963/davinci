@@ -59,22 +59,30 @@ import {
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
   DELETE_DRILL_HISTORY,
-  DRILL_PATH_SETTING
+  DRILL_PATH_SETTING,
+  SELECT_DASHBOARD_ITEM_CHART,
+  SET_SELECT_OPTIONS,
+  GLOBAL_CONTROL_CHANGE
 } from './constants'
+import {
+  INITIATE_DOWNLOAD_TASK,
+  INITIATE_DOWNLOAD_TASK_SUCCESS,
+  INITIATE_DOWNLOAD_TASK_FAILURE
+} from '../App/constants'
+import { ActionTypes as ViewActionTypes } from '../View/constants'
+import { ViewActionType } from '../View/actions'
 
 import {
-  LOAD_DATA_FROM_ITEM,
-  LOAD_DATA_FROM_ITEM_SUCCESS,
-  LOAD_DATA_FROM_ITEM_FAILURE,
-  LOAD_CASCADESOURCE_SUCCESS
-} from '../Bizlogic/constants'
-
-import {
-  IFilterItem,
+  IGlobalControl,
+  IControlRelatedField,
   getVariableValue,
   getModelValue,
-  getDefaultValue
+  deserializeDefaultValue,
+  IMapItemControlRequestParams,
+  IControlRequestParams
 } from '../../components/Filters'
+import { DownloadTypes } from '../App/types'
+import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 const initialState = fromJS({
   dashboards: null,
@@ -83,16 +91,16 @@ const initialState = fromJS({
   currentDashboardShareInfo: '',
   currentDashboardSecretInfo: '',
   currentDashboardShareInfoLoading: false,
-  currentDashboardCascadeSources: {},
+  currentDashboardSelectOptions: {},
   currentItems: null,
   currentItemsInfo: null,
   modalLoading: false
 })
 
-function dashboardReducer (state = initialState, action) {
+function dashboardReducer (state = initialState, action: ViewActionType | any) {
   const { type, payload } = action
   const dashboards = state.get('dashboards')
-  const dashboardCascadeSources = state.get('currentDashboardCascadeSources')
+  const dashboardSelectOptions = state.get('currentDashboardSelectOptions')
   const items = state.get('currentItems')
   const itemsInfo = state.get('currentItemsInfo')
 
@@ -136,7 +144,7 @@ function dashboardReducer (state = initialState, action) {
     case EDIT_CURRENT_DASHBOARD_SUCCESS:
       return state
         .set('currentDashboard', payload.result)
-        .set('currentDashboardCascadeSources', {})
+        .set('currentDashboardSelectOptions', {})
         .set('currentDashboardLoading', false)
     case EDIT_CURRENT_DASHBOARD_FAILURE:
       return state.set('currentDashboardLoading', false)
@@ -153,39 +161,39 @@ function dashboardReducer (state = initialState, action) {
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
       const { dashboardDetail } = payload
       const dashboardConfig = dashboardDetail.config ? JSON.parse(dashboardDetail.config) : {}
-      const globalFilters = dashboardConfig.filters || []
-      const globalFiltersInitialValue = {}
-      globalFilters.forEach((filter: IFilterItem) => {
-        const { key, type, relatedViews, operator } = filter
-        const defaultValue = getDefaultValue(filter)
+      const globalControls = (dashboardConfig.filters || []).map((c) => globalControlMigrationRecorder(c))
+      const globalControlsInitialValue = {}
+
+      globalControls.forEach((control: IGlobalControl) => {
+        const { interactionType, relatedItems, relatedViews } = control
+        const defaultValue = deserializeDefaultValue(control)
         if (defaultValue) {
-          Object.entries(relatedViews).forEach(([viewId, config]) => {
-            const { items, isVariable } = config
-            if (items.length) {
-              const filterValue = isVariable
-                ? getVariableValue(filter, config, defaultValue)
-                : getModelValue(filter, config, operator, defaultValue)
-              items.forEach((itemId) => {
-                if (!globalFiltersInitialValue[itemId]) {
-                  globalFiltersInitialValue[itemId] = {
+          Object.entries(relatedItems).forEach(([itemId, config]) => {
+            Object.entries(relatedViews).forEach(([viewId, fields]) => {
+              if (config.checked && config.viewId === Number(viewId)) {
+                const filterValue = interactionType === 'column'
+                  ? getModelValue(control, fields as IControlRelatedField, defaultValue)
+                  : getVariableValue(control, fields, defaultValue)
+                if (!globalControlsInitialValue[itemId]) {
+                  globalControlsInitialValue[itemId] = {
                     filters: [],
                     variables: []
                   }
                 }
-                if (isVariable) {
-                  globalFiltersInitialValue[itemId].variables = globalFiltersInitialValue[itemId].variables.concat(filterValue)
+                if (interactionType === 'column') {
+                  globalControlsInitialValue[itemId].filters = globalControlsInitialValue[itemId].filters.concat(filterValue)
                 } else {
-                  globalFiltersInitialValue[itemId].filters = globalFiltersInitialValue[itemId].filters.concat(filterValue)
+                  globalControlsInitialValue[itemId].variables = globalControlsInitialValue[itemId].variables.concat(filterValue)
                 }
-              })
-            }
+              }
+            })
           })
         }
       })
       return state
         .set('currentDashboardLoading', false)
         .set('currentDashboard', payload.dashboardDetail)
-        .set('currentDashboardCascadeSources', {})
+        .set('currentDashboardSelectOptions', {})
         .set('currentItems', payload.dashboardDetail.widgets)
         .set('currentItemsInfo', payload.dashboardDetail.widgets.reduce((obj, w) => {
           const drillpathSetting = w.config && w.config.length ? JSON.parse(w.config) : void 0
@@ -193,11 +201,12 @@ function dashboardReducer (state = initialState, action) {
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
+              tempFilters: [],
               linkageFilters: [],
-              globalFilters: globalFiltersInitialValue[w.id] ? globalFiltersInitialValue[w.id].filters : [],
+              globalFilters: globalControlsInitialValue[w.id] ? globalControlsInitialValue[w.id].filters : [],
               variables: [],
               linkageVariables: [],
-              globalVariables: globalFiltersInitialValue[w.id] ? globalFiltersInitialValue[w.id].variables : [],
+              globalVariables: globalControlsInitialValue[w.id] ? globalControlsInitialValue[w.id].variables : [],
               pagination: {},
               drillpathInstance: [],
               ...drillpathSetting
@@ -208,7 +217,8 @@ function dashboardReducer (state = initialState, action) {
             downloadCsvLoading: false,
             interactId: '',
             rendered: false,
-            renderType: 'rerender'
+            renderType: 'rerender',
+            controlSelectOptions: {}
           }
           return obj
         }, {}))
@@ -225,6 +235,7 @@ function dashboardReducer (state = initialState, action) {
               datasource: { resultList: [] },
               loading: false,
               queryConditions: {
+                tempFilters: [],
                 linkageFilters: [],
                 globalFilters: [],
                 variables: [],
@@ -239,7 +250,8 @@ function dashboardReducer (state = initialState, action) {
               downloadCsvLoading: false,
               interactId: '',
               rendered: false,
-              renderType: 'rerender'
+              renderType: 'rerender',
+              controlSelectOptions: {}
             }
             return obj
           }, {})
@@ -270,7 +282,7 @@ function dashboardReducer (state = initialState, action) {
         .set('currentItems', null)
         .set('currentItemsInfo', null)
 
-    case LOAD_DATA_FROM_ITEM:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
       return payload.vizType !== 'dashboard' ? state : state
         .set('currentItemsInfo', {
           ...itemsInfo,
@@ -280,16 +292,18 @@ function dashboardReducer (state = initialState, action) {
           }
         })
 
-    case LOAD_DATA_FROM_ITEM_SUCCESS:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS:
       return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
           loading: false,
           datasource: payload.result,
+          selectedItems: [],
           renderType: payload.renderType,
           queryConditions: {
             ...itemsInfo[payload.itemId].queryConditions,
+            tempFilters: payload.requestParams.tempFilters,
             linkageFilters: payload.requestParams.linkageFilters,
             globalFilters: payload.requestParams.globalFilters,
             variables: payload.requestParams.variables,
@@ -298,6 +312,27 @@ function dashboardReducer (state = initialState, action) {
             pagination: payload.requestParams.pagination,
             nativeQuery: payload.requestParams.nativeQuery
           }
+        }
+      })
+    case GLOBAL_CONTROL_CHANGE:
+      const controlRequestParamsByItem: IMapItemControlRequestParams = payload.controlRequestParamsByItem
+      Object.entries(controlRequestParamsByItem)
+        .forEach(([itemId, requestParams]: [string, IControlRequestParams]) => {
+          const { filters: globalFilters, variables: globalVariables } = requestParams
+          itemsInfo[itemId].queryConditions = {
+            ...itemsInfo[itemId].queryConditions,
+            ...globalFilters && { globalFilters },
+            ...globalVariables && { globalVariables }
+          }
+        })
+      return state.set('currentItemsInfo', itemsInfo)
+    case SELECT_DASHBOARD_ITEM_CHART:
+      return state.set('currentItemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          renderType: payload.renderType,
+          selectedItems: payload.selectedItems
         }
       })
     case DRILL_DASHBOARDITEM:
@@ -340,7 +375,7 @@ function dashboardReducer (state = initialState, action) {
           }
         }
       })
-    case LOAD_DATA_FROM_ITEM_FAILURE:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE:
       return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
@@ -416,11 +451,59 @@ function dashboardReducer (state = initialState, action) {
           downloadCsvLoading: false
         }
       })
-    case LOAD_CASCADESOURCE_SUCCESS:
-      return state.set('currentDashboardCascadeSources', {
-        ...dashboardCascadeSources,
-        [payload.controlId]: payload.values
-      })
+    case INITIATE_DOWNLOAD_TASK:
+      return payload.type === DownloadTypes.Widget
+        ? state.set('currentItemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            downloadCsvLoading: true
+          }
+        })
+        : state
+    case INITIATE_DOWNLOAD_TASK_SUCCESS:
+    case INITIATE_DOWNLOAD_TASK_FAILURE:
+      return payload.type === DownloadTypes.Widget
+        ? state.set('currentItemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            downloadCsvLoading: false
+          }
+        })
+        : state
+    case ViewActionTypes.LOAD_SELECT_OPTIONS_SUCCESS:
+      return payload.itemId
+        ?  state.set('currentItemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            controlSelectOptions: {
+              ...itemsInfo[payload.itemId].controlSelectOptions,
+              [payload.controlKey]: payload.values
+            }
+          }
+        })
+        : state.set('currentDashboardSelectOptions', {
+          ...dashboardSelectOptions,
+          [payload.controlKey]: payload.values
+        })
+    case SET_SELECT_OPTIONS:
+      return payload.itemId
+        ? state.set('currentItemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            controlSelectOptions: {
+              ...itemsInfo[payload.itemId].controlSelectOptions,
+              [payload.controlKey]: payload.options
+            }
+          }
+        })
+        : state.set('currentDashboardSelectOptions', {
+          ...dashboardSelectOptions,
+          [payload.controlKey]: payload.options
+        })
     case RENDER_DASHBOARDITEM:
       return state.set('currentItemsInfo', {
         ...itemsInfo,

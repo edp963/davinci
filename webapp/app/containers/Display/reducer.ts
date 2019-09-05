@@ -23,11 +23,7 @@ import undoable, { includeAction } from 'redux-undo'
 
 import { ActionTypes } from './constants'
 import { GraphTypes } from './components/util'
-import {
-  LOAD_DATA_FROM_ITEM,
-  LOAD_DATA_FROM_ITEM_SUCCESS,
-  LOAD_DATA_FROM_ITEM_FAILURE
-} from '../Bizlogic/constants'
+import { ActionTypes as ViewActionTypes } from '../View/constants'
 
 const emptyDisplayState = {
   displays: [],
@@ -37,7 +33,7 @@ const emptyDisplayState = {
   currentDisplaySecretInfo: '',
   currentSlide: null,
   currentSlideLoading: false,
-  currentDisplayCascadeSources: {},
+  currentDisplaySelectOptions: {},
 
   currentLayers: [],
   currentLayersInfo: {},
@@ -57,7 +53,7 @@ function displayReducer (state = initialState, action) {
   const { type, payload } = action
 
   const displays = state.get('displays')
-  const displayCascadeSources = state.get('currentDisplayCascadeSources')
+  const displaySelectOptions = state.get('currentDisplaySelectOptions')
   const layers = state.get('currentLayers')
   const layersInfo = state.get('currentLayersInfo')
   const layersOperationInfo = state.get('currentLayersOperationInfo')
@@ -114,14 +110,15 @@ function displayReducer (state = initialState, action) {
       return state
         .set('currentDisplayLoading', false)
         .set('currentDisplay', payload.display)
-        .set('currentDisplayCascadeSources', {})
+        .set('currentDisplaySelectOptions', {})
         .set('currentSlide', payload.slide)
         .set('currentLayers', payload.layers || [])
-        .set('currentLayersInfo', payload.layers.reduce((obj, layer) => {
+        .set('currentLayersInfo', (payload.layers || []).reduce((obj, layer) => {
           obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
+              tempFilters: [],
               linkageFilters: [],
               globalFilters: [],
               variables: [],
@@ -138,7 +135,7 @@ function displayReducer (state = initialState, action) {
           }
           return obj
         }, {}))
-        .set('currentLayersOperationInfo', payload.layers.reduce((obj, layer) => {
+        .set('currentLayersOperationInfo', (payload.layers || []).reduce((obj, layer) => {
           obj[layer.id] = {
             selected: false,
             dragging: false,
@@ -169,6 +166,7 @@ function displayReducer (state = initialState, action) {
               datasource: { resultList: [] },
               loading: false,
               queryConditions: {
+                tempFilters: [],
                 linkageFilters: [],
                 globalFilters: [],
                 variables: [],
@@ -226,7 +224,7 @@ function displayReducer (state = initialState, action) {
         .set('lastLayers', lastLayers)
         .set('currentLayers', copyLayers)
 
-    case LOAD_DATA_FROM_ITEM:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
       return payload.vizType !== 'display' ? state : state
         .set('currentLayersInfo', {
           ...layersInfo,
@@ -234,6 +232,7 @@ function displayReducer (state = initialState, action) {
             ...layersInfo[payload.itemId],
             loading: true,
             queryConditions: {
+              tempFilters: payload.requestParams.tempFilters,
               linkageFilters: payload.requestParams.linkageFilters,
               globalFilters: payload.requestParams.globalFilters,
               variables: payload.requestParams.variables,
@@ -242,7 +241,7 @@ function displayReducer (state = initialState, action) {
             }
           }
         })
-    case LOAD_DATA_FROM_ITEM_SUCCESS:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS:
       return payload.vizType !== 'display' ? state : state
         .set('currentLayersInfo', {
           ...layersInfo,
@@ -253,7 +252,7 @@ function displayReducer (state = initialState, action) {
             renderType: payload.renderType
           }
         })
-    case LOAD_DATA_FROM_ITEM_FAILURE:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE:
       return payload.vizType !== 'display' ? state : state.set('currentLayersInfo', {
         ...layersInfo,
         [payload.layerId]: {

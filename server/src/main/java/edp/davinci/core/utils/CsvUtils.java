@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.core.utils;
@@ -21,6 +22,7 @@ package edp.davinci.core.utils;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.ServerException;
 import edp.core.model.QueryColumn;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
@@ -33,6 +35,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.util.*;
+
+import static edp.core.consts.Consts.EMPTY;
+
 
 public class CsvUtils {
 
@@ -71,17 +76,17 @@ public class CsvUtils {
             List<Map<String, Object>> values = null;
             Set<QueryColumn> headers = null;
 
-            if (null != records && records.size() > 0) {
+            if (!CollectionUtils.isEmpty(records)) {
                 headers = new HashSet<>();
                 for (String key : csvHeaders) {
-                    headers.add(new QueryColumn(key, SqlUtils.formatSqlType(records.get(0).get(key))));
+                    headers.add(new QueryColumn(key.replace("\uFEFF", EMPTY), SqlUtils.formatSqlType(records.get(0).get(key))));
                 }
                 if (records.size() > 1) {
                     values = new ArrayList<>();
                     for (int i = 1; i < records.size(); i++) {
                         Map<String, Object> item = new HashMap<>();
                         for (String key : csvHeaders) {
-                            item.put(key, SqlColumnEnum.formatValue(records.get(0).get(key), records.get(i).get(key)));
+                            item.put(key.replace("\uFEFF", EMPTY), SqlColumnEnum.formatValue(records.get(0).get(key), records.get(i).get(key)));
                         }
                         values.add(item);
                     }
@@ -131,7 +136,7 @@ public class CsvUtils {
     public static String formatCsvWithFirstAsHeader(String filePath, String fileName, List<QueryColumn> columns, List<Map<String, Object>> dataList) throws ServerException {
 
         String csvFullName = null;
-        if (null != columns && columns.size() > 0) {
+        if (!CollectionUtils.isEmpty(columns)) {
 
             List<String> headers = new ArrayList<>();
             List<String> headerTypes = new ArrayList<>();
@@ -175,7 +180,7 @@ public class CsvUtils {
                 csvPrinter.printRecord(headers);
                 csvPrinter.printRecord(headerTypes);
 
-                if (null != dataList && dataList.size() > 0) {
+                if (!CollectionUtils.isEmpty(dataList)) {
                     for (Map<String, Object> map : dataList) {
                         List<Object> list = new ArrayList<>();
                         for (String key : headers) {

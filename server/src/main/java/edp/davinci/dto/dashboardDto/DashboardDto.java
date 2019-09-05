@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,14 +22,9 @@ package edp.davinci.dto.dashboardDto;
 import edp.davinci.model.Dashboard;
 import lombok.Data;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Data
 public class DashboardDto extends Dashboard {
-    private Long[] teamIds;
-
-    public List<Long> getTeamIds() {
-        return null == this.teamIds || this.teamIds.length == 0 ? null : Arrays.asList(this.teamIds);
-    }
+    private List<Long> roleIds;
 }

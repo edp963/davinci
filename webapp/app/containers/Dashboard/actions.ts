@@ -68,7 +68,11 @@ import {
   DELETE_DRILL_HISTORY,
   DRILL_PATH_DASHBOARDITEM,
   DELETE_DRILL_PATH_HISTORY,
-  DRILL_PATH_SETTING
+  DRILL_PATH_SETTING,
+  SELECT_DASHBOARD_ITEM_CHART,
+  SET_SELECT_OPTIONS,
+  SET_CONTROL_FORM_VALUES,
+  GLOBAL_CONTROL_CHANGE
 } from './constants'
 
 export function addDashboardItems (portalId, items, resolve) {
@@ -236,14 +240,14 @@ export function loadDashboardDetail (projectId, portalId, dashboardId) {
   }
 }
 
-export function dashboardDetailLoaded (dashboardId, dashboardDetail, widgets, bizlogics) {
+export function dashboardDetailLoaded (dashboardId, dashboardDetail, widgets, views) {
   return {
     type: LOAD_DASHBOARD_DETAIL_SUCCESS,
     payload: {
       dashboardId,
       dashboardDetail,
       widgets,
-      bizlogics
+      views
     }
   }
 }
@@ -269,10 +273,11 @@ export function addDashboardItemsFail () {
   }
 }
 
-export function editDashboardItem (item, resolve) {
+export function editDashboardItem (portalId, item, resolve) {
   return {
     type: EDIT_DASHBOARD_ITEM,
     payload: {
+      portalId,
       item,
       resolve
     }
@@ -294,10 +299,11 @@ export function editDashboardItemFail () {
   }
 }
 
-export function editDashboardItems (items) {
+export function editDashboardItems (portalId, items) {
   return {
     type: EDIT_DASHBOARD_ITEMS,
     payload: {
+      portalId,
       items
     }
   }
@@ -491,16 +497,42 @@ export function drillPathsetting (itemId, history) {
   }
 }
 
-// export function drillPthDashboardItem (itemId, history) {
-//   return {
-//     type: DRILL_PATH_DASHBOARDITEM,
-//     payload: {
-//       itemId,
-//       history
-//     }
-//   }
-// }
+export function selectDashboardItemChart (itemId, renderType, selectedItems) {
+  return {
+    type: SELECT_DASHBOARD_ITEM_CHART,
+    payload: {
+      itemId,
+      renderType,
+      selectedItems
+    }
+  }
+}
 
-// export function deleteDrillPathHistory () {
+export function setSelectOptions (controlKey, options, itemId?) {
+  return {
+    type: SET_SELECT_OPTIONS,
+    payload: {
+      controlKey,
+      options,
+      itemId
+    }
+  }
+}
 
-// }
+export function setControlFormValues (formValues) {
+  return {
+    type: SET_CONTROL_FORM_VALUES,
+    payload: {
+      formValues
+    }
+  }
+}
+
+export function globalControlChange (controlRequestParamsByItem) {
+  return {
+    type: GLOBAL_CONTROL_CHANGE,
+    payload: {
+      controlRequestParamsByItem
+    }
+  }
+}

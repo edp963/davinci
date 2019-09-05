@@ -1,50 +1,73 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.service;
 
-import edp.davinci.core.common.ResultMap;
+import com.github.pagehelper.PageInfo;
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
-import edp.davinci.dto.projectDto.ProjectCreat;
-import edp.davinci.dto.projectDto.ProjectUpdate;
+import edp.davinci.dto.projectDto.*;
+import edp.davinci.dto.roleDto.RoleProject;
+import edp.davinci.model.Project;
 import edp.davinci.model.User;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 public interface ProjectService extends CheckEntityService {
 
-    ResultMap getProjectInfo(Long id, User user, HttpServletRequest request);
+    ProjectInfo getProjectInfo(Long id, User user);
 
-    ResultMap getProjects(User user, HttpServletRequest request);
+    List<ProjectInfo> getProjects(User user) throws ServerException;
 
-    ResultMap createProject(ProjectCreat projectCreat, User user, HttpServletRequest request);
+    ProjectInfo createProject(ProjectCreat projectCreat, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
-    ResultMap updateProject(Long id, ProjectUpdate projectUpdate, User user, HttpServletRequest request);
+    Project updateProject(Long id, ProjectUpdate projectUpdate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
-    ResultMap deleteProject(Long id, User user, HttpServletRequest request);
+    boolean deleteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
-    ResultMap transferPeoject(Long id, Long orgId, User user, HttpServletRequest request);
+    Project transferPeoject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
-    ResultMap searchProjects(String keywords, User user, int pageNum, int pageSize, HttpServletRequest request);
+    PageInfo<ProjectWithCreateBy> searchProjects(String keywords, User user, int pageNum, int pageSize);
 
-    ResultMap favoriteProject(Long id, User user, HttpServletRequest request);
+    boolean favoriteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
-    ResultMap getFavoriteProjects(User user, HttpServletRequest request);
+    List<ProjectInfo> getFavoriteProjects(User user);
 
-    ResultMap removeFavoriteProjects(User user, Long[] projectIds, HttpServletRequest request);
+    boolean removeFavoriteProjects(User user, Long[] projectIds) throws ServerException, UnAuthorizedExecption, NotFoundException;
+
+    RelProjectAdminDto addAdmin(Long id, Long adminId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+
+    boolean removeAdmin(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+
+    ProjectDetail getProjectDetail(Long id, User user, boolean modify) throws NotFoundException, UnAuthorizedExecption;
+
+    List<RoleProject> postRoles(Long id, List<Long> roleIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+
+    PageInfo<ProjectWithCreateBy> getProjectsByOrg(Long id, User user, String keyword, int pageNum, int pageSize);
+
+    ProjectPermission getProjectPermission(ProjectDetail projectDetail, User user);
+
+    boolean allowGetData(ProjectDetail projectDetail, User user);
+
+    List<RelProjectAdminDto> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedExecption;
+
+    boolean isMaintainer(ProjectDetail projectDetail, User user);
 }

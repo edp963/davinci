@@ -1,36 +1,37 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-  <<
-  Davinci
-  ==
-  Copyright (C) 2016 - 2018 EDP
-  ==
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-        http://www.apache.org/licenses/LICENSE-2.0
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-  >>
+  ~ <<
+  ~  Davinci
+  ~  ==
+  ~  Copyright (C) 2016 - 2019 EDP
+  ~  ==
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  ~  >>
+  ~
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.RelUserOrganizationMapper" >
+<mapper namespace="edp.davinci.dao.RelUserOrganizationMapper">
     <insert id="insert" parameterType="edp.davinci.model.RelUserOrganization">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
         insert ignore rel_user_organization
-        <trim prefix="(" suffix=")" suffixOverrides="," >
-            org_id,
-            user_id,
-            role
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            `org_id`,
+            `user_id`,
+            `role`
         </trim>
         values
-        <trim prefix=" (" suffix=")" suffixOverrides="," >
+        <trim prefix=" (" suffix=")" suffixOverrides=",">
             #{orgId, jdbcType=BIGINT},
             #{userId, jdbcType=BIGINT},
             #{role, jdbcType=SMALLINT}
@@ -38,10 +39,9 @@
     </insert>
 
 
-
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert ignore into rel_user_organization
-        (org_id,user_id, role)
+        (`org_id`,`user_id`, `role`)
         VALUES
         <foreach collection="set" item="record" index="index" separator=",">
             (
@@ -54,9 +54,15 @@
 
 
     <delete id="deleteBatch" parameterType="java.util.List">
-        DELETE FROM rel_user_organization WHERE id in
-        <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        DELETE FROM rel_user_organization WHERE
+        <if test="set != null and set.size > 0">
+            id in
+            <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="set == null or set.size == 0">
+            1=0
+        </if>
     </delete>
 </mapper>

@@ -19,6 +19,7 @@
  */
 
 import { removeToken } from './request'
+import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, DEFAULT_FONT_WEIGHT } from 'app/globalConstants'
 import { message } from 'antd'
 
 /**
@@ -81,13 +82,17 @@ export function errorHandler (error) {
         message.error('未登录或会话过期，请重新登录', 1)
         removeToken()
         localStorage.removeItem('TOKEN')
-        const path = `${window.location.protocol}//${window.location.host}${window.location.pathname}${window.location.search}#login`
-        location.replace(path)
+        break
       case 401:
         message.error('您没有权限访问此数据', 2)
         break
       default:
-        message.error(error.response.data.header.msg, 3)
+        message.error(
+          error.response.data.header
+            ? error.response.data.header.msg
+            : error.message,
+          3
+        )
         break
     }
   } else {
@@ -99,6 +104,21 @@ export function getBase64 (img, callback) {
   const reader = new FileReader()
   reader.addEventListener('load', () => callback(reader.result))
   reader.readAsDataURL(img)
+}
+
+let utilCanvas = null
+
+export const getTextWidth = (
+  text: string,
+  fontWeight: string = DEFAULT_FONT_WEIGHT,
+  fontSize: string = DEFAULT_FONT_SIZE,
+  fontFamily: string = DEFAULT_FONT_FAMILY
+): number => {
+  const canvas = utilCanvas || (utilCanvas = document.createElement('canvas'))
+  const context = canvas.getContext('2d')
+  context.font = `${fontWeight} ${fontSize} ${fontFamily}`
+  const metrics = context.measureText(text)
+  return Math.ceil(metrics.width)
 }
 
 /**

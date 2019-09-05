@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.core.utils;
@@ -123,8 +124,8 @@ public class MailUtils {
                               String content, List<File> files) throws ServerException {
 
         if (StringUtils.isEmpty(from)) {
-            log.info("email address(from) cannot be empty");
-            throw new ServerException("email address(from) cannot be empty");
+            log.info("email address(from) cannot be EMPTY");
+            throw new ServerException("email address(from) cannot be EMPTY");
         }
 
         Pattern pattern = Pattern.compile(Consts.REG_EMAIL_FORMAT);
@@ -136,18 +137,18 @@ public class MailUtils {
         }
 
         if (StringUtils.isEmpty(subject)) {
-            log.info("email subject cannot be empty");
-            throw new ServerException("email subject cannot be empty");
+            log.info("email subject cannot be EMPTY");
+            throw new ServerException("email subject cannot be EMPTY");
         }
 
         if (null == to || to.length < 1) {
-            log.info("email address(to) cannot be empty");
-            throw new ServerException("email address(to) cannot be empty");
+            log.info("email address(to) cannot be EMPTY");
+            throw new ServerException("email address(to) cannot be EMPTY");
         }
 
         if (StringUtils.isEmpty(content)) {
-            log.info("email content cannot be empty");
-            throw new ServerException("email content cannot be empty");
+            log.info("email content cannot be EMPTY");
+            throw new ServerException("email content cannot be EMPTY");
         }
 
         long startTimestamp = System.currentTimeMillis();
@@ -173,7 +174,7 @@ public class MailUtils {
             }
             messageHelper.setText(content, true);
 
-            if (null != files && files.size() > 0) {
+            if (!CollectionUtils.isEmpty(files)) {
                 if (files.size() == 1) {
                     File file = files.get(0);
                     String attName = "attachment" + file.getName().substring(file.getName().lastIndexOf("."));
@@ -243,8 +244,8 @@ public class MailUtils {
                                   String template, Map<String, Object> content, List<File> files) throws ServerException {
 
         if (StringUtils.isEmpty(from)) {
-            log.info("email address(from) cannot be empty");
-            throw new ServerException("email address(from) cannot be empty");
+            log.info("email address(from) cannot be EMPTY");
+            throw new ServerException("email address(from) cannot be EMPTY");
         }
 
         Pattern pattern = Pattern.compile(Consts.REG_EMAIL_FORMAT);
@@ -256,23 +257,23 @@ public class MailUtils {
         }
 
         if (StringUtils.isEmpty(subject)) {
-            log.info("email subject cannot be empty");
-            throw new ServerException("email subject cannot be empty");
+            log.info("email subject cannot be EMPTY");
+            throw new ServerException("email subject cannot be EMPTY");
         }
 
         if (null == to || to.length < 1) {
-            log.info("email address(to) cannot be empty");
-            throw new ServerException("email address(to) cannot be empty");
+            log.info("email address(to) cannot be EMPTY");
+            throw new ServerException("email address(to) cannot be EMPTY");
         }
 
         if (StringUtils.isEmpty(template)) {
-            log.info("email template path is empty");
-            throw new ServerException("email template path is empty");
+            log.info("email template path is EMPTY");
+            throw new ServerException("email template path is EMPTY");
         }
 
         if (null == content) {
-            log.info("template content is empty");
-            throw new ServerException("template content is empty");
+            log.info("template content is EMPTY");
+            throw new ServerException("template content is EMPTY");
         }
 
         Context context = new Context();
@@ -300,7 +301,7 @@ public class MailUtils {
             String text = templateEngine.process(template, context);
             messageHelper.setText(text, true);
 
-            if (null != files && files.size() > 0) {
+            if (!CollectionUtils.isEmpty(files)) {
                 if (files.size() == 1) {
                     File file = files.get(0);
                     String attName = "Attachment" + file.getName().substring(file.getName().lastIndexOf("."));

@@ -32,9 +32,9 @@ import {
   EDIT_BIZLOGIC_SUCCESS,
   EDIT_BIZLOGIC_FAILURE,
   CLEAR_BIZDATAS,
-  LOAD_CASCADESOURCE,
-  LOAD_CASCADESOURCE_SUCCESS,
-  LOAD_CASCADESOURCE_FAILURE,
+  LOAD_SELECT_OPTIONS,
+  LOAD_SELECT_OPTIONS_SUCCESS,
+  LOAD_SELECT_OPTIONS_FAILURE,
   EXECUTE_SQL,
   EXECUTE_SQL_SUCCESS,
   EXECUTE_SQL_FAILURE,
@@ -167,32 +167,29 @@ export function clearBizdatas () {
   }
 }
 
-export function loadCascadeSource (controlId, viewId, columns, parents) {
+export function loadSelectOptions (controlKey, requestParams) {
   return {
-    type: LOAD_CASCADESOURCE,
+    type: LOAD_SELECT_OPTIONS,
     payload: {
-      controlId,
-      viewId,
-      columns,
-      parents
+      controlKey,
+      requestParams
     }
   }
 }
 
-export function cascadeSourceLoaded (controlId, columns, values) {
+export function selectOptionsLoaded (controlKey, values) {
   return {
-    type: LOAD_CASCADESOURCE_SUCCESS,
+    type: LOAD_SELECT_OPTIONS_SUCCESS,
     payload: {
-      controlId,
-      columns,
+      controlKey,
       values
     }
   }
 }
 
-export function loadCascadeSourceFail (error) {
+export function loadSelectOptionsFail (error) {
   return {
-    type: LOAD_CASCADESOURCE_FAILURE,
+    type: LOAD_SELECT_OPTIONS_FAILURE,
     payload: {
       error
     }

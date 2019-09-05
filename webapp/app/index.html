@@ -24,10 +24,11 @@
     <!-- The first thing in any HTML file should be the charset -->
     <meta charset="utf-8">
     <!-- Make the page mobile compatible -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
     <!-- Allow installing the app to the homescreen -->
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no" />
     <title>Davinci</title>
     <style>
       .general-loading {
@@ -118,7 +119,8 @@
   <body>
     <!-- Display a message if JS has been disabled on the browser. -->
     <noscript>如果你看到这条信息，说明<strong> 你的浏览器禁用了 JavaScript </strong>, 请 <strong>取消禁用</strong> 恢复应用程序正常工作。</noscript>
-
+    <!-- Prevent refresh page after keypress `Enter` to input when it is the only one input in document -->
+    <input type="text" style="display: none" />
     <!-- The app hooks into this div -->
     <div id="app">
       <div class="general-loading">

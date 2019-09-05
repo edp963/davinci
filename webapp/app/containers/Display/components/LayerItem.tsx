@@ -17,8 +17,8 @@ import {
   SecondaryGraphTypes
 } from './util'
 import { GRID_ITEM_MARGIN } from '../../../globalConstants'
-import { IModel } from '../../Widget/components/Workbench/index'
-import Widget, { IWidgetConfig, RenderType } from '../../Widget/components/Widget'
+import { IFormedView } from 'containers/View/types'
+import Widget, { IWidgetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
 import { TextAlignProperty } from 'csstype'
 
 import { Resizable } from 'libs/react-resizable'
@@ -27,7 +27,7 @@ const styles = require('../Display.less')
 
 interface ILayerItemProps {
   pure: boolean
-  scale: [number, number]
+  scale?: [number, number]
   slideParams?: any
   layer: any
   selected?: boolean
@@ -35,7 +35,7 @@ interface ILayerItemProps {
   dragging?: boolean
   itemId: number
   widget: any
-  view: any
+  view: IFormedView
   datasource: {
     pageNo: number
     pageSize: number
@@ -61,15 +61,20 @@ interface ILayerItemProps {
 
 interface ILayerItemStates {
   layerParams: ILayerParams
+  pagination: IPaginationParams
+  nativeQuery: boolean
   layerTooltipPosition: [number, number]
   mousePos: number[]
   widgetProps: IWidgetConfig
-  model: IModel
   currentTime: string
 }
 
 export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemStates> {
   private refLayer
+
+  public static defaultProps: Partial<ILayerItemProps> = {
+    scale: [1, 1]
+  }
 
   constructor (props) {
     super(props)
@@ -77,34 +82,69 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const layerParams = JSON.parse(layer.params)
     this.state = {
       layerParams,
+      pagination: null,
+      nativeQuery: false,
       layerTooltipPosition: [0, 0],
       mousePos: [-1, -1],
       widgetProps: null,
-      model: null,
       currentTime: ''
     }
   }
 
   public componentWillMount () {
-    const { widget, view } = this.props
+    const { widget, datasource } = this.props
     if (!widget) { return }
 
+    const widgetProps = JSON.parse(widget.config)
+    const pagination = this.getPagination(widgetProps, datasource)
+    const nativeQuery = this.getNativeQuery(widgetProps)
     this.setState({
-      widgetProps: JSON.parse(widget.config),
-      model: JSON.parse(view.model)
+      widgetProps,
+      pagination,
+      nativeQuery
     })
   }
 
   public componentDidMount () {
-      const { itemId, layer, widget, onGetChartData } = this.props
-      if (layer.type !== GraphTypes.Chart) { return }
+    const { itemId, layer, widget, onGetChartData } = this.props
+    if (layer.type !== GraphTypes.Chart) { return }
 
-      onGetChartData('clear', itemId, widget.id)
-      this.setFrequent(this.props)
+    const { pagination, nativeQuery } = this.state
+    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
+    this.initPolling(this.props)
+  }
+
+  private getPagination = (widgetProps: IWidgetConfig, datasource) => {
+    const { chartStyles } = widgetProps
+    const { table } = chartStyles
+    if (!table) { return null }
+
+    const { withPaging, pageSize } = table
+    const pagination: IPaginationParams = {
+      withPaging,
+      pageSize: 0,
+      pageNo: 0,
+      totalCount: datasource.totalCount || 0
+    }
+    if (pagination.withPaging) {
+      pagination.pageSize = datasource.pageSize || +pageSize
+      pagination.pageNo = datasource.pageNo || 1
+    }
+    return pagination
+  }
+
+  private getNativeQuery = (widgetProps: IWidgetConfig) => {
+    let noAggregators = false
+    const { chartStyles } = widgetProps
+    const { table } = chartStyles
+    if (table) {
+      noAggregators = table.withNoAggregators
+    }
+    return noAggregators
   }
 
   public componentWillReceiveProps (nextProps: ILayerItemProps) {
-    const { layer } = this.props
+    const { layer, datasource } = this.props
     if (layer.params !== nextProps.layer.params) {
       const layerParams: ILayerParams = JSON.parse(nextProps.layer.params)
       if (layer.subType === SecondaryGraphTypes.Timer) {
@@ -114,16 +154,18 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           currentTime: moment().format(timeFormat || 'YYYY-MM-dd HH:mm:ss')
         })
       }
-      this.setState({
-        layerParams
-      })
+      this.setState({ layerParams })
     }
 
+    let widgetProps = this.state.widgetProps
     if (this.props.widget !== nextProps.widget) {
-      this.setState({
-        widgetProps: JSON.parse(nextProps.widget.config),
-        model: nextProps.view && JSON.parse(nextProps.view.model)
-      })
+      widgetProps = JSON.parse(nextProps.widget.config)
+      this.setState({ widgetProps })
+    }
+
+    if (widgetProps && datasource !== nextProps.datasource) {
+      const pagination = this.getPagination(widgetProps, nextProps.datasource)
+      this.setState({ pagination })
     }
   }
 
@@ -137,7 +179,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       return
     }
     if (polling !== this.props.polling || frequency !== this.props.frequency) {
-      this.setFrequent(nextProps)
+      this.initPolling(nextProps)
     }
   }
 
@@ -154,13 +196,13 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   public componentWillUnmount () {
-    clearInterval(this.frequent)
+    clearInterval(this.pollingTimer)
     clearInterval(this.timer)
   }
 
-  private frequent: number
+  private pollingTimer: number
 
-  private setFrequent = (props: ILayerItemProps) => {
+  private initPolling = (props: ILayerItemProps) => {
     const {
       polling,
       frequency,
@@ -169,13 +211,26 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       onGetChartData
     } = props
 
-    clearInterval(this.frequent)
+    clearInterval(this.pollingTimer)
 
     if (polling === 'true' && frequency) {
-      this.frequent = window.setInterval(() => {
-        onGetChartData('refresh', itemId, widget.id)
+      const { pagination, nativeQuery } = this.state
+      this.pollingTimer = window.setInterval(() => {
+        onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
       }, Number(frequency) * 1000)
     }
+  }
+
+  private paginationChange = (pageNo: number, pageSize: number) => {
+    const { onGetChartData, itemId, widget } = this.props
+    let { pagination } = this.state
+    const { nativeQuery } = this.state
+    pagination = {
+      ...pagination,
+      pageNo,
+      pageSize
+    }
+    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
   }
 
   private dragOnStart = (e, data) => {
@@ -273,6 +328,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       selected,
       itemId,
       widget,
+      view,
       datasource,
       loading,
       renderType,
@@ -282,8 +338,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     } = this.props
     const {
       layerParams,
-      widgetProps,
-      model } = this.state
+      pagination,
+      widgetProps } = this.state
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -314,9 +370,11 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           (<Widget
             {...widgetProps}
             data={data}
+            pagination={pagination}
             loading={isLoading}
             renderType={renderType}
-            model={model}
+            model={view.model}
+            onPaginationChange={this.paginationChange}
           />)
         )}
       </div>
@@ -324,7 +382,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   private getLayerStyle = (layer, layerParams) => {
-    const { pure, scale } = this.props
+    const { pure } = this.props
     const {
       width, height,
       backgroundImage, backgroundRepeat, backgroundSize, backgroundColor,
@@ -352,10 +410,10 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       layerStyle = {
         ...layerStyle,
         position: 'absolute',
-        left: `${layerParams.positionX * scale[0]}px`,
-        top: `${layerParams.positionY * scale[1]}px`,
-        width: `${width * scale[0]}px`,
-        height: `${height * scale[1]}px`
+        left: `${layerParams.positionX}px`,
+        top: `${layerParams.positionY}px`,
+        width: `${width}px`,
+        height: `${height}px`
       }
     }
     return layerStyle
@@ -409,7 +467,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
   private renderLabelLayer = (layer) => {
     const { layerParams } = this.state
-    const { pure, scale, selected } = this.props
+    const { pure, selected } = this.props
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -432,22 +490,20 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       paddingRight
     } = layerParams
 
-    const exactScaleWidth = pure ? scale[0] : 1
-    const exactScaleHeight = pure ? scale[1] : 1
     const labelStyle: React.CSSProperties = {
       wordBreak: 'break-all',
       overflow: 'hidden',
       fontWeight,
       fontFamily,
       color: `rgba(${fontColor.join()})`,
-      fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
+      fontSize: `${fontSize}px`,
       textAlign: textAlign as TextAlignProperty,
-      lineHeight: `${lineHeight * exactScaleHeight}px`,
-      textIndent: `${textIndent * exactScaleWidth}px`,
-      paddingTop: `${paddingTop * exactScaleHeight}px`,
-      paddingRight: `${paddingRight * exactScaleWidth}px`,
-      paddingBottom: `${paddingBottom * exactScaleHeight}px`,
-      paddingLeft: `${paddingLeft * exactScaleWidth}px`
+      lineHeight: `${lineHeight}px`,
+      textIndent: `${textIndent}px`,
+      paddingTop: `${paddingTop}px`,
+      paddingRight: `${paddingRight}px`,
+      paddingBottom: `${paddingBottom}px`,
+      paddingLeft: `${paddingLeft}px`
     }
     if (textStyle) {
       labelStyle.fontStyle = textStyle.indexOf('italic') > -1 ? 'italic' : 'normal'
@@ -511,7 +567,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   private timer = null
   private renderTimerLayer = (layer) => {
     const { layerParams, currentTime } = this.state
-    const { pure, scale, selected } = this.props
+    const { pure, selected } = this.props
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -537,22 +593,20 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       timeDuration
     } = layerParams
 
-    const exactScaleWidth = pure ? scale[0] : 1
-    const exactScaleHeight = pure ? scale[1] : 1
     const labelStyle: React.CSSProperties = {
       wordBreak: 'break-all',
       overflow: 'hidden',
       fontWeight,
       fontFamily,
       color: `rgba(${fontColor.join()})`,
-      fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
+      fontSize: `${fontSize}px`,
       textAlign: textAlign as TextAlignProperty,
-      lineHeight: `${lineHeight * exactScaleHeight}px`,
-      textIndent: `${textIndent * exactScaleWidth}px`,
-      paddingTop: `${paddingTop * exactScaleHeight}px`,
-      paddingRight: `${paddingRight * exactScaleWidth}px`,
-      paddingBottom: `${paddingBottom * exactScaleHeight}px`,
-      paddingLeft: `${paddingLeft * exactScaleWidth}px`
+      lineHeight: `${lineHeight}px`,
+      textIndent: `${textIndent}px`,
+      paddingTop: `${paddingTop}px`,
+      paddingRight: `${paddingRight}px`,
+      paddingBottom: `${paddingBottom}px`,
+      paddingLeft: `${paddingLeft}px`
     }
     if (textStyle) {
       labelStyle.fontStyle = textStyle.indexOf('italic') > -1 ? 'italic' : 'normal'

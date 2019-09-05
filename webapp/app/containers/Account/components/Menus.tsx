@@ -5,7 +5,7 @@ const defaultItems = [
   {icons: 'icon-user1', key: '1', text: '个人信息', route: 'profile'},
   {icons: 'icon-xiugaimima', key: '2', text: '修改密码', route: 'resetPassword'},
   {icons: 'icon-organization', key: '3', text: '我的组织', route: 'organizations'},
-  {icons: 'icon-group', key: '4', text: '我的团队', route: 'teams'}
+  // {icons: 'icon-group', key: '4', text: '我的团队', route: 'teams'}
 ]
 
 interface IMenusProps {

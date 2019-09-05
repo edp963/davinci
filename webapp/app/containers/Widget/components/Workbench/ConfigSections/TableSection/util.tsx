@@ -38,6 +38,7 @@ export enum TableCellStyleTypes {
 
 export enum TableConditionStyleTypes {
   BackgroundColor = 'backgroundColor',
+  TextColor = 'textColor',
   NumericBar = 'numericBar',
   Custom = 'custom'
 }

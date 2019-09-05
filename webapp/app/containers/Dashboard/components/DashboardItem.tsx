@@ -18,17 +18,18 @@
  * >>
  */
 
-import * as React from 'react'
-import * as Animate from 'rc-animate'
-import * as classnames from 'classnames'
+import React from 'react'
+import Animate from 'rc-animate'
+import classnames from 'classnames'
 
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
+import DashboardItemMask from './DashboardItemMask'
 import SharePanel from '../../../components/SharePanel'
 import DownloadCsv, { IDownloadCsvProps } from '../../../components/DownloadCsv'
 import DataDrill from '../../../components/DataDrill/Panel'
 import DataDrillHistory from '../../../components/DataDrill/History'
-import {IView, IModel} from '../../../containers/Widget/components/Workbench/index'
+import { IFormedView, IViewModel } from 'containers/View/types'
 
 import Widget, { IWidgetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
 import { ChartTypes } from '../../Widget/config/chart/ChartTypes'
@@ -38,8 +39,8 @@ import { Icon, Tooltip, Popconfirm, Popover, Dropdown, Menu } from 'antd'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
 import { IProject } from '../../Projects'
-import { DEFAULT_SPLITER } from '../../../globalConstants'
 import { IQueryConditions, IQueryVariableMap } from '../Grid'
+import { IMapControlOptions, OnGetControlOptions, IDistinctValueReqeustParams } from 'app/components/Filters'
 const styles = require('../Dashboard.less')
 const utilStyles = require('../../../assets/less/util.less')
 
@@ -47,7 +48,7 @@ interface IDashboardItemProps {
   itemId: number
   widget: any
   widgets: any
-  view?: Partial<IView>
+  view?: Partial<IFormedView>
   datasource: any
   loading: boolean
   polling: string
@@ -62,6 +63,8 @@ interface IDashboardItemProps {
   drillpathInstance?: any
   rendered?: boolean
   renderType: RenderType
+  controlSelectOptions: IMapControlOptions
+  selectedItems: number[]
   currentProject?: IProject
   queryConditions: IQueryConditions
   container?: string
@@ -79,6 +82,8 @@ interface IDashboardItemProps {
   onEditWidget?: (itemId: number, widgetId: number) => void
   onDrillData?: (e: object) => void
   onDrillPathData?: (e: object) => void
+  onSelectChartsItems?: (itemId: number, renderType: string, selectedItems: number[]) => void
+  onGetControlOptions: OnGetControlOptions
 }
 
 interface IDashboardItemStates {
@@ -88,7 +93,7 @@ interface IDashboardItemStates {
   pagination: IPaginationParams
   queryVariables: IQueryVariableMap
   nativeQuery: boolean
-  model: IModel
+  model: IViewModel
   isDrilling: boolean
   dataDrillPanelPosition: boolean | object
   whichDataDrillBrushed: boolean | object []
@@ -124,24 +129,27 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     onShowDrillEdit: () => void 0,
     onDeleteDashboardItem: () => void 0
   }
-  private frequent: number
+  private pollingTimer: number
   private container: HTMLDivElement = null
 
   public componentWillMount () {
     const { itemId, widget, view, onGetChartData, container, datasource } = this.props
     const { cacheWidgetProps, cacheWidgetId } = this.state
     const widgetProps = JSON.parse(widget.config)
+    const { autoLoadData } = widgetProps
     const pagination = this.getPagination(widgetProps, datasource)
     const nativeQuery = this.getNativeQuery(widgetProps)
     if (container === 'share') {
-      onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
-      this.setFrequent(this.props)
+      if (autoLoadData === true || autoLoadData === undefined) {
+        onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
+      }
+      this.initPolling(this.props)
     }
     this.setState({
       widgetProps,
       pagination,
       nativeQuery,
-      model: JSON.parse(view.model)
+      model: view.model
     })
     if (!cacheWidgetProps) {
       this.setState({
@@ -152,12 +160,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   public componentWillReceiveProps (nextProps: IDashboardItemProps) {
-    const { widget, queryConditions } = this.props
+    const { widget, queryConditions, renderType } = this.props
     let { widgetProps, pagination, model } = this.state
 
     if (nextProps.widget !== widget) {
       widgetProps = JSON.parse(nextProps.widget.config)
-      model = JSON.parse(nextProps.view.model)
+      model = nextProps.view.model
       this.setState({
         widgetProps,
         model
@@ -181,15 +189,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     })
   }
 
-  public componentWillUpdate (nextProps: IDashboardItemProps) {
-    // console.log('---------------- in ------------------')
-    // Object.entries(nextProps).forEach(([k, v]) => {
-    //   if (v !== this.props[k]) {
-    //     console.log(k)
-    //     console.log(v)
-    //     console.log(this.props[k])
-    //   }
-    // })
+  public componentWillUpdate (nextProps: IDashboardItemProps, nextState: IDashboardItemStates) {
     const {
       itemId,
       widget,
@@ -200,22 +200,24 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       container
     } = nextProps
     const { pagination, nativeQuery } = this.state
-
+    const { autoLoadData } = nextState.widgetProps
     if (!container) {
       if (!this.props.rendered && rendered) {
-        onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
-        this.setFrequent(this.props)
+        // clear
+        if (autoLoadData === true || autoLoadData === undefined) {
+          onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
+        }
+        this.initPolling(this.props)
       }
     }
 
     if (polling !== this.props.polling || frequency !== this.props.frequency) {
-      this.setFrequent(nextProps)
+      this.initPolling(nextProps)
     }
-    // console.log('---------------- out ------------------')
   }
 
   public componentWillUnmount () {
-    clearInterval(this.frequent)
+    clearInterval(this.pollingTimer)
   }
 
   // @FIXME need refactor
@@ -248,7 +250,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     return noAggregators
   }
 
-  private setFrequent = (props: IDashboardItemProps) => {
+  private initPolling = (props: IDashboardItemProps) => {
     const {
       polling,
       frequency,
@@ -257,11 +259,11 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onGetChartData
     } = props
 
-    clearInterval(this.frequent)
+    clearInterval(this.pollingTimer)
 
     if (polling) {
       const { pagination, nativeQuery } = this.state
-      this.frequent = window.setInterval(() => {
+      this.pollingTimer = window.setInterval(() => {
         onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
       }, Number(frequency) * 1000)
     }
@@ -274,7 +276,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onGetChartData
     } = this.props
     const { pagination, nativeQuery } = this.state
-
     onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
   }
 
@@ -285,7 +286,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onGetChartData
     } = this.props
     const { pagination, nativeQuery } = this.state
-
     onGetChartData('clear', itemId, widget.id, { ...queryConditions, pagination, nativeQuery })
   }
 
@@ -407,14 +407,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         onSelectDrillHistory(history, item, itemId, wid)
         return
       }
-
       if (widgetProps.dimetionAxis) {
         if (widgetProps.dimetionAxis === 'col') {
           this.setState({
             widgetProps: {
               ...widgetProps,
               ...{
-                cols: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.cols
+                cols: historyGroups && historyGroups.length ? historyGroups.map((history) => ({name: history})) : cacheWidgetProps.cols
               }
             }
           })
@@ -423,7 +422,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             widgetProps: {
               ...widgetProps,
               ...{
-                rows: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.rows
+                rows: historyGroups && historyGroups.length ? historyGroups.map((history) => ({name: history})) : cacheWidgetProps.rows
               }
             }
           })
@@ -438,6 +437,16 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             }
           })
         }
+      } else {
+        this.setState({
+          widgetProps: {
+            ...widgetProps,
+            ...{
+              cols: historyCols,
+              rows: historyRows
+            }
+          }
+        })
       }
       if (item === -1 && !history) {
         this.setState({widgetProps: {...this.state.cacheWidgetProps}})
@@ -527,8 +536,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
     if (onDrillData) {
       onDrillData({
-        row: dimensions === 'row' ? name : void 0,
-        col: dimensions === 'col' ? name : void 0,
+        row: dimensions === 'row' ? name : [],
+        col: dimensions === 'col' ? name : [],
         mode,
         itemId,
         widgetId: widget.id,
@@ -609,12 +618,24 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             break
         }
       } else if (widgetProps.selectedChart === ChartTypes.Table) {
+        const cols = widgetProps.cols
+        const { whichDataDrillBrushed } = this.state
+        const drillData = whichDataDrillBrushed[0][0]
+        const drillKey = drillData[drillData.length - 1]['key']
+        const newWidgetPropCols = cols.reduce((array, col) => {
+          array.push(col)
+          if (col.name === drillKey) {
+            array.push({name})
+          }
+          return array
+        }, [])
         this.setState({
           widgetProps: {
             ...widgetProps,
             ...{
               cols: name && name.length
-              ? widgetProps.cols.concat({name})
+            //  ? widgetProps.cols.concat({name})
+              ? newWidgetPropCols
               : cacheWidgetProps.cols
             }
           }
@@ -633,6 +654,23 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       }
     }
   }
+
+  private selectChartsItems = (selectedItems) => {
+    const {onSelectChartsItems, itemId} = this.props
+    if (onSelectChartsItems) {
+      onSelectChartsItems(itemId, 'select', selectedItems)
+    }
+  }
+
+  private getControlSelectOptions = (
+    controlKey: string,
+    userOptions: boolean,
+    paramsOrOptions: { [viewId: string]: IDistinctValueReqeustParams } | any[]
+  ) => {
+    const { itemId, onGetControlOptions } = this.props
+    onGetControlOptions(controlKey, userOptions, paramsOrOptions, itemId)
+  }
+
   public render () {
     const {
       itemId,
@@ -647,6 +685,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       shareInfoLoading,
       downloadCsvLoading,
       renderType,
+      controlSelectOptions,
       currentProject,
       onShowEdit,
       onShowDrillEdit,
@@ -655,7 +694,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onLoadWidgetShareLink,
       container
     } = this.props
+
     const data = datasource.resultList
+
     const {
       controlPanelVisible,
       sharePanelAuthorized,
@@ -687,7 +728,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         </Tooltip>
       )
 
-      const ShareButton = ShareDownloadPermission<IconProps>(currentProject, 'download')(Icon)
+      const ShareButton = ShareDownloadPermission<IconProps>(currentProject, 'share')(Icon)
       shareButton = (
         <Tooltip title="分享">
           <Popover
@@ -712,9 +753,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         </Tooltip>
       )
 
+      const EditButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>>(currentProject, 'viz', false)(Span)
       widgetButton = (
         <Tooltip title="编辑widget">
-          <i className="iconfont icon-edit-2" onClick={this.toWorkbench} />
+          {/* <i className="iconfont icon-edit-2" onClick={this.toWorkbench} /> */}
+          <i>
+            <EditButton className="iconfont icon-edit-2" onClick={this.toWorkbench} />
+          </i>
         </Tooltip>
       )
     }
@@ -740,9 +785,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           <Menu.Item className={styles.menuItem}>
             <InfoButton className={styles.menuText} onClick={onShowEdit(itemId)}>基本信息</InfoButton>
           </Menu.Item>
-          <Menu.Item className={styles.menuItem}>
+          {/* <Menu.Item className={styles.menuItem}>
             <InfoButton className={styles.menuText} onClick={onShowDrillEdit(itemId)}>钻取设置</InfoButton>
-          </Menu.Item>
+          </Menu.Item> */}
           <Menu.Item className={styles.menuItem}>
             <Popconfirm
               title="确定删除？"
@@ -761,7 +806,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       )
     }
 
-    const controls = widgetProps.controls.filter((c) => c.type)
+    const controls = widgetProps.controls
     const controlPanelHandle = controls.length
       ? (
         <Tooltip title="选择参数">
@@ -859,17 +904,30 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         />
       </div>
     )
+
+    const { selectedChart, cols, rows, metrics } = widgetProps
+    const hasDataConfig = !!(cols.length || rows.length || metrics.length)
+    const empty = (
+      <DashboardItemMask.Empty
+        loading={loading}
+        chartType={selectedChart}
+        empty={!data.length}
+        hasDataConfig={hasDataConfig}
+      />
+    )
+
     return (
       <div className={gridItemClass} ref={(f) => this.container = f}>
         <div className={styles.header}>
           <div className={styles.title}>
             {controlPanelHandle}
             <h4>{widget.name}</h4>
+            {loading && <Icon className={styles.control} type="loading" />}
             {descPanelHandle}
           </div>
           <div className={styles.tools}>
             <Tooltip title="同步数据">
-              <Icon type={loading ? 'loading' : 'reload'} onClick={this.onSyncBizdatas} />
+              {!loading && <Icon type="reload" onClick={this.onSyncBizdatas} />}
             </Tooltip>
             {widgetButton}
             <Tooltip title="全屏">
@@ -897,7 +955,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             onClose={this.toggleControlPanel}
           >
             <DashboardItemControlForm
+              viewId={widget.viewId}
               controls={controls}
+              mapOptions={controlSelectOptions}
+              onGetOptions={this.getControlSelectOptions}
               onSearch={this.onControlSearch}
               onHide={this.toggleControlPanel}
             />
@@ -909,9 +970,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               {...widgetProps}
               renderType={loading ? 'loading' : renderType}
               data={data}
+              interacting={this.props.interacting}
               queryVariables={queryVariables}
               pagination={pagination}
-              loading={loading}
+              empty={empty}
               model={model}
               onCheckTableInteract={this.checkTableInteract}
               onDoInteract={this.doInteract}
@@ -919,6 +981,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               getDataDrillDetail={this.getDataDrillDetail}
               isDrilling={this.state.isDrilling}
               whichDataDrillBrushed={this.state.whichDataDrillBrushed}
+              onSelectChartsItems={this.selectChartsItems}
+              selectedItems={this.props.selectedItems}
             //  onHideDrillPanel={this.onHideDrillPanel}
             />
             {dataDrillHistory}

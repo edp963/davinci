@@ -29,14 +29,13 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
-import reducerProject from '../Projects/reducer'
-import sagaProject from '../Projects/sagas'
-import portalSaga from '../Portal/sagas'
+import projectReducer from '../Projects/reducer'
+import projectSaga from '../Projects/sagas'
 import portalReducer from '../Portal/reducer'
-import bizlogicReducer from '../Bizlogic/reducer'
-import bizlogicSaga from '../Bizlogic/sagas'
+import portalSaga from '../Portal/sagas'
+import viewReducer from '../View/reducer'
+import viewSaga from '../View/sagas'
 
-import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
 import DashboardAction from './components/DashboardAction'
 
@@ -57,24 +56,26 @@ import {
   loadDashboardDetail
 } from './actions'
 import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
-import { hideNavigator, checkNameUniqueAction } from '../App/actions'
+import { hideNavigator, checkNameUniqueAction, initiateDownloadTask } from '../App/actions'
+import { DownloadTypes } from '../App/types'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
-import { loadPortals, loadSelectTeams } from '../Portal/actions'
+import { loadPortals } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
-import { loadProjectDetail } from '../Projects/actions'
-import {makeSelectViewTeam} from '../Bizlogic/selectors'
-import { loadViewTeam } from '../Bizlogic/actions'
-
+import { loadProjectDetail, excludeRoles } from '../Projects/actions'
+import {IExludeRoles} from '../Portal/components/PortalList'
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
 const widgetStyles = require('../Widget/Widget.less')
-import {makeSelectCurrentProject} from '../Projects/selectors'
+import {makeSelectCurrentProject, makeSelectProjectRoles} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects'
 import EditorHeader from '../../components/EditorHeader'
-import { toListBF } from '../Bizlogic/components/viewUtil'
 const SplitPane = React.lazy(() => import('react-split-pane'))
+import {IProjectRoles} from '../Organizations/component/ProjectRole'
+import { loadProjectRoles } from '../Organizations/actions'
+import { IGlobalControl } from 'app/components/Filters'
+import { GlobalControlQueryMode } from 'app/components/Filters/types'
 
 interface IDashboardProps {
   modalLoading: boolean
@@ -83,7 +84,7 @@ interface IDashboardProps {
   params: any
   currentProject: IProject
   portals: any[]
-  viewTeam: any[]
+  projectRoles: IProjectRoles[]
   onLoadDashboards: (portalId: number, resolve: any) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
@@ -92,9 +93,9 @@ interface IDashboardProps {
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   onLoadPortals: (projectId) => void
   onLoadProjectDetail: (id) => any
-  onLoadViewTeam: (projectId: number, resolve?: any) => any
-  onLoadSelectTeams: (type: string, id: number, resolve?: any) => any
-  // onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
+  onExcludeRoles: (type: string, id: number, resolve?: any) => any
+  onLoadProjectRoles: (id: number) => any
+  onInitiateDownloadTask: (id: number, type: DownloadTypes, downloadParams?: any[]) => void
 }
 
 export interface IDashboard {
@@ -106,6 +107,12 @@ export interface IDashboard {
   index?: number
   type?: number
   children?: any[]
+}
+
+export interface IDashboardConfig {
+  filters?: IGlobalControl[]
+  linkagers?: any[]
+  queryMode?: GlobalControlQueryMode
 }
 
 export interface ICurrentDashboard extends IDashboard {
@@ -127,6 +134,7 @@ interface IDashboardStates {
   checkedKeys: any[]
   splitSize: number
   portalTreeWidth: number
+  exludeRoles: IExludeRoles[]
 }
 
 export class Dashboard extends React.Component<IDashboardProps, IDashboardStates> {
@@ -149,7 +157,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       isGrid: true,
       checkedKeys: [],
       splitSize,
-      portalTreeWidth: 0
+      portalTreeWidth: 0,
+      exludeRoles: []
     }
   }
 
@@ -160,9 +169,10 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
   public componentWillMount () {
     // this.props.onHideNavigator()
-    const { params, router, dashboards, onLoadDashboards, onLoadPortals, onLoadProjectDetail } = this.props
+    const { params, router, dashboards, onLoadDashboards, onLoadPortals, onLoadProjectDetail, onLoadProjectRoles } = this.props
     const { pid, portalId, portalName, dashboardId } = params
 
+    onLoadProjectRoles(Number(pid))
     onLoadDashboards(params.portalId, (result) => {
       let defaultDashboardId = 0
       const dashboardData = listToTree(result, 0)
@@ -217,6 +227,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     }
   }
 
+
   public componentDidMount () {
     this.props.onHideNavigator()
   }
@@ -241,73 +252,75 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   }
 
   private onModalOk = () => {
-    this.dashboardForm.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        const { dashboards, params, router, onEditDashboard, onAddDashboard, viewTeam } = this.props
-        const { formType, checkedKeys } = this.state
-        const { id, name, folder, selectType, index, config } = values
-        const teamIds = toListBF(viewTeam).map((t) => t.id).filter((item) => !checkedKeys.includes(item))
+    const { formType, checkedKeys } = this.state
 
-        const dashArr = folder === '0'
-          ? dashboards.filter((d) => d.parentId === 0)
-          : dashboards.filter((d) => d.parentId === Number(folder))
+    if (formType === 'delete') {
+      const id = this.dashboardForm.props.form.getFieldValue('id')
+      this.confirmDeleteDashboard(id)
+    } else {
+      this.dashboardForm.props.form.validateFieldsAndScroll((err, values) => {
+        if (!err) {
+          const { dashboards, params, router, onEditDashboard, onAddDashboard } = this.props
+          const { id, name, folder, selectType, index, config } = values
 
-        const indexTemp = dashArr.length === 0 ? 0 : dashArr[dashArr.length - 1].index + 1
-        const obj = {
-          config,
-          dashboardPortalId: Number(params.portalId),
-          name,
-          type: selectType ? 1 : 0
+          const dashArr = folder === '0'
+            ? dashboards.filter((d) => d.parentId === 0)
+            : dashboards.filter((d) => d.parentId === Number(folder))
+
+          const indexTemp = dashArr.length === 0 ? 0 : dashArr[dashArr.length - 1].index + 1
+          const obj = {
+            config,
+            dashboardPortalId: Number(params.portalId),
+            name,
+           // type: selectType ? 1 : 0   // todo selectType 更改位置
+            type: Number(selectType)
+          }
+
+          const addObj = {
+            ...obj,
+            parentId: Number(folder),
+            index: indexTemp,
+            roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id)
+          }
+
+          const editObj = [{
+            ...obj,
+            parentId: Number(folder),
+            id,
+            index,
+            roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id)
+          }]
+
+          const currentArr = dashboards.filter((d) => d.parentId === Number(folder))
+          const moveObj = [{
+            ...obj,
+            parentId: Number(folder),
+            id,
+            index: currentArr.length ? currentArr[currentArr.length - 1].index + 1 : 0
+          }]
+
+          switch (formType) {
+            case 'add':
+            // case 'copy':
+              onAddDashboard(addObj, (dashboardId) => {
+                this.hideDashboardForm()
+                this.setState({ isGrid: true })
+                const { pid, portalId, portalName } = params
+                addObj.type === 0
+                  ? router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}`)
+                  : router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
+              })
+              break
+            case 'edit':
+              onEditDashboard('edit', editObj, () => { this.hideDashboardForm() })
+              break
+            case 'move':
+              onEditDashboard('move', moveObj, () => { this.hideDashboardForm() })
+              break
+          }
         }
-
-        const addObj = {
-          ...obj,
-          parentId: Number(folder),
-          index: indexTemp,
-          teamIds
-        }
-
-        const editObj = [{
-          ...obj,
-          parentId: Number(folder),
-          id,
-          index,
-          teamIds
-        }]
-
-        const currentArr = dashboards.filter((d) => d.parentId === Number(folder))
-        const moveObj = [{
-          ...obj,
-          parentId: Number(folder),
-          id,
-          index: currentArr.length ? currentArr[currentArr.length - 1].index + 1  : 0,
-          teamIds
-        }]
-
-        switch (formType) {
-          case 'add':
-          // case 'copy':
-            onAddDashboard(addObj, (dashboardId) => {
-              this.hideDashboardForm()
-              this.setState({ isGrid: true })
-              const { pid, portalId, portalName } = params
-              addObj.type === 0
-                ? router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}`)
-                : router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
-            })
-            break
-          case 'edit':
-            onEditDashboard('edit', editObj, () => { this.hideDashboardForm() })
-            break
-          case 'move':
-            onEditDashboard('move', moveObj, () => { this.hideDashboardForm() })
-            break
-          case 'delete':
-            this.confirmDeleteDashboard(id)
-            break
-        }
-      }
-    })
+      })
+    }
   }
 
   private onExpand = (expandedKeys) => {
@@ -433,10 +446,12 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       formVisible: true,
       formType: 'add'
     }, () => {
-      const { params, onLoadViewTeam } = this.props
-      onLoadViewTeam(params.pid, (result) => {
-        this.setState({
-          checkedKeys: toListBF(result).map((t) => t.id)
+      this.setState({
+        exludeRoles: this.props.projectRoles.map((role) => {
+          return {
+            ...role,
+            permission: true
+          }
         })
       })
     })
@@ -487,35 +502,38 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             folder: parentId ? `${(dashboards as any[]).find((g) => g.id === parentId).id}` : '0',
             config,
             name: formType === 'copy' ? `${name}_copy` : name,
-            selectType: type === 1,
+          //  selectType: type === 1,
+            selectType: type,
             index
           })
         }, 0)
       })
-    })
-  }
 
-  private onOperateMore = (item, type) => {
-    this.setState({
-      formType: type
-    }, () => {
-      this.onShowDashboardForm(item, this.state.formType)
-      const { formType } = this.state
-      if (formType === 'edit' || formType === 'move') {
-        const { onLoadViewTeam, onLoadSelectTeams, params } = this.props
-        new Promise((resolve) => {
-          onLoadViewTeam(params.pid, (teams) => {
-            resolve(teams)
-          })
-        }).then((teams) => {
-          onLoadSelectTeams('dashboard', item.id, (result) => {
-            this.setState({
-              checkedKeys: toListBF(teams).map((t) => t.id).filter((it) => !result.includes(it))
+      const { onExcludeRoles, projectRoles } = this.props
+
+      if (onExcludeRoles && item && item.id) {
+        onExcludeRoles('dashboard', item.id, (result: number[]) => {
+          this.setState({
+            exludeRoles:  projectRoles.map((role) => {
+              return result.some((re) => re === role.id) ? {...role, permission: false} : {...role, permission: true}
             })
           })
         })
       }
     })
+  }
+
+
+  private onOperateMore = (item, type) => {
+    if (type === 'download') {
+      this.props.onInitiateDownloadTask(item.id, item.type === 0 ? DownloadTypes.Folder : DownloadTypes.Dashboard, [])
+    } else {
+      this.setState({
+        formType: type
+      }, () => {
+        this.onShowDashboardForm(item, this.state.formType)
+      })
+    }
   }
 
   private searchDashboard = (e) => {
@@ -633,6 +651,13 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     })
   }
 
+  private changePermission = (scope: IExludeRoles, event) => {
+    scope.permission = event.target.checked
+    this.setState({
+      exludeRoles: this.state.exludeRoles.map((role) => role && role.id === scope.id ? scope : role)
+    })
+  }
+
   public render () {
     const {
       params,
@@ -641,8 +666,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       children,
       currentProject,
       onCheckUniqueName,
-      portals,
-      viewTeam
+      portals
     } = this.props
 
     const {
@@ -656,7 +680,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       splitSize,
       portalTreeWidth
     } = this.state
-
     const items = searchValue.map((s) => {
       return <li key={s.id} onClick={this.pickSearchDashboard(s.id)}>{s.name}</li>
     })
@@ -842,10 +865,9 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             itemId={this.state.itemId}
             dashboards={dashboards}
             portalId={params.portalId}
+            exludeRoles={this.state.exludeRoles}
             onCheckUniqueName={onCheckUniqueName}
-            checkedKeys={checkedKeys}
-            viewTeam={viewTeam}
-            initCheckNodes={this.initCheckNodes}
+            onChangePermission={this.changePermission}
             wrappedComponentRef={this.refHandlers.dashboardForm}
           />
         </Modal>
@@ -859,12 +881,11 @@ const mapStateToProps = createStructuredSelector({
   modalLoading: makeSelectModalLoading(),
   currentProject: makeSelectCurrentProject(),
   portals: makeSelectPortals(),
-  viewTeam: makeSelectViewTeam()
+  projectRoles: makeSelectProjectRoles()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
-    // onLoadDashboardDetail: (selectedDashboard, projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(selectedDashboard, projectId, portalId, dashboardId)),
     onLoadDashboards: (portalId, resolve) => dispatch(loadDashboards(portalId, resolve)),
     onAddDashboard: (dashboard, resolve) => dispatch(addDashboard(dashboard, resolve)),
     onEditDashboard: (formType, dashboard, resolve) => dispatch(editDashboard(formType, dashboard, resolve)),
@@ -873,8 +894,9 @@ export function mapDispatchToProps (dispatch) {
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
-    onLoadViewTeam: (projectId, resolve) => dispatch(loadViewTeam(projectId, resolve)),
-    onLoadSelectTeams: (type, id, resolve) => dispatch(loadSelectTeams(type, id, resolve))
+    onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
+    onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
+    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(initiateDownloadTask(id, type, downloadParams))
   }
 }
 
@@ -883,23 +905,23 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'dashboard', reducer })
 const withSaga = injectSaga({ key: 'dashboard', saga })
 
-const withReducerProject = injectReducer({ key: 'project', reducer: reducerProject })
-const withSagaProject = injectSaga({ key: 'project', saga: sagaProject })
+const withProjectReducer = injectReducer({ key: 'project', reducer: projectReducer })
+const withProjectSaga = injectSaga({ key: 'project', saga: projectSaga })
 
 const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
 const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
 
-const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: bizlogicReducer })
-const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
+const withViewReducer = injectReducer({ key: 'view', reducer: viewReducer })
+const withViewSaga = injectSaga({ key: 'view', saga: viewSaga })
 
 export default compose(
   withReducer,
-  withReducerProject,
+  withProjectReducer,
   withPortalReducer,
+  withViewReducer,
   withSaga,
-  withSagaProject,
+  withProjectSaga,
   withPortalSaga,
-  withConnect,
-  withReducerBizlogic,
-  withSagaBizlogic
+  withViewSaga,
+  withConnect
 )(Dashboard)

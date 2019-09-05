@@ -6,7 +6,7 @@
 
     <groupId>edp.davinci</groupId>
     <artifactId>davinci-parent_3.01</artifactId>
-    <version>0.3.0-SNAPSHOT</version>
+    <version>0.3.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
@@ -37,6 +37,10 @@
     </properties>
 
     <repositories>
+        <repository>
+            <id>alimaven</id>
+            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+        </repository>
         <repository>
             <id>central</id>
             <name>Maven Repository</name>
@@ -175,19 +179,6 @@
                         <!--<include>**/*.css</include>-->
                         <!--<include>**/*.js</include>-->
                     </includes>
-                    <!--<excludes>-->
-                        <!--<exclude>**/CSVFormat.scala</exclude>-->
-                        <!--<exclude>**/CSVWriter.scala</exclude>-->
-                        <!--<exclude>**/Formats.scala</exclude>-->
-                        <!--<exclude>**/Quoting.scala</exclude>-->
-                        <!--<exclude>**/csv/package.scala</exclude>-->
-                        <!--<exclude>**/CSVParser.scala</exclude>-->
-                        <!--<exclude>**/CSVReader.scala</exclude>-->
-                        <!--<exclude>**/LineReader.java</exclude>-->
-                        <!--<exclude>**/MalformedCSVException.scala</exclude>-->
-                        <!--<exclude>**/ReaderLineReader.java</exclude>-->
-                        <!--<exclude>**/SourceLineReader.java</exclude>-->
-                    <!--</excludes>-->
                     <extraExtensions>
                         <scala>java</scala>
                     </extraExtensions>

@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.core.utils;
@@ -94,12 +95,12 @@ public class CustomDataSourceUtils {
 
         Yaml yaml = new Yaml();
         HashMap<String, Object> loads = yaml.loadAs(new BufferedReader(fileReader), HashMap.class);
-        if (null != loads && loads.size() > 0) {
+        if (!CollectionUtils.isEmpty(loads)) {
             ObjectMapper mapper = new ObjectMapper();
             for (String key : loads.keySet()) {
                 CustomDataSource customDataSource = mapper.convertValue(loads.get(key), CustomDataSource.class);
                 if (StringUtils.isEmpty(customDataSource.getName()) || StringUtils.isEmpty(customDataSource.getDriver())) {
-                    throw new Exception("Load custom datasource error: name or driver cannot be empty" );
+                    throw new Exception("Load custom datasource error: name or driver cannot be EMPTY");
                 }
                 if ("null".equals(customDataSource.getName().trim().toLowerCase())) {
                     throw new Exception("Load custom datasource error: invalid name");
@@ -134,12 +135,12 @@ public class CustomDataSourceUtils {
 
     private static String getDataSourceName(String jdbcUrl) {
         String dataSourceName = null;
-        jdbcUrl = jdbcUrl.replaceAll(newLineChar, "").replaceAll(space, "").trim().toLowerCase();
+        jdbcUrl = jdbcUrl.replaceAll(NEW_LINE_CHAR, EMPTY).replaceAll(SPACE, EMPTY).trim().toLowerCase();
         String reg = "jdbc:\\w+";
         Pattern pattern = Pattern.compile(reg);
         Matcher matcher = pattern.matcher(jdbcUrl);
         if (matcher.find()) {
-            dataSourceName = matcher.group().split(colon)[1];
+            dataSourceName = matcher.group().split(COLON)[1];
         }
         return dataSourceName;
     }

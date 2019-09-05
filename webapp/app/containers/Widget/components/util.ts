@@ -624,7 +624,7 @@ export function getChartTooltipLabel (type, seriesData, options) {
             : record[`${mc.agg}(${decodedName})`]
           : 0
         value = getFormattedValue(value, mc.format)
-        return `${decodedName}: ${value}`
+        return `${getFieldAlias(mc.field, {}) || decodedName}: ${value}`
       }))
       .join('<br/>')
   }
@@ -700,6 +700,8 @@ export const AvailableFieldFormatTypes = {
 
 export function getFormattedValue (value: number | string, format: IFieldFormatConfig) {
   if (!format) { return value }
+  if (value === null || value === undefined) { return value }
+  if (typeof value === 'string' && (!value || isNaN(+value))) { return value }
 
   const { formatType } = format
   const config = format[formatType]
@@ -860,4 +862,20 @@ export const iconMapping = {
   radar: 'icon-radarchart',
   parallel: 'icon-parallel',
   confidenceBand: 'icon-confidence-band'
+}
+
+export function getCorrectInputNumber (num: any): number {
+  switch (typeof num) {
+    case 'string':
+      if (!num.trim()) {
+        return null
+      } else {
+        return Number(num) || null
+      }
+      return
+    case 'number':
+      return num
+    default:
+      return null
+  }
 }

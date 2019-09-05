@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.model.User;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Set;
 
 public interface DepartmentService {
 
