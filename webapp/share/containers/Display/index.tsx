@@ -374,7 +374,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       const slideStyle = this.getSlideStyle(slideParams, scale)
       const layerItems =  Array.isArray(widgets) ? layers.map((layer) => {
         const widget = widgets.find((w) => w.id === layer.widgetId)
-        const model = widget && widget.model
+        const model = widget && JSON.parse(widget.model)
         const layerId = layer.id
         const { polling, frequency } = JSON.parse(layer.params)
         const { datasource, loading, interactId, renderType } = layersInfo[layerId]
