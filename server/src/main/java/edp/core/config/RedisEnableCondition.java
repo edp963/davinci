@@ -34,6 +34,6 @@ public class RedisEnableCondition implements Condition {
         if (isRedisEnable == null) {
             isRedisEnable = context.getEnvironment().getProperty("spring.redis.isEnable", Boolean.class);
         }
-        return isRedisEnable;
+        return isRedisEnable != null && isRedisEnable;
     }
 }

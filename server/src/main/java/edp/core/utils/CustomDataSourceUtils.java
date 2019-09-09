@@ -115,7 +115,12 @@ public class CustomDataSourceUtils {
                 } else {
                     versoins.add(customDataSource.getVersion());
                 }
-                dataSourceVersoin.put(customDataSource.getName(), versoins);
+
+                if (versoins.size() == 1 && versoins.get(0).equals(JDBC_DATASOURCE_DEFAULT_VERSION)) {
+                    versoins = null;
+                }
+
+                dataSourceVersoin.put(customDataSource.getName(), CollectionUtils.isEmpty(versoins) ? null : versoins);
                 customDataSourceMap.put(getKey(customDataSource.getName(), customDataSource.getVersion()), customDataSource);
             }
         }
