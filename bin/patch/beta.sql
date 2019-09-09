@@ -14,7 +14,9 @@ CREATE TABLE `davinci_statistic_visitor_operation` (
   `sub_viz_name` varchar(255) DEFAULT NULL,
   `widget_id` bigint(20) DEFAULT NULL,
   `widget_name` varchar(255) DEFAULT NULL,
-  `parameters` varchar(500) DEFAULT NULL,
+  `variables` varchar(500) DEFAULT NULL,
+  `filters` varchar(500) DEFAULT NULL,
+  `groups` varchar(500) DEFAULT NULL,
   `create_time` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -34,7 +36,7 @@ CREATE TABLE `davinci_statistic_terminal` (
   `device_type` varchar(255) DEFAULT NULL,
   `device_vendor` varchar(255) DEFAULT NULL,
   `cpu_architecture` varchar(255) DEFAULT NULL,
-  `create_time` datetime DEFAULT NULL,
+  `create_time` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
