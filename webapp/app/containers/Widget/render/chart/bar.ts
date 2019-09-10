@@ -19,6 +19,7 @@
  */
 
 import { IChartProps } from '../../components/Chart'
+import { DEFAULT_SPLITER } from 'app/globalConstants'
 import {
   IFieldFormatConfig,
   getFormattedValue,
@@ -81,8 +82,8 @@ export default function (chartProps: IChartProps, drillOptions) {
     label: {
       ...getLabelOption('bar', label, metrics, false, {
         formatter: (params) => {
-          const { value, seriesName } = params
-          const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
+          const { value, seriesId } = params
+          const m = metrics.find((m) => m.name === seriesId.split(`${DEFAULT_SPLITER}${DEFAULT_SPLITER}`)[0])
           let format: IFieldFormatConfig = m.format
           let formattedValue = value
           if (percentage) {
@@ -148,6 +149,7 @@ export default function (chartProps: IChartProps, drillOptions) {
 
       Object.entries(grouped).forEach(([k, v]: [string, any[]]) => {
         const serieObj = {
+          id: `${m.name}${DEFAULT_SPLITER}${DEFAULT_SPLITER}${k}`,
           name: `${k} ${localeMetricName}`,
           type: 'bar',
           ...stackOption,
@@ -207,6 +209,7 @@ export default function (chartProps: IChartProps, drillOptions) {
       })
     } else {
       const serieObj = {
+        id: m.name,
         name: decodedMetricName,
         type: 'bar',
         ...stackOption,
