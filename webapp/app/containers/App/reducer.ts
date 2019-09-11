@@ -39,7 +39,7 @@ import { DownloadStatus } from './types'
 
 
 const initialState = {
-  logged: false,
+  logged: null,
   loginUser: null,
   loginLoading: false,
   navigator: true,

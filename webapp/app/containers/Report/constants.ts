@@ -18,4 +18,14 @@
  * >>
  */
 
+import { IProjectPermission } from 'containers/Projects/types'
+
 export const LOAD_SIDEBAR = 'davinci/Report/LOAD_SIDEBAR'
+
+export const SidebarPermissions: Array<keyof IProjectPermission> = [
+  'vizPermission',
+  'widgetPermission',
+  'viewPermission',
+  'sourcePermission',
+  'schedulePermission'
+]

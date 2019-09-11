@@ -21,6 +21,16 @@
 import React from 'react'
 import debounce from 'lodash/debounce'
 
+import CodeMirror from 'codemirror/lib/codemirror'
+import 'codemirror/lib/codemirror.css'
+import 'assets/override/codemirror_theme.css'
+import 'codemirror/addon/hint/show-hint.css'
+import 'codemirror/addon/edit/matchbrackets'
+import 'codemirror/mode/sql/sql'
+import 'codemirror/addon/hint/show-hint'
+import 'codemirror/addon/hint/sql-hint'
+import 'codemirror/addon/display/placeholder'
+
 import Styles from '../View.less'
 
 interface ISqlEditorProps {
@@ -39,20 +49,10 @@ export class SqlEditor extends React.PureComponent<ISqlEditorProps> {
 
   constructor (props) {
     super(props)
+  }
 
-    require([
-      'codemirror/lib/codemirror',
-      'codemirror/lib/codemirror.css',
-      'assets/override/codemirror_theme.css',
-      'codemirror/addon/hint/show-hint.css',
-      'codemirror/addon/edit/matchbrackets',
-      'codemirror/mode/sql/sql',
-      'codemirror/addon/hint/show-hint',
-      'codemirror/addon/hint/sql-hint',
-      'codemirror/addon/display/placeholder'
-    ], (CodeMirror) => {
-      this.initEditor(CodeMirror, props.value)
-    })
+  public componentDidMount () {
+    this.initEditor(CodeMirror, this.props.value)
   }
 
   public componentDidUpdate () {

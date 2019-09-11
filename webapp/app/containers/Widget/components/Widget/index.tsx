@@ -27,7 +27,7 @@ import { IframeConfig } from '../Workbench/ConfigSections/IframeSection'
 import { ITableConfig } from '../Config/Table'
 import { IRichTextConfig, IBarConfig, IRadarConfig } from '../Workbench/ConfigSections'
 import { IDoubleYAxisConfig } from '../Workbench/ConfigSections/DoubleYAxisSection'
-import { IModel } from '../Workbench/index'
+import { IViewModel } from 'containers/View/types'
 import { IQueryVariableMap } from 'containers/Dashboard/Grid'
 import { getStyleConfig } from '../util'
 import ChartTypes from '../../config/chart/ChartTypes'
@@ -142,7 +142,7 @@ export interface IWidgetProps {
   renderType?: RenderType
   orders: Array<{ column: string, direction: string }>
   mode: WidgetMode
-  model: IModel
+  model: IViewModel
   pagination?: IPaginationParams
   editing?: boolean
   queryVariables?: IQueryVariableMap

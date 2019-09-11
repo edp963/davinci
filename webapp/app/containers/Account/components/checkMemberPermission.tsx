@@ -1,8 +1,8 @@
-import * as React from 'react'
+import React from 'react'
 import {
    CREATE_ORGANIZATION_PROJECT
 } from 'containers/App/constants'
-import {IOrganization} from 'containers/Organizations/Organization'
+import { IOrganization } from 'containers/Organizations/types'
 
 interface IComponentPermissionProps {
   size?: string

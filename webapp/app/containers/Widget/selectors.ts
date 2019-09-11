@@ -20,36 +20,36 @@
 
 import { createSelector } from 'reselect'
 
-const selectWidget = (state) => state.get('widget')
+const selectWidget = (state) => state.widget
 
 const makeSelectWidgets = () => createSelector(
   selectWidget,
-  (widgetState) => widgetState.get('widgets')
+  (widgetState) => widgetState.widgets
 )
 
 const makeSelectCurrentWidget = () => createSelector(
   selectWidget,
-  (widgetState) => widgetState.get('currentWidget')
+  (widgetState) => widgetState.currentWidget
 )
 
 const makeSelectLoading = () => createSelector(
   selectWidget,
-  (widgetState) => widgetState.get('loading')
+  (widgetState) => widgetState.loading
 )
 
 const makeSelectDataLoading = () => createSelector(
   selectWidget,
-  (widgetState) => widgetState.get('dataLoading')
+  (widgetState) => widgetState.dataLoading
 )
 
 const makeSelectDistinctColumnValues = () => createSelector(
   selectWidget,
-  (widgetState) => widgetState.get('distinctColumnValues')
+  (widgetState) => widgetState.distinctColumnValues
 )
 
 const makeSelectColumnValueLoading = () => createSelector(
   selectWidget,
-  (widgetState) => widgetState.get('columnValueLoading')
+  (widgetState) => widgetState.columnValueLoading
 )
 
 export {

@@ -22,6 +22,7 @@ import React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
+
 // import html2canvas from 'html2canvas'
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -32,21 +33,19 @@ import saga from './sagas'
 import { FieldSortTypes } from 'containers/Widget/components/Config/Sort'
 import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
 
-import Container from 'app/components/Container'
+import Container from 'components/Container'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
-import DashboardItem from 'app/containers/Dashboard/components/DashboardItem'
-import FullScreenPanel from 'app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
-import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
-import { ChartTypes } from 'app/containers/Widget/config/chart/ChartTypes'
-import { IMapItemControlRequestParams, IMapControlOptions, IFilters } from 'app/components/Filters/types'
-import GlobalControlPanel from 'app/components/Filters/FilterPanel'
-import DownloadList from 'app/components/DownloadList'
-import {getValidColumnValue} from 'app/components/Filters/util'
-import HeadlessBrowserIdentifier from '../../components/HeadlessBrowserIdentifier'
+import DashboardItem from 'containers/Dashboard/components/DashboardItem'
+import FullScreenPanel from 'containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
+import { Responsive, WidthProvider } from 'libs/react-grid-layout'
+import { ChartTypes } from 'containers/Widget/config/chart/ChartTypes'
+import { IMapItemControlRequestParams, IMapControlOptions, IFilters } from 'components/Filters/types'
+import GlobalControlPanel from 'components/Filters/FilterPanel'
+import DownloadList from 'components/DownloadList'
+import { getValidColumnValue } from 'components/Filters/util'
+import HeadlessBrowserIdentifier from 'share/components/HeadlessBrowserIdentifier'
 
-import { RenderType, IWidgetConfig, IWidgetProps } from 'app/containers/Widget/components/Widget'
-import { ViewActions } from 'app/containers/View/actions'
-const { loadViewsDetail } = ViewActions
+import { RenderType, IWidgetConfig, IWidgetProps } from 'containers/Widget/components/Widget'
 import { Row, Col, message } from 'antd'
 
 import {
@@ -89,11 +88,11 @@ import {
   DOWNLOAD_LIST_POLLING_FREQUENCY
 } from 'app/globalConstants'
 
-const styles = require('app/containers/Dashboard/Dashboard.less')
+import styles from 'app/containers/Dashboard/Dashboard.less'
 
-import Login from '../../components/Login/index'
+import Login from 'share/components/Login'
 import { IQueryConditions, IDataRequestParams, QueryVariable, IDataDownloadParams } from 'app/containers/Dashboard/Grid'
-import { getShareClientId } from '../../util'
+import { getShareClientId } from 'share/util'
 import { IDownloadRecord, DownloadTypes } from 'app/containers/App/types'
 import { IFormedView } from 'app/containers/View/types'
 
@@ -484,7 +483,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           func: t.agg
         })))
     }
-    
+
     const requestParamsFilters = filters.reduce((a, b) => {
       return a.concat(b.config.sqlModel)
     }, [])
@@ -1150,7 +1149,6 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onLoadDashboard: (token, reject) => dispatch(getDashboard(token, reject)),
     onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
     onLoadResultset: (renderType, itemid, dataToken, requestParams) => dispatch(getResultset(renderType, itemid, dataToken, requestParams)),

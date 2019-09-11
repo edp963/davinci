@@ -20,20 +20,34 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { Route, HashRouter as Router } from 'react-router-dom'
+import { Route, HashRouter as Router, Switch, Redirect } from 'react-router-dom'
 import { RouteComponentWithParams } from 'utils/types'
 import { createStructuredSelector } from 'reselect'
 
 import Navigator from 'components/Navigator'
 
-import { logged, logout, getLoginUser, loadDownloadList } from '../App/actions'
+import { logged, logout, getLoginUser, loadDownloadList, showNavigator, hideNavigator } from '../App/actions'
 import { makeSelectLogged, makeSelectNavigator } from '../App/selectors'
 import checkLogin from 'utils/checkLogin'
 import { setToken } from 'utils/request'
 import { DOWNLOAD_LIST_POLLING_FREQUENCY } from 'app/globalConstants'
-import { statistic } from 'utils/statistic/statistic.dv'
 
-const Projects = React.lazy(() => import('containers/Projects'))
+import { Project } from 'containers/Projects/Loadable'
+
+import { Report } from 'containers/Report/Loadable'
+import { Viz } from 'containers/Viz/Loadable'
+import { Widget, Workbench } from 'containers/Widget/Loadable'
+import { View, ViewEditor } from 'containers/View/Loadable'
+import { Source } from 'containers/Source/Loadable'
+import { Schedule } from 'containers/Schedule/Loadable'
+
+import { Dashboard } from 'containers/Dashboard/Loadable'
+import { DisplayEditor, DisplayPreview } from 'containers/Display/Loadable'
+import { Account } from 'containers/Account/Loadable'
+import { Profile, UserProfile } from 'containers/Profile/Loadable'
+import { ResetPassword } from 'containers/ResetPassword/Loadable'
+import { OrganizationList, Organization } from 'containers/Organizations/Loadable'
+import { NoAuthorization } from 'containers/NoAuthorization/Loadable'
 
 const styles = require('./Main.less')
 
@@ -45,75 +59,22 @@ interface IMainProps {
   onLogout: () => void
   onGetLoginUser: (resolve: () => void) => any
   onLoadDownloadList: () => void
+  onShowNavigator: () => void
+  onHideNavigator: () => void
 }
 
 export class Main extends React.Component<IMainProps & RouteComponentWithParams, {}> {
 
   private downloadListPollingTimer: number
 
-  public componentWillMount () {
-    this.checkTokenLink()
+  constructor (props: IMainProps & RouteComponentWithParams) {
+    super(props)
+    this.initPolling()
   }
 
   public componentWillUnmount () {
     if (this.downloadListPollingTimer) {
       clearInterval(this.downloadListPollingTimer)
-    }
-  }
-
-  private checkTokenLink = () => {
-    const {
-      history,
-      onGetLoginUser
-    } = this.props
-
-    const qs = this.getQs()
-    const token = qs['token']
-    // TODO allow take other parameters
-    // const dashboard = qs['dashboard']
-
-    if (token) {
-      setToken(token)
-      onGetLoginUser(() => {
-        history.replace('/projects')
-        // if (dashboard) {
-        //   router.replace(`/project/${this.props.params.pid}/dashboard/${dashboard}`)
-        // } else {
-
-        // }
-      })
-      this.initPolling()
-    } else {
-      this.checkNormalLogin()
-    }
-  }
-
-  private checkNormalLogin = () => {
-    if (checkLogin()) {
-      const token = localStorage.getItem('TOKEN')
-      const loginUser = localStorage.getItem('loginUser')
-      setToken(token)
-      this.props.onLogged(JSON.parse(loginUser))
-      statistic.sendPrevDurationRecord()
-      this.initPolling()
-    } else {
-      this.props.history.replace('/login')
-    }
-  }
-
-  private getQs = () => {
-    const search = location.search
-    const qs = search ? search.substr(1) : ''
-    if (qs) {
-      return qs
-        .split('&')
-        .reduce((rdc, val) => {
-          const pair = val.split('=')
-          rdc[pair[0]] = pair[1]
-          return rdc
-        }, {})
-    } else {
-      return false
     }
   }
 
@@ -130,20 +91,61 @@ export class Main extends React.Component<IMainProps & RouteComponentWithParams,
     history.replace('/login')
   }
 
+  private renderReport = () => (
+    <Report>
+      <Router>
+        <Switch>
+          <Route path="/project/:pid/vizs" component={Viz} />
+          <Route path="/project/:pid/widgets" component={Widget} />
+          <Route exact path="/project/:pid/views" component={View} />
+          <Route path="/project/:pid/sources" component={Source} />
+          <Route path="/project/:pid/schedules" component={Schedule} />
+        </Switch>
+      </Router>
+    </Report>
+  )
+
+  private renderAccount = () => (
+    <Account>
+      <Router>
+        <Switch>
+          <Redirect from="/account" exact to="/account/profile" />
+          <Route path="/account/profile" component={Profile} />
+          <Route path="/account/profile/:uid" component={UserProfile} />
+          <Route path="/account/resetPassword" component={ResetPassword} />
+          <Route path="/account/organizations" component={OrganizationList} />
+          <Route path="/account/organization/:organizationId" component={Organization} />
+        </Switch>
+      </Router>
+    </Account>
+  )
+
   public render () {
-    const { logged, navigator } = this.props
+    const { logged, location } = this.props
+    const editingMode = !isNaN(+location.pathname.substr(location.pathname.lastIndexOf('/') + 1))
 
     return logged
       ? (
         <div className={styles.container}>
           <Navigator
-            show={navigator}
+            show={!editingMode}
             onLogout={this.logout}
           />
           <Router>
-            <React.Suspense fallback={null}>
-              <Route path="/projects/" component={Projects} />
-            </React.Suspense>
+            <Switch>
+              <Route path="/project/:pid/portal/:portalId" component={Dashboard} />
+              <Route exact path="/project/:pid/display/:displayId" component={DisplayEditor} />
+              <Route exact path="/project/:pid/display/preview/:displayId" component={DisplayPreview} />
+              <Route exact path="/project/:pid/widget/:wid" component={Workbench} />
+              <Route exact path="/project/:pid/view" component={ViewEditor} />
+              <Route exact path="/project/:pid/view/:viewId" component={ViewEditor} />
+
+              <Route path="/projects/" component={Project} />
+              <Route path="/project/:pid" render={this.renderReport} />
+              <Route path="/account" render={this.renderAccount} />
+              <Route path="/noAuthorization" component={NoAuthorization} />
+              <Redirect to="/projects" />
+            </Switch>
           </Router>
         </div>
       )
@@ -163,7 +165,9 @@ export function mapDispatchToProps (dispatch) {
     onLogged: (user) => dispatch(logged(user)),
     onLogout: () => dispatch(logout()),
     onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve)),
-    onLoadDownloadList: () => dispatch(loadDownloadList())
+    onLoadDownloadList: () => dispatch(loadDownloadList()),
+    onShowNavigator: () => dispatch(showNavigator()),
+    onHideNavigator: () => dispatch(hideNavigator())
   }
 }
 

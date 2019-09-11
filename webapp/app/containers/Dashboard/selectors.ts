@@ -20,49 +20,49 @@
 
 import { createSelector } from 'reselect'
 
-const selectDashboard = (state) => state.get('dashboard')
-const selectForm = (state) => state.get('form')
+const selectDashboard = (state) => state.dashboard
+const selectForm = (state) => state.form
 
 const makeSelectDashboards = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('dashboards')
+  (dashboardState) => dashboardState.dashboards
 )
 
 const makeSelectCurrentDashboard = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboard')
+  (dashboardState) => dashboardState.currentDashboard
 )
 const makeSelectCurrentDashboardLoading = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboardLoading')
+  (dashboardState) => dashboardState.currentDashboardLoading
 )
 const makeSelectCurrentDashboardShareInfo = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboardShareInfo')
+  (dashboardState) => dashboardState.currentDashboardShareInfo
 )
 const makeSelectCurrentDashboardSecretInfo = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboardSecretInfo')
+  (dashboardState) => dashboardState.currentDashboardSecretInfo
 )
 const makeSelectCurrentDashboardShareInfoLoading = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboardShareInfoLoading')
+  (dashboardState) => dashboardState.currentDashboardShareInfoLoading
 )
 const makeSelectCurrentDashboardSelectOptions = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboardSelectOptions')
+  (dashboardState) => dashboardState.currentDashboardSelectOptions
 )
 const makeSelectCurrentItems = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('currentItems')
+  (dashboardState) => dashboardState.currentItems
 )
 const makeSelectCurrentItemsInfo = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('currentItemsInfo')
+  (dashboardState) => dashboardState.currentItemsInfo
 )
 const makeSelectModalLoading = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('modalLoading')
+  (dashboardState) => dashboardState.modalLoading
 )
 
 const makeSelectControlForm = () => createSelector(
@@ -73,8 +73,8 @@ const makeSelectControlForm = () => createSelector(
 const makeSelectCurrentLinkages = () => createSelector(
   selectDashboard,
   (dashboardState) => {
-    const currentDashboard = dashboardState.get('currentDashboard')
-    const currentItemsInfo = dashboardState.get('currentItemsInfo')
+    const currentDashboard = dashboardState.currentDashboard
+    const currentItemsInfo = dashboardState.currentItemsInfo
     if (!currentDashboard && !currentItemsInfo) { return [] }
 
     const emptyConfig = '{}'

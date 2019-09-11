@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import Helmet from 'react-helmet'
-import { Link, RouteComponentProps } from 'react-router'
+import { Link, withRouter } from 'react-router-dom'
 
 import { compose } from 'redux'
 import { connect } from 'react-redux'
@@ -29,14 +29,12 @@ import Container from 'components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
 import { makeSelectCurrentProject } from '../Projects/selectors'
-import { IProject } from '../Projects'
-import { excludeRoles } from '../Projects/actions'
+import { IProject } from '../Projects/types'
+import { ProjectActions } from '../Projects/actions'
 
-interface IParams {
-  pid: number
-}
+import { RouteComponentWithParams } from 'utils/types'
 
-interface IVizProps extends RouteComponentProps<{}, IParams> {
+interface IVizProps {
   displays: any[]
   portals: any[]
   currentProject: IProject
@@ -56,36 +54,34 @@ interface IVizStates {
   collapse: {dashboard: boolean, display: boolean}
 }
 
-export class Viz extends React.Component<IVizProps, IVizStates> {
+export class Viz extends React.Component<IVizProps & RouteComponentWithParams, IVizStates> {
 
-  constructor (props: IVizProps) {
-    super(props)
-    this.state = {
-      collapse: {
-        dashboard: true,
-        display: true
-      }
+  public state: Readonly<IVizStates> = {
+    collapse: {
+      dashboard: true,
+      display: true
     }
   }
 
   public componentWillMount () {
-    const { params, onLoadDisplays, onLoadPortals } = this.props
-    const projectId = params.pid
+    const { match, onLoadDisplays, onLoadPortals } = this.props
+    const projectId = match.params.pid
     onLoadDisplays(projectId)
     onLoadPortals(projectId)
   }
 
   private goToDashboard = (portal?: any) => () => {
-    const { params } = this.props
+    const { history, match } = this.props
     const { id, name } = portal
-    this.props.router.push(`/project/${params.pid}/portal/${id}/portalName/${name}`)
+    history.push(`/project/${match.params.pid}/portal/${id}`)
   }
 
   private goToDisplay = (display?: any) => () => {
-    const { params, currentProject: {permission: {vizPermission}} } = this.props
+    const { match, currentProject: { permission: { vizPermission }} } = this.props
+    const projectId = match.params.pid
     const isToPreview = vizPermission === 1
-    const path = isToPreview ? `/project/${params.pid}/display/preview/${display ? display.id : -1}` : `/project/${params.pid}/display/${display ? display.id : -1}`
-    this.props.router.push(path)
+    const path = isToPreview ? `/project/${projectId}/display/preview/${display ? display.id : -1}` : `/project/${projectId}/display/${display ? display.id : -1}`
+    this.props.history.push(path)
   }
 
   private onCopy = (display) => {
@@ -104,10 +100,10 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
 
   public render () {
     const {
-      displays, params, onAddDisplay, onEditDisplay, onDeleteDisplay,
+      displays, match, onAddDisplay, onEditDisplay, onDeleteDisplay,
       portals, onAddPortal, onEditPortal, onDeletePortal, currentProject, onCheckUniqueName
     } = this.props
-    const projectId = params.pid
+    const projectId = +match.params.pid
     const isHideDashboardStyle = classnames({
       [styles.listPadding]: true,
       [utilStyles.hide]: !this.state.collapse.dashboard
@@ -204,7 +200,7 @@ export function mapDispatchToProps (dispatch) {
     onEditPortal: (portal, resolve) => dispatch(editPortal(portal, resolve)),
     onDeletePortal: (id) => dispatch(deletePortal(id)),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
-    onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve))
+    onExcludeRoles: (type, id, resolve) => dispatch(ProjectActions.excludeRoles(type, id, resolve))
   }
 }
 
@@ -223,5 +219,6 @@ export default compose(
   withPortalSaga,
   withReducerView,
   withSagaView,
-  withConnect
+  withConnect,
+  withRouter
 )(Viz)

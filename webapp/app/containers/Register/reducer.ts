@@ -18,33 +18,33 @@
  * >>
  */
 
+import produce from 'immer'
+
 import {
   SIGNUP,
   SIGNUP_ERROR,
   SIGNUP_SUCCESS
 } from './constants'
 
-import { fromJS } from 'immutable'
-
-const initialState = fromJS({
+const initialState = {
   signupLoading: false
-})
-
-function signupReducer (state = initialState, action) {
-  const { type } = action
-  switch (type) {
-    case  SIGNUP:
-      return state
-        .set('signupLoading', true)
-    case SIGNUP_SUCCESS:
-      return state
-        .set('signupLoading', false)
-    case SIGNUP_ERROR:
-      return state
-        .set('signupLoading', false)
-    default:
-      return state
-  }
 }
+
+const signupReducer = (state = initialState, action) =>
+  produce(state, (draft) => {
+    switch (action.type) {
+      case SIGNUP:
+        draft.signupLoading = true
+        break
+
+      case SIGNUP_SUCCESS:
+        draft.signupLoading = false
+        break
+
+      case SIGNUP_ERROR:
+        draft.signupLoading = false
+        break
+    }
+  })
 
 export default signupReducer
