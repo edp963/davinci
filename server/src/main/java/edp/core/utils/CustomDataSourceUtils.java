@@ -117,10 +117,10 @@ public class CustomDataSourceUtils {
                 }
 
                 if (versoins.size() == 1 && versoins.get(0).equals(JDBC_DATASOURCE_DEFAULT_VERSION)) {
-                    versoins = null;
+                    versoins.remove(0);
                 }
 
-                dataSourceVersoin.put(customDataSource.getName(), CollectionUtils.isEmpty(versoins) ? null : versoins);
+                dataSourceVersoin.put(customDataSource.getName(), versoins);
                 customDataSourceMap.put(getKey(customDataSource.getName(), customDataSource.getVersion()), customDataSource);
             }
         }

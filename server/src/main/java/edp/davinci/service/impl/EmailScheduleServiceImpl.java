@@ -57,7 +57,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.script.ScriptEngine;
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -115,22 +114,21 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
     private static final String portal = "PORTAL";
 
-
-    private final String baseUrl = File.separator + "tempFiles" + File.separator;
-
     private final static ExecutorService executorService = Executors.newFixedThreadPool(4);
 
     private final static ReentrantLock lock = new ReentrantLock();
 
     @Override
     public void execute(long jobId) throws Exception {
+        log.info("cron job execute: {}", jobId);
         CronJob cronJob = cronJobMapper.getById(jobId);
         if (null != cronJob && !StringUtils.isEmpty(cronJob.getConfig())) {
+            log.info("cron job start: {}", jobId);
             CronJobConfig cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
             if (null != cronJobConfig && !StringUtils.isEmpty(cronJobConfig.getType())) {
                 Map<String, Object> content = new HashMap<>();
                 User user = userMapper.selectByEmail(cronJobConfig.getTo());
-                String username = cronJobConfig.getTo().split("@")[0];
+                String username = cronJobConfig.getTo().split(Constants.AT_SYMBOL)[0];
                 if (null != user) {
                     username = StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName();
                 }
@@ -168,6 +166,8 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                             excels,
                             images);
                 }
+            } else {
+                log.warn("cron job config is not expected format: {}", cronJob.getConfig());
             }
         }
     }
@@ -286,6 +286,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
         List<ExcelContent> excelContents = new CopyOnWriteArrayList<>();
 
+        ExecutorUtil.printThreadPoolStatusLog(executorService, "EmailGenerateExcelsExecutorService");
         workBookContextMap.forEach((name, context) -> executorService.submit(() -> {
             try {
                 lock.lock();

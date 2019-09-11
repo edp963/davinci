@@ -59,4 +59,6 @@ public interface SourceService extends CheckEntityService {
     SourceDetail getSourceDetail(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     List<DatasourceType> getDatasources();
+
+    boolean reconnect(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

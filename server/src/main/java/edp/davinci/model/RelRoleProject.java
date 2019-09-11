@@ -30,11 +30,11 @@ public class RelRoleProject extends RecordInfo<RelRoleProject> {
 
     private Long roleId;
 
-    private Short sourcePermission = 1;     //隐藏/只读/修改/删除 0/1/2/3
-    private Short viewPermission = 1;       //隐藏/只读/修改/删除 0/1/2/3
-    private Short widgetPermission = 1;     //隐藏/只读/修改/删除 0/1/2/3
+    private Short sourcePermission = 0;     //隐藏/只读/修改/删除 0/1/2/3
+    private Short viewPermission = 0;       //隐藏/只读/修改/删除 0/1/2/3
+    private Short widgetPermission = 0;     //隐藏/只读/修改/删除 0/1/2/3
     private Short vizPermission = 1;        //隐藏/只读/修改/删除 0/1/2/3
-    private Short schedulePermission = 1;   //隐藏/只读/修改/删除 0/1/2/3
+    private Short schedulePermission = 0;   //隐藏/只读/修改/删除 0/1/2/3
 
     private Boolean sharePermission = false;
     private Boolean downloadPermission = false;

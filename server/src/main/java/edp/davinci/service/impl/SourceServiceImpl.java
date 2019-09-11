@@ -20,6 +20,7 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import edp.core.common.jdbc.JdbcDataSource;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
@@ -28,10 +29,7 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.DBTables;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.DateUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.SqlUtils;
+import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.*;
 import edp.davinci.core.model.DataUploadEntity;
@@ -89,6 +87,9 @@ public class SourceServiceImpl implements SourceService {
 
     @Autowired
     private ProjectService projectService;
+
+    @Autowired
+    private JdbcDataSource jdbcDataSource;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -586,6 +587,25 @@ public class SourceServiceImpl implements SourceService {
     @Override
     public List<DatasourceType> getDatasources() {
         return LoadSupportDataSourceRunner.getSupportDatasourceList();
+    }
+
+    @Override
+    public boolean reconnect(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Source source = sourceMapper.getById(id);
+        if (null == source) {
+            log.info("source (:{}) is not found", id);
+            throw new NotFoundException("source is not found");
+        }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(source.getProjectId(), user, false), user);
+        if (projectPermission.getSourcePermission() < UserPermissionEnum.WRITE.getPermission()) {
+            log.info("user (:{}) have not permission to reconnect source(:{})", user.getId(), source.getId());
+            throw new UnAuthorizedExecption("You have not permission to reconnect this source");
+        }
+
+        SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
+        sourceUtils.releaseDataSource(source.getJdbcUrl(), source.getName(), source.getPassword(), source.getDbVersion(), source.isExt());
+        return sqlUtils.init(source).testConnection();
     }
 
     /**

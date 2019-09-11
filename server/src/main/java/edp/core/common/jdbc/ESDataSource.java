@@ -53,6 +53,7 @@ public class ESDataSource {
             if (!StringUtils.isEmpty(password)) {
                 properties.setProperty(PROP_PASSWORD, password);
             }
+            properties.setProperty(PROP_MAXACTIVE, String.valueOf(jdbcDataSource.getMaxActive()));
             properties.setProperty(PROP_INITIALSIZE, String.valueOf(jdbcDataSource.getInitialSize()));
             properties.setProperty(PROP_MINIDLE, String.valueOf(jdbcDataSource.getMinIdle()));
             properties.setProperty(PROP_MAXWAIT, String.valueOf(jdbcDataSource.getMaxActive()));
