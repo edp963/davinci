@@ -690,7 +690,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired, model } = widgetConfig
     const drillHistory = currentItemsInfo[itemId].queryConditions.drillHistory
     let sql = void 0
     let name = void 0
@@ -754,12 +754,13 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           }, {})
           for (const attr in coustomTable) {
             if (coustomTable[attr] !== undefined && attr) {
+              const sqlType = model[attr] && model[attr]['sqlType'] ? model[attr]['sqlType'] : 'VARCHAR'
               const filterJson: IFilters = {
                 name: attr,
                 operator: 'in',
                 type: 'filter',
-                value: coustomTable[attr].map((val) => getValidColumnValue(val, 'VARCHAR')),
-                sqlType: 'VARCHAR'
+                value: coustomTable[attr].map((val) => getValidColumnValue(val, sqlType)),
+                sqlType
               }
               coustomTableSqls.push(filterJson)
              // coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
@@ -783,12 +784,13 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       })
       if (name && name.length) {
         currentCol = col && col.length ? widgetConfigCols.concat([{name: col}]) : void 0
+        const sqlType = model[name] && model[name]['sqlType'] ? model[name]['sqlType'] : 'VARCHAR'
         sql = {
           name,
           operator: 'in',
           type: 'filter',
-          value: filterSource.map((val) => getValidColumnValue(val, 'VARCHAR')),
-          sqlType: 'VARCHAR'
+          value: filterSource.map((val) => getValidColumnValue(val, sqlType)),
+          sqlType
         }
         // sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
         sqls.push(sql)
@@ -839,12 +841,13 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         }, {})
         for (const attr in coustomTable) {
           if (coustomTable[attr] !== undefined && attr) {
+            const sqlType = model[attr] && model[attr]['sqlType'] ? model[attr]['sqlType'] : 'VARCHAR'
             const filterJson: IFilters = {
               name: attr,
               operator: 'in',
               type: 'filter',
-              value: coustomTable[attr].map((val) => getValidColumnValue(val, 'VARCHAR')),
-              sqlType: 'VARCHAR'
+              value: coustomTable[attr].map((val) => getValidColumnValue(val, sqlType)),
+              sqlType
             }
             coustomTableSqls.push(filterJson)
           //  coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
@@ -868,13 +871,14 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       } else {
         name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
         filterSource = sourceDataFilter.map((source) => source[name])
+        const sqlType = model[name] && model[name]['sqlType'] ? model[name]['sqlType'] : 'VARCHAR'
        // sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
         sql = {
           name,
           operator: 'in',
           type: 'filter',
-          value: filterSource.map((val) => getValidColumnValue(val, 'VARCHAR')),
-          sqlType: 'VARCHAR'
+          value: filterSource.map((val) => getValidColumnValue(val, sqlType)),
+          sqlType
         }
         sqls = lastDrillHistory.filter.sqls.concat(sql)
         currentCol = col && col.length ? (lastDrillHistory.col || []).concat({name: col}) : lastDrillHistory.col

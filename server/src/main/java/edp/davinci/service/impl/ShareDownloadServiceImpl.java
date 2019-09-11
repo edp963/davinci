@@ -64,7 +64,9 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
             record.setCreateTime(new Date());
             shareDownloadRecordMapper.insertSelective(record);
 
-            ExecutorUtil.submitWorkbookTask(WorkBookContext.newWorkBookContext(new MsgWrapper(record, ActionEnum.SHAREDOWNLOAD, uuid), widgetList, shareInfo.getShareUser(), resultLimit));
+            MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.SHAREDOWNLOAD, uuid);
+            ExecutorUtil.submitWorkbookTask(WorkBookContext.newWorkBookContext(wrapper, widgetList, shareInfo.getShareUser(), resultLimit));
+            log.info("Share download task submit: {}", wrapper);
             return true;
         } catch (Exception e) {
             log.error("submit download task error,e=", e);

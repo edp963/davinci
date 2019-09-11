@@ -139,7 +139,7 @@ public class CronJobServiceImpl implements CronJobService {
             cronJob.setStartDate(DateUtils.toDate(cronJobBaseInfo.getStartDate()));
             cronJob.setEndDate(DateUtils.toDate(cronJobBaseInfo.getEndDate()));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("{}", e.getMessage());
         }
 
         int insert = cronJobMapper.insert(cronJob);

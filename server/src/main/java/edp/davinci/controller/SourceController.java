@@ -22,7 +22,6 @@ package edp.davinci.controller;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.CurrentUser;
 import edp.core.model.DBTables;
-import edp.davinci.dto.sourceDto.DatasourceType;
 import edp.core.model.TableInfo;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
@@ -209,6 +208,23 @@ public class SourceController extends BaseController {
         }
 
         sourceService.testSource(sourceTest);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
+    }
+
+    /**
+     * 释放重连
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "release and reconnect", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/reconnect/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity reconnect(@PathVariable Long id,
+                                    @ApiIgnore @CurrentUser User user,
+                                    HttpServletRequest request) {
+        sourceService.reconnect(id, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 

@@ -92,13 +92,39 @@ function getWidgetDetailFieldsbyDownload (action) {
 }
 
 function getWidgetDetailFieldsByOthers (action) {
-    const { groups, filters, variables, tempFilters, widget: {id, name}} = action.statistic
+    const { groups, filters, variables, tempFilters, linkageFilters, tempVariables,
+            globalVariables, linkageVariables,  globalFilters, widget: {id, name}} = action.statistic
+
+    let bootstrapFilters = [...filters]
+    let bootstrapVariables = [...variables]
+    if (tempFilters && tempFilters.length) {
+        bootstrapFilters = filters.concat(tempFilters)
+    }
+    if (linkageFilters && linkageFilters.length) {
+        bootstrapFilters = bootstrapFilters.concat(linkageFilters)
+    }
+    if (globalFilters && globalFilters.length) {
+        bootstrapFilters = bootstrapFilters.concat(globalFilters)
+    }
+
+    // 全局 本地 联动  变量
+    if (linkageVariables && linkageVariables.length) {
+        bootstrapVariables = bootstrapVariables.concat(linkageVariables)
+    }
+
+    if (globalVariables && globalVariables.length) {
+        bootstrapVariables = bootstrapVariables.concat(globalVariables)
+    }
+
+    if (tempVariables && tempVariables.length) {
+        bootstrapVariables = bootstrapVariables.concat(tempVariables)
+    }
     return {
         widget_id: id,
         widget_name: name,
-        variables,
+        variables: bootstrapVariables,
         groups,
-        filters: tempFilters ? filters.concat(tempFilters) : filters
+        filters: bootstrapFilters
     }
 }
 
@@ -123,7 +149,6 @@ function mapMonitoreToAction (action: {type: string, payload: object}, initialTy
 
     if (isDataAction) {
         actionType = dataAction[action.type]
-        console.log(actionType)
         // change action type
         statistic.updateSingleFleld<IOperation>('operation', 'action', actionType)
     }
