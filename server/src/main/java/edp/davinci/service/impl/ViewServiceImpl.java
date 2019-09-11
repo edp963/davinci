@@ -522,7 +522,9 @@ public class ViewServiceImpl implements ViewService {
         List<SqlFilter> filters = new ArrayList<>();
         for(String str : filterStrs){
             SqlFilter obj = JSON.parseObject(str, SqlFilter.class);
-            obj.setName(ViewExecuteParam.getField(obj.getName(), source.getJdbcUrl(), source.getDbVersion()));
+            if(!StringUtils.isEmpty(obj.getName())){
+                obj.setName(ViewExecuteParam.getField(obj.getName(), source.getJdbcUrl(), source.getDbVersion()));
+            }
             filters.add(obj);
         }
 //        filterStrs.forEach(str -> filters.add(JSON.parseObject(str, SqlFilter.class)));

@@ -111,10 +111,20 @@ public class ScriptUtiils {
                             }
                             break;
                         case "filters":
-                            ScriptObjectMirror filterMirror = (ScriptObjectMirror) vsom.get(key);
-                            if (filterMirror.isArray()) {
-                                Collection<Object> values = filterMirror.values();
-                                values.forEach(v -> filters.add(String.valueOf(v)));
+                            Object o = vsom.get(key);
+                            if (o instanceof String) {
+                                String filtersJsonStr = (String) o;
+                                if (!StringUtils.isEmpty(filtersJsonStr)) {
+                                    filters.add(filtersJsonStr);
+                                }
+                            } else if (o instanceof ScriptObjectMirror) {
+                                ScriptObjectMirror filterMirror = (ScriptObjectMirror) o;
+                                if (filterMirror.isArray() && filterMirror.size() > 0) {
+                                    Collection<Object> values = filterMirror.values();
+                                    values.forEach(v -> {
+                                        filters.add(String.valueOf(v));
+                                    });
+                                }
                             }
                             break;
                         case "cache":

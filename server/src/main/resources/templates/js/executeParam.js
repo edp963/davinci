@@ -328,6 +328,36 @@ if (!Object.entries) {
         return resArray;
     };
 }
+
+if (typeof Object.assign != 'function') {
+    // Must be writable: true, enumerable: false, configurable: true
+    Object.defineProperty(Object, "assign", {
+        value: function assign(target, varArgs) { // .length of function is 2
+            'use strict';
+            if (target == null) { // TypeError if undefined or null
+                throw new TypeError('Cannot convert undefined or null to object');
+            }
+
+            var to = Object(target);
+
+            for (var index = 1; index < arguments.length; index++) {
+                var nextSource = arguments[index];
+
+                if (nextSource != null) { // Skip over if undefined or null
+                    for (var nextKey in nextSource) {
+                        // Avoid bugs when hasOwnProperty is shadowed
+                        if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                            to[nextKey] = nextSource[nextKey];
+                        }
+                    }
+                }
+            }
+            return to;
+        },
+        writable: true,
+        configurable: true
+    });
+}
 // #endregion
 
 // #region
@@ -5071,27 +5101,43 @@ function getModelValue(control, field, value) {
         || typeof value === 'string' && !value.trim()) {
         return filters;
     }
+
+    var commanFilterJson = {
+        name: name,
+        type: 'filter',
+        value: getValidColumnValue(value, sqlType),
+        sqlType: sqlType,
+        operator: operator
+    }
+
     switch (type) {
         case FilterTypes.InputText:
-            filters.push(name + " " + operator + " " + getValidColumnValue(value, sqlType));
+            filters.push(commanFilterJson);
             break;
         case FilterTypes.Select:
             if (multiple) {
                 if (value.length && value.length > 0) {
-                    filters.push(name + " " + operator + " (" + value.map(function (val) {
-                        return getValidColumnValue(val, sqlType);
-                    }).join(',') + ")");
+                    commanFilterJson.value = value.map(function (val) {
+                        return getValidColumnValue(val, sqlType)
+                    })
+                    filters.push(commanFilterJson)
                 }
             } else {
-                filters.push(name + " " + operator + " " + getValidColumnValue(value, sqlType));
+                filters.push(commanFilterJson);
             }
             break;
         case FilterTypes.NumberRange:
             if (value[0] !== '' && !isNaN(value[0])) {
-                filters.push(name + " >= " + getValidColumnValue(value[0], sqlType));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    operator: '>=',
+                    value: getValidColumnValue(value[0], sqlType)
+                }))
             }
             if (value[1] !== '' && !isNaN(value[1])) {
-                filters.push(name + " <= " + getValidColumnValue(value[1], sqlType));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    operator: '<=',
+                    value: getValidColumnValue(value[1], sqlType)
+                }))
             }
             break;
         // case FilterTypes.TreeSelect:
@@ -5101,23 +5147,35 @@ function getModelValue(control, field, value) {
         //   break
         case FilterTypes.Date:
             if (multiple) {
-                filters.push(name + " " + operator + " (" + value.split(',').map(function (val) {
-                    return getValidColumnValue(val, sqlType);
-                }).join(',') + ")");
+                filters.push(Object.assign({}, commanFilterJson, {
+                    value: value.split(',').map(function (val) {
+                        return getValidColumnValue(val, sqlType)
+                    })
+                }))
             } else {
-                filters.push(name + " " + operator + " " + getValidColumnValue(moment(value).format(dateFormat), sqlType));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    value: getValidColumnValue(moment(value).format(dateFormat), sqlType)
+                }))
             }
             break;
         case FilterTypes.DateRange:
             if (value.length) {
-                filters.push(name + " >= " + getValidColumnValue(moment(value[0]).format(dateFormat), sqlType));
-                filters.push(name + " <= " + getValidColumnValue(moment(value[1]).format(dateFormat), sqlType));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    operator: '>=',
+                    value: getValidColumnValue(moment(value[0]).format(dateFormat), sqlType)
+                }));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    operator: '<=',
+                    value: getValidColumnValue(moment(value[1]).format(dateFormat), sqlType)
+                }));
             }
             break;
         default:
             var inputValue = value.target.value.trim();
             if (inputValue) {
-                filters.push(name + " " + operator + " " + getValidColumnValue(inputValue, sqlType));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    value: getValidColumnValue(inputValue, sqlType)
+                }));
             }
             break;
     }
@@ -5182,6 +5240,7 @@ function getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, ite
     var globalFilters = getGlobalFilters(dashboardConfig, +itemId)
     var widgetExecuteParam = getWidgetExecuteParam(widgetConfig)
     widgetExecuteParam.filters = widgetExecuteParam.filters.concat(globalFilters.filters)
+    widgetExecuteParam.filters = widgetExecuteParam.filters.map(function(filter) { return JSON.stringify(filter) })
     widgetExecuteParam.params = widgetExecuteParam.params.concat(globalFilters.params)
     return widgetExecuteParam
 }
@@ -5325,12 +5384,15 @@ function getWidgetExecuteParam(widgetConfig) {
             }));
     }
 
+    var requestFilters = []
+    filters.forEach(function(item) {
+        requestFilters = requestFilters.concat(item.config.sqlModel)
+    })
+
     var requestParams = {
         groups: groups,
         aggregators: aggregators,
-        filters: filters.map(function (i) {
-            return i.config.sql;
-        }),
+        filters: requestFilters,
         params: [],
         orders: orders,
         cache: cache,
@@ -5344,7 +5406,7 @@ function getWidgetExecuteParam(widgetConfig) {
 // var fs = require('fs')
 // var dashboardConfigJson = fs.readFileSync('./dashboard.json', 'UTF-8')
 // var widgetConfigJson = fs.readFileSync('./widget.json', 'UTF-8')
-// var result = getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, 704)
+// var result = getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, 177)
 // console.log(JSON.stringify(result))
 // fs.writeFileSync('./globalFilters.json', JSON.stringify(result))
 // // #endregion
