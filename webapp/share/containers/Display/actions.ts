@@ -19,7 +19,7 @@
  */
 
 import { ActionTypes } from './constants'
-import { returnType } from 'app/utils/redux';
+import { returnType } from 'utils/redux'
 
 export const ShareDisplayActions = {
   loadDisplay (token: string, resolve, reject) {

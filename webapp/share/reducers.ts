@@ -28,7 +28,7 @@ import { connectRouter } from 'connected-react-router'
 
 import history from 'utils/history'
 
-import languageProviderReducer from '../app/containers/LanguageProvider/reducer'
+import languageProviderReducer from 'app/containers/LanguageProvider/reducer'
 
 /*
  * routeReducer

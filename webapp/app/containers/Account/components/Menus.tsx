@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import { Menu } from 'antd'
 const defaultItems = [
   {icons: 'icon-user1', key: '1', text: '个人信息', route: 'profile'},

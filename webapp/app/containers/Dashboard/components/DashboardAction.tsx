@@ -18,11 +18,10 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { Icon, Tooltip, Popover } from 'antd'
-import {IconProps} from 'antd/lib/icon'
 const styles = require('../Dashboard.less')
-import {IProject} from 'containers/Projects'
+import { IProject } from 'containers/Projects/types'
 import ShareDownloadPermission from 'containers/Account/components/checkShareDownloadPermission'
 import ModulePermission from 'containers/Account/components/checkModulePermission'
 import { getTextWidth } from 'utils/util'

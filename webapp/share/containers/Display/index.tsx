@@ -18,8 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
-import { RouteComponentProps } from 'react-router'
+import React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
@@ -33,13 +32,14 @@ import saga from './sagas'
 import { FieldSortTypes } from 'containers/Widget/components/Config/Sort'
 import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
 
-import Login from '../../components/Login/index'
-import LayerItem from '../../../app/containers/Display/components/LayerItem'
-import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
-import { decodeMetricName } from '../../../app/containers/Widget/components/util'
+import { Login } from 'share/components/Login/Loadable'
+import LayerItem from 'containers/Display/components/LayerItem'
+import { RenderType, IWidgetConfig } from 'containers/Widget/components/Widget'
+import { decodeMetricName } from 'containers/Widget/components/util'
+import { RouteComponentWithParams } from 'utils/types'
 
-const mainStyles = require('../../../app/containers/Main/Main.less')
-const styles = require('../../../app/containers/Display/Display.less')
+import mainStyles from 'containers/Main/Main.less'
+import styles from 'containers/Display/Display.less'
 
 import ShareDisplayActions from './actions'
 const { loadDisplay, loadLayerData } = ShareDisplayActions
@@ -51,9 +51,11 @@ import {
   makeSelectWidgets,
   makeSelectLayersInfo
 } from './selectors'
-import { IQueryConditions, IDataRequestParams } from '../../../app/containers/Dashboard/Grid'
+import { IQueryConditions, IDataRequestParams } from 'containers/Dashboard/Grid'
 
-interface IDisplayProps extends RouteComponentProps<{}, {}> {
+// console.error(injectReducer, injectSaga, FieldSortTypes, LayerItem)
+
+interface IDisplayProps extends RouteComponentWithParams {
   title: string
   display: any
   slide: any
@@ -91,8 +93,6 @@ interface IDisplayStates {
 
 export class Display extends React.Component<IDisplayProps, IDisplayStates> {
 
-  private charts: object = {}
-
   public constructor (props) {
     super(props)
     this.state = {
@@ -103,7 +103,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
   }
 
   public componentWillMount () {
-    const { shareInfo } = this.props.location.query
+    const shareInfo = new URLSearchParams(this.props.location.search).get('shareInfo')
     this.setState({
       shareInfo
     }, () => {

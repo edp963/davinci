@@ -21,7 +21,7 @@
 import { createSelector } from 'reselect'
 import { IOrganizationState } from './types'
 
-const selectOrganization = (state) => state.get('organization')
+const selectOrganization = (state) => state.organization
 
 const makeSelectOrganizations = () => createSelector(
   selectOrganization,

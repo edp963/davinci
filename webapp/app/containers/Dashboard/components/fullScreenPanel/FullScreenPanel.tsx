@@ -4,7 +4,7 @@ import { Icon, Menu } from 'antd'
 import * as classnames from 'classnames'
 import DashboardItemControlForm from '../DashboardItemControlForm'
 import { IQueryConditions } from 'containers/Dashboard/Grid'
-import { IModel } from 'containers/Widget/components/Workbench/index'
+import { IViewModel } from 'containers/View/types'
 import Widget from 'containers/Widget/components/Widget'
 const styles = require('./fullScreenPanel.less')
 
@@ -14,7 +14,7 @@ interface IFullScreenPanelProps {
   currentDataInFullScreen: {
     renderType?: string
     widget?: any
-    model?: IModel
+    model?: IViewModel
     itemId?: number
     onGetChartData?: any
   }

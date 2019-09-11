@@ -3,7 +3,7 @@ import { createSelector } from 'reselect'
 /**
  * Direct selector to the schedule state domain
  */
-const selectSchedule = (state) => state.get('schedule')
+const selectSchedule = (state) => state.schedule
 
 /**
  * Other specific selectors
@@ -15,31 +15,31 @@ const selectSchedule = (state) => state.get('schedule')
 
 const makeSelectSchedule = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('schedule')
+  (substate) => substate.schedule
 )
 const makeSelectDashboards = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('dashboards')
+  (substate) => substate.dashboards
 )
 const makeSelectCurrentDashboard = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('currentDashboard')
+  (substate) => substate.currentDashboard
 )
 const makeSelectWidgets = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('widgets')
+  (substate) => substate.widgets
 )
 const makeSelectTableLoading = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('tableLoading')
+  (substate) => substate.tableLoading
 )
 const makeSelectFormLoading = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('formLoading')
+  (substate) => substate.formLoading
 )
 const makeSelectVizs = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('vizs')
+  (substate) => substate.vizs
 )
 
 export {

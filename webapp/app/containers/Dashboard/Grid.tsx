@@ -23,7 +23,7 @@ import { findDOMNode } from 'react-dom'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
@@ -33,6 +33,7 @@ import viewReducer from 'containers/View/reducer'
 import viewSaga from 'containers/View/sagas'
 import formReducer from './FormReducer'
 
+import { RouteComponentWithParams } from 'utils/types'
 import { IViewBase, IFormedViews } from 'containers/View/types'
 
 import Container from 'components/Container'
@@ -93,6 +94,7 @@ import {
 } from './selectors'
 import { ViewActions, ViewActionType } from 'containers/View/actions'
 const { loadViewDataFromVizItem, loadViewsDetail, loadSelectOptions } = ViewActions
+import { makeSelectCurrentPortal } from 'containers/Portal/selectors'
 import { makeSelectWidgets } from 'containers/Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
 import { makeSelectCurrentProject } from 'containers/Projects/selectors'
@@ -110,9 +112,8 @@ import {
   KEY_COLUMN,
   DEFAULT_TABLE_PAGE
 } from 'app/globalConstants'
-import { InjectedRouter } from 'react-router/lib/Router'
 import { IWidgetConfig, RenderType, IWidgetProps } from '../Widget/components/Widget'
-import { IProject } from '../Projects'
+import { IProject } from '../Projects/types'
 import { ICurrentDashboard } from './'
 import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 import { DownloadTypes } from '../App/types'
@@ -197,9 +198,8 @@ interface IGridProps {
   widgets: any[]
   views: IViewBase[]
   formedViews: IFormedViews
+  currentPortal: any
   currentProject: IProject
-  router: InjectedRouter
-  params: any
   currentDashboard: ICurrentDashboard,
   currentDashboardLoading: boolean
   currentDashboardShareInfo: string
@@ -280,7 +280,7 @@ interface IDashboardItem {
   frequency?: number
 }
 
-export class Grid extends React.Component<IGridProps, IGridStates> {
+export class Grid extends React.Component<IGridProps & RouteComponentWithParams, IGridStates> {
   constructor (props) {
     super(props)
 
@@ -325,37 +325,39 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   public componentWillMount () {
     const {
       onLoadDashboardDetail,
-      params
+      match
     } = this.props
-    const { pid, portalId, dashboardId } = params
+    const { pid, portalId, dashboardId } = match.params
     if (dashboardId && Number(dashboardId) !== -1) {
-      onLoadDashboardDetail(pid, portalId, Number(dashboardId))
+      onLoadDashboardDetail(+pid, +portalId, Number(dashboardId))
     }
   }
 
-  public componentWillReceiveProps (nextProps: IGridProps) {
+  public componentWillReceiveProps (nextProps: IGridProps & RouteComponentWithParams) {
     const {
       currentDashboard,
       currentDashboardLoading,
       currentItems,
       currentItemsInfo,
-      params
+      currentPortal,
+      match: { params: nextParams }
     } = nextProps
     const { onLoadDashboardDetail } = this.props
     const { layoutInitialized } = this.state
 
-    const { params: {pid, portalId, portalName, dashboardId}, currentProject} = this.props
+    const { match, currentProject} = this.props
+    const { pid, portalId, dashboardId } = match.params
 
-    if (params.dashboardId === this.props.params.dashboardId) {
+    if (nextParams.dashboardId === dashboardId) {
       if (nextProps.currentDashboard !== this.props.currentDashboard) {
         statistic.setOperations({
-          project_id: pid,
+          project_id: +pid,
           project_name: currentProject.name,
           org_id: currentProject.orgId,
           viz_type: 'dashboard',
-          viz_id: portalId,
-          viz_name: portalName,
-          sub_viz_id: params.dashboardId,
+          viz_id: +portalId,
+          viz_name: currentPortal && currentPortal.name,
+          sub_viz_id: +nextParams.dashboardId,
           sub_viz_name: currentDashboard['name'],
           create_time:  statistic.getCurrentDateTime()
         }, (data) => {
@@ -371,13 +373,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       }
     }
 
-    if (params.dashboardId !== this.props.params.dashboardId) {
+    if (nextParams.dashboardId !== dashboardId) {
       this.setState({
         nextMenuTitle: ''
       })
 
-      if (params.dashboardId && Number(params.dashboardId) !== -1) {
-        onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
+      if (nextParams.dashboardId && Number(nextParams.dashboardId) !== -1) {
+        onLoadDashboardDetail(+nextParams.pid, +nextParams.portalId, +nextParams.dashboardId)
       }
 
       statistic.setDurations({
@@ -737,8 +739,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private onEditDashboardItemsPosition = (layout) => {
-    const { currentItems, onEditDashboardItems, params } = this.props
-    const portalId = +params.portalId
+    const { currentItems, onEditDashboardItems, match } = this.props
+    const portalId = +match.params.portalId
     const changedItems = currentItems.map((item) => {
       const { x, y, w, h } = layout.find((l) => Number(l.i) === item.id)
       return {
@@ -838,8 +840,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private saveDashboardItem = () => {
-    const { params, currentDashboard, currentItems, widgets, formedViews } = this.props
-    const portalId = +params.portalId
+    const { match, currentDashboard, currentItems, widgets, formedViews } = this.props
+    const portalId = +match.params.portalId
     const { selectedWidgets, dashboardItemFormType } = this.state
     const formdata: any = this.dashboardItemForm.props.form.getFieldsValue()
     const cols = GRID_COLS.lg
@@ -934,8 +936,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private navDropdownClick = (e) => {
-    const { params } = this.props
-    this.props.router.push(`/project/${params.pid}/dashboard/${e.key}`)
+    const { match } = this.props
+    const { pid, portalId } = match.params
+    this.props.history.push(`/project/${pid}/portal/${portalId}/dashboard/${e.key}`)
   }
 
   private nextNavDropdownClick = (e) => {
@@ -1180,10 +1183,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private toWorkbench = (itemId, widgetId) => {
-    const { pid, portalId, portalName, dashboardId } = this.props.params
-    const editSign = [pid, portalId, portalName, dashboardId, itemId].join(DEFAULT_SPLITER)
+    const { pid, portalId, dashboardId } = this.props.match.params
+    const editSign = [pid, portalId, dashboardId, itemId].join(DEFAULT_SPLITER)
     sessionStorage.setItem('editWidgetFromDashboard', editSign)
-    this.props.router.push(`/project/${pid}/widget/${widgetId}`)
+    this.props.history.push(`/project/${pid}/widget/${widgetId}`)
   }
 
   private onDrillPathData = (e) => {
@@ -1449,7 +1452,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     // const { onDrillPathSetting } = this.props
     // onDrillPathSetting(currentItemId as number, flag)
 
-    const {currentItems, params, onLoadDashboardDetail} = this.props
+    const {currentItems, match, onLoadDashboardDetail} = this.props
+    const { params } = match
     const portalId = +params.portalId
     const { currentItemId } = this.state
     const dashboardItem = currentItems.find((item) => item.id === Number(currentItemId))
@@ -1475,7 +1479,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
       if (params.dashboardId && Number(params.dashboardId) !== -1) {
-        onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
+        onLoadDashboardDetail(+params.pid, +params.portalId, params.dashboardId)
       }
       this.hideDrillPathSettingModal()
     })
@@ -1876,6 +1880,7 @@ const mapStateToProps = createStructuredSelector({
   currentItemsInfo: makeSelectCurrentItemsInfo(),
   currentDashboardSelectOptions: makeSelectCurrentDashboardSelectOptions(),
   currentLinkages: makeSelectCurrentLinkages(),
+  currentPortal: makeSelectCurrentPortal(),
   widgets: makeSelectWidgets(),
   views: makeSelectViews(),
   formedViews: makeSelectFormedViews(),

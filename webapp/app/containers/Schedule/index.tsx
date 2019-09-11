@@ -7,7 +7,8 @@
 import React, { createRef } from 'react'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
+import { RouteComponentWithParams } from 'utils/types'
 import Container from 'components/Container'
 import moment from 'moment'
 import { createStructuredSelector } from 'reselect'
@@ -36,7 +37,7 @@ import { PaginationProps } from 'antd/lib/pagination'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 const utilStyles = require('assets/less/util.less')
 import ModulePermission from '../Account/components/checkModulePermission'
-import { IProject } from '../Projects'
+import { IProject } from '../Projects/types'
 
 interface ICurrentDashboard {
   config: string
@@ -57,9 +58,8 @@ interface IEmailConfig {
   bcc?: string
   type?: 'image' | 'excel'
 }
-interface IScheduleProps {
+interface IScheduleProps extends RouteComponentWithParams {
   widgets: boolean | any[]
-  params: any
   schedule: boolean | any[]
   dashboards: boolean | any[]
   tableLoading: boolean
@@ -112,9 +112,10 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   private configForm = createRef<ConfigForm>()
 
   public componentWillMount () {
-    const {pid} = this.props.params
-    this.props.onLoadWidgets(pid)
-    this.props.onLoadVizs(pid)
+    const { match, onLoadWidgets, onLoadVizs, onLoadSchedules } = this.props
+    const projectId = +match.params.pid
+    onLoadWidgets(projectId)
+    onLoadVizs(projectId)
     // this.props.onLoadDashboards().then(() => {
     //   console.log('then')
     //   const {dashboards} = this.props
@@ -132,7 +133,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     //     screenWidth: document.documentElement.clientWidth
     //   })
     // })
-    this.props.onLoadSchedules(pid)
+    onLoadSchedules(projectId)
   }
 
   public componentWillReceiveProps (props) {
@@ -180,7 +181,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   }
 
   private onScheduleOk = () => {
-    const { pid } = this.props.params
+    const projectId = +this.props.match.params.pid
     const { onAddSchedule, onUpdateSchedule } = this.props
     this.scheduleForm.validateFieldsAndScroll((err, values) => {
       const { emailConfig } = this.state
@@ -240,7 +241,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
           const params = {
             ...values,
             ...{
-              projectId: pid,
+              projectId,
               startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
               endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
               cronExpression: cronPatten
@@ -253,7 +254,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
           } else {
             onUpdateSchedule(params, () => {
               this.hideForm()
-              this.props.onLoadSchedules(pid)
+              this.props.onLoadSchedules(projectId)
             })
           }
         })

@@ -38,7 +38,6 @@ interface IOrganizationProps {
   loginUser: any
   organizations: any
   starUserList: IStarUser[]
-  params: any
   inviteMemberList: any
   currentOrganization: IOrganization
   collectProjects: IProject[]
@@ -78,10 +77,11 @@ export class Organization extends React.PureComponent <IOrganizationProps & Rout
     const {
       onLoadOrganizationMembers,
       onLoadOrganizationDetail,
-      params: { organizationId }
+      match
     } = this.props
-    onLoadOrganizationMembers(Number(organizationId))
-    onLoadOrganizationDetail(Number(organizationId))
+    const organizationId = +match.params.organizationId
+    onLoadOrganizationMembers(organizationId)
+    onLoadOrganizationDetail(organizationId)
   }
 
   private deleteOrganization = (id) => {
@@ -104,11 +104,11 @@ export class Organization extends React.PureComponent <IOrganizationProps & Rout
       currentOrganizationMembers,
       inviteMemberList,
       starUserList,
-      params: {organizationId},
       currentOrganizationProjectsDetail
     } = this.props
 
-    const {avatar, name, memberNum, roleNum} = currentOrganization as IOrganization
+    if (!currentOrganization) { return null }
+    const { id: organizationId, avatar, name, memberNum, roleNum} = currentOrganization as IOrganization
     const projectNum = currentOrganizationProjects && currentOrganizationProjects.length ? currentOrganizationProjects.length : 0
     const memeberOfLoginUser = currentOrganizationMembers && currentOrganizationMembers.find((m) => m.user.id === loginUser.id)
     const isLoginUserOwner = !!memeberOfLoginUser && memeberOfLoginUser.user.role === 1

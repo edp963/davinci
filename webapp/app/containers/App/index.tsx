@@ -18,73 +18,160 @@
  * >>
  */
 
-import React from 'react'
+import React, { useCallback } from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Route, HashRouter as Router, Switch, Redirect } from 'react-router-dom'
+import { Route, HashRouter as Router, Switch, Redirect, withRouter } from 'react-router-dom'
+import { RouteComponentWithParams } from 'utils/types'
 
 import { compose } from 'redux'
-import injectReducer from 'utils/injectReducer'
+import { logged, logout, getLoginUser } from './actions'
 import injectSaga from 'utils/injectSaga'
-import reducer from './reducer'
 import saga from './sagas'
 
 import { makeSelectLogged } from './selectors'
 
-import { Background } from 'containers/Background/Loadable'
-import { Activate } from 'containers/Register/Loadable'
-import { Main } from 'containers/Main/Loadable'
+import checkLogin from 'utils/checkLogin'
+import { setToken } from 'utils/request'
+import { statistic } from 'utils/statistic/statistic.dv'
 
-interface IAppProps {
+import { Background } from 'containers/Background/Loadable'
+import { Main } from 'containers/Main/Loadable'
+import { Activate } from 'containers/Register/Loadable'
+
+interface IAppStateProps {
   logged: boolean
 }
 
-export const App: React.FC<IAppProps> = (props) => {
-  const { logged } = props
-
-  return (
-    <div>
-      <Helmet
-        titleTemplate="%s - Davinci"
-        defaultTitle="Davinci Web Application"
-        meta={[
-          {
-            name: 'description',
-            content: 'Davinci web application built for data visualization'
-          }
-        ]}
-      />
-      <Router>
-        <React.Suspense fallback={null}>
-          <Switch>
-            {logged ? (
-              <Route component={Main} />
-            ) : (
-              <Route component={Background} />
-            )}
-            <Route path="/activate" component={Activate} />
-          </Switch>
-        </React.Suspense>
-      </Router>
-    </div>
-  )
+interface IAppDispatchProps {
+  onLogged: (user) => void
+  onLogout: () => void
+  onGetLoginUser: (resolve: () => void) => any
 }
 
-const withReducer = injectReducer({ key: 'global', reducer })
+type AppProps = IAppStateProps & IAppDispatchProps & RouteComponentWithParams
+
+export class App extends React.PureComponent<AppProps> {
+
+  constructor (props: AppProps) {
+    super(props)
+    this.checkTokenLink()
+  }
+
+  private getQs = () => {
+    const search = location.search
+    const qs = search ? search.substr(1) : ''
+    if (qs) {
+      return qs
+        .split('&')
+        .reduce((rdc, val) => {
+          const pair = val.split('=')
+          rdc[pair[0]] = pair[1]
+          return rdc
+        }, {})
+    } else {
+      return false
+    }
+  }
+
+  private checkTokenLink = () => {
+    const {
+      history,
+      onGetLoginUser
+    } = this.props
+
+    const qs = this.getQs()
+    const token = qs['token']
+    // TODO allow take other parameters
+    // const dashboard = qs['dashboard']
+
+    if (token) {
+      setToken(token)
+      onGetLoginUser(() => {
+        history.replace('/projects')
+        // if (dashboard) {
+        //   router.replace(`/project/${this.props.params.pid}/dashboard/${dashboard}`)
+        // } else {
+
+        // }
+      })
+    } else {
+      this.checkNormalLogin()
+    }
+  }
+
+  private checkNormalLogin = () => {
+    if (checkLogin()) {
+      const token = localStorage.getItem('TOKEN')
+      const loginUser = localStorage.getItem('loginUser')
+      setToken(token)
+      this.props.onLogged(JSON.parse(loginUser))
+      statistic.sendPrevDurationRecord()
+    } else {
+      this.props.onLogout()
+      // this.props.history.replace('/login')
+    }
+  }
+
+  private renderRoute = () => {
+    const { logged } = this.props
+
+    return (
+      logged ? (
+        <Redirect to="/projects" />
+      ) : (
+        <Redirect to="/login" />
+      )
+    )
+  }
+
+  public render () {
+    const { logged } = this.props
+    if (typeof logged !== 'boolean') { return null }
+
+    return (
+      <div>
+        <Helmet
+          titleTemplate="%s - Davinci"
+          defaultTitle="Davinci Web Application"
+          meta={[
+            {
+              name: 'description',
+              content: 'Davinci web application built for data visualization'
+            }
+          ]}
+        />
+        <Router>
+          <Switch>
+            <Route path="/" exact render={this.renderRoute} />
+            <Route path="/" component={logged ? Main : Background} />
+            <Route path="/activate" component={Activate} />
+          </Switch>
+        </Router>
+      </div>
+    )
+  }
+}
+
 const withSaga = injectSaga({ key: 'global', saga })
 
 const mapStateToProps = createStructuredSelector({
   logged: makeSelectLogged()
 })
 
+const mapDispatchToProps = (dispatch) => ({
+  onLogged: (user) => dispatch(logged(user)),
+  onLogout: () => dispatch(logout()),
+  onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve))
+})
+
 const withConnect = connect(
   mapStateToProps,
-  null
+  mapDispatchToProps
 )
 
 export default compose(
-  withReducer,
   withSaga,
   withConnect
 )(App)

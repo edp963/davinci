@@ -33,14 +33,14 @@ import DisplayActions from './actions'
 import LayerItem from './components/LayerItem'
 
 const styles = require('./Display.less')
+import { RouteComponentWithParams } from 'utils/types'
 import { IWidgetConfig, RenderType } from 'containers/Widget/components/Widget'
 import { decodeMetricName } from 'containers/Widget/components/util'
 import { IQueryConditions, IDataRequestParams } from 'containers/Dashboard/Grid'
 import { IFormedViews } from 'containers/View/types'
 import { statistic } from 'utils/statistic/statistic.dv'
-import {IProject} from 'containers/Projects'
+import { IProject } from 'containers/Projects/types'
 interface IPreviewProps {
-  params: any
   widgets: any[]
   views: any[]
   formedViews: IFormedViews
@@ -81,7 +81,7 @@ interface IPreviewStates {
   scale: [number, number]
 }
 
-export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
+export class Preview extends React.Component<IPreviewProps & RouteComponentWithParams, IPreviewStates> {
 
   private charts: object = {}
 
@@ -94,12 +94,12 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
 
   public componentWillMount () {
     const {
-      params,
+      match,
       onLoadDisplayDetail,
       onloadProjectDetail
     } = this.props
-    const projectId = +params.pid
-    const displayId = +params.displayId
+    const projectId = +match.params.pid
+    const displayId = +match.params.displayId
     onLoadDisplayDetail(projectId, displayId)
     onloadProjectDetail(projectId)
   }
@@ -136,12 +136,14 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     const { currentSlide } = nextProps
     const { scale } = this.state
     const [scaleWidth, scaleHeight] = scale
-    const { params: {pid, displayId}, currentDisplay, currentProject} = this.props
+    const { match, currentDisplay, currentProject} = this.props
+    const projectId = match.params.pid
+    const displayId = match.params.displayId
     if (this.props.currentSlide) {
       this.statisticFirstVisit({
         org_id: currentProject.orgId,
         project_name: currentProject.name,
-        project_id: pid,
+        project_id: projectId,
         viz_type: 'display',
         viz_id: displayId,
         viz_name: currentDisplay['name'],

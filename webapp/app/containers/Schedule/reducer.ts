@@ -4,7 +4,7 @@
  *
  */
 
-import { fromJS } from 'immutable'
+import produce from 'immer'
 import {
   LOAD_SCHEDULES,
   LOAD_SCHEDULES_SUCCESS,
@@ -31,77 +31,99 @@ import {
   LOAD_WIDGETS_SUCCESS
 } from '../Widget/constants'
 
-const initialState = fromJS({
+const initialState = {
   widgets: false,
-  schedule: false,
+  schedule: null,
   dashboards: false,
   currentDashboard: false,
   tableLoading: false,
   formLoading: false,
   vizs: false
-})
-
-function scheduleReducer (state = initialState, action) {
-  const { type, payload } = action
-  const schedule = state.get('schedule')
-  const dashboards = state.get('dashboards')
-  switch (type) {
-    case LOAD_WIDGETS_SUCCESS:
-      return state.set('widgets', payload.widgets)
-    case LOAD_DASHBOARDS_SUCCESS:
-      return state.set('dashboards', payload.dashboards)
-    case LOAD_DASHBOARD_DETAIL_SUCCESS:
-      return state
-        .set('currentDashboard', payload.dashboard)
-    case LOAD_SCHEDULES:
-      return state.set('tableLoading', true)
-    case LOAD_SCHEDULES_SUCCESS:
-      return state
-        .set('schedule', payload.schedules)
-        .set('tableLoading', false)
-    case LOAD_SCHEDULES_FAILUER:
-      return state.set('tableLoading', false)
-    case ADD_SCHEDULES:
-      return state.set('formLoading', true)
-    case ADD_SCHEDULES_SUCCESS:
-      if (schedule) {
-        schedule.unshift(payload.result)
-        return state
-          .set('schedule', schedule.slice())
-          .set('formLoading', false)
-      } else {
-        return state
-          .set('schedule', [payload.result])
-          .set('formLoading', false)
-      }
-    case ADD_SCHEDULES_FAILURE:
-      return state.set('formLoading', false)
-    case DELETE_SCHEDULES:
-      return state
-    case DELETE_SCHEDULES_SUCCESS:
-      return state.set('schedule', schedule.filter((g) => g.id !== payload.id))
-    case CHANGE_SCHEDULE_STATUS:
-      return state
-    case CHANGE_SCHEDULE_STATUS_SUCCESS:
-      return state.set('schedule', schedule.map((s) => s.id === payload.id ? payload.schedules : s))
-    case CHANGE_SCHEDULE_STATUS_FAILURE:
-      return state
-    case UPDATE_SCHEDULES:
-      return state.set('formLoading', true)
-    case UPDATE_SCHEDULES_SUCCESS:
-      return state
-        .set('schedule', schedule.map((s) => s.id === payload.result.id ? payload.result : s))
-        .set('formLoading', false)
-    case UPDATE_SCHEDULES_FAILURE:
-      return state.set('formLoading', false)
-    case LOAD_VIZS_SUCCESS:
-      return state
-        .set('vizs', payload.result)
-    case LOAD_VIZS_FAILUER:
-      return state
-    default:
-      return state
-  }
 }
+
+const scheduleReducer = (state = initialState, action) =>
+  produce(state, (draft) => {
+    switch (action.type) {
+      case LOAD_WIDGETS_SUCCESS:
+        draft.widgets = action.payload.widgets
+        break
+
+      case LOAD_DASHBOARDS_SUCCESS:
+        draft.dashboards = action.payload.dashboards
+        break
+
+      case LOAD_DASHBOARD_DETAIL_SUCCESS:
+        draft.currentDashboard = action.payload.dashboard
+        break
+
+      case LOAD_SCHEDULES:
+        draft.tableLoading = true
+        break
+
+      case LOAD_SCHEDULES_SUCCESS:
+        draft.schedule = action.payload.schedules
+        draft.tableLoading = false
+        break
+
+      case LOAD_SCHEDULES_FAILUER:
+        draft.tableLoading = false
+        break
+
+      case ADD_SCHEDULES:
+        draft.formLoading = true
+        break
+
+      case ADD_SCHEDULES_SUCCESS:
+        if (draft.schedule) {
+          draft.schedule.unshift(action.payload.result)
+          draft.formLoading = false
+        } else {
+          draft.schedule = [action.payload.result]
+          draft.formLoading = false
+        }
+        break
+
+      case ADD_SCHEDULES_FAILURE:
+        draft.formLoading = false
+        break
+
+      case DELETE_SCHEDULES:
+        break
+
+      case DELETE_SCHEDULES_SUCCESS:
+        draft.schedule = draft.schedule.filter((g) => g.id !== action.payload.id)
+        break
+
+      case CHANGE_SCHEDULE_STATUS:
+        break
+
+      case CHANGE_SCHEDULE_STATUS_SUCCESS:
+        draft.schedule.splice(draft.schedule.findIndex(({ id }) => id === action.payload.id), 1, action.payload.schedules)
+        break
+
+      case CHANGE_SCHEDULE_STATUS_FAILURE:
+        break
+
+      case UPDATE_SCHEDULES:
+        draft.formLoading = true
+        break
+
+      case UPDATE_SCHEDULES_SUCCESS:
+        draft.schedule.splice(draft.schedule.findIndex(({ id }) => id === action.payload.result.id), 1, action.payload.result)
+        draft.formLoading = false
+        break
+
+      case UPDATE_SCHEDULES_FAILURE:
+        draft.formLoading = false
+        break
+
+      case LOAD_VIZS_SUCCESS:
+        draft.vizs = action.payload.result
+        break
+
+      case LOAD_VIZS_FAILUER:
+        break
+    }
+  })
 
 export default scheduleReducer

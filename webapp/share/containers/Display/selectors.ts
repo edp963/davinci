@@ -20,36 +20,36 @@
 
 import { createSelector } from 'reselect'
 
-const selectShare = (state) => state.get('shareDisplay')
+const selectShare = (state) => state.shareDisplay
 
 const makeSelectTitle = () => createSelector(
   selectShare,
-  (shareState) => shareState.get('title')
+  (shareState) => shareState.title
 )
 
 const makeSelectDisplay = () => createSelector(
   selectShare,
-  (shareState) => shareState.get('display')
+  (shareState) => shareState.display
 )
 
 const makeSelectSlide = () => createSelector(
   selectShare,
-  (shareState) => shareState.get('slide')
+  (shareState) => shareState.slide
 )
 
 const makeSelectLayers = () => createSelector(
   selectShare,
-  (shareState) => shareState.get('layers')
+  (shareState) => shareState.layers
 )
 
 const makeSelectWidgets = () => createSelector(
   selectShare,
-  (shareState) => shareState.get('widgets')
+  (shareState) => shareState.widgets
 )
 
 const makeSelectLayersInfo = () => createSelector(
   selectShare,
-  (shareState) => shareState.get('layersInfo')
+  (shareState) => shareState.layersInfo
 )
 
 export {

@@ -20,19 +20,26 @@
 
 import { createSelector } from 'reselect'
 
-const selectPortal = (state) => state.get('portal')
+const selectPortal = (state) => state.portal
 
 const makeSelectPortals = () => createSelector(
   selectPortal,
-  (portalState) => portalState.get('portals')
+  (portalState) => portalState.portals
 )
+
+const makeSelectCurrentPortal = () => createSelector(
+  selectPortal,
+  (portalState) => portalState.currentPortal
+)
+
 const makeSelectTeams = () => createSelector(
   selectPortal,
-  (portalState) => portalState.get('selectTeams')
+  (portalState) => portalState.selectTeams
 )
 
 export {
   selectPortal,
   makeSelectPortals,
+  makeSelectCurrentPortal,
   makeSelectTeams
 }

@@ -22,8 +22,9 @@ import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Link, InjectedRouter } from 'react-router'
+import { Link } from 'react-router-dom'
 import * as classnames from 'classnames'
+import { RouteComponentWithParams } from 'utils/types'
 
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -36,6 +37,7 @@ import { Row, Col, Button, Icon, Tooltip, Modal, Breadcrumb, Popconfirm, Input, 
 const Search = Input.Search
 import AntdFormType from 'antd/lib/form/Form'
 
+import { IPortal } from './types'
 import { loadPortals, addPortal, editPortal, deletePortal } from './actions'
 import { makeSelectPortals } from './selectors'
 
@@ -46,8 +48,6 @@ const widgetStyles = require('../Widget/Widget.less')
 interface IPortalProps {
   portals: IPortal[]
   loginUser: { id: number, admin: boolean }
-  router: InjectedRouter
-  params: any
   onLoadPortals: (projectId: number) => void
   onAddPortal: (portal: IPortal, resolve: () => void) => void
   onEditPortal: (portal: IPortal, resolve: () => void) => void
@@ -64,16 +64,7 @@ interface IPortalStates {
   screenWidth: number
 }
 
-export interface IPortal {
-  projectId?: number
-  id?: number
-  name?: string
-  avatar?: string
-  publish?: boolean
-  description?: string
-}
-
-export class Portal extends React.Component<IPortalProps, IPortalStates> {
+export class Portal extends React.Component<IPortalProps & RouteComponentWithParams, IPortalStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -94,7 +85,7 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
   }
 
   public componentWillMount () {
-    this.props.onLoadPortals(this.props.params.pid)
+    this.props.onLoadPortals(+this.props.match.params.pid)
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
@@ -136,7 +127,7 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
           description,
           name,
           publish,
-          projectId:  this.props.params.pid,
+          projectId: +this.props.match.params.pid,
           avatar: formType === 'add' ? `${Math.ceil(Math.random() * 19)}` : avatar
         }
         if (formType === 'add') {
@@ -178,13 +169,12 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
   }
 
   private toDashboard = (d) => (e) => {
-    const { params, router } = this.props
-    router.push(`/project/${params.pid}/portal/${d.id}/portalName/${d.name}`)
+    const { match, history } = this.props
+    history.push(`/project/${match.params.pid}/portal/${d.id}`)
   }
 
   public render () {
     const {
-      params,
       portals
     } = this.props
 
