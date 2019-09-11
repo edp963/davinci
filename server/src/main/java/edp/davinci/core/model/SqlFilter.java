@@ -2,6 +2,7 @@ package edp.davinci.core.model;
 
 import com.alibaba.fastjson.JSONArray;
 import edp.core.consts.Consts;
+import edp.davinci.core.enums.SqlOperatorEnum;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 
@@ -30,20 +31,6 @@ public class SqlFilter {
         public static final String relation = "relation";
         public static final String and = "and";
         public static final String or = "or";
-    }
-
-    public static class Operator {
-        public static final String EqualTo = "=";
-        public static final String NotEqualTo = "!=";
-        public static final String GreaterThan = ">";
-        public static final String GreaterThanOrEqualTo = ">=";
-        public static final String LessThan = "<";
-        public static final String LessThanOrEqualTo = "<=";
-        public static final String In = "in";
-        public static final String NotIn = "not in";
-        public static final String Between = "between";
-        public static final String Like = "like";
-        public static final String NotLike = "not like";
     }
 
     public enum NumericDataType {
@@ -93,38 +80,15 @@ public class SqlFilter {
     private static String dealOperator(SqlFilter filter){
         String name     = filter.getName();
         Object value    = filter.getValue();
-        String operator = filter.getOperator().toLowerCase();
+        String operator = filter.getOperator();
         String sqlType  = filter.getSqlType();
 
         Criterion criterion;
-        switch (operator) {
-            case SqlFilter.Operator.Between:
-                JSONArray values = (JSONArray) value;
-                criterion = new Criterion(name, operator, values.get(0), values.get(1), sqlType);
-                break;
-//            case SqlFilter.Operator.EqualTo:
-//                break;
-//            case SqlFilter.Operator.NotEqualTo:
-//                break;
-//            case SqlFilter.Operator.GreaterThan:
-//                break;
-//            case SqlFilter.Operator.GreaterThanOrEqualTo:
-//                break;
-//            case SqlFilter.Operator.LessThan:
-//                break;
-//            case SqlFilter.Operator.LessThanOrEqualTo:
-//                break;
-//            case SqlFilter.Operator.In:
-//                break;
-//            case SqlFilter.Operator.NotIn:
-//                break;
-//            case SqlFilter.Operator.Like:
-//                break;
-//            case SqlFilter.Operator.NotLike:
-//                break;
-            default:
-                criterion = new Criterion(name, operator, value, sqlType);
-
+        if(SqlOperatorEnum.BETWEEN.getValue().equalsIgnoreCase(operator)){
+            JSONArray values = (JSONArray) value;
+            criterion = new Criterion(name, operator, values.get(0), values.get(1), sqlType);
+        }else{
+            criterion = new Criterion(name, operator, value, sqlType);
         }
 
         return generator(criterion);
@@ -146,14 +110,14 @@ public class SqlFilter {
             //column>='' and column<=''
             String value1 = criterion.getValue().toString();
             whereClause.append(Consts.PARENTHESES_START);
-            whereClause.append(criterion.getColumn()+ Consts.SPACE + SqlFilter.Operator.GreaterThanOrEqualTo + Consts.SPACE);
+            whereClause.append(criterion.getColumn()+ Consts.SPACE + SqlOperatorEnum.GREATERTHANEQUALS.getValue() + Consts.SPACE);
             if(criterion.isNeedApostrophe() && !Pattern.matches(pattern, value1)){
                 whereClause.append(Consts.APOSTROPHE + value1 + Consts.APOSTROPHE);
             }else{
                 whereClause.append(value1);
             }
             whereClause.append(Consts.SPACE + SqlFilter.Type.and + Consts.SPACE);
-            whereClause.append(criterion.getColumn()+ Consts.SPACE + SqlFilter.Operator.LessThanOrEqualTo+ Consts.SPACE);
+            whereClause.append(criterion.getColumn()+ Consts.SPACE + SqlOperatorEnum.MINORTHANEQUALS.getValue() + Consts.SPACE);
             String value2 = criterion.getSecondValue().toString();
             if(criterion.isNeedApostrophe() && !Pattern.matches(pattern, value2)){
                 whereClause.append(Consts.APOSTROPHE + value2 + Consts.APOSTROPHE);
