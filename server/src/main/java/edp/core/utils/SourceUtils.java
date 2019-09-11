@@ -232,7 +232,7 @@ public class SourceUtils {
      * @param isExt
      * @return
      */
-    void releaseDataSource(String jdbcUrl, String username, String password, String dbVersion, boolean isExt) {
+    public void releaseDataSource(String jdbcUrl, String username, String password, String dbVersion, boolean isExt) {
         if (jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
             ESDataSource.removeDataSource(jdbcUrl, username, password);
         } else {
