@@ -19,6 +19,7 @@
  */
 
 import { IChartProps } from '../../components/Chart'
+import { DEFAULT_SPLITER } from 'app/globalConstants'
 import {
   decodeMetricName,
   getChartTooltipLabel,
@@ -86,6 +87,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     if (color.items.length) {
       Object.entries(grouped).forEach(([k, v]: [string, any[]]) => {
         const serieObj = {
+          id: `${m.name}${DEFAULT_SPLITER}${DEFAULT_SPLITER}${k}`,
           name: `${k} ${localeMetricName}`,
           type: 'line',
           sampling: 'average',
@@ -136,6 +138,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       })
     } else {
       const serieObj = {
+        id: m.name,
         name: decodedMetricName,
         type: 'line',
         sampling: 'average',
