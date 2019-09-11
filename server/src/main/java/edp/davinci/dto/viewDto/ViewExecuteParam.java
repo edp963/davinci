@@ -148,14 +148,14 @@ public class ViewExecuteParam {
             StringBuilder sb = new StringBuilder();
             if ("COUNTDISTINCT".equals(func.trim().toUpperCase())) {
                 sb.append("COUNT").append(PARENTHESES_START).append("DISTINCT").append(SPACE);
-                sb.append(getField(column, jdbcUrl, dbVersion));
+                sb.append(ViewExecuteParam.getField(column, jdbcUrl, dbVersion));
                 sb.append(PARENTHESES_END);
                 sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl, dbVersion)).append("COUNTDISTINCT").append(PARENTHESES_START);
                 sb.append(column);
                 sb.append(PARENTHESES_END).append(SqlUtils.getAliasSuffix(jdbcUrl, dbVersion));
             } else {
                 sb.append(func.trim()).append(PARENTHESES_START);
-                sb.append(getField(column, jdbcUrl, dbVersion));
+                sb.append(ViewExecuteParam.getField(column, jdbcUrl, dbVersion));
                 sb.append(PARENTHESES_END);
                 sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl, dbVersion));
                 sb.append(func.trim()).append(PARENTHESES_START);

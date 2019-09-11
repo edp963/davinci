@@ -1001,5 +1001,9 @@ public class SqlUtils {
             return sqlUtils;
         }
     }
+
+    public String getJdbcUrl() {
+        return jdbcUrl;
+    }
 }
 

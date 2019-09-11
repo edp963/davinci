@@ -20,6 +20,7 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.exception.NotFoundException;
@@ -37,6 +38,7 @@ import edp.davinci.core.enums.SqlVariableTypeEnum;
 import edp.davinci.core.enums.SqlVariableValueTypeEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.model.SqlEntity;
+import edp.davinci.core.model.SqlFilter;
 import edp.davinci.core.utils.SqlParseUtils;
 import edp.davinci.dao.RelRoleViewMapper;
 import edp.davinci.dao.SourceMapper;
@@ -498,7 +500,7 @@ public class ViewServiceImpl implements ViewService {
                 st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl(), source.getDbVersion()));
             }
             st.add("orders", executeParam.getOrders(source.getJdbcUrl(), source.getDbVersion()));
-            st.add("filters", executeParam.getFilters());
+            st.add("filters", convertFilters(executeParam.getFilters(), source));
             st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl(), source.getDbVersion()));
             st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl(), source.getDbVersion()));
 
@@ -508,6 +510,26 @@ public class ViewServiceImpl implements ViewService {
             }
 
         }
+    }
+
+    public List<String> convertFilters(List<String> filterStrs, Source source){
+        List<String> whereClauses = new ArrayList<>();
+        if(null == filterStrs || filterStrs.isEmpty()){
+            return null;
+        }
+
+        log.info("convertFilters before : filterStrs = {}", JSON.toJSON(filterStrs));
+        List<SqlFilter> filters = new ArrayList<>();
+        for(String str : filterStrs){
+            SqlFilter obj = JSON.parseObject(str, SqlFilter.class);
+            obj.setName(ViewExecuteParam.getField(obj.getName(), source.getJdbcUrl(), source.getDbVersion()));
+            filters.add(obj);
+        }
+//        filterStrs.forEach(str -> filters.add(JSON.parseObject(str, SqlFilter.class)));
+        log.info("convertFilters filters = {}", JSON.toJSON(filters));
+        filters.forEach(filter -> whereClauses.add(SqlFilter.dealFilter(filter)));
+        log.info("convertFilters after : whereClauses = {}", whereClauses);
+        return whereClauses;
     }
 
 
@@ -664,7 +686,7 @@ public class ViewServiceImpl implements ViewService {
                         STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
                         ST st = stg.getInstanceOf("queryDistinctSql");
                         st.add("columns", param.getColumns());
-                        st.add("filters", param.getFilters());
+                        st.add("filters", convertFilters(param.getFilters(), source));
                         st.add("sql", querySqlList.get(querySqlList.size() - 1));
                         st.add("keywordPrefix", SqlUtils.getKeywordPrefix(source.getJdbcUrl(), source.getDbVersion()));
                         st.add("keywordSuffix", SqlUtils.getKeywordSuffix(source.getJdbcUrl(), source.getDbVersion()));

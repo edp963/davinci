@@ -131,3 +131,9 @@ data-auth-center:
     - name:
       base-url:
       auth-code:
+
+buried_points:
+  statistic_open: true
+  # You can use external elasticsearch storage [127.0.0.1:9300], default davinci datasouce
+  elastic_urls:
+  elastic_index_prefix:
