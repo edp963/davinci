@@ -364,7 +364,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             action: 'visit'
           }
           statistic.sendOperation(visitRecord).then((res) => {
-            console.log('......reload........')
             statistic.updateSingleFleld('operation', 'action', 'initial')
           })
         })
@@ -1206,7 +1205,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired, model } = widgetConfig
     const drillHistory = currentItemsInfo[itemId].queryConditions.drillHistory
     let sql = void 0
     let name = void 0
@@ -1269,12 +1268,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           }, {})
           for (const attr in coustomTable) {
             if (coustomTable[attr] !== undefined && attr) {
+              const sqlType = model[attr] && model[attr]['sqlType'] ? model[attr]['sqlType'] : 'VARCHAR'
               const filterJson: IFilters = {
                 name: attr,
                 operator: 'in',
                 type: 'filter',
-                value: coustomTable[attr].map((val) => getValidColumnValue(val, 'VARCHAR')),
-                sqlType: 'VARCHAR'
+                value: coustomTable[attr].map((val) => getValidColumnValue(val, sqlType)),
+                sqlType
               }
               coustomTableSqls.push(filterJson)
              // coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
@@ -1296,19 +1296,20 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           return source[name]
         }
       })
+
       if (name && name.length) {
         // todo filter
         currentCol = col && col.length ? widgetConfigCols.concat([{name: col}]) : void 0
+        const sqlType = model[name] && model[name]['sqlType'] ? model[name]['sqlType'] : 'VARCHAR'
         sql = {
           name,
           operator: 'in',
           type: 'filter',
-          value: filterSource.map((val) => getValidColumnValue(val, 'VARCHAR')),
-          sqlType: 'VARCHAR'
+          value: filterSource.map((val) => getValidColumnValue(val, sqlType)),
+          sqlType
         }
         // sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
         sqls.push(sql)
-        console.log(sqls)
       }
       if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
         sqls = sqls.concat(coustomTableSqls)
@@ -1338,10 +1339,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         col: currentCol,
         row: row && row.length ? widgetConfigRows.concat([{name: row}]) : void 0,
         groups: currentDrillGroups,
-        // groups: isDrillUp
-        //         ? widgetConfigGroups.filter((cg) => cg !== groups)
-        //         : mode === 'pivot' ? widgetConfigGroups.concat([groups])
-        //                           : [groups],
         name: groups
       }
     } else {
@@ -1357,12 +1354,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         for (const attr in coustomTable) {
           if (coustomTable[attr] !== undefined && attr) {
             // todo filter
+            const sqlType = model[attr] && model[attr]['sqlType'] ? model[attr]['sqlType'] : 'VARCHAR'
             const filterJson: IFilters = {
               name: attr,
               operator: 'in',
               type: 'filter',
-              value: coustomTable[attr].map((val) => getValidColumnValue(val, 'VARCHAR')),
-              sqlType: 'VARCHAR'
+              value: coustomTable[attr].map((val) => getValidColumnValue(val, sqlType)),
+              sqlType
             }
             coustomTableSqls.push(filterJson)
            // coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
@@ -1387,13 +1385,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
         filterSource = sourceDataFilter.map((source) => source[name])
        // sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
-
+        const sqlType = model[name] && model[name]['sqlType'] ? model[name]['sqlType'] : 'VARCHAR'
         sql = {
           name,
           operator: 'in',
           type: 'filter',
-          value: filterSource.map((val) => getValidColumnValue(val, 'VARCHAR')),
-          sqlType: 'VARCHAR'
+          value: filterSource.map((val) => getValidColumnValue(val, sqlType)),
+          sqlType
         }
 
         sqls = lastDrillHistory.filter.sqls.concat(sql)

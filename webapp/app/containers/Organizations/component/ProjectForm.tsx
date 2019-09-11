@@ -88,7 +88,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
           <div className={styles.title}>
             <span className={styles.owner} style={{color: disabled ? '#ccc' : '#444444'}}>{o.name}</span>
             {`${o.id}` !== this.props.form.getFieldValue('orgId')
-              ? <Tag color={`${ disabled ? '#ccc' : '#108ee9'}`}>Owner</Tag>
+              ? o.role === 1 ? <Tag color={`${ disabled ? '#ccc' : '#108ee9'}`}>Owner</Tag> : ''
               : ''}
           </div>
           {`${o.id}` !== this.props.form.getFieldValue('orgId')

@@ -189,16 +189,12 @@ class Statistic {
         return
     }
 
-    public PromiseObject = () => {
-        return Promise.resolve(1)
-    }
     public sendDuration = (body) => {
         const url = `${api.buriedPoints}/duration`
         return request(url, {
             method: 'post',
             data: body
         })
-      //  return this.PromiseObject()
     }
 
     public sendTerminal = (body) => {
@@ -207,16 +203,15 @@ class Statistic {
             method: 'post',
             data: [body]
         })
-       // return this.PromiseObject()
     }
 
     public sendOperation = (body) => {
+
         const url = `${api.buriedPoints}/visitoroperation`
         return request(url, {
             method: 'post',
-            data: body
+            data: Array.isArray(body) ? body : [body]
         })
-      //  return this.PromiseObject()
     }
 
     public getClock = () => this.clock['time']
