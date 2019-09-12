@@ -30,12 +30,13 @@ const Option = Select.Option
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 
-import { FilterTypeList, FilterTypesLocale, FilterTypes } from '../filterTypes'
+import { FilterTypeList, FilterTypesLocale, FilterTypes, FilterTypesDynamicDefaultValueSetting } from '../filterTypes'
 import { renderDate } from '..'
 import { InteractionType } from '../types'
 import {
   getOperatorOptions,
-  getDatePickerFormatOptions
+  getDatePickerFormatOptions,
+  getDynamicDefaultValueOptions
 } from '../util'
 import DatePickerFormats, {
   DatePickerFormatsLocale,
@@ -65,12 +66,13 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
 
     let container
     let type
+    let multiple
     let showDefaultValue
 
     if (controlFormValues) {
-      const { type: typeValue, dynamicDefaultValue } = controlFormValues
-      type = typeValue
-      showDefaultValue = dynamicDefaultValue === DatePickerDefaultValues.Custom
+      type = controlFormValues.type
+      multiple = controlFormValues.multiple
+      showDefaultValue = controlFormValues.dynamicDefaultValue === DatePickerDefaultValues.Custom
     }
 
     switch (type) {
@@ -86,8 +88,8 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
                     allowClear
                   >
                     {
-                      Object.entries(DatePickerDefaultValuesLocales).map(([value, label]) => (
-                        <Option key={value} value={value}>{label}</Option>
+                      getDynamicDefaultValueOptions(type, multiple).map((val) => (
+                        <Option key={val} value={val}>{DatePickerDefaultValuesLocales[val]}</Option>
                       ))
                     }
                   </Select>
@@ -355,7 +357,8 @@ const formOptions = {
       }
 
       if (changedValues.hasOwnProperty('multiple')) {
-        changedValues.defaultValue = null
+        changedValues.dynamicDefaultValue = void 0
+        changedValues.defaultValue = void 0
       }
 
       if (changedValues.hasOwnProperty('type')) {
