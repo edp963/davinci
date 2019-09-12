@@ -2,20 +2,20 @@
 
 ## 项目管理
 
-Davinci 项目通过 [Project](https://github.com/edp963/davinci/projects) 来管理开发计划和维护清单。
+Davinci 项目通过 [Project](https://github.com/edp963/davinci/projects) 来管理开发计划和维护清单。
 
 ### 开发计划
 
-开发计划在 [Roadmap](https://github.com/edp963/davinci/projects/4) 中管理。Committers 可以在 `To do` 栏中自行添加功能卡片，当功能还在卡片阶段时，意味着此功能还在设计和讨论阶段，卡片中应当包含：
+开发计划在 [Roadmap](https://github.com/edp963/davinci/projects/4) 中管理。Committers 可以在 `To do` 栏中自行添加功能卡片，当功能还在卡片阶段时，意味着此功能还在设计和讨论阶段，卡片中应当包含：
 - 功能描述标题
 - 功能设计明细及原理
 - 如果包含子功能项，请逐一列出
 
-当功能经过设计和讨论阶段之后，可以将功能卡片转成 Issue，并打上相应的 Tags。如果有 Committers 计划开发实现它，请将 Issue 拖到 `In progress` 栏中，并添加自己到 Issue 的 Assignees 列表中。**请确保功能经过充分设计和讨论之后再开始开发，未经社区讨论过的功能 PR 不会被合并。**
+当功能经过设计和讨论阶段之后，可以将功能卡片转成 Issue，并打上相应的 Tags。如果有 Committers 计划开发实现它，请将 Issue 拖到 `In progress` 栏中，并添加自己到 Issue 的 Assignees 列表中。**请确保功能经过充分设计和讨论之后再开始开发，未经社区讨论过的功能 PR 不会被合并。**
 
 ### 维护清单
 
-维护清单在 [Maintenance](https://github.com/edp963/davinci/projects/5) 中管理。Committers 可以在 To do 栏中自行添加 bug 或亟待修复的缺陷类 Issue。同样的，如果有 Committers 计划开发修复它，请将 Issue 拖到 `In progress` 栏中，并添加自己到 Issue 的 Assignees 列表中。
+维护清单在 [Maintenance](https://github.com/edp963/davinci/projects/5) 中管理。Committers 可以在 To do 栏中自行添加 bug 或亟待修复的缺陷类 Issue。同样的，如果有 Committers 计划开发修复它，请将 Issue 拖到 `In progress` 栏中，并添加自己到 Issue 的 Assignees 列表中。
 
 **为保证开发高效以及目标专注，建议每位 Committer 在所有 Project `In progress` 栏中的 Issue 不超过2个。**
 

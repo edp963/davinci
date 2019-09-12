@@ -21,7 +21,7 @@ Davinci 用户手册文档在 docs/ 目录下，我们使用了 [jekyll](https:/
 
 ## 贡献流程
 
-### 分支结构
+### 分支结构
 Davinci 源码可能会产生一些临时分支，但真正有明确意义的只有以下三个分支：
 
 - master: 最近一次稳定 release 的源码，偶尔会多几次 hotfix 提交；
@@ -183,7 +183,7 @@ npm run build
 #### Reviewer 注意事项
 - 请使用建设性语气撰写评论
 - 如果需要提交者进行修改，请明确说明完成此次 Pull Request 所需要修改的所有内容
-- 如果某次 PR 在合并后发现带来了新问题，Reviewer 需要向 PR 作者联系并沟通解决问题；如果无法联系到 PR 作者，Reviewer 需要将此次 PR 进行还原
+- 如果某次 PR 在合并后发现带来了新问题，Reviewer 需要向 PR 作者联系并沟通解决问题；如果无法联系到 PR 作者，Reviewer 需要将此次 PR 进行还原
 
 ## 贡献进阶
 
@@ -195,7 +195,7 @@ npm run build
 #### Committer 的权利
 - 可以加入官方开发者微信群，参与讨论和制定开发计划
 - 可以对 Issue 进行管理，包括关闭、添加标签
-- 可以创建和管理项目分支，master、dev-0.3、dev-0.2 分支除外
+- 可以创建和管理项目分支，master、dev-0.3、dev-0.2 分支除外
 - 可以对提交到 dev-0.3 分支的 PR 进行 Review
 - 可以申请成为 Committee 成员
 
