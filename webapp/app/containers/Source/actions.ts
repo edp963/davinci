@@ -20,7 +20,7 @@
 
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
-import { ISourceBase, ISource, ITableColumns, ISourceDatabases, ICSVMetaInfo, IDatabaseTables } from './types'
+import { ISourceBase, ISource, ITableColumns, ISourceDatabases, ICSVMetaInfo, IDatabaseTables, IDatasourceInfo } from './types'
 
 export const SourceActions = {
   loadSources (projectId: number) {
@@ -138,11 +138,11 @@ export const SourceActions = {
       payload: {}
     }
   },
-  testSourceConnection (url: string) {
+  testSourceConnection (testSource) {
     return {
       type: ActionTypes.TEST_SOURCE_CONNECTION,
       payload: {
-        url
+        testSource
       }
     }
   },
@@ -256,6 +256,27 @@ export const SourceActions = {
   loadTableColumnsFail (err) {
     return {
       type: ActionTypes.LOAD_SOURCE_TABLE_COLUMNS_FAILURE,
+      payload: {
+        err
+      }
+    }
+  },
+  loadDatasourcesInfo () {
+    return {
+      type: ActionTypes.LOAD_DATASOURCES_INFO
+    }
+  },
+  datasourcesInfoLoaded (info: IDatasourceInfo[]) {
+    return {
+      type: ActionTypes.LOAD_DATASOURCES_INFO_SUCCESS,
+      payload: {
+        info
+      }
+    }
+  },
+  loadDatasourcesInfoFail (err) {
+    return {
+      type: ActionTypes.LOAD_DATASOURCES_INFO_FAILURE,
       payload: {
         err
       }

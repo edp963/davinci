@@ -16,9 +16,9 @@ import {
   GraphTypes,
   SecondaryGraphTypes
 } from './util'
-import { GRID_ITEM_MARGIN } from '../../../globalConstants'
-import { IFormedView } from 'containers/View/types'
-import Widget, { IWidgetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
+import { GRID_ITEM_MARGIN } from 'app/globalConstants'
+import { IViewModel } from 'containers/View/types'
+import Widget, { IWidgetConfig, IPaginationParams, RenderType } from 'containers/Widget/components/Widget'
 import { TextAlignProperty } from 'csstype'
 
 import { Resizable } from 'libs/react-resizable'
@@ -35,7 +35,7 @@ interface ILayerItemProps {
   dragging?: boolean
   itemId: number
   widget: any
-  view: IFormedView
+  model: IViewModel
   datasource: {
     pageNo: number
     pageSize: number
@@ -221,7 +221,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     }
   }
 
-  private paginationChange = (pageNo: number, pageSize: number) => {
+  private paginationChange = (pageNo: number, pageSize: number, orders) => {
     const { onGetChartData, itemId, widget } = this.props
     let { pagination } = this.state
     const { nativeQuery } = this.state
@@ -230,7 +230,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       pageNo,
       pageSize
     }
-    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
+    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery, orders })
   }
 
   private dragOnStart = (e, data) => {
@@ -328,7 +328,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       selected,
       itemId,
       widget,
-      view,
+      model,
       datasource,
       loading,
       renderType,
@@ -373,7 +373,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
             pagination={pagination}
             loading={isLoading}
             renderType={renderType}
-            model={view.model}
+            model={model}
             onPaginationChange={this.paginationChange}
           />)
         )}

@@ -24,9 +24,9 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const scorecard: IChartInfo = {
   id: ChartTypes.Scorecard,
@@ -34,8 +34,7 @@ const scorecard: IChartInfo = {
   title: '翻牌器',
   icon: 'icon-calendar1',
   coordinate: 'other',
-  requireDimetions: 0,
-  requireMetrics: [1, 3],
+  rules: [{ dimension: 0, metric: [1, 3] }],
   data: {
     cols: {
       title: '列',

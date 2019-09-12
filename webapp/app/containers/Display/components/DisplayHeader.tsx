@@ -30,7 +30,7 @@ const styles = require('../Display.less')
 
 import { slideSettings, GraphTypes, SecondaryGraphTypes } from './util'
 import LayerSelector from './LayerSelector'
-import SharePanel from '../../../components/SharePanel'
+import SharePanel from 'components/SharePanel'
 
 import {
   makeSelectCurrentDisplayShareInfo,

@@ -295,6 +295,11 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     public List<OrganizationInfo> getOrganizations(User user) {
         List<OrganizationInfo> organizationInfos = organizationMapper.getOrganizationByUser(user.getId());
+        organizationInfos.forEach(o -> {
+            if (o.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+                o.setAllowCreateProject(true);
+            }
+        });
         return organizationInfos;
     }
 

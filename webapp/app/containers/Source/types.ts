@@ -43,6 +43,18 @@ export interface ISource extends ISourceBase {
     password: string
     url: string
     parameters: string
+    ext?: boolean
+    version?: string
+  }
+}
+
+export interface ISourceFormValues extends ISourceBase {
+  datasourceInfo: string[]
+  config: {
+    username: string
+    password: string
+    url: string
+    parameters: string
   }
 }
 
@@ -108,5 +120,11 @@ export interface ISourceState {
   listLoading: boolean
   formLoading: boolean
   testLoading: boolean
+  datasourcesInfo: IDatasourceInfo[]
 }
 
+export interface IDatasourceInfo {
+  name: string
+  prefix: string
+  versions: string[]
+}

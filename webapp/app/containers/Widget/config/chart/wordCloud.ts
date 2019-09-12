@@ -1,13 +1,12 @@
 import ChartTypes from './ChartTypes'
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 const wordCloud: IChartInfo = {
   id: ChartTypes.WordCloud,
   name: 'wordCloud',
   title: '词云',
   icon: 'icon-chartwordcloud',
   coordinate: 'other',
-  requireDimetions: 1,
-  requireMetrics: 1,
+  rules: [{ dimension: 1, metric: 1 }],
   dimetionAxis: 'col',
   data: {
     cols: {

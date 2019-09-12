@@ -18,6 +18,7 @@
  * >>
  */
 
+import axios from 'axios'
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
 import { IDavinciResponse } from 'utils/request'
@@ -27,7 +28,8 @@ import {
 } from './types'
 import { IDataRequestParams } from 'containers/Dashboard/Grid'
 import { RenderType } from 'containers/Widget/components/Widget'
-import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
+const CancelToken = axios.CancelToken
 
 export const ViewActions = {
   viewsLoaded (views: IViewBase[]) {
@@ -54,19 +56,21 @@ export const ViewActions = {
     }
   },
 
-  viewsDetailLoaded (views: IView[]) {
+  viewsDetailLoaded (views: IView[], isEditing: boolean) {
     return {
       type: ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS,
       payload: {
-        views
+        views,
+        isEditing
       }
     }
   },
-  loadViewsDetail (viewIds: number[], resolve?: () => void) {
+  loadViewsDetail (viewIds: number[], resolve?: () => void, isEditing: boolean = false) {
     return {
       type: ActionTypes.LOAD_VIEWS_DETAIL,
       payload: {
         viewIds,
+        isEditing,
         resolve
       }
     }
@@ -285,7 +289,8 @@ export const ViewActions = {
       payload: {
         controlKey,
         requestParams,
-        itemId
+        itemId,
+        cancelTokenSource: CancelToken.source()
       }
     }
   },
@@ -308,13 +313,19 @@ export const ViewActions = {
     }
   },
 
-  loadViewData (id: number, requestParams: IDataRequestParams, resolve: (data: any[]) => void) {
+  loadViewData (
+    id: number,
+    requestParams: IDataRequestParams,
+    resolve: (data: any[]) => void,
+    reject: (error) => void
+  ) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA,
       payload: {
         id,
         requestParams,
-        resolve
+        resolve,
+        reject
       }
     }
   },
@@ -332,7 +343,7 @@ export const ViewActions = {
     }
   },
 
-  loadViewDistinctValue (viewId: number, params: IDistinctValueReqeustParams, resolve?: any) {
+  loadViewDistinctValue (viewId: number, params: Partial<IDistinctValueReqeustParams>, resolve?: any) {
     return {
       type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE,
       payload: {
@@ -364,7 +375,8 @@ export const ViewActions = {
     itemId: number,
     viewId: number,
     requestParams: IDataRequestParams,
-    vizType: 'dashboard' | 'display'
+    vizType: 'dashboard' | 'display',
+    statistic
   ) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM,
@@ -373,8 +385,10 @@ export const ViewActions = {
         itemId,
         viewId,
         requestParams,
-        vizType
-      }
+        vizType,
+        cancelTokenSource: CancelToken.source()
+      },
+      statistic
     }
   },
   viewDataFromVizItemLoaded (
@@ -382,7 +396,8 @@ export const ViewActions = {
     itemId: number,
     requestParams: IDataRequestParams,
     result: any[],
-    vizType: 'dashboard' | 'display'
+    vizType: 'dashboard' | 'display',
+    statistic
   ) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS,
@@ -392,15 +407,17 @@ export const ViewActions = {
         requestParams,
         result,
         vizType
-      }
+      },
+      statistic
     }
   },
-  loadViewDataFromVizItemFail (itemId: number, vizType: 'dashboard' | 'display') {
+  loadViewDataFromVizItemFail (itemId: number, vizType: 'dashboard' | 'display', errorMessage: string) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE,
       payload: {
         itemId,
-        vizType
+        vizType,
+        errorMessage
       }
     }
   }

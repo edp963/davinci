@@ -4,9 +4,9 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const bar: IChartInfo = {
   id: PivotTypes.Bar,
@@ -14,8 +14,7 @@ const bar: IChartInfo = {
   title: '柱状图',
   icon: 'icon-chart-bar',
   coordinate: 'cartesian',
-  requireDimetions: [0, 9999],
-  requireMetrics: [1, 9999],
+  rules: [{ dimension: [0, 9999], metric: [1, 9999] }],
   dimetionAxis: 'col',
   data: {
     cols: {

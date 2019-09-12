@@ -100,8 +100,8 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        if (request.getServletPath().indexOf("/user/active") < 0 && !user.getActive()) {
-            if (request.getServletPath().indexOf("/user/sendmail") > -1) {
+        if (!request.getServletPath().contains("/user/active") && !user.getActive()) {
+            if (request.getServletPath().contains("/user/sendmail")) {
                 request.setAttribute(Constants.CURRENT_USER, user);
                 return true;
             }

@@ -24,7 +24,7 @@ import { Form, Row, Col, Table, Input, Select, Button, Checkbox } from 'antd'
 const FormItem = Form.Item
 const Option = Select.Option
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const styles = require('../Widget.less')
 
 interface IVariableConfigTableProps {

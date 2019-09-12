@@ -26,10 +26,8 @@ const RadioGroup = Radio.Group
 const Option = Select.Option
 
 
-import SearchFilterDropdown from '../../../components/SearchFilterDropdown'
-import { SQL_NUMBER_TYPES, SQL_DATE_TYPES } from '../../../globalConstants'
-const utilStyles = require('../../../assets/less/util.less')
-const widgetStyles = require('../../Widget/Widget.less')
+import { SQL_NUMBER_TYPES, SQL_DATE_TYPES } from 'app/globalConstants'
+const utilStyles = require('assets/less/util.less')
 const styles = require('../Dashboard.less')
 
 interface IDrillPathSettingProps {

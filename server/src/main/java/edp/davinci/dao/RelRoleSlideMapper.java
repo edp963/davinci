@@ -19,6 +19,7 @@
 
 package edp.davinci.dao;
 
+import edp.davinci.core.model.RoleDisableViz;
 import edp.davinci.model.RelRoleSlide;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -36,14 +37,13 @@ public interface RelRoleSlideMapper {
     int deleteBySlideId(Long slideId);
 
     @Select({
-            "select rrs.slide_id",
+            "select rru.role_id, rrs.slide_id",
             "from rel_role_slide rrs",
             "inner join rel_role_user rru on rru.role_id = rrs.role_id",
             "inner join display_slide s on s.id = rrs.slide_id",
-            "inner join display d on d.id = s.display_id",
-            "where rru.user_id = #{userId} and rrs.visible = 0 and d.project_id = #{projectId}"
+            "where rru.user_id = #{userId} and rrs.visible = 0 and s.display_id = #{displayId}"
     })
-    List<Long> getDisableSlides(@Param("userId") Long userId, @Param("projectId") Long projectId);
+    List<RoleDisableViz> getDisableSlides(@Param("userId") Long userId, @Param("displayId") Long displayId);
 
     @Select({
             "select role_id from rel_role_slide where slide_id = #{slideId} and visible = 0"

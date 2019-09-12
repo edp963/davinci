@@ -62,7 +62,8 @@ export class DisplayContainer extends React.Component<IDisplayContainerProps, ID
     super(props)
     this.state = {
       translate: '',
-      scale: 1
+      scale: 1,
+      containerStyle: null
     }
   }
 

@@ -20,6 +20,7 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.exception.NotFoundException;
@@ -37,6 +38,7 @@ import edp.davinci.core.enums.SqlVariableTypeEnum;
 import edp.davinci.core.enums.SqlVariableValueTypeEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.model.SqlEntity;
+import edp.davinci.core.model.SqlFilter;
 import edp.davinci.core.utils.SqlParseUtils;
 import edp.davinci.dao.RelRoleViewMapper;
 import edp.davinci.dao.SourceMapper;
@@ -45,11 +47,9 @@ import edp.davinci.dao.WidgetMapper;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.sourceDto.SourceBaseInfo;
-import edp.davinci.dto.sourceDto.SourceConfig;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.*;
 import edp.davinci.service.ProjectService;
-import edp.davinci.service.SourceService;
 import edp.davinci.service.ViewService;
 import edp.davinci.service.excel.SQLContext;
 import lombok.extern.slf4j.Slf4j;
@@ -101,9 +101,6 @@ public class ViewServiceImpl implements ViewService {
 
     @Autowired
     private ProjectService projectService;
-
-    @Autowired
-    private SourceService sourceService;
 
     @Autowired
     private SqlParseUtils sqlParseUtils;
@@ -203,8 +200,9 @@ public class ViewServiceImpl implements ViewService {
 
         List<String> querySqlList = sqlParseUtils.getSqls(srcSql, Boolean.TRUE);
         if (!CollectionUtils.isEmpty(querySqlList)) {
-            buildQuerySql(querySqlList, viewWithSource.getSource(), executeParam);
-            executeParam.addExcludeColumn(excludeColumns, viewWithSource.getSource().getJdbcUrl());
+            Source source = viewWithSource.getSource();
+            buildQuerySql(querySqlList, source, executeParam);
+            executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl(), source.getDbVersion());
             context.setQuerySql(querySqlList);
             context.setViewExecuteParam(executeParam);
         }
@@ -244,7 +242,7 @@ public class ViewServiceImpl implements ViewService {
         }
 
         //测试连接
-        boolean testConnection = sourceService.isTestConnection(new SourceConfig(source));
+        boolean testConnection = sqlUtils.init(source).testConnection();
 
         if (testConnection) {
             View view = new View().createdBy(user.getId());
@@ -308,7 +306,7 @@ public class ViewServiceImpl implements ViewService {
         }
 
         //测试连接
-        boolean testConnection = sourceService.isTestConnection(new SourceConfig(source));
+        boolean testConnection = sqlUtils.init(source).testConnection();
 
         if (testConnection) {
 
@@ -428,7 +426,7 @@ public class ViewServiceImpl implements ViewService {
 
                     String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
-                    SqlUtils sqlUtils = this.sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword());
+                    SqlUtils sqlUtils = this.sqlUtils.init(source);
 
                     List<String> executeSqlList = sqlParseUtils.getSqls(srcSql, false);
 
@@ -499,12 +497,12 @@ public class ViewServiceImpl implements ViewService {
             if (executeParam.isNativeQuery()) {
                 st.add("aggregators", executeParam.getAggregators());
             } else {
-                st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
+                st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl(), source.getDbVersion()));
             }
-            st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
-            st.add("filters", executeParam.getFilters());
-            st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
-            st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
+            st.add("orders", executeParam.getOrders(source.getJdbcUrl(), source.getDbVersion()));
+            st.add("filters", convertFilters(executeParam.getFilters(), source));
+            st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl(), source.getDbVersion()));
+            st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl(), source.getDbVersion()));
 
             for (int i = 0; i < querySqlList.size(); i++) {
                 st.add("sql", querySqlList.get(i));
@@ -512,6 +510,31 @@ public class ViewServiceImpl implements ViewService {
             }
 
         }
+    }
+
+    public List<String> convertFilters(List<String> filterStrs, Source source){
+        List<String> whereClauses = new ArrayList<>();
+        List<SqlFilter> filters = new ArrayList<>();
+        try{
+            if(null == filterStrs || filterStrs.isEmpty()){
+                return null;
+            }
+
+            for(String str : filterStrs){
+                SqlFilter obj = JSON.parseObject(str, SqlFilter.class);
+                if(!StringUtils.isEmpty(obj.getName())){
+                    obj.setName(ViewExecuteParam.getField(obj.getName(), source.getJdbcUrl(), source.getDbVersion()));
+                }
+                filters.add(obj);
+            }
+            filters.forEach(filter -> whereClauses.add(SqlFilter.dealFilter(filter)));
+
+        }catch (Exception e){
+            log.error("convertFilters error . filterStrs = {}, source = {}, filters = {} , whereClauses = {} ",
+                    JSON.toJSON(filterStrs), JSON.toJSON(source), JSON.toJSON(filters), JSON.toJSON(whereClauses));
+            throw e;
+        }
+        return whereClauses;
     }
 
 
@@ -563,7 +586,7 @@ public class ViewServiceImpl implements ViewService {
                 List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
                 if (!CollectionUtils.isEmpty(querySqlList)) {
                     buildQuerySql(querySqlList, source, executeParam);
-                    executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl());
+                    executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl(), source.getDbVersion());
 
                     if (null != executeParam
                             && null != executeParam.getCache()
@@ -580,14 +603,16 @@ public class ViewServiceImpl implements ViewService {
 
                         cacheKey = MD5Util.getMD5(slatBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true, 32);
 
-                        try {
-                            Object object = redisUtils.get(cacheKey);
-                            if (null != object && executeParam.getCache()) {
-                                paginate = (PaginateWithQueryColumns) object;
-                                return paginate;
+                        if (!executeParam.getFlush()) {
+                            try {
+                                Object object = redisUtils.get(cacheKey);
+                                if (null != object && executeParam.getCache()) {
+                                    paginate = (PaginateWithQueryColumns) object;
+                                    return paginate;
+                                }
+                            } catch (Exception e) {
+                                log.warn("get data by cache: {}", e.getMessage());
                             }
-                        } catch (Exception e) {
-                            log.warn("get data by cache: {}", e.getMessage());
                         }
                     }
 
@@ -666,10 +691,10 @@ public class ViewServiceImpl implements ViewService {
                         STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
                         ST st = stg.getInstanceOf("queryDistinctSql");
                         st.add("columns", param.getColumns());
-                        st.add("filters", param.getFilters());
+                        st.add("filters", convertFilters(param.getFilters(), source));
                         st.add("sql", querySqlList.get(querySqlList.size() - 1));
-                        st.add("keywordPrefix", SqlUtils.getKeywordPrefix(source.getJdbcUrl()));
-                        st.add("keywordSuffix", SqlUtils.getKeywordSuffix(source.getJdbcUrl()));
+                        st.add("keywordPrefix", SqlUtils.getKeywordPrefix(source.getJdbcUrl(), source.getDbVersion()));
+                        st.add("keywordSuffix", SqlUtils.getKeywordSuffix(source.getJdbcUrl(), source.getDbVersion()));
 
                         String sql = st.render();
                         querySqlList.set(querySqlList.size() - 1, sql);
@@ -761,7 +786,9 @@ public class ViewServiceImpl implements ViewService {
                                         values.add(N0_AUTH_PERMISSION);
                                         sqlVariable.setDefaultValues(values);
                                     } else {
-                                        sqlVariable.setDefaultValues(v.getValues());
+                                        List<Object> values = sqlVariable.getDefaultValues() == null ? new ArrayList<>() : sqlVariable.getDefaultValues();
+                                        values.addAll(v.getValues());
+                                        sqlVariable.setDefaultValues(values);
                                     }
                                 } else {
                                     sqlVariable.setDefaultValues(new ArrayList<>());

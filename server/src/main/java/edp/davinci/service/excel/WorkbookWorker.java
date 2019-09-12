@@ -26,6 +26,7 @@ import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.common.utils.ScriptUtiils;
 import edp.davinci.core.config.SpringContextHolder;
+import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.model.ExcelHeader;
 import edp.davinci.core.utils.ExcelUtils;
@@ -68,6 +69,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
     public T call() throws Exception {
         Stopwatch watch = Stopwatch.createStarted();
         Workbook wb = null;
+        log.info("workbook worker start: action={}, xid={}", context.getWrapper().getAction(), context.getWrapper().getxId());
         String filePath = null;
         try {
             List<SheetContext> sheetContextList = buildSheetContextList();
@@ -79,7 +81,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             int sheetNo = 0;
             for (SheetContext sheetContext : sheetContextList) {
                 sheetNo++;
-                String name = String.valueOf(sheetNo) + "-" + sheetContext.getName();
+                String name = sheetNo + "-" + sheetContext.getName();
                 Sheet sheet = wb.createSheet(name);
                 sheetContext.setSheet(sheet);
                 sheetContext.setWorkbook(wb);
@@ -92,7 +94,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 rst = future.get();
             }
             if (rst) {
-                filePath = ((FileUtils) SpringContextHolder.getBean(FileUtils.class)).getFilePath(FileTypeEnum.XLSX, this.context.getWrapper().getxId());
+                filePath = ((FileUtils) SpringContextHolder.getBean(FileUtils.class)).getFilePath(FileTypeEnum.XLSX, this.context.getWrapper());
                 FileOutputStream out = null;
                 try {
                     out = new FileOutputStream(filePath);
@@ -107,8 +109,10 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                         out.close();
                     }
                 }
+                context.getWrapper().setRst(filePath);
+            } else {
+                context.getWrapper().setRst(null);
             }
-            context.getWrapper().setRst(filePath);
             super.tell(context.getWrapper());
         } catch (Exception e) {
             log.error("workbook worker error,e=", e);
@@ -119,8 +123,13 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
         } finally {
             wb = null;
         }
-        Object[] args = {StringUtils.isNotEmpty(filePath), context.getWrapper().getAction(), context.getWrapper().getxId(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
-        log.info("workbook worker complete status={},action={},xid={},filePath={},cost={}ms", args);
+        if (context.getWrapper().getAction() == ActionEnum.DOWNLOAD) {
+            Object[] args = {StringUtils.isNotEmpty(filePath), context.getWrapper().getAction(), context.getWrapper().getxId(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
+            log.info("workbook worker complete status={},action={},xid={},filePath={},cost={}ms", args);
+        } else if (context.getWrapper().getAction() == ActionEnum.SHAREDOWNLOAD || context.getWrapper().getAction() == ActionEnum.MAIL) {
+            Object[] args = {StringUtils.isNotEmpty(filePath), context.getWrapper().getAction(), context.getWrapper().getxUUID(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
+            log.info("workbook worker complete status={},action={},xUUID={},filePath={},cost={}ms", args);
+        }
         return (T) filePath;
     }
 
@@ -163,6 +172,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                     .buildWidgetId(context.getWidget().getId())
                     .buildName(context.getWidget().getName())
                     .buildWrapper(this.context.getWrapper())
+                    .buildResultLimist(this.context.getResultLimit())
                     .build();
             sheetContextList.add(sheetContext);
         }

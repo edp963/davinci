@@ -18,25 +18,25 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { Form, Row, Col, Input, Select, TreeSelect } from 'antd'
 const Option = Select.Option
 const FormItem = Form.Item
+import { FormComponentProps } from 'antd/lib/form/Form'
 import { ButtonSize } from 'antd/lib/button'
-const utilStyles =  require('../../assets/less/util.less')
+const utilStyles =  require('assets/less/util.less')
 
 interface IConfigFormProps {
-  form: any
   type: string
   vizs: any
   dashboardTree: any[]
-  treeSelect: () => any
-  treeChange: () => any
-  loadTreeData: () => any
+  treeSelect: (value: any) => void
+  treeChange: (value: any) => void
+  loadTreeData: (treeNode: any) => void
   dashboardTreeValue: any
 }
 
-export class ConfigForm extends React.PureComponent<IConfigFormProps> {
+export class ConfigForm extends React.PureComponent<FormComponentProps & IConfigFormProps> {
   public render () {
     const { getFieldDecorator } = this.props.form
     const { dashboardTree, dashboardTreeValue, treeSelect, treeChange, loadTreeData, vizs } = this.props
@@ -78,13 +78,15 @@ export class ConfigForm extends React.PureComponent<IConfigFormProps> {
         </Row>
         <Row>
           <Col span={12}>
-            <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('id', {
-                hidden: this.props.type === 'add'
-              })(
-                <Input />
-              )}
-            </FormItem>
+            {
+              this.props.type !== 'add' && (
+                <FormItem className={utilStyles.hide}>
+                  {getFieldDecorator('id', {})(
+                    <Input />
+                  )}
+                </FormItem>
+              )
+            }
             <FormItem
               label="收件人"
               {...commonFormItemStyle}
@@ -153,4 +155,4 @@ export class ConfigForm extends React.PureComponent<IConfigFormProps> {
 }
 
 
-export default Form.create()(ConfigForm)
+export default Form.create<FormComponentProps & IConfigFormProps>()(ConfigForm)

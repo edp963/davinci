@@ -3,9 +3,9 @@ import * as echarts from 'echarts/lib/echarts'
 import { IDrawingData, IMetricAxisConfig, ILegend } from './Pivot'
 import { IWidgetMetric, DimetionType, RenderType, IChartStyles } from '../Widget'
 import chartOptionGenerator from '../../render/pivot'
-import { PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
+import { PIVOT_DEFAULT_SCATTER_SIZE } from 'app/globalConstants'
 import { decodeMetricName, getTooltipPosition, getPivotTooltipLabel, getSizeValue, getChartLabel, getTriggeringRecord } from '../util'
-import { uuid } from '../../../../utils/util'
+import { uuid } from 'utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import PivotTypes from '../../config/pivot/PivotTypes'
 const styles = require('./Pivot.less')
@@ -685,7 +685,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
             instance.off('click')
             instance.on('click', (params) => {
               this.collectSelectedItems(params, seriesData)
-              const isInteractiveChart =onCheckTableInteract && onCheckTableInteract()
+              const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
               if (isInteractiveChart) {
                 const triggerData = getTriggeringRecord(params, seriesData)
                 onDoInteract(triggerData)

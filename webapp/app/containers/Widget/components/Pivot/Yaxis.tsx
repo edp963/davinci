@@ -4,7 +4,7 @@ import { IMetricAxisConfig } from './Pivot'
 import { IWidgetMetric, DimetionType, IChartStyles } from '../Widget'
 import { IChartLine, IChartUnit } from './Chart'
 import { metricAxisLabelFormatter, decodeMetricName } from '../util'
-import { PIVOT_DEFAULT_AXIS_LINE_COLOR } from '../../../../globalConstants'
+import { PIVOT_DEFAULT_AXIS_LINE_COLOR } from 'app/globalConstants'
 
 const styles = require('./Pivot.less')
 

@@ -225,6 +225,7 @@ public abstract class AbstractSheetWriter {
             if (columnWidthMap.containsKey(queryColumn.getName())) {
                 Integer width = columnWidthMap.get(queryColumn.getName());
                 if (width > 0) {
+                    width = width > 255 ? 255 : width;
                     context.getSheet().setColumnWidth(i, width * 256);
                 }
             } else {

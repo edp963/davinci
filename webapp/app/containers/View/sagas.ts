@@ -26,10 +26,10 @@ import omit from 'lodash/omit'
 import { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import request, { IDavinciResponse } from 'utils/request'
 import api from 'utils/api'
-import { errorHandler } from 'utils/util'
+import { errorHandler, getErrorMessage } from 'utils/util'
 
 import { IViewBase, IView, IExecuteSqlResponse, IExecuteSqlParams, IViewVariable } from './types'
-import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 
 export function* getViews (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS) { return }
@@ -54,12 +54,12 @@ export function* getViewsDetail (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS_DETAIL) { return }
   const { payload } = action
   const { viewsDetailLoaded, loadViewsDetailFail } = ViewActions
-  const { viewIds, resolve } = payload
+  const { viewIds, resolve, isEditing } = payload
   try {
     // @FIXME make it be a single request
     const asyncData = yield all(viewIds.map((viewId) => (call(request, `${api.view}/${viewId}`))))
     const views: IView[] = asyncData.map((item) => item.payload)
-    yield put(viewsDetailLoaded(views))
+    yield put(viewsDetailLoaded(views, isEditing))
     if (resolve) { resolve() }
   } catch (err) {
     yield put(loadViewsDetailFail())
@@ -150,7 +150,7 @@ export function* executeSql (action: ViewActionType) {
 /** View sagas for external usages */
 export function* getViewData (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEW_DATA) { return }
-  const { id, requestParams, resolve } = action.payload
+  const { id, requestParams, resolve, reject } = action.payload
   const { viewDataLoaded, loadViewDataFail } = ViewActions
   try {
     const asyncData = yield call(request, {
@@ -163,8 +163,10 @@ export function* getViewData (action: ViewActionType) {
     asyncData.payload.resultList = (resultList && resultList.slice(0, 500)) || []
     resolve(asyncData.payload)
   } catch (err) {
+    const { response } = err as AxiosError
+    const { data } = response as AxiosResponse<IDavinciResponse<any>>
     yield put(loadViewDataFail(err))
-    errorHandler(err)
+    reject(data.header)
   }
 }
 
@@ -173,7 +175,7 @@ export function* getSelectOptions (action: ViewActionType) {
   const { payload } = action
   const { selectOptionsLoaded, loadSelectOptionsFail } = ViewActions
   try {
-    const { controlKey, requestParams, itemId } = payload
+    const { controlKey, requestParams, itemId, cancelTokenSource } = payload
     const requestParamsMap: Array<[string, IDistinctValueReqeustParams]> = Object.entries(requestParams)
     const requests = requestParamsMap.map(([viewId, params]: [string, IDistinctValueReqeustParams]) => {
       const { columns, filters, variables, cache, expired } = params
@@ -186,7 +188,8 @@ export function* getSelectOptions (action: ViewActionType) {
           params: variables,
           cache,
           expired
-        }
+        },
+        cancelToken: cancelTokenSource.token
       })
     })
     const results = yield all(requests)
@@ -200,7 +203,7 @@ export function* getSelectOptions (action: ViewActionType) {
     yield put(selectOptionsLoaded(controlKey, Array.from(new Set(values)), itemId))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
-    errorHandler(err)
+    // errorHandler(err)
   }
 }
 
@@ -212,7 +215,11 @@ export function* getViewDistinctValue (action: ViewActionType) {
     const result = yield call(request, {
       method: 'post',
       url: `${api.view}/${viewId}/getdistinctvalue`,
-      data: params
+      data: {
+        cache: false,
+        expired: 0,
+        ...params
+      }
     })
     const list = params.columns.reduce((arr, col) => {
       return arr.concat(result.payload.map((item) => item[col]))
@@ -229,7 +236,7 @@ export function* getViewDistinctValue (action: ViewActionType) {
 
 export function* getViewDataFromVizItem (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM) { return }
-  const { renderType, itemId, viewId, requestParams, vizType } = action.payload
+  const { renderType, itemId, viewId, requestParams, vizType, cancelTokenSource } = action.payload
   const { viewDataFromVizItemLoaded, loadViewDataFromVizItemFail } = ViewActions
   const {
     filters,
@@ -249,19 +256,19 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
       method: 'post',
       url: `${api.view}/${viewId}/getdata`,
       data: {
-        ...rest,
+        ...omit(rest, 'customOrders'),
         filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
         params: variables.concat(linkageVariables).concat(globalVariables),
         pageSize,
         pageNo
-      }
+      },
+      cancelToken: cancelTokenSource.token
     })
     const { resultList } = asyncData.payload
     asyncData.payload.resultList = (resultList && resultList.slice(0, 500)) || []
-    yield put(viewDataFromVizItemLoaded(renderType, itemId, requestParams, asyncData.payload, vizType))
+    yield put(viewDataFromVizItemLoaded(renderType, itemId, requestParams, asyncData.payload, vizType, action.statistic))
   } catch (err) {
-    yield put(loadViewDataFromVizItemFail(itemId, vizType))
-    errorHandler(err)
+    yield put(loadViewDataFromVizItemFail(itemId, vizType, getErrorMessage(err)))
   }
 }
 /** */

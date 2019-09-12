@@ -1,4 +1,4 @@
-@import "../../assets/less/variable";
+@import "~assets/less/variable";
 
 .viewEditor {
   flex: 1;
@@ -76,23 +76,14 @@
       cursor: row-resize;
       background: none;
     }
-
-    .editor {
-      flex: 1;
-      display: flex;
-    }
-
-    .list {
-      width: 280px;
-      display: flex;
-      flex-direction: column;
-    }
   }
 
   .sqlEditor {
     flex: 1;
     padding: 16px;
     border-right: 1px solid @border-color-base;
+    min-height: 0;
+    min-width: 0;
   }
 
   .preview {
@@ -177,7 +168,7 @@
 }
 
 .viewVariable {
-  flex: 1;
+  width: 280px;
   display: flex;
   flex-direction: column;
 
@@ -234,6 +225,12 @@
 .sqlPreview {
   background: #f7f7f7;
   padding-top: 1px;
+
+  :global {
+    .ant-table-tbody > tr > td {
+      word-break: break-all;
+    }
+  }
 }
 
 .modelAuth {
@@ -255,4 +252,10 @@
   .cellVarInput {
     flex: 1;
   }
+}
+
+.errorMessage {
+  max-width: 640px;
+  max-height: 480px;
+  overflow-y: auto;
 }

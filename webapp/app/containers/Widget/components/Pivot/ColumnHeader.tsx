@@ -3,7 +3,7 @@ import * as classnames from 'classnames'
 import { IDrawingData } from './Pivot'
 import { IWidgetMetric, DimetionType, IChartStyles } from '../Widget'
 import { spanSize, getPivotCellWidth, getAggregatorLocale, getPivot, getStyleConfig } from '../util'
-import { DEFAULT_SPLITER } from '../../../../globalConstants'
+import { DEFAULT_SPLITER } from 'app/globalConstants'
 
 const styles = require('./Pivot.less')
 

@@ -22,7 +22,7 @@ var global = {}
 // #region polyfill
 if (!Array.prototype.map) {
 
-    Array.prototype.map = function(callback /*, thisArg*/ ) {
+    Array.prototype.map = function (callback /*, thisArg*/) {
 
         var T, A, k;
 
@@ -109,7 +109,7 @@ if (!Array.prototype.map) {
 }
 
 if (!Array.prototype.filter) {
-    Array.prototype.filter = function(func, thisArg) {
+    Array.prototype.filter = function (func, thisArg) {
         'use strict';
         if (!((typeof func === 'Function' || typeof func === 'function') && this))
             throw new TypeError();
@@ -148,7 +148,7 @@ if (!Array.prototype.filter) {
 // Reference: http://es5.github.io/#x15.4.4.18
 if (!Array.prototype.forEach) {
 
-    Array.prototype.forEach = function(callback /*, thisArg*/ ) {
+    Array.prototype.forEach = function (callback /*, thisArg*/) {
 
         var T, k;
 
@@ -274,7 +274,7 @@ if (!Array.prototype.reduce) {
 
 // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
 if (!Object.keys) {
-    Object.keys = (function() {
+    Object.keys = (function () {
         'use strict';
         var hasOwnProperty = Object.prototype.hasOwnProperty,
             hasDontEnumBug = !({
@@ -291,7 +291,7 @@ if (!Object.keys) {
             ],
             dontEnumsLength = dontEnums.length;
 
-        return function(obj) {
+        return function (obj) {
             if (typeof obj !== 'function' && (typeof obj !== 'object' || obj === null)) {
                 throw new TypeError('Object.keys called on non-object');
             }
@@ -318,7 +318,7 @@ if (!Object.keys) {
 }
 
 if (!Object.entries) {
-    Object.entries = function(obj) {
+    Object.entries = function (obj) {
         var ownProps = Object.keys(obj),
             i = ownProps.length,
             resArray = new Array(i); // preallocate the Array
@@ -328,16 +328,46 @@ if (!Object.entries) {
         return resArray;
     };
 }
+
+if (typeof Object.assign != 'function') {
+    // Must be writable: true, enumerable: false, configurable: true
+    Object.defineProperty(Object, "assign", {
+        value: function assign(target, varArgs) { // .length of function is 2
+            'use strict';
+            if (target == null) { // TypeError if undefined or null
+                throw new TypeError('Cannot convert undefined or null to object');
+            }
+
+            var to = Object(target);
+
+            for (var index = 1; index < arguments.length; index++) {
+                var nextSource = arguments[index];
+
+                if (nextSource != null) { // Skip over if undefined or null
+                    for (var nextKey in nextSource) {
+                        // Avoid bugs when hasOwnProperty is shadowed
+                        if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                            to[nextKey] = nextSource[nextKey];
+                        }
+                    }
+                }
+            }
+            return to;
+        },
+        writable: true,
+        configurable: true
+    });
+}
 // #endregion
 
 // #region
 //! moment.js
 ;
-(function(global, factory) {
+(function (global, factory) {
     // typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     // typeof define === 'function' && define.amd ? define(factory) :
     global.moment = factory()
-}(global, (function() {
+}(global, (function () {
     'use strict';
 
     var hookCallback;
@@ -454,7 +484,7 @@ if (!Object.entries) {
     if (Array.prototype.some) {
         some = Array.prototype.some;
     } else {
-        some = function(fun) {
+        some = function (fun) {
             var t = Object(this);
             var len = t.length >>> 0;
 
@@ -471,7 +501,7 @@ if (!Object.entries) {
     function isValid(m) {
         if (m._isValid == null) {
             var flags = getParsingFlags(m);
-            var parsedParts = some.call(flags.parsedDateParts, function(i) {
+            var parsedParts = some.call(flags.parsedDateParts, function (i) {
                 return i != null;
             });
             var isNowValid = !isNaN(m._d.getTime()) &&
@@ -630,7 +660,7 @@ if (!Object.entries) {
     function deprecate(msg, fn) {
         var firstTime = true;
 
-        return extend(function() {
+        return extend(function () {
             if (hooks.deprecationHandler != null) {
                 hooks.deprecationHandler(null, msg);
             }
@@ -733,7 +763,7 @@ if (!Object.entries) {
     if (Object.keys) {
         keys = Object.keys;
     } else {
-        keys = function(obj) {
+        keys = function (obj) {
             var i, res = [];
             for (i in obj) {
                 if (hasOwnProp(obj, i)) {
@@ -775,7 +805,7 @@ if (!Object.entries) {
             return format;
         }
 
-        this._longDateFormat[key] = formatUpper.replace(/MMMM|MM|DD|dddd/g, function(val) {
+        this._longDateFormat[key] = formatUpper.replace(/MMMM|MM|DD|dddd/g, function (val) {
             return val.slice(1);
         });
 
@@ -866,7 +896,7 @@ if (!Object.entries) {
                 priority: priorities[u]
             });
         }
-        units.sort(function(a, b) {
+        units.sort(function (a, b) {
             return a.priority - b.priority;
         });
         return units;
@@ -895,7 +925,7 @@ if (!Object.entries) {
     function addFormatToken(token, padded, ordinal, callback) {
         var func = callback;
         if (typeof callback === 'string') {
-            func = function() {
+            func = function () {
                 return this[callback]();
             };
         }
@@ -903,12 +933,12 @@ if (!Object.entries) {
             formatTokenFunctions[token] = func;
         }
         if (padded) {
-            formatTokenFunctions[padded[0]] = function() {
+            formatTokenFunctions[padded[0]] = function () {
                 return zeroFill(func.apply(this, arguments), padded[1], padded[2]);
             };
         }
         if (ordinal) {
-            formatTokenFunctions[ordinal] = function() {
+            formatTokenFunctions[ordinal] = function () {
                 return this.localeData().ordinal(func.apply(this, arguments), token);
             };
         }
@@ -933,7 +963,7 @@ if (!Object.entries) {
             }
         }
 
-        return function(mom) {
+        return function (mom) {
             var output = '',
                 i;
             for (i = 0; i < length; i++) {
@@ -999,7 +1029,7 @@ if (!Object.entries) {
     var regexes = {};
 
     function addRegexToken(token, regex, strictRegex) {
-        regexes[token] = isFunction(regex) ? regex : function(isStrict, localeData) {
+        regexes[token] = isFunction(regex) ? regex : function (isStrict, localeData) {
             return (isStrict && strictRegex) ? strictRegex : regex;
         };
     }
@@ -1014,7 +1044,7 @@ if (!Object.entries) {
 
     // Code from http://stackoverflow.com/questions/3561493/is-there-a-regexp-escape-function-in-javascript
     function unescapeFormat(s) {
-        return regexEscape(s.replace('\\', '').replace(/\\(\[)|\\(\])|\[([^\]\[]*)\]|\\(.)/g, function(matched, p1, p2, p3, p4) {
+        return regexEscape(s.replace('\\', '').replace(/\\(\[)|\\(\])|\[([^\]\[]*)\]|\\(.)/g, function (matched, p1, p2, p3, p4) {
             return p1 || p2 || p3 || p4;
         }));
     }
@@ -1031,7 +1061,7 @@ if (!Object.entries) {
             token = [token];
         }
         if (isNumber(callback)) {
-            func = function(input, array) {
+            func = function (input, array) {
                 array[callback] = toInt(input);
             };
         }
@@ -1041,7 +1071,7 @@ if (!Object.entries) {
     }
 
     function addWeekParseToken(token, callback) {
-        addParseToken(token, function(input, array, config, token) {
+        addParseToken(token, function (input, array, config, token) {
             config._w = config._w || {};
             callback(input, config._w, config, token);
         });
@@ -1065,12 +1095,12 @@ if (!Object.entries) {
 
     // FORMATTING
 
-    addFormatToken('Y', 0, 0, function() {
+    addFormatToken('Y', 0, 0, function () {
         var y = this.year();
         return y <= 9999 ? '' + y : '+' + y;
     });
 
-    addFormatToken(0, ['YY', 2], 0, function() {
+    addFormatToken(0, ['YY', 2], 0, function () {
         return this.year() % 100;
     });
 
@@ -1095,13 +1125,13 @@ if (!Object.entries) {
     addRegexToken('YYYYYY', match1to6, match6);
 
     addParseToken(['YYYYY', 'YYYYYY'], YEAR);
-    addParseToken('YYYY', function(input, array) {
+    addParseToken('YYYY', function (input, array) {
         array[YEAR] = input.length === 2 ? hooks.parseTwoDigitYear(input) : toInt(input);
     });
-    addParseToken('YY', function(input, array) {
+    addParseToken('YY', function (input, array) {
         array[YEAR] = hooks.parseTwoDigitYear(input);
     });
-    addParseToken('Y', function(input, array) {
+    addParseToken('Y', function (input, array) {
         array[YEAR] = parseInt(input, 10);
     });
 
@@ -1117,7 +1147,7 @@ if (!Object.entries) {
 
     // HOOKS
 
-    hooks.parseTwoDigitYear = function(input) {
+    hooks.parseTwoDigitYear = function (input) {
         return toInt(input) + (toInt(input) > 68 ? 1900 : 2000);
     };
 
@@ -1130,7 +1160,7 @@ if (!Object.entries) {
     }
 
     function makeGetSet(unit, keepTime) {
-        return function(value) {
+        return function (value) {
             if (value != null) {
                 set$1(this, unit, value);
                 hooks.updateOffset(this, keepTime);
@@ -1192,7 +1222,7 @@ if (!Object.entries) {
     if (Array.prototype.indexOf) {
         indexOf = Array.prototype.indexOf;
     } else {
-        indexOf = function(o) {
+        indexOf = function (o) {
             // I know
             var i;
             for (i = 0; i < this.length; ++i) {
@@ -1215,15 +1245,15 @@ if (!Object.entries) {
 
     // FORMATTING
 
-    addFormatToken('M', ['MM', 2], 'Mo', function() {
+    addFormatToken('M', ['MM', 2], 'Mo', function () {
         return this.month() + 1;
     });
 
-    addFormatToken('MMM', 0, 0, function(format) {
+    addFormatToken('MMM', 0, 0, function (format) {
         return this.localeData().monthsShort(this, format);
     });
 
-    addFormatToken('MMMM', 0, 0, function(format) {
+    addFormatToken('MMMM', 0, 0, function (format) {
         return this.localeData().months(this, format);
     });
 
@@ -1239,18 +1269,18 @@ if (!Object.entries) {
 
     addRegexToken('M', match1to2);
     addRegexToken('MM', match1to2, match2);
-    addRegexToken('MMM', function(isStrict, locale) {
+    addRegexToken('MMM', function (isStrict, locale) {
         return locale.monthsShortRegex(isStrict);
     });
-    addRegexToken('MMMM', function(isStrict, locale) {
+    addRegexToken('MMMM', function (isStrict, locale) {
         return locale.monthsRegex(isStrict);
     });
 
-    addParseToken(['M', 'MM'], function(input, array) {
+    addParseToken(['M', 'MM'], function (input, array) {
         array[MONTH] = toInt(input) - 1;
     });
 
-    addParseToken(['MMM', 'MMMM'], function(input, array, config, token) {
+    addParseToken(['MMM', 'MMMM'], function (input, array, config, token) {
         var month = config._locale.monthsParse(input, token, config._strict);
         // if we didn't find a month name, mark the date as invalid.
         if (month != null) {
@@ -1589,7 +1619,7 @@ if (!Object.entries) {
     addRegexToken('W', match1to2);
     addRegexToken('WW', match1to2, match2);
 
-    addWeekParseToken(['w', 'ww', 'W', 'WW'], function(input, week, config, token) {
+    addWeekParseToken(['w', 'ww', 'W', 'WW'], function (input, week, config, token) {
         week[token.substr(0, 1)] = toInt(input);
     });
 
@@ -1630,15 +1660,15 @@ if (!Object.entries) {
 
     addFormatToken('d', 0, 'do', 'day');
 
-    addFormatToken('dd', 0, 0, function(format) {
+    addFormatToken('dd', 0, 0, function (format) {
         return this.localeData().weekdaysMin(this, format);
     });
 
-    addFormatToken('ddd', 0, 0, function(format) {
+    addFormatToken('ddd', 0, 0, function (format) {
         return this.localeData().weekdaysShort(this, format);
     });
 
-    addFormatToken('dddd', 0, 0, function(format) {
+    addFormatToken('dddd', 0, 0, function (format) {
         return this.localeData().weekdays(this, format);
     });
 
@@ -1661,17 +1691,17 @@ if (!Object.entries) {
     addRegexToken('d', match1to2);
     addRegexToken('e', match1to2);
     addRegexToken('E', match1to2);
-    addRegexToken('dd', function(isStrict, locale) {
+    addRegexToken('dd', function (isStrict, locale) {
         return locale.weekdaysMinRegex(isStrict);
     });
-    addRegexToken('ddd', function(isStrict, locale) {
+    addRegexToken('ddd', function (isStrict, locale) {
         return locale.weekdaysShortRegex(isStrict);
     });
-    addRegexToken('dddd', function(isStrict, locale) {
+    addRegexToken('dddd', function (isStrict, locale) {
         return locale.weekdaysRegex(isStrict);
     });
 
-    addWeekParseToken(['dd', 'ddd', 'dddd'], function(input, week, config, token) {
+    addWeekParseToken(['dd', 'ddd', 'dddd'], function (input, week, config, token) {
         var weekday = config._locale.weekdaysParse(input, token, config._strict);
         // if we didn't get a weekday name, mark the date as invalid
         if (weekday != null) {
@@ -1681,7 +1711,7 @@ if (!Object.entries) {
         }
     });
 
-    addWeekParseToken(['d', 'e', 'E'], function(input, week, config, token) {
+    addWeekParseToken(['d', 'e', 'E'], function (input, week, config, token) {
         week[token] = toInt(input);
     });
 
@@ -2002,26 +2032,26 @@ if (!Object.entries) {
     addFormatToken('h', ['hh', 2], 0, hFormat);
     addFormatToken('k', ['kk', 2], 0, kFormat);
 
-    addFormatToken('hmm', 0, 0, function() {
+    addFormatToken('hmm', 0, 0, function () {
         return '' + hFormat.apply(this) + zeroFill(this.minutes(), 2);
     });
 
-    addFormatToken('hmmss', 0, 0, function() {
+    addFormatToken('hmmss', 0, 0, function () {
         return '' + hFormat.apply(this) + zeroFill(this.minutes(), 2) +
             zeroFill(this.seconds(), 2);
     });
 
-    addFormatToken('Hmm', 0, 0, function() {
+    addFormatToken('Hmm', 0, 0, function () {
         return '' + this.hours() + zeroFill(this.minutes(), 2);
     });
 
-    addFormatToken('Hmmss', 0, 0, function() {
+    addFormatToken('Hmmss', 0, 0, function () {
         return '' + this.hours() + zeroFill(this.minutes(), 2) +
             zeroFill(this.seconds(), 2);
     });
 
     function meridiem(token, lowercase) {
-        addFormatToken(token, 0, 0, function() {
+        addFormatToken(token, 0, 0, function () {
             return this.localeData().meridiem(this.hours(), this.minutes(), lowercase);
         });
     }
@@ -2057,25 +2087,25 @@ if (!Object.entries) {
     addRegexToken('Hmmss', match5to6);
 
     addParseToken(['H', 'HH'], HOUR);
-    addParseToken(['k', 'kk'], function(input, array, config) {
+    addParseToken(['k', 'kk'], function (input, array, config) {
         var kInput = toInt(input);
         array[HOUR] = kInput === 24 ? 0 : kInput;
     });
-    addParseToken(['a', 'A'], function(input, array, config) {
+    addParseToken(['a', 'A'], function (input, array, config) {
         config._isPm = config._locale.isPM(input);
         config._meridiem = input;
     });
-    addParseToken(['h', 'hh'], function(input, array, config) {
+    addParseToken(['h', 'hh'], function (input, array, config) {
         array[HOUR] = toInt(input);
         getParsingFlags(config).bigHour = true;
     });
-    addParseToken('hmm', function(input, array, config) {
+    addParseToken('hmm', function (input, array, config) {
         var pos = input.length - 2;
         array[HOUR] = toInt(input.substr(0, pos));
         array[MINUTE] = toInt(input.substr(pos));
         getParsingFlags(config).bigHour = true;
     });
-    addParseToken('hmmss', function(input, array, config) {
+    addParseToken('hmmss', function (input, array, config) {
         var pos1 = input.length - 4;
         var pos2 = input.length - 2;
         array[HOUR] = toInt(input.substr(0, pos1));
@@ -2083,12 +2113,12 @@ if (!Object.entries) {
         array[SECOND] = toInt(input.substr(pos2));
         getParsingFlags(config).bigHour = true;
     });
-    addParseToken('Hmm', function(input, array, config) {
+    addParseToken('Hmm', function (input, array, config) {
         var pos = input.length - 2;
         array[HOUR] = toInt(input.substr(0, pos));
         array[MINUTE] = toInt(input.substr(pos));
     });
-    addParseToken('Hmmss', function(input, array, config) {
+    addParseToken('Hmmss', function (input, array, config) {
         var pos1 = input.length - 4;
         var pos2 = input.length - 2;
         array[HOUR] = toInt(input.substr(0, pos1));
@@ -2190,7 +2220,8 @@ if (!Object.entries) {
                 var aliasedRequire = require;
                 aliasedRequire('./locale/' + name);
                 getSetGlobalLocale(oldLocale);
-            } catch (e) {}
+            } catch (e) {
+            }
         }
         return locales[name];
     }
@@ -2254,7 +2285,7 @@ if (!Object.entries) {
             locales[name] = new Locale(mergeConfigs(parentConfig, config));
 
             if (localeFamilies[name]) {
-                localeFamilies[name].forEach(function(x) {
+                localeFamilies[name].forEach(function (x) {
                     defineLocale(x.name, x.config);
                 });
             }
@@ -2734,10 +2765,12 @@ if (!Object.entries) {
     );
 
     // constant that refers to the ISO standard
-    hooks.ISO_8601 = function() {};
+    hooks.ISO_8601 = function () {
+    };
 
     // constant that refers to the RFC 2822 form
-    hooks.RFC_2822 = function() {};
+    hooks.RFC_2822 = function () {
+    };
 
     // date from string and format string
     function configFromStringAndFormat(config) {
@@ -2886,7 +2919,7 @@ if (!Object.entries) {
         }
 
         var i = normalizeObjectUnits(config._i);
-        config._a = map([i.year, i.month, i.day || i.date, i.hour, i.minute, i.second, i.millisecond], function(obj) {
+        config._a = map([i.year, i.month, i.day || i.date, i.hour, i.minute, i.second, i.millisecond], function (obj) {
             return obj && parseInt(obj, 10);
         });
 
@@ -2948,7 +2981,7 @@ if (!Object.entries) {
         } else if (typeof input === 'string') {
             configFromString(config);
         } else if (isArray(input)) {
-            config._a = map(input.slice(0), function(obj) {
+            config._a = map(input.slice(0), function (obj) {
                 return parseInt(obj, 10);
             });
             configFromArray(config);
@@ -3049,7 +3082,7 @@ if (!Object.entries) {
         return pickBy('isAfter', args);
     }
 
-    var now = function() {
+    var now = function () {
         return Date.now ? Date.now() : +(new Date());
     };
 
@@ -3137,7 +3170,7 @@ if (!Object.entries) {
     // FORMATTING
 
     function offset(token, separator) {
-        addFormatToken(token, 0, 0, function() {
+        addFormatToken(token, 0, 0, function () {
             var offset = this.utcOffset();
             var sign = '+';
             if (offset < 0) {
@@ -3155,7 +3188,7 @@ if (!Object.entries) {
 
     addRegexToken('Z', matchShortOffset);
     addRegexToken('ZZ', matchShortOffset);
-    addParseToken(['Z', 'ZZ'], function(input, array, config) {
+    addParseToken(['Z', 'ZZ'], function (input, array, config) {
         config._useUTC = true;
         config._tzm = offsetFromString(matchShortOffset, input);
     });
@@ -3208,7 +3241,8 @@ if (!Object.entries) {
 
     // This function will be called whenever a moment is mutated.
     // It is intended to keep the offset in sync with the timezone.
-    hooks.updateOffset = function() {};
+    hooks.updateOffset = function () {
+    };
 
     // MOMENTS
 
@@ -3474,7 +3508,7 @@ if (!Object.entries) {
 
     // TODO: remove 'name' arg after deprecation is removed
     function createAdder(direction, name) {
-        return function(val, period) {
+        return function (val, period) {
             var dur, tmp;
             //invert the arguments, but complain about it
             if (period !== null && !isNaN(+period)) {
@@ -3921,11 +3955,11 @@ if (!Object.entries) {
 
     // FORMATTING
 
-    addFormatToken(0, ['gg', 2], 0, function() {
+    addFormatToken(0, ['gg', 2], 0, function () {
         return this.weekYear() % 100;
     });
 
-    addFormatToken(0, ['GG', 2], 0, function() {
+    addFormatToken(0, ['GG', 2], 0, function () {
         return this.isoWeekYear() % 100;
     });
 
@@ -3960,11 +3994,11 @@ if (!Object.entries) {
     addRegexToken('GGGGG', match1to6, match6);
     addRegexToken('ggggg', match1to6, match6);
 
-    addWeekParseToken(['gggg', 'ggggg', 'GGGG', 'GGGGG'], function(input, week, config, token) {
+    addWeekParseToken(['gggg', 'ggggg', 'GGGG', 'GGGGG'], function (input, week, config, token) {
         week[token.substr(0, 2)] = toInt(input);
     });
 
-    addWeekParseToken(['gg', 'GG'], function(input, week, config, token) {
+    addWeekParseToken(['gg', 'GG'], function (input, week, config, token) {
         week[token] = hooks.parseTwoDigitYear(input);
     });
 
@@ -4031,7 +4065,7 @@ if (!Object.entries) {
     // PARSING
 
     addRegexToken('Q', match1);
-    addParseToken('Q', function(input, array) {
+    addParseToken('Q', function (input, array) {
         array[MONTH] = (toInt(input) - 1) * 3;
     });
 
@@ -4056,7 +4090,7 @@ if (!Object.entries) {
 
     addRegexToken('D', match1to2);
     addRegexToken('DD', match1to2, match2);
-    addRegexToken('Do', function(isStrict, locale) {
+    addRegexToken('Do', function (isStrict, locale) {
         // TODO: Remove "ordinalParse" fallback in next major release.
         return isStrict ?
             (locale._dayOfMonthOrdinalParse || locale._ordinalParse) :
@@ -4064,7 +4098,7 @@ if (!Object.entries) {
     });
 
     addParseToken(['D', 'DD'], DATE);
-    addParseToken('Do', function(input, array) {
+    addParseToken('Do', function (input, array) {
         array[DATE] = toInt(input.match(match1to2)[0]);
     });
 
@@ -4087,7 +4121,7 @@ if (!Object.entries) {
 
     addRegexToken('DDD', match1to3);
     addRegexToken('DDDD', match3);
-    addParseToken(['DDD', 'DDDD'], function(input, array, config) {
+    addParseToken(['DDD', 'DDDD'], function (input, array, config) {
         config._dayOfYear = toInt(input);
     });
 
@@ -4146,31 +4180,31 @@ if (!Object.entries) {
 
     // FORMATTING
 
-    addFormatToken('S', 0, 0, function() {
+    addFormatToken('S', 0, 0, function () {
         return ~~(this.millisecond() / 100);
     });
 
-    addFormatToken(0, ['SS', 2], 0, function() {
+    addFormatToken(0, ['SS', 2], 0, function () {
         return ~~(this.millisecond() / 10);
     });
 
     addFormatToken(0, ['SSS', 3], 0, 'millisecond');
-    addFormatToken(0, ['SSSS', 4], 0, function() {
+    addFormatToken(0, ['SSSS', 4], 0, function () {
         return this.millisecond() * 10;
     });
-    addFormatToken(0, ['SSSSS', 5], 0, function() {
+    addFormatToken(0, ['SSSSS', 5], 0, function () {
         return this.millisecond() * 100;
     });
-    addFormatToken(0, ['SSSSSS', 6], 0, function() {
+    addFormatToken(0, ['SSSSSS', 6], 0, function () {
         return this.millisecond() * 1000;
     });
-    addFormatToken(0, ['SSSSSSS', 7], 0, function() {
+    addFormatToken(0, ['SSSSSSS', 7], 0, function () {
         return this.millisecond() * 10000;
     });
-    addFormatToken(0, ['SSSSSSSS', 8], 0, function() {
+    addFormatToken(0, ['SSSSSSSS', 8], 0, function () {
         return this.millisecond() * 100000;
     });
-    addFormatToken(0, ['SSSSSSSSS', 9], 0, function() {
+    addFormatToken(0, ['SSSSSSSSS', 9], 0, function () {
         return this.millisecond() * 1000000;
     });
 
@@ -4435,7 +4469,7 @@ if (!Object.entries) {
 
     getSetGlobalLocale('en', {
         dayOfMonthOrdinalParse: /\d{1,2}(th|st|nd|rd)/,
-        ordinal: function(number) {
+        ordinal: function (number) {
             var b = number % 10,
                 output = (toInt(number % 100 / 10) === 1) ? 'th' :
                     (b === 1) ? 'st' :
@@ -4606,7 +4640,7 @@ if (!Object.entries) {
     }
 
     function makeAs(alias) {
-        return function() {
+        return function () {
             return this.as(alias);
         };
     }
@@ -4630,7 +4664,7 @@ if (!Object.entries) {
     }
 
     function makeGetter(name) {
-        return function() {
+        return function () {
             return this.isValid() ? this._data[name] : NaN;
         };
     }
@@ -4694,7 +4728,7 @@ if (!Object.entries) {
         if (roundingFunction === undefined) {
             return round;
         }
-        if (typeof(roundingFunction) === 'function') {
+        if (typeof (roundingFunction) === 'function') {
             round = roundingFunction;
             return true;
         }
@@ -4843,10 +4877,10 @@ if (!Object.entries) {
 
     addRegexToken('x', matchSigned);
     addRegexToken('X', matchTimestamp);
-    addParseToken('X', function(input, array, config) {
+    addParseToken('X', function (input, array, config) {
         config._d = new Date(parseFloat(input, 10) * 1000);
     });
-    addParseToken('x', function(input, array, config) {
+    addParseToken('x', function (input, array, config) {
         config._d = new Date(toInt(input));
     });
 
@@ -5067,27 +5101,43 @@ function getModelValue(control, field, value) {
         || typeof value === 'string' && !value.trim()) {
         return filters;
     }
+
+    var commanFilterJson = {
+        name: name,
+        type: 'filter',
+        value: getValidColumnValue(value, sqlType),
+        sqlType: sqlType,
+        operator: operator
+    }
+
     switch (type) {
         case FilterTypes.InputText:
-            filters.push(name + " " + operator + " " + getValidColumnValue(value, sqlType));
+            filters.push(commanFilterJson);
             break;
         case FilterTypes.Select:
             if (multiple) {
                 if (value.length && value.length > 0) {
-                    filters.push(name + " " + operator + " (" + value.map(function (val) {
-                        return getValidColumnValue(val, sqlType);
-                    }).join(',') + ")");
+                    commanFilterJson.value = value.map(function (val) {
+                        return getValidColumnValue(val, sqlType)
+                    })
+                    filters.push(commanFilterJson)
                 }
             } else {
-                filters.push(name + " " + operator + " " + getValidColumnValue(value, sqlType));
+                filters.push(commanFilterJson);
             }
             break;
         case FilterTypes.NumberRange:
             if (value[0] !== '' && !isNaN(value[0])) {
-                filters.push(name + " >= " + getValidColumnValue(value[0], sqlType));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    operator: '>=',
+                    value: getValidColumnValue(value[0], sqlType)
+                }))
             }
             if (value[1] !== '' && !isNaN(value[1])) {
-                filters.push(name + " <= " + getValidColumnValue(value[1], sqlType));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    operator: '<=',
+                    value: getValidColumnValue(value[1], sqlType)
+                }))
             }
             break;
         // case FilterTypes.TreeSelect:
@@ -5097,23 +5147,35 @@ function getModelValue(control, field, value) {
         //   break
         case FilterTypes.Date:
             if (multiple) {
-                filters.push(name + " " + operator + " (" + value.split(',').map(function (val) {
-                    return getValidColumnValue(val, sqlType);
-                }).join(',') + ")");
+                filters.push(Object.assign({}, commanFilterJson, {
+                    value: value.split(',').map(function (val) {
+                        return getValidColumnValue(val, sqlType)
+                    })
+                }))
             } else {
-                filters.push(name + " " + operator + " " + getValidColumnValue(moment(value).format(dateFormat), sqlType));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    value: getValidColumnValue(moment(value).format(dateFormat), sqlType)
+                }))
             }
             break;
         case FilterTypes.DateRange:
             if (value.length) {
-                filters.push(name + " >= " + getValidColumnValue(moment(value[0]).format(dateFormat), sqlType));
-                filters.push(name + " <= " + getValidColumnValue(moment(value[1]).format(dateFormat), sqlType));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    operator: '>=',
+                    value: getValidColumnValue(moment(value[0]).format(dateFormat), sqlType)
+                }));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    operator: '<=',
+                    value: getValidColumnValue(moment(value[1]).format(dateFormat), sqlType)
+                }));
             }
             break;
         default:
             var inputValue = value.target.value.trim();
             if (inputValue) {
-                filters.push(name + " " + operator + " " + getValidColumnValue(inputValue, sqlType));
+                filters.push(Object.assign({}, commanFilterJson, {
+                    value: getValidColumnValue(inputValue, sqlType)
+                }));
             }
             break;
     }
@@ -5178,6 +5240,7 @@ function getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, ite
     var globalFilters = getGlobalFilters(dashboardConfig, +itemId)
     var widgetExecuteParam = getWidgetExecuteParam(widgetConfig)
     widgetExecuteParam.filters = widgetExecuteParam.filters.concat(globalFilters.filters)
+    widgetExecuteParam.filters = widgetExecuteParam.filters.map(function(filter) { return JSON.stringify(filter) })
     widgetExecuteParam.params = widgetExecuteParam.params.concat(globalFilters.params)
     return widgetExecuteParam
 }
@@ -5215,7 +5278,7 @@ function getGlobalFilters(dashboardConfig, dashboardItemId) {
 
 
                         var filterValue_1 = interactionType === 'column' ?
-                            getModelValue(filter, fields, operator, defaultValue) :
+                            getModelValue(filter, fields, defaultValue) :
                             getVariableValue(filter, fields, defaultValue);
 
                         if (!globalFiltersInitialValue) {
@@ -5258,19 +5321,19 @@ function getWidgetExecuteParam(widgetConfig) {
         nativeQuery = _widgetConfig.chartStyles.table.withNoAggregators
     }
 
-    var groups = cols.concat(rows).filter(function(g) {
+    var groups = cols.concat(rows).filter(function (g) {
         return g.name !== '指标名称';
-    }).map(function(g) {
+    }).map(function (g) {
         return g.name;
     });
-    var aggregators = metrics.map(function(m) {
+    var aggregators = metrics.map(function (m) {
         return ({
             column: decodeMetricName(m.name),
             func: m.agg
         });
     });
     if (color) {
-        groups = groups.concat(color.items.map(function(c) {
+        groups = groups.concat(color.items.map(function (c) {
             return c.name;
         }));
     }
@@ -5321,12 +5384,15 @@ function getWidgetExecuteParam(widgetConfig) {
             }));
     }
 
+    var requestFilters = []
+    filters.forEach(function(item) {
+        requestFilters = requestFilters.concat(item.config.sqlModel)
+    })
+
     var requestParams = {
         groups: groups,
         aggregators: aggregators,
-        filters: filters.map(function(i) {
-            return i.config.sql;
-        }),
+        filters: requestFilters,
         params: [],
         orders: orders,
         cache: cache,
@@ -5340,7 +5406,7 @@ function getWidgetExecuteParam(widgetConfig) {
 // var fs = require('fs')
 // var dashboardConfigJson = fs.readFileSync('./dashboard.json', 'UTF-8')
 // var widgetConfigJson = fs.readFileSync('./widget.json', 'UTF-8')
-// var result = getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, 704)
+// var result = getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, 177)
 // console.log(JSON.stringify(result))
 // fs.writeFileSync('./globalFilters.json', JSON.stringify(result))
 // // #endregion

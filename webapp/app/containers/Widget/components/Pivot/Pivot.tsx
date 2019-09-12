@@ -22,7 +22,7 @@ import {
   PIVOT_LEGEND_PADDING,
   PIVOT_DEFAULT_SCATTER_SIZE,
   DEFAULT_SPLITER
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 import Corner from './Corner'
 import RowTitle from './RowTitle'
 import RowHeader from './RowHeader'

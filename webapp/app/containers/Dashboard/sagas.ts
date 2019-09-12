@@ -67,10 +67,10 @@ import {
   loadWidgetCsvFail
 } from './actions'
 
-import request from '../../utils/request'
-import { errorHandler } from '../../utils/util'
-import api from '../../utils/api'
-import config, { env } from '../../globalConfig'
+import request from 'utils/request'
+import { errorHandler } from 'utils/util'
+import api from 'utils/api'
+import config, { env } from 'app/globalConfig'
 const shareHost = config[env].shareHost
 
 export function* getDashboards (action) {

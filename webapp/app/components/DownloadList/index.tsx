@@ -19,24 +19,12 @@
  */
 
 import React from 'react'
-import { connect } from 'react-redux'
-import { createStructuredSelector } from 'reselect'
 import classnames from 'classnames'
 import { Icon, Empty, Popover, Tag, Badge } from 'antd'
 import { IDownloadRecord, DownloadStatus } from 'app/containers/App/types'
 import { DOWNLOAD_STATUS_COLORS, DOWNLOAD_STATUS_LOCALE } from 'app/containers/App/constants'
 
-import {
-  loadDownloadList,
-  downloadFile
-} from '../../containers/App/actions'
-import {
-  makeSelectDownloadList,
-  makeSelectDownloadListLoading
-} from '../../containers/App/selectors'
-
 const styles = require('./DownloadList.less')
-const utilStyles = require('../../assets/less/util.less')
 
 interface IDownloadListProps {
   downloadList: IDownloadRecord[]
@@ -128,15 +116,4 @@ function download (props: IDownloadListProps, record: IDownloadRecord) {
   }
 }
 
-const mapStateToProps = createStructuredSelector({
-  downloadList: makeSelectDownloadList()
-})
-
-function mapDispatchToProps (dispatch) {
-  return {
-    onLoadDownloadList: () => dispatch(loadDownloadList()),
-    onDownloadFile: (id) => dispatch(downloadFile(id))
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(DownloadList)
+export default DownloadList

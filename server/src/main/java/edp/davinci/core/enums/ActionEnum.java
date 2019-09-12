@@ -29,5 +29,6 @@ package edp.davinci.core.enums;
 public enum ActionEnum {
     DOWNLOAD,
     MAIL,
+    SHAREDOWNLOAD
     ;
 }

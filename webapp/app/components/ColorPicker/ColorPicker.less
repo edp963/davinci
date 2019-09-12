@@ -1,4 +1,4 @@
-@import "../../assets/less/variable";
+@import "~assets/less/variable";
 
 .picker {
   height: 28px;
@@ -9,9 +9,29 @@
   align-items: center;
   cursor: pointer;
 
-  .colorIndicator {
-    width: 14px;
-    height: 14px;
-    display: block;
+  &:global(-sm) {
+    height: 24px;
+    width: 24px;
+
+    .colorIndicator {
+      height: 12px;
+      width: 12px;
+    }
   }
+
+  &:global(-lg) {
+    height: 40px;
+    width: 40px;
+
+    .colorIndicator {
+      height: 20px;
+      width: 20px;
+    }
+  }
+}
+
+.colorIndicator {
+  width: 14px;
+  height: 14px;
+  display: block;
 }

@@ -4,13 +4,13 @@ import { Link } from 'react-router'
 import { Icon, Col, message, Row, Input, Form, Button, Breadcrumb } from 'antd'
 const FormItem = Form.Item
 const styles = require('./profile.less')
-import Box from '../../components/Box'
-import UploadAvatar from '../../components/UploadAvatar'
+import Box from 'components/Box'
+import UploadAvatar from 'components/UploadAvatar'
 import { createStructuredSelector } from 'reselect'
 import { makeSelectLoginUser } from '../App/selectors'
 import { compose } from 'redux'
 import { updateProfile, checkNameUniqueAction, uploadAvatarSuccess } from '../App/actions'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IProfileProps {
   form: any

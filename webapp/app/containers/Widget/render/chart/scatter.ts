@@ -32,7 +32,7 @@ import {
   getGridPositions,
   getSymbolSize
 } from './util'
-import { PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
+import { PIVOT_DEFAULT_SCATTER_SIZE } from 'app/globalConstants'
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
@@ -66,11 +66,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   } = splitLine
   const { selectedItems } = drillOptions
   const labelOption = {
-    label: getLabelOption('scatter', labelStyleConfig, true, {
-      formatter (param) {
-        return param.data.value[2]
-      }
-    })
+    label: getLabelOption('scatter', labelStyleConfig, metrics)
   }
 
   let sizeRate = 0

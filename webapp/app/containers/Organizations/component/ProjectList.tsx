@@ -5,14 +5,13 @@ import { Row, Col, Tooltip, Button, Pagination, Input, Modal } from 'antd'
 import ProjectItem from './ProjectItem'
 import AntdFormType from 'antd/lib/form/Form'
 import ProjectEditForm from './Project'
-import AdminForm from './Transfer'
 import ProjectForm from './ProjectForm'
 import * as Organization from '../Organization'
-import ComponentPermission from '../../Account/components/checkMemberPermission'
-import { CREATE_ORGANIZATION_PROJECT } from '../../App/constants'
-import { checkNameUniqueAction } from '../../App/actions'
-import { IStarUser, IProject } from '../../Projects'
-import { loadOrganizations } from '../../Organizations/actions'
+import ComponentPermission from 'containers/Account/components/checkMemberPermission'
+import { CREATE_ORGANIZATION_PROJECT } from 'containers/App/constants'
+import { checkNameUniqueAction } from 'containers/App/actions'
+import { IStarUser, IProject } from 'containers/Projects'
+import { loadOrganizations } from 'containers/Organizations/actions'
 import { createStructuredSelector } from 'reselect'
 import {
   loadOrganizationProjects,
@@ -30,7 +29,7 @@ import {
   makeSelectInviteMemberList,
   makeSelectCurrentOrganizationProject
 } from '../selectors'
-import { makeSelectVizs } from '../../Schedule/selectors'
+import { makeSelectVizs } from 'containers/Schedule/selectors'
 import {
   addProject,
   editProject,
@@ -43,17 +42,15 @@ import {
   addProjectAdmin,
   transferProject,
   deleteProjectAdmin
-} from '../../Projects/actions'
-import injectReducer from '../../../utils/injectReducer'
-import injectSaga from '../../../utils/injectSaga'
-import scheduleReducer from '../../Schedule/reducer'
-import scheduleSaga from '../../Schedule/sagas'
-import { loadVizs } from '../../Schedule/actions'
-import { loadDashboardDetail, loadDashboards } from '../../Dashboard/actions'
-import { makeSelectLoginUser } from '../../App/selectors'
+} from 'containers/Projects/actions'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
+import scheduleReducer from 'containers/Schedule/reducer'
+import scheduleSaga from 'containers/Schedule/sagas'
+import { loadVizs } from 'containers/Schedule/actions'
+import { makeSelectLoginUser } from 'containers/App/selectors'
 const styles = require('../Organization.less')
-import { makeSelectStarUserList, makeSelectCollectProjects } from '../../Projects/selectors'
-import { resolve } from 'path';
+import { makeSelectStarUserList, makeSelectCollectProjects } from 'containers/Projects/selectors'
 
 interface IProjectsState {
   formType?: string

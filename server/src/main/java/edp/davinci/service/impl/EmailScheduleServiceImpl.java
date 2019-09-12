@@ -22,15 +22,18 @@ package edp.davinci.service.impl;
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.common.job.ScheduleService;
-import edp.core.exception.ServerException;
-import edp.core.utils.*;
+import edp.core.utils.CollectionUtils;
+import edp.core.utils.MailUtils;
+import edp.core.utils.ServerUtils;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.CronJobMediaType;
-import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.cronJobDto.CronJobConfig;
 import edp.davinci.dto.cronJobDto.CronJobContent;
+import edp.davinci.dto.cronJobDto.ExcelContent;
+import edp.davinci.dto.cronJobDto.MsgMailExcel;
 import edp.davinci.dto.dashboardDto.DashboardWithPortal;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
@@ -41,7 +44,12 @@ import edp.davinci.model.User;
 import edp.davinci.model.Widget;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.ShareService;
-import edp.davinci.service.WidgetService;
+import edp.davinci.service.excel.ExecutorUtil;
+import edp.davinci.service.excel.MsgWrapper;
+import edp.davinci.service.excel.WidgetContext;
+import edp.davinci.service.excel.WorkBookContext;
+import edp.davinci.service.screenshot.ImageContent;
+import edp.davinci.service.screenshot.ScreenshotUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,16 +57,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.script.ScriptEngine;
-import java.io.File;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
-import java.net.URLDecoder;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
+import static edp.core.consts.Consts.EMPTY;
 import static edp.core.consts.Consts.SEMICOLON;
 import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
@@ -72,12 +79,6 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
     @Autowired
     private MailUtils mailUtils;
-
-    @Value("${file.phantomJs-path}")
-    private String phantomJsFile;
-
-    @Value("${phantomjs_home}")
-    private String phantomJsHome;
 
     @Value("${file.userfiles-path}")
     private String fileBasePath;
@@ -98,49 +99,54 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     private ProjectService projectService;
 
     @Autowired
-    private WidgetService widgetService;
-
-    @Autowired
     private ShareService shareService;
 
     @Autowired
     private ServerUtils serverUtils;
 
 
-    private volatile boolean imageExit = false;
+    @Autowired
+    private ScreenshotUtil screenshotUtil;
+
+
+    @Value("${source.result-limit:1000000}")
+    private int resultLimit;
 
     private static final String portal = "PORTAL";
 
-    /**
-     * outlook最大图片显示高度为1728px
-     */
-    private final int imageMaxHeight = 1720;
+    private final static ExecutorService executorService = Executors.newFixedThreadPool(4);
 
-    private final String baseUrl = File.separator + "tempFiles" + File.separator;
+    private final static ReentrantLock lock = new ReentrantLock();
 
     @Override
     public void execute(long jobId) throws Exception {
+        log.info("cron job execute: {}", jobId);
         CronJob cronJob = cronJobMapper.getById(jobId);
         if (null != cronJob && !StringUtils.isEmpty(cronJob.getConfig())) {
+            log.info("cron job start: {}", jobId);
             CronJobConfig cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
             if (null != cronJobConfig && !StringUtils.isEmpty(cronJobConfig.getType())) {
                 Map<String, Object> content = new HashMap<>();
                 User user = userMapper.selectByEmail(cronJobConfig.getTo());
-                String username = cronJobConfig.getTo().split("@")[0];
+                String username = cronJobConfig.getTo().split(Constants.AT_SYMBOL)[0];
                 if (null != user) {
                     username = StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName();
                 }
                 content.put("username", username);
 
-                List<File> attachments = null;
+                List<ExcelContent> excels = null;
+                List<ImageContent> images = null;
+
+                User creater = userMapper.getById(cronJob.getCreateBy());
+
                 if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-                    attachments = generateImages(cronJobConfig, cronJob.getCreateBy());
+                    images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
-                    attachments = generateExcels(cronJobConfig, user);
+                    excels = generateExcels(cronJobConfig, creater);
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
-                    attachments = new ArrayList<>();
-                    attachments.addAll(generateImages(cronJobConfig, cronJob.getCreateBy()));
-                    attachments.addAll(generateExcels(cronJobConfig, user));
+                    images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
+                    excels = new ArrayList<>();
+                    excels.addAll(generateExcels(cronJobConfig, creater));
                 }
 
                 String[] cc = null, bcc = null;
@@ -152,14 +158,19 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     bcc = cronJobConfig.getBcc().split(SEMICOLON);
                 }
 
-                mailUtils.sendTemplateAttachmentsEmail(
-                        cronJobConfig.getSubject(),
-                        cronJobConfig.getTo(),
-                        cc,
-                        bcc,
-                        Constants.SCHEDULE_MAIL_TEMPLATE,
-                        content,
-                        attachments);
+                if (!CollectionUtils.isEmpty(excels) || !CollectionUtils.isEmpty(images)) {
+                    mailUtils.sendTemplateAttachmentsEmail(
+                            cronJobConfig.getSubject(),
+                            cronJobConfig.getTo(),
+                            cc,
+                            bcc,
+                            Constants.SCHEDULE_MAIL_TEMPLATE,
+                            content,
+                            excels,
+                            images);
+                }
+            } else {
+                log.warn("cron job config is not expected format: {}", cronJob.getConfig());
             }
         }
     }
@@ -168,102 +179,24 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     /**
      * 根据job配置截取图片
      *
+     * @param jobId
      * @param cronJobConfig
      * @param userId
      * @return
      * @throws Exception
      */
-    private List<File> generateImages(CronJobConfig cronJobConfig, Long userId) throws Exception {
-        List<File> files = new ArrayList<>();
+    private List<ImageContent> generateImages(long jobId, CronJobConfig cronJobConfig, Long userId) throws Exception {
+        int order = 0;
+        List<ImageContent> imageContents = new ArrayList<>();
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
-            String imageName = UUID.randomUUID() + ".png";
-            String imageUrl = baseUrl + DateUtils.getNowDateYYYYMM() + File.separator + imageName;
-            String imagePath = fileBasePath + imageUrl;
-            File file = new File(fileBasePath + baseUrl + DateUtils.getNowDateYYYYMM());
-            if (!file.exists()) {
-                file.mkdirs();
-            }
-
-            imagePath = imagePath.replaceAll(File.separator + "{2,}", File.separator);
-
             String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId());
-            boolean bol = phantomRender(url, imagePath);
-            if (bol) {
-                File image = new File(imagePath);
-                files.add(image);
-            }
+            imageContents.add(new ImageContent(order, cronJobContent.getId(), cronJobContent.getContentType(), url));
+            order++;
         }
-        return files;
-    }
-
-    /**
-     * phantom打开连接并截图
-     *
-     * @param url
-     * @param imgPath
-     * @return
-     * @throws Exception
-     */
-    private boolean phantomRender(String url, String imgPath) throws Exception {
-        boolean result = false;
-        if (!StringUtils.isEmpty(phantomJsHome) && !StringUtils.isEmpty(phantomJsFile)) {
-            String rendJsPath = URLDecoder.decode(phantomJsFile, "UTF-8");
-            String cmd = buildCmd(phantomJsHome, rendJsPath, url, imgPath);
-            log.info("phantom command : {}", cmd);
-            Process process = Runtime.getRuntime().exec(cmd);
-            InputStreamReader isr = new InputStreamReader(process.getInputStream());
-            LineNumberReader input = new LineNumberReader(isr);
-            String line = input.readLine();
-            while (null != line) {
-                log.info(line);
-                line = input.readLine();
-            }
-            log.info("Finished command: {}", cmd);
-            process.destroy();
-            result = checkFileExists(imgPath);
+        if (!CollectionUtils.isEmpty(imageContents)) {
+            screenshotUtil.screenshot(jobId, imageContents);
         }
-        return result;
-    }
-
-    /**
-     * 生成运行命令
-     *
-     * @param args
-     * @return
-     */
-    private String buildCmd(String... args) {
-        StringBuilder sb = new StringBuilder();
-        for (String exp : args) {
-            sb.append(exp).append(" ");
-        }
-        return sb.toString().trim();
-    }
-
-    /**
-     * 检查文件
-     *
-     * @param filePath
-     * @return
-     */
-    private boolean checkFileExists(String filePath) {
-        boolean result = false;
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
-        Future<Boolean> future = executorService.submit(() -> {
-            while (!imageExit && !new File(filePath).exists()) {
-                Thread.sleep(1000);
-            }
-            return true;
-        });
-
-        try {
-            result = future.get(10 * 60 * 1000, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServerException(e.getMessage());
-        } finally {
-            executorService.shutdown();
-        }
-        return result;
+        return imageContents;
     }
 
     private String getContentUrl(Long userId, String contentType, Long contengId) {
@@ -279,7 +212,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             type = "";
         }
 
-        sb.append(serverUtils.getHost())
+        sb.append(serverUtils.getLocalHost())
                 .append("/share.html#/share/")
                 .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("portal") ? "dashboard" : contentType)
                 .append("?shareInfo=")
@@ -300,58 +233,83 @@ public class EmailScheduleServiceImpl implements ScheduleService {
      * @return
      * @throws Exception
      */
-    private List<File> generateExcels(CronJobConfig cronJobConfig, User user) throws Exception {
-        List<File> files = new ArrayList<>();
+    private List<ExcelContent> generateExcels(CronJobConfig cronJobConfig, User user) throws Exception {
+        ScriptEngine engine = getExecuptParamScriptEngine();
+
+        Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
+
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
             if (CheckEntityEnum.DASHBOARD.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())
                     || portal.equalsIgnoreCase(cronJobContent.getContentType().trim())) {
                 DashboardWithPortal dashboard = dashboardMapper.getDashboardWithPortalAndProject(cronJobContent.getId());
                 if (dashboard != null) {
-                    ScriptEngine engine = getExecuptParamScriptEngine();
-                    Map<Long, ViewExecuteParam> executeParamMap = new HashMap<>();
+
+                    ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
+                    boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
+
                     Set<WidgetWithRelationDashboardId> set = widgetMapper.getByDashboard(dashboard.getId());
-                    Set<Widget> widgets = new HashSet<>();
                     if (!CollectionUtils.isEmpty(set)) {
+                        List<WidgetContext> widgetContexts = new ArrayList<>();
                         set.forEach(w -> {
                             Widget widget = new Widget();
                             BeanUtils.copyProperties(w, widget);
-                            widgets.add(widget);
-                            executeParamMap.put(w.getId(), getViewExecuteParam((engine), dashboard.getConfig(), widget.getConfig(), w.getRelationId()));
+                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, dashboard.getConfig(), widget.getConfig(), w.getRelationId());
+                            widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
                         });
-                    }
-                    if (!CollectionUtils.isEmpty(widgets)) {
-                        String filePath = fileBasePath + baseUrl + DateUtils.getNowDateYYYYMM() + File.separator + dashboard.getName() + "-" + UUID.randomUUID() + FileTypeEnum.XLSX.getFormat();
 
-                        filePath = filePath.replaceAll(File.separator + "{2,}", File.separator);
-
-                        ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
-                        File file = widgetService.writeExcel(widgets, projectDetail, executeParamMap, filePath, user, false);
-                        files.add(file);
+                        workBookContextMap.put(dashboard.getName(), WorkBookContext.newWorkBookContext(widgetContexts, user, resultLimit));
                     }
                 }
             } else if (CheckEntityEnum.DISPLAY.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())) {
                 Display display = displayMapper.getById(cronJobContent.getId());
                 if (display != null) {
+
+                    ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
+                    boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
+
                     Set<Widget> widgets = widgetMapper.getByDisplayId(display.getId());
                     if (!CollectionUtils.isEmpty(widgets)) {
-                        String filePath = fileBasePath + baseUrl + DateUtils.getNowDateYYYYMM() + File.separator + display.getName() + "-" + UUID.randomUUID() + FileTypeEnum.XLSX.getFormat();
-                        filePath = filePath.replaceAll(File.separator + "{2,}", File.separator);
-                        ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
-                        File file = widgetService.writeExcel(widgets, projectDetail, null, filePath, user, false);
-                        files.add(file);
+                        List<WidgetContext> widgetContexts = new ArrayList<>();
+                        widgets.forEach(widget -> {
+                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, null, widget.getConfig(), null);
+                            widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
+                        });
+
+                        workBookContextMap.put(display.getName(), WorkBookContext.newWorkBookContext(widgetContexts, user, resultLimit));
                     }
                 }
             }
         }
 
-        //多个文件压缩至zip包
-        if (null != files && files.size() > 1) {
-            File zipFile = new File(fileBasePath + baseUrl + DateUtils.getNowDateYYYYMM() + File.separator + UUID.randomUUID() + ".zip");
-            FileUtils.zipFile(files, zipFile);
-            files.clear();
-            files.add(zipFile);
+        if (CollectionUtils.isEmpty(workBookContextMap)) {
+            return null;
         }
-        return files;
+
+        CountDownLatch countDownLatch = new CountDownLatch(workBookContextMap.size());
+
+        List<ExcelContent> excelContents = new CopyOnWriteArrayList<>();
+
+        ExecutorUtil.printThreadPoolStatusLog(executorService, "EmailGenerateExcelsExecutorService");
+        workBookContextMap.forEach((name, context) -> executorService.submit(() -> {
+            try {
+                lock.lock();
+                String uuid = UUID.randomUUID().toString().replace("-", EMPTY);
+                Condition condition = lock.newCondition();
+                MsgMailExcel msgMailExcel = new MsgMailExcel(lock, condition);
+                context.setWrapper(new MsgWrapper(msgMailExcel, ActionEnum.MAIL, uuid));
+                ExecutorUtil.submitWorkbookTask(context);
+                condition.await();
+                excelContents.add(new ExcelContent(name, msgMailExcel.getFilePath()));
+                countDownLatch.countDown();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                lock.unlock();
+            }
+        }));
+
+        countDownLatch.await();
+        return excelContents.isEmpty() ? null : excelContents;
     }
 
 }

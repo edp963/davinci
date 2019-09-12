@@ -22,6 +22,8 @@ import { fromJS } from 'immutable'
 import { ActionTypes } from './constants'
 import { GraphTypes } from '../../../app/containers/Display/components/util'
 
+import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
+
 const initialState = fromJS({
   title: '',
   display: null,
@@ -78,6 +80,7 @@ function displayReducer (state = initialState, { type, payload }) {
           }
         })
     case ActionTypes.LOAD_LAYER_DATA_SUCCESS:
+      fieldGroupedSort(payload.data.resultList, payload.requestParams.customOrders)
       return state
         .set('layersInfo', {
           ...layersInfo,

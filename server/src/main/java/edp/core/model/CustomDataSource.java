@@ -28,6 +28,7 @@ import static edp.core.consts.Consts.EMPTY;
 public class CustomDataSource {
     private String name;
     private String desc;
+    private String version;
     private String driver;
     private String keyword_prefix;
     private String keyword_suffix;
