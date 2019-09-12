@@ -44,12 +44,12 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
 
     boolean statisticOpen = false;  //是否开启埋点统计
 
-    @Value("${buried_points.elastic_index_prefix:''}")
+    @Value("${statistic.elastic_index_prefix:''}")
     private String elasticIndexPrefix;
 
     @PostConstruct
     public void init(){
-        String statistic_open = environment.getProperty("buried_points.statistic_open");
+        String statistic_open = environment.getProperty("statistic.enable");
         if("true".equalsIgnoreCase(statistic_open)){
             this.statisticOpen = true;
         }
@@ -58,7 +58,7 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
     @Override
     public <T> void insert(List<T> infoList, Class clz){
         if(statisticOpen){
-            String elastic_urls = environment.getProperty("buried_points.elastic_urls");
+            String elastic_urls = environment.getProperty("statistic.elastic_urls");
             if(StringUtils.isBlank(elastic_urls) && !durl.equals(this.sqlUtils.getJdbcUrl())){
                 this.sqlUtils = this.sqlUtils.init(durl, username, password, null, false);
             }
@@ -68,7 +68,7 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
 
         String tableName = getTableName4Info(clz);
 
-        String elastic_urls = environment.getProperty("buried_points.elastic_urls");
+        String elastic_urls = environment.getProperty("statistic.elastic_urls");
         if(StringUtils.isNotBlank(elastic_urls)){
             String index = StringUtils.isBlank(elasticIndexPrefix) ? tableName : elasticIndexPrefix + "_" + tableName;
             elasticOperationService.batchInsert(index, index, infoList);

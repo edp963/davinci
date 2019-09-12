@@ -87,7 +87,7 @@ public class LoginController {
         }
 
         UserLoginResult userLoginResult = new UserLoginResult(user);
-        String statistic_open = environment.getProperty("buried_points.statistic_open");
+        String statistic_open = environment.getProperty("statistic.enable");
         if("true".equalsIgnoreCase(statistic_open)){
             userLoginResult.setStatisticOpen(true);
         }

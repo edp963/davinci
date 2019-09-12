@@ -27,12 +27,12 @@ public class ElasticConfigration {
 
     @PostConstruct
     public void initialize() throws Exception {
-        String statistic_open = environment.getProperty("buried_points.statistic_open");
+        String statistic_open = environment.getProperty("statistic.enable");
         if(StringUtils.isBlank(statistic_open) || "false".equalsIgnoreCase(statistic_open)){
             return;
         }
 
-        String elastic_urls = environment.getProperty("buried_points.elastic_urls");
+        String elastic_urls = environment.getProperty("statistic.elastic_urls");
         if(StringUtils.isBlank(elastic_urls)){
             return;
         }
