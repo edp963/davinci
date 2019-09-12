@@ -514,23 +514,26 @@ public class ViewServiceImpl implements ViewService {
 
     public List<String> convertFilters(List<String> filterStrs, Source source){
         List<String> whereClauses = new ArrayList<>();
-        if(null == filterStrs || filterStrs.isEmpty()){
-            return null;
-        }
-
-        log.info("convertFilters before : filterStrs = {}", JSON.toJSON(filterStrs));
         List<SqlFilter> filters = new ArrayList<>();
-        for(String str : filterStrs){
-            SqlFilter obj = JSON.parseObject(str, SqlFilter.class);
-            if(!StringUtils.isEmpty(obj.getName())){
-                obj.setName(ViewExecuteParam.getField(obj.getName(), source.getJdbcUrl(), source.getDbVersion()));
+        try{
+            if(null == filterStrs || filterStrs.isEmpty()){
+                return null;
             }
-            filters.add(obj);
+
+            for(String str : filterStrs){
+                SqlFilter obj = JSON.parseObject(str, SqlFilter.class);
+                if(!StringUtils.isEmpty(obj.getName())){
+                    obj.setName(ViewExecuteParam.getField(obj.getName(), source.getJdbcUrl(), source.getDbVersion()));
+                }
+                filters.add(obj);
+            }
+            filters.forEach(filter -> whereClauses.add(SqlFilter.dealFilter(filter)));
+
+        }catch (Exception e){
+            log.error("convertFilters error . filterStrs = {}, source = {}, filters = {} , whereClauses = {} ",
+                    JSON.toJSON(filterStrs), JSON.toJSON(source), JSON.toJSON(filters), JSON.toJSON(whereClauses));
+            throw e;
         }
-//        filterStrs.forEach(str -> filters.add(JSON.parseObject(str, SqlFilter.class)));
-        log.info("convertFilters filters = {}", JSON.toJSON(filters));
-        filters.forEach(filter -> whereClauses.add(SqlFilter.dealFilter(filter)));
-        log.info("convertFilters after : whereClauses = {}", whereClauses);
         return whereClauses;
     }
 
