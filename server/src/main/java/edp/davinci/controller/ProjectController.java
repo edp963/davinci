@@ -336,15 +336,15 @@ public class ProjectController extends BaseController {
      * 为project 添加管理员
      *
      * @param id
-     * @param adminId
+     * @param adminIds
      * @param user
      * @param request
      * @return
      */
     @ApiOperation(value = "add an admin for a project")
-    @PostMapping(value = "/{id}/admin/{adminId}")
+    @PostMapping(value = "/{id}/admins")
     public ResponseEntity addProjectAdmin(@PathVariable Long id,
-                                          @PathVariable Long adminId,
+                                          @RequestBody Long[] adminIds,
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
         if (invalidId(id)) {
@@ -352,13 +352,13 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        if (invalidId(adminId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid admin id");
+        if (adminIds.length == 0) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid admin ids");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        RelProjectAdminDto relProjectAdminDto = projectService.addAdmin(id, adminId, user);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(relProjectAdminDto));
+        List<RelProjectAdminDto> list = projectService.addAdmins(id, Arrays.asList(adminIds), user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(list));
     }
 
     /**

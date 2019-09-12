@@ -52,6 +52,7 @@ public class SheetContext implements Serializable {
     private String name;
     private int sheetNo;
     private MsgWrapper wrapper;
+    private int resultLimit;
 
     private SheetContext(List<String> executeSql,
                          List<String> querySql,
@@ -68,7 +69,8 @@ public class SheetContext implements Serializable {
                          Long widgetId,
                          String name,
                          int sheetNo,
-                         MsgWrapper wrapper) {
+                         MsgWrapper wrapper,
+                         int resultLimit) {
         this.executeSql = executeSql;
         this.querySql = querySql;
         this.totalColumns = totalColumns;
@@ -85,6 +87,7 @@ public class SheetContext implements Serializable {
         this.name = name;
         this.sheetNo = sheetNo;
         this.wrapper = wrapper;
+        this.resultLimit = resultLimit;
     }
 
     public static SheetContextBuilder newSheetContextBuilder() {
@@ -219,6 +222,14 @@ public class SheetContext implements Serializable {
         this.wrapper = wrapper;
     }
 
+    public int getResultLimit() {
+        return resultLimit;
+    }
+
+    public void setResultLimit(int resultLimit) {
+        this.resultLimit = resultLimit;
+    }
+
     @Override
     public String toString() {
         return "SheetContext{" +
@@ -254,6 +265,7 @@ public class SheetContext implements Serializable {
         private String name;
         private int sheetNo;
         private MsgWrapper wrapper;
+        private int resultLimit;
 
         public SheetContextBuilder() {
         }
@@ -329,6 +341,11 @@ public class SheetContext implements Serializable {
             return this;
         }
 
+        public SheetContextBuilder buildResultLimist(int resultLimit) {
+            this.resultLimit = resultLimit;
+            return this;
+        }
+
 
         public SheetContext build() {
             return new SheetContext(
@@ -347,7 +364,8 @@ public class SheetContext implements Serializable {
                     this.widgetId,
                     this.name,
                     this.sheetNo,
-                    this.wrapper
+                    this.wrapper,
+                    this.resultLimit
             );
         }
 

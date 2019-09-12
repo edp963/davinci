@@ -19,6 +19,7 @@
 
 package edp.davinci.controller;
 
+import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.CurrentUser;
 import edp.davinci.common.controller.BaseController;
@@ -28,8 +29,10 @@ import edp.davinci.core.enums.DownloadType;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
 import edp.davinci.model.DownloadRecord;
+import edp.davinci.model.ShareDownloadRecord;
 import edp.davinci.model.User;
 import edp.davinci.service.DownloadService;
+import edp.davinci.service.ShareDownloadService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -69,6 +72,9 @@ public class DownloadController extends BaseController {
     @Autowired
     private DownloadService downloadService;
 
+    @Autowired
+    private ShareDownloadService shareDownloadService;
+
     @ApiOperation(value = "get download record page")
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity getDownloadRecordPage(@ApiIgnore @CurrentUser User user,
@@ -87,9 +93,6 @@ public class DownloadController extends BaseController {
                                                 HttpServletResponse response) {
         DownloadRecord record = downloadService.downloadById(id, token);
         try {
-//            response.addHeader("Content-Disposition", "attachment;filename=" + new String(record.getName().getBytes(), "UTF-8"));
-//            //response.addHeader("Content-Length", EMPTY + file.length());
-//            response.setContentType("application/octet-stream;charset=UTF-8");
             encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
             Streams.copy(new FileInputStream(new File(record.getPath())), response.getOutputStream(), true);
         } catch (Exception e) {
@@ -113,6 +116,77 @@ public class DownloadController extends BaseController {
     }
 
 
+    @ApiOperation(value = "submit share download")
+    @PostMapping(value = "/share/submit/{type}/{uuid}/{dataToken:.*}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @AuthIgnore
+    public ResponseEntity submitShareDownloadTask(@PathVariable(name = "type") String type,
+                                                  @PathVariable(name = "uuid") String uuid,
+                                                  @PathVariable(name = "dataToken") String dataToken,
+                                                  @Valid @RequestBody(required = false) DownloadViewExecuteParam[] params,
+                                                  @ApiIgnore @CurrentUser User user,
+                                                  HttpServletRequest request) {
+
+
+        if (StringUtils.isEmpty(dataToken)) {
+            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        List<DownloadViewExecuteParam> downloadViewExecuteParams = Arrays.asList(params);
+        boolean rst = shareDownloadService.submit(DownloadType.getDownloadType(type), uuid, dataToken, user, downloadViewExecuteParams);
+
+        return ResponseEntity.ok(rst ? new ResultMap().success() : new ResultMap().fail());
+    }
+
+
+    @ApiOperation(value = "get share download record page")
+    @GetMapping(value = "/share/page/{uuid}/{token:.*}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @AuthIgnore
+    public ResponseEntity getShareDownloadRecordPage(@PathVariable(name = "uuid") String uuid,
+                                                     @PathVariable(name = "token") String token,
+                                                     @ApiIgnore @CurrentUser User user,
+                                                     HttpServletRequest request) {
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        List<ShareDownloadRecord> records = shareDownloadService.queryDownloadRecordPage(uuid, token, user);
+
+        if (null == user) {
+            return ResponseEntity.ok(new ResultMap(tokenUtils).payloads(records));
+        } else {
+            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(records));
+        }
+    }
+
+
+    @ApiOperation(value = "get download record file")
+    @GetMapping(value = "/share/record/file/{id}/{uuid}/{token:.*}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @AuthIgnore
+    public ResponseEntity getShareDownloadRecordFile(@PathVariable(name = "id") String id,
+                                                     @PathVariable(name = "uuid") String uuid,
+                                                     @PathVariable(name = "token") String token,
+                                                     @ApiIgnore @CurrentUser User user,
+                                                     HttpServletRequest request,
+                                                     HttpServletResponse response) {
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareDownloadRecord record = shareDownloadService.downloadById(id, uuid, token, user);
+
+        try {
+            encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
+            Streams.copy(new FileInputStream(new File(record.getPath())), response.getOutputStream(), true);
+        } catch (Exception e) {
+            log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
+        }
+        return null;
+    }
+
+
     private void encodeFileName(HttpServletRequest request, HttpServletResponse response, String filename) throws UnsupportedEncodingException {
         response.setHeader("Content-Type", "application/force-download");
         // firefox浏览器
@@ -125,7 +199,6 @@ public class DownloadController extends BaseController {
             filename = new String(filename.getBytes("UTF-8"), "ISO8859-1");
         }
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
-//		response.setHeader("Content-Disposition", "attachment; filename="+ filename );
     }
 
     private static boolean isIE(HttpServletRequest request) {

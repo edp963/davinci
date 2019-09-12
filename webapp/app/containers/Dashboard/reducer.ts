@@ -75,13 +75,16 @@ import { ViewActionType } from '../View/actions'
 import {
   IGlobalControl,
   IControlRelatedField,
-  getVariableValue,
-  getModelValue,
-  deserializeDefaultValue,
   IMapItemControlRequestParams,
   IControlRequestParams
-} from '../../components/Filters'
+} from 'components/Filters/types'
+import {
+  getVariableValue,
+  getModelValue,
+  deserializeDefaultValue
+} from 'components/Filters/util'
 import { DownloadTypes } from '../App/types'
+import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 const initialState = fromJS({
@@ -218,7 +221,8 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
             interactId: '',
             rendered: false,
             renderType: 'rerender',
-            controlSelectOptions: {}
+            controlSelectOptions: {},
+            errorMessage: ''
           }
           return obj
         }, {}))
@@ -251,7 +255,8 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
               interactId: '',
               rendered: false,
               renderType: 'rerender',
-              controlSelectOptions: {}
+              controlSelectOptions: {},
+              errorMessage: ''
             }
             return obj
           }, {})
@@ -288,11 +293,13 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
           ...itemsInfo,
           [payload.itemId]: {
             ...itemsInfo[payload.itemId],
-            loading: true
+            loading: true,
+            errorMessage: ''
           }
         })
 
     case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS:
+      fieldGroupedSort(payload.result.resultList, payload.requestParams.customOrders)
       return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
@@ -376,13 +383,18 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
         }
       })
     case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE:
-      return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
-        ...itemsInfo,
-        [payload.itemId]: {
-          ...itemsInfo[payload.itemId],
-          loading: false
-        }
-      })
+      return payload.vizType === 'dashboard'
+        ? !!itemsInfo
+          ? state.set('currentItemsInfo', {
+            ...itemsInfo,
+            [payload.itemId]: {
+              ...itemsInfo[payload.itemId],
+              loading: false,
+              errorMessage: payload.errorMessage
+            }
+          })
+          : state
+        : state
 
     case LOAD_DASHBOARD_SHARE_LINK:
       return state.set('currentDashboardShareInfoLoading', true)

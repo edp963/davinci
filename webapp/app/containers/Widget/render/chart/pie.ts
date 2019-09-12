@@ -19,15 +19,10 @@
  */
 
 import { IChartProps } from '../../components/Chart'
-import {
-  decodeMetricName,
-  getTextWidth
-} from '../../components/util'
-import {
-  getLegendOption,
-  getLabelOption
-} from './util'
+import { decodeMetricName, getTextWidth } from '../../components/util'
+import { getLegendOption, getLabelOption } from './util'
 import { EChartOption } from 'echarts'
+import { getFormattedValue } from '../../components/Config/Format'
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
@@ -41,54 +36,50 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     tip
   } = chartProps
 
-  const {
-    label,
-    legend,
-    spec,
-    toolbox
-  } = chartStyles
+  const { label, legend, spec, toolbox } = chartStyles
 
-  const {
-    legendPosition,
-    fontSize
-  } = legend
+  const { legendPosition, fontSize } = legend
 
-  const {
-    circle,
-    roseType
-  } = spec
+  const { circle, roseType } = spec
   const { selectedItems } = drillOptions
   // formatter: '{b}({d}%)'
   const labelOption = {
-    label: getLabelOption('pie', label)
+    label: getLabelOption('pie', label, metrics)
   }
 
   const roseTypeValue = roseType ? 'radius' : ''
-  const radiusValue = (!circle && !roseType) || (!circle && roseType) ? `70%` : ['48%', '70%']
+  const radiusValue =
+    (!circle && !roseType) || (!circle && roseType) ? `70%` : ['48%', '70%']
 
   let seriesObj = {}
   const seriesArr = []
   let legendData = []
-  metrics.forEach((m) => {
-    const decodedMetricName = decodeMetricName(m.name)
-    if (cols.length || color.items.length) {
-      const groupColumns = color.items.map((c) => c.name).concat(cols.map((c) => c.name))
+  let grouped: { [key: string]: object[] } = {}
+
+  if (metrics.length <= 1) {
+    const groupColumns = color.items
+      .map((c) => c.name)
+      .concat(cols.map((c) => c.name))
       .reduce((distinctColumns, col) => {
         if (!distinctColumns.includes(col)) {
           distinctColumns.push(col)
         }
         return distinctColumns
       }, [])
-      const grouped = data.reduce((obj, val) => {
-        const groupingKey = groupColumns
-          .reduce((keyArr, col) => keyArr.concat(val[col]), [])
-          .join(String.fromCharCode(0))
-        if (!obj[groupingKey]) {
-          obj[groupingKey] = []
-        }
-        obj[groupingKey].push(val)
-        return obj
-      }, {})
+
+    grouped = data.reduce<{ [key: string]: object[] }>((obj, val) => {
+      const groupingKey = groupColumns
+        .reduce((keyArr, col) => keyArr.concat(val[col]), [])
+        .join(String.fromCharCode(0))
+      if (!obj[groupingKey]) {
+        obj[groupingKey] = []
+      }
+      obj[groupingKey].push(val)
+      return obj
+    }, {})
+
+    metrics.forEach((metric) => {
+      const decodedMetricName = decodeMetricName(metric.name)
 
       const seriesData = []
       Object.entries(grouped).forEach(([key, value]) => {
@@ -97,14 +88,16 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         value.forEach((v) => {
           const obj = {
             name: legendStr,
-            value: v[`${m.agg}(${decodedMetricName})`]
+            value: v[`${metric.agg}(${decodedMetricName})`]
           }
           seriesData.push(obj)
         })
       })
       let leftValue
       let topValue
-      const pieLeft = 56 + Math.max(...legendData.map((s) => getTextWidth(s, '', `${fontSize}px`)))
+      const pieLeft =
+        56 +
+        Math.max(...legendData.map((s) => getTextWidth(s, '', `${fontSize}px`)))
       switch (legendPosition) {
         case 'top':
           leftValue = width / 2
@@ -140,14 +133,23 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         name: '',
         type: 'pie',
         avoidLabelOverlap: false,
-        center: legend.showLegend ? [leftValue, topValue] : [width / 2, height / 2],
+        center: legend.showLegend
+          ? [leftValue, topValue]
+          : [width / 2, height / 2],
         color: colorArr,
         data: seriesData.map((data, index) => {
-          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
-            normal: {
-              opacity: 1
-            }
-          }} : {}
+          const itemStyleObj =
+            selectedItems &&
+            selectedItems.length &&
+            selectedItems.some((item) => item === index)
+              ? {
+                  itemStyle: {
+                    normal: {
+                      opacity: 1
+                    }
+                  }
+                }
+              : {}
           return {
             ...data,
             ...itemStyleObj
@@ -155,9 +157,9 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         }),
         itemStyle: {
           emphasis: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
           },
           normal: {
             opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
@@ -167,47 +169,74 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         roseType: roseTypeValue,
         radius: radiusValue
       }
-    } else {
-      legendData = []
-      seriesObj = {
-        name: decodedMetricName,
-        type: 'pie',
-        avoidLabelOverlap: false,
-        center: [width / 2, height / 2],
-        data: data.map((d, index) => {
-          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
-            normal: {
-              opacity: 1
-            }
-          }} : {}
-          return {
-            name: decodedMetricName,
-            value: d[`${m.agg}(${decodedMetricName})`],
-            ...itemStyleObj
-          }
-        }),
-        itemStyle: {
-          emphasis: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
-          },
-          normal: {
-            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
-          }
+
+      seriesArr.push(seriesObj)
+    })
+  } else {
+    legendData = []
+    seriesObj = {
+      type: 'pie',
+      avoidLabelOverlap: false,
+      center: [width / 2, height / 2],
+      data: metrics.map((metric) => {
+        const decodedMetricName = decodeMetricName(metric.name)
+        legendData.push(decodedMetricName)
+
+        const itemStyleObj =
+          selectedItems &&
+          selectedItems.length &&
+          selectedItems.some((item) => item === 0)
+            ? {
+                itemStyle: {
+                  normal: {
+                    opacity: 1
+                  }
+                }
+              }
+            : {}
+
+        return {
+          name: decodedMetricName,
+          value: data.reduce((sum, record) => sum + record[`${metric.agg}(${decodedMetricName})`], 0),
+          ...itemStyleObj
+        }
+      }),
+      itemStyle: {
+        emphasis: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)'
         },
-        ...labelOption,
-        roseType: roseTypeValue,
-        radius: radiusValue
-      }
+        normal: {
+          opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
+        }
+      },
+      ...labelOption,
+      roseType: roseTypeValue,
+      radius: radiusValue
     }
     seriesArr.push(seriesObj)
-  })
+  }
 
   const tooltip: EChartOption.Tooltip = {
     trigger: 'item',
-    formatter: '{b} <br/>{c} ({d}%)'
-}
+    formatter (params: EChartOption.Tooltip.Format) {
+      const { color, name, value, percent, dataIndex } = params
+      const tooltipLabels = []
+      if (color) {
+        tooltipLabels.push(
+          `<span class="widget-tooltip-circle" style="background: ${color}"></span>`
+        )
+      }
+      tooltipLabels.push(
+        `${name}<br/>${getFormattedValue(
+          value as number,
+          metrics[metrics.length > 1 ? dataIndex : 0].format
+        )}（${percent}%）`
+      )
+      return tooltipLabels.join('')
+    }
+  }
 
   return {
     tooltip,

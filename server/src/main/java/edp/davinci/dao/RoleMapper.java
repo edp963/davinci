@@ -69,4 +69,30 @@ public interface RoleMapper {
 
     @Delete({"delete from `role` where org_id = #{orgId}"})
     int deleteByOrg(Long orgId);
+
+
+    @Select({
+            "SELECT DISTINCT r.id FROM role r INNER JOIN rel_role_project rrp on rrp.role_id = r.id",
+            "INNER JOIN dashboard_portal p on p.project_id = rrp.project_id",
+            "INNER JOIN rel_role_user rru on rru.role_id = r.id",
+            "WHERE p.id = #{portalId} and rru.user_id = #{userId}"
+    })
+    List<Long> getRolesByUserAndPortal(@Param("userId") Long userId, @Param("portalId") Long portalId);
+
+
+    @Select({
+            "SELECT DISTINCT r.id FROM role r INNER JOIN rel_role_project rrp on rrp.role_id = r.id",
+            "INNER JOIN display d on d.project_id = rrp.project_id ",
+            "INNER JOIN rel_role_user rru on rru.role_id = r.id",
+            "WHERE d.id = #{displayId} and rru.user_id = #{userId}"
+    })
+    List<Long> getRolesByUserAndDisplay(@Param("userId") Long userId, @Param("displayId") Long displayId);
+
+    @Select({
+            "SELECT DISTINCT r.id FROM role r",
+            "INNER JOIN rel_role_project rrp on rrp.role_id = r.id",
+            "INNER JOIN rel_role_user rru on rru.role_id = r.id",
+            "WHERE rrp.project_id = #{projectId} and rru.user_id = #{userId}"
+    })
+    List<Long> getRolesByUserAndProject(@Param("userId") Long userId, @Param("projectId") Long projectId);
 }

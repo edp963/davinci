@@ -29,6 +29,7 @@ import edp.core.utils.FileUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
+import edp.davinci.core.enums.VizEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.displayDto.*;
 import edp.davinci.dto.projectDto.ProjectDetail;
@@ -52,17 +53,11 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service("displayService")
-public class DisplayServiceImpl implements DisplayService {
+public class DisplayServiceImpl extends VizCommonService implements DisplayService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
     private ProjectService projectService;
-
-    @Autowired
-    private DisplayMapper displayMapper;
-
-    @Autowired
-    private DisplaySlideMapper displaySlideMapper;
 
     @Autowired
     private MemDisplaySlideWidgetMapper memDisplaySlideWidgetMapper;
@@ -77,16 +72,7 @@ public class DisplayServiceImpl implements DisplayService {
     private FileUtils fileUtils;
 
     @Autowired
-    private RoleMapper roleMapper;
-
-    @Autowired
     private ViewMapper viewMapper;
-
-    @Autowired
-    private RelRoleDisplayMapper relRoleDisplayMapper;
-
-    @Autowired
-    private RelRoleSlideMapper relRoleSlideMapper;
 
     @Autowired
     private RelRoleDisplaySlideWidgetMapper relRoleDisplaySlideWidgetMapper;
@@ -176,7 +162,8 @@ public class DisplayServiceImpl implements DisplayService {
         ProjectDetail projectDetail = projectService.getProjectDetail(displayWithProject.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
-        boolean disable = relRoleDisplayMapper.isDisable(id, user.getId());
+        List<Long> disableDisplays = getDisableVizs(user.getId(), projectDetail.getId(), null, VizEnum.DISPLAY);
+        boolean disable = disableDisplays.contains(id);
 
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
@@ -230,9 +217,10 @@ public class DisplayServiceImpl implements DisplayService {
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
 
-        boolean disable = relRoleDisplayMapper.isDisable(displaySlide.getDisplayId(), user.getId());
+        List<Long> disableDisplays = getDisableVizs(user.getId(), display.getProjectId(), null, VizEnum.DISPLAY);
+        boolean disable = disableDisplays.contains(display.getId());
 
-        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), display.getId());
+        List<Long> disableSlides = getDisableVizs(user.getId(), display.getId(), null, VizEnum.SLIDE);
 
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
@@ -276,7 +264,10 @@ public class DisplayServiceImpl implements DisplayService {
 
         ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-        boolean disable = relRoleDisplayMapper.isDisable(display.getId(), user.getId());
+
+        List<Long> disableDisplays = getDisableVizs(user.getId(), projectDetail.getId(), null, VizEnum.DISPLAY);
+
+        boolean disable = disableDisplays.contains(display.getId());
 
 
         //校验权限
@@ -341,7 +332,9 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
-        boolean disable = relRoleDisplayMapper.isDisable(display.getId(), user.getId());
+
+        List<Long> disableDisplays = getDisableVizs(user.getId(), display.getProjectId(), null, VizEnum.DISPLAY);
+        boolean disable = disableDisplays.contains(display.getId());
 
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
@@ -396,15 +389,16 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
-        boolean disable = relRoleDisplayMapper.isDisable(displayId, user.getId());
+
+        List<Long> disableDisplays = getDisableVizs(user.getId(), display.getProjectId(), null, VizEnum.DISPLAY);
+        boolean disable = disableDisplays.contains(displayId);
 
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
             log.info("user {} have not permisson to update displaySlide", user.getUsername());
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
-        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), displayId);
-
+        List<Long> disableSlides = getDisableVizs(user.getId(), displayId, null, VizEnum.SLIDE);
 
         List<DisplaySlide> displaySlideList = new ArrayList<>();
         for (DisplaySlide displaySlide : displaySlides) {
@@ -449,8 +443,10 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-        boolean disable = relRoleDisplayMapper.isDisable(displayId, user.getId());
-        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), displayId);
+        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
+
+        boolean disable = disableDisplays.contains(displayId);
+        List<Long> disableSlides = getDisableVizs(user.getId(), displayId, null, VizEnum.SLIDE);
 
 
         //校验权限
@@ -549,8 +545,10 @@ public class DisplayServiceImpl implements DisplayService {
 
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-        boolean disable = relRoleDisplayMapper.isDisable(displayId, user.getId());
-        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), displayId);
+
+        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
+        boolean disable = disableDisplays.contains(displayId);
+        List<Long> disableSlides = getDisableVizs(user.getId(), displayId, null, VizEnum.SLIDE);
 
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
@@ -624,8 +622,10 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
-        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
+
+        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
+        boolean disable = disableDisplays.contains(slideWithDisplayAndProject.getDisplayId());
+        List<Long> disableSlides = getDisableVizs(user.getId(), slideWithDisplayAndProject.getDisplayId(), null, VizEnum.SLIDE);
 
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
@@ -675,8 +675,9 @@ public class DisplayServiceImpl implements DisplayService {
 
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
-        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
+        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
+        boolean disable = disableDisplays.contains(slideWithDisplayAndProject.getDisplayId());
+        List<Long> disableSlides = getDisableVizs(user.getId(), slideWithDisplayAndProject.getDisplayId(), null, VizEnum.SLIDE);
 
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
@@ -726,12 +727,18 @@ public class DisplayServiceImpl implements DisplayService {
             return null;
         }
 
-        List<Long> disableList = relRoleDisplayMapper.getDisableDisplayByUser(user.getId(), projectId);
+        List<Long> allDisplays = displays.stream().map(Display::getId).collect(Collectors.toList());
+
+        List<Long> disableList = getDisableVizs(user.getId(), projectId, allDisplays, VizEnum.DISPLAY);
 
         Iterator<Display> iterator = displays.iterator();
         while (iterator.hasNext()) {
             Display display = iterator.next();
-            if (!projectPermission.isProjectMaintainer() && (disableList.contains(display.getId()) || !display.getPublish())) {
+
+            boolean disable = !projectPermission.isProjectMaintainer() && disableList.contains(display.getId());
+            boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !display.getPublish();
+
+            if (disable || noPublish) {
                 iterator.remove();
             }
         }
@@ -764,9 +771,13 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-        boolean isDisable = relRoleDisplayMapper.isDisable(displayId, user.getId());
+        List<Long> disableDisplays = getDisableVizs(user.getId(), projectDetail.getId(), null, VizEnum.DISPLAY);
+        boolean isDisable = disableDisplays.contains(displayId);
 
-        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() || (!projectPermission.isProjectMaintainer() && isDisable)) {
+        boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !display.getPublish();
+
+        if (hidden || (!projectPermission.isProjectMaintainer() && isDisable) || noPublish) {
             return null;
         }
 
@@ -775,7 +786,9 @@ public class DisplayServiceImpl implements DisplayService {
             return null;
         }
 
-        List<Long> disableList = relRoleSlideMapper.getDisableSlides(user.getId(), display.getProjectId());
+        List<Long> allSlides = displaySlides.stream().map(DisplaySlide::getId).collect(Collectors.toList());
+
+        List<Long> disableList = getDisableVizs(user.getId(), display.getId(), allSlides, VizEnum.SLIDE);
 
         Iterator<DisplaySlide> iterator = displaySlides.iterator();
         while (iterator.hasNext()) {
@@ -836,7 +849,7 @@ public class DisplayServiceImpl implements DisplayService {
             return null;
         }
 
-        List<Long> disableList = relRoleSlideMapper.getDisableSlides(user.getId(), display.getProjectId());
+        List<Long> disableList = getDisableVizs(user.getId(), display.getId(), null, VizEnum.SLIDE);
         List<Long> disableMemDisplaySlideWidgets = relRoleDisplaySlideWidgetMapper.getDisableByUser(user.getId());
 
         Iterator<MemDisplaySlideWidget> iterator = widgetList.iterator();
@@ -891,8 +904,10 @@ public class DisplayServiceImpl implements DisplayService {
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
 
-        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
-        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
+        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
+
+        boolean disable = disableDisplays.contains(displayId);
+        List<Long> disableSlides = getDisableVizs(user.getId(), slideWithDisplayAndProject.getDisplayId(), null, VizEnum.SLIDE);
 
         if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission()
                 || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
@@ -959,8 +974,9 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
-        boolean disable = relRoleDisplayMapper.isDisable(slideWithDipaly.getDisplayId(), user.getId());
-        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDipaly.getDisplayId());
+        List<Long> disableDisplays = getDisableVizs(user.getId(), display.getProjectId(), null, VizEnum.DISPLAY);
+        boolean disable = disableDisplays.contains(display.getId());
+        List<Long> disableSlides = getDisableVizs(user.getId(), slideWithDipaly.getDisplayId(), null, VizEnum.SLIDE);
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
                 || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
             throw new UnAuthorizedExecption("Insufficient permissions");
@@ -1052,8 +1068,9 @@ public class DisplayServiceImpl implements DisplayService {
         SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(memDisplaySlideWidget.getDisplaySlideId());
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-        boolean disable = relRoleDisplayMapper.isDisable(slideWithDisplayAndProject.getDisplayId(), user.getId());
-        List<Long> disableSlides = relRoleSlideMapper.getDisableSlides(user.getId(), slideWithDisplayAndProject.getDisplayId());
+        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
+        boolean disable = disableDisplays.contains(slideWithDisplayAndProject.getDisplayId());
+        List<Long> disableSlides = getDisableVizs(user.getId(), slideWithDisplayAndProject.getDisplayId(), null, VizEnum.SLIDE);
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
                 || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideWithDisplayAndProject.getId())))) {
             throw new UnAuthorizedExecption("Insufficient permissions");
@@ -1116,7 +1133,8 @@ public class DisplayServiceImpl implements DisplayService {
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(displayWithProject.getProjectId(), user, false), user);
-        boolean disable = relRoleDisplayMapper.isDisable(id, user.getId());
+        List<Long> disableDisplays = getDisableVizs(user.getId(), displayWithProject.getProjectId(), null, VizEnum.DISPLAY);
+        boolean disable = disableDisplays.contains(id);
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
             throw new UnAuthorizedExecption("you have not permission to share this display");
         }

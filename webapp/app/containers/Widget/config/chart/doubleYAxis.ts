@@ -4,9 +4,9 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const doubleYAxis: IChartInfo = {
   id: ChartTypes.DoubleYAxis,
@@ -14,8 +14,7 @@ const doubleYAxis: IChartInfo = {
   title: '双Y轴图',
   icon: 'icon-duplex',
   coordinate: 'cartesian',
-  requireDimetions: 1,
-  requireMetrics: [2, 9999],
+  rules: [{ dimension: 1, metric: [2, 9999] }],
   dimetionAxis: 'col',
   data: {
     cols: {

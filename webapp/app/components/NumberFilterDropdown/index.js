@@ -23,7 +23,7 @@ import PropTypes from 'prop-types'
 
 import NumberRange from '../NumberRange'
 
-import utilStyles from '../../assets/less/util.less'
+import utilStyles from 'assets/less/util.less'
 
 export function NumberFilterDropdown (props) {
   return (

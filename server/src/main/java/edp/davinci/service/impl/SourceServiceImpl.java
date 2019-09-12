@@ -20,6 +20,7 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import edp.core.common.jdbc.JdbcDataSource;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
@@ -28,10 +29,7 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.DBTables;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.DateUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.SqlUtils;
+import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.*;
 import edp.davinci.core.model.DataUploadEntity;
@@ -45,6 +43,7 @@ import edp.davinci.dto.sourceDto.*;
 import edp.davinci.model.Source;
 import edp.davinci.model.User;
 import edp.davinci.model.View;
+import edp.davinci.runner.LoadSupportDataSourceRunner;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.SourceService;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +67,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
+
 
 @Slf4j
 @Service("sourceService")
@@ -85,10 +86,10 @@ public class SourceServiceImpl implements SourceService {
     private ViewMapper viewMapper;
 
     @Autowired
-    private FileUtils fileUtils;
+    private ProjectService projectService;
 
     @Autowired
-    private ProjectService projectService;
+    private JdbcDataSource jdbcDataSource;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -153,6 +154,7 @@ public class SourceServiceImpl implements SourceService {
         return sourceDetail;
     }
 
+
     /**
      * 创建source
      *
@@ -180,12 +182,21 @@ public class SourceServiceImpl implements SourceService {
         }
 
         //测试连接
-        boolean testConnection = isTestConnection(sourceCreate.getConfig());
+        SourceConfig config = sourceCreate.getConfig();
+
+        boolean testConnection = sqlUtils
+                .init(
+                        config.getUrl(),
+                        config.getUsername(),
+                        config.getPassword(),
+                        config.getVersion(),
+                        config.isExt()
+                ).testConnection();
 
         if (testConnection) {
             Source source = new Source().createdBy(user.getId());
             BeanUtils.copyProperties(sourceCreate, source);
-            source.setConfig(JSONObject.toJSONString(sourceCreate.getConfig()));
+            source.setConfig(JSONObject.toJSONString(config));
 
             int insert = sourceMapper.insert(source);
             if (insert > 0) {
@@ -228,8 +239,16 @@ public class SourceServiceImpl implements SourceService {
             throw new ServerException("the source name is already taken");
         }
 
+        SourceConfig sourceConfig = sourceInfo.getConfig();
         //测试连接
-        boolean testConnection = isTestConnection(sourceInfo.getConfig());
+        boolean testConnection = sqlUtils
+                .init(
+                        sourceConfig.getUrl(),
+                        sourceConfig.getUsername(),
+                        sourceConfig.getPassword(),
+                        sourceConfig.getVersion(),
+                        sourceConfig.isExt()
+                ).testConnection();
 
         if (testConnection) {
             String origin = source.toString();
@@ -301,7 +320,21 @@ public class SourceServiceImpl implements SourceService {
     public boolean testSource(SourceTest sourceTest) throws ServerException {
         boolean testConnection = false;
         try {
-            testConnection = sqlUtils.init(sourceTest.getUrl(), sourceTest.getUsername(), sourceTest.getPassword()).testConnection();
+            if (!sourceTest.isExt()) {
+                sourceTest.setVersion(null);
+            }
+            if (StringUtils.isEmpty(sourceTest.getVersion()) || JDBC_DATASOURCE_DEFAULT_VERSION.equals(sourceTest.getVersion())) {
+                sourceTest.setVersion(null);
+                sourceTest.setExt(false);
+            }
+            testConnection = sqlUtils
+                    .init(
+                            sourceTest.getUrl(),
+                            sourceTest.getUsername(),
+                            sourceTest.getPassword(),
+                            sourceTest.getVersion(),
+                            sourceTest.isExt()
+                    ).testConnection();
         } catch (SourceException e) {
             log.error(e.getMessage());
             throw new ServerException(e.getMessage());
@@ -389,11 +422,11 @@ public class SourceServiceImpl implements SourceService {
         }
 
         //校验文件是否csv文件
-        if (type.equals(FileTypeEnum.CSV.getType()) && !fileUtils.isCsv(file)) {
+        if (type.equals(FileTypeEnum.CSV.getType()) && !FileUtils.isCsv(file)) {
             throw new ServerException("Please upload csv file");
         }
 
-        if (type.equals(FileTypeEnum.XLSX.getType()) && !fileUtils.isExcel(file)) {
+        if (type.equals(FileTypeEnum.XLSX.getType()) && !FileUtils.isExcel(file)) {
             throw new ServerException("Please upload excel file");
         }
 
@@ -452,7 +485,7 @@ public class SourceServiceImpl implements SourceService {
         List<String> dbList = null;
 
         try {
-            dbList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getDatabases();
+            dbList = sqlUtils.init(source).getDatabases();
         } catch (SourceException e) {
             throw new ServerException(e.getMessage());
         }
@@ -493,7 +526,7 @@ public class SourceServiceImpl implements SourceService {
 
         List<QueryColumn> tableList = null;
         try {
-            tableList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableList(dbName);
+            tableList = sqlUtils.init(source).getTableList(dbName);
         } catch (SourceException e) {
             throw new ServerException(e.getMessage());
         }
@@ -533,7 +566,7 @@ public class SourceServiceImpl implements SourceService {
 
         TableInfo tableInfo = null;
         try {
-            tableInfo = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableInfo(dbName, tableName);
+            tableInfo = sqlUtils.init(source).getTableInfo(dbName, tableName);
         } catch (SourceException e) {
             e.printStackTrace();
             throw new ServerException(e.getMessage());
@@ -551,13 +584,28 @@ public class SourceServiceImpl implements SourceService {
         return tableInfo;
     }
 
-    public boolean isTestConnection(SourceConfig config) throws ServerException {
-        try {
-            return sqlUtils.init(config.getUrl(), config.getUsername(), config.getPassword()).testConnection();
-        } catch (SourceException e) {
-            log.error(e.getMessage());
-            throw new ServerException(e.getMessage());
+    @Override
+    public List<DatasourceType> getDatasources() {
+        return LoadSupportDataSourceRunner.getSupportDatasourceList();
+    }
+
+    @Override
+    public boolean reconnect(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Source source = sourceMapper.getById(id);
+        if (null == source) {
+            log.info("source (:{}) is not found", id);
+            throw new NotFoundException("source is not found");
         }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(source.getProjectId(), user, false), user);
+        if (projectPermission.getSourcePermission() < UserPermissionEnum.WRITE.getPermission()) {
+            log.info("user (:{}) have not permission to reconnect source(:{})", user.getId(), source.getId());
+            throw new UnAuthorizedExecption("You have not permission to reconnect this source");
+        }
+
+        SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
+        sourceUtils.releaseDataSource(source.getJdbcUrl(), source.getName(), source.getPassword(), source.getDbVersion(), source.isExt());
+        return sqlUtils.init(source).testConnection();
     }
 
     /**
@@ -722,4 +770,5 @@ public class SourceServiceImpl implements SourceService {
             }
         }
     }
+
 }

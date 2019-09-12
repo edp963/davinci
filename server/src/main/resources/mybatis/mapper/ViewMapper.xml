@@ -106,4 +106,37 @@
         </if>
         );
     </select>
+
+
+    <sql id="selectViewWithProjectAndSourceBaseSql">
+        SELECT v.*,
+               p.id            'project.id',
+               p.`name`        'project.name',
+               p.`description` 'project.description',
+               p.`pic`         'project.pic',
+               p.`org_id`      'project.orgId',
+               p.`user_id`     'project.userId',
+               p.`visibility`  'p.visibility',
+               s.`id`          'source.id',
+               s.`name`        'source.name',
+               s.`description` 'source.description',
+               s.`config`      'source.config',
+               s.`project_id`  'source.projectId',
+               s.`type`        'source.type'
+        FROM `view` v
+                 LEFT JOIN project p on p.id = v.project_id
+                 LEFT JOIN source s on s.id = v.source_id
+    </sql>
+
+    <select id="getViewWithProjectAndSourceByWidgetId"
+            resultType="edp.davinci.dto.viewDto.ViewWithProjectAndSource">
+        <include refid="selectViewWithProjectAndSourceBaseSql"></include>
+        WHERE v.id = (select view_id from widget where id = #{widgetId})
+    </select>
+
+    <select id="getViewWithProjectAndSourceById"
+            resultType="edp.davinci.dto.viewDto.ViewWithProjectAndSource">
+        <include refid="selectViewWithProjectAndSourceBaseSql"></include>
+        WHERE v.id = #{id}
+    </select>
 </mapper>

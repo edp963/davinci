@@ -77,6 +77,10 @@ public interface DashboardMapper {
     })
     List<Dashboard> getByPortalId(@Param("portalId") Long portalId);
 
+    @Select({
+            "SELECT * FROM dashboard WHERE parent_id = #{parentId} OR id = #{parentId} "
+    })
+    List<Dashboard> getByParentId(@Param("parentId") Long parentId);
 
     @Select({
             "SELECT ",

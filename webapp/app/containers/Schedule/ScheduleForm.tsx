@@ -27,7 +27,7 @@ const FormItem = Form.Item
 const TextArea = Input.TextArea
 const Option = Select.Option
 const { RangePicker } = DatePicker
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IScheduleFormProps {
   type: string

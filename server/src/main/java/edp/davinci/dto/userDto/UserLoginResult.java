@@ -35,6 +35,7 @@ public class UserLoginResult extends UserBaseInfo {
 
     private String department;
 
+    private boolean statisticOpen = false;
 
     public UserLoginResult(User user) {
         this.id = user.getId();

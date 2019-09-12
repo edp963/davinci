@@ -124,6 +124,11 @@ const makeSelectEditorBaselines = () =>  createSelector(
   ({ present }) => present.get('editorBaselines')
 )
 
+const makeSelectCurrentProject = () => createSelector(
+  selectDisplay,
+  ({present}) => present.get('currentProject')
+)
+
 export {
   selectDisplay,
   makeSelectDisplays,
@@ -146,5 +151,6 @@ export {
   makeSelectCurrentState,
   makeSelectNextState,
 
-  makeSelectEditorBaselines
+  makeSelectEditorBaselines,
+  makeSelectCurrentProject
 }

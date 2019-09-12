@@ -27,16 +27,18 @@ import {
   ILocalRenderTreeItem,
   IControlRequestParams,
   ILocalControl,
-  getControlRenderTree,
-  getModelValue,
-  getVariableValue,
   IControlRelatedField,
   OnGetControlOptions,
-  IMapControlOptions,
-  getParents,
+  IMapControlOptions
+} from 'app/components/Filters/types'
+import {
+  getVariableValue,
+  getModelValue,
+  deserializeDefaultValue,
+  getControlRenderTree,
   getAllChildren,
-  deserializeDefaultValue
-} from 'app/components/Filters'
+  getParents
+} from 'app/components/Filters/util'
 import { SHOULD_LOAD_OPTIONS, defaultFilterControlGridProps } from 'app/components/Filters/filterTypes'
 import FilterControl from 'app/components/Filters/FilterControl'
 import { localControlMigrationRecorder } from 'app/utils/migrationRecorders'
@@ -150,7 +152,6 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
       customOptions,
       options
     } = renderControl as ILocalRenderTreeItem
-
     if (customOptions) {
       onGetOptions(key, true, options)
     } else {
@@ -161,6 +162,7 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
       parents.forEach((parentControl) => {
         const parentValue = controlValues[parentControl.key]
         if (parentControl.interactionType === 'column') {
+          // get filters
           filters = filters.concat(getModelValue(parentControl, parentControl.fields as IControlRelatedField, parentValue))
         } else {
           variables = variables.concat(getVariableValue(parentControl, parentControl.fields, parentValue))
@@ -229,10 +231,10 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
       variables: [],
       tempFilters: []
     })
-
     onSearch({ ...queryConditions })
 
     onHide()
+
   }
 
   private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: ILocalControl[]) => {

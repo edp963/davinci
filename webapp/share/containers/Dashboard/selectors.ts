@@ -52,6 +52,11 @@ const makeSelectDashboardSelectOptions = () => createSelector(
   (shareState) => shareState.get('dashboardSelectOptions')
 )
 
+const makeSelectShareParams = () => createSelector(
+  selectShare,
+  (shareState) => shareState.get('shareParams')
+)
+
 const makeSelectLinkages = () => createSelector(
   selectShare,
   (shareState) => {
@@ -71,6 +76,17 @@ const makeSelectLinkages = () => createSelector(
   }
 )
 
+const makeSelectDownloadList = () => createSelector(
+  selectShare,
+  (globalState) => globalState.get('downloadList')
+)
+
+const makeSelectDownloadListLoading = () => createSelector(
+  selectShare,
+  (globalState) => globalState.get('downloadListLoading')
+)
+
+
 export {
   selectShare,
   makeSelectDashboard,
@@ -80,5 +96,8 @@ export {
   makeSelectWidgets,
   makeSelectItems,
   makeSelectItemsInfo,
-  makeSelectLinkages
+  makeSelectLinkages,
+  makeSelectDownloadList,
+  makeSelectDownloadListLoading,
+  makeSelectShareParams
 }

@@ -4,11 +4,13 @@ import { fromJS } from 'immutable'
 import {
   IGlobalControl,
   ILocalControl,
-  getControlRenderTree,
-  getAllChildren,
   IControlBase,
   IRenderTreeItem
-} from '..'
+} from '../types'
+import {
+  getControlRenderTree,
+  getAllChildren
+} from '../util'
 import FilterListItem from './FilterListItem'
 
 const styles = require('../filter.less')

@@ -51,8 +51,21 @@ export class CommonTransfer extends React.PureComponent<ICommonTransferProps, IC
   public componentDidMount () {
     const {dataSource} = this.props
     this.setState({
-      dataSource: (dataSource as any[]).map((o, index) => ({...o, ...{key: `dataSource${index}`}}))
+      dataSource: this.addKeyInDatasource(dataSource as any[])
     })
+  }
+
+  private addKeyInDatasource (dataSource) {
+    return dataSource.map((o, index) => ({...o, ...{key: `dataSource${index}`}}))
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    const {dataSource} = nextProps
+    if (dataSource !== this.props.dataSource) {
+      this.setState({
+        dataSource: this.addKeyInDatasource(dataSource as any[])
+      })
+    }
   }
 
   private handleChange = (targetKeys) => {

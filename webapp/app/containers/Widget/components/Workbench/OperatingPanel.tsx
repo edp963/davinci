@@ -1,13 +1,16 @@
 import React from 'react'
 import classnames from 'classnames'
+import set from 'lodash/set'
 
 import widgetlibs from '../../config'
 import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
-import { IViewBase, IFormedView, IViewModel } from 'containers/View/types'
-import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType, IDragItem} from './Dropbox'
+import { IViewBase, IFormedView } from 'containers/View/types'
+import { ViewModelVisualTypes } from 'containers/View/constants'
+import Dropbox, { DropboxType, DropType, AggregatorType, IDataParamSource, IDataParamConfig, DragType, IDragItem} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, IPaginationParams, WidgetMode, RenderType, DimetionType } from '../Widget'
-import FieldConfigModal, { IFieldConfig, getDefaultFieldConfig } from './FieldConfig'
-import FormatConfigModal, { IFieldFormatConfig, getDefaultFieldFormatConfig } from './FormatConfigModal'
+import { IFieldConfig, getDefaultFieldConfig, FieldConfigModal } from '../Config/Field'
+import { IFieldFormatConfig, getDefaultFieldFormatConfig, FormatConfigModal } from '../Config/Format'
+import { IFieldSortConfig, FieldSortTypes, SortConfigModal } from '../Config/Sort'
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
@@ -27,16 +30,18 @@ import DoubleYAxisSection, { IDoubleYAxisConfig } from './ConfigSections/DoubleY
 import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelectSection'
 import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
 import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
-import TableSection, { ITableConfig } from './ConfigSections/TableSection'
+import TableSection from './ConfigSections/TableSection'
+import { ITableConfig } from '../Config/Table'
 import BarSection from './ConfigSections/BarSection'
+import RadarSection from './ConfigSections/RadarSection'
 import { encodeMetricName, decodeMetricName, getPivot, getTable, getPivotModeSelectedCharts, checkChartEnable } from '../util'
-import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
+import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from 'app/globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
-import { uuid } from '../../../../utils/util'
+import { uuid } from 'utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
-import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox } from 'antd'
-import { IDistinctValueReqeustParams } from 'app/components/Filters'
+import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox, notification, Tooltip } from 'antd'
+import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { WorkbenchQueryMode } from './types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 const MenuItem = Menu.Item
@@ -44,9 +49,9 @@ const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 const confirm = Modal.confirm
 const styles = require('./Workbench.less')
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 export interface IDataParamProperty {
   title: string
@@ -81,8 +86,13 @@ interface IOperatingPanelProps {
   onSetComputed: (computesField: any[]) => void
   onDeleteComputed: (computesField: any[]) => void
   onSetWidgetProps: (widgetProps: IWidgetProps) => void
-  onLoadData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
-  onLoadDistinctValue: (viewId: number, params: IDistinctValueReqeustParams) => void
+  onLoadData: (
+    viewId: number,
+    requestParams: IDataRequestParams,
+    resolve: (data) => void,
+    reject: (error) => void
+  ) => void
+  onLoadDistinctValue: (viewId: number, params: Partial<IDistinctValueReqeustParams>) => void
 }
 
 interface IOperatingPanelStates {
@@ -105,7 +115,7 @@ interface IOperatingPanelStates {
   fieldModalVisible: boolean
 
   formatModalVisible: boolean
-  selectedFormatVisualType: string
+  sortModalVisible: boolean
 
   colorModalVisible: boolean
   actOnModalVisible: boolean
@@ -144,7 +154,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       currentEditingItem: null,
       fieldModalVisible: false,
       formatModalVisible: false,
-      selectedFormatVisualType: '',
+      sortModalVisible: false,
       colorModalVisible: false,
       actOnModalVisible: false,
       actOnModalList: null,
@@ -227,7 +237,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ...c,
             from: 'cols',
             type: 'category' as DragType,
-            visualType: c.name === '指标名称' ? 'string' : modelColumn.visualType
+            visualType: c.name === '指标名称' ? ViewModelVisualTypes.String : modelColumn.visualType
           })
         }
       })
@@ -239,7 +249,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ...r,
             from: 'rows',
             type: 'category' as DragType,
-            visualType: r.name === '指标名称' ? 'string' :  modelColumn.visualType
+            visualType: r.name === '指标名称' ? ViewModelVisualTypes.String :  modelColumn.visualType
           })
         }
       })
@@ -313,6 +323,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
   }
 
+  public componentWillUnmount () {
+    notification.destroy()
+  }
+
   private getChartDataConfig = (selectedCharts: IChartInfo[]) => {
     const { mode } = this.state
     const { dataParams, styleParams } = this.state
@@ -379,13 +393,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
   }
 
-  private getDragItemIconClass = (type: ViewModelType) => {
+  private getDragItemIconClass = (type: ViewModelVisualTypes) => {
     switch (type) {
-      case 'number': return 'icon-values'
-      case 'date': return `icon-calendar ${styles.iconDate}`
-      case 'geoCountry':
-      case 'geoProvince':
-      case 'geoCity': return 'icon-map'
+      case ViewModelVisualTypes.Number: return 'icon-values'
+      case ViewModelVisualTypes.Date: return `icon-calendar ${styles.iconDate}`
+      case ViewModelVisualTypes.GeoCountry:
+      case ViewModelVisualTypes.GeoProvince:
+      case ViewModelVisualTypes.GeoCity: return 'icon-map'
       default: return 'icon-categories'
     }
   }
@@ -497,6 +511,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       categoryDragItems,
       valueDragItems
     } = this.state
+
     const dragged = stateDragged || modalCachedData
     const from = dragged.from && dragged.from !== name && dataParams[dragged.from]
     const destination = dataParams[name]
@@ -569,6 +584,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       dragged: null,
       modalCachedData: null
     })
+
     this.setWidgetProps(dataParams, styleParams)
   }
 
@@ -606,12 +622,22 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.setWidgetProps(dataParams, styleParams)
   }
 
-  private getDropboxItemSortDirection = (from: string) => (item: IDataParamSource, sort: SortType) => {
+  private getDropboxItemSortDirection = (from: string) => (item: IDataParamSource, sortType: FieldSortTypes) => {
     const { dataParams, styleParams } = this.state
     const prop = dataParams[from]
-    item.sort = ['asc', 'desc'].indexOf(sort) >= 0 ? sort : void 0
-    prop.items = [...prop.items]
-    this.setWidgetProps(dataParams, styleParams)
+    if (sortType !== FieldSortTypes.Custom) {
+      item.sort = { sortType }
+      prop.items = [...prop.items]
+      this.setWidgetProps(dataParams, styleParams)
+    } else {
+      const { selectedView, onLoadDistinctValue } = this.props
+      onLoadDistinctValue(selectedView.id, { columns: [item.name] })
+      this.setState({
+        currentEditingCommonParamKey: from,
+        currentEditingItem: item,
+        sortModalVisible: true
+      })
+    }
   }
 
   private getDropboxItemAggregator = (from: string) => (item: IDataParamSource, agg: AggregatorType) => {
@@ -681,6 +707,25 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     })
   }
 
+  private saveSortConfig = (sortConfig: IFieldSortConfig) => {
+    const {
+      currentEditingCommonParamKey,
+      currentEditingItem,
+      dataParams,
+      styleParams
+    } = this.state
+    const item = dataParams[currentEditingCommonParamKey].items.find((i) => i.name === currentEditingItem.name)
+    item.sort = sortConfig
+    this.setWidgetProps(dataParams, styleParams)
+    this.setState({
+      sortModalVisible: false
+    })
+  }
+
+  private cancelSortConfig = () => {
+    this.setState({ sortModalVisible: false })
+  }
+
   private dropboxItemChangeColorConfig = (item: IDataParamSource) => {
     const { selectedView, onLoadDistinctValue } = this.props
     const { dataParams, styleParams } = this.state
@@ -741,7 +786,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     return [dcount, mcount]
   }
 
-  public flipPage = (pageNo: number, pageSize: number) => {
+  public flipPage = (pageNo: number, pageSize: number, orders) => {
     const { dataParams, styleParams, pagination } = this.state
     this.setWidgetProps(dataParams, styleParams, {
       renderType: 'rerender',
@@ -750,7 +795,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         pageNo,
         pageSize
       },
-      queryMode: WorkbenchQueryMode.Immediately
+      queryMode: WorkbenchQueryMode.Immediately,
+      orders
     })
   }
 
@@ -769,13 +815,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     options?: {
       renderType?: RenderType,
       updatedPagination?: IPaginationParams,
-      queryMode?: WorkbenchQueryMode
+      queryMode?: WorkbenchQueryMode,
+      orders?
     }
   ) => {
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, yAxis } = dataParams
     const { selectedView, onLoadData, onSetWidgetProps } = this.props
     const { mode, chartModeSelectedChart, pagination } = this.state
-
     let renderType
     let updatedPagination
     let queryMode = this.props.queryMode
@@ -850,11 +896,17 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     Object.values(dataParams)
       .reduce<IDataParamSource[]>((items, param: IDataParamProperty) => items.concat(param.items), [])
       .forEach((item) => {
-        const column = item.type === 'category' ? item.name : `${item.agg}(${decodeMetricName(item.name)})`
-        if (item.sort) {
+        let column = item.name
+        if (item.type === 'value') {
+          column = decodeMetricName(item.name)
+          if (!styleParams.table || !styleParams.table.withNoAggregators) {
+            column = `${item.agg}(${column})`
+          }
+        }
+        if (item.sort && [FieldSortTypes.Asc, FieldSortTypes.Desc].includes(item.sort.sortType)) {
           orders.push({
             column,
-            direction: item.sort
+            direction: item.sort.sortType
           })
         }
       })
@@ -897,17 +949,29 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
       updatedPagination.withPaging = withPaging
     }
-
+    // 生成filter
+    let requestParamsFilters = []
+    filters.items.forEach((item) => {
+      requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
+    })
     const requestParams = {
       groups,
       aggregators,
-      filters: filters.items.map((i) => i.config.sql),
+     // filters: filters.items.map((i) => [].concat(i.config.sql)),
+      filters: requestParamsFilters,
       orders,
       pageNo: updatedPagination.pageNo,
       pageSize: updatedPagination.pageSize,
       nativeQuery: noAggregators,
       cache: false,
-      expired: 0
+      expired: 0,
+      flush: false
+    }
+
+    if (options) {
+      if (options.orders) {
+        requestParams.orders = requestParams.orders.concat(options.orders)
+      }
     }
 
     const requestParamString = JSON.stringify(requestParams)
@@ -930,12 +994,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           cols: cols.items.map((item) => ({
             ...item,
             field: item.field || getDefaultFieldConfig(),
-            format: item.format || getDefaultFieldFormatConfig()
+            format: item.format || getDefaultFieldFormatConfig(),
+            sort: item.sort
           })),
           rows: rows.items.map((item) => ({
             ...item,
             field: item.field || getDefaultFieldConfig(),
-            format: item.format || getDefaultFieldFormatConfig()
+            format: item.format || getDefaultFieldFormatConfig(),
+            sort: item.sort
           })),
           metrics: metrics.items.map((item) => ({
             ...item,
@@ -976,6 +1042,22 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           dataParams: mergedDataParams,
           styleParams: mergedStyleParams
         })
+      }, (error) => {
+        notification.destroy()
+        notification.error({
+          message: '执行失败',
+          description: (
+            <Tooltip
+              placement="bottom"
+              trigger="click"
+              title={error.msg}
+              overlayClassName={styles.errorMessage}
+            >
+              <a>点击查看错误信息</a>
+            </Tooltip>
+          ),
+          duration: null
+        })
       })
     } else {
       onSetWidgetProps({
@@ -983,12 +1065,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         cols: cols.items.map((item) => ({
           ...item,
           field: item.field || getDefaultFieldConfig(),
-          format: item.format || getDefaultFieldFormatConfig()
+          format: item.format || getDefaultFieldFormatConfig(),
+          sort: item.sort
         })),
         rows: rows.items.map((item) => ({
           ...item,
           field: item.field || getDefaultFieldConfig(),
-          format: item.format || getDefaultFieldFormatConfig()
+          format: item.format || getDefaultFieldFormatConfig(),
+          sort: item.sort
         })),
         metrics: metrics.items.map((item) => ({
           ...item,
@@ -1150,6 +1234,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           size.value[key] = value
         }
     }
+    console.log('dropboxValueChange')
     this.setWidgetProps(dataParams, styleParams, { renderType: 'refresh' })
   }
 
@@ -1178,6 +1263,19 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.setWidgetProps(dataParams, styleParams, { renderType })
     // const { layerType } = styleParams.spec
     // chartModeSelectedChart.style.spec.layerType = layerType
+  }
+
+  // @FIXME refactor function styleChange2
+  private styleChange2 = (value: string | number, propPath: string[]) => {
+    const { dataParams, styleParams } = this.state
+    set(styleParams, propPath, value)
+    let renderType: RenderType = 'clear'
+    if (propPath.includes('layerType')) {
+      renderType = 'rerender'
+    } else if (propPath.includes('smooth')) {
+      renderType = 'clear'
+    }
+    this.setWidgetProps(dataParams, styleParams, { renderType })
   }
 
   private confirmColorModal = (config) => {
@@ -1422,7 +1520,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       modalDataFrom,
       fieldModalVisible,
       formatModalVisible,
-      selectedFormatVisualType,
+      sortModalVisible,
       currentEditingItem,
       colorModalVisible,
       actOnModalVisible,
@@ -1438,7 +1536,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const [dimetionsCount, metricsCount] = this.getDimetionsAndMetricsCount()
     const {
       spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend,
-      visualMap, toolbox, areaSelect, scorecard, iframe, table, bar, doubleYAxis } = styleParams
+      visualMap, toolbox, areaSelect, scorecard, iframe, table, bar, radar, doubleYAxis } = styleParams
 
     let categoryDragItems = this.state.categoryDragItems
     if (mode === 'pivot'
@@ -1447,7 +1545,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       categoryDragItems = categoryDragItems.concat({
         name: '指标名称',
         type: 'category',
-        visualType: 'string',
+        visualType: ViewModelVisualTypes.String,
         checked: false
       })
     }
@@ -1572,13 +1670,15 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               name={chartModeSelectedChart.name}
               title={chartModeSelectedChart.title}
               config={spec as ISpecConfig}
-              onChange={this.styleChange('spec')}
+              onChange={this.styleChange2}
               isLegendSection={mapLegendLayerType}
             />}
             {bar && <BarSection
               onChange={this.styleChange('bar')}
               config={bar}
+              dataParams={dataParams}
             />}
+            {radar && <RadarSection config={radar} onChange={this.styleChange2} />}
             { mapLabelLayerType
                 ? label && <LabelSection
                   title="标签"
@@ -1997,10 +2097,19 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           <FormatConfigModal
             key="formatConfigModal"
             visible={formatModalVisible}
-            visualType={selectedFormatVisualType}
+            visualType={currentEditingItem.visualType}
             formatConfig={currentEditingItem.format}
             onSave={this.saveFormatConfig}
             onCancel={this.cancelFormatConfig}
+          />
+        ), (
+          <SortConfigModal
+            key="sortConfigModal"
+            visible={sortModalVisible}
+            config={currentEditingItem.sort}
+            list={distinctColumnValues}
+            onSave={this.saveSortConfig}
+            onCancel={this.cancelSortConfig}
           />
         )
         ]}

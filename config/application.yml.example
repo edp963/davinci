@@ -46,6 +46,7 @@ source:
   max-active: 10
   break-after-acquire-failure: true
   connection-error-retry-attempts: 0
+  query-timeout: 600000
   validationQueryTimeout: 30000
 
   enable-query-log: false
@@ -119,10 +120,20 @@ spring:
     base:
     domainName:    # domainName 指 企业邮箱后缀，如企业邮箱为：xxx@example.com, 这里值为 '@example.com'
 
-phantomjs_home: $your_phantomjs_path$/phantomjs
+screenshot:
+  default_browser: PHANTOMJS                    # PHANTOMJS or CHROME
+  timeout_second: 600
+  phantomjs_path: $your_phantomjs_path$
+  chromedriver_path: $your_chromedriver_path$
 
 data-auth-center:
   channels:
     - name:
       base-url:
       auth-code:
+
+statistic:
+  enable: true
+  # You can use external elasticsearch storage [127.0.0.1:9300], default davinci datasouce
+  elastic_urls:
+  elastic_index_prefix:

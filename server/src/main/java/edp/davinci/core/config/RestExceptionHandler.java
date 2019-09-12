@@ -29,6 +29,7 @@ import edp.davinci.core.common.ResultMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -80,6 +81,14 @@ public class RestExceptionHandler {
     private ResultMap notFoundExceptionHandler(HttpServletRequest request, Exception e) {
         log.error(e.getMessage());
         return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.NOT_FOUND).message(e.getMessage());
+    }
+
+    @ExceptionHandler(value = MethodArgumentNotValidException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    private ResultMap methodArgumentNotValidExceptionHandler(HttpServletRequest request, Exception e) {
+        log.error(e.getMessage());
+        return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.FAIL).message(e.getMessage());
     }
 
 }

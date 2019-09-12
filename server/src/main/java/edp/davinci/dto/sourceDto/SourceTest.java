@@ -32,4 +32,7 @@ public class SourceTest {
 
     @NotBlank(message = "connection url cannot be EMPTY")
     private String url;
+
+    private String version;
+    private boolean isExt;
 }

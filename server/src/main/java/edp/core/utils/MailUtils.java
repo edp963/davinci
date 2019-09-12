@@ -20,8 +20,11 @@
 package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.consts.Consts;
 import edp.core.exception.ServerException;
+import edp.davinci.core.enums.CronJobMediaType;
+import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.dto.cronJobDto.ExcelContent;
+import edp.davinci.service.screenshot.ImageContent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,10 +40,13 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static edp.core.consts.Consts.PATTERN_EMAIL_FORMAT;
 
 @Component
 @Slf4j
@@ -57,7 +63,6 @@ public class MailUtils {
 
     @Value("${spring.mail.nickname}")
     private String nickName;
-
 
     /**
      * 发送简单邮件
@@ -128,8 +133,7 @@ public class MailUtils {
             throw new ServerException("email address(from) cannot be EMPTY");
         }
 
-        Pattern pattern = Pattern.compile(Consts.REG_EMAIL_FORMAT);
-        Matcher matcher = pattern.matcher(from);
+        Matcher matcher = PATTERN_EMAIL_FORMAT.matcher(from);
 
         if (!matcher.find()) {
             log.info("unknow email address(from): {}", from);
@@ -237,19 +241,18 @@ public class MailUtils {
      * @param bcc      加密抄送
      * @param template 模板地址
      * @param content  模板内容
-     * @param files    附件
+     * @param excels   附件
      * @throws ServerException
      */
     public void sendTemplateEmail(String from, String nickName, String subject, String[] to, String[] cc, String[] bcc,
-                                  String template, Map<String, Object> content, List<File> files) throws ServerException {
+                                  String template, Map<String, Object> content, List<ExcelContent> excels, List<ImageContent> images) throws ServerException {
 
         if (StringUtils.isEmpty(from)) {
             log.info("email address(from) cannot be EMPTY");
             throw new ServerException("email address(from) cannot be EMPTY");
         }
 
-        Pattern pattern = Pattern.compile(Consts.REG_EMAIL_FORMAT);
-        Matcher matcher = pattern.matcher(from);
+        Matcher matcher = PATTERN_EMAIL_FORMAT.matcher(from);
 
         if (!matcher.find()) {
             log.info("unknow email address(from): {}", from);
@@ -298,21 +301,42 @@ public class MailUtils {
             if (null != bcc && bcc.length > 0) {
                 messageHelper.setBcc(bcc);
             }
+
+            Map<String, File> imageFileMap = new HashMap<>();
+            List<String> imageContentIds = new ArrayList<>();
+            if (!CollectionUtils.isEmpty(images)) {
+                images.forEach(imageContent -> {
+                    if (imageContent.getImageFile() != null) {
+                        String contentId = CronJobMediaType.IMAGE.getType() + imageContent.getOrder();
+                        imageContentIds.add(contentId);
+                        imageFileMap.put(contentId, imageContent.getImageFile());
+                    }
+                });
+            }
+
+            if (!imageFileMap.isEmpty()) {
+                context.setVariable("images", imageContentIds);
+            }
+
             String text = templateEngine.process(template, context);
             messageHelper.setText(text, true);
 
-            if (!CollectionUtils.isEmpty(files)) {
-                if (files.size() == 1) {
-                    File file = files.get(0);
-                    String attName = "Attachment" + file.getName().substring(file.getName().lastIndexOf("."));
-                    messageHelper.addAttachment(attName, file);
-                } else {
-                    for (int i = 0; i < files.size(); i++) {
-                        File file = files.get(i);
-                        String attName = "Attachment-" + (i + 1) + file.getName().substring(file.getName().lastIndexOf("."));
-                        messageHelper.addAttachment(attName, file);
+            if (!CollectionUtils.isEmpty(excels)) {
+                excels.forEach(excel -> {
+                    try {
+                        messageHelper.addAttachment(excel.getName() + FileTypeEnum.XLSX.getFormat(), excel.getFile());
+                    } catch (MessagingException e) {
                     }
-                }
+                });
+            }
+
+            if (!imageFileMap.isEmpty()) {
+                imageFileMap.forEach((contentId, file) -> {
+                    try {
+                        messageHelper.addInline(contentId, file);
+                    } catch (MessagingException e) {
+                    }
+                });
             }
 
             javaMailSender.send(message);
@@ -338,7 +362,7 @@ public class MailUtils {
      * @throws ServerException
      */
     public void sendTemplateEmail(String to, String subject, String template, Map<String, Object> content) throws ServerException {
-        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, template, content, null);
+        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, template, content, null, null);
     }
 
     /**
@@ -350,11 +374,12 @@ public class MailUtils {
      * @param bcc      加密抄送
      * @param template 模板地址
      * @param content  模板内容
-     * @param files    附件
+     * @param excels   附件
+     * @param images
      * @throws ServerException
      */
-    public void sendTemplateAttachmentsEmail(String subject, String to, String[] cc, String[] bcc, String template, Map<String, Object> content, List<File> files) throws ServerException {
-        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, cc, bcc, template, content, files);
+    public void sendTemplateAttachmentsEmail(String subject, String to, String[] cc, String[] bcc, String template, Map<String, Object> content, List<ExcelContent> excels, List<ImageContent> images) throws ServerException {
+        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, cc, bcc, template, content, excels, images);
     }
 
 }

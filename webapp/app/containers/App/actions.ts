@@ -23,7 +23,6 @@ import {
   LOGGED,
   LOGIN_ERROR,
   LOGOUT,
-  SET_LOGIN_USER,
   GET_LOGIN_USER,
   GET_LOGIN_USER_ERROR,
   SHOW_NAVIGATOR,
@@ -48,21 +47,10 @@ import {
   DOWNLOAD_FILE,
   DOWNLOAD_FILE_FAILURE,
   DOWNLOAD_FILE_SUCCESS,
-  CHANGE_DOWNLOAD_STATUS,
-  CHANGE_DOWNLOAD_STATUS_SUCCESS,
-  CHANGE_DOWNLOAD_STATUS_FAILURE,
   INITIATE_DOWNLOAD_TASK,
   INITIATE_DOWNLOAD_TASK_SUCCESS,
   INITIATE_DOWNLOAD_TASK_FAILURE
 } from './constants'
-
-import { promiseActionCreator } from '../../utils/reduxPromisation'
-
-
-
-export const logout = promiseActionCreator(LOGOUT)
-
-export const setLoginUser = promiseActionCreator(SET_LOGIN_USER, ['user'])
 
 export function login (username, password, resolve) {
   return {
@@ -87,6 +75,12 @@ export function logged (user) {
 export function loginError () {
   return {
     type: LOGIN_ERROR
+  }
+}
+
+export function logout () {
+  return {
+    type: LOGOUT
   }
 }
 
@@ -291,42 +285,18 @@ export function downloadFile (id) {
   }
 }
 
-export function fileDownloaded () {
+export function fileDownloaded (id) {
   return {
-    type: DOWNLOAD_FILE_SUCCESS
+    type: DOWNLOAD_FILE_SUCCESS,
+    payload: {
+      id
+    }
   }
 }
 
 export function downloadFileFail (error) {
   return {
     type: DOWNLOAD_FILE_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
-
-export function changeDownloadStatus (id) {
-  return {
-    type: CHANGE_DOWNLOAD_STATUS,
-    payload: {
-      id
-    }
-  }
-}
-
-export function downloadStatusChanged (id) {
-  return {
-    type: CHANGE_DOWNLOAD_STATUS_SUCCESS,
-    payload: {
-      id
-    }
-  }
-}
-
-export function changeDownloadStatusFail (error) {
-  return {
-    type: CHANGE_DOWNLOAD_STATUS_FAILURE,
     payload: {
       error
     }
@@ -345,13 +315,14 @@ export function initiateDownloadTask (id, type, downloadParams?, itemId?) {
   }
 }
 
-export function DownloadTaskInitiated (type, itemId?) {
+export function DownloadTaskInitiated (type, itemId?, statistic?) {
   return {
     type: INITIATE_DOWNLOAD_TASK_SUCCESS,
     payload: {
       type,
       itemId
-    }
+    },
+    statistic
   }
 }
 

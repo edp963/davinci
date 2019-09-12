@@ -21,10 +21,10 @@
 import * as React from 'react'
 import { Button, Modal } from 'antd'
 
-import { SQL_NUMBER_TYPES, DEFAULT_SPLITER } from '../../../globalConstants'
-import { decodeMetricName, getAggregatorLocale } from '../../Widget/components/util'
+import { SQL_NUMBER_TYPES, DEFAULT_SPLITER } from 'app/globalConstants'
+import { decodeMetricName, getAggregatorLocale } from 'containers/Widget/components/util'
 import { IFormedViews } from 'containers/View/types'
-import { IWidgetConfig } from '../../Widget/components/Widget'
+import { IWidgetConfig } from 'containers/Widget/components/Widget'
 import LinkageConfig from 'components/Linkages/LinkageConfig'
 
 const styles = require('../Dashboard.less')

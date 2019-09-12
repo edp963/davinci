@@ -7,11 +7,11 @@ import {
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_PIE_LABEL_POSITIONS,
   DEFAULT_FONT_STYLE
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
 import {
   IChartInfo
-} from '../../../../containers/Widget/components/Widget'
+} from 'containers/Widget/components/Widget'
 
 const parallel: IChartInfo = {
   id: ChartTypes.Parallel,
@@ -19,8 +19,7 @@ const parallel: IChartInfo = {
   title: '平行坐标图',
   icon: 'icon-parallel',
   coordinate: 'cartesian',
-  requireDimetions: [1, 9999],
-  requireMetrics: [1, 9999],
+  rules: [{ dimension: [1, 9999], metric: [1, 9999] }],
   dimetionAxis: 'col',
   data: {
     cols: {

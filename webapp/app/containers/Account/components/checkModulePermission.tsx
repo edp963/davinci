@@ -1,9 +1,5 @@
 import * as React from 'react'
-import {
-  CREATE_ORGANIZATION_PROJECT
-} from '../../App/constants'
-import {IOrganization} from '../../Organizations/Organization'
-import {IProject} from '../../Projects'
+import {IProject} from 'containers/Projects'
 
 export default function<T> (project?: IProject, route?: string, isDelete?: boolean) {
   return (WrapperComponent) => {

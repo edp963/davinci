@@ -3,17 +3,16 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_PIE_LABEL_POSITIONS
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 const pie: IChartInfo = {
   id: ChartTypes.Pie,
   name: 'pie',
   title: '饼图',
   icon: 'icon-chartpie',
   coordinate: 'cartesian',
-  requireDimetions: [0, 9999],
-  requireMetrics: 1,
+  rules: [{ dimension: [0, 9999], metric: 1 }, { dimension: 0, metric: [2, 9999] }],
   dimetionAxis: 'col',
   data: {
     cols: {
@@ -47,7 +46,8 @@ const pie: IChartInfo = {
       pieLabelPosition: CHART_PIE_LABEL_POSITIONS[0].value,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_FONT_COLOR
+      labelColor: PIVOT_DEFAULT_FONT_COLOR,
+      labelParts: ['dimensionValue', 'indicatorValue', 'percentage']
     },
     legend: {
       showLegend: true,

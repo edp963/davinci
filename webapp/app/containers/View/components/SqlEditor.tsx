@@ -71,7 +71,7 @@ export class SqlEditor extends React.PureComponent<ISqlEditorProps> {
       mode: 'text/x-sql',
       theme: '3024-day',
       lineNumbers: true,
-      lineWrapping: true,
+      lineWrapping: false,
       autoCloseBrackets: true,
       matchBrackets: true,
       foldGutter: true
