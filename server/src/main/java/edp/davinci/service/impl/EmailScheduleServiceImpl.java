@@ -136,14 +136,17 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
                 List<ExcelContent> excels = null;
                 List<ImageContent> images = null;
+
+                User creater = userMapper.getById(cronJob.getCreateBy());
+
                 if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
                     images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
-                    excels = generateExcels(cronJobConfig, user);
+                    excels = generateExcels(cronJobConfig, creater);
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
                     images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
                     excels = new ArrayList<>();
-                    excels.addAll(generateExcels(cronJobConfig, user));
+                    excels.addAll(generateExcels(cronJobConfig, creater));
                 }
 
                 String[] cc = null, bcc = null;
