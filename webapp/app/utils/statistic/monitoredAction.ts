@@ -92,40 +92,45 @@ function getWidgetDetailFieldsbyDownload (action) {
 }
 
 function getWidgetDetailFieldsByOthers (action) {
-    const { groups, filters, variables, tempFilters, linkageFilters, tempVariables,
-            globalVariables, linkageVariables,  globalFilters, widget: {id, name}} = action.statistic
+    if (action && action.statistic) {
 
-    let bootstrapFilters = [...filters]
-    let bootstrapVariables = [...variables]
-    if (tempFilters && tempFilters.length) {
-        bootstrapFilters = filters.concat(tempFilters)
-    }
-    if (linkageFilters && linkageFilters.length) {
-        bootstrapFilters = bootstrapFilters.concat(linkageFilters)
-    }
-    if (globalFilters && globalFilters.length) {
-        bootstrapFilters = bootstrapFilters.concat(globalFilters)
-    }
+        const { groups, filters, variables, tempFilters, linkageFilters, tempVariables,
+                globalVariables, linkageVariables,  globalFilters, widget: {id, name}} = action.statistic
 
-    // 全局 本地 联动  变量
-    if (linkageVariables && linkageVariables.length) {
-        bootstrapVariables = bootstrapVariables.concat(linkageVariables)
-    }
+        let bootstrapFilters = [...filters]
+        let bootstrapVariables = [...variables]
+        if (tempFilters && tempFilters.length) {
+            bootstrapFilters = filters.concat(tempFilters)
+        }
+        if (linkageFilters && linkageFilters.length) {
+            bootstrapFilters = bootstrapFilters.concat(linkageFilters)
+        }
+        if (globalFilters && globalFilters.length) {
+            bootstrapFilters = bootstrapFilters.concat(globalFilters)
+        }
 
-    if (globalVariables && globalVariables.length) {
-        bootstrapVariables = bootstrapVariables.concat(globalVariables)
-    }
+        // 全局 本地 联动  变量
+        if (linkageVariables && linkageVariables.length) {
+            bootstrapVariables = bootstrapVariables.concat(linkageVariables)
+        }
 
-    if (tempVariables && tempVariables.length) {
-        bootstrapVariables = bootstrapVariables.concat(tempVariables)
+        if (globalVariables && globalVariables.length) {
+            bootstrapVariables = bootstrapVariables.concat(globalVariables)
+        }
+
+        if (tempVariables && tempVariables.length) {
+            bootstrapVariables = bootstrapVariables.concat(tempVariables)
+        }
+        return {
+            widget_id: id,
+            widget_name: name,
+            variables: bootstrapVariables,
+            groups,
+            filters: bootstrapFilters
+        }
     }
-    return {
-        widget_id: id,
-        widget_name: name,
-        variables: bootstrapVariables,
-        groups,
-        filters: bootstrapFilters
-    }
+    return false
+
 }
 
 function mapMonitoreToAction (action: {type: string, payload: object}, initialType: string) {
@@ -158,14 +163,16 @@ function mapMonitoreToAction (action: {type: string, payload: object}, initialTy
         // todo 重启定时器
         statistic.isResetTime()
         const widgetDetailFields = getWidgetDetailFieldsByOthers(action)
-        const newData = {
-            ...widgetDetailFields,
-            ...statistic.operationRecord,
-            ...statistic.userData,
-            create_time: statistic.getCurrentDateTime()
-        }
-        if (reportAction.some((report) => report === actionType)) {
-            statistic.sendOperation(newData)
+        if (widgetDetailFields) {
+            const newData = {
+                ...widgetDetailFields,
+                ...statistic.operationRecord,
+                ...statistic.userData,
+                create_time: statistic.getCurrentDateTime()
+            }
+            if (reportAction.some((report) => report === actionType)) {
+                statistic.sendOperation(newData)
+            }
         }
     }
 }
