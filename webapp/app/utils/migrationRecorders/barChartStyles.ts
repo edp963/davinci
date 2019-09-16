@@ -21,7 +21,6 @@ const barChartStyles: IMigrationRecorder<IChartStyles> = {
         chartStyle.bar = newBarConfig
         return chartStyle
       }
-      barConfig.barChart = !!barSpec.barChart
       const { stack } = barConfig
       if (!stack) {
         barConfig.stack = {

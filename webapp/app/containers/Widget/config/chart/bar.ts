@@ -44,11 +44,7 @@ const bar: IChartInfo = {
     }
   },
   style: {
-    spec: {
-      stack: false,
-      barChart: false,
-      percentage: false
-    },
+    spec: {},
     bar: {
       barChart: false,
       border: {
