@@ -120,9 +120,11 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
       validColumns.forEach((column) => {
         const existedConfig = draft.find((item) => item.columnName === column.name)
         if (existedConfig) {
-          existedConfig.alias = this.getColumnDisplayName(column)
-          existedConfig.visualType = column.visualType
-          config.push(existedConfig)
+          config.push({
+            ...existedConfig,
+            alias: this.getColumnDisplayName(column),
+            visualType: column.visualType
+          })
         } else {
           config.push({
             columnName: column.name,
