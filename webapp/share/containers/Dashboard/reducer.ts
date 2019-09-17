@@ -94,7 +94,7 @@ function shareReducer (state = initialState, { type, payload }) {
             if (defaultValue && defaultValue.length) {
                newCtrl = {
                  ...ctrl,
-                 defaultValue: decodeURI(defaultValue)
+                 defaultValue: Array.isArray(defaultValue) && defaultValue.length ? defaultValue.map((val) => decodeURI(val)) :  decodeURI(defaultValue)
                }
             }
           })
