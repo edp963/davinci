@@ -239,7 +239,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
   public componentWillMount () {
     // urlparse
-    const qs = this.getQs(location.href.substr(location.href.indexOf('?') + 1))
+    const qs = this.querystring(location.href.substr(location.href.indexOf('?') + 1))
     this.setState({
       type: qs.type,
       shareInfo: qs.shareInfo
@@ -305,6 +305,28 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       acc[arr[0]] = arr[1]
       return acc
     }, {})
+  }
+
+  private querystring = (str) => {
+    return str.split('&').reduce((o, kv) => {
+      const [key, value] = kv.split('=')
+      if (!value) {
+          return o
+      }
+      this.deep_set(o, key.split(/[\[\]]/g).filter((x) => x), value)
+      return o
+    }, {})
+  }
+
+  private deep_set (o, path, value) {
+    let i = 0
+    for (; i < path.length - 1; i++) {
+        if (o[path[i]] === undefined) {
+          o[path[i]] = path[i + 1].match(/^\d+$/) ? [] : {}
+        }
+        o = o[path[i]]
+    }
+    o[path[i]] = decodeURIComponent(value)
   }
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
