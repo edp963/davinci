@@ -198,8 +198,8 @@ export default function (chartProps: IChartProps, drillOptions) {
           }),
           itemStyle: {
             normal: {
-              opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
-              // color: color.items[0].config.values[k]
+              opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1,
+              color: color.items[0].config.values[k]
             }
           },
           ...labelOption
@@ -272,7 +272,7 @@ export default function (chartProps: IChartProps, drillOptions) {
             borderWidth,
             borderType,
             barBorderRadius,
-            color: color.value[m.name] || defaultThemeColors[i]
+            color: color.value[m.name] || defaultThemeColors[i % defaultThemeColors.length]
           }
         },
         barGap: `${barGap}%`,
