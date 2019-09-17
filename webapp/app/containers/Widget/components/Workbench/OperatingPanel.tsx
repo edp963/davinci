@@ -40,14 +40,16 @@ import PivotTypes from '../../config/pivot/PivotTypes'
 import { uuid } from 'utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
-import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox, notification, Tooltip } from 'antd'
+import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox, notification, Tooltip, Select } from 'antd'
 import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { WorkbenchQueryMode } from './types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
+import { SelectProps } from 'antd/lib/select'
 const MenuItem = Menu.Item
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 const confirm = Modal.confirm
+const Option = Select.Option
 const styles = require('./Workbench.less')
 const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
@@ -1149,7 +1151,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
   }
 
-  private viewSelect = ({key}) => {
+  private viewSelect = (key: string) => {
     const { mode, dataParams } = this.state
     const hasItems = Object.values(dataParams)
       .filter((param) => !!param.items.length)
@@ -1165,6 +1167,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       this.props.onViewSelect(+key)
     }
   }
+
+  private filterView: SelectProps['filterOption'] = (input, option) =>
+    (option.props.children as string).toLowerCase().includes(input.toLowerCase())
 
   private changeMode = (e) => {
     const mode = e.target.value
@@ -1550,14 +1555,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       })
     }
 
-    const viewSelectMenu = (
-      <Menu onClick={this.viewSelect}>
-        {(views || []).map((v) => (
-          <MenuItem key={v.id}>{v.name}</MenuItem>
-        ))}
-      </Menu>
-    )
-
     const coustomFieldSelectMenu = (
       <Menu onClick={this.coustomFieldSelect}>
         <MenuItem key="computed">计算字段</MenuItem>
@@ -1872,9 +1869,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       <div className={styles.operatingPanel}>
         <div className={styles.model}>
           <div className={styles.viewSelect}>
-            <Dropdown overlay={viewSelectMenu} trigger={['click']} placement="bottomLeft">
-              <a>{selectedView ? selectedView.name : '选择一个View'}</a>
-            </Dropdown>
+            <Select size="small" placeholder="选择一个View" showSearch onChange={this.viewSelect} filterOption={this.filterView}>
+              {(views || []).map(({ id, name }) => <Option key={id} value={id}>{name}</Option>)}
+            </Select>
             {/* <Dropdown overlay={coustomFieldSelectMenu} trigger={['click']} placement="bottomRight">
               <Icon type="plus" />
             </Dropdown> */}
