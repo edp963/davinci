@@ -83,7 +83,6 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
 
   private goToDisplay = (display?: any) => () => {
     const { params, currentProject: {permission: {vizPermission}} } = this.props
-    console.log(vizPermission)
     const isToPreview = vizPermission === 1
     const path = isToPreview ? `/project/${params.pid}/display/preview/${display ? display.id : -1}` : `/project/${params.pid}/display/${display ? display.id : -1}`
     this.props.router.push(path)
