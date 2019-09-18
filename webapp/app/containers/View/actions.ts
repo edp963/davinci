@@ -154,6 +154,30 @@ export const ViewActions = {
     }
   },
 
+  copyView (view: IViewBase, resolve: () => void) {
+    return {
+      type: ActionTypes.COPY_VIEW,
+      payload: {
+        view,
+        resolve
+      }
+    }
+  },
+  viewCopied (result: IView) {
+    return {
+      type: ActionTypes.COPY_VIEW_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  copyViewFail () {
+    return {
+      type: ActionTypes.COPY_VIEW_FAILURE,
+      payload: {}
+    }
+  },
+
   executeSql (params: IExecuteSqlParams) {
     return {
       type: ActionTypes.EXECUTE_SQL,
