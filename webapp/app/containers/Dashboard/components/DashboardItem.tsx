@@ -352,13 +352,18 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private paginationChange = (pageNo: number, pageSize: number, orders) => {
-    const { onGetChartData, itemId, widget } = this.props
+    const { onGetChartData, itemId, widget, drillHistory } = this.props
     let { pagination } = this.state
     const { nativeQuery } = this.state
     pagination = {
       ...pagination,
       pageNo,
       pageSize
+    }
+    if (drillHistory && drillHistory.length) {
+      const drillStatus = drillHistory[drillHistory.length - 1]
+      onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery, orders, drillStatus })
+      return
     }
     onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery, orders })
   }
