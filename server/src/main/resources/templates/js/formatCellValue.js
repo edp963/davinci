@@ -4535,51 +4535,470 @@ var global = {}
 })));
 // #endregion
 
+// https://tc39.github.io/ecma262/#sec-array.prototype.find
+if (!Array.prototype.find) {
+    Object.defineProperty(Array.prototype, 'find', {
+      value: function(predicate) {
+        // 1. Let O be ? ToObject(this value).
+        if (this == null) {
+          throw TypeError('"this" is null or not defined');
+        }
+
+        var o = Object(this);
+
+        // 2. Let len be ? ToLength(? Get(O, "length")).
+        var len = o.length >>> 0;
+
+        // 3. If IsCallable(predicate) is false, throw a TypeError exception.
+        if (typeof predicate !== 'function') {
+          throw TypeError('predicate must be a function');
+        }
+
+        // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+        var thisArg = arguments[1];
+
+        // 5. Let k be 0.
+        var k = 0;
+
+        // 6. Repeat, while k < len
+        while (k < len) {
+          // a. Let Pk be ! ToString(k).
+          // b. Let kValue be ? Get(O, Pk).
+          // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+          // d. If testResult is true, return kValue.
+          var kValue = o[k];
+          if (predicate.call(thisArg, kValue, k, o)) {
+            return kValue;
+          }
+          // e. Increase k by 1.
+          k++;
+        }
+
+        // 7. Return undefined.
+        return undefined;
+      },
+      configurable: true,
+      writable: true
+    });
+  }
+
 // #region polyfill
 // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
 if (!Array.prototype.findIndex) {
     Object.defineProperty(Array.prototype, 'findIndex', {
-        value: function (predicate) {
-            // 1. Let O be ? ToObject(this value).
-            if (this == null) {
-                throw new TypeError('"this" is null or not defined');
+      value: function(predicate) {
+       // 1. Let O be ? ToObject(this value).
+        if (this == null) {
+          throw new TypeError('"this" is null or not defined');
+        }
+
+        var o = Object(this);
+
+        // 2. Let len be ? ToLength(? Get(O, "length")).
+        var len = o.length >>> 0;
+
+        // 3. If IsCallable(predicate) is false, throw a TypeError exception.
+        if (typeof predicate !== 'function') {
+          throw new TypeError('predicate must be a function');
+        }
+
+        // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+        var thisArg = arguments[1];
+
+        // 5. Let k be 0.
+        var k = 0;
+
+        // 6. Repeat, while k < len
+        while (k < len) {
+          // a. Let Pk be ! ToString(k).
+          // b. Let kValue be ? Get(O, Pk).
+          // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+          // d. If testResult is true, return k.
+          var kValue = o[k];
+          if (predicate.call(thisArg, kValue, k, o)) {
+            return k;
+          }
+          // e. Increase k by 1.
+          k++;
+        }
+
+        // 7. Return -1.
+        return -1;
+      }
+    });
+  }
+
+  if (!Array.prototype.map) {
+
+    Array.prototype.map = function (callback /*, thisArg*/) {
+
+        var T, A, k;
+
+        if (this == null) {
+            throw new TypeError('this is null or not defined');
+        }
+
+        // 1. Let O be the result of calling ToObject passing the |this|
+        //    value as the argument.
+        var O = Object(this);
+
+        // 2. Let lenValue be the result of calling the Get internal
+        //    method of O with the argument "length".
+        // 3. Let len be ToUint32(lenValue).
+        var len = O.length >>> 0;
+
+        // 4. If IsCallable(callback) is false, throw a TypeError exception.
+        // See: http://es5.github.com/#x9.11
+        if (typeof callback !== 'function') {
+            throw new TypeError(callback + ' is not a function');
+        }
+
+        // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
+        if (arguments.length > 1) {
+            T = arguments[1];
+        }
+
+        // 6. Let A be a new array created as if by the expression new Array(len)
+        //    where Array is the standard built-in constructor with that name and
+        //    len is the value of len.
+        A = new Array(len);
+
+        // 7. Let k be 0
+        k = 0;
+
+        // 8. Repeat, while k < len
+        while (k < len) {
+
+            var kValue, mappedValue;
+
+            // a. Let Pk be ToString(k).
+            //   This is implicit for LHS operands of the in operator
+            // b. Let kPresent be the result of calling the HasProperty internal
+            //    method of O with argument Pk.
+            //   This step can be combined with c
+            // c. If kPresent is true, then
+            if (k in O) {
+
+                // i. Let kValue be the result of calling the Get internal
+                //    method of O with argument Pk.
+                kValue = O[k];
+
+                // ii. Let mappedValue be the result of calling the Call internal
+                //     method of callback with T as the this value and argument
+                //     list containing kValue, k, and O.
+                mappedValue = callback.call(T, kValue, k, O);
+
+                // iii. Call the DefineOwnProperty internal method of A with arguments
+                // Pk, Property Descriptor
+                // { Value: mappedValue,
+                //   Writable: true,
+                //   Enumerable: true,
+                //   Configurable: true },
+                // and false.
+
+                // In browsers that support Object.defineProperty, use the following:
+                // Object.defineProperty(A, k, {
+                //   value: mappedValue,
+                //   writable: true,
+                //   enumerable: true,
+                //   configurable: true
+                // });
+
+                // For best browser support, use the following:
+                A[k] = mappedValue;
+            }
+            // d. Increase k by 1.
+            k++;
+        }
+
+        // 9. return A
+        return A;
+    };
+}
+
+if (!Array.prototype.filter) {
+    Array.prototype.filter = function (func, thisArg) {
+        'use strict';
+        if (!((typeof func === 'Function' || typeof func === 'function') && this))
+            throw new TypeError();
+
+        var len = this.length >>> 0,
+            res = new Array(len), // preallocate array
+            t = this,
+            c = 0,
+            i = -1;
+        if (thisArg === undefined) {
+            while (++i !== len) {
+                // checks to see if the key was set
+                if (i in this) {
+                    if (func(t[i], i, t)) {
+                        res[c++] = t[i];
+                    }
+                }
+            }
+        } else {
+            while (++i !== len) {
+                // checks to see if the key was set
+                if (i in this) {
+                    if (func.call(thisArg, t[i], i, t)) {
+                        res[c++] = t[i];
+                    }
+                }
+            }
+        }
+
+        res.length = c; // shrink down array to proper size
+        return res;
+    };
+}
+
+// Production steps of ECMA-262, Edition 5, 15.4.4.18
+// Reference: http://es5.github.io/#x15.4.4.18
+if (!Array.prototype.forEach) {
+
+    Array.prototype.forEach = function (callback /*, thisArg*/) {
+
+        var T, k;
+
+        if (this == null) {
+            throw new TypeError('this is null or not defined');
+        }
+
+        // 1. Let O be the result of calling toObject() passing the
+        // |this| value as the argument.
+        var O = Object(this);
+
+        // 2. Let lenValue be the result of calling the Get() internal
+        // method of O with the argument "length".
+        // 3. Let len be toUint32(lenValue).
+        var len = O.length >>> 0;
+
+        // 4. If isCallable(callback) is false, throw a TypeError exception.
+        // See: http://es5.github.com/#x9.11
+        if (typeof callback !== 'function') {
+            throw new TypeError(callback + ' is not a function');
+        }
+
+        // 5. If thisArg was supplied, let T be thisArg; else let
+        // T be undefined.
+        if (arguments.length > 1) {
+            T = arguments[1];
+        }
+
+        // 6. Let k be 0.
+        k = 0;
+
+        // 7. Repeat while k < len.
+        while (k < len) {
+
+            var kValue;
+
+            // a. Let Pk be ToString(k).
+            //    This is implicit for LHS operands of the in operator.
+            // b. Let kPresent be the result of calling the HasProperty
+            //    internal method of O with argument Pk.
+            //    This step can be combined with c.
+            // c. If kPresent is true, then
+            if (k in O) {
+
+                // i. Let kValue be the result of calling the Get internal
+                // method of O with argument Pk.
+                kValue = O[k];
+
+                // ii. Call the Call internal method of callback with T as
+                // the this value and argument list containing kValue, k, and O.
+                callback.call(T, kValue, k, O);
+            }
+            // d. Increase k by 1.
+            k++;
+        }
+        // 8. return undefined.
+    };
+}
+
+// Production steps of ECMA-262, Edition 5, 15.4.4.17
+// Reference: http://es5.github.io/#x15.4.4.17
+if (!Array.prototype.some) {
+    Array.prototype.some = function(fun, thisArg) {
+      'use strict';
+
+      if (this == null) {
+        throw new TypeError('Array.prototype.some called on null or undefined');
+      }
+
+      if (typeof fun !== 'function') {
+        throw new TypeError();
+      }
+
+      var t = Object(this);
+      var len = t.length >>> 0;
+
+      for (var i = 0; i < len; i++) {
+        if (i in t && fun.call(thisArg, t[i], i, t)) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+  }
+
+// Production steps of ECMA-262, Edition 5, 15.4.4.21
+// Reference: http://es5.github.io/#x15.4.4.21
+// https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+if (!Array.prototype.reduce) {
+    Object.defineProperty(Array.prototype, 'reduce', {
+        value: function (callback /*, initialValue*/) {
+            if (this === null) {
+                throw new TypeError('Array.prototype.reduce ' +
+                    'called on null or undefined');
+            }
+            if (typeof callback !== 'function') {
+                throw new TypeError(callback +
+                    ' is not a function');
             }
 
+            // 1. Let O be ? ToObject(this value).
             var o = Object(this);
 
             // 2. Let len be ? ToLength(? Get(O, "length")).
             var len = o.length >>> 0;
 
-            // 3. If IsCallable(predicate) is false, throw a TypeError exception.
-            if (typeof predicate !== 'function') {
-                throw new TypeError('predicate must be a function');
+            // Steps 3, 4, 5, 6, 7
+            var k = 0;
+            var value;
+
+            if (arguments.length >= 2) {
+                value = arguments[1];
+            } else {
+                while (k < len && !(k in o)) {
+                    k++;
+                }
+
+                // 3. If len is 0 and initialValue is not present,
+                //    throw a TypeError exception.
+                if (k >= len) {
+                    throw new TypeError('Reduce of empty array ' +
+                        'with no initial value');
+                }
+                value = o[k++];
             }
 
-            // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
-            var thisArg = arguments[1];
-
-            // 5. Let k be 0.
-            var k = 0;
-
-            // 6. Repeat, while k < len
+            // 8. Repeat, while k < len
             while (k < len) {
                 // a. Let Pk be ! ToString(k).
-                // b. Let kValue be ? Get(O, Pk).
-                // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
-                // d. If testResult is true, return k.
-                var kValue = o[k];
-                if (predicate.call(thisArg, kValue, k, o)) {
-                    return k;
+                // b. Let kPresent be ? HasProperty(O, Pk).
+                // c. If kPresent is true, then
+                //    i.  Let kValue be ? Get(O, Pk).
+                //    ii. Let accumulator be ? Call(
+                //          callbackfn, undefined,
+                //          « accumulator, kValue, k, O »).
+                if (k in o) {
+                    value = callback(value, o[k], k, o);
                 }
-                // e. Increase k by 1.
+
+                // d. Increase k by 1.
                 k++;
             }
 
-            // 7. Return -1.
-            return -1;
+            // 9. Return accumulator.
+            return value;
         }
     });
 }
+
+// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+if (!Object.keys) {
+    Object.keys = (function () {
+        'use strict';
+        var hasOwnProperty = Object.prototype.hasOwnProperty,
+            hasDontEnumBug = !({
+                toString: null
+            }).propertyIsEnumerable('toString'),
+            dontEnums = [
+                'toString',
+                'toLocaleString',
+                'valueOf',
+                'hasOwnProperty',
+                'isPrototypeOf',
+                'propertyIsEnumerable',
+                'constructor'
+            ],
+            dontEnumsLength = dontEnums.length;
+
+        return function (obj) {
+            if (typeof obj !== 'function' && (typeof obj !== 'object' || obj === null)) {
+                throw new TypeError('Object.keys called on non-object');
+            }
+
+            var result = [],
+                prop, i;
+
+            for (prop in obj) {
+                if (hasOwnProperty.call(obj, prop)) {
+                    result.push(prop);
+                }
+            }
+
+            if (hasDontEnumBug) {
+                for (i = 0; i < dontEnumsLength; i++) {
+                    if (hasOwnProperty.call(obj, dontEnums[i])) {
+                        result.push(dontEnums[i]);
+                    }
+                }
+            }
+            return result;
+        };
+    }());
+}
+
+if (!Object.entries) {
+    Object.entries = function (obj) {
+        var ownProps = Object.keys(obj),
+            i = ownProps.length,
+            resArray = new Array(i); // preallocate the Array
+        while (i--)
+            resArray[i] = [ownProps[i], obj[ownProps[i]]];
+
+        return resArray;
+    };
+}
+
+if (typeof Object.assign != 'function') {
+    // Must be writable: true, enumerable: false, configurable: true
+    Object.defineProperty(Object, "assign", {
+        value: function assign(target, varArgs) { // .length of function is 2
+            'use strict';
+            if (target == null) { // TypeError if undefined or null
+                throw new TypeError('Cannot convert undefined or null to object');
+            }
+
+            var to = Object(target);
+
+            for (var index = 1; index < arguments.length; index++) {
+                var nextSource = arguments[index];
+
+                if (nextSource != null) { // Skip over if undefined or null
+                    for (var nextKey in nextSource) {
+                        // Avoid bugs when hasOwnProperty is shadowed
+                        if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                            to[nextKey] = nextSource[nextKey];
+                        }
+                    }
+                }
+            }
+            return to;
+        },
+        writable: true,
+        configurable: true
+    });
+}
+
+if (!Array.isArray) {
+    Array.isArray = function(arg) {
+      return Object.prototype.toString.call(arg) === '[object Array]';
+    };
+  }
 // #endregion
 
 // console.log(global.moment().format('YYYY-MM-DD'))
@@ -4727,7 +5146,7 @@ function getFormattedValues(values, format) {
 }
 // #endregion
 
-// #region Formar rows value
+// #region Formart rows value
 function findFieldByKey (fields, key) {
     if (!fields || !fields.length) { return null }
     if (!key) { return null }
@@ -4897,6 +5316,37 @@ function getFieldAlias(field, queryVars) {
 
 // #region
 
+function findHeaderConfig(config, headerName, callback) {
+    if (!Array.isArray(config)) { return false }
+
+    var hasFound = config.some(function(cfg) {
+        if (cfg.headerName === headerName) {
+            if (callback) {
+                callback(cfg)
+            }
+            return true
+        }
+        var children = cfg.children
+        if (Array.isArray(children) && children.length > 0) {
+            return findHeaderConfig(children, headerName, callback)
+        }
+        return false
+    })
+
+    return hasFound
+}
+
+function traverseConfig(config, callback) {
+    if (!Array.isArray(config)) { return }
+
+    config.forEach(function(cfg) {
+        if (Array.isArray(cfg.children) && cfg.children.length) {
+            traverseConfig(cfg.children, callback)
+        }
+        callback(cfg)
+    })
+}
+
 function lcm(a, b) {
     var c = a * b;
     while (b > 0) {
@@ -4966,15 +5416,9 @@ function getCells(cfg, row, col, rowsLeft, fields, queryVars) {
     }
 
     cfg.children.sort(function (cfg1, cfg2) {
-        if (cfg1.isGroup || cfg2.isGroup) {
-            return 0
-        }
-        var cfg1Idx = fields.findIndex(function (f) {
-            return f.name === cfg1.headerName
-        })
-        var cfg2Idx = fields.findIndex(function (f) {
-            return f.name === cfg2.headerName
-        })
+        if (cfg1.isGroup || cfg2.isGroup) { return 0 }
+        var cfg1Idx = fields.findIndex(function (f) { return f.name === cfg1.headerName })
+        var cfg2Idx = fields.findIndex(function (f) { return f.name === cfg2.headerName })
         return cfg1Idx - cfg2Idx
     })
 
@@ -4985,12 +5429,64 @@ function getCells(cfg, row, col, rowsLeft, fields, queryVars) {
     return cells
 }
 
+function validateHeaderConfig(headerConfig, fields) {
+    var validHeaderConfig = []
+
+    fields.forEach(function(field) {
+        var exists = findHeaderConfig(headerConfig, field.name, function(currentConfig) {
+            validHeaderConfig.push(currentConfig)
+        })
+        if (!exists) {
+            validHeaderConfig.push({
+                key: field.name,
+                headerName: field.name,
+                alias: '',
+                isGroup: false,
+            })
+        }
+    })
+
+    var groupedConfig = []
+    traverseConfig(headerConfig, function(currentConfig) {
+        if (!currentConfig.isGroup) { return }
+
+        var childrenConfig = currentConfig.children.filter(function(child) {
+            return (!child.isGroup && validHeaderConfig.findIndex(function(cfg) { return cfg.headerName === child.headerName }) >= 0)
+                || (child.isGroup && groupedConfig.findIndex(function(cfg) { return cfg.key === child.key }) >= 0)
+        })
+        if (!childrenConfig.length) { return }
+
+        var newConfig = Object.assign({}, currentConfig, { children: [] })
+
+        childrenConfig.sort(function (cfg1, cfg2) {
+            if (cfg1.isGroup || cfg2.isGroup) { return 0 }
+            var cfg1Idx = fields.findIndex(function (f) { return f.name === cfg1.headerName })
+            var cfg2Idx = fields.findIndex(function (f) { return f.name === cfg2.headerName })
+            return cfg1Idx - cfg2Idx
+        })
+
+        var insertIdx = Infinity
+        childrenConfig.forEach(function(child) {
+            var configIdx = validHeaderConfig.findIndex(function(cfg) {
+                return cfg.key === child.key
+            })
+            insertIdx = Math.min(insertIdx, configIdx)
+            newConfig.children.push(validHeaderConfig[configIdx])
+            validHeaderConfig.splice(configIdx, 1)
+        })
+        validHeaderConfig.splice(insertIdx, 0, newConfig)
+        groupedConfig.push(newConfig)
+    })
+
+    return validHeaderConfig
+}
+
 function parseTableHeader(headerConfig, fields, queryVars) {
     var rootHeaderConfig = {
         key: 'root',
         headerName: 'root',
         isGroup: true,
-        children: headerConfig
+        children: validateHeaderConfig(headerConfig, fields)
     }
 
     var headerCells = getCells(rootHeaderConfig, 0, 0, rowsToUse(rootHeaderConfig), fields, queryVars)
@@ -5061,26 +5557,3 @@ function getFieldsHeader(widgetConfigJson, queryVars) {
     }
     return headerCells
 }
-
-// #region @TEST format table cell value
-
-// function test() {
-//   const json = `{"data":[],"cols":[{"name":"单据日期","type":"category","visualType":"date","config":true,"from":"cols"},{"name":"客户分类","type":"category","visualType":"string","config":true,"from":"cols"},{"name":"存货分类","type":"category","visualType":"string","config":true,"from":"cols"},{"name":"部门名称","type":"category","visualType":"string","config":true,"from":"cols"}],"rows":[],"metrics":[{"name":"单价@davinci@869F8EA4","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics","format":{"formatType":"numeric","numeric":{"decimalPlaces":2,"unit":"k","useThousandSeparator":true}}},{"name":"数量@davinci@79C58EFC","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics","format":{"formatType":"numeric","numeric":{"decimalPlaces":2,"unit":"无","useThousandSeparator":false}}},{"name":"订单金额@davinci@9AEA36FC","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics","format":{"formatType":"currency","currency":{"decimalPlaces":2,"unit":"万","useThousandSeparator":true,"prefix":"上午","suffix":"的事"}}},{"name":"利润@davinci@462B3FE0","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics"},{"name":"税费@davinci@2720E8BF","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics","format":{"formatType":"percentage","percentage":{"decimalPlaces":3}}},{"name":"不含税金额@davinci@665BB656","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics","format":{"formatType":"scientificNotation","scientificNotation":{"decimalPlaces":2}}}],"filters":[],"chartStyles":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[{"key":"PQV0e","headerName":"单据日期","alias":"单据日期","visualType":"date","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"XdnzE","headerName":"客户分类","alias":"客户分类","visualType":"string","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"ZRBeV","headerName":"存货分类","alias":"存货分类","visualType":"string","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"F8B7x","headerName":"部门名称","alias":"部门名称","visualType":"string","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"gDGDu","headerName":"单价@davinci@869F8EA4","alias":"[总计]单价","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"TQyFt","headerName":"数量@davinci@79C58EFC","alias":"[总计]数量","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"oKJcH","headerName":"订单金额@davinci@9AEA36FC","alias":"[总计]订单金额","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"g8Qxk","headerName":"利润@davinci@462B3FE0","alias":"[总计]利润","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"oEndN","headerName":"税费@davinci@2720E8BF","alias":"[总计]税费","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"2S7yE","headerName":"不含税金额@davinci@665BB656","alias":"[总计]不含税金额","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null}],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}},"selectedChart":1,"pagination":{"pageNo":1,"pageSize":20,"withPaging":true,"totalCount":55},"renderType":"clear","orders":[],"mode":"chart","model":{"单据日期":{"sqlType":"DATE","visualType":"date","modelType":"category"},"订单号":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"订单金额":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"利润":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"税费":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"客户分类":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"部门编码":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"存货分类":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"业务员编码":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"客户名称":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"存货编码":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"地区名称":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"存货名称":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"部门名称":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"业务员名称":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"单价":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"数量":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"客户编码":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"订单明细号":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"不含税金额":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"}},"queryParams":[],"cache":false,"expired":300}`
-//   const rows = [{"单据日期":"2014-12-01 00:00:00","sum(税费)":3792.31,"sum(单价)":870,"存货分类":"PC原辅材料","客户分类":"PC机经销商","sum(订单金额)":26100,"sum(利润)":840,"sum(数量)":30,"sum(不含税金额)":22307.69,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":1086.84,"sum(单价)":680,"存货分类":"外购半成品","客户分类":"PC机经销商","sum(订单金额)":7480,"sum(利润)":669,"sum(数量)":11,"sum(不含税金额)":6393.16,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":5521.37,"sum(单价)":380,"存货分类":"手机原辅材料","客户分类":"PC机经销商","sum(订单金额)":38000,"sum(利润)":280,"sum(数量)":100,"sum(不含税金额)":32478.63,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":2615.38,"sum(单价)":1800,"存货分类":"自制产成品","客户分类":"PC机经销商","sum(订单金额)":18000,"sum(利润)":1790,"sum(数量)":10,"sum(不含税金额)":15384.62,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":16084.62,"sum(单价)":6310,"存货分类":"外购产成品","客户分类":"国外经销商","sum(订单金额)":110700,"sum(利润)":6275,"sum(数量)":35,"sum(不含税金额)":94615.38,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":6625.64,"sum(单价)":380,"存货分类":"手机原辅材料","客户分类":"国外经销商","sum(订单金额)":45600,"sum(利润)":260,"sum(数量)":120,"sum(不含税金额)":38974.36,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":81367.52,"sum(单价)":560,"存货分类":"通讯设备类","客户分类":"国外经销商","sum(订单金额)":560000,"sum(利润)":-440,"sum(数量)":1000,"sum(不含税金额)":478632.48,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":871.79,"sum(单价)":1200,"存货分类":"外购产成品","客户分类":"委托代销商","sum(订单金额)":6000,"sum(利润)":1195,"sum(数量)":5,"sum(不含税金额)":5128.21,"部门名称":"委外部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":1380.34,"sum(单价)":575,"存货分类":"手机原辅材料","客户分类":"委托代销商","sum(订单金额)":9500,"sum(利润)":510,"sum(数量)":65,"sum(不含税金额)":8119.66,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":0,"sum(单价)":0,"存货分类":"自制产成品","客户分类":"委托代销商","sum(订单金额)":0,"sum(利润)":-10000,"sum(数量)":10000,"sum(不含税金额)":0,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":3196.58,"sum(单价)":2200,"存货分类":"设备备品备件","客户分类":"委托代销商","sum(订单金额)":22000,"sum(利润)":2190,"sum(数量)":10,"sum(不含税金额)":18803.42,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":501.28,"sum(单价)":155,"存货分类":"手机原辅材料","客户分类":"手机经销商","sum(订单金额)":3450,"sum(利润)":105,"sum(数量)":50,"sum(不含税金额)":2948.72,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":25282.05,"sum(单价)":870,"存货分类":"PC原辅材料","客户分类":"直销客户","sum(订单金额)":174000,"sum(利润)":670,"sum(数量)":200,"sum(不含税金额)":148717.95,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":0,"sum(单价)":1200,"存货分类":"办公用品","客户分类":"直销客户","sum(订单金额)":60000,"sum(利润)":1150,"sum(数量)":50,"sum(不含税金额)":60000,"部门名称":"市场部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":13076.92,"sum(单价)":9000,"存货分类":"外购产成品","客户分类":"直销客户","sum(订单金额)":90000,"sum(利润)":8970,"sum(数量)":30,"sum(不含税金额)":76923.08,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":18888.89,"sum(单价)":2600,"存货分类":"自制产成品","客户分类":"直销客户","sum(订单金额)":130000,"sum(利润)":2550,"sum(数量)":50,"sum(不含税金额)":111111.11,"部门名称":"销售部"},{"单据日期":"2014-12-01 00:00:00","sum(税费)":14646.16,"sum(单价)":2360,"存货分类":"自制产成品","客户分类":"集团内部客户","sum(订单金额)":100800,"sum(利润)":2202,"sum(数量)":158,"sum(不含税金额)":86153.84,"部门名称":"销售部"},{"单据日期":"2014-12-02 00:00:00","sum(税费)":6247.86,"sum(单价)":860,"存货分类":"PC原辅材料","客户分类":"PC机经销商","sum(订单金额)":43000,"sum(利润)":810,"sum(数量)":50,"sum(不含税金额)":36752.14,"部门名称":"销售部"},{"单据日期":"2014-12-02 00:00:00","sum(税费)":8717.95,"sum(单价)":600,"存货分类":"自制半成品","客户分类":"PC机经销商","sum(订单金额)":60000,"sum(利润)":500,"sum(数量)":100,"sum(不含税金额)":51282.05,"部门名称":"销售部"},{"单据日期":"2014-12-02 00:00:00","sum(税费)":1799.3,"sum(单价)":233.65,"存货分类":"设备备品备件","客户分类":"PC机经销商","sum(订单金额)":12383.45,"sum(利润)":180.65,"sum(数量)":53,"sum(不含税金额)":10584.15,"部门名称":"销售部"}]
-//   const crows = getFormattedDataRows(json, rows)
-//   console.info(JSON.stringify(crows))
-// }
-
-// test()
-
-// #endregion
-
-
-// @TEST table header config parse
-// var fs = require('fs')
-// var config = fs.readFileSync('./widgetConfig.txt', 'UTF-8')
-// var cells = getFieldsHeader(config, [{"name":"month_var","value":"'2018-08'"}])
-// console.log(JSON.stringify(cells))
-// fs.writeFileSync('./result.txt', JSON.stringify(cells))
-
-// #endregion
