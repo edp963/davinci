@@ -298,14 +298,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }
   }
 
-  private getQs = (qs) => {
-    const qsArr = qs.split('&')
-    return qsArr.reduce((acc, str) => {
-      const arr = str.split('=')
-      acc[arr[0]] = arr[1]
-      return acc
-    }, {})
-  }
 
   private querystring = (str) => {
     return str.split('&').reduce((o, kv) => {
