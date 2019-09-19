@@ -35,7 +35,7 @@ import zh_CN from 'antd/lib/locale-provider/zh_CN'
 import LanguageProvider from 'containers/LanguageProvider'
 import { translationMessages } from './i18n'
 import moment from 'moment'
-import 'moment/locale/zh-cn'
+import 'moment/src/locale/zh-cn'
 moment.locale('zh-cn')
 
 import '!file-loader?name=[name].[ext]!./favicon.ico'
