@@ -363,9 +363,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     if (drillHistory && drillHistory.length) {
       const drillStatus = drillHistory[drillHistory.length - 1]
       onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery, orders, drillStatus })
-      return
+    } else {
+      onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery, orders })
     }
-    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery, orders })
   }
 
   private turnOffInteract = () => {
