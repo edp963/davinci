@@ -122,6 +122,27 @@ export function* deleteView (action: ViewActionType) {
   }
 }
 
+export function* copyView (action: ViewActionType) {
+  if (action.type !== ActionTypes.COPY_VIEW) { return }
+  const { view, resolve } = action.payload
+  const { viewCopied, copyViewFail } = ViewActions
+  try {
+    const fromViewResponse = yield call(request, `${api.view}/${view.id}`)
+    const fromView = fromViewResponse.payload
+    const copyView: IView = { ...fromView, name: view.name, description: view.description }
+    const asyncData = yield call<AxiosRequestConfig>(request, {
+      method: 'post',
+      url: api.view,
+      data: copyView
+    })
+    yield put(viewCopied(asyncData.payload))
+    resolve()
+  } catch (err) {
+    yield put(copyViewFail())
+    errorHandler(err)
+  }
+}
+
 export function* executeSql (action: ViewActionType) {
   if (action.type !== ActionTypes.EXECUTE_SQL) { return }
   const { params } = action.payload
@@ -321,6 +342,7 @@ export default function* rootViewSaga () {
     takeLatest(ActionTypes.ADD_VIEW, addView),
     takeEvery(ActionTypes.EDIT_VIEW, editView),
     takeEvery(ActionTypes.DELETE_VIEW, deleteView),
+    takeEvery(ActionTypes.COPY_VIEW, copyView),
     takeLatest(ActionTypes.EXECUTE_SQL, executeSql),
 
     takeEvery(ActionTypes.LOAD_VIEW_DATA, getViewData),
