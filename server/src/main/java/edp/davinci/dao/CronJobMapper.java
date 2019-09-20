@@ -54,7 +54,6 @@ public interface CronJobMapper {
             "`start_date` = #{startDate,jdbcType=TIMESTAMP},",
             "`end_date` = #{endDate,jdbcType=TIMESTAMP},",
             "`description` = #{description,jdbcType=VARCHAR},",
-            "`update_time` = #{updateTime,jdbcType=TIMESTAMP},",
             "`config` = #{config,jdbcType=LONGVARCHAR},",
             "`exec_log` = #{execLog,jdbcType=LONGVARCHAR},",
             "`update_by` = #{updateBy,jdbcType=BIGINT},",

@@ -21,7 +21,7 @@ package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
-import edp.core.common.job.ScheduleService;
+import edp.core.common.quartz.ScheduleService;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.MailUtils;
 import edp.core.utils.ServerUtils;
@@ -120,10 +120,9 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
     @Override
     public void execute(long jobId) throws Exception {
-        log.info("cron job execute: {}", jobId);
         CronJob cronJob = cronJobMapper.getById(jobId);
         if (null != cronJob && !StringUtils.isEmpty(cronJob.getConfig())) {
-            log.info("cron job start: {}", jobId);
+            log.info("Cronjob (:{}) is started!", jobId);
             CronJobConfig cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
             if (null != cronJobConfig && !StringUtils.isEmpty(cronJobConfig.getType())) {
                 Map<String, Object> content = new HashMap<>();
@@ -299,15 +298,16 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 context.setWrapper(new MsgWrapper(msgMailExcel, ActionEnum.MAIL, uuid));
                 ExecutorUtil.submitWorkbookTask(context);
                 condition.await();
-                excelContents.add(new ExcelContent(name, msgMailExcel.getFilePath()));
-                countDownLatch.countDown();
+                if (!StringUtils.isEmpty(msgMailExcel.getFilePath())) {
+                    excelContents.add(new ExcelContent(name, msgMailExcel.getFilePath()));
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
+                countDownLatch.countDown();
                 lock.unlock();
             }
         }));
-
         countDownLatch.await();
         return excelContents.isEmpty() ? null : excelContents;
     }

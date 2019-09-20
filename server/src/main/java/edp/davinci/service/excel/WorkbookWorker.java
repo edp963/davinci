@@ -92,6 +92,9 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             Boolean rst = false;
             for (Future<Boolean> future : futures) {
                 rst = future.get();
+                if (!rst) {
+                    future.cancel(true);
+                }
             }
             if (rst) {
                 filePath = ((FileUtils) SpringContextHolder.getBean(FileUtils.class)).getFilePath(FileTypeEnum.XLSX, this.context.getWrapper());
