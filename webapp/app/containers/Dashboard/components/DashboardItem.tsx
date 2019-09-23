@@ -352,7 +352,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private paginationChange = (pageNo: number, pageSize: number, orders) => {
-    const { onGetChartData, itemId, widget } = this.props
+    const { onGetChartData, itemId, widget, drillHistory } = this.props
     let { pagination } = this.state
     const { nativeQuery } = this.state
     pagination = {
@@ -360,7 +360,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       pageNo,
       pageSize
     }
-    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery, orders })
+    if (drillHistory && drillHistory.length) {
+      const drillStatus = drillHistory[drillHistory.length - 1]
+      onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery, orders, drillStatus })
+    } else {
+      onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery, orders })
+    }
   }
 
   private turnOffInteract = () => {

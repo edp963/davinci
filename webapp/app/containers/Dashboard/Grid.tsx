@@ -1721,30 +1721,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
                 {
                   currentDashboard && (
                     <Breadcrumb.Item>
-                      <Dropdown overlay={navDropdown} trigger={['click']}>
-                        <Link to="">
-                          {`${currentDashboard.name} `}
-                          <Icon type="down" />
-                        </Link>
-                      </Dropdown>
+                      <Link to="">
+                        {`${currentDashboard.name} `}
+                      </Link>
                     </Breadcrumb.Item>
                   )
-                }
-                {
-                  currentDashboard && (
-                    <Breadcrumb.Item>
-                      <Dropdown overlay={nextNavDropdown} trigger={['click']}>
-                        <Link to="">
-                          {
-                            currentDashboard.widgets && currentDashboard.widgets.length
-                              ? currentDashboard.widgets.length > 1
-                                ? <span>{this.state.nextMenuTitle} <Icon type="down" /></span>
-                                : ''
-                              : ''
-                          }
-                        </Link>
-                      </Dropdown>
-                    </Breadcrumb.Item>)
                 }
               </Breadcrumb>
             </Col>
