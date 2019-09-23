@@ -135,7 +135,7 @@ export function* copyView (action: ViewActionType) {
       url: api.view,
       data: copyView
     })
-    yield put(viewCopied(asyncData.payload))
+    yield put(viewCopied(fromView.id, asyncData.payload))
     resolve()
   } catch (err) {
     yield put(copyViewFail())

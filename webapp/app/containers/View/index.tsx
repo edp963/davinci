@@ -246,7 +246,6 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
         copyModalVisible: false
       })
       message.info('View 复制成功')
-      this.loadViews()
     })
   }
 
@@ -272,7 +271,7 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
   }
 
   public render () {
-    const { currentProject, views, loading: { view: loadingView } } = this.props
+    const { currentProject, views, loading } = this.props
     const { screenWidth, filterViewName } = this.state
     const { viewPermission, AdminButton, EditButton } = ViewList.getViewPermission(currentProject)
     const tableColumns = this.getTableColumns({ viewPermission, AdminButton, EditButton })
@@ -318,7 +317,7 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
                     <Table
                       bordered
                       rowKey="id"
-                      loading={loadingView}
+                      loading={loading.view}
                       dataSource={filterViews}
                       columns={tableColumns}
                       pagination={tablePagination}
@@ -332,6 +331,7 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
         </Container>
         <CopyModal
           visible={copyModalVisible}
+          loading={loading.copy}
           fromView={copyFromView}
           onCheckUniqueName={this.checkViewUniqueName}
           onCopy={this.copy}

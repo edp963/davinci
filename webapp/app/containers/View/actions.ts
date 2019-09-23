@@ -163,10 +163,11 @@ export const ViewActions = {
       }
     }
   },
-  viewCopied (result: IView) {
+  viewCopied (fromViewId: number, result: IView) {
     return {
       type: ActionTypes.COPY_VIEW_SUCCESS,
       payload: {
+        fromViewId,
         result
       }
     }

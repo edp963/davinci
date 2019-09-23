@@ -6,6 +6,7 @@ const FormItem = Form.Item
 
 interface ICopyModalProps extends FormComponentProps<IViewBase> {
   visible: boolean
+  loading: boolean
   fromView: IViewBase
   onCheckUniqueName: (viewName: string, resolve: () => void, reject: (err: string) => void) => void
   onCopy: (view: IViewBase) => void
@@ -36,40 +37,41 @@ export class CopyModal extends React.PureComponent<ICopyModalProps> {
     })
   }
 
-  private modalButtons = [(
-    <Button
-      key="back"
-      size="large"
-      onClick={this.props.onCancel}
-    >
-      取 消
-    </Button>
-  ), (
-    <Button
-      key="submit"
-      size="large"
-      type="primary"
-      onClick={this.save}
-    >
-      保 存
-    </Button>
-  )]
-
   private clearFieldsValue = () => {
     this.props.form.resetFields()
   }
 
   public render () {
-    const { form, visible, fromView, onCancel } = this.props
+    const { form, visible, loading, fromView, onCancel } = this.props
     const { getFieldDecorator } = form
     if (!fromView) { return null }
+
+    const modalButtons = [(
+      <Button
+        key="back"
+        size="large"
+        onClick={onCancel}
+      >
+        取 消
+      </Button>
+    ), (
+      <Button
+        disabled={loading}
+        key="submit"
+        size="large"
+        type="primary"
+        onClick={this.save}
+      >
+        保 存
+      </Button>
+    )]
 
     return (
       <Modal
         title="复制 View"
         wrapClassName="ant-modal-small"
         visible={visible}
-        footer={this.modalButtons}
+        footer={modalButtons}
         onCancel={onCancel}
         afterClose={this.clearFieldsValue}
       >
@@ -81,7 +83,7 @@ export class CopyModal extends React.PureComponent<ICopyModalProps> {
                 { required: true, message: '不能为空' },
                 { validator: this.checkName }
               ],
-              initialValue: fromView.name
+              initialValue: `${fromView.name}_copy`
             })(<Input />)}
           </FormItem>
           <FormItem label="描述" {...this.formItemStyle}>
