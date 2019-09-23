@@ -34,8 +34,8 @@ import saga from './sagas'
 import Container from 'components/Container'
 import Box from 'components/Box'
 import SearchFilterDropdown from 'components/SearchFilterDropdown'
-import SourceForm from './SourceForm'
-import UploadCsvForm from './UploadCsvForm'
+import SourceConfigModal from './components/SourceConfigModal'
+import UploadCsvModal from './components/UploadCsvModal'
 
 import { message, Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb } from 'antd'
 import { ButtonProps } from 'antd/lib/button/button'
@@ -535,7 +535,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
                   />
                 </Col>
               </Row>
-              <SourceForm
+              <SourceConfigModal
                 source={editingSource}
                 datasourcesInfo={datasourcesInfo}
                 visible={sourceModalVisible}
@@ -546,7 +546,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
                 onTestSourceConnection={this.testSourceConnection}
                 onCheckUniqueName={onCheckUniqueName}
               />
-              <UploadCsvForm
+              <UploadCsvModal
                 csvMeta={editingCsv}
                 visible={uploadModalVisible}
                 step={formStep}

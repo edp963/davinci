@@ -20,7 +20,7 @@
 
 import React from 'react'
 import classnames from 'classnames'
-import { ICSVMetaInfo } from './types'
+import { ICSVMetaInfo } from '../types'
 
 import { Modal, Form, Row, Col, Input, Radio, Upload, Icon, Popover, Button, Steps } from 'antd'
 const RadioGroup = Radio.Group
@@ -29,7 +29,7 @@ const FormItem = Form.Item
 import { FormComponentProps } from 'antd/lib/form/Form'
 import { UploadProps } from 'antd/lib/upload/Upload'
 
-const styles = require('./Source.less')
+const styles = require('../Source.less')
 
 interface IUploadCsvFormProps {
   visible: boolean
