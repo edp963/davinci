@@ -62,6 +62,13 @@ public interface CronJobMapper {
     })
     int update(CronJob record);
 
+    @Update({
+            "update cron_job",
+            "set `exec_log` = #{execLog,jdbcType=LONGVARCHAR}",
+            "where `id` = #{id,jdbcType=BIGINT}"
+    })
+    int updateExecLog(@Param("id") Long id, @Param("execLog") String execLog);
+
 
     @Select({"select id from cron_job where project_id = #{projectId} and `name` = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
