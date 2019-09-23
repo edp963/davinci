@@ -186,6 +186,9 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
             <Tooltip title="修改">
               <EditButton icon="edit" shape="circle" type="ghost" onClick={this.editView(record.id)} />
             </Tooltip>
+            <Tooltip title="复制">
+              <EditButton icon="copy" shape="circle" type="ghost" onClick={this.copyView(record)} />
+            </Tooltip>
             <Popconfirm
               title="确定删除？"
               placement="bottom"

@@ -1151,7 +1151,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
   }
 
-  private viewSelect = (key: string) => {
+  private viewSelect = (viewId: number) => {
     const { mode, dataParams } = this.state
     const hasItems = Object.values(dataParams)
       .filter((param) => !!param.items.length)
@@ -1160,11 +1160,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         title: '切换 View 会清空所有配置项，是否继续？',
         onOk: () => {
           this.resetWorkbench(mode)
-          this.props.onViewSelect(+key)
+          this.props.onViewSelect(viewId)
         }
       })
     } else {
-      this.props.onViewSelect(+key)
+      this.props.onViewSelect(viewId)
     }
   }
 
@@ -1869,7 +1869,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       <div className={styles.operatingPanel}>
         <div className={styles.model}>
           <div className={styles.viewSelect}>
-            <Select size="small" placeholder="选择一个View" showSearch onChange={this.viewSelect} filterOption={this.filterView}>
+            <Select
+              size="small"
+              placeholder="选择一个View"
+              showSearch
+              value={selectedView && selectedView.id}
+              onChange={this.viewSelect}
+              filterOption={this.filterView}
+            >
               {(views || []).map(({ id, name }) => <Option key={id} value={id}>{name}</Option>)}
             </Select>
             {/* <Dropdown overlay={coustomFieldSelectMenu} trigger={['click']} placement="bottomRight">
