@@ -165,7 +165,7 @@ export function getModelValue (control: IControlBase, field: IControlRelatedFiel
       break
     case FilterTypes.Select:
       if (multiple) {
-        if (value.length && value.length > 0) {
+        if (Array.isArray(value) && value.length > 0) {
           const filterJson = {
             ...commanFilterJson,
             value: value.map((val) => getValidColumnValue(val, sqlType))
