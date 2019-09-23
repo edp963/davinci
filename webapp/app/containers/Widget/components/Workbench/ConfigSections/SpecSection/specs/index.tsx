@@ -6,8 +6,6 @@ const fallback = <Skeleton paragraph={{ rows: 4 }} />
 
 export const LineSection = loadable(() => import('./Line'), { fallback })
 
-export const BarSection = loadable(() => import('./Bar'), { fallback })
-
 export const PieSection = loadable(() => import('./Pie'), { fallback })
 
 export const FunnelSection = loadable(() => import('./Funnel'), { fallback })

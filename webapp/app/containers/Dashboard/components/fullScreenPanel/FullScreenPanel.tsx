@@ -3,11 +3,9 @@ import memoizeOne from 'memoize-one'
 import { Icon, Menu } from 'antd'
 import * as classnames from 'classnames'
 import DashboardItemControlForm from '../DashboardItemControlForm'
-import { IQueryConditions } from '../../Grid'
-import { IModel } from '../../../Widget/components/Workbench/index'
-import Widget, { IWidgetWrapperProps } from '../../../Widget/components/Widget'
-import { getStyleConfig } from '../../../Widget/components/util'
-import ChartTypes from '../../../Widget/config/chart/ChartTypes'
+import { IQueryConditions } from 'containers/Dashboard/Grid'
+import { IModel } from 'containers/Widget/components/Workbench/index'
+import Widget from 'containers/Widget/components/Widget'
 const styles = require('./fullScreenPanel.less')
 
 interface IFullScreenPanelProps {

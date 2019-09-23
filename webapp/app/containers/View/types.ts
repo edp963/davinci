@@ -61,6 +61,7 @@ export interface IViewLoading {
   table: boolean
   modal: boolean
   execute: boolean
+  copy: boolean
 }
 
 export interface IExecuteSqlParams {

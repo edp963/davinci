@@ -19,6 +19,7 @@
 
 package edp.core.enums;
 
+import edp.core.consts.Consts;
 import edp.core.exception.SourceException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,7 +38,7 @@ public enum DataTypeEnum {
 
     MONGODB("mongo", "mongodb", "mongodb.jdbc.MongoDriver", "`", "`", "\"", "\""),
 
-    ELASTICSEARCH("sql4es", "elasticsearch", "nl.anchormen.sql4es.jdbc.ESDriver", "", "", "'", "'"),
+    ELASTICSEARCH("elasticsearch", "elasticsearch", "nl.anchormen.sql4es.jdbc.ESDriver", "", "", "'", "'"),
 
     PRESTO("presto", "presto", "com.facebook.presto.jdbc.PrestoDriver", "\"", "\"", "\"", "\""),
 
@@ -64,8 +65,6 @@ public enum DataTypeEnum {
     private String aliasPrefix;
     private String aliasSuffix;
 
-    private static final String jdbcUrlPrefix = "jdbc:";
-
     DataTypeEnum(String feature, String desc, String driver, String keywordPrefix, String keywordSuffix, String aliasPrefix, String aliasSuffix) {
         this.feature = feature;
         this.desc = desc;
@@ -79,15 +78,7 @@ public enum DataTypeEnum {
     public static DataTypeEnum urlOf(String jdbcUrl) throws SourceException {
         String url = jdbcUrl.toLowerCase().trim();
         for (DataTypeEnum dataTypeEnum : values()) {
-            if (url.startsWith(jdbcUrlPrefix + dataTypeEnum.feature)) {
-                try {
-                    Class<?> aClass = Class.forName(dataTypeEnum.getDriver());
-                    if (null == aClass) {
-                        throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
-                    }
-                } catch (ClassNotFoundException e) {
-                    throw new SourceException("Unable to get driver instance: " + jdbcUrl);
-                }
+            if (url.startsWith(String.format(Consts.JDBC_PREFIX_FORMATER, dataTypeEnum.feature))) {
                 return dataTypeEnum;
             }
         }

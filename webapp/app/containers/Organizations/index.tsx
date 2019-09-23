@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { Icon, Row, Col, Modal, Breadcrumb } from 'antd'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { Link } from 'react-router'
-import Box from '../../components/Box'
+import Box from 'components/Box'
 import { InjectedRouter } from 'react-router/lib/Router'
 import { compose } from 'redux'
 import { makeSelectLoginUser } from '../App/selectors'
@@ -12,8 +12,8 @@ import { createStructuredSelector } from 'reselect'
 import { makeSelectOrganizations } from './selectors'
 const styles = require('./Organization.less')
 import OrganizationForm from './component/OrganizationForm'
-const utilStyles = require('../../assets/less/util.less')
-import Avatar from '../../components/Avatar'
+const utilStyles = require('assets/less/util.less')
+import Avatar from 'components/Avatar'
 import { checkNameUniqueAction } from '../App/actions'
 
 interface IOrganizationsState {

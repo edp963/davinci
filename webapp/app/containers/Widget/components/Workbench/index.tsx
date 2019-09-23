@@ -3,34 +3,38 @@ import { compose } from 'redux'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 
-import injectReducer from '../../../../utils/injectReducer'
-import injectSaga from '../../../../utils/injectSaga'
-import reducer from '../../reducer'
-import viewReducer from '../../../View/reducer'
-import saga from '../../sagas'
-import viewSaga from '../../../View/sagas'
-import formReducer from '../../../Dashboard/FormReducer'
-import { hideNavigator } from '../../../App/actions'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
+import reducer from 'containers/Widget/reducer'
+import viewReducer from 'containers/View/reducer'
+import saga from 'containers/Widget/sagas'
+import viewSaga from 'containers/View/sagas'
+import formReducer from 'containers/Dashboard/FormReducer'
+import { hideNavigator } from 'containers/App/actions'
 import { ViewActions } from 'containers/View/actions'
 const { loadViews, loadViewsDetail, loadViewData, loadViewDistinctValue } = ViewActions
-import { addWidget, editWidget, loadWidgetDetail, clearCurrentWidget, executeComputed } from '../../actions'
-import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, makeSelectDistinctColumnValues, makeSelectColumnValueLoading } from '../../selectors'
+import { addWidget, editWidget, loadWidgetDetail, clearCurrentWidget, executeComputed } from 'containers/Widget/actions'
+import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, makeSelectDistinctColumnValues, makeSelectColumnValueLoading } from 'containers/Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
 
 import { IViewBase, IFormedViews, IFormedView } from 'containers/View/types'
 import OperatingPanel from './OperatingPanel'
 import Widget, { IWidgetProps } from '../Widget'
 import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
-import EditorHeader from '../../../../components/EditorHeader'
+import EditorHeader from 'components/EditorHeader'
 import WorkbenchSettingForm from './WorkbenchSettingForm'
 import DashboardItemMask, { IDashboardItemMaskProps } from 'containers/Dashboard/components/DashboardItemMask'
-import { DEFAULT_SPLITER, DEFAULT_CACHE_EXPIRED } from '../../../../globalConstants'
+import { DEFAULT_SPLITER, DEFAULT_CACHE_EXPIRED } from 'app/globalConstants'
 import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
+import { FieldSortTypes, fieldGroupedSort } from '../Config/Sort'
 import { message } from 'antd'
 import 'assets/less/resizer.less'
 import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { IWorkbenchSettings, WorkbenchQueryMode } from './types'
+
+import { widgetDimensionMigrationRecorder, barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
+
 const styles = require('./Workbench.less')
 
 interface IWidget {
@@ -159,7 +163,12 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   public componentWillReceiveProps (nextProps: IWorkbenchProps) {
     const { currentWidget } = nextProps
     if (currentWidget && (currentWidget !== this.props.currentWidget)) {
-      const { controls, cache, expired, computed, autoLoadData, ...rest } = JSON.parse(currentWidget.config)
+      const { controls, cache, expired, computed, autoLoadData, cols, rows, ...rest } = JSON.parse(currentWidget.config)
+      const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
+      const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
+      if (rest.selectedChart === ChartTypes.Bar) {
+        rest.chartStyles = barChartStylesMigrationRecorder(rest.chartStyles)
+      }
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
@@ -169,8 +178,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         autoLoadData: autoLoadData === undefined ? true : autoLoadData,
         expired,
         selectedViewId: currentWidget.viewId,
-        originalWidgetProps: {...rest},
-        widgetProps: {...rest},
+        originalWidgetProps: { cols: updatedCols, rows: updatedRows, ...rest },
+        widgetProps: { cols: updatedCols, rows: updatedRows, ...rest },
         originalComputed: computed
       })
     }
@@ -342,10 +351,16 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private setWidgetProps = (widgetProps: IWidgetProps) => {
+    const { cols, rows } = widgetProps
+    const data = [...(widgetProps.data || this.state.widgetProps.data)]
+    const customOrders = cols.concat(rows)
+      .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+      .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
+    fieldGroupedSort(data, customOrders)
     this.setState({
       widgetProps: {
         ...widgetProps,
-        data: widgetProps.data || this.state.widgetProps.data
+        data
       }
     })
   }
@@ -412,8 +427,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     this.props.router.goBack()
   }
 
-  private paginationChange = (pageNo: number, pageSize: number) => {
-    this.operatingPanel.flipPage(pageNo, pageSize)
+  private paginationChange = (pageNo: number, pageSize: number, orders) => {
+    this.operatingPanel.flipPage(pageNo, pageSize, orders)
   }
 
   private chartStylesChange = (propPath: string[], value: string) => {

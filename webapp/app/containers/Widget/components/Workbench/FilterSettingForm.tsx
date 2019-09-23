@@ -3,15 +3,16 @@ import classnames from 'classnames'
 import moment, { Moment } from 'moment'
 import { IDataParamConfig, IDataParamSource } from './Dropbox'
 import ConditionalFilterForm, { ConditionalFilterPanel } from './ConditionalFilterForm'
-import { DEFAULT_DATETIME_FORMAT } from '../../../../globalConstants'
+import { DEFAULT_DATETIME_FORMAT } from 'app/globalConstants'
 import { decodeMetricName } from '../util'
 import { uuid } from 'utils/util'
 import { Transfer, Radio, Button, DatePicker } from 'antd'
+import { IFilters } from 'app/components/Filters/types'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 const RangePicker = DatePicker.RangePicker
 const styles = require('./Workbench.less')
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IFilterSettingFormProps {
   item: IDataParamSource
@@ -181,17 +182,41 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
         return `${name} ${tree.filterOperator} ${this.getFilterValue(tree.filterValue, type)}`
       }
     } else {
-      return ''
+      return []
     }
   }
 
-  private getFilterValue = (val, type) => {
-    if (type === 'number') {
-      return val
-    } else {
-      return `'${val}'`
-    }
-  }
+  private getSqlModel = (tree) => {
+    const { name, type } = this.state
+    const result = tree.map((t) => {
+      let children
+      if (t && t.children && t.children.length) {
+          children = this.getSqlModel(t.children)
+      }
+      if (t.type === 'link') {
+        const filterJson = {
+            type: 'relation',
+            value: t.rel,
+            children
+        }
+        return filterJson
+      } else {
+          const filterJson = {
+              name,
+              type: 'filter',
+              value: this.getFilterValue(t.filterValue, type),
+              operator: t.filterOperator,
+              sqlType: this.getSqlType(type)
+          }
+          return filterJson
+      }
+  })
+    return result
+}
+
+  private getSqlType = (type) => type === 'number' ? 'INTEGER' : 'VARCHAR'
+  private getFilterValue = (val, type) => type === 'number' ? val : `'${val}'`
+
 
   private selectDate = (e) => {
     this.setState({
@@ -204,7 +229,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
       datepickerValue: dates.slice()
     })
   }
-
+// widget 编辑器filter 位置
   private getDateSql = () => {
     const { name, selectedDate, datepickerValue } = this.state
     const today = moment().startOf('day').format(DEFAULT_DATETIME_FORMAT)
@@ -242,9 +267,19 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     const { name, mode, target, filterTree, selectedDate, datepickerValue } = this.state
     if (mode === 'value') {
       const sql = target.map((key) => `'${key}'`).join(',')
+      const sqlModel = []
+      const filterItem: IFilters = {
+        name,
+        type: 'filter',
+        value: target.map((key) => `'${key}'`),
+        operator: 'in',
+        sqlType: 'VARCHAR'
+      }
+      sqlModel.push(filterItem)
       if (sql) {
         onSave({
-          sql: `${name} in (${sql})`,
+          sqlModel,
+        //  sql: `${name} in (${sql})`,
           filterSource: target.slice()
         })
       } else {
@@ -255,8 +290,9 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
         this.conditionalFilterForm.current.props.form.validateFieldsAndScroll((err) => {
           if (!err) {
             onSave({
-              sql: this.getSqlExpresstions(filterTree),
-              filterSource: {...filterTree}
+             // sql: this.getSqlExpresstions(filterTree),
+              filterSource: {...filterTree},
+              sqlModel: this.getSqlModel([{...filterTree}])
             })
             this.conditionalFilterForm.current.resetTree()
           }

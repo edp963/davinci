@@ -27,13 +27,12 @@ const FormItem = Form.Item
 const InputGroup = Input.Group
 import AdminForm from './Transfer'
 import AntdFormType from 'antd/lib/form/Form'
-import Avatar from '../../../components/Avatar/index'
 import Auth from './ProjectAuth'
 const styles = require('../Project.less')
-const utilStyles =  require('../../../assets/less/util.less')
+const utilStyles =  require('assets/less/util.less')
 import { createStructuredSelector } from 'reselect'
 import { makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationMembers, makeSelectCurrentOrganizationProjectAdmins } from '../selectors'
-import { addProjectAdmin, deleteProjectAdmin} from '../../Projects/actions'
+import { addProjectAdmin, deleteProjectAdmin} from 'containers/Projects/actions'
 import { loadProjectAdmin } from '../actions'
 
 interface IProjectAdminStates {

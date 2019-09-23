@@ -187,7 +187,9 @@ public class ProjectServiceImpl implements ProjectService {
             log.info("not found organization, Id: {}", projectCreat.getOrgId());
             throw new NotFoundException("not found organization");
         }
-        if (!organization.getAllowCreateProject()) {
+
+        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
+        if (rel != null && rel.getRole() != UserOrgRoleEnum.OWNER.getRole() && !organization.getAllowCreateProject()) {
             log.info("project are not allowed to be created under the organization named {}", organization.getName());
             throw new UnAuthorizedExecption("project are not allowed to be created under the organization named " + organization.getName());
         }
@@ -275,6 +277,9 @@ public class ProjectServiceImpl implements ProjectService {
             organizationMapper.updateProjectNum(beforeOrg);
             organization.setProjectNum(organization.getProjectNum() + 1);
             organizationMapper.updateProjectNum(organization);
+
+            projectMapper.deleteBeforOrgRole(project.getId(), beforeOrgId);
+
 
             return project;
         } else {

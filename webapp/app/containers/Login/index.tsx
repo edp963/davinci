@@ -27,17 +27,16 @@ import LoginForm from './LoginForm'
 import { Icon } from 'antd'
 
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 // import reducer from '../App/reducer'
 // import saga from '../App/sagas'
 
 import { login, logged } from '../App/actions'
 import { makeSelectLoginLoading } from '../App/selectors'
-import { promiseDispatcher } from '../../utils/reduxPromisation'
-import checkLogin from '../../utils/checkLogin'
-import { setToken } from '../../utils/request'
-import { statistic } from '../../utils/statistic/statistic.dv'
+import checkLogin from 'utils/checkLogin'
+import { setToken } from 'utils/request'
+import { statistic } from 'utils/statistic/statistic.dv'
 
 const styles = require('./Login.less')
 

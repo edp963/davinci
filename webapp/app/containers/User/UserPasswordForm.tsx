@@ -23,7 +23,7 @@ import * as React from 'react'
 import { Form, Row, Col, Input } from 'antd'
 const FormItem = Form.Item
 
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IUserPasswordFormProps {
   form: any

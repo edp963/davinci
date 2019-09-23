@@ -69,6 +69,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
     public T call() throws Exception {
         Stopwatch watch = Stopwatch.createStarted();
         Workbook wb = null;
+        log.info("workbook worker start: action={}, xid={}", context.getWrapper().getAction(), context.getWrapper().getxId());
         String filePath = null;
         try {
             List<SheetContext> sheetContextList = buildSheetContextList();
@@ -80,7 +81,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             int sheetNo = 0;
             for (SheetContext sheetContext : sheetContextList) {
                 sheetNo++;
-                String name = String.valueOf(sheetNo) + "-" + sheetContext.getName();
+                String name = sheetNo + "-" + sheetContext.getName();
                 Sheet sheet = wb.createSheet(name);
                 sheetContext.setSheet(sheet);
                 sheetContext.setWorkbook(wb);
@@ -91,6 +92,9 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             Boolean rst = false;
             for (Future<Boolean> future : futures) {
                 rst = future.get();
+                if (!rst) {
+                    future.cancel(true);
+                }
             }
             if (rst) {
                 filePath = ((FileUtils) SpringContextHolder.getBean(FileUtils.class)).getFilePath(FileTypeEnum.XLSX, this.context.getWrapper());
@@ -108,8 +112,10 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                         out.close();
                     }
                 }
+                context.getWrapper().setRst(filePath);
+            } else {
+                context.getWrapper().setRst(null);
             }
-            context.getWrapper().setRst(filePath);
             super.tell(context.getWrapper());
         } catch (Exception e) {
             log.error("workbook worker error,e=", e);

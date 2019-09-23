@@ -21,14 +21,14 @@
 import * as React from 'react'
 
 import { Form, Row, Col, Input, Radio, Select, Tabs, Checkbox} from 'antd'
-import {IExludeRoles} from '../../Portal/components/PortalList'
-const styles = require('../../Portal/Portal.less')
+import {IExludeRoles} from 'containers/Portal/components/PortalList'
+const styles = require('containers/Portal/Portal.less')
 const TabPane = Tabs.TabPane
 const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IDashboardFormProps {
   portalId: number

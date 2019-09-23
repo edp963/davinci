@@ -39,6 +39,7 @@ import edp.davinci.model.User;
 import edp.davinci.service.CronJobService;
 import edp.davinci.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -66,7 +67,7 @@ public class CronJobServiceImpl implements CronJobService {
     private CronJobMapper cronJobMapper;
 
     @Autowired
-    private QuartzUtils quartzUtils;
+    private QuartzHandler quartzHandler;
 
     @Autowired
     private RedisUtils redisUtils;
@@ -139,7 +140,7 @@ public class CronJobServiceImpl implements CronJobService {
             cronJob.setStartDate(DateUtils.toDate(cronJobBaseInfo.getStartDate()));
             cronJob.setEndDate(DateUtils.toDate(cronJobBaseInfo.getEndDate()));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("{}", e.getMessage());
         }
 
         int insert = cronJobMapper.insert(cronJob);
@@ -202,10 +203,10 @@ public class CronJobServiceImpl implements CronJobService {
             int update = cronJobMapper.update(cronJob);
             if (update > 0) {
                 optLogger.info("cronJob ({}) is update by (:{}), origin: ({})", cronJob.toString(), user.getId(), origin);
-                quartzUtils.modifyJob(cronJob);
+                quartzHandler.modifyJob(cronJob);
             }
         } catch (Exception e) {
-            quartzUtils.removeJob(cronJob);
+            quartzHandler.removeJob(cronJob);
             cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
             cronJobMapper.update(cronJob);
 
@@ -243,7 +244,7 @@ public class CronJobServiceImpl implements CronJobService {
         int i = cronJobMapper.deleteById(id);
         if (i > 0) {
             optLogger.info("cronjob ({}) is delete by (:{})", cronJob.toString(), user.getId());
-            quartzUtils.removeJob(cronJob);
+            quartzHandler.removeJob(cronJob);
         }
 
         return true;
@@ -266,17 +267,16 @@ public class CronJobServiceImpl implements CronJobService {
         }
 
         try {
-            quartzUtils.addJob(cronJob);
+            quartzHandler.addJob(cronJob);
             cronJob.setJobStatus(CronJobStatusEnum.START.getStatus());
             cronJob.setUpdateTime(new Date());
             cronJobMapper.update(cronJob);
             return cronJob;
-        } catch (ServerException e) {
+        } catch (SchedulerException e) {
             cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
             cronJob.setUpdateTime(new Date());
             cronJobMapper.update(cronJob);
-
-            throw e;
+            throw new ServerException(e.getMessage());
         }
     }
 
@@ -298,7 +298,7 @@ public class CronJobServiceImpl implements CronJobService {
 
         if (redisUtils.isRedisEnable()) {
             String flag = MD5Util.getMD5(UUID.randomUUID().toString() + id, true, 32);
-            redisUtils.convertAndSend(DAVINCI_TOPIC_CHANNEL, new RedisMessageEntity(CronJobHandler.class, id, flag));
+            redisUtils.convertAndSend(DAVINCI_TOPIC_CHANNEL, new RedisMessageEntity(CronJobMessageHandler.class, id, flag));
 
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -313,6 +313,8 @@ public class CronJobServiceImpl implements CronJobService {
                         if (result) {
                             cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
                             countDownLatch.countDown();
+                            redisUtils.delete(flag);
+                            log.info("CronJob (:{}) is stoped", id, flag);
                             break;
                         }
                     }
@@ -332,13 +334,12 @@ public class CronJobServiceImpl implements CronJobService {
                 e.printStackTrace();
             } finally {
                 countDownLatch.countDown();
-                redisUtils.delete(flag);
             }
 
             return cronJob;
         } else {
             try {
-                quartzUtils.removeJob(cronJob);
+                quartzHandler.removeJob(cronJob);
                 cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
                 cronJob.setUpdateTime(new Date());
                 cronJobMapper.update(cronJob);
@@ -362,14 +363,15 @@ public class CronJobServiceImpl implements CronJobService {
                 String md5 = MD5Util.getMD5(CRONJOB_KEY + Consts.UNDERLINE + cronJob.getId(), true, 32);
                 if (CronJobStatusEnum.START.getStatus().equals(cronJob.getJobStatus()) && null == redisUtils.get(md5)) {
                     try {
-                        quartzUtils.addJob(cronJob);
+                        quartzHandler.addJob(cronJob);
                         redisUtils.set(md5, 1, 5L, TimeUnit.MINUTES);
-                    } catch (ServerException e) {
-                        log.info(e.getMessage());
+                    } catch (SchedulerException e) {
+                        cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
+                        cronJobMapper.update(cronJob);
+                    } catch (ServerException e1) {
                     }
                 }
             }
-            quartzUtils.startJobs();
         }
     }
 }

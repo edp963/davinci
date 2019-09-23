@@ -22,10 +22,10 @@ import * as React from 'react'
 import { Icon, Tooltip, Popover } from 'antd'
 import {IconProps} from 'antd/lib/icon'
 const styles = require('../Dashboard.less')
-import {IProject} from '../../Projects'
-import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
-import ModulePermission from '../../Account/components/checkModulePermission'
-
+import {IProject} from 'containers/Projects'
+import ShareDownloadPermission from 'containers/Account/components/checkShareDownloadPermission'
+import ModulePermission from 'containers/Account/components/checkModulePermission'
+import { getTextWidth } from 'utils/util'
 interface IDashboardActionProps {
   currentProject: IProject
   depth: number
@@ -67,6 +67,12 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       })
     }
     onInitOperateMore(item, type)
+  }
+
+  private computeTitleWidth (text: string, wrapperWidth: number) {
+    const textWidth = getTextWidth(text)
+    const textLength = text.length
+    return text
   }
 
   public render () {
@@ -153,17 +159,19 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       }
     }
 
-    const titleWidth = `${splitWidth - 60 - 18 * depth - 6 }px`
+    const computeWidth: number = splitWidth - 60 - 18 * depth - 6
+    const titleWidth: string = `${computeWidth}px`
 
+    const computeTitleWidth = this.computeTitleWidth
     return (
       <span className={styles.portalTreeItem}>
         <Tooltip placement="right" title={`名称：${item.name}`}>
           {
             item.type === 0
-              ? <h4 className={styles.dashboardTitle} style={{ width: titleWidth }}>{item.name}</h4>
+              ? <h4 className={styles.dashboardTitle} style={{ width: titleWidth }}>{computeTitleWidth(item.name, computeWidth)}</h4>
               : <span className={styles.dashboardTitle} style={{width: titleWidth}} onClick={initChangeDashboard(item.id)}>
                   <Icon type={`${item.type === 2 ? 'table' : 'dot-chart'}`} />
-                  <span className={styles.itemName}>{item.name}</span>
+                  <span className={styles.itemName}>{computeTitleWidth(item.name, computeWidth)}</span>
                 </span>
           }
           {ulPopover}

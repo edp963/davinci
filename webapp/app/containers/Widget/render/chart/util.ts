@@ -23,7 +23,7 @@ import { ILabelConfig } from '../../components/Workbench/ConfigSections/LabelSec
 import { ILegendConfig } from '../../components/Workbench/ConfigSections/LegendSection'
 import { metricAxisLabelFormatter, decodeMetricName, getTextWidth } from '../../components/util'
 import { getFormattedValue } from '../../components/Config/Format'
-import { CHART_LEGEND_POSITIONS } from 'app/globalConstants'
+import { CHART_LEGEND_POSITIONS, DEFAULT_SPLITER } from 'app/globalConstants'
 import { EChartOption } from 'echarts'
 
 interface ISplitLineConfig {
@@ -216,8 +216,8 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, metrics
   switch (type) {
     case 'line':
       formatter = (params) => {
-        const { value, seriesName } = params
-        const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
+        const { value, seriesId } = params
+        const m = metrics.find((m) => m.name === seriesId.split(`${DEFAULT_SPLITER}${DEFAULT_SPLITER}`)[0])
         const formattedValue = getFormattedValue(value, m.format)
         return formattedValue
       }
@@ -238,10 +238,9 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, metrics
       break
     case 'pie':
     case 'funnel':
-    // case 'scatter':
       formatter = (params) => {
-        const { name, value, percent } = params
-        const formattedValue = getFormattedValue(value, metrics[0].format)
+        const { name, value, percent, dataIndex } = params
+        const formattedValue = getFormattedValue(value, metrics[metrics.length > 1 ? dataIndex : 0].format)
         const { labelParts } = labelConfig
         if (!labelParts) {
           return `${name}\n${formattedValue}（${percent}%）`

@@ -154,6 +154,31 @@ export const ViewActions = {
     }
   },
 
+  copyView (view: IViewBase, resolve: () => void) {
+    return {
+      type: ActionTypes.COPY_VIEW,
+      payload: {
+        view,
+        resolve
+      }
+    }
+  },
+  viewCopied (fromViewId: number, result: IView) {
+    return {
+      type: ActionTypes.COPY_VIEW_SUCCESS,
+      payload: {
+        fromViewId,
+        result
+      }
+    }
+  },
+  copyViewFail () {
+    return {
+      type: ActionTypes.COPY_VIEW_FAILURE,
+      payload: {}
+    }
+  },
+
   executeSql (params: IExecuteSqlParams) {
     return {
       type: ActionTypes.EXECUTE_SQL,
@@ -375,7 +400,8 @@ export const ViewActions = {
     itemId: number,
     viewId: number,
     requestParams: IDataRequestParams,
-    vizType: 'dashboard' | 'display'
+    vizType: 'dashboard' | 'display',
+    statistic
   ) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM,
@@ -386,7 +412,8 @@ export const ViewActions = {
         requestParams,
         vizType,
         cancelTokenSource: CancelToken.source()
-      }
+      },
+      statistic
     }
   },
   viewDataFromVizItemLoaded (
@@ -394,7 +421,8 @@ export const ViewActions = {
     itemId: number,
     requestParams: IDataRequestParams,
     result: any[],
-    vizType: 'dashboard' | 'display'
+    vizType: 'dashboard' | 'display',
+    statistic
   ) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS,
@@ -404,7 +432,8 @@ export const ViewActions = {
         requestParams,
         result,
         vizType
-      }
+      },
+      statistic
     }
   },
   loadViewDataFromVizItemFail (itemId: number, vizType: 'dashboard' | 'display', errorMessage: string) {

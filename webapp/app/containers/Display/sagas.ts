@@ -20,10 +20,10 @@
 
 import { call, fork, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
-import request from '../../utils/request'
-import api from '../../utils/api'
+import request from 'utils/request'
+import api from 'utils/api'
 import { getDefaultSlideParams } from './components/util'
-import { errorHandler } from '../../utils/util'
+import { errorHandler } from 'utils/util'
 
 import {
   ActionTypes

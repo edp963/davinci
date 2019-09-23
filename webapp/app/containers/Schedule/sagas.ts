@@ -15,10 +15,9 @@ import {
   vizsLoaded,
   loadVizsFail
 } from './actions'
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { errorHandler } from '../../utils/util'
-import { PortalList } from '../Portal/components/PortalList'
+import request from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
 import { message } from 'antd'
 
 export function* getSchedules ({payload}) {

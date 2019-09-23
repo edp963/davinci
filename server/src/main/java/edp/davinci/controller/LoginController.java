@@ -19,15 +19,12 @@
 
 package edp.davinci.controller;
 
-import edp.core.exception.ServerException;
 import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.userDto.UserLoginResult;
-import edp.davinci.model.LdapPerson;
 import edp.davinci.model.User;
-import edp.davinci.service.LdapService;
 import edp.davinci.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,6 +32,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -63,6 +61,9 @@ public class LoginController {
     @Autowired
     private TokenUtils tokenUtils;
 
+    @Autowired
+    private Environment environment;
+
     /**
      * 登录
      *
@@ -85,6 +86,12 @@ public class LoginController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(user)).payload(new UserLoginResult(user)));
+        UserLoginResult userLoginResult = new UserLoginResult(user);
+        String statistic_open = environment.getProperty("statistic.enable");
+        if("true".equalsIgnoreCase(statistic_open)){
+            userLoginResult.setStatisticOpen(true);
+        }
+
+        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(user)).payload(userLoginResult));
     }
 }

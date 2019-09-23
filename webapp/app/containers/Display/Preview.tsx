@@ -1,27 +1,19 @@
 import * as React from 'react'
-import * as classnames from 'classnames'
-import Helmet from 'react-helmet'
-import * as echarts from 'echarts/lib/echarts'
-import { Link, InjectedRouter } from 'react-router'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 
 import { compose } from 'redux'
 import reducer from './reducer'
-import reducerWidget from '../Widget/reducer'
+import reducerWidget from 'containers/Widget/reducer'
 import saga from './sagas'
-import sagaWidget from '../Widget/sagas'
-import reducerView from '../View/reducer'
-import sagaView from '../View/sagas'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import sagaWidget from 'containers/Widget/sagas'
+import reducerView from 'containers/View/reducer'
+import sagaView from 'containers/View/sagas'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 
-import { GraphTypes, SecondaryGraphTypes } from './components/util'
-
-import Container from '../../components/Container'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
-import { makeSelectWidgets } from '../Widget/selectors'
-import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
+import { makeSelectWidgets } from 'containers/Widget/selectors'
+import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
 import {
   makeSelectCurrentDisplay,
   makeSelectCurrentSlide,
@@ -31,21 +23,22 @@ import {
   makeSelectCurrentProject
 } from './selectors'
 
-import { hideNavigator } from '../App/actions'
-import { ViewActions } from '../View/actions'
+import { FieldSortTypes } from 'containers/Widget/components/Config/Sort'
+import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
+
+import { hideNavigator } from 'containers/App/actions'
+import { ViewActions } from 'containers/View/actions'
 const { loadViewDataFromVizItem } = ViewActions // @TODO global filter in Display Preview
 import DisplayActions from './actions'
-import { DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
 import LayerItem from './components/LayerItem'
 
 const styles = require('./Display.less')
-const stylesDashboard = require('../Dashboard/Dashboard.less')
-import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
-import { decodeMetricName } from '../Widget/components/util'
-import { IQueryConditions, IDataRequestParams } from '../Dashboard/Grid'
-import { IFormedViews } from '../View/types'
-import { statistic } from '../../utils/statistic/statistic.dv'
-import {IProject} from '../Projects'
+import { IWidgetConfig, RenderType } from 'containers/Widget/components/Widget'
+import { decodeMetricName } from 'containers/Widget/components/util'
+import { IQueryConditions, IDataRequestParams } from 'containers/Dashboard/Grid'
+import { IFormedViews } from 'containers/View/types'
+import { statistic } from 'utils/statistic/statistic.dv'
+import {IProject} from 'containers/Projects'
 interface IPreviewProps {
   params: any
   widgets: any[]
@@ -212,12 +205,18 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
+    const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
+    const customOrders = updatedCols.concat(updatedRows)
+      .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+      .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
 
     const cachedQueryConditions = currentLayersInfo[itemId].queryConditions
 
     let tempFilters
     let linkageFilters
     let globalFilters
+    let tempOrders
     let variables
     let linkageVariables
     let globalVariables
@@ -228,6 +227,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
       linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
       globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      tempOrders = queryConditions.orders !== void 0 ? queryConditions.orders : cachedQueryConditions.orders
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
@@ -237,6 +237,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
       globalFilters = cachedQueryConditions.globalFilters
+      tempOrders = cachedQueryConditions.orders
       variables = cachedQueryConditions.variables
       linkageVariables = cachedQueryConditions.linkageVariables
       globalVariables = cachedQueryConditions.globalVariables
@@ -293,27 +294,34 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         })))
     }
 
+    const requestParams = {
+      groups,
+      aggregators,
+      filters: filters.map((i) => i.config.sql),
+      tempFilters,
+      linkageFilters,
+      globalFilters,
+      variables,
+      linkageVariables,
+      globalVariables,
+      orders,
+      cache,
+      expired,
+      flush: renderType === 'refresh',
+      pagination,
+      nativeQuery,
+      customOrders
+    }
+
+    if (tempOrders) {
+      requestParams.orders = requestParams.orders.concat(tempOrders)
+    }
+
     onLoadViewDataFromVizItem(
       renderType,
       itemId,
       widget.viewId,
-      {
-        groups,
-        aggregators,
-        filters: filters.map((i) => i.config.sql),
-        tempFilters,
-        linkageFilters,
-        globalFilters,
-        variables,
-        linkageVariables,
-        globalVariables,
-        orders,
-        cache,
-        expired,
-        flush: renderType === 'refresh',
-        pagination,
-        nativeQuery
-      }
+      requestParams
     )
   }
 

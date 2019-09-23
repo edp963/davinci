@@ -21,6 +21,7 @@ package edp.davinci.controller;
 
 import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.AuthIgnore;
+import edp.core.annotation.AuthShare;
 import edp.core.annotation.CurrentUser;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
@@ -118,7 +119,7 @@ public class DownloadController extends BaseController {
 
     @ApiOperation(value = "submit share download")
     @PostMapping(value = "/share/submit/{type}/{uuid}/{dataToken:.*}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    @AuthIgnore
+    @AuthShare
     public ResponseEntity submitShareDownloadTask(@PathVariable(name = "type") String type,
                                                   @PathVariable(name = "uuid") String uuid,
                                                   @PathVariable(name = "dataToken") String dataToken,
@@ -141,7 +142,7 @@ public class DownloadController extends BaseController {
 
     @ApiOperation(value = "get share download record page")
     @GetMapping(value = "/share/page/{uuid}/{token:.*}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    @AuthIgnore
+    @AuthShare
     public ResponseEntity getShareDownloadRecordPage(@PathVariable(name = "uuid") String uuid,
                                                      @PathVariable(name = "token") String token,
                                                      @ApiIgnore @CurrentUser User user,
@@ -163,7 +164,7 @@ public class DownloadController extends BaseController {
 
     @ApiOperation(value = "get download record file")
     @GetMapping(value = "/share/record/file/{id}/{uuid}/{token:.*}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @AuthIgnore
+    @AuthShare
     public ResponseEntity getShareDownloadRecordFile(@PathVariable(name = "id") String id,
                                                      @PathVariable(name = "uuid") String uuid,
                                                      @PathVariable(name = "token") String token,

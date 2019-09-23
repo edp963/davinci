@@ -46,7 +46,6 @@ public class CronJobRunner implements ApplicationRunner {
         try {
             cronJobService.startAllJobs();
         } catch (Exception e) {
-            log.error(e.getMessage());
         }
         log.info("Load cron job finish");
     }

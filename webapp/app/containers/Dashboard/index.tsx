@@ -25,8 +25,8 @@ import { createStructuredSelector } from 'reselect'
 import { Link, InjectedRouter, routerShape } from 'react-router'
 
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 import projectReducer from '../Projects/reducer'
@@ -44,7 +44,6 @@ const TreeNode = Tree.TreeNode
 
 import { IconProps } from 'antd/lib/icon/index'
 import AntdFormType from 'antd/lib/form/Form'
-
 
 const Search = Input.Search
 
@@ -70,14 +69,14 @@ import { loadPortals } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
 import { loadProjectDetail, excludeRoles } from '../Projects/actions'
 import {IExludeRoles} from '../Portal/components/PortalList'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const styles = require('./Dashboard.less')
 const widgetStyles = require('../Widget/Widget.less')
 import {makeSelectCurrentProject, makeSelectProjectRoles} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects'
-import EditorHeader from '../../components/EditorHeader'
+import EditorHeader from 'components/EditorHeader'
 const SplitPane = React.lazy(() => import('react-split-pane'))
 import {IProjectRoles} from '../Organizations/component/ProjectRole'
 import { loadProjectRoles } from '../Organizations/actions'
@@ -763,6 +762,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     if (portals) {
       portalDec = portals.find((p) => p.id === Number(params.portalId)).description
     }
+
     return (
       <div className={styles.portal}>
         <EditorHeader
@@ -859,7 +859,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
                   ? children
                   : (
                     <div className={styles.noDashboard}>
-                      <img src={require('../../assets/images/noDashboard.png')} onClick={this.onAddItem}/>
+                      <img src={require('assets/images/noDashboard.png')} onClick={this.onAddItem}/>
                       <p>请创建文件夹或 Dashboard</p>
                     </div>
                   )

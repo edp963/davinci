@@ -11,6 +11,7 @@ import {
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { IFieldFormatConfig } from '../Config/Format'
 import { IFieldConfig } from '../Config/Field'
+import { IFieldSortConfig } from '../Config/Sort'
 import { IAxisConfig } from '../Workbench/ConfigSections/AxisSection'
 import { ISplitLineConfig } from '../Workbench/ConfigSections/SplitLineSection'
 import { IPivotConfig } from '../Workbench/ConfigSections/PivotSection'
@@ -26,7 +27,7 @@ import { ITableConfig } from '../Config/Table'
 import { IRichTextConfig, IBarConfig, IRadarConfig } from '../Workbench/ConfigSections'
 import { IDoubleYAxisConfig } from '../Workbench/ConfigSections/DoubleYAxisSection'
 import { IModel } from '../Workbench/index'
-import { IQueryVariableMap } from '../../../Dashboard/Grid'
+import { IQueryVariableMap } from 'containers/Dashboard/Grid'
 import { getStyleConfig } from '../util'
 import ChartTypes from '../../config/chart/ChartTypes'
 const styles = require('../Pivot/Pivot.less')
@@ -45,6 +46,7 @@ export interface IWidgetDimension {
   name: string
   field: IFieldConfig
   format: IFieldFormatConfig
+  sort: IFieldSortConfig
 }
 
 export interface IWidgetMetric {
@@ -92,14 +94,18 @@ export interface IChartStyles {
   doubleYAxis?: IDoubleYAxisConfig
 }
 
+export interface IChartRule {
+  dimension: number | [number, number]
+  metric: number | [number, number]
+}
+
 export interface IChartInfo {
   id: number
   name: string
   title: string
   icon: string
   coordinate: 'cartesian' | 'polar' | 'other'
-  requireDimetions: number | number[]
-  requireMetrics: number | number[]
+  rules: IChartRule[]
   dimetionAxis?: DimetionType
   data: object
   style: object
@@ -139,7 +145,7 @@ export interface IWidgetProps {
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
   getDataDrillDetail?: (position: string) => void
-  onPaginationChange?: (pageNo: number, pageSize: number) => void
+  onPaginationChange?: (pageNo: number, pageSize: number, order?: { column: string, direction: string }) => void
   onChartStylesChange?: (propPath: string[], value: string) => void
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object[]

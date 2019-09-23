@@ -24,6 +24,8 @@ import edp.core.consts.Consts;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+
 import static edp.core.consts.Consts.*;
 
 @Component
@@ -45,6 +47,9 @@ public class ServerUtils {
 
     @Value("${server.access.port:}")
     private String accessPort;
+
+    @Value("${file.base-path}")
+    private String basePath;
 
     public String getHost() {
         String pro = protocol.trim().toLowerCase();
@@ -76,5 +81,9 @@ public class ServerUtils {
 
     public String getLocalHost() {
         return protocol + PROTOCOL_SEPARATOR + "localhost:" + port;
+    }
+
+    public String getBasePath() {
+        return basePath.replaceAll("/", File.separator).replaceAll(File.separator + "{2,}", File.separator);
     }
 }

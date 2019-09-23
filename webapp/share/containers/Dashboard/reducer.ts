@@ -58,6 +58,8 @@ import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 import { DashboardItemStatus } from '.'
 import { DownloadStatus } from 'app/containers/App/types'
 
+import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
+
 const initialState = fromJS({
   dashboard: null,
   title: '',
@@ -84,15 +86,15 @@ function shareReducer (state = initialState, { type, payload }) {
     case LOAD_SHARE_DASHBOARD_SUCCESS:
       const dashboardConfig = payload.dashboard.config ? JSON.parse(payload.dashboard.config) : {}
       const globalControls = (dashboardConfig.filters || []).map((c) => globalControlMigrationRecorder(c)).map((ctrl) => {
-        const {relatedViews} = ctrl
+        const {relatedViews, name} = ctrl
         let newCtrl = {...ctrl}
         if (shareParams) {
           Object.entries(relatedViews).forEach(([key, value]) => {
-            const defaultValue = shareParams[value['name']]
+            const defaultValue = shareParams[name]
             if (defaultValue && defaultValue.length) {
                newCtrl = {
                  ...ctrl,
-                 defaultValue: decodeURI(defaultValue)
+                 defaultValue: Array.isArray(defaultValue) && defaultValue.length ? defaultValue.map((val) => decodeURI(val)) :  decodeURI(defaultValue)
                }
             }
           })
@@ -273,6 +275,7 @@ function shareReducer (state = initialState, { type, payload }) {
         }
       })
     case LOAD_SHARE_RESULTSET_SUCCESS:
+      fieldGroupedSort(payload.resultset.resultList, payload.requestParams.customOrders)
       return state.set('itemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {

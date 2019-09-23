@@ -20,7 +20,6 @@
 package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.common.jdbc.ESDataSource;
 import edp.core.common.jdbc.JdbcDataSource;
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
@@ -33,9 +32,10 @@ import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
-import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.select.*;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,9 +72,6 @@ public class SqlUtils {
     @Value("${source.enable-query-log:false}")
     private boolean isQueryLogEnable;
 
-    @Value("${source.query-timeout:600000}")
-    private int queryTimeout;
-
     private static final String TABLE = "TABLE";
 
     private static final String VIEW = "VIEW";
@@ -93,32 +90,42 @@ public class SqlUtils {
 
     private String password;
 
+    private String database;
+
+    private String dbVersion;
+
+    private boolean isExt;
+
     private DataTypeEnum dataTypeEnum;
 
+    private SourceUtils sourceUtils;
+
     public SqlUtils init(BaseSource source) {
-        SqlUtils sqlUtils = new SqlUtils();
-        sqlUtils.jdbcDataSource = jdbcDataSource;
-        sqlUtils.jdbcUrl = source.getJdbcUrl();
-        sqlUtils.username = source.getUsername();
-        sqlUtils.password = source.getPassword();
-        sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
-        sqlUtils.resultLimit = this.resultLimit;
-        sqlUtils.queryTimeout = this.queryTimeout;
-        sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(source.getJdbcUrl());
-        return sqlUtils;
+        return SqlUtilsBuilder
+                .SqlUtils()
+                .withJdbcUrl(source.getJdbcUrl())
+                .withUsername(source.getUsername())
+                .withPassword(source.getPassword())
+                .withDbVersion(source.getDbVersion())
+                .withIsExt(source.isExt())
+                .withJdbcDataSource(this.jdbcDataSource)
+                .withResultLimit(this.resultLimit)
+                .withIsQueryLogEnable(this.isQueryLogEnable)
+                .build();
     }
 
-    public SqlUtils init(String jdbcUrl, String username, String password) {
-        SqlUtils sqlUtils = new SqlUtils();
-        sqlUtils.jdbcDataSource = jdbcDataSource;
-        sqlUtils.jdbcUrl = jdbcUrl;
-        sqlUtils.username = username;
-        sqlUtils.password = password;
-        sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
-        sqlUtils.resultLimit = this.resultLimit;
-        sqlUtils.queryTimeout = this.queryTimeout;
-        sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-        return sqlUtils;
+    public SqlUtils init(String jdbcUrl, String username, String password, String dbVersion, boolean ext) {
+        return SqlUtilsBuilder
+                .SqlUtils()
+                .withJdbcUrl(jdbcUrl)
+                .withUsername(username)
+                .withPassword(password)
+                .withDbVersion(dbVersion)
+                .withIsExt(ext)
+                .withJdbcDataSource(this.jdbcDataSource)
+                .withResultLimit(this.resultLimit)
+                .withIsQueryLogEnable(this.isQueryLogEnable)
+                .build();
     }
 
     public void execute(String sql) throws ServerException {
@@ -246,13 +253,13 @@ public class SqlUtils {
     }
 
     private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns, int startRow) {
+        Set<String> queryFromsAndJoins = getQueryFromsAndJoins(sql);
         jdbcTemplate.query(sql, rs -> {
             if (null != rs) {
                 ResultSetMetaData metaData = rs.getMetaData();
-
                 List<QueryColumn> queryColumns = new ArrayList<>();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                    String key = metaData.getColumnLabel(i);
+                    String key = getColumnLabel(queryFromsAndJoins, metaData.getColumnLabel(i));
                     if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
                         continue;
                     }
@@ -267,13 +274,13 @@ public class SqlUtils {
                         rs.absolute(startRow);
                     }
                     while (rs.next()) {
-                        resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                        resultList.add(getResultObjectMap(excludeColumns, rs, metaData, queryFromsAndJoins));
                     }
                 } catch (Throwable e) {
                     int currentRow = 0;
                     while (rs.next()) {
                         if (currentRow >= startRow) {
-                            resultList.add(getResultObjectMap(excludeColumns, rs, metaData));
+                            resultList.add(getResultObjectMap(excludeColumns, rs, metaData, queryFromsAndJoins));
                         }
                         currentRow++;
                     }
@@ -285,14 +292,17 @@ public class SqlUtils {
         });
     }
 
-    private Map<String, Object> getResultObjectMap(Set<String> excludeColumns, ResultSet rs, ResultSetMetaData metaData) throws SQLException {
+    private Map<String, Object> getResultObjectMap(Set<String> excludeColumns, ResultSet rs, ResultSetMetaData metaData, Set<String> queryFromsAndJoins) throws SQLException {
         Map<String, Object> map = new LinkedHashMap<>();
+
         for (int i = 1; i <= metaData.getColumnCount(); i++) {
             String key = metaData.getColumnLabel(i);
-            if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
+            String label = getColumnLabel(queryFromsAndJoins, key);
+
+            if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(label)) {
                 continue;
             }
-            map.put(key, rs.getObject(key));
+            map.put(label, rs.getObject(key));
         }
         return map;
     }
@@ -309,6 +319,68 @@ public class SqlUtils {
     }
 
 
+    public static Set<String> getQueryFromsAndJoins(String sql) {
+        Set<String> columnPrefixs = new HashSet<>();
+        try {
+            Select select = (Select) CCJSqlParserUtil.parse(sql);
+            SelectBody selectBody = select.getSelectBody();
+            if (selectBody instanceof PlainSelect) {
+                PlainSelect plainSelect = (PlainSelect) selectBody;
+                columnPrefixExtractor(columnPrefixs, plainSelect);
+            } else if (selectBody instanceof SetOperationList) {
+                SetOperationList setOperationList = (SetOperationList) selectBody;
+                List<SelectBody> selects = setOperationList.getSelects();
+                for (SelectBody optSelectBody : selects) {
+                    PlainSelect plainSelect = (PlainSelect) optSelectBody;
+                    columnPrefixExtractor(columnPrefixs, plainSelect);
+                }
+            } else if (selectBody instanceof WithItem) {
+                WithItem withItem = (WithItem) selectBody;
+                PlainSelect plainSelect = (PlainSelect) withItem.getSelectBody();
+                columnPrefixExtractor(columnPrefixs, plainSelect);
+            }
+        } catch (JSQLParserException e) {
+        }
+        return columnPrefixs;
+    }
+
+    private static void columnPrefixExtractor(Set<String> columnPrefixs, PlainSelect plainSelect) {
+        getFromItemName(columnPrefixs, plainSelect.getFromItem());
+        List<Join> joins = plainSelect.getJoins();
+        if (!CollectionUtils.isEmpty(joins)) {
+            joins.forEach(join -> getFromItemName(columnPrefixs, join.getRightItem()));
+        }
+    }
+
+    private static void getFromItemName(Set<String> columnPrefixs, FromItem fromItem) {
+        Alias alias = fromItem.getAlias();
+        if (alias != null) {
+            if (alias.isUseAs()) {
+                columnPrefixs.add(alias.getName().trim() + DOT);
+            } else {
+                columnPrefixs.add(alias.toString().trim() + DOT);
+            }
+        } else {
+            fromItem.accept(getFromItemTableName(columnPrefixs));
+        }
+    }
+
+
+    public static String getColumnLabel(Set<String> columnPrefixs, String columnLable) {
+        if (!CollectionUtils.isEmpty(columnPrefixs)) {
+            for (String prefix : columnPrefixs) {
+                if (columnLable.startsWith(prefix)) {
+                    return columnLable.replaceFirst(prefix, EMPTY);
+                } else if (columnLable.startsWith(prefix.toLowerCase())) {
+                    return columnLable.replaceFirst(prefix.toLowerCase(), EMPTY);
+                } else if (columnLable.startsWith(prefix.toUpperCase())) {
+                    return columnLable.replaceFirst(prefix.toUpperCase(), EMPTY);
+                }
+            }
+        }
+        return columnLable;
+    }
+
     /**
      * 获取当前连接数据库
      *
@@ -319,7 +391,7 @@ public class SqlUtils {
         List<String> dbList = new ArrayList<>();
         Connection connection = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 if (this.dataTypeEnum == ORACLE) {
                     dbList.add(this.username);
@@ -341,7 +413,7 @@ public class SqlUtils {
             e.printStackTrace();
             throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
 
 
@@ -358,7 +430,7 @@ public class SqlUtils {
         List<QueryColumn> tableList = null;
         Connection connection = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
                 String schema = null;
@@ -388,7 +460,7 @@ public class SqlUtils {
             e.printStackTrace();
             throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
         return tableList;
     }
@@ -429,7 +501,7 @@ public class SqlUtils {
         TableInfo tableInfo = null;
         Connection connection = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
                 List<String> primaryKeys = getPrimaryKeys(dbName, tableName, metaData);
@@ -440,7 +512,7 @@ public class SqlUtils {
             e.printStackTrace();
             throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
         return tableInfo;
     }
@@ -457,7 +529,7 @@ public class SqlUtils {
         boolean result = false;
         Connection connection = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 ResultSet tables = connection.getMetaData().getTables(null, null, tableName, null);
                 if (null != tables && tables.next()) {
@@ -470,7 +542,7 @@ public class SqlUtils {
         } catch (Exception e) {
             throw new SourceException("Get connection meta data error, jdbcUrl=" + this.jdbcUrl);
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
 
         return result;
@@ -489,7 +561,7 @@ public class SqlUtils {
         Connection connection = null;
         List<QueryColumn> columnList = new ArrayList<>();
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 Statement statement = connection.createStatement();
                 statement.setMaxRows(1);
@@ -508,7 +580,7 @@ public class SqlUtils {
         } catch (Exception e) {
             throw new ServerException(e.getMessage());
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
         long l1 = System.currentTimeMillis();
         log.info("get columns for >>> {} ms", l1 - l);
@@ -535,7 +607,7 @@ public class SqlUtils {
         } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
-            closeResult(rs);
+            sourceUtils.closeResult(rs);
         }
         return primaryKeys;
     }
@@ -563,46 +635,11 @@ public class SqlUtils {
         } catch (Exception e) {
             throw new ServerException(e.getMessage());
         } finally {
-            closeResult(rs);
+            sourceUtils.closeResult(rs);
         }
         return columnList;
     }
 
-
-    /**
-     * 获取数据源
-     *
-     * @param jdbcUrl
-     * @param userename
-     * @param password
-     * @return
-     * @throws SourceException
-     */
-    private DataSource getDataSource(String jdbcUrl, String userename, String password) throws SourceException {
-        if (jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase()) > -1) {
-            return ESDataSource.getDataSource(jdbcUrl);
-        } else {
-            return jdbcDataSource.getDataSource(jdbcUrl, userename, password);
-        }
-    }
-
-
-    /**
-     * 释放失效数据源
-     *
-     * @param jdbcUrl
-     * @param userename
-     * @param password
-     * @return
-     * @throws SourceException
-     */
-    private void releaseDataSource(String jdbcUrl, String userename, String password) throws SourceException {
-        if (jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase()) > -1) {
-            ESDataSource.removeDataSource(jdbcUrl);
-        } else {
-            jdbcDataSource.removeDatasource(jdbcUrl, userename, password);
-        }
-    }
 
     /**
      * 检查敏感操作
@@ -619,74 +656,18 @@ public class SqlUtils {
         }
     }
 
-    private Connection getConnection() throws SourceException {
-        DataSource dataSource = getDataSource(this.jdbcUrl, this.username, this.password);
-        Connection connection = null;
-        try {
-            connection = dataSource.getConnection();
-        } catch (Exception e) {
-            connection = null;
-        }
-        try {
-            if (null == connection || connection.isClosed()) {
-                log.info("connection is closed, retry get connection!");
-                releaseDataSource(this.jdbcUrl, this.username, this.password);
-                connection = dataSource.getConnection();
-            }
-        } catch (Exception e) {
-            log.error("create connection error, jdbcUrl: {}", jdbcUrl);
-            throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
-        }
 
-        try {
-            if (!connection.isValid(5)) {
-                log.info("connection is invalid, retry get connection!");
-                releaseDataSource(this.jdbcUrl, this.username, this.password);
-                connection = null;
-            }
-        } catch (Exception e) {
-        }
-
-        if (null == connection) {
-            try {
-                connection = dataSource.getConnection();
-            } catch (SQLException e) {
-                log.error("create connection error, jdbcUrl: {}", jdbcUrl);
-                throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
-            }
-        }
-
-        return connection;
-    }
-
-    private void releaseConnection(Connection connection) {
-        if (null != connection) {
-            try {
-                connection.close();
-                connection = null;
-            } catch (Exception e) {
-                e.printStackTrace();
-                log.error("connection close error", e.getMessage());
-            }
-        }
-    }
-
-
-    public static void closeResult(ResultSet rs) {
-        if (rs != null) {
-            try {
-                rs.close();
-                rs = null;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+    public JdbcTemplate jdbcTemplate() throws SourceException {
+        DataSource dataSource = sourceUtils.getDataSource(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        jdbcTemplate.setFetchSize(1000);
+        return jdbcTemplate;
     }
 
     public boolean testConnection() throws SourceException {
         Connection connection = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 return true;
             } else {
@@ -695,16 +676,8 @@ public class SqlUtils {
         } catch (SourceException sourceException) {
             throw sourceException;
         } finally {
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
-    }
-
-    public JdbcTemplate jdbcTemplate() throws SourceException {
-        DataSource dataSource = getDataSource(this.jdbcUrl, this.username, this.password);
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.setQueryTimeout(queryTimeout / 1000);
-        jdbcTemplate.setFetchSize(1000);
-        return jdbcTemplate;
     }
 
     public void executeBatch(String sql, Set<QueryColumn> headers, List<Map<String, Object>> datas) throws ServerException {
@@ -722,7 +695,7 @@ public class SqlUtils {
         Connection connection = null;
         PreparedStatement pstmt = null;
         try {
-            connection = getConnection();
+            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
                 connection.setAutoCommit(false);
                 pstmt = connection.prepareStatement(sql);
@@ -735,22 +708,22 @@ public class SqlUtils {
                         Object obj = map.get(queryColumn.getName());
                         switch (SqlColumnEnum.toJavaType(queryColumn.getType())) {
                             case "Short":
-                                pstmt.setShort(i, null == obj ? (short) 0 : Short.parseShort(String.valueOf(obj).trim()));
+                                pstmt.setShort(i, null == obj || String.valueOf(obj).equals(EMPTY) ? (short) 0 : Short.parseShort(String.valueOf(obj).trim()));
                                 break;
                             case "Integer":
-                                pstmt.setInt(i, null == obj ? 0 : Integer.parseInt(String.valueOf(obj).trim()));
+                                pstmt.setInt(i, null == obj || String.valueOf(obj).equals(EMPTY) ? 0 : Integer.parseInt(String.valueOf(obj).trim()));
                                 break;
                             case "Long":
-                                pstmt.setLong(i, null == obj ? 0L : Long.parseLong(String.valueOf(obj).trim()));
+                                pstmt.setLong(i, null == obj || String.valueOf(obj).equals(EMPTY) ? 0L : Long.parseLong(String.valueOf(obj).trim()));
                                 break;
                             case "BigDecimal":
-                                pstmt.setBigDecimal(i, (BigDecimal) obj);
+                                pstmt.setBigDecimal(i, null == obj || String.valueOf(obj).equals(EMPTY) ? null : (BigDecimal) obj);
                                 break;
                             case "Float":
-                                pstmt.setFloat(i, null == obj ? 0.0F : Float.parseFloat(String.valueOf(obj).trim()));
+                                pstmt.setFloat(i, null == obj || String.valueOf(obj).equals(EMPTY) ? 0.0F : Float.parseFloat(String.valueOf(obj).trim()));
                                 break;
                             case "Double":
-                                pstmt.setDouble(i, null == obj ? 0.0D : Double.parseDouble(String.valueOf(obj).trim()));
+                                pstmt.setDouble(i, null == obj || String.valueOf(obj).equals(EMPTY) ? 0.0D : Double.parseDouble(String.valueOf(obj).trim()));
                                 break;
                             case "String":
                                 pstmt.setString(i, (String) obj);
@@ -762,21 +735,29 @@ public class SqlUtils {
                                 pstmt.setBytes(i, (byte[]) obj);
                                 break;
                             case "Date":
-                                java.util.Date date = (java.util.Date) obj;
-                                pstmt.setDate(i, DateUtils.toSqlDate(date));
+                                if (obj == null) {
+                                    pstmt.setDate(i, null);
+                                } else {
+                                    java.util.Date date = (java.util.Date) obj;
+                                    pstmt.setDate(i, DateUtils.toSqlDate(date));
+                                }
                                 break;
                             case "DateTime":
-                                DateTime dateTime = (DateTime) obj;
-                                pstmt.setTimestamp(i, DateUtils.toTimestamp(dateTime));
+                                if (obj == null) {
+                                    pstmt.setTimestamp(i, null);
+                                } else {
+                                    DateTime dateTime = (DateTime) obj;
+                                    pstmt.setTimestamp(i, DateUtils.toTimestamp(dateTime));
+                                }
                                 break;
                             case "Timestamp":
-                                pstmt.setTimestamp(i, (Timestamp) obj);
+                                pstmt.setTimestamp(i, null == obj ? null : (Timestamp) obj);
                                 break;
                             case "Blob":
-                                pstmt.setBlob(i, (Blob) obj);
+                                pstmt.setBlob(i, null == obj ? null : (Blob) obj);
                                 break;
                             case "Clob":
-                                pstmt.setClob(i, (Clob) obj);
+                                pstmt.setClob(i, null == obj ? null : (Clob) obj);
                                 break;
                             default:
                                 pstmt.setObject(i, obj);
@@ -817,13 +798,13 @@ public class SqlUtils {
                     throw new ServerException(e.getMessage());
                 }
             }
-            releaseConnection(connection);
+            sourceUtils.releaseConnection(connection);
         }
     }
 
-    public static String getKeywordPrefix(String jdbcUrl) {
+    public static String getKeywordPrefix(String jdbcUrl, String dbVersion) {
         String keywordPrefix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             keywordPrefix = customDataSource.getKeyword_prefix();
         } else {
@@ -835,9 +816,9 @@ public class SqlUtils {
         return StringUtils.isEmpty(keywordPrefix) ? EMPTY : keywordPrefix;
     }
 
-    public static String getKeywordSuffix(String jdbcUrl) {
+    public static String getKeywordSuffix(String jdbcUrl, String dbVersion) {
         String keywordSuffix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             keywordSuffix = customDataSource.getKeyword_suffix();
         } else {
@@ -849,9 +830,9 @@ public class SqlUtils {
         return StringUtils.isEmpty(keywordSuffix) ? EMPTY : keywordSuffix;
     }
 
-    public static String getAliasPrefix(String jdbcUrl) {
+    public static String getAliasPrefix(String jdbcUrl, String dbVersion) {
         String aliasPrefix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             aliasPrefix = customDataSource.getAlias_prefix();
         } else {
@@ -863,9 +844,9 @@ public class SqlUtils {
         return StringUtils.isEmpty(aliasPrefix) ? EMPTY : aliasPrefix;
     }
 
-    public static String getAliasSuffix(String jdbcUrl) {
+    public static String getAliasSuffix(String jdbcUrl, String dbVersion) {
         String aliasSuffix = "";
-        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion);
         if (null != customDataSource) {
             aliasSuffix = customDataSource.getAlias_suffix();
         } else {
@@ -903,4 +884,126 @@ public class SqlUtils {
         return null;
     }
 
+    private static FromItemVisitor getFromItemTableName(Set<String> set) {
+        return new FromItemVisitor() {
+            @Override
+            public void visit(Table tableName) {
+                set.add(tableName.getName() + DOT);
+            }
+
+            @Override
+            public void visit(SubSelect subSelect) {
+            }
+
+            @Override
+            public void visit(SubJoin subjoin) {
+            }
+
+            @Override
+            public void visit(LateralSubSelect lateralSubSelect) {
+            }
+
+            @Override
+            public void visit(ValuesList valuesList) {
+            }
+
+            @Override
+            public void visit(TableFunction tableFunction) {
+            }
+
+            @Override
+            public void visit(ParenthesisFromItem aThis) {
+            }
+        };
+    }
+
+
+    public SqlUtils() {
+    }
+
+    public SqlUtils(String jdbcUrl, String username, String password, String dbVersion, boolean isExt) {
+        this.jdbcUrl = jdbcUrl;
+        this.username = username;
+        this.password = password;
+        this.dbVersion = dbVersion;
+        this.isExt = isExt;
+    }
+
+    public static final class SqlUtilsBuilder {
+        private JdbcDataSource jdbcDataSource;
+        private int resultLimit;
+        private boolean isQueryLogEnable;
+        private String jdbcUrl;
+        private String username;
+        private String password;
+        private String dbVersion;
+        private boolean isExt;
+
+        private SqlUtilsBuilder() {
+        }
+
+        public static SqlUtilsBuilder SqlUtils() {
+            return new SqlUtilsBuilder();
+        }
+
+        SqlUtilsBuilder withJdbcDataSource(JdbcDataSource jdbcDataSource) {
+            this.jdbcDataSource = jdbcDataSource;
+            return this;
+        }
+
+        SqlUtilsBuilder withResultLimit(int resultLimit) {
+            this.resultLimit = resultLimit;
+            return this;
+        }
+
+        SqlUtilsBuilder withIsQueryLogEnable(boolean isQueryLogEnable) {
+            this.isQueryLogEnable = isQueryLogEnable;
+            return this;
+        }
+
+        SqlUtilsBuilder withJdbcUrl(String jdbcUrl) {
+            this.jdbcUrl = jdbcUrl;
+            return this;
+        }
+
+        SqlUtilsBuilder withUsername(String username) {
+            this.username = username;
+            return this;
+        }
+
+        SqlUtilsBuilder withPassword(String password) {
+            this.password = password;
+            return this;
+        }
+
+        SqlUtilsBuilder withDbVersion(String dbVersion) {
+            this.dbVersion = dbVersion;
+            return this;
+        }
+
+        SqlUtilsBuilder withIsExt(boolean isExt) {
+            this.isExt = isExt;
+            return this;
+        }
+
+        public SqlUtils build() throws ServerException {
+            String datasource = SourceUtils.isSupportedDatasource(jdbcUrl);
+            SourceUtils.checkDriver(datasource, jdbcUrl, dbVersion, isExt);
+
+            SqlUtils sqlUtils = new SqlUtils(jdbcUrl, username, password, dbVersion, isExt);
+            sqlUtils.jdbcDataSource = this.jdbcDataSource;
+            sqlUtils.resultLimit = this.resultLimit;
+            sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
+            sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+            sqlUtils.database = datasource;
+            sqlUtils.sourceUtils = new SourceUtils(this.jdbcDataSource);
+
+            return sqlUtils;
+        }
+    }
+
+    public String getJdbcUrl() {
+        return jdbcUrl;
+    }
 }
+

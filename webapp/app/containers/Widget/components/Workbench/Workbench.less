@@ -1,4 +1,4 @@
-@import "../../../../assets/less/variable";
+@import "~assets/less/variable";
 
 .workbench {
   background-color: @body-bg;
@@ -74,6 +74,18 @@
   flex-shrink: 0;
   justify-content: space-between;
   align-items: center;
+
+  :global {
+    .ant-select {
+      flex: 1;
+    }
+
+    .ant-select-selection {
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+  }
 }
 
 .columnContainer {
@@ -355,7 +367,7 @@
       .addVariable {
         text-align: right;
         cursor: pointer;
-  
+
         &:hover {
           color: @primary-color;
         }

@@ -98,10 +98,10 @@ public enum SqlColumnEnum {
     }
 
     private static Object s2dbValue(String type, String value) throws Exception {
-        Object result = value.trim();
         if (StringUtils.isEmpty(value)) {
             return null;
         }
+        Object result = value.trim();
         switch (type.toUpperCase()) {
             case "TINYINT":
             case "SMALLINT":

@@ -9,8 +9,10 @@ import SizePanel from '../SizePanel'
 import { IChartInfo, WidgetMode } from '../../Widget'
 import { IFieldConfig } from '../../Config/Field'
 import { IFieldFormatConfig } from '../../Config/Format'
+import { IFieldSortConfig, FieldSortTypes } from '../../Config/Sort'
 import { decodeMetricName } from '../../util'
 import { Popover, Icon } from 'antd'
+import { IFilters } from 'app/components/Filters/types'
 
 const styles = require('../Workbench.less')
 
@@ -18,13 +20,12 @@ export type DragType = 'category' | 'value'
 export type DropboxType = DragType | 'all'
 export type DropboxItemType = DragType | 'add'
 export type DropType = 'outside' | 'inside' | 'unmoved'
-export type SortType = 'asc' | 'desc'
 export type AggregatorType = 'sum' | 'avg' | 'count' | 'COUNTDISTINCT' | 'max' | 'min' | 'median' | 'var' | 'dev'
 
 interface IDataColumn {
   name: string
   from?: string
-  sort?: SortType
+  sort?: IFieldSortConfig
   agg?: AggregatorType
   field?: IFieldConfig
   format?: IFieldFormatConfig
@@ -48,6 +49,7 @@ export interface IDataParamConfig {
     [key: string]: string
   },
   sql?: string
+  sqlModel?: IFilters[]
   filterSource?: any
   field?: {
     alias: string,
@@ -78,7 +80,7 @@ interface IDropboxProps {
   onItemDragStart: (item: IDataParamSource, e: React.DragEvent<HTMLLIElement | HTMLParagraphElement>) => void
   onItemDragEnd: (dropType: DropType) => void
   onItemRemove: (name: string) => (e) => void
-  onItemSort: (item: IDataParamSource, sort: SortType) => void
+  onItemSort: (item: IDataParamSource, sort: FieldSortTypes) => void
   onItemChangeAgg: (item: IDataParamSource, agg: AggregatorType) => void
   onItemChangeColorConfig: (item: IDataParamSource) => void
   onItemChangeFilterConfig: (item: IDataParamSource) => void

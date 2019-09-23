@@ -25,36 +25,37 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
-import widgetReducer from '../Widget/reducer'
-import widgetSaga from '../Widget/sagas'
-import viewReducer from '../View/reducer'
-import viewSaga from '../View/sagas'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
+import widgetReducer from 'containers/Widget/reducer'
+import widgetSaga from 'containers/Widget/sagas'
+import viewReducer from 'containers/View/reducer'
+import viewSaga from 'containers/View/sagas'
 import formReducer from './FormReducer'
 
-import { IViewBase, IFormedViews } from '../View/types'
+import { IViewBase, IFormedViews } from 'containers/View/types'
 
-import Container from '../../components/Container'
+import Container from 'components/Container'
 import DashboardToolbar from './components/DashboardToolbar'
 import DashboardItemForm from './components/DashboardItemForm'
 import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
-import { IMapItemControlRequestParams, IMapControlOptions, IDistinctValueReqeustParams } from 'components/Filters/types'
-import GlobalControlPanel from '../../components/Filters/FilterPanel'
-import GlobalControlConfig from '../../components/Filters/config/FilterConfig'
+import { IMapItemControlRequestParams, IMapControlOptions, IDistinctValueReqeustParams, IFilters } from 'components/Filters/types'
+import {getValidColumnValue} from 'app/components/Filters/util'
+import GlobalControlPanel from 'components/Filters/FilterPanel'
+import GlobalControlConfig from 'components/Filters/config/FilterConfig'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 import { hasVizEditPermission } from '../Account/components/checkUtilPermission'
 
 import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
 import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu, message } from 'antd'
-import { uuid } from '../../utils/util'
+import { uuid } from 'utils/util'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
-import { decodeMetricName, getTable } from '../Widget/components/util'
-import { initiateDownloadTask } from '../App/actions'
+import { decodeMetricName, getTable } from 'containers/Widget/components/util'
+import { initiateDownloadTask } from 'containers/App/actions'
 import {
   loadDashboardDetail,
   addDashboardItems,
@@ -90,11 +91,14 @@ import {
   makeSelectCurrentDashboardSelectOptions,
   makeSelectCurrentLinkages
 } from './selectors'
-import { ViewActions, ViewActionType } from '../View/actions'
+import { ViewActions, ViewActionType } from 'containers/View/actions'
 const { loadViewDataFromVizItem, loadViewsDetail, loadSelectOptions } = ViewActions
-import { makeSelectWidgets } from '../Widget/selectors'
-import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
-import { makeSelectCurrentProject } from '../Projects/selectors'
+import { makeSelectWidgets } from 'containers/Widget/selectors'
+import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
+import { makeSelectCurrentProject } from 'containers/Projects/selectors'
+
+import { IFieldSortDescriptor, FieldSortTypes } from 'containers/Widget/components/Config/Sort'
+import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
 
 import {
   SQL_NUMBER_TYPES,
@@ -105,16 +109,16 @@ import {
   GRID_ROW_HEIGHT,
   KEY_COLUMN,
   DEFAULT_TABLE_PAGE
-} from '../../globalConstants'
+} from 'app/globalConstants'
 import { InjectedRouter } from 'react-router/lib/Router'
 import { IWidgetConfig, RenderType, IWidgetProps } from '../Widget/components/Widget'
 import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
 import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 import { DownloadTypes } from '../App/types'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const styles = require('./Dashboard.less')
-import { statistic } from '../../utils/statistic/statistic.dv'
+import { statistic } from 'utils/statistic/statistic.dv'
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
 export type QueryVariable = Array<{name: string, value: string | number}>
@@ -126,6 +130,7 @@ export interface IQueryConditions {
   tempFilters: string[]
   linkageFilters: string[]
   globalFilters: string[]
+  orders: { column: string, direction: string }
   variables: QueryVariable
   linkageVariables: QueryVariable
   globalVariables: QueryVariable
@@ -180,6 +185,7 @@ export interface IDataRequestParams {
     pageSize: number
   }
   nativeQuery?: boolean
+  customOrders?: IFieldSortDescriptor[]
 }
 
 export interface IDataDownloadParams extends IDataRequestParams {
@@ -215,7 +221,8 @@ interface IGridProps {
     renderType: RenderType,
     dashboardItemId: number,
     viewId: number,
-    requestParams: IDataRequestParams
+    requestParams: IDataRequestParams,
+    statistic: any
   ) => void
   onLoadViewsDetail: (viewIds: number[], resolve: () => void) => void
   onInitiateDownloadTask: (id: number, type: DownloadTypes, downloadParams?: IDataDownloadParams[], itemId?: number) => void
@@ -326,20 +333,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
   }
 
-  private __once__ (fn) {
-    let tag = true
-    return (...args) => {
-      if (tag) {
-        tag = !tag
-        return fn.apply(this, args)
-      } else {
-        return void 0
-      }
-    }
-  }
-
-  private statisticFirstVisit: any
-
   public componentWillReceiveProps (nextProps: IGridProps) {
     const {
       currentDashboard,
@@ -352,24 +345,29 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { layoutInitialized } = this.state
 
     const { params: {pid, portalId, portalName, dashboardId}, currentProject} = this.props
-    if (currentProject && this.props.currentDashboard) {
-        this.statisticFirstVisit({
+
+    if (params.dashboardId === this.props.params.dashboardId) {
+      if (nextProps.currentDashboard !== this.props.currentDashboard) {
+        statistic.setOperations({
           project_id: pid,
           project_name: currentProject.name,
           org_id: currentProject.orgId,
           viz_type: 'dashboard',
           viz_id: portalId,
           viz_name: portalName,
-          sub_viz_id: dashboardId,
-          sub_viz_name: this.props.currentDashboard['name'],
-          create_time: statistic.getCurrentDateTime()
+          sub_viz_id: params.dashboardId,
+          sub_viz_name: currentDashboard['name'],
+          create_time:  statistic.getCurrentDateTime()
         }, (data) => {
           const visitRecord = {
             ...data,
             action: 'visit'
           }
-          statistic.sendOperation(visitRecord)
+          statistic.sendOperation(visitRecord).then((res) => {
+            statistic.updateSingleFleld('operation', 'action', 'initial')
+          })
         })
+      }
     }
 
     if (params.dashboardId !== this.props.params.dashboardId) {
@@ -380,21 +378,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       if (params.dashboardId && Number(params.dashboardId) !== -1) {
         onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
       }
-
-      statistic.setOperations({
-      //  action: 'visit',
-        sub_viz_id: params.dashboardId,
-        sub_viz_name: this.props.currentDashboard['name'],
-        create_time:  statistic.getCurrentDateTime()
-      }, (data) => {
-        const visitRecord = {
-          ...data,
-          action: 'visit'
-        }
-        statistic.sendOperation(visitRecord).then((res) => {
-          statistic.updateSingleFleld('operation', 'action', 'initial') // todo fix 回滚action
-        })
-      })
 
       statistic.setDurations({
         end_time: statistic.getCurrentDateTime()
@@ -436,7 +419,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         })
       })
     }, false)
-    this.statisticFirstVisit = this.__once__(statistic.setOperations)
     statistic.setDurations({
       start_time: statistic.getCurrentDateTime()
     })
@@ -512,7 +494,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
     this.getData(
       (renderType, itemId, widget, requestParams) => {
-        this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, requestParams)
+        this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, requestParams, {...requestParams, widget})
       },
       renderType,
       itemId,
@@ -551,7 +533,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       (renderType, itemId, widget, requestParams) => {
         const downloadParams = [{
           ...requestParams,
-          id: widgetId
+          id: widgetId,
+          itemId,
+          widget
         }]
         this.props.onInitiateDownloadTask(widgetId, DownloadTypes.Widget, downloadParams, itemId)
       },
@@ -584,7 +568,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         (renderType, itemId, widget, requestParams) => {
           downloadParams.push({
             ...requestParams,
-            id
+            id,
+            itemId: id,
+            widget
           })
         },
         'rerender',
@@ -615,12 +601,18 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
+    const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
+    const customOrders = updatedCols.concat(updatedRows)
+      .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+      .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
 
     const cachedQueryConditions = currentItemsInfo[itemId].queryConditions
 
     let tempFilters
     let linkageFilters
     let globalFilters
+    let tempOrders
     let variables
     let linkageVariables
     let globalVariables
@@ -632,6 +624,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
       linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
       globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      tempOrders = queryConditions.orders !== void 0 ? queryConditions.orders : cachedQueryConditions.orders
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
@@ -642,6 +635,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
       globalFilters = cachedQueryConditions.globalFilters
+      tempOrders = cachedQueryConditions.orders
       variables = cachedQueryConditions.variables
       linkageVariables = cachedQueryConditions.linkageVariables
       globalVariables = cachedQueryConditions.globalVariables
@@ -697,11 +691,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           func: t.agg
         })))
     }
-
+    let requestParamsFilters = []
+    filters.forEach((item) => {
+      requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
+    })
     const requestParams = {
       groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
       aggregators,
-      filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
+      filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : requestParamsFilters,
       tempFilters,
       linkageFilters,
       globalFilters,
@@ -713,7 +710,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       expired,
       flush: renderType === 'refresh',
       pagination,
-      nativeQuery
+      nativeQuery,
+      customOrders
+    }
+
+    if (tempOrders) {
+      requestParams.orders = requestParams.orders.concat(tempOrders)
     }
 
     callback(
@@ -959,7 +961,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private saveLinkageConfig = (linkages: any[]) => {
-    // todo
     const { currentDashboard, onEditCurrentDashboard } = this.props
     onEditCurrentDashboard({
       ...currentDashboard,
@@ -980,7 +981,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       const triggerId = +trigger[0]
       return triggerId === itemId
     })
-
     return isInteractiveItem
   }
 
@@ -992,6 +992,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
 
     const mappingLinkage = getMappingLinkage(itemId, currentLinkages)
+    console.log(this.interactingLinkagers)
     this.interactingLinkagers = processLinkage(itemId, triggerData, mappingLinkage, this.interactingLinkagers)
 
     Object.keys(mappingLinkage).forEach((linkagerItemId) => {
@@ -1204,7 +1205,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired, model } = widgetConfig
     const drillHistory = currentItemsInfo[itemId].queryConditions.drillHistory
     let sql = void 0
     let name = void 0
@@ -1233,7 +1234,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let widgetConfigRows = []
     let widgetConfigCols = []
     const coustomTableSqls = []
-    let sqls = widgetConfig.filters.map((i) => i.config.sql)
+   // let sqls = widgetConfig.filters.map((i) => i.config.sqlModel)
+    let sqls = []
+    widgetConfig.filters.forEach((item) => {
+      sqls = sqls.concat(item.config.sqlModel)
+    })
     if ((!drillHistory) || drillHistory.length === 0) {
       let currentCol = void 0
       if (widgetConfig) {
@@ -1263,7 +1268,16 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           }, {})
           for (const attr in coustomTable) {
             if (coustomTable[attr] !== undefined && attr) {
-              coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
+              const sqlType = model[attr] && model[attr]['sqlType'] ? model[attr]['sqlType'] : 'VARCHAR'
+              const filterJson: IFilters = {
+                name: attr,
+                operator: 'in',
+                type: 'filter',
+                value: coustomTable[attr].map((val) => getValidColumnValue(val, sqlType)),
+                sqlType
+              }
+              coustomTableSqls.push(filterJson)
+             // coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
             }
           }
           const drillKey = sourceDataFilter[sourceDataFilter.length - 1]['key']
@@ -1282,9 +1296,19 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           return source[name]
         }
       })
+
       if (name && name.length) {
+        // todo filter
         currentCol = col && col.length ? widgetConfigCols.concat([{name: col}]) : void 0
-        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+        const sqlType = model[name] && model[name]['sqlType'] ? model[name]['sqlType'] : 'VARCHAR'
+        sql = {
+          name,
+          operator: 'in',
+          type: 'filter',
+          value: filterSource.map((val) => getValidColumnValue(val, sqlType)),
+          sqlType
+        }
+        // sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
         sqls.push(sql)
       }
       if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
@@ -1315,10 +1339,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         col: currentCol,
         row: row && row.length ? widgetConfigRows.concat([{name: row}]) : void 0,
         groups: currentDrillGroups,
-        // groups: isDrillUp
-        //         ? widgetConfigGroups.filter((cg) => cg !== groups)
-        //         : mode === 'pivot' ? widgetConfigGroups.concat([groups])
-        //                           : [groups],
         name: groups
       }
     } else {
@@ -1333,7 +1353,17 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         }, {})
         for (const attr in coustomTable) {
           if (coustomTable[attr] !== undefined && attr) {
-            coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
+            // todo filter
+            const sqlType = model[attr] && model[attr]['sqlType'] ? model[attr]['sqlType'] : 'VARCHAR'
+            const filterJson: IFilters = {
+              name: attr,
+              operator: 'in',
+              type: 'filter',
+              value: coustomTable[attr].map((val) => getValidColumnValue(val, sqlType)),
+              sqlType
+            }
+            coustomTableSqls.push(filterJson)
+           // coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
           }
         }
         if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
@@ -1354,7 +1384,16 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       } else {
         name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
         filterSource = sourceDataFilter.map((source) => source[name])
-        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+       // sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+        const sqlType = model[name] && model[name]['sqlType'] ? model[name]['sqlType'] : 'VARCHAR'
+        sql = {
+          name,
+          operator: 'in',
+          type: 'filter',
+          value: filterSource.map((val) => getValidColumnValue(val, sqlType)),
+          sqlType
+        }
+
         sqls = lastDrillHistory.filter.sqls.concat(sql)
         currentCol = col && col.length ? (lastDrillHistory.col || []).concat({name: col}) : lastDrillHistory.col
         currentRow = row && row.length ? (lastDrillHistory.row || []).concat({name: row}) : lastDrillHistory.row
@@ -1598,6 +1637,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onGetControlOptions={this.getOptions}
               selectedItems={selectedItems || []}
               monitoredSyncDataAction={this.props.onMonitoredSyncDataAction}
+              monitoredSearchDataAction={this.props.onMonitoredSearchDataAction}
               ref={(f) => this[`dashboardItem${id}`] = f}
             />
           </div>
@@ -1681,30 +1721,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
                 {
                   currentDashboard && (
                     <Breadcrumb.Item>
-                      <Dropdown overlay={navDropdown} trigger={['click']}>
-                        <Link to="">
-                          {`${currentDashboard.name} `}
-                          <Icon type="down" />
-                        </Link>
-                      </Dropdown>
+                      <Link to="">
+                        {`${currentDashboard.name} `}
+                      </Link>
                     </Breadcrumb.Item>
                   )
-                }
-                {
-                  currentDashboard && (
-                    <Breadcrumb.Item>
-                      <Dropdown overlay={nextNavDropdown} trigger={['click']}>
-                        <Link to="">
-                          {
-                            currentDashboard.widgets && currentDashboard.widgets.length
-                              ? currentDashboard.widgets.length > 1
-                                ? <span>{this.state.nextMenuTitle} <Icon type="down" /></span>
-                                : ''
-                              : ''
-                          }
-                        </Link>
-                      </Dropdown>
-                    </Breadcrumb.Item>)
                 }
               </Breadcrumb>
             </Col>
@@ -1848,8 +1869,8 @@ export function mapDispatchToProps (dispatch) {
     onEditDashboardItem: (portalId, item, resolve) => dispatch(editDashboardItem(portalId, item, resolve)),
     onEditDashboardItems: (portalId, items) => dispatch(editDashboardItems(portalId, items)),
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
-    onLoadDataFromItem: (renderType, itemId, viewId, requestParams) =>
-                        dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard')),
+    onLoadDataFromItem: (renderType, itemId, viewId, requestParams, statistic) =>
+                        dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard', statistic)),
     onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onInitiateDownloadTask: (id, type, downloadParams?, itemId?) => dispatch(initiateDownloadTask(id, type, downloadParams, itemId)),

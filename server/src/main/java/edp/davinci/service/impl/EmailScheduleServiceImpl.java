@@ -21,7 +21,7 @@ package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
-import edp.core.common.job.ScheduleService;
+import edp.core.common.quartz.ScheduleService;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.MailUtils;
 import edp.core.utils.ServerUtils;
@@ -57,13 +57,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.script.ScriptEngine;
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.Condition;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static edp.core.consts.Consts.EMPTY;
@@ -115,9 +113,6 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
     private static final String portal = "PORTAL";
 
-
-    private final String baseUrl = File.separator + "tempFiles" + File.separator;
-
     private final static ExecutorService executorService = Executors.newFixedThreadPool(4);
 
     private final static ReentrantLock lock = new ReentrantLock();
@@ -126,11 +121,12 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     public void execute(long jobId) throws Exception {
         CronJob cronJob = cronJobMapper.getById(jobId);
         if (null != cronJob && !StringUtils.isEmpty(cronJob.getConfig())) {
+            log.info("Cronjob (:{}) is started!", jobId);
             CronJobConfig cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
             if (null != cronJobConfig && !StringUtils.isEmpty(cronJobConfig.getType())) {
                 Map<String, Object> content = new HashMap<>();
                 User user = userMapper.selectByEmail(cronJobConfig.getTo());
-                String username = cronJobConfig.getTo().split("@")[0];
+                String username = cronJobConfig.getTo().split(Constants.AT_SYMBOL)[0];
                 if (null != user) {
                     username = StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName();
                 }
@@ -138,14 +134,17 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
                 List<ExcelContent> excels = null;
                 List<ImageContent> images = null;
+
+                User creater = userMapper.getById(cronJob.getCreateBy());
+
                 if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
                     images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
-                    excels = generateExcels(cronJobConfig, user);
+                    excels = generateExcels(jobId, cronJobConfig, creater);
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
                     images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
                     excels = new ArrayList<>();
-                    excels.addAll(generateExcels(cronJobConfig, user));
+                    excels.addAll(generateExcels(jobId, cronJobConfig, creater));
                 }
 
                 String[] cc = null, bcc = null;
@@ -168,6 +167,8 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                             excels,
                             images);
                 }
+            } else {
+                log.warn("cron job config is not expected format: {}", cronJob.getConfig());
             }
         }
     }
@@ -226,11 +227,12 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     /**
      * 根据job配置生成excel ，多个excel压缩至zip包
      *
+     * @param cronJobId
      * @param cronJobConfig
      * @return
      * @throws Exception
      */
-    private List<ExcelContent> generateExcels(CronJobConfig cronJobConfig, User user) throws Exception {
+    private List<ExcelContent> generateExcels(Long cronJobId, CronJobConfig cronJobConfig, User user) throws Exception {
         ScriptEngine engine = getExecuptParamScriptEngine();
 
         Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
@@ -282,29 +284,26 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             return null;
         }
 
-        CountDownLatch countDownLatch = new CountDownLatch(workBookContextMap.size());
-
         List<ExcelContent> excelContents = new CopyOnWriteArrayList<>();
+        Map<String, Future<String>> excelPathFutureMap = new LinkedHashMap<>();
+        workBookContextMap.forEach((name, context) -> {
+            String uuid = UUID.randomUUID().toString().replace("-", EMPTY);
+            context.setWrapper(new MsgWrapper(new MsgMailExcel(cronJobId), ActionEnum.MAIL, uuid));
+            excelPathFutureMap.put(name, ExecutorUtil.submitWorkbookTask(context));
+        });
 
-        workBookContextMap.forEach((name, context) -> executorService.submit(() -> {
+        excelPathFutureMap.forEach((name, future) -> {
+            String excelPath = null;
             try {
-                lock.lock();
-                String uuid = UUID.randomUUID().toString().replace("-", EMPTY);
-                Condition condition = lock.newCondition();
-                MsgMailExcel msgMailExcel = new MsgMailExcel(lock, condition);
-                context.setWrapper(new MsgWrapper(msgMailExcel, ActionEnum.MAIL, uuid));
-                ExecutorUtil.submitWorkbookTask(context);
-                condition.await();
-                excelContents.add(new ExcelContent(name, msgMailExcel.getFilePath()));
-                countDownLatch.countDown();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                lock.unlock();
+                excelPath = future.get();
+            } catch (Exception e) {
+                log.warn(e.getMessage());
             }
-        }));
+            if (!StringUtils.isEmpty(excelPath)) {
+                excelContents.add(new ExcelContent(name, excelPath));
+            }
+        });
 
-        countDownLatch.await();
         return excelContents.isEmpty() ? null : excelContents;
     }
 

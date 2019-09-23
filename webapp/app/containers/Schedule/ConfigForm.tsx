@@ -24,7 +24,7 @@ const Option = Select.Option
 const FormItem = Form.Item
 import { FormComponentProps } from 'antd/lib/form/Form'
 import { ButtonSize } from 'antd/lib/button'
-const utilStyles =  require('../../assets/less/util.less')
+const utilStyles =  require('assets/less/util.less')
 
 interface IConfigFormProps {
   type: string

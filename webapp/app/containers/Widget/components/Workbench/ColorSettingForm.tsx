@@ -6,10 +6,10 @@ import { IDataParamSource, IDataParamConfig } from './Dropbox'
 import { WidgetMode } from '../Widget'
 import { Radio, Button } from 'antd'
 const RadioGroup = Radio.Group
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 const styles = require('./Workbench.less')
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IColorProp {
   key: string

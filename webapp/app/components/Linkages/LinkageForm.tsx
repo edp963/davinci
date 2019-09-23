@@ -5,7 +5,7 @@ import { Form, Row, Col, Cascader, Select } from 'antd'
 const FormItem = Form.Item
 const Option = Select.Option
 
-import { DEFAULT_SPLITER } from '../../globalConstants'
+import { DEFAULT_SPLITER } from 'app/globalConstants'
 import { LinkageOperatorTypes } from 'utils/operatorTypes'
 const styles = require('./Linkage.less')
 

@@ -23,7 +23,7 @@ import line from './line'
 import bar from './bar'
 import pie from './pie'
 import scatter from './scatter'
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const widgetlibs: IChartInfo[] = [
   pivot,

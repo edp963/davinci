@@ -35,7 +35,7 @@ import {
 } from './util'
 import { EChartOption } from 'echarts'
 import { getFormattedValue } from '../../components/Config/Format'
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps) {

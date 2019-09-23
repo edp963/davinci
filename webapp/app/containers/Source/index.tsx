@@ -26,14 +26,14 @@ import memoizeOne from 'memoize-one'
 import { Link, RouteComponentProps } from 'react-router'
 
 import { compose, Dispatch } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import Container from '../../components/Container'
-import Box from '../../components/Box'
-import SearchFilterDropdown from '../../components/SearchFilterDropdown'
+import Container from 'components/Container'
+import Box from 'components/Box'
+import SearchFilterDropdown from 'components/SearchFilterDropdown'
 import SourceForm from './SourceForm'
 import UploadCsvForm from './UploadCsvForm'
 
@@ -47,17 +47,19 @@ import {
   makeSelectSources,
   makeSelectListLoading,
   makeSelectFormLoading,
-  makeSelectTestLoading
+  makeSelectTestLoading,
+  makeSelectDatasourcesInfo
 } from './selectors'
-const utilStyles = require('../../assets/less/util.less')
-import api from '../../utils/api'
+const utilStyles = require('assets/less/util.less')
+import api from 'utils/api'
 import { checkNameUniqueAction } from '../App/actions'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IRouteParams } from 'app/routes'
 import { IProject } from '../Projects'
-import { ISource, ICSVMetaInfo } from './types'
+import { ISource, ICSVMetaInfo, ISourceFormValues } from './types'
+import { CascaderOptionType } from 'antd/lib/cascader'
 
 interface ISourceListStateProps {
   sources: ISource[]
@@ -65,6 +67,7 @@ interface ISourceListStateProps {
   formLoading: boolean
   testLoading: boolean
   currentProject: IProject
+  datasourcesInfo: CascaderOptionType[]
 }
 
 interface ISourceListDispatchProps {
@@ -76,6 +79,7 @@ interface ISourceListDispatchProps {
   onTestSourceConnection: (testSource: any) => any
   onGetCsvMetaId: (csvMeta: ICSVMetaInfo, resolve: () => void) => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onLoadDatasourcesInfo: () => void
 }
 
 type ISourceListProps = ISourceListStateProps & ISourceListDispatchProps & RouteComponentProps<{}, IRouteParams>
@@ -91,16 +95,17 @@ interface ISourceListStates {
   formStep: number
   uploadDisabled: boolean
   uploadFileList: UploadChangeParam['fileList']
-  editingSource: ISource
+  editingSource: ISourceFormValues
   editingCsv: ICSVMetaInfo
 }
 
-const emptySource: ISource = {
+const emptySource: ISourceFormValues = {
   id: 0,
   name: '',
   type: 'jdbc',
   description: '',
   projectId: 0,
+  datasourceInfo: [],
   config: {
     username: '',
     password: '',
@@ -144,9 +149,10 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
   }
 
   public componentWillMount () {
-    const { onLoadSources, params } = this.props
+    const { onLoadSources, onLoadDatasourcesInfo, params } = this.props
     const { pid: projectId } = params
     onLoadSources(+projectId)
+    onLoadDatasourcesInfo()
     window.addEventListener('resize', this.setScreenWidth, false)
   }
 
@@ -267,10 +273,30 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
   private editSource = (sourceId: number) => () => {
     this.props.onLoadSourceDetail(sourceId, (editingSource) => {
       this.setState({
-        editingSource,
+        editingSource: {
+          ...editingSource,
+          datasourceInfo: this.getDatasourceInfo(editingSource)
+        },
         sourceModalVisible: true
       })
     })
+  }
+
+  private getDatasourceInfo = (source: ISource): string[] => {
+    const { datasourcesInfo } = this.props
+    const { url, version } = source.config
+    const matchResult = url.match(/^jdbc\:(\w+)\:/)
+
+    if (matchResult) {
+      const datasource = datasourcesInfo.find((info) => info.value === matchResult[1])
+      return datasource
+        ? datasource.children
+          ? [datasource.value, version || 'Default']
+          : [datasource.value]
+        : []
+    } else {
+      return []
+    }
   }
 
   private deleteSource = (sourceId: number) => () => {
@@ -289,10 +315,17 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
     })
   }
 
-  private saveSourceForm = (values: ISource) => {
+  private saveSourceForm = (values: ISourceFormValues) => {
     const { params } = this.props
+    const { datasourceInfo, config, ...rest } = values
+    const version = datasourceInfo[1] === 'Default' ? '' : (datasourceInfo[1] || '')
     const requestValue = {
-      ...values,
+      ...rest,
+      config: {
+        ...config,
+        ext: !!version,
+        version
+      },
       projectId: Number(params.pid)
     }
 
@@ -369,12 +402,14 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
     })
   }
 
-  private testSourceConnection = (username, password, jdbcUrl) => {
+  private testSourceConnection = (username, password, jdbcUrl, ext, version) => {
     if (jdbcUrl) {
       this.props.onTestSourceConnection({
         username,
         password,
-        url: jdbcUrl
+        url: jdbcUrl,
+        ext,
+        version
       })
     } else {
       message.error('连接 Url 都不能为空')
@@ -446,6 +481,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
       formLoading,
       testLoading,
       currentProject,
+      datasourcesInfo,
       onCheckUniqueName
     } = this.props
 
@@ -501,6 +537,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
               </Row>
               <SourceForm
                 source={editingSource}
+                datasourcesInfo={datasourcesInfo}
                 visible={sourceModalVisible}
                 formLoading={formLoading}
                 testLoading={testLoading}
@@ -533,9 +570,10 @@ const mapDispatchToProps = (dispatch: Dispatch<SourceActionType | any>) => ({
   onAddSource: (source, resolve) => dispatch(SourceActions.addSource(source, resolve)),
   onDeleteSource: (id) => dispatch(SourceActions.deleteSource(id)),
   onEditSource: (source, resolve) => dispatch(SourceActions.editSource(source, resolve)),
-  onTestSourceConnection: (url) => dispatch(SourceActions.testSourceConnection(url)),
+  onTestSourceConnection: (testSource) => dispatch(SourceActions.testSourceConnection(testSource)),
   onGetCsvMetaId: (csvMeta, resolve) => dispatch(SourceActions.getCsvMetaId(csvMeta, resolve)),
-  onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+  onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
+  onLoadDatasourcesInfo: () => dispatch(SourceActions.loadDatasourcesInfo())
 })
 
 const mapStateToProps = createStructuredSelector({
@@ -543,7 +581,8 @@ const mapStateToProps = createStructuredSelector({
   listLoading: makeSelectListLoading(),
   formLoading: makeSelectFormLoading(),
   testLoading: makeSelectTestLoading(),
-  currentProject: makeSelectCurrentProject()
+  currentProject: makeSelectCurrentProject(),
+  datasourcesInfo: makeSelectDatasourcesInfo()
 })
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)

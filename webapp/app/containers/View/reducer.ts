@@ -20,7 +20,7 @@
 
 import produce from 'immer'
 import pick from 'lodash/pick'
-import { IViewState, IView, IFormedViews } from './types'
+import { IViewState, IView, IFormedViews, IViewBase } from './types'
 import { getFormedView, getValidModel } from './util'
 
 import { ActionTypes, DEFAULT_SQL_LIMIT } from './constants'
@@ -77,7 +77,8 @@ const initialState: IViewState = {
     view: false,
     table: false,
     modal: false,
-    execute: false
+    execute: false,
+    copy: false
   },
 
   channels: [],
@@ -86,7 +87,7 @@ const initialState: IViewState = {
   cancelTokenSources: []
 }
 
-const viewReducer = (state = initialState, action: ViewActionType | SourceActionType | any): IViewState => (
+const viewReducer = (state = initialState, action: ViewActionType | SourceActionType): IViewState => (
   produce(state, (draft) => {
     switch (action.type) {
       case ActionTypes.LOAD_VIEWS:
@@ -181,6 +182,22 @@ const viewReducer = (state = initialState, action: ViewActionType | SourceAction
         draft.editingViewInfo = { model: {}, variable: [], roles: [] }
         draft.formedViews[action.payload.result.id] = getFormedView(action.payload.result)
         break
+
+      case ActionTypes.COPY_VIEW:
+        draft.loading.copy = true
+        break
+      case ActionTypes.COPY_VIEW_SUCCESS:
+        const fromViewId = action.payload.fromViewId
+        const copiedViewKeys: Array<keyof IViewBase> = ['id', 'name', 'description']
+        const copiedView: IViewBase = pick(action.payload.result, copiedViewKeys)
+        copiedView.sourceName = action.payload.result.source.name
+        draft.views.splice(draft.views.findIndex(({ id }) => id === fromViewId) + 1, 0, copiedView)
+        draft.loading.copy = false
+        break
+      case ActionTypes.COPY_VIEW_FAILURE:
+        draft.loading.copy = false
+        break
+
       case ActionTypes.LOAD_DAC_CHANNELS_SUCCESS:
         draft.channels = action.payload.channels
         break

@@ -19,7 +19,7 @@
  */
 
 import ChartTypes from './ChartTypes'
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const iframe: IChartInfo = {
   id: ChartTypes.Iframe,
@@ -27,8 +27,7 @@ const iframe: IChartInfo = {
   title: '内嵌网页',
   icon: 'icon-iframe',
   coordinate: 'other',
-  requireDimetions: 0,
-  requireMetrics: 0,
+  rules: [{ dimension: 0, metric: 0 }],
   data: {
     cols: {
       title: '列',

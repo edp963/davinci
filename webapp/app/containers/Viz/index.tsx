@@ -22,14 +22,13 @@ import { makeSelectPortals } from '../Portal/selectors'
 import { checkNameUniqueAction } from '../App/actions'
 
 import { Icon, Row, Col, Breadcrumb } from 'antd'
-import Box from '../../components/Box'
+import Box from 'components/Box'
 const styles = require('./Viz.less')
-const utilStyles = require('../../assets/less/util.less')
-import Container from '../../components/Container'
+const utilStyles = require('assets/less/util.less')
+import Container from 'components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
 import { makeSelectCurrentProject } from '../Projects/selectors'
-import ModulePermission from '../Account/components/checkModulePermission'
 import { IProject } from '../Projects'
 import { excludeRoles } from '../Projects/actions'
 
@@ -84,7 +83,6 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
 
   private goToDisplay = (display?: any) => () => {
     const { params, currentProject: {permission: {vizPermission}} } = this.props
-    console.log(vizPermission)
     const isToPreview = vizPermission === 1
     const path = isToPreview ? `/project/${params.pid}/display/preview/${display ? display.id : -1}` : `/project/${params.pid}/display/${display ? display.id : -1}`
     this.props.router.push(path)

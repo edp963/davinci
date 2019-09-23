@@ -25,16 +25,12 @@ import edp.core.model.QueryColumn;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.enums.ActionEnum;
+import edp.davinci.dto.cronJobDto.MsgMailExcel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowCallbackHandler;
 
-import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -69,19 +65,24 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             super.writeHeader(context);
             template.setMaxRows(context.getResultLimit() > 0 && context.getResultLimit() <= maxRows ? context.getResultLimit() : maxRows);
             template.setFetchSize(500);
-            template.query(context.getQuerySql().get(context.getQuerySql().size() - 1), new RowCallbackHandler() {
-                @Override
-                public void processRow(ResultSet rs) throws SQLException {
-                    Map<String, Object> dataMap = Maps.newHashMap();
-                    for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                        dataMap.put(rs.getMetaData().getColumnLabel(i), rs.getObject(rs.getMetaData().getColumnLabel(i)));
-                    }
-                    writeLine(context, dataMap);
+
+            String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
+            Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
+            template.query(sql, rs -> {
+                Map<String, Object> dataMap = Maps.newHashMap();
+                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                    dataMap.put(SqlUtils.getColumnLabel(queryFromsAndJoins, rs.getMetaData().getColumnLabel(i)), rs.getObject(rs.getMetaData().getColumnLabel(i)));
                 }
+                writeLine(context, dataMap);
             });
             super.refreshHeightWidth(context);
         } catch (Exception e) {
             log.error("sheet worker error,context=" + context.toString(), e);
+            if (context.getWrapper().getAction() == ActionEnum.MAIL) {
+                MsgMailExcel msg = (MsgMailExcel) context.getWrapper().getMsg();
+                msg.setDate(new Date());
+                msg.setException(e);
+            }
             rst = false;
         }
 
@@ -121,17 +122,19 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
     private void buildQueryColumn(JdbcTemplate template) {
         template.setMaxRows(1);
         String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
-        template.query(String.format(QUERY_META_SQL, sql), rs -> {
+        sql = String.format(QUERY_META_SQL, sql);
+        Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
+        template.query(sql, rs -> {
             ResultSetMetaData metaData = rs.getMetaData();
             List<QueryColumn> totalColumns = new ArrayList<>();
             List<QueryColumn> queryColumns = new ArrayList<>();
             for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                String key = metaData.getColumnLabel(i);
-                totalColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
-                if (!CollectionUtils.isEmpty(context.getExcludeColumns()) && context.getExcludeColumns().contains(key)) {
+                String label = SqlUtils.getColumnLabel(queryFromsAndJoins, metaData.getColumnLabel(i));
+                totalColumns.add(new QueryColumn(label, metaData.getColumnTypeName(i)));
+                if (!CollectionUtils.isEmpty(context.getExcludeColumns()) && context.getExcludeColumns().contains(label)) {
                     continue;
                 }
-                queryColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
+                queryColumns.add(new QueryColumn(label, metaData.getColumnTypeName(i)));
             }
             if (CollectionUtils.isEmpty(totalColumns) || CollectionUtils.isEmpty(queryColumns)) {
                 throw new IllegalArgumentException("can not find any QueryColumn,widgetId=" + context.getWidgetId()

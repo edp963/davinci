@@ -26,22 +26,24 @@ import { IChartStyles, IPaginationParams } from '../../Widget'
 import { ITableHeaderConfig } from 'containers/Widget/components/Config/Table'
 
 import { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
-import { Table as AntTable } from 'antd'
-import { TableProps, ColumnProps } from 'antd/lib/table'
+import { Table as AntTable, Tooltip, Icon } from 'antd'
+import { TableProps, ColumnProps, SorterResult } from 'antd/lib/table'
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
-import PaginationWithoutTotal from '../../../../../components/PaginationWithoutTotal'
-import SearchFilterDropdown from '../../../../../components/SearchFilterDropdown/index'
-import NumberFilterDropdown from '../../../../../components/NumberFilterDropdown/index'
-import DateFilterDropdown from '../../../../../components/DateFilterDropdown/index'
+import PaginationWithoutTotal from 'components/PaginationWithoutTotal'
+import SearchFilterDropdown from 'components/SearchFilterDropdown/index'
+import NumberFilterDropdown from 'components/NumberFilterDropdown/index'
+import DateFilterDropdown from 'components/DateFilterDropdown/index'
 
 import { TABLE_PAGE_SIZES } from 'app/globalConstants'
 import { getFieldAlias } from 'containers/Widget/components/Config/Field'
 import { decodeMetricName } from 'containers/Widget/components/util'
-import styles from '../Chart.less'
+import Styles from './Table.less'
 
 import {
   findChildConfig, traverseConfig,
   computeCellWidth, getDataColumnWidth, getMergedCellSpan, getTableCellValueRange } from './util'
+import { MapAntSortOrder } from './constants'
+import { FieldSortTypes } from '../../Config/Sort'
 import { tableComponents } from './components'
 import { resizeTableColumns } from './components/HeadCell'
 
@@ -54,6 +56,7 @@ interface ITableStates {
   data: object[]
   width: number
   pagination: IPaginationParams
+  currentSorter: { column: string, direction: FieldSortTypes }
 
   tableColumns: Array<ColumnProps<any>>
   mapTableHeaderConfig: IMapTableHeaderConfig
@@ -76,6 +79,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     data: null,
     width: 0,
     pagination: null,
+    currentSorter: null,
 
     tableColumns: [],
     mapTableHeaderConfig: {},
@@ -96,13 +100,27 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     this.setState({ tableColumns: nextColumns })
   }
 
-  private onPaginationChange = (current: number, pageSize: number) => {
+  private paginationChange = (current: number, pageSize: number) => {
+    const { currentSorter } = this.state
+    this.refreshTable(current, pageSize, currentSorter)
+  }
+
+  private tableChange = (pagination: PaginationConfig, _, sorter: SorterResult<object>) => {
+    const nextCurrentSorter: ITableStates['currentSorter'] = sorter.field
+      ? { column: sorter.field, direction: MapAntSortOrder[sorter.order] }
+      : null
+    this.setState({ currentSorter: nextCurrentSorter })
+    const { current, pageSize } = pagination
+    this.refreshTable(current, pageSize, nextCurrentSorter)
+  }
+
+  private refreshTable = (current: number, pageSize: number, sorter?: ITableStates['currentSorter']) => {
     const { tablePagination } = this.state
     if (pageSize !== tablePagination.pageSize) {
       current = 1
     }
     const { onPaginationChange } = this.props
-    onPaginationChange(current, pageSize)
+    onPaginationChange(current, pageSize, sorter)
   }
 
   private basePagination: PaginationConfig = {
@@ -110,8 +128,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     showQuickJumper: true,
     showSizeChanger: true,
     showTotal: (total: number) => `共${total}条`,
-    onChange: this.onPaginationChange,
-    onShowSizeChange: this.onPaginationChange
+    onChange: this.paginationChange,
+    onShowSizeChange: this.paginationChange
   }
 
   public componentDidMount () {
@@ -284,7 +302,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private setRowClassName = (record, row) =>
-   this.state.selectedRow.some((sr) => this.isSameObj(sr, record, true)) ? styles.selectedRow : styles.unSelectedRow
+   this.state.selectedRow.some((sr) => this.isSameObj(sr, record, true)) ? Styles.selectedRow : Styles.unSelectedRow
 
 
   private getTableStyle (
@@ -320,8 +338,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       />
     ) : null
     const tableCls = classnames({
-      [styles.table]: true,
-      [styles.noBorder]: bordered !== undefined && !bordered
+      [Styles.table]: true,
+      [Styles.noBorder]: bordered !== undefined && !bordered
     })
 
     return (
@@ -340,6 +358,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
           bordered={bordered}
           rowClassName={this.setRowClassName}
           onRowClick={this.rowClick}
+          onChange={this.tableChange}
         />
         {paginationWithoutTotal}
       </>
@@ -367,7 +386,17 @@ function getTableColumns (props: IChartProps) {
     const headerText = getFieldAlias(field, queryVariables || {}) || name
     const column: ColumnProps<any> = {
       key: name,
-      title: headerText,
+      title: (field && field.desc) ? (
+        <>
+          {headerText}
+          <Tooltip
+            title={field.desc}
+            placement="top"
+          >
+            <Icon className={Styles.headerIcon} type="info-circle" />
+          </Tooltip>
+        </>
+      ) : headerText,
       dataIndex: name
     }
     if (autoMergeCell) {
@@ -384,6 +413,9 @@ function getTableColumns (props: IChartProps) {
     const columnConfigItem = columnsConfig.find((cfg) => cfg.columnName === name)
     column.width = getDataColumnWidth(name, columnConfigItem, format, data)
     column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
+    if (columnConfigItem) {
+      column.sorter = columnConfigItem.sort
+    }
     mapTableHeaderConfig[name] = headerConfigItem
     column.onCell = (record) => ({
       config: columnConfigItem,
@@ -402,7 +434,17 @@ function getTableColumns (props: IChartProps) {
     const headerText = getFieldAlias(field, queryVariables || {}) || expression
     const column: ColumnProps<any> = {
       key: name,
-      title: headerText,
+      title: (field && field.desc) ? (
+        <>
+          {headerText}
+          <Tooltip
+            title={field.desc}
+            placement="top"
+          >
+            <Icon className={Styles.headerIcon} type="info-circle" />
+          </Tooltip>
+        </>
+      ) : headerText,
       dataIndex: expression
     }
     let headerConfigItem: ITableHeaderConfig = null
@@ -410,6 +452,9 @@ function getTableColumns (props: IChartProps) {
       headerConfigItem = config
     })
     const columnConfigItem = columnsConfig.find((cfg) => cfg.columnName === name)
+    if (columnConfigItem) {
+      column.sorter = columnConfigItem.sort
+    }
     column.width = getDataColumnWidth(expression, columnConfigItem, format, data)
     column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
     mapTableHeaderConfig[name] = headerConfigItem

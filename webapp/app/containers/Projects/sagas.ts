@@ -82,10 +82,9 @@ import {
   excludeRolesFail
 } from './actions'
 
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { errorHandler } from '../../utils/util'
-import { dashboardAdded } from '../Dashboard/actions';
+import request from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
 
 export function* getProjects (action) {
   try {
