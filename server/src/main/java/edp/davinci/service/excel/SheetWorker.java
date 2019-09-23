@@ -25,14 +25,12 @@ import edp.core.model.QueryColumn;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.enums.ActionEnum;
+import edp.davinci.dto.cronJobDto.MsgMailExcel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.ResultSetMetaData;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -80,6 +78,11 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             super.refreshHeightWidth(context);
         } catch (Exception e) {
             log.error("sheet worker error,context=" + context.toString(), e);
+            if (context.getWrapper().getAction() == ActionEnum.MAIL) {
+                MsgMailExcel msg = (MsgMailExcel) context.getWrapper().getMsg();
+                msg.setDate(new Date());
+                msg.setException(e);
+            }
             rst = false;
         }
 

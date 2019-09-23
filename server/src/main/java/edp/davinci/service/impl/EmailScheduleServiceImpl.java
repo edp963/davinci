@@ -21,7 +21,7 @@ package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
-import edp.core.common.job.ScheduleService;
+import edp.core.common.quartz.ScheduleService;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.MailUtils;
 import edp.core.utils.ServerUtils;
@@ -59,10 +59,9 @@ import org.springframework.stereotype.Service;
 import javax.script.ScriptEngine;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.Condition;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static edp.core.consts.Consts.EMPTY;
@@ -120,10 +119,9 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
     @Override
     public void execute(long jobId) throws Exception {
-        log.info("cron job execute: {}", jobId);
         CronJob cronJob = cronJobMapper.getById(jobId);
         if (null != cronJob && !StringUtils.isEmpty(cronJob.getConfig())) {
-            log.info("cron job start: {}", jobId);
+            log.info("Cronjob (:{}) is started!", jobId);
             CronJobConfig cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
             if (null != cronJobConfig && !StringUtils.isEmpty(cronJobConfig.getType())) {
                 Map<String, Object> content = new HashMap<>();
@@ -142,11 +140,11 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
                     images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
-                    excels = generateExcels(cronJobConfig, creater);
+                    excels = generateExcels(jobId, cronJobConfig, creater);
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
                     images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
                     excels = new ArrayList<>();
-                    excels.addAll(generateExcels(cronJobConfig, creater));
+                    excels.addAll(generateExcels(jobId, cronJobConfig, creater));
                 }
 
                 String[] cc = null, bcc = null;
@@ -229,11 +227,12 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     /**
      * 根据job配置生成excel ，多个excel压缩至zip包
      *
+     * @param cronJobId
      * @param cronJobConfig
      * @return
      * @throws Exception
      */
-    private List<ExcelContent> generateExcels(CronJobConfig cronJobConfig, User user) throws Exception {
+    private List<ExcelContent> generateExcels(Long cronJobId, CronJobConfig cronJobConfig, User user) throws Exception {
         ScriptEngine engine = getExecuptParamScriptEngine();
 
         Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
@@ -285,30 +284,26 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             return null;
         }
 
-        CountDownLatch countDownLatch = new CountDownLatch(workBookContextMap.size());
-
         List<ExcelContent> excelContents = new CopyOnWriteArrayList<>();
+        Map<String, Future<String>> excelPathFutureMap = new LinkedHashMap<>();
+        workBookContextMap.forEach((name, context) -> {
+            String uuid = UUID.randomUUID().toString().replace("-", EMPTY);
+            context.setWrapper(new MsgWrapper(new MsgMailExcel(cronJobId), ActionEnum.MAIL, uuid));
+            excelPathFutureMap.put(name, ExecutorUtil.submitWorkbookTask(context));
+        });
 
-        ExecutorUtil.printThreadPoolStatusLog(executorService, "EmailGenerateExcelsExecutorService");
-        workBookContextMap.forEach((name, context) -> executorService.submit(() -> {
+        excelPathFutureMap.forEach((name, future) -> {
+            String excelPath = null;
             try {
-                lock.lock();
-                String uuid = UUID.randomUUID().toString().replace("-", EMPTY);
-                Condition condition = lock.newCondition();
-                MsgMailExcel msgMailExcel = new MsgMailExcel(lock, condition);
-                context.setWrapper(new MsgWrapper(msgMailExcel, ActionEnum.MAIL, uuid));
-                ExecutorUtil.submitWorkbookTask(context);
-                condition.await();
-                excelContents.add(new ExcelContent(name, msgMailExcel.getFilePath()));
-                countDownLatch.countDown();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                lock.unlock();
+                excelPath = future.get();
+            } catch (Exception e) {
+                log.warn(e.getMessage());
             }
-        }));
+            if (!StringUtils.isEmpty(excelPath)) {
+                excelContents.add(new ExcelContent(name, excelPath));
+            }
+        });
 
-        countDownLatch.await();
         return excelContents.isEmpty() ? null : excelContents;
     }
 

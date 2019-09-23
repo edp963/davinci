@@ -19,7 +19,7 @@
 
 package edp.davinci.service.impl;
 
-import edp.core.utils.QuartzUtils;
+import edp.core.utils.QuartzHandler;
 import edp.core.utils.RedisUtils;
 import edp.davinci.core.enums.CronJobStatusEnum;
 import edp.davinci.core.service.RedisMessageHandler;
@@ -33,14 +33,14 @@ import java.util.Date;
 
 @Slf4j
 @Component
-public class CronJobHandler implements RedisMessageHandler {
+public class CronJobMessageHandler implements RedisMessageHandler {
 
 
     @Autowired
     private CronJobMapper cronJobMapper;
 
     @Autowired
-    private QuartzUtils quartzUtils;
+    private QuartzHandler quartzHandler;
 
     @Autowired
     private RedisUtils redisUtils;
@@ -52,8 +52,8 @@ public class CronJobHandler implements RedisMessageHandler {
             Long id = (Long) message;
             if (id > 0L) {
                 CronJob cronJob = cronJobMapper.getById(id);
-                if (cronJob != null && quartzUtils.isStarted(cronJob)) {
-                    quartzUtils.removeJob(cronJob);
+                if (cronJob != null) {
+                    quartzHandler.removeJob(cronJob);
                     cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
                     cronJob.setUpdateTime(new Date());
                     cronJobMapper.update(cronJob);

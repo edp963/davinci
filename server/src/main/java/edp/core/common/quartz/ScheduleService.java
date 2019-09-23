@@ -17,7 +17,7 @@
  *
  */
 
-package edp.core.common.job;
+package edp.core.common.quartz;
 
 
 /**
