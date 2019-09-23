@@ -19,7 +19,7 @@
  */
 
 import React from 'react'
-import { ISourceFormValues } from './types'
+import { ISourceFormValues } from '../types'
 
 import { Modal, Form, Row, Col, Button, Input, Select, Icon, Cascader } from 'antd'
 const FormItem = Form.Item
