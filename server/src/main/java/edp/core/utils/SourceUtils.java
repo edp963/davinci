@@ -28,6 +28,7 @@ import edp.core.enums.DataTypeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.model.CustomDataSource;
+import edp.core.model.JdbcSourceInfo;
 import edp.davinci.core.config.SpringContextHolder;
 import edp.davinci.runner.LoadSupportDataSourceRunner;
 import lombok.extern.slf4j.Slf4j;
@@ -53,25 +54,20 @@ public class SourceUtils {
     /**
      * 获取数据源
      *
-     * @param jdbcUrl
-     * @param userename
-     * @param password
-     * @param database
-     * @param version
-     * @param isExt
+     * @param jdbcSourceInfo
      * @return
      * @throws SourceException
      */
-    DataSource getDataSource(String jdbcUrl, String userename, String password, String database, String version, boolean isExt) throws SourceException {
-        if (jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
-            return ESDataSource.getDataSource(jdbcUrl, userename, password, jdbcDataSource);
+    DataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
+        if (jdbcSourceInfo.getJdbcUrl().toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
+            return ESDataSource.getDataSource(jdbcSourceInfo, jdbcDataSource);
         } else {
-            return jdbcDataSource.getDataSource(jdbcUrl, userename, password, database, version, isExt);
+            return jdbcDataSource.getDataSource(jdbcSourceInfo);
         }
     }
 
-    Connection getConnection(String jdbcUrl, String username, String password, String database, String version, boolean isExt) throws SourceException {
-        DataSource dataSource = getDataSource(jdbcUrl, username, password, database, version, isExt);
+    Connection getConnection(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
+        DataSource dataSource = getDataSource(jdbcSourceInfo);
         Connection connection = null;
         try {
             connection = dataSource.getConnection();
@@ -81,19 +77,19 @@ public class SourceUtils {
         try {
             if (null == connection || connection.isClosed()) {
                 log.info("connection is closed, retry get connection!");
-                releaseDataSource(jdbcUrl, username, password, version, isExt);
-                dataSource = getDataSource(jdbcUrl, username, password, database, version, isExt);
+                releaseDataSource(jdbcSourceInfo);
+                dataSource = getDataSource(jdbcSourceInfo);
                 connection = dataSource.getConnection();
             }
         } catch (Exception e) {
-            log.error("create connection error, jdbcUrl: {}", jdbcUrl);
-            throw new SourceException("create connection error, jdbcUrl: " + jdbcUrl);
+            log.error("create connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
+            throw new SourceException("create connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
         }
 
         try {
             if (!connection.isValid(5)) {
                 log.info("connection is invalid, retry get connection!");
-                releaseDataSource(jdbcUrl, username, password, version, isExt);
+                releaseDataSource(jdbcSourceInfo);
                 connection = null;
             }
         }
@@ -103,11 +99,11 @@ public class SourceUtils {
 
         if (null == connection) {
             try {
-                dataSource = getDataSource(jdbcUrl, username, password, database, version, isExt);
+                dataSource = getDataSource(jdbcSourceInfo);
                 connection = dataSource.getConnection();
             } catch (SQLException e) {
-                log.error("create connection error, jdbcUrl: {}", jdbcUrl);
-                throw new SourceException("create connection error, jdbcUrl: " + jdbcUrl);
+                log.error("create connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
+                throw new SourceException("create connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
             }
         }
 
@@ -225,18 +221,14 @@ public class SourceUtils {
     /**
      * 释放失效数据源
      *
-     * @param jdbcUrl
-     * @param username
-     * @param password
-     * @param dbVersion
-     * @param isExt
+     * @param jdbcSourceInfo
      * @return
      */
-    public void releaseDataSource(String jdbcUrl, String username, String password, String dbVersion, boolean isExt) {
-        if (jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
-            ESDataSource.removeDataSource(jdbcUrl, username, password);
+    public void releaseDataSource(JdbcSourceInfo jdbcSourceInfo) {
+        if (jdbcSourceInfo.getJdbcUrl().toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
+            ESDataSource.removeDataSource(jdbcSourceInfo.getJdbcUrl(), jdbcSourceInfo.getUsername(), jdbcSourceInfo.getPassword());
         } else {
-            jdbcDataSource.removeDatasource(jdbcUrl, username, password, dbVersion, isExt);
+            jdbcDataSource.removeDatasource(jdbcSourceInfo);
         }
     }
 

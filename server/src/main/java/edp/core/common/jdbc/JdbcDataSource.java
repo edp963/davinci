@@ -22,8 +22,9 @@ package edp.core.common.jdbc;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.consts.Consts;
-import edp.core.enums.DataTypeEnum;
 import edp.core.exception.SourceException;
+import edp.core.model.JdbcSourceInfo;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.ServerUtils;
 import edp.core.utils.SourceUtils;
 import edp.davinci.core.config.SpringContextHolder;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
@@ -94,8 +96,12 @@ public class JdbcDataSource {
 
     private static volatile Map<String, DruidDataSource> dataSourceMap = new HashMap<>();
 
-    public synchronized void removeDatasource(String jdbcUrl, String username, String password, String version, boolean isExt) {
-        String key = SourceUtils.getKey(jdbcUrl, username, password, version, isExt);
+    public synchronized void removeDatasource(JdbcSourceInfo jdbcSourceInfo) {
+        String key = SourceUtils.getKey(jdbcSourceInfo.getJdbcUrl(),
+                jdbcSourceInfo.getUsername(),
+                jdbcSourceInfo.getPassword(),
+                jdbcSourceInfo.getDbVersion(),
+                jdbcSourceInfo.isExt());
 
         if (dataSourceMap.containsKey(key)) {
             DruidDataSource druidDataSource = dataSourceMap.get(key);
@@ -104,8 +110,12 @@ public class JdbcDataSource {
         }
     }
 
-    public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password, String database, String version, boolean isExt) throws SourceException {
-        String key = SourceUtils.getKey(jdbcUrl, username, password, version, isExt);
+    public synchronized DruidDataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
+        String key = SourceUtils.getKey(jdbcSourceInfo.getJdbcUrl(),
+                jdbcSourceInfo.getUsername(),
+                jdbcSourceInfo.getPassword(),
+                jdbcSourceInfo.getDbVersion(),
+                jdbcSourceInfo.isExt());
 
         if (dataSourceMap.containsKey(key) && dataSourceMap.get(key) != null) {
             DruidDataSource druidDataSource = dataSourceMap.get(key);
@@ -118,26 +128,27 @@ public class JdbcDataSource {
 
         DruidDataSource instance = new DruidDataSource();
 
-        if (StringUtils.isEmpty(version) || !isExt || JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
-            String className = SourceUtils.getDriverClassName(jdbcUrl, null);
+        if (StringUtils.isEmpty(jdbcSourceInfo.getDbVersion()) ||
+                !jdbcSourceInfo.isExt() || JDBC_DATASOURCE_DEFAULT_VERSION.equals(jdbcSourceInfo.getDbVersion())) {
+
+            String className = SourceUtils.getDriverClassName(jdbcSourceInfo.getJdbcUrl(), null);
             try {
                 Class.forName(className);
             } catch (ClassNotFoundException e) {
-                throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
+                throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
             }
 
             instance.setDriverClassName(className);
 
         } else {
             String path = ((ServerUtils) SpringContextHolder.getBean(ServerUtils.class)).getBasePath()
-                    + String.format(Consts.PATH_EXT_FORMATER, database, version);
+                    + String.format(Consts.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), jdbcSourceInfo.getDbVersion());
             instance.setDriverClassLoader(ExtendedJdbcClassLoader.getExtJdbcClassLoader(path));
         }
 
-        instance.setUrl(jdbcUrl.trim());
-        instance.setUsername(jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getFeature()) ? null : username);
-        instance.setPassword((jdbcUrl.toLowerCase().contains(DataTypeEnum.PRESTO.getFeature()) || jdbcUrl.toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getFeature())) ?
-                null : password);
+        instance.setUrl(jdbcSourceInfo.getJdbcUrl());
+        instance.setUsername(jdbcSourceInfo.getUsername());
+        instance.setPassword(jdbcSourceInfo.getPassword());
         instance.setInitialSize(initialSize);
         instance.setMinIdle(minIdle);
         instance.setMaxActive(maxActive);
@@ -149,7 +160,12 @@ public class JdbcDataSource {
         instance.setTestOnReturn(testOnReturn);
         instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
         instance.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
-        // instance.setQueryTimeout(queryTimeout / 1000);
+
+        if (!CollectionUtils.isEmpty(jdbcSourceInfo.getProperties())) {
+            Properties properties = new Properties();
+            jdbcSourceInfo.getProperties().forEach(dict -> properties.setProperty(dict.getKey(), dict.getValue()));
+            instance.setConnectProperties(properties);
+        }
 
         try {
             instance.init();

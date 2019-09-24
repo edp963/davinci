@@ -27,6 +27,7 @@ import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.DBTables;
+import edp.core.model.JdbcSourceInfo;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
 import edp.core.utils.*;
@@ -190,6 +191,7 @@ public class SourceServiceImpl implements SourceService {
                         config.getUsername(),
                         config.getPassword(),
                         config.getVersion(),
+                        config.getProperties(),
                         config.isExt()
                 ).testConnection();
 
@@ -247,6 +249,7 @@ public class SourceServiceImpl implements SourceService {
                         sourceConfig.getUsername(),
                         sourceConfig.getPassword(),
                         sourceConfig.getVersion(),
+                        sourceConfig.getProperties(),
                         sourceConfig.isExt()
                 ).testConnection();
 
@@ -333,6 +336,7 @@ public class SourceServiceImpl implements SourceService {
                             sourceTest.getUsername(),
                             sourceTest.getPassword(),
                             sourceTest.getVersion(),
+                            sourceTest.getProperties(),
                             sourceTest.isExt()
                     ).testConnection();
         } catch (SourceException e) {
@@ -604,7 +608,19 @@ public class SourceServiceImpl implements SourceService {
         }
 
         SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
-        sourceUtils.releaseDataSource(source.getJdbcUrl(), source.getName(), source.getPassword(), source.getDbVersion(), source.isExt());
+        JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo
+                .JdbcSourceInfoBuilder
+                .aJdbcSourceInfo()
+                .withJdbcUrl(source.getJdbcUrl())
+                .withUsername(source.getUsername())
+                .withPassword(source.getPassword())
+                .withDatabase(source.getDatabase())
+                .withDbVersion(source.getDbVersion())
+                .withProperties(source.getProperties())
+                .withExt(source.isExt())
+                .build();
+
+        sourceUtils.releaseDataSource(jdbcSourceInfo);
         return sqlUtils.init(source).testConnection();
     }
 
