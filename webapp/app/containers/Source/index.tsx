@@ -58,8 +58,7 @@ import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IRouteParams } from 'app/routes'
 import { IProject } from '../Projects'
-import { ISource, ICSVMetaInfo, ISourceFormValues } from './types'
-import { CascaderOptionType } from 'antd/lib/cascader'
+import { ISource, ICSVMetaInfo, ISourceFormValues, IDatasourceInfo } from './types'
 
 interface ISourceListStateProps {
   sources: ISource[]
@@ -67,7 +66,7 @@ interface ISourceListStateProps {
   formLoading: boolean
   testLoading: boolean
   currentProject: IProject
-  datasourcesInfo: CascaderOptionType[]
+  datasourcesInfo: IDatasourceInfo[]
 }
 
 interface ISourceListDispatchProps {
@@ -288,11 +287,11 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
     const matchResult = url.match(/^jdbc\:(\w+)\:/)
 
     if (matchResult) {
-      const datasource = datasourcesInfo.find((info) => info.value === matchResult[1])
+      const datasource = datasourcesInfo.find((info) => info.name === matchResult[1])
       return datasource
-        ? datasource.children
-          ? [datasource.value, version || 'Default']
-          : [datasource.value]
+        ? datasource.versions.length
+          ? [datasource.name, version || 'Default']
+          : [datasource.name]
         : []
     } else {
       return []

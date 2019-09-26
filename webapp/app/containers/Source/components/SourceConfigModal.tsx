@@ -20,7 +20,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import pick from 'lodash/pick'
-import { ISourceFormValues } from '../types'
+import { ISourceFormValues, IDatasourceInfo } from '../types'
 
 import {
   Modal,
@@ -52,7 +52,7 @@ interface ISourceConfigModalProps
   formLoading: boolean
   testLoading: boolean
   source: ISourceFormValues
-  datasourcesInfo: CascaderOptionType[]
+  datasourcesInfo: IDatasourceInfo[]
   onSave: (values: any) => void
   onClose: () => void
   onTestSourceConnection: (
@@ -80,7 +80,7 @@ const longFormItemStyle = {
   wrapperCol: { span: 20 }
 }
 
-const datasourcesInfoDisplayRender = (label) => label.join(' : ')
+const datasourceInfoDisplayRender = (label: string[]) => label.join(' : ')
 
 const columns: Array<EditableColumnProps<SourceProperty>> = [
   {
@@ -181,6 +181,27 @@ const SourceConfigModal: React.FC<ISourceConfigModalProps> = (props) => {
     [onCheckUniqueName, source]
   )
 
+  const datasourceInfoChange = useCallback(
+    (value: string[]) => {
+      const datasourceName = value[0]
+      const selectedDatasource = datasourcesInfo.find(
+        ({ name }) => name === datasourceName
+      )
+      const prefix = selectedDatasource.prefix
+      const currentUrl = form.getFieldValue('config.url') as string
+      let hasMatched = false
+      let newUrl = currentUrl.replace(/^jdbc:([\w:]+):/, (match) => {
+        hasMatched = !!match
+        return prefix
+      })
+      if (!hasMatched) {
+        newUrl = prefix + currentUrl
+      }
+      form.setFieldsValue({ 'config.url': newUrl })
+    },
+    [datasourcesInfo]
+  )
+
   const testSourceConnection = useCallback(
     () => {
       const {
@@ -213,6 +234,21 @@ const SourceConfigModal: React.FC<ISourceConfigModalProps> = (props) => {
       setSourceProperties([])
     },
     [form]
+  )
+
+  const cascaderOptions: CascaderOptionType[] = useMemo(
+    () =>
+      datasourcesInfo.map(({ name, versions }) => ({
+        label: name,
+        value: name,
+        ...(versions && {
+          children: versions.map((ver) => ({
+            label: ver,
+            value: ver
+          }))
+        })
+      })),
+    [datasourcesInfo]
   )
 
   const modalButtons = useMemo(
@@ -284,8 +320,9 @@ const SourceConfigModal: React.FC<ISourceConfigModalProps> = (props) => {
                 initialValue: []
               })(
                 <Cascader
-                  options={datasourcesInfo}
-                  displayRender={datasourcesInfoDisplayRender}
+                  options={cascaderOptions}
+                  displayRender={datasourceInfoDisplayRender}
+                  onChange={datasourceInfoChange}
                 />
               )}
             </FormItem>
