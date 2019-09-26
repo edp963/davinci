@@ -1,4 +1,4 @@
-@import "../../../../assets/less/variable";
+@import "~assets/less/variable";
 
 .workbench {
   background-color: @body-bg;
@@ -355,7 +355,7 @@
       .addVariable {
         text-align: right;
         cursor: pointer;
-  
+
         &:hover {
           color: @primary-color;
         }
@@ -920,4 +920,10 @@
 .sizePanel {
   min-width: 120px;
   max-width: 256px;
+}
+
+.errorMessage {
+  max-width: 640px;
+  max-height: 480px;
+  overflow-y: auto;
 }

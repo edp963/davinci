@@ -3,11 +3,11 @@ import * as React from 'react'
 import { Button, Tooltip, Popover, Col, Popconfirm } from 'antd'
 import { ButtonProps } from 'antd/lib/button/button'
 
-import { IProject } from '../../Projects'
+import { IProject } from 'containers/Projects'
 import { ICurrentDashboard } from '../'
 
-import ModulePermission from '../../Account/components/checkModulePermission'
-import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
+import ModulePermission from 'containers/Account/components/checkModulePermission'
+import ShareDownloadPermission from 'containers/Account/components/checkShareDownloadPermission'
 
 import SharePanel from 'components/SharePanel'
 

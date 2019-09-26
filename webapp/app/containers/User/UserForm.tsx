@@ -28,7 +28,7 @@ const Step = Steps.Step
 
 import { checkNameAction } from '../App/actions'
 
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IUserFormProps {
   form: any

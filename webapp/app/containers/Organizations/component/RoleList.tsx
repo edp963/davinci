@@ -2,19 +2,17 @@ import React from 'react'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { createStructuredSelector } from 'reselect'
 import RoleForm from './RoleForm'
-import debounce from 'lodash/debounce'
 import RelRoleMember from './RelRoleMember'
 import { connect } from 'react-redux'
 import { InjectedRouter } from 'react-router/lib/Router'
 
-import { Row, Col, Tooltip, Button, Input, Table, Modal, Icon, Popconfirm, Divider, message} from 'antd'
+import { Row, Col, Tooltip, Button, Input, Table, Modal, Popconfirm, Divider, message} from 'antd'
 import { ColumnProps } from 'antd/lib/table'
 const styles = require('../Organization.less')
 import * as Organization from '../Organization'
-import {checkNameUniqueAction} from '../../App/actions'
+import {checkNameUniqueAction} from 'containers/App/actions'
 import {addRole, loadOrganizationRole, deleteRole, relRoleMember, editRole, getRelRoleMember} from '../actions'
-import Avatar from '../../../components/Avatar'
-import ComponentPermission from '../../Account/components/checkMemberPermission'
+import ComponentPermission from 'containers/Account/components/checkMemberPermission'
 import { makeSelectRoleModalLoading, makeSelectCurrentOrganizationRole } from '../selectors'
 
 interface IRoleState {

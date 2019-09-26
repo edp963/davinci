@@ -74,6 +74,21 @@ public class QuartzUtils {
         }
     }
 
+
+    public boolean isStarted(ScheduleJob scheduleJob) throws ServerException {
+        Scheduler scheduler = schedulerFactoryBean.getScheduler();
+        try {
+            TriggerKey triggerKey = TriggerKey.triggerKey(scheduleJob.getId().toString());
+            CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
+            if (null != trigger) {
+                return true;
+            }
+        } catch (Exception e) {
+            throw new ServerException(e.getMessage());
+        }
+        return false;
+    }
+
     public void removeJob(ScheduleJob scheduleJob) throws ServerException {
 
         Scheduler scheduler = schedulerFactoryBean.getScheduler();

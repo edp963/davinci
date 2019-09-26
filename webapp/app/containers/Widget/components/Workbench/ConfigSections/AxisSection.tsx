@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { Row, Col, Checkbox, Select, InputNumber } from 'antd'
 const Option = Select.Option
-import ColorPicker from '../../../../../components/ColorPicker'
-import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES } from '../../../../../globalConstants'
+import ColorPicker from 'components/ColorPicker'
+import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES } from 'app/globalConstants'
 import { getCorrectInputNumber } from '../../util'
 const styles = require('../Workbench.less')
 

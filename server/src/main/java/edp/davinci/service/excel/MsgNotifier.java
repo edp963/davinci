@@ -22,9 +22,14 @@ package edp.davinci.service.excel;
 import edp.davinci.core.config.SpringContextHolder;
 import edp.davinci.core.enums.DownloadTaskStatus;
 import edp.davinci.dao.DownloadRecordMapper;
+import edp.davinci.dao.ShareDownloadRecordMapper;
+import edp.davinci.dto.cronJobDto.MsgMailExcel;
 import edp.davinci.model.DownloadRecord;
+import edp.davinci.model.ShareDownloadRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by IntelliJ IDEA.
@@ -59,7 +64,37 @@ public abstract class MsgNotifier {
                 log.info("DownloadAction record is updated status=" + record.getStatus());
                 break;
             case MAIL:
-                log.info("MailAction,nothing to do");
+                MsgMailExcel msgMailExcel = (MsgMailExcel) wrapper.getMsg();
+                if (msgMailExcel == null) {
+                    log.error("MailAction msg is null,nothing to do");
+                    break;
+                }
+                ReentrantLock lock = msgMailExcel.getLock();
+                try {
+                    lock.lock();
+                    msgMailExcel.setFilePath(wrapper.getRst());
+                    msgMailExcel.getCondition().signal();
+                } finally {
+                    lock.unlock();
+                }
+                log.info("MailAction finish, condition signal");
+                break;
+
+            case SHAREDOWNLOAD:
+                ShareDownloadRecord shareDownloadRecord = (ShareDownloadRecord) wrapper.getMsg();
+                if (shareDownloadRecord == null) {
+                    log.error("ShareDownloadAction record is null,nothing to do");
+                    break;
+                }
+
+                if (StringUtils.isNotEmpty(wrapper.getRst())) {
+                    shareDownloadRecord.setStatus(DownloadTaskStatus.SUCCESS.getStatus());
+                    shareDownloadRecord.setPath(wrapper.getRst());
+                } else {
+                    shareDownloadRecord.setStatus(DownloadTaskStatus.FAILED.getStatus());
+                }
+                ((ShareDownloadRecordMapper) SpringContextHolder.getBean(ShareDownloadRecordMapper.class)).updateById(shareDownloadRecord);
+                log.info("ShareDownloadAction record is updated status=" + shareDownloadRecord.getStatus());
                 break;
         }
     }

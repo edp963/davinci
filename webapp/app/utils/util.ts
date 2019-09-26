@@ -81,7 +81,6 @@ export function errorHandler (error) {
       case 403:
         message.error('未登录或会话过期，请重新登录', 1)
         removeToken()
-        localStorage.removeItem('TOKEN')
         break
       case 401:
         message.error('您没有权限访问此数据', 2)
@@ -95,9 +94,17 @@ export function errorHandler (error) {
         )
         break
     }
-  } else {
-    message.error(error, 3)
+  } else if (error.message) {
+    message.error(error.message, 3)
   }
+}
+
+export function getErrorMessage (error) {
+  return error.response
+    ? error.response.data.header
+      ? error.response.data.header.msg
+      : error.message
+    : error.message
 }
 
 export function getBase64 (img, callback) {

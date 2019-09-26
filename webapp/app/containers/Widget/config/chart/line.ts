@@ -4,9 +4,9 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const line: IChartInfo = {
   id: ChartTypes.Line,
@@ -14,8 +14,7 @@ const line: IChartInfo = {
   title: '折线图',
   icon: 'icon-chart-line',
   coordinate: 'cartesian',
-  requireDimetions: 1,
-  requireMetrics: [1, 9999],
+  rules: [{ dimension: 1, metric: [1, 9999] }],
   dimetionAxis: 'col',
   data: {
     cols: {

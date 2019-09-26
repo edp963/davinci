@@ -116,4 +116,8 @@ public interface RelRoleProjectMapper {
             "delete from rel_role_project where role_id = #{roleId} and project_id = #{projectId}"
     })
     int deleteByRoleAndProject(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
+
+    List<RelRoleProject> getByProject(@Param("projectId") Long id);
+
+    int deleteByIds(@Param("list") List<Long> list);
 }

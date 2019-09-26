@@ -3,9 +3,9 @@ const styles = require('../Organization.less')
 import { Button, Input, Form, Row, Col, Radio, Modal } from 'antd'
 const FormItem = Form.Item
 const RadioButton = Radio.Button
-import UploadAvatar from '../../../components/UploadAvatar'
+import UploadAvatar from 'components/UploadAvatar'
 import { IOrganization } from '../Organization'
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface ISettingProps {
   form: any

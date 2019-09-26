@@ -1,4 +1,4 @@
-@import "../../assets/less/variable";
+@import "~assets/less/variable";
 
 .unit {
   height: 120px;
@@ -78,6 +78,7 @@
   flex-direction: column;
   box-shadow: @block-box-shadow;
   transition: all 350ms ease;
+  position: relative;
 
   .header {
     width: 100%;
@@ -101,18 +102,14 @@
         margin-left: 8px;
       }
 
-      .control, .desc {
-        font-weight: normal;
+      .toggle {
+        font-size: 16px;
+        margin-left: 8px;
         cursor: pointer;
       }
 
-      .control {
-        font-size: 16px;
-        margin-left: 8px;
-      }
-
-      .desc {
-        margin-left: 8px;
+      .error {
+        color: @error-color;
       }
     }
 
@@ -141,6 +138,16 @@
       .tools {
         opacity: 1;
       }
+    }
+  }
+
+  .trigger {
+    position: absolute;
+    top: 28px;
+    left: 10px;
+    i{
+      font-size: 14px;
+      color: @rich-text;
     }
   }
 
@@ -256,8 +263,10 @@
   }
 }
 
-.descPanel {
-  max-width: 256px;
+.widgetInfoContent {
+  max-width: 480px;
+  max-height: 360px;
+  overflow-y: auto;
 }
 
 .gridBottom {
@@ -280,7 +289,25 @@
 }
 
 .shareTitle {
+  padding: 0 50px;
   text-align: center;
+}
+
+.shareDownloadListToggle {
+  width: 50px;
+  height: 32px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  i {
+    font-size: 24px;
+    cursor: pointer;
+  }
 }
 
 .shareContentEmpty {
@@ -470,6 +497,7 @@
         overflow-y: auto;
         border-top: 1px solid #d9d9d9;
         padding-left: 8px;
+        margin-bottom: 34px;
       }
     }
 
@@ -506,7 +534,7 @@
   }
 
   .itemAction {
-    display: none !important;
+    display: none;
   }
 
   &:hover {
@@ -515,11 +543,6 @@
       cursor: pointer;
       font-weight: 900;
       margin-bottom: 1px;
-      padding-left: 5px;
-
-      &:before {
-        // padding: 0 8px;
-      }
     }
   }
 

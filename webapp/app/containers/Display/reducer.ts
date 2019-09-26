@@ -25,6 +25,8 @@ import { ActionTypes } from './constants'
 import { GraphTypes } from './components/util'
 import { ActionTypes as ViewActionTypes } from '../View/constants'
 
+import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
+
 const emptyDisplayState = {
   displays: [],
   currentDisplay: null,
@@ -44,6 +46,7 @@ const emptyDisplayState = {
   lastOperationType: '',
   lastLayers: [],
 
+  currentProject: null,
   editorBaselines: []
 }
 
@@ -242,6 +245,7 @@ function displayReducer (state = initialState, action) {
           }
         })
     case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS:
+      fieldGroupedSort(payload.result.resultList, payload.requestParams.customOrders)
       return payload.vizType !== 'display' ? state : state
         .set('currentLayersInfo', {
           ...layersInfo,
@@ -393,6 +397,9 @@ function displayReducer (state = initialState, action) {
         .set('currentDisplayShareInfoLoading', false)
     case ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE:
       return state.set('currentDisplayShareInfoLoading', false)
+    case ActionTypes.LOAD_CURRENT_PROJECT_SUCCESS:
+      return state
+        .set('currentProject', payload.result)
     case ActionTypes.RESET_DISPLAY_STATE:
       return fromJS(emptyDisplayState)
     default:

@@ -23,7 +23,7 @@ import { Form, Row, Col, Input, Button, Select } from 'antd'
 const FormItem = Form.Item
 const TextArea = Input.TextArea
 const Option = Select.Option
-import Avatar from '../../../components/Avatar'
+import Avatar from 'components/Avatar'
 const styles = require('../Organization.less')
 import { ITeam } from './TeamList'
 

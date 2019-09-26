@@ -28,7 +28,8 @@ const SourceRecord = Record<ISourceState>({
   sources: null,
   listLoading: false,
   formLoading: false,
-  testLoading: false
+  testLoading: false,
+  datasourcesInfo: []
 })
 const initialState = new SourceRecord()
 
@@ -76,6 +77,8 @@ function sourceReducer (state = initialState, action: SourceActionType) {
     case ActionTypes.TEST_SOURCE_CONNECTION_SUCCESS:
     case ActionTypes.TEST_SOURCE_CONNECTION_FAILURE:
       return state.set('testLoading', false)
+    case ActionTypes.LOAD_DATASOURCES_INFO_SUCCESS:
+      return state.set('datasourcesInfo', action.payload.info)
     default:
       return state
   }

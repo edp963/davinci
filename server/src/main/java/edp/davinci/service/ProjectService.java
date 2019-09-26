@@ -53,7 +53,7 @@ public interface ProjectService extends CheckEntityService {
 
     boolean removeFavoriteProjects(User user, Long[] projectIds) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
-    RelProjectAdminDto addAdmin(Long id, Long adminId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RelProjectAdminDto> addAdmins(Long id, List<Long> adminIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
     boolean removeAdmin(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 

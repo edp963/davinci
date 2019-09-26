@@ -47,6 +47,7 @@
 # mysql:
 #   name: mysql
 #   desc: mysql
+#   version:
 #   driver: com.mysql.jdbc.Driver
 #   keyword_prefix: \`
 #   keyword_suffix: \`
@@ -56,6 +57,7 @@
 # oracle:
 #   name: oracle
 #   desc: oracle
+#   version: 
 #   driver: oracle.jdbc.driver.OracleDriver
 #   keyword_prefix: \"
 #   keyword_suffix: \"

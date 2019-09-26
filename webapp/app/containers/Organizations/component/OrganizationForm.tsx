@@ -23,7 +23,7 @@ import { Form, Row, Col, Input, Button } from 'antd'
 const FormItem = Form.Item
 const TextArea = Input.TextArea
 const styles = require('../Organization.less')
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IProjectsFormProps {
   form: any

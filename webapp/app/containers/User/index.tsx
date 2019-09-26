@@ -25,16 +25,16 @@ import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 import groupReducer from '../Group/reducer'
 import groupSaga from '../Group/sagas'
 
-import Container from '../../components/Container'
-import Box from '../../components/Box'
-import SearchFilterDropdown from '../../components/SearchFilterDropdown'
+import Container from 'components/Container'
+import Box from 'components/Box'
+import SearchFilterDropdown from 'components/SearchFilterDropdown'
 import UserForm from './UserForm'
 import UserPasswordForm from './UserPasswordForm'
 import GroupForm from '../Group/GroupForm'
@@ -46,7 +46,7 @@ import { loadUsers, addUser, deleteUser, loadUserGroups, editUserInfo, changeUse
 import { loadGroups, addGroup } from '../Group/actions'
 import { makeSelectUsers, makeSelectTableLoading, makeSelectFormLoading } from './selectors'
 import { makeSelectGroups } from '../Group/selectors'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IUserProps {
   users: any[]

@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { Row, Col, Select } from 'antd'
 const Option = Select.Option
-import ColorPicker from '../../../../../components/ColorPicker'
-import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_FONT_SIZES, PIVOT_CHART_LINE_STYLES } from '../../../../../globalConstants'
+import ColorPicker from 'components/ColorPicker'
+import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_FONT_SIZES, PIVOT_CHART_LINE_STYLES } from 'app/globalConstants'
 const styles = require('../Workbench.less')
 
 export interface IPivotConfig {

@@ -27,7 +27,7 @@ export function Background (props) {
   return (
     <div className={styles.container}>
       <Canvas />
-      <img className={styles.logo} src={require('../../assets/images/logo_light.svg')} />
+      <img className={styles.logo} src={require('assets/images/logo_light.svg')} />
       {props.children}
     </div>
   )

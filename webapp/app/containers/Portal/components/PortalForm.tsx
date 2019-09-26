@@ -27,7 +27,7 @@ const TextArea = Input.TextArea
 const RadioGroup = Radio.Group
 const TabPane = Tabs.TabPane
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const styles = require('../Portal.less')
 import { IExludeRoles} from './PortalList'
 

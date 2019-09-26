@@ -19,12 +19,15 @@
  */
 
 import { IChartProps } from '../../components/Chart'
+import { EChartOption } from 'echarts'
 import {
   decodeMetricName,
   getChartTooltipLabel,
   getSizeValue,
   getSizeRate
 } from '../../components/util'
+import { getFieldAlias } from '../../components/Config/Field'
+import { getFormattedValue } from '../../components/Config/Format'
 import {
   getMetricAxisOption,
   getLabelOption,
@@ -47,7 +50,7 @@ export default function (chartProps: IChartProps) {
   const {
     label,
     legend,
-    spec,
+    radar,
     toolbox
   } = chartStyles
 
@@ -56,10 +59,8 @@ export default function (chartProps: IChartProps) {
     fontSize
   } = legend
 
-  const { shape } = spec
-
   const labelOption = {
-    label: getLabelOption('radar', label)
+    label: getLabelOption('radar', label, metrics)
   }
 
   let dimensions = []
@@ -103,33 +104,33 @@ export default function (chartProps: IChartProps) {
     value: Object.values(value)
   })) : []
 
-  const {
-    showLabel,
-    labelColor,
-    labelFontFamily,
-    labelFontSize
-  } = label
-
-  const radarName = {
-    show: showLabel,
-    color: labelColor,
-    fontFamily: labelFontFamily,
-    fontSize: labelFontSize
+  const tooltip: EChartOption.Tooltip = {
+    formatter (params: EChartOption.Tooltip.Format) {
+      const { dataIndex, data, color } = params
+      const metric = metrics[dataIndex]
+      let tooltipLabels = []
+      tooltipLabels.push(getFieldAlias(metric.field, {}) || decodeMetricName(metric.name))
+      tooltipLabels = tooltipLabels.concat(indicator.map(({ name }, idx) => (`${name}: ${getFormattedValue(data.value[idx], metric.format)}`)))
+      if (color) {
+        tooltipLabels[0] = `<span class="widget-tooltip-circle" style="background: ${color}"></span>` + tooltipLabels[0]
+      }
+      return tooltipLabels.join('<br/>')
+    }
   }
 
   return {
-    tooltip : {},
+    tooltip,
     legend: getLegendOption(legend, legendData),
     radar: {
       // type: 'log',
-      shape,
       indicator,
-      name: radarName
+      ...radar
     },
     series: [{
       name: '',
       type: 'radar',
-      data: seriesData
+      data: seriesData,
+      ...labelOption
     }]
   }
 }

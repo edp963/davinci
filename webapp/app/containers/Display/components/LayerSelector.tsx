@@ -28,12 +28,12 @@ const Step = Steps.Step
 import { FormComponentProps } from 'antd/lib/form/Form'
 
 // TODO widgets icon display
-import { iconMapping } from '../../Widget/components/chartUtil'
-import WidgetSelector from '../../Widget/components/WidgetSelector'
+// import { iconMapping } from 'containers/Widget/components/chartUtil'
+import WidgetSelector from 'containers/Widget/components/WidgetSelector'
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
-interface ILayerSelectorProps {
+interface ILayerSelectorProps extends FormComponentProps {
   visible: boolean
   multiple: boolean
   modalLoading: boolean
@@ -49,7 +49,7 @@ interface ILayerSelectorStates {
   showFrequency: boolean
 }
 
-export class LayerSelector extends React.Component<ILayerSelectorProps & FormComponentProps, ILayerSelectorStates> {
+export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSelectorStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -203,4 +203,4 @@ export class LayerSelector extends React.Component<ILayerSelectorProps & FormCom
   }
 }
 
-export default Form.create()(LayerSelector)
+export default Form.create<ILayerSelectorProps>()(LayerSelector)

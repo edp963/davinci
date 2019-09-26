@@ -22,7 +22,8 @@ import { IAxisConfig } from '../../components/Workbench/ConfigSections/AxisSecti
 import { ILabelConfig } from '../../components/Workbench/ConfigSections/LabelSection'
 import { ILegendConfig } from '../../components/Workbench/ConfigSections/LegendSection'
 import { metricAxisLabelFormatter, decodeMetricName, getTextWidth } from '../../components/util'
-import { CHART_LEGEND_POSITIONS } from '../../../../globalConstants'
+import { getFormattedValue } from '../../components/Config/Format'
+import { CHART_LEGEND_POSITIONS, DEFAULT_SPLITER } from 'app/globalConstants'
 import { EChartOption } from 'echarts'
 
 interface ISplitLineConfig {
@@ -186,7 +187,7 @@ export function getMetricAxisOption (
   }
 }
 
-export function getLabelOption (type: string, labelConfig: ILabelConfig, emphasis?: boolean, options?: object) {
+export function getLabelOption (type: string, labelConfig: ILabelConfig, metrics, emphasis?: boolean, options?: object) {
   const {
     showLabel,
     labelPosition,
@@ -197,41 +198,124 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, emphasi
     funnelLabelPosition
   } = labelConfig
 
-  let positionVale
+  let position
   switch (type) {
     case 'pie':
-      positionVale = pieLabelPosition
+      position = pieLabelPosition
       break
     case 'funnel':
-      positionVale = funnelLabelPosition
+      position = funnelLabelPosition
       break
     default:
-      positionVale = labelPosition
+      position = labelPosition
       break
   }
 
-  return {
+  let formatter
+
+  switch (type) {
+    case 'line':
+      formatter = (params) => {
+        const { value, seriesId } = params
+        const m = metrics.find((m) => m.name === seriesId.split(`${DEFAULT_SPLITER}${DEFAULT_SPLITER}`)[0])
+        const formattedValue = getFormattedValue(value, m.format)
+        return formattedValue
+      }
+      break
+    case 'waterfall':
+      formatter = (params) => {
+        const { value } = params
+        const formattedValue = getFormattedValue(value, metrics[0].format)
+        return formattedValue
+      }
+      break
+    case 'scatter':
+      formatter = (params) => {
+        const { value } = params
+        const formattedValue = getFormattedValue(value[0], metrics[0].format)
+        return formattedValue
+      }
+      break
+    case 'pie':
+    case 'funnel':
+      formatter = (params) => {
+        const { name, value, percent, dataIndex } = params
+        const formattedValue = getFormattedValue(value, metrics[metrics.length > 1 ? dataIndex : 0].format)
+        const { labelParts } = labelConfig
+        if (!labelParts) {
+          return `${name}\n${formattedValue}（${percent}%）`
+        }
+        const labels: string[] = []
+        if (labelParts.includes('dimensionValue')) {
+          labels.push(name)
+        }
+        if (labelParts.includes('indicatorValue')) {
+          labels.push(formattedValue)
+        }
+        if (labelParts.includes('percentage')) {
+          labels.push(labels.length ? `（${percent}%）` : `${percent}%`)
+        }
+        if (labels.length > 1 && labelParts.includes('dimensionValue')) {
+          labels.splice(1, 0, '\n')
+        }
+        return labels.join('')
+      }
+      break
+    case 'radar':
+      formatter = (params) => {
+        const { name, value, dataIndex } = params
+        const formattedValue = getFormattedValue(value, metrics[dataIndex].format)
+        const { labelParts } = labelConfig
+        if (!labelParts) {
+          return `${name}\n${formattedValue}`
+        }
+        const labels: string[] = []
+        if (labelParts.includes('indicatorName')) {
+          labels.push(name)
+        }
+        if (labelParts.includes('indicatorValue')) {
+          labels.push(formattedValue)
+        }
+        if (labels.length > 1) {
+          labels.splice(1, 0, '\n')
+        }
+        return labels.join('')
+      }
+      break
+    case 'lines':
+      formatter = (param) => {
+        const { name, data } = param
+        return `${name}(${data.value[2]})`
+      }
+      break
+  }
+
+  const labelOption = {
     normal: {
       show: type === 'pie' && pieLabelPosition === 'center' ? false : showLabel,
-      position: positionVale,
+      position,
       distance: 15,
       color: labelColor,
       fontFamily: labelFontFamily,
       fontSize: labelFontSize,
+      formatter,
       ...options
     },
     ...emphasis && {
       emphasis: {
         show: showLabel,
-        position: positionVale,
+        position,
         distance: 15,
         color: labelColor,
         fontFamily: labelFontFamily,
         fontSize: labelFontSize,
+        formatter,
         ...options
       }
     }
   }
+
+  return labelOption
 }
 
 export function getLegendOption (legendConfig: ILegendConfig, seriesNames: string[]) {
@@ -346,10 +430,12 @@ function getGridBase (pos, chartName, dimetionAxisConfig?: IAxisConfig, xAxisDat
 
 export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData) {
   const grouped = {}
+  const colKeySet = new Set()
 
   data.forEach((d) => {
     const groupingKey = groupColumns.map((col) => d[col]).join(' ')
     const colKey = d[xAxisColumn] || 'default'
+    colKeySet.add(colKey)
     if (!grouped[groupingKey]) {
       grouped[groupingKey] = {}
     }
@@ -359,6 +445,7 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
     grouped[groupingKey][colKey].push(d)
   })
 
+  const colKeys = Array.from(colKeySet)
   Object.keys(grouped).map((groupingKey) => {
     const currentGroupValues = grouped[groupingKey]
 
@@ -367,7 +454,10 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
         if (currentGroupValues[xd]) {
           return currentGroupValues[xd][0]
         } else {
-          return metrics.reduce((obj, m) => ({ ...obj, [`${m.agg}(${decodeMetricName(m.name)})`]: 0 }), {})
+          return metrics.reduce((obj, m) => ({ ...obj, [`${m.agg}(${decodeMetricName(m.name)})`]: 0 }), {
+            [xAxisColumn]: xd,
+            // []: groupingKey
+          })
         }
       })
       : [currentGroupValues['default'][0]]

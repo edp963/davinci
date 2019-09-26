@@ -20,7 +20,7 @@
 
 import React, { PureComponent } from 'react'
 import classnames from 'classnames'
-import { uuid } from '../../../../utils/util'
+import { uuid } from 'utils/util'
 
 import { FormComponentProps } from 'antd/lib/form/Form'
 import { Form, Input, InputNumber, Select, Radio, Button, Icon } from 'antd'

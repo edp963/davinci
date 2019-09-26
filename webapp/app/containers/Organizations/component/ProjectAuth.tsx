@@ -27,7 +27,7 @@ const RadioGroup = Radio.Group
 const Option = Select.Option
 const styles = require('../Project.less')
 import { uuid } from 'utils/util'
-const utilStyles =  require('../../../assets/less/util.less')
+const utilStyles =  require('assets/less/util.less')
 
 interface IAuthProps {
   vizs?: any

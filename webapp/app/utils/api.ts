@@ -46,5 +46,6 @@ export default {
   roles: `${host}/roles`,
   portal: `${host}/dashboardPortals`,
   star: `${host}/star`,
-  download: `${host}/download`
+  download: `${host}/download`,
+  buriedPoints: `${host}/statistic`
 }

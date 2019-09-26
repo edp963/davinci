@@ -43,10 +43,26 @@ const makeSelectTestLoading = () => createSelector(
   (sourceState: SourceStateType) => sourceState.get('testLoading')
 )
 
+const makeSelectDatasourcesInfo = () => createSelector(
+  selectSource,
+  (sourceState: SourceStateType) => sourceState.get('datasourcesInfo')
+    .map((info) => ({
+      label: info.name,
+      value: info.name,
+      ...info.versions && {
+        children: info.versions.map((ver) => ({
+          label: ver,
+          value: ver
+        }))
+      }
+    }))
+)
+
 export {
   selectSource,
   makeSelectSources,
   makeSelectListLoading,
   makeSelectFormLoading,
-  makeSelectTestLoading
+  makeSelectTestLoading,
+  makeSelectDatasourcesInfo
 }

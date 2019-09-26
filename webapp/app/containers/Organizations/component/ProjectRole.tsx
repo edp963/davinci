@@ -21,22 +21,17 @@
 import * as React from 'react'
 import { compose } from 'redux'
 import { connect } from 'react-redux'
-import * as classnames from 'classnames'
-import { Icon, Button, Row, Col, Input, Tooltip, Popconfirm, Table, Modal, Form, Divider } from 'antd'
-const FormItem = Form.Item
-const InputGroup = Input.Group
-import Avatar from '../../../components/Avatar/index'
+import { Button, Row, Col, Input, Tooltip, Popconfirm, Table, Modal, Form, Divider } from 'antd'
 import RoleForm from './Transfer'
 import Auth from './ProjectAuth'
 import AntdFormType from 'antd/lib/form/Form'
 import { loadOrganizationRole, loadProjectRoles, getVizVisbility, postVizVisbility } from '../actions'
 const styles = require('../Project.less')
-const utilStyles =  require('../../../assets/less/util.less')
 import {createStructuredSelector} from 'reselect'
-import { addProjectRole, addProjectRoleFail, loadRelRoleProject, updateRelRoleProject, deleteRelRoleProject} from '../../Projects/actions'
+import { addProjectRole, addProjectRoleFail, loadRelRoleProject, updateRelRoleProject, deleteRelRoleProject} from 'containers/Projects/actions'
 import {makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationRole, makeSelectCurrentOrganizationProjectRoles, makeSelectCurrentOrganizations } from '../selectors'
-import { makeSelectCurrentProjectRole} from '../../Projects/selectors'
-import { makeSelectVizs } from '../../Schedule/selectors'
+import { makeSelectCurrentProjectRole} from 'containers/Projects/selectors'
+import { makeSelectVizs } from 'containers/Schedule/selectors'
 
 interface IRoleStates {
   relationRoleVisible: boolean

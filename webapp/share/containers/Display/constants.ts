@@ -18,7 +18,9 @@
  * >>
  */
 
-export enum ActionTypes {
+import { createTypes } from 'utils/redux'
+
+enum Types {
   LOAD_SHARE_DISPLAY = 'davinci/Share/LOAD_SHARE_DISPLAY',
   LOAD_SHARE_DISPLAY_SUCCESS = 'davinci/Share/LOAD_SHARE_DISPLAY_SUCCESS',
   LOAD_SHARE_DISPLAY_FAILURE = 'davinci/Share/LOAD_SHARE_DISPLAY_FAILURE',
@@ -28,4 +30,4 @@ export enum ActionTypes {
   LOAD_LAYER_DATA_FAILURE = 'davinci/Share/LOAD_LAYER_DATA_FAILURE'
 }
 
-export default ActionTypes
+export const ActionTypes = createTypes(Types)

@@ -18,7 +18,7 @@
  * >>
  */
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 import table from './table'
 import line from './line'

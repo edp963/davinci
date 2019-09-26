@@ -27,7 +27,7 @@ const FormItem = Form.Item
 const TextArea = Input.TextArea
 const Option = Select.Option
 const { RangePicker } = DatePicker
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IScheduleFormProps {
   type: string
@@ -67,8 +67,8 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
       labelCol: { span: 4 },
       wrapperCol: { span: 18 }
     }
-    let minuteIndex = 0
-    let monthIndex = 0
+    let minuteIndex = 10
+    let monthIndex = 1
     const minuteOptions = []
     const monthOptions = []
     while (minuteIndex < 60) {

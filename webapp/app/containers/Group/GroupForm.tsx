@@ -25,7 +25,7 @@ import { Form, Row, Col, Input } from 'antd'
 const FormItem = Form.Item
 const TextArea = Input.TextArea
 
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IGroupFormProps {
   type: string

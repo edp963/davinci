@@ -33,6 +33,7 @@ import { LOAD_WIDGET_DETAIL_SUCCESS } from 'containers/Widget/constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from 'containers/Dashboard/constants'
 
 import { ActionTypes as DisplayActionTypes } from 'containers/Display/constants'
+import { LOCATION_CHANGE } from 'react-router-redux'
 
 const emptyView: IView = {
   id: null,
@@ -81,7 +82,8 @@ const initialState: IViewState = {
 
   channels: [],
   tenants: [],
-  bizs: []
+  bizs: [],
+  cancelTokenSources: []
 }
 
 const viewReducer = (state = initialState, action: ViewActionType | SourceActionType | any): IViewState => (
@@ -102,8 +104,10 @@ const viewReducer = (state = initialState, action: ViewActionType | SourceAction
         break
       case ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS:
         const detailedViews = action.payload.views
-        draft.editingView = detailedViews[0]
-        draft.editingViewInfo = pick(getFormedView(detailedViews[0]), ['model', 'variable', 'roles'])
+        if (action.payload.isEditing) {
+          draft.editingView = detailedViews[0]
+          draft.editingViewInfo = pick(getFormedView(detailedViews[0]), ['model', 'variable', 'roles'])
+        }
         draft.formedViews = detailedViews.reduce((acc, view) => {
           const { id, model, variable, roles } = getFormedView(view)
           acc[id] = {
@@ -216,6 +220,18 @@ const viewReducer = (state = initialState, action: ViewActionType | SourceAction
         draft.formedViews = {
           ...draft.formedViews,
           ...updatedViews
+        }
+        break
+      case ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
+      case ActionTypes.LOAD_SELECT_OPTIONS:
+        draft.cancelTokenSources.push(action.payload.cancelTokenSource)
+        break
+      case LOCATION_CHANGE:
+        if (state.cancelTokenSources.length) {
+          state.cancelTokenSources.forEach((source) => {
+            source.cancel()
+          })
+          draft.cancelTokenSources = []
         }
         break
       default:

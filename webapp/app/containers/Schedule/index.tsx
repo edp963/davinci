@@ -4,37 +4,37 @@
  *
  */
 
-import * as React from 'react'
+import React, { createRef } from 'react'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
 import { Link } from 'react-router'
-import Container from '../../components/Container'
+import Container from 'components/Container'
 import moment from 'moment'
 import { createStructuredSelector } from 'reselect'
 
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 import widgetReducer from '../Widget/reducer'
 import widgetSaga from '../Widget/sagas'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 import { makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets, makeSelectTableLoading, makeSelectFormLoading, makeSelectVizs } from './selectors'
-import { promiseDispatcher } from '../../utils/reduxPromisation'
+import { promiseDispatcher } from 'utils/reduxPromisation'
 import ScheduleForm from './ScheduleForm'
-import ConfigForm from './ConfigForm'
+import ConfigFormWrapper, { ConfigForm } from './ConfigForm'
 
 import { loadDashboardDetail, loadDashboards } from '../Dashboard/actions'
 import { loadSchedules, addSchedule, deleteSchedule, changeSchedulesStatus, updateSchedule, loadVizs } from './actions'
 import { loadWidgets } from '../Widget/actions'
-import Box from '../../components/Box'
+import Box from 'components/Box'
 
 import { Modal, Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb } from 'antd'
 import { ButtonProps } from 'antd/lib/button/button'
 import { PaginationProps } from 'antd/lib/pagination'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 import ModulePermission from '../Account/components/checkModulePermission'
 import { IProject } from '../Projects'
 
@@ -50,6 +50,13 @@ interface ICurrentDashboard {
   widgets: any[]
 }
 
+interface IEmailConfig {
+  subject?: string
+  to?: string
+  cc?: string
+  bcc?: string
+  type?: 'image' | 'excel'
+}
 interface IScheduleProps {
   widgets: boolean | any[]
   params: any
@@ -72,7 +79,7 @@ interface IScheduleProps {
 }
 
 interface IScheduleStates {
-  emailConfig: {to?: any, cc?: any, subject?: any, bcc?: any}
+  emailConfig: IEmailConfig
   formType: string,
   tableSource: any[],
   configType: string,
@@ -102,7 +109,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   }
 
   private scheduleForm: WrappedFormUtils = null
-  private configForm: WrappedFormUtils = null
+  private configForm = createRef<ConfigForm>()
 
   public componentWillMount () {
     const {pid} = this.props.params
@@ -319,7 +326,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   private json2arr = (json) => json.map((js) => `${js.id}(${js.contentType.substr(0, 1)})`)
 
   private onConfigModalOk = () => {
-    this.configForm.validateFieldsAndScroll((err, values) => {
+    this.configForm.current.props.form.validateFieldsAndScroll((err, values) => {
       const { dashboardTreeValue } = this.state
       if (!err) {
         const emailConfigData = {
@@ -356,7 +363,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     this.setState({
       configVisible: false,
       dashboardTreeValue: []
-    }, () => this.configForm.resetFields())
+    }, () => this.configForm.current.props.form.resetFields())
   }
 
   private showConfig = () => {
@@ -368,8 +375,8 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     }, () => {
       setTimeout(() => {
         if (jsonStringify && jsonStringify.length > 2) {
-          const { to, cc, subject, bcc } = emailConfig
-          this.configForm.setFieldsValue({to, cc, subject, bcc})
+          const { to, cc, subject, bcc, type } = emailConfig
+          this.configForm.current.props.form.setFieldsValue({to, cc, subject, bcc, type})
         }
       }, 0)
     })
@@ -661,7 +668,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
                 footer={configModalButtons}
                 onCancel={this.hideConfigForm}
               >
-                <ConfigForm
+                <ConfigFormWrapper
                   type={configType}
                   vizs={vizs}
                   dashboardTree={dashboardTree}
@@ -669,7 +676,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
                   treeChange={this.onTreeChange}
                   loadTreeData={this.onLoadTreeData}
                   dashboardTreeValue={dashboardTreeValue}
-                  ref={(f) => { this.configForm = f }}
+                  wrappedComponentRef={this.configForm}
                 />
               </Modal>
             </Box.Body>

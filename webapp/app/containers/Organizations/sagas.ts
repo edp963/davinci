@@ -77,16 +77,13 @@ import {
   getRelRoleMemberSuccess,
   getRelRoleMemberFail,
   projectAdminLoaded,
-  loadProjectAdminFail,
-  // projectRolesLoaded,
-  // loadProjectRolesFail
+  loadProjectAdminFail
 } from './actions'
 
 import { message } from 'antd'
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { userPasswordChanged } from '../App/actions'
-import { errorHandler } from '../../utils/util'
+import request from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
 
 export function* getOrganizations () {
   try {
