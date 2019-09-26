@@ -110,7 +110,7 @@ const emptySource: ISourceFormValues = {
     username: '',
     password: '',
     url: '',
-    parameters: ''
+    properties: []
   }
 }
 
