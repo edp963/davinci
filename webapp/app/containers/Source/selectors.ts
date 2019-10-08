@@ -43,6 +43,11 @@ const makeSelectTestLoading = () => createSelector(
   (sourceState: SourceStateType) => sourceState.get('testLoading')
   )
 
+const makeSelectResetLoading = () => createSelector(
+  selectSource,
+  (sourceState: SourceStateType) => sourceState.get('resetLoading')
+)
+
 const makeSelectDatasourcesInfo = () => createSelector(
   selectSource,
   (sourceState: SourceStateType) => sourceState.get('datasourcesInfo')
@@ -54,5 +59,6 @@ export {
   makeSelectListLoading,
   makeSelectFormLoading,
   makeSelectTestLoading,
+  makeSelectResetLoading,
   makeSelectDatasourcesInfo
 }
