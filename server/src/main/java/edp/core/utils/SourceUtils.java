@@ -96,7 +96,9 @@ public class SourceUtils {
                 releaseDataSource(jdbcUrl, username, password, version, isExt);
                 connection = null;
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
+            // ignore
         }
 
         if (null == connection) {
@@ -112,7 +114,7 @@ public class SourceUtils {
         return connection;
     }
 
-    void releaseConnection(Connection connection) {
+    public static void releaseConnection(Connection connection) {
         if (null != connection) {
             try {
                 connection.close();
@@ -132,6 +134,7 @@ public class SourceUtils {
                 rs = null;
             } catch (Exception e) {
                 e.printStackTrace();
+                log.error("resultSet close error", e.getMessage());
             }
         }
     }
@@ -160,12 +163,9 @@ public class SourceUtils {
                 } else {
                     try {
                         String className = getDriverClassName(jdbcUrl, null);
-                        Class<?> aClass = Class.forName(className);
-                        if (null == aClass) {
-                            throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
-                        }
+                        Class.forName(className);
                     } catch (Exception e) {
-                        throw new SourceException("Unable to get driver instance: " + jdbcUrl);
+                        throw new SourceException("Unable to get driver instance: " + jdbcUrl, e);
                     }
                 }
             }

@@ -429,9 +429,11 @@ public class WidgetServiceImpl implements WidgetService {
     public File writeExcel(Set<Widget> widgets,
                            ProjectDetail projectDetail, Map<Long, ViewExecuteParam> executeParamMap,
                            String filePath, User user, boolean containType) throws Exception {
+        
         if (StringUtils.isEmpty(filePath)) {
             throw new ServerException("excel file path is EMPTY");
         }
+
         if (!filePath.trim().toLowerCase().endsWith(FileTypeEnum.XLSX.getFormat())) {
             throw new ServerException("unknow file format");
         }
@@ -454,24 +456,31 @@ public class WidgetServiceImpl implements WidgetService {
             executorService.execute(() -> {
                 Sheet sheet = null;
                 try {
-                    ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(widget.getViewId());
+                    ViewWithProjectAndSource viewWithProjectAndSource = viewMapper
+                            .getViewWithProjectAndSourceById(widget.getViewId());
 
                     ViewExecuteParam executeParam = null;
                     if (null != executeParamMap && executeParamMap.containsKey(widget.getId())) {
                         executeParam = executeParamMap.get(widget.getId());
-                    } else {
+                    }
+                    else {
                         executeParam = getViewExecuteParam((engine), null, widget.getConfig(), null);
                     }
 
-                    PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer, viewWithProjectAndSource, executeParam, user);
+                    PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer,
+                            viewWithProjectAndSource, executeParam, user);
 
                     sheet = wb.createSheet(sheetName);
-                    ExcelUtils.writeSheet(sheet, paginate.getColumns(), paginate.getResultList(), wb, containType, widget.getConfig(), executeParam.getParams());
-                } catch (ServerException e) {
+                    ExcelUtils.writeSheet(sheet, paginate.getColumns(), paginate.getResultList(), wb, containType,
+                            widget.getConfig(), executeParam.getParams());
+                }
+                catch (ServerException e) {
                     e.printStackTrace();
-                } catch (SQLException e) {
+                }
+                catch (SQLException e) {
                     e.printStackTrace();
-                } finally {
+                }
+                finally {
                     sheet = null;
                     countDownLatch.countDown();
                 }
@@ -481,6 +490,7 @@ public class WidgetServiceImpl implements WidgetService {
         }
 
         countDownLatch.await();
+        //TODO performance problem need to fix 
         executorService.shutdown();
 
         File file = new File(filePath);
@@ -490,9 +500,16 @@ public class WidgetServiceImpl implements WidgetService {
         }
 
         FileOutputStream out = new FileOutputStream(filePath);
-        wb.write(out);
-        out.flush();
-        out.close();
+        try {
+            wb.write(out);
+            out.flush();
+        }
+        catch (Exception e) {
+            // ignore
+        }
+        finally {
+            FileUtils.closeCloseable(out);
+        }
         return file;
     }
 }

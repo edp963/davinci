@@ -121,10 +121,7 @@ public class JdbcDataSource {
         if (StringUtils.isEmpty(version) || !isExt || JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
             String className = SourceUtils.getDriverClassName(jdbcUrl, null);
             try {
-                Class<?> aClass = Class.forName(className);
-                if (null == aClass) {
-                    throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
-                }
+                Class.forName(className);
             } catch (ClassNotFoundException e) {
                 throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
             }
@@ -152,7 +149,7 @@ public class JdbcDataSource {
         instance.setTestOnReturn(testOnReturn);
         instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
         instance.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
-//        instance.setQueryTimeout(queryTimeout / 1000);
+        // instance.setQueryTimeout(queryTimeout / 1000);
 
         try {
             instance.init();

@@ -438,7 +438,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         List<User> admins = userMapper.getByIds(adminIds);
 
-        if (null == admins && admins.isEmpty()) {
+        if (null == admins || admins.isEmpty()) {
             throw new NotFoundException("user is not found");
         }
 
@@ -451,7 +451,6 @@ public class ProjectServiceImpl implements ProjectService {
         List<Long> oAdminIds = relProjectAdminMapper.getAdminIds(id);
 
         admins.removeIf(u -> oAdminIds.contains(u.getId()));
-
 
         if (!CollectionUtils.isEmpty(admins)) {
             List<RelProjectAdmin> relProjectAdmins = new ArrayList<>();
@@ -471,6 +470,7 @@ public class ProjectServiceImpl implements ProjectService {
                 throw new ServerException("unspecified error");
             }
         }
+
         return null;
     }
 

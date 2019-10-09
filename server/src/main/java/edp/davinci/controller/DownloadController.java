@@ -23,6 +23,7 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.AuthShare;
 import edp.core.annotation.CurrentUser;
+import edp.core.utils.FileUtils;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -93,11 +94,17 @@ public class DownloadController extends BaseController {
                                                 HttpServletRequest request,
                                                 HttpServletResponse response) {
         DownloadRecord record = downloadService.downloadById(id, token);
+        FileInputStream is = null;
         try {
             encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
-            Streams.copy(new FileInputStream(new File(record.getPath())), response.getOutputStream(), true);
-        } catch (Exception e) {
+            is = new FileInputStream(new File(record.getPath()));
+            Streams.copy(is, response.getOutputStream(), true);
+        }
+        catch (Exception e) {
             log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
+        }
+        finally {
+            FileUtils.closeCloseable(is);
         }
         return null;
     }
@@ -177,26 +184,31 @@ public class DownloadController extends BaseController {
         }
 
         ShareDownloadRecord record = shareDownloadService.downloadById(id, uuid, token, user);
-
+        FileInputStream is = null;
         try {
             encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
-            Streams.copy(new FileInputStream(new File(record.getPath())), response.getOutputStream(), true);
+            is = new FileInputStream(new File(record.getPath()));
+            Streams.copy(is, response.getOutputStream(), true);
         } catch (Exception e) {
             log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
+        }finally {
+            FileUtils.closeCloseable(is);
         }
         return null;
     }
 
 
     private void encodeFileName(HttpServletRequest request, HttpServletResponse response, String filename) throws UnsupportedEncodingException {
+
         response.setHeader("Content-Type", "application/force-download");
         // firefox浏览器
         if (request.getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
             filename = new String(filename.getBytes("UTF-8"), "ISO8859-1");
-            //IE
-        } else if (isIE(request)) {
+        }
+        else if (isIE(request)) {
             filename = URLEncoder.encode(filename, "UTF-8");
-        } else {
+        }
+        else {
             filename = new String(filename.getBytes("UTF-8"), "ISO8859-1");
         }
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");

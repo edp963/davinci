@@ -171,7 +171,7 @@ public class CronJobServiceImpl implements CronJobService {
             throw new NotFoundException("cronjob is not found");
         }
 
-        if (null != cronJob && !cronJob.getProjectId().equals(cronJobUpdate.getProjectId())) {
+        if (!cronJob.getProjectId().equals(cronJobUpdate.getProjectId())) {
             throw new ServerException("Invalid project id");
         }
 
