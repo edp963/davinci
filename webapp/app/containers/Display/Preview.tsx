@@ -307,7 +307,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       orders,
       cache,
       expired,
-      flush: renderType === 'refresh',
+      flush: renderType === 'flush',
       pagination,
       nativeQuery,
       customOrders

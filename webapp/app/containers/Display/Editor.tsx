@@ -392,7 +392,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       orders,
       cache,
       expired,
-      flush: renderType === 'refresh',
+      flush: renderType === 'flush',
       pagination,
       nativeQuery,
       customOrders

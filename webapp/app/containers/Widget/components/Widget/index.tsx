@@ -40,6 +40,7 @@ export type RenderType =
   | 'resize'
   | 'loading'
   | 'select'
+  | 'flush'
 export type WidgetMode = 'pivot' | 'chart'
 
 export interface IWidgetDimension {
