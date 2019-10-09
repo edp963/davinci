@@ -708,7 +708,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       orders,
       cache,
       expired,
-      flush: renderType === 'refresh',
+      flush: renderType === 'flush',
       pagination,
       nativeQuery,
       customOrders
