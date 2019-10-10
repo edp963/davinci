@@ -594,7 +594,7 @@ public class SourceServiceImpl implements SourceService {
     }
 
     @Override
-    public boolean reconnect(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean reconnect(Long id, DbBaseInfo dbBaseInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         Source source = sourceMapper.getById(id);
         if (null == source) {
             log.info("source (:{}) is not found", id);
@@ -605,6 +605,11 @@ public class SourceServiceImpl implements SourceService {
         if (projectPermission.getSourcePermission() < UserPermissionEnum.WRITE.getPermission()) {
             log.info("user (:{}) have not permission to reconnect source(:{})", user.getId(), source.getId());
             throw new UnAuthorizedExecption("You have not permission to reconnect this source");
+        }
+
+        if (!(dbBaseInfo.getDbUser().equals(source.getUsername()) && dbBaseInfo.getDbPassword().equals(source.getPassword()))) {
+            log.warn("reconnect source(:{}) error, dbuser and dbpassword is wrong", id);
+            throw new ServerException("user or password is wrong");
         }
 
         SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
