@@ -84,7 +84,7 @@ export function* getData (action: ShareDisplayActionType) {
       }
     })
     const { resultList } = response.payload
-    response.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    response.payload.resultList = (resultList && resultList.slice(0, 600)) || []
     yield put(layerDataLoaded(renderType, layerId, response.payload, requestParams))
   } catch (err) {
     yield put(loadLayerDataFail(err))

@@ -181,7 +181,7 @@ export function* getViewData (action: ViewActionType) {
     })
     yield put(viewDataLoaded())
     const { resultList } = asyncData.payload
-    asyncData.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    asyncData.payload.resultList = (resultList && resultList.slice(0, 600)) || []
     resolve(asyncData.payload)
   } catch (err) {
     const { response } = err as AxiosError
@@ -286,7 +286,7 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
       cancelToken: cancelTokenSource.token
     })
     const { resultList } = asyncData.payload
-    asyncData.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    asyncData.payload.resultList = (resultList && resultList.slice(0, 600)) || []
     yield put(viewDataFromVizItemLoaded(renderType, itemId, requestParams, asyncData.payload, vizType, action.statistic))
   } catch (err) {
     yield put(loadViewDataFromVizItemFail(itemId, vizType, getErrorMessage(err)))
