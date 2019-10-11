@@ -73,7 +73,7 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
             String index = StringUtils.isBlank(elasticIndexPrefix) ? tableName : elasticIndexPrefix + "_" + tableName;
             elasticOperationService.batchInsert(index, index, infoList);
         }else{
-            List<Map<String, Object>> values = EntityConvertMap(infoList);
+            List<Map<String, Object>> values = entityConvertIntoMap(infoList);
             Set<QueryColumn> headers = getHeaders(tableName);
             String sql = getInsertSql(clz, headers);
 
@@ -92,7 +92,7 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
 
     private String getTableName4Info(Class clz){
         String className = clz.getSimpleName();
-        String tableName = HumpToUnderline(className.substring(0, className.indexOf("Info")));
+        String tableName = humpToUnderline(className.substring(0, className.indexOf("Info")));
         return tableName;
     }
 
@@ -108,7 +108,7 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
         return sql;
     }
 
-    public static String HumpToUnderline(String para){
+    public static String humpToUnderline(String para){
         StringBuilder sb = new StringBuilder(para);
         boolean firstNumberUpper = true;
         int temp=0;//定位
@@ -126,7 +126,7 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
         return sb.toString().toLowerCase();
     }
 
-    public static <T> List<Map<String, Object>> EntityConvertMap(List<T> list){
+    public static <T> List<Map<String, Object>> entityConvertIntoMap(List<T> list){
         List<Map<String, Object>> l = new LinkedList<>();
         try {
             for(T t : list){

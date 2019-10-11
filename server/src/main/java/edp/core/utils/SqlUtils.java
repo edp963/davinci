@@ -102,7 +102,7 @@ public class SqlUtils {
 
     public SqlUtils init(BaseSource source) {
         return SqlUtilsBuilder
-                .SqlUtils()
+                .getBuilder()
                 .withJdbcUrl(source.getJdbcUrl())
                 .withUsername(source.getUsername())
                 .withPassword(source.getPassword())
@@ -116,7 +116,7 @@ public class SqlUtils {
 
     public SqlUtils init(String jdbcUrl, String username, String password, String dbVersion, boolean ext) {
         return SqlUtilsBuilder
-                .SqlUtils()
+                .getBuilder()
                 .withJdbcUrl(jdbcUrl)
                 .withUsername(username)
                 .withPassword(password)
@@ -427,8 +427,11 @@ public class SqlUtils {
      * @throws SourceException
      */
     public List<QueryColumn> getTableList(String dbName) throws SourceException {
+        
         List<QueryColumn> tableList = null;
         Connection connection = null;
+        ResultSet tables = null;
+        
         try {
             connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
@@ -437,9 +440,10 @@ public class SqlUtils {
                 try {
                     schema = metaData.getConnection().getSchema();
                 } catch (Throwable t) {
+                    // ignore
                 }
 
-                ResultSet tables = metaData.getTables(dbName, getDBSchemaPattern(schema), "%", TABLE_TYPES);
+                tables = metaData.getTables(dbName, getDBSchemaPattern(schema), "%", TABLE_TYPES);
                 if (null != tables) {
                     tableList = new ArrayList<>();
                     while (tables.next()) {
@@ -454,37 +458,41 @@ public class SqlUtils {
                         }
                     }
                 }
-                tables.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
             throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
         } finally {
-            sourceUtils.releaseConnection(connection);
+            SourceUtils.releaseConnection(connection);
+            SourceUtils.closeResult(tables);
         }
         return tableList;
     }
 
     private String getDBSchemaPattern(String schema) {
+
         String schemaPattern = null;
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
-        if (null != dataTypeEnum) {
-            switch (dataTypeEnum) {
-                case ORACLE:
-                    schemaPattern = this.username;
-                    if (null != schemaPattern) {
-                        schemaPattern = schemaPattern.toUpperCase();
-                    }
-                    break;
-                case SQLSERVER:
-                    schemaPattern = "dbo";
-
-                case PRESTO:
-                    if (!StringUtils.isEmpty(schema)) {
-                        schemaPattern = schema;
-                    }
-                    break;
-            }
+        if (dataTypeEnum == null) {
+            return null;
+        }
+        switch (dataTypeEnum) {
+            case ORACLE:
+                schemaPattern = this.username;
+                if (null != schemaPattern) {
+                    schemaPattern = schemaPattern.toUpperCase();
+                }
+                break;
+            case SQLSERVER:
+                schemaPattern = "dbo";
+                break;
+            case PRESTO:
+                if (!StringUtils.isEmpty(schema)) {
+                    schemaPattern = schema;
+                }
+                break;
+            default:
+                break;
         }
         return schemaPattern;
 
@@ -528,21 +536,22 @@ public class SqlUtils {
     public boolean tableIsExist(String tableName) throws SourceException {
         boolean result = false;
         Connection connection = null;
+        ResultSet rs = null;
         try {
             connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
             if (null != connection) {
-                ResultSet tables = connection.getMetaData().getTables(null, null, tableName, null);
-                if (null != tables && tables.next()) {
+                rs = connection.getMetaData().getTables(null, null, tableName, null);
+                if (null != rs && rs.next()) {
                     result = true;
                 } else {
                     result = false;
                 }
-                tables.close();
             }
         } catch (Exception e) {
             throw new SourceException("Get connection meta data error, jdbcUrl=" + this.jdbcUrl);
         } finally {
-            sourceUtils.releaseConnection(connection);
+            SourceUtils.releaseConnection(connection);
+            SourceUtils.closeResult(rs);
         }
 
         return result;
@@ -940,9 +949,10 @@ public class SqlUtils {
         private boolean isExt;
 
         private SqlUtilsBuilder() {
+
         }
 
-        public static SqlUtilsBuilder SqlUtils() {
+        public static SqlUtilsBuilder getBuilder() {
             return new SqlUtilsBuilder();
         }
 

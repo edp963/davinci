@@ -41,6 +41,7 @@ import javax.mail.internet.MimeMessage;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +78,7 @@ public class MailUtils {
      */
     public void sendSimpleEmail(String from, String subject, String[] to, String[] cc, String[] bcc, String content) throws ServerException {
         long startTimestamp = System.currentTimeMillis();
-        log.info("start send email to {}", to.toString());
+        log.info("start send email to {}", Arrays.toString(to));
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(from);
@@ -280,12 +281,12 @@ public class MailUtils {
         }
 
         Context context = new Context();
-        for (String key : content.keySet()) {
-            context.setVariable(key, content.get(key));
+        for (Map.Entry<String, Object> entry : content.entrySet()) {
+            context.setVariable(entry.getKey(), entry.getValue());
         }
 
         long startTimestamp = System.currentTimeMillis();
-        log.info("start send email to {}", to);
+        log.info("start send email to {}", Arrays.toString(to));
 
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
@@ -325,7 +326,9 @@ public class MailUtils {
                 excels.forEach(excel -> {
                     try {
                         messageHelper.addAttachment(excel.getName() + FileTypeEnum.XLSX.getFormat(), excel.getFile());
-                    } catch (MessagingException e) {
+                    }
+                    catch (MessagingException e) {
+                        // ingorn
                     }
                 });
             }
@@ -341,13 +344,10 @@ public class MailUtils {
 
             javaMailSender.send(message);
             log.info("Send mail success, in {} million seconds", System.currentTimeMillis() - startTimestamp);
-        } catch (MessagingException e) {
+        } catch (Exception e) {
             log.error("Send mail failed, {}\n", e.getMessage());
             e.printStackTrace();
             throw new ServerException(e.getMessage());
-        } catch (UnsupportedEncodingException e) {
-            log.error("Send mail failed, {}\n", e.getMessage());
-            e.printStackTrace();
         }
     }
 

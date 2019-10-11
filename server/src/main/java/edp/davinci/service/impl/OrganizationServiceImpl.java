@@ -567,9 +567,9 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         if (i > 0) {
             //更新组织成员数量
-            organization.setMemberNum(organization.getMemberNum() > 0 ? organization.getMemberNum() - 1 : organization.getMemberNum());
+            int memberNum = organization.getMemberNum();
+            organization.setMemberNum(memberNum > 0 ? memberNum - 1 : memberNum);
             organizationMapper.updateMemberNum(organization);
-
             return true;
         } else {
             throw new ServerException("unknown fail");
@@ -587,14 +587,16 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     @Transactional
     public boolean updateMemberRole(Long relationId, User user, int role) throws NotFoundException, UnAuthorizedExecption, ServerException {
+
         RelUserOrganization rel = relUserOrganizationMapper.getById(relationId);
+        
         if (null == rel) {
             throw new ServerException("this member are no longer member of the organization");
         }
 
         Organization organization = organizationMapper.getById(rel.getOrgId());
         if (null == organization) {
-            log.info("organization(:{}) is not found", organization.getId());
+            log.info("organization(:{}) is not found", rel.getOrgId());
             throw new NotFoundException("organization is not found");
         }
 

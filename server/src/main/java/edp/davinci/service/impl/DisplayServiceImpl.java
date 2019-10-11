@@ -999,25 +999,28 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
             }
 
             if (!StringUtils.isEmpty(slideWithDipaly.getConfig())) {
+                
                 jsonObject = JSONObject.parseObject(slideWithDipaly.getConfig());
+                
                 if (null == jsonObject) {
                     jsonObject = new JSONObject();
                 }
+                
                 JSONObject slideParams = null;
-                if (null != jsonObject) {
-                    slideParams = jsonObject.getJSONObject("slideParams");
-                    if (null != slideParams) {
-                        //删除原数据
-                        if (!StringUtils.isEmpty(slideParams.getString("backgroundImage"))) {
-                            File bgFile = new File(slideParams.getString("backgroundImage"));
-                            if (null != bgFile && bgFile.exists() && bgFile.isFile() && fileUtils.isImage(bgFile)) {
-                                bgFile.delete();
-                            }
+                slideParams = jsonObject.getJSONObject("slideParams");
+                if (null != slideParams) {
+                    // 删除原数据
+                    if (!StringUtils.isEmpty(slideParams.getString("backgroundImage"))) {
+                        File bgFile = new File(slideParams.getString("backgroundImage"));
+                        if (null != bgFile && bgFile.exists() && bgFile.isFile() && fileUtils.isImage(bgFile)) {
+                            bgFile.delete();
                         }
                     }
-                } else {
+                }
+                else {
                     slideParams = new JSONObject();
                 }
+                
                 slideParams.put("backgroundImage", background);
                 jsonObject.put("slideParams", slideParams);
 
