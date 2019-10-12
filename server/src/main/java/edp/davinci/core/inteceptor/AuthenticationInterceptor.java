@@ -80,7 +80,9 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         }
 
         if (StringUtils.isEmpty(token) || !token.startsWith(Constants.TOKEN_PREFIX)) {
-            log.info("{} : Unknown token", request.getServletPath());
+            if (!request.getServletPath().endsWith("/download/page")) {
+                log.info("{} : Unknown token", request.getServletPath());
+            }
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
             response.getWriter().print("The resource requires authentication, which was not supplied with the request");
             return false;

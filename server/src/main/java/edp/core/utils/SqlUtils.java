@@ -24,7 +24,6 @@ import edp.core.common.jdbc.JdbcDataSource;
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
 import edp.core.enums.SqlTypeEnum;
-import edp.core.enums.TypeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.model.*;
@@ -54,8 +53,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 
 import static edp.core.consts.Consts.*;
-import static edp.core.enums.DataTypeEnum.MYSQL;
-import static edp.core.enums.DataTypeEnum.ORACLE;
+import static edp.core.enums.DataTypeEnum.*;
 
 @Slf4j
 @Component
@@ -75,7 +73,6 @@ public class SqlUtils {
     private static final String TABLE = "TABLE";
 
     private static final String VIEW = "VIEW";
-
 
     private static final String[] TABLE_TYPES = new String[]{TABLE, VIEW};
 
@@ -547,45 +544,6 @@ public class SqlUtils {
         return result;
     }
 
-    /**
-     * 根据sql查询列
-     *
-     * @param sql
-     * @return
-     * @throws ServerException
-     */
-    public List<QueryColumn> getColumns(String sql) throws ServerException {
-        long l = System.currentTimeMillis();
-        checkSensitiveSql(sql);
-        Connection connection = null;
-        List<QueryColumn> columnList = new ArrayList<>();
-        try {
-            connection = sourceUtils.getConnection(this.jdbcSourceInfo);
-            if (null != connection) {
-                Statement statement = connection.createStatement();
-                statement.setMaxRows(1);
-                ResultSet resultSet = statement.executeQuery(sql);
-                ResultSetMetaData rsmd = resultSet.getMetaData();
-                int columnCount = rsmd.getColumnCount();
-                for (int i = 1; i <= columnCount; i++) {
-                    QueryColumn queryColumn = new QueryColumn(
-                            rsmd.getColumnLabel(i),
-                            TypeEnum.getType(rsmd.getColumnType(i)));
-                    columnList.add(queryColumn);
-                }
-                resultSet.close();
-                statement.close();
-            }
-        } catch (Exception e) {
-            throw new ServerException(e.getMessage());
-        } finally {
-            sourceUtils.releaseConnection(connection);
-        }
-        long l1 = System.currentTimeMillis();
-        log.info("get columns for >>> {} ms", l1 - l);
-        return columnList;
-    }
-
 
     /**
      * 获取数据表主键
@@ -657,6 +615,16 @@ public class SqlUtils {
 
 
     public JdbcTemplate jdbcTemplate() throws SourceException {
+        Connection connection = null;
+        try {
+            connection = sourceUtils.getConnection(this.jdbcSourceInfo);
+        } catch (SourceException e) {
+        }
+        if (connection == null) {
+            sourceUtils.releaseDataSource(this.jdbcSourceInfo);
+        } else {
+            SourceUtils.releaseConnection(connection);
+        }
         DataSource dataSource = sourceUtils.getDataSource(this.jdbcSourceInfo);
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.setFetchSize(1000);

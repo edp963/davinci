@@ -22,6 +22,7 @@ package edp.core.common.jdbc;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.consts.Consts;
+import edp.core.enums.DataTypeEnum;
 import edp.core.exception.SourceException;
 import edp.core.model.JdbcSourceInfo;
 import edp.core.utils.CollectionUtils;
@@ -148,7 +149,11 @@ public class JdbcDataSource {
 
         instance.setUrl(jdbcSourceInfo.getJdbcUrl());
         instance.setUsername(jdbcSourceInfo.getUsername());
-        instance.setPassword(jdbcSourceInfo.getPassword());
+
+        if (!jdbcSourceInfo.getJdbcUrl().toLowerCase().contains(DataTypeEnum.PRESTO.getFeature())) {
+            instance.setPassword(jdbcSourceInfo.getPassword());
+        }
+
         instance.setInitialSize(initialSize);
         instance.setMinIdle(minIdle);
         instance.setMaxActive(maxActive);
