@@ -28,9 +28,9 @@ import {
   CHART_ALIGNMENT_MODES,
   DEFAULT_FONT_STYLE,
   DEFAULT_ECHARTS_THEME
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'app/containers/Widget/components/Widget'
 const gauge: IChartInfo = {
   id: ChartTypes.Gauge,
   name: 'gauge',
