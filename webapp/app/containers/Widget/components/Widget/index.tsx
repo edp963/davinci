@@ -22,6 +22,7 @@ import { IVisualMapConfig } from '../Workbench/ConfigSections/VisualMapSection'
 import { IToolboxConfig } from '../Workbench/ConfigSections/ToolboxSection'
 import { IAreaSelectConfig } from '../Workbench/ConfigSections/AreaSelectSection'
 import { IScorecardConfig } from '../Workbench/ConfigSections/ScorecardSection'
+import { IGaugeConfig } from '../Workbench/ConfigSections/GaugeSection'
 import { IframeConfig } from '../Workbench/ConfigSections/IframeSection'
 import { ITableConfig } from '../Config/Table'
 import { IRichTextConfig, IBarConfig, IRadarConfig } from '../Workbench/ConfigSections'
@@ -42,6 +43,7 @@ export type RenderType =
   | 'select'
   | 'flush'
 export type WidgetMode = 'pivot' | 'chart'
+export type Coordinate = 'cartesian' | 'polar' | 'other'
 
 export interface IWidgetDimension {
   name: string
@@ -87,6 +89,7 @@ export interface IChartStyles {
   spec?: ISpecConfig
   visualMap?: IVisualMapConfig
   scorecard?: IScorecardConfig
+  gauge?: IGaugeConfig
   iframe?: IframeConfig
   table?: ITableConfig
   richText?: IRichTextConfig
@@ -105,7 +108,7 @@ export interface IChartInfo {
   name: string
   title: string
   icon: string
-  coordinate: 'cartesian' | 'polar' | 'other'
+  coordinate: Coordinate
   rules: IChartRule[]
   dimetionAxis?: DimetionType
   data: object

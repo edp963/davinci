@@ -31,6 +31,7 @@ import parallel from './parallel'
 import wordCloud from './wordCloud'
 import waterfall from './waterfall'
 import doubleYAxis from './doubleYAxis'
+import gauge from './gauge'
 import { EChartOption } from 'echarts'
 import { IChartProps } from '../../components/Chart'
 
@@ -49,5 +50,6 @@ export default function (type, chartProps: IChartProps, drillOptions?: any): ECh
     case 'wordCloud': return wordCloud(chartProps)
     case 'waterfall': return waterfall(chartProps)
     case 'doubleYAxis': return doubleYAxis(chartProps, drillOptions)
+    case 'gauge': return gauge(chartProps, drillOptions)
   }
 }

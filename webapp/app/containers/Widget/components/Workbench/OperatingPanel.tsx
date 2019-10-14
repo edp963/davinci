@@ -31,6 +31,7 @@ import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelec
 import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
 import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
 import TableSection from './ConfigSections/TableSection'
+import GaugeSection from './ConfigSections/GaugeSection'
 import { ITableConfig } from '../Config/Table'
 import BarSection from './ConfigSections/BarSection'
 import RadarSection from './ConfigSections/RadarSection'
@@ -1541,7 +1542,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const [dimetionsCount, metricsCount] = this.getDimetionsAndMetricsCount()
     const {
       spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend,
-      visualMap, toolbox, areaSelect, scorecard, iframe, table, bar, radar, doubleYAxis } = styleParams
+      visualMap, toolbox, areaSelect, scorecard, gauge, iframe, table, bar, radar, doubleYAxis } = styleParams
 
     let categoryDragItems = this.state.categoryDragItems
     if (mode === 'pivot'
@@ -1666,7 +1667,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             {spec && <SpecSection
               name={chartModeSelectedChart.name}
               title={chartModeSelectedChart.title}
-              config={spec as ISpecConfig}
+              config={spec}
               onChange={this.styleChange2}
               isLegendSection={mapLegendLayerType}
             />}
@@ -1679,7 +1680,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             { mapLabelLayerType
                 ? label && <LabelSection
                   title="标签"
-                  config={label as ILabelConfig}
+                  config={label}
                   onChange={this.styleChange('label')}
                   name={chartModeSelectedChart.name}
                 />
@@ -1688,7 +1689,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             { mapLegendLayerType
                 ? legend && <LegendSection
                   title="图例"
-                  config={legend as ILegendConfig}
+                  config={legend}
                   onChange={this.styleChange('legend')}
                 />
                 : null
@@ -1697,63 +1698,68 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 ? null
                 : visualMap && <VisualMapSection
                   title="视觉映射"
-                  config={visualMap as IVisualMapConfig}
+                  config={visualMap}
                   onChange={this.styleChange('visualMap')}
                 />
             }
             {toolbox && <ToolboxSection
               title="工具"
-              config={toolbox as IToolboxConfig}
+              config={toolbox}
               onChange={this.styleChange('toolbox')}
             />}
             {doubleYAxis && <DoubleYAxisSection
               title="双Y轴"
-              config={doubleYAxis as IDoubleYAxisConfig}
+              config={doubleYAxis}
               onChange={this.styleChange('doubleYAxis')}
             />}
             {xAxis && <AxisSection
               title="X轴"
-              config={xAxis as IAxisConfig}
+              config={xAxis}
               onChange={this.styleChange('xAxis')}
             />}
             {yAxis && <AxisSection
               title="Y轴"
-              config={yAxis as IAxisConfig}
+              config={yAxis}
               onChange={this.styleChange('yAxis')}
             />}
             {axis && <AxisSection
               title="轴"
-              config={axis as IAxisConfig}
+              config={axis}
               onChange={this.styleChange('axis')}
             />}
             {splitLine && <SplitLineSection
               title="分隔线"
-              config={splitLine as ISplitLineConfig}
+              config={splitLine}
               onChange={this.styleChange('splitLine')}
             />}
             {areaSelect && <AreaSelectSection
               title="坐标轴框选"
-              config={areaSelect as IAreaSelectConfig}
+              config={areaSelect}
               onChange={this.styleChange('areaSelect')}
             />}
             {scorecard && <ScorecardSection
               title="翻牌器"
-              config={scorecard as IScorecardConfig}
+              config={scorecard}
               onChange={this.styleChange('scorecard')}
+            />}
+            {gauge && <GaugeSection
+              title="仪表盘"
+              config={gauge}
+              onChange={this.styleChange('gauge')}
             />}
             {iframe && <IframeSection
               title="内嵌网页"
-              config={iframe as IframeConfig}
+              config={iframe}
               onChange={this.styleChange('iframe')}
             />}
             {table && <TableSection
               dataParams={dataParams}
-              config={table as ITableConfig}
+              config={table}
               onChange={this.styleChange('table')}
             />}
             {pivotConfig && <PivotSection
               title="透视表"
-              config={pivotConfig as IPivotConfig}
+              config={pivotConfig}
               onChange={this.styleChange('pivot')}
             />}
           </div>
