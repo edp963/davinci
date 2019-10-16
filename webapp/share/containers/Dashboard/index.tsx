@@ -42,6 +42,7 @@ import { IMapItemControlRequestParams, IMapControlOptions, IFilters } from 'app/
 import GlobalControlPanel from 'app/components/Filters/FilterPanel'
 import DownloadList from 'app/components/DownloadList'
 import {getValidColumnValue} from 'app/components/Filters/util'
+import HeadlessBrowserIdentifier from '../../components/HeadlessBrowserIdentifier'
 
 import { RenderType, IWidgetConfig, IWidgetProps } from 'app/containers/Widget/components/Widget'
 import { ViewActions } from 'app/containers/View/actions'
@@ -1093,17 +1094,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
 
-    let headlessBrowserIdentifier
-    if (headlessBrowserRenderSign) {
-      const { offsetWidth, offsetHeight } = document.getElementById('app')
-      headlessBrowserIdentifier = (
-        <>
-          <input id="headlessBrowserRenderSign" type="hidden" />
-          <input id="width" type="hidden" value={offsetWidth} />
-          <input id="height" type="hidden" value={offsetHeight} />
-        </>
-      )
-    }
+    const headlessBrowserRenderParentNode = document.getElementById('app')
 
     return (
       <Container>
@@ -1134,7 +1125,10 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         <div className={styles.gridBottom} />
         {fullScreenComponent}
         {loginPanel}
-        {headlessBrowserIdentifier}
+        <HeadlessBrowserIdentifier
+          renderSign={headlessBrowserRenderSign}
+          parentNode={headlessBrowserRenderParentNode}
+        />
       </Container>
     )
   }
