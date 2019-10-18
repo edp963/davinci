@@ -301,7 +301,7 @@ export function* getWidgetCsv (action) {
 
 export default function* rootDashboardSaga (): IterableIterator<any> {
   yield all([
-    takeLatest(LOAD_DASHBOARDS, getDashboards),
+    takeEvery(LOAD_DASHBOARDS, getDashboards),
     takeLatest(ADD_DASHBOARD, addDashboard),
     takeEvery(EDIT_DASHBOARD, editDashboard),
     takeEvery(EDIT_CURRENT_DASHBOARD, editCurrentDashboard),
