@@ -160,28 +160,6 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
         </Col>
       </Row>
 
-      <FormItem label="内容" {...LongFormItemStyle}>
-        {loading ? (
-          <Spin />
-        ) : (
-          getFieldDecorator<IScheduleMailConfig>('content', {
-            validateFirst: true,
-            rules: [
-              { required: true, message: '请输入邮件文本内容' },
-              {
-                validator: checkContentMaxLength
-              }
-            ],
-            initialValue: config.content
-          })(
-            <ReactQuill
-              style={{ height: 350, lineHeight: 1, marginBottom: 70 }}
-              modules={modules}
-              theme="snow"
-            />
-          )
-        )}
-      </FormItem>
       <FormItem label="收件人" {...LongFormItemStyle}>
         {getFieldDecorator<IScheduleMailConfig>('to', {
           rules: [{ required: true, message: '请选择收件人' }],
@@ -218,6 +196,28 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
           )}
         </FormItem>
       )}
+      <FormItem label="内容" {...LongFormItemStyle}>
+        {loading ? (
+          <Spin />
+        ) : (
+          getFieldDecorator<IScheduleMailConfig>('content', {
+            validateFirst: true,
+            rules: [
+              { required: true, message: '请输入邮件文本内容' },
+              {
+                validator: checkContentMaxLength
+              }
+            ],
+            initialValue: config.content
+          })(
+            <ReactQuill
+              style={{ height: 350, lineHeight: 1, marginBottom: 70 }}
+              modules={modules}
+              theme="snow"
+            />
+          )
+        )}
+      </FormItem>
     </Form>
   )
 }
