@@ -92,9 +92,7 @@ public class SourceUtils {
                 releaseDataSource(jdbcSourceInfo);
                 connection = null;
             }
-        }
-        catch (Exception e) {
-            // ignore
+        } catch (Exception e) {
         }
 
         if (null == connection) {

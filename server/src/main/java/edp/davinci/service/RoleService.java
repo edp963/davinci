@@ -74,6 +74,7 @@ public interface RoleService {
      */
     Role getRoleInfo(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
+    List<Role> getRoleInfo(Long orgId, Long userId);
 
     /**
      * 添加Role与User关联

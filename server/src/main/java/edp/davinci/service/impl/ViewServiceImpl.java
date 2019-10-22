@@ -738,15 +738,19 @@ public class ViewServiceImpl implements ViewService {
     }
 
 
-    private Set<String> getExcludeColumns(List<RelRoleView> roleViewList) {
+    private Set<String> getExcludeColumnsViaOneView(List<RelRoleView> roleViewList) {
         if (!CollectionUtils.isEmpty(roleViewList)) {
             Set<String> columns = new HashSet<>();
-            roleViewList.forEach(r -> {
+            boolean isFullAuth = false;
+            for (RelRoleView r : roleViewList) {
                 if (!StringUtils.isEmpty(r.getColumnAuth())) {
                     columns.addAll(JSONObject.parseArray(r.getColumnAuth(), String.class));
+                } else {
+                    isFullAuth = true;
+                    break;
                 }
-            });
-            return columns;
+            }
+            return isFullAuth ? null : columns;
         }
         return null;
     }
@@ -819,7 +823,7 @@ public class ViewServiceImpl implements ViewService {
             List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewId);
             authVariables = getAuthVariables(roleViewList, variables);
             if (null != excludeColumns) {
-                Set<String> eclmns = getExcludeColumns(roleViewList);
+                Set<String> eclmns = getExcludeColumnsViaOneView(roleViewList);
                 if (!CollectionUtils.isEmpty(eclmns)) {
                     excludeColumns.addAll(eclmns);
                 }

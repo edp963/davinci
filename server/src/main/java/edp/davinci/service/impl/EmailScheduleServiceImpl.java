@@ -111,7 +111,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     @Value("${source.result-limit:1000000}")
     private int resultLimit;
 
-    private static final String portal = "PORTAL";
+    private static final String PORTAL = "PORTAL";
 
     private final static ExecutorService executorService = Executors.newFixedThreadPool(4);
 
@@ -192,7 +192,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             order++;
         }
         if (!CollectionUtils.isEmpty(imageContents)) {
-            screenshotUtil.screenshot(jobId, imageContents);
+            screenshotUtil.screenshot(jobId, imageContents, cronJobConfig.getImageWidth());
         }
         return imageContents;
     }
@@ -204,7 +204,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         String type = "";
         if ("widget".equalsIgnoreCase(contentType)) {
             type = "widget";
-        } else if ("portal".equalsIgnoreCase(contentType) || "dashboard".equalsIgnoreCase(contentType)) {
+        } else if ("PORTAL".equalsIgnoreCase(contentType) || "dashboard".equalsIgnoreCase(contentType)) {
             type = "dashboard";
         } else {
             type = "";
@@ -212,12 +212,12 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
         sb.append(serverUtils.getLocalHost())
                 .append("/share.html#/share/")
-                .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("portal") ? "dashboard" : contentType)
+                .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("PORTAL") ? "dashboard" : contentType)
                 .append("?shareInfo=")
                 .append(shareToken);
 
         if (!StringUtils.isEmpty(type)) {
-            sb.append("&type=" + type);
+            sb.append("&type=").append(type);
         }
 
         return sb.toString();
@@ -237,10 +237,39 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
         Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
 
+        Set<Long> dashboardIdList = new HashSet<>();
+
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
             if (CheckEntityEnum.DASHBOARD.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())
-                    || portal.equalsIgnoreCase(cronJobContent.getContentType().trim())) {
-                DashboardWithPortal dashboard = dashboardMapper.getDashboardWithPortalAndProject(cronJobContent.getId());
+                    || PORTAL.equalsIgnoreCase(cronJobContent.getContentType().trim())) {
+                //兼容原始结构：contentId 为 dashboardId
+                if (CollectionUtils.isEmpty(dashboardIdList)) {
+                    dashboardIdList.add(cronJobContent.getId());
+                } else {
+                    dashboardIdList.addAll(cronJobContent.getItems());
+                }
+            } else if (CheckEntityEnum.DISPLAY.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())) {
+                Display display = displayMapper.getById(cronJobContent.getId());
+                if (display != null) {
+                    ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
+                    boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
+
+                    Set<Widget> widgets = widgetMapper.getByDisplayId(display.getId());
+                    if (!CollectionUtils.isEmpty(widgets)) {
+                        List<WidgetContext> widgetContexts = new ArrayList<>();
+                        widgets.forEach(widget -> {
+                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, null, widget.getConfig(), null);
+                            widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
+                        });
+                        workBookContextMap.put(display.getName(), WorkBookContext.newWorkBookContext(widgetContexts, user, resultLimit));
+                    }
+                }
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(dashboardIdList)) {
+            for (Long dId : dashboardIdList) {
+                DashboardWithPortal dashboard = dashboardMapper.getDashboardWithPortalAndProject(dId);
                 if (dashboard != null) {
 
                     ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
@@ -255,26 +284,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                             ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, dashboard.getConfig(), widget.getConfig(), w.getRelationId());
                             widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
                         });
-
                         workBookContextMap.put(dashboard.getName(), WorkBookContext.newWorkBookContext(widgetContexts, user, resultLimit));
-                    }
-                }
-            } else if (CheckEntityEnum.DISPLAY.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())) {
-                Display display = displayMapper.getById(cronJobContent.getId());
-                if (display != null) {
-
-                    ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
-                    boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
-
-                    Set<Widget> widgets = widgetMapper.getByDisplayId(display.getId());
-                    if (!CollectionUtils.isEmpty(widgets)) {
-                        List<WidgetContext> widgetContexts = new ArrayList<>();
-                        widgets.forEach(widget -> {
-                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, null, widget.getConfig(), null);
-                            widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
-                        });
-
-                        workBookContextMap.put(display.getName(), WorkBookContext.newWorkBookContext(widgetContexts, user, resultLimit));
                     }
                 }
             }

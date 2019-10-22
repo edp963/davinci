@@ -100,6 +100,9 @@ public class RoleServiceImpl implements RoleService {
     private DisplayService displayService;
 
     @Autowired
+    private DisplaySlideService displaySlideService;
+
+    @Autowired
     private DashboardService dashboardService;
 
     @Autowired
@@ -253,6 +256,11 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Role getRoleInfo(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         return getRole(id, user, false);
+    }
+
+    @Override
+    public List<Role> getRoleInfo(Long orgId, Long userId) {
+        return roleMapper.getRolesByOrgAndUser(orgId, userId);
     }
 
 
@@ -672,7 +680,7 @@ public class RoleServiceImpl implements RoleService {
                 result = displayService.postDisplayVisibility(role, vizVisibility, user);
                 break;
             case SLIDE:
-                result = displayService.postSlideVisibility(role, vizVisibility, user);
+                result = displaySlideService.postSlideVisibility(role, vizVisibility, user);
                 break;
         }
         return result;

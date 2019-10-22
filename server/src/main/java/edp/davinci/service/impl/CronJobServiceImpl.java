@@ -108,6 +108,24 @@ public class CronJobServiceImpl implements CronJobService {
         return cronJobMapper.getByProject(projectId);
     }
 
+    @Override
+    public CronJob getCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        CronJob cronJob = cronJobMapper.getById(id);
+        ProjectDetail projectDetail = null;
+        try {
+            projectDetail = projectService.getProjectDetail(cronJob.getProjectId(), user, false);
+        } catch (NotFoundException e) {
+            return null;
+        } catch (UnAuthorizedExecption e) {
+            return null;
+        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        if (projectPermission.getSchedulePermission() < UserPermissionEnum.READ.getPermission()) {
+            return null;
+        }
+        return cronJob;
+    }
+
 
     /**
      * 创建job

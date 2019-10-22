@@ -211,11 +211,16 @@ public class UserServiceImpl implements UserService {
      * @param keyword
      * @param user
      * @param orgId
+     * @param includeSelf
      * @return
      */
     @Override
-    public List<UserBaseInfo> getUsersByKeyword(String keyword, User user, Long orgId) {
+    public List<UserBaseInfo> getUsersByKeyword(String keyword, User user, Long orgId, Boolean includeSelf) {
         List<UserBaseInfo> users = userMapper.getUsersByKeyword(keyword, orgId);
+
+        if (includeSelf) {
+            return users;
+        }
 
         Iterator<UserBaseInfo> iterator = users.iterator();
         while (iterator.hasNext()) {

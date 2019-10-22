@@ -38,7 +38,7 @@ public interface UserService extends CheckEntityService {
 
     User userLogin(UserLogin userLogin) throws ServerException;
 
-    List<UserBaseInfo> getUsersByKeyword(String keyword, User user, Long orgId);
+    List<UserBaseInfo> getUsersByKeyword(String keyword, User user, Long orgId, Boolean includeSelf);
 
     boolean updateUser(User user) throws ServerException;
 
