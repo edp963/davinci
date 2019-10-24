@@ -49,6 +49,7 @@ import {
   IGlobalControl,
   IControlRelatedField
 } from 'app/components/Filters/types'
+import { DatePickerDefaultValues } from 'app/components/Filters/datePickerFormats'
 import {
   getVariableValue,
   getModelValue,
@@ -92,6 +93,9 @@ function shareReducer (state = initialState, { type, payload }) {
           Object.entries(relatedViews).forEach(([key, value]) => {
             const defaultValue = shareParams[name]
             if (defaultValue && defaultValue.length) {
+               if (ctrl && ctrl.type === 'date') {
+                 ctrl.dynamicDefaultValue = DatePickerDefaultValues.Custom
+               }
                newCtrl = {
                  ...ctrl,
                  defaultValue: Array.isArray(defaultValue) && defaultValue.length ? defaultValue.map((val) => decodeURI(val)) :  decodeURI(defaultValue)
@@ -99,6 +103,7 @@ function shareReducer (state = initialState, { type, payload }) {
             }
           })
         }
+        console.log(newCtrl)
         return newCtrl
       })
 
