@@ -135,6 +135,8 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
       const c = currentDataInFullScreen
       title = c.widget.name
       itemInfo = currentItemsInfo[c.itemId]
+      // fix: 修复切换dashboard后，itemInfo为undefined, 导致的白屏或展示异常问题
+      if (!itemInfo) return null
       const widgetProps = JSON.parse(currentDataInFullScreen.widget.config)
       const queryVariables = this.getQueryVariables(itemInfo.queryConditions)
       charts = (
