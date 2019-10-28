@@ -489,6 +489,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
     })
 
+
     const requestParams = {
       groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
       aggregators,

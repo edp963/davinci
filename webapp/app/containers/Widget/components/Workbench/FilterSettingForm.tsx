@@ -214,7 +214,8 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     return result
 }
 
-  private getSqlType = (type) => type === 'number' ? 'INTEGER' : 'VARCHAR'
+// fix it   getSqlType
+  private getSqlType = (model) => model === 'number' ? 'INTEGER' : 'VARCHAR'
   private getFilterValue = (val, type) => type === 'number' ? val : `'${val}'`
 
 
@@ -234,31 +235,112 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     const { name, selectedDate, datepickerValue } = this.state
     const today = moment().startOf('day').format(DEFAULT_DATETIME_FORMAT)
     const yesterday = moment().startOf('day').subtract(1, 'days').format(DEFAULT_DATETIME_FORMAT)
-
+    let tml = {
+      name,
+      operator: '>=',
+      type: 'filter'
+    }
     if (selectedDate === 'today') {
-      return `${name} >= '${today}'`
+      const resultJson = {
+        ...tml,
+        sqlType: this.getSqlType(`'${today}'`),
+        value: `'${today}'`
+      }
+      return [resultJson]
+      
     } else if (selectedDate === 'yesterday') {
-      return `${name} >= '${yesterday}' and ${name} <= '${today}'`
+      const resultJson = [
+        {
+          ...tml,
+          sqlType: this.getSqlType(`'${yesterday}'`),
+          value: `'${yesterday}'`
+        },
+        {
+          ...tml,
+          operator: '<=',
+          sqlType: this.getSqlType(`'${today}'`),
+          value: `'${today}'`
+        }
+      ]
+      return resultJson
     } else if (selectedDate === 'yesterdayFromNow') {
-      return `${name} >= '${yesterday}'`
+      const resultJson = {
+        ...tml,
+        sqlType: this.getSqlType(`'${yesterday}'`),
+        value: `'${yesterday}'`
+      }
+      return [resultJson]
     } else if (selectedDate === '7') {
-      return `${name} >= '${moment().subtract(7, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      const resultJson = {
+        ...tml,
+        sqlType: this.getSqlType(`'${moment().subtract(7, 'days').format(DEFAULT_DATETIME_FORMAT)}'`),
+        value: `'${moment().subtract(7, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      }
+      return [resultJson]
     } else if (selectedDate === '30') {
-      return `${name} >= '${moment().subtract(30, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      const resultJson = {
+        ...tml,
+        sqlType: this.getSqlType(`'${moment().subtract(30, 'days').format(DEFAULT_DATETIME_FORMAT)}'`),
+        value: `'${moment().subtract(30, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      }
+      return [resultJson]
     } else if (selectedDate === '90') {
-      return `${name} >= '${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      const resultJson = {
+        ...tml,
+        sqlType: this.getSqlType(`'${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'`),
+        value: `'${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      }
+      return [resultJson]
     } else if (selectedDate === '365') {
-      return `${name} >= '${moment().subtract(365, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      const resultJson = {
+        ...tml,
+        sqlType: this.getSqlType(`'${moment().subtract(365, 'days').format(DEFAULT_DATETIME_FORMAT)}'`),
+        value: `'${moment().subtract(365, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      }
+      return [resultJson]
     } else if (selectedDate === 'week') {
-      return `${name} >= '${moment().startOf('week').format(DEFAULT_DATETIME_FORMAT)}'`
+      const resultJson = {
+        ...tml,
+        sqlType: this.getSqlType(`'${moment().startOf('week').format(DEFAULT_DATETIME_FORMAT)}'`),
+        value: `'${moment().startOf('week').format(DEFAULT_DATETIME_FORMAT)}'`
+      }
+      return [resultJson]
     } else if (selectedDate === 'month') {
-      return `${name} >= '${moment().startOf('month').format(DEFAULT_DATETIME_FORMAT)}'`
+      const resultJson = {
+        ...tml,
+        sqlType: this.getSqlType(`'${moment().startOf('month').format(DEFAULT_DATETIME_FORMAT)}'`),
+        value: `'${moment().startOf('month').format(DEFAULT_DATETIME_FORMAT)}'`
+      }
+      return [resultJson]
     } else if (selectedDate === 'quarter') {
-      return `${name} >= '${moment().startOf('quarter').format(DEFAULT_DATETIME_FORMAT)}'`
+      const resultJson = {
+        ...tml,
+        sqlType: this.getSqlType(`'${moment().startOf('quarter').format(DEFAULT_DATETIME_FORMAT)}'`),
+        value: `'${moment().startOf('quarter').format(DEFAULT_DATETIME_FORMAT)}'`
+      }
+      return [resultJson]
     } else if (selectedDate === 'year') {
-      return `${name} >= '${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`
+      const resultJson = {
+        ...tml,
+        sqlType: this.getSqlType(`'${name} >= '${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`),
+        value: `'${name} >= '${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`
+      }
+      return [resultJson]
     } else {
-      return `${name} >= '${datepickerValue[0].format(DEFAULT_DATETIME_FORMAT)}' and ${name} <= '${datepickerValue[1].format(DEFAULT_DATETIME_FORMAT)}'`
+      const resultJson = [
+        {
+          ...tml,
+          sqlType: this.getSqlType(`'${datepickerValue[0].format(DEFAULT_DATETIME_FORMAT)}'`),
+          value: `'${datepickerValue[0].format(DEFAULT_DATETIME_FORMAT)}'`
+        },
+        {
+          ...tml,
+          operator: '<=',
+          sqlType: this.getSqlType(`'${datepickerValue[1].format(DEFAULT_DATETIME_FORMAT)}'`),
+          value: `'${datepickerValue[1].format(DEFAULT_DATETIME_FORMAT)}'`
+        }
+      ]
+      return resultJson
     }
   }
 
@@ -301,8 +383,11 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
         onCancel()
       }
     } else {
+      console.log(filterTree)
+      console.log(this.getSqlModel([{...filterTree}]))
       onSave({
-        sql: this.getDateSql(),
+      //  sql: this.getDateSql(),
+        sqlModel: this.getDateSql(),
         filterSource: {
           selectedDate,
           datepickerValue: datepickerValue.map((m) => m.format(DEFAULT_DATETIME_FORMAT))

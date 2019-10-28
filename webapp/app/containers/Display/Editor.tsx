@@ -379,10 +379,16 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         })))
     }
 
+
+    let requestParamsFilters = []
+    filters.forEach((item) => {
+      requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
+    })
+
     const requestParams = {
       groups,
       aggregators,
-      filters: filters.map((i) => i.config.sql),
+      filters: requestParamsFilters,
       tempFilters,
       linkageFilters,
       globalFilters,

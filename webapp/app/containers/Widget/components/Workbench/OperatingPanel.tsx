@@ -955,8 +955,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     // 生成filter
     let requestParamsFilters = []
     filters.items.forEach((item) => {
+      console.log(item)
       requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
     })
+
+    console.log(requestParamsFilters)
+
     const requestParams = {
       groups,
       aggregators,
