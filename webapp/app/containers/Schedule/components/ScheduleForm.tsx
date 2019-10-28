@@ -20,7 +20,7 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { checkNameAction, checkNameUniqueAction } from '../App/actions'
+import { checkNameAction, checkNameUniqueAction } from 'containers/App/actions'
 import moment from 'moment'
 import { Form, Row, Col, Input, Select, DatePicker, TimePicker } from 'antd'
 const FormItem = Form.Item
