@@ -81,7 +81,6 @@
         </foreach>
     </insert>
 
-
     <update id="updateBatch" parameterType="java.util.List">
         <foreach collection="list" item="record" index="index" open="" close="" separator=";">
             update mem_display_slide_widget
