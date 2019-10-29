@@ -26,7 +26,7 @@ import React, {
   useImperativeHandle,
   forwardRef
 } from 'react'
-import moment from 'moment'
+import moment, { Moment } from 'moment'
 import { Form, Row, Col, Input, Select, DatePicker, Spin } from 'antd'
 const FormItem = Form.Item
 const { TextArea } = Input
@@ -105,7 +105,12 @@ const monthOptions = [...Array(12).keys()].map((m) => (
   </Option>
 ))
 
-interface IScheduleBaseConfigProps extends FormComponentProps<ISchedule> {
+export type ScheduleBaseFormProps = ISchedule &
+  ICronExpressionPartition & {
+    dateRange: [Moment, Moment]
+  }
+
+interface IScheduleBaseConfigProps extends FormComponentProps<ScheduleBaseFormProps> {
   schedule: ISchedule
   loading: boolean
   onCheckUniqueName: (
@@ -174,13 +179,11 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
   )
 
   let { minute, hour, day, month, weekDay } = useMemo<
-    Partial<ICronExpressionPartition>
+    Partial<ScheduleBaseFormProps>
   >(
     () => {
       const partitions = cronExpression.split(' ')
-      let minute = +(partitions[1].includes('/')
-        ? partitions[1].slice(2) // slice(2) to remove */
-        : partitions[1])
+      let minute = form.getFieldValue('minute')
       // min minute duration is 10
       if (currentPeriodUnit === 'Minute' && minute < 10) {
         minute = 10
@@ -205,7 +208,7 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
       <Row>
         <Col span={12}>
           <FormItem label="名称" {...FormItemStyle} hasFeedback>
-            {getFieldDecorator<ISchedule>('name', {
+            {getFieldDecorator<ScheduleBaseFormProps>('name', {
               rules: [
                 { required: true, message: '名称不能为空' },
                 { validator: checkNameUnique }
@@ -216,7 +219,7 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
         </Col>
         <Col span={12}>
           <FormItem label="类型" {...FormItemStyle}>
-            {getFieldDecorator<ISchedule>('jobType', {
+            {getFieldDecorator<ScheduleBaseFormProps>('jobType', {
               initialValue: schedule.jobType
             })(
               <Select>
@@ -227,12 +230,12 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
         </Col>
       </Row>
       <FormItem label="描述" {...LongFormItemStyle}>
-        {getFieldDecorator<ISchedule>('description', {
+        {getFieldDecorator<ScheduleBaseFormProps>('description', {
           initialValue: schedule.description
         })(<TextArea />)}
       </FormItem>
       <FormItem label="有效时间范围" {...LongFormItemStyle}>
-        {getFieldDecorator('dateRange', {
+        {getFieldDecorator<ScheduleBaseFormProps>('dateRange', {
           initialValue: [
             startDate && moment(startDate),
             endDate && moment(endDate)
@@ -254,7 +257,7 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
             {/* Minute */}
             {currentPeriodUnit === 'Minute' && (
               <>
-                {getFieldDecorator<ICronExpressionPartition>('minute', {
+                {getFieldDecorator<ScheduleBaseFormProps>('minute', {
                   initialValue: minute
                 })(
                   <Select style={{ width: 80 }}>{minutePeriodOptions}</Select>
@@ -262,7 +265,7 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
               </>
             )}
             {/** */}
-            {getFieldDecorator<ICronExpressionPartition>('periodUnit', {
+            {getFieldDecorator<ScheduleBaseFormProps>('periodUnit', {
               initialValue: currentPeriodUnit
             })(
               <Select
@@ -283,7 +286,7 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
             {currentPeriodUnit === 'Hour' && (
               <>
                 <span>的第</span>
-                {getFieldDecorator<ICronExpressionPartition>('minute', {
+                {getFieldDecorator<ScheduleBaseFormProps>('minute', {
                   initialValue: minute
                 })(<Select style={{ width: 80 }}>{minuteOptions}</Select>)}
               </>
@@ -292,11 +295,11 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
             {currentPeriodUnit === 'Day' && (
               <>
                 <span>的</span>
-                {getFieldDecorator<ICronExpressionPartition>('hour', {
+                {getFieldDecorator<ScheduleBaseFormProps>('hour', {
                   initialValue: hour
                 })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
                 <span>:</span>
-                {getFieldDecorator<ICronExpressionPartition>('minute', {
+                {getFieldDecorator<ScheduleBaseFormProps>('minute', {
                   initialValue: minute
                 })(<Select style={{ width: 100 }}>{minuteOptions}</Select>)}
               </>
@@ -304,15 +307,15 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
             {/* Week */}
             {currentPeriodUnit === 'Week' && (
               <>
-                {getFieldDecorator<ICronExpressionPartition>('weekDay', {
+                {getFieldDecorator<ScheduleBaseFormProps>('weekDay', {
                   initialValue: weekDay
                 })(<Select style={{ width: 95 }}>{weekOptions}</Select>)}
                 <span>的</span>
-                {getFieldDecorator<ICronExpressionPartition>('hour', {
+                {getFieldDecorator<ScheduleBaseFormProps>('hour', {
                   initialValue: hour
                 })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
                 <span>:</span>
-                {getFieldDecorator<ICronExpressionPartition>('minute', {
+                {getFieldDecorator<ScheduleBaseFormProps>('minute', {
                   initialValue: minute
                 })(<Select style={{ width: 80 }}>{minuteOptions}</Select>)}
               </>
@@ -320,11 +323,11 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
             {/* Month */}
             {currentPeriodUnit === 'Month' && (
               <>
-                {getFieldDecorator<ICronExpressionPartition>('day', {
+                {getFieldDecorator<ScheduleBaseFormProps>('day', {
                   initialValue: day
                 })(<Select style={{ width: 80 }}>{dayOptions}</Select>)}
                 <span>的</span>
-                {getFieldDecorator<ICronExpressionPartition>('hour', {
+                {getFieldDecorator<ScheduleBaseFormProps>('hour', {
                   initialValue: hour
                 })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
                 <span>:</span>
@@ -336,18 +339,18 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
             {/* Year */}
             {currentPeriodUnit === 'Year' && (
               <>
-                {getFieldDecorator<ICronExpressionPartition>('month', {
+                {getFieldDecorator<ScheduleBaseFormProps>('month', {
                   initialValue: month
                 })(<Select style={{ width: 80 }}>{monthOptions}</Select>)}
-                {getFieldDecorator<ICronExpressionPartition>('day', {
+                {getFieldDecorator<ScheduleBaseFormProps>('day', {
                   initialValue: day
                 })(<Select style={{ width: 80 }}>{dayOptions}</Select>)}
                 <span>的</span>
-                {getFieldDecorator<ICronExpressionPartition>('hour', {
+                {getFieldDecorator<ScheduleBaseFormProps>('hour', {
                   initialValue: hour
                 })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
                 <span>:</span>
-                {getFieldDecorator<ICronExpressionPartition>('minute', {
+                {getFieldDecorator<ScheduleBaseFormProps>('minute', {
                   initialValue: minute
                 })(<Select style={{ width: 80 }}>{minuteOptions}</Select>)}
               </>

@@ -52,7 +52,7 @@ import dashboardSaga from 'containers/Dashboard/sagas'
 import { Row, Col, Card, Button, Icon, Tooltip, message } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
 
-import ScheduleBaseConfig from './components/ScheduleBaseConfig'
+import ScheduleBaseConfig, { ScheduleBaseFormProps } from './components/ScheduleBaseConfig'
 import ScheduleMailConfig from './components/ScheduleMailConfig'
 import ScheduleVizConfig from './components/ScheduleVizConfig'
 import { IRouteParams } from 'app/routes'
@@ -194,7 +194,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
     [contentList]
   )
 
-  let baseConfigForm: FormComponentProps<ISchedule> = null
+  let baseConfigForm: FormComponentProps<ScheduleBaseFormProps> = null
   let mailConfigForm: FormComponentProps<IScheduleMailConfig> = null
 
   const saveSchedule = () => {
@@ -206,13 +206,11 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
       if (err1) {
         return
       }
-      const cronExpression = getCronExpressionByPartition(
-        (value1 as unknown) as ICronExpressionPartition
-      )
+      const cronExpression = getCronExpressionByPartition(value1)
       const [startDate, endDate] = baseConfigForm.form.getFieldValue(
         'dateRange'
-      ) as [Moment, Moment]
-      delete (value1 as any).dateRange
+      ) as ScheduleBaseFormProps['dateRange']
+      delete value1.dateRange
       mailConfigForm.form.validateFieldsAndScroll((err2, value2) => {
         if (err2) {
           return
