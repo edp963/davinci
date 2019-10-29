@@ -17,6 +17,7 @@ const utilStyles = require('assets/less/util.less')
 interface IFilterSettingFormProps {
   item: IDataParamSource
   list: string[]
+  model: any
   config: IDataParamConfig
   onSave: (config: IDataParamConfig) => void
   onCancel: () => void
@@ -206,7 +207,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
               type: 'filter',
               value: this.getFilterValue(t.filterValue, type),
               operator: t.filterOperator,
-              sqlType: this.getSqlType(type)
+              sqlType: this.getSqlType(name)
           }
           return filterJson
       }
@@ -214,8 +215,17 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     return result
 }
 
-// fix it   getSqlType
-  private getSqlType = (model) => model === 'number' ? 'INTEGER' : 'VARCHAR'
+ // private getSqlType = (model) => model === 'number' ? 'INTEGER' : 'VARCHAR'
+  private getSqlType = (key) => {
+    const {model} = this.props
+    let result
+    Object.entries(model).forEach(([name, value]) => {
+      if (key === name) {
+        result = value.sqlType
+      }
+    })
+    return result === 'DATE' ? 'VARCHAR' : result
+  }
   private getFilterValue = (val, type) => type === 'number' ? val : `'${val}'`
 
 
@@ -238,12 +248,12 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     let tml = {
       name,
       operator: '>=',
-      type: 'filter'
+      type: 'filter',
+      sqlType: this.getSqlType(name),
     }
     if (selectedDate === 'today') {
       const resultJson = {
         ...tml,
-        sqlType: this.getSqlType(`'${today}'`),
         value: `'${today}'`
       }
       return [resultJson]
@@ -252,13 +262,11 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
       const resultJson = [
         {
           ...tml,
-          sqlType: this.getSqlType(`'${yesterday}'`),
           value: `'${yesterday}'`
         },
         {
           ...tml,
           operator: '<=',
-          sqlType: this.getSqlType(`'${today}'`),
           value: `'${today}'`
         }
       ]
@@ -266,63 +274,54 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     } else if (selectedDate === 'yesterdayFromNow') {
       const resultJson = {
         ...tml,
-        sqlType: this.getSqlType(`'${yesterday}'`),
         value: `'${yesterday}'`
       }
       return [resultJson]
     } else if (selectedDate === '7') {
       const resultJson = {
         ...tml,
-        sqlType: this.getSqlType(`'${moment().subtract(7, 'days').format(DEFAULT_DATETIME_FORMAT)}'`),
         value: `'${moment().subtract(7, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
       }
       return [resultJson]
     } else if (selectedDate === '30') {
       const resultJson = {
         ...tml,
-        sqlType: this.getSqlType(`'${moment().subtract(30, 'days').format(DEFAULT_DATETIME_FORMAT)}'`),
         value: `'${moment().subtract(30, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
       }
       return [resultJson]
     } else if (selectedDate === '90') {
       const resultJson = {
         ...tml,
-        sqlType: this.getSqlType(`'${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'`),
         value: `'${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
       }
       return [resultJson]
     } else if (selectedDate === '365') {
       const resultJson = {
         ...tml,
-        sqlType: this.getSqlType(`'${moment().subtract(365, 'days').format(DEFAULT_DATETIME_FORMAT)}'`),
         value: `'${moment().subtract(365, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
       }
       return [resultJson]
     } else if (selectedDate === 'week') {
       const resultJson = {
         ...tml,
-        sqlType: this.getSqlType(`'${moment().startOf('week').format(DEFAULT_DATETIME_FORMAT)}'`),
         value: `'${moment().startOf('week').format(DEFAULT_DATETIME_FORMAT)}'`
       }
       return [resultJson]
     } else if (selectedDate === 'month') {
       const resultJson = {
         ...tml,
-        sqlType: this.getSqlType(`'${moment().startOf('month').format(DEFAULT_DATETIME_FORMAT)}'`),
         value: `'${moment().startOf('month').format(DEFAULT_DATETIME_FORMAT)}'`
       }
       return [resultJson]
     } else if (selectedDate === 'quarter') {
       const resultJson = {
         ...tml,
-        sqlType: this.getSqlType(`'${moment().startOf('quarter').format(DEFAULT_DATETIME_FORMAT)}'`),
         value: `'${moment().startOf('quarter').format(DEFAULT_DATETIME_FORMAT)}'`
       }
       return [resultJson]
     } else if (selectedDate === 'year') {
       const resultJson = {
         ...tml,
-        sqlType: this.getSqlType(`'${name} >= '${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`),
         value: `'${name} >= '${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`
       }
       return [resultJson]
@@ -330,13 +329,11 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
       const resultJson = [
         {
           ...tml,
-          sqlType: this.getSqlType(`'${datepickerValue[0].format(DEFAULT_DATETIME_FORMAT)}'`),
           value: `'${datepickerValue[0].format(DEFAULT_DATETIME_FORMAT)}'`
         },
         {
           ...tml,
           operator: '<=',
-          sqlType: this.getSqlType(`'${datepickerValue[1].format(DEFAULT_DATETIME_FORMAT)}'`),
           value: `'${datepickerValue[1].format(DEFAULT_DATETIME_FORMAT)}'`
         }
       ]
@@ -355,7 +352,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
         type: 'filter',
         value: target.map((key) => `'${key}'`),
         operator: 'in',
-        sqlType: 'VARCHAR'
+        sqlType: this.getSqlType(name)
       }
       sqlModel.push(filterItem)
       if (sql) {
@@ -383,8 +380,6 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
         onCancel()
       }
     } else {
-      console.log(filterTree)
-      console.log(this.getSqlModel([{...filterTree}]))
       onSave({
       //  sql: this.getDateSql(),
         sqlModel: this.getDateSql(),

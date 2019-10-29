@@ -955,11 +955,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     // 生成filter
     let requestParamsFilters = []
     filters.items.forEach((item) => {
-      console.log(item)
       requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
     })
-
-    console.log(requestParamsFilters)
 
     const requestParams = {
       groups,
@@ -1541,7 +1538,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       computedConfigModalVisible,
       selectedComputed
     } = this.state
-
+    
+    let widgetPropsModel = {}
+    if (originalWidgetProps && originalWidgetProps.model) {
+      widgetPropsModel = originalWidgetProps.model
+    }
+  
     const { metrics } = dataParams
     const [dimetionsCount, metricsCount] = this.getDimetionsAndMetricsCount()
     const {
@@ -2067,6 +2069,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         >
           <FilterSettingForm
             item={modalCachedData}
+            model={widgetPropsModel}
             list={distinctColumnValues}
             config={filterSettingConfig}
             onSave={this.confirmFilterModal}
