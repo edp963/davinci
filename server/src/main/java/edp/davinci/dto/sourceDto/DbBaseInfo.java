@@ -19,30 +19,17 @@
 
 package edp.davinci.dto.sourceDto;
 
-import edp.core.model.Dict;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
-import java.util.List;
+import javax.validation.constraints.NotNull;
 
+@NotNull
 @Data
-public class SourceConfig {
+public class DbBaseInfo {
+    @NotBlank(message = "source user cannot be empty")
+    private String dbUser;
 
-    private String username;
-
-    private String password;
-
-    @NotBlank(message = "connection url cannot be EMPTY")
-    private String url;
-
-    private String parameters;
-
-    private String version;
-
-    private List<Dict> properties;
-
-    private boolean isExt;
-
-    public SourceConfig() {
-    }
+    @NotBlank(message = "source password cannot be empty")
+    private String dbPassword;
 }

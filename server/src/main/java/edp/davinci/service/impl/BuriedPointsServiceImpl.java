@@ -60,7 +60,7 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
         if(statisticOpen){
             String elastic_urls = environment.getProperty("statistic.elastic_urls");
             if(StringUtils.isBlank(elastic_urls) && !durl.equals(this.sqlUtils.getJdbcUrl())){
-                this.sqlUtils = this.sqlUtils.init(durl, username, password, null, false);
+                this.sqlUtils = this.sqlUtils.init(durl, username, password, null, null, false);
             }
         }else{
             return;

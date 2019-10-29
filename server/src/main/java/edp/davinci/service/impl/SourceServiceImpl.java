@@ -27,12 +27,14 @@ import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.DBTables;
+import edp.core.model.JdbcSourceInfo;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
 import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.*;
 import edp.davinci.core.model.DataUploadEntity;
+import edp.davinci.core.model.RedisMessageEntity;
 import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.core.utils.ExcelUtils;
 import edp.davinci.dao.SourceMapper;
@@ -62,12 +64,11 @@ import org.stringtemplate.v4.STGroupFile;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.UUID;
+import java.util.concurrent.*;
 
 import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
+import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 
 
 @Slf4j
@@ -90,6 +91,9 @@ public class SourceServiceImpl implements SourceService {
 
     @Autowired
     private JdbcDataSource jdbcDataSource;
+
+    @Autowired
+    private RedisUtils redisUtils;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -190,6 +194,7 @@ public class SourceServiceImpl implements SourceService {
                         config.getUsername(),
                         config.getPassword(),
                         config.getVersion(),
+                        config.getProperties(),
                         config.isExt()
                 ).testConnection();
 
@@ -247,6 +252,7 @@ public class SourceServiceImpl implements SourceService {
                         sourceConfig.getUsername(),
                         sourceConfig.getPassword(),
                         sourceConfig.getVersion(),
+                        sourceConfig.getProperties(),
                         sourceConfig.isExt()
                 ).testConnection();
 
@@ -333,6 +339,7 @@ public class SourceServiceImpl implements SourceService {
                             sourceTest.getUsername(),
                             sourceTest.getPassword(),
                             sourceTest.getVersion(),
+                            sourceTest.getProperties(),
                             sourceTest.isExt()
                     ).testConnection();
         } catch (SourceException e) {
@@ -580,7 +587,6 @@ public class SourceServiceImpl implements SourceService {
             }
         }
 
-
         return tableInfo;
     }
 
@@ -590,7 +596,7 @@ public class SourceServiceImpl implements SourceService {
     }
 
     @Override
-    public boolean reconnect(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean reconnect(Long id, DbBaseInfo dbBaseInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         Source source = sourceMapper.getById(id);
         if (null == source) {
             log.info("source (:{}) is not found", id);
@@ -603,8 +609,65 @@ public class SourceServiceImpl implements SourceService {
             throw new UnAuthorizedExecption("You have not permission to reconnect this source");
         }
 
-        SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
-        sourceUtils.releaseDataSource(source.getJdbcUrl(), source.getName(), source.getPassword(), source.getDbVersion(), source.isExt());
+        if (!(dbBaseInfo.getDbUser().equals(source.getUsername()) && dbBaseInfo.getDbPassword().equals(source.getPassword()))) {
+            log.warn("reconnect source(:{}) error, dbuser and dbpassword is wrong", id);
+            throw new ServerException("user or password is wrong");
+        }
+
+
+        if (redisUtils.isRedisEnable()) {
+            String flag = MD5Util.getMD5(UUID.randomUUID().toString() + id, true, 32);
+            redisUtils.convertAndSend(DAVINCI_TOPIC_CHANNEL, new RedisMessageEntity(SourceMessageHandler.class, id, flag));
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+
+            long l = System.currentTimeMillis();
+
+            Thread fetchReconnectResultThread = new Thread(() -> {
+                boolean result = false;
+                do {
+                    Object o = redisUtils.get(flag);
+                    if (o != null) {
+                        result = (boolean) o;
+                        if (result) {
+                            countDownLatch.countDown();
+                            redisUtils.delete(flag);
+                            log.info("Source (:{}) is released", id);
+                            break;
+                        }
+                    }
+                } while (!result);
+            });
+
+            fetchReconnectResultThread.start();
+
+            if ((System.currentTimeMillis() - l) >= 10000L) {
+                fetchReconnectResultThread.interrupt();
+                countDownLatch.countDown();
+            }
+
+            try {
+                countDownLatch.await(15L, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                countDownLatch.countDown();
+            }
+        } else {
+            SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
+            JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo
+                    .JdbcSourceInfoBuilder
+                    .aJdbcSourceInfo()
+                    .withJdbcUrl(source.getJdbcUrl())
+                    .withUsername(source.getUsername())
+                    .withPassword(source.getPassword())
+                    .withDatabase(source.getDatabase())
+                    .withDbVersion(source.getDbVersion())
+                    .withProperties(source.getProperties())
+                    .withExt(source.isExt())
+                    .build();
+
+            sourceUtils.releaseDataSource(jdbcSourceInfo);
+        }
         return sqlUtils.init(source).testConnection();
     }
 

@@ -22,6 +22,8 @@ package edp.core.common.jdbc;
 import com.alibaba.druid.pool.ElasticSearchDruidDataSourceFactory;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.SourceException;
+import edp.core.model.JdbcSourceInfo;
+import edp.core.utils.CollectionUtils;
 import edp.core.utils.SourceUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,16 +44,16 @@ public class ESDataSource {
 
     private static volatile Map<String, DataSource> esDataSourceMap = new HashMap<>();
 
-    public static synchronized DataSource getDataSource(String jdbcUrl, String userename, String password, JdbcDataSource jdbcDataSource) throws SourceException {
-        String key = SourceUtils.getKey(jdbcUrl, userename, password, null, false);
+    public static synchronized DataSource getDataSource(JdbcSourceInfo jdbcSourceInfo, JdbcDataSource jdbcDataSource) throws SourceException {
+        String key = SourceUtils.getKey(jdbcSourceInfo.getJdbcUrl(), jdbcSourceInfo.getUsername(), jdbcSourceInfo.getPassword(), null, false);
         if (!esDataSourceMap.containsKey(key) || null == esDataSourceMap.get(key)) {
             Properties properties = new Properties();
-            properties.setProperty(PROP_URL, jdbcUrl.trim());
-            if (!StringUtils.isEmpty(userename)) {
-                properties.setProperty(PROP_USERNAME, userename);
+            properties.setProperty(PROP_URL, jdbcSourceInfo.getJdbcUrl().trim());
+            if (!StringUtils.isEmpty(jdbcSourceInfo.getUsername())) {
+                properties.setProperty(PROP_USERNAME, jdbcSourceInfo.getUsername());
             }
-            if (!StringUtils.isEmpty(password)) {
-                properties.setProperty(PROP_PASSWORD, password);
+            if (!StringUtils.isEmpty(jdbcSourceInfo.getPassword())) {
+                properties.setProperty(PROP_PASSWORD, jdbcSourceInfo.getPassword());
             }
             properties.setProperty(PROP_MAXACTIVE, String.valueOf(jdbcDataSource.getMaxActive()));
             properties.setProperty(PROP_INITIALSIZE, String.valueOf(jdbcDataSource.getInitialSize()));
@@ -64,6 +66,11 @@ public class ESDataSource {
             properties.setProperty(PROP_TESTONBORROW, String.valueOf(jdbcDataSource.isTestOnBorrow()));
             properties.setProperty(PROP_TESTONRETURN, String.valueOf(jdbcDataSource.isTestOnReturn()));
             properties.put(PROP_CONNECTIONPROPERTIES, "client.transport.ignore_cluster_name=true");
+
+            if (!CollectionUtils.isEmpty(jdbcSourceInfo.getProperties())) {
+                jdbcSourceInfo.getProperties().forEach(dict -> properties.setProperty(dict.getKey(), dict.getValue()));
+            }
+
             try {
                 dataSource = ElasticSearchDruidDataSourceFactory.createDataSource(properties);
                 esDataSourceMap.put(key, dataSource);

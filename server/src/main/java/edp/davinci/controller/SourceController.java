@@ -215,6 +215,7 @@ public class SourceController extends BaseController {
      * 释放重连
      *
      * @param id
+     * @param dbBaseInfo
      * @param user
      * @param request
      * @return
@@ -222,9 +223,10 @@ public class SourceController extends BaseController {
     @ApiOperation(value = "release and reconnect", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(value = "/reconnect/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity reconnect(@PathVariable Long id,
+                                    @RequestBody DbBaseInfo dbBaseInfo,
                                     @ApiIgnore @CurrentUser User user,
                                     HttpServletRequest request) {
-        sourceService.reconnect(id, user);
+        sourceService.reconnect(id, dbBaseInfo, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 

@@ -282,24 +282,24 @@ public class ViewServiceImpl implements ViewService {
     @Transactional
     public boolean updateView(ViewUpdate viewUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        ViewWithSource viewWithSource = viewMapper.getViewWithSource(viewUpdate.getId());
-        if (null == viewWithSource) {
+        View view = viewMapper.getById(viewUpdate.getId());
+        if (null == view) {
             throw new NotFoundException("view is not found");
         }
 
-        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), user, false);
+        ProjectDetail projectDetail = projectService.getProjectDetail(view.getProjectId(), user, false);
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getViewPermission() < UserPermissionEnum.WRITE.getPermission()) {
             throw new UnAuthorizedExecption("you have not permission to update this view");
         }
 
-        if (isExist(viewUpdate.getName(), viewUpdate.getId(), viewWithSource.getProjectId())) {
+        if (isExist(viewUpdate.getName(), viewUpdate.getId(), view.getProjectId())) {
             log.info("the view {} name is already taken", viewUpdate.getName());
             throw new ServerException("the view name is already taken");
         }
 
-        Source source = viewWithSource.getSource();
+        Source source = sourceMapper.getById(viewUpdate.getSourceId());
         if (null == source) {
             log.info("source not found");
             throw new NotFoundException("source is not found");
@@ -310,17 +310,17 @@ public class ViewServiceImpl implements ViewService {
 
         if (testConnection) {
 
-            String originStr = viewWithSource.toString();
-            BeanUtils.copyProperties(viewUpdate, viewWithSource);
-            viewWithSource.updatedBy(user.getId());
+            String originStr = view.toString();
+            BeanUtils.copyProperties(viewUpdate, view);
+            view.updatedBy(user.getId());
 
-            int update = viewMapper.update(viewWithSource);
+            int update = viewMapper.update(view);
             if (update > 0) {
-                optLogger.info("view ({}) is updated by user(:{}), origin: ({})", viewWithSource.toString(), user.getId(), originStr);
+                optLogger.info("view ({}) is updated by user(:{}), origin: ({})", view.toString(), user.getId(), originStr);
                 if (CollectionUtils.isEmpty(viewUpdate.getRoles())) {
                     relRoleViewMapper.deleteByViewId(viewUpdate.getId());
                 } else if (!StringUtils.isEmpty(viewUpdate.getVariable())) {
-                    checkAndInsertRoleParam(viewUpdate.getVariable(), viewUpdate.getRoles(), user, viewWithSource);
+                    checkAndInsertRoleParam(viewUpdate.getVariable(), viewUpdate.getRoles(), user, view);
                 }
 
                 return true;
