@@ -215,16 +215,9 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     return result
 }
 
- // private getSqlType = (model) => model === 'number' ? 'INTEGER' : 'VARCHAR'
   private getSqlType = (key) => {
     const {model} = this.props
-    let result
-    Object.entries(model).forEach(([name, value]) => {
-      if (key === name) {
-        result = value.sqlType
-      }
-    })
-    return result === 'DATE' ? 'VARCHAR' : result
+    return model && model[key] ? model[key]['sqlType'] : 'VARCHAR'
   }
   private getFilterValue = (val, type) => type === 'number' ? val : `'${val}'`
 
@@ -250,14 +243,10 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
       operator: '>=',
       type: 'filter',
       sqlType: this.getSqlType(name),
+      value: ''
     }
     if (selectedDate === 'today') {
-      const resultJson = {
-        ...tml,
-        value: `'${today}'`
-      }
-      return [resultJson]
-      
+      tml.value = `'${today}'`
     } else if (selectedDate === 'yesterday') {
       const resultJson = [
         {
@@ -272,59 +261,23 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
       ]
       return resultJson
     } else if (selectedDate === 'yesterdayFromNow') {
-      const resultJson = {
-        ...tml,
-        value: `'${yesterday}'`
-      }
-      return [resultJson]
+      tml.value = `'${yesterday}'`
     } else if (selectedDate === '7') {
-      const resultJson = {
-        ...tml,
-        value: `'${moment().subtract(7, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
-      }
-      return [resultJson]
+      tml.value = `'${moment().subtract(7, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
     } else if (selectedDate === '30') {
-      const resultJson = {
-        ...tml,
-        value: `'${moment().subtract(30, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
-      }
-      return [resultJson]
+      tml.value = `'${moment().subtract(30, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
     } else if (selectedDate === '90') {
-      const resultJson = {
-        ...tml,
-        value: `'${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
-      }
-      return [resultJson]
+      tml.value = `'${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'` 
     } else if (selectedDate === '365') {
-      const resultJson = {
-        ...tml,
-        value: `'${moment().subtract(365, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
-      }
-      return [resultJson]
+      tml.value = `'${moment().subtract(365, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
     } else if (selectedDate === 'week') {
-      const resultJson = {
-        ...tml,
-        value: `'${moment().startOf('week').format(DEFAULT_DATETIME_FORMAT)}'`
-      }
-      return [resultJson]
+      tml.value = `'${moment().startOf('week').format(DEFAULT_DATETIME_FORMAT)}'`
     } else if (selectedDate === 'month') {
-      const resultJson = {
-        ...tml,
-        value: `'${moment().startOf('month').format(DEFAULT_DATETIME_FORMAT)}'`
-      }
-      return [resultJson]
+      tml.value = `'${moment().startOf('month').format(DEFAULT_DATETIME_FORMAT)}'`
     } else if (selectedDate === 'quarter') {
-      const resultJson = {
-        ...tml,
-        value: `'${moment().startOf('quarter').format(DEFAULT_DATETIME_FORMAT)}'`
-      }
-      return [resultJson]
+      tml.value = `'${moment().startOf('quarter').format(DEFAULT_DATETIME_FORMAT)}'`
     } else if (selectedDate === 'year') {
-      const resultJson = {
-        ...tml,
-        value: `'${name} >= '${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`
-      }
-      return [resultJson]
+      tml.value = `'${name} >= '${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`
     } else {
       const resultJson = [
         {
@@ -339,6 +292,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
       ]
       return resultJson
     }
+    return [{...tml}]
   }
 
   private save = () => {
@@ -358,7 +312,6 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
       if (sql) {
         onSave({
           sqlModel,
-        //  sql: `${name} in (${sql})`,
           filterSource: target.slice()
         })
       } else {
@@ -369,7 +322,6 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
         this.conditionalFilterForm.current.props.form.validateFieldsAndScroll((err) => {
           if (!err) {
             onSave({
-             // sql: this.getSqlExpresstions(filterTree),
               filterSource: {...filterTree},
               sqlModel: this.getSqlModel([{...filterTree}])
             })
@@ -381,7 +333,6 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
       }
     } else {
       onSave({
-      //  sql: this.getDateSql(),
         sqlModel: this.getDateSql(),
         filterSource: {
           selectedDate,

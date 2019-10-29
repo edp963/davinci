@@ -484,10 +484,10 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           func: t.agg
         })))
     }
-    let requestParamsFilters = []
-    filters.forEach((item) => {
-      requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
-    })
+    
+    const requestParamsFilters = filters.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
 
 
     const requestParams = {

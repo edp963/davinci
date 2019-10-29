@@ -88,7 +88,6 @@ function shareReducer (state = initialState, { type, payload }) {
       const dashboardConfig = payload.dashboard.config ? JSON.parse(payload.dashboard.config) : {}
       const globalControls = (dashboardConfig.filters || []).map((c) => globalControlMigrationRecorder(c)).map((ctrl) => {
         const {relatedViews, name} = ctrl
-        let newCtrl = {...ctrl}
         if (shareParams) {
           Object.entries(relatedViews).forEach(([key, value]) => {
             const defaultValue = shareParams[name]
@@ -96,15 +95,11 @@ function shareReducer (state = initialState, { type, payload }) {
                if (ctrl && ctrl.type === 'date') {
                  ctrl.dynamicDefaultValue = DatePickerDefaultValues.Custom
                }
-               newCtrl = {
-                 ...ctrl,
-                 defaultValue: Array.isArray(defaultValue) && defaultValue.length ? defaultValue.map((val) => decodeURI(val)) :  decodeURI(defaultValue)
-               }
+               ctrl.defaultValue = Array.isArray(defaultValue) && defaultValue.length ? defaultValue.map((val) => decodeURI(val)) :  decodeURI(defaultValue)
             }
           })
         }
-        console.log(newCtrl)
-        return newCtrl
+        return ctrl
       })
 
       const globalControlsInitialValue = {}
