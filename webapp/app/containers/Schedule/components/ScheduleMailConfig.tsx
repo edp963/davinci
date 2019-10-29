@@ -126,15 +126,13 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
 
   return (
     <Form>
+      <FormItem label="主题" {...LongFormItemStyle}>
+        {getFieldDecorator<IScheduleMailConfig>('subject', {
+          rules: [{ required: true, message: '主题不能为空' }],
+          initialValue: config.subject
+        })(<Input />)}
+      </FormItem>
       <Row>
-        <Col span={12}>
-          <FormItem label="主题" {...FormItemStyle}>
-            {getFieldDecorator<IScheduleMailConfig>('subject', {
-              rules: [{ required: true, message: '主题不能为空' }],
-              initialValue: config.subject
-            })(<Input />)}
-          </FormItem>
-        </Col>
         <Col span={12}>
           <FormItem label="文件类型" {...FormItemStyle}>
             {getFieldDecorator<IScheduleMailConfig>('type', {
@@ -148,6 +146,8 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
               </Select>
             )}
           </FormItem>
+        </Col>
+        <Col span={12}>
           {form.getFieldValue('type') !== 'excel' && (
             <FormItem label="图片宽度" {...FormItemStyle}>
               {getFieldDecorator<IScheduleMailConfig>('imageWidth', {
