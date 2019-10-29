@@ -144,7 +144,7 @@ public class Constants extends Consts {
 
     public static final String LDAP_USER_PASSWORD = "LDAP";
 
-    public static final String N0_AUTH_PERMISSION = "@DAVINCI_DATA_ACCESS_DENIED@";
+    public static final String NO_AUTH_PERMISSION = "@DAVINCI_DATA_ACCESS_DENIED@";
 
     public static final String DAVINCI_TOPIC_CHANNEL = "DAVINCI_TOPIC_CHANNEL";
 

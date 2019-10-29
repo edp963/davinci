@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.COMMA;
 import static edp.core.consts.Consts.MINUS;
-import static edp.davinci.core.common.Constants.N0_AUTH_PERMISSION;
+import static edp.davinci.core.common.Constants.NO_AUTH_PERMISSION;
 import static edp.davinci.core.enums.SqlVariableTypeEnum.AUTHVARE;
 import static edp.davinci.core.enums.SqlVariableTypeEnum.QUERYVAR;
 
@@ -786,7 +786,7 @@ public class ViewServiceImpl implements ViewService {
                                 if (v.isEnable()) {
                                     if (CollectionUtils.isEmpty(v.getValues())) {
                                         List values = new ArrayList<>();
-                                        values.add(N0_AUTH_PERMISSION);
+                                        values.add(NO_AUTH_PERMISSION);
                                         sqlVariable.setDefaultValues(values);
                                     } else {
                                         List<Object> values = sqlVariable.getDefaultValues() == null ? new ArrayList<>() : sqlVariable.getDefaultValues();
@@ -878,7 +878,7 @@ public class ViewServiceImpl implements ViewService {
 
                                 List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
                                 if (null == values) {
-                                    vSet.add(N0_AUTH_PERMISSION);
+                                    vSet.add(NO_AUTH_PERMISSION);
                                 } else if (!values.isEmpty()) {
                                     vSet.addAll(values);
                                 }
