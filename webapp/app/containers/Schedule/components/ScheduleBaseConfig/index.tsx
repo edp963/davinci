@@ -110,7 +110,8 @@ export type ScheduleBaseFormProps = ISchedule &
     dateRange: [Moment, Moment]
   }
 
-interface IScheduleBaseConfigProps extends FormComponentProps<ScheduleBaseFormProps> {
+interface IScheduleBaseConfigProps
+  extends FormComponentProps<ScheduleBaseFormProps> {
   schedule: ISchedule
   loading: boolean
   onCheckUniqueName: (
@@ -183,7 +184,11 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
   >(
     () => {
       const partitions = cronExpression.split(' ')
-      let minute = form.getFieldValue('minute')
+      let minute =
+        form.getFieldValue('minute') ||
+        +(partitions[1].includes('/')
+          ? partitions[1].slice(2) // slice(2) to remove */
+          : partitions[1])
       // min minute duration is 10
       if (currentPeriodUnit === 'Minute' && minute < 10) {
         minute = 10
