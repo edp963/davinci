@@ -952,11 +952,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
       updatedPagination.withPaging = withPaging
     }
-    // 生成filter
-    let requestParamsFilters = []
-    filters.items.forEach((item) => {
-      requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
-    })
+
+    const requestParamsFilters = filters.items.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
+
     const requestParams = {
       groups,
       aggregators,
@@ -1435,7 +1435,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private saveComputedConfig = (config) => {
-    console.log({config})
     const {onSetComputed} = this.props
     if (config) {
       onSetComputed(config)
@@ -1443,7 +1442,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private onShowEditComputed = (tag) => () => {
-    console.log({tag})
     this.setState({
       computedConfigModalVisible: true,
       selectedComputed: tag
@@ -1538,6 +1536,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       selectedComputed
     } = this.state
 
+    const widgetPropsModel = selectedView && selectedView.model ? selectedView.model : {}
+  
     const { metrics } = dataParams
     const [dimetionsCount, metricsCount] = this.getDimetionsAndMetricsCount()
     const {
@@ -2063,6 +2063,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         >
           <FilterSettingForm
             item={modalCachedData}
+            model={widgetPropsModel}
             list={distinctColumnValues}
             config={filterSettingConfig}
             onSave={this.confirmFilterModal}

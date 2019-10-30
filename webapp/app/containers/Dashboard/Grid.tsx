@@ -691,10 +691,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           func: t.agg
         })))
     }
-    let requestParamsFilters = []
-    filters.forEach((item) => {
-      requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
-    })
+
+    const requestParamsFilters = filters.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
     const requestParams = {
       groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
       aggregators,

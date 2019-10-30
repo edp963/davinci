@@ -259,10 +259,14 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         })))
     }
 
+    const requestParamsFilters = filters.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
+
     const requestParams = {
       groups,
       aggregators,
-      filters: filters.map((i) => i.config.sql),
+      filters: requestParamsFilters,
       tempFilters,
       linkageFilters,
       globalFilters,

@@ -294,10 +294,14 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         })))
     }
 
+    const requestParamsFilters = filters.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
+
     const requestParams = {
       groups,
       aggregators,
-      filters: filters.map((i) => i.config.sql),
+      filters: requestParamsFilters,
       tempFilters,
       linkageFilters,
       globalFilters,
