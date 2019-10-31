@@ -37,7 +37,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static edp.core.consts.Consts.*;
+import static edp.core.consts.Consts.COMMA;
+import static edp.core.consts.Consts.EMPTY;
+import static edp.core.consts.Consts.NEW_LINE_CHAR;
+import static edp.core.consts.Consts.PARENTHESES_END;
+import static edp.core.consts.Consts.PARENTHESES_START;
+import static edp.core.consts.Consts.SEMICOLON;
+import static edp.core.consts.Consts.SPACE;
 import static edp.davinci.core.common.Constants.*;
 
 @Slf4j
@@ -192,7 +198,14 @@ public class SqlParseUtils {
 
         ST st = new ST(sql, delimiter, delimiter);
         if (!CollectionUtils.isEmpty(authParamMap) && !CollectionUtils.isEmpty(expSet)) {
-            authParamMap.forEach((k, v) -> st.add(k, true));
+            authParamMap.forEach((k, v) ->{
+                List values = authParamMap.get(k);
+                if(CollectionUtils.isEmpty(values) || (values.size()==1 && values.get(0).toString().contains(Constants.NO_AUTH_PERMISSION))){
+                    st.add(k, false);
+                }else{
+                    st.add(k, true);
+                }
+            });
         }
         // 替换query@var
         if (!CollectionUtils.isEmpty(queryParamMap)) {
@@ -323,7 +336,7 @@ public class SqlParseUtils {
                             return "1=1";
                         }
 
-                        if (v.equals(N0_AUTH_PERMISSION)) {
+                        if (v.equals(NO_AUTH_PERMISSION)) {
                             return "1=0";
                         }
 
@@ -347,7 +360,7 @@ public class SqlParseUtils {
                         }
                     }
                     else {
-                        List<String> collect = list.stream().filter(s -> !s.contains(N0_AUTH_PERMISSION))
+                        List<String> collect = list.stream().filter(s -> !s.contains(NO_AUTH_PERMISSION))
                                 .collect(Collectors.toList());
                         switch (sqlOperator) {
                             case IN:
