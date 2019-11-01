@@ -46,13 +46,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static edp.core.consts.Consts.COMMA;
-import static edp.core.consts.Consts.EMPTY;
-import static edp.core.consts.Consts.NEW_LINE_CHAR;
-import static edp.core.consts.Consts.PARENTHESES_END;
-import static edp.core.consts.Consts.PARENTHESES_START;
-import static edp.core.consts.Consts.SEMICOLON;
-import static edp.core.consts.Consts.SPACE;
+import static edp.core.consts.Consts.*;
 import static edp.davinci.core.common.Constants.*;
 
 @Slf4j
@@ -284,121 +278,125 @@ public class SqlParseUtils {
         }
 
         String originExpression = "";
-        if (!StringUtils.isEmpty(srcExpression)) {
-            srcExpression = srcExpression.trim();
-            if (srcExpression.startsWith(PARENTHESES_START) && srcExpression.endsWith(PARENTHESES_END)) {
-                srcExpression = srcExpression.substring(1, srcExpression.length() - 1);
+
+        if (StringUtils.isEmpty(srcExpression)) {
+            return originExpression;
+        }
+
+        srcExpression = srcExpression.trim();
+        if (srcExpression.startsWith(PARENTHESES_START) && srcExpression.endsWith(PARENTHESES_END)) {
+            srcExpression = srcExpression.substring(1, srcExpression.length() - 1);
+        }
+
+        String sql = String.format(Constants.SELECT_EXEPRESSION, srcExpression);
+        Select select = (Select) CCJSqlParserUtil.parse(sql);
+        PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+        Expression where = plainSelect.getWhere();
+
+        ListBuffer<Map<SqlOperatorEnum, List<String>>> listBuffer = new ListBuffer<>();
+        where.accept(SqlOperatorEnum.getVisitor(listBuffer));
+        Map<SqlOperatorEnum, List<String>> operatorMap = listBuffer.toList().head;
+
+        String delimiter = String.valueOf(sqlTempDelimiter);
+
+        for (SqlOperatorEnum sqlOperator : operatorMap.keySet()) {
+            List<String> expList = operatorMap.get(sqlOperator);
+            if (CollectionUtils.isEmpty(expList)) {
+                continue;
             }
-
-            String sql = String.format(Constants.SELECT_EXEPRESSION, srcExpression);
-            Select select = (Select) CCJSqlParserUtil.parse(sql);
-            PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
-            Expression where = plainSelect.getWhere();
-
-            ListBuffer<Map<SqlOperatorEnum, List<String>>> listBuffer = new ListBuffer<>();
-            where.accept(SqlOperatorEnum.getVisitor(listBuffer));
-            Map<SqlOperatorEnum, List<String>> operatorMap = listBuffer.toList().head;
-
-            String delimiter = String.valueOf(sqlTempDelimiter);
-
-            for (SqlOperatorEnum sqlOperator : operatorMap.keySet()) {
-                List<String> expList = operatorMap.get(sqlOperator);
-                if (!CollectionUtils.isEmpty(expList)) {
-                    String left = operatorMap.get(sqlOperator).get(0);
-                    String right = operatorMap.get(sqlOperator).get(expList.size() - 1);
-                    if (right.startsWith(PARENTHESES_START) && right.endsWith(PARENTHESES_END)) {
-                        right = right.substring(1, right.length() - 1);
-                    }
-                    if (right.startsWith(delimiter) && right.endsWith(delimiter)) {
-                        right = right.substring(1, right.length() - 1);
-                    }
-                    if (authParamMap.containsKey(right.trim())) {
-                        List<String> list = authParamMap.get(right.trim());
-                        if (!CollectionUtils.isEmpty(list)) {
-                            StringBuilder expBuilder = new StringBuilder();
-                            if (list.size() == 1) {
-                                String v = list.get(0);
-                                if (!StringUtils.isEmpty(v)) {
-                                    if (v.equals(NO_AUTH_PERMISSION)) {
-                                        return "1=0";
-                                    } else {
-                                        if (sqlOperator == SqlOperatorEnum.IN) {
-                                            expBuilder
-                                                    .append(left).append(SPACE)
-                                                    .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
-                                                    .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
-                                        } else {
-                                            if (v.split(COMMA).length > 1) {
-                                                expBuilder
-                                                        .append(left).append(SPACE)
-                                                        .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
-                                                        .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
-                                            } else {
-                                                expBuilder
-                                                        .append(left).append(SPACE)
-                                                        .append(sqlOperator.getValue()).append(SPACE).append(v);
-                                            }
-                                        }
-                                    }
-
-                                } else {
-                                    return "1=1";
-                                }
+            String left = operatorMap.get(sqlOperator).get(0);
+            String right = operatorMap.get(sqlOperator).get(expList.size() - 1);
+            if (right.startsWith(PARENTHESES_START) && right.endsWith(PARENTHESES_END)) {
+                right = right.substring(1, right.length() - 1);
+            }
+            if (right.startsWith(delimiter) && right.endsWith(delimiter)) {
+                right = right.substring(1, right.length() - 1);
+            }
+            if (authParamMap.containsKey(right.trim())) {
+                List<String> list = authParamMap.get(right.trim());
+                if (!CollectionUtils.isEmpty(list)) {
+                    StringBuilder expBuilder = new StringBuilder();
+                    if (list.size() == 1) {
+                        String v = list.get(0);
+                        if (!StringUtils.isEmpty(v)) {
+                            if (v.equals(NO_AUTH_PERMISSION)) {
+                                return "1=0";
                             } else {
-                                List<String> collect = list.stream().filter(s -> !s.contains(NO_AUTH_PERMISSION)).collect(Collectors.toList());
-                                switch (sqlOperator) {
-                                    case IN:
-                                    case EQUALSTO:
+                                if (sqlOperator == SqlOperatorEnum.IN) {
+                                    expBuilder
+                                            .append(left).append(SPACE)
+                                            .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
+                                            .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
+                                } else {
+                                    if (v.split(COMMA).length > 1) {
                                         expBuilder
                                                 .append(left).append(SPACE)
                                                 .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
-                                                .append(collect.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
-                                        break;
-
-                                    case NOTEQUALSTO:
+                                                .append(list.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
+                                    } else {
                                         expBuilder
                                                 .append(left).append(SPACE)
-                                                .append(SqlOperatorEnum.NoTIN.getValue()).append(SPACE)
-                                                .append(collect.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
-                                        break;
-
-                                    case BETWEEN:
-                                    case GREATERTHAN:
-                                    case GREATERTHANEQUALS:
-                                    case MINORTHAN:
-                                    case MINORTHANEQUALS:
-                                        expBuilder.append(collect.stream()
-                                                .map(x -> SPACE + left + SPACE + SqlOperatorEnum.BETWEEN.getValue() + SPACE + x + SPACE)
-                                                .collect(Collectors.joining(OR, PARENTHESES_START, PARENTHESES_END)));
-                                        break;
-
-                                    default:
-                                        expBuilder.append(originExpression);
-                                        break;
+                                                .append(sqlOperator.getValue()).append(SPACE).append(v);
+                                    }
                                 }
                             }
-                            return expBuilder.toString();
+
                         } else {
                             return "1=1";
                         }
                     } else {
-                        Set<String> keySet = authParamMap.keySet();
-                        String finalRight = right.trim();
-                        List<String> keys = keySet.stream().filter(finalRight::contains).collect(Collectors.toList());
-                        if (!CollectionUtils.isEmpty(keys)) {
-                            String k = keys.get(0);
-                            List<String> list = authParamMap.get(k);
-                            String v = "";
-                            if (!CollectionUtils.isEmpty(list)) {
-                                String s = String.join(COMMA, list);
-                                v = right.replace(delimiter + k + delimiter, s);
+                        List<String> collect = list.stream().filter(s -> !s.contains(NO_AUTH_PERMISSION)).collect(Collectors.toList());
+                        switch (sqlOperator) {
+                            case IN:
+                            case EQUALSTO:
+                                expBuilder
+                                        .append(left).append(SPACE)
+                                        .append(SqlOperatorEnum.IN.getValue()).append(SPACE)
+                                        .append(collect.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
+                                break;
 
-                            }
-                            return String.join(EMPTY, left, SPACE, sqlOperator.getValue(), SPACE, v);
-                        } else {
-                            return "1=0";
+                            case NOTEQUALSTO:
+                                expBuilder
+                                        .append(left).append(SPACE)
+                                        .append(SqlOperatorEnum.NoTIN.getValue()).append(SPACE)
+                                        .append(collect.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
+                                break;
+
+                            case BETWEEN:
+                            case GREATERTHAN:
+                            case GREATERTHANEQUALS:
+                            case MINORTHAN:
+                            case MINORTHANEQUALS:
+                                expBuilder.append(collect.stream()
+                                        .map(x -> SPACE + left + SPACE + SqlOperatorEnum.BETWEEN.getValue() + SPACE + x + SPACE)
+                                        .collect(Collectors.joining(OR, PARENTHESES_START, PARENTHESES_END)));
+                                break;
+
+                            default:
+                                expBuilder.append(originExpression);
+                                break;
                         }
                     }
+                    return expBuilder.toString();
+                } else {
+                    return "1=1";
+                }
+            } else {
+                Set<String> keySet = authParamMap.keySet();
+                String finalRight = right.trim();
+                List<String> keys = keySet.stream().filter(finalRight::contains).collect(Collectors.toList());
+                if (!CollectionUtils.isEmpty(keys)) {
+                    String k = keys.get(0);
+                    List<String> list = authParamMap.get(k);
+                    String v = "";
+                    if (!CollectionUtils.isEmpty(list)) {
+                        String s = String.join(COMMA, list);
+                        v = right.replace(delimiter + k + delimiter, s);
+
+                    }
+                    return String.join(EMPTY, left, SPACE, sqlOperator.getValue(), SPACE, v);
+                } else {
+                    return "1=0";
                 }
             }
         }

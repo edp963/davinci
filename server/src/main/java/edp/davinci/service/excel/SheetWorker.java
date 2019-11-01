@@ -68,6 +68,9 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
 
             String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
             Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().info("Task ({}) -- {} start query", context.getTaskKey(), context.getName());
+            }
             template.query(sql, rs -> {
                 Map<String, Object> dataMap = Maps.newHashMap();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
@@ -75,9 +78,15 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
                 }
                 writeLine(context, dataMap);
             });
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().info("Task ({}) -- {} finish query", context.getTaskKey(), context.getName());
+            }
             super.refreshHeightWidth(context);
         } catch (Exception e) {
-            log.error("sheet worker error,context=" + context.toString(), e);
+            log.error("sheet worker error,  task={}, context={}, error={}", context.getTaskKey(), context.toString(), e);
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().error("sheet worker error,  task={}, context={}, error={}", context.getTaskKey(), context.toString(), e);
+            }
             if (context.getWrapper().getAction() == ActionEnum.MAIL) {
                 MsgMailExcel msg = (MsgMailExcel) context.getWrapper().getMsg();
                 msg.setDate(new Date());
@@ -87,15 +96,21 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         }
 
         if (context.getWrapper().getAction() == ActionEnum.DOWNLOAD) {
-            Object[] args = {rst, context.getWrapper().getAction(), context.getWrapper().getxId(),
+            Object[] args = {context.getTaskKey(), rst, context.getWrapper().getAction(), context.getWrapper().getxId(),
                     context.getSheet().getSheetName(), context.getDashboardId(), context.getWidgetId()
                     , watch.elapsed(TimeUnit.MILLISECONDS)};
-            log.info("sheet worker complete status={},action={},xid={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            log.info("sheet worker complete task={}, status={},action={},xid={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().info("sheet worker complete task={}, status={},action={},xid={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            }
         } else if (context.getWrapper().getAction() == ActionEnum.SHAREDOWNLOAD) {
-            Object[] args = {rst, context.getWrapper().getAction(), context.getWrapper().getxUUID(),
+            Object[] args = {context.getTaskKey(), rst, context.getWrapper().getAction(), context.getWrapper().getxUUID(),
                     context.getSheet().getSheetName(), context.getDashboardId(), context.getWidgetId()
                     , watch.elapsed(TimeUnit.MILLISECONDS)};
-            log.info("sheet worker complete status={},action={},xUUID={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            log.info("sheet worker complete task={}, status={},action={},xUUID={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().info("sheet worker complete task={}, status={},action={},xUUID={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            }
         }
 
         return (T) rst;

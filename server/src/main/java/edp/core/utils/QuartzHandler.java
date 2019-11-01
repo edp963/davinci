@@ -23,8 +23,11 @@ import edp.core.common.quartz.QuartzJobExecutor;
 import edp.core.consts.Consts;
 import edp.core.exception.ServerException;
 import edp.core.model.ScheduleJob;
+import edp.davinci.core.enums.LogNameEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.stereotype.Component;
@@ -34,6 +37,9 @@ import java.util.Date;
 @Slf4j
 @Component
 public class QuartzHandler {
+
+    private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
+
 
     @Autowired
     private SchedulerFactoryBean schedulerFactoryBean;
@@ -52,12 +58,15 @@ public class QuartzHandler {
 
         if (System.currentTimeMillis() < scheduleJob.getStartDate().getTime()
                 || System.currentTimeMillis() > scheduleJob.getEndDate().getTime()) {
-            log.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]",
+            Object[] args = {
                     scheduleJob.getId(),
                     DateUtils.toyyyyMMddHHmmss(System.currentTimeMillis()),
                     DateUtils.toyyyyMMddHHmmss(scheduleJob.getStartDate()),
                     DateUtils.toyyyyMMddHHmmss(scheduleJob.getEndDate()),
-                    scheduleJob.getCronExpression());
+                    scheduleJob.getCronExpression()
+            };
+            log.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
+            scheduleLogger.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
             throw new ServerException("Current time is not within the planned execution time!");
         }
 
@@ -66,6 +75,7 @@ public class QuartzHandler {
         CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
         if (null != trigger) {
             log.warn("ScheduleJob (:{}) already started!", scheduleJob.getId());
+            scheduleLogger.warn("ScheduleJob (:{}) already started!", scheduleJob.getId());
             throw new ServerException("job already started!");
         }
 
@@ -84,11 +94,14 @@ public class QuartzHandler {
         trigger = triggerBuilder.build();
         scheduler.scheduleJob(jobDetail, trigger);
 
-        log.info("ScheduleJob (:{}) is added to the scheduler, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]",
+        Object[] args = {
                 scheduleJob.getId(),
                 DateUtils.toyyyyMMddHHmmss(scheduleJob.getStartDate()),
                 DateUtils.toyyyyMMddHHmmss(scheduleJob.getEndDate()),
-                scheduleJob.getCronExpression());
+                scheduleJob.getCronExpression()
+        };
+        log.info("ScheduleJob (:{}) is added to the scheduler, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
+        scheduleLogger.info("ScheduleJob (:{}) is added to the scheduler, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
 
         if (!scheduler.isStarted()) {
             scheduler.start();
@@ -107,8 +120,10 @@ public class QuartzHandler {
                 scheduler.unscheduleJob(triggerKey);
                 scheduler.deleteJob(JobKey.jobKey(scheduleJob.getId().toString()));
                 log.info("ScheduleJob (:{}) removed finish!", triggerKey.getName());
+                scheduleLogger.info("ScheduleJob (:{}) removed finish!", triggerKey.getName());
             } else {
                 log.info("ScheduleJob (:{}) not found", triggerKey.getName());
+                scheduleLogger.info("ScheduleJob (:{}) not found", triggerKey.getName());
             }
         } catch (Exception e) {
             throw new ServerException(e.getMessage());

@@ -915,7 +915,7 @@ public class ViewServiceImpl implements ViewService {
                 map.forEach((k, v) -> sqlEntity.getAuthParams().put(k, new ArrayList<String>(v)));
             }
         } else {
-            sqlEntity.setAuthParams(new HashMap<>());
+            sqlEntity.setAuthParams(null);
         }
     }
 

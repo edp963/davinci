@@ -59,6 +59,8 @@ import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 @Service("cronJobService")
 public class CronJobServiceImpl implements CronJobService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
+    private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
+
 
     @Autowired
     private ProjectService projectService;
@@ -333,6 +335,7 @@ public class CronJobServiceImpl implements CronJobService {
                             countDownLatch.countDown();
                             redisUtils.delete(flag);
                             log.info("CronJob (:{}) is stoped", id, flag);
+                            scheduleLogger.info("CronJob (:{}) is stoped", id, flag);
                             break;
                         }
                     }
