@@ -30,7 +30,8 @@ import {
   LOAD_DOWNLOAD_LIST,
   LOAD_DOWNLOAD_LIST_SUCCESS,
   LOAD_DOWNLOAD_LIST_FAILURE,
-  DOWNLOAD_FILE_SUCCESS
+  DOWNLOAD_FILE_SUCCESS,
+  UPDATE_PROFILE_SUCCESS
 } from './constants'
 import { fromJS } from 'immutable'
 import { DownloadStatus } from './types'
@@ -75,6 +76,12 @@ function appReducer (state = initialState, action) {
       localStorage.setItem('loginUser', JSON.stringify(newLoginUser))
       return state
         .set('loginUser', newLoginUser)
+    case UPDATE_PROFILE_SUCCESS:
+      const {id, name, department, description } = payload
+      const updateUserProfile = {...loginUser, id, name, department, description}
+      localStorage.setItem('loginUser', JSON.stringify(updateUserProfile))
+      return state
+        .set('loginUser', updateUserProfile)
     case SHOW_NAVIGATOR:
       return state.set('navigator', true)
     case HIDE_NAVIGATOR:

@@ -181,6 +181,7 @@ export function* updateProfile (action): IterableIterator<any> {
         department
       }
     })
+    yield put(updateProfileSuccess(asyncData && asyncData.header && asyncData.header.code === 200 ? {id, name, description, department} : {}))
     resolve(asyncData)
   } catch (err) {
     yield put(updateProfileError())

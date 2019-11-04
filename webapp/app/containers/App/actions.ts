@@ -210,12 +210,10 @@ export function uploadAvatarSuccess (path) {
   }
 }
 
-export function updateProfileSuccess (user) {
+export function updateProfileSuccess (payload) {
   return {
     type: UPDATE_PROFILE_SUCCESS,
-    payload: {
-      user
-    }
+    payload
   }
 }
 
