@@ -21,7 +21,9 @@ package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 import edp.core.enums.HttpCodeEnum;
+import edp.core.enums.MailContentTypeEnum;
 import edp.core.exception.ServerException;
+import edp.core.model.MailContent;
 import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -123,16 +125,7 @@ public class UserServiceImpl implements UserService {
         int insert = userMapper.insert(user);
         if (insert > 0) {
             //添加成功，发送激活邮件
-            Map content = new HashMap<String, Object>();
-            content.put("username", user.getUsername());
-            content.put("host", serverUtils.getHost());
-            content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(user), null));
-
-            mailUtils.sendTemplateEmail(user.getEmail(),
-                    Constants.USER_ACTIVATE_EMAIL_SUBJECT,
-                    Constants.USER_ACTIVATE_EMAIL_TEMPLATE,
-                    content);
-
+            sendMail(user.getEmail(), user);
             return user;
         } else {
             log.info("regist fail: {}", userRegist.toString());
@@ -347,10 +340,6 @@ public class UserServiceImpl implements UserService {
         content.put("username", user.getUsername());
         content.put("host", serverUtils.getHost());
         content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(user), null));
-        mailUtils.sendTemplateEmail(user.getEmail(),
-                Constants.USER_ACTIVATE_EMAIL_SUBJECT,
-                Constants.USER_ACTIVATE_EMAIL_TEMPLATE,
-                content);
 
         MailContent mailContent = MailContent.MailContentBuilder.builder()
                 .withSubject(Constants.USER_ACTIVATE_EMAIL_SUBJECT)

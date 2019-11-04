@@ -67,7 +67,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static edp.core.consts.Consts.EMPTY;
-import static edp.core.consts.Consts.SEMICOLON;
 import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
 
@@ -227,7 +226,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         String type = "";
         if ("widget".equalsIgnoreCase(contentType)) {
             type = "widget";
-        } else if ("PORTAL".equalsIgnoreCase(contentType) || "dashboard".equalsIgnoreCase(contentType)) {
+        } else if (PORTAL.equalsIgnoreCase(contentType) || "dashboard".equalsIgnoreCase(contentType)) {
             type = "dashboard";
         } else {
             type = "";
@@ -235,7 +234,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
         sb.append(serverUtils.getLocalHost())
                 .append("/share.html#/share/")
-                .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("PORTAL") ? "dashboard" : contentType)
+                .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase(PORTAL) ? "dashboard" : contentType)
                 .append("?shareInfo=")
                 .append(shareToken);
 
@@ -258,9 +257,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     private List<ExcelContent> generateExcels(Long cronJobId, CronJobConfig cronJobConfig, User user) throws Exception {
         scheduleLogger.info("CronJob (:{}) fetching excel contents", cronJobId);
 
-        scheduleLogger.info("CronJob (:{}) getting ScriptEngine", cronJobId);
         ScriptEngine engine = getExecuptParamScriptEngine();
-        scheduleLogger.info("CronJob (:{}) got ScriptEngine", cronJobId);
 
         Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
 
@@ -278,6 +275,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             } else if (CheckEntityEnum.DISPLAY.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())) {
                 Display display = displayMapper.getById(cronJobContent.getId());
                 if (display != null) {
+
                     ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
                     boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
 
@@ -355,14 +353,12 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
         excelPathFutureMap.forEach((name, future) -> {
             String excelPath = null;
-            long l = System.currentTimeMillis();
             try {
                 excelPath = future.get(1, TimeUnit.HOURS);
             } catch (Exception e) {
                 log.warn(e.getMessage());
             }
             if (!StringUtils.isEmpty(excelPath)) {
-                long l1 = System.currentTimeMillis();
                 excelContents.add(new ExcelContent(name, excelPath));
             }
         });

@@ -20,16 +20,13 @@
 package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSONObject;
+import com.google.common.base.Stopwatch;
 import edp.core.exception.ServerException;
-import edp.davinci.core.enums.CronJobMediaType;
-import edp.davinci.core.enums.FileTypeEnum;
-import edp.davinci.dto.cronJobDto.ExcelContent;
-import edp.davinci.service.screenshot.ImageContent;
+import edp.core.model.MailContent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
@@ -38,13 +35,8 @@ import org.thymeleaf.context.Context;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 import static edp.core.consts.Consts.PATTERN_EMAIL_FORMAT;
@@ -68,136 +60,108 @@ public class MailUtils {
     @Value("${spring.mail.nickname}")
     private String nickName;
 
-    /**
-     * 发送简单邮件
-     *
-     * @param from    发件人
-     * @param subject 主题
-     * @param to      收件人
-     * @param cc      抄送
-     * @param bcc     加密抄送
-     * @param content 内容
-     * @throws ServerException
-     */
-    public void sendSimpleEmail(String from, String subject, String[] to, String[] cc, String[] bcc, String content) throws ServerException {
-        long startTimestamp = System.currentTimeMillis();
-        log.info("start send email to {}", Arrays.toString(to));
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(from);
-            message.setSubject(subject);
-            message.setTo(to);
-            if (null != cc && cc.length > 0) {
-                message.setCc(cc);
+
+    public void sendMail(MailContent mailContent) throws ServerException {
+        Stopwatch watch = Stopwatch.createStarted();
+        if (mailContent == null) {
+            throw new ServerException("Mail content is null");
+        }
+
+        String from = StringUtils.isEmpty(fromAddress) ? mailUsername : fromAddress;
+
+        String displayName = nickName;
+        if (!StringUtils.isEmpty(mailContent.getFrom())) {
+            Matcher matcher = PATTERN_EMAIL_FORMAT.matcher(mailContent.getFrom());
+            if (!matcher.find()) {
+                log.info("Unknown email sending address: {}", mailContent.getFrom());
+                throw new ServerException("Unknown email sending address: " + mailContent.getFrom());
             }
-            if (null != bcc && bcc.length > 0) {
-                message.setBcc(bcc);
-            }
-            message.setText(content);
-            javaMailSender.send(message);
-            log.info("send mail success, in {} million seconds", System.currentTimeMillis() - startTimestamp);
-        } catch (MailException e) {
-            log.error("send mail failed, {} \n", e.getMessage());
-            e.printStackTrace();
-            throw new ServerException(e.getMessage());
-        }
-    }
-
-    /**
-     * 发送简单邮件
-     * 使用默认配置发送地址
-     *
-     * @param to      接受邮箱地址
-     * @param subject 主题
-     * @param content 内容
-     * @throws ServerException
-     */
-    public void sendSimpleEmail(String to, String subject, String content) throws ServerException {
-        sendSimpleEmail(sendEmailfrom, subject, new String[]{to}, null, null, content);
-
-    }
-
-    /**
-     * 发送 Html 邮件
-     *
-     * @param subject  主题
-     * @param from     发件人
-     * @param nickName 昵称
-     * @param to       收件人
-     * @param cc       抄送
-     * @param bcc      加密抄送
-     * @param content  内容
-     * @throws ServerException
-     */
-    public void sendHtmlEmail(String from, String nickName, String subject, String[] to, String[] cc, String[] bcc,
-                              String content, List<File> files) throws ServerException {
-
-        if (StringUtils.isEmpty(from)) {
-            log.info("email address(from) cannot be EMPTY");
-            throw new ServerException("email address(from) cannot be EMPTY");
+            from = mailContent.getFrom();
         }
 
-        Matcher matcher = PATTERN_EMAIL_FORMAT.matcher(from);
-
-        if (!matcher.find()) {
-            log.info("unknow email address(from): {}", from);
-            throw new ServerException("unknow email address(from)");
+        if (!StringUtils.isEmpty(mailContent.getNickName())) {
+            displayName = mailContent.getNickName();
         }
 
-        if (StringUtils.isEmpty(subject)) {
-            log.info("email subject cannot be EMPTY");
-            throw new ServerException("email subject cannot be EMPTY");
+        if (StringUtils.isEmpty(mailContent.getSubject())) {
+            log.info("Email subject cannot be EMPTY");
+            throw new ServerException("Email subject cannot be EMPTY");
         }
 
-        if (null == to || to.length < 1) {
-            log.info("email address(to) cannot be EMPTY");
-            throw new ServerException("email address(to) cannot be EMPTY");
+        if (null == mailContent.getTo() || mailContent.getTo().length < 1) {
+            log.info("Email receiving address(to) cannot be EMPTY");
+            throw new ServerException("Email receiving address cannot be EMPTY");
         }
 
-        if (StringUtils.isEmpty(content)) {
-            log.info("email content cannot be EMPTY");
-            throw new ServerException("email content cannot be EMPTY");
-        }
+        boolean multipart = false, html = false;
+        String content = "<html></html>";
+        boolean emptyAttachments = CollectionUtils.isEmpty(mailContent.getAttachments());
 
-        long startTimestamp = System.currentTimeMillis();
-        log.info("start send email to {}", to);
-
-        try {
-
-            MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper messageHelper = new MimeMessageHelper(message, true);
-
-            messageHelper.setFrom(from, nickName);
-            messageHelper.setSubject(subject);
-            messageHelper.setTo(to);
-            if (null != cc && cc.length > 0) {
-                messageHelper.setCc(cc);
-            }
-            if (null != bcc && bcc.length > 0) {
-                messageHelper.setBcc(bcc);
-            }
-
-            if (StringUtils.isEmpty(content)) {
-                content = "<html></html>";
-            }
-            messageHelper.setText(content, true);
-
-            if (!CollectionUtils.isEmpty(files)) {
-                if (files.size() == 1) {
-                    File file = files.get(0);
-                    String attName = "attachment" + file.getName().substring(file.getName().lastIndexOf("."));
-                    messageHelper.addAttachment(attName, file);
-                } else {
-                    for (int i = 0; i < files.size(); i++) {
-                        File file = files.get(i);
-                        String attName = "attachment-" + (i + 1) + file.getName().substring(file.getName().lastIndexOf("."));
-                        messageHelper.addAttachment(attName, file);
-                    }
+        switch (mailContent.getMailContentType()) {
+            case TEXT:
+                if (StringUtils.isEmpty(mailContent.getContent()) && emptyAttachments) {
+                    throw new ServerException("Mail content cannot be EMPTY");
                 }
+                if (!emptyAttachments) {
+                    multipart = true;
+                }
+                content = mailContent.getContent();
+                break;
+            case HTML:
+                if (StringUtils.isEmpty(mailContent.getHtmlContent()) && emptyAttachments) {
+                    throw new ServerException("Mail content cannot be EMPTY");
+                }
+                if (!emptyAttachments) {
+                    multipart = true;
+                }
+                html = true;
+                content = mailContent.getHtmlContent() + "<br/>";
+                break;
+            case TEMPLATE:
+                if (StringUtils.isEmpty(mailContent.getTemplate()) && emptyAttachments) {
+                    throw new ServerException("Mail content cannot be EMPTY");
+                }
+                Context context = new Context();
+                if (!CollectionUtils.isEmpty(mailContent.getTemplateContent())) {
+                    mailContent.getTemplateContent().forEach(context::setVariable);
+                }
+                content = templateEngine.process(mailContent.getTemplate(), context);
+                html = true;
+                multipart = true;
+                break;
+        }
+
+        try {
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper messageHelper = new MimeMessageHelper(message, multipart);
+
+            messageHelper.setFrom(from, displayName);
+            messageHelper.setSubject(mailContent.getSubject());
+            messageHelper.setTo(mailContent.getTo());
+            if (null != mailContent.getCc() && mailContent.getCc().length > 0) {
+                messageHelper.setCc(mailContent.getCc());
+            }
+            if (null != mailContent.getBcc() && mailContent.getBcc().length > 0) {
+                messageHelper.setBcc(mailContent.getBcc());
+            }
+            messageHelper.setText(content, html);
+
+            if (!emptyAttachments) {
+                mailContent.getAttachments().forEach(attachment -> {
+                    try {
+                        if (attachment.isImage()) {
+                            messageHelper.addInline(attachment.getName(), attachment.getFile());
+                        } else {
+                            messageHelper.addAttachment(attachment.getName(), attachment.getFile());
+                        }
+                    } catch (MessagingException e) {
+                        log.warn(e.getMessage());
+                    }
+                });
             }
 
             javaMailSender.send(message);
-            log.info("Send mail success, in {} million seconds", System.currentTimeMillis() - startTimestamp);
+            log.info("MailUtil.sendMail sending: MailContent: {}, cost: {}", JSONObject.toJSONString(mailContent), watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (MessagingException e) {
             log.error("Send mail failed, {}\n", e.getMessage());
             e.printStackTrace();
@@ -207,182 +171,4 @@ public class MailUtils {
             e.printStackTrace();
         }
     }
-
-    /**
-     * 发送 Html 邮件
-     * 使用默认配置发送地址
-     *
-     * @param subject
-     * @param to
-     * @param content
-     * @throws ServerException
-     */
-    public void sendHtmlEmail(String subject, String to, String content, List<File> files) throws ServerException {
-        sendHtmlEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, content, files);
-    }
-
-    /**
-     * 发送 Html 邮件
-     * 使用默认配置发送地址
-     *
-     * @param subject
-     * @param to
-     * @param content
-     * @throws ServerException
-     */
-    public void sendHtmlEmail(String subject, String to, String[] cc, String[] bcc, String content, List<File> files) throws ServerException {
-        sendHtmlEmail(sendEmailfrom, nickName, subject, new String[]{to}, cc, bcc, content, files);
-    }
-
-    /**
-     * 发送模板邮件
-     *
-     * @param from     发件地址
-     * @param nickName 昵称
-     * @param subject  主题
-     * @param to       收件地址
-     * @param cc       抄送
-     * @param bcc      加密抄送
-     * @param template 模板地址
-     * @param content  模板内容
-     * @param excels   附件
-     * @throws ServerException
-     */
-    public void sendTemplateEmail(String from, String nickName, String subject, String[] to, String[] cc, String[] bcc,
-                                  String template, Map<String, Object> content, List<ExcelContent> excels, List<ImageContent> images) throws ServerException {
-
-        if (StringUtils.isEmpty(from)) {
-            log.info("email address(from) cannot be EMPTY");
-            throw new ServerException("email address(from) cannot be EMPTY");
-        }
-
-        Matcher matcher = PATTERN_EMAIL_FORMAT.matcher(from);
-
-        if (!matcher.find()) {
-            log.info("unknow email address(from): {}", from);
-            throw new ServerException("unknow email address(from)");
-        }
-
-        if (StringUtils.isEmpty(subject)) {
-            log.info("email subject cannot be EMPTY");
-            throw new ServerException("email subject cannot be EMPTY");
-        }
-
-        if (null == to || to.length < 1) {
-            log.info("email address(to) cannot be EMPTY");
-            throw new ServerException("email address(to) cannot be EMPTY");
-        }
-
-        if (StringUtils.isEmpty(template)) {
-            log.info("email template path is EMPTY");
-            throw new ServerException("email template path is EMPTY");
-        }
-
-        if (null == content) {
-            log.info("template content is EMPTY");
-            throw new ServerException("template content is EMPTY");
-        }
-
-        Context context = new Context();
-        for (Map.Entry<String, Object> entry : content.entrySet()) {
-            context.setVariable(entry.getKey(), entry.getValue());
-        }
-
-        long startTimestamp = System.currentTimeMillis();
-        log.info("start send email to {}", Arrays.toString(to));
-
-        try {
-            MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper messageHelper = new MimeMessageHelper(message, true);
-
-            messageHelper.setFrom(from, nickName);
-            messageHelper.setSubject(subject);
-            messageHelper.setSubject(subject);
-            messageHelper.setTo(to);
-            if (null != cc && cc.length > 0) {
-                messageHelper.setCc(cc);
-            }
-            if (null != bcc && bcc.length > 0) {
-                messageHelper.setBcc(bcc);
-            }
-
-            Map<String, File> imageFileMap = new HashMap<>();
-            List<String> imageContentIds = new ArrayList<>();
-            if (!CollectionUtils.isEmpty(images)) {
-                images.forEach(imageContent -> {
-                    if (imageContent.getImageFile() != null) {
-                        String contentId = CronJobMediaType.IMAGE.getType() + imageContent.getOrder();
-                        imageContentIds.add(contentId);
-                        imageFileMap.put(contentId, imageContent.getImageFile());
-                    }
-                });
-            }
-
-            if (!imageFileMap.isEmpty()) {
-                context.setVariable("images", imageContentIds);
-            }
-
-            String text = templateEngine.process(template, context);
-            messageHelper.setText(text, true);
-
-            if (!CollectionUtils.isEmpty(excels)) {
-                excels.forEach(excel -> {
-                    try {
-                        messageHelper.addAttachment(excel.getName() + FileTypeEnum.XLSX.getFormat(), excel.getFile());
-                    }
-                    catch (MessagingException e) {
-                        // ingorn
-                    }
-                });
-            }
-
-            if (!imageFileMap.isEmpty()) {
-                imageFileMap.forEach((contentId, file) -> {
-                    try {
-                        messageHelper.addInline(contentId, file);
-                    } catch (MessagingException e) {
-                    }
-                });
-            }
-
-            javaMailSender.send(message);
-            log.info("Send mail success, in {} million seconds", System.currentTimeMillis() - startTimestamp);
-        } catch (Exception e) {
-            log.error("Send mail failed, {}\n", e.getMessage());
-            e.printStackTrace();
-            throw new ServerException(e.getMessage());
-        }
-    }
-
-    /**
-     * 发送简单模板邮件
-     * 使用默认配置发送地址
-     *
-     * @param to       接收邮箱地址
-     * @param subject  主题
-     * @param template 模板地址
-     * @param content  内容【哈希，与模板对应】
-     * @throws ServerException
-     */
-    public void sendTemplateEmail(String to, String subject, String template, Map<String, Object> content) throws ServerException {
-        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, template, content, null, null);
-    }
-
-    /**
-     * 发送模板附件邮件
-     *
-     * @param subject  主题
-     * @param to       接收人
-     * @param cc       抄送
-     * @param bcc      加密抄送
-     * @param template 模板地址
-     * @param content  模板内容
-     * @param excels   附件
-     * @param images
-     * @throws ServerException
-     */
-    public void sendTemplateAttachmentsEmail(String subject, String to, String[] cc, String[] bcc, String template, Map<String, Object> content, List<ExcelContent> excels, List<ImageContent> images) throws ServerException {
-        sendTemplateEmail(sendEmailfrom, nickName, subject, new String[]{to}, cc, bcc, template, content, excels, images);
-    }
-
 }

@@ -20,9 +20,11 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
+import edp.core.enums.MailContentTypeEnum;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.model.MailContent;
 import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.LogNameEnum;
