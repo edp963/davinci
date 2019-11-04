@@ -352,6 +352,15 @@ public class UserServiceImpl implements UserService {
                 Constants.USER_ACTIVATE_EMAIL_TEMPLATE,
                 content);
 
+        MailContent mailContent = MailContent.MailContentBuilder.builder()
+                .withSubject(Constants.USER_ACTIVATE_EMAIL_SUBJECT)
+                .withTo(user.getEmail())
+                .withMainContent(MailContentTypeEnum.TEMPLATE)
+                .withTemplate(Constants.USER_ACTIVATE_EMAIL_TEMPLATE)
+                .withTemplateContent(content)
+                .build();
+
+        mailUtils.sendMail(mailContent);
         return true;
     }
 

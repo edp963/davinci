@@ -60,7 +60,10 @@ public class MailUtils {
     private TemplateEngine templateEngine;
 
     @Value("${spring.mail.username}")
-    private String sendEmailfrom;
+    private String mailUsername;
+
+    @Value("{spring.mail.fromAddress:}")
+    private String fromAddress;
 
     @Value("${spring.mail.nickname}")
     private String nickName;

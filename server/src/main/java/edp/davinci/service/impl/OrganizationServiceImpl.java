@@ -373,10 +373,15 @@ public class OrganizationServiceImpl implements OrganizationService {
         //aes加密token
         content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(orgInviteDetail), null));
         try {
-            mailUtils.sendTemplateEmail(member.getEmail(),
-                    String.format(Constants.INVITE_ORG_MEMBER_MAIL_SUBJECT, user.getUsername(), organization.getName()),
-                    Constants.INVITE_ORG_MEMBER_MAIL_TEMPLATE,
-                    content);
+            MailContent mailContent = MailContent.MailContentBuilder.builder()
+                    .withSubject(String.format(Constants.INVITE_ORG_MEMBER_MAIL_SUBJECT, user.getUsername(), organization.getName()))
+                    .withTo(member.getEmail())
+                    .withMainContent(MailContentTypeEnum.TEMPLATE)
+                    .withTemplate(Constants.INVITE_ORG_MEMBER_MAIL_TEMPLATE)
+                    .withTemplateContent(content)
+                    .build();
+
+            mailUtils.sendMail(mailContent);
         } catch (ServerException e) {
             log.info(e.getMessage());
             e.printStackTrace();

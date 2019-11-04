@@ -22,14 +22,15 @@ package edp.davinci.service.impl;
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.common.quartz.ScheduleService;
+import edp.core.enums.MailContentTypeEnum;
+import edp.core.exception.ServerException;
+import edp.core.model.MailAttachment;
+import edp.core.model.MailContent;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.MailUtils;
 import edp.core.utils.ServerUtils;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.enums.ActionEnum;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.CronJobMediaType;
-import edp.davinci.core.enums.LogNameEnum;
+import edp.davinci.core.enums.*;
 import edp.davinci.dao.*;
 import edp.davinci.dto.cronJobDto.CronJobConfig;
 import edp.davinci.dto.cronJobDto.CronJobContent;
@@ -61,8 +62,9 @@ import org.springframework.stereotype.Service;
 
 import javax.script.ScriptEngine;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static edp.core.consts.Consts.EMPTY;
 import static edp.core.consts.Consts.SEMICOLON;
@@ -105,7 +107,6 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     @Autowired
     private ServerUtils serverUtils;
 
-
     @Autowired
     private ScreenshotUtil screenshotUtil;
 
@@ -115,75 +116,81 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
     private static final String PORTAL = "PORTAL";
 
-    private final static ExecutorService executorService = Executors.newFixedThreadPool(4);
-
-    private final static ReentrantLock lock = new ReentrantLock();
-
     @Override
     public void execute(long jobId) throws Exception {
         CronJob cronJob = cronJobMapper.getById(jobId);
-        if (null != cronJob && !StringUtils.isEmpty(cronJob.getConfig())) {
-            scheduleLogger.info("CronJob (:{}) is started! ----------------", jobId);
-            CronJobConfig cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
-            if (null != cronJobConfig && !StringUtils.isEmpty(cronJobConfig.getType())) {
-                Map<String, Object> content = new HashMap<>();
-                User user = userMapper.selectByEmail(cronJobConfig.getTo());
-                String username = cronJobConfig.getTo().split(Constants.AT_SYMBOL)[0];
-                if (null != user) {
-                    username = StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName();
-                }
-                content.put("username", username);
-
-                List<ExcelContent> excels = null;
-                List<ImageContent> images = null;
-
-                User creater = userMapper.getById(cronJob.getCreateBy());
-
-                scheduleLogger.info("CronJob (:{}) job type is {}", jobId, cronJobConfig.getType());
-                if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-                    images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
-                } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
-                    try {
-                        excels = generateExcels(jobId, cronJobConfig, creater);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        scheduleLogger.error(e.getMessage());
-                    }
-                } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
-                    images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
-                    excels = new ArrayList<>();
-                    excels.addAll(generateExcels(jobId, cronJobConfig, creater));
-                }
-
-                String[] cc = null, bcc = null;
-                if (!StringUtils.isEmpty(cronJobConfig.getCc())) {
-                    cc = cronJobConfig.getCc().split(SEMICOLON);
-                }
-
-                if (!StringUtils.isEmpty(cronJobConfig.getBcc())) {
-                    bcc = cronJobConfig.getBcc().split(SEMICOLON);
-                }
-
-                if (!CollectionUtils.isEmpty(excels) || !CollectionUtils.isEmpty(images)) {
-                    scheduleLogger.info("CronJob (:{}): sending email, excel count: {}, image count: {}", jobId, excels == null ? 0 : excels.size(), images == null ? 0 : images.size());
-
-                    mailUtils.sendTemplateAttachmentsEmail(
-                            cronJobConfig.getSubject(),
-                            cronJobConfig.getTo(),
-                            cc,
-                            bcc,
-                            Constants.SCHEDULE_MAIL_TEMPLATE,
-                            content,
-                            excels,
-                            images);
-                } else {
-                    scheduleLogger.warn("CronJob (:{}): excel and image is empty, email will not be send", jobId);
-                }
-            } else {
-                log.warn("cron job config is not expected format: {}", cronJob.getConfig());
-                scheduleLogger.warn("cron job config is not expected format: {}", cronJob.getConfig());
-            }
+        if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
+            scheduleLogger.info("CronJob (:{}) config ie empty!", jobId);
+            return;
         }
+        scheduleLogger.info("CronJob (:{}) is started! ----------------", jobId);
+        CronJobConfig cronJobConfig = null;
+        try {
+            cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
+        } catch (Exception e) {
+            log.error("Cronjob (:{}), parse config ({}) error: {}", jobId, cronJob.getConfig(), e.getMessage());
+            return;
+        }
+
+        if (null == cronJobConfig || !StringUtils.isEmpty(cronJobConfig.getType())) {
+            log.warn("cron job config is not expected format: {}", cronJob.getConfig());
+            scheduleLogger.warn("cron job config is not expected format: {}", cronJob.getConfig());
+            return;
+        }
+
+        List<ExcelContent> excels = null;
+        List<ImageContent> images = null;
+
+        User creater = userMapper.getById(cronJob.getCreateBy());
+
+        if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
+            images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
+        } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
+            try {
+                excels = generateExcels(jobId, cronJobConfig, creater);
+            } catch (Exception e) {
+                e.printStackTrace();
+                scheduleLogger.error(e.getMessage());
+            }
+        } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
+            images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
+            excels = generateExcels(jobId, cronJobConfig, creater);
+        }
+
+        if (CollectionUtils.isEmpty(excels) && CollectionUtils.isEmpty(images)) {
+            log.warn("CronJob (:{}) Email content is empty", jobId);
+            return;
+        }
+
+        List<MailAttachment> attachmentList = new ArrayList<>();
+
+        if (!CollectionUtils.isEmpty(excels)) {
+            excels.forEach(excel -> attachmentList.add(new MailAttachment(excel.getName() + FileTypeEnum.XLSX.getFormat(), excel.getFile())));
+        }
+        if (!CollectionUtils.isEmpty(images)) {
+            images.forEach(image -> {
+                String contentId = CronJobMediaType.IMAGE.getType() + image.getOrder();
+                attachmentList.add(new MailAttachment(contentId, image.getImageFile(), image.getUrl(), true));
+            });
+        }
+
+        MailContent mailContent = null;
+        try {
+            mailContent = MailContent.MailContentBuilder.builder()
+                    .withSubject(cronJobConfig.getSubject())
+                    .withTo(cronJobConfig.getTo())
+                    .withCc(cronJobConfig.getCc())
+                    .withBcc(cronJobConfig.getBcc())
+                    .withMainContent(MailContentTypeEnum.HTML)
+                    .withHtmlContent(cronJobConfig.getContent())
+                    .withTemplate(Constants.SCHEDULE_MAIL_TEMPLATE)
+                    .withAttachments(attachmentList)
+                    .build();
+        } catch (ServerException e) {
+            log.error("EmailScheduleServiceImpl.execute, build MailContent error: {}", e.getMessage());
+            scheduleLogger.error("EmailScheduleServiceImpl.execute, build MailContent error: {}", e.getMessage());
+        }
+        mailUtils.sendMail(mailContent);
         scheduleLogger.info("CronJob (:{}) is finish! --------------", jobId);
     }
 
