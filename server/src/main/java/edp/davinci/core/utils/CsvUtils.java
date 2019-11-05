@@ -98,11 +98,9 @@ public class CsvUtils {
                 dataUploadEntity.setValues(values);
             }
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new ServerException(e.getMessage(), e);
         } catch (Exception e) {
             e.printStackTrace();
+            throw new ServerException(e.getMessage());
         } finally {
             FileUtils.closeCloseable(csvParser);
             FileUtils.closeCloseable(reader);
@@ -191,13 +189,12 @@ public class CsvUtils {
         }
         return csvFullName;
     }
-    
+
     private static void flushFlushable(Flushable f) {
-        if(f != null) {
+        if (f != null) {
             try {
                 f.flush();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
