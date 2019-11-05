@@ -22,13 +22,15 @@ package edp.davinci.service.impl;
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.common.quartz.ScheduleService;
+import edp.core.enums.MailContentTypeEnum;
+import edp.core.exception.ServerException;
+import edp.core.model.MailAttachment;
+import edp.core.model.MailContent;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.MailUtils;
 import edp.core.utils.ServerUtils;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.enums.ActionEnum;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.CronJobMediaType;
+import edp.davinci.core.enums.*;
 import edp.davinci.dao.*;
 import edp.davinci.dto.cronJobDto.CronJobConfig;
 import edp.davinci.dto.cronJobDto.CronJobContent;
@@ -51,6 +53,8 @@ import edp.davinci.service.excel.WorkBookContext;
 import edp.davinci.service.screenshot.ImageContent;
 import edp.davinci.service.screenshot.ScreenshotUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,19 +63,18 @@ import org.springframework.stereotype.Service;
 import javax.script.ScriptEngine;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
 
 import static edp.core.consts.Consts.EMPTY;
-import static edp.core.consts.Consts.SEMICOLON;
 import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
 
 @Slf4j
 @Service("emailScheduleService")
 public class EmailScheduleServiceImpl implements ScheduleService {
+
+    private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
     @Autowired
     private CronJobMapper cronJobMapper;
@@ -103,7 +106,6 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     @Autowired
     private ServerUtils serverUtils;
 
-
     @Autowired
     private ScreenshotUtil screenshotUtil;
 
@@ -111,66 +113,84 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     @Value("${source.result-limit:1000000}")
     private int resultLimit;
 
-    private static final String portal = "PORTAL";
-
-    private final static ExecutorService executorService = Executors.newFixedThreadPool(4);
-
-    private final static ReentrantLock lock = new ReentrantLock();
+    private static final String PORTAL = "PORTAL";
 
     @Override
     public void execute(long jobId) throws Exception {
         CronJob cronJob = cronJobMapper.getById(jobId);
-        if (null != cronJob && !StringUtils.isEmpty(cronJob.getConfig())) {
-            log.info("Cronjob (:{}) is started!", jobId);
-            CronJobConfig cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
-            if (null != cronJobConfig && !StringUtils.isEmpty(cronJobConfig.getType())) {
-                Map<String, Object> content = new HashMap<>();
-                User user = userMapper.selectByEmail(cronJobConfig.getTo());
-                String username = cronJobConfig.getTo().split(Constants.AT_SYMBOL)[0];
-                if (null != user) {
-                    username = StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName();
-                }
-                content.put("username", username);
-
-                List<ExcelContent> excels = null;
-                List<ImageContent> images = null;
-
-                User creater = userMapper.getById(cronJob.getCreateBy());
-
-                if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-                    images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
-                } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
-                    excels = generateExcels(jobId, cronJobConfig, creater);
-                } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
-                    images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
-                    excels = new ArrayList<>();
-                    excels.addAll(generateExcels(jobId, cronJobConfig, creater));
-                }
-
-                String[] cc = null, bcc = null;
-                if (!StringUtils.isEmpty(cronJobConfig.getCc())) {
-                    cc = cronJobConfig.getCc().split(SEMICOLON);
-                }
-
-                if (!StringUtils.isEmpty(cronJobConfig.getBcc())) {
-                    bcc = cronJobConfig.getBcc().split(SEMICOLON);
-                }
-
-                if (!CollectionUtils.isEmpty(excels) || !CollectionUtils.isEmpty(images)) {
-                    mailUtils.sendTemplateAttachmentsEmail(
-                            cronJobConfig.getSubject(),
-                            cronJobConfig.getTo(),
-                            cc,
-                            bcc,
-                            Constants.SCHEDULE_MAIL_TEMPLATE,
-                            content,
-                            excels,
-                            images);
-                }
-            } else {
-                log.warn("cron job config is not expected format: {}", cronJob.getConfig());
-            }
+        if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
+            scheduleLogger.info("CronJob (:{}) config ie empty!", jobId);
+            return;
         }
+        scheduleLogger.info("CronJob (:{}) is started! ----------------", jobId);
+        CronJobConfig cronJobConfig = null;
+        try {
+            cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
+        } catch (Exception e) {
+            log.error("Cronjob (:{}), parse config ({}) error: {}", jobId, cronJob.getConfig(), e.getMessage());
+            return;
+        }
+
+        if (null == cronJobConfig || !StringUtils.isEmpty(cronJobConfig.getType())) {
+            log.warn("cron job config is not expected format: {}", cronJob.getConfig());
+            scheduleLogger.warn("cron job config is not expected format: {}", cronJob.getConfig());
+            return;
+        }
+
+        List<ExcelContent> excels = null;
+        List<ImageContent> images = null;
+
+        User creater = userMapper.getById(cronJob.getCreateBy());
+
+        if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
+            images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
+        } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
+            try {
+                excels = generateExcels(jobId, cronJobConfig, creater);
+            } catch (Exception e) {
+                e.printStackTrace();
+                scheduleLogger.error(e.getMessage());
+            }
+        } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
+            images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
+            excels = generateExcels(jobId, cronJobConfig, creater);
+        }
+
+        if (CollectionUtils.isEmpty(excels) && CollectionUtils.isEmpty(images)) {
+            log.warn("CronJob (:{}) Email content is empty", jobId);
+            return;
+        }
+
+        List<MailAttachment> attachmentList = new ArrayList<>();
+
+        if (!CollectionUtils.isEmpty(excels)) {
+            excels.forEach(excel -> attachmentList.add(new MailAttachment(excel.getName() + FileTypeEnum.XLSX.getFormat(), excel.getFile())));
+        }
+        if (!CollectionUtils.isEmpty(images)) {
+            images.forEach(image -> {
+                String contentId = CronJobMediaType.IMAGE.getType() + image.getOrder();
+                attachmentList.add(new MailAttachment(contentId, image.getImageFile(), image.getUrl(), true));
+            });
+        }
+
+        MailContent mailContent = null;
+        try {
+            mailContent = MailContent.MailContentBuilder.builder()
+                    .withSubject(cronJobConfig.getSubject())
+                    .withTo(cronJobConfig.getTo())
+                    .withCc(cronJobConfig.getCc())
+                    .withBcc(cronJobConfig.getBcc())
+                    .withMainContent(MailContentTypeEnum.HTML)
+                    .withHtmlContent(cronJobConfig.getContent())
+                    .withTemplate(Constants.SCHEDULE_MAIL_TEMPLATE)
+                    .withAttachments(attachmentList)
+                    .build();
+        } catch (ServerException e) {
+            log.error("EmailScheduleServiceImpl.execute, build MailContent error: {}", e.getMessage());
+            scheduleLogger.error("EmailScheduleServiceImpl.execute, build MailContent error: {}", e.getMessage());
+        }
+        mailUtils.sendMail(mailContent);
+        scheduleLogger.info("CronJob (:{}) is finish! --------------", jobId);
     }
 
 
@@ -184,6 +204,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
      * @throws Exception
      */
     private List<ImageContent> generateImages(long jobId, CronJobConfig cronJobConfig, Long userId) throws Exception {
+        scheduleLogger.info("CronJob (:{}) fetching images contents", jobId);
         int order = 0;
         List<ImageContent> imageContents = new ArrayList<>();
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
@@ -192,8 +213,9 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             order++;
         }
         if (!CollectionUtils.isEmpty(imageContents)) {
-            screenshotUtil.screenshot(jobId, imageContents);
+            screenshotUtil.screenshot(jobId, imageContents, cronJobConfig.getImageWidth());
         }
+        scheduleLogger.info("CronJob (:{}) fetched images contents, count: {}", jobId, imageContents.size());
         return imageContents;
     }
 
@@ -204,7 +226,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         String type = "";
         if ("widget".equalsIgnoreCase(contentType)) {
             type = "widget";
-        } else if ("portal".equalsIgnoreCase(contentType) || "dashboard".equalsIgnoreCase(contentType)) {
+        } else if (PORTAL.equalsIgnoreCase(contentType) || "dashboard".equalsIgnoreCase(contentType)) {
             type = "dashboard";
         } else {
             type = "";
@@ -212,12 +234,12 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
         sb.append(serverUtils.getLocalHost())
                 .append("/share.html#/share/")
-                .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("portal") ? "dashboard" : contentType)
+                .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase(PORTAL) ? "dashboard" : contentType)
                 .append("?shareInfo=")
                 .append(shareToken);
 
         if (!StringUtils.isEmpty(type)) {
-            sb.append("&type=" + type);
+            sb.append("&type=").append(type);
         }
 
         return sb.toString();
@@ -233,31 +255,22 @@ public class EmailScheduleServiceImpl implements ScheduleService {
      * @throws Exception
      */
     private List<ExcelContent> generateExcels(Long cronJobId, CronJobConfig cronJobConfig, User user) throws Exception {
+        scheduleLogger.info("CronJob (:{}) fetching excel contents", cronJobId);
+
         ScriptEngine engine = getExecuptParamScriptEngine();
 
         Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
 
+        Set<Long> dashboardIdList = new HashSet<>();
+
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
             if (CheckEntityEnum.DASHBOARD.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())
-                    || portal.equalsIgnoreCase(cronJobContent.getContentType().trim())) {
-                DashboardWithPortal dashboard = dashboardMapper.getDashboardWithPortalAndProject(cronJobContent.getId());
-                if (dashboard != null) {
-
-                    ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
-                    boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
-
-                    Set<WidgetWithRelationDashboardId> set = widgetMapper.getByDashboard(dashboard.getId());
-                    if (!CollectionUtils.isEmpty(set)) {
-                        List<WidgetContext> widgetContexts = new ArrayList<>();
-                        set.forEach(w -> {
-                            Widget widget = new Widget();
-                            BeanUtils.copyProperties(w, widget);
-                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, dashboard.getConfig(), widget.getConfig(), w.getRelationId());
-                            widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
-                        });
-
-                        workBookContextMap.put(dashboard.getName(), WorkBookContext.newWorkBookContext(widgetContexts, user, resultLimit));
-                    }
+                    || PORTAL.equalsIgnoreCase(cronJobContent.getContentType().trim())) {
+                //兼容原始结构：contentId 为 dashboardId
+                if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
+                    dashboardIdList.add(cronJobContent.getId());
+                } else {
+                    dashboardIdList.addAll(cronJobContent.getItems());
                 }
             } else if (CheckEntityEnum.DISPLAY.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())) {
                 Display display = displayMapper.getById(cronJobContent.getId());
@@ -274,28 +287,74 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                             widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
                         });
 
-                        workBookContextMap.put(display.getName(), WorkBookContext.newWorkBookContext(widgetContexts, user, resultLimit));
+                        WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
+                                .withWidgets(widgetContexts)
+                                .withUser(user)
+                                .withResultLimit(resultLimit)
+                                .withTaskKey("Schedule_" + cronJobId)
+                                .withCustomLogger(scheduleLogger)
+                                .build();
+
+                        workBookContextMap.put(display.getName(), workBookContext);
                     }
                 }
             }
         }
 
+        if (CollectionUtils.isEmpty(dashboardIdList)) {
+            scheduleLogger.warn("CronJob (:{}): dashboards is empty", cronJobId);
+            return null;
+        } else {
+            scheduleLogger.info("CronJob (:{}): dashboards size: {}", cronJobId, dashboardIdList.size());
+        }
+
+        for (Long dId : dashboardIdList) {
+            DashboardWithPortal dashboard = dashboardMapper.getDashboardWithPortalAndProject(dId);
+            if (dashboard != null) {
+                ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
+                boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
+
+                Set<WidgetWithRelationDashboardId> set = widgetMapper.getByDashboard(dashboard.getId());
+                if (!CollectionUtils.isEmpty(set)) {
+                    List<WidgetContext> widgetContexts = new ArrayList<>();
+                    set.forEach(w -> {
+                        Widget widget = new Widget();
+                        BeanUtils.copyProperties(w, widget);
+                        ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, dashboard.getConfig(), widget.getConfig(), w.getRelationId());
+                        widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
+                    });
+
+                    WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
+                            .withWidgets(widgetContexts)
+                            .withUser(user)
+                            .withResultLimit(resultLimit)
+                            .withTaskKey("Schedule_" + cronJobId)
+                            .withCustomLogger(scheduleLogger)
+                            .build();
+
+                    workBookContextMap.put(dashboard.getName(), workBookContext);
+                }
+            }
+        }
+
         if (CollectionUtils.isEmpty(workBookContextMap)) {
+            scheduleLogger.warn("CronJob (:{}):  WorkbookContext is empty", cronJobId);
             return null;
         }
 
         List<ExcelContent> excelContents = new CopyOnWriteArrayList<>();
         Map<String, Future<String>> excelPathFutureMap = new LinkedHashMap<>();
         workBookContextMap.forEach((name, context) -> {
+            scheduleLogger.info("CronJob (:{}): submit Workbook task: {}", cronJobId, name);
             String uuid = UUID.randomUUID().toString().replace("-", EMPTY);
             context.setWrapper(new MsgWrapper(new MsgMailExcel(cronJobId), ActionEnum.MAIL, uuid));
-            excelPathFutureMap.put(name, ExecutorUtil.submitWorkbookTask(context));
+            excelPathFutureMap.put(name, ExecutorUtil.submitWorkbookTask(context, scheduleLogger));
         });
 
         excelPathFutureMap.forEach((name, future) -> {
             String excelPath = null;
             try {
-                excelPath = future.get();
+                excelPath = future.get(1, TimeUnit.HOURS);
             } catch (Exception e) {
                 log.warn(e.getMessage());
             }
@@ -303,6 +362,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 excelContents.add(new ExcelContent(name, excelPath));
             }
         });
+        scheduleLogger.info("CronJob (:{}) fetched excel contents, count {}", cronJobId, excelContents.size());
 
         return excelContents.isEmpty() ? null : excelContents;
     }

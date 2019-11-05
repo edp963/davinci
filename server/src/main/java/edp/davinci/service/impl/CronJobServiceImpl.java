@@ -59,6 +59,8 @@ import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 @Service("cronJobService")
 public class CronJobServiceImpl implements CronJobService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
+    private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
+
 
     @Autowired
     private ProjectService projectService;
@@ -106,6 +108,24 @@ public class CronJobServiceImpl implements CronJobService {
             return null;
         }
         return cronJobMapper.getByProject(projectId);
+    }
+
+    @Override
+    public CronJob getCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        CronJob cronJob = cronJobMapper.getById(id);
+        ProjectDetail projectDetail = null;
+        try {
+            projectDetail = projectService.getProjectDetail(cronJob.getProjectId(), user, false);
+        } catch (NotFoundException e) {
+            return null;
+        } catch (UnAuthorizedExecption e) {
+            return null;
+        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        if (projectPermission.getSchedulePermission() < UserPermissionEnum.READ.getPermission()) {
+            return null;
+        }
+        return cronJob;
     }
 
 
@@ -315,6 +335,7 @@ public class CronJobServiceImpl implements CronJobService {
                             countDownLatch.countDown();
                             redisUtils.delete(flag);
                             log.info("CronJob (:{}) is stoped", id, flag);
+                            scheduleLogger.info("CronJob (:{}) is stoped", id, flag);
                             break;
                         }
                     }

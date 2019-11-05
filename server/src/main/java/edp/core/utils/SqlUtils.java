@@ -376,6 +376,9 @@ public class SqlUtils {
      * @throws SourceException
      */
     public List<String> getDatabases() throws SourceException {
+        if (this.dataTypeEnum == ELASTICSEARCH) {
+            return null;
+        }
         List<String> dbList = new ArrayList<>();
         Connection connection = null;
         try {
@@ -415,7 +418,9 @@ public class SqlUtils {
      * @throws SourceException
      */
     public List<QueryColumn> getTableList(String dbName) throws SourceException {
-
+        if (this.dataTypeEnum == ELASTICSEARCH) {
+            return null;
+        }
         List<QueryColumn> tableList = null;
         Connection connection = null;
         ResultSet tables = null;
@@ -458,11 +463,10 @@ public class SqlUtils {
     }
 
     private String getDBSchemaPattern(String schema) {
-
-        String schemaPattern = null;
-        if (dataTypeEnum == null) {
+        if (dataTypeEnum == null || this.dataTypeEnum == ELASTICSEARCH) {
             return null;
         }
+        String schemaPattern = null;
         switch (dataTypeEnum) {
             case ORACLE:
                 schemaPattern = this.jdbcSourceInfo.getUsername();
@@ -493,6 +497,9 @@ public class SqlUtils {
      * @throws SourceException
      */
     public TableInfo getTableInfo(String dbName, String tableName) throws SourceException {
+        if (this.dataTypeEnum == ELASTICSEARCH) {
+            return null;
+        }
         TableInfo tableInfo = null;
         Connection connection = null;
         try {

@@ -112,11 +112,13 @@ public class JdbcDataSource {
     }
 
     public synchronized DruidDataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
-        String key = SourceUtils.getKey(jdbcSourceInfo.getJdbcUrl(),
-                jdbcSourceInfo.getUsername(),
-                jdbcSourceInfo.getPassword(),
-                jdbcSourceInfo.getDbVersion(),
-                jdbcSourceInfo.isExt());
+        String jdbcUrl = jdbcSourceInfo.getJdbcUrl();
+        String username = jdbcSourceInfo.getUsername();
+        String password = jdbcSourceInfo.getPassword();
+        String dbVersion = jdbcSourceInfo.getDbVersion();
+        boolean ext = jdbcSourceInfo.isExt();
+
+        String key = SourceUtils.getKey(jdbcUrl, username, password, dbVersion, ext);
 
         if (dataSourceMap.containsKey(key) && dataSourceMap.get(key) != null) {
             DruidDataSource druidDataSource = dataSourceMap.get(key);
@@ -129,29 +131,29 @@ public class JdbcDataSource {
 
         DruidDataSource instance = new DruidDataSource();
 
-        if (StringUtils.isEmpty(jdbcSourceInfo.getDbVersion()) ||
-                !jdbcSourceInfo.isExt() || JDBC_DATASOURCE_DEFAULT_VERSION.equals(jdbcSourceInfo.getDbVersion())) {
+        if (StringUtils.isEmpty(dbVersion) ||
+                !ext || JDBC_DATASOURCE_DEFAULT_VERSION.equals(dbVersion)) {
 
-            String className = SourceUtils.getDriverClassName(jdbcSourceInfo.getJdbcUrl(), null);
+            String className = SourceUtils.getDriverClassName(jdbcUrl, null);
             try {
                 Class.forName(className);
             } catch (ClassNotFoundException e) {
-                throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
+                throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
             }
 
             instance.setDriverClassName(className);
 
         } else {
             String path = ((ServerUtils) SpringContextHolder.getBean(ServerUtils.class)).getBasePath()
-                    + String.format(Consts.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), jdbcSourceInfo.getDbVersion());
+                    + String.format(Consts.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), dbVersion);
             instance.setDriverClassLoader(ExtendedJdbcClassLoader.getExtJdbcClassLoader(path));
         }
 
-        instance.setUrl(jdbcSourceInfo.getJdbcUrl());
-        instance.setUsername(jdbcSourceInfo.getUsername());
+        instance.setUrl(jdbcUrl);
+        instance.setUsername(username);
 
-        if (!jdbcSourceInfo.getJdbcUrl().toLowerCase().contains(DataTypeEnum.PRESTO.getFeature())) {
-            instance.setPassword(jdbcSourceInfo.getPassword());
+        if (!jdbcUrl.toLowerCase().contains(DataTypeEnum.PRESTO.getFeature())) {
+            instance.setPassword(password);
         }
 
         instance.setInitialSize(initialSize);

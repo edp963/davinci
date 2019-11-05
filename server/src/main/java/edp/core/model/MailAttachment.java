@@ -17,20 +17,29 @@
  *
  */
 
-package edp.davinci.core.enums;
+package edp.core.model;
 
-public enum LogNameEnum {
-    BUSINESS_SQL("BUSINESS_SQL"),
-    BUSINESS_OPERATION("BUSINESS_OPERATION"),
-    BUSINESS_SCHEDULE("BUSINESS_SCHEDULE");
+import lombok.Data;
 
+import java.io.File;
+
+@Data
+public class MailAttachment {
     private String name;
+    private File file;
+    private String url = null;
 
-    LogNameEnum(String name) {
+    private boolean isImage = false;
+
+    public MailAttachment(String name, File file, String url, boolean isImage) {
         this.name = name;
+        this.file = file;
+        this.url = url;
+        this.isImage = isImage;
     }
 
-    public String getName() {
-        return name;
+    public MailAttachment(String name, File file) {
+        this.name = name;
+        this.file = file;
     }
 }

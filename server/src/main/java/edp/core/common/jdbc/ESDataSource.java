@@ -45,15 +45,19 @@ public class ESDataSource {
     private static volatile Map<String, DataSource> esDataSourceMap = new HashMap<>();
 
     public static synchronized DataSource getDataSource(JdbcSourceInfo jdbcSourceInfo, JdbcDataSource jdbcDataSource) throws SourceException {
-        String key = SourceUtils.getKey(jdbcSourceInfo.getJdbcUrl(), jdbcSourceInfo.getUsername(), jdbcSourceInfo.getPassword(), null, false);
+        String jdbcUrl = jdbcSourceInfo.getJdbcUrl();
+        String username = jdbcSourceInfo.getUsername();
+        String password = jdbcSourceInfo.getPassword();
+        
+        String key = SourceUtils.getKey(jdbcUrl, username, password, null, false);
         if (!esDataSourceMap.containsKey(key) || null == esDataSourceMap.get(key)) {
             Properties properties = new Properties();
-            properties.setProperty(PROP_URL, jdbcSourceInfo.getJdbcUrl().trim());
-            if (!StringUtils.isEmpty(jdbcSourceInfo.getUsername())) {
-                properties.setProperty(PROP_USERNAME, jdbcSourceInfo.getUsername());
+            properties.setProperty(PROP_URL, jdbcUrl.trim());
+            if (!StringUtils.isEmpty(username)) {
+                properties.setProperty(PROP_USERNAME, username);
             }
-            if (!StringUtils.isEmpty(jdbcSourceInfo.getPassword())) {
-                properties.setProperty(PROP_PASSWORD, jdbcSourceInfo.getPassword());
+            if (!StringUtils.isEmpty(password)) {
+                properties.setProperty(PROP_PASSWORD, password);
             }
             properties.setProperty(PROP_MAXACTIVE, String.valueOf(jdbcDataSource.getMaxActive()));
             properties.setProperty(PROP_INITIALSIZE, String.valueOf(jdbcDataSource.getInitialSize()));

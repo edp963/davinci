@@ -20,9 +20,11 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
+import edp.core.enums.MailContentTypeEnum;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.model.MailContent;
 import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.LogNameEnum;
@@ -373,10 +375,15 @@ public class OrganizationServiceImpl implements OrganizationService {
         //aes加密token
         content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(orgInviteDetail), null));
         try {
-            mailUtils.sendTemplateEmail(member.getEmail(),
-                    String.format(Constants.INVITE_ORG_MEMBER_MAIL_SUBJECT, user.getUsername(), organization.getName()),
-                    Constants.INVITE_ORG_MEMBER_MAIL_TEMPLATE,
-                    content);
+            MailContent mailContent = MailContent.MailContentBuilder.builder()
+                    .withSubject(String.format(Constants.INVITE_ORG_MEMBER_MAIL_SUBJECT, user.getUsername(), organization.getName()))
+                    .withTo(member.getEmail())
+                    .withMainContent(MailContentTypeEnum.TEMPLATE)
+                    .withTemplate(Constants.INVITE_ORG_MEMBER_MAIL_TEMPLATE)
+                    .withTemplateContent(content)
+                    .build();
+
+            mailUtils.sendMail(mailContent);
         } catch (ServerException e) {
             log.info(e.getMessage());
             e.printStackTrace();

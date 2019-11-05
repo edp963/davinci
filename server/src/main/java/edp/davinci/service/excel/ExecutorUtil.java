@@ -21,6 +21,7 @@ package edp.davinci.service.excel;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
 import java.util.concurrent.*;
 
@@ -41,35 +42,38 @@ public class ExecutorUtil {
             new ThreadFactoryBuilder().setNameFormat("sheet-worker-%d").setDaemon(true).build());
 
 
-    public static <T> Future<T> submitWorkbookTask(WorkbookWorker worker) {
-        printThreadPoolStatusLog(WORKBOOK_WORKERS, "WORKBOOK_WORKERS");
+    public static <T> Future<T> submitWorkbookTask(WorkbookWorker worker, Logger customLogger) {
+        printThreadPoolStatusLog(WORKBOOK_WORKERS, "WORKBOOK_WORKERS", customLogger);
         return ExecutorUtil.WORKBOOK_WORKERS.submit(worker);
     }
 
-    public static <T> Future<T> submitWorkbookTask(WorkBookContext context) {
-        return ExecutorUtil.submitWorkbookTask(new WorkbookWorker(context));
+    public static <T> Future<T> submitWorkbookTask(WorkBookContext context, Logger customLogger) {
+        return ExecutorUtil.submitWorkbookTask(new WorkbookWorker(context), customLogger);
     }
 
-    public static <T> Future<T> submitSheetTask(SheetWorker worker) {
-        printThreadPoolStatusLog(SHEET_WORKERS, "SHEET_WORKERS");
+    public static <T> Future<T> submitSheetTask(SheetWorker worker, Logger customLogger) {
+        printThreadPoolStatusLog(SHEET_WORKERS, "SHEET_WORKERS", customLogger);
         return ExecutorUtil.SHEET_WORKERS.submit(worker);
     }
 
-    public static <T> Future<T> submitSheetTask(SheetContext context) {
-        return ExecutorUtil.submitSheetTask(new SheetWorker(context));
+    public static <T> Future<T> submitSheetTask(SheetContext context, Logger customLogger) {
+        return ExecutorUtil.submitSheetTask(new SheetWorker(context), customLogger);
     }
 
 
-    public static void printThreadPoolStatusLog(ExecutorService executorService, String serviceName) {
+    public static void printThreadPoolStatusLog(ExecutorService executorService, String serviceName, Logger customLogger) {
         ThreadPoolExecutor executor = (ThreadPoolExecutor) executorService;
-        log.info("{} keep alive time: {}, poolSize：{}, waiting queue size: {}, task count: {}, completed task size: {}",
+        Object[] args = {
                 serviceName,
                 executor.getKeepAliveTime(TimeUnit.SECONDS),
                 executor.getPoolSize(),
                 executor.getQueue().size(),
                 executor.getTaskCount(),
                 executor.getCompletedTaskCount()
-        );
-
+        };
+        log.info("{} keep alive time: {}, poolSize：{}, waiting queue size: {}, task count: {}, completed task size: {}", args);
+        if (customLogger != null) {
+            customLogger.info("{} keep alive time: {}, poolSize：{}, waiting queue size: {}, task count: {}, completed task size: {}", args);
+        }
     }
 }

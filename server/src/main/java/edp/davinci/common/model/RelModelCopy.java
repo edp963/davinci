@@ -17,20 +17,17 @@
  *
  */
 
-package edp.davinci.core.enums;
+package edp.davinci.common.model;
 
-public enum LogNameEnum {
-    BUSINESS_SQL("BUSINESS_SQL"),
-    BUSINESS_OPERATION("BUSINESS_OPERATION"),
-    BUSINESS_SCHEDULE("BUSINESS_SCHEDULE");
+import lombok.Getter;
 
-    private String name;
+@Getter
+public class RelModelCopy {
+    private Long originId;
+    private Long copyId;
 
-    LogNameEnum(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
+    public RelModelCopy(Long originId, Long copyId) {
+        this.originId = originId;
+        this.copyId = copyId;
     }
 }
