@@ -73,13 +73,11 @@ function appReducer (state = initialState, action) {
         .set('loginUser', null)
     case UPLOAD_AVATAR_SUCCESS:
       const newLoginUser = {...loginUser, ...{avatar: payload.path}}
-      localStorage.setItem('loginUser', JSON.stringify(newLoginUser))
       return state
         .set('loginUser', newLoginUser)
     case UPDATE_PROFILE_SUCCESS:
-      const {id, name, department, description } = payload
+      const {id, name, department, description } = payload.user
       const updateUserProfile = {...loginUser, id, name, department, description}
-      localStorage.setItem('loginUser', JSON.stringify(updateUserProfile))
       return state
         .set('loginUser', updateUserProfile)
     case SHOW_NAVIGATOR:
