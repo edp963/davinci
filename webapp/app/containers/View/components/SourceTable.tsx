@@ -250,6 +250,7 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
           <Col span={24}>
             <Select
               showSearch
+              dropdownMatchSelectWidth={false}
               placeholder="数据源"
               style={{width: '100%'}}
               value={sourceId}

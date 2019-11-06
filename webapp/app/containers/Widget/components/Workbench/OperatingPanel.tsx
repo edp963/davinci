@@ -1537,7 +1537,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     } = this.state
 
     const widgetPropsModel = selectedView && selectedView.model ? selectedView.model : {}
-  
+
     const { metrics } = dataParams
     const [dimetionsCount, metricsCount] = this.getDimetionsAndMetricsCount()
     const {
@@ -1879,6 +1879,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               size="small"
               placeholder="选择一个View"
               showSearch
+              dropdownMatchSelectWidth={false}
               value={selectedView && selectedView.id}
               onChange={this.viewSelect}
               filterOption={this.filterView}
