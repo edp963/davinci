@@ -40,16 +40,21 @@ import Styles from './MailTag.less'
 interface IMailTagProps {
   dataSource: IUserInfo[]
   value?: string
+  allowCreate?: boolean
   onLoadDataSource: (keyword: string) => void
   onChange?: (value: string) => void
   onFocus?: () => void
   onBlur?: () => void
 }
 
+// http://emailregex.com/
+const regexEmail = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+
 const MailTag: React.FC<IMailTagProps> = (props, ref) => {
   const {
     dataSource,
     value,
+    allowCreate,
     onLoadDataSource,
     onChange,
     onFocus,
@@ -75,6 +80,26 @@ const MailTag: React.FC<IMailTagProps> = (props, ref) => {
     },
     [value]
   )
+  const appendOptions = useMemo(() => {
+    if (!allowCreate) {
+      return []
+    }
+    const newEmail = keyword as string
+    if (!regexEmail.test(newEmail) || ~dataSource.findIndex(({ email }) => email === newEmail) < 0) {
+      return []
+    }
+    return [(
+      <Option key={newEmail} value={newEmail}>
+        <div className={Styles.mailOption}>
+          <Avatar path={null} size="small" />
+          <span>{newEmail.split('@')[0]}</span>
+          <span>{newEmail}</span>
+        </div>
+      </Option>
+    )]
+  }, [allowCreate, keyword])
+  const autoCompleteOptions = appendOptions.concat(options)
+
   const emails = useMemo(() => (value ? value.split(';') : []), [value])
 
   const removeEmail = useCallback(
@@ -117,7 +142,7 @@ const MailTag: React.FC<IMailTagProps> = (props, ref) => {
       <AutoComplete
         placeholder="输入邮箱或姓名关键字查找..."
         value={keyword}
-        dataSource={options}
+        dataSource={autoCompleteOptions}
         optionLabelProp=""
         onFocus={onFocus}
         onBlur={onBlur}
