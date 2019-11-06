@@ -44,6 +44,7 @@ import {
 import 'react-quill/dist/quill.core.css'
 import 'react-quill/dist/quill.snow.css'
 
+Quill.register('modules/imageResize', ImageResize)
 const modules = {
   toolbar: [
     [{ font: [] }],
@@ -88,10 +89,6 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
       />
     </span>
   )
-
-  useEffect(() => {
-    Quill.register('modules/imageResize', ImageResize)
-  }, [])
 
   const resetMailList = useCallback(
     () => {
