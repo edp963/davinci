@@ -238,7 +238,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     const { name, selectedDate, datepickerValue } = this.state
     const today = moment().startOf('day').format(DEFAULT_DATETIME_FORMAT)
     const yesterday = moment().startOf('day').subtract(1, 'days').format(DEFAULT_DATETIME_FORMAT)
-    let tml = {
+    const tml = {
       name,
       operator: '>=',
       type: 'filter',
@@ -267,7 +267,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     } else if (selectedDate === '30') {
       tml.value = `'${moment().subtract(30, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
     } else if (selectedDate === '90') {
-      tml.value = `'${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'` 
+      tml.value = `'${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
     } else if (selectedDate === '365') {
       tml.value = `'${moment().subtract(365, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
     } else if (selectedDate === 'week') {
@@ -277,7 +277,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     } else if (selectedDate === 'quarter') {
       tml.value = `'${moment().startOf('quarter').format(DEFAULT_DATETIME_FORMAT)}'`
     } else if (selectedDate === 'year') {
-      tml.value = `'${name} >= '${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`
+      tml.value = `'${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`
     } else {
       const resultJson = [
         {
