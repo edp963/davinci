@@ -383,7 +383,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                     .withTemplateContent(content)
                     .build();
 
-            mailUtils.sendMail(mailContent);
+            mailUtils.sendMail(mailContent, null);
         } catch (ServerException e) {
             log.info(e.getMessage());
             e.printStackTrace();

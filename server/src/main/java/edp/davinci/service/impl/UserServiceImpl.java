@@ -349,7 +349,7 @@ public class UserServiceImpl implements UserService {
                 .withTemplateContent(content)
                 .build();
 
-        mailUtils.sendMail(mailContent);
+        mailUtils.sendMail(mailContent, null);
         return true;
     }
 

@@ -31,6 +31,8 @@ public class Consts {
 
     public static final String SLASH = "/";
 
+    public static final String DOUBLE_SLASH = "//";
+
     public static final String SPACE = " ";
 
     public static final String EMPTY = "";

@@ -29,6 +29,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +52,18 @@ public class MailContent {
 
     private Map<String, Object> templateContent;
     private List<MailAttachment> attachments;
+
+    @Override
+    public String toString() {
+        return "MailContent{" +
+                "from='" + from + '\'' +
+                ", subject='" + subject + '\'' +
+                ", to=" + Arrays.toString(to) +
+                ", cc=" + Arrays.toString(cc) +
+                ", bcc=" + Arrays.toString(bcc) +
+                ", attachments.size=" + (CollectionUtils.isEmpty(attachments) ? 0 : attachments.size()) +
+                '}';
+    }
 
     public static final class MailContentBuilder {
         private String from;

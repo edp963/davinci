@@ -20,11 +20,11 @@
 package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
-import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Stopwatch;
 import edp.core.exception.ServerException;
 import edp.core.model.MailContent;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -54,14 +54,14 @@ public class MailUtils {
     @Value("${spring.mail.username}")
     private String mailUsername;
 
-    @Value("{spring.mail.fromAddress:}")
+    @Value("${spring.mail.fromAddress:}")
     private String fromAddress;
 
     @Value("${spring.mail.nickname}")
     private String nickName;
 
 
-    public void sendMail(MailContent mailContent) throws ServerException {
+    public void sendMail(MailContent mailContent, Logger customLogger) throws ServerException {
         Stopwatch watch = Stopwatch.createStarted();
         if (mailContent == null) {
             throw new ServerException("Mail content is null");
@@ -73,7 +73,10 @@ public class MailUtils {
         if (!StringUtils.isEmpty(mailContent.getFrom())) {
             Matcher matcher = PATTERN_EMAIL_FORMAT.matcher(mailContent.getFrom());
             if (!matcher.find()) {
-                log.info("Unknown email sending address: {}", mailContent.getFrom());
+                log.error("Unknown email sending address: {}", mailContent.getFrom());
+                if (customLogger != null) {
+                    customLogger.error("Unknown email sending address: {}", mailContent.getFrom());
+                }
                 throw new ServerException("Unknown email sending address: " + mailContent.getFrom());
             }
             from = mailContent.getFrom();
@@ -84,12 +87,18 @@ public class MailUtils {
         }
 
         if (StringUtils.isEmpty(mailContent.getSubject())) {
-            log.info("Email subject cannot be EMPTY");
+            log.error("Email subject cannot be EMPTY");
+            if (customLogger != null) {
+                customLogger.error("Email subject cannot be EMPTY");
+            }
             throw new ServerException("Email subject cannot be EMPTY");
         }
 
         if (null == mailContent.getTo() || mailContent.getTo().length < 1) {
-            log.info("Email receiving address(to) cannot be EMPTY");
+            log.error("Email receiving address(to) cannot be EMPTY");
+            if (customLogger != null) {
+                log.error("Email receiving address(to) cannot be EMPTY");
+            }
             throw new ServerException("Email receiving address cannot be EMPTY");
         }
 
@@ -156,18 +165,30 @@ public class MailUtils {
                         }
                     } catch (MessagingException e) {
                         log.warn(e.getMessage());
+                        if (customLogger != null) {
+                            log.warn(e.getMessage());
+                        }
                     }
                 });
             }
 
             javaMailSender.send(message);
-            log.info("MailUtil.sendMail sending: MailContent: {}, cost: {}", JSONObject.toJSONString(mailContent), watch.elapsed(TimeUnit.MILLISECONDS));
+            log.info("Email sending --- content: {}, cost: {}", mailContent.toString(), watch.elapsed(TimeUnit.MILLISECONDS));
+            if (customLogger != null) {
+                customLogger.info("Email sending --- content: {}, cost: {}", mailContent.toString(), watch.elapsed(TimeUnit.MILLISECONDS));
+            }
         } catch (MessagingException e) {
             log.error("Send mail failed, {}\n", e.getMessage());
+            if (customLogger != null) {
+                customLogger.error("Send mail failed, {}\n", e.getMessage());
+            }
             e.printStackTrace();
             throw new ServerException(e.getMessage());
         } catch (UnsupportedEncodingException e) {
             log.error("Send mail failed, {}\n", e.getMessage());
+            if (customLogger != null) {
+                customLogger.error("Send mail failed, {}\n", e.getMessage());
+            }
             e.printStackTrace();
         }
     }
