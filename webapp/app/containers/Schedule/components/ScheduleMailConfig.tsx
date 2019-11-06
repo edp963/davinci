@@ -163,6 +163,7 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
           initialValue: config.to
         })(
           <MailTag
+            allowCreate
             dataSource={mailList}
             onLoadDataSource={onLoadMailList}
             onBlur={resetMailList}
@@ -174,6 +175,7 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
           initialValue: config.cc
         })(
           <MailTag
+            allowCreate
             dataSource={mailList}
             onLoadDataSource={onLoadMailList}
             onBlur={resetMailList}
@@ -186,6 +188,7 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
             initialValue: config.bcc
           })(
             <MailTag
+              allowCreate
               dataSource={mailList}
               onLoadDataSource={onLoadMailList}
               onBlur={resetMailList}
