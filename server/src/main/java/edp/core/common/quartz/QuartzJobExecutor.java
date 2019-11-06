@@ -63,6 +63,8 @@ public class QuartzJobExecutor implements Job {
                     try {
                         scheduleService.execute(scheduleJob.getId());
                     } catch (Exception e) {
+                        e.printStackTrace();
+                        log.error(e.getMessage());
                         scheduleLogger.error(e.getMessage());
                     }
                 } else {

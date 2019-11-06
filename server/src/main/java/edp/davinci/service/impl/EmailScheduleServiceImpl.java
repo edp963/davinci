@@ -131,7 +131,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             return;
         }
 
-        if (null == cronJobConfig || !StringUtils.isEmpty(cronJobConfig.getType())) {
+        if (null == cronJobConfig || StringUtils.isEmpty(cronJobConfig.getType())) {
             log.warn("cron job config is not expected format: {}", cronJob.getConfig());
             scheduleLogger.warn("cron job config is not expected format: {}", cronJob.getConfig());
             return;
@@ -156,11 +156,6 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             excels = generateExcels(jobId, cronJobConfig, creater);
         }
 
-        if (CollectionUtils.isEmpty(excels) && CollectionUtils.isEmpty(images)) {
-            log.warn("CronJob (:{}) Email content is empty", jobId);
-            return;
-        }
-
         List<MailAttachment> attachmentList = new ArrayList<>();
 
         if (!CollectionUtils.isEmpty(excels)) {
@@ -171,6 +166,12 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 String contentId = CronJobMediaType.IMAGE.getType() + image.getOrder();
                 attachmentList.add(new MailAttachment(contentId, image.getImageFile(), image.getUrl(), true));
             });
+        }
+
+        if (CollectionUtils.isEmpty(attachmentList)) {
+            log.warn("CronJob (:{}) Email content is empty", jobId);
+            scheduleLogger.warn("CronJob (:{}) Email content is empty", jobId);
+            return;
         }
 
         MailContent mailContent = null;
@@ -189,7 +190,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             log.error("EmailScheduleServiceImpl.execute, build MailContent error: {}", e.getMessage());
             scheduleLogger.error("EmailScheduleServiceImpl.execute, build MailContent error: {}", e.getMessage());
         }
-        mailUtils.sendMail(mailContent);
+        mailUtils.sendMail(mailContent, null);
         scheduleLogger.info("CronJob (:{}) is finish! --------------", jobId);
     }
 
