@@ -128,7 +128,9 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
       }, () => {
         if (previousDashboard) {
           this.batchChange()
-          this.search()
+          if (queryMode === GlobalControlQueryMode.Immediately) {
+            this.search()
+          }
         }
       })
     }
