@@ -115,6 +115,7 @@ interface IScheduleEditorDispatchProps {
   onLoadScheduleDetail: (scheduleId: number) => void
   onAddSchedule: (schedule: ISchedule, resolve: () => void) => any
   onEditSchedule: (schedule: ISchedule, resolve: () => void) => any
+  onResetState: () => void
   onCheckUniqueName: (
     data: any,
     resolve: () => any,
@@ -133,6 +134,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
     onLoadDisplays,
     onLoadPortals,
     onLoadScheduleDetail,
+    onResetState,
     params,
     router
   } = props
@@ -143,6 +145,10 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
     onLoadPortals(+projectId)
     if (+scheduleId) {
       onLoadScheduleDetail(+scheduleId)
+    }
+
+    return () => {
+      onResetState()
     }
   }, [])
   const goBack = useCallback(() => {
@@ -329,6 +335,7 @@ const mapDispatchToProps = (dispatch) => ({
     dispatch(ScheduleActions.addSchedule(schedule, resolve)),
   onEditSchedule: (schedule, resolve) =>
     dispatch(ScheduleActions.editSchedule(schedule, resolve)),
+  onResetState: () => dispatch(ScheduleActions.resetScheduleState()),
   onCheckUniqueName: (data, resolve, reject) =>
     dispatch(checkNameUniqueAction('cronjob', data, resolve, reject)),
   onLoadSuggestMails: (keyword) =>
