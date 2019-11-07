@@ -52,7 +52,9 @@ import dashboardSaga from 'containers/Dashboard/sagas'
 import { Row, Col, Card, Button, Icon, Tooltip, message } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
 
-import ScheduleBaseConfig, { ScheduleBaseFormProps } from './components/ScheduleBaseConfig'
+import ScheduleBaseConfig, {
+  ScheduleBaseFormProps
+} from './components/ScheduleBaseConfig'
 import ScheduleMailConfig from './components/ScheduleMailConfig'
 import ScheduleVizConfig from './components/ScheduleVizConfig'
 import { IRouteParams } from 'app/routes'
@@ -168,13 +170,18 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
           return false // Display does not need to load slides currently
         }
         if (portals.findIndex((portal) => portal.id === id) < 0) {
-          return true // id from portal do not need to load portal's dashboards
+          return true // old invalid portal id need load all dashboards
         }
       })
       if (needLoadAllDashboards) {
         portals.forEach(({ id }) => {
           onLoadDashboards(id)
         })
+      } else {
+        // init load dashboards by contentList setting
+        contentList
+          .filter(({ contentType }) => contentType === 'portal')
+          .forEach(({ id }) => onLoadDashboards(id))
       }
     },
     [portals, editingSchedule]
