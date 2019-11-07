@@ -100,7 +100,7 @@ const MailTag: React.FC<IMailTagProps> = (props, ref) => {
   }, [allowCreate, keyword])
   const autoCompleteOptions = appendOptions.concat(options)
 
-  const emails = useMemo(() => (value ? value.split(';') : []), [value])
+  const emails = useMemo(() => (value ? value.split(';').filter((val) => !!val) : []), [value])
 
   const removeEmail = useCallback(
     (email) => () => {

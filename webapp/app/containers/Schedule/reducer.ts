@@ -91,6 +91,8 @@ const scheduleReducer = (state = initialState, action: ScheduleActionType) =>
       case ActionTypes.EDIT_SCHEDULE_FAILURE:
         draft.loading.edit = false
         break
+      case ActionTypes.RESET_SCHEDULE_STATE:
+        return initialState
 
       case ActionTypes.CHANGE_SCHEDULE_STATUS_SUCCESS:
         draft.schedules.splice(

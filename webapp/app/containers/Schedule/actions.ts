@@ -159,6 +159,13 @@ export const ScheduleActions = {
     }
   },
 
+  resetScheduleState () {
+    return {
+      type: ActionTypes.RESET_SCHEDULE_STATE,
+      payload: {}
+    }
+  },
+
   loadSuggestMails(keyword: string) {
     return {
       type: ActionTypes.LOAD_SUGGEST_MAILS,
