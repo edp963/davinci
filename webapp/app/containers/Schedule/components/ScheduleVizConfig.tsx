@@ -195,7 +195,7 @@ const ScheduleVizConfig: React.FC<IScheduleVizConfigProps> = (props) => {
                 title="确认清除所有勾选项？"
                 onConfirm={clearSelection('portal')}
               >
-                <Button size="small" type="link" icon="close" />
+                <Button size="small" type="primary">重置</Button>
               </Popconfirm>
             </Row>
           }
@@ -237,7 +237,7 @@ const ScheduleVizConfig: React.FC<IScheduleVizConfigProps> = (props) => {
                 title="确认清除所有勾选项？"
                 onConfirm={clearSelection('display')}
               >
-                <Button size="small" type="link" icon="close" />
+                <Button size="small" type="primary">重置</Button>
               </Popconfirm>
             </Row>
           }
