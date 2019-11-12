@@ -102,7 +102,7 @@ export class Report extends React.Component<IReportProps & RouteComponentWithPar
     const whichModuleHasPermission = Object.entries(permission).map(([k, v]) => k !== 'projectId' && typeof v === 'number' && v ? k : void 0).filter((a) => a)
     if (location.pathname.endsWith(`/project/${projectId}`)) {
       if (whichModuleHasPermission.some((p) => p === 'vizPermission')) {
-        this.props.history.replace(`/project/${match.params.pid}/viz`)
+        this.props.history.replace(`/project/${match.params.pid}/vizs`)
         return
       }
 

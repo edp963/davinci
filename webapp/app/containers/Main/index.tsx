@@ -39,7 +39,7 @@ import { Viz } from 'containers/Viz/Loadable'
 import { Widget, Workbench } from 'containers/Widget/Loadable'
 import { View, ViewEditor } from 'containers/View/Loadable'
 import { Source } from 'containers/Source/Loadable'
-import { Schedule } from 'containers/Schedule/Loadable'
+import { Schedule, ScheduleEditor } from 'containers/Schedule/Loadable'
 
 import { Dashboard } from 'containers/Dashboard/Loadable'
 import { DisplayEditor, DisplayPreview } from 'containers/Display/Loadable'
@@ -137,8 +137,8 @@ export class Main extends React.Component<IMainProps & RouteComponentWithParams,
               <Route exact path="/project/:pid/display/:displayId" component={DisplayEditor} />
               <Route exact path="/project/:pid/display/preview/:displayId" component={DisplayPreview} />
               <Route exact path="/project/:pid/widget/:wid" component={Workbench} />
-              <Route exact path="/project/:pid/view" component={ViewEditor} />
-              <Route exact path="/project/:pid/view/:viewId" component={ViewEditor} />
+              <Route exact path="/project/:pid/view/:viewId?" component={ViewEditor} />
+              <Route exact path="/project/:pid/schedule/:scheduleId?" component={ScheduleEditor} />
 
               <Route path="/projects/" component={Project} />
               <Route path="/project/:pid" render={this.renderReport} />
