@@ -54,7 +54,6 @@ import Container from 'components/Container'
 import Box from 'components/Box'
 
 import { ISchedule, JobStatus, IScheduleLoading } from './types'
-import { IRouteParams } from 'app/routes'
 import { IProject } from 'containers/Projects/types'
 
 import utilStyles from 'assets/less/util.less'

@@ -99,7 +99,10 @@ const shareReducer = (state = initialState, action) =>
                   if (ctrl && ctrl.type === 'date') {
                     ctrl.dynamicDefaultValue = DatePickerDefaultValues.Custom
                   }
-                  ctrl.defaultValue = Array.isArray(defaultValue) && defaultValue.length ? defaultValue.map((val) => decodeURI(val)) : decodeURI(defaultValue)
+                  ctrl.defaultValue =
+                    Array.isArray(defaultValue) && defaultValue.length
+                      ? defaultValue.map((val) => decodeURI(val))
+                      : decodeURI(defaultValue)
                 }
               })
             }
