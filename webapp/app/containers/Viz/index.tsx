@@ -65,7 +65,7 @@ export class Viz extends React.Component<IVizProps & RouteComponentWithParams, I
 
   public componentWillMount () {
     const { match, onLoadDisplays, onLoadPortals } = this.props
-    const projectId = match.params.pid
+    const projectId = match.params.projectId
     onLoadDisplays(projectId)
     onLoadPortals(projectId)
   }
@@ -73,12 +73,12 @@ export class Viz extends React.Component<IVizProps & RouteComponentWithParams, I
   private goToDashboard = (portal?: any) => () => {
     const { history, match } = this.props
     const { id, name } = portal
-    history.push(`/project/${match.params.pid}/portal/${id}`)
+    history.push(`/project/${match.params.projectId}/portal/${id}`)
   }
 
   private goToDisplay = (display?: any) => () => {
     const { match, currentProject: { permission: { vizPermission }} } = this.props
-    const projectId = match.params.pid
+    const projectId = match.params.projectId
     const isToPreview = vizPermission === 1
     const path = isToPreview ? `/project/${projectId}/display/preview/${display ? display.id : -1}` : `/project/${projectId}/display/${display ? display.id : -1}`
     this.props.history.push(path)
@@ -103,7 +103,7 @@ export class Viz extends React.Component<IVizProps & RouteComponentWithParams, I
       displays, match, onAddDisplay, onEditDisplay, onDeleteDisplay,
       portals, onAddPortal, onEditPortal, onDeletePortal, currentProject, onCheckUniqueName
     } = this.props
-    const projectId = +match.params.pid
+    const projectId = +match.params.projectId
     const isHideDashboardStyle = classnames({
       [styles.listPadding]: true,
       [utilStyles.hide]: !this.state.collapse.dashboard

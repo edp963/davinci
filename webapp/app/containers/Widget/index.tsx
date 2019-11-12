@@ -122,7 +122,7 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
       onLoadViews,
       match
     } = this.props
-    const projectId = +match.params.pid
+    const projectId = +match.params.projectId
 
     onLoadWidgets(projectId)
     onLoadViews(projectId)
@@ -145,7 +145,7 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
   private toWorkbench = (widgetId) => () => {
     const { history, match } = this.props
     sessionStorage.removeItem('editWidgetFromDashboard')
-    history.push(`/project/${match.params.pid}/widget/${widgetId}`)
+    history.push(`/project/${match.params.projectId}/widget/${widgetId}`)
   }
 
   private hideWorkbench = () => {
@@ -198,7 +198,7 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
 
         const widgetValue = {
           ...values,
-          projectId: Number(match.params.pid)
+          projectId: Number(match.params.projectId)
         }
 
         this.props.onAddWidget(widgetValue, () => {
@@ -418,7 +418,7 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
         >
           <CopyWidgetForm
             type={workbenchType}
-            projectId={match.params.pid}
+            projectId={match.params.projectId}
             onCheckUniqueName={onCheckUniqueName}
             ref={(f) => { this.copyWidgetForm = f }}
           />

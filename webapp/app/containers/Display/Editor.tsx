@@ -190,7 +190,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
   public componentDidMount () {
     const { match: { params }, onLoadDisplayDetail, onHideNavigator } = this.props
-    const projectId = +params.pid
+    const projectId = +params.projectId
     const displayId = +params.displayId
     onLoadDisplayDetail(projectId, displayId)
     onHideNavigator()
@@ -775,10 +775,10 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
   private toWorkbench = (_, widgetId) => {
     const { match, history } = this.props
-    const { pid, displayId } = match.params
-    const editSign = [pid, displayId].join(DEFAULT_SPLITER)
+    const { projectId, displayId } = match.params
+    const editSign = [projectId, displayId].join(DEFAULT_SPLITER)
     sessionStorage.setItem('editWidgetFromDisplay', editSign)
-    history.push(`/project/${pid}/widget/${widgetId}`)
+    history.push(`/project/${projectId}/widget/${widgetId}`)
   }
 
   public render () {

@@ -181,9 +181,9 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
   public componentWillMount () {
     // this.props.onHideNavigator()
     const { match, history, dashboards, onLoadDashboards, onLoadPortals, onLoadProjectDetail, onLoadProjectRoles } = this.props
-    const { pid, portalId, dashboardId } = match.params
+    const { projectId, portalId, dashboardId } = match.params
 
-    onLoadProjectRoles(Number(pid))
+    onLoadProjectRoles(Number(projectId))
     onLoadDashboards(+portalId, (result) => {
       let defaultDashboardId = 0
       const dashboardData = listToTree(result, 0)
@@ -196,7 +196,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
 
       if (defaultDashboardId >= 0) {
         if (!dashboardId) {
-          history.replace(`/project/${pid}/portal/${portalId}/dashboard/${defaultDashboardId}`)
+          history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${defaultDashboardId}`)
         }
       }
 
@@ -214,15 +214,15 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
     //     const currentdashboardId = dashboardId ? Number(dashboardId) : defaultDashboardId
     //     const selectedDashboard = (result as any).find((r) => r.id === currentdashboardId)
     //     console.log(selectedDashboard)
-    //     this.props.onLoadDashboardDetail(selectedDashboard, params.pid, params.portalId, currentdashboardId)
+    //     this.props.onLoadDashboardDetail(selectedDashboard, params.projectId, params.portalId, currentdashboardId)
     //   } else {
     //     this.setState({
     //       isGrid: false
     //     })
     //   }
     // })
-    onLoadPortals(pid, +portalId)
-    onLoadProjectDetail(pid)
+    onLoadPortals(projectId, +portalId)
+    onLoadProjectDetail(projectId)
   }
 
   private initalDashboardData (dashboards) {
@@ -245,7 +245,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
 
   private changeDashboard = (dashboardId) => (e) => {
     const { match, history } = this.props
-    const { pid, portalId, dashboardId: currentDashboardId } = match.params
+    const { projectId, portalId, dashboardId: currentDashboardId } = match.params
     if (+currentDashboardId === dashboardId) {
       return
     }
@@ -253,7 +253,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
     this.setState({
       isGrid: true
     }, () => {
-      history.replace(`/project/${pid}/portal/${portalId}/dashboard/${dashboardId}`)
+      history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${dashboardId}`)
     })
   }
 
@@ -320,10 +320,10 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
               onAddDashboard(addObj, (dashboardId) => {
                 this.hideDashboardForm()
                 this.setState({ isGrid: true })
-                const { pid, portalId } = match.params
+                const { projectId, portalId } = match.params
                 addObj.type === 0
-                  ? history.replace(`/project/${pid}/portal/${portalId}`)
-                  : history.replace(`/project/${pid}/portal/${portalId}/dashboard/${dashboardId}`)
+                  ? history.replace(`/project/${projectId}/portal/${portalId}`)
+                  : history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${dashboardId}`)
               })
               break
             case 'edit':
@@ -561,7 +561,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
 
   private backPortal = () => {
     const { history, match } = this.props
-    history.replace(`/project/${match.params.pid}/vizs`)
+    history.replace(`/project/${match.params.projectId}/vizs`)
   }
 
   private pickSearchDashboard = (dashboardId) => (e) => {
@@ -585,7 +585,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
     const { dashboardData } = this.state
 
     onDeleteDashboard(id, () => {
-      const { pid, portalId } = match.params
+      const { projectId, portalId } = match.params
 
       const paramsDashboard = dashboards.find((d) => d.id === Number(match.params.dashboardId))
       const noCurrentDashboards = dashboardData.filter((d) => d.id !== id)
@@ -598,10 +598,10 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
         }
         if (Number(match.params.dashboardId) === id || paramsDashboard.parentId === id) {
           const defaultDashboardId = findFirstLeaf(treeData)
-          history.replace(`/project/${pid}/portal/${portalId}/dashboard/${defaultDashboardId}`)
+          history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${defaultDashboardId}`)
         }
       } else {
-        history.replace(`/project/${pid}/portal/${portalId}/dashboard/-1`)
+        history.replace(`/project/${projectId}/portal/${portalId}/dashboard/-1`)
         this.setState({
           isGrid: false
         })
@@ -650,7 +650,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
 
   private cancel = () => {
     const { history, match } = this.props
-    history.replace(`/project/${match.params.pid}/vizs`)
+    history.replace(`/project/${match.params.projectId}/vizs`)
   }
 
   private initCheckNodes = (checkedKeys) => {
@@ -860,7 +860,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
               <div className={styles.gridClass}>
                 {
                   isGrid
-                  ? <Route path="/project/:pid/portal/:portalId/dashboard/:dashboardId" component={Grid} />
+                  ? <Route path="/project/:projectId/portal/:portalId/dashboard/:dashboardId" component={Grid} />
                   : (
                     <div className={styles.noDashboard}>
                       <img src={require('assets/images/noDashboard.png')} onClick={this.onAddItem}/>

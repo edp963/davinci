@@ -91,7 +91,7 @@ export class App extends React.PureComponent<AppProps> {
       onGetLoginUser(() => {
         history.replace('/projects')
         // if (dashboard) {
-        //   router.replace(`/project/${this.props.params.pid}/dashboard/${dashboard}`)
+        //   router.replace(`/project/${this.props.params.projectId}/dashboard/${dashboard}`)
         // } else {
 
         // }

@@ -140,7 +140,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     super(props)
     const { onHideNavigator, onLoadSources, onLoadViewDetail, onLoadProjectRoles, onLoadDacChannels, match } = this.props
     onHideNavigator()
-    const { viewId, pid: projectId } = match.params
+    const { viewId, projectId } = match.params
     if (projectId) {
       onLoadSources(+projectId)
       onLoadProjectRoles(+projectId)
@@ -245,7 +245,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
 
   private saveView = () => {
     const { onAddView, onEditView, editingView, editingViewInfo, projectRoles, match } = this.props
-    const { pid: projectId } = match.params
+    const { projectId } = match.params
     const { model, variable, roles } = editingViewInfo
     const { id: viewId } = editingView
     const validRoles = roles.filter(({ roleId }) => projectRoles && projectRoles.findIndex(({ id }) => id === roleId) >= 0)
@@ -273,7 +273,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
 
   private goToViewList = () => {
     const { history, match } = this.props
-    const { pid: projectId } = match.params
+    const { projectId } = match.params
     history.push(`/project/${projectId}/views`)
   }
 

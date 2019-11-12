@@ -139,7 +139,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
     match,
     history
   } = props
-  const { pid: projectId, scheduleId } = match.params
+  const { projectId, scheduleId } = match.params
   useEffect(() => {
     onHideNavigator()
     onLoadDisplays(+projectId)

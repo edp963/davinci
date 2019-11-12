@@ -157,7 +157,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
 
   public componentWillMount () {
     const { onLoadSources, onLoadDatasourcesInfo, match } = this.props
-    const projectId = +match.params.pid
+    const projectId = +match.params.projectId
     onLoadSources(projectId)
     onLoadDatasourcesInfo()
     window.addEventListener('resize', this.setScreenWidth, false)
@@ -276,7 +276,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
 
   private addSource = () => {
     this.setState({
-      editingSource: { ...emptySource, projectId: +this.props.match.params.pid },
+      editingSource: { ...emptySource, projectId: +this.props.match.params.projectId },
       sourceModalVisible: true
     })
   }
@@ -354,7 +354,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
         ext: !!version,
         version
       },
-      projectId: Number(match.params.pid)
+      projectId: Number(match.params.projectId)
     }
 
     if (!values.id) {

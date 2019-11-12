@@ -380,9 +380,9 @@ export function* loadProjectDetail (action: DisplayActionType) {
   if (action.type !== ActionTypes.LOAD_CURRENT_PROJECT) { return }
 
   const { projectLoaded } = DisplayActions
-  const { pid } = action.payload
+  const { projectId } = action.payload
   try {
-    const asyncData = yield call(request, `${api.projects}/${pid}`)
+    const asyncData = yield call(request, `${api.projects}/${projectId}`)
     const project = asyncData.payload
     yield put(projectLoaded(project))
   } catch (err) {

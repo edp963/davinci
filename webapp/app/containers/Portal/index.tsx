@@ -85,7 +85,7 @@ export class Portal extends React.Component<IPortalProps & RouteComponentWithPar
   }
 
   public componentWillMount () {
-    this.props.onLoadPortals(+this.props.match.params.pid)
+    this.props.onLoadPortals(+this.props.match.params.projectId)
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
@@ -127,7 +127,7 @@ export class Portal extends React.Component<IPortalProps & RouteComponentWithPar
           description,
           name,
           publish,
-          projectId: +this.props.match.params.pid,
+          projectId: +this.props.match.params.projectId,
           avatar: formType === 'add' ? `${Math.ceil(Math.random() * 19)}` : avatar
         }
         if (formType === 'add') {
@@ -170,7 +170,7 @@ export class Portal extends React.Component<IPortalProps & RouteComponentWithPar
 
   private toDashboard = (d) => (e) => {
     const { match, history } = this.props
-    history.push(`/project/${match.params.pid}/portal/${d.id}`)
+    history.push(`/project/${match.params.projectId}/portal/${d.id}`)
   }
 
   public render () {
@@ -340,7 +340,7 @@ export class Portal extends React.Component<IPortalProps & RouteComponentWithPar
           onCancel={this.hidePortalForm}
         >
           {/* <PortalForm
-            projectId={params.pid}
+            projectId={params.projectId}
             type={formType}
             wrappedComponentRef={this.refHandlers.portalForm}
           /> */}

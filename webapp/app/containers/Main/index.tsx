@@ -52,7 +52,6 @@ import { NoAuthorization } from 'containers/NoAuthorization/Loadable'
 const styles = require('./Main.less')
 
 interface IMainProps {
-  params: {pid?: number}
   logged: boolean
   navigator: boolean
   onLogged: (user) => void
@@ -93,11 +92,11 @@ export class Main extends React.Component<IMainProps & RouteComponentWithParams,
     <Report>
       <Router>
         <Switch>
-          <Route path="/project/:pid/vizs" component={Viz} />
-          <Route path="/project/:pid/widgets" component={Widget} />
-          <Route exact path="/project/:pid/views" component={View} />
-          <Route path="/project/:pid/sources" component={Source} />
-          <Route path="/project/:pid/schedules" component={Schedule} />
+          <Route path="/project/:projectId/vizs" component={Viz} />
+          <Route path="/project/:projectId/widgets" component={Widget} />
+          <Route exact path="/project/:projectId/views" component={View} />
+          <Route path="/project/:projectId/sources" component={Source} />
+          <Route path="/project/:projectId/schedules" component={Schedule} />
         </Switch>
       </Router>
     </Report>
@@ -130,15 +129,15 @@ export class Main extends React.Component<IMainProps & RouteComponentWithParams,
           />
           <Router>
             <Switch>
-              <Route path="/project/:pid/portal/:portalId" component={Dashboard} />
-              <Route exact path="/project/:pid/display/:displayId" component={DisplayEditor} />
-              <Route exact path="/project/:pid/display/preview/:displayId" component={DisplayPreview} />
-              <Route exact path="/project/:pid/widget/:wid" component={Workbench} />
-              <Route exact path="/project/:pid/view/:viewId?" component={ViewEditor} />
-              <Route exact path="/project/:pid/schedule/:scheduleId?" component={ScheduleEditor} />
+              <Route path="/project/:projectId/portal/:portalId" component={Dashboard} />
+              <Route exact path="/project/:projectId/display/:displayId" component={DisplayEditor} />
+              <Route exact path="/project/:projectId/display/preview/:displayId" component={DisplayPreview} />
+              <Route exact path="/project/:projectId/widget/:widgetId" component={Workbench} />
+              <Route exact path="/project/:projectId/view/:viewId?" component={ViewEditor} />
+              <Route exact path="/project/:projectId/schedule/:scheduleId?" component={ScheduleEditor} />
 
               <Route path="/projects/" component={Project} />
-              <Route path="/project/:pid" render={this.renderReport} />
+              <Route path="/project/:projectId" render={this.renderReport} />
               <Route path="/account" render={this.renderAccount} />
               <Route path="/noAuthorization" component={NoAuthorization} />
               <Redirect to="/projects" />

@@ -210,7 +210,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps & RouteCo
       canUndo,
       canRedo
     } = this.props
-    const projectId = match.params.pid
+    const projectId = match.params.projectId
     const displayId = match.params.displayId
 
     const undoClass = classnames({

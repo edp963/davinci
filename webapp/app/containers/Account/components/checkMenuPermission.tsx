@@ -9,9 +9,9 @@ interface IModulePermissionProps {
   onClick?: any
   className?: string
   permission?: IOrganization
-  route?: any[]
+  indexRoute?: string
   active?: any
-  params?: any
+  projectId?: string
 }
 
 export default (project?: IProject, item?: any) => (WrapperComponent) => {

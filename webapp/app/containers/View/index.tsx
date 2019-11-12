@@ -101,7 +101,7 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
 
   private loadViews = () => {
     const { onLoadViews, match } = this.props
-    const { pid: projectId } = match.params
+    const { projectId } = match.params
     if (projectId) {
       onLoadViews(+projectId)
     }
@@ -230,7 +230,7 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
 
   private addView = () => {
     const { history, match } = this.props
-    history.push(`/project/${match.params.pid}/view`)
+    history.push(`/project/${match.params.projectId}/view`)
   }
 
   private copyView = (fromView: IViewBase) => () => {
@@ -256,7 +256,7 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
 
   private editView = (viewId: number) => () => {
     const { history, match } = this.props
-    history.push(`/project/${match.params.pid}/view/${viewId}`)
+    history.push(`/project/${match.params.projectId}/view/${viewId}`)
   }
 
   private deleteView = (viewId: number) => () => {

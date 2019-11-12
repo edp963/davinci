@@ -76,7 +76,7 @@ interface IProjectsProps {
   onGetProjectStarUser: (id: number) => any
   currentOrganizationProjects: IProject[]
   organizationMembers: any[]
-  onLoadVizs: (pid: number) => any
+  onLoadVizs: (projectId: number) => any
   onLoadOrganizations: () => any
   vizs: any
 }
@@ -466,7 +466,7 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadVizs: (pid) => dispatch(loadVizs(pid)),
+    onLoadVizs: (projectId) => dispatch(loadVizs(projectId)),
     onSetCurrentProject: (option) => dispatch(OrganizationActions.setCurrentProject(option)),
     onTransferProject: (id, orgId, resolve) => dispatch(ProjectActions.transferProject(id, orgId, resolve)),
     onStarProject: (id, resolve) => dispatch(ProjectActions.unStarProject(id, resolve)),

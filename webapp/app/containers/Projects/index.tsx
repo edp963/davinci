@@ -272,9 +272,9 @@ export class Projects extends React.PureComponent<IProjectsProps & RouteComponen
   }
 
   private toProject = (d: any) => () => {
-    const pid = d.id
-    this.props.history.push(`/project/${pid}`)
-   // this.props.onLoadProjectDetail(pid)
+    const projectId = d.id
+    this.props.history.push(`/project/${projectId}`)
+   // this.props.onLoadProjectDetail(projectId)
     this.saveHistory(d)
   }
 

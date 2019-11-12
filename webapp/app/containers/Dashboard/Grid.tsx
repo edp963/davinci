@@ -327,9 +327,9 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       onLoadDashboardDetail,
       match
     } = this.props
-    const { pid, portalId, dashboardId } = match.params
+    const { projectId, portalId, dashboardId } = match.params
     if (dashboardId && Number(dashboardId) !== -1) {
-      onLoadDashboardDetail(+pid, +portalId, Number(dashboardId))
+      onLoadDashboardDetail(+projectId, +portalId, Number(dashboardId))
     }
   }
 
@@ -346,12 +346,12 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     const { layoutInitialized } = this.state
 
     const { match, currentProject} = this.props
-    const { pid, portalId, dashboardId } = match.params
+    const { projectId, portalId, dashboardId } = match.params
 
     if (nextParams.dashboardId === dashboardId) {
       if (nextProps.currentDashboard !== this.props.currentDashboard) {
         statistic.setOperations({
-          project_id: +pid,
+          project_id: +projectId,
           project_name: currentProject.name,
           org_id: currentProject.orgId,
           viz_type: 'dashboard',
@@ -378,7 +378,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       })
 
       if (nextParams.dashboardId && Number(nextParams.dashboardId) !== -1) {
-        onLoadDashboardDetail(+nextParams.pid, +nextParams.portalId, +nextParams.dashboardId)
+        onLoadDashboardDetail(+nextParams.projectId, +nextParams.portalId, +nextParams.dashboardId)
       }
 
       statistic.setDurations({
@@ -936,8 +936,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
 
   private navDropdownClick = (e) => {
     const { match } = this.props
-    const { pid, portalId } = match.params
-    this.props.history.push(`/project/${pid}/portal/${portalId}/dashboard/${e.key}`)
+    const { projectId, portalId } = match.params
+    this.props.history.push(`/project/${projectId}/portal/${portalId}/dashboard/${e.key}`)
   }
 
   private nextNavDropdownClick = (e) => {
@@ -1182,10 +1182,10 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
   }
 
   private toWorkbench = (itemId, widgetId) => {
-    const { pid, portalId, dashboardId } = this.props.match.params
-    const editSign = [pid, portalId, dashboardId, itemId].join(DEFAULT_SPLITER)
+    const { projectId, portalId, dashboardId } = this.props.match.params
+    const editSign = [projectId, portalId, dashboardId, itemId].join(DEFAULT_SPLITER)
     sessionStorage.setItem('editWidgetFromDashboard', editSign)
-    this.props.history.push(`/project/${pid}/widget/${widgetId}`)
+    this.props.history.push(`/project/${projectId}/widget/${widgetId}`)
   }
 
   private onDrillPathData = (e) => {
@@ -1477,7 +1477,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
 
     this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
       if (params.dashboardId && Number(params.dashboardId) !== -1) {
-        onLoadDashboardDetail(+params.pid, +params.portalId, params.dashboardId)
+        onLoadDashboardDetail(+params.projectId, +params.portalId, +params.dashboardId)
       }
       this.hideDrillPathSettingModal()
     })

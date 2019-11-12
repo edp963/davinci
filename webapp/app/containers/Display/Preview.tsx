@@ -74,7 +74,7 @@ interface IPreviewProps {
   onMonitoredSearchDataAction: () => any
   onMonitoredLinkageDataAction: () => any
   currentProject: IProject
-  onloadProjectDetail: (pid) => any
+  onLoadProjectDetail: (projectId: number) => any
 }
 
 interface IPreviewStates {
@@ -96,12 +96,12 @@ export class Preview extends React.Component<IPreviewProps & RouteComponentWithP
     const {
       match,
       onLoadDisplayDetail,
-      onloadProjectDetail
+      onLoadProjectDetail
     } = this.props
-    const projectId = +match.params.pid
+    const projectId = +match.params.projectId
     const displayId = +match.params.displayId
     onLoadDisplayDetail(projectId, displayId)
-    onloadProjectDetail(projectId)
+    onLoadProjectDetail(projectId)
   }
 
   public componentDidMount () {
@@ -137,7 +137,7 @@ export class Preview extends React.Component<IPreviewProps & RouteComponentWithP
     const { scale } = this.state
     const [scaleWidth, scaleHeight] = scale
     const { match, currentDisplay, currentProject} = this.props
-    const projectId = match.params.pid
+    const projectId = match.params.projectId
     const displayId = match.params.displayId
     if (this.props.currentSlide) {
       this.statisticFirstVisit({
@@ -499,7 +499,7 @@ export function mapDispatchToProps (dispatch) {
     onMonitoredSyncDataAction: () => dispatch(DisplayActions.monitoredSyncDataAction()),
     onMonitoredSearchDataAction: () => dispatch(DisplayActions.monitoredSearchDataAction()),
     onMonitoredLinkageDataAction: () => dispatch(DisplayActions.monitoredLinkageDataAction()),
-    onloadProjectDetail: (pid) => dispatch(DisplayActions.loadProjectDetail(pid))
+    onLoadProjectDetail: (projectId) => dispatch(DisplayActions.loadProjectDetail(projectId))
   }
 }
 

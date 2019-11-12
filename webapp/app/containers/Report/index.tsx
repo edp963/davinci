@@ -87,12 +87,12 @@ export class Report extends React.Component<IReportProps & RouteComponentWithPar
   }
 
   public componentDidMount () {
-    const { pid } = this.props.match.params
+    const { projectId } = this.props.match.params
     this.props.onPageLoad()
     this.props.onShowNavigator()
-    if (pid) {
-      this.props.onLoadProjectDetail(+pid)
-      this.props.onLoadProjectRoles(+pid)
+    if (projectId) {
+      this.props.onLoadProjectDetail(+projectId)
+      this.props.onLoadProjectRoles(+projectId)
     }
   }
 
@@ -102,14 +102,14 @@ export class Report extends React.Component<IReportProps & RouteComponentWithPar
     const whichModuleHasPermission = Object.entries(permission).map(([k, v]) => k !== 'projectId' && typeof v === 'number' && v ? k : void 0).filter((a) => a)
     if (location.pathname.endsWith(`/project/${projectId}`)) {
       if (whichModuleHasPermission.some((p) => p === 'vizPermission')) {
-        this.props.history.replace(`/project/${match.params.pid}/vizs`)
+        this.props.history.replace(`/project/${match.params.projectId}/vizs`)
         return
       }
 
       SidebarPermissions.some((sidebarPermission) => {
         if (whichModuleHasPermission.includes(sidebarPermission)) {
           const path = sidebarPermission.slice(0, -10)
-          this.props.history.replace(`/project/${match.params.pid}/${path}s`)
+          this.props.history.replace(`/project/${match.params.projectId}/${path}s`)
           return true
         }
       })
@@ -153,6 +153,7 @@ export class Report extends React.Component<IReportProps & RouteComponentWithPar
     const {
       sidebar,
       location,
+      match,
       currentProject
     } = this.props
     const locationName = location.pathname.substr(location.pathname.lastIndexOf('/') + 1)
@@ -163,9 +164,9 @@ export class Report extends React.Component<IReportProps & RouteComponentWithPar
       return (
         <ProviderSidebar
           key={item.permission}
-          route={item.route}
+          indexRoute={item.route[0]}
           active={isOptionActive}
-          params={this.props.match.params}
+          projectId={match.params.projectId}
         >
           {item.icon}
         </ProviderSidebar>

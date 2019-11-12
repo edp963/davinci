@@ -148,8 +148,8 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
 
   public componentWillMount () {
     const { match, onLoadViews, onLoadWidgetDetail } = this.props
-    const projectId = +match.params.pid
-    const widgetId = match.params.wid
+    const projectId = +match.params.projectId
+    const widgetId = match.params.widgetId
     onLoadViews(projectId, () => {
       if (widgetId !== 'add' && !Number.isNaN(Number(widgetId))) {
         onLoadWidgetDetail(+widgetId)
@@ -257,7 +257,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
           description,
           type: 1,
           viewId: selectedViewId,
-          projectId: Number(match.params.pid),
+          projectId: Number(match.params.projectId),
           config: JSON.stringify({
             ...widgetProps,
             controls,
@@ -283,7 +283,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
           description,
           type: 1,
           viewId: selectedViewId,
-          projectId: Number(match.params.pid),
+          projectId: Number(match.params.projectId),
           config: JSON.stringify({
             ...widgetProps,
             controls,
@@ -382,7 +382,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
       description,
       type: 1,
       viewId: selectedViewId,
-      projectId: Number(match.params.pid),
+      projectId: Number(match.params.projectId),
       config: JSON.stringify({
         ...widgetProps,
         controls,
@@ -404,20 +404,20 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
         const editSignDisplay = sessionStorage.getItem('editWidgetFromDisplay')
         if (editSignDashboard) {
           sessionStorage.removeItem('editWidgetFromDashboard')
-          const [pid, portalId, dashboardId, itemId] = editSignDashboard.split(DEFAULT_SPLITER)
-          this.props.history.replace(`/project/${pid}/portal/${portalId}/dashboard/${dashboardId}`)
+          const [projectId, portalId, dashboardId, itemId] = editSignDashboard.split(DEFAULT_SPLITER)
+          this.props.history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${dashboardId}`)
         } else if (editSignDisplay) {
           sessionStorage.removeItem('editWidgetFromDisplay')
-          const [pid, displayId] = editSignDisplay.split(DEFAULT_SPLITER)
-          this.props.history.replace(`/project/${pid}/display/${displayId}`)
+          const [projectId, displayId] = editSignDisplay.split(DEFAULT_SPLITER)
+          this.props.history.replace(`/project/${projectId}/display/${displayId}`)
         } else {
-          this.props.history.replace(`/project/${match.params.pid}/widgets`)
+          this.props.history.replace(`/project/${match.params.projectId}/widgets`)
         }
       })
     } else {
       onAddWidget(widget, () => {
         message.success('添加成功')
-        this.props.history.replace(`/project/${match.params.pid}/widgets`)
+        this.props.history.replace(`/project/${match.params.projectId}/widgets`)
       })
     }
   }

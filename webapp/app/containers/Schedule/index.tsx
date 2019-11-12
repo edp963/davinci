@@ -149,13 +149,13 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
   const tablePagination = useTablePagination(0)
 
   useEffect(() => {
-    onLoadSchedules(+match.params.pid)
+    onLoadSchedules(+match.params.projectId)
   }, [])
 
   const addSchedule = useCallback(
     () => {
-      const { pid } = match.params
-      history.push(`/project/${pid}/schedule`)
+      const { projectId } = match.params
+      history.push(`/project/${projectId}/schedule`)
     },
     [currentProject]
   )
@@ -190,8 +190,8 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
 
   const editSchedule = useCallback(
     (scheduleId: number) => () => {
-      const { pid } = match.params
-      history.push(`/project/${pid}/schedule/${scheduleId}`)
+      const { projectId } = match.params
+      history.push(`/project/${projectId}/schedule/${scheduleId}`)
     },
     []
   )

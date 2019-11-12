@@ -2,10 +2,10 @@ import { RouteComponentProps } from 'react-router-dom'
 
 export interface IRouteParams {
   organizationId?: string
-  pid?: string
+  projectId?: string
   portalId?: string
   dashboardId?: string
-  wid?: string
+  widgetId?: string
   displayId?: string
   viewId?: string
   scheduleId?: string
