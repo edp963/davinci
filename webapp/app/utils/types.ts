@@ -9,7 +9,7 @@ export interface IRouteParams {
   displayId?: string
   viewId?: string
   scheduleId?: string
-  uid?: string
+  userId?: string
 }
 
 export type RouteComponentWithParams = RouteComponentProps<IRouteParams, {}>

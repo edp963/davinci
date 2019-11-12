@@ -108,7 +108,7 @@ export class Main extends React.Component<IMainProps & RouteComponentWithParams,
         <Switch>
           <Redirect from="/account" exact to="/account/profile" />
           <Route path="/account/profile" component={Profile} />
-          <Route path="/account/profile/:uid" component={UserProfile} />
+          <Route path="/account/profile/:userId" component={UserProfile} />
           <Route path="/account/resetPassword" component={ResetPassword} />
           <Route path="/account/organizations" component={OrganizationList} />
           <Route path="/account/organization/:organizationId" component={Organization} />

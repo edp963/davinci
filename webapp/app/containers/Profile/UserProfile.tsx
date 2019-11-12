@@ -29,7 +29,7 @@ interface IProfileProps {
 export class UserProfile extends React.PureComponent<IProfileProps & RouteComponentWithParams, {}> {
   public componentDidMount () {
     const { match, onGetUserProfile } = this.props
-    const userId = +match.params.uid
+    const userId = +match.params.userId
     onGetUserProfile(userId)
   }
   public componentWillReceiveProps (nextProps) {
