@@ -59,8 +59,6 @@ interface IMainProps {
   onLogout: () => void
   onGetLoginUser: (resolve: () => void) => any
   onLoadDownloadList: () => void
-  onShowNavigator: () => void
-  onHideNavigator: () => void
 }
 
 export class Main extends React.Component<IMainProps & RouteComponentWithParams, {}> {
@@ -121,14 +119,13 @@ export class Main extends React.Component<IMainProps & RouteComponentWithParams,
   )
 
   public render () {
-    const { logged, location } = this.props
-    const editingMode = !isNaN(+location.pathname.substr(location.pathname.lastIndexOf('/') + 1))
+    const { logged, navigator } = this.props
 
     return logged
       ? (
         <div className={styles.container}>
           <Navigator
-            show={!editingMode}
+            show={navigator}
             onLogout={this.logout}
           />
           <Router>
@@ -165,9 +162,7 @@ export function mapDispatchToProps (dispatch) {
     onLogged: (user) => dispatch(logged(user)),
     onLogout: () => dispatch(logout()),
     onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve)),
-    onLoadDownloadList: () => dispatch(loadDownloadList()),
-    onShowNavigator: () => dispatch(showNavigator()),
-    onHideNavigator: () => dispatch(hideNavigator())
+    onLoadDownloadList: () => dispatch(loadDownloadList())
   }
 }
 
