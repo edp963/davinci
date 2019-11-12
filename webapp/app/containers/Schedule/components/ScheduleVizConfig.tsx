@@ -111,13 +111,10 @@ const ScheduleVizConfig: React.FC<IScheduleVizConfigProps> = (props) => {
 
   const displayOptions = useMemo(
     () =>
-      // @FIXME immutable initial value is empty List object
-      !displays.length
-        ? []
-        : displays.map<CheckboxOptionType>(({ id, name }) => ({
-            label: name,
-            value: id
-          })),
+      displays.map<CheckboxOptionType>(({ id, name }) => ({
+        label: name,
+        value: id
+      })),
     [displays]
   )
 
@@ -267,7 +264,9 @@ const ScheduleVizConfig: React.FC<IScheduleVizConfigProps> = (props) => {
                 title="确认清除所有勾选项？"
                 onConfirm={clearSelection('portal')}
               >
-                <Button size="small" type="primary">重置</Button>
+                <Button size="small" type="primary">
+                  重置
+                </Button>
               </Popconfirm>
             </Row>
           }
@@ -303,7 +302,9 @@ const ScheduleVizConfig: React.FC<IScheduleVizConfigProps> = (props) => {
                 title="确认清除所有勾选项？"
                 onConfirm={clearSelection('display')}
               >
-                <Button size="small" type="primary">重置</Button>
+                <Button size="small" type="primary">
+                  重置
+                </Button>
               </Popconfirm>
             </Row>
           }
