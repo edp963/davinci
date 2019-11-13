@@ -165,24 +165,14 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
         return
       }
       const { contentList } = editingSchedule.config
-      const needLoadAllDashboards = contentList.some(({ contentType, id }) => {
-        if (contentType !== 'portal') {
-          return false // Display does not need to load slides currently
-        }
-        if (portals.findIndex((portal) => portal.id === id) < 0) {
-          return true // old invalid portal id need load all dashboards
-        }
-      })
-      if (needLoadAllDashboards) {
-        portals.forEach(({ id }) => {
-          onLoadDashboards(id)
+      // initial Dashboards loading by contentList Portal setting
+      contentList
+        .filter(({ contentType }) => contentType === 'portal')
+        .forEach(({ id }) => {
+          if (~portals.findIndex((portal) => portal.id === id)) {
+            onLoadDashboards(id)
+          }
         })
-      } else {
-        // init load dashboards by contentList setting
-        contentList
-          .filter(({ contentType }) => contentType === 'portal')
-          .forEach(({ id }) => onLoadDashboards(id))
-      }
     },
     [portals, editingSchedule]
   )

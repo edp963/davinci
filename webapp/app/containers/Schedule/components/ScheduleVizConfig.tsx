@@ -128,13 +128,14 @@ const ScheduleVizConfig: React.FC<IScheduleVizConfigProps> = (props) => {
         : value
             .filter(({ contentType }) => contentType === 'portal')
             .reduce<string[]>((acc, { id, items }) => {
+              // checked all Dashboards under this Portal
               if (!Array.isArray(items)) {
+                // check the Portal's validity
                 if (~portals.findIndex((portal) => portal.id === id)) {
                   acc.push(`${portalNodeKeyPrefix}${id}`)
-                } else {
-                  acc.push(`${dashboardNodeKeyPrefix}${id}`)
                 }
               } else {
+                // check the partial Dashboards under this Portal
                 items.map((dashboardId) => {
                   acc.push(`${dashboardNodeKeyPrefix}${dashboardId}`)
                 })
@@ -245,32 +246,12 @@ const ScheduleVizConfig: React.FC<IScheduleVizConfigProps> = (props) => {
     [value, onChange]
   )
 
-  const clearSelection = useCallback(
-    (clearContentType: IScheduleVizItem['contentType']) => () => {
-      const newValue = value.filter(
-        ({ contentType }) => contentType !== clearContentType
-      )
-      onChange(newValue)
-    },
-    [value, onChange]
-  )
-
   return (
     <Row gutter={8}>
       <Col span={12}>
         <Card
           size="small"
-          title={
-            <Row type="flex" justify="space-between">
-              <span>Dashboard</span>
-              <Popconfirm
-                title="确认清除所有勾选项？"
-                onConfirm={clearSelection('portal')}
-              >
-                <Button size="small" type="primary">重置</Button>
-              </Popconfirm>
-            </Row>
-          }
+          title="Dashboard"
         >
           <Tree
             checkable
@@ -296,17 +277,7 @@ const ScheduleVizConfig: React.FC<IScheduleVizConfigProps> = (props) => {
       <Col span={12}>
         <Card
           size="small"
-          title={
-            <Row type="flex" justify="space-between">
-              <span>Display</span>
-              <Popconfirm
-                title="确认清除所有勾选项？"
-                onConfirm={clearSelection('display')}
-              >
-                <Button size="small" type="primary">重置</Button>
-              </Popconfirm>
-            </Row>
-          }
+          title="Display"
         >
           {/* @TODO make it to tree select when has Display Slide feature */}
           <CheckboxGroup
