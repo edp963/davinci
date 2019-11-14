@@ -31,6 +31,7 @@ import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelec
 import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
 import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
 import TableSection from './ConfigSections/TableSection'
+import GaugeSection from './ConfigSections/GaugeSection'
 import { ITableConfig } from '../Config/Table'
 import BarSection from './ConfigSections/BarSection'
 import RadarSection from './ConfigSections/RadarSection'
@@ -40,14 +41,16 @@ import PivotTypes from '../../config/pivot/PivotTypes'
 import { uuid } from 'utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
-import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox, notification, Tooltip } from 'antd'
+import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox, notification, Tooltip, Select } from 'antd'
 import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 import { WorkbenchQueryMode } from './types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
+import { SelectProps } from 'antd/lib/select'
 const MenuItem = Menu.Item
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 const confirm = Modal.confirm
+const Option = Select.Option
 const styles = require('./Workbench.less')
 const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
@@ -949,11 +952,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
       updatedPagination.withPaging = withPaging
     }
-    // 生成filter
-    let requestParamsFilters = []
-    filters.items.forEach((item) => {
-      requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
-    })
+
+    const requestParamsFilters = filters.items.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
+
     const requestParams = {
       groups,
       aggregators,
@@ -1149,7 +1152,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
   }
 
-  private viewSelect = ({key}) => {
+  private viewSelect = (viewId: number) => {
     const { mode, dataParams } = this.state
     const hasItems = Object.values(dataParams)
       .filter((param) => !!param.items.length)
@@ -1158,13 +1161,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         title: '切换 View 会清空所有配置项，是否继续？',
         onOk: () => {
           this.resetWorkbench(mode)
-          this.props.onViewSelect(+key)
+          this.props.onViewSelect(viewId)
         }
       })
     } else {
-      this.props.onViewSelect(+key)
+      this.props.onViewSelect(viewId)
     }
   }
+
+  private filterView: SelectProps['filterOption'] = (input, option) =>
+    (option.props.children as string).toLowerCase().includes(input.toLowerCase())
 
   private changeMode = (e) => {
     const mode = e.target.value
@@ -1429,7 +1435,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private saveComputedConfig = (config) => {
-    console.log({config})
     const {onSetComputed} = this.props
     if (config) {
       onSetComputed(config)
@@ -1437,7 +1442,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private onShowEditComputed = (tag) => () => {
-    console.log({tag})
     this.setState({
       computedConfigModalVisible: true,
       selectedComputed: tag
@@ -1532,11 +1536,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       selectedComputed
     } = this.state
 
+    const widgetPropsModel = selectedView && selectedView.model ? selectedView.model : {}
+
     const { metrics } = dataParams
     const [dimetionsCount, metricsCount] = this.getDimetionsAndMetricsCount()
     const {
       spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend,
-      visualMap, toolbox, areaSelect, scorecard, iframe, table, bar, radar, doubleYAxis } = styleParams
+      visualMap, toolbox, areaSelect, scorecard, gauge, iframe, table, bar, radar, doubleYAxis } = styleParams
 
     let categoryDragItems = this.state.categoryDragItems
     if (mode === 'pivot'
@@ -1549,14 +1555,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         checked: false
       })
     }
-
-    const viewSelectMenu = (
-      <Menu onClick={this.viewSelect}>
-        {(views || []).map((v) => (
-          <MenuItem key={v.id}>{v.name}</MenuItem>
-        ))}
-      </Menu>
-    )
 
     const coustomFieldSelectMenu = (
       <Menu onClick={this.coustomFieldSelect}>
@@ -1669,7 +1667,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             {spec && <SpecSection
               name={chartModeSelectedChart.name}
               title={chartModeSelectedChart.title}
-              config={spec as ISpecConfig}
+              config={spec}
               onChange={this.styleChange2}
               isLegendSection={mapLegendLayerType}
             />}
@@ -1682,7 +1680,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             { mapLabelLayerType
                 ? label && <LabelSection
                   title="标签"
-                  config={label as ILabelConfig}
+                  config={label}
                   onChange={this.styleChange('label')}
                   name={chartModeSelectedChart.name}
                 />
@@ -1691,7 +1689,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             { mapLegendLayerType
                 ? legend && <LegendSection
                   title="图例"
-                  config={legend as ILegendConfig}
+                  config={legend}
                   onChange={this.styleChange('legend')}
                 />
                 : null
@@ -1700,63 +1698,68 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 ? null
                 : visualMap && <VisualMapSection
                   title="视觉映射"
-                  config={visualMap as IVisualMapConfig}
+                  config={visualMap}
                   onChange={this.styleChange('visualMap')}
                 />
             }
             {toolbox && <ToolboxSection
               title="工具"
-              config={toolbox as IToolboxConfig}
+              config={toolbox}
               onChange={this.styleChange('toolbox')}
             />}
             {doubleYAxis && <DoubleYAxisSection
               title="双Y轴"
-              config={doubleYAxis as IDoubleYAxisConfig}
+              config={doubleYAxis}
               onChange={this.styleChange('doubleYAxis')}
             />}
             {xAxis && <AxisSection
               title="X轴"
-              config={xAxis as IAxisConfig}
+              config={xAxis}
               onChange={this.styleChange('xAxis')}
             />}
             {yAxis && <AxisSection
               title="Y轴"
-              config={yAxis as IAxisConfig}
+              config={yAxis}
               onChange={this.styleChange('yAxis')}
             />}
             {axis && <AxisSection
               title="轴"
-              config={axis as IAxisConfig}
+              config={axis}
               onChange={this.styleChange('axis')}
             />}
             {splitLine && <SplitLineSection
               title="分隔线"
-              config={splitLine as ISplitLineConfig}
+              config={splitLine}
               onChange={this.styleChange('splitLine')}
             />}
             {areaSelect && <AreaSelectSection
               title="坐标轴框选"
-              config={areaSelect as IAreaSelectConfig}
+              config={areaSelect}
               onChange={this.styleChange('areaSelect')}
             />}
             {scorecard && <ScorecardSection
               title="翻牌器"
-              config={scorecard as IScorecardConfig}
+              config={scorecard}
               onChange={this.styleChange('scorecard')}
+            />}
+            {gauge && <GaugeSection
+              title="仪表盘"
+              config={gauge}
+              onChange={this.styleChange('gauge')}
             />}
             {iframe && <IframeSection
               title="内嵌网页"
-              config={iframe as IframeConfig}
+              config={iframe}
               onChange={this.styleChange('iframe')}
             />}
             {table && <TableSection
               dataParams={dataParams}
-              config={table as ITableConfig}
+              config={table}
               onChange={this.styleChange('table')}
             />}
             {pivotConfig && <PivotSection
               title="透视表"
-              config={pivotConfig as IPivotConfig}
+              config={pivotConfig}
               onChange={this.styleChange('pivot')}
             />}
           </div>
@@ -1872,9 +1875,17 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       <div className={styles.operatingPanel}>
         <div className={styles.model}>
           <div className={styles.viewSelect}>
-            <Dropdown overlay={viewSelectMenu} trigger={['click']} placement="bottomLeft">
-              <a>{selectedView ? selectedView.name : '选择一个View'}</a>
-            </Dropdown>
+            <Select
+              size="small"
+              placeholder="选择一个View"
+              showSearch
+              dropdownMatchSelectWidth={false}
+              value={selectedView && selectedView.id}
+              onChange={this.viewSelect}
+              filterOption={this.filterView}
+            >
+              {(views || []).map(({ id, name }) => <Option key={id} value={id}>{name}</Option>)}
+            </Select>
             {/* <Dropdown overlay={coustomFieldSelectMenu} trigger={['click']} placement="bottomRight">
               <Icon type="plus" />
             </Dropdown> */}
@@ -2053,6 +2064,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         >
           <FilterSettingForm
             item={modalCachedData}
+            model={widgetPropsModel}
             list={distinctColumnValues}
             config={filterSettingConfig}
             onSave={this.confirmFilterModal}

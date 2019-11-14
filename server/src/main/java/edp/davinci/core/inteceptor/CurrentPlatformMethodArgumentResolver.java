@@ -20,13 +20,9 @@
 package edp.davinci.core.inteceptor;
 
 import edp.core.annotation.CurrentPlatform;
-import edp.core.annotation.CurrentUser;
 import edp.core.consts.Consts;
 import edp.core.inteceptor.CurrentPlatformMethodArgumentResolverInterface;
-import edp.core.inteceptor.CurrentUserMethodArgumentResolverInterface;
 import edp.davinci.model.Platform;
-import edp.davinci.model.User;
-import net.sf.jsqlparser.statement.select.PlainSelect;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;

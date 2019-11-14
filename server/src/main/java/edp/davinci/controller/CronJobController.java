@@ -78,6 +78,21 @@ public class CronJobController extends BaseController {
     }
 
 
+    @ApiOperation(value = "get a cronjob")
+    @GetMapping("/{id}")
+    public ResponseEntity getCronJob(@PathVariable Long id,
+                                     @ApiIgnore @CurrentUser User user,
+                                     HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid cronjob id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        CronJob cronJob = cronJobService.getCronJob(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(cronJob));
+    }
+
+
     /**
      * 创建 cronjob
      *

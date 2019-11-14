@@ -18,7 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
+import React, { createRef, RefObject } from 'react'
 import { RouteComponentProps } from 'react-router'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
@@ -34,12 +34,13 @@ import { FieldSortTypes } from 'containers/Widget/components/Config/Sort'
 import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
 
 import Login from '../../components/Login/index'
-import LayerItem from '../../../app/containers/Display/components/LayerItem'
-import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
-import { decodeMetricName } from '../../../app/containers/Widget/components/util'
+import LayerItem from 'app/containers/Display/components/LayerItem'
+import { RenderType, IWidgetConfig } from 'app/containers/Widget/components/Widget'
+import { decodeMetricName } from 'app/containers/Widget/components/util'
+import HeadlessBrowserIdentifier from '../../components/HeadlessBrowserIdentifier'
 
-const mainStyles = require('../../../app/containers/Main/Main.less')
-const styles = require('../../../app/containers/Display/Display.less')
+const mainStyles = require('app/containers/Main/Main.less')
+const styles = require('app/containers/Display/Display.less')
 
 import ShareDisplayActions from './actions'
 const { loadDisplay, loadLayerData } = ShareDisplayActions
@@ -52,6 +53,8 @@ import {
   makeSelectLayersInfo
 } from './selectors'
 import { IQueryConditions, IDataRequestParams } from '../../../app/containers/Dashboard/Grid'
+import { DashboardItemStatus } from '../Dashboard'
+import { GraphTypes } from 'app/containers/Display/components/util'
 
 interface IDisplayProps extends RouteComponentProps<{}, {}> {
   title: string
@@ -67,6 +70,7 @@ interface IDisplayProps extends RouteComponentProps<{}, {}> {
         resultList: any[]
         totalCount: number
       }
+      status: DashboardItemStatus
       loading: boolean
       queryConditions: IQueryConditions
       downloadCsvLoading: boolean
@@ -87,18 +91,21 @@ interface IDisplayStates {
   scale: [number, number]
   showLogin: boolean
   shareInfo: string
+  headlessBrowserRenderSign: boolean
 }
 
 export class Display extends React.Component<IDisplayProps, IDisplayStates> {
 
   private charts: object = {}
+  private displayCanvas: RefObject<HTMLDivElement> = createRef()
 
   public constructor (props) {
     super(props)
     this.state = {
       scale: [1, 1],
       showLogin: false,
-      shareInfo: ''
+      shareInfo: '',
+      headlessBrowserRenderSign: false
     }
   }
 
@@ -112,7 +119,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
   }
 
   public componentWillReceiveProps (nextProps: IDisplayProps) {
-    const { slide } = nextProps
+    const { slide, layers, layersInfo } = nextProps
     const { scale } = this.state
     const [scaleWidth, scaleHeight] = scale
     if (slide && this.props.slide !== slide) {
@@ -134,6 +141,21 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       }
       if (scaleHeight !== nextScaleHeight || scaleWidth !== nextScaleWidth) {
         this.setState({ scale: [nextScaleWidth, nextScaleHeight] })
+      }
+    }
+    if (layersInfo) {
+      const widgetLayers = layers.filter((layer) => layer.type === GraphTypes.Chart)
+      const initialedItems = Object.entries(layersInfo)
+        .filter(([key, info]) => {
+          return widgetLayers.find((layer) => layer.id === Number(key))
+            && [DashboardItemStatus.Fulfilled, DashboardItemStatus.Error].includes(info.status)
+        })
+      if (initialedItems.length === widgetLayers.length) {
+        setTimeout(() => {
+          this.setState({
+            headlessBrowserRenderSign: true
+          })
+        }, 5000)
       }
     }
   }
@@ -237,10 +259,14 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         })))
     }
 
+    const requestParamsFilters = filters.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
+
     const requestParams = {
       groups,
       aggregators,
-      filters: filters.map((i) => i.config.sql),
+      filters: requestParamsFilters,
       tempFilters,
       linkageFilters,
       globalFilters,
@@ -250,7 +276,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       orders,
       cache,
       expired,
-      flush: renderType === 'refresh',
+      flush: renderType === 'flush',
       pagination,
       nativeQuery,
       customOrders
@@ -362,7 +388,13 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       layersInfo
     } = this.props
 
-    const { scale, showLogin, shareInfo } = this.state
+    const {
+      scale,
+      showLogin,
+      shareInfo,
+      headlessBrowserRenderSign
+    } = this.state
+
     const loginPanel = showLogin ? <Login shareInfo={shareInfo} legitimateUser={this.handleLegitimateUser} /> : null
 
     let content = null
@@ -398,7 +430,11 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         )
       }) : null
       content = (
-        <div className={styles.board} style={slideStyle}>
+        <div
+          className={styles.board}
+          style={slideStyle}
+          ref={this.displayCanvas}
+        >
           {layerItems}
         </div>
       )
@@ -411,6 +447,10 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
           {content}
           {loginPanel}
         </div>
+        <HeadlessBrowserIdentifier
+          renderSign={headlessBrowserRenderSign}
+          parentNode={this.displayCanvas.current}
+        />
       </div>
     )
   }

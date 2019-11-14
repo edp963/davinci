@@ -111,7 +111,7 @@ public interface DashboardMapper {
     @Select({"select full_parent_id from dashboard where id = #{id}"})
     String getFullParentId(Long id);
 
-    Map<Long, String> getFullParentIds(@Param("parentIds") Set<Long> parentIds);
+    List<Dashboard> queryByParentIds(@Param("parentIds") Set<Long> parentIds);
 
     Set<Long> getIdSetByIds(@Param("set") Set<Long> dashboardIds);
 
@@ -120,4 +120,8 @@ public interface DashboardMapper {
             "select * from dashboard where type = 1 and FIND_IN_SET(#{id},full_parent_Id)"
     })
     List<Dashboard> getSubDashboardById(@Param("id") Long id);
+
+    Set<Dashboard> queryDashboardsByIds(@Param("set") Set<Long> dashboardIds);
+
+    Set<Dashboard> queryByPortals(@Param("set") Set<Long> portalIds);
 }

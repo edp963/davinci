@@ -69,7 +69,6 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     if (checkLogin()) {
       const token = localStorage.getItem('TOKEN')
       const loginUser = localStorage.getItem('loginUser')
-
       setToken(token)
       this.props.onLogged(JSON.parse(loginUser))
       this.props.router.replace('/')

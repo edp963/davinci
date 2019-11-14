@@ -30,8 +30,8 @@ public enum DownloadTaskStatus {
     PROCESSING((short) 1),
     SUCCESS((short) 2),
     FAILED((short) 3),
-    DOWNLOADED((short) 4),
-    ;
+    DOWNLOADED((short) 4);
+
     private short status;
 
     private DownloadTaskStatus(short status) {
@@ -40,9 +40,5 @@ public enum DownloadTaskStatus {
 
     public short getStatus() {
         return status;
-    }
-
-    public void setStatus(short status) {
-        this.status = status;
     }
 }

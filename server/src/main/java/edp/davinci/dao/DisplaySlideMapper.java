@@ -90,4 +90,6 @@ public interface DisplaySlideMapper {
             "where s.id = #{slideId}",
     })
     SlideWithDisplayAndProject getSlideWithDipalyAndProjectById(@Param("slideId") Long slideId);
+
+    int copySlide(@Param("originDisplayId") Long originDisplayId, @Param("displayId") Long displayId, @Param("userId") Long userId);
 }

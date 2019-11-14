@@ -54,7 +54,6 @@ public interface CronJobMapper {
             "`start_date` = #{startDate,jdbcType=TIMESTAMP},",
             "`end_date` = #{endDate,jdbcType=TIMESTAMP},",
             "`description` = #{description,jdbcType=VARCHAR},",
-            "`update_time` = #{updateTime,jdbcType=TIMESTAMP},",
             "`config` = #{config,jdbcType=LONGVARCHAR},",
             "`exec_log` = #{execLog,jdbcType=LONGVARCHAR},",
             "`update_by` = #{updateBy,jdbcType=BIGINT},",
@@ -62,6 +61,13 @@ public interface CronJobMapper {
             "where `id` = #{id,jdbcType=BIGINT}"
     })
     int update(CronJob record);
+
+    @Update({
+            "update cron_job",
+            "set `exec_log` = #{execLog,jdbcType=LONGVARCHAR}",
+            "where `id` = #{id,jdbcType=BIGINT}"
+    })
+    int updateExecLog(@Param("id") Long id, @Param("execLog") String execLog);
 
 
     @Select({"select id from cron_job where project_id = #{projectId} and `name` = #{name}"})
@@ -73,4 +79,6 @@ public interface CronJobMapper {
     @Select({"select * from cron_job where job_status = 'started'"})
     List<CronJob> getStartedJobs();
 
+    @Delete({"delete from `cron_job` where project_id = #{projectId}"})
+    int deleteByProject(@Param("projectId") Long projectId);
 }

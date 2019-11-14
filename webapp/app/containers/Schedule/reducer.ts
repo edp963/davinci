@@ -1,107 +1,122 @@
 /*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Schedule reducer
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
  */
 
-import { fromJS } from 'immutable'
-import {
-  LOAD_SCHEDULES,
-  LOAD_SCHEDULES_SUCCESS,
-  LOAD_SCHEDULES_FAILUER,
-  ADD_SCHEDULES,
-  ADD_SCHEDULES_SUCCESS,
-  ADD_SCHEDULES_FAILURE,
-  DELETE_SCHEDULES,
-  DELETE_SCHEDULES_SUCCESS,
-  CHANGE_SCHEDULE_STATUS,
-  CHANGE_SCHEDULE_STATUS_SUCCESS,
-  UPDATE_SCHEDULES,
-  UPDATE_SCHEDULES_SUCCESS,
-  UPDATE_SCHEDULES_FAILURE,
-  CHANGE_SCHEDULE_STATUS_FAILURE,
-  LOAD_VIZS_SUCCESS,
-  LOAD_VIZS_FAILUER
-} from './constants'
-import {
-  LOAD_DASHBOARDS_SUCCESS,
-  LOAD_DASHBOARD_DETAIL_SUCCESS
-} from '../Dashboard/constants'
-import {
-  LOAD_WIDGETS_SUCCESS
-} from '../Widget/constants'
+import produce from 'immer'
+import { ActionTypes, EmptySchedule } from './constants'
+import { ScheduleActionType } from './actions'
 
-const initialState = fromJS({
-  widgets: false,
-  schedule: false,
-  dashboards: false,
-  currentDashboard: false,
-  tableLoading: false,
-  formLoading: false,
-  vizs: false
-})
-
-function scheduleReducer (state = initialState, action) {
-  const { type, payload } = action
-  const schedule = state.get('schedule')
-  const dashboards = state.get('dashboards')
-  switch (type) {
-    case LOAD_WIDGETS_SUCCESS:
-      return state.set('widgets', payload.widgets)
-    case LOAD_DASHBOARDS_SUCCESS:
-      return state.set('dashboards', payload.dashboards)
-    case LOAD_DASHBOARD_DETAIL_SUCCESS:
-      return state
-        .set('currentDashboard', payload.dashboard)
-    case LOAD_SCHEDULES:
-      return state.set('tableLoading', true)
-    case LOAD_SCHEDULES_SUCCESS:
-      return state
-        .set('schedule', payload.schedules)
-        .set('tableLoading', false)
-    case LOAD_SCHEDULES_FAILUER:
-      return state.set('tableLoading', false)
-    case ADD_SCHEDULES:
-      return state.set('formLoading', true)
-    case ADD_SCHEDULES_SUCCESS:
-      if (schedule) {
-        schedule.unshift(payload.result)
-        return state
-          .set('schedule', schedule.slice())
-          .set('formLoading', false)
-      } else {
-        return state
-          .set('schedule', [payload.result])
-          .set('formLoading', false)
-      }
-    case ADD_SCHEDULES_FAILURE:
-      return state.set('formLoading', false)
-    case DELETE_SCHEDULES:
-      return state
-    case DELETE_SCHEDULES_SUCCESS:
-      return state.set('schedule', schedule.filter((g) => g.id !== payload.id))
-    case CHANGE_SCHEDULE_STATUS:
-      return state
-    case CHANGE_SCHEDULE_STATUS_SUCCESS:
-      return state.set('schedule', schedule.map((s) => s.id === payload.id ? payload.schedules : s))
-    case CHANGE_SCHEDULE_STATUS_FAILURE:
-      return state
-    case UPDATE_SCHEDULES:
-      return state.set('formLoading', true)
-    case UPDATE_SCHEDULES_SUCCESS:
-      return state
-        .set('schedule', schedule.map((s) => s.id === payload.result.id ? payload.result : s))
-        .set('formLoading', false)
-    case UPDATE_SCHEDULES_FAILURE:
-      return state.set('formLoading', false)
-    case LOAD_VIZS_SUCCESS:
-      return state
-        .set('vizs', payload.result)
-    case LOAD_VIZS_FAILUER:
-      return state
-    default:
-      return state
-  }
+const initialState = {
+  schedules: [],
+  editingSchedule: EmptySchedule,
+  loading: {
+    table: false,
+    schedule: false,
+    edit: false
+  },
+  suggestMails: [],
+  vizs: false,
+  portalDashboards: {} // @TODO refactor to viz reducer
 }
+
+const scheduleReducer = (state = initialState, action: ScheduleActionType) =>
+  produce(state, (draft) => {
+    switch (action.type) {
+      case ActionTypes.LOAD_SCHEDULES:
+      case ActionTypes.DELETE_SCHEDULE:
+        draft.loading.table = true
+        break
+      case ActionTypes.LOAD_SCHEDULES_SUCCESS:
+        draft.schedules = action.payload.schedules
+        draft.loading.table = false
+        break
+      case ActionTypes.DELETE_SCHEDULE_SUCCESS:
+        draft.schedules = draft.schedules.filter(
+          ({ id }) => id !== action.payload.id
+        )
+        draft.loading.table = false
+        break
+      case ActionTypes.LOAD_SCHEDULES_FAILURE:
+      case ActionTypes.DELETE_SCHEDULE_FAILURE:
+        draft.loading.table = false
+        break
+
+      case ActionTypes.LOAD_SCHEDULE_DETAIL:
+        draft.loading.schedule = true
+        break
+      case ActionTypes.LOAD_SCHEDULE_DETAIL_SUCCESS:
+        draft.editingSchedule = action.payload.schedule
+        draft.loading.schedule = false
+        break
+      case ActionTypes.LOAD_SCHEDULE_DETAIL_FAILURE:
+        draft.loading.schedule = false
+        break
+
+      case ActionTypes.ADD_SCHEDULE:
+      case ActionTypes.EDIT_SCHEDULE:
+        draft.loading.edit = true
+        break
+      case ActionTypes.ADD_SCHEDULE_SUCCESS:
+        draft.schedules.unshift(action.payload.result)
+        draft.loading.edit = false
+        break
+      case ActionTypes.EDIT_SCHEDULE_SUCCESS:
+        draft.schedules.splice(
+          draft.schedules.findIndex(
+            ({ id }) => id === action.payload.result.id
+          ),
+          1,
+          action.payload.result
+        )
+        draft.editingSchedule = EmptySchedule
+        draft.loading.edit = false
+        break
+      case ActionTypes.ADD_SCHEDULE_FAILURE:
+      case ActionTypes.EDIT_SCHEDULE_FAILURE:
+        draft.loading.edit = false
+        break
+      case ActionTypes.RESET_SCHEDULE_STATE:
+        return initialState
+
+      case ActionTypes.CHANGE_SCHEDULE_STATUS_SUCCESS:
+        draft.schedules.splice(
+          draft.schedules.findIndex(
+            ({ id }) => id === action.payload.schedule.id
+          ),
+          1,
+          action.payload.schedule
+        )
+        break
+      case ActionTypes.LOAD_SUGGEST_MAILS_SUCCESS:
+        draft.suggestMails = action.payload.mails
+        break
+      case ActionTypes.LOAD_SUGGEST_MAILS_FAILURE:
+        draft.suggestMails = []
+        break
+      case ActionTypes.LOAD_PORTAL_DASHBOARDS_SUCCESS:
+        draft.portalDashboards[action.payload.portalId] = action.payload.dashboards
+        break
+      // @FIXME
+      case ActionTypes.LOAD_VIZS_SUCCESS:
+        draft.vizs = action.payload.result
+        break
+    }
+  })
 
 export default scheduleReducer

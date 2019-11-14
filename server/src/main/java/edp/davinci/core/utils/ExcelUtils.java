@@ -131,7 +131,6 @@ public class ExcelUtils {
     private static Workbook getReadWorkbook(MultipartFile excelFile) throws ServerException {
         InputStream inputStream = null;
         try {
-
             String originalFilename = excelFile.getOriginalFilename();
             inputStream = excelFile.getInputStream();
             if (originalFilename.toLowerCase().endsWith(FileTypeEnum.XLSX.getFormat())) {
@@ -145,14 +144,7 @@ public class ExcelUtils {
             e.printStackTrace();
             throw new ServerException(e.getMessage());
         } finally {
-            try {
-                if (null != inputStream) {
-                    inputStream.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new ServerException(e.getMessage());
-            }
+            FileUtils.closeCloseable(inputStream);
         }
     }
 
@@ -407,76 +399,87 @@ public class ExcelUtils {
      * @return
      */
     public static String getDataFormat(Object fieldTypeObject) {
-        if (null != fieldTypeObject) {
-            String formatExpr = "@";
-            if (fieldTypeObject instanceof FieldCurrency || fieldTypeObject instanceof FieldNumeric) {
-                FieldNumeric fieldNumeric = (FieldNumeric) fieldTypeObject;
-                StringBuilder fmtSB = new StringBuilder();
-
-                if (fieldTypeObject instanceof FieldCurrency) {
-                    FieldCurrency fieldCurrency = (FieldCurrency) fieldTypeObject;
-                    fmtSB.append(fieldCurrency.getPrefix());
-                }
-
-                fmtSB.append(OCTOTHORPE);
-
-                if (fieldNumeric.isUseThousandSeparator()) {
-                    fmtSB.append(COMMA)
-                            .append(makeNTimesString(2, OCTOTHORPE))
-                            .append("0");
-                }
-
-                String nzero = makeNTimesString(fieldNumeric.getDecimalPlaces(), 0);
-                if (!StringUtils.isEmpty(nzero)) {
-                    fmtSB.append(".").append(nzero);
-                }
-
-                if (null != fieldNumeric.getUnit() && !StringUtils.isEmpty(getUnitExpr(fieldNumeric))) {
-                    fmtSB.append(getUnitExpr(fieldNumeric));
-                }
-
-                if (fieldTypeObject instanceof FieldCurrency) {
-                    FieldCurrency fieldCurrency = (FieldCurrency) fieldTypeObject;
-                    fmtSB.append(fieldCurrency.getSuffix());
-                }
-
-                formatExpr = fmtSB.toString();
-
-            } else if (fieldTypeObject instanceof FieldCustom) {
-
-            } else if (fieldTypeObject instanceof FieldDate) {
-
-                FieldCustom fieldCustom = (FieldCustom) fieldTypeObject;
-                formatExpr = fieldCustom.getFormat().toLowerCase();
-
-            } else if (fieldTypeObject instanceof FieldPercentage) {
-                FieldPercentage fieldPercentage = (FieldPercentage) fieldTypeObject;
-
-                StringBuilder fmtSB = new StringBuilder("0");
-                if (fieldPercentage.getDecimalPlaces() > 0) {
-                    fmtSB.append(".").append(makeNTimesString(fieldPercentage.getDecimalPlaces(), 0));
-
-                }
-                fmtSB.append(PERCENT_SIGN);
-
-                formatExpr = fmtSB.toString();
-
-            } else if (fieldTypeObject instanceof FieldScientificNotation) {
-                FieldScientificNotation fieldScientificNotation = (FieldScientificNotation) fieldTypeObject;
-                StringBuilder fmtSB = new StringBuilder("0");
-                if (fieldScientificNotation.getDecimalPlaces() > 0) {
-                    fmtSB.append(".")
-                            .append(makeNTimesString(fieldScientificNotation.getDecimalPlaces(), 0));
-                }
-                fmtSB.append("E+00");
-                formatExpr = fmtSB.toString();
-
-            }
-
-            return formatExpr;
+        
+        if (null == fieldTypeObject) {
+            return null;
         }
 
-        return null;
+        String formatExpr = "@";
+        
+        if (fieldTypeObject instanceof FieldCurrency || fieldTypeObject instanceof FieldNumeric) {
+            
+            FieldNumeric fieldNumeric = (FieldNumeric) fieldTypeObject;
+            
+            StringBuilder fmtSB = new StringBuilder();
+
+            if (fieldTypeObject instanceof FieldCurrency) {
+                FieldCurrency fieldCurrency = (FieldCurrency) fieldTypeObject;
+                fmtSB.append(fieldCurrency.getPrefix());
+            }
+
+            fmtSB.append(OCTOTHORPE);
+
+            if (fieldNumeric.isUseThousandSeparator()) {
+                fmtSB.append(COMMA).append(makeNTimesString(2, OCTOTHORPE)).append("0");
+            }
+
+            String nzero = makeNTimesString(fieldNumeric.getDecimalPlaces(), 0);
+            if (!StringUtils.isEmpty(nzero)) {
+                fmtSB.append(".").append(nzero);
+            }
+
+            if (null != fieldNumeric.getUnit() && !StringUtils.isEmpty(getUnitExpr(fieldNumeric))) {
+                fmtSB.append(getUnitExpr(fieldNumeric));
+            }
+
+            if (fieldTypeObject instanceof FieldCurrency) {
+                FieldCurrency fieldCurrency = (FieldCurrency) fieldTypeObject;
+                fmtSB.append(fieldCurrency.getSuffix());
+            }
+
+            formatExpr = fmtSB.toString();
+
+        }
+        else if (fieldTypeObject instanceof FieldCustom) {
+
+        }
+        else if (fieldTypeObject instanceof FieldDate) {
+
+            // TODO need to fix impossible cast
+            FieldCustom fieldCustom = (FieldCustom) fieldTypeObject;
+            
+            formatExpr = fieldCustom.getFormat().toLowerCase();
+        }
+        else if (fieldTypeObject instanceof FieldPercentage) {
+            
+            FieldPercentage fieldPercentage = (FieldPercentage) fieldTypeObject;
+
+            StringBuilder fmtSB = new StringBuilder("0");
+            if (fieldPercentage.getDecimalPlaces() > 0) {
+                fmtSB.append(".").append(makeNTimesString(fieldPercentage.getDecimalPlaces(), 0));
+
+            }
+            
+            fmtSB.append(PERCENT_SIGN);
+
+            formatExpr = fmtSB.toString();
+        }
+        else if (fieldTypeObject instanceof FieldScientificNotation) {
+            
+            FieldScientificNotation fieldScientificNotation = (FieldScientificNotation) fieldTypeObject;
+            
+            StringBuilder fmtSB = new StringBuilder("0");
+            
+            if (fieldScientificNotation.getDecimalPlaces() > 0) {
+                fmtSB.append(".").append(makeNTimesString(fieldScientificNotation.getDecimalPlaces(), 0));
+            }
+            
+            fmtSB.append("E+00");
+            
+            formatExpr = fmtSB.toString();
+        }
+
+        return formatExpr;
     }
 
 
