@@ -75,7 +75,7 @@ public class SourceUtils {
             connection = null;
         }
         try {
-            if (null == connection || connection.isClosed()) {
+            if (null == connection) {
                 log.info("connection is closed, retry get connection!");
                 releaseDataSource(jdbcSourceInfo);
                 dataSource = getDataSource(jdbcSourceInfo);

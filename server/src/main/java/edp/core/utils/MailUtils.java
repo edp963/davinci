@@ -19,6 +19,7 @@
 
 package edp.core.utils;
 
+import com.alibaba.druid.Constants;
 import com.alibaba.druid.util.StringUtils;
 import com.google.common.base.Stopwatch;
 import edp.core.exception.ServerException;
@@ -36,10 +37,13 @@ import org.thymeleaf.context.Context;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 import static edp.core.consts.Consts.PATTERN_EMAIL_FORMAT;
+import static edp.davinci.core.common.Constants.EMAIL_DEFAULT_TEMPLATE;
 
 @Component
 @Slf4j
@@ -59,6 +63,9 @@ public class MailUtils {
 
     @Value("${spring.mail.nickname}")
     private String nickName;
+
+    private static final String MAIL_TEXT_KEY = "text";
+    private static final String MAIL_HTML_KEY = "html";
 
 
     public void sendMail(MailContent mailContent, Logger customLogger) throws ServerException {
@@ -102,10 +109,11 @@ public class MailUtils {
             throw new ServerException("Email receiving address cannot be EMPTY");
         }
 
-        boolean multipart = false, html = false;
-        String content = "<html></html>";
+        boolean multipart = false;
         boolean emptyAttachments = CollectionUtils.isEmpty(mailContent.getAttachments());
-
+        String mailContentTemplate = null;
+        String contentHtml = null;
+        Context context = new Context();
         switch (mailContent.getMailContentType()) {
             case TEXT:
                 if (StringUtils.isEmpty(mailContent.getContent()) && emptyAttachments) {
@@ -114,7 +122,8 @@ public class MailUtils {
                 if (!emptyAttachments) {
                     multipart = true;
                 }
-                content = mailContent.getContent();
+                context.setVariable(MAIL_TEXT_KEY, mailContent.getContent());
+                mailContentTemplate = EMAIL_DEFAULT_TEMPLATE;
                 break;
             case HTML:
                 if (StringUtils.isEmpty(mailContent.getHtmlContent()) && emptyAttachments) {
@@ -123,19 +132,17 @@ public class MailUtils {
                 if (!emptyAttachments) {
                     multipart = true;
                 }
-                html = true;
-                content = mailContent.getHtmlContent() + "<br/>";
+                context.setVariable(MAIL_HTML_KEY, mailContent.getHtmlContent());
+                mailContentTemplate = EMAIL_DEFAULT_TEMPLATE;
                 break;
             case TEMPLATE:
                 if (StringUtils.isEmpty(mailContent.getTemplate()) && emptyAttachments) {
                     throw new ServerException("Mail content cannot be EMPTY");
                 }
-                Context context = new Context();
                 if (!CollectionUtils.isEmpty(mailContent.getTemplateContent())) {
                     mailContent.getTemplateContent().forEach(context::setVariable);
                 }
-                content = templateEngine.process(mailContent.getTemplate(), context);
-                html = true;
+                mailContentTemplate = mailContent.getTemplate();
                 multipart = true;
                 break;
         }
@@ -153,7 +160,23 @@ public class MailUtils {
             if (null != mailContent.getBcc() && mailContent.getBcc().length > 0) {
                 messageHelper.setBcc(mailContent.getBcc());
             }
-            messageHelper.setText(content, html);
+
+            List<String> imageContentIds = new ArrayList<>();
+
+            if (!emptyAttachments) {
+                mailContent.getAttachments().forEach(attachment -> {
+                    if (attachment.isImage()) {
+                        imageContentIds.add(attachment.getName());
+                    }
+                });
+            }
+
+            if (!CollectionUtils.isEmpty(imageContentIds)) {
+                context.setVariable("images", imageContentIds);
+            }
+
+            contentHtml = templateEngine.process(mailContentTemplate, context);
+            messageHelper.setText(contentHtml, true);
 
             if (!emptyAttachments) {
                 mailContent.getAttachments().forEach(attachment -> {
