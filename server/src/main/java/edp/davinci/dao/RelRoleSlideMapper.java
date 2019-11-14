@@ -75,4 +75,12 @@ public interface RelRoleSlideMapper {
     int deleteByDisplayId(@Param("displayId") Long displayId);
 
     int copyRoleSlideRelation(@Param("relSlideCopies") List<RelModelCopy> slideCopies, @Param("userId") Long userId);
+
+    @Delete({
+            "delete from rel_role_slide where slide_id in ",
+            "(select ds.id from display_slide ds ",
+            "left join display d on d.id = ds.display_id ",
+            "where d.project_id = #{projectId})"
+    })
+    int deleteByProjectId(Long projectId);
 }

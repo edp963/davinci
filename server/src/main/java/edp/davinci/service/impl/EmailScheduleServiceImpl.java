@@ -40,10 +40,7 @@ import edp.davinci.dto.dashboardDto.DashboardWithPortal;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.widgetDto.WidgetWithRelationDashboardId;
-import edp.davinci.model.CronJob;
-import edp.davinci.model.Display;
-import edp.davinci.model.User;
-import edp.davinci.model.Widget;
+import edp.davinci.model.*;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.ShareService;
 import edp.davinci.service.excel.ExecutorUtil;
@@ -65,6 +62,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.EMPTY;
 import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
@@ -206,13 +204,52 @@ public class EmailScheduleServiceImpl implements ScheduleService {
      */
     private List<ImageContent> generateImages(long jobId, CronJobConfig cronJobConfig, Long userId) throws Exception {
         scheduleLogger.info("CronJob (:{}) fetching images contents", jobId);
-        int order = 0;
+
         List<ImageContent> imageContents = new ArrayList<>();
+        Set<Long> dashboardIds = new HashSet<>();
+        Set<Long> portalIds = new HashSet<>();
+        List<CronJobContent> jobContentList = new ArrayList<>();
+
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
+            if (cronJobContent.getContentType().equalsIgnoreCase("display")) {
+                jobContentList.add(cronJobContent);
+            } else {
+                if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
+                    portalIds.add(cronJobContent.getId());
+                } else {
+                    dashboardIds.addAll(cronJobContent.getItems());
+                }
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(portalIds)) {
+            Set<Dashboard> dashboards = dashboardMapper.queryByPortals(portalIds);
+            if (!CollectionUtils.isEmpty(dashboards)) {
+                dashboardIds.addAll(dashboards.stream().map(Dashboard::getId).collect(Collectors.toList()));
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(dashboardIds)) {
+            Set<Dashboard> dashboards = dashboardMapper.queryDashboardsByIds(dashboardIds);
+            for (Dashboard dashboard : dashboards) {
+                if (dashboard != null && dashboard.getType() == 1) {
+                    jobContentList.add(new CronJobContent(("dashboard"), dashboard.getId()));
+                }
+            }
+        }
+
+        if (CollectionUtils.isEmpty(jobContentList)) {
+            scheduleLogger.warn("CronJob (:{}):  share entity is empty", jobId);
+            return null;
+        }
+
+        int order = 0;
+        for (CronJobContent cronJobContent : jobContentList) {
             String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId());
             imageContents.add(new ImageContent(order, cronJobContent.getId(), cronJobContent.getContentType(), url));
             order++;
         }
+
         if (!CollectionUtils.isEmpty(imageContents)) {
             screenshotUtil.screenshot(jobId, imageContents, cronJobConfig.getImageWidth());
         }
@@ -262,16 +299,17 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
         Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
 
-        Set<Long> dashboardIdList = new HashSet<>();
+        Set<Long> portalIds = new HashSet<>();
+        Set<Long> dashboardIds = new HashSet<>();
 
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
             if (CheckEntityEnum.DASHBOARD.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())
                     || PORTAL.equalsIgnoreCase(cronJobContent.getContentType().trim())) {
                 //兼容原始结构：contentId 为 dashboardId
                 if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
-                    dashboardIdList.add(cronJobContent.getId());
+                    portalIds.add(cronJobContent.getId());
                 } else {
-                    dashboardIdList.addAll(cronJobContent.getItems());
+                    dashboardIds.addAll(cronJobContent.getItems());
                 }
             } else if (CheckEntityEnum.DISPLAY.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())) {
                 Display display = displayMapper.getById(cronJobContent.getId());
@@ -302,14 +340,30 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             }
         }
 
-        if (CollectionUtils.isEmpty(dashboardIdList)) {
+        if (!CollectionUtils.isEmpty(portalIds)) {
+            Set<Dashboard> dashboards = dashboardMapper.queryByPortals(portalIds);
+            if (!CollectionUtils.isEmpty(dashboards)) {
+                dashboardIds.addAll(dashboards.stream().map(Dashboard::getId).collect(Collectors.toList()));
+            }
+        }
+
+        List<Long> mailContentDashboardIds = null;
+        if (!CollectionUtils.isEmpty(dashboardIds)) {
+            mailContentDashboardIds = new ArrayList<>();
+            Set<Dashboard> dashboards = dashboardMapper.queryDashboardsByIds(dashboardIds);
+            for (Dashboard dashboard : dashboards) {
+                mailContentDashboardIds.add(dashboard.getId());
+            }
+        }
+
+        if (CollectionUtils.isEmpty(mailContentDashboardIds)) {
             scheduleLogger.warn("CronJob (:{}): dashboards is empty", cronJobId);
             return null;
         } else {
-            scheduleLogger.info("CronJob (:{}): dashboards size: {}", cronJobId, dashboardIdList.size());
+            scheduleLogger.info("CronJob (:{}): dashboards size: {}", cronJobId, mailContentDashboardIds.size());
         }
 
-        for (Long dId : dashboardIdList) {
+        for (Long dId : mailContentDashboardIds) {
             DashboardWithPortal dashboard = dashboardMapper.getDashboardWithPortalAndProject(dId);
             if (dashboard != null) {
                 ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);

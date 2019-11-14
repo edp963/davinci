@@ -71,4 +71,7 @@ public interface RelRoleDisplayMapper {
             "select role_id, ${copyDisplayId}, visible, ${userId}, now() from rel_role_display where display_id = #{originDisplayId}"
     })
     int copyRoleRelation(@Param("originDisplayId") Long originDisplayId, @Param("copyDisplayId") Long copyDisplayId, @Param("userId") Long userId);
+
+    @Delete({"delete from rel_role_display where display_id in (select id from display where project_id = #{projectId})"})
+    int deleteByProjectId(Long projectId);
 }
