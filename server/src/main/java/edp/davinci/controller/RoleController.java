@@ -418,4 +418,22 @@ public class RoleController extends BaseController {
         roleService.postVizvisibility(id, vizVisibility, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
+
+    @ApiOperation(value = "get role")
+    @GetMapping("/getRole")
+    public ResponseEntity getRole(@RequestParam(value = "orgId") Long orgId,
+                                  @RequestParam(value = "userId") Long userId,
+                                  @ApiIgnore @CurrentUser User user,
+                                  HttpServletRequest request) {
+        if (invalidId(orgId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid orgId id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+        if (invalidId(userId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid userId id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+        List<Role> roles = roleService.getRoleInfo(orgId, userId);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(roles));
+    }
 }

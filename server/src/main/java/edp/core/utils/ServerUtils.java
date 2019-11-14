@@ -52,6 +52,7 @@ public class ServerUtils {
     private String basePath;
 
     public String getHost() {
+
         String pro = protocol.trim().toLowerCase();
         String accAddress = StringUtils.isEmpty(accessAddress) ? address : accessAddress;
         String accPort = StringUtils.isEmpty(accessPort) ? port : accessPort;
@@ -71,7 +72,7 @@ public class ServerUtils {
         }
 
         if (!StringUtils.isEmpty(contextPath)) {
-            contextPath.replaceAll(Consts.SLASH, EMPTY);
+            contextPath = contextPath.replaceAll(Consts.SLASH, EMPTY);
             sb.append(Consts.SLASH);
             sb.append(contextPath);
         }

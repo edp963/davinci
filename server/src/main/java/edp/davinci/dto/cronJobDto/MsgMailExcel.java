@@ -19,27 +19,30 @@
 
 package edp.davinci.dto.cronJobDto;
 
+import edp.core.utils.DateUtils;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.Date;
 
 public class MsgMailExcel {
 
     @Getter
-    private ReentrantLock lock;
+    private Long id;
 
-    @Getter
-    private Condition condition;
+    @Setter
+    private Date date;
 
     @Getter
     @Setter
-    private String filePath;
+    private Exception exception;
 
+    public MsgMailExcel(Long id) {
+        this.id = id;
+    }
 
-    public MsgMailExcel(ReentrantLock lock, Condition condition) {
-        this.lock = lock;
-        this.condition = condition;
+    @Override
+    public String toString() {
+        return "Date: " + DateUtils.toyyyyMMddHHmmss(date) + ", exception: {" + exception.getMessage() + "}";
     }
 }

@@ -47,7 +47,7 @@ public class Dashboard extends RecordInfo<Dashboard> {
 
     private Integer index = 0;
 
-    private Long parentId;
+    private Long parentId = null;
 
     private String config;
 

@@ -42,6 +42,14 @@ public interface RoleMapper {
     Role getById(Long id);
 
 
+    @Select({
+            "SELECT a.* " +
+                    "FROM role a " +
+                    "LEFT JOIN rel_role_user b ON b.role_id = a.id " +
+                    "WHERE a.org_id = #{orgId,jdbcType=BIGINT} AND b.user_id = #{userId,jdbcType=BIGINT} "
+    })
+    List<Role> getRolesByOrgAndUser(@Param("orgId") Long orgId, @Param("userId") Long userId);
+
     List<Role> getRolesByIds(List<Long> list);
 
     @Update({

@@ -53,4 +53,12 @@
             )
         </foreach>
     </insert>
+
+    <insert id="copyRoleSlideRelation">
+        <foreach collection="relSlideCopies" item="copy" open="" close="" separator=";">
+            replace into rel_role_slide (`role_id`,`slide_id`,`visible`,`create_by`,`create_time`)
+            select `role_id`, ${copy.copyId}, visible, ${userId}, NOW() from rel_role_slide
+            where slide_id = #{copy.originId}
+        </foreach>
+    </insert>
 </mapper>

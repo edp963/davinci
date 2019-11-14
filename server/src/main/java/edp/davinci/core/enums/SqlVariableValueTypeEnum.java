@@ -20,6 +20,7 @@
 package edp.davinci.core.enums;
 
 import edp.core.utils.SqlUtils;
+import edp.davinci.core.common.Constants;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -63,7 +64,9 @@ public enum SqlVariableValueTypeEnum {
                 case STRING:
                 case DATE:
                     return values.stream().map(String::valueOf)
-                            .map(s -> s.startsWith(APOSTROPHE) && s.endsWith(APOSTROPHE) ? s : String.join(EMPTY, APOSTROPHE, s, APOSTROPHE))
+                            .map(s -> s.equals(Constants.NO_AUTH_PERMISSION) || (s.startsWith(APOSTROPHE) && s.endsWith(APOSTROPHE)) ?
+                                    s :
+                                    String.join(EMPTY, APOSTROPHE, s, APOSTROPHE))
                             .collect(Collectors.toList());
                 case SQL:
                     values.stream().map(String::valueOf).forEach(SqlUtils::checkSensitiveSql);

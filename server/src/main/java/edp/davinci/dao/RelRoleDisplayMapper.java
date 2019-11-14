@@ -22,6 +22,7 @@ package edp.davinci.dao;
 import edp.davinci.core.model.RoleDisableViz;
 import edp.davinci.model.RelRoleDisplay;
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -38,7 +39,7 @@ public interface RelRoleDisplayMapper {
     int deleteByDisplayId(Long id);
 
     @Select({
-            "select rru.role_id, rrd.display_id",
+            "select rru.role_id as roleId, rrd.display_id as vizId",
             "from rel_role_display rrd",
             "       inner join rel_role_user rru on rru.role_id = rrd.role_id",
             "       inner join display d on d.id = rrd.display_id",
@@ -64,4 +65,13 @@ public interface RelRoleDisplayMapper {
 
     @Delete({"delete from rel_role_display where role_id = #{roleId}"})
     int deleteByRoleId(Long roleId);
+
+    @Insert({
+            "insert rel_role_display (role_id, display_id, visible, create_by, create_time)",
+            "select role_id, ${copyDisplayId}, visible, ${userId}, now() from rel_role_display where display_id = #{originDisplayId}"
+    })
+    int copyRoleRelation(@Param("originDisplayId") Long originDisplayId, @Param("copyDisplayId") Long copyDisplayId, @Param("userId") Long userId);
+
+    @Delete({"delete from rel_role_display where display_id in (select id from display where project_id = #{projectId})"})
+    int deleteByProjectId(Long projectId);
 }

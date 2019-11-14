@@ -17,6 +17,7 @@ const utilStyles = require('assets/less/util.less')
 interface IFilterSettingFormProps {
   item: IDataParamSource
   list: string[]
+  model: any
   config: IDataParamConfig
   onSave: (config: IDataParamConfig) => void
   onCancel: () => void
@@ -206,7 +207,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
               type: 'filter',
               value: this.getFilterValue(t.filterValue, type),
               operator: t.filterOperator,
-              sqlType: this.getSqlType(type)
+              sqlType: this.getSqlType(name)
           }
           return filterJson
       }
@@ -214,7 +215,10 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     return result
 }
 
-  private getSqlType = (type) => type === 'number' ? 'INTEGER' : 'VARCHAR'
+  private getSqlType = (key) => {
+    const {model} = this.props
+    return model && model[key] ? model[key]['sqlType'] : 'VARCHAR'
+  }
   private getFilterValue = (val, type) => type === 'number' ? val : `'${val}'`
 
 
@@ -234,32 +238,61 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     const { name, selectedDate, datepickerValue } = this.state
     const today = moment().startOf('day').format(DEFAULT_DATETIME_FORMAT)
     const yesterday = moment().startOf('day').subtract(1, 'days').format(DEFAULT_DATETIME_FORMAT)
-
-    if (selectedDate === 'today') {
-      return `${name} >= '${today}'`
-    } else if (selectedDate === 'yesterday') {
-      return `${name} >= '${yesterday}' and ${name} <= '${today}'`
-    } else if (selectedDate === 'yesterdayFromNow') {
-      return `${name} >= '${yesterday}'`
-    } else if (selectedDate === '7') {
-      return `${name} >= '${moment().subtract(7, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
-    } else if (selectedDate === '30') {
-      return `${name} >= '${moment().subtract(30, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
-    } else if (selectedDate === '90') {
-      return `${name} >= '${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
-    } else if (selectedDate === '365') {
-      return `${name} >= '${moment().subtract(365, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
-    } else if (selectedDate === 'week') {
-      return `${name} >= '${moment().startOf('week').format(DEFAULT_DATETIME_FORMAT)}'`
-    } else if (selectedDate === 'month') {
-      return `${name} >= '${moment().startOf('month').format(DEFAULT_DATETIME_FORMAT)}'`
-    } else if (selectedDate === 'quarter') {
-      return `${name} >= '${moment().startOf('quarter').format(DEFAULT_DATETIME_FORMAT)}'`
-    } else if (selectedDate === 'year') {
-      return `${name} >= '${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`
-    } else {
-      return `${name} >= '${datepickerValue[0].format(DEFAULT_DATETIME_FORMAT)}' and ${name} <= '${datepickerValue[1].format(DEFAULT_DATETIME_FORMAT)}'`
+    const tml = {
+      name,
+      operator: '>=',
+      type: 'filter',
+      sqlType: this.getSqlType(name),
+      value: ''
     }
+    if (selectedDate === 'today') {
+      tml.value = `'${today}'`
+    } else if (selectedDate === 'yesterday') {
+      const resultJson = [
+        {
+          ...tml,
+          value: `'${yesterday}'`
+        },
+        {
+          ...tml,
+          operator: '<=',
+          value: `'${today}'`
+        }
+      ]
+      return resultJson
+    } else if (selectedDate === 'yesterdayFromNow') {
+      tml.value = `'${yesterday}'`
+    } else if (selectedDate === '7') {
+      tml.value = `'${moment().subtract(7, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+    } else if (selectedDate === '30') {
+      tml.value = `'${moment().subtract(30, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+    } else if (selectedDate === '90') {
+      tml.value = `'${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+    } else if (selectedDate === '365') {
+      tml.value = `'${moment().subtract(365, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+    } else if (selectedDate === 'week') {
+      tml.value = `'${moment().startOf('week').format(DEFAULT_DATETIME_FORMAT)}'`
+    } else if (selectedDate === 'month') {
+      tml.value = `'${moment().startOf('month').format(DEFAULT_DATETIME_FORMAT)}'`
+    } else if (selectedDate === 'quarter') {
+      tml.value = `'${moment().startOf('quarter').format(DEFAULT_DATETIME_FORMAT)}'`
+    } else if (selectedDate === 'year') {
+      tml.value = `'${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`
+    } else {
+      const resultJson = [
+        {
+          ...tml,
+          value: `'${datepickerValue[0].format(DEFAULT_DATETIME_FORMAT)}'`
+        },
+        {
+          ...tml,
+          operator: '<=',
+          value: `'${datepickerValue[1].format(DEFAULT_DATETIME_FORMAT)}'`
+        }
+      ]
+      return resultJson
+    }
+    return [{...tml}]
   }
 
   private save = () => {
@@ -273,13 +306,12 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
         type: 'filter',
         value: target.map((key) => `'${key}'`),
         operator: 'in',
-        sqlType: 'VARCHAR'
+        sqlType: this.getSqlType(name)
       }
       sqlModel.push(filterItem)
       if (sql) {
         onSave({
           sqlModel,
-        //  sql: `${name} in (${sql})`,
           filterSource: target.slice()
         })
       } else {
@@ -290,7 +322,6 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
         this.conditionalFilterForm.current.props.form.validateFieldsAndScroll((err) => {
           if (!err) {
             onSave({
-             // sql: this.getSqlExpresstions(filterTree),
               filterSource: {...filterTree},
               sqlModel: this.getSqlModel([{...filterTree}])
             })
@@ -302,7 +333,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
       }
     } else {
       onSave({
-        sql: this.getDateSql(),
+        sqlModel: this.getDateSql(),
         filterSource: {
           selectedDate,
           datepickerValue: datepickerValue.map((m) => m.format(DEFAULT_DATETIME_FORMAT))

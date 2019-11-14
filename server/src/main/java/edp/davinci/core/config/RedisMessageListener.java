@@ -42,7 +42,7 @@ import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 public class RedisMessageListener {
 
     @Autowired(required = false)
-    @Qualifier("InitRedisTemplate")
+    @Qualifier("initRedisTemplate")
     private RedisTemplate<String, Object> redisTemplate;
 
     @Bean

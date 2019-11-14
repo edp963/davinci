@@ -242,12 +242,15 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
   private changeDashboard = (dashboardId) => (e) => {
     const { params, router } = this.props
-    const { pid, portalId, portalName } = params
-    this.setState({
-      isGrid: true
-    }, () => {
-      router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
-    })
+    const { pid, portalId, portalName, dashboardId: currentDashboardId } = params
+
+    if (Number(currentDashboardId) !== dashboardId) {
+      this.setState({
+        isGrid: true
+      }, () => {
+        router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
+      })
+    }
   }
 
   private hideDashboardForm = () => {

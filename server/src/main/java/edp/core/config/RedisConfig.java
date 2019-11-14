@@ -40,7 +40,7 @@ public class RedisConfig {
     private BeanFactory beanFactory;
 
     @Bean
-    public RedisTemplate<String, Object> InitRedisTemplate() {
+    public RedisTemplate<String, Object> initRedisTemplate() {
         RedisTemplate<String, Object> redisTemplate = null;
         if (isRedisEnable) {
             log.info("InitRedisTemplate");

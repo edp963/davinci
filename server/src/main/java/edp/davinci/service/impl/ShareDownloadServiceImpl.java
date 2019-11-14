@@ -65,7 +65,14 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
             shareDownloadRecordMapper.insertSelective(record);
 
             MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.SHAREDOWNLOAD, uuid);
-            ExecutorUtil.submitWorkbookTask(WorkBookContext.newWorkBookContext(wrapper, widgetList, shareInfo.getShareUser(), resultLimit));
+            WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
+                    .withWrapper(wrapper)
+                    .withWidgets(widgetList)
+                    .withUser(shareInfo.getShareUser())
+                    .withResultLimit(resultLimit)
+                    .withTaskKey("ShareDownload_" + uuid)
+                    .build();
+            ExecutorUtil.submitWorkbookTask(workBookContext, null);
             log.info("Share download task submit: {}", wrapper);
             return true;
         } catch (Exception e) {
@@ -88,12 +95,12 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
 
         ShareDownloadRecord record = shareDownloadRecordMapper.getShareDownloadRecordBy(Long.valueOf(id), uuid);
 
-        if(record != null){
+        if (record != null) {
             record.setLastDownloadTime(new Date());
             record.setStatus(DownloadTaskStatus.DOWNLOADED.getStatus());
             shareDownloadRecordMapper.updateById(record);
             return record;
-        }else{
+        } else {
             return null;
         }
     }

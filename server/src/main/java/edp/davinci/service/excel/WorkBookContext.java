@@ -20,6 +20,8 @@
 package edp.davinci.service.excel;
 
 import edp.davinci.model.User;
+import lombok.Data;
+import org.slf4j.Logger;
 
 import java.io.Serializable;
 import java.util.List;
@@ -31,6 +33,7 @@ import java.util.List;
  * @Date 19/5/29 19:26
  * To change this template use File | Settings | File Templates.
  */
+@Data
 public class WorkBookContext implements Serializable {
 
     private MsgWrapper wrapper;
@@ -41,57 +44,67 @@ public class WorkBookContext implements Serializable {
 
     private int resultLimit;
 
+    private String taskKey;
 
-    public static WorkBookContext newWorkBookContext(MsgWrapper wrapper, List<WidgetContext> widgets, User user, int resultLimit) {
-        return new WorkBookContext(wrapper, widgets, user, resultLimit);
+    private Logger customLogger;
+
+    private WorkBookContext() {
     }
 
-    public static WorkBookContext newWorkBookContext(List<WidgetContext> widgets, User user, int resultLimit) {
-        return new WorkBookContext(widgets, user, resultLimit);
-    }
+    public static final class WorkBookContextBuilder {
+        private MsgWrapper wrapper;
+        private List<WidgetContext> widgets;
+        private User user;
+        private int resultLimit;
+        private String taskKey;
+        private Logger customLogger;
 
-    public WorkBookContext(List<WidgetContext> widgets, User user, int resultLimit) {
-        this.widgets = widgets;
-        this.user = user;
-        this.resultLimit = resultLimit;
-    }
+        private WorkBookContextBuilder() {
+        }
 
-    private WorkBookContext(MsgWrapper wrapper, List<WidgetContext> widgets, User user, int resultLimit) {
-        this.wrapper = wrapper;
-        this.widgets = widgets;
-        this.user = user;
-        this.resultLimit = resultLimit;
-    }
+        public static WorkBookContextBuilder newBuildder() {
+            return new WorkBookContextBuilder();
+        }
 
-    public MsgWrapper getWrapper() {
-        return wrapper;
-    }
+        public WorkBookContextBuilder withWrapper(MsgWrapper wrapper) {
+            this.wrapper = wrapper;
+            return this;
+        }
 
-    public void setWrapper(MsgWrapper wrapper) {
-        this.wrapper = wrapper;
-    }
+        public WorkBookContextBuilder withWidgets(List<WidgetContext> widgets) {
+            this.widgets = widgets;
+            return this;
+        }
 
-    public List<WidgetContext> getWidgets() {
-        return widgets;
-    }
+        public WorkBookContextBuilder withUser(User user) {
+            this.user = user;
+            return this;
+        }
 
-    public void setWidgets(List<WidgetContext> widgets) {
-        this.widgets = widgets;
-    }
+        public WorkBookContextBuilder withResultLimit(int resultLimit) {
+            this.resultLimit = resultLimit;
+            return this;
+        }
 
-    public User getUser() {
-        return user;
-    }
+        public WorkBookContextBuilder withTaskKey(String taskKey) {
+            this.taskKey = taskKey;
+            return this;
+        }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+        public WorkBookContextBuilder withCustomLogger(Logger customLogger) {
+            this.customLogger = customLogger;
+            return this;
+        }
 
-    public int getResultLimit() {
-        return resultLimit;
-    }
-
-    public void setResultLimit(int resultLimit) {
-        this.resultLimit = resultLimit;
+        public WorkBookContext build() {
+            WorkBookContext workBookContext = new WorkBookContext();
+            workBookContext.setWrapper(wrapper);
+            workBookContext.setWidgets(widgets);
+            workBookContext.setUser(user);
+            workBookContext.setResultLimit(resultLimit);
+            workBookContext.setTaskKey(taskKey);
+            workBookContext.setCustomLogger(customLogger);
+            return workBookContext;
+        }
     }
 }

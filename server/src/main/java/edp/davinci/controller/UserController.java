@@ -282,6 +282,7 @@ public class UserController extends BaseController {
     @ApiOperation(value = "get users by keyword")
     @GetMapping
     public ResponseEntity getUsers(@RequestParam("keyword") String keyword,
+                                   @RequestParam(name = "includeSelf", required = false, defaultValue = "false") Boolean includeSelf,
                                    @RequestParam(value = "orgId", required = false) Long orgId,
                                    @ApiIgnore @CurrentUser User user,
                                    HttpServletRequest request) {
@@ -289,7 +290,7 @@ public class UserController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("keyword can not EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        List<UserBaseInfo> users = userService.getUsersByKeyword(keyword, user, orgId);
+        List<UserBaseInfo> users = userService.getUsersByKeyword(keyword, user, orgId, includeSelf);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(users));
     }
 
