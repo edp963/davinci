@@ -179,7 +179,6 @@ module.exports = options => ({
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.react.js'],
     mainFields: ['browser', 'jsnext:main', 'main'],
     alias: {
-      'react-dom': '@hot-loader/react-dom', // https://github.com/gaearon/react-hot-loader/issues/1227
       'react-resizable': path.resolve(process.cwd(), 'libs/react-resizable'),
       app: path.resolve(process.cwd(), 'app'),
       share: path.resolve(process.cwd(), 'share'),
