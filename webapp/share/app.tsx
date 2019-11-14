@@ -38,8 +38,8 @@ moment.locale('zh-cn')
 
 import '!file-loader?name=[name].[ext]!../app/favicon.ico'
 import 'file-loader?name=[name].[ext]!../app/.htaccess'
-import '../libs/react-grid-layout/css/styles.css'
-import '../libs/react-resizable/css/styles.css'
+import 'react-grid-layout/css/styles.css'
+import 'libs/react-resizable/css/styles.css'
 import 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'
 import 'react-quill/dist/quill.snow.css'
 import '../app/assets/fonts/iconfont.css'
