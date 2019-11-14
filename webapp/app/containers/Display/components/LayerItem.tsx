@@ -4,7 +4,7 @@ import * as classnames from 'classnames'
 import moment from 'moment'
 
 import { Tooltip, Icon } from 'antd'
-import Draggable from 'libs/react-draggable'
+import Draggable from 'react-draggable'
 import Video from 'components/Video'
 
 // @TODO contentMenu

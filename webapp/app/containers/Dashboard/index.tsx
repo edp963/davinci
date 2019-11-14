@@ -78,6 +78,7 @@ import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects/types'
 import EditorHeader from 'components/EditorHeader'
+import 'assets/less/resizer.less'
 const SplitPane = React.lazy(() => import('react-split-pane'))
 import {IProjectRoles} from '../Organizations/component/ProjectRole'
 import { OrganizationActions } from '../Organizations/actions'
