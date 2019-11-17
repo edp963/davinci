@@ -462,8 +462,12 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         relRoleDisplaySlideWidgetMapper.deleteByProjectId(projectId);
         //删除slide与widget的关联
         memDisplaySlideWidgetMapper.deleteByProject(projectId);
+        //删除rel_role_slide
+        relRoleSlideMapper.deleteByProjectId(projectId);
         //删除slide
         displaySlideMapper.deleteByProjectId(projectId);
+        //删除rel_role_display
+        relRoleDisplayMapper.deleteByProjectId(projectId);
         //删除display
         displayMapper.deleteByProject(projectId);
     }
