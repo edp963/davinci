@@ -74,7 +74,7 @@
     "intl": "1.2.5",
     "invariant": "2.2.4",
     "ip": "1.1.5",
-    "lodash": "4.17.11",
+    "lodash": "4.17.13",
     "memoize-one": "^5.0.0",
     "minimist": "1.2.0",
     "moment": "^2.22.2",
