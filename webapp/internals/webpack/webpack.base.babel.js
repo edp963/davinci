@@ -60,9 +60,14 @@ module.exports = options => ({
         use: [
           'style-loader',
           'css-loader',
-          `less-loader?{"sourceMap": true, "modifyVars": ${JSON.stringify(
-            overrideLessVariables
-          )}}`
+          {
+            loader: 'less-loader',
+            options: {
+              sourceMap: true,
+              javascriptEnabled: true,
+              modifyVars: overrideLessVariables
+            }
+          }
         ]
       },
       {
@@ -70,9 +75,21 @@ module.exports = options => ({
         exclude: /node_modules/,
         use: [
           'style-loader',
-          'css-loader?modules&importLoaders=1',
+          {
+            loader: 'css-loader',
+            options: {
+              modules: true,
+              importLoaders: 1
+            }
+          },
           'postcss-loader',
-          'less-loader'
+          {
+            loader: 'less-loader',
+            options: {
+              sourceMap: true,
+              javascriptEnabled: true
+            }
+          }
         ]
       },
       {
