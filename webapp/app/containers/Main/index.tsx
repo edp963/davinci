@@ -132,7 +132,7 @@ export class Main extends React.Component<IMainProps & RouteComponentWithParams,
               <Route path="/project/:projectId/portal/:portalId" component={Dashboard} />
               <Route exact path="/project/:projectId/display/:displayId" component={DisplayEditor} />
               <Route exact path="/project/:projectId/display/preview/:displayId" component={DisplayPreview} />
-              <Route exact path="/project/:projectId/widget/:widgetId" component={Workbench} />
+              <Route exact path="/project/:projectId/widget/:widgetId?" component={Workbench} />
               <Route exact path="/project/:projectId/view/:viewId?" component={ViewEditor} />
               <Route exact path="/project/:projectId/schedule/:scheduleId?" component={ScheduleEditor} />
 
