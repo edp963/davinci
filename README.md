@@ -62,5 +62,3 @@ The fastest way to get response from our developers is to send email to our mail
 
 ## License
 Please refer to [LICENSE](https://github.com/edp963/davinci/blob/master/LICENSE) file.
-  
-
