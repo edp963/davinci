@@ -72,7 +72,6 @@ const appReducer = (state = initialState, action) =>
         break
       case UPLOAD_AVATAR_SUCCESS:
         draft.loginUser.avatar = action.payload.path
-        localStorage.setItem('loginUser', JSON.stringify(draft.loginUser))
         break
       case UPDATE_PROFILE_SUCCESS:
         const { id, name, department, description } = action.payload.user

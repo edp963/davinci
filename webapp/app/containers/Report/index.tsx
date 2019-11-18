@@ -49,13 +49,6 @@ const styles = require('./Report.less')
 
 import { RouteComponentWithParams } from 'utils/types'
 
-import { Viz } from 'containers/Viz/Loadable'
-import { Widget } from 'containers/Widget/Loadable'
-import { View } from 'containers/View/Loadable'
-import { Source } from 'containers/Source/Loadable'
-import { Schedule } from 'containers/Schedule/Loadable'
-
-
 interface IReportProps {
   sidebar: boolean | IsidebarDetail[]
   loginUser: { admin: boolean }
