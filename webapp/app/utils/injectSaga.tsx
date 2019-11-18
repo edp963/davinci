@@ -49,7 +49,8 @@ export default (descriptor: { key: string, saga: any, mode?: string }) => (Wrapp
   return hoistNonReactStatics(InjectSaga, WrappedComponent)
 }
 
-const useInjectSaga = ({ key, saga, mode }) => {
+const useInjectSaga = (descriptor: { key: string, saga: any, mode?: string }) => {
+  const { key, saga, mode } = descriptor
   const context = React.useContext(ReactReduxContext)
   React.useEffect(() => {
     const injectors = getInjectors(context.store)

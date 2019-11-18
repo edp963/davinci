@@ -130,7 +130,7 @@ export function* copyView (action: ViewActionType) {
     const fromViewResponse = yield call(request, `${api.view}/${view.id}`)
     const fromView = fromViewResponse.payload
     const copyView: IView = { ...fromView, name: view.name, description: view.description }
-    const asyncData = yield call<AxiosRequestConfig>(request, {
+    const asyncData = yield call(request, {
       method: 'post',
       url: api.view,
       data: copyView
