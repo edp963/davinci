@@ -7,6 +7,7 @@ import { routerMiddleware } from 'connected-react-router'
 import { History } from 'history'
 import createSagaMiddleware, { Task, SagaIterator } from 'redux-saga'
 import createReducer from './reducers'
+import { apiInterceptorMiddleware } from 'utils/statistic/apiInterceptorMiddleware'
 
 export interface IStore<T> extends Store<T> {
   runSaga?: (saga: (...args: any[]) => SagaIterator, ...args: any[]) => Task
@@ -45,9 +46,10 @@ export default function configureStore<T> (initialState = {}, history: History<a
   const sagaMiddleware = createSagaMiddleware(reduxSagaMonitorOptions)
 
   // Create the store with two middlewares
-  // 1. sagaMiddleware: Makes redux-sagas work
-  // 2. routerMiddleware: Syncs the location/URL path to the state
-  const middlewares = [sagaMiddleware, routerMiddleware(history)]
+  // 1. statistics middleware
+  // 2. sagaMiddleware: Makes redux-sagas work
+  // 3. routerMiddleware: Syncs the location/URL path to the state
+  const middlewares = [apiInterceptorMiddleware, sagaMiddleware, routerMiddleware(history)]
 
   const enhancers = [applyMiddleware(...middlewares)]
 
