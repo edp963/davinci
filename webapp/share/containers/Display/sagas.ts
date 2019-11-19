@@ -19,8 +19,7 @@
  */
 
 import omit from 'lodash/omit'
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import { call, fork, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
 import { message } from 'antd'
 import request from 'utils/request'
@@ -92,8 +91,8 @@ export function* getData (action: ShareDisplayActionType) {
 }
 
 export default function* rootDisplaySaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(ActionTypes.LOAD_SHARE_DISPLAY, getDisplay),
     takeEvery(ActionTypes.LOAD_LAYER_DATA, getData)
-  ]
+  ])
 }

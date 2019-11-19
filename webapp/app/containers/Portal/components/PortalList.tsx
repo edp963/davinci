@@ -10,8 +10,8 @@ const styles = require('../Portal.less')
 
 import PortalForm from './PortalForm'
 import ModulePermission from 'containers/Account/components/checkModulePermission'
-import { IProject } from 'containers/Projects'
-import { IPortal } from 'containers/Portal'
+import { IProject } from 'containers/Projects/types'
+import { IPortal } from 'containers/Portal/types'
 import { makeSelectProjectRoles } from 'containers/Projects/selectors'
 import {IProjectRoles} from 'containers/Organizations/component/ProjectRole'
 

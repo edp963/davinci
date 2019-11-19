@@ -111,13 +111,10 @@ const ScheduleVizConfig: React.FC<IScheduleVizConfigProps> = (props) => {
 
   const displayOptions = useMemo(
     () =>
-      // @FIXME immutable initial value is empty List object
-      !displays.length
-        ? []
-        : displays.map<CheckboxOptionType>(({ id, name }) => ({
-            label: name,
-            value: id
-          })),
+      displays.map<CheckboxOptionType>(({ id, name }) => ({
+        label: name,
+        value: id
+      })),
     [displays]
   )
 

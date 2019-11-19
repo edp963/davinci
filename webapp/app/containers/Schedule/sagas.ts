@@ -143,12 +143,12 @@ export function* getSuggestMails (action: ScheduleActionType) {
 
 // @FIXME need remove
 export function* getVizsData (action) {
-  const { pid } = action.payload
+  const { projectId } = action.payload
   try {
-    const portalsData = yield call(request, `${api.portal}?projectId=${pid}`)
+    const portalsData = yield call(request, `${api.portal}?projectId=${projectId}`)
     const portalsList = portalsData.payload
 
-    const displayData = yield call(request, `${api.display}?projectId=${pid}`)
+    const displayData = yield call(request, `${api.display}?projectId=${projectId}`)
     const displayList = displayData.payload.map((display) => ({
       ...display,
       vizType: 'display',

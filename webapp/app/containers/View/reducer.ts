@@ -33,7 +33,7 @@ import { LOAD_WIDGET_DETAIL_SUCCESS } from 'containers/Widget/constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from 'containers/Dashboard/constants'
 
 import { ActionTypes as DisplayActionTypes } from 'containers/Display/constants'
-import { LOCATION_CHANGE } from 'react-router-redux'
+import { LOCATION_CHANGE } from 'connected-react-router'
 
 const emptyView: IView = {
   id: null,

@@ -22,7 +22,8 @@ import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
+import { RouteComponentWithParams } from 'utils/types'
 
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -51,18 +52,16 @@ import { checkNameUniqueAction } from '../App/actions'
 import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
-import { IProject } from '../Projects'
+import { IProject } from '../Projects/types'
 
 const styles = require('./Widget.less')
 const utilStyles = require('assets/less/util.less')
 
-interface IWidgetProps {
+interface IWidgetProps extends RouteComponentWithParams {
   widgets: any[]
   views: any[]
   loginUser: any
   loading: boolean
-  router: any
-  params: any
   currentProject: IProject
   onLoadWidgets: (projectId: number) => void
   onLoadViews: (projectId: number, resolve?: any) => void
@@ -121,11 +120,12 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
     const {
       onLoadWidgets,
       onLoadViews,
-      params
+      match
     } = this.props
+    const projectId = +match.params.projectId
 
-    onLoadWidgets(params.pid)
-    onLoadViews(params.pid)
+    onLoadWidgets(projectId)
+    onLoadViews(projectId)
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
@@ -143,9 +143,9 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
   }
 
   private toWorkbench = (widgetId) => () => {
-    const { router, params } = this.props
+    const { history, match } = this.props
     sessionStorage.removeItem('editWidgetFromDashboard')
-    router.push(`/project/${params.pid}/widget/${widgetId}`)
+    history.push(`/project/${match.params.projectId}/widget/${widgetId}`)
   }
 
   private hideWorkbench = () => {
@@ -194,11 +194,11 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
   private onModalOk = () => new Promise((resolve, reject) => {
     this.copyWidgetForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { params } = this.props
+        const { match } = this.props
 
         const widgetValue = {
           ...values,
-          projectId: Number(params.pid)
+          projectId: Number(match.params.projectId)
         }
 
         this.props.onAddWidget(widgetValue, () => {
@@ -263,7 +263,7 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
 
   public render () {
     const {
-      params,
+      match,
       widgets,
       onDeleteWidget,
       onCheckUniqueName,
@@ -418,7 +418,7 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
         >
           <CopyWidgetForm
             type={workbenchType}
-            projectId={params.pid}
+            projectId={match.params.projectId}
             onCheckUniqueName={onCheckUniqueName}
             ref={(f) => { this.copyWidgetForm = f }}
           />

@@ -19,21 +19,19 @@
  */
 
 import { LOAD_SIDEBAR } from './constants'
-import { fromJS } from 'immutable'
+import produce from 'immer'
 
-const initialState = fromJS({
+const initialState = {
   sidebar: false,
   currentProject: false
-})
-
-function reportReducer (state = initialState, action) {
-  const { payload } = action
-  switch (action.type) {
-    case LOAD_SIDEBAR:
-      return state.set('sidebar', action.sidebar)
-    default:
-      return state
-  }
 }
+
+const reportReducer = (state = initialState, action) =>
+  produce(state, (draft) => {
+    switch (action.type) {
+      case LOAD_SIDEBAR:
+        draft.sidebar = action.sidebar
+    }
+  })
 
 export default reportReducer

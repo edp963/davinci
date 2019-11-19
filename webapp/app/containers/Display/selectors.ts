@@ -20,64 +20,64 @@
 
 import { createSelector } from 'reselect'
 
-const selectDisplay = (state) => state.get('display')
+const selectDisplay = (state) => state.display
 
 const makeSelectDisplays = () => createSelector(
   selectDisplay,
-  ({ present }) => present.get('displays')
+  ({ present }) => present.displays
 )
 
 const makeSelectCurrentDisplay = () => createSelector(
   selectDisplay,
-  ({ present }) => present.get('currentDisplay')
+  ({ present }) => present.currentDisplay
 )
 
 const makeSelectCurrentSlide = () => createSelector(
   selectDisplay,
-  ({ present }) => present.get('currentSlide')
+  ({ present }) => present.currentSlide
 )
 
 const makeSelectCurrentLayers = () => createSelector(
   selectDisplay,
-  ({ present }) =>  present.get('currentLayers')
+  ({ present }) =>  present.currentLayers
 )
 
 const makeSelectCurrentLayersInfo = () => createSelector(
   selectDisplay,
-  ({ present }) => present.get('currentLayersInfo')
+  ({ present }) => present.currentLayersInfo
 )
 const makeSelectCurrentLayersOperationInfo = () => createSelector(
   selectDisplay,
-  ({ present }) => present.get('currentLayersOperationInfo')
+  ({ present }) => present.currentLayersOperationInfo
 )
 
 const makeSelectCurrentSelectedLayers = () => createSelector(
   selectDisplay,
   ({ present }) => {
-    const layersOperationInfo = present.get('currentLayersOperationInfo')
-    const layers = present.get('currentLayers')
+    const layersOperationInfo = present.currentLayersOperationInfo
+    const layers = present.currentLayers
     return layers.filter((layer) => layersOperationInfo[layer.id].selected)
   }
 )
 
 const makeSelectClipboardLayers = () => createSelector(
   selectDisplay,
-  ({ present }) => present.get('clipboardLayers')
+  ({ present }) => present.clipboardLayers
 )
 
 const makeSelectCurrentDisplayShareInfo = () => createSelector(
   selectDisplay,
-  ({ present }) => present.get('currentDisplayShareInfo')
+  ({ present }) => present.currentDisplayShareInfo
 )
 
 const makeSelectCurrentDisplaySecretInfo = () => createSelector(
   selectDisplay,
-  ({ present }) => present.get('currentDisplaySecretInfo')
+  ({ present }) => present.currentDisplaySecretInfo
 )
 
 const makeSelectCurrentDisplayShareInfoLoading = () => createSelector(
   selectDisplay,
-  ({ present }) => present.get('currentDisplayShareInfoLoading')
+  ({ present }) => present.currentDisplayShareInfoLoading
 )
 
 const makeSelectCanUndo = () => createSelector(
@@ -93,13 +93,13 @@ const makeSelectCanRedo = () => createSelector(
 const makeSelectCurrentState = () => createSelector(
   selectDisplay,
   ({ present }) => {
-    const display = present.get('currentDisplay')
+    const display = present.currentDisplay
     return {
       displayId: display && display.id,
-      slide: present.get('currentSlide'),
-      layers: present.get('currentLayers'),
-      lastOperationType: present.get('lastOperationType'),
-      lastLayers: present.get('lastLayers')
+      slide: present.currentSlide,
+      layers: present.currentLayers,
+      lastOperationType: present.lastOperationType,
+      lastLayers: present.lastLayers
     }
   }
 )
@@ -110,23 +110,23 @@ const makeSelectNextState = () => createSelector(
     if (future.length === 0) { return {} }
     const item = future[0]
     return {
-      displayId: item.get('currentDisplay').id,
-      slide: item.get('currentSlide'),
-      layers: item.get('currentLayers'),
-      lastOperationType: item.get('lastOperationType'),
-      lastLayers: item.get('lastLayers')
+      displayId: item.currentDisplay.id,
+      slide: item.currentSlide,
+      layers: item.currentLayers,
+      lastOperationType: item.lastOperationType,
+      lastLayers: item.lastLayers
     }
   }
 )
 
 const makeSelectEditorBaselines = () =>  createSelector(
   selectDisplay,
-  ({ present }) => present.get('editorBaselines')
+  ({ present }) => present.editorBaselines
 )
 
 const makeSelectCurrentProject = () => createSelector(
   selectDisplay,
-  ({present}) => present.get('currentProject')
+  ({present}) => present.currentProject
 )
 
 export {

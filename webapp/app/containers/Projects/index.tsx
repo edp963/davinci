@@ -4,9 +4,8 @@ import { connect } from 'react-redux'
 import { Row, Col, Tooltip, Popconfirm, Icon, Modal, Button, Pagination } from 'antd'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 const styles = require('../Organizations/Project.less')
-import { InjectedRouter } from 'react-router/lib/Router'
-import { addProject, deleteProject, editProject, loadProjects, loadProjectDetail,
-  transferProject, searchProject, unStarProject, getProjectStarUser, loadCollectProjects, clickCollectProjects } from './actions'
+
+import { ProjectActions } from './actions'
 import { compose } from 'redux'
 import { makeSelectLoginUser } from '../App/selectors'
 import { makeSelectProjects, makeSelectSearchProject, makeSelectStarUserList, makeSelectCollectProjects } from './selectors'
@@ -18,7 +17,8 @@ import saga from './sagas'
 import reducer from './reducer'
 import reducerOrganization from '../Organizations/reducer'
 import sagaOrganization from '../Organizations/sagas'
-import { loadOrganizations } from '../Organizations/actions'
+import { OrganizationActions } from '../Organizations/actions'
+const { loadOrganizations } = OrganizationActions
 import { makeSelectOrganizations } from '../Organizations/selectors'
 import { checkNameUniqueAction } from '../App/actions'
 import ComponentPermission from '../Account/components/checkMemberPermission'
@@ -30,8 +30,10 @@ import HistoryStack from '../Organizations/component/historyStack'
 import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
 const historyStack = new HistoryStack()
 
+import { RouteComponentWithParams } from 'utils/types'
+import { IProject, IStarUser } from './types'
+
 interface IProjectsProps {
-  router: InjectedRouter
   projects: IProject[]
   collectProjects: IProject[]
   loginUser: any
@@ -52,12 +54,7 @@ interface IProjectsProps {
   onSearchProject: (param: {keywords: string, pageNum: number, pageSize: number }) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
-export interface IStarUser {
-  avatar: string
-  id: number
-  starTime: string
-  username: string
-}
+
 interface IProjectsState {
   formType?: string
   formVisible: boolean
@@ -73,32 +70,7 @@ interface IProjectsState {
   isDisableCollect: boolean
 }
 
-export interface IProjectPermission {
-  downloadPermission: boolean
-  schedulePermission: number
-  sharePermission: boolean
-  sourcePermission: number
-  viewPermission: number
-  vizPermission: number
-  widgetPermission: number
-}
-
-export interface IProject {
-  createBy?: { avatar?: string, id?: number, username?: string}
-  permission?: IProjectPermission
-  inTeam?: boolean
-  isStar?: boolean
-  type?: string
-  name?: string
-  id?: number
-  description?: string
-  pic?: string
-  orgId?: number
-  visibility?: boolean
-  starNum?: number
-}
-
-export class Projects extends React.PureComponent<IProjectsProps, IProjectsState> {
+export class Projects extends React.PureComponent<IProjectsProps & RouteComponentWithParams, IProjectsState> {
   constructor (props) {
     super(props)
     this.state = {
@@ -300,9 +272,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
   }
 
   private toProject = (d: any) => () => {
-    const pid = d.id
-    this.props.router.push(`/project/${pid}`)
-   // this.props.onLoadProjectDetail(pid)
+    const projectId = d.id
+    this.props.history.push(`/project/${projectId}`)
+   // this.props.onLoadProjectDetail(projectId)
     this.saveHistory(d)
   }
 
@@ -1033,18 +1005,18 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadProjects: () => dispatch(loadProjects()),
-    onStarProject: (id, resolve) => dispatch(unStarProject(id, resolve)),
-    onGetProjectStarUser: (id) => dispatch(getProjectStarUser(id)),
-    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
-    onLoadOrganizations: () => dispatch(loadOrganizations()),
-    onLoadCollectProjects: () => dispatch(loadCollectProjects()),
-    onClickCollectProjects: (formType, project, result) => dispatch(clickCollectProjects(formType, project, result)),
-    onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),
-    onEditProject: (project, resolve) => dispatch(editProject(project, resolve)),
-    onTransferProject: (id, orgId) => dispatch(transferProject(id, orgId)),
-    onDeleteProject: (id, resolve) => dispatch(deleteProject(id, resolve)),
-    onSearchProject: (param) => dispatch(searchProject(param)),
+    onLoadProjects: () => dispatch(ProjectActions.loadProjects()),
+    onStarProject: (id, resolve) => dispatch(ProjectActions.unStarProject(id, resolve)),
+    onGetProjectStarUser: (id) => dispatch(ProjectActions.getProjectStarUser(id)),
+    onLoadProjectDetail: (id) => dispatch(ProjectActions.loadProjectDetail(id)),
+    onLoadOrganizations: () => dispatch(OrganizationActions.loadOrganizations()),
+    onLoadCollectProjects: () => dispatch(ProjectActions.loadCollectProjects()),
+    onClickCollectProjects: (formType, project, result) => dispatch(ProjectActions.clickCollectProjects(formType, project, result)),
+    onAddProject: (project, resolve) => dispatch(ProjectActions.addProject(project, resolve)),
+    onEditProject: (project, resolve) => dispatch(ProjectActions.editProject(project, resolve)),
+    onTransferProject: (id, orgId) => dispatch(ProjectActions.transferProject(id, orgId)),
+    onDeleteProject: (id, resolve) => dispatch(ProjectActions.deleteProject(id, resolve)),
+    onSearchProject: (param) => dispatch(ProjectActions.searchProject(param)),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }

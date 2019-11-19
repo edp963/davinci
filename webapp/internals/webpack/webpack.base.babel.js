@@ -181,6 +181,7 @@ module.exports = options => ({
     alias: {
       'react-dom': '@hot-loader/react-dom', // https://github.com/gaearon/react-hot-loader/issues/1227
       app: path.resolve(process.cwd(), 'app'),
+      share: path.resolve(process.cwd(), 'share'),
       libs: path.resolve(process.cwd(), 'libs'),
       assets: path.resolve(process.cwd(), 'app/assets')
       // fonts: path.resolve(process.cwd(), 'app/assets/fonts')

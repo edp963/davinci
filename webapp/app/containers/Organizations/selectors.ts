@@ -19,62 +19,63 @@
  */
 
 import { createSelector } from 'reselect'
+import { IOrganizationState } from './types'
 
-const selectOrganization = (state) => state.get('organization')
+const selectOrganization = (state) => state.organization
 
 const makeSelectOrganizations = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('organizations')
+  (organizationState: IOrganizationState) => organizationState.organizations
 )
 
 const makeSelectInviteMemberList = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('inviteMemberLists')
+  (organizationState: IOrganizationState) => organizationState.inviteMemberLists
 )
 
 const makeSelectCurrentOrganizations = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('currentOrganization')
+  (organizationState: IOrganizationState) => organizationState.currentOrganization
 )
 
 const makeSelectCurrentOrganizationProjects = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('currentOrganizationProjects')
+  (organizationState: IOrganizationState) => organizationState.currentOrganizationProjects
 )
 
 const makeSelectCurrentOrganizationProjectsDetail = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('currentOrganizationProjectsDetail')
+  (organizationState: IOrganizationState) => organizationState.currentOrganizationProjectsDetail
 )
 
 const makeSelectCurrentOrganizationRole = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('currentOrganizationRole')
+  (organizationState: IOrganizationState) => organizationState.currentOrganizationRole
 )
 
 const makeSelectCurrentOrganizationMembers = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('currentOrganizationMembers')
+  (organizationState: IOrganizationState) => organizationState.currentOrganizationMembers
 )
 
 const makeSelectRoleModalLoading = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('roleModalLoading')
+  (organizationState: IOrganizationState) => organizationState.roleModalLoading
 )
 
 const makeSelectCurrentOrganizationProject = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('projectDetail')
+  (organizationState: IOrganizationState) => organizationState.projectDetail
 )
 
 const makeSelectCurrentOrganizationProjectAdmins = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('projectAdmins')
+  (organizationState: IOrganizationState) => organizationState.projectAdmins
 )
 
 const makeSelectCurrentOrganizationProjectRoles = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('projectRoles')
+  (organizationState: IOrganizationState) => organizationState.projectRoles
 )
 
 

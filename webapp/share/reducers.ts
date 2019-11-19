@@ -23,13 +23,12 @@
  * If we were to do this in store.js, reducers wouldn't be hot reloadable.
  */
 
-import { fromJS } from 'immutable'
-import { Reducer, ReducersMapObject } from 'redux'
-import { combineReducers } from 'redux-immutable'
-import { LOCATION_CHANGE } from 'react-router-redux'
+import { combineReducers, Reducer, ReducersMapObject } from 'redux'
+import { connectRouter } from 'connected-react-router'
 
-import globalReducer from './containers/App/reducer'
-import languageProviderReducer from '../app/containers/LanguageProvider/reducer'
+import history from 'utils/history'
+
+import languageProviderReducer from 'app/containers/LanguageProvider/reducer'
 
 /*
  * routeReducer
@@ -39,32 +38,12 @@ import languageProviderReducer from '../app/containers/LanguageProvider/reducer'
  *
  */
 
-// Initial routing state
-const routeInitialState = fromJS({
-  locationBeforeTransitions: null
-})
-
-/**
- * Merge route into the global application state
- */
-function routeReducer (state = routeInitialState, action) {
-  switch (action.type) {
-    /* istanbul ignore next */
-    case LOCATION_CHANGE:
-      return state.merge({
-        locationBeforeTransitions: action.payload
-      })
-    default:
-      return state
-  }
-}
-
 /**
  * Creates the main reducer with the asynchronously loaded ones
  */
 export default function createReducer (injectedReducers: ReducersMapObject = {}): Reducer<any> {
   return combineReducers({
-    route: routeReducer,
+    route: connectRouter(history),
     language: languageProviderReducer,
     ...injectedReducers
   })

@@ -18,11 +18,12 @@
  * >>
  */
 
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { connect } from 'react-redux'
+import { compose } from 'redux'
 import { createStructuredSelector } from 'reselect'
-import { Link } from 'react-router'
+import { Link, withRouter } from 'react-router-dom'
 
 import { Icon, Tooltip, Popover, Menu, Dropdown } from 'antd'
 
@@ -39,9 +40,9 @@ import {
 } from '../selectors'
 
 import { uuid } from 'utils/util'
+import { RouteComponentWithParams } from 'utils/types'
 
 interface IDisplayHeaderProps {
-  params: any
   display: any
   widgets: any[]
   currentDisplayShareInfo?: string
@@ -65,7 +66,7 @@ interface IDisplayHeaderStates {
   displaySharePanelAuthorized: boolean
 }
 
-export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplayHeaderStates> {
+export class DisplayHeader extends React.Component<IDisplayHeaderProps & RouteComponentWithParams, IDisplayHeaderStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -201,7 +202,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
     } = this.state
 
     const {
-      params,
+      match,
       widgets,
       onDeleteLayers,
       onCopyLayers,
@@ -209,8 +210,8 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
       canUndo,
       canRedo
     } = this.props
-
-    const {pid, displayId} = params
+    const projectId = match.params.projectId
+    const displayId = match.params.displayId
 
     const undoClass = classnames({
       [styles.disabled]: !canUndo
@@ -258,7 +259,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
           <ul className={styles.historyBack}>
             <li>
               <Tooltip placement="bottom" title="返回">
-                <Link to={`/project/${pid}/vizs`}>
+                <Link to={`/project/${projectId}/vizs`}>
                   <Icon type="left-circle-o"/>
                 </Link>
               </Tooltip>
@@ -308,7 +309,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
           <ul className={styles.commandGroup}>
             <li>
               <Tooltip placement="bottom" title="预览">
-                <a href={`/#/project/${pid}/display/preview/${displayId}`} target="_blank">
+                <a href={`/#/project/${projectId}/display/preview/${displayId}`} target="_blank">
                   <i className="iconfont icon-preview" />
                 </a>
               </Tooltip>
@@ -338,4 +339,9 @@ const mapStateToProps = createStructuredSelector({
   currentDisplayShareInfoLoading: makeSelectCurrentDisplayShareInfoLoading()
 })
 
-export default connect<{}, {}, IDisplayHeaderProps>(mapStateToProps, null)(DisplayHeader)
+const withConnect = connect<{}, {}, IDisplayHeaderProps>(mapStateToProps)
+
+export default compose(
+  withConnect,
+  withRouter
+)(DisplayHeader)

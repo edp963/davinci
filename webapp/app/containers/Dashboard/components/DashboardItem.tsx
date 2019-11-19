@@ -38,7 +38,7 @@ import { Icon, Tooltip, Popconfirm, Popover, Dropdown, Menu } from 'antd'
 
 import ModulePermission from 'containers/Account/components/checkModulePermission'
 import ShareDownloadPermission from 'containers/Account/components/checkShareDownloadPermission'
-import { IProject } from 'containers/Projects'
+import { IProject } from 'containers/Projects/types'
 import { IQueryConditions, IQueryVariableMap } from '../Grid'
 import { IMapControlOptions, OnGetControlOptions, IDistinctValueReqeustParams, IFilters } from 'app/components/Filters/types'
 const styles = require('../Dashboard.less')

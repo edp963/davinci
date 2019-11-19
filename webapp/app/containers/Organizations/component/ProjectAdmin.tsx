@@ -32,8 +32,10 @@ const styles = require('../Project.less')
 const utilStyles =  require('assets/less/util.less')
 import { createStructuredSelector } from 'reselect'
 import { makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationMembers, makeSelectCurrentOrganizationProjectAdmins } from '../selectors'
-import { addProjectAdmin, deleteProjectAdmin} from 'containers/Projects/actions'
-import { loadProjectAdmin } from '../actions'
+import { ProjectActions } from 'containers/Projects/actions'
+const { addProjectAdmin, deleteProjectAdmin } = ProjectActions
+import { OrganizationActions } from '../actions'
+const { loadProjectAdmin } = OrganizationActions
 
 interface IProjectAdminStates {
   relationRoleVisible: boolean

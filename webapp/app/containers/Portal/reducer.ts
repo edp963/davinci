@@ -18,6 +18,8 @@
  * >>
  */
 
+import produce from 'immer'
+
 import {
     LOAD_PORTALS,
     LOAD_PORTALS_SUCCESS,
@@ -35,52 +37,56 @@ import {
     LOAD_SELECT_TEAMS_SUCCESS,
     LOAD_SELECT_TEAMS_FAILURE
   } from './constants'
-import { fromJS } from 'immutable'
 
-const initialState = fromJS({
-    portals: false,
+
+const initialState = {
+    currentPortal: null,
+    portals: [],
     selectTeams: []
-})
-
-function portalReducer (state = initialState, action) {
-  const { type, payload } = action
-  const portals = state.get('portals')
-  switch (type) {
-    case LOAD_PORTALS:
-        return state
-    case LOAD_PORTALS_SUCCESS:
-        return state.set('portals', payload.result)
-    case LOAD_PORTALS_FAILURE:
-        return state
-    case ADD_PORTAL:
-        return state
-    case ADD_PORTAL_SUCCESS:
-        portals.unshift(payload.result)
-        return state.set('portals', portals.slice())
-    case ADD_PORTAL_FAILURE:
-        return state
-    case DELETE_PORTAL:
-        return state
-    case DELETE_PORTAL_SUCCESS:
-        return state.set('portals', portals.filter((g) => g.id !== payload.id))
-    case DELETE_PORTAL_FAILURE:
-    return state
-    case EDIT_PORTAL:
-        return state
-    case EDIT_PORTAL_SUCCESS:
-        portals.splice(portals.findIndex((g) => g.id === payload.result.id), 1, payload.result)
-        return state.set('portals', portals.slice())
-    case EDIT_PORTAL_FAILURE:
-        return state
-    case LOAD_SELECT_TEAMS:
-        return state
-    case LOAD_SELECT_TEAMS_SUCCESS:
-        return state.set('selectTeams', payload.result)
-    case LOAD_SELECT_TEAMS_FAILURE:
-        return state
-    default:
-    return state
-  }
 }
+
+const portalReducer = (state = initialState, action) =>
+  produce(state, (draft) => {
+    switch (action.type) {
+      case LOAD_PORTALS:
+        break
+      case LOAD_PORTALS_SUCCESS:
+        draft.portals = action.payload.result
+        if (action.payload.portalId) {
+          draft.currentPortal = draft.portals.find(({ id }) => id === action.payload.portalId)
+        }
+      case LOAD_PORTALS_FAILURE:
+        break
+      case ADD_PORTAL:
+        break
+      case ADD_PORTAL_SUCCESS:
+        draft.portals.unshift(action.payload.result)
+        break
+      case ADD_PORTAL_FAILURE:
+        break
+      case DELETE_PORTAL:
+        break
+      case DELETE_PORTAL_SUCCESS:
+        draft.portals = draft.portals.filter((g) => g.id !== action.payload.id)
+        break
+
+      case DELETE_PORTAL_FAILURE:
+        break
+      case EDIT_PORTAL:
+        break
+      case EDIT_PORTAL_SUCCESS:
+        draft.portals.splice(draft.portals.findIndex((g) => g.id === action.payload.result.id), 1, action.payload.result)
+        break
+      case EDIT_PORTAL_FAILURE:
+        break
+      case LOAD_SELECT_TEAMS:
+        break
+      case LOAD_SELECT_TEAMS_SUCCESS:
+        draft.selectTeams = action.payload.result
+        break
+      case LOAD_SELECT_TEAMS_FAILURE:
+        break
+    }
+  })
 
 export default portalReducer

@@ -36,10 +36,12 @@ function refreshToken (response: AxiosResponse) {
   return response
 }
 
-export function request (config: AxiosRequestConfig): AxiosPromise
 export function request (url: string, options?: AxiosRequestConfig): AxiosPromise
-export default function request (url: any, options?: AxiosRequestConfig): AxiosPromise {
-  return axios(url, options)
+export function request (config: AxiosRequestConfig): AxiosPromise
+export default function request (url: string | AxiosRequestConfig, options?: AxiosRequestConfig): AxiosPromise {
+  const axiosPromise =
+    typeof url === 'string' ? axios(url, options) : axios(url)
+  return axiosPromise
     .then(refreshToken)
     .then(parseJSON)
 }

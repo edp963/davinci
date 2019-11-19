@@ -18,37 +18,34 @@
  * >>
  */
 
-import * as React from 'react'
-import * as classnames from 'classnames'
-import { Link } from 'react-router'
+import React from 'react'
+import classnames from 'classnames'
+import { Link } from 'react-router-dom'
 
-const styles = require('../Sidebar/Sidebar.less')
+import styles from '../Sidebar/Sidebar.less'
 
 
 interface ISidebarOptionProps {
-  route: any[]
+  indexRoute: string
   active: boolean
-  children: React.ReactNode
-  params: any
+  projectId: string
 }
 
-export class SidebarOption extends React.PureComponent <ISidebarOptionProps, {}> {
-  public render () {
-    const optionClass = classnames(
-      { [styles.option]: true },
-      { [styles.active]: this.props.active }
-    )
-   // const linkRoute = `/report/${this.props.route[0]}`
-    const linkRoute = `/project/${this.props.params.pid}/${this.props.route[0]}`
+const SidebarOption: React.FC<ISidebarOptionProps> = (props) => {
+  const { projectId, indexRoute } = props
+  const optionClass = classnames(
+    { [styles.option]: true },
+    { [styles.active]: props.active }
+  )
+  const linkRoute = `/project/${projectId}/${indexRoute}`
 
-    return (
-      <div className={optionClass}>
-        <Link to={linkRoute}>
-          {this.props.children}
-        </Link>
-      </div>
-    )
-  }
+  return (
+    <div className={optionClass}>
+      <Link to={linkRoute}>
+        {props.children}
+      </Link>
+    </div>
+  )
 }
 
-export default SidebarOption
+export default React.memo(SidebarOption)

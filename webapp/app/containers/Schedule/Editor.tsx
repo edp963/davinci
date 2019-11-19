@@ -23,7 +23,7 @@ import moment, { Moment } from 'moment'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { compose } from 'redux'
-import { RouteComponentProps } from 'react-router'
+import { RouteComponentWithParams } from 'utils/types'
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
 import { createStructuredSelector } from 'reselect'
@@ -57,11 +57,10 @@ import ScheduleBaseConfig, {
 } from './components/ScheduleBaseConfig'
 import ScheduleMailConfig from './components/ScheduleMailConfig'
 import ScheduleVizConfig from './components/ScheduleVizConfig'
-import { IRouteParams } from 'app/routes'
 import { IDashboard } from 'containers/Dashboard'
 import { IDisplay } from 'containers/Display/types'
-import { IPortal } from 'containers/Portal'
-import { IProject } from 'containers/Projects'
+import { IPortal } from 'containers/Portal/types'
+import { IProject } from 'containers/Projects/types'
 import { ISchedule, IScheduleLoading } from './types'
 import {
   IUserInfo,
@@ -128,7 +127,7 @@ interface IScheduleEditorDispatchProps {
 
 type ScheduleEditorProps = IScheduleEditorStateProps &
   IScheduleEditorDispatchProps &
-  RouteComponentProps<{}, IRouteParams>
+  RouteComponentWithParams
 
 const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
   const {
@@ -137,10 +136,10 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
     onLoadPortals,
     onLoadScheduleDetail,
     onResetState,
-    params,
-    router
+    match,
+    history
   } = props
-  const { pid: projectId, scheduleId } = params
+  const { projectId, scheduleId } = match.params
   useEffect(() => {
     onHideNavigator()
     onLoadDisplays(+projectId)
@@ -154,7 +153,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
     }
   }, [])
   const goBack = useCallback(() => {
-    router.push(`/project/${projectId}/schedules`)
+    history.push(`/project/${projectId}/schedules`)
   }, [])
 
   const { portals, loading, editingSchedule, onLoadDashboards } = props
