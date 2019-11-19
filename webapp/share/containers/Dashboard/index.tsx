@@ -1074,12 +1074,17 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         ? <FullScreenPanel
             widgets={widgets}
             currentItems={currentItems}
-            currentDashboard={{ widgets: currentItems }}
+            currentDashboard={dashboard}
             currentItemsInfo={currentItemsInfo}
             visible={allowFullScreen}
             isVisible={this.visibleFullScreen}
-            currentDataInFullScreen={this.state.currentDataInFullScreen}
+            mapOptions={dashboardSelectOptions}
+            onChange={this.globalControlChange}
+            onSearch={this.globalControlSearch}
+            onGetControlOptions={this.getOptions}
+            onGetChartData={this.getChartData}
             onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
+            chartDetail={this.state.currentDataInFullScreen}
           />
         : <div/>
     } else {
