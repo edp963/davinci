@@ -314,11 +314,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let i = 0
     for (; i < path.length - 1; i++) {
         if (o[path[i]] === undefined) {
-          o[path[i]] = path[i + 1].match(/^\d+$/) ? [] : {}
+          o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
         }
-        o = o[path[i]]
+        o = o[decodeURIComponent(path[i])]
     }
-    o[path[i]] = decodeURIComponent(value)
+    o[decodeURIComponent(path[i])] = decodeURIComponent(value)
   }
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
