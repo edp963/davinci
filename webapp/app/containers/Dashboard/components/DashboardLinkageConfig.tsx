@@ -71,20 +71,26 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
     if (!currentItemsInfo) { return [] }
 
     const linkageConfigSource = []
-    Object.keys(currentItemsInfo).forEach((k) => {
-      const dashboardItem = currentItems.find((ci) => `${ci.id}` === k)
+    Object.keys(currentItemsInfo).forEach((infoKey) => {
+      const dashboardItem = currentItems.find((ci) => `${ci.id}` === infoKey)
       const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
       const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
-      const { cols, rows, metrics } = widgetConfig
-
+      const { cols, rows, metrics, color, label } = widgetConfig
       const view = views[widget.viewId]
       const { model, variable } = view
 
-      // Cascader value 中带有 itemId、字段类型、参数/变量标识 这些信息，用 DEFAULT_SPLITER 分隔
-      const columns = [
-        ...[...cols, ...rows]
-          .filter(({ name }) => model[name])
-          .map(({ name }) => {
+      let triggerDimensions = [...cols, ...rows].map(({ name }) => name)
+      if (color) {
+        triggerDimensions = triggerDimensions.concat(color.items.map(({ name }) => name))
+      }
+      if (label) {
+        triggerDimensions = triggerDimensions.concat(color.items.map(({ name }) => name))
+      }
+
+      const triggerColumns = [
+        ...[...new Set(triggerDimensions)]
+          .filter((name) => model[name])
+          .map((name) => {
             return {
               label: name,
               value: [name, model[name].sqlType, 'column'].join(DEFAULT_SPLITER)
@@ -99,6 +105,12 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
         })
       ]
 
+      const linkagerColumns = Object.entries(model)
+        .map(([name, value]) => ({
+          label: name,
+          value: [name, value.sqlType, 'column'].join(DEFAULT_SPLITER)
+        }))
+
       const variables = variable.map(({ name }) => {
         return {
           label: `${name}[变量]`,
@@ -108,14 +120,14 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
 
       linkageConfigSource.push({
         label: widget.name,
-        value: k,
+        value: infoKey,
         children: {
-          columns,
+          triggerColumns,
+          linkagerColumns,
           variables
         }
       })
     })
-
     return linkageConfigSource
   }
 
