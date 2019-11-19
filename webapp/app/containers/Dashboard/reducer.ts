@@ -356,7 +356,7 @@ const dashboardReducer = (state = initialState, action: ViewActionType | any) =>
         if (!drillHistory) {
           draft.currentItemsInfo[action.payload.itemId].queryConditions.drillHistory = []
         }
-        draft.currentItemsInfo[action.payload.itemId].queryConditions.drillHistory.push(action.payload.history)
+        draft.currentItemsInfo[action.payload.itemId].queryConditions.drillHistory.push(action.payload.drillHistory)
         break
 
       case DRILL_PATH_SETTING:
