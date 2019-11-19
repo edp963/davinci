@@ -92,4 +92,9 @@ export const CascadeFilterTypes = [
 
 export const defaultFilterControlGridProps = { xxl: 3, xl: 4, lg: 6, md: 12}
 
+export const fullScreenFilterControlGridProps = {xxl: 12, xl: 12, lg: 12, md: 12}
+
+export const fullScreenGlobalControlGridProps = {xxl: 12, xl: 12, lg: 12, md: 12}
+
+
 export default FilterTypes
