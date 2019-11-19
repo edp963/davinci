@@ -45,6 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.validation.constraints.Min;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -297,10 +298,14 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         List<Dashboard> dashboardList = new ArrayList<>();
         Map<Long, List<Long>> rolesMap = new HashMap<>();
 
-        Set<Long> parentIds = Arrays.stream(dashboards).map(Dashboard::getParentId).filter(pId -> pId.longValue() > 0).collect(Collectors.toSet());
-        Map<Long, String> parentMap = null;
+        Set<Long> parentIds = Arrays.stream(dashboards).map(Dashboard::getParentId).filter(pId -> pId > 0).collect(Collectors.toSet());
+        Map<Long, String> parentMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(parentIds)) {
-            parentMap = dashboardMapper.getFullParentIds(parentIds);
+            List<Dashboard> parents = dashboardMapper.queryByParentIds(parentIds);
+            if (!CollectionUtils.isEmpty(parents)) {
+                Map<Long, List<Dashboard>> longListMap = parents.stream().collect(Collectors.groupingBy(Dashboard::getId));
+                longListMap.forEach((k, v) -> v.stream().findFirst().ifPresent(d -> parentMap.put(k, d.getFullParentId())));
+            }
         }
 
         List<Long> disableDashboards = getDisableVizs(user.getId(), portalId, null, VizEnum.DASHBOARD);
@@ -324,6 +329,8 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
             if (null != dashboardDto.getParentId() && dashboardDto.getParentId() > 0L && parentMap.containsKey(dashboardDto.getParentId())) {
                 String fullParentId = parentMap.get(dashboardDto.getParentId());
                 dashboardDto.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboardDto.getParentId().toString() : dashboardDto.getParentId() + COMMA + fullParentId);
+            } else {
+                dashboardDto.setFullParentId(null);
             }
 
             dashboardList.add(dashboardDto);
@@ -350,7 +357,6 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
                     relRoleDashboardMapper.insertBatch(list);
                 }
             }
-
         }
     }
 
@@ -382,19 +388,21 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
             throw new UnAuthorizedExecption("you have not permission to create dashboard");
         }
 
-        List<Dashboard> deletingDashboards ;
-        if(0 == dashboardWithPortalAndProject.getType()){   //folder
+        List<Dashboard> deletingDashboards;
+        if (0 == dashboardWithPortalAndProject.getType()) {   //folder
             deletingDashboards = dashboardMapper.getByParentId(dashboardWithPortalAndProject.getId());
-        }else{
-            deletingDashboards = new ArrayList<Dashboard>(1){
-                {add(dashboardWithPortalAndProject);}
+        } else {
+            deletingDashboards = new ArrayList<Dashboard>(1) {
+                {
+                    add(dashboardWithPortalAndProject);
+                }
             };
         }
 
-        if(deletingDashboards.isEmpty()){
+        if (deletingDashboards.isEmpty()) {
             return true;
         }
-        for(Dashboard deletingDashboard : deletingDashboards){
+        for (Dashboard deletingDashboard : deletingDashboards) {
             //delete rel_role_dashboard_widget
             relRoleDashboardWidgetMapper.deleteByDashboardId(deletingDashboard.getId());
 
@@ -702,8 +710,12 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         relRoleDashboardWidgetMapper.deleteByProjectId(projectId);
         //删除dashboard与widget关联
         memDashboardWidgetMapper.deleteByProject(projectId);
+        //删除 rel_role_dashboard
+        relRoleDashboardMapper.deleteByProject(projectId);
         //删除dashaboard
         dashboardMapper.deleteByProject(projectId);
+        //删除 rel_role_portal
+        relRolePortalMapper.deleteByProject(projectId);
         //删除dashboardPortal
         dashboardPortalMapper.deleteByProject(projectId);
     }

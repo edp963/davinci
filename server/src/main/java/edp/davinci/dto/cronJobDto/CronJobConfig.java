@@ -30,5 +30,8 @@ public class CronJobConfig {
     private String bcc;
     private String subject;
     private String type;
+    private String content;
+
+    private Integer imageWidth;
     private List<CronJobContent> contentList;
 }

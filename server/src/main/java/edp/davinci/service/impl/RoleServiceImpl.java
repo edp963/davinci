@@ -100,6 +100,9 @@ public class RoleServiceImpl implements RoleService {
     private DisplayService displayService;
 
     @Autowired
+    private DisplaySlideService displaySlideService;
+
+    @Autowired
     private DashboardService dashboardService;
 
     @Autowired
@@ -123,8 +126,9 @@ public class RoleServiceImpl implements RoleService {
         }
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null == rel && !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
-            log.info("user(:{}) have not permission to create role in organization (:{})", user.getId(), organization.getId());
+        if (null == rel || !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
+            log.info("user(:{}) have not permission to create role in organization (:{})", user.getId(),
+                    organization.getId());
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
@@ -136,7 +140,6 @@ public class RoleServiceImpl implements RoleService {
             optLogger.info("role ( :{} ) create by user( :{} )", role.toString(), user.getId());
             organization.setRoleNum(organization.getRoleNum() + 1);
             organizationMapper.updateRoleNum(organization);
-
             return role;
         } else {
             log.info("create role fail: {}", role.toString());
@@ -221,7 +224,6 @@ public class RoleServiceImpl implements RoleService {
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
-            log.info("user(:{}) have not permission to update role in organization (:{})", user.getId(), role.getOrgId());
             throw new UnAuthorizedExecption("you have not permission to update this role");
         }
 
@@ -256,6 +258,11 @@ public class RoleServiceImpl implements RoleService {
         return getRole(id, user, false);
     }
 
+    @Override
+    public List<Role> getRoleInfo(Long orgId, Long userId) {
+        return roleMapper.getRolesByOrgAndUser(orgId, userId);
+    }
+
 
     /**
      * 添加Role与User关联
@@ -271,16 +278,14 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public List<RelRoleMember> addMembers(Long id, List<Long> memberIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
-        Role role = null;
+        
         try {
-            role = getRole(id, user, false);
+            getRole(id, user, false);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
-            log.info("user(:{}) have not permission to update role in organization (:{})", user.getId(), role.getOrgId());
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
-
 
         if (CollectionUtils.isEmpty(memberIds)) {
             relRoleUserMapper.deleteByRoleId(id);
@@ -332,9 +337,8 @@ public class RoleServiceImpl implements RoleService {
             throw new NotFoundException("not found");
         }
 
-        Role role = null;
         try {
-            role = getRole(relRoleUser.getRoleId(), user, true);
+            getRole(relRoleUser.getRoleId(), user, true);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -397,9 +401,8 @@ public class RoleServiceImpl implements RoleService {
      */
     @Override
     public List<RelRoleMember> getMembers(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
-        Role role = null;
         try {
-            role = getRole(id, user, false);
+            getRole(id, user, false);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -425,9 +428,8 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public RoleProject addProject(Long id, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
-        Role role = null;
         try {
-            role = getRole(id, user, true);
+            getRole(id, user, true);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -678,7 +680,7 @@ public class RoleServiceImpl implements RoleService {
                 result = displayService.postDisplayVisibility(role, vizVisibility, user);
                 break;
             case SLIDE:
-                result = displayService.postSlideVisibility(role, vizVisibility, user);
+                result = displaySlideService.postSlideVisibility(role, vizVisibility, user);
                 break;
         }
         return result;

@@ -70,7 +70,8 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     const { currentDashboard, currentItems } = nextProps
     if (currentDashboard !== this.props.currentDashboard
         || this.dashboardItemsChange(currentItems, this.props.currentItems)) {
-      this.initDerivedState(currentDashboard, currentItems, this.props.currentDashboard)
+      const isCurrentDashboardUpdated = this.props.currentDashboard && this.props.currentDashboard.id === currentDashboard.id
+      this.initDerivedState(currentDashboard, currentItems, isCurrentDashboardUpdated)
     }
   }
 
@@ -83,7 +84,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     return false
   }
 
-  private initDerivedState = (currentDashboard, currentItems, previousDashboard) => {
+  private initDerivedState = (currentDashboard, currentItems, isCurrentDashboardUpdated) => {
     if (currentDashboard) {
       this.props.form.resetFields()
       const config = JSON.parse(currentDashboard.config || '{}')
@@ -126,9 +127,11 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
         controlValues,
         queryMode
       }, () => {
-        if (previousDashboard) {
+        if (isCurrentDashboardUpdated) {
           this.batchChange()
-          this.search()
+          if (queryMode === GlobalControlQueryMode.Immediately) {
+            this.search()
+          }
         }
       })
     }

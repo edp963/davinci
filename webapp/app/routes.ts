@@ -38,6 +38,7 @@ import Background from 'containers/Background'
 import Login from 'containers/Login'
 import Main from 'containers/Main'
 import Schedule from 'containers/Schedule'
+import ScheduleEditor from 'containers/Schedule/Editor'
 import Editor from 'containers/Display/Editor'
 import Preview from 'containers/Display/Preview'
 import Account from 'containers/Account'
@@ -130,7 +131,7 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               component: SourceList
             },
             {
-              path: '/project/:pid/schedule',
+              path: '/project/:pid/schedules',
               name: 'schedule',
               component: Schedule
             }
@@ -177,6 +178,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           path: '/project/:pid/view(/:viewId)',
           name: 'viewEditor',
           component: ViewEditor
+        },
+        {
+          path: '/project/:pid/schedule(/:scheduleId)',
+          name: 'scheduleEditor',
+          component: ScheduleEditor
         },
         {
           path: '/project/:pid/portal/:portalId/portalName/:portalName',
@@ -227,4 +233,5 @@ export default function createRoutes (store): IExtendedRouteProps[] {
 export interface IRouteParams {
   pid?: string
   viewId?: string
+  scheduleId?: string
 }

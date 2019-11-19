@@ -31,6 +31,7 @@ import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.model.ExcelHeader;
 import edp.davinci.core.utils.ExcelUtils;
 import edp.davinci.dao.ViewMapper;
+import edp.davinci.dto.cronJobDto.MsgMailExcel;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.service.ViewService;
@@ -42,9 +43,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.io.FileOutputStream;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -69,7 +68,14 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
     public T call() throws Exception {
         Stopwatch watch = Stopwatch.createStarted();
         Workbook wb = null;
-        log.info("workbook worker start: action={}, xid={}", context.getWrapper().getAction(), context.getWrapper().getxId());
+
+        MsgWrapper wrapper = context.getWrapper();
+        Object[] logArgs = {context.getTaskKey(), wrapper.getAction(), wrapper.getxId()};
+        log.info("workbook worker start: taksKey={}, action={}, xid={}", logArgs);
+        if (context.getCustomLogger() != null) {
+            context.getCustomLogger().info("workbook worker start: taksKey={}, action={}, xid={}", logArgs);
+        }
+
         String filePath = null;
         try {
             List<SheetContext> sheetContextList = buildSheetContextList();
@@ -86,13 +92,36 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 sheetContext.setSheet(sheet);
                 sheetContext.setWorkbook(wb);
                 sheetContext.setSheetNo(sheetNo);
-                Future<Boolean> future = ExecutorUtil.submitSheetTask(sheetContext);
+                Future<Boolean> future = ExecutorUtil.submitSheetTask(sheetContext, context.getCustomLogger());
                 futures.add(future);
             }
             Boolean rst = false;
-            for (Future<Boolean> future : futures) {
-                rst = future.get();
+
+            try {
+                for (Future<Boolean> future : futures) {
+                    rst = future.get(1, TimeUnit.HOURS);
+                    if (!rst) {
+                        future.cancel(true);
+                    }
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("workbook worker error, task={}, e={}", context.getTaskKey(), e.getMessage());
+                if (context.getCustomLogger() != null) {
+                    context.getCustomLogger().error("workbook worker error, task={}, e={}", context.getTaskKey(), e.getMessage());
+                }
+            } catch (TimeoutException e) {
+                log.error("workbook worker error, task={} timeout, e={}", context.getTaskKey(), e.getMessage());
+                if (context.getCustomLogger() != null) {
+                    context.getCustomLogger().error("workbook worker error, task={} timeout, e={}", context.getTaskKey(), e.getMessage());
+                }
+                if (wrapper.getAction() == ActionEnum.MAIL) {
+                    MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
+                    msg.setException(new TimeoutException("Get data timeout"));
+                    super.tell(wrapper);
+                }
+                return (T) filePath;
             }
+
             if (rst) {
                 filePath = ((FileUtils) SpringContextHolder.getBean(FileUtils.class)).getFilePath(FileTypeEnum.XLSX, this.context.getWrapper());
                 FileOutputStream out = null;
@@ -109,27 +138,41 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                         out.close();
                     }
                 }
-                context.getWrapper().setRst(filePath);
+                wrapper.setRst(filePath);
             } else {
-                context.getWrapper().setRst(null);
+                wrapper.setRst(null);
             }
-            super.tell(context.getWrapper());
+            super.tell(wrapper);
         } catch (Exception e) {
-            log.error("workbook worker error,e=", e);
-            super.tell(context.getWrapper());
+            log.error("workbook worker error, task={}, e={}", context.getTaskKey(), e.getMessage());
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().error("workbook worker error, task={}, e={}", context.getTaskKey(), e.getMessage());
+            }
+            if (wrapper.getAction() == ActionEnum.MAIL) {
+                MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
+                msg.setException(e);
+            }
+            super.tell(wrapper);
             if (StringUtils.isNotEmpty(filePath)) {
                 FileUtils.delete(filePath);
             }
         } finally {
             wb = null;
         }
-        if (context.getWrapper().getAction() == ActionEnum.DOWNLOAD) {
-            Object[] args = {StringUtils.isNotEmpty(filePath), context.getWrapper().getAction(), context.getWrapper().getxId(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
-            log.info("workbook worker complete status={},action={},xid={},filePath={},cost={}ms", args);
-        } else if (context.getWrapper().getAction() == ActionEnum.SHAREDOWNLOAD || context.getWrapper().getAction() == ActionEnum.MAIL) {
-            Object[] args = {StringUtils.isNotEmpty(filePath), context.getWrapper().getAction(), context.getWrapper().getxUUID(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
-            log.info("workbook worker complete status={},action={},xUUID={},filePath={},cost={}ms", args);
+        if (wrapper.getAction() == ActionEnum.DOWNLOAD) {
+            Object[] args = {context.getTaskKey(), StringUtils.isNotEmpty(filePath), wrapper.getAction(), wrapper.getxId(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
+            log.info("workbook worker complete task={}, status={},action={},xid={},filePath={},cost={}ms", args);
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().info("workbook worker complete task={}, status={},action={},xid={},filePath={},cost={}ms", args);
+            }
+        } else if (wrapper.getAction() == ActionEnum.SHAREDOWNLOAD || wrapper.getAction() == ActionEnum.MAIL) {
+            Object[] args = {context.getTaskKey(), StringUtils.isNotEmpty(filePath), wrapper.getAction(), wrapper.getxUUID(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
+            log.info("workbook worker complete task={}, status={},action={},xUUID={},filePath={},cost={}ms", args);
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().info("workbook worker complete task={}, status={},action={},xUUID={},filePath={},cost={}ms", args);
+            }
         }
+
         return (T) filePath;
     }
 
@@ -160,19 +203,21 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 excelHeaders = ScriptUtiils.formatHeader(ScriptUtiils.getCellValueScriptEngine(), context.getWidget().getConfig(),
                         sqlContext.getViewExecuteParam().getParams());
             }
-            SheetContext sheetContext = SheetContext.newSheetContextBuilder()
-                    .buildExecuteSql(sqlContext.getExecuteSql())
-                    .buildQuerySql(sqlContext.getQuerySql())
-                    .buildExcludeColumns(sqlContext.getExcludeColumns())
-                    .buildContain(Boolean.FALSE)
-                    .buildSqlUtils(sqlUtils)
-                    .buildIsTable(isTable)
-                    .buildHeaders(excelHeaders)
-                    .buildDashboardId(null != context.getDashboard() ? context.getDashboard().getId() : null)
-                    .buildWidgetId(context.getWidget().getId())
-                    .buildName(context.getWidget().getName())
-                    .buildWrapper(this.context.getWrapper())
-                    .buildResultLimist(this.context.getResultLimit())
+            SheetContext sheetContext = SheetContext.SheetContextBuilder.newBuilder()
+                    .withExecuteSql(sqlContext.getExecuteSql())
+                    .withQuerySql(sqlContext.getQuerySql())
+                    .withExcludeColumns(sqlContext.getExcludeColumns())
+                    .withContain(Boolean.FALSE)
+                    .withSqlUtils(sqlUtils)
+                    .withIsTable(isTable)
+                    .withExcelHeaders(excelHeaders)
+                    .withDashboardId(null != context.getDashboard() ? context.getDashboard().getId() : null)
+                    .withWidgetId(context.getWidget().getId())
+                    .withName(context.getWidget().getName())
+                    .withWrapper(this.context.getWrapper())
+                    .withResultLimit(this.context.getResultLimit())
+                    .withTaskKey(this.context.getTaskKey())
+                    .withCustomLogger(this.context.getCustomLogger())
                     .build();
             sheetContextList.add(sheetContext);
         }

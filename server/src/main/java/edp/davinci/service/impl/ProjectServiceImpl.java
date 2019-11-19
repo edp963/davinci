@@ -27,6 +27,7 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.PageUtils;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.enums.CronJobStatusEnum;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
@@ -96,6 +97,13 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Autowired
     private RoleMapper roleMapper;
+
+    @Autowired
+    private CronJobMapper cronJobMapper;
+
+    @Autowired
+    private RelRoleViewMapper relRoleViewMapper;
+
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long orgId) {
@@ -301,6 +309,20 @@ public class ProjectServiceImpl implements ProjectService {
 
         ProjectDetail project = getProjectDetail(id, user, true);
 
+        List<CronJob> cronJobs = cronJobMapper.getByProject(project.getId());
+        if (!CollectionUtils.isEmpty(cronJobs)) {
+            List<CronJob> startedJobs = cronJobs.stream()
+                    .filter(c -> c.getJobStatus().equals(CronJobStatusEnum.START.getStatus()))
+                    .collect(Collectors.toList());
+
+            if (!CollectionUtils.isEmpty(startedJobs)) {
+                throw new ServerException("This project cannot be deleted cause which at least one 'Schedule' is started");
+            }
+        }
+
+        //删除cron_job
+        cronJobMapper.deleteByProject(project.getId());
+
         //删除displayslide、display、slide和widget的关联
         displayService.deleteSlideAndDisplayByProject(project.getId());
 
@@ -309,6 +331,9 @@ public class ProjectServiceImpl implements ProjectService {
 
         //删除widget
         widgetMapper.deleteByProject(project.getId());
+
+        //删除rel_role_view
+        relRoleViewMapper.deleteByProject(project.getId());
 
         //删除view
         viewMapper.deleteByPorject(project.getId());
@@ -438,7 +463,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         List<User> admins = userMapper.getByIds(adminIds);
 
-        if (null == admins && admins.isEmpty()) {
+        if (null == admins || admins.isEmpty()) {
             throw new NotFoundException("user is not found");
         }
 
@@ -451,7 +476,6 @@ public class ProjectServiceImpl implements ProjectService {
         List<Long> oAdminIds = relProjectAdminMapper.getAdminIds(id);
 
         admins.removeIf(u -> oAdminIds.contains(u.getId()));
-
 
         if (!CollectionUtils.isEmpty(admins)) {
             List<RelProjectAdmin> relProjectAdmins = new ArrayList<>();
@@ -471,6 +495,7 @@ public class ProjectServiceImpl implements ProjectService {
                 throw new ServerException("unspecified error");
             }
         }
+
         return null;
     }
 

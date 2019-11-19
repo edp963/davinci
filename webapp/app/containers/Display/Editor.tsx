@@ -379,10 +379,15 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         })))
     }
 
+
+    const requestParamsFilters = filters.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
+
     const requestParams = {
       groups,
       aggregators,
-      filters: filters.map((i) => i.config.sql),
+      filters: requestParamsFilters,
       tempFilters,
       linkageFilters,
       globalFilters,
@@ -392,7 +397,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       orders,
       cache,
       expired,
-      flush: renderType === 'refresh',
+      flush: renderType === 'flush',
       pagination,
       nativeQuery,
       customOrders

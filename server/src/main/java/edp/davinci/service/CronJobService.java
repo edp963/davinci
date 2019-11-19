@@ -34,6 +34,8 @@ import java.util.List;
 public interface CronJobService extends CheckEntityService {
     List<CronJob> getCronJobs(Long projectId, User user);
 
+    CronJob getCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+
     CronJobInfo createCronJob(CronJobBaseInfo cronJobBaseInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     boolean updateCronJob(CronJobUpdate cronJobUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;

@@ -26,7 +26,7 @@ export function getFormattedValue (value: number | string, format: IFieldFormatC
         unit,
         useThousandSeparator } = config as IFieldFormatConfig['numeric'] | IFieldFormatConfig['currency']
       formattedValue = formatByUnit(value, unit)
-      formattedValue = formartByDecimalPlaces(formattedValue, decimalPlaces)
+      formattedValue = formatByDecimalPlaces(formattedValue, decimalPlaces)
       formattedValue = formatByThousandSeperator(formattedValue, useThousandSeparator)
       if (unit !== NumericUnit.None) {
         formattedValue = `${formattedValue}${unit}`
@@ -39,7 +39,7 @@ export function getFormattedValue (value: number | string, format: IFieldFormatC
     case FieldFormatTypes.Percentage:
       formattedValue = (+value) * 100
       formattedValue = isNaN(formattedValue) ? value
-        : `${formartByDecimalPlaces(formattedValue, (config as IFieldFormatConfig['percentage']).decimalPlaces)}%`
+        : `${formatByDecimalPlaces(formattedValue, (config as IFieldFormatConfig['percentage']).decimalPlaces)}%`
       break
     case FieldFormatTypes.ScientificNotation:
       formattedValue = (+value).toExponential((config as IFieldFormatConfig['scientificNotation']).decimalPlaces)
@@ -60,7 +60,7 @@ export function getFormattedValue (value: number | string, format: IFieldFormatC
   return formattedValue
 }
 
-function formartByDecimalPlaces (value, decimalPlaces: number) {
+function formatByDecimalPlaces (value, decimalPlaces: number) {
   if (isNaN(value)) { return value }
   if (decimalPlaces < 0 || decimalPlaces > 100) { return value }
 

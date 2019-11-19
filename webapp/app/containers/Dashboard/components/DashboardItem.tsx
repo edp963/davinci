@@ -282,7 +282,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       monitoredSyncDataAction
     } = this.props
     const { pagination, nativeQuery } = this.state
-    onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
+    onGetChartData('flush', itemId, widget.id, { pagination, nativeQuery })
     if (monitoredSyncDataAction) {
       monitoredSyncDataAction()
     }

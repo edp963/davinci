@@ -41,21 +41,16 @@ const makeSelectFormLoading = () => createSelector(
 const makeSelectTestLoading = () => createSelector(
   selectSource,
   (sourceState: SourceStateType) => sourceState.get('testLoading')
+  )
+
+const makeSelectResetLoading = () => createSelector(
+  selectSource,
+  (sourceState: SourceStateType) => sourceState.get('resetLoading')
 )
 
 const makeSelectDatasourcesInfo = () => createSelector(
   selectSource,
   (sourceState: SourceStateType) => sourceState.get('datasourcesInfo')
-    .map((info) => ({
-      label: info.name,
-      value: info.name,
-      ...info.versions && {
-        children: info.versions.map((ver) => ({
-          label: ver,
-          value: ver
-        }))
-      }
-    }))
 )
 
 export {
@@ -64,5 +59,6 @@ export {
   makeSelectListLoading,
   makeSelectFormLoading,
   makeSelectTestLoading,
+  makeSelectResetLoading,
   makeSelectDatasourcesInfo
 }

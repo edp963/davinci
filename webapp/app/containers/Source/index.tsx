@@ -34,8 +34,9 @@ import saga from './sagas'
 import Container from 'components/Container'
 import Box from 'components/Box'
 import SearchFilterDropdown from 'components/SearchFilterDropdown'
-import SourceForm from './SourceForm'
-import UploadCsvForm from './UploadCsvForm'
+import SourceConfigModal from './components/SourceConfigModal'
+import UploadCsvModal from './components/UploadCsvModal'
+import ResetConnectionModal from './components/ResetConnectionModal'
 
 import { message, Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb } from 'antd'
 import { ButtonProps } from 'antd/lib/button/button'
@@ -48,6 +49,7 @@ import {
   makeSelectListLoading,
   makeSelectFormLoading,
   makeSelectTestLoading,
+  makeSelectResetLoading,
   makeSelectDatasourcesInfo
 } from './selectors'
 const utilStyles = require('assets/less/util.less')
@@ -58,16 +60,16 @@ import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IRouteParams } from 'app/routes'
 import { IProject } from '../Projects'
-import { ISource, ICSVMetaInfo, ISourceFormValues } from './types'
-import { CascaderOptionType } from 'antd/lib/cascader'
+import { ISource, ICSVMetaInfo, ISourceFormValues, IDatasourceInfo, SourceResetConnectionProperties } from './types'
 
 interface ISourceListStateProps {
   sources: ISource[]
   listLoading: boolean
   formLoading: boolean
   testLoading: boolean
+  resetLoading: boolean
   currentProject: IProject
-  datasourcesInfo: CascaderOptionType[]
+  datasourcesInfo: IDatasourceInfo[]
 }
 
 interface ISourceListDispatchProps {
@@ -77,6 +79,7 @@ interface ISourceListDispatchProps {
   onDeleteSource: (id: number) => any
   onEditSource: (sourceData: any, resolve: any) => any
   onTestSourceConnection: (testSource: any) => any
+  onResetSourceConnection: (properties: SourceResetConnectionProperties, resolve: () => void) => any
   onGetCsvMetaId: (csvMeta: ICSVMetaInfo, resolve: () => void) => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   onLoadDatasourcesInfo: () => void
@@ -92,6 +95,8 @@ interface ISourceListStates {
   tableSorter: SorterResult<ISource>
   sourceModalVisible: boolean
   uploadModalVisible: boolean
+  resetModalVisible: boolean
+  resetSource: ISource
   formStep: number
   uploadDisabled: boolean
   uploadFileList: UploadChangeParam['fileList']
@@ -110,7 +115,7 @@ const emptySource: ISourceFormValues = {
     username: '',
     password: '',
     url: '',
-    parameters: ''
+    properties: []
   }
 }
 
@@ -135,6 +140,8 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
     sourceModalVisible: false,
 
     uploadModalVisible: false,
+    resetModalVisible: false,
+    resetSource: null,
     formStep: 0,
     uploadDisabled: false,
     uploadFileList: [],
@@ -181,6 +188,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
     { sourcePermission, AdminButton, EditButton }: ReturnType<typeof SourceList.getSourcePermission>
   ) => {
     const { tempFilterSourceName, filterSourceName, filterDropdownVisible, tableSorter } = this.state
+    const { resetLoading } = this.props
 
     const columns: Array<ColumnProps<ISource>> = [{
       title: '名称',
@@ -235,9 +243,12 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
       columns.push({
         title: '操作',
         key: 'action',
-        width: 150,
+        width: 180,
         render: (_, record) => (
           <span className="ant-table-action-column">
+            <Tooltip title="重置连接">
+              <EditButton icon="reload" shape="circle" type="ghost" disabled={resetLoading} onClick={this.openResetSource(record)} />
+            </Tooltip>
             <Tooltip title="修改">
               <EditButton icon="edit" shape="circle" type="ghost" onClick={this.editSource(record.id)} />
             </Tooltip>
@@ -270,6 +281,23 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
     })
   }
 
+  private openResetSource = (source: ISource) => () => {
+    this.setState({
+      resetModalVisible: true,
+      resetSource: source
+    })
+  }
+
+  private resetConnection = (properties: SourceResetConnectionProperties) => {
+    this.props.onResetSourceConnection(properties, () => {
+      this.closeResetConnectionModal()
+    })
+  }
+
+  private closeResetConnectionModal = () => {
+    this.setState({ resetModalVisible: false })
+  }
+
   private editSource = (sourceId: number) => () => {
     this.props.onLoadSourceDetail(sourceId, (editingSource) => {
       this.setState({
@@ -288,11 +316,11 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
     const matchResult = url.match(/^jdbc\:(\w+)\:/)
 
     if (matchResult) {
-      const datasource = datasourcesInfo.find((info) => info.value === matchResult[1])
+      const datasource = datasourcesInfo.find((info) => info.name === matchResult[1])
       return datasource
-        ? datasource.children
-          ? [datasource.value, version || 'Default']
-          : [datasource.value]
+        ? datasource.versions.length
+          ? [datasource.name, version || 'Default']
+          : [datasource.name]
         : []
     } else {
       return []
@@ -467,6 +495,8 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
       filterSourceName,
       sourceModalVisible,
       uploadModalVisible,
+      resetModalVisible,
+      resetSource,
       formStep,
       editingCsv,
       uploadDisabled,
@@ -535,7 +565,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
                   />
                 </Col>
               </Row>
-              <SourceForm
+              <SourceConfigModal
                 source={editingSource}
                 datasourcesInfo={datasourcesInfo}
                 visible={sourceModalVisible}
@@ -546,7 +576,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
                 onTestSourceConnection={this.testSourceConnection}
                 onCheckUniqueName={onCheckUniqueName}
               />
-              <UploadCsvForm
+              <UploadCsvModal
                 csvMeta={editingCsv}
                 visible={uploadModalVisible}
                 step={formStep}
@@ -555,6 +585,12 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
                 onUpload={this.uploadFile}
                 onClose={this.closeUploadForm}
                 onAfterClose={this.afterUploadFormClose}
+              />
+              <ResetConnectionModal
+                visible={resetModalVisible}
+                source={resetSource}
+                onConfirm={this.resetConnection}
+                onCancel={this.closeResetConnectionModal}
               />
             </Box.Body>
           </Box>
@@ -571,6 +607,7 @@ const mapDispatchToProps = (dispatch: Dispatch<SourceActionType | any>) => ({
   onDeleteSource: (id) => dispatch(SourceActions.deleteSource(id)),
   onEditSource: (source, resolve) => dispatch(SourceActions.editSource(source, resolve)),
   onTestSourceConnection: (testSource) => dispatch(SourceActions.testSourceConnection(testSource)),
+  onResetSourceConnection: (properties, resolve) => dispatch(SourceActions.resetSourceConnection(properties, resolve)),
   onGetCsvMetaId: (csvMeta, resolve) => dispatch(SourceActions.getCsvMetaId(csvMeta, resolve)),
   onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
   onLoadDatasourcesInfo: () => dispatch(SourceActions.loadDatasourcesInfo())
@@ -581,6 +618,7 @@ const mapStateToProps = createStructuredSelector({
   listLoading: makeSelectListLoading(),
   formLoading: makeSelectFormLoading(),
   testLoading: makeSelectTestLoading(),
+  releaseLoading: makeSelectResetLoading(),
   currentProject: makeSelectCurrentProject(),
   datasourcesInfo: makeSelectDatasourcesInfo()
 })

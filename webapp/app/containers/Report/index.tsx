@@ -98,7 +98,7 @@ export class Report extends React.Component<IReportProps, IReportStates> {
       }
       if (whichModuleHasPermission && whichModuleHasPermission.length > 0) {
         const path = whichModuleHasPermission[0].slice(0, -10)
-        this.props.router.replace(`/project/${params.pid}/${path}${path === 'schedule' ? '' : 's'}`)
+        this.props.router.replace(`/project/${params.pid}/${path}s`)
       }
     }
   }
@@ -194,7 +194,7 @@ export function mapDispatchToProps (dispatch) {
         { icon: (<i className="iconfont icon-widget-gallery" />), route: ['widgets'], permission: 'widget' },
         { icon: (<i className="iconfont icon-custom-business" />), route: ['views', 'view'], permission: 'view' },
         { icon: (<i className="iconfont icon-datasource24" />), route: ['sources'], permission: 'source' },
-        { icon: (<Icon type="clock-circle" />), route: ['schedule'], permission: 'schedule' }
+        { icon: (<Icon type="clock-circle" />), route: ['schedules', 'schedule'], permission: 'schedule' }
       ]
       dispatch(loadSidebar(sidebarSource))
     },

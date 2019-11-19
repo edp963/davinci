@@ -32,7 +32,6 @@ import edp.davinci.dao.PlatformMapper;
 import edp.davinci.dao.UserMapper;
 import edp.davinci.model.Platform;
 import edp.davinci.model.User;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.method.HandlerMethod;
@@ -45,7 +44,6 @@ import java.util.Map;
 
 import static edp.core.consts.Consts.AUTH_CODE;
 
-@Slf4j
 public class PlatformAuthInterceptor implements HandlerInterceptor {
 
     @Autowired
@@ -64,14 +62,15 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
-
         HandlerMethod handlerMethod = null;
+        
         try {
             handlerMethod = (HandlerMethod) handler;
         } catch (Exception e) {
             response.setStatus(HttpCodeEnum.NOT_FOUND.getCode());
             return false;
         }
+        
         Method method = handlerMethod.getMethod();
 
         AuthIgnore ignoreAuthMethod = method.getAnnotation(AuthIgnore.class);
@@ -119,7 +118,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
         User user = null;
 
         AuthShare authShareMethoed = method.getAnnotation(AuthShare.class);
-        if (handler instanceof HandlerMethod && null != authShareMethoed) {
+        if (null != authShareMethoed) {
             String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
             if (!StringUtils.isEmpty(token) && token.startsWith(Constants.TOKEN_PREFIX)) {
                 String username = tokenUtils.getUsername(token);

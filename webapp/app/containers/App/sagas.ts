@@ -181,6 +181,10 @@ export function* updateProfile (action): IterableIterator<any> {
         department
       }
     })
+    const updateUserProfile = {id, name, department, description}
+    yield put(updateProfileSuccess(updateUserProfile))
+    const prevLoginUser = JSON.parse(localStorage.getItem('loginUser')) 
+    localStorage.setItem('loginUser', JSON.stringify({...prevLoginUser, ...updateUserProfile}))  
     resolve(asyncData)
   } catch (err) {
     yield put(updateProfileError())
@@ -229,13 +233,11 @@ export function* joinOrganization (action): IterableIterator<any> {
       reject(error)
     }
     if (error.response) {
-      console.log(error.response.status)
       switch (error.response.status) {
         case 403:
           removeToken()
           break
         case 400:
-          console.log({error})
           message.error(error.response.data.header.msg, 3)
           break
         default:
