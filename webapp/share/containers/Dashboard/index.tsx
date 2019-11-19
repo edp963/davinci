@@ -1069,7 +1069,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           {itemblocks}
         </ResponsiveReactGridLayout>
       )
-      fullScreenComponent = 
+      fullScreenComponent =
         allowFullScreen
         ? <FullScreenPanel
             widgets={widgets}
