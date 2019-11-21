@@ -1117,6 +1117,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               </div>
             </Col>
           </Row>
+
           <GlobalControlPanel
             currentDashboard={dashboard}
             currentItems={currentItems}
