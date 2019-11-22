@@ -1,16 +1,20 @@
-highlighter: pygments
+title: Davinci 用户手册
+zh_masthead_title: 用户手册
+baseurl: "/davinci"
+logo: "assets/images/logo.svg"
+
+# theme: minimal-mistakes-jekyll
+remote_theme: "mmistakes/minimal-mistakes@4.16.5"
 markdown: kramdown
-google_analytics:
-show_downloads: true
+minimal_mistakes_skin: "default"
 plugins:
-  - jekyll-redirect-from
+  - jekyll-feed
+  - jekyll-include-cache
 
-kramdown:
-  entity_output: numeric
-
-include:
-  - _static
-  - _modules
+collections:
+  docs:
+    permalink: /:collection/:path
+    output: true
 
 DAVINCI_VERSION: 0.3
 DAVINCI_VERSION_SHORT: 0.3
