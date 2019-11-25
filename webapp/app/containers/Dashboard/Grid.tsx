@@ -54,7 +54,7 @@ import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
 import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu, message } from 'antd'
 import { uuid } from 'utils/util'
-import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
+import  FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
 import { decodeMetricName, getTable } from 'containers/Widget/components/util'
 import { initiateDownloadTask } from 'containers/App/actions'
 import {
@@ -101,7 +101,7 @@ import { makeSelectCurrentProject } from 'containers/Projects/selectors'
 
 import { IFieldSortDescriptor, FieldSortTypes } from 'containers/Widget/components/Config/Sort'
 import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
-
+import { ICurrentDataInFullScreenProps } from './components/fullScreenPanel/FullScreenPanel'
 import {
   SQL_NUMBER_TYPES,
   DEFAULT_SPLITER,
@@ -146,7 +146,7 @@ export interface IQueryConditions {
   drillpathInstance?: any
 }
 
-interface IDashboardItemInfo {
+export interface IDashboardItemInfo {
   datasource: {
     pageNo: number
     pageSize: number
@@ -248,7 +248,7 @@ interface IGridStates {
   mounted: boolean
   layoutInitialized: boolean
   allowFullScreen: boolean
-  currentDataInFullScreen: object
+  currentDataInFullScreen: ICurrentDataInFullScreenProps
   dashboardItemFormType: string
   dashboardItemFormVisible: boolean
   dashboardItemFormStep: number
@@ -268,7 +268,7 @@ interface IDashboardItemForm extends AntdFormType {
   onReset: () => void
 }
 
-interface IDashboardItem {
+export interface IDashboardItem {
   id?: number
   x?: number
   y?: number
@@ -278,6 +278,7 @@ interface IDashboardItem {
   dashboardId?: number
   polling?: boolean
   frequency?: number
+  config?: string
 }
 
 export class Grid extends React.Component<IGridProps & RouteComponentWithParams, IGridStates> {
@@ -289,7 +290,11 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       layoutInitialized: false,
 
       allowFullScreen: false,
-      currentDataInFullScreen: {},
+      currentDataInFullScreen: {
+        itemId: 0,
+        widget: null,
+        model: null
+      },
 
       dashboardItemFormType: '',
       dashboardItemFormVisible: false,
@@ -358,7 +363,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           viz_id: +portalId,
           viz_name: currentPortal && currentPortal.name,
           sub_viz_id: +nextParams.dashboardId,
-          sub_viz_name: currentDashboard['name'],
+          sub_viz_name: currentDashboard && currentDashboard['name'],
           create_time:  statistic.getCurrentDateTime()
         }, (data) => {
           const visitRecord = {
@@ -995,7 +1000,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     } = this.props
 
     const mappingLinkage = getMappingLinkage(itemId, currentLinkages)
-    console.log(this.interactingLinkagers)
     this.interactingLinkagers = processLinkage(itemId, triggerData, mappingLinkage, this.interactingLinkagers)
 
     Object.keys(mappingLinkage).forEach((linkagerItemId) => {
@@ -1136,7 +1140,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     }
   }
 
-  private visibleFullScreen = (currentChartData) => {
+  private visibleFullScreen = (currentChartData: ICurrentDataInFullScreenProps) => {
     const {allowFullScreen} = this.state
     if (currentChartData) {
       this.setState({
@@ -1159,10 +1163,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     this.setState({
       currentDataInFullScreen: {
         itemId: id,
-        widgetId: widget.id,
         widget,
-        model,
-        onGetChartData: this.getChartData
+        model
       }
     })
   }
@@ -1833,16 +1835,27 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           onSave={this.saveFilters}
           onGetOptions={this.getOptions}
         />
-        <FullScreenPanel
-          widgets={widgets}
-          currentItems={currentItems}
-          currentDashboard={currentDashboard}
-          currentItemsInfo={currentItemsInfo}
-          visible={allowFullScreen}
-          isVisible={this.visibleFullScreen}
-          currentDataInFullScreen={this.state.currentDataInFullScreen}
-          onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
-        />
+        {
+          allowFullScreen
+          ? <FullScreenPanel
+              widgets={widgets}
+              currentItems={currentItems}
+              currentItemsInfo={currentItemsInfo}
+              currentDashboard={currentDashboard}
+              mapOptions={currentDashboardSelectOptions}
+              onChange={this.globalControlChange}
+              onSearch={this.globalControlSearch}
+              onGetControlOptions={this.getOptions}
+              visible={allowFullScreen}
+              onGetChartData={this.getChartData}
+              isVisible={this.visibleFullScreen}
+              chartDetail={this.state.currentDataInFullScreen}
+              onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
+              monitoredSearchDataAction={this.props.onMonitoredSearchDataAction}
+            />
+          : <div/>
+        }
+
       </Container>
     )
   }

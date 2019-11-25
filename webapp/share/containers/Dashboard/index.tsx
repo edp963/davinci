@@ -1069,19 +1069,24 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           {itemblocks}
         </ResponsiveReactGridLayout>
       )
-
-      fullScreenComponent = (
-        <FullScreenPanel
-          widgets={widgets}
-          currentItems={currentItems}
-          currentDashboard={{ widgets: currentItems }}
-          currentItemsInfo={currentItemsInfo}
-          visible={allowFullScreen}
-          isVisible={this.visibleFullScreen}
-          currentDataInFullScreen={this.state.currentDataInFullScreen}
-          onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
-        />
-      )
+      fullScreenComponent = 
+        allowFullScreen
+        ? <FullScreenPanel
+            widgets={widgets}
+            currentItems={currentItems}
+            currentDashboard={dashboard}
+            currentItemsInfo={currentItemsInfo}
+            visible={allowFullScreen}
+            isVisible={this.visibleFullScreen}
+            mapOptions={dashboardSelectOptions}
+            onChange={this.globalControlChange}
+            onSearch={this.globalControlSearch}
+            onGetControlOptions={this.getOptions}
+            onGetChartData={this.getChartData}
+            onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
+            chartDetail={this.state.currentDataInFullScreen}
+          />
+        : <div/>
     } else {
       grids = (
         <div className={styles.shareContentEmpty}>
@@ -1112,6 +1117,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               </div>
             </Col>
           </Row>
+
           <GlobalControlPanel
             currentDashboard={dashboard}
             currentItems={currentItems}

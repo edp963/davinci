@@ -342,19 +342,21 @@ const shareReducer = (state = initialState, action) =>
         break
 
       case LOAD_SELECT_OPTIONS_SUCCESS:
-        draft.itemsInfo[action.payload.itemId].controlSelectOptions[
-          action.payload.controlKey
-        ] = action.payload.values
-        draft.dashboardSelectOptions[action.payload.controlKey] =
-          action.payload.values
+        if (action.payload.itemId) {
+          itemInfo = draft.itemsInfo[action.payload.itemId]
+          itemInfo.controlSelectOptions[action.payload.controlKey] = action.payload.values
+        } else {
+          draft.dashboardSelectOptions[action.payload.controlKey] = action.payload.values
+        }
         break
 
       case SET_SELECT_OPTIONS:
-        draft.itemsInfo[action.payload.itemId].controlSelectOptions[
-          action.payload.controlKey
-        ] = action.payload.options
-        draft.dashboardSelectOptions[action.payload.controlKey] =
-          action.payload.options
+        if (action.payload.itemId) {
+          itemInfo = draft.itemsInfo[action.payload.itemId]
+          itemInfo.controlSelectOptions[action.payload.controlKey] = action.payload.values
+        } else {
+          draft.dashboardSelectOptions[action.payload.controlKey] = action.payload.values
+        }
         break
 
       case RESIZE_ALL_DASHBOARDITEM:
