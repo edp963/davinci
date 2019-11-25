@@ -86,11 +86,3 @@ export interface IDavinciResponse<T> {
   payload: T
 }
 
-export interface IAsyncData {
-  header: {
-    code: number
-    msg: string
-    token?: string
-  }
-  payload: object
-}

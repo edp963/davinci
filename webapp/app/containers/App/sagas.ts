@@ -53,7 +53,7 @@ import {
   DownloadTaskInitiated,
   initiateDownloadTaskFail
 } from './actions'
-import request, { removeToken, getToken, IAsyncData } from 'utils/request'
+import request, { removeToken, getToken } from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 
@@ -61,7 +61,7 @@ export function* login (action): IterableIterator<any> {
   const { username, password, resolve } = action.payload
 
   try {
-    const asyncData:IAsyncData = yield call(request, {
+    const asyncData = yield call(request, {
       method: 'post',
       url: api.login,
       data: {
@@ -91,7 +91,7 @@ export function* logout (): IterableIterator<any> {
 export function* activeUser (action): IterableIterator<any> {
   const {token, resolve} = action.payload
   try {
-    const asyncData:IAsyncData = yield call(request, {
+    const asyncData = yield call(request, {
       method: 'post',
       url: `${api.signup}/active/${token}`
     })
@@ -119,7 +119,7 @@ export function* activeUser (action): IterableIterator<any> {
 
 export function* getLoginUser (action): IterableIterator<any> {
   try {
-    const asyncData:IAsyncData = yield call(request, `${api.user}/token`)
+    const asyncData = yield call(request, `${api.user}/token`)
     const loginUser = asyncData.payload
     yield put(logged(loginUser))
     localStorage.setItem('loginUser', JSON.stringify(loginUser))
@@ -133,7 +133,7 @@ export function* getLoginUser (action): IterableIterator<any> {
 export function* checkName (action): IterableIterator<any> {
   const { id, name, type, params, resolve, reject } = action.payload
   try {
-    const asyncData:IAsyncData = yield call(request, `${api.checkName}/${type}`, {
+    const asyncData = yield call(request, `${api.checkName}/${type}`, {
       method: 'get',
       params: {
         ...params,
@@ -155,7 +155,7 @@ export function* checkNameUnique (action): IterableIterator<any> {
     if (!data.name) {
       return
     }
-    const asyncData:IAsyncData = yield call(request, {
+    const asyncData = yield call(request, {
       method: 'get',
       url: `${api.checkNameUnique}/${pathname}`,
       params: data
@@ -172,7 +172,7 @@ export function* updateProfile (action): IterableIterator<any> {
   const {  id, name, description, department, resolve } = action.payload
 
   try {
-    const asyncData:IAsyncData = yield call(request, {
+    const asyncData = yield call(request, {
       method: 'put',
       url: `${api.signup}/${id}`,
       data: {
@@ -195,7 +195,7 @@ export function* updateProfile (action): IterableIterator<any> {
 export function* changeUserPassword ({ payload }) {
   const {user} = payload
   try {
-    const result:IAsyncData = yield call(request, {
+    const result = yield call(request, {
       method: 'put',
       url: `${api.user}/${user.id}/changepassword`,
       data: user
@@ -211,7 +211,7 @@ export function* changeUserPassword ({ payload }) {
 export function* joinOrganization (action): IterableIterator<any> {
   const {token, resolve, reject} = action.payload
   try {
-    const asyncData:IAsyncData = yield call(request, {
+    const asyncData = yield call(request, {
       method: 'post',
       url: `${api.organizations}/confirminvite/${token}`
     })
@@ -249,7 +249,7 @@ export function* joinOrganization (action): IterableIterator<any> {
 
 export function* getDownloadList (): IterableIterator<any> {
   try {
-    const result:IAsyncData = yield call(request, `${api.download}/page`)
+    const result = yield call(request, `${api.download}/page`)
     yield put(downloadListLoaded(result.payload))
   } catch (err) {
     yield put(loadDownloadListFail(err))
