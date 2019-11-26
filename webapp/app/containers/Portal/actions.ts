@@ -36,20 +36,22 @@ import {
   LOAD_SELECT_TEAMS_FAILURE
 } from './constants'
 
-export function loadPortals (projectId) {
+export function loadPortals (projectId, portalId?: number) {
   return {
     type: LOAD_PORTALS,
     payload: {
-      projectId
+      projectId,
+      portalId
     }
   }
 }
 
-export function portalsLoaded (result) {
+export function portalsLoaded (result, portalId: number) {
   return {
     type: LOAD_PORTALS_SUCCESS,
     payload: {
-      result
+      result,
+      portalId
     }
   }
 }

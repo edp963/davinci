@@ -77,8 +77,14 @@ export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
       wrapperCol: { span: 12 }
     }
 
-    const triggerOptions = cascaderSource.map(({ label, value, children: { columns } }) => ({ label, value, children: columns }))
-    const linkagerOptions = cascaderSource.map(({ label, value, children: { columns, variables } }) => ({ label, value, children: [].concat(columns, variables) }))
+    const triggerOptions = cascaderSource
+      .map(({ label, value, children: { triggerColumns } }) =>
+        ({ label, value, children: triggerColumns })
+      )
+    const linkagerOptions = cascaderSource
+      .map(({ label, value, children: { linkagerColumns, variables } }) =>
+        ({ label, value, children: [].concat(linkagerColumns, variables) })
+      )
 
     return (
       <Form className={styles.linkageForm}>

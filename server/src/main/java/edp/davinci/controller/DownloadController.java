@@ -54,6 +54,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -99,11 +100,9 @@ public class DownloadController extends BaseController {
             encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
             is = new FileInputStream(new File(record.getPath()));
             Streams.copy(is, response.getOutputStream(), true);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
-        }
-        finally {
+        } finally {
             FileUtils.closeCloseable(is);
         }
         return null;
@@ -191,7 +190,7 @@ public class DownloadController extends BaseController {
             Streams.copy(is, response.getOutputStream(), true);
         } catch (Exception e) {
             log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
-        }finally {
+        } finally {
             FileUtils.closeCloseable(is);
         }
         return null;
@@ -199,17 +198,15 @@ public class DownloadController extends BaseController {
 
 
     private void encodeFileName(HttpServletRequest request, HttpServletResponse response, String filename) throws UnsupportedEncodingException {
-
         response.setHeader("Content-Type", "application/force-download");
-        // firefox浏览器
         if (request.getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
-            filename = new String(filename.getBytes("UTF-8"), "ISO8859-1");
-        }
-        else if (isIE(request)) {
+            // firefox浏览器
+            filename = new String(filename.getBytes(StandardCharsets.UTF_8), "ISO8859-1");
+        } else if (isIE(request)) {
+            //IE
             filename = URLEncoder.encode(filename, "UTF-8");
-        }
-        else {
-            filename = new String(filename.getBytes("UTF-8"), "ISO8859-1");
+        } else {
+            filename = new String(filename.getBytes(StandardCharsets.UTF_8), "ISO8859-1");
         }
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
     }

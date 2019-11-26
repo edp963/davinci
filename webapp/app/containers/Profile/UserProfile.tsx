@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import { Icon, Col, Row, Input, Form, Tooltip, Breadcrumb } from 'antd'
 const FormItem = Form.Item
 const styles = require('./profile.less')
@@ -14,20 +14,23 @@ import { getUserProfile } from './actions'
 import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
+
+import { RouteComponentWithParams } from 'utils/types'
+
 const utilStyles = require('assets/less/util.less')
 
 interface IProfileProps {
   form: any
   loading: boolean
-  params: any
   userProfile: any
   onGetUserProfile: (id: number) => any
 }
 
-export class UserProfile extends React.PureComponent<IProfileProps, {}> {
+export class UserProfile extends React.PureComponent<IProfileProps & RouteComponentWithParams, {}> {
   public componentDidMount () {
-    const { params: {uid}, onGetUserProfile } = this.props
-    onGetUserProfile(uid)
+    const { match, onGetUserProfile } = this.props
+    const userId = +match.params.userId
+    onGetUserProfile(userId)
   }
   public componentWillReceiveProps (nextProps) {
     if (nextProps && nextProps.userProfile !== this.props.userProfile) {

@@ -1,10 +1,10 @@
 import { createSelector } from 'reselect'
 
-const selectGlobal = (state) => state.get('register')
+const selectGlobal = (state) => state.register
 
 const makeSelectSignupLoading = () => createSelector(
   selectGlobal,
-  (globalState) => globalState.get('signupLoading')
+  (globalState) => globalState.signupLoading
 )
 
 export {

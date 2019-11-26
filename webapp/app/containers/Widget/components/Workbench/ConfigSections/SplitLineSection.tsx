@@ -85,8 +85,8 @@ export class SplitLineSection extends React.PureComponent<ISplitLineSectionProps
                 onChange={this.selectChange('horizontalLineSize')}
               >
                 {Array.from(Array(10), (o, i) => (
-                    <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
-                  ))}
+                  <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                ))}
               </Select>
             </Col>
             <Col span={4}>
@@ -125,8 +125,8 @@ export class SplitLineSection extends React.PureComponent<ISplitLineSectionProps
                 onChange={this.selectChange('verticalLineSize')}
               >
                 {Array.from(Array(10), (o, i) => (
-                    <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
-                  ))}
+                  <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                ))}
               </Select>
             </Col>
             <Col span={4}>

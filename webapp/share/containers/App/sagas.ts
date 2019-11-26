@@ -18,15 +18,14 @@
  * >>
  */
 
-import { takeLatest } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import { call, fork, put, takeLatest } from 'redux-saga/effects'
 
 import { LOGIN, GET_LOGIN_USER } from './constants'
 import { logged } from './actions'
 
-import request from '../../../app/utils/request'
-import { errorHandler } from '../../../app/utils/util'
-import api from '../../../app/utils/api'
+import request from 'utils/request'
+import { errorHandler } from 'utils/util'
+import api from 'utils/api'
 
 export function* login (action) {
   const { username, password, shareInfo, resolve } = action.payload

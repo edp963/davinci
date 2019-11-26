@@ -67,7 +67,7 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
   public componentDidMount () {
     window.addEventListener('resize', this.setEditorHeight, false)
     // @FIX for this init height, 64px is the height of the hidden navigator in Main.tsx
-    const editorHeight = this.editor.current.clientHeight + 64
+    const editorHeight = this.editor.current.clientHeight
     this.setState({
       editorHeight
     })

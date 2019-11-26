@@ -22,6 +22,7 @@ import React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
+
 // import html2canvas from 'html2canvas'
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -32,20 +33,19 @@ import saga from './sagas'
 import { FieldSortTypes } from 'containers/Widget/components/Config/Sort'
 import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
 
-import Container from 'app/components/Container'
+import Container from 'components/Container'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
-import DashboardItem from 'app/containers/Dashboard/components/DashboardItem'
-import FullScreenPanel from 'app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
-import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
-import { ChartTypes } from 'app/containers/Widget/config/chart/ChartTypes'
-import { IMapItemControlRequestParams, IMapControlOptions, IFilters } from 'app/components/Filters/types'
-import GlobalControlPanel from 'app/components/Filters/FilterPanel'
-import DownloadList from 'app/components/DownloadList'
-import {getValidColumnValue} from 'app/components/Filters/util'
+import DashboardItem from 'containers/Dashboard/components/DashboardItem'
+import FullScreenPanel from 'containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
+import { Responsive, WidthProvider } from 'libs/react-grid-layout'
+import { ChartTypes } from 'containers/Widget/config/chart/ChartTypes'
+import { IMapItemControlRequestParams, IMapControlOptions, IFilters } from 'components/Filters/types'
+import GlobalControlPanel from 'components/Filters/FilterPanel'
+import DownloadList from 'components/DownloadList'
+import { getValidColumnValue } from 'components/Filters/util'
+import HeadlessBrowserIdentifier from 'share/components/HeadlessBrowserIdentifier'
 
-import { RenderType, IWidgetConfig, IWidgetProps } from 'app/containers/Widget/components/Widget'
-import { ViewActions } from 'app/containers/View/actions'
-const { loadViewsDetail } = ViewActions
+import { RenderType, IWidgetConfig, IWidgetProps } from 'containers/Widget/components/Widget'
 import { Row, Col, message } from 'antd'
 
 import {
@@ -88,11 +88,11 @@ import {
   DOWNLOAD_LIST_POLLING_FREQUENCY
 } from 'app/globalConstants'
 
-const styles = require('app/containers/Dashboard/Dashboard.less')
+import styles from 'app/containers/Dashboard/Dashboard.less'
 
-import Login from '../../components/Login/index'
+import Login from 'share/components/Login'
 import { IQueryConditions, IDataRequestParams, QueryVariable, IDataDownloadParams } from 'app/containers/Dashboard/Grid'
-import { getShareClientId } from '../../util'
+import { getShareClientId } from 'share/util'
 import { IDownloadRecord, DownloadTypes } from 'app/containers/App/types'
 import { IFormedView } from 'app/containers/View/types'
 
@@ -314,11 +314,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let i = 0
     for (; i < path.length - 1; i++) {
         if (o[path[i]] === undefined) {
-          o[path[i]] = path[i + 1].match(/^\d+$/) ? [] : {}
+          o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
         }
-        o = o[path[i]]
+        o = o[decodeURIComponent(path[i])]
     }
-    o[path[i]] = decodeURIComponent(value)
+    o[decodeURIComponent(path[i])] = decodeURIComponent(value)
   }
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
@@ -483,10 +483,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           func: t.agg
         })))
     }
-    let requestParamsFilters = []
-    filters.forEach((item) => {
-      requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
-    })
+
+    const requestParamsFilters = filters.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
+
 
     const requestParams = {
       groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
@@ -501,7 +502,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       orders,
       cache,
       expired,
-      flush: renderType === 'refresh',
+      flush: renderType === 'flush',
       pagination,
       nativeQuery,
       customOrders
@@ -1068,19 +1069,24 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           {itemblocks}
         </ResponsiveReactGridLayout>
       )
-
-      fullScreenComponent = (
-        <FullScreenPanel
-          widgets={widgets}
-          currentItems={currentItems}
-          currentDashboard={{ widgets: currentItems }}
-          currentItemsInfo={currentItemsInfo}
-          visible={allowFullScreen}
-          isVisible={this.visibleFullScreen}
-          currentDataInFullScreen={this.state.currentDataInFullScreen}
-          onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
-        />
-      )
+      fullScreenComponent = 
+        allowFullScreen
+        ? <FullScreenPanel
+            widgets={widgets}
+            currentItems={currentItems}
+            currentDashboard={dashboard}
+            currentItemsInfo={currentItemsInfo}
+            visible={allowFullScreen}
+            isVisible={this.visibleFullScreen}
+            mapOptions={dashboardSelectOptions}
+            onChange={this.globalControlChange}
+            onSearch={this.globalControlSearch}
+            onGetControlOptions={this.getOptions}
+            onGetChartData={this.getChartData}
+            onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
+            chartDetail={this.state.currentDataInFullScreen}
+          />
+        : <div/>
     } else {
       grids = (
         <div className={styles.shareContentEmpty}>
@@ -1093,17 +1099,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
 
-    let headlessBrowserIdentifier
-    if (headlessBrowserRenderSign) {
-      const { offsetWidth, offsetHeight } = document.getElementById('app')
-      headlessBrowserIdentifier = (
-        <>
-          <input id="headlessBrowserRenderSign" type="hidden" />
-          <input id="width" type="hidden" value={offsetWidth} />
-          <input id="height" type="hidden" value={offsetHeight} />
-        </>
-      )
-    }
+    const headlessBrowserRenderParentNode = document.getElementById('app')
 
     return (
       <Container>
@@ -1121,6 +1117,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               </div>
             </Col>
           </Row>
+
           <GlobalControlPanel
             currentDashboard={dashboard}
             currentItems={currentItems}
@@ -1134,7 +1131,10 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         <div className={styles.gridBottom} />
         {fullScreenComponent}
         {loginPanel}
-        {headlessBrowserIdentifier}
+        <HeadlessBrowserIdentifier
+          renderSign={headlessBrowserRenderSign}
+          parentNode={headlessBrowserRenderParentNode}
+        />
       </Container>
     )
   }
@@ -1155,7 +1155,6 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onLoadDashboard: (token, reject) => dispatch(getDashboard(token, reject)),
     onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
     onLoadResultset: (renderType, itemid, dataToken, requestParams) => dispatch(getResultset(renderType, itemid, dataToken, requestParams)),

@@ -1,11 +1,11 @@
-import * as React from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
-import LoginForm from '../../../app/containers/Login/LoginForm'
-const styles = require('../../../app/containers/Background/Background.less')
-const loginStyles = require('../../../app/containers/Login/Login.less')
+import LoginForm from 'containers/Login/LoginForm'
+import styles from 'containers/Background/Background.less'
+import loginStyles from 'containers/Login/Login.less'
 
-import { login } from '../../containers/App/actions'
+import { login } from 'share/containers/App/actions'
 
 import { Icon } from 'antd'
 
@@ -59,7 +59,7 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     return (
       <div className={`${styles.container} ${styles.share}`}>
         <Helmet title="Login" />
-        <img className={styles.logo} src={require('../../../app/assets/images/logo_light.svg')} />
+        <img className={styles.logo} src={require('assets/images/logo_light.svg')} />
         <div className={`${styles.window} ${loginStyles.window}`}>
           <LoginForm
             username={username}

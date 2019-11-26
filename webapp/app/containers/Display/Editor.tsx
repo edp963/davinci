@@ -23,7 +23,6 @@ import { fromJS } from 'immutable'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
 import { createStructuredSelector } from 'reselect'
-import { RouteComponentProps } from 'react-router'
 
 import { compose } from 'redux'
 import reducer from './reducer'
@@ -85,12 +84,9 @@ import { ISlideParams } from './types'
 import { IQueryConditions, IDataRequestParams } from '../Dashboard/Grid'
 import { IFormedViews } from 'containers/View/types'
 
-interface IParams {
-  pid: number
-  displayId: number
-}
+import { RouteComponentWithParams } from 'utils/types'
 
-interface IEditorProps extends RouteComponentProps<{}, IParams> {
+interface IEditorProps extends RouteComponentWithParams {
   widgets: any[]
   formedViews: IFormedViews
   currentDisplay: any
@@ -193,8 +189,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   public componentDidMount () {
-    const { params, onLoadDisplayDetail, onHideNavigator } = this.props
-    const projectId = +params.pid
+    const { match: { params }, onLoadDisplayDetail, onHideNavigator } = this.props
+    const projectId = +params.projectId
     const displayId = +params.displayId
     onLoadDisplayDetail(projectId, displayId)
     onHideNavigator()
@@ -379,10 +375,15 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         })))
     }
 
+
+    const requestParamsFilters = filters.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
+
     const requestParams = {
       groups,
       aggregators,
-      filters: filters.map((i) => i.config.sql),
+      filters: requestParamsFilters,
       tempFilters,
       linkageFilters,
       globalFilters,
@@ -392,7 +393,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       orders,
       cache,
       expired,
-      flush: renderType === 'refresh',
+      flush: renderType === 'flush',
       pagination,
       nativeQuery,
       customOrders
@@ -773,16 +774,16 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private toWorkbench = (_, widgetId) => {
-    const { params } = this.props
-    const { pid, displayId } = params
-    const editSign = [pid, displayId].join(DEFAULT_SPLITER)
+    const { match, history } = this.props
+    const { projectId, displayId } = match.params
+    const editSign = [projectId, displayId].join(DEFAULT_SPLITER)
     sessionStorage.setItem('editWidgetFromDisplay', editSign)
-    this.props.router.push(`/project/${pid}/widget/${widgetId}`)
+    history.push(`/project/${projectId}/widget/${widgetId}`)
   }
 
   public render () {
     const {
-      params,
+      match,
       currentLayersInfo,
       currentLayersOperationInfo,
       currentSelectedLayers,
@@ -888,7 +889,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         <DisplayHeader
           display={currentDisplay}
           widgets={widgets}
-          params={params}
           onAddLayers={this.addLayers}
           onDeleteLayers={this.deleteLayers}
           onCopyLayers={this.copyLayers}

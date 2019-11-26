@@ -121,7 +121,9 @@ public class ScriptUtiils {
                                 if (filterMirror.isArray() && filterMirror.size() > 0) {
                                     Collection<Object> values = filterMirror.values();
                                     values.forEach(v -> {
-                                        filters.add(String.valueOf(v));
+                                        if (v != null) {
+                                            filters.add(String.valueOf(v));
+                                        }
                                     });
                                 }
                             }

@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import { Icon, Col, message, Row, Input, Form, Button, Breadcrumb } from 'antd'
 const FormItem = Form.Item
 const styles = require('./profile.less')
@@ -48,6 +48,14 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
     const { name, description, department } = this.props.loginUser
     this.props.form.setFieldsValue({name, description, department })
   }
+  public uploadAvatarSuccessCallback = (path) => {
+    const { onUploadAvatarSuccess, loginUser } = this.props
+    const newLoginUser = {...loginUser,  ...{avatar: path}}
+    if (onUploadAvatarSuccess) {
+      onUploadAvatarSuccess(path)
+    }
+    localStorage.setItem('loginUser', JSON.stringify(newLoginUser))
+  }
   public render () {
     const {getFieldDecorator} = this.props.form
     const { id, avatar } = this.props.loginUser
@@ -71,7 +79,7 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
         <Box.Body>
           <div className={styles.container}>
             <div className={styles.uploadWrapper}>
-              <UploadAvatar type="profile" xhrParams={{id, callback: this.props.onUploadAvatarSuccess}} path={avatar}/>
+              <UploadAvatar type="profile" xhrParams={{id, callback: this.uploadAvatarSuccessCallback}} path={avatar}/>
             </div>
             <hr/>
             <div className={styles.form}>

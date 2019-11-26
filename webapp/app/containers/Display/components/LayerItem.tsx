@@ -20,7 +20,7 @@ import { GRID_ITEM_MARGIN } from 'app/globalConstants'
 import { IViewModel } from 'containers/View/types'
 import Widget, { IWidgetConfig, IPaginationParams, RenderType } from 'containers/Widget/components/Widget'
 import { TextAlignProperty } from 'csstype'
-
+import { getPagination, getNativeQuery} from 'containers/Viz/utils'
 import { Resizable } from 'libs/react-resizable'
 
 const styles = require('../Display.less')
@@ -96,8 +96,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     if (!widget) { return }
 
     const widgetProps = JSON.parse(widget.config)
-    const pagination = this.getPagination(widgetProps, datasource)
-    const nativeQuery = this.getNativeQuery(widgetProps)
+    const pagination = getPagination(widgetProps, datasource)
+    const nativeQuery = getNativeQuery(widgetProps)
     this.setState({
       widgetProps,
       pagination,
@@ -114,34 +114,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     this.initPolling(this.props)
   }
 
-  private getPagination = (widgetProps: IWidgetConfig, datasource) => {
-    const { chartStyles } = widgetProps
-    const { table } = chartStyles
-    if (!table) { return null }
-
-    const { withPaging, pageSize } = table
-    const pagination: IPaginationParams = {
-      withPaging,
-      pageSize: 0,
-      pageNo: 0,
-      totalCount: datasource.totalCount || 0
-    }
-    if (pagination.withPaging) {
-      pagination.pageSize = datasource.pageSize || +pageSize
-      pagination.pageNo = datasource.pageNo || 1
-    }
-    return pagination
-  }
-
-  private getNativeQuery = (widgetProps: IWidgetConfig) => {
-    let noAggregators = false
-    const { chartStyles } = widgetProps
-    const { table } = chartStyles
-    if (table) {
-      noAggregators = table.withNoAggregators
-    }
-    return noAggregators
-  }
+  
 
   public componentWillReceiveProps (nextProps: ILayerItemProps) {
     const { layer, datasource } = this.props
@@ -164,7 +137,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     }
 
     if (widgetProps && datasource !== nextProps.datasource) {
-      const pagination = this.getPagination(widgetProps, nextProps.datasource)
+      const pagination = getPagination(widgetProps, nextProps.datasource)
       this.setState({ pagination })
     }
   }

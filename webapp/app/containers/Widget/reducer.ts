@@ -18,6 +18,7 @@
  * >>
  */
 
+import produce from 'immer'
 import {
   LOAD_WIDGETS,
   LOAD_WIDGETS_SUCCESS,
@@ -39,96 +40,128 @@ import {
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
 import { ActionTypes as DisplayActionTypes } from '../Display/constants'
 import { ActionTypes as ViewActionTypes } from '../View/constants'
-import { fromJS } from 'immutable'
 
-const initialState = fromJS({
+const initialState = {
   widgets: null,
   currentWidget: null,
   loading: false,
   dataLoading: false,
   columnValueLoading: false,
   distinctColumnValues: null
-})
-
-function widgetReducer (state = initialState, action) {
-  const { type, payload } = action
-  const widgets = state.get('widgets')
-
-  switch (type) {
-    case LOAD_WIDGETS:
-      return state
-        .set('loading', true)
-        .set('widgets', null)
-    case LOAD_WIDGETS_SUCCESS:
-      return state
-        .set('loading', false)
-        .set('widgets', payload.widgets)
-    case LOAD_WIDGETS_FAILURE:
-      return state.set('loading', false)
-    case ADD_WIDGET:
-      return state.set('loading', true)
-    case ADD_WIDGET_SUCCESS:
-      if (widgets) {
-        widgets.push(payload.result)
-        return state
-          .set('loading', false)
-          .set('widgets', widgets.slice())
-      } else {
-        return state
-          .set('loading', false)
-          .set('widgets', [payload.result])
-      }
-    case ADD_WIDGET_FAILURE:
-      return state.set('loading', false)
-    case DELETE_WIDGET:
-      return state.set('loading', true)
-    case DELETE_WIDGET_SUCCESS:
-      return state
-        .set('widgets', widgets.filter((g) => g.id !== payload.id))
-        .set('loading', false)
-    case DELETE_WIDGET_FAILURE:
-      return state.set('loading', false)
-    case LOAD_WIDGET_DETAIL:
-      return state
-        .set('loading', true)
-        .set('currentWidget', null)
-    case LOAD_WIDGET_DETAIL_SUCCESS:
-      return state
-        .set('loading', false)
-        .set('currentWidget', payload.detail)
-    case LOAD_WIDGET_DETAIL_FAILURE:
-      return state.set('loading', false)
-    case EDIT_WIDGET:
-      return state.set('loading', true)
-    case EDIT_WIDGET_SUCCESS:
-      return state.set('loading', false)
-    case EDIT_WIDGET_FAILURE:
-      return state.set('loading', false)
-    case ViewActionTypes.LOAD_VIEW_DATA:
-      return state.set('dataLoading', true)
-    case ViewActionTypes.LOAD_VIEW_DATA_SUCCESS:
-      return state.set('dataLoading', false)
-    case ViewActionTypes.LOAD_VIEW_DATA_FAILURE:
-      return state.set('dataLoading', false)
-    case LOAD_DASHBOARD_DETAIL_SUCCESS:
-      return state.set('widgets', payload.widgets)
-    case DisplayActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
-      return state.set('widgets', payload.widgets)
-    case ViewActionTypes.LOAD_VIEW_DISTINCT_VALUE:
-      return state
-        .set('columnValueLoading', true)
-        .set('distinctColumnValues', null)
-    case ViewActionTypes.LOAD_VIEW_DISTINCT_VALUE_SUCCESS:
-      return state
-        .set('columnValueLoading', false)
-        .set('distinctColumnValues', payload.data.slice(0, 100))
-    case ViewActionTypes.LOAD_VIEW_DISTINCT_VALUE_FAILURE:
-      return state.set('columnValueLoading', false)
-    case CLEAR_CURRENT_WIDGET:
-      return state.set('currentWidget', null)
-    default:
-      return state
-  }
 }
+
+const widgetReducer = (state = initialState, action) =>
+  produce(state, (draft) => {
+    switch (action.type) {
+      case LOAD_WIDGETS:
+        draft.loading = true
+        draft.widgets = null
+        break
+
+      case LOAD_WIDGETS_SUCCESS:
+        draft.loading = false
+        draft.widgets = action.payload.widgets
+        break
+
+      case LOAD_WIDGETS_FAILURE:
+        draft.loading = false
+        break
+
+      case ADD_WIDGET:
+        draft.loading = true
+        break
+
+      case ADD_WIDGET_SUCCESS:
+        if (draft.widgets) {
+          draft.widgets.push(action.payload.result)
+          draft.loading = false
+        } else {
+          draft.loading = false
+          draft.widgets = [action.payload.result]
+        }
+        break
+
+      case ADD_WIDGET_FAILURE:
+        draft.loading = false
+        break
+
+      case DELETE_WIDGET:
+        draft.loading = true
+        break
+
+      case DELETE_WIDGET_SUCCESS:
+        draft.widgets = draft.widgets.filter((g) => g.id !== action.payload.id)
+        draft.loading = false
+        break
+
+      case DELETE_WIDGET_FAILURE:
+        draft.loading = false
+        break
+
+      case LOAD_WIDGET_DETAIL:
+        draft.loading = true
+        draft.currentWidget = null
+        break
+
+      case LOAD_WIDGET_DETAIL_SUCCESS:
+        draft.loading = false
+        draft.currentWidget = action.payload.detail
+        break
+
+      case LOAD_WIDGET_DETAIL_FAILURE:
+        draft.loading = false
+        break
+
+      case EDIT_WIDGET:
+        draft.loading = true
+        break
+
+      case EDIT_WIDGET_SUCCESS:
+        draft.loading = false
+        break
+
+      case EDIT_WIDGET_FAILURE:
+        draft.loading = false
+        break
+
+      case ViewActionTypes.LOAD_VIEW_DATA:
+        draft.dataLoading = true
+        break
+
+      case ViewActionTypes.LOAD_VIEW_DATA_SUCCESS:
+        draft.dataLoading = false
+        break
+
+      case ViewActionTypes.LOAD_VIEW_DATA_FAILURE:
+        draft.dataLoading = false
+        break
+
+      case LOAD_DASHBOARD_DETAIL_SUCCESS:
+        draft.widgets = action.payload.widgets
+        break
+
+      case DisplayActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
+        draft.widgets = action.payload.widgets
+        break
+
+      case ViewActionTypes.LOAD_VIEW_DISTINCT_VALUE:
+        draft.columnValueLoading = true
+        draft.distinctColumnValues = null
+        break
+
+      case ViewActionTypes.LOAD_VIEW_DISTINCT_VALUE_SUCCESS:
+        draft.columnValueLoading = false
+        draft.distinctColumnValues = action.payload.data.slice(0, 100)
+        break
+
+      case ViewActionTypes.LOAD_VIEW_DISTINCT_VALUE_FAILURE:
+        draft.columnValueLoading = false
+        break
+
+      case CLEAR_CURRENT_WIDGET:
+        draft.currentWidget = null
+        break
+    }
+  })
 
 export default widgetReducer

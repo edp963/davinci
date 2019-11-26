@@ -20,11 +20,11 @@
 
 import { createSelector } from 'reselect'
 
-const selectReport = () => (state) => state.get('report')
+const selectReport = () => (state) => state.report
 
 const selectSidebar = () => createSelector(
   selectReport(),
-  (reportState) => reportState.get('sidebar')
+  (reportState) => reportState.sidebar
 )
 
 export {

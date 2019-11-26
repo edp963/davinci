@@ -20,36 +20,36 @@
 
 import { createSelector } from 'reselect'
 
-const selectGlobal = (state) => state.get('global')
+const selectGlobal = (state) => state.global
 
 const makeSelectLogged = () => createSelector(
   selectGlobal,
-  (globalState) => globalState.get('logged')
+  (globalState) => globalState.logged
 )
 
 const makeSelectLoginUser = () => createSelector(
   selectGlobal,
-  (globalState) => globalState.get('loginUser')
+  (globalState) => globalState.loginUser
 )
 
 const makeSelectLoginLoading = () => createSelector(
   selectGlobal,
-  (globalState) => globalState.get('loginLoading')
+  (globalState) => globalState.loginLoading
 )
 
 const makeSelectNavigator = () => createSelector(
   selectGlobal,
-  (globalState) => globalState.get('navigator')
+  (globalState) => globalState.navigator
 )
 
 const makeSelectDownloadList = () => createSelector(
   selectGlobal,
-  (globalState) => globalState.get('downloadList')
+  (globalState) => globalState.downloadList
 )
 
 const makeSelectDownloadListLoading = () => createSelector(
   selectGlobal,
-  (globalState) => globalState.get('downloadListLoading')
+  (globalState) => globalState.downloadListLoading
 )
 
 const makeSelectLocationState = () => {
@@ -57,7 +57,7 @@ const makeSelectLocationState = () => {
   let prevRoutingStateJS
 
   return (state) => {
-    const routingState = state.get('route') // or state.route
+    const routingState = state.route // or state.route
 
     if (!routingState.equals(prevRoutingState)) {
       prevRoutingState = routingState

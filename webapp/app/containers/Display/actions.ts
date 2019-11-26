@@ -508,11 +508,11 @@ export const DisplayActions = {
     }
   },
 
-  loadProjectDetail (pid) {
+  loadProjectDetail (projectId: number) {
     return {
       type: ActionTypes.LOAD_CURRENT_PROJECT,
       payload: {
-        pid
+        projectId
       }
     }
   },

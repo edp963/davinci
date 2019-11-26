@@ -20,7 +20,7 @@ import {
   getAllChildren,
   getParents
 } from './util'
-import { defaultFilterControlGridProps, SHOULD_LOAD_OPTIONS } from './filterTypes'
+import { defaultFilterControlGridProps, SHOULD_LOAD_OPTIONS, fullScreenGlobalControlGridProps } from './filterTypes'
 import FilterControl from './FilterControl'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
@@ -35,6 +35,7 @@ interface IFilterPanelProps {
   onGetOptions: OnGetControlOptions
   onChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
   onSearch: (itemIds: number[]) => void
+  isFullScreen?: boolean
 }
 
 interface IFilterPanelStates {
@@ -66,11 +67,19 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     }
   } = {}
 
+  public componentDidMount () {
+    const { currentDashboard, currentItems } = this.props
+    if (currentDashboard && currentDashboard.id) {
+      this.initDerivedState(currentDashboard, currentItems, true)
+    }
+  }
+
   public componentWillReceiveProps (nextProps: IFilterPanelProps & FormComponentProps) {
     const { currentDashboard, currentItems } = nextProps
     if (currentDashboard !== this.props.currentDashboard
         || this.dashboardItemsChange(currentItems, this.props.currentItems)) {
-      this.initDerivedState(currentDashboard, currentItems, this.props.currentDashboard)
+      const isCurrentDashboardUpdated = this.props.currentDashboard && this.props.currentDashboard.id === (currentDashboard && currentDashboard.id)
+      this.initDerivedState(currentDashboard, currentItems, isCurrentDashboardUpdated)
     }
   }
 
@@ -83,7 +92,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     return false
   }
 
-  private initDerivedState = (currentDashboard, currentItems, previousDashboard) => {
+  private initDerivedState = (currentDashboard, currentItems, isCurrentDashboardUpdated) => {
     if (currentDashboard) {
       this.props.form.resetFields()
       const config = JSON.parse(currentDashboard.config || '{}')
@@ -113,7 +122,6 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
       })
 
       const { renderTree, flatTree } = getControlRenderTree<IGlobalControl, IRenderTreeItem>(controls)
-
       Object.values(flatTree).forEach((control) => {
         if (SHOULD_LOAD_OPTIONS[control.type]) {
           this.loadOptions(control, flatTree, controlValues)
@@ -126,9 +134,11 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
         controlValues,
         queryMode
       }, () => {
-        if (previousDashboard) {
+        if (isCurrentDashboardUpdated) {
           this.batchChange()
-          this.search()
+          if (queryMode === GlobalControlQueryMode.Immediately) {
+            this.search()
+          }
         }
       })
     }
@@ -240,8 +250,6 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     const childrenKeys = getAllChildren(key, flatTree)
     const relatedItemIds = []
 
-    // console.log(control)
-    // console.log(currentItems)
     const controlValues = {
       ...this.state.controlValues,
       [key]: val
@@ -330,7 +338,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
   }
 
   private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: IGlobalControl[]) => {
-    const { form, mapOptions } = this.props
+    const { form, mapOptions, isFullScreen } = this.props
     const { controlValues } = this.state
 
     let components = []
@@ -349,12 +357,15 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
             return values
           }, [])
         : null
-      const controlGridProps = width
+      let controlGridProps = width
           ? {
               lg: width,
               md: width < 8 ? 12 : 24
             }
           : defaultFilterControlGridProps
+      if (isFullScreen) {
+        controlGridProps = fullScreenGlobalControlGridProps
+      }  
       components = components.concat(
         <Col
           key={key}
@@ -381,20 +392,34 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
 
   public render () {
     const { renderTree, queryMode } = this.state
+    const { isFullScreen } = this.props
     const panelClass = classnames({
       [styles.controlPanel]: true,
-      [styles.empty]: !renderTree.length
+      [styles.empty]: !renderTree.length,
+      [styles.flexColumn]: isFullScreen
     })
+
+    const controlClass = classnames({
+      [styles.wfull]: isFullScreen,
+      [styles.controls]: true
+    })
+
+    const actionClass = classnames({
+      [styles.actions]: true,
+      [styles.flexEnd]: isFullScreen,
+      [styles.mt16]: isFullScreen
+    })
+
     return (
       <Form className={panelClass}>
-        <div className={styles.controls}>
+        <div className={controlClass}>
           <Row gutter={8}>
             {this.renderFilterControls(renderTree)}
           </Row>
         </div>
         {
           queryMode === GlobalControlQueryMode.Manually && (
-            <div className={styles.actions}>
+            <div className={actionClass}>
               <Button type="primary" icon="search" onClick={this.search}>查询</Button>
               <Button icon="reload" onClick={this.reset}>重置</Button>
             </div>

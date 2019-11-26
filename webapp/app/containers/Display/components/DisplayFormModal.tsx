@@ -26,7 +26,7 @@ const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const TabPane = Tabs.TabPane
 import { IDisplay } from './DisplayList'
-const styles = require('../../Portal/Portal.less')
+const styles = require('containers/Portal/Portal.less')
 import {IExludeRoles} from 'containers/Portal/components/PortalList'
 const utilStyles = require('assets/less/util.less')
 

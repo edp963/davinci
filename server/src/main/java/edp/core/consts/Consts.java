@@ -31,6 +31,8 @@ public class Consts {
 
     public static final String SLASH = "/";
 
+    public static final String DOUBLE_SLASH = "//";
+
     public static final String SPACE = " ";
 
     public static final String EMPTY = "";
@@ -128,6 +130,8 @@ public class Consts {
 
 
     public static final String SCHEDULE_JOB_DATA_KEY = "scheduleJobs";
+
+    public static final String DEFAULT_COPY_SUFFIX = "_COPY";
 
     /**
      * 常用图片格式

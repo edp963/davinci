@@ -222,7 +222,7 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
                 render: (val) => {
                   const { cascaderSource } = this.props
                   const triggerData = cascaderSource.find((ts) => ts.value === val[0])
-                  const triggerColumnData = triggerData.children.columns.find((c) => c.value === val[1])
+                  const triggerColumnData = triggerData.children.triggerColumns.find((c) => c.value === val[1])
                   return `${triggerData.label} - ${triggerColumnData.label}`
                 }
               }, {

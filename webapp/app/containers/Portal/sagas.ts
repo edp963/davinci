@@ -48,7 +48,7 @@ export function* getPortals (action) {
   try {
     const asyncData = yield call(request, `${api.portal}?projectId=${payload.projectId}`)
     const portals = asyncData.payload
-    yield put(portalsLoaded(portals))
+    yield put(portalsLoaded(portals, payload.portalId))
   } catch (err) {
     yield put(loadPortalsFail())
     errorHandler(err)

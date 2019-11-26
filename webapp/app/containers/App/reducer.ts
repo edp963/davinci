@@ -18,6 +18,8 @@
  * >>
  */
 
+import produce from 'immer'
+
 import {
   LOGIN,
   LOGGED,
@@ -30,78 +32,77 @@ import {
   LOAD_DOWNLOAD_LIST,
   LOAD_DOWNLOAD_LIST_SUCCESS,
   LOAD_DOWNLOAD_LIST_FAILURE,
-  DOWNLOAD_FILE_SUCCESS
+  DOWNLOAD_FILE_SUCCESS,
+  UPDATE_PROFILE_SUCCESS
 } from './constants'
-import { fromJS } from 'immutable'
 import { DownloadStatus } from './types'
 
 
-const initialState = fromJS({
-  logged: false,
+const initialState = {
+  logged: null,
   loginUser: null,
   loginLoading: false,
   navigator: true,
   downloadListLoading: false,
   downloadList: null,
   downloadListInfo: null
-})
+}
 
-function appReducer (state = initialState, action) {
-  const { type, payload } = action
-  const loginUser = state.get('loginUser')
-  const downloadList = state.get('downloadList')
-  switch (type) {
-    case LOGIN:
-      return state
-        .set('loginLoading', true)
-    case LOGGED:
-      return state
-        .set('loginLoading', false)
-        .set('logged', true)
-        .set('loginUser', payload.user)
-    case LOGIN_ERROR:
-      return state
-        .set('loginLoading', false)
-    case ACTIVE_SUCCESS:
-      return state
-        .set('logged', true)
-        .set('loginUser', payload.user)
-    case LOGOUT:
-      return state
-        .set('logged', false)
-        .set('loginUser', null)
-    case UPLOAD_AVATAR_SUCCESS:
-      const newLoginUser = {...loginUser, ...{avatar: payload.path}}
-      localStorage.setItem('loginUser', JSON.stringify(newLoginUser))
-      return state
-        .set('loginUser', newLoginUser)
-    case SHOW_NAVIGATOR:
-      return state.set('navigator', true)
-    case HIDE_NAVIGATOR:
-      return state.set('navigator', false)
-    case LOAD_DOWNLOAD_LIST:
-      return state.set('downloadListLoading', true)
-    case LOAD_DOWNLOAD_LIST_SUCCESS:
-      return state
-        .set('downloadListLoading', false)
-        .set('downloadList', payload.list)
-        .set('downloadListInfo', payload.list.reduce((info, item) => {
+const appReducer = (state = initialState, action) =>
+  produce(state, (draft) => {
+    switch (action.type) {
+      case LOGIN:
+        draft.loginLoading = true
+        break
+      case LOGGED:
+        draft.loginLoading = false
+        draft.logged = true
+        draft.loginUser = action.payload.user
+        break
+      case LOGIN_ERROR:
+        draft.loginLoading = false
+        break
+      case ACTIVE_SUCCESS:
+        draft.logged = true
+        draft.loginUser = action.payload.user
+        break
+      case LOGOUT:
+        draft.logged = false
+        draft.loginUser = null
+        break
+      case UPLOAD_AVATAR_SUCCESS:
+        draft.loginUser.avatar = action.payload.path
+        break
+      case UPDATE_PROFILE_SUCCESS:
+        const { id, name, department, description } = action.payload.user
+        draft.loginUser = { ...draft.loginUser, id, name, department, description }
+        break
+      case SHOW_NAVIGATOR:
+        draft.navigator = true
+        break
+      case HIDE_NAVIGATOR:
+        draft.navigator = false
+        break
+      case LOAD_DOWNLOAD_LIST:
+        draft.downloadListLoading = true
+        break
+      case LOAD_DOWNLOAD_LIST_SUCCESS:
+        draft.downloadListLoading = false
+        draft.downloadList = action.payload.list
+        draft.downloadListInfo = action.payload.list.reduce((info, item) => {
           info[item.id] = {
             loading: false
           }
           return info
-        }, {}))
-    case LOAD_DOWNLOAD_LIST_FAILURE:
-      return state.set('downloadListLoading', false)
-    case DOWNLOAD_FILE_SUCCESS:
-      return state.set('downloadList', downloadList.map((item) => {
-        return item.id === payload.id
-          ? { ...item, status: DownloadStatus.Downloaded }
-          : item
-      }))
-    default:
-      return state
-  }
-}
+        }, {})
+        break
+      case LOAD_DOWNLOAD_LIST_FAILURE:
+        draft.downloadListLoading = false
+        break
+      case DOWNLOAD_FILE_SUCCESS:
+        draft.downloadList.find(({ id }) => action.payload.id === id).status = DownloadStatus.Downloaded
+        break
+    }
+  })
 
 export default appReducer

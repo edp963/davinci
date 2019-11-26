@@ -18,12 +18,12 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { findDOMNode } from 'react-dom'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
@@ -33,6 +33,7 @@ import viewReducer from 'containers/View/reducer'
 import viewSaga from 'containers/View/sagas'
 import formReducer from './FormReducer'
 
+import { RouteComponentWithParams } from 'utils/types'
 import { IViewBase, IFormedViews } from 'containers/View/types'
 
 import Container from 'components/Container'
@@ -53,7 +54,7 @@ import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
 import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu, message } from 'antd'
 import { uuid } from 'utils/util'
-import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
+import  FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
 import { decodeMetricName, getTable } from 'containers/Widget/components/util'
 import { initiateDownloadTask } from 'containers/App/actions'
 import {
@@ -93,13 +94,14 @@ import {
 } from './selectors'
 import { ViewActions, ViewActionType } from 'containers/View/actions'
 const { loadViewDataFromVizItem, loadViewsDetail, loadSelectOptions } = ViewActions
+import { makeSelectCurrentPortal } from 'containers/Portal/selectors'
 import { makeSelectWidgets } from 'containers/Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
 import { makeSelectCurrentProject } from 'containers/Projects/selectors'
 
 import { IFieldSortDescriptor, FieldSortTypes } from 'containers/Widget/components/Config/Sort'
 import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
-
+import { ICurrentDataInFullScreenProps } from './components/fullScreenPanel/FullScreenPanel'
 import {
   SQL_NUMBER_TYPES,
   DEFAULT_SPLITER,
@@ -110,9 +112,8 @@ import {
   KEY_COLUMN,
   DEFAULT_TABLE_PAGE
 } from 'app/globalConstants'
-import { InjectedRouter } from 'react-router/lib/Router'
 import { IWidgetConfig, RenderType, IWidgetProps } from '../Widget/components/Widget'
-import { IProject } from '../Projects'
+import { IProject } from '../Projects/types'
 import { ICurrentDashboard } from './'
 import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 import { DownloadTypes } from '../App/types'
@@ -145,7 +146,7 @@ export interface IQueryConditions {
   drillpathInstance?: any
 }
 
-interface IDashboardItemInfo {
+export interface IDashboardItemInfo {
   datasource: {
     pageNo: number
     pageSize: number
@@ -197,9 +198,8 @@ interface IGridProps {
   widgets: any[]
   views: IViewBase[]
   formedViews: IFormedViews
+  currentPortal: any
   currentProject: IProject
-  router: InjectedRouter
-  params: any
   currentDashboard: ICurrentDashboard,
   currentDashboardLoading: boolean
   currentDashboardShareInfo: string
@@ -248,7 +248,7 @@ interface IGridStates {
   mounted: boolean
   layoutInitialized: boolean
   allowFullScreen: boolean
-  currentDataInFullScreen: object
+  currentDataInFullScreen: ICurrentDataInFullScreenProps
   dashboardItemFormType: string
   dashboardItemFormVisible: boolean
   dashboardItemFormStep: number
@@ -268,7 +268,7 @@ interface IDashboardItemForm extends AntdFormType {
   onReset: () => void
 }
 
-interface IDashboardItem {
+export interface IDashboardItem {
   id?: number
   x?: number
   y?: number
@@ -278,9 +278,10 @@ interface IDashboardItem {
   dashboardId?: number
   polling?: boolean
   frequency?: number
+  config?: string
 }
 
-export class Grid extends React.Component<IGridProps, IGridStates> {
+export class Grid extends React.Component<IGridProps & RouteComponentWithParams, IGridStates> {
   constructor (props) {
     super(props)
 
@@ -289,7 +290,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       layoutInitialized: false,
 
       allowFullScreen: false,
-      currentDataInFullScreen: {},
+      currentDataInFullScreen: {
+        itemId: 0,
+        widget: null,
+        model: null
+      },
 
       dashboardItemFormType: '',
       dashboardItemFormVisible: false,
@@ -325,38 +330,40 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   public componentWillMount () {
     const {
       onLoadDashboardDetail,
-      params
+      match
     } = this.props
-    const { pid, portalId, dashboardId } = params
+    const { projectId, portalId, dashboardId } = match.params
     if (dashboardId && Number(dashboardId) !== -1) {
-      onLoadDashboardDetail(pid, portalId, Number(dashboardId))
+      onLoadDashboardDetail(+projectId, +portalId, Number(dashboardId))
     }
   }
 
-  public componentWillReceiveProps (nextProps: IGridProps) {
+  public componentWillReceiveProps (nextProps: IGridProps & RouteComponentWithParams) {
     const {
       currentDashboard,
       currentDashboardLoading,
       currentItems,
       currentItemsInfo,
-      params
+      currentPortal,
+      match: { params: nextParams }
     } = nextProps
     const { onLoadDashboardDetail } = this.props
     const { layoutInitialized } = this.state
 
-    const { params: {pid, portalId, portalName, dashboardId}, currentProject} = this.props
+    const { match, currentProject} = this.props
+    const { projectId, portalId, dashboardId } = match.params
 
-    if (params.dashboardId === this.props.params.dashboardId) {
+    if (nextParams.dashboardId === dashboardId) {
       if (nextProps.currentDashboard !== this.props.currentDashboard) {
         statistic.setOperations({
-          project_id: pid,
+          project_id: +projectId,
           project_name: currentProject.name,
           org_id: currentProject.orgId,
           viz_type: 'dashboard',
-          viz_id: portalId,
-          viz_name: portalName,
-          sub_viz_id: params.dashboardId,
-          sub_viz_name: currentDashboard['name'],
+          viz_id: +portalId,
+          viz_name: currentPortal && currentPortal.name,
+          sub_viz_id: +nextParams.dashboardId,
+          sub_viz_name: currentDashboard && currentDashboard['name'],
           create_time:  statistic.getCurrentDateTime()
         }, (data) => {
           const visitRecord = {
@@ -370,13 +377,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       }
     }
 
-    if (params.dashboardId !== this.props.params.dashboardId) {
+    if (nextParams.dashboardId !== dashboardId) {
       this.setState({
         nextMenuTitle: ''
       })
 
-      if (params.dashboardId && Number(params.dashboardId) !== -1) {
-        onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
+      if (nextParams.dashboardId && Number(nextParams.dashboardId) !== -1) {
+        onLoadDashboardDetail(+nextParams.projectId, +nextParams.portalId, +nextParams.dashboardId)
       }
 
       statistic.setDurations({
@@ -691,10 +698,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           func: t.agg
         })))
     }
-    let requestParamsFilters = []
-    filters.forEach((item) => {
-      requestParamsFilters = requestParamsFilters.concat(item.config.sqlModel)
-    })
+
+    const requestParamsFilters = filters.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
     const requestParams = {
       groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
       aggregators,
@@ -708,7 +715,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       orders,
       cache,
       expired,
-      flush: renderType === 'refresh',
+      flush: renderType === 'flush',
       pagination,
       nativeQuery,
       customOrders
@@ -736,8 +743,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private onEditDashboardItemsPosition = (layout) => {
-    const { currentItems, onEditDashboardItems, params } = this.props
-    const portalId = +params.portalId
+    const { currentItems, onEditDashboardItems, match } = this.props
+    const portalId = +match.params.portalId
     const changedItems = currentItems.map((item) => {
       const { x, y, w, h } = layout.find((l) => Number(l.i) === item.id)
       return {
@@ -837,8 +844,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private saveDashboardItem = () => {
-    const { params, currentDashboard, currentItems, widgets, formedViews } = this.props
-    const portalId = +params.portalId
+    const { match, currentDashboard, currentItems, widgets, formedViews } = this.props
+    const portalId = +match.params.portalId
     const { selectedWidgets, dashboardItemFormType } = this.state
     const formdata: any = this.dashboardItemForm.props.form.getFieldsValue()
     const cols = GRID_COLS.lg
@@ -933,8 +940,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private navDropdownClick = (e) => {
-    const { params } = this.props
-    this.props.router.push(`/project/${params.pid}/dashboard/${e.key}`)
+    const { match } = this.props
+    const { projectId, portalId } = match.params
+    this.props.history.push(`/project/${projectId}/portal/${portalId}/dashboard/${e.key}`)
   }
 
   private nextNavDropdownClick = (e) => {
@@ -992,7 +1000,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
 
     const mappingLinkage = getMappingLinkage(itemId, currentLinkages)
-    console.log(this.interactingLinkagers)
     this.interactingLinkagers = processLinkage(itemId, triggerData, mappingLinkage, this.interactingLinkagers)
 
     Object.keys(mappingLinkage).forEach((linkagerItemId) => {
@@ -1133,7 +1140,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
   }
 
-  private visibleFullScreen = (currentChartData) => {
+  private visibleFullScreen = (currentChartData: ICurrentDataInFullScreenProps) => {
     const {allowFullScreen} = this.state
     if (currentChartData) {
       this.setState({
@@ -1156,10 +1163,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     this.setState({
       currentDataInFullScreen: {
         itemId: id,
-        widgetId: widget.id,
         widget,
-        model,
-        onGetChartData: this.getChartData
+        model
       }
     })
   }
@@ -1179,10 +1184,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private toWorkbench = (itemId, widgetId) => {
-    const { pid, portalId, portalName, dashboardId } = this.props.params
-    const editSign = [pid, portalId, portalName, dashboardId, itemId].join(DEFAULT_SPLITER)
+    const { projectId, portalId, dashboardId } = this.props.match.params
+    const editSign = [projectId, portalId, dashboardId, itemId].join(DEFAULT_SPLITER)
     sessionStorage.setItem('editWidgetFromDashboard', editSign)
-    this.props.router.push(`/project/${pid}/widget/${widgetId}`)
+    this.props.history.push(`/project/${projectId}/widget/${widgetId}`)
   }
 
   private onDrillPathData = (e) => {
@@ -1447,7 +1452,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     // const { onDrillPathSetting } = this.props
     // onDrillPathSetting(currentItemId as number, flag)
 
-    const {currentItems, params, onLoadDashboardDetail} = this.props
+    const {currentItems, match, onLoadDashboardDetail} = this.props
+    const { params } = match
     const portalId = +params.portalId
     const { currentItemId } = this.state
     const dashboardItem = currentItems.find((item) => item.id === Number(currentItemId))
@@ -1473,7 +1479,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
       if (params.dashboardId && Number(params.dashboardId) !== -1) {
-        onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
+        onLoadDashboardDetail(+params.projectId, +params.portalId, +params.dashboardId)
       }
       this.hideDrillPathSettingModal()
     })
@@ -1829,16 +1835,27 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           onSave={this.saveFilters}
           onGetOptions={this.getOptions}
         />
-        <FullScreenPanel
-          widgets={widgets}
-          currentItems={currentItems}
-          currentDashboard={currentDashboard}
-          currentItemsInfo={currentItemsInfo}
-          visible={allowFullScreen}
-          isVisible={this.visibleFullScreen}
-          currentDataInFullScreen={this.state.currentDataInFullScreen}
-          onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
-        />
+        {
+          allowFullScreen
+          ? <FullScreenPanel
+              widgets={widgets}
+              currentItems={currentItems}
+              currentItemsInfo={currentItemsInfo}
+              currentDashboard={currentDashboard}
+              mapOptions={currentDashboardSelectOptions}
+              onChange={this.globalControlChange}
+              onSearch={this.globalControlSearch}
+              onGetControlOptions={this.getOptions}
+              visible={allowFullScreen}
+              onGetChartData={this.getChartData}
+              isVisible={this.visibleFullScreen}
+              chartDetail={this.state.currentDataInFullScreen}
+              onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
+              monitoredSearchDataAction={this.props.onMonitoredSearchDataAction}
+            />
+          : <div/>
+        }
+
       </Container>
     )
   }
@@ -1855,6 +1872,7 @@ const mapStateToProps = createStructuredSelector({
   currentItemsInfo: makeSelectCurrentItemsInfo(),
   currentDashboardSelectOptions: makeSelectCurrentDashboardSelectOptions(),
   currentLinkages: makeSelectCurrentLinkages(),
+  currentPortal: makeSelectCurrentPortal(),
   widgets: makeSelectWidgets(),
   views: makeSelectViews(),
   formedViews: makeSelectFormedViews(),

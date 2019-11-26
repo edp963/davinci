@@ -73,7 +73,7 @@ export function* addView (action: ViewActionType) {
   const { view, resolve } = payload
   const { viewAdded, addViewFail } = ViewActions
   try {
-    const asyncData = yield call<AxiosRequestConfig>(request, {
+    const asyncData = yield call(request, {
       method: 'post',
       url: api.view,
       data: view
@@ -92,7 +92,7 @@ export function* editView (action: ViewActionType) {
   const { view, resolve } = payload
   const { viewEdited, editViewFail } = ViewActions
   try {
-    yield call<AxiosRequestConfig>(request, {
+    yield call(request, {
       method: 'put',
       url: `${api.view}/${view.id}`,
       data: view
@@ -110,7 +110,7 @@ export function* deleteView (action: ViewActionType) {
   const { payload } = action
   const { viewDeleted, deleteViewFail } = ViewActions
   try {
-    yield call<AxiosRequestConfig>(request, {
+    yield call(request, {
       method: 'delete',
       url: `${api.view}/${payload.id}`
     })
@@ -151,7 +151,7 @@ export function* executeSql (action: ViewActionType) {
   const variableParam = variables.map((v) => omit(v, omitKeys))
   const { sqlExecuted, executeSqlFail } = ViewActions
   try {
-    const asyncData: IDavinciResponse<IExecuteSqlResponse> = yield call<AxiosRequestConfig>(request, {
+    const asyncData: IDavinciResponse<IExecuteSqlResponse> = yield call(request, {
       method: 'post',
       url: `${api.view}/executesql`,
       data: {
@@ -181,7 +181,7 @@ export function* getViewData (action: ViewActionType) {
     })
     yield put(viewDataLoaded())
     const { resultList } = asyncData.payload
-    asyncData.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    asyncData.payload.resultList = (resultList && resultList.slice(0, 600)) || []
     resolve(asyncData.payload)
   } catch (err) {
     const { response } = err as AxiosError
@@ -286,7 +286,7 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
       cancelToken: cancelTokenSource.token
     })
     const { resultList } = asyncData.payload
-    asyncData.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    asyncData.payload.resultList = (resultList && resultList.slice(0, 600)) || []
     yield put(viewDataFromVizItemLoaded(renderType, itemId, requestParams, asyncData.payload, vizType, action.statistic))
   } catch (err) {
     yield put(loadViewDataFromVizItemFail(itemId, vizType, getErrorMessage(err)))
