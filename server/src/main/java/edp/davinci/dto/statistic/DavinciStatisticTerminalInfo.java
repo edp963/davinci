@@ -7,7 +7,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Data
 @NotNull(message = "terminal info cannot be null")
@@ -42,6 +42,6 @@ public class DavinciStatisticTerminalInfo {
     private String cpu_architecture;
 
     @NotNull
-    private Timestamp create_time;
+    private LocalDateTime create_time;
     
 }

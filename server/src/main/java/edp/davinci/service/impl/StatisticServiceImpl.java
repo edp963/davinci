@@ -4,7 +4,7 @@ import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
-import edp.davinci.service.BuriedPointsService;
+import edp.davinci.service.StatisticService;
 import edp.davinci.service.elastic.ElasticOperationService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -20,9 +20,9 @@ import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.util.*;
 
-@Service("buriedPointsService")
+@Service("statisticService")
 @Slf4j
-public class BuriedPointsServiceImpl implements BuriedPointsService {
+public class StatisticServiceImpl implements StatisticService {
 
     @Autowired
     private Environment environment;
@@ -33,13 +33,13 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
     @Autowired
     private SqlUtils sqlUtils;
 
-    @Value("${spring.datasource.url}")
+    @Value("${statistic.url:}")
     private String durl;
 
-    @Value("${spring.datasource.username}")
+    @Value("${statistic.username:}")
     private String username;
 
-    @Value("${spring.datasource.password}")
+    @Value("${statistic.password:}")
     private String password;
 
     boolean statisticOpen = false;  //是否开启埋点统计
@@ -57,22 +57,20 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
 
     @Override
     public <T> void insert(List<T> infoList, Class clz){
-        if(statisticOpen){
-            String elastic_urls = environment.getProperty("statistic.elastic_urls");
-            if(StringUtils.isBlank(elastic_urls) && !durl.equals(this.sqlUtils.getJdbcUrl())){
-                this.sqlUtils = this.sqlUtils.init(durl, username, password, null, null, false);
-            }
-        }else{
+        if(!statisticOpen) {
             return;
         }
 
         String tableName = getTableName4Info(clz);
 
         String elastic_urls = environment.getProperty("statistic.elastic_urls");
-        if(StringUtils.isNotBlank(elastic_urls)){
+        if(StringUtils.isNotBlank(elastic_urls)) {
             String index = StringUtils.isBlank(elasticIndexPrefix) ? tableName : elasticIndexPrefix + "_" + tableName;
             elasticOperationService.batchInsert(index, index, infoList);
-        }else{
+
+        } else {
+            this.sqlUtils = this.sqlUtils.init(durl, username, password, null, null, false);
+
             List<Map<String, Object>> values = entityConvertIntoMap(infoList);
             Set<QueryColumn> headers = getHeaders(tableName);
             String sql = getInsertSql(clz, headers);

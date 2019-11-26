@@ -49,6 +49,7 @@ import org.springframework.stereotype.Component;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -720,12 +721,24 @@ public class SqlUtils {
                                 if (obj == null) {
                                     pstmt.setTimestamp(i, null);
                                 } else {
-                                    DateTime dateTime = (DateTime) obj;
-                                    pstmt.setTimestamp(i, DateUtils.toTimestamp(dateTime));
+                                    if(obj instanceof LocalDateTime){
+                                        pstmt.setTimestamp(i, Timestamp.valueOf((LocalDateTime) obj));
+                                    }else {
+                                        DateTime dateTime = (DateTime) obj;
+                                        pstmt.setTimestamp(i, DateUtils.toTimestamp(dateTime));
+                                    }
                                 }
                                 break;
                             case "Timestamp":
-                                pstmt.setTimestamp(i, null == obj ? null : (Timestamp) obj);
+                                if(obj == null){
+                                    pstmt.setTimestamp(i, null);
+                                }else{
+                                    if(obj instanceof LocalDateTime){
+                                        pstmt.setTimestamp(i, Timestamp.valueOf((LocalDateTime) obj));
+                                    }else {
+                                        pstmt.setTimestamp(i, (Timestamp) obj);
+                                    }
+                                }
                                 break;
                             case "Blob":
                                 pstmt.setBlob(i, null == obj ? null : (Blob) obj);
