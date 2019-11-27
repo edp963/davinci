@@ -119,7 +119,7 @@ import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 import { DownloadTypes } from '../App/types'
 const utilStyles = require('assets/less/util.less')
 const styles = require('./Dashboard.less')
-import { statistic } from 'utils/statistic/statistic.dv'
+import { statistic, IVizData } from 'utils/statistic/statistic.dv'
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
 export type QueryVariable = Array<{name: string, value: string | number}>
@@ -338,6 +338,27 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     }
   }
 
+  private getVizDataForStatistic ({
+    portalId,
+    projectId,
+    dashboardId,
+    currentPortal,
+    currentProject,
+    currentDashboard
+  }): IVizData {
+    return {
+      project_id: +projectId,
+      project_name: currentProject.name,
+      org_id: currentProject.orgId,
+      viz_type: 'dashboard',
+      viz_id: +portalId,
+      viz_name: currentPortal && currentPortal.name,
+      sub_viz_id: +dashboardId,
+      sub_viz_name: currentDashboard && currentDashboard['name'],
+    }
+  }
+  
+
   public componentWillReceiveProps (nextProps: IGridProps & RouteComponentWithParams) {
     const {
       currentDashboard,
@@ -353,17 +374,20 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     const { match, currentProject} = this.props
     const { projectId, portalId, dashboardId } = match.params
 
+    const getVizData = this.getVizDataForStatistic({
+      projectId,
+      portalId,
+      dashboardId: nextParams.dashboardId,
+      currentPortal,
+      currentProject,
+      currentDashboard
+    })
+    
     if (nextParams.dashboardId === dashboardId) {
       if (nextProps.currentDashboard !== this.props.currentDashboard) {
+       
         statistic.setOperations({
-          project_id: +projectId,
-          project_name: currentProject.name,
-          org_id: currentProject.orgId,
-          viz_type: 'dashboard',
-          viz_id: +portalId,
-          viz_name: currentPortal && currentPortal.name,
-          sub_viz_id: +nextParams.dashboardId,
-          sub_viz_name: currentDashboard && currentDashboard['name'],
+          ...getVizData,
           create_time:  statistic.getCurrentDateTime()
         }, (data) => {
           const visitRecord = {
@@ -387,6 +411,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       }
 
       statistic.setDurations({
+        ...getVizData,
         end_time: statistic.getCurrentDateTime()
       }, (data) => {
         statistic.sendDuration([data]).then((res) => {
@@ -408,11 +433,35 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         })
       }
     }
+
+    if (currentDashboard && currentDashboard.name) {
+      statistic.setDurations({
+        sub_viz_name: currentDashboard['name']
+      })
+    }
   }
   private statisticTimeFuc = () => {
     statistic.isTimeout()
   }
   public componentDidMount () {
+    const {
+      match, 
+      currentProject,
+      currentDashboard,
+      currentPortal,
+      match: { params }
+    } = this.props
+
+    const { projectId, portalId } = match.params
+    const getVizData = this.getVizDataForStatistic({
+      projectId,
+      portalId,
+      dashboardId: params.dashboardId,
+      currentPortal,
+      currentProject,
+      currentDashboard
+    })
+
     window.addEventListener('resize', this.onWindowResize, false)
     window.addEventListener('beforeunload', function (event) {
       statistic.setDurations({
@@ -427,6 +476,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       })
     }, false)
     statistic.setDurations({
+      ...getVizData,
       start_time: statistic.getCurrentDateTime()
     })
     statistic.startClock()
