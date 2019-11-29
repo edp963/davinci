@@ -187,6 +187,12 @@ export interface IDataRequestParams {
   }
   nativeQuery?: boolean
   customOrders?: IFieldSortDescriptor[]
+  drillStatus?: {
+    filter: {
+      sqls: []
+    }
+    groups: Array<string>
+  }
 }
 
 export interface IDataDownloadParams extends IDataRequestParams {
@@ -676,6 +682,9 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     let drillStatus
     let pagination
     let nativeQuery
+    const prevDrillHistory = cachedQueryConditions.drillHistory 
+                            ? cachedQueryConditions.drillHistory[cachedQueryConditions.drillHistory.length - 1] 
+                            : {}
 
     if (queryConditions) {
       tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
@@ -685,7 +694,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
-      drillStatus = queryConditions.drillStatus || void 0
+      drillStatus = queryConditions.drillStatus || prevDrillHistory
       pagination = queryConditions.pagination || cachedQueryConditions.pagination
       nativeQuery = queryConditions.nativeQuery !== void 0 ? queryConditions.nativeQuery : cachedQueryConditions.nativeQuery
     } else {
@@ -698,6 +707,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       globalVariables = cachedQueryConditions.globalVariables
       pagination = cachedQueryConditions.pagination
       nativeQuery = cachedQueryConditions.nativeQuery
+      drillStatus = prevDrillHistory
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -753,9 +763,9 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       return a.concat(b.config.sqlModel)
     }, [])
     const requestParams = {
-      groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
+      groups,
       aggregators,
-      filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : requestParamsFilters,
+      filters: requestParamsFilters,
       tempFilters,
       linkageFilters,
       globalFilters,
@@ -768,7 +778,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       flush: renderType === 'flush',
       pagination,
       nativeQuery,
-      customOrders
+      customOrders,
+      drillStatus
     }
 
     if (tempOrders) {
@@ -1487,14 +1498,16 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       })
   }
   private selectDrillHistory = (history, item, itemId, widgetId) => {
-    const { currentItemsInfo, onDeleteDrillHistory } = this.props
-    if (history) {
-      this.getChartData('rerender', itemId, widgetId, {
-        drillStatus: history
-      })
-    } else {
-      this.getChartData('rerender', itemId, widgetId)
-    }
+    const { onDeleteDrillHistory } = this.props
+    setTimeout(() => {
+      if (history) {
+        this.getChartData('rerender', itemId, widgetId, {
+          drillStatus: history
+        })
+      } else {
+        this.getChartData('rerender', itemId, widgetId)
+      }
+    }, 50)
     onDeleteDrillHistory(itemId, item)
   }
 
