@@ -93,9 +93,16 @@ export function* getResultset (action) {
     linkageVariables,
     globalVariables,
     pagination,
+    drillStatus,
+    groups,
     ...rest
   } = requestParams
   const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
+
+  let searchFilters = filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters)
+  if (drillStatus && drillStatus.filter) {
+    searchFilters = searchFilters.concat( drillStatus.filter.sqls)
+  }
 
   try {
     const resultset = yield call(request, {
@@ -103,7 +110,8 @@ export function* getResultset (action) {
       url: `${api.share}/data/${dataToken}`,
       data: {
         ...omit(rest, 'customOrders'),
-        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
+        groups:  drillStatus && drillStatus.groups ? drillStatus.groups : groups,
+        filters: searchFilters,
         params: variables.concat(linkageVariables).concat(globalVariables),
         pageSize,
         pageNo
