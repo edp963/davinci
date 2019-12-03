@@ -36,7 +36,6 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.stringtemplate.v4.ST;
 
@@ -59,15 +58,17 @@ public class SqlParseUtils {
 
     private static final String OR = "or";
 
-    @Autowired
+    private static final String QUERY_WHERE_TRUE = "1=1";
+    private static final String QUERY_WHERE_FALSE = "1=0";
+
     private DacChannelUtil dacChannelUtil;
 
     /**
      * 解析sql
      *
-     * @param sqlStr                view sql 模版
-     * @param variables             view 变量
-     * @param sqlTempDelimiter      ST 模板界定符
+     * @param sqlStr           view sql 模版
+     * @param variables        view 变量
+     * @param sqlTempDelimiter ST 模板界定符
      * @return
      */
     public SqlEntity parseSql(String sqlStr, List<SqlVariable> variables, String sqlTempDelimiter) throws ServerException {
@@ -157,10 +158,10 @@ public class SqlParseUtils {
     /**
      * 替换参数
      *
-     * @param sql               sql 模板
-     * @param queryParamMap     普通查询变量
-     * @param authParamMap      权限变量
-     * @param sqlTempDelimiter  ST 界定符
+     * @param sql              sql 模板
+     * @param queryParamMap    普通查询变量
+     * @param authParamMap     权限变量
+     * @param sqlTempDelimiter ST 界定符
      * @return
      */
     public String replaceParams(String sql, Map<String, Object> queryParamMap, Map<String, List<String>> authParamMap, String sqlTempDelimiter) {
@@ -201,11 +202,11 @@ public class SqlParseUtils {
 
         ST st = new ST(sql, delimiter, delimiter);
         if (!CollectionUtils.isEmpty(authParamMap) && !CollectionUtils.isEmpty(expSet)) {
-            authParamMap.forEach((k, v) ->{
+            authParamMap.forEach((k, v) -> {
                 List values = authParamMap.get(k);
-                if(CollectionUtils.isEmpty(values) || (values.size()==1 && values.get(0).toString().contains(Constants.NO_AUTH_PERMISSION))){
+                if (CollectionUtils.isEmpty(values) || (values.size() == 1 && values.get(0).toString().contains(Constants.NO_AUTH_PERMISSION))) {
                     st.add(k, false);
-                }else{
+                } else {
                     st.add(k, true);
                 }
             });
@@ -240,7 +241,7 @@ public class SqlParseUtils {
         if (split.length > 0) {
             list = new ArrayList<>();
             for (String sqlStr : split) {
-                sqlStr = sqlStr.trim();
+                sqlStr = rebuildSqlWithFragment(sqlStr.trim());
                 boolean select = sqlStr.toLowerCase().startsWith(SELECT) || sqlStr.toLowerCase().startsWith(WITH);
                 if (isQuery) {
                     if (select) {
@@ -256,6 +257,22 @@ public class SqlParseUtils {
         return list;
     }
 
+    private static String rebuildSqlWithFragment(String sql) {
+        if (!sql.toLowerCase().startsWith(WITH)) {
+            Matcher matcher = WITH_SQL_FRAGMENT.matcher(sql);
+            if (matcher.find()) {
+                String withFragment = matcher.group();
+                if (withFragment.length() > 6) {
+                    int lastSelectIndex = withFragment.length() - 6;
+                    sql = sql.replace(withFragment, withFragment.substring(lastSelectIndex));
+                    withFragment = withFragment.substring(0, lastSelectIndex);
+                }
+                sql = withFragment + SPACE + sql;
+                sql = sql.replaceAll(SPACE + "{2,}", SPACE);
+            }
+        }
+        return sql;
+    }
 
     private static Map<String, String> getParsedExpression(Set<String> expSet, Map<String, List<String>> authParamMap, char sqlTempDelimiter) {
         Iterator<String> iterator = expSet.iterator();
@@ -274,7 +291,7 @@ public class SqlParseUtils {
     private static String getAuthVarExpression(String srcExpression, Map<String, List<String>> authParamMap, char sqlTempDelimiter) throws Exception {
 
         if (null == authParamMap) {
-            return "1=1";
+            return QUERY_WHERE_TRUE;
         }
 
         String originExpression = "";
@@ -320,7 +337,7 @@ public class SqlParseUtils {
                         String v = list.get(0);
                         if (!StringUtils.isEmpty(v)) {
                             if (v.equals(NO_AUTH_PERMISSION)) {
-                                return "1=0";
+                                return QUERY_WHERE_FALSE;
                             } else {
                                 if (sqlOperator == SqlOperatorEnum.IN) {
                                     expBuilder
@@ -342,7 +359,7 @@ public class SqlParseUtils {
                             }
 
                         } else {
-                            return "1=1";
+                            return QUERY_WHERE_TRUE;
                         }
                     } else {
                         List<String> collect = list.stream().filter(s -> !s.contains(NO_AUTH_PERMISSION)).collect(Collectors.toList());
@@ -379,7 +396,7 @@ public class SqlParseUtils {
                     }
                     return expBuilder.toString();
                 } else {
-                    return "1=1";
+                    return QUERY_WHERE_TRUE;
                 }
             } else {
                 Set<String> keySet = authParamMap.keySet();
@@ -396,7 +413,7 @@ public class SqlParseUtils {
                     }
                     return String.join(EMPTY, left, SPACE, sqlOperator.getValue(), SPACE, v);
                 } else {
-                    return "1=0";
+                    return QUERY_WHERE_FALSE;
                 }
             }
         }
