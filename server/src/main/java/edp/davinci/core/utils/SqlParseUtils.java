@@ -36,6 +36,7 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.stringtemplate.v4.ST;
 
@@ -61,6 +62,7 @@ public class SqlParseUtils {
     private static final String QUERY_WHERE_TRUE = "1=1";
     private static final String QUERY_WHERE_FALSE = "1=0";
 
+    @Autowired
     private DacChannelUtil dacChannelUtil;
 
     /**
@@ -93,7 +95,7 @@ public class SqlParseUtils {
 
         // 解析参数
         if (!CollectionUtils.isEmpty(variables)) {
-            ExecutorService executorService = Executors.newFixedThreadPool(8);
+            ExecutorService executorService = Executors.newFixedThreadPool(4);
             try {
                 CountDownLatch countDownLatch = new CountDownLatch(variables.size());
                 List<Future> futures = new ArrayList<>(variables.size());
@@ -140,7 +142,6 @@ public class SqlParseUtils {
 
 
     public List<String> getAuthVarValue(SqlVariable variable, String email) {
-
         SqlVariableChannel channel = variable.getChannel();
         if (null == channel) {
             return SqlVariableValueTypeEnum.getValues(variable.getValueType(), variable.getDefaultValues(),
@@ -241,7 +242,6 @@ public class SqlParseUtils {
         if (split.length > 0) {
             list = new ArrayList<>();
             for (String sqlStr : split) {
-                sqlStr = rebuildSqlWithFragment(sqlStr.trim());
                 boolean select = sqlStr.toLowerCase().startsWith(SELECT) || sqlStr.toLowerCase().startsWith(WITH);
                 if (isQuery) {
                     if (select) {
@@ -257,18 +257,20 @@ public class SqlParseUtils {
         return list;
     }
 
-    private static String rebuildSqlWithFragment(String sql) {
+    public static String rebuildSqlWithFragment(String sql) {
         if (!sql.toLowerCase().startsWith(WITH)) {
             Matcher matcher = WITH_SQL_FRAGMENT.matcher(sql);
             if (matcher.find()) {
                 String withFragment = matcher.group();
-                if (withFragment.length() > 6) {
-                    int lastSelectIndex = withFragment.length() - 6;
-                    sql = sql.replace(withFragment, withFragment.substring(lastSelectIndex));
-                    withFragment = withFragment.substring(0, lastSelectIndex);
+                if (!StringUtils.isEmpty(withFragment)) {
+                    if (withFragment.length() > 6) {
+                        int lastSelectIndex = withFragment.length() - 6;
+                        sql = sql.replace(withFragment, withFragment.substring(lastSelectIndex));
+                        withFragment = withFragment.substring(0, lastSelectIndex);
+                    }
+                    sql = withFragment + SPACE + sql;
+                    sql = sql.replaceAll(SPACE + "{2,}", SPACE);
                 }
-                sql = withFragment + SPACE + sql;
-                sql = sql.replaceAll(SPACE + "{2,}", SPACE);
             }
         }
         return sql;
