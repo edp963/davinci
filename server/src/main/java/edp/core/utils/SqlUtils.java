@@ -29,6 +29,7 @@ import edp.core.exception.SourceException;
 import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
+import edp.davinci.core.utils.SqlParseUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
@@ -296,14 +297,15 @@ public class SqlUtils {
     }
 
     public static String getCountSql(String sql) {
+        String countSql = String.format(Consts.QUERY_COUNT_SQL, sql);
         try {
             Select select = (Select) CCJSqlParserUtil.parse(sql);
             PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
             plainSelect.setOrderByElements(null);
-            return String.format(QUERY_COUNT_SQL, select.toString());
+            countSql = String.format(QUERY_COUNT_SQL, select.toString());
         } catch (JSQLParserException e) {
         }
-        return String.format(Consts.QUERY_COUNT_SQL, sql);
+        return SqlParseUtils.rebuildSqlWithFragment(countSql);
     }
 
 
@@ -328,6 +330,7 @@ public class SqlUtils {
                 columnPrefixExtractor(columnPrefixs, plainSelect);
             }
         } catch (JSQLParserException e) {
+            log.warn("Get table name or alias Error: {}", e.getCause().getMessage());
         }
         return columnPrefixs;
     }
