@@ -14,17 +14,18 @@ public class KafkaOperationService extends KafkaConfigration {
 
         }catch (Exception e){
             log.error("Send msg to kafka error . topic = {}, msg = {} ", topic, msg, e);
-            super.initialize();
+            super.initProducer();
 
             //重试
             for(int i=1; i<=2; i++){
                 log.info("Send msg to kafka retry {} time . topic = {}, msg = {} ", i, topic, msg);
                 try {
                     doSend(topic, msg);
+                    break;
                 }catch (Exception ex){
-                    log.error("Send msg to kafka retry {} time . topic = {}, msg = {} ", topic, msg, e);
+                    log.error("Send msg to kafka retry {} time . topic = {}, msg = {} ", i, topic, msg, ex);
                 }finally {
-                    super.initialize();
+                    super.initProducer();
                 }
             }
         }
