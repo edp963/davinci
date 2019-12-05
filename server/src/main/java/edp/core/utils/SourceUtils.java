@@ -247,14 +247,19 @@ public class SourceUtils {
     }
 
     public static String getKey(String jdbcUrl, String username, String password, String version, boolean isExt) {
+
         StringBuilder sb = new StringBuilder();
+        
         if (!StringUtils.isEmpty(username)) {
             sb.append(username);
         }
+        
         if (!StringUtils.isEmpty(password)) {
             sb.append(Consts.COLON).append(password);
         }
+        
         sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
+        
         if (isExt && !StringUtils.isEmpty(version)) {
             sb.append(Consts.COLON).append(version);
         }

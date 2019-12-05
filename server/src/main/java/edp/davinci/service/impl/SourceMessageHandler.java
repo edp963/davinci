@@ -19,21 +19,20 @@
 
 package edp.davinci.service.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import edp.core.common.jdbc.JdbcDataSource;
 import edp.core.model.JdbcSourceInfo;
-import edp.core.utils.RedisUtils;
 import edp.core.utils.SourceUtils;
 import edp.davinci.core.service.RedisMessageHandler;
 import edp.davinci.dao.SourceMapper;
 import edp.davinci.model.Source;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 public class SourceMessageHandler implements RedisMessageHandler {
-
 
     @Autowired
     private SourceMapper sourceMapper;
@@ -41,39 +40,33 @@ public class SourceMessageHandler implements RedisMessageHandler {
     @Autowired
     private JdbcDataSource jdbcDataSource;
 
-    @Autowired
-    private RedisUtils redisUtils;
-
     @Override
     public void handle(Object message, String flag) {
+
         log.info("SourceHandler received release source message (:{}), and Flag is (:{})", message, flag);
-        try {
-            if (message instanceof Long) {
-                Long id = (Long) message;
-                if (id > 0L) {
-                    Source source = sourceMapper.getById(id);
-                    if (null == source) {
-                        log.info("source (:{}) is not found", id);
-                    }
-
-                    SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
-                    JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo
-                            .JdbcSourceInfoBuilder
-                            .aJdbcSourceInfo()
-                            .withJdbcUrl(source.getJdbcUrl())
-                            .withUsername(source.getUsername())
-                            .withPassword(source.getPassword())
-                            .withDatabase(source.getDatabase())
-                            .withDbVersion(source.getDbVersion())
-                            .withProperties(source.getProperties())
-                            .withExt(source.isExt())
-                            .build();
-
-                    sourceUtils.releaseDataSource(jdbcSourceInfo);
-                }
-            }
-        } finally {
-            redisUtils.set(flag, true);
+        
+        if (!(message instanceof Long)) {
+            return;
         }
+        
+        Long id = (Long) message;
+        if (id <= 0L) {
+           return;
+        }
+        
+        Source source = sourceMapper.getById(id);
+        if (null == source) {
+            log.info("source (:{}) is not found", id);
+            return;
+        }
+
+        SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
+        JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo.JdbcSourceInfoBuilder.aJdbcSourceInfo()
+                .withJdbcUrl(source.getJdbcUrl()).withUsername(source.getUsername())
+                .withPassword(source.getPassword()).withDatabase(source.getDatabase())
+                .withDbVersion(source.getDbVersion()).withProperties(source.getProperties())
+                .withExt(source.isExt()).build();
+
+        sourceUtils.releaseDataSource(jdbcSourceInfo);
     }
 }
