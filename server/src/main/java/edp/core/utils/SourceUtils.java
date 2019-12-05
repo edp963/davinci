@@ -120,7 +120,6 @@ public class SourceUtils {
         }
     }
 
-
     public static void closeResult(ResultSet rs) {
         if (rs != null) {
             try {
@@ -198,28 +197,38 @@ public class SourceUtils {
     }
 
     public static String getDriverClassName(String jdbcUrl, String version) {
+        
         String className = null;
+        
         try {
             className = DriverManager.getDriver(jdbcUrl.trim()).getClass().getName();
         } catch (SQLException e) {
-        }
-        if (StringUtils.isEmpty(className)) {
-            DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-            CustomDataSource customDataSource = null;
-            if (null == dataTypeEnum) {
-                try {
-                    customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
-                } catch (Exception e) {
-                    throw new SourceException(e.getMessage());
-                }
-            }
 
-            if (null == dataTypeEnum && null == customDataSource) {
-                throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
-            }
-            className = null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver()) ? dataTypeEnum.getDriver() : customDataSource.getDriver().trim();
         }
-        return className;
+        
+        if (!StringUtils.isEmpty(className) && !className.contains("com.sun.proxy")
+                && !className.contains("net.sf.cglib.proxy")) {
+            return className;
+        }
+        
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+        CustomDataSource customDataSource = null;
+        if (null == dataTypeEnum) {
+            try {
+                customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
+            }
+            catch (Exception e) {
+                throw new SourceException(e.getMessage());
+            }
+        }
+
+        if (null == dataTypeEnum && null == customDataSource) {
+            throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
+        }
+
+        return className = null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver())
+                ? dataTypeEnum.getDriver()
+                : customDataSource.getDriver().trim();
     }
 
 
