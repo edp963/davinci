@@ -34,9 +34,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
@@ -95,92 +98,137 @@ public class JdbcDataSource {
     @Getter
     private int queryTimeout;
 
-    private static volatile Map<String, DruidDataSource> dataSourceMap = new HashMap<>();
+    private static volatile Map<String, DruidDataSource> dataSourceMap = new ConcurrentHashMap<>();
+    private static volatile Map<String, Lock> dataSourceLockMap = new ConcurrentHashMap<>();
 
-    public synchronized void removeDatasource(JdbcSourceInfo jdbcSourceInfo) {
-        String key = SourceUtils.getKey(jdbcSourceInfo.getJdbcUrl(),
-                jdbcSourceInfo.getUsername(),
-                jdbcSourceInfo.getPassword(),
-                jdbcSourceInfo.getDbVersion(),
-                jdbcSourceInfo.isExt());
+    private synchronized Lock getDataSourceLock(String key) {
+        if (dataSourceLockMap.containsKey(key)) {
+            return dataSourceLockMap.get(key);
+        }
+        
+        Lock lock = new ReentrantLock();
+        dataSourceLockMap.put(key, lock);
+        return lock;
+    }
+    
+    public void removeDatasource(JdbcSourceInfo jdbcSourceInfo) {
+        
+        String key = getDataSourceKey(jdbcSourceInfo);
 
-        if (dataSourceMap.containsKey(key)) {
-            DruidDataSource druidDataSource = dataSourceMap.get(key);
-            druidDataSource.close();
-            dataSourceMap.remove(key);
+        Lock lock = getDataSourceLock(key);
+        
+        if (!lock.tryLock()) {
+            return;
+        }
+    
+        try {
+            DruidDataSource druidDataSource = dataSourceMap.remove(key);
+            if (druidDataSource != null) {
+                druidDataSource.close();
+            }
+            
+            dataSourceLockMap.remove(key);
+        }finally {
+            lock.unlock();
         }
     }
 
-    public synchronized DruidDataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
+    public DruidDataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
+
+        
         String jdbcUrl = jdbcSourceInfo.getJdbcUrl();
         String username = jdbcSourceInfo.getUsername();
         String password = jdbcSourceInfo.getPassword();
         String dbVersion = jdbcSourceInfo.getDbVersion();
         boolean ext = jdbcSourceInfo.isExt();
+        
+        String key = getDataSourceKey(jdbcSourceInfo);
 
-        String key = SourceUtils.getKey(jdbcUrl, username, password, dbVersion, ext);
-
-        if (dataSourceMap.containsKey(key) && dataSourceMap.get(key) != null) {
-            DruidDataSource druidDataSource = dataSourceMap.get(key);
-            if (!druidDataSource.isClosed()) {
+        DruidDataSource druidDataSource = dataSourceMap.get(key);
+        if (druidDataSource != null && !druidDataSource.isClosed()) {
                 return druidDataSource;
-            } else {
-                dataSourceMap.remove(key);
-            }
         }
-
-        DruidDataSource instance = new DruidDataSource();
-
-        if (StringUtils.isEmpty(dbVersion) ||
-                !ext || JDBC_DATASOURCE_DEFAULT_VERSION.equals(dbVersion)) {
-
-            String className = SourceUtils.getDriverClassName(jdbcUrl, null);
-            try {
-                Class.forName(className);
-            } catch (ClassNotFoundException e) {
+        
+        Lock lock = getDataSourceLock(key);
+        
+        try {
+            if (!lock.tryLock(5L, TimeUnit.SECONDS)) {
                 throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
             }
-
-            instance.setDriverClassName(className);
-
-        } else {
-            String path = ((ServerUtils) SpringContextHolder.getBean(ServerUtils.class)).getBasePath()
-                    + String.format(Consts.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), dbVersion);
-            instance.setDriverClassLoader(ExtendedJdbcClassLoader.getExtJdbcClassLoader(path));
         }
-
-        instance.setUrl(jdbcUrl);
-        instance.setUsername(username);
-
-        if (!jdbcUrl.toLowerCase().contains(DataTypeEnum.PRESTO.getFeature())) {
-            instance.setPassword(password);
+        catch (InterruptedException e) {
+            throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
         }
-
-        instance.setInitialSize(initialSize);
-        instance.setMinIdle(minIdle);
-        instance.setMaxActive(maxActive);
-        instance.setMaxWait(maxWait);
-        instance.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
-        instance.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
-        instance.setTestWhileIdle(false);
-        instance.setTestOnBorrow(testOnBorrow);
-        instance.setTestOnReturn(testOnReturn);
-        instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
-        instance.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
-
-        if (!CollectionUtils.isEmpty(jdbcSourceInfo.getProperties())) {
-            Properties properties = new Properties();
-            jdbcSourceInfo.getProperties().forEach(dict -> properties.setProperty(dict.getKey(), dict.getValue()));
-            instance.setConnectProperties(properties);
-        }
-
+        
+        druidDataSource = new DruidDataSource();
+        
         try {
-            instance.init();
-        } catch (Exception e) {
-            log.error("Exception during pool initialization", e);
-            throw new SourceException(e.getMessage());
+
+            if (StringUtils.isEmpty(dbVersion) ||
+                    !ext || JDBC_DATASOURCE_DEFAULT_VERSION.equals(dbVersion)) {
+
+                String className = SourceUtils.getDriverClassName(jdbcUrl, null);
+                try {
+                    Class.forName(className);
+                } catch (ClassNotFoundException e) {
+                    throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
+                }
+
+                druidDataSource.setDriverClassName(className);
+
+            } else {
+                String path = ((ServerUtils) SpringContextHolder.getBean(ServerUtils.class)).getBasePath()
+                        + String.format(Consts.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), dbVersion);
+                druidDataSource.setDriverClassLoader(ExtendedJdbcClassLoader.getExtJdbcClassLoader(path));
+            }
+
+            druidDataSource.setUrl(jdbcUrl);
+            druidDataSource.setUsername(username);
+
+            if (!jdbcUrl.toLowerCase().contains(DataTypeEnum.PRESTO.getFeature())) {
+                druidDataSource.setPassword(password);
+            }
+
+            druidDataSource.setInitialSize(initialSize);
+            druidDataSource.setMinIdle(minIdle);
+            druidDataSource.setMaxActive(maxActive);
+            druidDataSource.setMaxWait(maxWait);
+            druidDataSource.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
+            druidDataSource.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
+            druidDataSource.setTestWhileIdle(false);
+            druidDataSource.setTestOnBorrow(testOnBorrow);
+            druidDataSource.setTestOnReturn(testOnReturn);
+            druidDataSource.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
+            druidDataSource.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
+
+            if (!CollectionUtils.isEmpty(jdbcSourceInfo.getProperties())) {
+                Properties properties = new Properties();
+                jdbcSourceInfo.getProperties().forEach(dict -> properties.setProperty(dict.getKey(), dict.getValue()));
+                druidDataSource.setConnectProperties(properties);
+            }
+
+            try {
+                druidDataSource.init();
+            } catch (Exception e) {
+                log.error("Exception during pool initialization", e);
+                throw new SourceException(e.getMessage());
+            }
+
+            dataSourceMap.put(key, druidDataSource);
+
+        }finally {
+            lock.unlock();
         }
-        dataSourceMap.put(key, instance);
-        return instance;
+        
+        return druidDataSource;
     }
+    
+    private static String getDataSourceKey (JdbcSourceInfo jdbcSourceInfo) {
+        return SourceUtils.getKey(jdbcSourceInfo.getJdbcUrl(),
+                jdbcSourceInfo.getUsername(),
+                jdbcSourceInfo.getPassword(),
+                jdbcSourceInfo.getDbVersion(),
+                jdbcSourceInfo.isExt());
+    }
+    
 }
