@@ -38,7 +38,7 @@ import { IWidgetConfig, RenderType } from 'containers/Widget/components/Widget'
 import { decodeMetricName } from 'containers/Widget/components/util'
 import { IQueryConditions, IDataRequestParams } from 'containers/Dashboard/Grid'
 import { IFormedViews } from 'containers/View/types'
-import { statistic } from 'utils/statistic/statistic.dv'
+import { statistic, IVizData } from 'utils/statistic/statistic.dv'
 import { IProject } from 'containers/Projects/types'
 interface IPreviewProps {
   widgets: any[]
@@ -132,6 +132,22 @@ export class Preview extends React.Component<IPreviewProps & RouteComponentWithP
     statistic.isTimeout()
   }
 
+  private getVizDataForStatistic ({
+    displayId,
+    projectId,
+    currentProject,
+    currentDisplay
+  }): Partial<IVizData> {
+    return {
+      org_id: currentProject && currentProject.orgId,
+      project_name: currentProject && currentProject.name,
+      project_id: projectId,
+      viz_type: 'display',
+      viz_id: displayId,
+      viz_name: currentDisplay && currentDisplay['name'],
+    }
+  }
+
   public componentWillReceiveProps (nextProps: IPreviewProps) {
     const { currentSlide } = nextProps
     const { scale } = this.state
@@ -140,13 +156,14 @@ export class Preview extends React.Component<IPreviewProps & RouteComponentWithP
     const projectId = match.params.projectId
     const displayId = match.params.displayId
     if (this.props.currentSlide) {
+      const vizData = this.getVizDataForStatistic({
+        displayId,
+        projectId,
+        currentProject,
+        currentDisplay
+      })
       this.statisticFirstVisit({
-        org_id: currentProject.orgId,
-        project_name: currentProject.name,
-        project_id: projectId,
-        viz_type: 'display',
-        viz_id: displayId,
-        viz_name: currentDisplay['name'],
+        ...vizData,
         create_time:  statistic.getCurrentDateTime()
       }, (data) => {
         const visitRecord = {
@@ -154,6 +171,10 @@ export class Preview extends React.Component<IPreviewProps & RouteComponentWithP
           action: 'visit'
         }
         statistic.sendOperation(visitRecord)
+      })
+
+      statistic.setDurations({
+        ...vizData
       })
     }
 

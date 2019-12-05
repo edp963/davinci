@@ -437,6 +437,7 @@ public class ViewServiceImpl implements ViewService {
                     }
                     if (!CollectionUtils.isEmpty(querySqlList)) {
                         for (String sql : querySqlList) {
+                            sql = SqlParseUtils.rebuildSqlWithFragment(sql);
                             paginateWithQueryColumns = sqlUtils.syncQuery4Paginate(sql, null, null, null, executeSql.getLimit(), null);
                         }
                     }
@@ -618,7 +619,7 @@ public class ViewServiceImpl implements ViewService {
 
                     for (String sql : querySqlList) {
                         paginate = sqlUtils.syncQuery4Paginate(
-                                sql,
+                                SqlParseUtils.rebuildSqlWithFragment(sql),
                                 executeParam.getPageNo(),
                                 executeParam.getPageSize(),
                                 executeParam.getTotalCount(),
@@ -717,7 +718,7 @@ public class ViewServiceImpl implements ViewService {
                 }
                 List<Map<String, Object>> list = null;
                 for (String sql : querySqlList) {
-                    list = sqlUtils.query4List(sql, -1);
+                    list = sqlUtils.query4List(SqlParseUtils.rebuildSqlWithFragment(sql), -1);
                 }
 
                 if (null != param.getCache() && param.getCache() && param.getExpired().longValue() > 0L) {

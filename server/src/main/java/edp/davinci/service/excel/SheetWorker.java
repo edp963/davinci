@@ -25,6 +25,7 @@ import edp.core.model.QueryColumn;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.enums.ActionEnum;
+import edp.davinci.core.utils.SqlParseUtils;
 import edp.davinci.dto.cronJobDto.MsgMailExcel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -67,6 +68,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             template.setFetchSize(500);
 
             String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
+            sql = SqlParseUtils.rebuildSqlWithFragment(sql);
             Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
             if (context.getCustomLogger() != null) {
                 context.getCustomLogger().info("Task ({}) -- {} start query", context.getTaskKey(), context.getName());
@@ -138,6 +140,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         template.setMaxRows(1);
         String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
         sql = String.format(QUERY_META_SQL, sql);
+        sql = SqlParseUtils.rebuildSqlWithFragment(sql);
         Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
         template.query(sql, rs -> {
             ResultSetMetaData metaData = rs.getMetaData();
