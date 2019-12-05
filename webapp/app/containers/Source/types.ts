@@ -19,6 +19,8 @@
  */
 
 import { SqlTypes } from 'app/globalConstants'
+import { SourceProperty } from './components/types'
+export { SourceResetConnectionProperties } from './components/types'
 
 export type SourceType = 'csv' | 'jdbc'
 
@@ -42,7 +44,19 @@ export interface ISource extends ISourceBase {
     username: string
     password: string
     url: string
-    parameters: string
+    properties: SourceProperty[]
+    ext?: boolean
+    version?: string
+  }
+}
+
+export interface ISourceFormValues extends ISourceBase {
+  datasourceInfo: string[]
+  config: {
+    username: string
+    password: string
+    url: string
+    properties: SourceProperty[]
   }
 }
 
@@ -108,5 +122,12 @@ export interface ISourceState {
   listLoading: boolean
   formLoading: boolean
   testLoading: boolean
+  resetLoading: boolean
+  datasourcesInfo: IDatasourceInfo[]
 }
 
+export interface IDatasourceInfo {
+  name: string
+  prefix: string
+  versions: string[]
+}

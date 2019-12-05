@@ -35,7 +35,9 @@
             <if test="subType != null">
                 `sub_type`,
             </if>
-            `index`
+            `index`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{displaySlideId,jdbcType=BIGINT},
@@ -46,13 +48,15 @@
             <if test="subType != null">
                 #{subType,jdbcType=SMALLINT},
             </if>
-            #{index,jdbcType=INTEGER}
+            #{index,jdbcType=INTEGER},
+            #{createBy,jdbcType=BIGINT},
+            #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert into mem_display_slide_widget
-        (`id`,`display_slide_id`, `widget_id`, `name`, `type`, `params`,`sub_type`, `index`)
+        (`id`,`display_slide_id`, `widget_id`, `name`, `type`, `params`,`sub_type`, `index`,`create_by`,`create_time`)
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (
@@ -70,11 +74,12 @@
             #{record.type,jdbcType=SMALLINT},
             #{record.params,jdbcType=LONGVARCHAR},
             #{record.subType,jdbcType=SMALLINT},
-            #{record.index,jdbcType=INTEGER}
+            #{record.index,jdbcType=INTEGER},
+            #{record.createBy,jdbcType=BIGINT},
+            #{record.createTime,jdbcType=TIMESTAMP}
             )
         </foreach>
     </insert>
-
 
     <update id="updateBatch" parameterType="java.util.List">
         <foreach collection="list" item="record" index="index" open="" close="" separator=";">

@@ -1,5 +1,6 @@
 
 import OperatorTypes from 'utils/operatorTypes'
+import { DatePickerDefaultValues } from './datePickerFormats'
 
 export enum FilterTypes {
   Select = 'select',
@@ -59,6 +60,29 @@ export const FilterTypesOperatorSetting = {
   [FilterTypes.InputText]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
   [FilterTypes.NumberRange]: []
   // [FilterTypes.TreeSelect]: [OperatorTypes.In, OperatorTypes.NotIn]
+}
+
+export const FilterTypesDynamicDefaultValueSetting = {
+  [FilterTypes.Date]: {
+    normal: [
+      DatePickerDefaultValues.Today,
+      DatePickerDefaultValues.Yesterday,
+      DatePickerDefaultValues.Week,
+      DatePickerDefaultValues.Day7,
+      DatePickerDefaultValues.LastWeek,
+      DatePickerDefaultValues.Month,
+      DatePickerDefaultValues.Day30,
+      DatePickerDefaultValues.LastMonth,
+      DatePickerDefaultValues.Quarter,
+      DatePickerDefaultValues.Day90,
+      DatePickerDefaultValues.LastQuarter,
+      DatePickerDefaultValues.Year,
+      DatePickerDefaultValues.Day365,
+      DatePickerDefaultValues.LastYear,
+      DatePickerDefaultValues.Custom
+    ],
+    multiple: [DatePickerDefaultValues.Custom]
+  }
 }
 
 export const CascadeFilterTypes = [

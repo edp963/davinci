@@ -28,8 +28,8 @@ import { Reducer, ReducersMapObject } from 'redux'
 import { combineReducers } from 'redux-immutable'
 import { LOCATION_CHANGE } from 'react-router-redux'
 
-import languageProviderReducer from './containers/LanguageProvider/reducer'
-import reportReducer from './containers/Report/reducer'
+import languageProviderReducer from 'containers/LanguageProvider/reducer'
+import reportReducer from 'containers/Report/reducer'
 
 /*
  * routeReducer

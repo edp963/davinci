@@ -25,7 +25,9 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.CollectionUtils;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.dao.*;
+import edp.davinci.core.enums.VizEnum;
+import edp.davinci.dao.MemDashboardWidgetMapper;
+import edp.davinci.dao.RelRoleDashboardWidgetMapper;
 import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
 import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
 import edp.davinci.dto.projectDto.ProjectDetail;
@@ -51,32 +53,17 @@ import java.util.stream.Collectors;
 
 @Service("dashboardPortalService")
 @Slf4j
-public class DashboardPortalServiceImpl implements DashboardPortalService {
+public class DashboardPortalServiceImpl extends VizCommonService implements DashboardPortalService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
-    private DashboardPortalMapper dashboardPortalMapper;
-
-    @Autowired
-    private DashboardMapper dashboardMapper;
-
-    @Autowired
     private ProjectService projectService;
-
-    @Autowired
-    private RoleMapper roleMapper;
-
-    @Autowired
-    private RelRolePortalMapper relRolePortalMapper;
 
     @Autowired
     private RelRoleDashboardWidgetMapper relRoleDashboardWidgetMapper;
 
     @Autowired
     private MemDashboardWidgetMapper memDashboardWidgetMapper;
-
-    @Autowired
-    private RelRoleDashboardMapper relRoleDashboardMapper;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -113,20 +100,26 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
 
         List<DashboardPortal> dashboardPortals = dashboardPortalMapper.getByProject(projectId);
 
+        if (!CollectionUtils.isEmpty(dashboardPortals)) {
 
-        List<Long> disbalePortals = relRolePortalMapper.getDisablePortalByUser(user.getId(), projectId);
+            List<Long> allPortals = dashboardPortals.stream().map(DashboardPortal::getId).collect(Collectors.toList());
 
-        if (CollectionUtils.isEmpty(disbalePortals)) {
-            return dashboardPortals;
-        }
+            List<Long> disbalePortals = getDisableVizs(user.getId(), projectId, allPortals, VizEnum.PORTAL);
 
-        Iterator<DashboardPortal> iterator = dashboardPortals.iterator();
-        while (iterator.hasNext()) {
-            DashboardPortal portal = iterator.next();
-            if (!projectPermission.isProjectMaintainer() && (disbalePortals.contains(portal.getId()) || !portal.getPublish())) {
-                iterator.remove();
+            Iterator<DashboardPortal> iterator = dashboardPortals.iterator();
+            while (iterator.hasNext()) {
+                DashboardPortal portal = iterator.next();
+
+                boolean disable = !projectPermission.isProjectMaintainer() && disbalePortals.contains(portal.getId());
+                boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !portal.getPublish();
+
+                if (disable || noPublish) {
+                    iterator.remove();
+                }
             }
+
         }
+
 
         return dashboardPortals;
     }
@@ -205,8 +198,7 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardPortal.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
-        List<Long> disbalePortals = relRolePortalMapper.getDisablePortalByUser(user.getId(), dashboardPortal.getProjectId());
-
+        List<Long> disbalePortals = getDisableVizs(user.getId(), projectDetail.getId(), null, VizEnum.PORTAL);
 
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() ||
@@ -298,8 +290,7 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardPortal.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
-        List<Long> disbalePortals = relRolePortalMapper.getDisablePortalByUser(user.getId(), dashboardPortal.getProjectId());
-
+        List<Long> disbalePortals = getDisableVizs(user.getId(), dashboardPortal.getProjectId(), null, VizEnum.PORTAL);
 
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission() ||

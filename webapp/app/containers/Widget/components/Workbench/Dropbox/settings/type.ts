@@ -13,11 +13,23 @@ export enum ItemTypes {
   Value = 1 << 1
 }
 
+export enum ItemValueTypes {
+  Number = 1 << 0,
+  String = 1 << 1,
+  Date = 1 << 2,
+  GeoCountry = 1 << 3,
+  GeoProvince = 1 << 4,
+  GeoCity = 1 << 5
+}
+
 export interface ISettingItem {
   key: string
   name: string
-  settingType: SettingTypes
-  itemType: ItemTypes
+  constrants: Array<{
+    settingType: SettingTypes
+    itemType: ItemTypes
+    itemValueType: ItemValueTypes
+  }>
   sub: boolean
   items: Array<{
     [key: string]: string

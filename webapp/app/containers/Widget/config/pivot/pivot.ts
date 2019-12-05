@@ -4,9 +4,9 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const pivot: IChartInfo = {
   id: PivotTypes.PivotTable,
@@ -14,8 +14,7 @@ const pivot: IChartInfo = {
   title: '透视表',
   icon: 'icon-table',
   coordinate: 'cartesian',
-  requireDimetions: [0, 9999],
-  requireMetrics: [0, 9999],
+  rules: [{ dimension: [0, 9999], metric: [0, 9999] }],
   data: {
     cols: {
       title: '列',

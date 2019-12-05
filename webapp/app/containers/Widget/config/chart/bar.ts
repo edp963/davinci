@@ -4,9 +4,10 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
+import { EmptyStack } from 'app/containers/Widget/components/Config/Stack/constants'
 
 const bar: IChartInfo = {
   id: ChartTypes.Bar,
@@ -14,8 +15,7 @@ const bar: IChartInfo = {
   title: '柱状图',
   icon: 'icon-chart-bar',
   coordinate: 'cartesian',
-  requireDimetions: [0, 1],
-  requireMetrics: [1, 9999],
+  rules: [{ dimension: [0, 1], metric: [1, 9999] }],
   dimetionAxis: 'col',
   data: {
     cols: {
@@ -44,12 +44,9 @@ const bar: IChartInfo = {
     }
   },
   style: {
-    spec: {
-      stack: false,
-      barChart: false,
-      percentage: false
-    },
+    spec: {},
     bar: {
+      barChart: false,
       border: {
         color: '#000',
         width: 0,
@@ -57,7 +54,8 @@ const bar: IChartInfo = {
         radius: 0
       },
       gap: 30,
-      width: null
+      width: null,
+      stack: EmptyStack
     },
     label: {
       showLabel: false,

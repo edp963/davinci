@@ -21,8 +21,9 @@
 import React from 'react'
 import DownloadList from '../DownloadList'
 import { Icon, Button } from 'antd'
+import { IDownloadRecord } from 'app/containers/App/types'
 const styles = require('./EditorHeader.less')
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IEditorHeaderProps {
   currentType: string
@@ -33,12 +34,15 @@ interface IEditorHeaderProps {
     description: string
   }
   className: string
+  loading?: boolean
+  downloadList?: IDownloadRecord[]
   onNameChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   onDescriptionChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   onSave?: () => void
   onCancel: () => void
   onSetting?: () => void
-  loading?: boolean
+  onLoadDownloadList?: () => void
+  onDownloadFile?: (id) => void
 }
 
 export function EditorHeader (props: IEditorHeaderProps) {
@@ -47,12 +51,15 @@ export function EditorHeader (props: IEditorHeaderProps) {
     name,
     description,
     className,
+    loading,
+    downloadList,
     onNameChange,
     onDescriptionChange,
     onSave,
     onCancel,
     onSetting,
-    loading
+    onLoadDownloadList,
+    onDownloadFile
   } = props
 
   const placeholder = props.placeholder || {
@@ -90,7 +97,11 @@ export function EditorHeader (props: IEditorHeaderProps) {
           ? (
             <ul className={styles.tools}>
               <li>
-                <DownloadList />
+                <DownloadList
+                  downloadList={downloadList}
+                  onLoadDownloadList={onLoadDownloadList}
+                  onDownloadFile={onDownloadFile}
+                />
               </li>
             </ul>
           )

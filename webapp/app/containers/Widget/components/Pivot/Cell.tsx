@@ -2,7 +2,7 @@ import * as React from 'react'
 import { IWidgetMetric, IChartStyles } from '../Widget'
 import { ILegend } from './Pivot'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
-import { DEFAULT_SPLITER } from '../../../../globalConstants'
+import { DEFAULT_SPLITER } from 'app/globalConstants'
 import { decodeMetricName } from 'containers/Widget/components/util'
 
 const styles = require('./Pivot.less')

@@ -46,9 +46,9 @@ import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.model.*;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.ShareService;
+import edp.davinci.service.UserService;
 import edp.davinci.service.ViewService;
 import lombok.extern.slf4j.Slf4j;
-import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -102,6 +102,9 @@ public class ShareServiceImpl implements ShareService {
     @Autowired
     private ServerUtils serverUtils;
 
+    @Autowired
+    private UserService userService;
+
     @Override
     public User shareLogin(String token, UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption {
         //AES解密
@@ -117,14 +120,9 @@ public class ShareServiceImpl implements ShareService {
             throw new ServerException("Invalid share token");
         }
 
-        User loginUser = userMapper.selectByUsername(userLogin.getUsername());
+        User loginUser = userService.userLogin(userLogin);
         if (null == loginUser) {
             throw new NotFoundException("user is not found");
-        }
-
-        //校验密码
-        if (!BCrypt.checkpw(userLogin.getPassword(), loginUser.getPassword())) {
-            throw new ServerException("password is wrong");
         }
 
         Long shareUserId = Long.parseLong(tokenInfos[1]);
@@ -171,15 +169,8 @@ public class ShareServiceImpl implements ShareService {
     public ShareWidget getShareWidget(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
 
         ShareInfo shareInfo = getShareInfo(token, user);
-        if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-            throw new ServerException("Invalid share token");
-        }
+        verifyShareUser(user, shareInfo);
 
-        if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-            if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                throw new ForbiddenExecption("ERROR Permission denied");
-            }
-        }
 
         ShareWidget shareWidget = widgetMapper.getShareWidgetById(shareInfo.getShareId());
 
@@ -187,7 +178,7 @@ public class ShareServiceImpl implements ShareService {
             throw new NotFoundException("widget not found");
         }
 
-        String dateToken = generateShareToken(shareWidget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
+        String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
         shareWidget.setDataToken(dateToken);
         return shareWidget;
     }
@@ -203,19 +194,10 @@ public class ShareServiceImpl implements ShareService {
     @Override
     public ShareDisplay getShareDisplay(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
         ShareInfo shareInfo = getShareInfo(token, user);
-        if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-            throw new ServerException("Invalid share token");
-        }
+        verifyShareUser(user, shareInfo);
 
         Long displayId = shareInfo.getShareId();
         Display display = displayMapper.getById(displayId);
-
-        if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-            if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                throw new ForbiddenExecption("ERROR Permission denied");
-            }
-        }
-
         if (null == display) {
             throw new ServerException("display is not found");
         }
@@ -264,7 +246,7 @@ public class ShareServiceImpl implements ShareService {
             Iterator<ShareWidget> widgetIterator = shareWidgets.iterator();
             while (widgetIterator.hasNext()) {
                 ShareWidget shareWidget = widgetIterator.next();
-                String dateToken = generateShareToken(shareWidget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
+                String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
                 shareWidget.setDataToken(dateToken);
             }
             shareDisplay.setWidgets(shareWidgets);
@@ -283,15 +265,8 @@ public class ShareServiceImpl implements ShareService {
     @Override
     public ShareDashboard getShareDashboard(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
         ShareInfo shareInfo = getShareInfo(token, user);
-        if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-            throw new ServerException("Invalid share token");
-        }
 
-        if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-            if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                throw new ForbiddenExecption("ERROR Permission denied");
-            }
-        }
+        verifyShareUser(user, shareInfo);
 
         Long dashboardId = shareInfo.getShareId();
         Dashboard dashboard = dashboardMapper.getById(dashboardId);
@@ -311,12 +286,25 @@ public class ShareServiceImpl implements ShareService {
             Iterator<ShareWidget> iterator = shareWidgets.iterator();
             while (iterator.hasNext()) {
                 ShareWidget shareWidget = iterator.next();
-                String dateToken = generateShareToken(shareWidget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
+                String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
                 shareWidget.setDataToken(dateToken);
             }
         }
         shareDashboard.setWidgets(shareWidgets);
         return shareDashboard;
+    }
+
+    private void verifyShareUser(User user, ShareInfo shareInfo) {
+        if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
+            throw new ServerException("Invalid share token");
+        }
+
+        if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
+            User tokenUser = userMapper.selectByUsername(shareInfo.getSharedUserName());
+            if (tokenUser == null || !tokenUser.getId().equals(user.getId())) {
+                throw new ForbiddenExecption("ERROR Permission denied");
+            }
+        }
     }
 
     /**
@@ -331,17 +319,9 @@ public class ShareServiceImpl implements ShareService {
     public Paginate<Map<String, Object>> getShareData(String token, ViewExecuteParam executeParam, User user)
             throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException {
         ShareInfo shareInfo = getShareInfo(token, user);
-        if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-            throw new ServerException("Invalid share token");
-        }
+        verifyShareUser(user, shareInfo);
 
-        if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-            if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                throw new ForbiddenExecption("ERROR Permission denied");
-            }
-        }
-
-        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(shareInfo.getShareId());
+        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceByWidgetId(shareInfo.getShareId());
 
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareInfo.getShareUser(), false);
         boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
@@ -363,17 +343,9 @@ public class ShareServiceImpl implements ShareService {
     public String generationShareDataCsv(ViewExecuteParam executeParam, User user, String token) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
         String filePath = null;
         ShareInfo shareInfo = getShareInfo(token, user);
-        if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-            throw new ServerException("Invalid share token");
-        }
+        verifyShareUser(user, shareInfo);
 
-        if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-            if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                throw new ForbiddenExecption("ERROR Permission denied");
-            }
-        }
-
-        ViewWithSource viewWithSource = viewMapper.getViewWithSource(shareInfo.getShareId());
+        ViewWithSource viewWithSource = viewMapper.getViewWithProjectAndSourceByWidgetId(shareInfo.getShareId());
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), shareInfo.getShareUser(), false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareInfo.getShareUser());
 
@@ -426,15 +398,7 @@ public class ShareServiceImpl implements ShareService {
         try {
 
             ShareInfo shareInfo = getShareInfo(token, user);
-            if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-                return resultFail(user, request, null).message("Invalid share token");
-            }
-
-            if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-                if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                    resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
-                }
-            }
+            verifyShareUser(user, shareInfo);
 
             ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
             if (null == viewWithProjectAndSource) {
@@ -507,7 +471,7 @@ public class ShareServiceImpl implements ShareService {
      * @throws ServerException
      * @throws UnAuthorizedExecption
      */
-    private ShareInfo getShareInfo(String token, User user) throws ServerException, UnAuthorizedExecption {
+    public ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption {
 
         if (StringUtils.isEmpty(token)) {
             throw new ServerException("Invalid share token");

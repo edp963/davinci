@@ -34,6 +34,12 @@ import { makeSelectLocationState } from '../app/containers/App/selectors'
 
 import LanguageProvider from '../app/containers/LanguageProvider'
 
+import { LocaleProvider } from 'antd'
+import zh_CN from 'antd/lib/locale-provider/zh_CN'
+import moment from 'moment'
+import 'moment/src/locale/zh-cn'
+moment.locale('zh-cn')
+
 import '!file-loader?name=[name].[ext]!../app/favicon.ico'
 import 'file-loader?name=[name].[ext]!../app/.htaccess'
 
@@ -63,6 +69,7 @@ import 'echarts/lib/chart/sankey'
 import 'echarts/lib/chart/funnel'
 import 'echarts/lib/chart/map'
 import 'echarts/lib/chart/lines'
+import 'echarts/lib/chart/effectScatter'
 import 'echarts/lib/chart/treemap'
 import 'echarts/lib/chart/heatmap'
 import 'echarts/lib/chart/boxplot'
@@ -82,7 +89,7 @@ import 'echarts/lib/component/geo'
 import 'echarts/lib/component/brush'
 import '../app/assets/js/china.js'
 
-import { DEFAULT_ECHARTS_THEME } from '../app/globalConstants'
+import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
 echarts.registerTheme('default', DEFAULT_ECHARTS_THEME)
 
 const initialState = {}
@@ -108,15 +115,17 @@ const render = (messages) => {
   ReactDOM.render(
     <Provider store={store}>
       <LanguageProvider messages={messages}>
-        <Router
-          history={history}
-          routes={rootRoute}
-          render={
-            // Scroll to top when going to a new page, imitating default browser
-            // behaviour
-            applyRouterMiddleware(useScroll())
-          }
-        />
+        <LocaleProvider locale={zh_CN}>
+          <Router
+            history={history}
+            routes={rootRoute}
+            render={
+              // Scroll to top when going to a new page, imitating default browser
+              // behaviour
+              applyRouterMiddleware(useScroll())
+            }
+          />
+        </LocaleProvider>
       </LanguageProvider>
     </Provider>,
     MOUNT_NODE

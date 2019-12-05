@@ -20,7 +20,7 @@
 
 import produce from 'immer'
 import pick from 'lodash/pick'
-import { IViewState, IView, IFormedViews } from './types'
+import { IViewState, IView, IFormedViews, IViewBase } from './types'
 import { getFormedView, getValidModel } from './util'
 
 import { ActionTypes, DEFAULT_SQL_LIMIT } from './constants'
@@ -33,6 +33,7 @@ import { LOAD_WIDGET_DETAIL_SUCCESS } from 'containers/Widget/constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from 'containers/Dashboard/constants'
 
 import { ActionTypes as DisplayActionTypes } from 'containers/Display/constants'
+import { LOCATION_CHANGE } from 'react-router-redux'
 
 const emptyView: IView = {
   id: null,
@@ -76,15 +77,17 @@ const initialState: IViewState = {
     view: false,
     table: false,
     modal: false,
-    execute: false
+    execute: false,
+    copy: false
   },
 
   channels: [],
   tenants: [],
-  bizs: []
+  bizs: [],
+  cancelTokenSources: []
 }
 
-const viewReducer = (state = initialState, action: ViewActionType | SourceActionType | any): IViewState => (
+const viewReducer = (state = initialState, action: ViewActionType | SourceActionType): IViewState => (
   produce(state, (draft) => {
     switch (action.type) {
       case ActionTypes.LOAD_VIEWS:
@@ -102,8 +105,10 @@ const viewReducer = (state = initialState, action: ViewActionType | SourceAction
         break
       case ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS:
         const detailedViews = action.payload.views
-        draft.editingView = detailedViews[0]
-        draft.editingViewInfo = pick(getFormedView(detailedViews[0]), ['model', 'variable', 'roles'])
+        if (action.payload.isEditing) {
+          draft.editingView = detailedViews[0]
+          draft.editingViewInfo = pick(getFormedView(detailedViews[0]), ['model', 'variable', 'roles'])
+        }
         draft.formedViews = detailedViews.reduce((acc, view) => {
           const { id, model, variable, roles } = getFormedView(view)
           acc[id] = {
@@ -177,6 +182,22 @@ const viewReducer = (state = initialState, action: ViewActionType | SourceAction
         draft.editingViewInfo = { model: {}, variable: [], roles: [] }
         draft.formedViews[action.payload.result.id] = getFormedView(action.payload.result)
         break
+
+      case ActionTypes.COPY_VIEW:
+        draft.loading.copy = true
+        break
+      case ActionTypes.COPY_VIEW_SUCCESS:
+        const fromViewId = action.payload.fromViewId
+        const copiedViewKeys: Array<keyof IViewBase> = ['id', 'name', 'description']
+        const copiedView: IViewBase = pick(action.payload.result, copiedViewKeys)
+        copiedView.sourceName = action.payload.result.source.name
+        draft.views.splice(draft.views.findIndex(({ id }) => id === fromViewId) + 1, 0, copiedView)
+        draft.loading.copy = false
+        break
+      case ActionTypes.COPY_VIEW_FAILURE:
+        draft.loading.copy = false
+        break
+
       case ActionTypes.LOAD_DAC_CHANNELS_SUCCESS:
         draft.channels = action.payload.channels
         break
@@ -216,6 +237,18 @@ const viewReducer = (state = initialState, action: ViewActionType | SourceAction
         draft.formedViews = {
           ...draft.formedViews,
           ...updatedViews
+        }
+        break
+      case ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
+      case ActionTypes.LOAD_SELECT_OPTIONS:
+        draft.cancelTokenSources.push(action.payload.cancelTokenSource)
+        break
+      case LOCATION_CHANGE:
+        if (state.cancelTokenSources.length) {
+          state.cancelTokenSources.forEach((source) => {
+            source.cancel()
+          })
+          draft.cancelTokenSources = []
         }
         break
       default:

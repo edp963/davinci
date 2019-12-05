@@ -21,7 +21,8 @@
 import * as React from 'react'
 import { IChartProps } from './'
 import { IWidgetMetric } from 'containers/Widget/components/Widget'
-import { decodeMetricName, getTextWidth, getFormattedValue } from 'containers/Widget/components/util'
+import { decodeMetricName, getTextWidth } from 'containers/Widget/components/util'
+import { getFormattedValue } from '../Config/Format'
 
 const styles = require('./Chart.less')
 

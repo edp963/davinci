@@ -26,6 +26,7 @@ import {
   SET_INDIVIDUAL_DASHBOARD,
   LOAD_SHARE_RESULTSET,
   LOAD_SHARE_RESULTSET_SUCCESS,
+  LOAD_SHARE_RESULTSET_FAILURE,
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
   LOAD_WIDGET_CSV_FAILURE,
@@ -35,9 +36,30 @@ import {
   DELETE_DRILL_HISTORY,
   SET_SELECT_OPTIONS,
   SELECT_DASHBOARD_ITEM_CHART,
-  GLOBAL_CONTROL_CHANGE
+  GLOBAL_CONTROL_CHANGE,
+  LOAD_DOWNLOAD_LIST,
+  LOAD_DOWNLOAD_LIST_SUCCESS,
+  LOAD_DOWNLOAD_LIST_FAILURE,
+  DOWNLOAD_FILE_SUCCESS,
+  SEND_SHARE_PARAMS
 } from './constants'
-import { IMapItemControlRequestParams, IControlRequestParams } from 'app/components/Filters';
+import {
+  IMapItemControlRequestParams,
+  IControlRequestParams,
+  IGlobalControl,
+  IControlRelatedField
+} from 'app/components/Filters/types'
+import { DatePickerDefaultValues } from 'app/components/Filters/datePickerFormats'
+import {
+  getVariableValue,
+  getModelValue,
+  deserializeDefaultValue
+} from 'app/components/Filters/util'
+import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
+import { DashboardItemStatus } from '.'
+import { DownloadStatus } from 'app/containers/App/types'
+
+import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
 
 const initialState = fromJS({
   dashboard: null,
@@ -46,40 +68,103 @@ const initialState = fromJS({
   dashboardSelectOptions: null,
   widgets: null,
   items: null,
-  itemsInfo: null
+  itemsInfo: null,
+  downloadListLoading: false,
+  downloadList: null,
+  downloadListInfo: null,
+  shareParams: null
 })
 
 function shareReducer (state = initialState, { type, payload }) {
   const dashboardSelectOptions = state.get('dashboardSelectOptions')
   const itemsInfo = state.get('itemsInfo')
   let widgets = state.get('widgets')
-
+  const downloadList = state.get('downloadList')
+  const shareParams = state.get('shareParams')
   switch (type) {
+    case SEND_SHARE_PARAMS:
+      return state.set('shareParams', payload.params)
     case LOAD_SHARE_DASHBOARD_SUCCESS:
+      const dashboardConfig = payload.dashboard.config ? JSON.parse(payload.dashboard.config) : {}
+      const globalControls = (dashboardConfig.filters || []).map((c) => globalControlMigrationRecorder(c)).map((ctrl) => {
+        const {relatedViews, name} = ctrl
+        if (shareParams) {
+          Object.entries(relatedViews).forEach(([key, value]) => {
+            const defaultValue = shareParams[name]
+            if (defaultValue && defaultValue.length) {
+               if (ctrl && ctrl.type === 'date') {
+                 ctrl.dynamicDefaultValue = DatePickerDefaultValues.Custom
+               }
+               ctrl.defaultValue = Array.isArray(defaultValue) && defaultValue.length ? defaultValue.map((val) => decodeURI(val)) :  decodeURI(defaultValue)
+            }
+          })
+        }
+        return ctrl
+      })
+
+      const globalControlsInitialValue = {}
+      globalControls.forEach((control: IGlobalControl) => {
+        const { interactionType, relatedItems, relatedViews } = control
+        const defaultValue = deserializeDefaultValue(control)
+        if (defaultValue) {
+          Object.entries(relatedItems).forEach(([itemId, config]) => {
+            Object.entries(relatedViews).forEach(([viewId, fields]) => {
+              if (config.checked && config.viewId === Number(viewId)) {
+                const filterValue = interactionType === 'column'
+                  ? getModelValue(control, fields as IControlRelatedField, defaultValue)
+                  : getVariableValue(control, fields, defaultValue)
+                if (!globalControlsInitialValue[itemId]) {
+                  globalControlsInitialValue[itemId] = {
+                    filters: [],
+                    variables: []
+                  }
+                }
+                if (interactionType === 'column') {
+                  globalControlsInitialValue[itemId].filters = globalControlsInitialValue[itemId].filters.concat(filterValue)
+                } else {
+                  globalControlsInitialValue[itemId].variables = globalControlsInitialValue[itemId].variables.concat(filterValue)
+                }
+              }
+            })
+          })
+        }
+      })
+
       return state
         .set('title', payload.dashboard.name)
-        .set('dashboard', payload.dashboard)
-        .set('config', payload.dashboard.config)
+        .set('dashboard', {
+          ...payload.dashboard,
+          config: JSON.stringify({
+            ...dashboardConfig,
+            filters: globalControls
+          })
+        })
+        .set('config', JSON.stringify({
+          ...dashboardConfig,
+          filters: globalControls
+        }))
         .set('dashboardSelectOptions', {})
         .set('widgets', payload.dashboard.widgets)
         .set('items', payload.dashboard.relations)
         .set('itemsInfo', payload.dashboard.relations.reduce((obj, item) => {
           obj[item.id] = {
+            status: DashboardItemStatus.Initial,
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
               tempFilters: [],
               linkageFilters: [],
-              globalFilters: [],
+              globalFilters: globalControlsInitialValue[item.id] ? globalControlsInitialValue[item.id].filters : [],
               variables: [],
               linkageVariables: [],
-              globalVariables: [],
+              globalVariables: globalControlsInitialValue[item.id] ? globalControlsInitialValue[item.id].variables : [],
               pagination: {}
             },
             downloadCsvLoading: false,
             interactId: '',
             renderType: 'rerender',
-            controlSelectOptions: {}
+            controlSelectOptions: {},
+            errorMessage: ''
           }
           return obj
         }, {}))
@@ -98,6 +183,7 @@ function shareReducer (state = initialState, { type, payload }) {
         }])
         .set('itemsInfo', {
           1: {
+            status: DashboardItemStatus.Initial,
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
@@ -112,7 +198,8 @@ function shareReducer (state = initialState, { type, payload }) {
             downloadCsvLoading: false,
             interactId: '',
             renderType: 'rerender',
-            controlSelectOptions: {}
+            controlSelectOptions: {},
+            errorMessage: ''
           }
         })
     case LOAD_SHARE_WIDGET_SUCCESS:
@@ -136,6 +223,7 @@ function shareReducer (state = initialState, { type, payload }) {
           ...itemsInfo[payload.itemId],
           selectedItems: [],
           loading: true,
+          errorMessage: '',
           queryConditions: {
             ...itemsInfo[payload.itemId].queryConditions,
             tempFilters: payload.requestParams.tempFilters,
@@ -187,13 +275,25 @@ function shareReducer (state = initialState, { type, payload }) {
         }
       })
     case LOAD_SHARE_RESULTSET_SUCCESS:
+      fieldGroupedSort(payload.resultset.resultList, payload.requestParams.customOrders)
       return state.set('itemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
+          status: DashboardItemStatus.Fulfilled,
           loading: false,
           datasource: payload.resultset || { resultList: [] },
           renderType: payload.renderType
+        }
+      })
+    case LOAD_SHARE_RESULTSET_FAILURE:
+      return state.set('itemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          status: DashboardItemStatus.Error,
+          loading: false,
+          errorMessage: payload.errorMessage
         }
       })
     case LOAD_WIDGET_CSV:
@@ -257,6 +357,26 @@ function shareReducer (state = initialState, { type, payload }) {
           return info
         }, {})
       )
+    case LOAD_DOWNLOAD_LIST:
+      return state.set('downloadListLoading', true)
+    case LOAD_DOWNLOAD_LIST_SUCCESS:
+      return state
+        .set('downloadListLoading', false)
+        .set('downloadList', payload.list)
+        .set('downloadListInfo', payload.list.reduce((info, item) => {
+          info[item.id] = {
+            loading: false
+          }
+          return info
+        }, {}))
+    case LOAD_DOWNLOAD_LIST_FAILURE:
+      return state.set('downloadListLoading', false)
+    case DOWNLOAD_FILE_SUCCESS:
+        return state.set('downloadList', downloadList.map((item) => {
+          return item.id === payload.id
+            ? { ...item, status: DownloadStatus.Downloaded }
+            : item
+        }))
     default:
       return state
   }

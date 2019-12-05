@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { Row, Col, Checkbox, Select } from 'antd'
 const Option = Select.Option
-import ColorPicker from '../../../../../components/ColorPicker'
-import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES, CHART_LEGEND_POSITIONS } from '../../../../../globalConstants'
+import ColorPicker from 'components/ColorPicker'
+import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES, CHART_LEGEND_POSITIONS } from 'app/globalConstants'
 const styles = require('../Workbench.less')
 
 export interface ILegendConfig {

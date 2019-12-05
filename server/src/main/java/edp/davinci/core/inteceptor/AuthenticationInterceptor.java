@@ -58,6 +58,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             response.setStatus(HttpCodeEnum.NOT_FOUND.getCode());
             return false;
         }
+        
         Method method = handlerMethod.getMethod();
 
         AuthIgnore ignoreAuthMethod = method.getAnnotation(AuthIgnore.class);
@@ -69,7 +70,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
 
         AuthShare authShareMethoed = method.getAnnotation(AuthShare.class);
-        if (handler instanceof HandlerMethod && null != authShareMethoed) {
+        if (null != authShareMethoed) {
             if (!StringUtils.isEmpty(token) && token.startsWith(Constants.TOKEN_PREFIX)) {
                 String username = tokenUtils.getUsername(token);
                 User user = userService.getByUsername(username);
@@ -79,7 +80,9 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         }
 
         if (StringUtils.isEmpty(token) || !token.startsWith(Constants.TOKEN_PREFIX)) {
-            log.info("{} : Unknown token", request.getServletPath());
+            if (!request.getServletPath().endsWith("/download/page")) {
+                log.info("{} : Unknown token", request.getServletPath());
+            }
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
             response.getWriter().print("The resource requires authentication, which was not supplied with the request");
             return false;
@@ -100,8 +103,8 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        if (request.getServletPath().indexOf("/user/active") < 0 && !user.getActive()) {
-            if (request.getServletPath().indexOf("/user/sendmail") > -1) {
+        if (!request.getServletPath().contains("/user/active") && !user.getActive()) {
+            if (request.getServletPath().contains("/user/sendmail")) {
                 request.setAttribute(Constants.CURRENT_USER, user);
                 return true;
             }

@@ -22,17 +22,16 @@ import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-// import { Link } from 'react-router'
 
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import Container from '../../components/Container'
-import Box from '../../components/Box'
-import SearchFilterDropdown from '../../components/SearchFilterDropdown'
+import Container from 'components/Container'
+import Box from 'components/Box'
+import SearchFilterDropdown from 'components/SearchFilterDropdown'
 import GroupForm from './GroupForm'
 import { Modal, Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb } from 'antd'
 
@@ -40,7 +39,7 @@ import { PaginationProps } from 'antd/lib/pagination'
 
 import { loadGroups, addGroup, deleteGroup, editGroup } from './actions'
 import { makeSelectGroups, makeSelectTableLoading, makeSelectFormLoading } from './selectors'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IGroupProps {
   groups: boolean | any[]

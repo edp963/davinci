@@ -34,16 +34,16 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
     @Value("${spring.redis.isEnable:false}")
-    private boolean redisIsEnable;
+    private boolean isRedisEnable;
 
     @Autowired
     private BeanFactory beanFactory;
 
     @Bean
-    public RedisTemplate<String, Object> InitRedisTemplate() {
-        log.info("InitRedisTemplate");
+    public RedisTemplate<String, Object> initRedisTemplate() {
         RedisTemplate<String, Object> redisTemplate = null;
-        if (redisIsEnable) {
+        if (isRedisEnable) {
+            log.info("InitRedisTemplate");
             redisTemplate = (RedisTemplate<String, Object>) beanFactory.getBean("redisTemplate");
 
             redisTemplate.setKeySerializer(new StringRedisSerializer());

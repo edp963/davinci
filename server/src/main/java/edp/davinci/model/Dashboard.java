@@ -20,7 +20,7 @@
 package edp.davinci.model;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import edp.davinci.common.model.RecordInfo;
+import edp.core.model.RecordInfo;
 import lombok.Data;
 
 import javax.validation.constraints.Max;
@@ -47,7 +47,7 @@ public class Dashboard extends RecordInfo<Dashboard> {
 
     private Integer index = 0;
 
-    private Long parentId;
+    private Long parentId = null;
 
     private String config;
 

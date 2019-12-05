@@ -211,6 +211,25 @@ public class SourceController extends BaseController {
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
+    /**
+     * 释放重连
+     *
+     * @param id
+     * @param dbBaseInfo
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "release and reconnect", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/reconnect/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity reconnect(@PathVariable Long id,
+                                    @RequestBody DbBaseInfo dbBaseInfo,
+                                    @ApiIgnore @CurrentUser User user,
+                                    HttpServletRequest request) {
+        sourceService.reconnect(id, dbBaseInfo, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
+    }
+
 
     /**
      * 生成csv对应的表结构
@@ -368,6 +387,21 @@ public class SourceController extends BaseController {
         BeanUtils.copyProperties(tableInfo, sourceTableInfo);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(sourceTableInfo));
+    }
+
+
+    /**
+     * 获取系统支持jdbc数据源
+     *
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get jdbc datasources")
+    @GetMapping("/jdbc/datasources")
+    public ResponseEntity getJdbcDataSources(@ApiIgnore @CurrentUser User user, HttpServletRequest request) {
+        List<DatasourceType> list = sourceService.getDatasources();
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(list));
     }
 
 }

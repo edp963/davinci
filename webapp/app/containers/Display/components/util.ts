@@ -26,9 +26,9 @@ import video from 'assets/json/slideSettings/video.json'
 import timer from 'assets/json/slideSettings/timer.json'
 
 import { ILayer, ILayerParams, IBaseline, IDeltaPosition, IDeltaSize } from './LayerItem'
-import { ISlideParams, ISlide } from '../'
+import { ISlideParams } from './types'
 
-import { DEFAULT_BASELINE_THICKNESS } from '../../../../app/globalConstants'
+import { DEFAULT_BASELINE_THICKNESS } from 'app/globalConstants'
 
 export enum SecondaryGraphTypes {
   Rectangle = 20,

@@ -169,6 +169,7 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
         editorBottom = c
       } else if (areComponentsEqual(type, ViewVariableList)) {
         viewVariableList = React.cloneElement<IViewVariableListProps>(c, {
+          className: Styles.viewVariable,
           onAdd: this.addVariable,
           onDelete: this.deleteVariable,
           onEdit: this.editVariable
@@ -222,8 +223,8 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
                   onResize={this.previewResize}
                 >
                   <div className={Styles.containerVertical}>
-                    <div className={Styles.editor}>{sqlEditor}</div>
-                    <div className={Styles.list}>{viewVariableList}</div>
+                    {sqlEditor}
+                    {viewVariableList}
                   </div>
                 </Resizable>
               </div>

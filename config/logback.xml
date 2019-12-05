@@ -29,6 +29,7 @@
     <property name="USER" value="user"/>
 
     <property name="SQL" value="sql"/>
+    <property name="SCHEDULE" value="schedule"/>
     <property name="OPT" value="opt"/>
 
     <property name="LOG_HOME_PATH" value="${DAVINCI3_HOME}/logs"/>
@@ -41,6 +42,9 @@
 
     <property name="BUSINESS_OPERATION_LOG_PATTERN"
               value="${BUSINESS_OPERATION_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} --- %file:%line : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
+    <property name="BUSINESS_SCHEDULE_LOG_PATTERN"
+              value="${BUSINESS_SCHEDULE_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} --- %file:%line : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
 
     <appender name="SYS_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
@@ -95,11 +99,34 @@
     </appender>
 
 
+    <appender name="BUSINESS_SCHEDULE_LOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_HOME_PATH}/${USER}/${SCHEDULE}/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <MaxHistory>10</MaxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>${BUSINESS_SCHEDULE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+
     <logger name="BUSINESS_SQL" additivity="false" level="INFO">
         <appender-ref ref="BUSINESS_SQL_LOG_APPENDER"/>
     </logger>
     <logger name="BUSINESS_OPERATION" additivity="false" level="INFO">
         <appender-ref ref="BUSINESS_OPERATION_LOG_APPENDER"/>
+    </logger>
+    <logger name="BUSINESS_SCHEDULE" additivity="false" level="INFO">
+        <appender-ref ref="BUSINESS_SCHEDULE_LOG_APPENDER"/>
     </logger>
 
 

@@ -21,6 +21,8 @@ package edp.davinci.core.common;
 
 import edp.core.consts.Consts;
 
+import java.util.regex.Pattern;
+
 /**
  * 常量
  */
@@ -42,6 +44,9 @@ public class Constants extends Consts {
      * 用户激活 / 重发激活邮件模板
      */
     public static final String USER_ACTIVATE_EMAIL_TEMPLATE = "mail/userActivateEmailTemplate";
+
+
+    public static final String EMAIL_DEFAULT_TEMPLATE = "mail/emaiDefaultTemplate";
 
     /**
      * 用户激活 / 重发激活邮件主题
@@ -136,9 +141,15 @@ public class Constants extends Consts {
 
     public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.-[\\u4e00-\\u9fa5]*]+\\s*[\\w<>!=]*\\s*[a-zA-Z0-9_.-]*((\\(%s[a-zA-Z0-9_]+%s\\))|(%s[a-zA-Z0-9_]+%s))+\\s*\\)";
 
+    public static final String REG_CHINESE = "[\\u4e00-\\u9fa5]+";
+
+    public static final Pattern REG_CHINESE_PATTERN = Pattern.compile(REG_CHINESE);
+
     public static final String LDAP_USER_PASSWORD = "LDAP";
 
-    public static final String N0_AUTH_PERMISSION = "@DAVINCI_DATA_ACCESS_DENIED@";
+    public static final String NO_AUTH_PERMISSION = "@DAVINCI_DATA_ACCESS_DENIED@";
+
+    public static final String DAVINCI_TOPIC_CHANNEL = "DAVINCI_TOPIC_CHANNEL";
 
 
     public static char getSqlTempDelimiter(String sqlTempDelimiter) {

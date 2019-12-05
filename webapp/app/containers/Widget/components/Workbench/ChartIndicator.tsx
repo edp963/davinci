@@ -15,29 +15,31 @@ interface IChartIndicatorProps {
 
 export function ChartIndicator (props: IChartIndicatorProps) {
   const { chartInfo, dimetionsCount, metricsCount, selectedCharts } = props
-  const { title, icon, requireDimetions, requireMetrics} = chartInfo
+  const { title, icon, rules } = chartInfo
 
-  let dimetionContent
-  let metricContent
-
-  if (Array.isArray(requireDimetions)) {
-    dimetionContent = `需要 ${requireDimetions[0]}个 到 ${requireDimetions[1] === 9999 ? '多' : requireDimetions[1]}个 维度`
-  } else {
-    dimetionContent =  `需要 ${requireDimetions}个 维度`
-  }
-
-  if (Array.isArray(requireMetrics)) {
-    metricContent = `需要 ${requireMetrics[0]}个 到 ${requireMetrics[1] === 9999 ? '多' : requireMetrics[1]}个 指标`
-  } else {
-    metricContent =  `需要 ${requireMetrics}个 指标`
-  }
+  const contents = rules.map(({ dimension, metric }, ruleIdx) => {
+    const subContents = []
+    if (Array.isArray(dimension)) {
+      subContents.push(`${dimension[0]}个 到 ${dimension[1] === 9999 ? '多' : dimension[1]}个 维度`)
+    } else {
+      subContents.push(`${dimension}个 维度`)
+    }
+    if (Array.isArray(metric)) {
+      subContents.push(`${metric[0]}个 到 ${metric[1] === 9999 ? '多' : metric[1]}个 指标`)
+    } else {
+      subContents.push(`${metric}个 指标`)
+    }
+    if (rules.length > 1) {
+      return (<p key={ruleIdx}>{subContents.join('，')}</p>)
+    }
+    return (subContents.map((item, idx) => (<p key={`${ruleIdx}_${idx}`}>{item}</p>)))
+  })
 
   const overlay = (
-    <p>
-      {title}<br />
-      {dimetionContent}<br/>
-      {metricContent}
-    </p>
+    <>
+      <p>{title}</p>
+      {contents}
+    </>
   )
 
   const iconClass = classnames({

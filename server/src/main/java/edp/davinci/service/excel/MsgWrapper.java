@@ -40,10 +40,18 @@ public class MsgWrapper<T> {
 
     public Long xId;
 
+    public String xUUID;
+
     public MsgWrapper(T msg, ActionEnum action, Long xId) {
         this.msg=msg;
         this.action=action;
         this.xId=xId;
+    }
+
+    public MsgWrapper(T msg, ActionEnum action, String xUUID) {
+        this.msg = msg;
+        this.action = action;
+        this.xUUID = xUUID;
     }
 
     public T getMsg() {
@@ -76,5 +84,13 @@ public class MsgWrapper<T> {
 
     public void setxId(Long xId) {
         this.xId = xId;
+    }
+
+    public String getxUUID() {
+        return xUUID;
+    }
+
+    public void setxUUID(String xUUID) {
+        this.xUUID = xUUID;
     }
 }

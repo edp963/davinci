@@ -23,6 +23,7 @@ import { call, put, all, takeLatest, throttle, takeEvery } from 'redux-saga/effe
 import { message } from 'antd'
 import {
   LOGIN,
+  LOGOUT,
   GET_LOGIN_USER,
   CHECK_NAME,
   ACTIVE,
@@ -52,10 +53,9 @@ import {
   DownloadTaskInitiated,
   initiateDownloadTaskFail
 } from './actions'
-import request, { removeToken, getToken } from '../../utils/request'
-// import request from '../../utils/request'
-import api from '../../utils/api'
-import { errorHandler } from '../../utils/util'
+import request, { removeToken, getToken } from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
 
 export function* login (action): IterableIterator<any> {
   const { username, password, resolve } = action.payload
@@ -71,7 +71,6 @@ export function* login (action): IterableIterator<any> {
     })
 
     const loginUser = asyncData.payload
-    yield put(logged(loginUser))
     localStorage.setItem('loginUser', JSON.stringify(loginUser))
     resolve()
   } catch (err) {
@@ -80,6 +79,14 @@ export function* login (action): IterableIterator<any> {
   }
 }
 
+export function* logout (): IterableIterator<any> {
+  try {
+    removeToken()
+    localStorage.removeItem('loginUser')
+  } catch (err) {
+    errorHandler(err)
+  }
+}
 
 export function* activeUser (action): IterableIterator<any> {
   const {token, resolve} = action.payload
@@ -174,6 +181,10 @@ export function* updateProfile (action): IterableIterator<any> {
         department
       }
     })
+    const updateUserProfile = {id, name, department, description}
+    yield put(updateProfileSuccess(updateUserProfile))
+    const prevLoginUser = JSON.parse(localStorage.getItem('loginUser')) 
+    localStorage.setItem('loginUser', JSON.stringify({...prevLoginUser, ...updateUserProfile}))  
     resolve(asyncData)
   } catch (err) {
     yield put(updateProfileError())
@@ -222,14 +233,11 @@ export function* joinOrganization (action): IterableIterator<any> {
       reject(error)
     }
     if (error.response) {
-      console.log(error.response.status)
       switch (error.response.status) {
         case 403:
           removeToken()
-          localStorage.removeItem('TOKEN')
           break
         case 400:
-          console.log({error})
           message.error(error.response.data.header.msg, 3)
           break
         default:
@@ -253,6 +261,7 @@ export function* downloadFile (action): IterableIterator<any> {
   const { id } = action.payload
   try {
     location.href = `${api.download}/record/file/${id}/${getToken()}`
+    yield put(fileDownloaded(id))
   } catch (err) {
     yield put(downloadFileFail(err))
     errorHandler(err)
@@ -289,7 +298,7 @@ export function* initiateDownloadTask (action): IterableIterator<any> {
       data: downloadParams
     })
     message.success('下载任务创建成功！')
-    yield put(DownloadTaskInitiated(type, itemId))
+    yield put(DownloadTaskInitiated(type, itemId, downloadParams))
   } catch (err) {
     yield put(initiateDownloadTaskFail(err))
     errorHandler(err)
@@ -302,6 +311,7 @@ export default function* rootGroupSaga (): IterableIterator<any> {
     takeLatest(GET_LOGIN_USER, getLoginUser as any),
     takeLatest(ACTIVE, activeUser as any),
     takeLatest(LOGIN, login as any),
+    takeLatest(LOGOUT, logout),
     takeLatest(UPDATE_PROFILE, updateProfile as any),
     takeLatest(CHANGE_USER_PASSWORD, changeUserPassword as any),
     takeLatest(JOIN_ORGANIZATION, joinOrganization as any),

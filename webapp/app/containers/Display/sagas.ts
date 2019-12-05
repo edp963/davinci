@@ -20,57 +20,21 @@
 
 import { call, fork, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
-import request from '../../utils/request'
-import api from '../../utils/api'
+import request from 'utils/request'
+import api from 'utils/api'
 import { getDefaultSlideParams } from './components/util'
-import { errorHandler } from '../../utils/util'
+import { errorHandler } from 'utils/util'
 
 import {
   ActionTypes
 } from './constants'
-import {
-  loadDisplays,
-  displaysLoaded,
-  loadDisplaysFail,
+import DisplayActions, { DisplayActionType } from './actions'
 
-  loadDisplayDetail,
-  displayDetailLoaded,
+export function* getDisplays (action: DisplayActionType) {
+  if (action.type !== ActionTypes.LOAD_DISPLAYS) { return }
 
-  displayAdded,
-  addDisplayFail,
-  displayEdited,
-  editDisplayFail,
-  currentDisplayEdited,
-  editCurrentDisplayFail,
-  currentSlideEdited,
-  editCurrentSlideFail,
-  currentSlideCoverUploaded,
-  uploadCurrentSlideCoverFail,
-  displayDeleted,
-  deleteDisplayFail,
-
-  displayLayersAdded,
-  addDisplayLayersFail,
-  displayLayersDeleted,
-  deleteDisplayLayersFail,
-  displayLayersEdited,
-  editDisplayLayersFail,
-
-  slideLayersPasted,
-  pasteSlideLayersFail,
-
-  undoOperationDone,
-  undoOperationFail,
-  redoOperationDone,
-  redoOperationFail,
-
-  displaySecretLinkLoaded,
-  displayShareLinkLoaded,
-  loadDisplayShareLinkFail
-} from './actions'
-
-export function* getDisplays (action): IterableIterator<any> {
   const { projectId } = action.payload
+  const { displaysLoaded, loadDisplaysFail } = DisplayActions
   try {
     const asyncData = yield call(request, `${api.display}?projectId=${projectId}`)
     const displays = asyncData.payload
@@ -80,8 +44,11 @@ export function* getDisplays (action): IterableIterator<any> {
   }
 }
 
-export function* addDisplay (action) {
+export function* addDisplay (action: DisplayActionType) {
+  if (action.type !== ActionTypes.ADD_DISPLAY) { return }
+
   const { display, resolve } = action.payload
+  const { displayAdded, addDisplayFail } = DisplayActions
   try {
     const asyncDisplayData = yield call(request, api.display, {
       method: 'post',
@@ -106,8 +73,11 @@ export function* addDisplay (action) {
   }
 }
 
-export function* getDisplayDetail (action): IterableIterator<any> {
+export function* getDisplayDetail (action: DisplayActionType) {
+  if (action.type !== ActionTypes.LOAD_DISPLAY_DETAIL) { return }
+
   const { projectId, displayId } = action.payload
+  const { displayDetailLoaded, loadDisplaysFail } = DisplayActions
   try {
     const result = yield all({
       dashboardDetail: call(request, `${api.display}/${displayId}/slides`),
@@ -125,8 +95,11 @@ export function* getDisplayDetail (action): IterableIterator<any> {
   }
 }
 
-export function* editDisplay (action): IterableIterator<any> {
+export function* editDisplay (action: DisplayActionType) {
+  if (action.type !== ActionTypes.EDIT_DISPLAY) { return }
+
   const { display, resolve } = action.payload
+  const { displayEdited, editDisplayFail } = DisplayActions
   try {
     yield call(request, `${api.display}/${display.id}`, {
       method: 'put',
@@ -140,8 +113,11 @@ export function* editDisplay (action): IterableIterator<any> {
   }
 }
 
-export function* editCurrentDisplay (action): IterableIterator<any> {
+export function* editCurrentDisplay (action: DisplayActionType) {
+  if (action.type !== ActionTypes.EDIT_CURRENT_DISPLAY) { return }
+
   const { display, resolve } = action.payload
+  const { currentDisplayEdited, editCurrentDisplayFail } = DisplayActions
   try {
     yield call(request, `${api.display}/${display.id}`, {
       method: 'put',
@@ -155,8 +131,11 @@ export function* editCurrentDisplay (action): IterableIterator<any> {
   }
 }
 
-export function* editCurrentSlide (action): IterableIterator<any> {
+export function* editCurrentSlide (action: DisplayActionType) {
+  if (action.type !== ActionTypes.EDIT_CURRENT_SLIDE) { return }
+
   const { displayId, slide, resolve } = action.payload
+  const { currentSlideEdited, editCurrentSlideFail } = DisplayActions
   try {
     yield call(request, `${api.display}/${displayId}/slides`, {
       method: 'put',
@@ -172,8 +151,11 @@ export function* editCurrentSlide (action): IterableIterator<any> {
   }
 }
 
-export function* uploadCurrentSlideCover (action): IterableIterator<any> {
+export function* uploadCurrentSlideCover (action: DisplayActionType) {
+  if (action.type !== ActionTypes.UPLOAD_CURRENT_SLIDE_COVER) { return }
+
   const { cover, resolve } = action.payload
+  const { currentSlideCoverUploaded, uploadCurrentSlideCoverFail } = DisplayActions
   try {
     const formData = new FormData()
     formData.append('coverImage', new File([cover], 'coverImage.png'))
@@ -190,8 +172,11 @@ export function* uploadCurrentSlideCover (action): IterableIterator<any> {
   }
 }
 
-export function* deleteDisplay (action) {
+export function* deleteDisplay (action: DisplayActionType) {
+  if (action.type !== ActionTypes.DELETE_DISPLAY) { return }
+
   const { id } = action.payload
+  const { displayDeleted, deleteDisplayFail } = DisplayActions
   try {
     yield call(request, `${api.display}/${id}`, {
       method: 'delete'
@@ -203,8 +188,11 @@ export function* deleteDisplay (action) {
   }
 }
 
-export function* addDisplayLayers (action) {
+export function* addDisplayLayers (action: DisplayActionType) {
+  if (action.type !== ActionTypes.ADD_DISPLAY_LAYERS) { return }
+
   const { displayId, slideId, layers } = action.payload
+  const { displayLayersAdded, addDisplayLayersFail } = DisplayActions
   try {
     const asyncData = yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
       method: 'post',
@@ -219,8 +207,11 @@ export function* addDisplayLayers (action) {
   }
 }
 
-export function* editDisplayLayers (action) {
+export function* editDisplayLayers (action: DisplayActionType) {
+  if (action.type !== ActionTypes.EDIT_DISPLAY_LAYERS) { return }
+
   const { displayId, slideId, layers } = action.payload
+  const { displayLayersEdited, editDisplayLayersFail } = DisplayActions
   try {
     yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
       method: 'put',
@@ -233,8 +224,11 @@ export function* editDisplayLayers (action) {
   }
 }
 
-export function* deleteDisplayLayers (action) {
+export function* deleteDisplayLayers (action: DisplayActionType) {
+  if (action.type !== ActionTypes.DELETE_DISPLAY_LAYERS) { return }
+
   const { displayId, slideId, ids } = action.payload
+  const { displayLayersDeleted, deleteDisplayLayersFail } = DisplayActions
   try {
     yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
       method: 'delete',
@@ -247,8 +241,11 @@ export function* deleteDisplayLayers (action) {
   }
 }
 
-export function* pasteSlideLayers (action) {
+export function* pasteSlideLayers (action: DisplayActionType) {
+  if (action.type !== ActionTypes.PASTE_SLIDE_LAYERS) { return }
+
   const { displayId, slideId, layers } = action.payload
+  const { slideLayersPasted, pasteSlideLayersFail } = DisplayActions
   try {
     const asyncData = yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
       method: 'post',
@@ -263,8 +260,11 @@ export function* pasteSlideLayers (action) {
   }
 }
 
-export function* getDisplayShareLink (action) {
+export function* getDisplayShareLink (action: DisplayActionType) {
+  if (action.type !== ActionTypes.LOAD_DISPLAY_SHARE_LINK) { return }
+
   const { id, authName } = action.payload
+  const { displaySecretLinkLoaded, displayShareLinkLoaded, loadDisplayShareLinkFail } = DisplayActions
   try {
     const asyncData = yield call(request, {
       method: 'get',
@@ -283,10 +283,13 @@ export function* getDisplayShareLink (action) {
   }
 }
 
-export function* undoOperation (action) {
+export function* undoOperation (action: DisplayActionType) {
+  if (action.type !== ActionTypes.UNDO_OPERATION) { return }
+
   const { currentState } = action.payload
   const { displayId, slide, lastOperationType, lastLayers } = currentState
   const slideId = slide.id
+  const { undoOperationDone, undoOperationFail } = DisplayActions
   try {
     switch (lastOperationType) {
       case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
@@ -326,10 +329,13 @@ export function* undoOperation (action) {
   }
 }
 
-export function* redoOperation (action) {
+export function* redoOperation (action: DisplayActionType) {
+  if (action.type !== ActionTypes.REDO_OPERATION) { return }
+
   const { nextState } = action.payload
   const { displayId, slide, lastOperationType, lastLayers } = nextState
   const slideId = slide.id
+  const { redoOperationDone, redoOperationFail } = DisplayActions
   try {
     switch (lastOperationType) {
       case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
@@ -369,7 +375,22 @@ export function* redoOperation (action) {
   }
 }
 
-export default function* rootDisplaySaga (): IterableIterator<any> {
+
+export function* loadProjectDetail (action: DisplayActionType) {
+  if (action.type !== ActionTypes.LOAD_CURRENT_PROJECT) { return }
+
+  const { projectLoaded } = DisplayActions
+  const { pid } = action.payload
+  try {
+    const asyncData = yield call(request, `${api.projects}/${pid}`)
+    const project = asyncData.payload
+    yield put(projectLoaded(project))
+  } catch (err) {
+    errorHandler(err)
+  }
+}
+
+export default function* rootDisplaySaga () {
   yield all([
     takeLatest(ActionTypes.LOAD_DISPLAYS, getDisplays),
     takeEvery(ActionTypes.ADD_DISPLAY, addDisplay),
@@ -385,6 +406,7 @@ export default function* rootDisplaySaga (): IterableIterator<any> {
     takeEvery(ActionTypes.PASTE_SLIDE_LAYERS, pasteSlideLayers),
     takeLatest(ActionTypes.LOAD_DISPLAY_SHARE_LINK, getDisplayShareLink),
     takeEvery(ActionTypes.UNDO_OPERATION, undoOperation),
-    takeEvery(ActionTypes.REDO_OPERATION, redoOperation)
+    takeEvery(ActionTypes.REDO_OPERATION, redoOperation),
+    takeEvery(ActionTypes.LOAD_CURRENT_PROJECT, loadProjectDetail)
   ])
 }

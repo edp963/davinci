@@ -40,4 +40,19 @@
             #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
+
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        insert ignore rel_project_admin
+        (`project_id`, `user_id`, `create_by`, `create_time`)
+        VALUES
+        <foreach collection="list" item="record" index="index" separator=",">
+            (
+            #{record.projectId,jdbcType=BIGINT},
+            #{record.userId,jdbcType=BIGINT},
+            #{record.createBy,jdbcType=BIGINT},
+            #{record.createTime,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
 </mapper>

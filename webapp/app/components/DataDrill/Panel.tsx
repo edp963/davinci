@@ -20,7 +20,7 @@
 
 import * as React from 'react'
 import { Menu, Icon } from 'antd'
-import { getPivot } from '../../containers/Widget/components/util'
+import { getPivot } from 'containers/Widget/components/util'
 const styles = require('./datadrill.less')
 export interface IDataDrillProps {
   key?: string | number

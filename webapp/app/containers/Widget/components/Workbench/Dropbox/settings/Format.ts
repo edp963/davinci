@@ -1,13 +1,22 @@
-import { SettingTypes, ItemTypes, ISettingItem } from './type'
+import { SettingTypes, ItemTypes, ItemValueTypes, ISettingItem } from './type'
 
 const Format: ISettingItem = {
   key: 'format',
-  name: '数值显示格式',
-  settingType: SettingTypes.Indicator,
-  itemType: ItemTypes.Value,
+  name: '格式设置',
+  constrants: [{
+    settingType: SettingTypes.Indicator | SettingTypes.Tip,
+    itemType: ItemTypes.Value,
+    itemValueType: ItemValueTypes.Number
+  }],
+  // @TODO date dimension format support
+  // , {
+  //   settingType: SettingTypes.Dimension | SettingTypes.Color,
+  //   itemType: ItemTypes.Category,
+  //   itemValueType: ItemValueTypes.Date
+  // }],
   sub: false,
   items: [{
-    format: '数值显示格式'
+    format: '格式设置'
   }]
 }
 

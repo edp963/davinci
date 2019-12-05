@@ -78,7 +78,7 @@ public interface WidgetMapper {
     Set<Widget> getByDisplayId(@Param("displayId") Long displayId);
 
     @Select({
-            "SELECT  w.*, v.model FROM widget w ",
+            "SELECT  w.*, v.model, v.variable FROM widget w ",
             "LEFT JOIN mem_display_slide_widget m on w.id = m.widget_id",
             "LEFT JOIN display_slide s on m.display_slide_id = s.id",
             "LEFT JOIN `view` v on v.id = w.view_id",

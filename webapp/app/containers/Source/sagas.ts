@@ -23,9 +23,9 @@ import { ActionTypes } from './constants'
 import { SourceActions, SourceActionType } from './actions'
 import omit from 'lodash/omit'
 
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { errorHandler } from '../../utils/util'
+import request from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
 import { message } from 'antd'
 import { ISourceBase, ISourceRaw, ISource, ISourceDatabases, IDatabaseTables, ITableColumns } from './types'
 
@@ -115,12 +115,34 @@ export function* testSourceConnection (action: SourceActionType) {
     const res = yield call(request, {
       method: 'post',
       url: `${api.source}/test`,
-      data: payload.url
+      data: payload.testSource
     })
     yield put(SourceActions.sourceConnected())
     message.success('测试成功')
   } catch (err) {
     yield put(SourceActions.testSourceConnectionFail())
+    errorHandler(err)
+  }
+}
+
+export function* resetSourceConnection (action: SourceActionType) {
+  if (action.type !== ActionTypes.RESET_SOURCE_CONNECTION) { return }
+  const { properties, resolve } = action.payload
+  const { sourceId, username, password } = properties
+  try {
+    yield call(request, {
+      method: 'post',
+      url: `${api.source}/reconnect/${sourceId}`,
+      data: {
+        dbUser: username,
+        dbPassword: password
+      }
+    })
+    yield put(SourceActions.sourceReset())
+    message.success('连接重置成功')
+    resolve()
+  } catch (err) {
+    yield put(SourceActions.resetSourceConnectionFail())
     errorHandler(err)
   }
 }
@@ -188,6 +210,17 @@ export function* getTableColumns (action: SourceActionType) {
   }
 }
 
+export function* getDatasourcesInfo (action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_DATASOURCES_INFO) { return }
+  try {
+    const asyncData = yield call(request, `${api.source}/jdbc/datasources`)
+    yield put(SourceActions.datasourcesInfoLoaded(asyncData.payload))
+  } catch (err) {
+    yield put(SourceActions.loadDatasourcesInfoFail(err))
+    errorHandler(err)
+  }
+}
+
 export default function* rootSourceSaga (): IterableIterator<any> {
   yield all([
     takeLatest(ActionTypes.LOAD_SOURCES, getSources),
@@ -196,9 +229,11 @@ export default function* rootSourceSaga (): IterableIterator<any> {
     takeEvery(ActionTypes.DELETE_SOURCE, deleteSource),
     takeEvery(ActionTypes.EDIT_SOURCE, editSource),
     takeEvery(ActionTypes.TEST_SOURCE_CONNECTION, testSourceConnection),
+    takeEvery(ActionTypes.RESET_SOURCE_CONNECTION, resetSourceConnection),
     takeEvery(ActionTypes.GET_CSV_META_ID, getCsvMetaId),
     takeEvery(ActionTypes.LOAD_SOURCE_DATABASES, getSourceDatabases),
     takeEvery(ActionTypes.LOAD_SOURCE_DATABASE_TABLES, getDatabaseTables),
-    takeEvery(ActionTypes.LOAD_SOURCE_TABLE_COLUMNS, getTableColumns)
+    takeEvery(ActionTypes.LOAD_SOURCE_TABLE_COLUMNS, getTableColumns),
+    takeLatest(ActionTypes.LOAD_DATASOURCES_INFO, getDatasourcesInfo)
   ])
 }

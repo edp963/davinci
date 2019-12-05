@@ -19,7 +19,6 @@
 
 package edp.core.model;
 
-import edp.davinci.common.model.RecordInfo;
 import edp.davinci.model.CronJob;
 import lombok.Data;
 

@@ -21,11 +21,13 @@
 
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
-<h3>Hi,
-    <span th:text="${username}"></span>:
+<h3>Hi~
 </h3>
 <p>
     &emsp;&emsp;This email comes from cron job on the Davinci
+</p>
+<p th:if="${images}">
+    <img th:each="image:${images}" th:src="@{'cid:' + ${image}}" style="max-width: 90%; max-height: 90%"/></br>
 </p>
 </body>
 </html>

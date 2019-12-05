@@ -1,82 +1,25 @@
-import * as React from 'react'
+import React from 'react'
+import produce from 'immer'
 import { uuid } from 'utils/util'
-import OperatorTypes from 'utils/operatorTypes'
 import { IDataParams } from '../../OperatingPanel'
-import { ViewModelType, IDataParamSource } from '../../Dropbox'
-import { decodeMetricName, getAggregatorLocale, getFieldAlias } from 'containers/Widget/components/util'
+import { IDataParamSource } from '../../Dropbox'
+import { getFieldAlias } from 'containers/Widget/components/Config/Field'
+import { decodeMetricName, getAggregatorLocale } from 'containers/Widget/components/util'
+
 import {
-  fontSizeOptions,
-  TableCellStyleTypes, TableConditionStyleTypes, TableConditionStyleFieldTypes, pageSizeOptions } from './util'
+  ITableConfig, ITableHeaderConfig, ITableColumnConfig,
+  TableCellStyleTypes, DefaultTableCellStyle } from 'containers/Widget/components/Config/Table'
+import { pageSizeOptions } from './constants'
 
 import { Icon, Row, Col, Select, Radio, Checkbox, Modal } from 'antd'
 const { Option } = Select
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 
+const HeaderConfigModal = React.lazy(() => import('containers/Widget/components/Config/Table/Header/HeaderConfigModal'))
+const ColumnConfigModal = React.lazy(() => import('containers/Widget/components/Config/Table/Column/ColumnConfigModal'))
+
 const styles = require('../../Workbench.less')
-
-export interface ITableCellStyle {
-  fontSize: string
-  fontFamily: string
-  fontWeight: string
-  fontColor: string
-  fontStyle: 'normal' | 'oblique'
-  backgroundColor: string
-  justifyContent: 'flex-start' | 'center' | 'flex-end'
-}
-
-export interface ITableHeaderConfig {
-  key: string
-  headerName: string
-  alias: string
-  visualType: ViewModelType
-  isGroup: boolean
-  style: ITableCellStyle
-  children: ITableHeaderConfig[]
-}
-
-export interface ITableConditionStyle {
-  key: string
-  type: TableConditionStyleTypes,
-  operatorType: OperatorTypes
-  conditionValues: Array<string | number>
-  colors: {
-    background?: string
-    fore: string
-    positive?: string
-    negative?: string
-  },
-  bar: {
-    mode: 'auto' | 'fixed',
-    min?: number,
-    max?: number
-  },
-  zeroPosition?: 'auto' | 'center'
-  customTemplate?: string
-}
-
-export interface ITableColumnConfig {
-  columnName: string
-  alias: string
-  visualType: ViewModelType
-  styleType: TableCellStyleTypes
-  style: ITableCellStyle
-  conditionStyles: ITableConditionStyle[]
-}
-
-export interface ITableConfig {
-  headerConfig: ITableHeaderConfig[]
-  columnsConfig: ITableColumnConfig[]
-  leftFixedColumns: string[]
-  rightFixedColumns: string[]
-  headerFixed: boolean
-  bordered: boolean
-  size: 'default' | 'middle' | 'small'
-  autoMergeCell: boolean
-  withPaging: boolean
-  pageSize: string
-  withNoAggregators: boolean
-}
 
 interface ITableSectionProps {
   dataParams: IDataParams
@@ -91,9 +34,6 @@ interface ITableSectionStates {
   validHeaderConfig: ITableHeaderConfig[]
   validColumnConfig: ITableColumnConfig[]
 }
-
-import HeaderConfigModal, { DefaultTableCellStyle } from './HeaderConfigModal'
-import ColumnConfigModal from './ColumnConfigModal'
 
 export class TableSection extends React.PureComponent<ITableSectionProps, ITableSectionStates> {
 
@@ -125,15 +65,19 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   private getCurrentTableColumns (props: ITableSectionProps) {
     const { dataParams } = props
     const keyNames = ['cols', 'metrics', 'rows']
-    const validColumns: IDataParamSource[] = Object.entries(dataParams).reduce((acc, [key, value]) => {
-      if (!~keyNames.indexOf(key)) { return acc }
-      if (key !== 'metrics') { return acc.concat(value.items) }
 
-      return acc.concat(value.items.map((item) => ({
-        ...item,
-        alias: this.getColumnDisplayName(item)
-      })))
-    }, [])
+    const validColumns: IDataParamSource[] = produce(dataParams, (draft) => {
+      const columns = Object.entries(draft).reduce((acc, [key, value]) => {
+        if (!~keyNames.indexOf(key)) { return acc }
+        if (key !== 'metrics') { return acc.concat(value.items) }
+
+        return acc.concat(value.items.map((item) => ({
+          ...item,
+          alias: this.getColumnDisplayName(item)
+        })))
+      }, [])
+      return columns
+    })
     return validColumns
   }
 
@@ -141,54 +85,60 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     const { config } = props
     const columns = [...validColumns]
 
-    const localHeaderConfig: ITableHeaderConfig[] = [...config.headerConfig]
+    const localHeaderConfig = produce(config.headerConfig, (draft) => {
+      this.traverseHeaderConfig(draft, columns)
 
-    this.traverseHeaderConfig(localHeaderConfig, columns)
+      let dimensionIdx = 0
+      columns.forEach((c) => {
+        const cfg = {
+          key: uuid(5),
+          headerName: c.name,
+          alias: this.getColumnDisplayName(c),
+          visualType: c.visualType,
+          isGroup: false,
+          style: { ...DefaultTableCellStyle },
+          children: null
+        }
 
-    let dimensionIdx = 0
-    columns.forEach((c) => {
-      const cfg = {
-        key: uuid(5),
-        headerName: c.name,
-        alias: this.getColumnDisplayName(c),
-        visualType: c.visualType,
-        isGroup: false,
-        style: { ...DefaultTableCellStyle },
-        children: null
-      }
+        if (c.agg) {
+          draft.push(cfg)
+        } else {
+          draft.splice(dimensionIdx++, 0, cfg)
+        }
+      })
 
-      if (c.agg) {
-        localHeaderConfig.push(cfg)
-      } else {
-        localHeaderConfig.splice(dimensionIdx++, 0, cfg)
-      }
     })
-
     return localHeaderConfig
   }
 
   private getValidColumnConfig = (props: ITableSectionProps, validColumns: IDataParamSource[]) => {
     const { config } = props
-    const validColumnConfig: ITableColumnConfig[] = []
 
-    validColumns.forEach((column) => {
-      const existedConfig = config.columnsConfig.find((item) => item.columnName === column.name)
-      if (existedConfig) {
-        existedConfig.alias = this.getColumnDisplayName(column)
-        existedConfig.visualType = column.visualType
-        validColumnConfig.push(existedConfig)
-      } else {
-        validColumnConfig.push({
-          columnName: column.name,
-          alias: this.getColumnDisplayName(column),
-          visualType: column.visualType,
-          styleType: TableCellStyleTypes.Column,
-          style: { ...DefaultTableCellStyle },
-          conditionStyles: []
-        })
-      }
+    const validColumnConfig = produce(config.columnsConfig, (draft) => {
+      const config: ITableColumnConfig[] = []
+
+      validColumns.forEach((column) => {
+        const existedConfig = draft.find((item) => item.columnName === column.name)
+        if (existedConfig) {
+          config.push({
+            ...existedConfig,
+            alias: this.getColumnDisplayName(column),
+            visualType: column.visualType
+          })
+        } else {
+          config.push({
+            columnName: column.name,
+            alias: this.getColumnDisplayName(column),
+            visualType: column.visualType,
+            styleType: TableCellStyleTypes.Column,
+            style: { ...DefaultTableCellStyle },
+            conditionStyles: []
+          })
+        }
+      })
+
+      return config
     })
-
     return validColumnConfig
   }
 
@@ -275,7 +225,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   private deleteColumnConfig = () => {
     const { onChange } = this.props
     Modal.confirm({
-      title: '确认删除单元格样式与条件？',
+      title: '确认删除表格数据列设置？',
       onOk: () => {
         onChange('columnsConfig', [])
       }
@@ -360,7 +310,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
         </div>
         <div className={styles.paneBlock}>
           <h4>
-            <span>单元格样式与条件</span>
+            <span>表格数据列</span>
             <Icon type="delete" onClick={this.deleteColumnConfig} />
             <Icon type="edit" onClick={this.showColumnConfig} />
           </h4>
@@ -475,20 +425,20 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
             </Row>
           </div>
         </div>
-
-        <HeaderConfigModal
-          visible={headerConfigModalVisible}
-          config={validHeaderConfig}
-          onCancel={this.closeHeaderConfig}
-          onSave={this.saveHeaderConfig}
-        />
-
-        <ColumnConfigModal
-          visible={columnConfigModalVisible}
-          config={validColumnConfig}
-          onCancel={this.closeColumnConfig}
-          onSave={this.saveColumnConfig}
-        />
+        <React.Suspense fallback={null}>
+          <HeaderConfigModal
+            visible={headerConfigModalVisible}
+            config={validHeaderConfig}
+            onCancel={this.closeHeaderConfig}
+            onSave={this.saveHeaderConfig}
+          />
+          <ColumnConfigModal
+            visible={columnConfigModalVisible}
+            config={validColumnConfig}
+            onCancel={this.closeColumnConfig}
+            onSave={this.saveColumnConfig}
+          />
+        </React.Suspense>
       </div>
     )
   }

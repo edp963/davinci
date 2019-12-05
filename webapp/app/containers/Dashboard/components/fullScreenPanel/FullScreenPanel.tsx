@@ -1,11 +1,11 @@
 import React from 'react'
+import memoizeOne from 'memoize-one'
 import { Icon, Menu } from 'antd'
 import * as classnames from 'classnames'
 import DashboardItemControlForm from '../DashboardItemControlForm'
-import { IModel } from '../../../Widget/components/Workbench/index'
-import Widget, { IWidgetWrapperProps } from '../../../Widget/components/Widget'
-import { getStyleConfig } from '../../../Widget/components/util'
-import ChartTypes from '../../../Widget/config/chart/ChartTypes'
+import { IQueryConditions } from 'containers/Dashboard/Grid'
+import { IModel } from 'containers/Widget/components/Workbench/index'
+import Widget from 'containers/Widget/components/Widget'
 const styles = require('./fullScreenPanel.less')
 
 interface IFullScreenPanelProps {
@@ -75,6 +75,17 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
     } = currentDataInFullScreen
     onGetChartData('rerender', itemId, widget.id, queryConditions)
   }
+
+  private getQueryVariables = memoizeOne((queryConditions: IQueryConditions) => {
+    const { variables, linkageVariables, globalVariables } = queryConditions
+    const queryVariables = [...variables, ...linkageVariables, ...globalVariables]
+      .reduce((obj, { name, value }) => {
+        obj[`$${name}$`] = value
+        return obj
+      }, {})
+    return queryVariables
+  })
+
   public render () {
     const {isShowMenu, controlPanelVisible} = this.state
     const {visible, currentDataInFullScreen, currentItemsInfo, currentDashboard, widgets, currentItems} = this.props
@@ -83,6 +94,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
       [styles.displayNone]: !visible,
       [styles.displayBlock]: visible
     })
+
     let charts: any = null
     let menus: any
     let title: string = ''
@@ -124,11 +136,13 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
       title = c.widget.name
       itemInfo = currentItemsInfo[c.itemId]
       const widgetProps = JSON.parse(currentDataInFullScreen.widget.config)
+      const queryVariables = this.getQueryVariables(itemInfo.queryConditions)
       charts = (
         <Widget
           {...widgetProps}
           data={itemInfo && itemInfo.datasource ? itemInfo.datasource.resultList : []}
           model={currentDataInFullScreen.model}
+          queryVariables={queryVariables}
           renderType={itemInfo && itemInfo.loading ? 'loading' : 'rerender'}
           loading={itemInfo && itemInfo.loading ? itemInfo.loading : false}
         />

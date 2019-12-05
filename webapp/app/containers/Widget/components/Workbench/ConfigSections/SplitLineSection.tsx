@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { Row, Col, Checkbox, Select} from 'antd'
 const Option = Select.Option
-import ColorPicker from '../../../../../components/ColorPicker'
-import { PIVOT_CHART_LINE_STYLES } from '../../../../../globalConstants'
+import ColorPicker from 'components/ColorPicker'
+import { PIVOT_CHART_LINE_STYLES } from 'app/globalConstants'
 const styles = require('../Workbench.less')
 
 export interface ISplitLineConfig {
@@ -85,8 +85,8 @@ export class SplitLineSection extends React.PureComponent<ISplitLineSectionProps
                 onChange={this.selectChange('horizontalLineSize')}
               >
                 {Array.from(Array(10), (o, i) => (
-                    <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
-                  ))}
+                  <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                ))}
               </Select>
             </Col>
             <Col span={4}>
@@ -125,8 +125,8 @@ export class SplitLineSection extends React.PureComponent<ISplitLineSectionProps
                 onChange={this.selectChange('verticalLineSize')}
               >
                 {Array.from(Array(10), (o, i) => (
-                    <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
-                  ))}
+                  <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                ))}
               </Select>
             </Col>
             <Col span={4}>

@@ -36,7 +36,7 @@ module.exports = require('./webpack.base.babel')({
       chunks: 'all',
       cacheGroups: {
         vendors: {
-          test: /[\\/]node_modules[\\/](?!antd|jquery|three|bootstrap-datepicker|((react-)?quill))(.[a-zA-Z0-9.\-_]+)[\\/]/,
+          test: /[\\/]node_modules[\\/](?!antd|jquery|three|bootstrap-datepicker)(.[a-zA-Z0-9.\-_]+)[\\/]/,
           // test: /[\\/]node_modules[\\/]/,
           name: 'vendor',
           chunks: 'all'
@@ -67,31 +67,12 @@ module.exports = require('./webpack.base.babel')({
     new ForkTsCheckerWebpackPlugin()
   ],
 
-  tsLoaders: [
-    // {
-    //   loader: 'awesome-typescript-loader',
-    //   options: {
-    //     useBabel: true,
-    //     babelOptions: {
-    //       babelrc: true
-    //     },
-    //     useCache: true
-    //   }
-    // }
-    {
-      loader: 'babel-loader',
-      options: {
-        plugins: ['react-hot-loader/babel']
-      }
-    },
-    {
-      loader: 'ts-loader',
-      options: {
-        transpileOnly: true,
-        experimentalWatchApi: true,
-      }
+  tsLoaders: [{
+    loader: 'babel-loader',
+    options: {
+      plugins: ['react-hot-loader/babel']
     }
-  ],
+  }],
 
   // Emit a source map for easier debugging
   // See https://webpack.js.org/configuration/devtool/#devtool

@@ -26,8 +26,8 @@ import {InjectedRouter} from 'react-router/lib/Router'
 
 import { Icon } from 'antd'
 import { IProject } from '../Projects'
-import Sidebar from '../../components/Sidebar'
-import SidebarOption from '../../components/SidebarOption/index'
+import Sidebar from 'components/Sidebar'
+import SidebarOption from 'components/SidebarOption/index'
 import { selectSidebar } from './selectors'
 import { loadSidebar } from './actions'
 import { makeSelectLoginUser } from '../App/selectors'
@@ -40,7 +40,8 @@ import saga from '../Projects/sagas'
 import injectSaga from 'utils/injectSaga'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 
-import MenuPermission, { onlyVizPermission } from '../Account/components/checkMenuPermission'
+import MenuPermission from '../Account/components/checkMenuPermission'
+import { hasOnlyVizPermission } from '../Account/components/checkUtilPermission'
 const styles = require('./Report.less')
 
 interface IReportProps {
@@ -64,7 +65,17 @@ interface IsidebarDetail {
   permission?: string
 }
 
-export class Report extends React.Component<IReportProps, {}> {
+interface IReportStates {
+  isPermissioned: boolean
+}
+
+export class Report extends React.Component<IReportProps, IReportStates> {
+  public constructor (props) {
+    super(props)
+    this.state = {
+      isPermissioned: false
+    }
+  }
 
   public componentDidMount () {
     const { pid } = this.props.params
@@ -75,10 +86,28 @@ export class Report extends React.Component<IReportProps, {}> {
       this.props.onLoadProjectRoles(pid)
     }
   }
+
+  public indexRoute = (projectDetail: IProject) => {
+    const { routes, params } = this.props
+    const { permission } = projectDetail
+    const whichModuleHasPermission = Object.entries(permission).map(([k, v]) => k !== 'projectId' && typeof v === 'number' && v ? k : void 0).filter((a) => a)
+    if (routes.length === 3 && routes[routes.length - 1]['name'] === 'project') {
+      if (whichModuleHasPermission.some((p) => p === 'vizPermission')) {
+        this.props.router.replace(`/project/${params.pid}/vizs`)
+        return
+      }
+      if (whichModuleHasPermission && whichModuleHasPermission.length > 0) {
+        const path = whichModuleHasPermission[0].slice(0, -10)
+        this.props.router.replace(`/project/${params.pid}/${path}s`)
+      }
+    }
+  }
+
   public componentWillReceiveProps (nextProps) {
     const {location, currentProject} = nextProps
     let permission = void 0
     if (location && currentProject && currentProject.permission) {
+      this.indexRoute(currentProject)
       const projectPermission = currentProject.permission
       for (const attr in projectPermission) {
         if (attr) {
@@ -91,10 +120,13 @@ export class Report extends React.Component<IReportProps, {}> {
           }
         }
       }
-    }
 
-    if (permission === 0) {
-      this.props.router.replace(`/noAuthorization`)
+      if (permission === 0) {
+        this.props.router.replace(`/noAuthorization`)
+      }
+      this.setState({
+        isPermissioned: true
+      })
     }
   }
   public componentWillUnmount () {
@@ -102,12 +134,16 @@ export class Report extends React.Component<IReportProps, {}> {
   }
   public render () {
     const {
+      isPermissioned
+    } = this.state
+
+    const {
       sidebar,
       routes,
       currentProject
     } = this.props
-    const sidebarOptions = sidebar && (sidebar as IsidebarDetail[]).map((item) => {
-      const isOptionActive = item.route.indexOf(routes[3].name) >= 0
+    const sidebarOptions = isPermissioned && sidebar && (sidebar as IsidebarDetail[]).map((item) => {
+      const isOptionActive = item.route.indexOf(routes && routes[3] ? routes[3]['name'] : '') >= 0
       const ProviderSidebar = MenuPermission(currentProject, item.permission)(SidebarOption)
 
       return (
@@ -124,21 +160,23 @@ export class Report extends React.Component<IReportProps, {}> {
 
     const sidebarComponent = currentProject
       && currentProject.permission
-      && !onlyVizPermission(currentProject.permission)
+      && !hasOnlyVizPermission(currentProject.permission)
         ? (
           <Sidebar>
             {sidebarOptions}
           </Sidebar>
         ) : ''
 
-    return (
+    const reportView = isPermissioned ? (
       <div className={styles.report}>
         {sidebarComponent}
         <div className={styles.container}>
           {this.props.children}
         </div>
       </div>
-    )
+    ) : []
+
+    return reportView
   }
 }
 
@@ -156,7 +194,7 @@ export function mapDispatchToProps (dispatch) {
         { icon: (<i className="iconfont icon-widget-gallery" />), route: ['widgets'], permission: 'widget' },
         { icon: (<i className="iconfont icon-custom-business" />), route: ['views', 'view'], permission: 'view' },
         { icon: (<i className="iconfont icon-datasource24" />), route: ['sources'], permission: 'source' },
-        { icon: (<Icon type="clock-circle" />), route: ['schedule'], permission: 'schedule' }
+        { icon: (<Icon type="clock-circle" />), route: ['schedules', 'schedule'], permission: 'schedule' }
       ]
       dispatch(loadSidebar(sidebarSource))
     },

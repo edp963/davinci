@@ -29,7 +29,7 @@
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `name`,
             <if test="description != null">
-                `description`,
+            `description`,
             </if>
             <if test='pic != null and pic != "" '>
                 `pic`,
@@ -38,7 +38,9 @@
             `user_id`,
             `visibility`,
             `is_transfer`,
-            `initial_org_id`
+            `initial_org_id`,
+            `create_time`,
+            `create_by`
         </trim>
         values
         <trim prefix=" (" suffix=")" suffixOverrides=",">
@@ -53,9 +55,82 @@
             #{userId, jdbcType=BIGINT},
             #{visibility, jdbcType=TINYINT},
             #{isTransfer, jdbcType=TINYINT},
-            #{orgId, jdbcType=BIGINT}
+            #{orgId, jdbcType=BIGINT},
+            #{createTime, jdbcType=TIMESTAMP},
+            #{createUserId, jdbcType=BIGINT}
         </trim>
     </insert>
+
+    <delete id="deleteBeforOrgRole">
+        delete
+        from rel_role_project
+        where project_id = #{projectId}
+          and role_id in (select id from role where org_id = #{orgId});
+
+        delete
+        from rel_role_dashboard_widget
+        where role_id in (select id from role where org_id = #{orgId})
+          and mem_dashboard_widget_id in (
+            select id
+            from mem_dashboard_widget
+            where dashboard_id in (
+                select d.id
+                from dashboard d
+                         inner join dashboard_portal dp on dp.id = d.dashboard_portal_id
+                where dp.project_id = #{projectId}
+            )
+        );
+
+        delete
+        from rel_role_dashboard
+        where role_id in (select id from role where org_id = #{orgId})
+          and dashboard_id in (
+            select d.id
+            from dashboard d
+                     inner join dashboard_portal dp on dp.id = d.dashboard_portal_id
+            where dp.project_id = #{projectId}
+        );
+
+
+        delete
+        from rel_role_portal
+        where role_id in (select id from role where org_id = #{orgId})
+          and portal_id in (select id from dashboard_portal where project_id = #{projectId});
+
+        delete
+        from rel_role_display_slide_widget
+        where role_id in (select id from role where org_id = #{orgId})
+          and mem_display_slide_widget_id in (select m.id
+                                              from mem_display_slide_widget m
+                                                       right join display_slide s on s.id = m.display_slide_id
+                                                       right join display d on d.id = s.display_id
+                                              where d.project_id = #{projectId});
+
+
+        delete
+        from rel_role_slide
+        where role_id in (select id from role where org_id = #{orgId})
+          and slide_id in (select s.id
+                           from display_slide s
+                                    right join display d on d.id = s.display_id and d.project_id = #{projectId});
+
+        delete
+        from rel_role_display
+        where role_id in (select id from role where org_id = #{orgId})
+          and display_id in (select id from display where project_id = #{projectId});
+
+
+        delete
+        from rel_role_view
+        where role_id in (select id from role where org_id = #{orgId})
+          and view_id in (select id from view where project_id = #{projectId});
+
+        delete
+        from rel_project_admin
+        where project_id = #{projectId};
+
+
+    </delete>
 
 
     <sql id="selectProjectByUserBaseSql">
@@ -149,43 +224,43 @@
 
 
     <select id="getProjectIdsByAdmin" resultType="java.lang.Long">
-      select p.id
-      from project p
-             left join rel_project_admin rpa on rpa.project_id = p.id
-      where p.user_id = #{userId}
-         or rpa.user_id = #{userId}
-      union
-      select p.id
-      from project p
-             left join rel_user_organization ruo on ruo.org_id = p.org_id
-             left join organization o on o.id = p.org_id
-      where o.user_id = #{userId}
-         or (ruo.user_id = #{userId} and ruo.role > 0)
-  </select>
+        select p.id
+        from project p
+                 left join rel_project_admin rpa on rpa.project_id = p.id
+        where p.user_id = #{userId}
+           or rpa.user_id = #{userId}
+        union
+        select p.id
+        from project p
+                 left join rel_user_organization ruo on ruo.org_id = p.org_id
+                 left join organization o on o.id = p.org_id
+        where o.user_id = #{userId}
+           or (ruo.user_id = #{userId} and ruo.role > 0)
+    </select>
 
     <select id="getProjectDetail" resultType="edp.davinci.dto.projectDto.ProjectDetail">
-      SELECT p.*,
-             u.`id`                                       AS 'createBy.id',
-             IF(u.`name` is NULL, u.`username`, u.`name`) AS 'createBy.username',
-             u.`avatar`                                   AS 'createBy.avatar',
-             o.`id`                                       AS 'organization.id',
-             o.`name`                                     AS 'organization.name',
-             o.`description`                              AS 'organization.description',
-             o.`avatar`                                   AS 'organization.avatar',
-             o.`user_id`                                  AS 'organization.userId',
-             o.`project_num`                              AS 'organization.projectNum',
-             o.`member_num`                               AS 'organization.memberNum',
-             o.`role_num`                                 AS 'organization.teamNum',
-             o.`allow_create_project`                     AS 'organization.allowCreateProject',
-             o.`member_permission`                        AS 'organization.memberPermission',
-             o.`create_time`                              AS 'organization.createTime',
-             o.`create_by`                                AS 'organization.createBy',
-             o.`update_time`                              AS 'organization.updateTime',
-             o.`update_by`                                AS 'organization.updateBy'
-      FROM project p
-             LEFT JOIN organization o on o.`id` = p.`org_id`
-             LEFT JOIN `user` u on u.`id` = p.`user_id`
-      WHERE p.`id` = #{id}
-  </select>
+        SELECT p.*,
+               u.`id`                                       AS 'createBy.id',
+               IF(u.`name` is NULL, u.`username`, u.`name`) AS 'createBy.username',
+               u.`avatar`                                   AS 'createBy.avatar',
+               o.`id`                                       AS 'organization.id',
+               o.`name`                                     AS 'organization.name',
+               o.`description`                              AS 'organization.description',
+               o.`avatar`                                   AS 'organization.avatar',
+               o.`user_id`                                  AS 'organization.userId',
+               o.`project_num`                              AS 'organization.projectNum',
+               o.`member_num`                               AS 'organization.memberNum',
+               o.`role_num`                                 AS 'organization.teamNum',
+               o.`allow_create_project`                     AS 'organization.allowCreateProject',
+               o.`member_permission`                        AS 'organization.memberPermission',
+               o.`create_time`                              AS 'organization.createTime',
+               o.`create_by`                                AS 'organization.createBy',
+               o.`update_time`                              AS 'organization.updateTime',
+               o.`update_by`                                AS 'organization.updateBy'
+        FROM project p
+                 LEFT JOIN organization o on o.`id` = p.`org_id`
+                 LEFT JOIN `user` u on u.`id` = p.`user_id`
+        WHERE p.`id` = #{id}
+    </select>
 
 </mapper>

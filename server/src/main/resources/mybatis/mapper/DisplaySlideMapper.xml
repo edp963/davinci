@@ -28,13 +28,30 @@
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `display_id`,
             `index`,
-            `config`
+            `config`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{displayId,jdbcType=BIGINT},
             #{index,jdbcType=INTEGER},
-            #{config,jdbcType=LONGVARCHAR}
+            #{config,jdbcType=LONGVARCHAR},
+            #{createBy,jdbcType=BIGINT},
+            #{createTime,jdbcType=TIMESTAMP}
         </trim>
+    </insert>
+
+    <insert id="copySlide">
+        insert into display_slide
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            `display_id`,
+            `index`,
+            `config`,
+            `create_by`,
+            `create_time`
+        </trim>
+        select ${displayId}, `index`, `config`, ${useId}, NOW()
+        from display_slide where display_id = #{originDisplayId}
     </insert>
 
     <update id="updateBatch" parameterType="java.util.List">

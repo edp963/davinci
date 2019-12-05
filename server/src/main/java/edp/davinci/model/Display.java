@@ -19,7 +19,7 @@
 
 package edp.davinci.model;
 
-import edp.davinci.common.model.RecordInfo;
+import edp.core.model.RecordInfo;
 import lombok.Data;
 
 import javax.validation.constraints.Min;
@@ -43,4 +43,16 @@ public class Display extends RecordInfo<Display> {
     private String avatar;
 
     private Boolean publish = false;
+
+    @Override
+    public String toString() {
+        return "Display{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", projectId=" + projectId +
+                ", avatar='" + avatar + '\'' +
+                ", publish=" + publish +
+                '}';
+    }
 }

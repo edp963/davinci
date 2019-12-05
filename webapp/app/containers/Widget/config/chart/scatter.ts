@@ -4,9 +4,9 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const scatter: IChartInfo = {
   id: ChartTypes.Scatter,
@@ -14,8 +14,7 @@ const scatter: IChartInfo = {
   title: '散点图',
   icon: 'icon-scatter-chart',
   coordinate: 'cartesian',
-  requireDimetions: [0, 9999],
-  requireMetrics: 2,
+  rules: [{ dimension: [0, 9999], metric: 2 }],
   dimetionAxis: 'col',
   data: {
     cols: {

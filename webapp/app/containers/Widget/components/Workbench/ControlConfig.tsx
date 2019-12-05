@@ -23,15 +23,17 @@ import { fromJS } from 'immutable'
 import { connect } from 'react-redux'
 import moment from 'moment'
 import {
-  getDefaultLocalControl,
   IGlobalControlRelatedItem,
   InteractionType,
   IControlRelatedField,
-  ILocalControl,
-  getRelatedFieldsInfo,
+  ILocalControl
+} from 'app/components/Filters/types'
+import {
+  getDefaultLocalControl,
+  deserializeDefaultValue,
   serializeDefaultValue,
-  deserializeDefaultValue
-} from 'app/components/Filters'
+  getRelatedFieldsInfo
+} from 'app/components/Filters/util'
 import { FilterTypes, IS_RANGE_TYPE} from 'app/components/Filters/filterTypes'
 import { localControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
@@ -41,8 +43,7 @@ import OptionSettingFormWithModal, { OptionSettingForm } from 'app/components/Fi
 import { Form, Row, Col, Button, Modal, Radio, Select, Checkbox } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { setControlFormValues } from 'app/containers/Dashboard/actions'
-import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
-import { ViewVariableTypes } from 'app/containers/View/constants'
+import { IViewVariable, IFormedView, IViewModelProps } from 'app/containers/View/types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 
 const FormItem = Form.Item

@@ -19,7 +19,7 @@
 
 package edp.davinci.model;
 
-import edp.davinci.common.model.RecordInfo;
+import edp.core.model.RecordInfo;
 import lombok.Data;
 
 import javax.validation.constraints.Min;
@@ -51,4 +51,17 @@ public class MemDisplaySlideWidget extends RecordInfo<MemDisplaySlideWidget> {
     @NotBlank(message = "params cannot be EMPTY")
     private String params;
 
+    @Override
+    public String toString() {
+        return "MemDisplaySlideWidget{" +
+                "id=" + id +
+                ", displaySlideId=" + displaySlideId +
+                ", widgetId=" + widgetId +
+                ", name='" + name + '\'' +
+                ", type=" + type +
+                ", subType=" + subType +
+                ", index=" + index +
+                ", params='" + params + '\'' +
+                '}';
+    }
 }

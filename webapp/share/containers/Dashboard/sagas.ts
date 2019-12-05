@@ -18,6 +18,7 @@
  * >>
  */
 
+import omit from 'lodash/omit'
 import { takeLatest, takeEvery } from 'redux-saga'
 import { call, put, all } from 'redux-saga/effects'
 import {
@@ -25,24 +26,35 @@ import {
   LOAD_SHARE_WIDGET,
   LOAD_SHARE_RESULTSET,
   LOAD_WIDGET_CSV,
-  LOAD_SELECT_OPTIONS
+  LOAD_SELECT_OPTIONS,
+  LOAD_DOWNLOAD_LIST,
+  DOWNLOAD_FILE,
+  INITIATE_DOWNLOAD_TASK
 } from './constants'
 import {
   dashboardGetted,
   loadDashboardFail,
   widgetGetted,
   resultsetGetted,
+  getResultsetFail,
   widgetCsvLoaded,
   loadWidgetCsvFail,
   selectOptionsLoaded,
-  loadSelectOptionsFail
+  loadSelectOptionsFail,
+  downloadListLoaded,
+  loadDownloadListFail,
+  fileDownloaded,
+  downloadFileFail,
+  DownloadTaskInitiated,
+  initiateDownloadTaskFail
 } from './actions'
 
 import request from '../../../app/utils/request'
-import { errorHandler } from '../../../app/utils/util'
+import { errorHandler, getErrorMessage } from '../../../app/utils/util'
 import api from '../../../app/utils/api'
-import config, { env } from '../../../app/globalConfig'
-import { IDistinctValueReqeustParams } from '../../../app/components/Filters'
+import config, { env } from 'app/globalConfig'
+import { IDistinctValueReqeustParams } from '../../../app/components/Filters/types'
+import { message } from 'antd'
 const shareHost = config[env].shareHost
 
 export function* getDashboard (action) {
@@ -93,7 +105,7 @@ export function* getResultset (action) {
       method: 'post',
       url: `${api.share}/data/${dataToken}`,
       data: {
-        ...rest,
+        ...omit(rest, 'customOrders'),
         filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
         params: variables.concat(linkageVariables).concat(globalVariables),
         pageSize,
@@ -101,10 +113,10 @@ export function* getResultset (action) {
       }
     })
     const { resultList } = resultset.payload
-    resultset.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    resultset.payload.resultList = (resultList && resultList.slice(0, 600)) || []
     yield put(resultsetGetted(renderType, itemId, requestParams, resultset.payload))
   } catch (err) {
-    errorHandler(err)
+    yield put(getResultsetFail(itemId, getErrorMessage(err)))
   }
 }
 
@@ -137,14 +149,16 @@ export function* getSelectOptions (action) {
     const { controlKey, dataToken, requestParams, itemId } = payload
     const requestParamsMap: Array<[string, IDistinctValueReqeustParams]> = Object.entries(requestParams)
     const requests = requestParamsMap.map(([viewId, params]: [string, IDistinctValueReqeustParams]) => {
-      const { columns, filters, variables } = params
+      const { columns, filters, variables, cache, expired } = params
       return call(request, {
         method: 'post',
         url: `${api.share}/data/${dataToken}/distinctvalue/${viewId}`,
         data: {
           columns,
           filters,
-          params: variables
+          params: variables,
+          cache,
+          expired
         }
       })
     })
@@ -159,6 +173,65 @@ export function* getSelectOptions (action) {
     yield put(selectOptionsLoaded(controlKey, Array.from(new Set(values)), itemId))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
+    // errorHandler(err)
+  }
+}
+
+export function* getDownloadList (action): IterableIterator<any> {
+  const { shareClinetId, token } = action.payload
+  try {
+    const result = yield call(request, `${api.download}/share/page/${shareClinetId}/${token}`)
+    yield put(downloadListLoaded(result.payload))
+  } catch (err) {
+    yield put(loadDownloadListFail(err))
+    errorHandler(err)
+  }
+}
+
+export function* downloadFile (action): IterableIterator<any> {
+  const { id, shareClinetId, token } = action.payload
+  try {
+    location.href = `${api.download}/share/record/file/${id}/${shareClinetId}/${token}`
+    yield put(fileDownloaded(id))
+  } catch (err) {
+    yield put(downloadFileFail(err))
+    errorHandler(err)
+  }
+}
+
+export function* initiateDownloadTask (action): IterableIterator<any> {
+  const { shareClientId, dataToken, type, itemId } = action.payload
+  try {
+    const downloadParams = action.payload.downloadParams.map((params) => {
+      const {
+        id,
+        filters,
+        tempFilters,
+        linkageFilters,
+        globalFilters,
+        variables,
+        linkageVariables,
+        globalVariables,
+        ...rest
+      } = params
+      return {
+        id,
+        param: {
+          ...rest,
+          filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
+          params: variables.concat(linkageVariables).concat(globalVariables)
+        }
+      }
+    })
+    yield call(request, {
+      method: 'POST',
+      url: `${api.download}/share/submit/${type}/${shareClientId}/${dataToken}`,
+      data: downloadParams
+    })
+    message.success('下载任务创建成功！')
+    yield put(DownloadTaskInitiated(type, itemId))
+  } catch (err) {
+    yield put(initiateDownloadTaskFail(err))
     errorHandler(err)
   }
 }
@@ -169,6 +242,9 @@ export default function* rootDashboardSaga (): IterableIterator<any> {
     takeEvery(LOAD_SHARE_WIDGET, getWidget),
     takeEvery(LOAD_SHARE_RESULTSET, getResultset),
     takeLatest(LOAD_WIDGET_CSV, getWidgetCsv),
-    takeEvery(LOAD_SELECT_OPTIONS, getSelectOptions)
+    takeEvery(LOAD_SELECT_OPTIONS, getSelectOptions),
+    takeLatest(LOAD_DOWNLOAD_LIST, getDownloadList),
+    takeLatest(DOWNLOAD_FILE, downloadFile),
+    takeEvery(INITIATE_DOWNLOAD_TASK, initiateDownloadTask)
   ]
 }

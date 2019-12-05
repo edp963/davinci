@@ -19,10 +19,11 @@
 
 package edp.davinci.dto.sourceDto;
 
-import edp.davinci.model.Source;
+import edp.core.model.Dict;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import java.util.List;
 
 @Data
 public class SourceConfig {
@@ -36,20 +37,11 @@ public class SourceConfig {
 
     private String parameters;
 
+    private String version;
 
-    public SourceConfig(Source source) {
-        this.username = source.getUsername();
-        this.password = source.getPassword();
-        this.url = source.getJdbcUrl();
-        this.parameters = source.getConfigParams();
-    }
+    private List<Dict> properties;
 
-    public SourceConfig(String username, String password, String url, String parameters) {
-        this.username = username;
-        this.password = password;
-        this.url = url;
-        this.parameters = parameters;
-    }
+    private boolean isExt;
 
     public SourceConfig() {
     }

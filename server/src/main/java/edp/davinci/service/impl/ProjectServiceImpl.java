@@ -27,6 +27,7 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.PageUtils;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.enums.CronJobStatusEnum;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
@@ -96,6 +97,12 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Autowired
     private RoleMapper roleMapper;
+
+    @Autowired
+    private CronJobMapper cronJobMapper;
+
+    @Autowired
+    private RelRoleViewMapper relRoleViewMapper;
 
 
     @Override
@@ -188,7 +195,9 @@ public class ProjectServiceImpl implements ProjectService {
             log.info("not found organization, Id: {}", projectCreat.getOrgId());
             throw new NotFoundException("not found organization");
         }
-        if (!organization.getAllowCreateProject()) {
+
+        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
+        if (rel != null && rel.getRole() != UserOrgRoleEnum.OWNER.getRole() && !organization.getAllowCreateProject()) {
             log.info("project are not allowed to be created under the organization named {}", organization.getName());
             throw new UnAuthorizedExecption("project are not allowed to be created under the organization named " + organization.getName());
         }
@@ -196,6 +205,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = new Project();
         BeanUtils.copyProperties(projectCreat, project);
         project.setUserId(user.getId());
+        project.setCreateUserId(user.getId());
 
         int insert = projectMapper.insert(project);
         if (insert > 0) {
@@ -276,6 +286,9 @@ public class ProjectServiceImpl implements ProjectService {
             organization.setProjectNum(organization.getProjectNum() + 1);
             organizationMapper.updateProjectNum(organization);
 
+            projectMapper.deleteBeforOrgRole(project.getId(), beforeOrgId);
+
+
             return project;
         } else {
             log.info("transfer project fail, {} -> {}", project.getOrgId(), organization.getId());
@@ -296,6 +309,20 @@ public class ProjectServiceImpl implements ProjectService {
 
         ProjectDetail project = getProjectDetail(id, user, true);
 
+        List<CronJob> cronJobs = cronJobMapper.getByProject(project.getId());
+        if (!CollectionUtils.isEmpty(cronJobs)) {
+            List<CronJob> startedJobs = cronJobs.stream()
+                    .filter(c -> c.getJobStatus().equals(CronJobStatusEnum.START.getStatus()))
+                    .collect(Collectors.toList());
+
+            if (!CollectionUtils.isEmpty(startedJobs)) {
+                throw new ServerException("This project cannot be deleted cause which at least one 'Schedule' is started");
+            }
+        }
+
+        //删除cron_job
+        cronJobMapper.deleteByProject(project.getId());
+
         //删除displayslide、display、slide和widget的关联
         displayService.deleteSlideAndDisplayByProject(project.getId());
 
@@ -304,6 +331,9 @@ public class ProjectServiceImpl implements ProjectService {
 
         //删除widget
         widgetMapper.deleteByProject(project.getId());
+
+        //删除rel_role_view
+        relRoleViewMapper.deleteByProject(project.getId());
 
         //删除view
         viewMapper.deleteByPorject(project.getId());
@@ -358,6 +388,8 @@ public class ProjectServiceImpl implements ProjectService {
         project.setName(projectUpdate.getName());
         project.setDescription(projectUpdate.getDescription());
         project.setVisibility(projectUpdate.getVisibility());
+        project.setUpdateTime(new Date());
+        project.setUpdateBy(user.getId());
 
         int i = projectMapper.updateBaseInfo(project);
         if (i > 0) {
@@ -417,7 +449,7 @@ public class ProjectServiceImpl implements ProjectService {
      * 添加project admin
      *
      * @param id
-     * @param adminId
+     * @param adminIds
      * @param user
      * @return
      * @throws ServerException
@@ -426,30 +458,45 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Override
     @Transactional
-    public RelProjectAdminDto addAdmin(Long id, Long adminId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public List<RelProjectAdminDto> addAdmins(Long id, List<Long> adminIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         getProjectDetail(id, user, true);
 
-        RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getByProjectAndUser(id, adminId);
-        if (null != relProjectAdmin) {
-            log.warn("user (:{}) is already admin of project(:{})", adminId, id);
-            throw new ServerException("already exist this admin");
-        }
+        List<User> admins = userMapper.getByIds(adminIds);
 
-        User admin = userMapper.getById(adminId);
-
-        if (null == admin) {
+        if (null == admins || admins.isEmpty()) {
             throw new NotFoundException("user is not found");
         }
 
-        relProjectAdmin = new RelProjectAdmin(id, adminId).createdBy(user.getId());
-        int insert = relProjectAdminMapper.insert(relProjectAdmin);
-        if (insert > 0) {
-            optLogger.info("relProjectAdmin(:{}) creaty by user(:{})", relProjectAdmin.toString(), user.getId());
-            return new RelProjectAdminDto(relProjectAdmin.getId(), admin);
-        } else {
-            log.error("add project admin fail: (project:{}, admin:{})", id, adminId);
-            throw new ServerException("unspecified error");
+        admins.forEach(u -> {
+            if (!adminIds.contains(u.getId())) {
+                throw new NotFoundException("user is not found");
+            }
+        });
+
+        List<Long> oAdminIds = relProjectAdminMapper.getAdminIds(id);
+
+        admins.removeIf(u -> oAdminIds.contains(u.getId()));
+
+        if (!CollectionUtils.isEmpty(admins)) {
+            List<RelProjectAdmin> relProjectAdmins = new ArrayList<>();
+            admins.forEach(u -> relProjectAdmins.add(new RelProjectAdmin(id, u.getId()).createdBy(user.getId())));
+            int insert = relProjectAdminMapper.insertBatch(relProjectAdmins);
+            if (insert > 0) {
+                Map<Long, User> userMap = new HashMap<>();
+                admins.forEach(u -> userMap.put(u.getId(), u));
+
+                List<RelProjectAdminDto> list = new ArrayList<>();
+                relProjectAdmins.forEach(r -> {
+                    list.add(new RelProjectAdminDto(r.getId(), userMap.get(r.getUserId())));
+                });
+
+                return list;
+            } else {
+                throw new ServerException("unspecified error");
+            }
         }
+
+        return null;
     }
 
 
@@ -514,11 +561,9 @@ public class ProjectServiceImpl implements ProjectService {
         boolean isCreater = projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer();
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
+        RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getByProjectAndUser(id, user.getId());
 
         if (modify) {
-
-            RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getByProjectAndUser(id, user.getId());
-
             //项目的创建人 和 当前项目对应组织的owner可以修改
             if (!isCreater && null == relProjectAdmin && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
                 log.info("user(:{}) have not permission to modify project (:{})", user.getId(), id);
@@ -531,7 +576,12 @@ public class ProjectServiceImpl implements ProjectService {
             }
 
             //project 所在org 对普通成员project不可见
-            if (!isCreater && !projectDetail.getVisibility() && projectDetail.getOrganization().getMemberPermission() < (short) 1) {
+            if (!isCreater
+                    && rel.getRole() != UserOrgRoleEnum.OWNER.getRole()
+                    && null == relProjectAdmin
+                    && projectDetail.getOrganization().getMemberPermission() < (short) 1
+                    && !projectDetail.getVisibility()) {
+
                 log.info("user(:{}) have not permission to get project (:{})", user.getId(), id);
                 throw new UnAuthorizedExecption();
             }
@@ -559,9 +609,29 @@ public class ProjectServiceImpl implements ProjectService {
 
         List<Role> roleList = roleMapper.selectByIdsAndOrgId(projectDetail.getOrgId(), roleIds);
 
-        List<RelRoleProject> list = roleList.stream().map(role -> new RelRoleProject(projectDetail.getId(), role.getId()).createdBy(user.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(roleList)) {
+            relRoleProjectMapper.deleteByProjectId(id);
+            return null;
+        }
 
-        relRoleProjectMapper.deleteByProjectId(id);
+        List<RelRoleProject> originRels = relRoleProjectMapper.getByProject(id);
+
+        List<Long> invariantRoleIds = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(originRels)) {
+            invariantRoleIds.addAll(originRels.stream().map(RelRoleProject::getRoleId).filter(roleIds::contains).collect(Collectors.toList()));
+
+            if (!CollectionUtils.isEmpty(invariantRoleIds)) {
+                List<Long> delList = originRels.stream().filter(r -> !invariantRoleIds.contains(r.getRoleId())).map(RelRoleProject::getId).collect(Collectors.toList());
+                if (!CollectionUtils.isEmpty(delList)) {
+                    relRoleProjectMapper.deleteByIds(delList);
+                }
+            }
+        }
+
+        List<RelRoleProject> list = roleList.stream()
+                .filter(r -> !invariantRoleIds.contains(r.getId()))
+                .map(role -> new RelRoleProject(projectDetail.getId(), role.getId()).createdBy(user.getId())).collect(Collectors.toList());
+
         if (!CollectionUtils.isEmpty(list)) {
             relRoleProjectMapper.insertBatch(list);
             List<RoleProject> roleProjects = list.stream().map(r -> {

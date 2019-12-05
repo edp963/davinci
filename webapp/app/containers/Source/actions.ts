@@ -20,7 +20,16 @@
 
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
-import { ISourceBase, ISource, ITableColumns, ISourceDatabases, ICSVMetaInfo, IDatabaseTables } from './types'
+import {
+  ISourceBase,
+  ISource,
+  SourceResetConnectionProperties,
+  ITableColumns,
+  ISourceDatabases,
+  ICSVMetaInfo,
+  IDatabaseTables,
+  IDatasourceInfo
+} from './types'
 
 export const SourceActions = {
   loadSources (projectId: number) {
@@ -138,11 +147,11 @@ export const SourceActions = {
       payload: {}
     }
   },
-  testSourceConnection (url: string) {
+  testSourceConnection (testSource) {
     return {
       type: ActionTypes.TEST_SOURCE_CONNECTION,
       payload: {
-        url
+        testSource
       }
     }
   },
@@ -158,6 +167,29 @@ export const SourceActions = {
       payload: {}
     }
   },
+
+  resetSourceConnection (properties: SourceResetConnectionProperties, resolve: () => void) {
+    return {
+      type: ActionTypes.RESET_SOURCE_CONNECTION,
+      payload: {
+        properties,
+        resolve
+      }
+    }
+  },
+  sourceReset () {
+    return {
+      type: ActionTypes.RESET_SOURCE_CONNECTION_SUCCESS,
+      payload: {}
+    }
+  },
+  resetSourceConnectionFail () {
+    return {
+      type: ActionTypes.RESET_SOURCE_CONNECTION_FAILURE,
+      payload: {}
+    }
+  },
+
   getCsvMetaId (csvMeta: ICSVMetaInfo, resolve: () => void) {
     return {
       type: ActionTypes.GET_CSV_META_ID,
@@ -233,7 +265,12 @@ export const SourceActions = {
       }
     }
   },
-  loadTableColumns (sourceId: number, databaseName: string, tableName: string, resolve?) {
+  loadTableColumns (
+    sourceId: number,
+    databaseName: string,
+    tableName: string,
+    resolve?
+  ) {
     return {
       type: ActionTypes.LOAD_SOURCE_TABLE_COLUMNS,
       payload: {
@@ -260,6 +297,27 @@ export const SourceActions = {
         err
       }
     }
+  },
+  loadDatasourcesInfo () {
+    return {
+      type: ActionTypes.LOAD_DATASOURCES_INFO
+    }
+  },
+  datasourcesInfoLoaded (info: IDatasourceInfo[]) {
+    return {
+      type: ActionTypes.LOAD_DATASOURCES_INFO_SUCCESS,
+      payload: {
+        info
+      }
+    }
+  },
+  loadDatasourcesInfoFail (err) {
+    return {
+      type: ActionTypes.LOAD_DATASOURCES_INFO_FAILURE,
+      payload: {
+        err
+      }
+    }
   }
 }
 
@@ -267,4 +325,3 @@ const mockAction = returnType(SourceActions)
 export type SourceActionType = typeof mockAction
 
 export default SourceActions
-
