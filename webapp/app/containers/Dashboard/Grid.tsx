@@ -566,17 +566,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     )
   }
 
-  // private downloadCsv = (itemId: number, widgetId: number) => {
-  //   this.getData(
-  //     (renderType, itemId, widget, requestParams) => {
-  //       this.props.onLoadWidgetCsv(itemId, widget.id, requestParams)
-  //     },
-  //     'rerender',
-  //     itemId,
-  //     widgetId
-  //   )
-  // }
-
   private initiateWidgetDownloadTask = (itemId: number, widgetId: number) => {
     const { widgets } = this.props
     const widget = widgets.find((w) => w.id === widgetId)
