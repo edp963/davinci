@@ -161,7 +161,9 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         }
         if (!CollectionUtils.isEmpty(images)) {
             images.forEach(image -> {
-                String contentId = CronJobMediaType.IMAGE.getType() + image.getOrder();
+                String contentId = CronJobMediaType.IMAGE.getType() +
+                        Constants.UNDERLINE +
+                        UUID.randomUUID().toString().replaceAll(Constants.MINUS, EMPTY);
                 attachmentList.add(new MailAttachment(contentId, image.getImageFile(), image.getUrl(), true));
             });
         }
