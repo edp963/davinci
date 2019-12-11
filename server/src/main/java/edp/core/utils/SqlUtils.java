@@ -330,7 +330,7 @@ public class SqlUtils {
                 columnPrefixExtractor(columnPrefixs, plainSelect);
             }
         } catch (JSQLParserException e) {
-            log.warn("Get table name or alias Error: {}", e.getCause().getMessage());
+//            log.warn("Get table name or alias Error: {}", e.getCause().getMessage());
         }
         return columnPrefixs;
     }
