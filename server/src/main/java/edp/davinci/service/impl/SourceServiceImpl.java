@@ -266,7 +266,7 @@ public class SourceServiceImpl implements SourceService {
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
         if (projectPermission.getSourcePermission() < UserPermissionEnum.WRITE.getPermission()) {
-            log.info("user (:{}) have not permission to reconnect source(:{})", user.getId(), projectId);
+            log.info("user (:{}) have not permission to " + operation + " this source(:{})", user.getId(), projectId);
             throw new UnAuthorizedExecption("you have not permission to " + operation + " this source");
         }
     }
