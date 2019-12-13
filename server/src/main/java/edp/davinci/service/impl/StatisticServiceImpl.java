@@ -78,7 +78,7 @@ public class StatisticServiceImpl implements StatisticService {
             return;
         }
 
-        String kafkaServers = environment.getProperty("kafka.bootstrap.servers");
+        String kafkaServers = environment.getProperty("statistic.kafka.bootstrap.servers");
         if(StringUtils.isNotBlank(kafkaServers)) {
             String topic = environment.getProperty("statistic.kafka.topic");
             kafkaOperationService.send(topic, JSON.toJSONString(infoList));
