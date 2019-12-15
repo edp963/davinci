@@ -60,7 +60,6 @@ import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.MD5Util;
 import edp.core.utils.RedisUtils;
-import edp.core.utils.RedisUtils.RedisLock;
 import edp.core.utils.SourceUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
