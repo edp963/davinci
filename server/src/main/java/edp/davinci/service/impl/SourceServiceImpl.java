@@ -30,7 +30,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +60,7 @@ import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.MD5Util;
 import edp.core.utils.RedisUtils;
+import edp.core.utils.RedisUtils.RedisLock;
 import edp.core.utils.SourceUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
@@ -120,27 +120,11 @@ public class SourceServiceImpl implements SourceService {
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
-        
         Long sourceId = sourceMapper.getByNameWithProjectId(name, projectId);
-
         if (null != id && null != sourceId) {
             return !id.equals(sourceId);
         }
-        
-        if (null != sourceId && sourceId.longValue() > 0L) {
-            return true;
-        }
-        
-        if (!redisUtils.isRedisEnable()) {
-            return false;
-        }
-        
-        if (redisUtils.get("SOURCE@"+projectId+"@"+name) != null) {
-            return true;
-        }
-        
-        redisUtils.set("SOURCE@"+projectId+"@"+name, System.currentTimeMillis(), 10 * 1000L);
-        return false;
+        return null != sourceId && sourceId.longValue() > 0L;
     }
 
     /**

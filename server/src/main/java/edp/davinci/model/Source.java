@@ -37,6 +37,7 @@ import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 @Slf4j
 @Data
 public class Source extends BaseSource {
+
     private Long id;
 
     private String name;

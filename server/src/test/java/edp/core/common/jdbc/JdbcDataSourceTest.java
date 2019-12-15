@@ -1,44 +1,57 @@
 
 package edp.core.common.jdbc;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import edp.core.model.JdbcSourceInfo;
 import edp.core.model.JdbcSourceInfo.JdbcSourceInfoBuilder;
+import edp.davinci.BaseTest;
 
 /**
  * JdbcDataSourceTest description: ???
  *
  */
-@SpringBootTest(webEnvironment = WebEnvironment.MOCK)
 @RunWith(SpringRunner.class)
-public class JdbcDataSourceTest {
+public class JdbcDataSourceTest extends BaseTest {
+
+    @Value("${spring.datasource.url}")
+    private String url;
+
+    @Value("${spring.datasource.username}")
+    private String username;
+
+    @Value("${spring.datasource.password}")
+    private String password;
 
     @Autowired
     JdbcDataSource dataSource;
 
+    JdbcSourceInfo jdbcSourceInfo;
+
+    @Before
+    public void setUp() throws Exception {
+
+        jdbcSourceInfo = JdbcSourceInfoBuilder.aJdbcSourceInfo().withJdbcUrl(url).withUsername(username)
+                .withPassword(password).withExt(false).build();
+    }
+
     @Test
     public void getDataSource() {
 
-        JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfoBuilder.aJdbcSourceInfo().withJdbcUrl(
-                "jdbc:mysql://10.143.252.121:3306/app?allowMultiQueries=true&amp;useUnicode=true&amp;characterEncoding=UTF-8")
-                .withUsername("test121").withPassword("dds@test121").withExt(false).build();
         assertNotNull(dataSource.getDataSource(jdbcSourceInfo));
     }
-    
+
     @Test
     public void removeDatasource() {
 
-        JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfoBuilder.aJdbcSourceInfo().withJdbcUrl(
-                "jdbc:mysql://10.143.252.121:3306/app?allowMultiQueries=true&amp;useUnicode=true&amp;characterEncoding=UTF-8")
-                .withUsername("test121").withPassword("dds@test121").withExt(false).build();
         dataSource.removeDatasource(jdbcSourceInfo);
         assertFalse(dataSource.isDataSourceExist(jdbcSourceInfo));
     }
