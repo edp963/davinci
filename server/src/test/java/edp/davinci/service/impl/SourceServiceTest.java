@@ -70,7 +70,7 @@ public class SourceServiceTest extends BaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        source = createSource("junit data source 4 set up");
+        source = createSource("junit data source 4 test");
     }
     
     private Source createSource(String name) {
