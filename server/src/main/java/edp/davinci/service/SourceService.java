@@ -35,7 +35,6 @@ import java.util.List;
 
 public interface SourceService extends CheckEntityService {
 
-
     List<Source> getSources(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     Source createSource(SourceCreate sourceCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;

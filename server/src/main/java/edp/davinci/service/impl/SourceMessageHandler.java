@@ -43,6 +43,7 @@ public class SourceMessageHandler implements RedisMessageHandler {
     @Override
     public void handle(Object message, String flag) {
 
+    	// the flag is deprecated
         log.info("SourceHandler received release source message (:{}), and Flag is (:{})", message, flag);
         
         if (!(message instanceof Long)) {
