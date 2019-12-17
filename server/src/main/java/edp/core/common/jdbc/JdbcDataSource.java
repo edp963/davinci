@@ -100,15 +100,28 @@ public class JdbcDataSource {
 
     private static volatile Map<String, DruidDataSource> dataSourceMap = new ConcurrentHashMap<>();
     private static volatile Map<String, Lock> dataSourceLockMap = new ConcurrentHashMap<>();
-
-    private synchronized Lock getDataSourceLock(String key) {
+    private static final Object lockLock = new Object();
+    
+    private Lock getDataSourceLock(String key) {
         if (dataSourceLockMap.containsKey(key)) {
             return dataSourceLockMap.get(key);
         }
         
-        Lock lock = new ReentrantLock();
-        dataSourceLockMap.put(key, lock);
-        return lock;
+        synchronized (lockLock) {
+            Lock lock = new ReentrantLock();
+            dataSourceLockMap.put(key, lock);
+            return lock;
+        }
+    }
+    
+    /**
+     * only for test
+     * @param jdbcSourceInfo
+     * @return
+     */
+    public boolean isDataSourceExist(JdbcSourceInfo jdbcSourceInfo) {
+        
+        return dataSourceMap.containsKey(getDataSourceKey(jdbcSourceInfo));
     }
     
     public void removeDatasource(JdbcSourceInfo jdbcSourceInfo) {
@@ -223,7 +236,7 @@ public class JdbcDataSource {
         return druidDataSource;
     }
     
-    private static String getDataSourceKey (JdbcSourceInfo jdbcSourceInfo) {
+    private String getDataSourceKey (JdbcSourceInfo jdbcSourceInfo) {
         return SourceUtils.getKey(jdbcSourceInfo.getJdbcUrl(),
                 jdbcSourceInfo.getUsername(),
                 jdbcSourceInfo.getPassword(),

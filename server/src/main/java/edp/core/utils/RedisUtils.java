@@ -91,17 +91,10 @@ public class RedisUtils {
         list.leftPush(key, value);
     }
 
-    public void bLpush(String key, Object value) {
-        // TODO need to fix dead store
-        ListOperations<String, Object> list = redisTemplate.opsForList();
-    }
-
-
     public Object rPop(String key) {
         ListOperations<String, Object> list = redisTemplate.opsForList();
         return list.rightPop(key);
     }
-
 
     public void convertAndSend(String channel, Object message) {
         redisTemplate.convertAndSend(channel, message);
