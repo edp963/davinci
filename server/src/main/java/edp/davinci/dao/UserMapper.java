@@ -21,6 +21,8 @@ package edp.davinci.dao;
 
 import edp.davinci.dto.userDto.UserBaseInfo;
 import edp.davinci.model.User;
+
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -67,4 +69,12 @@ public interface UserMapper {
 
     @Select({"select count(id) from `user` where `username` = #{username}"})
     boolean existUsername(@Param("username") String username);
+    
+    /**
+     * only for test
+     * @param id
+     * @return
+     */
+    @Delete({"delete from `user` where id = #{id}"})
+    int deleteById(@Param("id") Long id);
 }

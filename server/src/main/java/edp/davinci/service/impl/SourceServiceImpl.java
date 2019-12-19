@@ -22,10 +22,10 @@ package edp.davinci.service.impl;
 import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,6 +43,7 @@ import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
 import edp.core.common.jdbc.JdbcDataSource;
@@ -53,13 +54,14 @@ import edp.core.exception.SourceException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.DBTables;
 import edp.core.model.JdbcSourceInfo;
+import edp.core.model.JdbcSourceInfo.JdbcSourceInfoBuilder;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
-import edp.core.utils.MD5Util;
 import edp.core.utils.RedisUtils;
+import edp.core.utils.RedisUtils.RedisLock;
 import edp.core.utils.SourceUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
@@ -118,14 +120,14 @@ public class SourceServiceImpl implements SourceService {
 	private RedisUtils redisUtils;
 
 	@Override
-	public synchronized boolean isExist(String name, Long id, Long projectId) {
+	public boolean isExist(String name, Long id, Long projectId) {
 		Long sourceId = sourceMapper.getByNameWithProjectId(name, projectId);
 		if (null != id && null != sourceId) {
 			return !id.equals(sourceId);
 		}
 		return null != sourceId && sourceId.longValue() > 0L;
 	}
-
+	
 	/**
 	 * 获取source列表
 	 *
@@ -191,46 +193,70 @@ public class SourceServiceImpl implements SourceService {
 	@Transactional
 	public Source createSource(SourceCreate sourceCreate, User user)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
-
-		checkSourcePermission(sourceCreate.getProjectId(), user, "create");
-
-		if (isExist(sourceCreate.getName(), null, sourceCreate.getProjectId())) {
-			log.info("the source {} name is already taken", sourceCreate.getName());
-			throw new ServerException("the source name is already taken");
+		
+		String name = sourceCreate.getName();
+		Long projectId = sourceCreate.getProjectId();
+		
+		if (isExist(name, null, projectId)) {
+			alertNameTaken(name);
 		}
+
+		checkSourcePermission(projectId, user, "create");
 
 		if (null == SourceTypeEnum.typeOf(sourceCreate.getType())) {
 			throw new ServerException("Invalid source type");
 		}
 
-		// 测试连接
-		SourceConfig config = sourceCreate.getConfig();
+		RedisLock lock = getSourceLock(name, projectId);
+		if (lock != null && !lock.getLock()) {
+			alertNameTaken(name);
+		}
+		
+		try{
 
-		boolean testConnection = sqlUtils
-                .init(
-                        config.getUrl(),
-                        config.getUsername(),
-                        config.getPassword(),
-                        config.getVersion(),
-                        config.getProperties(),
-                        config.isExt()
-                ).testConnection();
-
-		if (testConnection) {
+			SourceConfig config = sourceCreate.getConfig();
+			
+			// 测试连接
+			if (!testConnection(config)) {
+				throw new ServerException("test source connection fail");
+			}
+			
 			Source source = new Source().createdBy(user.getId());
 			BeanUtils.copyProperties(sourceCreate, source);
 			source.setConfig(JSONObject.toJSONString(config));
 
-			int insert = sourceMapper.insert(source);
-			if (insert > 0) {
-				optLogger.info("source ({}) create by user (:{})", source.toString(), user.getId());
-				return source;
-			} else {
-				throw new ServerException("create source fail");
+			if (sourceMapper.insert(source) != 1) {
+				throw new ServerException("create source fail"); 
 			}
-		} else {
-			throw new ServerException("get source connection fail");
+
+			optLogger.info("source ({}) create by user (:{})", source.toString(), user.getId());
+			return source;
+
+		}finally {
+			releaseLock(lock);
 		}
+	}
+	
+	private RedisLock getSourceLock(String name, Long projectId) {
+		
+		RedisLock lock = null;
+		
+		if (redisUtils.isRedisEnable()) {
+			lock = redisUtils.new RedisLock("SOURCE@" + name + "@" + projectId, 5);
+		}
+		
+		return lock;
+	}
+	
+	private void releaseLock(RedisLock lock) {
+		if (lock != null) {
+			lock.release();
+		}
+	}
+	
+	private void alertNameTaken(String name) {
+		log.warn("the source {} name is already taken", name);
+		throw new ServerException("the source name is already taken");
 	}
 
 	private Source getSource(Long id) {
@@ -252,9 +278,20 @@ public class SourceServiceImpl implements SourceService {
 		ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
 		if (projectPermission.getSourcePermission() < UserPermissionEnum.WRITE.getPermission()) {
-			log.info("user (:{}) have not permission to " + operation + " this source(:{})", user.getId(), projectId);
+			log.info("user (:{}) have not permission to " + operation + " this source (:{})", user.getId(), projectId);
 			throw new UnAuthorizedExecption("you have not permission to " + operation + " this source");
 		}
+	}
+	
+	private boolean testConnection(SourceConfig config) {
+		return sqlUtils.init(
+                        config.getUrl(),
+                        config.getUsername(),
+                        config.getPassword(),
+                        config.getVersion(),
+                        config.getProperties(),
+                        config.isExt()
+                ).testConnection();
 	}
 
 	/**
@@ -268,58 +305,74 @@ public class SourceServiceImpl implements SourceService {
 	@Transactional
 	public Source updateSource(SourceInfo sourceInfo, User user)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
-
+		
 		Source source = getSource(sourceInfo.getId());
-
+		
 		checkSourcePermission(source.getProjectId(), user, "update");
+		
+		String name = sourceInfo.getName();
+		Long projectId = source.getProjectId();
 
-		if (isExist(sourceInfo.getName(), sourceInfo.getId(), source.getProjectId())) {
-			log.info("the source {} name is already taken", sourceInfo.getName());
-			throw new ServerException("the source name is already taken");
+		if (isExist(name, sourceInfo.getId(), projectId)) {
+			alertNameTaken(name);
 		}
-
-		SourceConfig sourceConfig = sourceInfo.getConfig();
-
-		// 测试连接
-        boolean testConnection = sqlUtils
-                .init(
-                        sourceConfig.getUrl(),
-                        sourceConfig.getUsername(),
-                        sourceConfig.getPassword(),
-                        sourceConfig.getVersion(),
-                        sourceConfig.getProperties(),
-                        sourceConfig.isExt()
-                ).testConnection();
-
-		if (!testConnection) {
-			throw new ServerException("get source connection fail");
-		}
-
-		// 准备释放失效数据源
-		Source copySource = new Source();
-		BeanUtils.copyProperties(source, copySource);
-
-		BeanUtils.copyProperties(sourceInfo, source);
-		source.updatedBy(user.getId());
-		source.setConfig(JSONObject.toJSONString(sourceInfo.getConfig()));
-
-		int update = sourceMapper.update(source);
-		if (update > 0) {
-			optLogger.info("source ({}) update by user(:{}), origin ( {} )", source.toString(), user.getId(),
-					source.toString());
-			// 释放失效数据源
-			String oldKey = SourceUtils.getKey(copySource.getJdbcUrl(), copySource.getUsername(),
-					copySource.getPassword(), copySource.getDbVersion(), copySource.isExt());
-			String newKey = SourceUtils.getKey(sourceConfig.getUrl(), sourceConfig.getUsername(),
-					sourceConfig.getPassword(), sourceConfig.getVersion(), sourceConfig.isExt());
-			if (!newKey.equals(oldKey)) {
-				releaseSource(copySource);
+		
+		RedisLock lock = null;
+		
+		if (!name.equals(source.getName())) {
+			lock = getSourceLock(name, projectId);
+			if (lock != null && !lock.getLock()) {
+				alertNameTaken(name);
 			}
-			return source;
 		}
 
-		log.info("update source fail: {}", source.toString());
-		throw new ServerException("update source fail: unspecified error");
+		try {
+			
+			SourceConfig config = sourceInfo.getConfig();
+
+			// 测试连接
+			if (!testConnection(config)) {
+				throw new ServerException("test source connection fail");
+			}
+
+			// 失效的数据源
+			Source sourceCopy = new Source();
+			BeanUtils.copyProperties(source, sourceCopy);
+
+			BeanUtils.copyProperties(sourceInfo, source);
+			source.updatedBy(user.getId());
+			source.setConfig(JSONObject.toJSONString(sourceInfo.getConfig()));
+
+			if (sourceMapper.update(source) != 1) {
+				log.info("update source fail:{}", source.toString());
+				throw new ServerException("update source fail:unspecified error");
+			}
+			
+			// 释放失效数据源
+			String copyKey = SourceUtils.getKey(
+					sourceCopy.getJdbcUrl(), 
+					sourceCopy.getUsername(),
+					sourceCopy.getPassword(), 
+					sourceCopy.getDbVersion(), 
+					sourceCopy.isExt());
+			
+			String newKey = SourceUtils.getKey(
+					config.getUrl(), 
+					config.getUsername(), 
+					config.getPassword(),
+					config.getVersion(), 
+					config.isExt());
+			
+			if (!newKey.equals(copyKey)) {
+				releaseSource(sourceCopy);
+			}
+
+			optLogger.info("source ({}) update by user (:{})", source.toString(), user.getId());
+			return source;
+			
+		} finally {
+			releaseLock(lock);
+		}
 	}
 
 	/**
@@ -339,13 +392,12 @@ public class SourceServiceImpl implements SourceService {
 
 		List<View> viewList = viewMapper.getBySourceId(id);
 		if (!CollectionUtils.isEmpty(viewList)) {
-			log.warn("There is at least one view using the source({}), it is can not be deleted", id);
+			log.warn("There is at least one view using the source ({}), it is can not be deleted", id);
 			throw new ServerException("There is at least one view using the source, it is can not be deleted");
 		}
 
-		int i = sourceMapper.deleteById(id);
-		if (i > 0) {
-			optLogger.info("source ({}) delete by user(:{})", source.toString(), user.getId());
+		if (sourceMapper.deleteById(id) ==1) {
+			optLogger.info("source ({}) delete by user (:{})", source.toString(), user.getId());
 			releaseSource(source);
 			return true;
 		} else {
@@ -363,6 +415,7 @@ public class SourceServiceImpl implements SourceService {
 	public boolean testSource(SourceTest sourceTest) throws ServerException {
 
 		boolean testConnection = false;
+		
 		try {
 
 			if (!sourceTest.isExt()) {
@@ -391,7 +444,7 @@ public class SourceServiceImpl implements SourceService {
 		}
 
 		if (!testConnection) {
-			throw new ServerException("get source connection fail");
+			throw new ServerException("test source connection fail");
 		}
 
 		return true;
@@ -413,22 +466,24 @@ public class SourceServiceImpl implements SourceService {
 
 		checkSourcePermission(source.getProjectId(), user, "upload csv file in");
 
-		if (uploadMeta.getMode() != UploadModeEnum.REPLACE.getMode()) {
-			try {
-				boolean tableIsExist = sqlUtils.init(source).tableIsExist(uploadMeta.getTableName());
-				if (uploadMeta.getMode() == UploadModeEnum.NEW.getMode()) {
-					if (tableIsExist) {
-						throw new ServerException("table " + uploadMeta.getTableName() + " is already exist");
-					}
-				} else {
-					if (!tableIsExist) {
-						throw new ServerException("table " + uploadMeta.getTableName() + " is not exist");
-					}
+		if (uploadMeta.getMode() == UploadModeEnum.REPLACE.getMode()) {
+			return;
+		}
+
+		try {
+			boolean tableIsExist = sqlUtils.init(source).tableIsExist(uploadMeta.getTableName());
+			if (uploadMeta.getMode() == UploadModeEnum.NEW.getMode()) {
+				if (tableIsExist) {
+					throw new ServerException("table " + uploadMeta.getTableName() + " is already exist");
 				}
-			} catch (SourceException e) {
-				log.error(e.getMessage());
-				throw new ServerException(e.getMessage());
+			} else {
+				if (!tableIsExist) {
+					throw new ServerException("table " + uploadMeta.getTableName() + " is not exist");
+				}
 			}
+		} catch (SourceException e) {
+			log.error(e.getMessage());
+			throw new ServerException(e.getMessage());
 		}
 	}
 
@@ -493,7 +548,18 @@ public class SourceServiceImpl implements SourceService {
 
 		return true;
 	}
-
+	
+	private <T> T handleHiddenPermission(T obj, ProjectDetail projectDetail, User user, Long sourceId,
+			String operation) {
+		ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+		if (projectPermission.getSourcePermission() != UserPermissionEnum.HIDDEN.getPermission()) {
+			return obj;
+		}
+		
+		log.info("user (:{}) have not permission to get source (:{}) {}", user.getId(), sourceId, operation);
+		return null;
+	}
+	
 	/**
 	 * 获取Source 的 db
 	 *
@@ -519,11 +585,7 @@ public class SourceServiceImpl implements SourceService {
 		}
 
 		if (null != dbList) {
-			ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-			if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
-				log.info("user (:{}) have not permission to get source(:{}) databases", user.getId(), source.getId());
-				dbList = null;
-			}
+			dbList = handleHiddenPermission(dbList, projectDetail, user, source.getId(), "databases");
 		}
 
 		return dbList;
@@ -553,16 +615,13 @@ public class SourceServiceImpl implements SourceService {
 		}
 
 		if (null != tableList) {
-			ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-			if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
-				log.info("user (:{}) have not permission to get source(:{}) tables", user.getId(), source.getId());
-				tableList = null;
-			}
+			handleHiddenPermission(tableList, projectDetail, user, source.getId(), "tables");
 		}
 
 		if (null != tableList) {
 			dbTable.setTables(tableList);
 		}
+
 		return dbTable;
 	}
 
@@ -589,12 +648,7 @@ public class SourceServiceImpl implements SourceService {
 		}
 
 		if (null != tableInfo) {
-			ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-			if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
-				log.info("user (:{}) have not permission to get source(:{}) table columns", user.getId(),
-						source.getId());
-				tableInfo = null;
-			}
+			handleHiddenPermission(tableInfo, projectDetail, user, source.getId(), "table columns");
 		}
 
 		return tableInfo;
@@ -616,7 +670,7 @@ public class SourceServiceImpl implements SourceService {
 
 		if (!(dbBaseInfo.getDbUser().equals(source.getUsername())
 				&& dbBaseInfo.getDbPassword().equals(source.getPassword()))) {
-			log.warn("reconnect source(:{}) error, dbuser and dbpassword is wrong", id);
+			log.warn("reconnect source (:{}) error, dbuser and dbpassword is wrong", id);
 			throw new ServerException("user or password is wrong");
 		}
 
@@ -633,13 +687,26 @@ public class SourceServiceImpl implements SourceService {
 	private void releaseSource(Source source) {
 
 		if (redisUtils.isRedisEnable()) {
-			publishReconnect(source.getId());
+			Map<String,Object> map = new HashMap<>();
+			
+			map.put("url", source.getJdbcUrl());
+			map.put("username", source.getUsername());
+			map.put("password", source.getPassword());
+			map.put("version", source.getDbVersion());
+			map.put("ext", source.isExt());
+			
+			publishReconnect(JSON.toJSONString(map));
 		} else {
 			SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
-			JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo.JdbcSourceInfoBuilder.aJdbcSourceInfo()
-					.withJdbcUrl(source.getJdbcUrl()).withUsername(source.getUsername())
-					.withPassword(source.getPassword()).withDatabase(source.getDatabase())
-					.withDbVersion(source.getDbVersion()).withProperties(source.getProperties()).withExt(source.isExt())
+			JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfoBuilder
+					.aJdbcSourceInfo()
+					.withJdbcUrl(source.getJdbcUrl())
+					.withUsername(source.getUsername())
+					.withPassword(source.getPassword())
+					.withDatabase(source.getDatabase())
+					.withDbVersion(source.getDbVersion())
+					.withProperties(source.getProperties())
+					.withExt(source.isExt())
 					.build();
 
 			sourceUtils.releaseDataSource(jdbcSourceInfo);
@@ -651,10 +718,12 @@ public class SourceServiceImpl implements SourceService {
 	 * 
 	 * @param id
 	 */
-	private void publishReconnect(Long id) {
+	private void publishReconnect(String message) {
 
-		String flag = MD5Util.getMD5(UUID.randomUUID().toString() + id, true, 32);
-		redisUtils.convertAndSend(DAVINCI_TOPIC_CHANNEL, new RedisMessageEntity(SourceMessageHandler.class, id, flag));
+		//	String flag = MD5Util.getMD5(UUID.randomUUID().toString() + id, true, 32);
+		// the flag is deprecated
+		String flag = "-1";
+		redisUtils.convertAndSend(DAVINCI_TOPIC_CHANNEL, new RedisMessageEntity(SourceMessageHandler.class,  message, flag));
 	}
 
 	/**
@@ -794,23 +863,22 @@ public class SourceServiceImpl implements SourceService {
 
 			// 分页批量插入
 			long startTime = System.currentTimeMillis();
-			log.info("execute insert start ----  {}", DateUtils.toyyyyMMddHHmmss(startTime));
+			log.info("execute insert start ---- {}", DateUtils.toyyyyMMddHHmmss(startTime));
 			for (int pageNum = 1; pageNum < totalPage + 1; pageNum++) {
 				int localPageNum = pageNum;
 				int localPageSize = pageSize;
 				future = executorService.submit(() -> {
 					int starNum = (localPageNum - 1) * localPageSize;
 					int endNum = localPageNum * localPageSize > totalSize ? (totalSize) : localPageNum * localPageSize;
-					log.info("executeInsert thread-{} : start:{}, end: {}", localPageNum, starNum, endNum);
+					log.info("executeInsert thread-{} : start:{}, end:{}", localPageNum, starNum, endNum);
 					sqlUtils.executeBatch(sql, headers, values.subList(starNum, endNum));
 				});
 			}
 
 			try {
 				future.get();
-
 				long endTime = System.currentTimeMillis();
-				log.info("execute insert end ----  {}", DateUtils.toyyyyMMddHHmmss(endTime));
+				log.info("execute insert end ---- {}", DateUtils.toyyyyMMddHHmmss(endTime));
 				log.info("execution time {} second", (endTime - startTime) / 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();

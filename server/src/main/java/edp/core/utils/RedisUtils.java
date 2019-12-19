@@ -19,32 +19,84 @@
 
 package edp.core.utils;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class RedisUtils {
-
+	
     @Autowired(required = false)
     @Qualifier("initRedisTemplate")
     private RedisTemplate<String, Object> redisTemplate;
 
     @Value("${spring.redis.isEnable:false}")
     private boolean isRedisEnable;
+    
+    public class RedisLock {
+    	
+    	private final String  script = "if redis.call('setnx', KEYS[1], ARGV[1]) == 1 then return redis.call('expire', KEYS[1], ARGV[2]) else return 0 end";
+    	
+		private String key;
+		private int timeout;
+		private long currentTime;
+		
+		public RedisLock(String key, int timeout) {
+			this.key = key;
+			this.timeout = timeout;
+		}
+		
+		public boolean getLock() {
+			currentTime = System.currentTimeMillis();
+			return setIfAbsent(key, currentTime, timeout);
+		}
+
+		public boolean release() {
+			if (isHolding()) {
+				return delete(key);
+			}
+			return false;
+		}
+
+		private boolean isHolding() {
+			if (currentTime == (long) get(key)) {
+				return true;
+			}
+			return false;
+		}
+		
+		@SuppressWarnings("unchecked")
+		public boolean setIfAbsent(String key, Object value, int timeout) {
+	        
+			if (!isRedisEnable) {
+	            throw new RuntimeException("Redis is disabled");
+	        }
+	        
+	        List<String> keys = new ArrayList<>();
+	        keys.add(key);
+	        
+	        Object[] values = new Object[]{value,timeout};
+	        
+	        return 1L== (Long)redisTemplate.execute(RedisScript.of(script, Long.class),keys,values);
+		}
+
+    }
 
     public boolean isRedisEnable() {
         return isRedisEnable;
     }
 
     public boolean set(String key, Object value) {
-        if (null != redisTemplate) {
+        if (isRedisEnable) {
             ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
             valueOperations.set(key, value);
             return true;
@@ -53,7 +105,7 @@ public class RedisUtils {
     }
 
     public boolean set(String key, Object value, Long millisecond) {
-        if (null != redisTemplate) {
+        if (!isRedisEnable) {
             ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
             valueOperations.set(key, value, millisecond, TimeUnit.MILLISECONDS);
             return true;
@@ -62,7 +114,7 @@ public class RedisUtils {
     }
 
     public boolean set(String key, Object value, Long l, TimeUnit timeUnit) {
-        if (null != redisTemplate) {
+        if (!isRedisEnable) {
             ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
             valueOperations.set(key, value, l, timeUnit);
             return true;
@@ -71,7 +123,7 @@ public class RedisUtils {
     }
 
     public Object get(String key) {
-        if (null == redisTemplate) {
+        if (!isRedisEnable) {
             return null;
         }
         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
@@ -79,11 +131,11 @@ public class RedisUtils {
     }
 
     public boolean hasKey(String key) {
-        return null != redisTemplate && redisTemplate.hasKey(key);
+        return isRedisEnable && redisTemplate.hasKey(key);
     }
 
     public boolean delete(String key) {
-        return null != redisTemplate && redisTemplate.delete(key);
+        return isRedisEnable && redisTemplate.delete(key);
     }
 
     public void lPush(String key, Object value) {
@@ -99,4 +151,5 @@ public class RedisUtils {
     public void convertAndSend(String channel, Object message) {
         redisTemplate.convertAndSend(channel, message);
     }
+
 }
