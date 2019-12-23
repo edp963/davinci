@@ -77,6 +77,7 @@ public interface DisplaySlideMapper {
             "	d.project_id as 'display.projectId',",
             "	d.avatar as 'display.avatar',",
             "	d.publish as 'display.publish',",
+            "	d.config as 'display.config',",
             "	p.id 'project.id',",
             "	p.`name` 'project.name',",
             "	p.description 'project.description',",
