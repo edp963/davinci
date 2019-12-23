@@ -18,17 +18,18 @@
  * >>
  */
 
-import { call, all, put, takeLatest, takeEvery, throttle } from 'redux-saga/effects'
-
-import { ActionTypes as OrganizationActionTypes } from '../Organizations/constants'
-import { OrganizationActions, OrganizationActionType } from 'containers/Organizations/actions'
-
+import api from 'utils/api'
+import request from 'utils/request'
+import { errorHandler } from 'utils/util'
 import { ActionTypes } from './constants'
 import { ProjectActions, ProjectActionType } from './actions'
+import { ActionTypes as OrganizationActionTypes } from '../Organizations/constants'
+import { call, all, put, takeLatest, takeEvery, throttle } from 'redux-saga/effects'
+import { OrganizationActions, OrganizationActionType } from 'containers/Organizations/actions'
 
-import request from 'utils/request'
-import api from 'utils/api'
-import { errorHandler } from 'utils/util'
+
+
+
 
 export function* getProjects (action: ProjectActionType) {
   if (action.type !== ActionTypes.LOAD_PROJECTS) { return }
@@ -272,20 +273,20 @@ export function* getCollectProjects () {
 export function* editCollectProject (action: ProjectActionType) {
   if (action.type !== ActionTypes.CLICK_COLLECT_PROJECT) { return }
 
-  const { formType, project, resolve } = action.payload
+  const { isFavorite, proId, resolve } = action.payload
   const { collectProjectClicked, clickCollectProjectFail } = ProjectActions
   try {
-    if (formType === 'collect') {
+    if (!isFavorite) {
       yield call(request, {
         method: 'post',
-        url: `${api.projects}/favorite/${project.id}`,
-        data: {id: project.id}
+        url: `${api.projects}/favorite/${proId}`,
+        data: {id: proId}
       })
     } else {
       yield call(request, {
         method: 'delete',
         url: `${api.projects}/remove/favorites`,
-        data: [project.id]
+        data: [proId]
       })
     }
     yield put(collectProjectClicked(action.payload))

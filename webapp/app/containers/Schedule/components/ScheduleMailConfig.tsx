@@ -115,6 +115,7 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
       if (config.bcc) {
         setShowBcc(true)
       }
+      console.log(config.content)
       form.setFieldsValue({ content: config.content || DefaultEmailContent })
     },
     [config]
@@ -145,6 +146,9 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
       <Row>
         <Col span={12}>
           <FormItem label="文件类型" {...FormItemStyle}>
+            {
+              console.log(config.type)
+            }
             {getFieldDecorator<IScheduleMailConfig>('type', {
               rules: [{ required: true }],
               initialValue: config.type
