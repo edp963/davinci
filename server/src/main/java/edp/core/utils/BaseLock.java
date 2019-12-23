@@ -22,8 +22,8 @@ package edp.core.utils;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class BaseLock {
-	
-	public static class CacheLock extends BaseLock{
+
+	public static class CacheLock extends BaseLock {
 
 		private static final ConcurrentHashMap<String, Long> LOCKS = new ConcurrentHashMap<>();
 		private static final ConcurrentHashMap<String, Long> TTLS = new ConcurrentHashMap<>();
@@ -33,7 +33,8 @@ public abstract class BaseLock {
 		public CacheLock(String key, int timeout) {
 			super(key, timeout);
 		}
-		
+
+		@Override
 		public boolean getLock() {
 			synchronized (key) {
 				timestamp = System.currentTimeMillis();
@@ -53,6 +54,7 @@ public abstract class BaseLock {
 			}
 		}
 
+		@Override
 		public boolean release() {
 			synchronized (key) {
 				long ttl = timestamp + timeout * 1000L;
@@ -77,14 +79,14 @@ public abstract class BaseLock {
 			return false;
 		}
 	}
-	
+
 	public static class RedisLock extends BaseLock {
 
 		private long currentTime;
 
 		RedisUtils redisUtils;
-		
-		public RedisLock(	RedisUtils redisUtils, String key, int timeout) {
+
+		public RedisLock(RedisUtils redisUtils, String key, int timeout) {
 			super(key, timeout);
 			this.redisUtils = redisUtils;
 		}
@@ -105,13 +107,13 @@ public abstract class BaseLock {
 
 		@Override
 		public boolean isHolding() {
-			
-			Long value = (Long)redisUtils.get(key);
-			
+
+			Long value = (Long) redisUtils.get(key);
+
 			if (value == null) {
 				return false;
 			}
-			
+
 			if (currentTime == value) {
 				return true;
 			}
@@ -120,7 +122,7 @@ public abstract class BaseLock {
 		}
 
 	}
-	
+
 	protected final String key;
 	protected final int timeout;
 
@@ -128,10 +130,10 @@ public abstract class BaseLock {
 		this.key = key;
 		this.timeout = timeout;
 	}
-	
+
 	public abstract boolean getLock();
 
 	public abstract boolean release();
-	
+
 	public abstract boolean isHolding();
 }
