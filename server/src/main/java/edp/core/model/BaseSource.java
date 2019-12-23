@@ -23,7 +23,6 @@ import java.util.List;
 
 import edp.davinci.model.Source;
 
-
 public abstract class BaseSource extends RecordInfo<Source> {
 
 	public abstract String getJdbcUrl();
