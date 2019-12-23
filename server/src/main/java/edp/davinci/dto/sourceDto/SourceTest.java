@@ -31,6 +31,7 @@ import lombok.Data;
 public class SourceTest {
 
     private String username;
+
     private String password;
 
     @NotBlank(message = "connection url cannot be EMPTY")
