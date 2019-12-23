@@ -70,10 +70,6 @@ const projectReducer = (
       case ActionTypes.ADD_PROJECT_FAILURE:
         break
 
-      // case ActionTypes.EDIT_PROJECT_SUCCESS:
-      //   projects.splice(projects.findIndex((d) => d.id === payload.result.id), 1, payload.result)
-      //   return state.set('projects', projects.slice())
-
       case ActionTypes.DELETE_PROJECT_SUCCESS:
         if (draft.projects) {
           draft.projects = draft.projects.filter(
@@ -117,13 +113,6 @@ const projectReducer = (
         break
 
       case ActionTypes.CLICK_COLLECT_PROJECT_SUCCESS:
-        if (action.payload.result.formType === 'unCollect') {
-          draft.collectProjects = draft.collectProjects.filter(
-            (p) => p.id !== action.payload.result.project.id
-          )
-        } else {
-          draft.collectProjects.push(action.payload.result.project)
-        }
         break
 
       case OrganizationActionTypes.LOAD_PROJECT_ROLES_SUCCESS:

@@ -270,12 +270,12 @@ export const ProjectActions = {
     }
   },
 
-  clickCollectProjects (formType, project, resolve) {
+  clickCollectProjects (isFavorite, proId, resolve) {
     return {
       type: ActionTypes.CLICK_COLLECT_PROJECT,
       payload: {
-        formType,
-        project,
+        isFavorite,
+        proId,
         resolve
       }
     }
