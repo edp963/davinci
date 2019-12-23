@@ -174,6 +174,9 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             return;
         }
 
+
+        scheduleLogger.info("CronJob (:{}) is ready to send email", cronJob.getId());
+
         MailContent mailContent = null;
         try {
             mailContent = MailContent.MailContentBuilder.builder()
