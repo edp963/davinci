@@ -24,6 +24,7 @@ import {
   makeSelectInviteMemberList,
   makeSelectCurrentOrganizationProject
 } from '../selectors'
+import { Items } from '../../Projects/index'
 import { makeSelectVizs } from 'containers/Schedule/selectors'
 import { ProjectActions } from 'containers/Projects/actions'
 import injectReducer from 'utils/injectReducer'
@@ -333,9 +334,25 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     onGetProjectStarUser(id)
   }
 
+  private favoritePro = (proId: number, isFavorite: boolean) => {
+    const {onClickCollectProjects, onLoadCollectProjects, onLoadOrganizationProjects} = this.props
+    onClickCollectProjects && onClickCollectProjects(isFavorite, proId, () => {
+      const { onStarProject, organizationId } = this.props
+      const param = {
+        id: Number(organizationId),
+        pageNum: this.state.pageNum,
+        pageSize: this.state.pageSize
+      }
+      onLoadCollectProjects && onLoadCollectProjects()
+      onLoadOrganizationProjects && onLoadOrganizationProjects(param)
+    })
+  }
+
   public render () {
     const { formVisible, formType, modalLoading, organizationProjects, editFormVisible, currentProject, adminFormVisible } = this.state
-    const { currentOrganization, organizationProjectsDetail, onCheckUniqueName, collectProjects, starUserList, vizs, organizations } = this.props
+    const { onLoadOrganizationProjects, loginUser, currentOrganization, organizationProjectsDetail, onCheckUniqueName, collectProjects, starUserList, vizs, organizations } = this.props
+    const {id: userId} = loginUser
+
     let CreateButton = void 0
     if (currentOrganization) {
        CreateButton = ComponentPermission(currentOrganization, CREATE_ORGANIZATION_PROJECT)(Button)
@@ -365,6 +382,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
           current={this.state.pageNum}
         />)
     }
+
     const ProjectItems = Array.isArray(organizationProjects) ? organizationProjects.map((lists, index) => (
       <ProjectItem
         unStar={this.starProject}
@@ -374,7 +392,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
         currentOrganization={currentOrganization}
         key={index}
         loginUser={this.props.loginUser}
-        options={lists}
+        pro={lists}
         toProject={this.props.toProject}
         showEditProjectForm={this.showEditProjectForm('edit', lists)}
         onClickCollectProjects={this.props.onClickCollectProjects}
@@ -478,7 +496,7 @@ export function mapDispatchToProps (dispatch) {
     onDeleteProject: (id, resolve) => dispatch(ProjectActions.deleteProject(id, resolve)),
     onDeleteOrganizationMember: (id, resolve) => dispatch(OrganizationActions.deleteOrganizationMember(id, resolve)),
     onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(OrganizationActions.changeOrganizationMemberRole(id, role, resolve)),
-    onClickCollectProjects: (formType, project, resolve) => dispatch(ProjectActions.clickCollectProjects(formType, project, resolve)),
+    onClickCollectProjects: (isFavorite, proId, result) => dispatch(ProjectActions.clickCollectProjects(isFavorite, proId, result)),
     onLoadCollectProjects: () => dispatch(ProjectActions.loadCollectProjects()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
