@@ -57,15 +57,17 @@ import edp.core.model.JdbcSourceInfo;
 import edp.core.model.JdbcSourceInfo.JdbcSourceInfoBuilder;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
+import edp.core.utils.BaseLock;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
+import edp.core.utils.LockFactory;
 import edp.core.utils.RedisUtils;
-import edp.core.utils.RedisUtils.RedisLock;
 import edp.core.utils.SourceUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.core.enums.LockType;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SourceTypeEnum;
 import edp.davinci.core.enums.UploadModeEnum;
@@ -207,7 +209,7 @@ public class SourceServiceImpl implements SourceService {
 			throw new ServerException("Invalid source type");
 		}
 
-		RedisLock lock = getSourceLock(name, projectId);
+		BaseLock lock = getSourceLock(name, projectId);
 		if (lock != null && !lock.getLock()) {
 			alertNameTaken(name);
 		}
@@ -237,21 +239,14 @@ public class SourceServiceImpl implements SourceService {
 		}
 	}
 	
-	private RedisLock getSourceLock(String name, Long projectId) {
+	private BaseLock getSourceLock(String name, Long projectId) {
 		
-		RedisLock lock = null;
-		
-		if (redisUtils.isRedisEnable()) {
-			lock = redisUtils.new RedisLock("SOURCE@" + name + "@" + projectId, 5);
-		}
-		
-		return lock;
+		return LockFactory.getLock("SOURCE@" + name + "@" + projectId, 5, LockType.REDIS);
 	}
 	
-	private void releaseLock(RedisLock lock) {
-		if (lock != null) {
-			lock.release();
-		}
+	private void releaseLock(BaseLock lock) {
+		// workaround for very high concurrency
+		// do nothing, wait for the transaction to commit
 	}
 	
 	private void alertNameTaken(String name) {
@@ -317,7 +312,7 @@ public class SourceServiceImpl implements SourceService {
 			alertNameTaken(name);
 		}
 		
-		RedisLock lock = null;
+		BaseLock lock = null;
 		
 		if (!name.equals(source.getName())) {
 			lock = getSourceLock(name, projectId);

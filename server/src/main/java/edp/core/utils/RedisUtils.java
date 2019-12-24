@@ -43,38 +43,6 @@ public class RedisUtils {
 
 	private final String script = "if redis.call('setnx', KEYS[1], ARGV[1]) == 1 then return redis.call('expire', KEYS[1], ARGV[2]) else return 0 end";
 
-	public class RedisLock {
-
-		private String key;
-		private int timeout;
-		private long currentTime;
-
-		public RedisLock(String key, int timeout) {
-			this.key = key;
-			this.timeout = timeout;
-		}
-
-		public boolean getLock() {
-			currentTime = System.currentTimeMillis();
-			return setIfAbsent(key, currentTime, timeout);
-		}
-
-		public boolean release() {
-			if (isHolding()) {
-				return delete(key);
-			}
-			return false;
-		}
-
-		private boolean isHolding() {
-			if (currentTime == (long) get(key)) {
-				return true;
-			}
-			return false;
-		}
-
-	}
-
 	public boolean isRedisEnable() {
 		return isRedisEnable;
 	}
