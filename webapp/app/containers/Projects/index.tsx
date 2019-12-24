@@ -28,7 +28,7 @@ import Star from 'components/StarPanel/Star'
 import HistoryStack from '../Organizations/component/historyStack'
 const historyStack = new HistoryStack()
 import { RouteComponentWithParams } from 'utils/types'
-import { 
+import {
   IProject, IProjectFormFieldProps, IProjectsFormProps ,
   IProjectsProps, projectType, IProjectType, IToolbarProps, projectTypeSmall,
   ItemToolbarProps, ITagProps, eTag, ItemProps, IContentProps
@@ -49,7 +49,7 @@ function enhanceInput(props, ref) {
 
 const EnhanceInput = React.forwardRef(enhanceInput)
 
-const Toolbar: React.FC<IToolbarProps>  = React.memo(({ 
+const Toolbar: React.FC<IToolbarProps>  = React.memo(({
   pType, setPType, setKeywords, searchKeywords, showProForm
 }) => {
   const [documentWidth, setDocumentWidth] = useState(document.body.clientWidth)
@@ -73,7 +73,7 @@ const Toolbar: React.FC<IToolbarProps>  = React.memo(({
 
   const menus = useMemo(() => {
     const types = ['all', 'join', 'create', 'favorite', 'history']
-  
+
     return types.map((t: IProjectType) => {
       const classNames = classnames({
         [styles.selectMenu] : pType === t,
@@ -92,7 +92,7 @@ const Toolbar: React.FC<IToolbarProps>  = React.memo(({
   const getKeywords = useCallback((e) => {
     setKeywords(e.target.value)
   }, [setKeywords])
-  
+
   const addPro = useCallback((e) => {
     showProForm && showProForm('add',{}, e)
   }, [showProForm])
@@ -104,9 +104,9 @@ const Toolbar: React.FC<IToolbarProps>  = React.memo(({
         {menus}
       </div>
       <div className={styles.searchs}>
-        <EnhanceInput 
+        <EnhanceInput
           type="text"
-          ref={searchRef} 
+          ref={searchRef}
           val={searchKeywords}
           onChange={getKeywords}
           placeholder="查找您的项目"
@@ -126,7 +126,7 @@ const Toolbar: React.FC<IToolbarProps>  = React.memo(({
 
 
 const ItemToolbar: React.FC<ItemToolbarProps> = React.memo(({
-  onStar, onTransfer, onEdit, onDelete, organization, isMimePro, 
+  onStar, onTransfer, onEdit, onDelete, organization, isMimePro,
   onFavorite, pType, isStar, isFavorite, StarCom
 }) => {
   const CreateButton = useMemo(() => {
@@ -141,21 +141,21 @@ const ItemToolbar: React.FC<ItemToolbarProps> = React.memo(({
       [styles.ft16]: true,
       [styles.mainColor]: isFavorite
     })
-    
+
     const themeFavorite: string = isFavorite ? 'filled' : 'outlined'
 
-    const Favorite = !isMimePro 
+    const Favorite = !isMimePro
     ?   <Tooltip title="收藏">
           <Icon type="heart" theme={themeFavorite}  className={favoriteClassName} onClick={onFavorite} />
         </Tooltip>
     :   []
 
-    const Transfer = ( 
+    const Transfer = (
       <Tooltip title="移交">
         <CreateButton type="swap"  className={styles.ft16} onClick={onTransfer} />
       </Tooltip>
-    ) 
-    
+    )
+
     const Edit = (
       <Tooltip title="编辑">
         <CreateButton type="form"  className={styles.ft16}  onClick={onEdit}/>
@@ -257,7 +257,7 @@ export const Items: React.FC<ItemProps & Partial<IProjectsProps>> = React.memo((
     }
 
     return tagType
-    
+
   }, [pro])
 
   const starProject = useCallback((id) => () => {
@@ -276,12 +276,12 @@ export const Items: React.FC<ItemProps & Partial<IProjectsProps>> = React.memo((
                 proId={id}
                 starNum={starNum}
                 isStar={isStar}
-                starUser={starUserList} 
-                unStar={starProject} 
+                starUser={starUserList}
+                unStar={starProject}
                 userList={getStarProjectUserList}
               />
   }, [pro, starProject, starUserList, getStarProjectUserList])
- 
+
 
   const toProject = useCallback((e) => {
     history.push(`/project/${pro.id}`)
@@ -332,7 +332,7 @@ export const Items: React.FC<ItemProps & Partial<IProjectsProps>> = React.memo((
         <div className={styles.unit}
           onClick={toProject}
         >
-          <div 
+          <div
             className={styles.thumbnail}
             style={{backgroundImage: `url(${require(`assets/images/bg${pro.pic}.png`)})`}}
           >
@@ -405,7 +405,7 @@ const Content: React.FC<IContentProps & Partial<IProjectsProps>> = React.memo(({
           case 'join':
             return arr.filter((pro) => pro.createBy && pro.createBy.id !== userId)
           case 'favorite':
-            return arr.filter((pro) => pro.isFavorites) 
+            return arr.filter((pro) => pro.isFavorites)
           case 'history':
             return arr.filter((pro) => proIdList.includes(pro.id))
           case 'all':
@@ -423,7 +423,7 @@ const Content: React.FC<IContentProps & Partial<IProjectsProps>> = React.memo(({
     }
 
     return compose(filterByProjectType, filterByKeyword, pushForkTagProjects)(projects)
-    
+
   }, [projects, pType, searchKeywords, userId])
 
 
@@ -445,14 +445,14 @@ const Content: React.FC<IContentProps & Partial<IProjectsProps>> = React.memo(({
                 onGetProjectStarUser={onGetProjectStarUser}
               />
       })
-      : 
+      :
       []
-    
+
   }, [ getProjectsBySearch, pType, projects, starUserList,
       onLoadProjects, onStarProject, onGetProjectStarUser,
       userId,organizations
     ])
-  
+
   return (
     <div className={styles.content}>
       <div className={styles.flex}>
@@ -507,7 +507,7 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
 
   const checkoutFormVisible = useCallback(() => {
     setFormVisible(true)
-    
+
   }, [formVisible])
 
   const hideProForm = useCallback(() => {
@@ -593,7 +593,7 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
         callback(err)
       })
   }, [formVisible])
-  
+
   return (
     <div className={styles.wrapper}>
       <Toolbar
