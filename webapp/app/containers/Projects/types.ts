@@ -132,6 +132,14 @@ export enum projectType {
   history = '最近浏览的'
 }
 
+export enum projectTypeSmall {
+  all = '全部',
+  join = '参与',
+  create = '创建',
+  favorite = '收藏',
+  history = '历史'
+}
+
 export type IProjectType = 'all' | 'join' | 'create' | 'favorite' | 'history'
 
 export type IDOMEventHandler = (event: React.MouseEvent<HTMLElement>) => any
