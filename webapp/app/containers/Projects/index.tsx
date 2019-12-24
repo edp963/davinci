@@ -1,10 +1,10 @@
-import React, { useMemo, useEffect, useState, ReactElement, useCallback, useRef, useImperativeHandle, useReducer } from 'react'
+import React, { useMemo, useEffect, useState, ReactElement, useCallback, useRef, useImperativeHandle, useLayoutEffect } from 'react'
 import * as classnames from 'classnames'
 import { connect } from 'react-redux'
 import { Row, Col, Tooltip, Popconfirm, Icon, Modal, Button } from 'antd'
 const styles = require('../Organizations/Project.less')
 
-
+import { debounce } from 'lodash'
 import saga from './sagas'
 import reducer from './reducer'
 import { compose } from 'redux'
@@ -30,12 +30,11 @@ const historyStack = new HistoryStack()
 import { RouteComponentWithParams } from 'utils/types'
 import { 
   IProject, IProjectFormFieldProps, IProjectsFormProps ,
-  IProjectsProps, projectType, IProjectType, IToolbarProps,
+  IProjectsProps, projectType, IProjectType, IToolbarProps, projectTypeSmall,
   ItemToolbarProps, ITagProps, eTag, ItemProps, IContentProps
 } from './types'
 import { FormComponentProps } from 'antd/lib/form/Form'
 import { uuid } from 'app/utils/util'
-
 
 
 function enhanceInput(props, ref) {
@@ -53,7 +52,7 @@ const EnhanceInput = React.forwardRef(enhanceInput)
 const Toolbar: React.FC<IToolbarProps>  = React.memo(({ 
   pType, setPType, setKeywords, searchKeywords, showProForm
 }) => {
-
+  const [documentWidth, setDocumentWidth] = useState(document.body.clientWidth)
   const searchRef = useRef(null)
 
   const checkoutType = useCallback((type) => {
@@ -62,20 +61,33 @@ const Toolbar: React.FC<IToolbarProps>  = React.memo(({
     }
   }, [pType])
 
+  useLayoutEffect(() => {
+    function updateClientWidth () {
+      setDocumentWidth(document.body.clientWidth)
+    }
+    window.addEventListener('resize',  debounce(updateClientWidth, 300))
+    return () => {
+      window.removeEventListener('resize', updateClientWidth)
+    }
+  })
+
   const menus = useMemo(() => {
     const types = ['all', 'join', 'create', 'favorite', 'history']
   
     return types.map((t: IProjectType) => {
       const classNames = classnames({
-        [styles.selectMenu] : pType === t
+        [styles.selectMenu] : pType === t,
+        [styles.menuitem] : true
       })
       return (
         <p key={t} className={classNames} onClick={checkoutType(t)}>
-          {projectType[t]}
+          {
+            documentWidth < 1200 ? projectTypeSmall[t] : projectType[t]
+          }
         </p>
       )
     })
-  }, [pType])
+  }, [pType, documentWidth])
 
   const getKeywords = useCallback((e) => {
     setKeywords(e.target.value)
