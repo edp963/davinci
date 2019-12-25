@@ -625,7 +625,7 @@ CREATE TABLE `davinci_statistic_visitor_operation` (
   `groups` varchar(500) DEFAULT NULL,
   `create_time` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 DROP TABLE IF EXISTS `davinci_statistic_terminal`;
 CREATE TABLE `davinci_statistic_terminal` (
@@ -644,18 +644,27 @@ CREATE TABLE `davinci_statistic_terminal` (
   `cpu_architecture` varchar(255) DEFAULT NULL,
   `create_time` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 DROP TABLE IF EXISTS `davinci_statistic_duration`;
-CREATE TABLE `davinci_statistic_duration` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) DEFAULT NULL,
-  `email` varchar(255) DEFAULT NULL,
-  `start_time` timestamp NULL DEFAULT NULL,
-  `end_time` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `davinci_statistic_duration`
+(
+    `id`         bigint(20) NOT NULL AUTO_INCREMENT,
+    `user_id`    bigint(20)      DEFAULT NULL,
+    `email`      varchar(255)    DEFAULT NULL,
+    `org_id` bigint(20) DEFAULT NULL COMMENT '报表关联组织ID',
+    `project_id` bigint(20) DEFAULT NULL COMMENT '报表关联项目ID',
+    `project_name` varchar(255) DEFAULT NULL COMMENT '报表关联项目名称',
+    `viz_type` varchar(10) DEFAULT NULL COMMENT '报表关联应用类型（dashboard/display）',
+    `viz_id` bigint(20) DEFAULT NULL COMMENT '报表关联应用ID',
+    `viz_name` varchar(255) DEFAULT NULL COMMENT '报表关联应用名称',
+    `sub_viz_id` bigint(20) DEFAULT NULL COMMENT '报表ID',
+    `sub_viz_name` varchar(255) DEFAULT NULL COMMENT '报表名称',
+    `start_time` timestamp  NULL DEFAULT NULL,
+    `end_time`   timestamp  NULL DEFAULT NULL,
+    PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 DROP TABLE IF EXISTS `share_download_record`;
 CREATE TABLE `share_download_record` (
