@@ -40,6 +40,7 @@ export default class ResizableBox extends React.Component<
         propsHeight: props.height
       }
     }
+    return {}
   }
 
   private onResize = (e: SyntheticEvent, data: ResizeCallbackData) => {

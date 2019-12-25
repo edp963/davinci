@@ -3,7 +3,7 @@ import { DraggableCore, DraggableData, DraggableEvent } from 'react-draggable'
 import { cloneElement } from './utils'
 
 type Axis = 'both' | 'x' | 'y' | 'none'
-type ResizeHandle = 's' | 'w' | 'e' | 'n' | 'sw' | 'nw' | 'se' | 'ne'
+export type ResizeHandle = 's' | 'w' | 'e' | 'n' | 'sw' | 'nw' | 'se' | 'ne'
 type ResizableState = {
   slackW: number
   slackH: number
@@ -123,7 +123,8 @@ export default class Resizable extends React.Component<
       e: DraggableEvent,
       { node, deltaX, deltaY }: DraggableData
     ) => {
-      const scale = this.props.scale || 1
+      deltaX = Math.round(deltaX)
+      deltaY = Math.round(deltaY)
       // Axis restrictions
       const canDragX =
         (this.props.axis === 'both' || this.props.axis === 'x') &&
@@ -141,8 +142,8 @@ export default class Resizable extends React.Component<
       }
 
       // Update w/h
-      let width = this.props.width + (canDragX ? deltaX / scale : 0)
-      let height = this.props.height + (canDragY ? deltaY / scale : 0)
+      let width = this.props.width + (canDragX ? deltaX : 0)
+      let height = this.props.height + (canDragY ? deltaY : 0)
 
       // Early return if no change
       const widthChanged = width !== this.props.width
@@ -201,6 +202,7 @@ export default class Resizable extends React.Component<
       draggableOpts,
       width,
       height,
+      handle,
       handleSize,
       lockAspectRatio,
       axis,
@@ -210,6 +212,7 @@ export default class Resizable extends React.Component<
       onResizeStop,
       onResizeStart,
       resizeHandles,
+      scale,
       ...p
     } = this.props
 
@@ -229,6 +232,7 @@ export default class Resizable extends React.Component<
         resizeHandles.map((h) => (
           <DraggableCore
             {...draggableOpts}
+            scale={scale}
             key={`resizableHandle-${h}`}
             onStop={this.resizeHandler('onResizeStop', h)}
             onStart={this.resizeHandler('onResizeStart', h)}
