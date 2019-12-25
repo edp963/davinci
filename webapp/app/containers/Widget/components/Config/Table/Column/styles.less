@@ -102,23 +102,26 @@
       align-items: center;
     }
 
-    :global(.ant-form-item) {
-      margin-bottom: 4px;
-    }
-    :global(.ant-form-item-label) {
-      line-height: 1em;
-    }
-    :global(.ant-form-item-label label) {
-      color: @disabled-text-color;
-      font-size: 12px;
-      font-weight: bold;
-    }
-    :global(.ant-form-item-required:before) {
-      margin-right: 2px;
-      vertical-align: middle;
-    }
-    :global(.ant-form-item-control) {
-      line-height: 32px;
+    :global {
+      .ant-form-item {
+        margin-bottom: 4px;
+      }
+      .ant-form-item-label {
+        line-height: 1em;
+
+        label {
+          color: @disabled-text-color;
+          font-size: 12px;
+          font-weight: bold;
+        }
+      }
+      .ant-form-item-required:before {
+        margin-right: 2px;
+        vertical-align: middle;
+      }
+      .ant-form-item-control {
+        line-height: 32px;
+      }
     }
   }
 }
