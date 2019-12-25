@@ -21,10 +21,16 @@
 import { IAxisConfig } from '../../components/Workbench/ConfigSections/AxisSection'
 import { ILabelConfig } from '../../components/Workbench/ConfigSections/LabelSection'
 import { ILegendConfig } from '../../components/Workbench/ConfigSections/LegendSection'
-import { metricAxisLabelFormatter, decodeMetricName, getTextWidth } from '../../components/util'
 import { getFormattedValue } from '../../components/Config/Format'
 import { CHART_LEGEND_POSITIONS, DEFAULT_SPLITER } from 'app/globalConstants'
 import { EChartOption } from 'echarts'
+import { IWidgetMetric } from '../../components/Widget'
+import {
+  metricAxisLabelFormatter,
+  decodeMetricName,
+  getTextWidth,
+  getAggregatorLocale
+} from '../../components/util'
 
 interface ISplitLineConfig {
   showLine: boolean
@@ -455,7 +461,7 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
           return currentGroupValues[xd][0]
         } else {
           return metrics.reduce((obj, m) => ({ ...obj, [`${m.agg}(${decodeMetricName(m.name)})`]: 0 }), {
-            [xAxisColumn]: xd,
+            [xAxisColumn]: xd
             // []: groupingKey
           })
         }
@@ -479,4 +485,23 @@ export function distinctXaxis (data, xAxisColumn) {
 
 export function getSymbolSize (sizeRate, size) {
   return sizeRate ? Math.ceil(size / sizeRate) : size
+}
+
+export function getCartesianChartMetrics (metrics: IWidgetMetric[]) {
+  return metrics.map((metric) => {
+    const { name, agg } = metric
+    const decodedMetricName = decodeMetricName(name)
+    const duplicates = metrics
+      .filter((m) => decodeMetricName(m.name) === decodedMetricName && m.agg === agg)
+    const prefix = agg !== 'sum' ? `[${getAggregatorLocale(agg)}] ` : ''
+    const suffix = duplicates.length > 1
+      ? duplicates.indexOf(metric)
+        ? duplicates.indexOf(metric) + 1
+        : ''
+      : ''
+    return {
+      ...metric,
+      displayName: `${prefix}${decodedMetricName}${suffix}`
+    }
+  })
 }
