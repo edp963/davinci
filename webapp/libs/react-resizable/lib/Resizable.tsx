@@ -1,36 +1,12 @@
-import React, { ReactElement, ReactNode, SyntheticEvent } from 'react'
+import React, { ReactNode, SyntheticEvent } from 'react'
 import { DraggableCore, DraggableData, DraggableEvent } from 'react-draggable'
 import { cloneElement } from './utils'
 
-type Axis = 'both' | 'x' | 'y' | 'none'
-export type ResizeHandle = 's' | 'w' | 'e' | 'n' | 'sw' | 'nw' | 'se' | 'ne'
+import { ResizableProps, ResizeHandle } from './types'
+
 type ResizableState = {
   slackW: number
   slackH: number
-}
-
-export type ResizeCallbackData = {
-  node: HTMLElement
-  size: { width: number; height: number }
-  handle: ResizeHandle
-}
-export type ResizableProps = {
-  children: ReactElement<any>
-  className?: string
-  width: number
-  height: number
-  scale?: number
-  handle: (resizeHandle: ResizeHandle) => ReactElement<any> | ReactElement<any>
-  handleSize: [number, number]
-  resizeHandles: ResizeHandle[]
-  lockAspectRatio: boolean
-  axis: Axis
-  minConstraints: [number, number]
-  maxConstraints: [number, number]
-  onResizeStop?: (e: SyntheticEvent, data: ResizeCallbackData) => any
-  onResizeStart?: (e: SyntheticEvent, data: ResizeCallbackData) => any
-  onResize?: (e: SyntheticEvent, data: ResizeCallbackData) => any
-  draggableOpts?: object
 }
 
 export default class Resizable extends React.Component<
