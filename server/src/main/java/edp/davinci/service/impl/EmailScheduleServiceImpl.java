@@ -267,12 +267,14 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         StringBuilder sb = new StringBuilder();
 
         String type = "";
+        String page = "";
         if ("widget".equalsIgnoreCase(contentType)) {
             type = "widget";
         } else if (PORTAL.equalsIgnoreCase(contentType) || "dashboard".equalsIgnoreCase(contentType)) {
             type = "dashboard";
         } else {
             type = "";
+            page = "p=1";
         }
 
         sb.append(serverUtils.getLocalHost())
@@ -284,6 +286,12 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         if (!StringUtils.isEmpty(type)) {
             sb.append("&type=").append(type);
         }
+
+        //TODO 多Slide暂时只支持1页
+        if (!StringUtils.isEmpty(page)) {
+            sb.append("&").append(page);
+        }
+
 
         return sb.toString();
     }
