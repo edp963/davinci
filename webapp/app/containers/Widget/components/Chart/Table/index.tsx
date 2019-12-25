@@ -315,7 +315,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const tableStyle: React.CSSProperties = { }
     if (!headerFixed) {
       tableStyle.height = tableBodyHeght
-      tableStyle.overflowY = 'scroll'
+      tableStyle.overflowY = 'auto'
     }
     return tableStyle
   }
