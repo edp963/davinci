@@ -44,5 +44,6 @@ public class SourceConfig {
     private boolean isExt;
 
     public SourceConfig() {
+
     }
 }

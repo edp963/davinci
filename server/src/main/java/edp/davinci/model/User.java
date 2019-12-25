@@ -26,6 +26,7 @@ import java.util.Date;
 
 @Data
 public class User extends TokenDetail {
+
     private Long id;
 
     private String email;
@@ -51,9 +52,11 @@ public class User extends TokenDetail {
     private Long updateBy;
 
     public User() {
+
     }
 
     public User(LdapPerson ldapPerson) {
+
         this.username = ldapPerson.getSAMAccountName();
         this.email = ldapPerson.getEmail();
         this.name = ldapPerson.getName();

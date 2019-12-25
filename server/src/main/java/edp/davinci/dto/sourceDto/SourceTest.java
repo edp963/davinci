@@ -20,18 +20,18 @@
 package edp.davinci.dto.sourceDto;
 
 
-import edp.core.model.Dict;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.validation.constraints.NotBlank;
 import java.util.List;
 
+import javax.validation.constraints.NotBlank;
+
+import edp.core.model.Dict;
+import lombok.Data;
+
 @Data
-@Slf4j
 public class SourceTest {
 
     private String username;
+
     private String password;
 
     @NotBlank(message = "connection url cannot be EMPTY")

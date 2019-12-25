@@ -30,6 +30,7 @@ export function renderSelect (control: IGlobalControl, onChange, options) {
       allowClear
       placeholder="请选择"
       onChange={onChange}
+      dropdownMatchSelectWidth={false}
       {...multiple && {mode: 'multiple'}}
     >
       {options.map((o) => {
