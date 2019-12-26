@@ -36,9 +36,9 @@ function refreshToken (response: AxiosResponse) {
   return response
 }
 
-export function request (url: string, options?: AxiosRequestConfig): AxiosPromise
-export function request (config: AxiosRequestConfig): AxiosPromise
-export default function request (url: string | AxiosRequestConfig, options?: AxiosRequestConfig): AxiosPromise {
+export function request (url: string, options?: AxiosRequestConfig): AxiosPromise<IDavinciResponse<object>>
+export function request (config: AxiosRequestConfig): AxiosPromise<IDavinciResponse<object>>
+export default function request (url: string | AxiosRequestConfig, options?: AxiosRequestConfig): AxiosPromise<IDavinciResponse<object>> {
   const axiosPromise =
     typeof url === 'string' ? axios(url, options) : axios(url)
   return axiosPromise
