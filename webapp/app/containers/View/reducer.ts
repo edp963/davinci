@@ -255,7 +255,7 @@ const viewReducer = (
         }
         break
       case LOAD_DASHBOARD_DETAIL_SUCCESS:
-      case DisplayActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
+      case DisplayActionTypes.LOAD_SLIDE_DETAIL_SUCCESS:
         const updatedViews: IFormedViews = (action.payload.views || []).reduce(
           (obj, view) => {
             obj[view.id] = {
