@@ -19,11 +19,32 @@
 
 package edp.davinci.service.impl;
 
+import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
+
+import java.util.Date;
+import java.util.List;
+
+import org.quartz.SchedulerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSON;
+
+import edp.core.common.quartz.QuartzJobExecutor;
 import edp.core.consts.Consts;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
-import edp.core.utils.*;
+import edp.core.utils.BaseLock;
+import edp.core.utils.DateUtils;
+import edp.core.utils.LockFactory;
+import edp.core.utils.QuartzHandler;
+import edp.core.utils.RedisUtils;
 import edp.davinci.core.enums.CronJobStatusEnum;
 import edp.davinci.core.enums.LockType;
 import edp.davinci.core.enums.LogNameEnum;
@@ -33,38 +54,21 @@ import edp.davinci.dao.CronJobMapper;
 import edp.davinci.dto.cronJobDto.CronJobBaseInfo;
 import edp.davinci.dto.cronJobDto.CronJobInfo;
 import edp.davinci.dto.cronJobDto.CronJobUpdate;
-import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.model.CronJob;
 import edp.davinci.model.User;
 import edp.davinci.service.CronJobService;
 import edp.davinci.service.ProjectService;
+import edp.davinci.service.excel.ExecutorUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.quartz.SchedulerException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.alibaba.fastjson.JSON;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 
 @Slf4j
 @Service("cronJobService")
 public class CronJobServiceImpl implements CronJobService {
 
 	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
+	
+	private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
 	@Autowired
 	private ProjectService projectService;
@@ -77,6 +81,9 @@ public class CronJobServiceImpl implements CronJobService {
 
 	@Autowired
 	private RedisUtils redisUtils;
+	
+    @Autowired
+    private EmailScheduleServiceImpl emailScheduleService;
 
 	private static final String CRONJOB_KEY = "CRONJOB";
 
@@ -383,4 +390,46 @@ public class CronJobServiceImpl implements CronJobService {
 			}
 		});
 	}
+
+	@Override
+	public boolean executeCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+
+		CronJob cronJob = getCronJob(id);
+
+		checkWritePermisson(cronJob.getProjectId(), user, "execute");
+
+		ExecutorUtil.printThreadPoolStatusLog(QuartzJobExecutor.executorService, "Cronjob_Executor", scheduleLogger);
+
+		QuartzJobExecutor.executorService.submit(() -> {
+			if (cronJob.getStartDate().getTime() <= System.currentTimeMillis()
+					&& cronJob.getEndDate().getTime() >= System.currentTimeMillis()) {
+				String jobType = cronJob.getJobType().trim();
+
+				if (!StringUtils.isEmpty(jobType)) {
+					try {
+						emailScheduleService.execute(cronJob.getId());
+					} catch (Exception e) {
+						log.error(e.getMessage(), e);
+						scheduleLogger.error(e.getMessage());
+					}
+				} else {
+					log.warn("Unknown job type [{}], job ID: (:{})", jobType, cronJob.getId());
+					scheduleLogger.warn("Unknown job type [{}], job ID: (:{})", jobType, cronJob.getId());
+				}
+			} else {
+				Object[] args = { cronJob.getId(), DateUtils.toyyyyMMddHHmmss(System.currentTimeMillis()),
+						DateUtils.toyyyyMMddHHmmss(cronJob.getStartDate()),
+						DateUtils.toyyyyMMddHHmmss(cronJob.getEndDate()), cronJob.getCronExpression() };
+				log.warn(
+						"ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]",
+						args);
+				scheduleLogger.warn(
+						"ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]",
+						args);
+			}
+		});
+
+		return true;
+	}
+
 }

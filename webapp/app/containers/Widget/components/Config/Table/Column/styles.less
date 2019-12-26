@@ -93,6 +93,36 @@
       padding: 8px;
       overflow: auto;
     }
+
+    .colorPickerWrapper {
+      width: 36px;
+      height: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    :global {
+      .ant-form-item {
+        margin-bottom: 4px;
+      }
+      .ant-form-item-label {
+        line-height: 1em;
+
+        label {
+          color: @disabled-text-color;
+          font-size: 12px;
+          font-weight: bold;
+        }
+      }
+      .ant-form-item-required:before {
+        margin-right: 2px;
+        vertical-align: middle;
+      }
+      .ant-form-item-control {
+        line-height: 32px;
+      }
+    }
   }
 }
 

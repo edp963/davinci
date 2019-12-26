@@ -55,7 +55,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
     }
 
     @Override
-    public T call() throws Exception {
+    public T call() {
         Stopwatch watch = Stopwatch.createStarted();
         Boolean rst = true;
         try {
@@ -85,15 +85,15 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             }
             super.refreshHeightWidth(context);
         } catch (Exception e) {
-            log.error("sheet worker error,  task={}, context={}, error={}", context.getTaskKey(), context.toString(), e);
-            if (context.getCustomLogger() != null) {
-                context.getCustomLogger().error("sheet worker error,  task={}, context={}, error={}", context.getTaskKey(), context.toString(), e);
-            }
             if (context.getWrapper().getAction() == ActionEnum.MAIL) {
                 MsgMailExcel msg = (MsgMailExcel) context.getWrapper().getMsg();
                 msg.setDate(new Date());
                 msg.setException(e);
             }
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().error("sheet worker error,  task={}, context={}, error={}", context.getTaskKey(), context.toString(), e);
+            }
+            log.error("sheet worker error,  task={}, context={}, error={}", context.getTaskKey(), context.toString(), e.getMessage());
             rst = false;
         }
 

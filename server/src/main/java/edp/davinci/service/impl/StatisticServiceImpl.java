@@ -1,15 +1,16 @@
 package edp.davinci.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
-import edp.davinci.service.BuriedPointsService;
+import edp.davinci.service.StatisticService;
 import edp.davinci.service.elastic.ElasticOperationService;
+import edp.davinci.service.kafka.KafkaOperationService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.stringtemplate.v4.ST;
@@ -20,9 +21,9 @@ import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.util.*;
 
-@Service("buriedPointsService")
+@Service("statisticService")
 @Slf4j
-public class BuriedPointsServiceImpl implements BuriedPointsService {
+public class StatisticServiceImpl implements StatisticService {
 
     @Autowired
     private Environment environment;
@@ -31,21 +32,12 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
     private ElasticOperationService elasticOperationService;
 
     @Autowired
+    private KafkaOperationService kafkaOperationService;
+
+    @Autowired
     private SqlUtils sqlUtils;
 
-    @Value("${spring.datasource.url}")
-    private String durl;
-
-    @Value("${spring.datasource.username}")
-    private String username;
-
-    @Value("${spring.datasource.password}")
-    private String password;
-
     boolean statisticOpen = false;  //是否开启埋点统计
-
-    @Value("${statistic.elastic_index_prefix:''}")
-    private String elasticIndexPrefix;
 
     @PostConstruct
     public void init(){
@@ -57,32 +49,45 @@ public class BuriedPointsServiceImpl implements BuriedPointsService {
 
     @Override
     public <T> void insert(List<T> infoList, Class clz){
-        if(statisticOpen){
-            String elastic_urls = environment.getProperty("statistic.elastic_urls");
-            if(StringUtils.isBlank(elastic_urls) && !durl.equals(this.sqlUtils.getJdbcUrl())){
-                this.sqlUtils = this.sqlUtils.init(durl, username, password, null, null, false);
-            }
-        }else{
+        if(!statisticOpen) {
             return;
         }
 
         String tableName = getTableName4Info(clz);
 
         String elastic_urls = environment.getProperty("statistic.elastic_urls");
-        if(StringUtils.isNotBlank(elastic_urls)){
+        if(StringUtils.isNotBlank(elastic_urls)) {
+            String elasticIndexPrefix = environment.getProperty("statistic.elastic_index_prefix");
             String index = StringUtils.isBlank(elasticIndexPrefix) ? tableName : elasticIndexPrefix + "_" + tableName;
             elasticOperationService.batchInsert(index, index, infoList);
-        }else{
+            return;
+        }
+
+        String mysqlUrl = environment.getProperty("statistic.mysql_url");
+        if(StringUtils.isNotBlank(mysqlUrl)) {
+            String mysqlUsername = environment.getProperty("statistic.mysql_username");
+            String mysqlPassword = environment.getProperty("statistic.mysql_password");
+
+            this.sqlUtils = this.sqlUtils.init(mysqlUrl, mysqlUsername, mysqlPassword, null, null, false);
+
             List<Map<String, Object>> values = entityConvertIntoMap(infoList);
-            Set<QueryColumn> headers = getHeaders(tableName);
+            Set<QueryColumn> headers = getHeaders(mysqlUrl, tableName);
             String sql = getInsertSql(clz, headers);
 
             sqlUtils.executeBatch(sql, headers, values);
+            return;
+        }
+
+        String kafkaServers = environment.getProperty("statistic.kafka.bootstrap.servers");
+        if(StringUtils.isNotBlank(kafkaServers)) {
+            String topic = environment.getProperty("statistic.kafka.topic");
+            kafkaOperationService.send(topic, JSON.toJSONString(infoList));
+            return;
         }
     }
 
-    public Set<QueryColumn> getHeaders(String tableName){
-        String dbName = this.durl.substring(0, this.durl.indexOf("?"));
+    public Set<QueryColumn> getHeaders(String url, String tableName){
+        String dbName = url.substring(0, url.indexOf("?"));
         dbName = dbName.substring(dbName.lastIndexOf("/")+1, dbName.length());
 
         TableInfo tableInfo = sqlUtils.getTableInfo(dbName, tableName);
