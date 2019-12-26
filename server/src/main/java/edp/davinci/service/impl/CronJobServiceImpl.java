@@ -19,6 +19,8 @@
 
 package edp.davinci.service.impl;
 
+import com.alibaba.druid.util.StringUtils;
+import edp.core.common.quartz.QuartzJobExecutor;
 import edp.core.consts.Consts;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
@@ -38,6 +40,7 @@ import edp.davinci.model.CronJob;
 import edp.davinci.model.User;
 import edp.davinci.service.CronJobService;
 import edp.davinci.service.ProjectService;
+import edp.davinci.service.excel.ExecutorUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -73,6 +76,9 @@ public class CronJobServiceImpl implements CronJobService {
 
     @Autowired
     private RedisUtils redisUtils;
+
+    @Autowired
+    private EmailScheduleServiceImpl emailScheduleService;
 
     private static final String CRONJOB_KEY = "CRONJOB";
 
@@ -394,5 +400,54 @@ public class CronJobServiceImpl implements CronJobService {
                 }
             }
         }
+    }
+
+    @Override
+    public boolean executeCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        CronJob cronJob = cronJobMapper.getById(id);
+        if (null == cronJob) {
+            log.info("cronjob (:{}) is not found", id);
+            throw new NotFoundException("cronjob is not found");
+        }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(cronJob.getProjectId(), user, false), user);
+
+        //校验权限
+        if (projectPermission.getSchedulePermission() < UserPermissionEnum.WRITE.getPermission()) {
+            throw new UnAuthorizedExecption("Insufficient permissions");
+        }
+
+        ExecutorUtil.printThreadPoolStatusLog(QuartzJobExecutor.executorService, "Cronjob_Executor", scheduleLogger);
+        QuartzJobExecutor.executorService.submit(() -> {
+            if (cronJob.getStartDate().getTime() <= System.currentTimeMillis()
+                    && cronJob.getEndDate().getTime() >= System.currentTimeMillis()) {
+                String jobType = cronJob.getJobType().trim();
+
+                if (!StringUtils.isEmpty(jobType)) {
+                    try {
+                        emailScheduleService.execute(cronJob.getId());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        log.error(e.getMessage());
+                        scheduleLogger.error(e.getMessage());
+                    }
+                } else {
+                    log.warn("Unknown job type [{}], job ID: (:{})", jobType, cronJob.getId());
+                    scheduleLogger.warn("Unknown job type [{}], job ID: (:{})", jobType, cronJob.getId());
+                }
+            } else {
+                Object[] args = {
+                        cronJob.getId(),
+                        DateUtils.toyyyyMMddHHmmss(System.currentTimeMillis()),
+                        DateUtils.toyyyyMMddHHmmss(cronJob.getStartDate()),
+                        DateUtils.toyyyyMMddHHmmss(cronJob.getEndDate()),
+                        cronJob.getCronExpression()
+                };
+                log.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
+                scheduleLogger.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
+            }
+        });
+
+        return true;
     }
 }
