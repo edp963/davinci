@@ -158,6 +158,7 @@ public class SourceServiceImpl implements SourceService {
 				sources = null;
 			}
 		}
+
 		return sources;
 	}
 
@@ -203,7 +204,7 @@ public class SourceServiceImpl implements SourceService {
 			alertNameTaken(name);
 		}
 
-		checkSourcePermission(projectId, user, "create");
+		checkWritePermission(projectId, user, "create");
 
 		if (null == SourceTypeEnum.typeOf(sourceCreate.getType())) {
 			throw new ServerException("Invalid source type");
@@ -228,7 +229,8 @@ public class SourceServiceImpl implements SourceService {
 			source.setConfig(JSONObject.toJSONString(config));
 
 			if (sourceMapper.insert(source) != 1) {
-				throw new ServerException("create source fail"); 
+				log.info("create source fail:{}", source.toString());
+				throw new ServerException("create source fail");
 			}
 
 			optLogger.info("source ({}) create by user (:{})", source.toString(), user.getId());
@@ -266,7 +268,7 @@ public class SourceServiceImpl implements SourceService {
 		return source;
 	}
 
-	private void checkSourcePermission(Long projectId, User user, String operation) {
+	private void checkWritePermission(Long projectId, User user, String operation) {
 
 		ProjectDetail projectDetail = projectService.getProjectDetail(projectId, user, false);
 
@@ -303,7 +305,7 @@ public class SourceServiceImpl implements SourceService {
 		
 		Source source = getSource(sourceInfo.getId());
 		
-		checkSourcePermission(source.getProjectId(), user, "update");
+		checkWritePermission(source.getProjectId(), user, "update");
 		
 		String name = sourceInfo.getName();
 		Long projectId = source.getProjectId();
@@ -383,7 +385,7 @@ public class SourceServiceImpl implements SourceService {
 
 		Source source = getSource(id);
 
-		checkSourcePermission(source.getProjectId(), user, "delete");
+		checkWritePermission(source.getProjectId(), user, "delete");
 
 		List<View> viewList = viewMapper.getBySourceId(id);
 		if (!CollectionUtils.isEmpty(viewList)) {
@@ -459,7 +461,7 @@ public class SourceServiceImpl implements SourceService {
 
 		Source source = getSource(sourceId);
 
-		checkSourcePermission(source.getProjectId(), user, "upload csv file in");
+		checkWritePermission(source.getProjectId(), user, "upload csv file in");
 
 		if (uploadMeta.getMode() == UploadModeEnum.REPLACE.getMode()) {
 			return;
@@ -499,7 +501,7 @@ public class SourceServiceImpl implements SourceService {
 
 		Source source = getSource(sourceId);
 
-		checkSourcePermission(source.getProjectId(), user, "upload data in");
+		checkWritePermission(source.getProjectId(), user, "upload data in");
 
 		if (!type.equals(FileTypeEnum.CSV.getType()) && !type.equals(FileTypeEnum.XLSX.getType())
 				&& !type.equals(FileTypeEnum.XLS.getType())) {
@@ -661,7 +663,7 @@ public class SourceServiceImpl implements SourceService {
 
 		Source source = getSource(id);
 
-		checkSourcePermission(source.getProjectId(), user, "reconnect");
+		checkWritePermission(source.getProjectId(), user, "reconnect");
 
 		if (!(dbBaseInfo.getDbUser().equals(source.getUsername())
 				&& dbBaseInfo.getDbPassword().equals(source.getPassword()))) {
