@@ -18,16 +18,12 @@
  * >>
  */
 
-import { createSelector } from 'reselect'
+import { IProjectPermission } from 'containers/Projects/types'
 
-const selectReport = () => (state) => state.report
-
-const selectSidebar = () => createSelector(
-  selectReport(),
-  (reportState) => reportState.sidebar
-)
-
-export {
-  selectReport,
-  selectSidebar
-}
+export const SidebarPermissions: Array<keyof IProjectPermission> = [
+  'vizPermission',
+  'widgetPermission',
+  'viewPermission',
+  'sourcePermission',
+  'schedulePermission'
+]
