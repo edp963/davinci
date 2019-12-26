@@ -19,7 +19,7 @@
  */
 
 import React from 'react'
-import { HashRouter as Router, Switch, Route } from 'react-router-dom'
+import { Switch, Route } from 'react-router-dom'
 import { useInjectReducer } from 'utils/injectReducer'
 import { useInjectSaga } from 'utils/injectSaga'
 
@@ -33,11 +33,9 @@ export default () => {
   useInjectSaga({ key: 'widget', saga })
 
   return (
-    <Router>
-      <Switch>
-        <Route exact path="/project/:projectId/widget/:widgetId?" component={Workbench} />
-        <Route exact path="/project/:projectId/widgets" component={WidgetList} />
-      </Switch>
-    </Router>
+    <Switch>
+      <Route exact path="/project/:projectId/widget/:widgetId?" component={Workbench} />
+      <Route exact path="/project/:projectId/widgets" component={WidgetList} />
+    </Switch>
   )
 }

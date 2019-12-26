@@ -18,6 +18,8 @@
  * >>
  */
 
+import { IWidgetConfig } from "./components/Widget"
+
 export interface IWidgetBase {
   id: number
   name: string
@@ -30,6 +32,11 @@ export interface IWidgetBase {
 
 export interface IWidgetRaw extends IWidgetBase {
   config: string
+}
+
+export interface IWidgetFormed extends IWidgetBase {
+  config: IWidgetConfig
+  dataToken?: string // widget response in Share request
 }
 
 export interface IWidgetState {

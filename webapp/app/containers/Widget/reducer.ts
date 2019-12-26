@@ -22,14 +22,13 @@ import produce from 'immer'
 import { IWidgetState } from './types'
 import { ActionTypes } from './constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
-import { ActionTypes as DisplayActionTypes } from '../Display/constants'
 import { ActionTypes as ViewActionTypes } from '../View/constants'
 import { WidgetActionType } from './actions'
 import { ViewActionType } from 'containers/View/actions'
 import { DisplayActionType } from 'containers/Display/actions'
 
-const initialState: IWidgetState = {
-  widgets: null,
+export const initialState: IWidgetState = {
+  widgets: [],
   currentWidget: null,
   loading: false,
   dataLoading: false,
@@ -130,10 +129,6 @@ const widgetReducer = (
         break
 
       case LOAD_DASHBOARD_DETAIL_SUCCESS:
-        draft.widgets = action.payload.widgets
-        break
-
-      case DisplayActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
         draft.widgets = action.payload.widgets
         break
 
