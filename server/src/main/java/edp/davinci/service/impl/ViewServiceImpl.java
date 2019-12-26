@@ -105,8 +105,14 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     private static final String SQL_VARABLE_KEY = "name";
 
     private static final CheckEntityEnum entity = CheckEntityEnum.VIEW;
-    
+
     private static final  ExecutorService ROLEPARAM_THREADPOOL = Executors.newFixedThreadPool(8);
+
+    private static final String CONCURRENCY_LOCK_FROMAT = "CON_LOCK@VIEW_%s@%s";
+    private static final String CONCURRENCY_COUNT_FROMAT = "CON_COUNT@VIEW_%s@%s";
+    private static final String CONCURRENCY_DATA_FROMAT = "CON_DATA@VIEW_%s@%s";
+
+    private static final int CONCURRENCY_EXPIRE = 60 * 60;
 
     @Override
     public boolean isExist(String name, Long id, Long projectId) {
@@ -167,6 +173,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         List<RelRoleView> relRoleViews = relRoleViewMapper.getByView(view.getId());
         view.setRoles(relRoleViews);
+
         return view;
     }
 
@@ -577,23 +584,20 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             throw new NotFoundException("source is not found");
         }
 
+        if (StringUtils.isEmpty(viewWithSource.getSql())) {
+            return null;
+        }
+
         String cacheKey = null;
         try {
-
-            if (StringUtils.isEmpty(viewWithSource.getSql())) {
-                return paginate;
-            }
-
-            // 解析变量
+            //解析变量
             List<SqlVariable> variables = viewWithSource.getVariables();
-            // 解析sql
-            SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter, user, isMaintainer);
-            // 列权限（只记录被限制访问的字段）
+            //解析sql
+            SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
+            //列权限（只记录被限制访问的字段）
             Set<String> excludeColumns = new HashSet<>();
-            packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(),
-                    excludeColumns, user);
-            String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(),
-                    sqlEntity.getAuthParams(), sqlTempDelimiter);
+            packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(), excludeColumns, user);
+            String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
             Source source = viewWithSource.getSource();
 
@@ -601,44 +605,121 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
             List<String> executeSqlList = sqlParseUtils.getSqls(srcSql, false);
             if (!CollectionUtils.isEmpty(executeSqlList)) {
-                executeSqlList.forEach(sql -> sqlUtils.execute(sql));
+                executeSqlList.forEach(sqlUtils::execute);
             }
 
             List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
-            if (!CollectionUtils.isEmpty(querySqlList)) {
-                buildQuerySql(querySqlList, source, executeParam);
-                executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl(), source.getDbVersion());
+            if (CollectionUtils.isEmpty(querySqlList)) {
+                return null;
+            }
 
-                if (null != executeParam && null != executeParam.getCache() && executeParam.getCache()
-                        && executeParam.getExpired() > 0L) {
+            buildQuerySql(querySqlList, source, executeParam);
+            executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl(), source.getDbVersion());
 
-                    StringBuilder slatBuilder = new StringBuilder();
-                    slatBuilder.append(executeParam.getPageNo());
-                    slatBuilder.append(MINUS);
-                    slatBuilder.append(executeParam.getLimit());
-                    slatBuilder.append(MINUS);
-                    slatBuilder.append(executeParam.getPageSize());
-                    excludeColumns.forEach(slatBuilder::append);
-                    cacheKey = MD5Util.getMD5(slatBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true,
-                            32);
-                    if (!executeParam.getFlush()) {
+            StringBuilder res = new StringBuilder();
+            res.append(executeParam.getPageNo());
+            res.append(MINUS);
+            res.append(executeParam.getLimit());
+            res.append(MINUS);
+            res.append(executeParam.getPageSize());
+            excludeColumns.forEach(res::append);
 
-                        try {
-                            Object object = redisUtils.get(cacheKey);
-                            if (null != object && executeParam.getCache()) {
-                                paginate = (PaginateWithQueryColumns) object;
-                                return paginate;
-                            }
-                        } catch (Exception e) {
-                            log.warn("get data by cache: {}", e.getMessage());
+            cacheKey = MD5Util.getMD5(res.toString() + querySqlList.get(querySqlList.size() - 1), true, 32);
+
+            if (null != executeParam.getCache() && executeParam.getCache() && executeParam.getExpired() > 0L) {
+                if (!executeParam.getFlush()) {
+                    try {
+                        Object object = redisUtils.get(cacheKey);
+                        if (null != object && executeParam.getCache()) {
+                            paginate = (PaginateWithQueryColumns) object;
+                            return paginate;
+                        }
+                    } catch (Exception e) {
+                        log.warn("get data by cache: {}", e.getMessage());
+                    }
+                }
+            }
+
+            if (redisUtils.isRedisEnable() && executeParam.isConcurrencyOptimization()) {
+                String lockKey = String.format(CONCURRENCY_LOCK_FROMAT, viewWithSource.getId(), cacheKey);
+                String countKey = String.format(CONCURRENCY_COUNT_FROMAT, viewWithSource.getId(), cacheKey);
+                String dataKey = String.format(CONCURRENCY_DATA_FROMAT, viewWithSource.getId(), cacheKey);
+
+                BaseLock lock = LockFactory.getLock(lockKey, CONCURRENCY_EXPIRE, LockType.REDIS);
+                ConcurrencyStrategyEnum strategyEnum = ConcurrencyStrategyEnum.strategyOf(executeParam.getConcurrencyOptimizationStrategy());
+
+                redisUtils.incr(countKey, CONCURRENCY_EXPIRE);
+
+                if (strategyEnum == ConcurrencyStrategyEnum.DIRTY_READ) {
+                    try {
+                        Object o = redisUtils.get(dataKey);
+                        if (null != o) {
+                            paginate = (PaginateWithQueryColumns) o;
+                            return paginate;
+                        }
+                    } finally {
+                        redisUtils.decr(countKey, -1);
+                        Object decr = redisUtils.get(countKey);
+                        if (decr == null || (Integer) decr <= 0L) {
+                            redisUtils.delete(countKey);
                         }
                     }
                 }
 
+                if (lock.getLock()) {
+                    long millisStart = System.currentTimeMillis();
+                    for (String sql : querySqlList) {
+                        paginate = sqlUtils.syncQuery4Paginate(
+                                SqlParseUtils.rebuildSqlWithFragment(sql),
+                                executeParam.getPageNo(),
+                                executeParam.getPageSize(),
+                                executeParam.getTotalCount(),
+                                executeParam.getLimit(),
+                                excludeColumns);
+                    }
+                    long millisEnd = System.currentTimeMillis();
+                    long expire = (millisEnd - millisStart) / 1_000;
+                    redisUtils.set(dataKey, paginate, Math.max(10L, expire), TimeUnit.SECONDS);
+                    lock.release();
+                }
+
+                boolean waite = true;
+                do {
+                    waite = redisUtils.get(lockKey) != null;
+                    if (waite) {
+                        if (strategyEnum == ConcurrencyStrategyEnum.FAIL_FAST) {
+                            throw new ServerException("Current get data request is in progress");
+                        } else {
+                            Thread.sleep(100);
+                        }
+                    } else {
+                        if (paginate == null) {
+                            Object cacheData = redisUtils.get(dataKey);
+                            if (null != cacheData) {
+                                paginate = (PaginateWithQueryColumns) cacheData;
+                            }
+                        }
+                        redisUtils.decr(countKey, -1);
+                    }
+                } while (waite);
+
+                Object decr = redisUtils.get(countKey);
+                if (decr == null || (Integer) decr <= 0L) {
+                    redisUtils.delete(countKey);
+                    if (strategyEnum == ConcurrencyStrategyEnum.FAIL_FAST) {
+                        redisUtils.delete(dataKey);
+                    }
+                }
+
+            } else {
                 for (String sql : querySqlList) {
-                    paginate = sqlUtils.syncQuery4Paginate(SqlParseUtils.rebuildSqlWithFragment(sql),
-                            executeParam.getPageNo(), executeParam.getPageSize(), executeParam.getTotalCount(),
-                            executeParam.getLimit(), excludeColumns);
+                    paginate = sqlUtils.syncQuery4Paginate(
+                            SqlParseUtils.rebuildSqlWithFragment(sql),
+                            executeParam.getPageNo(),
+                            executeParam.getPageSize(),
+                            executeParam.getTotalCount(),
+                            executeParam.getLimit(),
+                            excludeColumns);
                 }
             }
 
@@ -647,7 +728,9 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             throw new ServerException(e.getMessage());
         }
 
-        if (null != executeParam.getCache() && executeParam.getCache() && executeParam.getExpired() > 0L
+        if (null != executeParam.getCache()
+                && executeParam.getCache()
+                && executeParam.getExpired() > 0L
                 && null != paginate && !CollectionUtils.isEmpty(paginate.getResultList())) {
             redisUtils.set(cacheKey, paginate, executeParam.getExpired(), TimeUnit.SECONDS);
         }
@@ -828,6 +911,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         List<SqlVariable> queryVariables = getQueryVariables(variables);
         List<SqlVariable> authVariables = null;
+
         if (!isProjectMaintainer) {
             List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewId);
             authVariables = getAuthVariables(roleViewList, variables);
@@ -929,7 +1013,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             relRoleViewMapper.deleteByViewId(view.getId());
             return;
         }
-        
+
         ROLEPARAM_THREADPOOL.execute(()->{
 			Set<String> vars = null, columns = null;
 

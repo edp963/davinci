@@ -14,30 +14,14 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
- *
  */
 
 package edp.davinci.dto.viewDto;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.util.List;
-
-@EqualsAndHashCode(callSuper = true)
 @Data
-@NotNull(message = "request parameter cannot be null")
-public class DistinctParam  extends ConcurrencyStrategy{
-    @NotEmpty(message = "distinct column cannot be EMPTY")
-    private List<String> columns;
-
-    private List<String> filters;
-
-    private List<Param> params;
-
-    private Boolean cache;
-
-    private Long expired;
+public class ConcurrencyStrategy {
+    boolean concurrencyOptimization = false;
+    int concurrencyOptimizationStrategy = -1;
 }

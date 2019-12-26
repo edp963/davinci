@@ -23,6 +23,7 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +32,9 @@ import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.*;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class ViewExecuteParam {
+public class ViewExecuteParam extends ConcurrencyStrategy{
     private List<String> groups;
     private List<Aggregator> aggregators;
     private List<Order> orders;

@@ -14,30 +14,28 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
- *
  */
 
-package edp.davinci.dto.viewDto;
+package edp.davinci.core.enums;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.util.List;
+public enum ConcurrencyStrategyEnum {
+    DIRTY_READ(0),
+    FAIL_FAST(1);
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-@NotNull(message = "request parameter cannot be null")
-public class DistinctParam  extends ConcurrencyStrategy{
-    @NotEmpty(message = "distinct column cannot be EMPTY")
-    private List<String> columns;
+    private int strategy;
 
-    private List<String> filters;
+    ConcurrencyStrategyEnum(int strategy) {
+        this.strategy = strategy;
+    }
 
-    private List<Param> params;
-
-    private Boolean cache;
-
-    private Long expired;
+    public static ConcurrencyStrategyEnum strategyOf(int strategy) {
+        for (ConcurrencyStrategyEnum strategyEnum : values()) {
+            if (strategyEnum.strategy == strategy) {
+                return strategyEnum;
+            }
+        }
+        return null;
+    }
 }
