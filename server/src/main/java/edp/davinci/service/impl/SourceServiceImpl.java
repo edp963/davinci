@@ -228,8 +228,8 @@ public class SourceServiceImpl implements SourceService {
 			BeanUtils.copyProperties(sourceCreate, source);
 			source.setConfig(JSONObject.toJSONString(config));
 
-			int i = sourceMapper.insert(source);
-			if (i != 1) {
+			if (sourceMapper.insert(source) != 1) {
+				log.info("create source fail:{}", source.toString());
 				throw new ServerException("create source fail");
 			}
 
