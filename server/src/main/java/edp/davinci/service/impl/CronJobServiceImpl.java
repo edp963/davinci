@@ -134,7 +134,7 @@ public class CronJobServiceImpl implements CronJobService {
 	private void checkWritePermisson(Long projectId, User user, String operation) {
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 		if (projectPermission == null || projectPermission.getSchedulePermission() < UserPermissionEnum.WRITE.getPermission()) {
-			log.info("user {} have not permisson to {} create job", user.getUsername(), operation);
+			log.info("user {} have not permisson to {} " + operation + " job", user.getUsername(), operation);
 			throw new UnAuthorizedExecption("you have not permission to " + operation + " job");
 		}
 	}
