@@ -21,7 +21,7 @@
 import React, { useState } from 'react'
 import classnames from 'classnames'
 import { ResizableBox } from 'libs/react-resizable'
-import { ResizableProps } from 'libs/react-resizable/lib/Resizable'
+import { ResizableProps } from 'libs/react-resizable'
 import ResizeHandle from './ResizeHandle'
 import './SplitPane.less'
 

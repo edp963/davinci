@@ -42,19 +42,23 @@
 
     &-1 {
       display: flex;
+
+      & > .react-resizable {
+        display: flex;
+      }
     }
 
     &-2 {
       flex: 1;
       display: flex;
       overflow: hidden;
+
+      & > .react-resizable {
+        display: flex;
+      }
     }
 
-    .react-resizable {
-      display: flex;
-    }
-
-    .resize-handle {
+    &-resize-handle {
       position: absolute;
       width: 8px;
       cursor: col-resize;
