@@ -44,6 +44,8 @@ const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 import { barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
+import { colorSort } from '../../components/Config/Sort/util'
+import { FieldSortTypes } from '../../components/Config/Sort'
 
 export default function (chartProps: IChartProps, drillOptions) {
   const { data, cols, chartStyles: prevChartStyles, color, tip } = chartProps
@@ -145,7 +147,15 @@ export default function (chartProps: IChartProps, drillOptions) {
         sumArr.push(getColorDataSum(v, metrics))
       })
 
-      Object.entries(grouped).forEach(([k, v]: [string, any[]]) => {
+      const groupEntries = Object.entries(grouped)
+      const customColorSort = color.items
+        .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+        .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
+      if (customColorSort.length) {
+        colorSort(groupEntries, customColorSort[0])
+      }
+
+      groupEntries.forEach(([k, v]: [string, any[]]) => {
         const serieObj = {
           id: `${m.name}${DEFAULT_SPLITER}${DEFAULT_SPLITER}${k}`,
           name: `${k}${metrics.length > 1 ? ` ${m.displayName}` : ''}`,
