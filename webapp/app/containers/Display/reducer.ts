@@ -19,136 +19,124 @@
  */
 
 import produce from 'immer'
-import undoable, { includeAction } from 'redux-undo'
+
+import { matchPath } from 'react-router-dom'
+import { LOCATION_CHANGE, LocationChangeAction } from 'connected-react-router'
+import { IRouteParams } from 'utils/types'
 
 import { ActionTypes } from './constants'
-import { GraphTypes } from './components/util'
+import { ActionTypes as VizActionTypes } from 'containers/Viz/constants'
 import { ActionTypes as ViewActionTypes } from '../View/constants'
 
+import { GraphTypes } from './components/constants'
 import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
 
-const initialState = {
-  displays: [],
-  currentDisplay: null,
-  currentDisplayLoading: false,
+import { DisplayActionType } from './actions'
+import { VizActionType } from '../Viz/actions'
+import { ViewActionType } from '../View/actions'
+
+import { IDisplayState } from './types'
+
+export const initialState: IDisplayState = {
   currentDisplayShareInfo: '',
   currentDisplaySecretInfo: '',
-  currentSlide: null,
-  currentSlideLoading: false,
   currentDisplaySelectOptions: {},
 
-  currentLayers: [],
-  currentLayersInfo: {},
-  currentLayersOperationInfo: {},
+  currentSlideId: 0,
 
-  displayLoading: false,
+  currentDisplayWidgets: {},
+
+  slideLayers: {},
+  slideLayersInfo: {},
+  slideLayersOperationInfo: {},
+
+  clipboardSlides: [],
   clipboardLayers: [],
-  lastOperationType: '',
+
+  lastOperationType: null,
   lastLayers: [],
 
-  currentProject: null,
   editorBaselines: [],
 
-  currentDisplayShareInfoLoading: false
+  loading: {
+    shareInfo: false,
+    slideLayers: false
+  }
 }
 
-const displayReducer = (state = initialState, action) =>
-  produce(state, (draft) => {
+const displayReducer = (
+  state = initialState,
+  action:
+    | DisplayActionType
+    | VizActionType
+    | ViewActionType
+    | LocationChangeAction
+) =>
+  produce(state, (draft: IDisplayState) => {
+    let slideId: number
+    let layerId: number
+
+    const layersInfo = draft.slideLayersInfo[draft.currentSlideId]
+    const layersOperationInfo =
+      draft.slideLayersOperationInfo[draft.currentSlideId]
+
     switch (action.type) {
-      case ActionTypes.LOAD_DISPLAYS_SUCCESS:
-        draft.displays = action.payload.displays
+      case VizActionTypes.EDIT_SLIDES_SUCCESS:
+        draft.lastOperationType = VizActionTypes.EDIT_SLIDES_SUCCESS
         break
 
-      case ActionTypes.LOAD_DISPLAYS_FAILURE:
+      case ActionTypes.LOAD_SLIDE_DETAIL:
+        draft.loading.slideLayers = true
         break
 
-      case ActionTypes.ADD_DISPLAY:
-        draft.displayLoading = true
-        break
-
-      case ActionTypes.ADD_DISPLAY_SUCCESS:
-        draft.displays.unshift(action.payload.result)
-        draft.displayLoading = false
-        break
-
-      case ActionTypes.ADD_DISPLAY_FAILURE:
-        draft.displayLoading = false
-        break
-
-      case ActionTypes.EDIT_DISPLAY:
-        draft.displayLoading = true
-        break
-
-      case ActionTypes.EDIT_DISPLAY_SUCCESS:
-        draft.displays = draft.displays.splice(draft.displays.findIndex(({ id }) => id === action.payload.result.id), 1, action.payload.result)
-        break
-
-      case ActionTypes.EDIT_DISPLAY_FAILURE:
-        draft.displayLoading = false
-        break
-
-      case ActionTypes.EDIT_CURRENT_DISPLAY:
-        draft.currentDisplayLoading = true
-        break
-
-      case ActionTypes.EDIT_CURRENT_DISPLAY_SUCCESS:
-        draft.currentDisplay = action.payload.result
-        draft.currentDisplayLoading = false
-        break
-
-      case ActionTypes.EDIT_CURRENT_DISPLAY_FAILURE:
-        draft.currentDisplayLoading = false
-        break
-
-      case ActionTypes.EDIT_CURRENT_SLIDE:
-        draft.currentSlideLoading = true
-        break
-
-      case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
-        draft.lastOperationType = ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS
-        draft.currentSlide = action.payload.result
-        draft.currentSlideLoading = false
-        break
-
-      case ActionTypes.EDIT_CURRENT_SLIDE_FAILURE:
-        draft.currentSlideLoading = false
-        break
-
-      case ActionTypes.LOAD_DISPLAY_DETAIL:
-        draft.currentDisplayLoading = true
-        draft.currentDisplayShareInfo = ''
-        draft.currentDisplaySecretInfo = ''
-        break
-
-      case ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
-        draft.currentDisplayLoading = false
-        draft.currentDisplay = action.payload.display
+      case ActionTypes.LOAD_SLIDE_DETAIL_SUCCESS:
+        slideId = action.payload.slideId
         draft.currentDisplaySelectOptions = {}
-        draft.currentSlide = action.payload.slide
-        draft.currentLayers = action.payload.layers || []
-        draft.currentLayersInfo = (action.payload.layers || []).reduce((obj, layer) => {
-          obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
-            datasource: { resultList: [] },
-            loading: false,
-            queryConditions: {
-              tempFilters: [],
-              linkageFilters: [],
-              globalFilters: [],
-              variables: [],
-              linkageVariables: [],
-              globalVariables: [],
-              pagination: {}
-            },
-            interactId: '',
-            rendered: false,
-            renderType: 'rerender'
-          } : {
-            loading: false,
-            datasource: { resultList: [] }
-          }
-          return obj
-        }, {})
-        draft.currentLayersOperationInfo = (action.payload.layers || []).reduce((obj, layer) => {
+        draft.currentDisplayWidgets = action.payload.widgets.reduce(
+          (obj, widget) => {
+            obj[widget.id] = widget
+            return obj
+          },
+          draft.currentDisplayWidgets
+        )
+        draft.slideLayers[slideId] = (action.payload.layers || []).reduce(
+          (obj, layer) => {
+            obj[layer.id] = layer
+            return obj
+          },
+          {}
+        )
+        draft.slideLayersInfo[slideId] = (action.payload.layers || []).reduce(
+          (obj, layer) => {
+            obj[layer.id] =
+              layer.type === GraphTypes.Chart
+                ? {
+                    datasource: { resultList: [] },
+                    loading: false,
+                    queryConditions: {
+                      tempFilters: [],
+                      linkageFilters: [],
+                      globalFilters: [],
+                      variables: [],
+                      linkageVariables: [],
+                      globalVariables: [],
+                      pagination: {}
+                    },
+                    interactId: '',
+                    rendered: false,
+                    renderType: 'rerender'
+                  }
+                : {
+                    loading: false,
+                    datasource: { resultList: [] }
+                  }
+            return obj
+          },
+          {}
+        )
+        draft.slideLayersOperationInfo[slideId] = (
+          action.payload.layers || []
+        ).reduce((obj, layer) => {
           obj[layer.id] = {
             selected: false,
             dragging: false,
@@ -159,74 +147,86 @@ const displayReducer = (state = initialState, action) =>
         draft.editorBaselines = []
         break
 
-      case ActionTypes.LOAD_DISPLAY_DETAIL_FAILURE:
-        draft.currentDisplayLoading = false
-        draft.currentDisplay = null
+      case ActionTypes.LOAD_SLIDE_DETAIL_FAILURE:
+        draft.loading.slideLayers = false
         break
 
-      case ActionTypes.DELETE_DISPLAY_SUCCESS:
-        draft.displays = draft.displays.filter((d) => d.id !== action.payload.id)
-        break
+      case ActionTypes.ADD_SLIDE_LAYERS_SUCCESS:
+        draft.lastOperationType = ActionTypes.ADD_SLIDE_LAYERS_SUCCESS
+        draft.lastLayers = action.payload.layers
+        slideId = action.payload.slideId
+        action.payload.layers.forEach((layer) => {
+          draft.slideLayers[slideId][layer.id] = layer
+          draft.slideLayersInfo[slideId][layer.id] =
+            layer.type === GraphTypes.Chart
+              ? {
+                  datasource: { resultList: [] },
+                  loading: false,
+                  queryConditions: {
+                    tempFilters: [],
+                    linkageFilters: [],
+                    globalFilters: [],
+                    variables: [],
+                    linkageVariables: [],
+                    globalVariables: []
+                  },
+                  interactId: '',
+                  rendered: false,
+                  renderType: 'rerender'
+                }
+              : {
+                  datasource: { resultList: [] },
+                  loading: false
+                }
 
-      case ActionTypes.DELETE_DISPLAY_FAILURE:
-        break
-
-      case ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS:
-        draft.lastOperationType = ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS
-        draft.lastLayers = action.payload.result
-        draft.currentLayers = draft.currentLayers.concat(action.payload.result)
-        action.payload.result.forEach((layer) => {
-          draft.currentLayersInfo[layer.id] = (layer.type === GraphTypes.Chart) ? {
-            datasource: { resultList: [] },
-            loading: false,
-            queryConditions: {
-              tempFilters: [],
-              linkageFilters: [],
-              globalFilters: [],
-              variables: [],
-              linkageVariables: [],
-              globalVariables: [],
-              pagination: {}
-            },
-            interactId: '',
-            rendered: false,
-            renderType: 'rerender'
-          } : {
-            datasource: { resultList: [] },
-            loading: false
-          }
-
-          draft.currentLayersOperationInfo[layer.id] = {
+          draft.slideLayersOperationInfo[slideId][layer.id] = {
             selected: false,
             resizing: false,
             dragging: false
           }
+
+          if (Array.isArray(action.payload.widgets)) {
+            action.payload.widgets.forEach((w) => {
+              draft.currentDisplayWidgets[w.id] = w
+            })
+          }
         })
         break
 
-      case ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS:
-        draft.lastOperationType = ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS
-        draft.lastLayers = draft.currentLayers.filter((layer) => action.payload.ids.indexOf(layer.id.toString()) >= 0)
-        draft.currentLayers = draft.currentLayers.filter((layer) => action.payload.ids.indexOf(layer.id.toString()) < 0)
-        action.payload.ids.forEach((id) => {
-          delete draft.currentLayersInfo[id]
-          delete draft.currentLayersOperationInfo[id]
+      case ActionTypes.DELETE_SLIDE_LAYERS_SUCCESS:
+        slideId = action.payload.slideId
+        draft.lastOperationType = ActionTypes.DELETE_SLIDE_LAYERS_SUCCESS
+        draft.lastLayers = action.payload.layerIds.map(
+          (layerId) => draft.slideLayers[slideId][layerId]
+        )
+        action.payload.layerIds.forEach((id) => {
+          delete draft.slideLayers[slideId][id]
+          delete draft.slideLayersInfo[slideId][id]
+          delete draft.slideLayersOperationInfo[slideId][id]
         })
         break
 
-      case ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS:
+      case ActionTypes.EDIT_SLIDE_LAYERS_SUCCESS:
+        slideId = action.payload.slideId
         const lastLayers = []
-        action.payload.result.forEach((layer) => {
-          lastLayers.push(draft.currentLayers.find((l) => l.id === layer.id))
-          draft.currentLayers.splice(draft.currentLayers.findIndex((l) => l.id === layer.id), 1, layer)
+        action.payload.layers.forEach((layer) => {
+          lastLayers.push(draft.slideLayers[slideId][layer.id])
+          draft.slideLayers[slideId][layer.id] = layer
+          if (draft.slideLayersInfo[slideId][layer.id].renderType) {
+            draft.slideLayersInfo[slideId][layer.id].renderType = 'resize'
+            draft.slideLayersInfo[slideId][layer.id].datasource = {
+              ...draft.slideLayersInfo[slideId][layer.id].datasource
+            }
+          }
         })
-        draft.lastOperationType = ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS
+        draft.lastOperationType = ActionTypes.EDIT_SLIDE_LAYERS_SUCCESS
         draft.lastLayers = lastLayers
         break
 
       case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
         if (action.payload.vizType === 'display') {
-          const layerInfo = draft.currentLayersInfo[action.payload.itemId]
+          ;[slideId, layerId] = action.payload.itemId as [number, number]
+          const layerInfo = draft.slideLayersInfo[slideId][layerId]
           layerInfo.loading = true
           layerInfo.queryConditions = {
             tempFilters: action.payload.requestParams.tempFilters,
@@ -241,8 +241,12 @@ const displayReducer = (state = initialState, action) =>
 
       case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS:
         if (action.payload.vizType === 'display') {
-          fieldGroupedSort(action.payload.result.resultList, action.payload.requestParams.customOrders)
-          const layerInfo = draft.currentLayersInfo[action.payload.itemId]
+          ;[slideId, layerId] = action.payload.itemId as [number, number]
+          fieldGroupedSort(
+            action.payload.result.resultList,
+            action.payload.requestParams.customOrders
+          )
+          const layerInfo = draft.slideLayersInfo[slideId][layerId]
           layerInfo.loading = false
           layerInfo.datasource = action.payload.result
           layerInfo.renderType = action.payload.renderType
@@ -251,56 +255,95 @@ const displayReducer = (state = initialState, action) =>
 
       case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE:
         if (action.payload.vizType === 'display') {
-          draft.currentLayersInfo[action.payload.layerId].loading = false
+          ;[slideId, layerId] = action.payload.itemId as [number, number]
+          draft.slideLayersInfo[slideId][layerId].loading = false
         }
         break
 
-      case ActionTypes.DRAG_SELECT_LAYER:
-        draft.currentLayers.forEach((layer) => {
-          if (!draft.currentLayersOperationInfo[layer.id].selected || layer.id === action.payload.id) { return layer }
-          const layerParams = JSON.parse(layer.params)
-          const { positionX, positionY } = layerParams
-          layerParams.positionX = positionX + action.payload.deltaX
-          layerParams.positionY = positionY + action.payload.deltaY
-          layer.params = JSON.stringify(layerParams)
+      case ActionTypes.RESIZE_LAYER_ADJUSTED:
+        const resizingLayerIds = action.payload.layerIds
+        resizingLayerIds.forEach((layerId) => {
+          if (!action.payload.finish) {
+            draft.slideLayers[draft.currentSlideId][layerId].params.width +=
+              action.payload.deltaSize.deltaWidth
+            draft.slideLayers[draft.currentSlideId][layerId].params.height +=
+              action.payload.deltaSize.deltaHeight
+          }
+          if (layersInfo[layerId].renderType) {
+            layersInfo[layerId].renderType = 'resize'
+            layersInfo[layerId].datasource = {
+              ...layersInfo[layerId].datasource
+            }
+          }
+          draft.slideLayersOperationInfo[draft.currentSlideId][
+            layerId
+          ].resizing = !action.payload.finish
         })
         break
 
-      case ActionTypes.RESIZE_LAYERS:
-        action.payload.layerIds.forEach((layerId) => {
-          const layerInfo = draft.currentLayersInfo[layerId]
-          layerInfo.renderType = 'resize'
-          layerInfo.datasource = { ...layerInfo.datasource }
+      case ActionTypes.DRAG_LAYER_ADJUSTED:
+        const {
+          width: slideWidth,
+          height: slideHeight
+        } = action.payload.slideSize
+        const movingLayerIds = action.payload.layerIds
+        movingLayerIds.forEach((layerId) => {
+          if (!action.payload.finish) {
+            const layer = draft.slideLayers[draft.currentSlideId][layerId]
+            layer.params.positionX += action.payload.deltaPosition.deltaX
+            layer.params.positionY += action.payload.deltaPosition.deltaY
+            if (layer.params.positionX < 0) {
+              layer.params.positionX = 0
+            } else if (
+              layer.params.positionX + layer.params.width >
+              slideWidth
+            ) {
+              layer.params.positionX = slideWidth - layer.params.width
+            }
+            if (layer.params.positionY < 0) {
+              layer.params.positionY = 0
+            } else if (
+              layer.params.positionY + layer.params.height >
+              slideHeight
+            ) {
+              layer.params.positionY = slideHeight - layer.params.height
+            }
+          }
+
+          draft.slideLayersOperationInfo[draft.currentSlideId][
+            layerId
+          ].dragging = !action.payload.finish
         })
         break
 
       case ActionTypes.SELECT_LAYER:
-        Object.entries(draft.currentLayersOperationInfo).forEach(([id, layerOperationInfo]: [string, any]) => {
-          if (action.payload.selected && action.payload.exclusive) {
-            layerOperationInfo.selected = false
+        Object.entries(layersOperationInfo).forEach(
+          ([id, layerOperationInfo]: [string, any]) => {
+            if (action.payload.selected && action.payload.exclusive) {
+              draft.slideLayersOperationInfo[draft.currentSlideId][id] = {
+                ...layerOperationInfo,
+                selected: false
+              }
+            }
+            if (+id === action.payload.layerId) {
+              draft.slideLayersOperationInfo[draft.currentSlideId][id] = {
+                ...layerOperationInfo,
+                selected: action.payload.selected
+              }
+            }
           }
-          if (id === action.payload.id.toString) {
-            layerOperationInfo.selected = action.payload.selected
-          }
-        })
+        )
+        draft.slideLayersOperationInfo[draft.currentSlideId] = {
+          ...layersOperationInfo
+        }
         break
 
       case ActionTypes.CLEAR_LAYERS_SELECTION:
-        Object.values(draft.currentLayersOperationInfo).forEach((layerOperationInfo: any) => {
-          layerOperationInfo.selected = false
-        })
-        break
-
-      case ActionTypes.TOGGLE_LAYERS_RESIZING_STATUS:
-        action.payload.layerIds.forEach((layerId) => {
-          draft.currentLayersOperationInfo[layerId].resizing = action.payload.resizing
-        })
-        break
-
-      case ActionTypes.TOGGLE_LAYERS_DRAGGING_STATUS:
-        action.payload.layerIds.forEach((layerId) => {
-          draft.currentLayersOperationInfo[layerId].dragging = action.payload.dragging
-        })
+        Object.values(layersOperationInfo).forEach(
+          (layerOperationInfo: any) => {
+            layerOperationInfo.selected = false
+          }
+        )
         break
 
       case ActionTypes.CLEAR_EDITOR_BASELINES:
@@ -311,82 +354,47 @@ const displayReducer = (state = initialState, action) =>
         draft.editorBaselines = action.payload.baselines
         break
 
-      case ActionTypes.COPY_SLIDE_LAYERS:
+      case ActionTypes.COPY_SLIDE_LAYERS_SUCCESS:
         draft.clipboardLayers = action.payload.layers
         break
 
-      case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
-        draft.lastOperationType = ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS
-        draft.lastLayers = action.payload.result
-        draft.currentLayers = draft.currentLayers.concat(action.payload.result)
-        action.payload.result.forEach((layer) => {
-          draft.currentLayersInfo[layer.id] = (layer.type === GraphTypes.Chart) ? {
-            datasource: { resultList: [] },
-            loading: false,
-            queryConditions: {
-              linkageFilters: [],
-              globalFilters: [],
-              variables: [],
-              linkageVariables: [],
-              globalVariables: [],
-              pagination: {}
-            },
-            interactId: '',
-            rendered: false,
-            renderType: 'rerender'
-          } : {
-            datasource: { resultList: [] },
-            loading: false
-          }
-
-          draft.currentLayersOperationInfo[layer.id] = {
-            selected: false,
-            resizing: false,
-            dragging: false
-          }
-        })
-        break
-
       case ActionTypes.LOAD_DISPLAY_SHARE_LINK:
-        draft.currentDisplayShareInfoLoading = true
+        draft.loading.shareInfo = true
         break
 
       case ActionTypes.LOAD_DISPLAY_SHARE_LINK_SUCCESS:
         draft.currentDisplayShareInfo = action.payload.shareInfo
-        draft.currentDisplayShareInfoLoading = false
+        draft.loading.shareInfo = false
         break
 
       case ActionTypes.LOAD_DISPLAY_SECRET_LINK_SUCCESS:
         draft.currentDisplaySecretInfo = action.payload.secretInfo
-        draft.currentDisplayShareInfoLoading = false
+        draft.loading.shareInfo = false
         break
 
       case ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE:
-        draft.currentDisplayShareInfoLoading = false
-        break
-
-      case ActionTypes.LOAD_CURRENT_PROJECT_SUCCESS:
-        draft.currentProject = action.payload.result
+        draft.loading.shareInfo = false
         break
 
       case ActionTypes.RESET_DISPLAY_STATE:
         return initialState
+
+      case LOCATION_CHANGE:
+        const matchSlide = matchPath<IRouteParams>(
+          action.payload.location.pathname,
+          {
+            path: '/project/:projectId/display/:displayId/slide/:slideId',
+            exact: false,
+            strict: false
+          }
+        )
+        if (matchSlide) {
+          draft.currentSlideId = +matchSlide.params.slideId || null
+        } else {
+          return initialState
+        }
+        break
     }
   })
 
-const undoableDisplayReducer = undoable(displayReducer, {
-  initTypes: [ActionTypes.LOAD_DISPLAY_DETAIL],
-  ignoreInitialState: true,
-  filter: includeAction([
-    ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS,
-    ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS,
-    ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS,
-    ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS,
-    ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS,
-    ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS
-  ]),
-  undoType: ActionTypes.UNDO_OPERATION_SUCCESS,
-  redoType: ActionTypes.REDO_OPERATION_SUCCESS
-})
-
-export default undoableDisplayReducer
+export default displayReducer
