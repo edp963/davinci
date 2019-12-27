@@ -38,7 +38,7 @@ import { widgetDimensionMigrationRecorder, barChartStylesMigrationRecorder } fro
 
 const styles = require('./Workbench.less')
 
-interface IWidget {
+export interface IWidget {
   id?: number
   name: string
   description: string

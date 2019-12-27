@@ -314,11 +314,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let i = 0
     for (; i < path.length - 1; i++) {
         if (o[path[i]] === undefined) {
-          o[path[i]] = path[i + 1].match(/^\d+$/) ? [] : {}
+          o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
         }
-        o = o[path[i]]
+        o = o[decodeURIComponent(path[i])]
     }
-    o[path[i]] = decodeURIComponent(value)
+    o[decodeURIComponent(path[i])] = decodeURIComponent(value)
   }
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
@@ -411,6 +411,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let drillStatus
     let pagination
     let nativeQuery
+    const prevDrillHistory = cachedQueryConditions.drillHistory 
+    ? cachedQueryConditions.drillHistory[cachedQueryConditions.drillHistory.length - 1] 
+    : {}
 
     if (queryConditions) {
       tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
@@ -420,9 +423,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
-      drillStatus = queryConditions.drillStatus || void 0
       pagination = queryConditions.pagination || cachedQueryConditions.pagination
       nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
+      drillStatus = queryConditions.drillStatus || prevDrillHistory
     } else {
       tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
@@ -433,6 +436,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       globalVariables = cachedQueryConditions.globalVariables
       pagination = cachedQueryConditions.pagination
       nativeQuery = cachedQueryConditions.nativeQuery
+      drillStatus = prevDrillHistory
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -490,9 +494,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
 
     const requestParams = {
-      groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
+      groups,
       aggregators,
-      filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : requestParamsFilters,
+      filters: requestParamsFilters,
       tempFilters,
       linkageFilters,
       globalFilters,
@@ -505,7 +509,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       flush: renderType === 'flush',
       pagination,
       nativeQuery,
-      customOrders
+      customOrders,
+      drillStatus
     }
 
     if (tempOrders) {
@@ -934,14 +939,16 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   private selectDrillHistory = (history, item, itemId, widgetId) => {
-    const { currentItemsInfo, onDeleteDrillHistory } = this.props
-    if (history) {
-      this.getChartData('rerender', itemId, widgetId, {
-        drillStatus: history
-      })
-    } else {
-      this.getChartData('rerender', itemId, widgetId)
-    }
+    const { onDeleteDrillHistory } = this.props
+    setTimeout(() => {
+      if (history) {
+        this.getChartData('rerender', itemId, widgetId, {
+          drillStatus: history
+        })
+      } else {
+        this.getChartData('rerender', itemId, widgetId)
+      }
+    }, 50)
     onDeleteDrillHistory(itemId, item)
   }
 
@@ -1069,19 +1076,24 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           {itemblocks}
         </ResponsiveReactGridLayout>
       )
-
-      fullScreenComponent = (
-        <FullScreenPanel
-          widgets={widgets}
-          currentItems={currentItems}
-          currentDashboard={{ widgets: currentItems }}
-          currentItemsInfo={currentItemsInfo}
-          visible={allowFullScreen}
-          isVisible={this.visibleFullScreen}
-          currentDataInFullScreen={this.state.currentDataInFullScreen}
-          onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
-        />
-      )
+      fullScreenComponent = 
+        allowFullScreen
+        ? <FullScreenPanel
+            widgets={widgets}
+            currentItems={currentItems}
+            currentDashboard={dashboard}
+            currentItemsInfo={currentItemsInfo}
+            visible={allowFullScreen}
+            isVisible={this.visibleFullScreen}
+            mapOptions={dashboardSelectOptions}
+            onChange={this.globalControlChange}
+            onSearch={this.globalControlSearch}
+            onGetControlOptions={this.getOptions}
+            onGetChartData={this.getChartData}
+            onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
+            chartDetail={this.state.currentDataInFullScreen}
+          />
+        : <div/>
     } else {
       grids = (
         <div className={styles.shareContentEmpty}>
@@ -1112,6 +1124,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               </div>
             </Col>
           </Row>
+
           <GlobalControlPanel
             currentDashboard={dashboard}
             currentItems={currentItems}

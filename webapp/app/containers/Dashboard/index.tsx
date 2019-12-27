@@ -172,9 +172,9 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
   }
 
   public componentWillMount () {
-    // this.props.onHideNavigator()
     const { match, history, dashboards, onLoadDashboards, onLoadPortals, onLoadProjectDetail, onLoadProjectRoles } = this.props
-    const { projectId, portalId, dashboardId } = match.params
+    const { projectId, portalId } = match.params
+    const dashboardId = this.getDashboardIdFromLocation()
 
     onLoadProjectRoles(Number(projectId))
     onLoadDashboards(+portalId, (result) => {
@@ -201,28 +201,8 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
       this.expandAll(result)
     })
 
-    // .then(({result, defaultDashboardId}) => {
-    //   if (result.length !== 0 && defaultDashboardId !== -1) {
-    //     const { dashboardId } = params
-    //     const currentdashboardId = dashboardId ? Number(dashboardId) : defaultDashboardId
-    //     const selectedDashboard = (result as any).find((r) => r.id === currentdashboardId)
-    //     console.log(selectedDashboard)
-    //     this.props.onLoadDashboardDetail(selectedDashboard, params.projectId, params.portalId, currentdashboardId)
-    //   } else {
-    //     this.setState({
-    //       isGrid: false
-    //     })
-    //   }
-    // })
     onLoadPortals(projectId)
     onLoadProjectDetail(projectId)
-  }
-
-  private initalDashboardData (dashboards) {
-    this.setState({
-      dashboardData: listToTree(dashboards, 0)
-    })
-    this.expandAll(dashboards)
   }
 
   public componentWillReceiveProps (nextProps) {
@@ -231,15 +211,29 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
     }
   }
 
-
   public componentDidMount () {
     this.props.onHideNavigator()
   }
 
+  private initalDashboardData = (dashboards) => {
+    this.setState({
+      dashboardData: listToTree(dashboards, 0)
+    })
+    this.expandAll(dashboards)
+  }
+
+  private getDashboardIdFromLocation = () => {
+    const urlPieces = location.href.split('/')
+    const lastModuleName = urlPieces[urlPieces.length - 2]
+    const lastModuleId = urlPieces[urlPieces.length - 1]
+    return lastModuleName === 'dashboard' ? Number(lastModuleId) : 0
+  }
+
   private changeDashboard = (dashboardId) => (e) => {
     const { match, history } = this.props
-    const { projectId, portalId, dashboardId: currentDashboardId } = match.params
-    if (+currentDashboardId === dashboardId) {
+    const { projectId, portalId } = match.params
+    const currentDashboardId = this.getDashboardIdFromLocation()
+    if (currentDashboardId === dashboardId) {
       return
     }
 
@@ -552,11 +546,6 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
     })
   }
 
-  private backPortal = () => {
-    const { history, match } = this.props
-    history.replace(`/project/${match.params.projectId}/vizs`)
-  }
-
   private pickSearchDashboard = (dashboardId) => (e) => {
     const { dashboards } = this.props
     this.setState({
@@ -576,11 +565,12 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
   private confirmDeleteDashboard = (id) => {
     const { match, history, onDeleteDashboard, dashboards } = this.props
     const { dashboardData } = this.state
+    const dashboardId = this.getDashboardIdFromLocation()
 
     onDeleteDashboard(id, +match.params.portalId, () => {
       const { projectId, portalId } = match.params
 
-      const paramsDashboard = dashboards.find((d) => d.id === Number(match.params.dashboardId))
+      const paramsDashboard = dashboards.find((d) => d.id === dashboardId)
       const noCurrentDashboards = dashboardData.filter((d) => d.id !== id)
       if (noCurrentDashboards.length !== 0 && paramsDashboard) {
         const remainDashboards = noCurrentDashboards.filter((r) => r.parentId !== id)
@@ -589,7 +579,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
           type: 2,
           children: remainDashboards
         }
-        if (Number(match.params.dashboardId) === id || paramsDashboard.parentId === id) {
+        if (dashboardId === id || paramsDashboard.parentId === id) {
           const defaultDashboardId = findFirstLeaf(treeData)
           history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${defaultDashboardId}`)
         }
@@ -693,6 +683,8 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
     const items = searchValue.map((s) => {
       return <li key={s.id} onClick={this.pickSearchDashboard(s.id)}>{s.name}</li>
     })
+
+    const dashboardId = this.getDashboardIdFromLocation().toString()
 
     let modalTitle = ''
     switch (formType) {
@@ -839,7 +831,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
                       onExpand={this.onExpand}
                       expandedKeys={this.state.expandedKeys}
                       autoExpandParent={this.state.autoExpandParent}
-                      selectedKeys={[currentDashboard && currentDashboard.id.toString()]}
+                      selectedKeys={[dashboardId]}
                       draggable={initializePermission(currentProject, 'vizPermission')}
                       onDrop={this.onDrop}
                       onSelect={this.handleTree}
@@ -876,7 +868,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
             type={formType}
             itemId={this.state.itemId}
             dashboards={dashboards}
-            portalId={currentPortal.id}
+            portalId={Number(match.params.portalId)}
             exludeRoles={this.state.exludeRoles}
             onCheckUniqueName={onCheckUniqueName}
             onChangePermission={this.changePermission}

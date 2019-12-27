@@ -41,7 +41,7 @@ public class QuartzJobExecutor implements Job {
 
     private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
-    private static ExecutorService executorService = Executors.newFixedThreadPool(4);
+    public static final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) {

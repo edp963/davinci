@@ -29,6 +29,7 @@ import edp.core.exception.SourceException;
 import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
+import edp.davinci.core.utils.SqlParseUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
@@ -49,6 +50,7 @@ import org.springframework.stereotype.Component;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -296,14 +298,15 @@ public class SqlUtils {
     }
 
     public static String getCountSql(String sql) {
+        String countSql = String.format(Consts.QUERY_COUNT_SQL, sql);
         try {
             Select select = (Select) CCJSqlParserUtil.parse(sql);
             PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
             plainSelect.setOrderByElements(null);
-            return String.format(QUERY_COUNT_SQL, select.toString());
+            countSql = String.format(QUERY_COUNT_SQL, select.toString());
         } catch (JSQLParserException e) {
         }
-        return String.format(Consts.QUERY_COUNT_SQL, sql);
+        return SqlParseUtils.rebuildSqlWithFragment(countSql);
     }
 
 
@@ -328,6 +331,7 @@ public class SqlUtils {
                 columnPrefixExtractor(columnPrefixs, plainSelect);
             }
         } catch (JSQLParserException e) {
+//            log.warn("Get table name or alias Error: {}", e.getCause().getMessage());
         }
         return columnPrefixs;
     }
@@ -404,7 +408,7 @@ public class SqlUtils {
             e.printStackTrace();
             throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcSourceInfo.getJdbcUrl());
         } finally {
-            sourceUtils.releaseConnection(connection);
+            SourceUtils.releaseConnection(connection);
         }
 
 
@@ -514,7 +518,7 @@ public class SqlUtils {
             e.printStackTrace();
             throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcSourceInfo.getJdbcUrl());
         } finally {
-            sourceUtils.releaseConnection(connection);
+            SourceUtils.releaseConnection(connection);
         }
         return tableInfo;
     }
@@ -571,7 +575,7 @@ public class SqlUtils {
         } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
-            sourceUtils.closeResult(rs);
+            SourceUtils.closeResult(rs);
         }
         return primaryKeys;
     }
@@ -599,7 +603,7 @@ public class SqlUtils {
         } catch (Exception e) {
             throw new ServerException(e.getMessage());
         } finally {
-            sourceUtils.closeResult(rs);
+            SourceUtils.closeResult(rs);
         }
         return columnList;
     }
@@ -637,11 +641,11 @@ public class SqlUtils {
         jdbcTemplate.setFetchSize(1000);
         return jdbcTemplate;
     }
-
+    
     public boolean testConnection() throws SourceException {
         Connection connection = null;
         try {
-            connection = sourceUtils.getConnection(this.jdbcSourceInfo);
+            connection = sourceUtils.getConnection(jdbcSourceInfo);
             if (null != connection) {
                 return true;
             } else {
@@ -650,7 +654,8 @@ public class SqlUtils {
         } catch (SourceException sourceException) {
             throw sourceException;
         } finally {
-            sourceUtils.releaseConnection(connection);
+            SourceUtils.releaseConnection(connection);
+            sourceUtils.releaseDataSource(jdbcSourceInfo);
         }
     }
 
@@ -720,12 +725,24 @@ public class SqlUtils {
                                 if (obj == null) {
                                     pstmt.setTimestamp(i, null);
                                 } else {
-                                    DateTime dateTime = (DateTime) obj;
-                                    pstmt.setTimestamp(i, DateUtils.toTimestamp(dateTime));
+                                    if(obj instanceof LocalDateTime){
+                                        pstmt.setTimestamp(i, Timestamp.valueOf((LocalDateTime) obj));
+                                    }else {
+                                        DateTime dateTime = (DateTime) obj;
+                                        pstmt.setTimestamp(i, DateUtils.toTimestamp(dateTime));
+                                    }
                                 }
                                 break;
                             case "Timestamp":
-                                pstmt.setTimestamp(i, null == obj ? null : (Timestamp) obj);
+                                if(obj == null){
+                                    pstmt.setTimestamp(i, null);
+                                }else{
+                                    if(obj instanceof LocalDateTime){
+                                        pstmt.setTimestamp(i, Timestamp.valueOf((LocalDateTime) obj));
+                                    }else {
+                                        pstmt.setTimestamp(i, (Timestamp) obj);
+                                    }
+                                }
                                 break;
                             case "Blob":
                                 pstmt.setBlob(i, null == obj ? null : (Blob) obj);
@@ -772,7 +789,7 @@ public class SqlUtils {
                     throw new ServerException(e.getMessage());
                 }
             }
-            sourceUtils.releaseConnection(connection);
+            SourceUtils.releaseConnection(connection);
         }
     }
 

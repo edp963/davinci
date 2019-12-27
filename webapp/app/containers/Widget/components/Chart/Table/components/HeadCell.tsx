@@ -51,10 +51,9 @@ function HeadCell (props: IHeadCellProps) {
   )
 }
 
-export function resizeTableColumns (columns: Array<ColumnProps<any>>, columnIndex: number, width: number) {
+export function resizeTableColumns (columns: Array<ColumnProps<any>>, columnIndex: number, width: number, ratio: number) {
   const nextColumns = [...columns]
   const resizedColumn = nextColumns[columnIndex]
-  const ratio = Number((width / (+resizedColumn.width)).toFixed(2))
   nextColumns[columnIndex] = {
     ...resizedColumn,
     width

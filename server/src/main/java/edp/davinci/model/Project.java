@@ -27,6 +27,7 @@ import java.util.Date;
 
 @Data
 public class Project {
+
     private Long id;
 
     private String name;
@@ -61,9 +62,11 @@ public class Project {
     private Long createUserId;
 
     public Project() {
+
     }
 
     public Project(Long id, Long userId) {
+
         this.id = id;
         this.userId = userId;
     }

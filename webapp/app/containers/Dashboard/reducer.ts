@@ -307,15 +307,16 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
         if (!drillHistory) {
           draft.currentItemsInfo[action.payload.itemId].queryConditions.drillHistory = []
         }
-        draft.currentItemsInfo[action.payload.itemId].queryConditions.drillHistory.push(action.payload.history)
+        draft.currentItemsInfo[action.payload.itemId].queryConditions.drillHistory.push(action.payload.drillHistory)
         break
 
       case DRILL_PATH_SETTING:
         const drillSetting = draft.currentItemsInfo[action.payload.itemId].queryConditions.drillSetting
         if (!drillSetting) {
-          draft.currentItemsInfo[action.payload.itemId].queryConditions.drillSetting = []
+          draft.currentItemsInfo[action.payload.itemId].queryConditions.drillSetting = [action.payload.history]
+        } else {
+          drillSetting.push(action.payload.history)
         }
-        drillSetting.push(action.payload.history)
         break
 
       case DELETE_DRILL_HISTORY:

@@ -80,8 +80,8 @@ const hourOptions = [...Array(24).keys()].map((h) => (
 ))
 
 const dayOptions = [...Array(31).keys()].map((d) => (
-  <Option key={d} value={d}>
-    {`0${d}`.slice(-2)} 日
+  <Option key={d + 1} value={d + 1}>
+    {`0${d + 1}`.slice(-2)} 日
   </Option>
 ))
 
@@ -94,14 +94,14 @@ const weekOptions = [
   '星期五',
   '星期六'
 ].map((w, idx) => (
-  <Option key={idx} value={idx}>
+  <Option key={idx + 1} value={idx + 1}>
     {w}
   </Option>
 ))
 
 const monthOptions = [...Array(12).keys()].map((m) => (
-  <Option key={m} value={m}>
-    {`0${m}`.slice(-2)}月
+  <Option key={m + 1} value={m + 1}>
+    {`0${m + 1}`.slice(-2)}月
   </Option>
 ))
 

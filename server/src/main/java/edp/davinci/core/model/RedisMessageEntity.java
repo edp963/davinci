@@ -25,8 +25,8 @@ import java.io.Serializable;
 
 @Getter
 public class RedisMessageEntity implements Serializable {
-    private static final long serialVersionUID = 7958963558520404281L;
 
+    private static final long serialVersionUID = 7958963558520404281L;
 
     private Class clazz;
 
@@ -35,6 +35,7 @@ public class RedisMessageEntity implements Serializable {
     private String flag;
 
     public RedisMessageEntity() {
+
     }
 
     public RedisMessageEntity(Class clazz, Object message, String flag) {

@@ -21,7 +21,8 @@
 import * as React from 'react'
 
 import { Form, Row, Col, Input, Radio, Select, Tabs, Checkbox} from 'antd'
-import {IExludeRoles} from 'containers/Viz/components/PortalList'
+import { IExludeRoles } from 'containers/Viz/components/PortalList'
+import { FormComponentProps } from 'antd/lib/form'
 const styles = require('containers/Viz/Viz.less')
 const TabPane = Tabs.TabPane
 const Option = Select.Option
@@ -30,7 +31,7 @@ const RadioGroup = Radio.Group
 
 const utilStyles = require('assets/less/util.less')
 
-interface IDashboardFormProps {
+interface IDashboardFormProps extends FormComponentProps {
   portalId: number
   type: string
   itemId: number
@@ -200,5 +201,5 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
   }
 }
 
-export default Form.create()(DashboardForm)
+export default Form.create<IDashboardFormProps>()(DashboardForm)
 

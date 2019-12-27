@@ -79,4 +79,6 @@ public interface CronJobMapper {
     @Select({"select * from cron_job where job_status = 'started'"})
     List<CronJob> getStartedJobs();
 
+    @Delete({"delete from `cron_job` where project_id = #{projectId}"})
+    int deleteByProject(@Param("projectId") Long projectId);
 }

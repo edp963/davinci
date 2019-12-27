@@ -27,8 +27,7 @@ import {
 } from 'containers/Widget/components/Config/Format'
 import {
   decodeMetricName,
-  getChartTooltipLabel,
-  getAggregatorLocale
+  getChartTooltipLabel
 } from '../../components/util'
 import {
   getDimetionAxisOption,
@@ -37,7 +36,8 @@ import {
   getLegendOption,
   getGridPositions,
   makeGrouped,
-  distinctXaxis
+  distinctXaxis,
+  getCartesianChartMetrics
 } from './util'
 import { getStackName, EmptyStack } from 'containers/Widget/components/Config/Stack'
 const defaultTheme = require('assets/json/echartsThemes/default.project.json')
@@ -46,7 +46,8 @@ const defaultThemeColors = defaultTheme.theme.color
 import { barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
 
 export default function (chartProps: IChartProps, drillOptions) {
-  const { data, cols, metrics, chartStyles: prevChartStyles, color, tip } = chartProps
+  const { data, cols, chartStyles: prevChartStyles, color, tip } = chartProps
+  const metrics =  getCartesianChartMetrics(chartProps.metrics)
   const chartStyles = barChartStylesMigrationRecorder(prevChartStyles)
 
   const { bar, label, legend, xAxis, yAxis, splitLine } = chartStyles
@@ -135,9 +136,6 @@ export default function (chartProps: IChartProps, drillOptions) {
   const seriesData = []
   metrics.forEach((m, i) => {
     const decodedMetricName = decodeMetricName(m.name)
-    const localeMetricName = `[${getAggregatorLocale(
-      m.agg
-    )}] ${decodedMetricName}`
     const stackOption = turnOnStack
       ? { stack: getStackName(m.name, stackConfig) }
       : null
@@ -150,7 +148,7 @@ export default function (chartProps: IChartProps, drillOptions) {
       Object.entries(grouped).forEach(([k, v]: [string, any[]]) => {
         const serieObj = {
           id: `${m.name}${DEFAULT_SPLITER}${DEFAULT_SPLITER}${k}`,
-          name: `${k} ${localeMetricName}`,
+          name: `${k}${metrics.length > 1 ? ` ${m.displayName}` : ''}`,
           type: 'bar',
           ...stackOption,
           sampling: 'average',
@@ -210,7 +208,7 @@ export default function (chartProps: IChartProps, drillOptions) {
     } else {
       const serieObj = {
         id: m.name,
-        name: decodedMetricName,
+        name: m.displayName,
         type: 'bar',
         ...stackOption,
         sampling: 'average',

@@ -85,3 +85,4 @@ export interface IDavinciResponse<T> {
   header: IDavinciResponseHeader,
   payload: T
 }
+
