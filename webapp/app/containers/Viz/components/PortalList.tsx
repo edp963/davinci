@@ -6,12 +6,12 @@ import { connect } from 'react-redux'
 import { Icon, Col, Button, Tooltip, Popconfirm, Modal, Row } from 'antd'
 import { IconProps } from 'antd/lib/icon'
 import AntdFormType from 'antd/lib/form/Form'
-const styles = require('../Portal.less')
+const styles = require('../Viz.less')
 
 import PortalForm from './PortalForm'
 import ModulePermission from 'containers/Account/components/checkModulePermission'
 import { IProject } from 'containers/Projects/types'
-import { IPortal } from 'containers/Portal/types'
+import { IPortal } from 'containers/Viz/types'
 import { makeSelectProjectRoles } from 'containers/Projects/selectors'
 import {IProjectRoles} from 'containers/Organizations/component/ProjectRole'
 
@@ -20,7 +20,7 @@ interface IPortalListProps {
   portals: IPortal[]
   projectRoles: IProjectRoles[]
   currentProject: IProject
-  onPortalClick: (portal: any) => () => void
+  onPortalClick: (portalId: number) => () => void
   onAdd: (portal, resolve) => void
   onEdit: (portal, resolve) => void
   onDelete: (portalId: number) => void
@@ -199,7 +199,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
         lg={8}
         md={12}
         sm={24}
-        onClick={onPortalClick(portal)}
+        onClick={onPortalClick(portal.id)}
       >
         <div
           className={itemClass}

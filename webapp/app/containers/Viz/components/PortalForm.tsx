@@ -28,7 +28,7 @@ const RadioGroup = Radio.Group
 const TabPane = Tabs.TabPane
 
 const utilStyles = require('assets/less/util.less')
-const styles = require('../Portal.less')
+const styles = require('../Viz.less')
 import { IExludeRoles} from './PortalList'
 
 interface IProtalListProps {

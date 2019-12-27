@@ -25,14 +25,14 @@ const TextArea = Input.TextArea
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const TabPane = Tabs.TabPane
-import { IDisplay } from './DisplayList'
-const styles = require('containers/Portal/Portal.less')
-import {IExludeRoles} from 'containers/Portal/components/PortalList'
+import { IDisplayFormed } from './types'
+const styles = require('containers/Viz/Viz.less')
+import {IExludeRoles} from 'containers/Viz/components/PortalList'
 const utilStyles = require('assets/less/util.less')
 
 interface IDisplayFormModalProps {
   projectId: number
-  display: IDisplay,
+  display: IDisplayFormed,
   visible: boolean
   loading: boolean
   type: 'add' | 'edit'
@@ -56,7 +56,7 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
     this.initFormValue(form, display)
   }
 
-  private initFormValue (form, display: IDisplay) {
+  private initFormValue (form, display: IDisplayFormed) {
     if (display) {
       form.setFieldsValue({ ...display })
     } else {

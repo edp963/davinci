@@ -18,146 +18,468 @@
  * >>
  */
 
+import { ActionTypes } from './constants'
+import { returnType } from 'utils/redux'
 import {
-  LOAD_PORTALS,
-  LOAD_PORTALS_SUCCESS,
-  LOAD_PORTALS_FAILURE,
-  ADD_PORTAL,
-  ADD_PORTAL_SUCCESS,
-  ADD_PORTAL_FAILURE,
-  EDIT_PORTAL,
-  EDIT_PORTAL_SUCCESS,
-  EDIT_PORTAL_FAILURE,
-  DELETE_PORTAL,
-  DELETE_PORTAL_SUCCESS,
-  DELETE_PORTAL_FAILURE,
-  LOAD_SELECT_TEAMS,
-  LOAD_SELECT_TEAMS_SUCCESS,
-  LOAD_SELECT_TEAMS_FAILURE
-} from './constants'
+  IPortal,
+  IDashboardNode,
+  IDisplayFormed,
+  ISlideFormed,
+  Slide
+} from './types'
 
-export function loadPortals (projectId, portalId?: number) {
-  return {
-    type: LOAD_PORTALS,
-    payload: {
-      projectId,
-      portalId
+export const VizActions = {
+  loadPortals(projectId: number) {
+    return {
+      type: ActionTypes.LOAD_PORTALS,
+      payload: {
+        projectId
+      }
     }
-  }
-}
-
-export function portalsLoaded (result, portalId: number) {
-  return {
-    type: LOAD_PORTALS_SUCCESS,
-    payload: {
-      result,
-      portalId
-    }
-  }
-}
-
-export function loadPortalsFail () {
-  return {
-    type: LOAD_PORTALS_FAILURE
-  }
-}
-
-export function addPortal (values, resolve) {
-  return {
-    type: ADD_PORTAL,
-    payload: {
-      values,
-      resolve
-    }
-  }
-}
-
-export function portalAdded (result) {
-  return {
-    type: ADD_PORTAL_SUCCESS,
-    payload: {
+  },
+  portalsLoaded(result: IPortal[]) {
+    return {
+      type: ActionTypes.LOAD_PORTALS_SUCCESS,
+      payload: {
         result
+      }
+    }
+  },
+  loadPortalsFail() {
+    return {
+      type: ActionTypes.LOAD_PORTALS_FAILURE,
+      payload: {}
+    }
+  },
+
+  addPortal(portal: IPortal, resolve) {
+    return {
+      type: ActionTypes.ADD_PORTAL,
+      payload: {
+        portal,
+        resolve
+      }
+    }
+  },
+  portalAdded(result) {
+    return {
+      type: ActionTypes.ADD_PORTAL_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  addPortalFail() {
+    return {
+      type: ActionTypes.ADD_PORTAL_FAILURE,
+      payload: {}
+    }
+  },
+
+  editPortal(values, resolve) {
+    return {
+      type: ActionTypes.EDIT_PORTAL,
+      payload: {
+        values,
+        resolve
+      }
+    }
+  },
+  portalEdited(result) {
+    return {
+      type: ActionTypes.EDIT_PORTAL_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  editPortalFail() {
+    return {
+      type: ActionTypes.EDIT_PORTAL_FAILURE,
+      payload: {}
+    }
+  },
+
+  deletePortal(id) {
+    return {
+      type: ActionTypes.DELETE_PORTAL,
+      payload: {
+        id
+      }
+    }
+  },
+  portalDeleted(id) {
+    return {
+      type: ActionTypes.DELETE_PORTAL_SUCCESS,
+      payload: {
+        id
+      }
+    }
+  },
+  deletePortalFail() {
+    return {
+      type: ActionTypes.DELETE_PORTAL_FAILURE,
+      payload: {}
+    }
+  },
+
+  loadPortalDashboards(portalId: number, resolve?: (result) => void, convertTree: boolean = true) {
+    return {
+      type: ActionTypes.LOAD_PORTAL_DASHBOARDS,
+      payload: {
+        portalId,
+        resolve,
+        convertTree
+      }
+    }
+  },
+  portalDashboardsLoaded(portalId: number, dashboards: IDashboardNode[]) {
+    return {
+      type: ActionTypes.LOAD_PORTAL_DASHBOARDS_SUCCESS,
+      payload: {
+        portalId,
+        dashboards
+      }
+    }
+  },
+  loadPortalDashboardsFail(portalId: number) {
+    return {
+      type: ActionTypes.LOAD_PORTAL_DASHBOARDS_FAILURE,
+      payload: {
+        portalId
+      }
+    }
+  },
+
+  loadDisplays(projectId: number) {
+    return {
+      type: ActionTypes.LOAD_DISPLAYS,
+      payload: {
+        projectId
+      }
+    }
+  },
+  displaysLoaded(displays) {
+    return {
+      type: ActionTypes.LOAD_DISPLAYS_SUCCESS,
+      payload: {
+        displays
+      }
+    }
+  },
+  loadDisplaysFail(error) {
+    return {
+      type: ActionTypes.LOAD_DISPLAYS_FAILURE,
+      payload: {
+        error
+      }
+    }
+  },
+
+  updateCurrentDisplay(display: IDisplayFormed) {
+    return {
+      type: ActionTypes.UPDATE_CURRENT_DISPLAY,
+      payload: {
+        display
+      }
+    }
+  },
+
+  loadDisplaySlides(displayId: number) {
+    return {
+      type: ActionTypes.LOAD_DISPLAY_SLIDES,
+      payload: {
+        displayId
+      }
+    }
+  },
+  displaySlidesLoaded(display: IDisplayFormed, slides: ISlideFormed[]) {
+    return {
+      type: ActionTypes.LOAD_DISPLAY_SLIDES_SUCCESS,
+      payload: {
+        display,
+        slides
+      }
+    }
+  },
+  loadDisplaySlidesFail(displayId: number) {
+    return {
+      type: ActionTypes.LOAD_DISPLAY_SLIDES_FAILURE,
+      payload: {
+        displayId
+      }
+    }
+  },
+
+  addDisplay(display, resolve) {
+    return {
+      type: ActionTypes.ADD_DISPLAY,
+      payload: {
+        display,
+        resolve
+      }
+    }
+  },
+  displayAdded(result) {
+    return {
+      type: ActionTypes.ADD_DISPLAY_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  addDisplayFail() {
+    return {
+      type: ActionTypes.ADD_DISPLAY_FAILURE,
+      payload: {}
+    }
+  },
+
+  editDisplay(display: IDisplayFormed, resolve?) {
+    return {
+      type: ActionTypes.EDIT_DISPLAY,
+      payload: {
+        display,
+        resolve
+      }
+    }
+  },
+  displayEdited(result: IDisplayFormed) {
+    return {
+      type: ActionTypes.EDIT_DISPLAY_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  editDisplayFail(error) {
+    return {
+      type: ActionTypes.EDIT_DISPLAY_FAILURE,
+      payload: {
+        error
+      }
+    }
+  },
+
+  deleteDisplay(id) {
+    return {
+      type: ActionTypes.DELETE_DISPLAY,
+      payload: {
+        id
+      }
+    }
+  },
+  displayDeleted(id) {
+    return {
+      type: ActionTypes.DELETE_DISPLAY_SUCCESS,
+      payload: {
+        id
+      }
+    }
+  },
+  deleteDisplayFail() {
+    return {
+      type: ActionTypes.DELETE_DISPLAY_FAILURE,
+      payload: {}
+    }
+  },
+
+  copyDisplay(id: number) {
+    return {
+      type: ActionTypes.COPY_DISPLAY,
+      payload: {
+        id
+      }
+    }
+  },
+  displayCopied(fromDisplayId: number, display: IDisplayFormed) {
+    return {
+      type: ActionTypes.COPY_DISPLAY_SUCCESS,
+      payload: {
+        fromDisplayId,
+        display
+      }
+    }
+  },
+  copyDisplayFail() {
+    return {
+      type: ActionTypes.COPY_DISPLAY_FAILURE,
+      payload: {}
+    }
+  },
+
+  addDashboard(dashboard, resolve) {
+    return {
+      type: ActionTypes.ADD_DASHBOARD,
+      payload: {
+        dashboard,
+        resolve
+      }
+    }
+  },
+  dashboardAdded(result) {
+    return {
+      type: ActionTypes.ADD_DASHBOARD_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  addDashboardFail() {
+    return {
+      type: ActionTypes.ADD_DASHBOARD_FAILURE
+    }
+  },
+
+  editDashboard(formType, dashboard, resolve) {
+    return {
+      type: ActionTypes.EDIT_DASHBOARD,
+      payload: {
+        formType,
+        dashboard,
+        resolve
+      }
+    }
+  },
+  dashboardEdited(result, formType) {
+    return {
+      type: ActionTypes.EDIT_DASHBOARD_SUCCESS,
+      payload: {
+        result,
+        formType
+      }
+    }
+  },
+  editDashboardFail() {
+    return {
+      type: ActionTypes.EDIT_DASHBOARD_FAILURE
+    }
+  },
+
+  editCurrentDashboard (dashboard, resolve) {
+    return {
+      type: ActionTypes.EDIT_CURRENT_DASHBOARD,
+      payload: {
+        dashboard,
+        resolve
+      }
+    }
+  },
+  currentDashboardEdited (result) {
+    return {
+      type: ActionTypes.EDIT_CURRENT_DASHBOARD_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  editCurrentDashboardFail () {
+    return {
+      type: ActionTypes.EDIT_CURRENT_DASHBOARD_FAILURE
+    }
+  },
+
+
+  deleteDashboard(id, portalId, resolve) {
+    return {
+      type: ActionTypes.DELETE_DASHBOARD,
+      payload: {
+        resolve,
+        id,
+        portalId
+      }
+    }
+  },
+  dashboardDeleted(id, portalId) {
+    return {
+      type: ActionTypes.DELETE_DASHBOARD_SUCCESS,
+      payload: {
+        id,
+        portalId
+      }
+    }
+  },
+  deleteDashboardFail() {
+    return {
+      type: ActionTypes.DELETE_DASHBOARD_FAILURE
+    }
+  },
+
+  addSlide() {
+    return {
+      type: ActionTypes.ADD_SLIDE,
+      payload: {
+      }
+    }
+  },
+  slideAdded(slide: ISlideFormed, insertIdx: number, afterSlides: ISlideFormed[]) {
+    return {
+      type: ActionTypes.ADD_SLIDE_SUCCESS,
+      payload: {
+        slide,
+        insertIdx,
+        afterSlides
+      }
+    }
+  },
+  addSlideFail() {
+    return {
+      type: ActionTypes.ADD_SLIDE_FAILURE,
+      payload: {}
+    }
+  },
+
+  editSlides(slides: ISlideFormed[]) {
+    return {
+      type: ActionTypes.EDIT_SLIDES,
+      payload: {
+        slides
+      }
+    }
+  },
+  slidesEdited(displayId: number, slides: ISlideFormed[]) {
+    return {
+      type: ActionTypes.EDIT_SLIDES_SUCCESS,
+      payload: {
+        displayId,
+        slides
+      }
+    }
+  },
+  editSlidesFail() {
+    return {
+      type: ActionTypes.EDIT_SLIDES_FAILURE,
+      payload: {}
+    }
+  },
+
+  deleteSlides(displayId: number, slideIds: number[]) {
+    return {
+      type: ActionTypes.DELETE_SLIDES,
+      payload: {
+        displayId,
+        slideIds
+      }
+    }
+  },
+  slidesDeleted(displayId: number, slideIds: number[]) {
+    return {
+      type: ActionTypes.DELETE_SLIDES_SUCCESS,
+      payload: {
+        displayId,
+        slideIds
+      }
+    }
+  },
+  deleteSlidesFail() {
+    return {
+      type: ActionTypes.DELETE_SLIDES_FAILURE,
+      payload: {}
     }
   }
 }
 
-export function addPortalFail () {
-  return {
-    type: ADD_PORTAL_FAILURE
-  }
-}
+const mockAction = returnType(VizActions)
+export type VizActionType = typeof mockAction
 
-export function editPortal (values, resolve) {
-  return {
-    type: EDIT_PORTAL,
-    payload: {
-      values,
-      resolve
-    }
-  }
-}
-
-export function portalEdited (result) {
-  return {
-    type: EDIT_PORTAL_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function editPortalFail () {
-  return {
-    type: EDIT_PORTAL_FAILURE
-  }
-}
-
-export function deletePortal (id) {
-  return {
-    type: DELETE_PORTAL,
-    payload: {
-      id
-    }
-  }
-}
-
-export function portalDeleted (id) {
-  return {
-    type: DELETE_PORTAL_SUCCESS,
-    payload: {
-      id
-    }
-  }
-}
-
-export function deletePortalFail () {
-  return {
-      type: DELETE_PORTAL_FAILURE
-  }
-}
-
-export function loadSelectTeams (type, id, resolve) {
-  return {
-    type: LOAD_SELECT_TEAMS,
-    payload: {
-      type,
-      id,
-      resolve
-    }
-  }
-}
-
-export function selectTeamsLoaded (result) {
-  return {
-    type: LOAD_SELECT_TEAMS_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function loadSelectTeamsFail () {
-  return {
-      type: LOAD_SELECT_TEAMS_FAILURE
-  }
-}
+export default VizActions

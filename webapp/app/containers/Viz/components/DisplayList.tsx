@@ -6,33 +6,26 @@ import { connect } from 'react-redux'
 import {compose} from 'redux'
 import { Col, Tooltip, Icon, Popconfirm, Row } from 'antd'
 import { IconProps } from 'antd/lib/icon'
-const styles = require('../Display.less')
+const styles = require('../Viz.less')
 
 import DisplayFormModal from './DisplayFormModal'
 import ModulePermission from 'containers/Account/components/checkModulePermission'
 import { IProject } from 'containers/Projects/types'
-import { IExludeRoles } from 'containers/Portal/components/PortalList'
+import { IExludeRoles } from 'containers/Viz/components/PortalList'
 import { IProjectRoles } from 'containers/Organizations/component/ProjectRole'
-export interface IDisplay {
-  id: number
-  name: string
-  projectId: number
-  publish: boolean
-  avatar: string
-  description: string
-}
+import { IDisplayFormed } from './types'
 
 export interface IDisplayEvent {
-  onDisplayClick: (display: IDisplay) => () => void
-  onAdd: (display: IDisplay, resolve: () => void) => void
-  onEdit: (display: IDisplay, resolve: () => void) => void
-  onCopy: (display: IDisplay) => void
+  onDisplayClick: (displayId: number) => () => void
+  onAdd: (display: IDisplayFormed, resolve: () => void) => void
+  onEdit: (display: IDisplayFormed, resolve: () => void) => void
+  onCopy: (display: IDisplayFormed) => void
   onDelete: (displayId: number) => void
 }
 
 interface IDisplayListProps extends IDisplayEvent {
   projectId: number
-  displays: IDisplay[],
+  displays: IDisplayFormed[],
   currentProject?: IProject
   projectRoles: IProjectRoles[]
   onCheckName: (type, data, resolve, reject) => void
@@ -40,7 +33,7 @@ interface IDisplayListProps extends IDisplayEvent {
 }
 
 interface IDisplayListStates {
-  editingDisplay: IDisplay
+  editingDisplay: IDisplayFormed
   modalLoading: boolean
   formType: 'edit' | 'add'
   formVisible: boolean
@@ -78,7 +71,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   }
 
 
-  private saveDisplay = (display: IDisplay, type: 'edit' | 'add') => {
+  private saveDisplay = (display: IDisplayFormed, type: 'edit' | 'add') => {
     this.setState({ modalLoading: true })
     const { onAdd, onEdit } = this.props
     const val = {
@@ -103,7 +96,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     })
   }
 
-  private showDisplayFormModal = (formType: 'edit' | 'add', display?: IDisplay) => (e: React.MouseEvent<HTMLDivElement>) => {
+  private showDisplayFormModal = (formType: 'edit' | 'add', display?: IDisplayFormed) => (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation()
     this.setState({
       editingDisplay: display,
@@ -172,7 +165,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     )
   }
 
-  private renderDisplay (display: IDisplay) {
+  private renderDisplay (display: IDisplayFormed) {
     const coverStyle: React.CSSProperties = {
       backgroundImage: `url(${display.avatar})`
     }
@@ -195,7 +188,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
         md={12}
         sm={24}
         key={display.id}
-        onClick={onDisplayClick(display)}
+        onClick={onDisplayClick(display.id)}
       >
         <div className={displayClass} style={coverStyle}>
           <div className={styles.container}>
