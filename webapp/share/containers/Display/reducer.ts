@@ -20,18 +20,17 @@
 
 import produce from 'immer'
 import { ActionTypes } from './constants'
-import { GraphTypes } from 'containers/Display/components/util'
 
+import { GraphTypes } from 'containers/Display/constants'
 import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
 import { DashboardItemStatus } from '../Dashboard'
 
-const initialState = {
+export const initialState = {
   title: '',
   display: null,
-  slide: null,
-  layers: [],
-  layersInfo: {},
-  widgets: []
+  slidesLayers: [],
+  slideLayersInfo: {},
+  widgets: {}
 }
 
 const displayReducer = (state = initialState, action) =>
@@ -40,31 +39,36 @@ const displayReducer = (state = initialState, action) =>
       case ActionTypes.LOAD_SHARE_DISPLAY_SUCCESS:
         draft.title = action.payload.display.name
         draft.display = action.payload.display
-        draft.slide = action.payload.slide
-        draft.layers = action.payload.slide.relations
-        draft.widgets = action.payload.widgets
-        draft.layersInfo = action.payload.slide.relations.reduce(
-          (obj, layer) => {
-            obj[layer.id] =
-              layer.type === GraphTypes.Chart
-                ? {
-                    status: DashboardItemStatus.Initial,
-                    datasource: { resultList: [] },
-                    loading: false,
-                    queryConditions: {
-                      tempFilters: [],
-                      linkageFilters: [],
-                      globalFilters: [],
-                      variables: [],
-                      linkageVariables: [],
-                      globalVariables: []
-                    },
-                    interactId: '',
-                    renderType: 'rerender'
-                  }
-                : {
-                    loading: false
-                  }
+        draft.slidesLayers = action.payload.slides
+        draft.widgets = action.payload.widgets.reduce((obj, w) => {
+          obj[w.id] = w
+          return obj
+        }, {})
+        draft.slideLayersInfo = action.payload.slides.reduce(
+          (obj, slide, idx) => {
+            obj[idx + 1] = slide.relations.reduce((info, layer) => {
+              info[layer.id] =
+                layer.type === GraphTypes.Chart
+                  ? {
+                      status: DashboardItemStatus.Initial,
+                      datasource: { resultList: [] },
+                      loading: false,
+                      queryConditions: {
+                        tempFilters: [],
+                        linkageFilters: [],
+                        globalFilters: [],
+                        variables: [],
+                        linkageVariables: [],
+                        globalVariables: []
+                      },
+                      interactId: '',
+                      renderType: 'rerender'
+                    }
+                  : {
+                      loading: false
+                    }
+              return info
+            }, {})
             return obj
           },
           {}
@@ -73,14 +77,15 @@ const displayReducer = (state = initialState, action) =>
 
       case ActionTypes.LOAD_SHARE_DISPLAY_FAILURE:
         draft.display = null
-        draft.slide = null
-        draft.layers = []
-        draft.widgets = []
-        draft.layersInfo = {}
+        draft.slidesLayers = null
+        draft.widgets = {}
+        draft.slideLayersInfo = {}
         break
 
       case ActionTypes.LOAD_LAYER_DATA:
-        draft.layersInfo[action.payload.layerId].loading = true
+        draft.slideLayersInfo[action.payload.slideNumber][
+          action.payload.layerId
+        ].loading = true
         break
 
       case ActionTypes.LOAD_LAYER_DATA_SUCCESS:
@@ -88,8 +93,12 @@ const displayReducer = (state = initialState, action) =>
           action.payload.data.resultList,
           action.payload.requestParams.customOrders
         )
-        draft.layersInfo[action.payload.layerId] = {
-          ...draft.layersInfo[action.payload.layerId],
+        draft.slideLayersInfo[action.payload.slideNumber][
+          action.payload.layerId
+        ] = {
+          ...draft.slideLayersInfo[action.payload.slideNumber][
+            action.payload.layerId
+          ],
           status: DashboardItemStatus.Fulfilled,
           loading: false,
           datasource: action.payload.data,
@@ -98,8 +107,12 @@ const displayReducer = (state = initialState, action) =>
         break
 
       case ActionTypes.LOAD_LAYER_DATA_FAILURE:
-        draft.layersInfo[action.payload.layerId] = {
-          ...draft.layersInfo[action.payload.layerId],
+        draft.slideLayersInfo[action.payload.slideNumber][
+          action.payload.layerId
+        ] = {
+          ...draft.slideLayersInfo[action.payload.slideNumber][
+            action.payload.layerId
+          ],
           status: DashboardItemStatus.Error,
           loading: false
         }
