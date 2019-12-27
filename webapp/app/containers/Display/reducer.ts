@@ -20,9 +20,9 @@
 
 import produce from 'immer'
 
-import { matchPath } from 'react-router-dom'
 import { LOCATION_CHANGE, LocationChangeAction } from 'connected-react-router'
-import { IRouteParams } from 'utils/types'
+import { matchDisplaySlidePath } from 'utils/router'
+
 
 import { ActionTypes } from './constants'
 import { ActionTypes as VizActionTypes } from 'containers/Viz/constants'
@@ -91,6 +91,9 @@ const displayReducer = (
 
       case ActionTypes.LOAD_SLIDE_DETAIL_SUCCESS:
         slideId = action.payload.slideId
+        if (!draft.currentSlideId) {
+          draft.currentSlideId = slideId
+        }
         draft.currentDisplaySelectOptions = {}
         draft.currentDisplayWidgets = action.payload.widgets.reduce(
           (obj, widget) => {
@@ -380,14 +383,7 @@ const displayReducer = (
         return initialState
 
       case LOCATION_CHANGE:
-        const matchSlide = matchPath<IRouteParams>(
-          action.payload.location.pathname,
-          {
-            path: '/project/:projectId/display/:displayId/slide/:slideId',
-            exact: false,
-            strict: false
-          }
-        )
+        const matchSlide = matchDisplaySlidePath(action.payload.location.pathname)
         if (matchSlide) {
           draft.currentSlideId = +matchSlide.params.slideId || null
         } else {
