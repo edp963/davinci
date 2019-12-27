@@ -129,8 +129,8 @@ const vizReducer = (
         const { result, formType } = action.payload
         if (formType === 'edit') {
           result.forEach((r) => {
-            draft.portalDashboards[result.dashboardPortalId].splice(
-              draft.portalDashboards[result.dashboardPortalId].findIndex(
+            draft.portalDashboards[r.dashboardPortalId].splice(
+              draft.portalDashboards[r.dashboardPortalId].findIndex(
                 (d) => d.id === r.id
               ),
               1,
@@ -139,13 +139,13 @@ const vizReducer = (
           })
         } else if (formType === 'move') {
           draft.portalDashboards[
-            result.dashboardPortalId
-          ] = draft.portalDashboards[result.dashboardPortalId].filter(
+            result[0].dashboardPortalId
+          ] = draft.portalDashboards[result[0].dashboardPortalId].filter(
             (d) => result.findIndex(({ id }) => id === d.id) < 0
           )
           draft.portalDashboards[
-            result.dashboardPortalId
-          ] = draft.portalDashboards[result.dashboardPortalId].concat(result)
+            result[0].dashboardPortalId
+          ] = draft.portalDashboards[result[0].dashboardPortalId].concat(result)
         }
         break
 

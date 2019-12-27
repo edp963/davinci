@@ -31,8 +31,8 @@ import reducer from './reducer'
 import saga from './sagas'
 import projectReducer from '../Projects/reducer'
 import projectSaga from '../Projects/sagas'
-import portalReducer from '../Portal/reducer'
-import portalSaga from '../Portal/sagas'
+import vizReducer from '../Viz/reducer'
+import vizSaga from '../Viz/sagas'
 import viewReducer from '../View/reducer'
 import viewSaga from '../View/sagas'
 
@@ -47,14 +47,9 @@ import AntdFormType from 'antd/lib/form/Form'
 
 const Search = Input.Search
 
-import {
-  loadDashboards,
-  addDashboard,
-  editDashboard,
-  deleteDashboard,
-  loadDashboardDetail
-} from './actions'
-import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
+import { VizActions } from 'containers/Viz/actions'
+import { makeSelectCurrentDashboards, makeSelectCurrentPortal, makeSelectVizLoading } from 'containers/Viz/selectors'
+import { makeSelectCurrentDashboard } from './selectors'
 import {
   hideNavigator,
   checkNameUniqueAction,
@@ -65,14 +60,10 @@ import {
 import { makeSelectDownloadList, makeSelectDownloadListLoading } from '../App/selectors'
 import { DownloadTypes, IDownloadRecord } from '../App/types'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
-import { loadPortals } from '../Portal/actions'
-import { makeSelectCurrentPortal } from '../Portal/selectors'
 import { ProjectActions } from '../Projects/actions'
 const { loadProjectDetail, excludeRoles } = ProjectActions
-import {IExludeRoles} from '../Portal/components/PortalList'
-const utilStyles = require('assets/less/util.less')
+import {IExludeRoles} from '../Viz/components/PortalList'
 const styles = require('./Dashboard.less')
-const widgetStyles = require('../Widget/Widget.less')
 import {makeSelectCurrentProject, makeSelectProjectRoles} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
@@ -91,6 +82,7 @@ import { Grid } from './Loadable'
 interface IDashboardProps {
   modalLoading: boolean
   dashboards: IDashboard[]
+  currentDashboard: IDashboard,
   currentProject: IProject
   currentPortal: any
   projectRoles: IProjectRoles[]
@@ -98,10 +90,10 @@ interface IDashboardProps {
   onLoadDashboards: (portalId: number, resolve: any) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
-  onDeleteDashboard: (id: number, resolve: any) => void
+  onDeleteDashboard: (id: number, portalId: number, resolve: any) => void
   onHideNavigator: () => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
-  onLoadPortals: (projectId, portalId) => void
+  onLoadPortals: (projectId) => void
   onLoadProjectDetail: (id) => any
   onExcludeRoles: (type: string, id: number, resolve?: any) => any
   onLoadProjectRoles: (id: number) => any
@@ -222,7 +214,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
     //     })
     //   }
     // })
-    onLoadPortals(projectId, +portalId)
+    onLoadPortals(projectId)
     onLoadProjectDetail(projectId)
   }
 
@@ -585,7 +577,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
     const { match, history, onDeleteDashboard, dashboards } = this.props
     const { dashboardData } = this.state
 
-    onDeleteDashboard(id, () => {
+    onDeleteDashboard(id, +match.params.portalId, () => {
       const { projectId, portalId } = match.params
 
       const paramsDashboard = dashboards.find((d) => d.id === Number(match.params.dashboardId))
@@ -676,7 +668,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
 
   public render () {
     const {
-      match,
+      currentDashboard,
       dashboards,
       modalLoading,
       currentProject,
@@ -734,7 +726,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
         key="submit"
         size="large"
         type="primary"
-        loading={modalLoading}
+        loading={modalLoading.editing}
         onClick={this.onModalOk}
       >
         {formType === 'delete' ? '确 定' : '保 存'}
@@ -847,7 +839,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
                       onExpand={this.onExpand}
                       expandedKeys={this.state.expandedKeys}
                       autoExpandParent={this.state.autoExpandParent}
-                      selectedKeys={[this.props.match.params.dashboardId]}
+                      selectedKeys={[currentDashboard && currentDashboard.id.toString()]}
                       draggable={initializePermission(currentProject, 'vizPermission')}
                       onDrop={this.onDrop}
                       onSelect={this.handleTree}
@@ -884,7 +876,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
             type={formType}
             itemId={this.state.itemId}
             dashboards={dashboards}
-            portalId={match.params.portalId}
+            portalId={currentPortal.id}
             exludeRoles={this.state.exludeRoles}
             onCheckUniqueName={onCheckUniqueName}
             onChangePermission={this.changePermission}
@@ -897,8 +889,9 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
 }
 
 const mapStateToProps = createStructuredSelector({
-  dashboards: makeSelectDashboards(),
-  modalLoading: makeSelectModalLoading(),
+  dashboards: makeSelectCurrentDashboards(),
+  currentDashboard: makeSelectCurrentDashboard(),
+  modalLoading: makeSelectVizLoading(),
   currentProject: makeSelectCurrentProject(),
   currentPortal: makeSelectCurrentPortal(),
   projectRoles: makeSelectProjectRoles(),
@@ -907,13 +900,13 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadDashboards: (portalId, resolve) => dispatch(loadDashboards(portalId, resolve)),
-    onAddDashboard: (dashboard, resolve) => dispatch(addDashboard(dashboard, resolve)),
-    onEditDashboard: (formType, dashboard, resolve) => dispatch(editDashboard(formType, dashboard, resolve)),
-    onDeleteDashboard: (id, resolve) => dispatch(deleteDashboard(id, resolve)),
+    onLoadDashboards: (portalId, resolve) => dispatch(VizActions.loadPortalDashboards(portalId, resolve, false)),
+    onAddDashboard: (dashboard, resolve) => dispatch(VizActions.addDashboard(dashboard, resolve)),
+    onEditDashboard: (formType, dashboard, resolve) => dispatch(VizActions.editDashboard(formType, dashboard, resolve)),
+    onDeleteDashboard: (id, portalId, resolve) => dispatch(VizActions.deleteDashboard(id, portalId, resolve)),
     onHideNavigator: () => dispatch(hideNavigator()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
-    onLoadPortals: (projectId, portalId) => dispatch(loadPortals(projectId, portalId)),
+    onLoadPortals: (projectId) => dispatch(VizActions.loadPortals(projectId)),
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
     onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
@@ -931,8 +924,8 @@ const withSaga = injectSaga({ key: 'dashboard', saga })
 const withProjectReducer = injectReducer({ key: 'project', reducer: projectReducer })
 const withProjectSaga = injectSaga({ key: 'project', saga: projectSaga })
 
-const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
-const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
+const withVizReducer = injectReducer({ key: 'viz', reducer: vizReducer })
+const withVizSaga = injectSaga({ key: 'viz', saga: vizSaga })
 
 const withViewReducer = injectReducer({ key: 'view', reducer: viewReducer })
 const withViewSaga = injectSaga({ key: 'view', saga: viewSaga })
@@ -940,11 +933,11 @@ const withViewSaga = injectSaga({ key: 'view', saga: viewSaga })
 export default compose(
   withReducer,
   withProjectReducer,
-  withPortalReducer,
+  withVizReducer,
   withViewReducer,
   withSaga,
   withProjectSaga,
-  withPortalSaga,
+  withVizSaga,
   withViewSaga,
   withConnect
 )(Dashboard)
