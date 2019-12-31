@@ -19,14 +19,23 @@
 
 package edp.davinci.service.impl;
 
-import edp.core.consts.Consts;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.BaseLock;
 import edp.core.utils.CollectionUtils;
-import edp.core.utils.LockFactory;
-import edp.davinci.core.enums.LockType;
+import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.VizEnum;
@@ -34,7 +43,6 @@ import edp.davinci.dao.MemDashboardWidgetMapper;
 import edp.davinci.dao.RelRoleDashboardWidgetMapper;
 import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
 import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
-import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.roleDto.VizVisibility;
 import edp.davinci.model.DashboardPortal;
@@ -44,16 +52,6 @@ import edp.davinci.model.User;
 import edp.davinci.service.DashboardPortalService;
 import edp.davinci.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service("dashboardPortalService")
 @Slf4j
@@ -63,12 +61,14 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
     @Autowired
     private ProjectService projectService;
-
+    
     @Autowired
     private RelRoleDashboardWidgetMapper relRoleDashboardWidgetMapper;
 
     @Autowired
     private MemDashboardWidgetMapper memDashboardWidgetMapper;
+    
+    private static final CheckEntityEnum entity = CheckEntityEnum.DASHBOARDPORTAL;
 
     @Override
     public boolean isExist(String name, Long id, Long projectId) {
@@ -77,6 +77,12 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
             return id.longValue() != portalId.longValue();
         }
         return null != portalId && portalId.longValue() > 0L;
+    }
+    
+    private void checkIsExist(String name, Long id, Long projectId) {
+        if (isExist(name, null, projectId)) {
+            alertNameTaken(entity, name);
+        }
     }
 
     /**
@@ -89,7 +95,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
     @Override
     public List<DashboardPortal> getDashboardPortals(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        if (!checkReadPermission(projectId, user)) {
+        if (!checkReadPermission(entity, projectId, user)) {
             return null;
         }
 
@@ -107,9 +113,8 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
             while (iterator.hasNext()) {
                 DashboardPortal portal = iterator.next();
-                boolean disable = !projectPermission.isProjectMaintainer() && disablePortals.contains(portal.getId());
+                boolean disable = isDisableVizs(projectPermission, disablePortals, portal.getId());
                 boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !portal.getPublish();
-
                 if (disable || noPublish) {
                     iterator.remove();
                 }
@@ -130,65 +135,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
 		return dashboardPortal;
 	}
-
-    private ProjectPermission getProjectPermission(Long projectId, User user) {
-		try {
-			return projectService
-					.getProjectPermission(projectService.getProjectDetail(projectId, user, false), user);
-		} catch (Exception e) {
-			return null;
-		}
-	}
 	
-	private boolean checkReadPermission(Long projectId, User user) {
-		ProjectPermission projectPermission = getProjectPermission(projectId, user);
-		if (projectPermission == null || projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission()) {
-			return false;
-		}
-		return true;
-	}
-
-	private void checkWritePermisson(Long id, Long projectId, User user, String operation) {
-
-		ProjectPermission projectPermission = getProjectPermission(projectId, user);
-
-		if (projectPermission == null) {
-			alertUnAuthorized(user, operation);
-		}
-
-		if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()) {
-			alertUnAuthorized(user, operation);
-		}
-
-		if (id != null) {
-			List<Long> disablePortals = getDisableVizs(user.getId(), projectId, null, VizEnum.PORTAL);
-			if (!projectPermission.isProjectMaintainer() && disablePortals.contains(id)) {
-				alertUnAuthorized(user, operation);
-			}
-		}
-	}
-
-	private void alertUnAuthorized(User user, String operation) {
-		log.info("user {} have not permisson to {} " + operation + " dashboardPortal", user.getUsername(), operation);
-		throw new UnAuthorizedExecption("you have not permission to " + operation + " dashboardPortal");
-	}
-	
-	private void alertNameTaken(String name) {
-		log.warn("the dashboardPortal {} name is already taken", name);
-		throw new ServerException("the dashboardPortal name is already taken");
-	}
-
-	private BaseLock getDashboardPortalLock(String name, Long projectId) {
-
-		return LockFactory.getLock("DASHBOARDPORTAL" + Consts.AT_SYMBOL + name + Consts.AT_SYMBOL + projectId, 5,
-				LockType.REDIS);
-	}
-
-	private void releaseLock(BaseLock lock) {
-		// workaround for very high concurrency
-		// do nothing, wait for the transaction to commit
-	}
-
     /**
      * 新建DashboardPortal
      *
@@ -203,15 +150,13 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
     	Long projectId = dashboardPortalCreate.getProjectId();
     	String name = dashboardPortalCreate.getName();
     	
-    	checkWritePermisson(null, projectId, user, "create");
+    	checkWritePermission(entity, projectId, user, "create");
 
-        if (isExist(name, null, projectId)) {
-            alertNameTaken(name);
-        }
+    	checkIsExist(name, null, projectId);
         
-        BaseLock lock = getDashboardPortalLock(name, projectId);
+        BaseLock lock = getLock(entity, name, projectId);
         if (!lock.getLock()) {
-        	 alertNameTaken(name);
+        	alertNameTaken(entity, name);
         }
 
 		try {
@@ -222,7 +167,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 				throw new ServerException("create dashboardPortal fail");
 			}
 			
-			optLogger.info("dashboardPortal ({}) is created by user(:{})", dashboardPortal.toString(), user.getId());
+			optLogger.info("dashboardPortal ({}) is created by user (:{})", dashboardPortal.toString(), user.getId());
 
 			List<Long> roleIds = dashboardPortalCreate.getRoleIds();
 			
@@ -262,17 +207,20 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 		DashboardPortal dashboardPortal = getDashboardPortal(dashboardPortalUpdate.getId());
 
 		Long projectId = dashboardPortal.getProjectId();
+		Long id = dashboardPortal.getId();
 		String name = dashboardPortalUpdate.getName();
 
-		checkWritePermisson(dashboardPortal.getId(), projectId, user, "update");
+		checkWritePermission(entity,  projectId, user, "update");
 
-		if (isExist(name, dashboardPortal.getId(), projectId)) {
-			alertNameTaken(name);
-		}
+		checkIsExist(name, id, projectId);
 		
-		BaseLock lock = getDashboardPortalLock(name, projectId);
+    	if (isDisablePortal(id, projectId, user)) {
+    		alertUnAuthorized(entity, user, "delete");
+    	}
+		
+		BaseLock lock = getLock(entity, name, projectId);
 		if (!lock.getLock()) {
-			alertNameTaken(name);
+			alertNameTaken(entity, name);
 		}
 
 		try {
@@ -285,18 +233,18 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 				throw new ServerException("update dashboardPortal fail");
 			}
 
-			optLogger.info("dashboardPortal ({}) is update by (:{}), origin: ({})", dashboardPortal.toString(),
+			optLogger.info("dashboardPortal ({}) is update by (:{}), origin:({})", dashboardPortal.toString(),
 					user.getId(), origin);
 
-			relRolePortalMapper.deleteByProtalId(dashboardPortal.getId());
+			relRolePortalMapper.deleteByProtalId(id);
 			if (!CollectionUtils.isEmpty(dashboardPortalUpdate.getRoleIds())) {
 				List<Role> roles = roleMapper.getRolesByIds(dashboardPortalUpdate.getRoleIds());
 				List<RelRolePortal> list = roles.stream()
-						.map(r -> new RelRolePortal(dashboardPortal.getId(), r.getId()).createdBy(user.getId()))
+						.map(r -> new RelRolePortal(id, r.getId()).createdBy(user.getId()))
 						.collect(Collectors.toList());
 				if (!CollectionUtils.isEmpty(list)) {
 					relRolePortalMapper.insertBatch(list);
-					optLogger.info("update dashboardPortal ({}) limit role ({}) access", dashboardPortal.getId(),
+					optLogger.info("update dashboardPortal ({}) limit role ({}) access", id,
 							roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
 				}
 			}
@@ -348,24 +296,20 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
     	DashboardPortal dashboardPortal = getDashboardPortal(id);
 
-    	checkWritePermisson(id, dashboardPortal.getProjectId(), user, "delete");
+    	checkWritePermission(entity, dashboardPortal.getProjectId(), user, "delete");
+    	
+    	if (isDisablePortal(id, dashboardPortal.getProjectId(), user)) {
+    		alertUnAuthorized(entity, user, "delete");
+    	}
 
-        //delete rel_role_dashboard_widget
         relRoleDashboardWidgetMapper.deleteByPortalId(id);
-
-        //delete mem_dashboard_widget
         memDashboardWidgetMapper.deleteByPortalId(id);
-
-        //delete rel_role_dashboard
         relRoleDashboardMapper.deleteByPortalId(id);
-
-        //delete dashboard
         dashboardMapper.deleteByPortalId(id);
 
-        //delete dashboard_portal
         if (dashboardPortalMapper.deleteById(id) == 1) {
             relRolePortalMapper.deleteByProtalId(dashboardPortal.getId());
-            optLogger.info("dashboaard portal( {} ) delete by user( :{}) ", dashboardPortal.toString(), user.getId());
+            optLogger.info("dashboaard portal ({}) delete by user (:{}) ", dashboardPortal.toString(), user.getId());
             return true;
         }
         return false;

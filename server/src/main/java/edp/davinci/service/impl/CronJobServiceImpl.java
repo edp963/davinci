@@ -42,36 +42,29 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.BaseLock;
 import edp.core.utils.DateUtils;
-import edp.core.utils.LockFactory;
 import edp.core.utils.QuartzHandler;
 import edp.core.utils.RedisUtils;
+import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.CronJobStatusEnum;
-import edp.davinci.core.enums.LockType;
 import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.model.RedisMessageEntity;
 import edp.davinci.dao.CronJobMapper;
 import edp.davinci.dto.cronJobDto.CronJobBaseInfo;
 import edp.davinci.dto.cronJobDto.CronJobInfo;
 import edp.davinci.dto.cronJobDto.CronJobUpdate;
-import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.model.CronJob;
 import edp.davinci.model.User;
 import edp.davinci.service.CronJobService;
-import edp.davinci.service.ProjectService;
 import edp.davinci.service.excel.ExecutorUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service("cronJobService")
-public class CronJobServiceImpl implements CronJobService {
+public class CronJobServiceImpl extends BaseEntityService implements CronJobService {
 
 	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 	
 	private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
-
-	@Autowired
-	private ProjectService projectService;
 
 	@Autowired
 	private CronJobMapper cronJobMapper;
@@ -85,7 +78,7 @@ public class CronJobServiceImpl implements CronJobService {
 	@Autowired
 	private EmailScheduleServiceImpl emailScheduleService;
 
-	private static final String CRONJOB_KEY = "CRONJOB";
+	private static final CheckEntityEnum entity = CheckEntityEnum.CRONJOB;
 
 	@Override
 	public boolean isExist(String name, Long id, Long projectId) {
@@ -105,54 +98,13 @@ public class CronJobServiceImpl implements CronJobService {
 	 */
 	@Override
 	public List<CronJob> getCronJobs(Long projectId, User user) {
-		return checkReadPermission(projectId, user) == true ? cronJobMapper.getByProject(projectId) : null;
+		return checkReadPermission(entity, projectId, user) == true ? cronJobMapper.getByProject(projectId) : null;
 	}
 
 	@Override
 	public CronJob getCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 		CronJob cronJob = cronJobMapper.getById(id);
-		return checkReadPermission(cronJob.getProjectId(), user) == true ? cronJob : null;
-	}
-	
-	private ProjectPermission getProjectPermission(Long projectId, User user) {
-		try {
-			return projectService
-					.getProjectPermission(projectService.getProjectDetail(projectId, user, false), user);
-		} catch (Exception e) {
-			return null;
-		}
-	}
-	
-	private boolean checkReadPermission(Long projectId, User user) {
-		ProjectPermission projectPermission = getProjectPermission(projectId, user);
-		if (projectPermission == null || projectPermission.getSchedulePermission() < UserPermissionEnum.READ.getPermission()) {
-			return false;
-		}
-		return true;
-	}
-
-	private void checkWritePermisson(Long projectId, User user, String operation) {
-		ProjectPermission projectPermission = getProjectPermission(projectId, user);
-		if (projectPermission == null || projectPermission.getSchedulePermission() < UserPermissionEnum.WRITE.getPermission()) {
-			log.info("user {} have not permisson to {} " + operation + " job", user.getUsername(), operation);
-			throw new UnAuthorizedExecption("you have not permission to " + operation + " job");
-		}
-	}
-
-	private void alertNameTaken(String name) {
-		log.warn("the job {} name is already taken", name);
-		throw new ServerException("the job name is already taken");
-	}
-
-	private BaseLock getJobLock(String name, Long projectId) {
-
-		return LockFactory.getLock(CRONJOB_KEY + Consts.AT_SYMBOL + name + Consts.AT_SYMBOL + projectId, 5,
-				LockType.REDIS);
-	}
-
-	private void releaseLock(BaseLock lock) {
-		// workaround for very high concurrency
-		// do nothing, wait for the transaction to commit
+		return checkReadPermission(entity, cronJob.getProjectId(), user) == true ? cronJob : null;
 	}
 	
 	private CronJob getCronJob(Long id) {
@@ -182,15 +134,15 @@ public class CronJobServiceImpl implements CronJobService {
 		Long projectId = cronJobBaseInfo.getProjectId();
 		String name = cronJobBaseInfo.getName();
 
-		checkWritePermisson(projectId, user, "create");
+		checkWritePermission(entity, projectId, user, "create");
 
 		if (isExist(name, null, projectId)) {
-			alertNameTaken(name);
+			alertNameTaken(entity, name);
 		}
 
-		BaseLock lock = getJobLock(name, projectId);
+		BaseLock lock = getLock(entity, name, projectId);
 		if (lock != null && !lock.getLock()) {
-			alertNameTaken(name);
+			alertNameTaken(entity, name);
 		}
 
 		CronJob cronJob = new CronJob().createdBy(user.getId());
@@ -204,8 +156,7 @@ public class CronJobServiceImpl implements CronJobService {
 
 		try {
 
-			int insert = cronJobMapper.insert(cronJob);
-			if (insert != 1) {
+			if (cronJobMapper.insert(cronJob) != 1) {
 				throw new ServerException("create cronJob fail");
 			}
 
@@ -244,10 +195,10 @@ public class CronJobServiceImpl implements CronJobService {
 			throw new ServerException("Invalid project id");
 		}
 
-		checkWritePermisson(projectId, user, "update");
+		checkWritePermission(entity, projectId, user, "update");
 
 		if (isExist(name, id, projectId)) {
-			alertNameTaken(name);
+			alertNameTaken(entity, name);
 		}
 
 		if (CronJobStatusEnum.START.getStatus().equals(cronJob.getJobStatus())) {
@@ -257,9 +208,9 @@ public class CronJobServiceImpl implements CronJobService {
 		BaseLock lock = null;
 		
 		if (!name.equals(cronJob.getName())) {
-			lock = getJobLock(name, projectId);
+			lock = getLock(entity, name, projectId);
 			if (lock != null && !lock.getLock()) {
-				alertNameTaken(name);
+				alertNameTaken(entity, name);
 			}
 		}
 		
@@ -303,7 +254,7 @@ public class CronJobServiceImpl implements CronJobService {
 
 		CronJob cronJob = getCronJob(id);
 
-		checkWritePermisson(cronJob.getProjectId(), user, "delete");
+		checkWritePermission(entity, cronJob.getProjectId(), user, "delete");
 
 		if (cronJobMapper.deleteById(id) == 1) {
 			optLogger.info("cronjob ({}) is delete by (:{})", cronJob.toString(), user.getId());
@@ -320,7 +271,7 @@ public class CronJobServiceImpl implements CronJobService {
 
 		CronJob cronJob = getCronJob(id);
 
-		checkWritePermisson(cronJob.getProjectId(), user, "start");
+		checkWritePermission(entity, cronJob.getProjectId(), user, "start");
 
 		try {
 			quartzHandler.addJob(cronJob);
@@ -350,17 +301,17 @@ public class CronJobServiceImpl implements CronJobService {
 		
 		CronJob cronJob = getCronJob(id);
 
-		checkWritePermisson(cronJob.getProjectId(), user, "start");
+		checkWritePermission(entity, cronJob.getProjectId(), user, "start");
+
+		cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
 
 		if (redisUtils.isRedisEnable()) {
-			cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
 			publishReconnect(JSON.toJSONString(cronJob));
 			return cronJob;
 		}
 
 		try {
 			quartzHandler.removeJob(cronJob);
-			cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
 			cronJob.setUpdateTime(new Date());
 			cronJobMapper.update(cronJob);
 		} catch (ServerException e) {
@@ -376,7 +327,8 @@ public class CronJobServiceImpl implements CronJobService {
 	public void startAllJobs() {
 		List<CronJob> jobList = cronJobMapper.getStartedJobs();
 		jobList.forEach((cronJob) -> {
-			String key = CRONJOB_KEY + Consts.UNDERLINE + cronJob.getId() + Consts.UNDERLINE + cronJob.getProjectId();
+			String key = entity.getSource().toUpperCase() + Consts.UNDERLINE + cronJob.getId() + Consts.UNDERLINE
+					+ cronJob.getProjectId();
 			if (redisUtils.setIfAbsent(key, 1, 300)) {
 				try {
 					quartzHandler.addJob(cronJob);
@@ -396,7 +348,7 @@ public class CronJobServiceImpl implements CronJobService {
 
 		CronJob cronJob = getCronJob(id);
 
-		checkWritePermisson(cronJob.getProjectId(), user, "execute");
+		checkWritePermission(entity, cronJob.getProjectId(), user, "execute");
 
 		ExecutorUtil.printThreadPoolStatusLog(QuartzJobExecutor.executorService, "Cronjob_Executor", scheduleLogger);
 
