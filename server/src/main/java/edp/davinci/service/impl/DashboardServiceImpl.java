@@ -106,6 +106,12 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         return null != dashboardId && dashboardId.longValue() > 0L;
     }
     
+	private void checkIsExist(String name, Long id, Long portalId) {
+		if (isExist(name, id, portalId)) {
+			alertNameTaken(entity, name);
+		}
+	}
+    
     private DashboardPortal getDashboardPortal(Long portalId, boolean isThrow) {
         DashboardPortal dashboardPortal = dashboardPortalMapper.getById(portalId);
         if (dashboardPortal == null && isThrow) {
@@ -232,20 +238,15 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         DashboardPortal dashboardPortal =getDashboardPortal(dashboardCreate.getDashboardPortalId(), true);
 
         Long projectId = dashboardPortal.getProjectId();
-        
         checkWritePermission(entity, projectId, user, "create");
-        
-		if (isDisablePortal(dashboardPortal.getId(), projectId, user)) {
+
+		if (isDisablePortal(dashboardPortal.getId(), projectId, user, getProjectPermission(projectId, user))) {
 			alertUnAuthorized(entity, user, "create");
 		}
 
-        Long userId = user.getId();
         String name = dashboardCreate.getName();
         Long portalId = dashboardCreate.getDashboardPortalId();
-        
-        if (isExist(name, null, portalId)) {
-            alertNameTaken(entity, name);
-        }
+		checkIsExist(name, null, portalId);
         
 		BaseLock lock = getLock(entity, name, projectId);
 		if (lock != null && !lock.getLock()) {
@@ -254,6 +255,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 		
 		try {
 
+			Long userId = user.getId();
 			Dashboard dashboard = new Dashboard().createdBy(userId);
 	        BeanUtils.copyProperties(dashboardCreate, dashboard);
 
@@ -299,24 +301,16 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     public void updateDashboards(Long portalId, DashboardDto[] dashboards, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
     	DashboardPortal dashboardPortal = getDashboardPortal(portalId, true);
-    	
     	Long projectId = dashboardPortal.getProjectId();
-
     	checkWritePermission(entity, projectId, user, "update");
     	
-		ProjectPermission projectPermission = getProjectPermission(projectId, user);
-		List<Long> disablePortals = getDisableVizs(user.getId(), projectId, null, VizEnum.PORTAL);
-
-		if (isDisableVizs(projectPermission, disablePortals, portalId)) {
+    	ProjectPermission projectPermission = getProjectPermission(projectId, user);
+		if (isDisablePortal(portalId, projectId, user, projectPermission)) {
 			alertUnAuthorized(entity, user, "update");
 		}
-
-        List<Dashboard> dashboardList = new ArrayList<>();
-        Map<Long, List<Long>> rolesMap = new HashMap<>();
-
+    	
         Set<Long> parentIds = Arrays.stream(dashboards).map(Dashboard::getParentId).filter(pId -> pId > 0).collect(Collectors.toSet());
         Map<Long, String> parentMap = new HashMap<>();
-        
         if (!CollectionUtils.isEmpty(parentIds)) {
             List<Dashboard> parents = dashboardMapper.queryByParentIds(parentIds);
             if (!CollectionUtils.isEmpty(parents)) {
@@ -325,14 +319,12 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
             }
         }
 
+        List<Dashboard> dashboardList = new ArrayList<>();
+        Map<Long, List<Long>> rolesMap = new HashMap<>();
         List<Long> disableDashboards = getDisableVizs(user.getId(), portalId, null, VizEnum.DASHBOARD);
-        
         for (DashboardDto dashboardDto : dashboards) {
-        	
         	String name = dashboardDto.getName();
         	Long id = dashboardDto.getId();
-        	Long parentId = dashboardDto.getParentId();
-            
         	if (isDisableVizs(projectPermission, disableDashboards, id)) {
                 throw new UnAuthorizedExecption("you have not permission to update dashboard:\"" + name + "\"");
             }
@@ -341,9 +333,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
                 throw new ServerException("Invalid dashboard portal id");
             }
 
-            if (isExist(name, id, portalId)) {
-            	alertNameTaken(entity, name);
-            }
+            checkIsExist(name, id, portalId);
             
     		BaseLock lock = getLock(entity, name, projectId);
     		if (lock != null && !lock.getLock()) {
@@ -352,6 +342,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
             dashboardDto.updatedBy(user.getId());
 
+            Long parentId = dashboardDto.getParentId();
             if (null != parentId && parentId > 0L && parentMap.containsKey(parentId)) {
                 String fullParentId = parentMap.get(parentId);
                 dashboardDto.setFullParentId(StringUtils.isEmpty(fullParentId) ? parentId.toString() : parentId + COMMA + fullParentId);
@@ -411,24 +402,20 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     public boolean deleteDashboard(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
 		DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(id, false);
-
 		if (null == dashboardWithPortal) {
 			return true;
 		}
 		
 		Long projectId = dashboardWithPortal.getProject().getId();
-		
 		checkWritePermission(entity, projectId, user, "delete");
-
-        ProjectPermission projectPermission = getProjectPermission(projectId, user);
-        List<Long> disableDashboards = getDisableVizs(user.getId(), dashboardWithPortal.getDashboardPortalId(), null, VizEnum.DASHBOARD);
-       
-		// 校验权限
-		if (isDisableVizs(projectPermission, disableDashboards, id)) {
-			log.info("user {} have not permisson to delete dashboard", user.getUsername());
-			throw new UnAuthorizedExecption("you have not permission to delete dashboard");
-		}
 		
+		Long portalId = dashboardWithPortal.getDashboardPortalId();
+		ProjectPermission projectPermission = getProjectPermission(projectId, user);
+		if (isDisablePortal(portalId, projectId, user, projectPermission)
+				|| isDisableDashboard(id, portalId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "delete");
+		}
+
 		List<Dashboard> deletingDashboards;
 		if (0 == dashboardWithPortal.getType()) { // folder
 			deletingDashboards = dashboardMapper.getByParentId(dashboardWithPortal.getId());
@@ -520,33 +507,28 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     public List<MemDashboardWidget> createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate[] memDashboardWidgetCreates, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
     	DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(dashboardId, true);
-
         if (!dashboardWithPortal.getDashboardPortalId().equals(portalId)) {
             throw new ServerException("Invalid dashboard");
         }
         
         Long projectId = dashboardWithPortal.getProject().getId();
-        
-        checkWritePermission(entity, projectId, user, "create dashboardWidget");
+        checkWritePermission(entity, projectId, user, "create widget with");
         
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 		List<Long> disablePortals = getDisableVizs(user.getId(), projectId, null, VizEnum.PORTAL);
-
 		if (isDisableVizs(projectPermission, disablePortals, portalId)) {
-			alertUnAuthorized(entity, user, "update");
+			alertUnAuthorized(entity, user, "create widget with");
 		}
         
-        List<Long> disableDashboards = getDisableVizs(user.getId(), portalId, null, VizEnum.DASHBOARD);
         Set<Long> ids = new HashSet<>();
         List<MemDashboardWidget> memDashboardWidgetList = new ArrayList<>();
-        
         for (MemDashboardWidgetCreate create : memDashboardWidgetCreates) {
 
-            if (isDisableVizs(projectPermission, disableDashboards, create.getDashboardId())) {
-                throw new UnAuthorizedExecption("Insufficient permissions");
-            }
+        	if (isDisableDashboard(create.getDashboardId(), portalId, user, projectPermission)) {
+        		alertUnAuthorized(entity, user, "create widget with");
+        	}
 
-            if (create.getPolling() && create.getFrequency() < 1) {
+        	if (create.getPolling() && create.getFrequency() < 1) {
                 throw new ServerException("Invalid frequency");
             }
 
@@ -583,36 +565,28 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 
 		DashboardPortal dashboardPortal = getDashboardPortal(portalId, true);
-
 		Long projectId = dashboardPortal.getProjectId();
-
-		checkWritePermission(entity, projectId, user, "update dashboardWidget");
+		checkWritePermission(entity, projectId, user, "update widget with");
 		
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
-		List<Long> disablePortals = getDisableVizs(user.getId(), projectId, null, VizEnum.PORTAL);
-
-		if (isDisableVizs(projectPermission, disablePortals, portalId)) {
-			alertUnAuthorized(entity, user, "update dashboardWidget");
+		if (isDisablePortal(portalId, projectId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "update widget with");
 		}
 
 		List<MemDashboardWidgetDto> dtoList = Arrays.asList(memDashboardWidgets);
-
 		Set<Long> dashboardIds = dashboardMapper
 				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDto::getDashboardId).collect(Collectors.toSet()));
 		Set<Long> widgetIds = widgetMapper
 				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDto::getWidgetId).collect(Collectors.toSet()));
-
 		String before = dtoList.toString();
-
-		List<Long> disableDashboards = getDisableVizs(user.getId(), portalId, null, VizEnum.DASHBOARD);
 		List<MemDashboardWidget> memDashboardWidgetList = new ArrayList<>(dtoList.size());
 		Map<Long, List<Long>> rolesMap = new HashMap<>();
-
 		dtoList.forEach(m -> {
-			if (isDisableVizs(projectPermission, disableDashboards, m.getDashboardId())) {
-				throw new UnAuthorizedExecption("Insufficient permissions");
-			}
-
+			
+        	if (isDisableDashboard(m.getDashboardId(), portalId, user, projectPermission)) {
+        		alertUnAuthorized(entity, user, "update widget with");
+        	}
+			
 			if (!dashboardIds.contains(m.getDashboardId())) {
 				throw new ServerException("Invalid dashboard id");
 			}
@@ -669,20 +643,15 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
         Long projectId = dashboardWithPortal.getProject().getId();
         Long portalId = dashboardWithPortal.getDashboardPortalId();
-
-		if (isDisablePortal(portalId, projectId, user)) {
-			alertUnAuthorized(entity, user, "delete dashboardWidget");
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+		if (isDisablePortal(portalId, projectId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "delete widget with");
 		}
-
-		ProjectPermission projectPermission = getProjectPermission(projectId, user);
-        List<Long> disableDashboards = getDisableVizs(user.getId(), portalId, null, VizEnum.DASHBOARD);
-
+		
 		// 校验权限
 		if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission()
-				|| isDisableVizs(projectPermission, disableDashboards, dashboardWithPortal.getId())) {
-			log.info("user ({}) have not permission to delete dashboardWidget ({})", user.getId(),
-					dashboardWidget.getId());
-			throw new UnAuthorizedExecption("Insufficient permissions");
+				|| isDisableDashboard(dashboardWidget.getDashboardId(), portalId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "delete widget with");
 		}
 
         relRoleDashboardWidgetMapper.deleteByMemDashboardWidgetId(relationId);
@@ -695,41 +664,34 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         return true;
     }
 
-    /**
-     * 分享dashboard
-     *
-     * @param dashboardId
-     * @param username
-     * @param user
-     * @return
-     */
-    @Override
-    public String shareDashboard(Long dashboardId, String username, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+	/**
+	 * 分享dashboard
+	 *
+	 * @param dashboardId
+	 * @param username
+	 * @param user
+	 * @return
+	 */
+	@Override
+	public String shareDashboard(Long dashboardId, String username, User user)
+			throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-    	DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(dashboardId, true);
-
-    	Long projectId = dashboardWithPortal.getProject().getId();
-        Long portalId = dashboardWithPortal.getDashboardPortalId();
-
-		if (isDisablePortal(portalId, projectId, user)) {
-			alertUnAuthorized(entity, user, "share dashboard");
+		DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(dashboardId, true);
+		if (dashboardWithPortal.getType() == 0) {
+			throw new ServerException("dashboard folder cannot be shared");
 		}
 
+		Long projectId = dashboardWithPortal.getProject().getId();
+		Long portalId = dashboardWithPortal.getDashboardPortalId();
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
-        List<Long> disableDashboards = getDisableVizs(user.getId(), portalId, null, VizEnum.DASHBOARD);
-
 		// 校验权限
-		if (!projectPermission.getSharePermission() || isDisableVizs(projectPermission, disableDashboards, dashboardWithPortal.getId())) {
-			log.info("user {} have not permisson to share the dashboard {}", user.getUsername(), user.getId());
-			throw new UnAuthorizedExecption("you have not permission to share the dashboard");
+		if (!projectPermission.getSharePermission() || isDisablePortal(portalId, projectId, user, projectPermission)
+				|| isDisableDashboard(dashboardId, portalId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "share");
 		}
 
-        if (dashboardWithPortal.getType() == 0) {
-            throw new ServerException("dashboard folder cannot be shared");
-        }
-
-        return shareService.generateShareToken(dashboardId, username, user.getId());
-    }
+		return shareService.generateShareToken(dashboardId, username, user.getId());
+	}
 
     @Override
     @Transactional

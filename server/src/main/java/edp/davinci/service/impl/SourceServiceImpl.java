@@ -120,7 +120,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	@Autowired
 	private RedisUtils redisUtils;
 	
-	private static final CheckEntityEnum entryType = CheckEntityEnum.SOURCE;
+	private static final CheckEntityEnum entity = CheckEntityEnum.SOURCE;
 
 	@Override
 	public boolean isExist(String name, Long id, Long projectId) {
@@ -129,6 +129,12 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			return !id.equals(sourceId);
 		}
 		return null != sourceId && sourceId.longValue() > 0L;
+	}
+	
+	private void checkIsExist(String name, Long id, Long projectId) {
+		if (isExist(name, id, projectId)) {
+			alertNameTaken(entity, name);
+		}
 	}
 	
 	/**
@@ -197,22 +203,19 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	public Source createSource(SourceCreate sourceCreate, User user)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 		
-		String name = sourceCreate.getName();
 		Long projectId = sourceCreate.getProjectId();
-		
-		if (isExist(name, null, projectId)) {
-			alertNameTaken(entryType, name);
-		}
+		checkWritePermission(entity, projectId, user, "create");
 
-		checkWritePermission(entryType, projectId, user, "create");
+		String name = sourceCreate.getName();
+		checkIsExist(name, null, projectId);
 
 		if (null == SourceTypeEnum.typeOf(sourceCreate.getType())) {
 			throw new ServerException("Invalid source type");
 		}
 
-		BaseLock lock = getLock(entryType, name, projectId);
+		BaseLock lock = getLock(entity, name, projectId);
 		if (lock != null && !lock.getLock()) {
-			alertNameTaken(entryType, name);
+			alertNameTaken(entity, name);
 		}
 		
 		try{
@@ -277,24 +280,16 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 		
 		Source source = getSource(sourceInfo.getId());
-		
-		checkWritePermission(entryType, source.getProjectId(), user, "update");
+		checkWritePermission(entity, source.getProjectId(), user, "update");
 		
 		String name = sourceInfo.getName();
 		Long projectId = source.getProjectId();
-
-		if (isExist(name, sourceInfo.getId(), projectId)) {
-			alertNameTaken(entryType, name);
-		}
+		checkIsExist(name, source.getId(), projectId);
 		
-		BaseLock lock = null;
-		
-		if (!name.equals(source.getName())) {
-			lock = getLock(entryType, name, projectId);
-			if (lock != null && !lock.getLock()) {
-				alertNameTaken(entryType, name);
-			}
-		}
+        BaseLock lock = getLock(entity, name, projectId);
+        if (!lock.getLock()) {
+        	alertNameTaken(entity, name);
+        }
 
 		try {
 			
@@ -358,7 +353,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		Source source = getSource(id);
 
-		checkWritePermission(entryType, source.getProjectId(), user, "delete");
+		checkWritePermission(entity, source.getProjectId(), user, "delete");
 
 		List<View> viewList = viewMapper.getBySourceId(id);
 		if (!CollectionUtils.isEmpty(viewList)) {
@@ -366,13 +361,13 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			throw new ServerException("There is at least one view using the source, it is can not be deleted");
 		}
 
-		if (sourceMapper.deleteById(id) ==1) {
+		if (sourceMapper.deleteById(id) == 1) {
 			optLogger.info("source ({}) delete by user (:{})", source.toString(), user.getId());
 			releaseSource(source);
 			return true;
-		} else {
-			return false;
 		}
+
+		return false;
 	}
 
 	/**
@@ -434,7 +429,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		Source source = getSource(sourceId);
 
-		checkWritePermission(entryType, source.getProjectId(), user, "upload csv file in");
+		checkWritePermission(entity, source.getProjectId(), user, "upload csv file in");
 
 		if (uploadMeta.getMode() == UploadModeEnum.REPLACE.getMode()) {
 			return;
@@ -474,7 +469,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		Source source = getSource(sourceId);
 
-		checkWritePermission(entryType, source.getProjectId(), user, "upload data in");
+		checkWritePermission(entity, source.getProjectId(), user, "upload data in");
 
 		if (!type.equals(FileTypeEnum.CSV.getType()) && !type.equals(FileTypeEnum.XLSX.getType())
 				&& !type.equals(FileTypeEnum.XLS.getType())) {
@@ -636,7 +631,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		Source source = getSource(id);
 
-		checkWritePermission(entryType, source.getProjectId(), user, "reconnect");
+		checkWritePermission(entity, source.getProjectId(), user, "reconnect");
 
 		if (!(dbBaseInfo.getDbUser().equals(source.getUsername())
 				&& dbBaseInfo.getDbPassword().equals(source.getPassword()))) {

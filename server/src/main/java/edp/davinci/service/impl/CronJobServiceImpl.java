@@ -88,6 +88,12 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		}
 		return null != cronJobId && cronJobId.longValue() > 0L;
 	}
+	
+	private void checkIsExist(String name, Long id, Long projectId) {
+		if (isExist(name, id, projectId)) {
+			alertNameTaken(entity, name);
+		}
+	}
 
 	/**
 	 * 获取所在project对用户可见的jobs
@@ -132,13 +138,10 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 
 		Long projectId = cronJobBaseInfo.getProjectId();
-		String name = cronJobBaseInfo.getName();
-
 		checkWritePermission(entity, projectId, user, "create");
 
-		if (isExist(name, null, projectId)) {
-			alertNameTaken(entity, name);
-		}
+		String name = cronJobBaseInfo.getName();
+		checkIsExist(name, null, projectId);
 
 		BaseLock lock = getLock(entity, name, projectId);
 		if (lock != null && !lock.getLock()) {
@@ -187,39 +190,29 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		
 		Long id = cronJobUpdate.getId();
 		Long projectId = cronJobUpdate.getProjectId();
-		String name = cronJobUpdate.getName();
-
 		CronJob cronJob = getCronJob(id);
-
 		if (!cronJob.getProjectId().equals(projectId)) {
 			throw new ServerException("Invalid project id");
 		}
 
 		checkWritePermission(entity, projectId, user, "update");
 
-		if (isExist(name, id, projectId)) {
-			alertNameTaken(entity, name);
-		}
+		String name = cronJobUpdate.getName();
+		checkIsExist(name, null, projectId);
 
 		if (CronJobStatusEnum.START.getStatus().equals(cronJob.getJobStatus())) {
 			throw new ServerException("Please stop the job before updating");
 		}
 		
-		BaseLock lock = null;
-		
-		if (!name.equals(cronJob.getName())) {
-			lock = getLock(entity, name, projectId);
-			if (lock != null && !lock.getLock()) {
-				alertNameTaken(entity, name);
-			}
+		BaseLock lock = getLock(entity, name, projectId);
+		if (lock != null && !lock.getLock()) {
+			alertNameTaken(entity, name);
 		}
 		
-		boolean res = false;
-
-		String origin = cronJob.toString();
 		BeanUtils.copyProperties(cronJobUpdate, cronJob);
 		cronJob.updatedBy(user.getId());
-		
+		String origin = cronJob.toString();
+		boolean res = false;
 		try {
 			cronJob.setStartDate(DateUtils.toDate(cronJobUpdate.getStartDate()));
 			cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
@@ -301,7 +294,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		
 		CronJob cronJob = getCronJob(id);
 
-		checkWritePermission(entity, cronJob.getProjectId(), user, "start");
+		checkWritePermission(entity, cronJob.getProjectId(), user, "stop");
 
 		cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
 

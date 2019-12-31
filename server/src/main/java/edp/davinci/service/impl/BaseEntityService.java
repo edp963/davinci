@@ -60,7 +60,7 @@ public abstract class BaseEntityService {
 	}
 
 	protected void alertUnAuthorized(CheckEntityEnum entity, User user, String operation) throws ServerException {
-		log.warn("user ({}) does not have permission to {} this {}", user.getId(), operation, entity.getSource());
+		log.warn("user ({}) don't have permission to {} this {}", user.getId(), operation, entity.getSource());
 		throw new UnAuthorizedExecption("you don't have permission to " + operation + " this " + entity.getSource());
 	}
 

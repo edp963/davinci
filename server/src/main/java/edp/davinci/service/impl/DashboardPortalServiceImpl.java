@@ -80,7 +80,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
     }
     
     private void checkIsExist(String name, Long id, Long projectId) {
-        if (isExist(name, null, projectId)) {
+        if (isExist(name, id, projectId)) {
             alertNameTaken(entity, name);
         }
     }
@@ -148,10 +148,9 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
     public DashboardPortal createDashboardPortal(DashboardPortalCreate dashboardPortalCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
     	Long projectId = dashboardPortalCreate.getProjectId();
-    	String name = dashboardPortalCreate.getName();
-    	
     	checkWritePermission(entity, projectId, user, "create");
 
+    	String name = dashboardPortalCreate.getName();
     	checkIsExist(name, null, projectId);
         
         BaseLock lock = getLock(entity, name, projectId);
@@ -160,6 +159,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
         }
 
 		try {
+
 			DashboardPortal dashboardPortal = new DashboardPortal().createdBy(user.getId());
 			BeanUtils.copyProperties(dashboardPortalCreate, dashboardPortal);
 
@@ -205,18 +205,16 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 
 		DashboardPortal dashboardPortal = getDashboardPortal(dashboardPortalUpdate.getId());
-
 		Long projectId = dashboardPortal.getProjectId();
-		Long id = dashboardPortal.getId();
-		String name = dashboardPortalUpdate.getName();
-
 		checkWritePermission(entity,  projectId, user, "update");
 
+		Long id = dashboardPortal.getId();
+		String name = dashboardPortalUpdate.getName();
 		checkIsExist(name, id, projectId);
 		
-    	if (isDisablePortal(id, projectId, user)) {
-    		alertUnAuthorized(entity, user, "delete");
-    	}
+		if (isDisablePortal(id, projectId, user, getProjectPermission(projectId, user))) {
+			alertUnAuthorized(entity, user, "delete");
+		}
 		
 		BaseLock lock = getLock(entity, name, projectId);
 		if (!lock.getLock()) {
@@ -295,12 +293,12 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
     public boolean deleteDashboardPortal(Long id, User user) throws NotFoundException, UnAuthorizedExecption {
 
     	DashboardPortal dashboardPortal = getDashboardPortal(id);
-
     	checkWritePermission(entity, dashboardPortal.getProjectId(), user, "delete");
-    	
-    	if (isDisablePortal(id, dashboardPortal.getProjectId(), user)) {
-    		alertUnAuthorized(entity, user, "delete");
-    	}
+
+		Long projectId = dashboardPortal.getProjectId();
+		if (isDisablePortal(id, projectId, user, getProjectPermission(projectId, user))) {
+			alertUnAuthorized(entity, user, "delete");
+		}
 
         relRoleDashboardWidgetMapper.deleteByPortalId(id);
         memDashboardWidgetMapper.deleteByPortalId(id);
