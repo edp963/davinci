@@ -21,9 +21,9 @@
 import * as React from 'react'
 
 import { Form, Row, Col, Input, Radio, Select, Tabs, Checkbox} from 'antd'
-import { IExludeRoles } from 'containers/Portal/components/PortalList'
+import { IExludeRoles } from 'containers/Viz/components/PortalList'
 import { FormComponentProps } from 'antd/lib/form'
-const styles = require('containers/Portal/Portal.less')
+const styles = require('containers/Viz/Viz.less')
 const TabPane = Tabs.TabPane
 const Option = Select.Option
 const FormItem = Form.Item

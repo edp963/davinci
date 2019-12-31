@@ -25,7 +25,7 @@ import { IChartProps } from '../'
 import { IChartStyles, IPaginationParams } from '../../Widget'
 import { ITableHeaderConfig } from 'containers/Widget/components/Config/Table'
 
-import { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
+import { ResizeCallbackData } from 'libs/react-resizable'
 import { Table as AntTable, Tooltip, Icon } from 'antd'
 import { TableProps, ColumnProps, SorterResult } from 'antd/lib/table'
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
@@ -97,7 +97,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private table = React.createRef<AntTable<any>>()
 
-  private handleResize = (idx: number, containerWidthRatio: number) => (_, { size }: IResizeCallbackData) => {
+  private handleResize = (idx: number, containerWidthRatio: number) => (_, { size }: ResizeCallbackData) => {
     const nextColumns = resizeTableColumns(this.state.tableColumns, idx, size.width, containerWidthRatio)
     this.setState({ tableColumns: nextColumns })
   }

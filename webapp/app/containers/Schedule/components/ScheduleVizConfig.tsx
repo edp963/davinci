@@ -19,8 +19,7 @@
  */
 
 import React, { useMemo, useCallback } from 'react'
-import { IDisplay } from 'containers/Display/types'
-import { IPortal } from 'containers/Portal'
+import { IPortal, IDisplayFormed } from 'containers/Viz/types'
 
 import { Row, Col, Card, Tree, Checkbox, Button, Icon, Popconfirm } from 'antd'
 const CheckboxGroup = Checkbox.Group
@@ -32,7 +31,7 @@ import { IDashboard } from 'containers/Dashboard'
 import { IScheduleVizItem } from './types'
 
 interface IScheduleVizConfigProps {
-  displays: IDisplay[]
+  displays: IDisplayFormed[]
   portals: IPortal[]
   value: IScheduleVizItem[]
   portalDashboards: { [portalId: number]: IDashboard[] }

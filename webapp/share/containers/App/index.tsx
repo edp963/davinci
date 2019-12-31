@@ -18,9 +18,9 @@
  * >>
  */
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import Helmet from 'react-helmet'
-import { Route, HashRouter as Router, Switch } from 'react-router-dom'
+import { Route, HashRouter as Router, Switch, useHistory } from 'react-router-dom'
 
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -33,6 +33,16 @@ import { Dashboard } from 'share/containers/Dashboard/Loadable'
 import { NotFound } from 'containers/NotFoundPage/Loadable'
 
 export const App: React.FC = () => {
+  const history = useHistory()
+  const currentPathname = history.location.pathname + history.location.search
+  useEffect(() => {
+    const pathname = sessionStorage.getItem('pathname')
+    if (pathname && pathname !== currentPathname) {
+      history.push(pathname)
+      sessionStorage.removeItem('pathname')
+    }
+  }, [])
+
   return (
     <div>
       <Helmet

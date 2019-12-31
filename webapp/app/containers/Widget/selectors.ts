@@ -19,8 +19,10 @@
  */
 
 import { createSelector } from 'reselect'
+import { IWidgetState } from './types'
+import { initialState } from './reducer'
 
-const selectWidget = (state) => state.widget
+const selectWidget = (state: { widget: IWidgetState }) => state.widget || initialState
 
 const makeSelectWidgets = () => createSelector(
   selectWidget,
