@@ -18,6 +18,13 @@
  * >>
  */
 
+import { IWidgetFormed } from 'containers/Widget/types'
+import { IViewModel } from 'app/containers/View/types'
+import { RenderType } from 'app/containers/Widget/components/Widget'
+import { IQueryConditions } from 'app/containers/Dashboard/Grid'
+import { ILayerFormed } from '../types'
+import { ILayerInfo } from '../../types'
+
 export type DeltaPosition = { deltaX: number, deltaY: number }
 export type DeltaSize = { deltaWidth: number, deltaHeight: number }
 
@@ -42,4 +49,35 @@ export type ResizableChildrenProps = {
   className?: string
   // other props
   // libs/react-resizable/lib/Resizable.tsx Line #225
+}
+
+export type LayerListContextValue = {
+  currentDisplayWidgets: { [widgetId: number]: IWidgetFormed }
+  editWidget?: (widgetId: number) => void
+  getWidgetViewModel: (viewId: number, widgetId: number) => IViewModel
+  getChartData: (
+    renderType: RenderType,
+    slideId: number,
+    layerId: number,
+    widget: IWidgetFormed,
+    prevQueryCondition?: Partial<IQueryConditions>,
+    queryConditions?: Partial<IQueryConditions>
+  ) => void
+  onDrag?: (
+    layerId: number,
+    deltaPosition: DeltaPosition,
+    finish?: boolean
+  ) => void
+  onResize?: (layerId: number, deltaSize: DeltaSize, finish?: boolean) => void
+  onSelectionChange?: (
+    layerId: number,
+    selected: boolean,
+    exclusive: boolean
+  ) => void
+}
+
+export type LayerContextValue = {
+  layer: ILayerFormed
+  layerInfo: ILayerInfo
+  operationInfo?: OperationInfo
 }
