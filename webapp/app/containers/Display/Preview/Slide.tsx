@@ -58,7 +58,7 @@ const Slide: React.FC<ISlideProps> = (props) => {
     sectionProps['data-transition-speed'] = transitionSpeed
   }
   if (autoSlideGlobal === false) {
-    sectionProps['data-autoslide'] = autoPlay !== false ? 0 : autoSlide * 1000
+    sectionProps['data-autoslide'] = autoPlay !== false ? autoSlide * 1000 : 0
   }
 
   return (

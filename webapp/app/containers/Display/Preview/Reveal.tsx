@@ -58,7 +58,7 @@ const DisplayReveal: React.FC = () => {
       minScale: 1,
       maxScale: 1,
 
-      autoSlide: autoPlay !== false ? 0 : autoSlide * 1000,
+      autoSlide: autoPlay !== false ? autoSlide * 1000 : 0,
       transition: transitionStyle,
       transitionSpeed,
 

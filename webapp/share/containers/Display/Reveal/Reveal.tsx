@@ -59,7 +59,7 @@ const ShareDisplayReveal: React.FC = () => {
       maxScale: 1,
 
       autoSlide:
-        (slideNumber > 0 && slideNumber < slidesCount) || autoPlay !== true
+        (slideNumber > 0 && slideNumber < slidesCount) || autoPlay === false
           ? 0
           : autoSlide * 1000,
       transition: transitionStyle,
