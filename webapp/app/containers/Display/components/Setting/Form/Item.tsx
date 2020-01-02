@@ -54,12 +54,15 @@ const Item: React.FC<IItemProps> = (props) => {
   const { item } = props
   const { form, size, slideId } = useContext(SlideSettingContext)
   let visible = true
-  const { relatedItemName, relatedValues } = item
-  if (relatedItemName) {
-    const relatedValue = form.getFieldValue(relatedItemName)
-    if (relatedValues.findIndex((val) => val === relatedValue) < 0) {
-      visible = false
-    }
+  const { relatedItems } = item
+  if (Array.isArray(relatedItems)) {
+    relatedItems.some(({ name, values }) => {
+      const relatedValue = form.getFieldValue(name)
+      if (values.findIndex((val) => val === relatedValue) < 0) {
+        visible = false
+        return true
+      }
+    })
   }
   const itemCls = classnames({
     [utilStyles.hide]: !visible

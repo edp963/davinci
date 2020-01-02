@@ -47,6 +47,7 @@ const Slide: React.FC<ISlideProps> = (props) => {
     transitionStyleOut,
     transitionSpeed,
     autoSlideGlobal,
+    autoPlay,
     autoSlide
   } = slideParams
   const sectionProps = {}
@@ -57,7 +58,7 @@ const Slide: React.FC<ISlideProps> = (props) => {
     sectionProps['data-transition-speed'] = transitionSpeed
   }
   if (autoSlideGlobal === false) {
-    sectionProps['data-autoslide'] = autoSlide * 1000
+    sectionProps['data-autoslide'] = autoPlay !== false ? 0 : autoSlide * 1000
   }
 
   return (

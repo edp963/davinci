@@ -35,7 +35,7 @@ const ShareDisplayReveal: React.FC = () => {
   const {
     config: { displayParams }
   } = useSelector(makeSelectDisplay())
-  const { autoSlide, transitionStyle, transitionSpeed } =
+  const { autoPlay, autoSlide, transitionStyle, transitionSpeed } =
     displayParams || DefaultDisplayParams
 
   const slidesCount = useSelector(makeSelectSlidesCount())
@@ -59,7 +59,9 @@ const ShareDisplayReveal: React.FC = () => {
       maxScale: 1,
 
       autoSlide:
-        slideNumber > 0 && slideNumber < slidesCount ? 0 : autoSlide * 1000,
+        (slideNumber > 0 && slideNumber < slidesCount) || autoPlay !== true
+          ? 0
+          : autoSlide * 1000,
       transition: transitionStyle,
       transitionSpeed,
 

@@ -40,6 +40,7 @@ const SlideSettingForm: React.FC<ISlideSettingFormProps> = (props) => {
     if (refForm.current) {
       const fieldsValue: ISlideParams = {
         autoSlideGlobal: true,
+        autoPlay: true,
         transitionGlobal: true,
         ...slideParams
       }
