@@ -18,13 +18,10 @@
  * >>
  */
 
-import React, { useCallback, useMemo } from 'react'
-import produce from 'immer'
+import React, { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import {
-  makeSelectCurrentSlide
-} from 'containers/Viz/selectors'
+import { makeSelectCurrentSlide } from 'containers/Viz/selectors'
 import { makeSelectCurrentSelectedLayerList } from '../selectors'
 
 import {
@@ -35,7 +32,8 @@ import {
 import { ISlideParams } from 'containers/Viz/types'
 import DisplayActions from '../actions'
 import VizActions from 'containers/Viz/actions'
-import { ILayerParams, ILayerFormed } from '../components/types'
+import { ILayerParams } from '../components/types'
+import { LayerAlignmentTypes } from '../components/constants'
 
 const Setting: React.FC = () => {
   const dispatch = useDispatch()
@@ -47,16 +45,10 @@ const Setting: React.FC = () => {
   const slideParamsChange = useCallback(
     (changedValues: Partial<ISlideParams>) => {
       if (changedValues && Object.keys(changedValues).length) {
-        const updatedSlide = produce(currentSlide, (draft) => {
-          draft.config.slideParams = {
-            ...draft.config.slideParams,
-            ...changedValues
-          }
-        })
-        dispatch(VizActions.editSlides([updatedSlide]))
+        dispatch(VizActions.editCurrentSlideParams(changedValues))
       }
     },
-    [currentSlide]
+    []
   )
 
   const layerParamsChange = useCallback(
@@ -68,18 +60,18 @@ const Setting: React.FC = () => {
     []
   )
 
-  const setAlignment = useCallback((alignmentType) => {
+  const setAlignment = useCallback((alignmentType: LayerAlignmentTypes) => {
     dispatch(DisplayActions.setLayersAlignment(alignmentType))
   }, [])
 
-  const { id: slideId } = currentSlide
+  const { id: slideId, config: { slideParams } } = currentSlide
   const selectedLayersLength = currentSelectedLayerList.length
   switch (selectedLayersLength) {
     case 0:
       return (
         <SlideSettingForm
           slideId={slideId}
-          slideParams={currentSlide.config.slideParams}
+          slideParams={slideParams}
           onChange={slideParamsChange}
         />
       )

@@ -25,7 +25,7 @@ import {
   IDashboardNode,
   IDisplayFormed,
   ISlideFormed,
-  Slide
+  ISlideParams
 } from './types'
 
 export const VizActions = {
@@ -450,6 +450,14 @@ export const VizActions = {
     return {
       type: ActionTypes.EDIT_SLIDES_FAILURE,
       payload: {}
+    }
+  },
+  editCurrentSlideParams(changedParams: Partial<ISlideParams>) {
+    return {
+      type: ActionTypes.EDIT_CURRENT_SLIDE_PARAMS,
+      payload: {
+        changedParams
+      }
     }
   },
 
