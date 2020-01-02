@@ -43,6 +43,7 @@ export interface IDisplayRaw extends IDisplayBase {
 }
 
 export interface IDisplayParams {
+  autoPlay: boolean
   autoSlide: number
   transitionStyle: 'none' | 'fade' | 'slide' | 'convex' | 'concave' | 'zoom'
   transitionSpeed: 'default' | 'fast' | 'slow'
@@ -89,6 +90,7 @@ export interface ISlideParams {
   backgroundColor: [number, number, number, number]
   backgroundImage: string
   autoSlideGlobal: boolean
+  autoPlay: boolean
   autoSlide: number
   transitionGlobal: boolean
   transitionStyleIn: 'none' | 'fade-in' | 'slide-in' | 'convex-in' | 'concave-in' | 'zoom-in'

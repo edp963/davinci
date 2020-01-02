@@ -19,6 +19,7 @@
  */
 
 import React, { useContext } from 'react'
+import classnames from 'classnames'
 import {
   Input,
   InputNumber,
@@ -43,6 +44,8 @@ import { SettingItem } from './types'
 import { SlideSettingContext } from './util'
 import api from 'utils/api'
 
+import utilStyles from 'assets/less/util.less'
+
 interface IItemProps {
   item: SettingItem
 }
@@ -50,13 +53,20 @@ interface IItemProps {
 const Item: React.FC<IItemProps> = (props) => {
   const { item } = props
   const { form, size, slideId } = useContext(SlideSettingContext)
-  const { relatedItemName, relatedValues } = item
-  if (relatedItemName) {
-    const relatedValue = form.getFieldValue(relatedItemName)
-    if (relatedValues.findIndex((val) => val === relatedValue) < 0) {
-      return null
-    }
+  let visible = true
+  const { relatedItems } = item
+  if (Array.isArray(relatedItems)) {
+    relatedItems.some(({ name, values }) => {
+      const relatedValue = form.getFieldValue(name)
+      if (values.findIndex((val) => val === relatedValue) < 0) {
+        visible = false
+        return true
+      }
+    })
   }
+  const itemCls = classnames({
+    [utilStyles.hide]: !visible
+  })
 
   const { getFieldDecorator } = form
   const options: GetFieldDecoratorOptions = { initialValue: item.default }
@@ -148,7 +158,7 @@ const Item: React.FC<IItemProps> = (props) => {
   }
   const { labelCol, wrapperCol, span } = item
   return (
-    <Col span={span || 24}>
+    <Col span={span || 24} className={itemCls}>
       <FormItem
         labelCol={{ span: labelCol || 12 }}
         wrapperCol={{ span: wrapperCol || 12 }}

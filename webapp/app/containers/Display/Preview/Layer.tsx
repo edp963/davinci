@@ -39,7 +39,7 @@ const PreviewLayer: React.FC<IPreviewLayerProps> = (props) => {
     []
   )
   const layerContextValue = useSelector((state) =>
-    selectSlideLayerContextValue(state, slideId, id)
+    selectSlideLayerContextValue(state, slideId, id, false)
   )
 
   return (

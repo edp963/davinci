@@ -65,8 +65,10 @@ export type SettingItem = {
   name: string
   title: string
   default: string | number
-  relatedItemName: string
-  relatedValues: string[] | number[] | boolean[]
+  relatedItems: Array<{
+    name: string,
+    values: string[] | number[] | boolean[]
+  }>
   labelCol?: number
   wrapperCol?: number
   span?: number

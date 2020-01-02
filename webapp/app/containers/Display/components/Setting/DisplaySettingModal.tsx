@@ -20,7 +20,17 @@
 
 import React, { useCallback } from 'react'
 
-import { Modal, Form, Card, Row, Col, InputNumber, Radio, Select } from 'antd'
+import {
+  Modal,
+  Form,
+  Card,
+  Row,
+  Col,
+  Checkbox,
+  InputNumber,
+  Radio,
+  Select
+} from 'antd'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const { Option } = Select
@@ -68,14 +78,14 @@ const transitionStyleOptions: Array<{
 ]
 
 const formItemStyle: Partial<FormItemProps> = {
-  labelCol: { span: 10 },
-  wrapperCol: { span: 14 }
+  labelCol: { span: 12 },
+  wrapperCol: { span: 12 }
 }
 
 const DisplaySettingModal: React.FC<IDisplaySettingModalProps> = (props) => {
   const { visible, displayParams, form, onCancel, onOk } = props
   const { getFieldDecorator } = form
-  const { autoSlide, transitionStyle, transitionSpeed, grid } =
+  const { autoPlay, autoSlide, transitionStyle, transitionSpeed, grid } =
     displayParams || DefaultDisplayParams
 
   const ok = useCallback(() => {
@@ -97,15 +107,27 @@ const DisplaySettingModal: React.FC<IDisplaySettingModalProps> = (props) => {
     >
       <Form>
         <Row gutter={8}>
-          <Col span={12}>
-            <Card title="全局动画设置" size="small">
-              <FormItem label="每页停留时间（秒）" {...formItemStyle}>
-                {getFieldDecorator<IDisplayParams>('autoSlide', {
-                  initialValue: autoSlide,
-                  validateFirst: true,
-                  rules: [{ required: true, message: '请输入数字' }]
-                })(<InputNumber min={3} />)}
+          <Col span={10}>
+            <Card title="全局播放设置" size="small">
+              <FormItem label="自动播放" {...formItemStyle}>
+                {getFieldDecorator<IDisplayParams>('autoPlay', {
+                  initialValue: autoPlay,
+                  valuePropName: 'checked'
+                })(<Checkbox />)}
               </FormItem>
+              {form.getFieldValue('autoPlay') === true && (
+                <FormItem label="每页停留时间（秒）" {...formItemStyle}>
+                  {getFieldDecorator<IDisplayParams>('autoSlide', {
+                    initialValue: autoSlide,
+                    validateFirst: true,
+                    rules: [{ required: true, message: '请输入数字' }]
+                  })(<InputNumber min={3} />)}
+                </FormItem>
+              )}
+            </Card>
+          </Col>
+          <Col span={7}>
+            <Card title="全局动画设置" size="small">
               <FormItem label="过渡动画" {...formItemStyle}>
                 {getFieldDecorator<IDisplayParams>('transitionStyle', {
                   initialValue: transitionStyle
@@ -124,26 +146,20 @@ const DisplaySettingModal: React.FC<IDisplaySettingModalProps> = (props) => {
               </FormItem>
             </Card>
           </Col>
-          <Col span={12}>
+          <Col span={7}>
             <Card title="拖动栅格设置（像素）" size="small">
-              <Row>
-                <Col span={11}>
-                  <FormItem label="x轴方向" {...formItemStyle}>
-                    {getFieldDecorator('grid[0]', {
-                      initialValue: grid[0],
-                      rules: [{ required: true, message: '请填入数字' }]
-                    })(<InputNumber min={1} />)}
-                  </FormItem>
-                </Col>
-                <Col span={11}>
-                  <FormItem label="y轴方向" {...formItemStyle}>
-                    {getFieldDecorator('grid[1]', {
-                      initialValue: grid[1],
-                      rules: [{ required: true, message: '请填入数字' }]
-                    })(<InputNumber min={1} />)}
-                  </FormItem>
-                </Col>
-              </Row>
+              <FormItem label="x 轴方向" {...formItemStyle}>
+                {getFieldDecorator('grid[0]', {
+                  initialValue: grid[0],
+                  rules: [{ required: true, message: '请填入数字' }]
+                })(<InputNumber min={1} />)}
+              </FormItem>
+              <FormItem label="y 轴方向" {...formItemStyle}>
+                {getFieldDecorator('grid[1]', {
+                  initialValue: grid[1],
+                  rules: [{ required: true, message: '请填入数字' }]
+                })(<InputNumber min={1} />)}
+              </FormItem>
             </Card>
           </Col>
         </Row>

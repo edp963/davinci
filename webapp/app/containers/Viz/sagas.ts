@@ -451,6 +451,19 @@ export function* editSlides(action: VizActionType) {
     errorHandler(err)
   }
 }
+export function* editCurrentSlideParams(action: VizActionType) {
+  if (action.type !== ActionTypes.EDIT_CURRENT_SLIDE_PARAMS) {
+    return
+  }
+  const currentSlide: ISlideFormed = yield select(makeSelectCurrentSlide())
+  const updateSlide = produce(currentSlide, (draft) => {
+    draft.config.slideParams = {
+      ...draft.config.slideParams,
+      ...action.payload.changedParams
+    }
+  })
+  yield put(VizActions.editSlides([updateSlide]))
+}
 
 export function* deleteSlides(action: VizActionType) {
   if (action.type !== ActionTypes.DELETE_SLIDES) {
@@ -523,6 +536,7 @@ export default function* rootVizSaga(): IterableIterator<any> {
 
     takeLatest(ActionTypes.ADD_SLIDE, addSlide),
     takeEvery(ActionTypes.EDIT_SLIDES, editSlides),
+    takeEvery(ActionTypes.EDIT_CURRENT_SLIDE_PARAMS, editCurrentSlideParams),
     takeEvery(ActionTypes.DELETE_SLIDES, deleteSlides)
   ])
 }

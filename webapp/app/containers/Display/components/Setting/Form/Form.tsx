@@ -71,7 +71,7 @@ export default Form.create<ISettingFormProps>({
       debouncedChange = debounce((layerId) => {
         onChange({ ...cachedValues }, layerId)
         cachedValues = {}
-      }, 1500)
+      }, 1000)
     }
     debouncedChange(layerId)
   }

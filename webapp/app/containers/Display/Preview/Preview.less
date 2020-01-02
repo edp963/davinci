@@ -18,6 +18,8 @@
  * >>
  */
 
+@import "~assets/less/variable";
+
 :global {
   .display {
     &-preview-slide {
@@ -28,5 +30,15 @@
       height: 100% !important;
       display: flex !important;
     }
+
+    &-preview-slide &-slide {
+      &-layer p {
+        margin: 0;
+      }
+    }
+  }
+
+  .reveal aside.controls {
+    color: @primary-color;
   }
 }

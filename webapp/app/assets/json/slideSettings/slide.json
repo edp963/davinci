@@ -46,6 +46,18 @@
       "labelCol": 11,
       "wrapperCol": 8
     }, {
+      "name": "autoPlay",
+      "title": "自动播放",
+      "component": "checkbox",
+      "valuePropName": "checked",
+      "default": true,
+      "labelCol": 11,
+      "wrapperCol": 8,
+      "relatedItems": [{
+        "name": "autoSlideGlobal",
+        "values": [false]
+      }]
+    }, {
       "name": "autoSlide",
       "title": "停留时间（秒）",
       "component": "inputnumber",
@@ -53,8 +65,13 @@
       "min": 3,
       "labelCol": 14,
       "wrapperCol": 10,
-      "relatedItemName": "autoSlideGlobal",
-      "relatedValues": [false]
+      "relatedItems": [{
+        "name": "autoSlideGlobal",
+        "values": [false]
+      }, {
+        "name": "autoPlay",
+        "values": [true]
+      }]
     }]
   }, {
     "name": "play",
@@ -93,8 +110,10 @@
       "default": "none",
       "labelCol": 11,
       "wrapperCol": 8,
-      "relatedItemName": "transitionGlobal",
-      "relatedValues": [false]
+      "relatedItems": [{
+        "name": "transitionGlobal",
+        "values": [false]
+      }]
     }, {
       "name": "transitionStyleOut",
       "title": "消失时动画",
@@ -121,8 +140,10 @@
       "default": "none",
       "labelCol": 11,
       "wrapperCol": 8,
-      "relatedItemName": "transitionGlobal",
-      "relatedValues": [false]
+      "relatedItems": [{
+        "name": "transitionGlobal",
+        "values": [false]
+      }]
     }, {
       "name": "transitionSpeed",
       "title": "动画速度",
@@ -140,8 +161,10 @@
       "default": "default",
       "labelCol": 11,
       "wrapperCol": 8,
-      "relatedItemName": "transitionGlobal",
-      "relatedValues": [false]
+      "relatedItems": [{
+        "name": "transitionGlobal",
+        "values": [false]
+      }]
     }]
   }, {
     "name": "scale",

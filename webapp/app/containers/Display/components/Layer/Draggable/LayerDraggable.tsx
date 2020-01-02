@@ -45,6 +45,12 @@ const LayerDraggable: React.FC = (props) => {
     if (e.target === data.node.lastElementChild) {
       return false
     }
+    if (
+      typeof (e as MouseEvent).button === 'number' &&
+      (e as MouseEvent).button !== 0
+    ) {
+      return false
+    }
   }, [])
 
   const drag: DraggableEventHandler = useCallback(

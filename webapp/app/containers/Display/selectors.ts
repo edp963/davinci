@@ -21,7 +21,7 @@
 import { createSelector, createSelectorCreator } from 'reselect'
 import { IDisplayState } from './types'
 import { initialState } from './reducer'
-import { ILayerFormed } from './components/types'
+import { LayerContextValue } from './components/types'
 
 const selectDisplay = (state: { display: IDisplayState }) =>
   state.display || initialState
@@ -84,18 +84,23 @@ const makeSelectSlideLayerContextValue = () =>
     selectSlideLayersInfo,
     (_, slideId: number) => slideId,
     (_1, _2, layerId: number) => layerId,
+    (_1, _2, _3, editing: boolean = true) => editing,
     (
       slideLayers,
       slideLayersOperationInfo,
       slideLayersInfo,
       slideId,
-      layerId
+      layerId,
+      editing
     ) => {
-      return {
+      const layerContextValue: LayerContextValue = {
         layer: slideLayers[slideId][layerId],
-        operationInfo: slideLayersOperationInfo[slideId][layerId],
         layerInfo: slideLayersInfo[slideId][layerId]
       }
+      if (editing) {
+        layerContextValue.operationInfo = slideLayersOperationInfo[slideId][layerId]
+      }
+      return layerContextValue
     }
   )
 

@@ -39,7 +39,7 @@ const DisplayReveal: React.FC = () => {
 
   useStatistic(currentProject, currentDisplay)
 
-  const { autoSlide, transitionStyle, transitionSpeed } =
+  const { autoPlay, autoSlide, transitionStyle, transitionSpeed } =
     currentDisplay.config.displayParams || DefaultDisplayParams
 
   useEffect(() => {
@@ -47,7 +47,8 @@ const DisplayReveal: React.FC = () => {
       hash: false,
       history: false,
 
-      controls: false,
+      controls: true,
+      controlsLayout: 'edges',
       controlsTutorial: false,
       progress: false,
       loop: true,
@@ -58,7 +59,7 @@ const DisplayReveal: React.FC = () => {
       minScale: 1,
       maxScale: 1,
 
-      autoSlide: autoSlide * 1000,
+      autoSlide: autoPlay !== false ? autoSlide * 1000 : 0,
       transition: transitionStyle,
       transitionSpeed,
 
