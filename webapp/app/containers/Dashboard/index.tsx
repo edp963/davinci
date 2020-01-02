@@ -80,7 +80,13 @@ import { RouteComponentWithParams } from 'utils/types'
 import { Grid } from './Loadable'
 
 interface IDashboardProps {
-  modalLoading: boolean
+  modalLoading: {
+    portal: boolean
+    display: boolean
+    editing: boolean
+    dashboards: boolean
+    slides: boolean
+  }
   dashboards: IDashboard[]
   currentDashboard: IDashboard,
   currentProject: IProject
@@ -658,6 +664,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
 
   public render () {
     const {
+      match,
       currentDashboard,
       dashboards,
       modalLoading,
