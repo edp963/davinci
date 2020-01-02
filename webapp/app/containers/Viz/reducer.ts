@@ -124,7 +124,9 @@ const vizReducer = (
       case ActionTypes.ADD_DASHBOARD_FAILURE:
         draft.loading.editing = false
         break
-
+      case ActionTypes.EDIT_DASHBOARD:
+        draft.loading.editing = true
+        break
       case ActionTypes.EDIT_DASHBOARD_SUCCESS:
         const { result, formType } = action.payload
         if (formType === 'edit') {
@@ -147,8 +149,11 @@ const vizReducer = (
             result[0].dashboardPortalId
           ] = draft.portalDashboards[result[0].dashboardPortalId].concat(result)
         }
+        draft.loading.editing = false
         break
-
+      case ActionTypes.EDIT_DASHBOARD_FAILURE:
+        draft.loading.editing = false
+        break
       case ActionTypes.DELETE_DASHBOARD_SUCCESS:
         draft.portalDashboards[
           action.payload.portalId
