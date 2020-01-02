@@ -47,7 +47,8 @@ const DisplayReveal: React.FC = () => {
       hash: false,
       history: false,
 
-      controls: false,
+      controls: true,
+      controlsLayout: 'edges',
       controlsTutorial: false,
       progress: false,
       loop: true,
