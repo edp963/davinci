@@ -106,6 +106,9 @@ const vizReducer = (
         draft.portalDashboards[action.payload.portalId] =
           action.payload.dashboards
         draft.loading.dashboards = false
+        if (!draft.currentPortalId) {
+          draft.currentPortalId = action.payload.portalId
+        }
         break
       case ActionTypes.LOAD_PORTAL_DASHBOARDS_FAILURE:
         delete draft.portalDashboards[action.payload.portalId]
