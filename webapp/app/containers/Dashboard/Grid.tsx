@@ -354,8 +354,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
   }): IVizData {
     return {
       project_id: +projectId,
-      project_name: currentProject.name,
-      org_id: currentProject.orgId,
+      project_name: currentProject && currentProject.name,
+      org_id: currentProject && currentProject.orgId,
       viz_type: 'dashboard',
       viz_id: +portalId,
       viz_name: currentPortal && currentPortal.name,
@@ -442,9 +442,23 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
 
     if (currentDashboard && currentDashboard.name) {
       statistic.setDurations({
-        sub_viz_name: currentDashboard['name']
+        sub_viz_name: currentDashboard.name
       })
     }
+
+    if ( currentProject && currentProject.name) {
+      statistic.setDurations({
+        project_name: currentProject.name,
+        org_id: currentProject.orgId
+      })
+    }
+
+    if ( currentPortal && currentPortal.name) {
+      statistic.setDurations({
+        viz_name:  currentPortal.name
+      })
+    }
+
   }
   private statisticTimeFuc = () => {
     statistic.isTimeout()
