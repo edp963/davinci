@@ -332,6 +332,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
 
                     Set<Widget> widgets = widgetMapper.getByDisplayId(display.getId());
+                    log.info("-----------display slide widget size {}", widgets.size());
                     if (!CollectionUtils.isEmpty(widgets)) {
                         List<WidgetContext> widgetContexts = new ArrayList<>();
                         widgets.forEach(widget -> {
@@ -371,36 +372,34 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
         if (CollectionUtils.isEmpty(mailContentDashboardIds)) {
             scheduleLogger.warn("CronJob (:{}): dashboards is empty", cronJobId);
-            return null;
         } else {
             scheduleLogger.info("CronJob (:{}): dashboards size: {}", cronJobId, mailContentDashboardIds.size());
-        }
+            for (Long dId : mailContentDashboardIds) {
+                DashboardWithPortal dashboard = dashboardMapper.getDashboardWithPortalAndProject(dId);
+                if (dashboard != null) {
+                    ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
+                    boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
 
-        for (Long dId : mailContentDashboardIds) {
-            DashboardWithPortal dashboard = dashboardMapper.getDashboardWithPortalAndProject(dId);
-            if (dashboard != null) {
-                ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
-                boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
+                    Set<WidgetWithRelationDashboardId> set = widgetMapper.getByDashboard(dashboard.getId());
+                    if (!CollectionUtils.isEmpty(set)) {
+                        List<WidgetContext> widgetContexts = new ArrayList<>();
+                        set.forEach(w -> {
+                            Widget widget = new Widget();
+                            BeanUtils.copyProperties(w, widget);
+                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, dashboard.getConfig(), widget.getConfig(), w.getRelationId());
+                            widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
+                        });
 
-                Set<WidgetWithRelationDashboardId> set = widgetMapper.getByDashboard(dashboard.getId());
-                if (!CollectionUtils.isEmpty(set)) {
-                    List<WidgetContext> widgetContexts = new ArrayList<>();
-                    set.forEach(w -> {
-                        Widget widget = new Widget();
-                        BeanUtils.copyProperties(w, widget);
-                        ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, dashboard.getConfig(), widget.getConfig(), w.getRelationId());
-                        widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
-                    });
+                        WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
+                                .withWidgets(widgetContexts)
+                                .withUser(user)
+                                .withResultLimit(resultLimit)
+                                .withTaskKey("Schedule_" + cronJobId)
+                                .withCustomLogger(scheduleLogger)
+                                .build();
 
-                    WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
-                            .withWidgets(widgetContexts)
-                            .withUser(user)
-                            .withResultLimit(resultLimit)
-                            .withTaskKey("Schedule_" + cronJobId)
-                            .withCustomLogger(scheduleLogger)
-                            .build();
-
-                    workBookContextMap.put(dashboard.getName(), workBookContext);
+                        workBookContextMap.put(dashboard.getName(), workBookContext);
+                    }
                 }
             }
         }
