@@ -61,13 +61,12 @@ import edp.core.utils.BaseLock;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
-import edp.core.utils.LockFactory;
 import edp.core.utils.RedisUtils;
 import edp.core.utils.SourceUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.FileTypeEnum;
-import edp.davinci.core.enums.LockType;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SourceTypeEnum;
 import edp.davinci.core.enums.UploadModeEnum;
@@ -99,7 +98,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service("sourceService")
-public class SourceServiceImpl implements SourceService {
+public class SourceServiceImpl extends BaseEntityService implements SourceService {
 
 	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
@@ -120,6 +119,8 @@ public class SourceServiceImpl implements SourceService {
 
 	@Autowired
 	private RedisUtils redisUtils;
+	
+	private static final CheckEntityEnum entity = CheckEntityEnum.SOURCE;
 
 	@Override
 	public boolean isExist(String name, Long id, Long projectId) {
@@ -128,6 +129,12 @@ public class SourceServiceImpl implements SourceService {
 			return !id.equals(sourceId);
 		}
 		return null != sourceId && sourceId.longValue() > 0L;
+	}
+	
+	private void checkIsExist(String name, Long id, Long projectId) {
+		if (isExist(name, id, projectId)) {
+			alertNameTaken(entity, name);
+		}
 	}
 	
 	/**
@@ -168,8 +175,7 @@ public class SourceServiceImpl implements SourceService {
 
 		Source source = getSource(id);
 
-		ProjectPermission projectPermission = projectService
-				.getProjectPermission(projectService.getProjectDetail(source.getProjectId(), user, false), user);
+		ProjectPermission projectPermission = getProjectPermission(source.getProjectId(), user);
 
 		if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
 			throw new UnAuthorizedExecption();
@@ -197,22 +203,19 @@ public class SourceServiceImpl implements SourceService {
 	public Source createSource(SourceCreate sourceCreate, User user)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 		
-		String name = sourceCreate.getName();
 		Long projectId = sourceCreate.getProjectId();
-		
-		if (isExist(name, null, projectId)) {
-			alertNameTaken(name);
-		}
+		checkWritePermission(entity, projectId, user, "create");
 
-		checkWritePermission(projectId, user, "create");
+		String name = sourceCreate.getName();
+		checkIsExist(name, null, projectId);
 
 		if (null == SourceTypeEnum.typeOf(sourceCreate.getType())) {
 			throw new ServerException("Invalid source type");
 		}
 
-		BaseLock lock = getSourceLock(name, projectId);
+		BaseLock lock = getLock(entity, name, projectId);
 		if (lock != null && !lock.getLock()) {
-			alertNameTaken(name);
+			alertNameTaken(entity, name);
 		}
 		
 		try{
@@ -241,21 +244,6 @@ public class SourceServiceImpl implements SourceService {
 		}
 	}
 	
-	private BaseLock getSourceLock(String name, Long projectId) {
-		
-		return LockFactory.getLock("SOURCE@" + name + "@" + projectId, 5, LockType.REDIS);
-	}
-	
-	private void releaseLock(BaseLock lock) {
-		// workaround for very high concurrency
-		// do nothing, wait for the transaction to commit
-	}
-	
-	private void alertNameTaken(String name) {
-		log.warn("the source {} name is already taken", name);
-		throw new ServerException("the source name is already taken");
-	}
-
 	private Source getSource(Long id) {
 
 		Source source = sourceMapper.getById(id);
@@ -268,18 +256,6 @@ public class SourceServiceImpl implements SourceService {
 		return source;
 	}
 
-	private void checkWritePermission(Long projectId, User user, String operation) {
-
-		ProjectDetail projectDetail = projectService.getProjectDetail(projectId, user, false);
-
-		ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-
-		if (projectPermission.getSourcePermission() < UserPermissionEnum.WRITE.getPermission()) {
-			log.info("user (:{}) have not permission to " + operation + " this source (:{})", user.getId(), projectId);
-			throw new UnAuthorizedExecption("you have not permission to " + operation + " this source");
-		}
-	}
-	
 	private boolean testConnection(SourceConfig config) {
 		return sqlUtils.init(
                         config.getUrl(),
@@ -304,24 +280,16 @@ public class SourceServiceImpl implements SourceService {
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 		
 		Source source = getSource(sourceInfo.getId());
-		
-		checkWritePermission(source.getProjectId(), user, "update");
+		checkWritePermission(entity, source.getProjectId(), user, "update");
 		
 		String name = sourceInfo.getName();
 		Long projectId = source.getProjectId();
-
-		if (isExist(name, sourceInfo.getId(), projectId)) {
-			alertNameTaken(name);
-		}
+		checkIsExist(name, source.getId(), projectId);
 		
-		BaseLock lock = null;
-		
-		if (!name.equals(source.getName())) {
-			lock = getSourceLock(name, projectId);
-			if (lock != null && !lock.getLock()) {
-				alertNameTaken(name);
-			}
-		}
+        BaseLock lock = getLock(entity, name, projectId);
+        if (!lock.getLock()) {
+        	alertNameTaken(entity, name);
+        }
 
 		try {
 			
@@ -385,7 +353,7 @@ public class SourceServiceImpl implements SourceService {
 
 		Source source = getSource(id);
 
-		checkWritePermission(source.getProjectId(), user, "delete");
+		checkWritePermission(entity, source.getProjectId(), user, "delete");
 
 		List<View> viewList = viewMapper.getBySourceId(id);
 		if (!CollectionUtils.isEmpty(viewList)) {
@@ -393,13 +361,13 @@ public class SourceServiceImpl implements SourceService {
 			throw new ServerException("There is at least one view using the source, it is can not be deleted");
 		}
 
-		if (sourceMapper.deleteById(id) ==1) {
+		if (sourceMapper.deleteById(id) == 1) {
 			optLogger.info("source ({}) delete by user (:{})", source.toString(), user.getId());
 			releaseSource(source);
 			return true;
-		} else {
-			return false;
 		}
+
+		return false;
 	}
 
 	/**
@@ -461,7 +429,7 @@ public class SourceServiceImpl implements SourceService {
 
 		Source source = getSource(sourceId);
 
-		checkWritePermission(source.getProjectId(), user, "upload csv file in");
+		checkWritePermission(entity, source.getProjectId(), user, "upload csv file in");
 
 		if (uploadMeta.getMode() == UploadModeEnum.REPLACE.getMode()) {
 			return;
@@ -501,7 +469,7 @@ public class SourceServiceImpl implements SourceService {
 
 		Source source = getSource(sourceId);
 
-		checkWritePermission(source.getProjectId(), user, "upload data in");
+		checkWritePermission(entity, source.getProjectId(), user, "upload data in");
 
 		if (!type.equals(FileTypeEnum.CSV.getType()) && !type.equals(FileTypeEnum.XLSX.getType())
 				&& !type.equals(FileTypeEnum.XLS.getType())) {
@@ -663,7 +631,7 @@ public class SourceServiceImpl implements SourceService {
 
 		Source source = getSource(id);
 
-		checkWritePermission(source.getProjectId(), user, "reconnect");
+		checkWritePermission(entity, source.getProjectId(), user, "reconnect");
 
 		if (!(dbBaseInfo.getDbUser().equals(source.getUsername())
 				&& dbBaseInfo.getDbPassword().equals(source.getPassword()))) {
