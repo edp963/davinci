@@ -500,7 +500,9 @@ function getTableColumns (props: IChartProps) {
     : 1
   tableColumns.forEach((column) => {
     if (fixedColumnInfo[column.key] === void 0) {
-      column.width = containerWidthRatio * Number(column.width)
+      // Math.floor to avoid creating float column width value and scrollbar showing
+      // not use Math.ceil because it will exceed the container width in total
+      column.width = Math.floor(containerWidthRatio * Number(column.width))
     }
   })
 
