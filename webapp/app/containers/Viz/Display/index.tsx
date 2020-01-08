@@ -64,7 +64,7 @@ const VizDisplay: React.FC<RouteComponentWithParams> = (props) => {
   return (
     <>
       <Helmet title={`${currentDisplay.name} - Display`} />
-      <Route exact path="/project/:projectId/display/:displayId/slide/:slideId/preview" component={Display} />
+      <Route exact path="/project/:projectId/display/:displayId/preview/slide/:slideId" component={Display} />
       <Route exact path="/project/:projectId/display/:displayId/slide/:slideId" component={VizDisplayEditor} />
     </>
   )

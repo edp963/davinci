@@ -33,26 +33,16 @@ export const matchPortalPath = (pathname: string, exact: boolean = false) => {
 
 export const matchDisplayPath = (pathname: string, exact: boolean = false) => {
   const result = matchPath<IRouteParams>(pathname, {
-    path: '/project/:projectId/display/:displayId',
+    path: '/project/:projectId/display/:displayId/(preview)?',
     exact,
     strict: false
   })
   return result
 }
 
-export const matchDisplaySlidePath = (pathname: string, exact: boolean = false) => {
+export const matchDisplaySlidePath = (pathname: string, exact: boolean = true) => {
   const result = matchPath<IRouteParams>(pathname, {
-    path: '/project/:projectId/display/:displayId/slide/:slideId',
-    exact,
-    strict: false
-  })
-  return result
-}
-
-
-export const matchDisplayPreviewPath = (pathname: string, exact: boolean = true) => {
-  const result = matchPath<IRouteParams>(pathname, {
-    path: '/project/:projectId/display/:displayId/slide/:slideId/preview',
+    path: '/project/:projectId/display/:displayId/(preview)?/slide/:slideId',
     exact,
     strict: false
   })

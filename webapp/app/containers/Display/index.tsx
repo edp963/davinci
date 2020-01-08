@@ -39,7 +39,7 @@ const DisplayIndex: React.FC = () => {
 
   return (
     <Switch>
-      <Route exact path="/project/:projectId/display/:displayId/slide/:slideId/preview" component={DisplayPreview} />
+      <Route exact path="/project/:projectId/display/:displayId/preview/slide/:slideId" component={DisplayPreview} />
       <Route exact path="/project/:projectId/display/:displayId/slide/:slideId" component={DisplayEditor} />
     </Switch>
   )

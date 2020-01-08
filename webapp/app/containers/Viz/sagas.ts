@@ -30,7 +30,7 @@ import produce from 'immer'
 import { push } from 'connected-react-router'
 import { Location } from 'history'
 import history from 'utils/history'
-import { matchDisplayPreviewPath, matchDisplaySlidePath } from 'utils/router'
+import { matchDisplayPath, matchDisplaySlidePath } from 'utils/router'
 import { ActionTypes } from './constants'
 import { VizActions, VizActionType } from './actions'
 
@@ -267,24 +267,33 @@ export function* getDisplaySlides(action: VizActionType) {
     })
     rest.config = JSON.parse(rest.config || '{}')
     yield put(VizActions.displaySlidesLoaded(rest, slides))
+
     const location: Location = yield select(makeSelectLocation())
+    const matchDisplay = matchDisplayPath(location.pathname)
     const matchDisplaySlide = matchDisplaySlidePath(location.pathname)
+
+    let previewSubPath: string = ''
+    if (matchDisplay) {
+      previewSubPath = matchDisplay.params[0]
+      previewSubPath = previewSubPath ? `/${previewSubPath}` : ''
+    }
+
     let nextSlideId: number = slides[0].id
+    let paramSlideId: number
     if (matchDisplaySlide) {
-      const paramSlideId = +matchDisplaySlide.params.slideId
-      const slideExists = ~(slides as ISlideFormed[]).findIndex(
-        ({ id }) => id === paramSlideId
-      )
-      if (slideExists) {
-        nextSlideId = paramSlideId
+      paramSlideId = +matchDisplaySlide.params.slideId
+      if (paramSlideId) {
+        const slideExists = ~(slides as ISlideFormed[]).findIndex(
+          ({ id }) => id === paramSlideId
+        )
+        if (slideExists) {
+          nextSlideId = paramSlideId
+        }
       }
     }
     const { id: projectId } = yield select(makeSelectCurrentProject())
-    const matchDisplayPreview = matchDisplayPreviewPath(location.pathname)
 
-    const nextPath = `/project/${projectId}/display/${displayId}/slide/${nextSlideId}${
-      matchDisplayPreview ? '/preview' : ''
-    }`
+    const nextPath = `/project/${projectId}/display/${displayId}${previewSubPath}/slide/${nextSlideId}`
     yield put(push(nextPath))
     yield put(VizActions.updateCurrentDisplay(rest))
   } catch (err) {
