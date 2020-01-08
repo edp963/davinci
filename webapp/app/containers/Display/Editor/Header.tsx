@@ -218,7 +218,7 @@ const Header: React.FC = () => {
   const history = useHistory()
   const preview = useCallback(() => {
     const location: LocationDescriptorObject = {
-      pathname: `/project/${projectId}/display/${currentDisplayId}/slide/${slideId}/preview`
+      pathname: `/project/${projectId}/display/${currentDisplayId}/preview/slide/${slideId}`
     }
 
     const link = document.createElement('a')

@@ -27,6 +27,7 @@ import styles from './Viz.less'
 import utilStyles from 'assets/less/util.less'
 
 import { RouteComponentWithParams } from 'utils/types'
+import OrganizationActions from '../Organizations/actions'
 
 interface IVizProps {
   currentProject: IProject
@@ -50,6 +51,7 @@ interface IVizProps {
     resolve: () => any,
     reject: (error: string) => any
   ) => any
+  onLoadProjectRoles: (projectId: number) => void
   onExcludeRoles: (type: string, id: number, resolve?: any) => any
 }
 
@@ -69,10 +71,11 @@ export class VizList extends React.Component<
   }
 
   public componentWillMount() {
-    const { match, onLoadDisplays, onLoadPortals } = this.props
+    const { match, onLoadDisplays, onLoadPortals, onLoadProjectRoles } = this.props
     const projectId = +match.params.projectId
     onLoadDisplays(projectId)
     onLoadPortals(projectId)
+    onLoadProjectRoles(projectId)
   }
 
   private goToPortal = (portalId: number) => () => {
@@ -89,9 +92,9 @@ export class VizList extends React.Component<
     } = this.props
     const projectId = match.params.projectId
     const isToPreview = vizPermission === 1
-    const path = isToPreview
-      ? `/project/${projectId}/display/preview/${displayId}`
-      : `/project/${projectId}/display/${displayId}`
+    const path = `/project/${projectId}/display/${displayId}${
+      isToPreview ? '/preview' : ''
+    }`
     this.props.history.push(path)
   }
 
@@ -233,6 +236,8 @@ export function mapDispatchToProps(dispatch) {
     onDeletePortal: (id) => dispatch(VizActions.deletePortal(id)),
     onCheckUniqueName: (pathname, data, resolve, reject) =>
       dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
+    onLoadProjectRoles: (projectId) =>
+      dispatch(OrganizationActions.loadProjectRoles(projectId)),
     onExcludeRoles: (type, id, resolve) =>
       dispatch(ProjectActions.excludeRoles(type, id, resolve))
   }
@@ -243,6 +248,4 @@ const withConnect = connect(
   mapDispatchToProps
 )
 
-export default compose(
-  withConnect
-)(VizList)
+export default compose(withConnect)(VizList)
