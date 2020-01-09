@@ -23,7 +23,7 @@ import { useSelector } from 'react-redux'
 
 import { makeSelectSlideLayerContextValue } from '../selectors'
 
-import { LayerContext } from '../components/Layer/util'
+import { LayerContext } from '../components/Layer'
 import { SlideContext } from '../components/Container'
 
 interface ISlideLayerProps {

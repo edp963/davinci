@@ -31,7 +31,7 @@ import { makeSelectFormedViews } from 'containers/View/selectors'
 import {
   LayerListContextValue,
   LayerListContext
-} from '../components/Layer/util'
+} from '../components/Layer'
 import Slide from './Slide'
 
 import { ViewActions } from 'containers/View/actions'

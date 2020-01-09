@@ -27,7 +27,7 @@ import { ContainerContext } from '../ContainerContext'
 
 import { DISPLAY_CONTAINER_PADDING } from './constants'
 import { LayerOperations } from '../../constants'
-import { DeltaPosition } from '../../Layer/types'
+import { DeltaPosition } from '../../Layer'
 
 type KeyDownKeys =
   | 'ArrowUp'

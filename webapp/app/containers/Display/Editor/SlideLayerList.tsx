@@ -30,8 +30,9 @@ import {
 
 import {
   LayerListContext,
-  LayerListContextValue
-} from '../components/Layer/util'
+  LayerListContextValue,
+  LayerItem
+} from '../components/Layer'
 
 import ViewActions from '../../View/actions'
 import DisplayActions from '../actions'
@@ -45,7 +46,6 @@ import {
 } from '../../Viz/selectors'
 
 import SlideLayer from './SlideLayer'
-import { LayerItem } from '../components/Layer'
 import { ContainerContext } from '../components/Container'
 import { makeSelectCurrentProject } from '../../Projects/selectors'
 import { DEFAULT_SPLITER } from 'app/globalConstants'
