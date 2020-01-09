@@ -34,7 +34,7 @@ interface IFilterPanelProps {
   mapOptions: IMapControlOptions
   onGetOptions: OnGetControlOptions
   onChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
-  onSearch: (itemIds: number[]) => void
+  onSearch: (itemIds: number[], controlRequestParamsByItem?: IMapItemControlRequestParams) => void
   isFullScreen?: boolean
 }
 
@@ -136,9 +136,6 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
       }, () => {
         if (isCurrentDashboardUpdated) {
           this.batchChange()
-          if (queryMode === GlobalControlQueryMode.Immediately) {
-            this.search()
-          }
         }
       })
     }
@@ -282,14 +279,14 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
       return acc
     }, {})
 
-    onChange(controlRequestParamsByItem)
-
     if (queryMode === GlobalControlQueryMode.Immediately && !isInputChange) {
-      this.search()
+      this.search(controlRequestParamsByItem)
+    } else {
+      onChange(controlRequestParamsByItem)
     }
   }
 
-  private search = () => {
+  private search = (controlRequestParamsByItem?: IMapItemControlRequestParams) => {
     const itemIds: number[] = Object.values(this.state.flatTree)
       .reduce((arr: number[], item) => {
         const { relatedItems } = item as IGlobalRenderTreeItem
@@ -299,10 +296,14 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
             .map(([itemId, info]) => Number(itemId))
         )
       }, [])
-    this.props.onSearch(Array.from(new Set(itemIds)))
+    this.props.onSearch(Array.from(new Set(itemIds)), controlRequestParamsByItem)
   }
 
-  private batchChange = () => {
+  private manualSearch = () => {
+    this.search()
+  }
+
+  private batchChange = (isReset?: boolean) => {
     const controlRequestParamsByItem = Object
       .entries(this.controlRequestParamsByItem)
       .reduce((paramsByItem, [itemId, expsByControl]) => {
@@ -319,7 +320,11 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
         return paramsByItem
       }, {})
 
-    this.props.onChange(controlRequestParamsByItem)
+    if (!isReset && this.state.queryMode === GlobalControlQueryMode.Immediately) {
+      this.search(controlRequestParamsByItem)
+    } else {
+      this.props.onChange(controlRequestParamsByItem)
+    }
   }
 
   private reset = () => {
@@ -334,7 +339,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
       this.setControlRequestParams(control as IGlobalRenderTreeItem, value, currentItems)
     })
 
-    this.batchChange()
+    this.batchChange(true)
   }
 
   private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: IGlobalControl[]) => {
@@ -365,7 +370,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
           : defaultFilterControlGridProps
       if (isFullScreen) {
         controlGridProps = fullScreenGlobalControlGridProps
-      }  
+      }
       components = components.concat(
         <Col
           key={key}
@@ -420,7 +425,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
         {
           queryMode === GlobalControlQueryMode.Manually && (
             <div className={actionClass}>
-              <Button type="primary" icon="search" onClick={this.search}>查询</Button>
+              <Button type="primary" icon="search" onClick={this.manualSearch}>查询</Button>
               <Button icon="reload" onClick={this.reset}>重置</Button>
             </div>
           )
