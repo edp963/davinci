@@ -67,7 +67,7 @@ const ColorPicker: RefForwardingComponent<
         <div className={cls}>
           <span
             className={styles.colorIndicator}
-            style={{ background: value }}
+            style={{ background: color }}
           />
         </div>
       )}
