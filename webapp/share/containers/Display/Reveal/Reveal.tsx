@@ -26,7 +26,6 @@ import { makeSelectDisplay, makeSelectSlidesCount } from '../selectors'
 
 import Reveal from 'reveal.js'
 import 'reveal.js/css/reveal.css'
-import 'reveal.js/css/theme/simple.css'
 
 import { DefaultDisplayParams } from 'containers/Display/constants'
 import Display from './Display'

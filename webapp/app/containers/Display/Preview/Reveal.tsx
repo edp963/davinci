@@ -25,7 +25,6 @@ import { makeSelectCurrentDisplay } from 'containers/Viz/selectors'
 
 import Reveal from 'reveal.js'
 import 'reveal.js/css/reveal.css'
-import 'reveal.js/css/theme/simple.css'
 
 import Display from './Display'
 import { DefaultDisplayParams } from '../components/Setting/constants'
