@@ -36,6 +36,7 @@ import edp.davinci.dto.cronJobDto.CronJobConfig;
 import edp.davinci.dto.cronJobDto.CronJobContent;
 import edp.davinci.dto.cronJobDto.ExcelContent;
 import edp.davinci.dto.cronJobDto.MsgMailExcel;
+import edp.davinci.dto.dashboardDto.DashboardTree;
 import edp.davinci.dto.dashboardDto.DashboardWithPortal;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
@@ -64,6 +65,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static edp.core.consts.Consts.AT_SYMBOL;
 import static edp.core.consts.Consts.EMPTY;
 import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
@@ -112,6 +114,11 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     private int resultLimit;
 
     private static final String PORTAL = "PORTAL";
+
+    private static final String DISPLAY = "display";
+
+    private static final String DASHBOARD = "dashboard";
+
 
     @Override
     public void execute(long jobId) throws Exception {
@@ -207,22 +214,35 @@ public class EmailScheduleServiceImpl implements ScheduleService {
      * @return
      * @throws Exception
      */
-    private List<ImageContent> generateImages(long jobId, CronJobConfig cronJobConfig, Long userId) throws Exception {
+    public List<ImageContent> generateImages(long jobId, CronJobConfig cronJobConfig, Long userId) throws Exception {
         scheduleLogger.info("CronJob (:{}) fetching images contents", jobId);
 
         List<ImageContent> imageContents = new ArrayList<>();
         Set<Long> dashboardIds = new HashSet<>();
         Set<Long> portalIds = new HashSet<>();
+
         List<CronJobContent> jobContentList = new ArrayList<>();
 
-        for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
-            if (cronJobContent.getContentType().equalsIgnoreCase("display")) {
+        Map<String, Integer> orderWidgetMap = new HashMap<>();
+        Map<String, Integer> orderMap = new HashMap<>();
+
+        for (int i = 0; i < cronJobConfig.getContentList().size(); i++) {
+            int orderWidget = i * 1000;
+            CronJobContent cronJobContent = cronJobConfig.getContentList().get(i);
+            if (cronJobContent.getContentType().equalsIgnoreCase(DISPLAY)) {
+                orderWidgetMap.put(DISPLAY + AT_SYMBOL + cronJobContent.getId(), orderWidget);
                 jobContentList.add(cronJobContent);
+                orderMap.put(DISPLAY + AT_SYMBOL + cronJobContent.getId(), orderWidget);
             } else {
+                orderWidgetMap.put(PORTAL + AT_SYMBOL + cronJobContent.getId(), orderWidget);
                 if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
                     portalIds.add(cronJobContent.getId());
                 } else {
-                    dashboardIds.addAll(cronJobContent.getItems());
+                    List<Long> items = cronJobContent.getItems();
+                    dashboardIds.addAll(items);
+                    for (int j = 0; j < items.size(); j++) {
+                        orderMap.put(DASHBOARD + AT_SYMBOL + items.get(j), orderWidget + j);
+                    }
                 }
             }
         }
@@ -230,7 +250,21 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         if (!CollectionUtils.isEmpty(portalIds)) {
             Set<Dashboard> dashboards = dashboardMapper.queryByPortals(portalIds);
             if (!CollectionUtils.isEmpty(dashboards)) {
-                dashboardIds.addAll(dashboards.stream().map(Dashboard::getId).collect(Collectors.toList()));
+                dashboardIds.addAll(dashboards.stream().filter(d -> d.getType() == (short) 1).map(Dashboard::getId).collect(Collectors.toList()));
+                Map<Long, List<Dashboard>> portalDashboardsMap = dashboards.stream().collect(Collectors.groupingBy(Dashboard::getDashboardPortalId));
+                portalDashboardsMap.forEach((pId, ds) -> {
+                    DashboardTree tree = new DashboardTree(pId, 0);
+                    buildDashboardTree(tree, dashboards);
+                    List<DashboardTree> list = tree.traversalLeaf();
+                    if (!CollectionUtils.isEmpty(list)) {
+                        for (int i = 0; i < list.size(); i++) {
+                            DashboardTree node = list.get(i);
+                            if (!orderMap.containsKey(DASHBOARD + AT_SYMBOL + node.getId())) {
+                                orderMap.put(DASHBOARD + AT_SYMBOL + node.getId(), i + orderWidgetMap.get(PORTAL + AT_SYMBOL + pId));
+                            }
+                        }
+                    }
+                });
             }
         }
 
@@ -238,7 +272,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             Set<Dashboard> dashboards = dashboardMapper.queryDashboardsByIds(dashboardIds);
             for (Dashboard dashboard : dashboards) {
                 if (dashboard != null && dashboard.getType() == 1) {
-                    jobContentList.add(new CronJobContent(("dashboard"), dashboard.getId()));
+                    jobContentList.add(new CronJobContent(DASHBOARD, dashboard.getId()));
                 }
             }
         }
@@ -248,11 +282,15 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             return null;
         }
 
-        int order = 0;
         for (CronJobContent cronJobContent : jobContentList) {
             String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId());
+            int order = 0;
+            if (cronJobContent.getContentType().equalsIgnoreCase(DISPLAY)) {
+                order = orderMap.get(DISPLAY + AT_SYMBOL + cronJobContent.getId());
+            } else {
+                order = orderMap.get(DASHBOARD + AT_SYMBOL + cronJobContent.getId());
+            }
             imageContents.add(new ImageContent(order, cronJobContent.getId(), cronJobContent.getContentType(), url));
-            order++;
         }
 
         if (!CollectionUtils.isEmpty(imageContents)) {
@@ -260,6 +298,53 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         }
         scheduleLogger.info("CronJob (:{}) fetched images contents, count: {}", jobId, imageContents.size());
         return imageContents;
+    }
+
+    private void buildDashboardTree(DashboardTree root, Set<Dashboard> dashboards) {
+        if (CollectionUtils.isEmpty(dashboards)) {
+            return;
+        }
+        Map<Long, Set<Dashboard>> dashboardsMap = new HashMap<>();
+        List<DashboardTree> rootChilds = new ArrayList<>();
+        for (Dashboard dashboard : dashboards) {
+            if (dashboard.getParentId() > 0L) {
+                Set<Dashboard> set;
+                if (dashboardsMap.containsKey(dashboard.getParentId())) {
+                    set = dashboardsMap.get(dashboard.getParentId());
+                } else {
+                    set = new HashSet<>();
+                }
+                set.add(dashboard);
+                dashboardsMap.put(dashboard.getParentId(), set);
+            } else {
+                rootChilds.add(new DashboardTree(dashboard.getId(), dashboard.getIndex()));
+            }
+        }
+
+        rootChilds.sort(Comparator.comparing(DashboardTree::getIndex));
+        root.setChilds(rootChilds);
+
+        for (DashboardTree child : rootChilds) {
+            child.setChilds(getChilds(dashboardsMap, child));
+        }
+    }
+
+    private List<DashboardTree> getChilds(Map<Long, Set<Dashboard>> dashboardsMap, DashboardTree node) {
+        if (CollectionUtils.isEmpty(dashboardsMap)) {
+            return null;
+        }
+        Set<Dashboard> childs = dashboardsMap.get(node.getId());
+        if (CollectionUtils.isEmpty(childs)) {
+            return null;
+        }
+        List<DashboardTree> list = new ArrayList<>();
+        for (Dashboard dashboard : childs) {
+            DashboardTree treeNode = new DashboardTree(dashboard.getId(), dashboard.getIndex());
+            treeNode.setChilds(getChilds(dashboardsMap, treeNode));
+            list.add(treeNode);
+        }
+        list.sort(Comparator.comparing(DashboardTree::getIndex));
+        return list;
     }
 
     private String getContentUrl(Long userId, String contentType, Long contengId) {
@@ -357,7 +442,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         if (!CollectionUtils.isEmpty(portalIds)) {
             Set<Dashboard> dashboards = dashboardMapper.queryByPortals(portalIds);
             if (!CollectionUtils.isEmpty(dashboards)) {
-                dashboardIds.addAll(dashboards.stream().map(Dashboard::getId).collect(Collectors.toList()));
+                dashboardIds.addAll(dashboards.stream().filter(d -> d.getType() == (short) 1).map(Dashboard::getId).collect(Collectors.toList()));
             }
         }
 
