@@ -104,11 +104,12 @@ export class Organization extends React.PureComponent <IOrganizationProps & Rout
       currentOrganizationMembers,
       inviteMemberList,
       starUserList,
+      match: { params: { organizationId } },
       currentOrganizationProjectsDetail
     } = this.props
 
     if (!currentOrganization) { return null }
-    const { id: organizationId, avatar, name, memberNum, roleNum} = currentOrganization as IOrganization
+    const { avatar, name, memberNum, roleNum} = currentOrganization as IOrganization
     const projectNum = currentOrganizationProjects && currentOrganizationProjects.length ? currentOrganizationProjects.length : 0
     const memeberOfLoginUser = currentOrganizationMembers && currentOrganizationMembers.find((m) => m.user.id === loginUser.id)
     const isLoginUserOwner = !!memeberOfLoginUser && memeberOfLoginUser.user.role === 1
@@ -145,7 +146,7 @@ export class Organization extends React.PureComponent <IOrganizationProps & Rout
               <MemberList
                 loginUser={loginUser}
                 toThatUserProfile={this.toThatTeam}
-                organizationId={organizationId}
+                organizationId={+organizationId}
                 loadOrganizationsMembers={this.props.onLoadOrganizationMembers}
                 organizationMembers={currentOrganizationMembers}
                 currentOrganization={currentOrganization}
