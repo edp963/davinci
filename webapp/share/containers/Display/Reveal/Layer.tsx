@@ -21,10 +21,9 @@
 import React, { useContext, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 
-import { LayerContext } from 'containers/Display/components/Layer/util'
+import { LayerContext, LayerSimple } from 'containers/Display/components/Layer'
 import { SlideContext } from 'containers/Display/components/Container'
 import { makeSelectSlideLayerContextValue } from '../selectors'
-import LayerSimple from 'containers/Display/components/Layer/LayerSimple'
 
 interface ILayerProps {
   id: number

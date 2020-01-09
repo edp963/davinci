@@ -18,5 +18,5 @@
  * >>
  */
 
-import { SelectionInfo } from 'containers/Display/components/Layer/types'
+import { SelectionInfo } from '../'
 export type LayerSelectionInfo = { [layerId: number]: SelectionInfo }

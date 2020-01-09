@@ -18,9 +18,9 @@
  * >>
  */
 
-import { call, fork, put, takeLatest } from 'redux-saga/effects'
+import { call, put, all, takeLatest } from 'redux-saga/effects'
 
-import { LOGIN, GET_LOGIN_USER } from './constants'
+import { LOGIN } from './constants'
 import { logged } from './actions'
 
 import request from 'utils/request'
@@ -45,8 +45,8 @@ export function* login (action) {
   }
 }
 
-export default function* rootAppSaga (): IterableIterator<any> {
-  yield [
+export default function* rootAppSaga () {
+  yield all([
     takeLatest(LOGIN, login)
-  ]
+  ])
 }

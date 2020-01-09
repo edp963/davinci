@@ -1,5 +1,6 @@
-import React, { ReactNode, SyntheticEvent } from 'react'
-import Resizable, { ResizableProps, ResizeCallbackData } from './Resizable'
+import React, { SyntheticEvent } from 'react'
+import Resizable from './Resizable'
+import { ResizableProps, ResizeCallbackData } from './types'
 
 type ResizableBoxState = {
   width: number

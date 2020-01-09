@@ -92,7 +92,7 @@ const LayerBox: React.FC = (props) => {
   const selectionChange = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       e.stopPropagation()
-      if (!onSelectionChange || e.target.nodeName.toLowerCase() === 'span') {
+      if (!onSelectionChange || (e.target as HTMLDivElement).nodeName.toLowerCase() === 'span') {
         return
       }
 

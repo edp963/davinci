@@ -20,7 +20,7 @@
 
 import { ILayerFormed } from "../../types"
 import { ISlideParams } from "containers/Viz/types"
-import { DeltaPosition, DeltaSize } from 'containers/Display/components/Layer/types'
+import { DeltaPosition, DeltaSize } from 'containers/Display/components/Layer'
 import { IBaseline } from './types'
 
 import { DEFAULT_BASELINE_DIVISIONS, DEFAULT_BASELINE_THICKNESS } from './constants'

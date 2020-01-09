@@ -27,7 +27,7 @@ import { getRequestParamsByWidgetConfig } from 'containers/Viz/util'
 import {
   LayerListContext,
   LayerListContextValue
-} from 'app/containers/Display/components/Layer/util'
+} from 'containers/Display/components/Layer'
 
 import Slide from './Slide'
 import ShareDisplayActions from '../actions'

@@ -312,7 +312,7 @@ const mapDispatchToProps = (dispatch) => ({
     dispatch(
       VizActions.loadPortalDashboards(portalId, (dashboards) => {
         dispatch(ScheduleActions.portalDashboardsLoaded(portalId, dashboards))
-      })
+      }, false)
     ),
   onLoadScheduleDetail: (scheduleId) =>
     dispatch(ScheduleActions.loadScheduleDetail(scheduleId)),
