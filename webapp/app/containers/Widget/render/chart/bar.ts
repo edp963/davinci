@@ -36,7 +36,7 @@ import {
   getLegendOption,
   getGridPositions,
   makeGrouped,
-  distinctXaxis,
+  getGroupedXaxis,
   getCartesianChartMetrics
 } from './util'
 import { getStackName, EmptyStack } from 'containers/Widget/components/Config/Stack'
@@ -44,7 +44,7 @@ const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 import { barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
-import { colorSort } from '../../components/Config/Sort/util'
+import { inGroupColorSort } from '../../components/Config/Sort/util'
 import { FieldSortTypes } from '../../components/Config/Sort'
 
 export default function (chartProps: IChartProps, drillOptions) {
@@ -107,11 +107,12 @@ export default function (chartProps: IChartProps, drillOptions) {
 
   const xAxisColumnName = cols.length ? cols[0].name : ''
 
-  let xAxisData = data.map((d) => d[xAxisColumnName] || '')
+  let xAxisData = []
   let grouped = {}
   let percentGrouped = {}
+
   if (color.items.length) {
-    xAxisData = distinctXaxis(data, xAxisColumnName)
+    xAxisData = getGroupedXaxis(data, xAxisColumnName, metrics)
     grouped = makeGrouped(
       data,
       color.items.map((c) => c.name),
@@ -132,6 +133,8 @@ export default function (chartProps: IChartProps, drillOptions) {
       metrics,
       configKeys
     )
+  } else {
+    xAxisData = data.map((d) => d[xAxisColumnName] || '')
   }
 
   const series = []
@@ -152,7 +155,7 @@ export default function (chartProps: IChartProps, drillOptions) {
         .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
         .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
       if (customColorSort.length) {
-        colorSort(groupEntries, customColorSort[0])
+        inGroupColorSort(groupEntries, customColorSort[0])
       }
 
       groupEntries.forEach(([k, v]: [string, any[]]) => {
