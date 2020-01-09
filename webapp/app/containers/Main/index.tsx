@@ -27,12 +27,7 @@ import { createStructuredSelector } from 'reselect'
 
 import Navigator from 'components/Navigator'
 
-import {
-  logged,
-  logout,
-  getLoginUser,
-  loadDownloadList
-} from '../App/actions'
+import { logged, logout, getLoginUser, loadDownloadList } from '../App/actions'
 import { makeSelectLogged, makeSelectNavigator } from '../App/selectors'
 import { DOWNLOAD_LIST_POLLING_FREQUENCY } from 'app/globalConstants'
 
@@ -121,10 +116,10 @@ export class Main extends React.Component<
         <Navigator show={navigator} onLogout={this.logout} />
         <Switch>
           <Route path="/project(s?)">
-            <Project>
-              <Switch>
-                <Route path="/projects" exact component={ProjectList} />
-                <Route path="/project/:projectId">
+            <Switch>
+              <Route path="/projects" exact component={ProjectList} />
+              <Route path="/project/:projectId">
+                <Project>
                   <Switch>
                     <Route
                       path="/project/:projectId/portal/:portalId"
@@ -180,9 +175,9 @@ export class Main extends React.Component<
                       </Switch>
                     </Sidebar>
                   </Switch>
-                </Route>
-              </Switch>
-            </Project>
+                </Project>
+              </Route>
+            </Switch>
           </Route>
           <Route path="/account" render={this.renderAccount} />
           <Route path="/noAuthorization" component={NoAuthorization} />
