@@ -27,9 +27,8 @@ import {
   takeEvery
 } from 'redux-saga/effects'
 import produce from 'immer'
-import { push } from 'connected-react-router'
+import { push, replace } from 'connected-react-router'
 import { Location } from 'history'
-import history from 'utils/history'
 import { matchDisplayPath, matchDisplaySlidePath } from 'utils/router'
 import { ActionTypes } from './constants'
 import { VizActions, VizActionType } from './actions'
@@ -294,7 +293,7 @@ export function* getDisplaySlides(action: VizActionType) {
     const { id: projectId } = yield select(makeSelectCurrentProject())
 
     const nextPath = `/project/${projectId}/display/${displayId}${previewSubPath}/slide/${nextSlideId}`
-    yield put(push(nextPath))
+    yield put(replace(nextPath))
     yield put(VizActions.updateCurrentDisplay(rest))
   } catch (err) {
     yield put(VizActions.loadDisplaySlidesFail(displayId))
@@ -428,9 +427,10 @@ export function* addSlide(action: VizActionType) {
     slideReponse.config = JSON.parse(slideReponse.config)
     yield put(VizActions.slideAdded(slideReponse, insertSlideIdx, afterSlides))
     const { id: projectId } = yield select(makeSelectCurrentProject())
-    history.push(
-      `/project/${projectId}/display/${displayId}/slide/${slideReponse.id}`
-    )
+    const nextPath = `/project/${projectId}/display/${displayId}/slide/${
+      slideReponse.id
+    }`
+    yield put(push(nextPath))
   } catch (err) {
     yield put(VizActions.addSlideFail())
     errorHandler(err)
@@ -514,7 +514,7 @@ export function* deleteSlides(action: VizActionType) {
       }
     }
     yield put(
-      push(`/project/${projectId}/display/${displayId}/slide/${nextSlideId}`)
+      replace(`/project/${projectId}/display/${displayId}/slide/${nextSlideId}`)
     )
     yield put(VizActions.slidesDeleted(displayId, slideIds))
   } catch (err) {
