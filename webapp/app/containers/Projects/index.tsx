@@ -57,7 +57,7 @@ const Project: React.FC<any> = (props) => {
   useEffect(() => {
     // clear currentProject for not in router /project/:projectId when this project index component unmounted
     return () => {
-      dispatch(ProjectActions.killProjectDetail())
+      dispatch(ProjectActions.clearCurrentProject())
     }
   }, [])
 
