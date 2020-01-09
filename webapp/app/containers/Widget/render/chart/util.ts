@@ -31,6 +31,7 @@ import {
   getTextWidth,
   getAggregatorLocale
 } from '../../components/util'
+import { FieldSortTypes } from '../../components/Config/Sort'
 
 interface ISplitLineConfig {
   showLine: boolean
@@ -434,14 +435,19 @@ function getGridBase (pos, chartName, dimetionAxisConfig?: IAxisConfig, xAxisDat
   }
 }
 
-export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData) {
+export function makeGrouped (
+  data: object[],
+  groupColumns: string[],
+  xAxisColumn: string,
+  metrics: IWidgetMetric[],
+  xAxisData: string[]
+) {
   const grouped = {}
-  const colKeySet = new Set()
 
   data.forEach((d) => {
     const groupingKey = groupColumns.map((col) => d[col]).join(' ')
     const colKey = d[xAxisColumn] || 'default'
-    colKeySet.add(colKey)
+
     if (!grouped[groupingKey]) {
       grouped[groupingKey] = {}
     }
@@ -451,8 +457,7 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
     grouped[groupingKey][colKey].push(d)
   })
 
-  const colKeys = Array.from(colKeySet)
-  Object.keys(grouped).map((groupingKey) => {
+  Object.keys(grouped).forEach((groupingKey) => {
     const currentGroupValues = grouped[groupingKey]
 
     grouped[groupingKey] = xAxisData.length
@@ -472,15 +477,40 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
   return grouped
 }
 
-export function distinctXaxis (data, xAxisColumn) {
-  return xAxisColumn
-    ? Object.keys(data.reduce((distinct, ds) => {
-      if (!distinct[ds[xAxisColumn]]) {
-        distinct[ds[xAxisColumn]] = true
+// TODO: function explanation
+export function getGroupedXaxis (data, xAxisColumn, metrics) {
+  if (xAxisColumn) {
+    const metricsInSorting = metrics
+      .filter(({ sort }) => sort && sort.sortType !== FieldSortTypes.Default)
+    const appliedMetric = metricsInSorting.length ? metricsInSorting[0] : void 0
+
+    const dataGroupByXaxis = data.reduce((grouped, d) => {
+      const colKey = d[xAxisColumn]
+      if (grouped[colKey] === void 0) {
+        grouped[colKey] = 0
       }
-      return distinct
-    }, {}))
-    : []
+      if (appliedMetric) {
+        const { agg, name } = appliedMetric
+        grouped[colKey] += d[`${agg}(${decodeMetricName(name)})`]
+      }
+      return grouped
+    }, {})
+
+    if (appliedMetric) {
+      return Object.entries(dataGroupByXaxis)
+        .sort((p1: [string, number], p2: [string, number]) => {
+          return appliedMetric.sort.sortType === FieldSortTypes.Asc
+            ? p1[1] - p2[1]
+            : appliedMetric.sort.sortType === FieldSortTypes.Desc
+              ? p2[1] - p1[1]
+              : 0
+        })
+        .map(([key, value]) => key)
+    } else {
+      return Object.keys(dataGroupByXaxis)
+    }
+  }
+  return []
 }
 
 export function getSymbolSize (sizeRate, size) {
