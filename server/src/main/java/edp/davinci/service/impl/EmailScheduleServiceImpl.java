@@ -127,7 +127,6 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             scheduleLogger.info("CronJob (:{}) config ie empty!", jobId);
             return;
         }
-        scheduleLogger.info("CronJob (:{}) is started! ----------------", jobId);
         CronJobConfig cronJobConfig = null;
         try {
             cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
@@ -218,8 +217,10 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         scheduleLogger.info("CronJob (:{}) fetching images contents", jobId);
 
         List<ImageContent> imageContents = new ArrayList<>();
+
         Set<Long> dashboardIds = new HashSet<>();
-        Set<Long> portalIds = new HashSet<>();
+        Set<Long> checkedPortalIds = new HashSet<>();
+        Set<Long> refPortalIds = new HashSet<>();
 
         List<CronJobContent> jobContentList = new ArrayList<>();
 
@@ -236,45 +237,54 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             } else {
                 orderWidgetMap.put(PORTAL + AT_SYMBOL + cronJobContent.getId(), orderWidget);
                 if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
-                    portalIds.add(cronJobContent.getId());
+                    checkedPortalIds.add(cronJobContent.getId());
                 } else {
                     List<Long> items = cronJobContent.getItems();
                     dashboardIds.addAll(items);
-                    for (int j = 0; j < items.size(); j++) {
-                        orderMap.put(DASHBOARD + AT_SYMBOL + items.get(j), orderWidget + j);
-                    }
                 }
             }
         }
 
-        if (!CollectionUtils.isEmpty(portalIds)) {
-            Set<Dashboard> dashboards = dashboardMapper.queryByPortals(portalIds);
-            if (!CollectionUtils.isEmpty(dashboards)) {
-                dashboardIds.addAll(dashboards.stream().filter(d -> d.getType() == (short) 1).map(Dashboard::getId).collect(Collectors.toList()));
-                Map<Long, List<Dashboard>> portalDashboardsMap = dashboards.stream().collect(Collectors.groupingBy(Dashboard::getDashboardPortalId));
-                portalDashboardsMap.forEach((pId, ds) -> {
-                    DashboardTree tree = new DashboardTree(pId, 0);
-                    buildDashboardTree(tree, dashboards);
-                    List<DashboardTree> list = tree.traversalLeaf();
-                    if (!CollectionUtils.isEmpty(list)) {
-                        for (int i = 0; i < list.size(); i++) {
-                            DashboardTree node = list.get(i);
-                            if (!orderMap.containsKey(DASHBOARD + AT_SYMBOL + node.getId())) {
-                                orderMap.put(DASHBOARD + AT_SYMBOL + node.getId(), i + orderWidgetMap.get(PORTAL + AT_SYMBOL + pId));
-                            }
-                        }
-                    }
-                });
+        Set<Dashboard> dashboards = new HashSet<>();
+        if (!CollectionUtils.isEmpty(dashboardIds)) {
+            Set<Dashboard> checkDashboards = dashboardMapper.queryDashboardsByIds(dashboardIds);
+            if (!CollectionUtils.isEmpty(checkDashboards)) {
+                dashboards.addAll(checkDashboards);
             }
         }
 
-        if (!CollectionUtils.isEmpty(dashboardIds)) {
-            Set<Dashboard> dashboards = dashboardMapper.queryDashboardsByIds(dashboardIds);
+        if (!CollectionUtils.isEmpty(checkedPortalIds)) {
+            Set<Dashboard> checkoutPortalDashboards = dashboardMapper.queryByPortals(checkedPortalIds);
+            if (!CollectionUtils.isEmpty(checkoutPortalDashboards)) {
+                dashboards.addAll(checkoutPortalDashboards);
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(dashboards)) {
             for (Dashboard dashboard : dashboards) {
                 if (dashboard != null && dashboard.getType() == 1) {
                     jobContentList.add(new CronJobContent(DASHBOARD, dashboard.getId()));
+                    refPortalIds.add(dashboard.getDashboardPortalId());
                 }
             }
+        }
+
+        if (!CollectionUtils.isEmpty(refPortalIds)) {
+            Set<Dashboard> refPortalAllDashboards = dashboardMapper.queryByPortals(refPortalIds);
+            Map<Long, List<Dashboard>> portalDashboardsMap = refPortalAllDashboards.stream().collect(Collectors.groupingBy(Dashboard::getDashboardPortalId));
+            portalDashboardsMap.forEach((pId, ds) -> {
+                DashboardTree tree = new DashboardTree(pId, 0);
+                buildDashboardTree(tree, ds);
+                List<DashboardTree> list = tree.traversalLeaf();
+                if (!CollectionUtils.isEmpty(list)) {
+                    for (int i = 0; i < list.size(); i++) {
+                        DashboardTree node = list.get(i);
+                        if (!orderMap.containsKey(DASHBOARD + AT_SYMBOL + node.getId())) {
+                            orderMap.put(DASHBOARD + AT_SYMBOL + node.getId(), i + orderWidgetMap.get(PORTAL + AT_SYMBOL + pId));
+                        }
+                    }
+                }
+            });
         }
 
         if (CollectionUtils.isEmpty(jobContentList)) {
@@ -300,14 +310,14 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         return imageContents;
     }
 
-    private void buildDashboardTree(DashboardTree root, Set<Dashboard> dashboards) {
+    private void buildDashboardTree(DashboardTree root, List<Dashboard> dashboards) {
         if (CollectionUtils.isEmpty(dashboards)) {
             return;
         }
         Map<Long, Set<Dashboard>> dashboardsMap = new HashMap<>();
         List<DashboardTree> rootChilds = new ArrayList<>();
         for (Dashboard dashboard : dashboards) {
-            if (dashboard.getParentId() > 0L) {
+            if (dashboard.getParentId() > 0L && !dashboard.getParentId().equals(dashboard.getId())) {
                 Set<Dashboard> set;
                 if (dashboardsMap.containsKey(dashboard.getParentId())) {
                     set = dashboardsMap.get(dashboard.getParentId());
@@ -451,7 +461,9 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             mailContentDashboardIds = new ArrayList<>();
             Set<Dashboard> dashboards = dashboardMapper.queryDashboardsByIds(dashboardIds);
             for (Dashboard dashboard : dashboards) {
-                mailContentDashboardIds.add(dashboard.getId());
+                if (dashboard != null && dashboard.getType() == (short) 1) {
+                    mailContentDashboardIds.add(dashboard.getId());
+                }
             }
         }
 
