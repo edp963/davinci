@@ -94,7 +94,7 @@ const projectReducer = (
         draft.currentProject = action.payload.project
         break
 
-      case ActionTypes.KILL_PROJECT_DETAIL:
+      case ActionTypes.CLEAR_CURRENT_PROJECT:
         draft.currentProject = null
         break
 

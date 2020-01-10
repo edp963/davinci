@@ -48,17 +48,20 @@ const Project: React.FC<any> = (props) => {
       strict: false
     })
 
-    if (match) {
-      const projectId = +match.params.projectId
-      if (projectId && (!currentProject || +currentProject.id !== projectId)) {
-        dispatch(ProjectActions.loadProjectDetail(projectId))
-      }
-      return
+    const projectId = +match.params.projectId
+    if (projectId && (!currentProject || +currentProject.id !== projectId)) {
+      dispatch(ProjectActions.loadProjectDetail(projectId))
     }
-    dispatch(ProjectActions.killProjectDetail())
   }, [pathname, currentProject])
 
-  return <>{props.children}</>
+  useEffect(() => {
+    // clear currentProject for not in router /project/:projectId when this project index component unmounted
+    return () => {
+      dispatch(ProjectActions.clearCurrentProject())
+    }
+  }, [])
+
+  return <>{currentProject && props.children}</>
 }
 
 export default Project
