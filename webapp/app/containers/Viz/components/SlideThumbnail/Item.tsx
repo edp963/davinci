@@ -63,13 +63,13 @@ const SlideThumbnail: React.FC<ISlideThumbnailProps> = (props) => {
 
   if (height / width <= ThumbnailRatio) {
     // landscape
-    slideStyle.paddingBottom = `${(height / width) * 100}%`
     slideStyle.top = `${((1 - (1 / ThumbnailRatio) * (height / width)) / 2) * 100}%`
+    slideStyle.bottom = slideStyle.top
     slideStyle.width = '100%'
   } else {
     // portrait
-    slideStyle.paddingRight = `${(height / width) * 100}%`
     slideStyle.left = `${((1 - ThumbnailRatio * (width / height)) / 2) * 100}%`
+    slideStyle.right = slideStyle.left
     slideStyle.height = '100%'
   }
 

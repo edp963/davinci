@@ -259,7 +259,9 @@ const displayReducer = (
       case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE:
         if (action.payload.vizType === 'display') {
           ;[slideId, layerId] = action.payload.itemId as [number, number]
-          draft.slideLayersInfo[slideId][layerId].loading = false
+          if (draft.slideLayersInfo[slideId]) {
+            draft.slideLayersInfo[slideId][layerId].loading = false
+          }
         }
         break
 
