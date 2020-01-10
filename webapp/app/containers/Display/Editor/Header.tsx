@@ -138,9 +138,7 @@ const Header: React.FC = () => {
           dispatch(VizActions.addSlide())
           break
         case GraphTypes.Chart:
-          if (!widgets.length) {
-            dispatch(WidgetActions.loadWidgets(projectId))
-          }
+          dispatch(WidgetActions.loadWidgets(projectId))
           setWidgetSelectModalVisible(true)
           break
         case GraphTypes.Secondary:
