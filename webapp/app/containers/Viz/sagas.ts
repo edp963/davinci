@@ -529,7 +529,7 @@ export default function* rootVizSaga(): IterableIterator<any> {
     takeEvery(ActionTypes.ADD_PORTAL, addPortal),
     takeEvery(ActionTypes.EDIT_PORTAL, editPortal),
     takeEvery(ActionTypes.DELETE_PORTAL, deletePortal),
-    takeLatest(ActionTypes.LOAD_PORTAL_DASHBOARDS, getPortalDashboards),
+    takeEvery(ActionTypes.LOAD_PORTAL_DASHBOARDS, getPortalDashboards),
 
     takeLatest(ActionTypes.LOAD_DISPLAYS, getDisplays),
     takeEvery(ActionTypes.ADD_DISPLAY, addDisplay),
