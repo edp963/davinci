@@ -13,7 +13,7 @@ import ModulePermission from 'containers/Account/components/checkModulePermissio
 import { IProject } from 'containers/Projects/types'
 import { IExludeRoles } from 'containers/Viz/components/PortalList'
 import { IProjectRoles } from 'containers/Organizations/component/ProjectRole'
-import { IDisplayFormed } from './types'
+import { IDisplayFormed, IDisplayRaw } from './types'
 
 export interface IDisplayEvent {
   onDisplayClick: (displayId: number) => () => void
@@ -25,7 +25,7 @@ export interface IDisplayEvent {
 
 interface IDisplayListProps extends IDisplayEvent {
   projectId: number
-  displays: IDisplayFormed[],
+  displays: IDisplayRaw[],
   currentProject?: IProject
   projectRoles: IProjectRoles[]
   onCheckName: (type, data, resolve, reject) => void
@@ -96,10 +96,10 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     })
   }
 
-  private showDisplayFormModal = (formType: 'edit' | 'add', display?: IDisplayFormed) => (e: React.MouseEvent<HTMLDivElement>) => {
+  private showDisplayFormModal = (formType: 'edit' | 'add', display?: IDisplayRaw) => (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation()
     this.setState({
-      editingDisplay: display,
+      editingDisplay: { ...display, config: JSON.parse(display.config || '{}')},
       formType,
       formVisible: true
     })
@@ -165,7 +165,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     )
   }
 
-  private renderDisplay (display: IDisplayFormed) {
+  private renderDisplay (display: IDisplayRaw) {
     const coverStyle: React.CSSProperties = {
       backgroundImage: `url(${display.avatar})`
     }

@@ -21,7 +21,7 @@ import PortalList from './components/PortalList'
 import DisplayList from './components/DisplayList'
 
 import { IProject } from '../Projects/types'
-import { IPortal, IDisplayFormed } from './types'
+import { IPortal, IDisplayRaw, IDisplayFormed } from './types'
 
 import styles from './Viz.less'
 import utilStyles from 'assets/less/util.less'
@@ -32,7 +32,7 @@ import OrganizationActions from '../Organizations/actions'
 interface IVizProps {
   currentProject: IProject
 
-  displays: IDisplayFormed[]
+  displays: IDisplayRaw[]
   portals: IPortal[]
 
   onLoadDisplays: (projectId: number) => void

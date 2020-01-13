@@ -37,7 +37,7 @@ interface IDisplayFormModalProps {
   loading: boolean
   type: 'add' | 'edit'
   onCheckName: (type, data, resolve, reject) => void
-  onSave: (display, type: string) => void
+  onSave: (display: IDisplayFormed, type: string) => void
   onCancel: () => void
   exludeRoles?: IExludeRoles[]
   onChangePermission: (scope: object, e: any) => any
@@ -84,10 +84,10 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
   }
 
   private onModalOk = () => {
-    const { type, projectId, onSave } = this.props
+    const { type, display, projectId, onSave } = this.props
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        onSave({ ...values, projectId }, type)
+        onSave({ ...display, ...values, projectId }, type)
       }
     })
   }
@@ -102,8 +102,9 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
     const { getFieldDecorator } = form
     const authControl = exludeRoles && exludeRoles.length ? exludeRoles.map((role) => (
       <div className={styles.excludeList} key={`${role.name}key`}>
-        <Checkbox checked={role.permission} onChange={this.props.onChangePermission.bind(this, role)}/>
-        <b>{role.name}</b>
+        <Checkbox checked={role.permission} onChange={this.props.onChangePermission.bind(this, role)}>
+          {role.name}
+        </Checkbox>
       </div>
     )) : []
     const modalButtons = [(

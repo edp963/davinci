@@ -20,6 +20,7 @@
 
 import {
   IPortal,
+  IDisplayRaw,
   IDisplayParams,
   IDisplayFormed,
   IDashboard,
@@ -49,7 +50,7 @@ interface IVizState {
   currentPortalId: number
   currentDisplay: IDisplayFormed
   currentSlide: ISlideFormed
-  displays: IDisplayFormed[]
+  displays: IDisplayRaw[]
   loading: {
     portal: boolean
     display: boolean
@@ -61,6 +62,7 @@ interface IVizState {
 
 export {
   IPortal,
+  IDisplayRaw,
   IDisplayParams,
   IDisplayFormed,
   IDashboard,

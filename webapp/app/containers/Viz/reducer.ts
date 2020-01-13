@@ -189,9 +189,15 @@ const vizReducer = (
         draft.displays.splice(
           draft.displays.findIndex(({ id }) => id === action.payload.result.id),
           1,
-          action.payload.result
+          {
+            ...action.payload.result,
+            config: JSON.stringify(action.payload.result.config)
+          }
         )
-        if (action.payload.result.id === draft.currentDisplay.id) {
+        if (
+          draft.currentDisplay &&
+          action.payload.result.id === draft.currentDisplay.id
+        ) {
           draft.currentDisplay = action.payload.result
         }
         draft.loading.editing = false
@@ -202,7 +208,10 @@ const vizReducer = (
             ({ id }) => id === action.payload.fromDisplayId
           ),
           0,
-          action.payload.display
+          {
+            ...action.payload.display,
+            config: JSON.stringify(action.payload.display.config)
+          }
         )
         break
 

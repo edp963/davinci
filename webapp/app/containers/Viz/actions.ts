@@ -23,6 +23,7 @@ import { returnType } from 'utils/redux'
 import {
   IPortal,
   IDashboardNode,
+  IDisplayRaw,
   IDisplayFormed,
   ISlideFormed,
   ISlideParams
@@ -159,7 +160,7 @@ export const VizActions = {
       }
     }
   },
-  displaysLoaded(displays) {
+  displaysLoaded(displays: IDisplayRaw[]) {
     return {
       type: ActionTypes.LOAD_DISPLAYS_SUCCESS,
       payload: {
