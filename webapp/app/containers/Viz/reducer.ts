@@ -191,7 +191,10 @@ const vizReducer = (
           1,
           action.payload.result
         )
-        if (action.payload.result.id === draft.currentDisplay.id) {
+        if (
+          draft.currentDisplay &&
+          action.payload.result.id === draft.currentDisplay.id
+        ) {
           draft.currentDisplay = action.payload.result
         }
         draft.loading.editing = false

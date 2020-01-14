@@ -13,19 +13,19 @@ import ModulePermission from 'containers/Account/components/checkModulePermissio
 import { IProject } from 'containers/Projects/types'
 import { IExludeRoles } from 'containers/Viz/components/PortalList'
 import { IProjectRoles } from 'containers/Organizations/component/ProjectRole'
-import { IDisplayFormed } from './types'
+import { Display } from './types'
 
 export interface IDisplayEvent {
   onDisplayClick: (displayId: number) => () => void
-  onAdd: (display: IDisplayFormed, resolve: () => void) => void
-  onEdit: (display: IDisplayFormed, resolve: () => void) => void
-  onCopy: (display: IDisplayFormed) => void
+  onAdd: (display: Display, resolve: () => void) => void
+  onEdit: (display: Display, resolve: () => void) => void
+  onCopy: (display: Display) => void
   onDelete: (displayId: number) => void
 }
 
 interface IDisplayListProps extends IDisplayEvent {
   projectId: number
-  displays: IDisplayFormed[],
+  displays: Display[],
   currentProject?: IProject
   projectRoles: IProjectRoles[]
   onCheckName: (type, data, resolve, reject) => void
@@ -33,7 +33,7 @@ interface IDisplayListProps extends IDisplayEvent {
 }
 
 interface IDisplayListStates {
-  editingDisplay: IDisplayFormed
+  editingDisplay: Display
   modalLoading: boolean
   formType: 'edit' | 'add'
   formVisible: boolean
@@ -71,12 +71,15 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   }
 
 
-  private saveDisplay = (display: IDisplayFormed, type: 'edit' | 'add') => {
+  private saveDisplay = (display: Display, type: 'edit' | 'add') => {
     this.setState({ modalLoading: true })
     const { onAdd, onEdit } = this.props
     const val = {
       ...display,
       roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id)
+    }
+    if (typeof display.config === 'string' && display.config) {
+      val.config = JSON.parse(display.config)
     }
     if (type === 'add') {
       onAdd({
@@ -96,7 +99,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     })
   }
 
-  private showDisplayFormModal = (formType: 'edit' | 'add', display?: IDisplayFormed) => (e: React.MouseEvent<HTMLDivElement>) => {
+  private showDisplayFormModal = (formType: 'edit' | 'add', display?: Display) => (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation()
     this.setState({
       editingDisplay: display,
@@ -165,7 +168,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     )
   }
 
-  private renderDisplay (display: IDisplayFormed) {
+  private renderDisplay (display: Display) {
     const coverStyle: React.CSSProperties = {
       backgroundImage: `url(${display.avatar})`
     }
