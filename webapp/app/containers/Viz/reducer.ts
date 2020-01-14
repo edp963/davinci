@@ -189,10 +189,7 @@ const vizReducer = (
         draft.displays.splice(
           draft.displays.findIndex(({ id }) => id === action.payload.result.id),
           1,
-          {
-            ...action.payload.result,
-            config: JSON.stringify(action.payload.result.config)
-          }
+          action.payload.result
         )
         if (
           draft.currentDisplay &&
@@ -208,10 +205,7 @@ const vizReducer = (
             ({ id }) => id === action.payload.fromDisplayId
           ),
           0,
-          {
-            ...action.payload.display,
-            config: JSON.stringify(action.payload.display.config)
-          }
+          action.payload.display
         )
         break
 

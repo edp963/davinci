@@ -56,6 +56,8 @@ export interface IDisplayFormed extends IDisplayBase {
   }
 }
 
+export type Display = IDisplayRaw | IDisplayFormed
+
 export interface IDashboard {
   id: number
   name: number

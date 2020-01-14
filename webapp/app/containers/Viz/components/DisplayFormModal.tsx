@@ -25,19 +25,19 @@ const TextArea = Input.TextArea
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const TabPane = Tabs.TabPane
-import { IDisplayFormed } from './types'
+import { Display } from './types'
 const styles = require('containers/Viz/Viz.less')
 import {IExludeRoles} from 'containers/Viz/components/PortalList'
 const utilStyles = require('assets/less/util.less')
 
 interface IDisplayFormModalProps {
   projectId: number
-  display: IDisplayFormed,
+  display: Display,
   visible: boolean
   loading: boolean
   type: 'add' | 'edit'
   onCheckName: (type, data, resolve, reject) => void
-  onSave: (display: IDisplayFormed, type: string) => void
+  onSave: (display: Display, type: string) => void
   onCancel: () => void
   exludeRoles?: IExludeRoles[]
   onChangePermission: (scope: object, e: any) => any
@@ -56,7 +56,7 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
     this.initFormValue(form, display)
   }
 
-  private initFormValue (form, display: IDisplayFormed) {
+  private initFormValue (form, display: Display) {
     if (display) {
       form.setFieldsValue({ ...display })
     } else {
