@@ -68,8 +68,6 @@ const ProjectsForm: React.FC<IProjectsFormProps & FormComponentProps> = ({
   onModalOk, onTransfer, currentPro
 }, ref) => {
 
-    console.log(currentPro)
-
     const commonFormItemStyle = useMemo(() => (
       {
         labelCol: { span: 3 },
