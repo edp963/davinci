@@ -20,8 +20,9 @@
 
 import { createSelector } from 'reselect'
 import { IProjectState } from './types'
+import { initialState } from './reducer'
 
-const selectProject = (state) => state.project
+const selectProject = (state) => state.project || initialState
 
 const makeSelectProjects = () => createSelector(
   selectProject,

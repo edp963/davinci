@@ -13,7 +13,7 @@ import formReducer from 'containers/Dashboard/FormReducer'
 import { hideNavigator } from 'containers/App/actions'
 import { ViewActions } from 'containers/View/actions'
 const { loadViews, loadViewsDetail, loadViewData, loadViewDistinctValue } = ViewActions
-import { addWidget, editWidget, loadWidgetDetail, clearCurrentWidget, executeComputed } from 'containers/Widget/actions'
+import { WidgetActions } from 'containers/Widget/actions'
 import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, makeSelectDistinctColumnValues, makeSelectColumnValueLoading } from 'containers/Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
 
@@ -624,13 +624,13 @@ export function mapDispatchToProps (dispatch) {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadViews: (projectId, resolve) => dispatch(loadViews(projectId, resolve)),
     onLoadViewDetail: (viewId, resolve) => dispatch(loadViewsDetail([viewId], resolve)),
-    onLoadWidgetDetail: (id) => dispatch(loadWidgetDetail(id)),
+    onLoadWidgetDetail: (id) => dispatch(WidgetActions.loadWidgetDetail(id)),
     onLoadViewData: (viewId, requestParams, resolve, reject) => dispatch(loadViewData(viewId, requestParams, resolve, reject)),
-    onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),
-    onEditWidget: (widget, resolve) => dispatch(editWidget(widget, resolve)),
+    onAddWidget: (widget, resolve) => dispatch(WidgetActions.addWidget(widget, resolve)),
+    onEditWidget: (widget, resolve) => dispatch(WidgetActions.editWidget(widget, resolve)),
     onLoadViewDistinctValue: (viewId, params) => dispatch(loadViewDistinctValue(viewId, params)),
-    onClearCurrentWidget: () => dispatch(clearCurrentWidget()),
-    onExecuteComputed: (sql) => dispatch(executeComputed(sql))
+    onClearCurrentWidget: () => dispatch(WidgetActions.clearCurrentWidget()),
+    onExecuteComputed: (sql) => dispatch(WidgetActions.executeComputed(sql))
   }
 }
 

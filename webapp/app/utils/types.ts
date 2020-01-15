@@ -7,6 +7,7 @@ export interface IRouteParams {
   dashboardId?: string
   widgetId?: string
   displayId?: string
+  slideId?: string
   viewId?: string
   scheduleId?: string
   userId?: string

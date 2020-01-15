@@ -21,11 +21,15 @@
     "items": [{
       "name": "positionX",
       "title": "x轴位置（像素）",
-      "component": "inputnumber"
+      "component": "inputnumber",
+      "labelCol": 15,
+      "wrapperCol": 8
     }, {
       "name": "positionY",
       "title": "y轴位置（像素）",
-      "component": "inputnumber"
+      "component": "inputnumber",
+      "labelCol": 15,
+      "wrapperCol": 8
     }]
   }, {
     "name": "background",
@@ -34,7 +38,8 @@
       "name": "backgroundColor",
       "title": "背景颜色",
       "component": "colorPicker",
-      "default": [255,255,255,0]
+      "default": [255,255,255,0],
+      "labelCol": 10
     }]
   }, {
     "name": "border",
@@ -43,12 +48,15 @@
       "name": "borderColor",
       "title": "边框颜色",
       "component": "colorPicker",
-      "default": [0,0,0]
+      "default": [0,0,0],
+      "labelCol": 10
     }, {
       "name": "borderWidth",
       "title": "边框粗细",
       "component": "inputnumber",
-      "default": 0
+      "default": 0,
+      "placeholder": "像素",
+      "labelCol": 10
     }, {
       "name": "borderStyle",
       "title": "边框样式",
@@ -66,19 +74,22 @@
         "name": "双框",
         "value": "double"
       }],
-      "default": "solid"
+      "default": "solid",
+      "labelCol": 10
     }, {
       "name": "borderRadius",
       "title": "圆角半径",
       "component": "inputnumber",
-      "default": 0
+      "default": 0,
+      "placeholder": "像素",
+      "labelCol": 10
     }]
   }, {
     "name": "dataRefresh",
     "title": "数据刷新",
     "items": [{
       "name": "polling",
-      "title": "模式",
+      "title": "刷新模式",
       "component": "select",
       "values": [{
         "name": "手动刷新",
@@ -87,14 +98,16 @@
         "name": "定时刷新",
         "value": "true"
       }],
-      "default": "false"
+      "default": "false",
+      "labelCol": 10
     }, {
       "name": "frequency",
-      "title": "时长",
+      "title": "时长（秒）",
       "component": "inputnumber",
       "default": "60",
       "min": 1,
-      "placeholder": "秒"
+      "placeholder": "秒",
+      "labelCol": 10
     }]
   }]
 }

@@ -58,6 +58,7 @@ export interface IWidgetMetric {
   chart: IChartInfo
   field: IFieldConfig
   format: IFieldFormatConfig
+  sort?: IFieldSortConfig
 }
 
 export interface IWidgetSecondaryMetric {
@@ -65,6 +66,7 @@ export interface IWidgetSecondaryMetric {
   agg: AggregatorType
   field: IFieldConfig
   format: IFieldFormatConfig
+  sort?: IFieldSortConfig
   from?: string
   type?: any
   visualType?: any

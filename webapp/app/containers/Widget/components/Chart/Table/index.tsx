@@ -25,7 +25,7 @@ import { IChartProps } from '../'
 import { IChartStyles, IPaginationParams } from '../../Widget'
 import { ITableHeaderConfig } from 'containers/Widget/components/Config/Table'
 
-import { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
+import { ResizeCallbackData } from 'libs/react-resizable'
 import { Table as AntTable, Tooltip, Icon } from 'antd'
 import { TableProps, ColumnProps, SorterResult } from 'antd/lib/table'
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
@@ -97,7 +97,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private table = React.createRef<AntTable<any>>()
 
-  private handleResize = (idx: number, containerWidthRatio: number) => (_, { size }: IResizeCallbackData) => {
+  private handleResize = (idx: number, containerWidthRatio: number) => (_, { size }: ResizeCallbackData) => {
     const nextColumns = resizeTableColumns(this.state.tableColumns, idx, size.width, containerWidthRatio)
     this.setState({ tableColumns: nextColumns })
   }
@@ -500,7 +500,9 @@ function getTableColumns (props: IChartProps) {
     : 1
   tableColumns.forEach((column) => {
     if (fixedColumnInfo[column.key] === void 0) {
-      column.width = containerWidthRatio * Number(column.width)
+      // Math.floor to avoid creating float column width value and scrollbar showing
+      // not use Math.ceil because it will exceed the container width in total
+      column.width = Math.floor(containerWidthRatio * Number(column.width))
     }
   })
 

@@ -29,9 +29,7 @@ import {
   getMetricAxisOption,
   getLabelOption,
   getLegendOption,
-  getGridPositions,
-  makeGrouped,
-  distinctXaxis
+  getGridPositions
 } from './util'
 import { EChartOption } from 'echarts'
 import { getFormattedValue } from '../../components/Config/Format'

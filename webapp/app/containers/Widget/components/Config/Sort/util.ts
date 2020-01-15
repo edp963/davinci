@@ -18,7 +18,7 @@ export function fieldGroupedSort (data: object[], descriptors: IFieldSortDescrip
   })
 }
 
-export function colorSort (
+export function inGroupColorSort (
   groupEntries: Array<[string, unknown]>,
   descriptor: IFieldSortDescriptor
 ) {

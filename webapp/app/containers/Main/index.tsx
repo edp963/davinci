@@ -18,35 +18,37 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
-import { Route, HashRouter as Router, Switch, Redirect } from 'react-router-dom'
+import { Route, Switch, Redirect } from 'react-router-dom'
+import AuthorizedRoute from './AuthorizedRoute'
 import { RouteComponentWithParams } from 'utils/types'
 import { createStructuredSelector } from 'reselect'
 
 import Navigator from 'components/Navigator'
 
-import { logged, logout, getLoginUser, loadDownloadList, showNavigator, hideNavigator } from '../App/actions'
+import { logged, logout, getLoginUser, loadDownloadList } from '../App/actions'
 import { makeSelectLogged, makeSelectNavigator } from '../App/selectors'
-import checkLogin from 'utils/checkLogin'
-import { setToken } from 'utils/request'
 import { DOWNLOAD_LIST_POLLING_FREQUENCY } from 'app/globalConstants'
 
-import { Project } from 'containers/Projects/Loadable'
+import { Project, ProjectList } from 'containers/Projects/Loadable'
 
-import { Report } from 'containers/Report/Loadable'
-import { Viz } from 'containers/Viz/Loadable'
+import { Sidebar } from './Loadable'
+import Viz from 'containers/Viz/Loadable'
 import { Widget, Workbench } from 'containers/Widget/Loadable'
 import { View, ViewEditor } from 'containers/View/Loadable'
 import { Source } from 'containers/Source/Loadable'
 import { Schedule, ScheduleEditor } from 'containers/Schedule/Loadable'
 
 import { Dashboard } from 'containers/Dashboard/Loadable'
-import { DisplayEditor, DisplayPreview } from 'containers/Display/Loadable'
+
 import { Account } from 'containers/Account/Loadable'
 import { Profile, UserProfile } from 'containers/Profile/Loadable'
 import { ResetPassword } from 'containers/ResetPassword/Loadable'
-import { OrganizationList, Organization } from 'containers/Organizations/Loadable'
+import {
+  OrganizationList,
+  Organization
+} from 'containers/Organizations/Loadable'
 import { NoAuthorization } from 'containers/NoAuthorization/Loadable'
 
 const styles = require('./Main.less')
@@ -60,16 +62,18 @@ interface IMainProps {
   onLoadDownloadList: () => void
 }
 
-export class Main extends React.Component<IMainProps & RouteComponentWithParams, {}> {
-
+export class Main extends React.Component<
+  IMainProps & RouteComponentWithParams,
+  {}
+> {
   private downloadListPollingTimer: number
 
-  constructor (props: IMainProps & RouteComponentWithParams) {
+  constructor(props: IMainProps & RouteComponentWithParams) {
     super(props)
     this.initPolling()
   }
 
-  public componentWillUnmount () {
+  public componentWillUnmount() {
     if (this.downloadListPollingTimer) {
       clearInterval(this.downloadListPollingTimer)
     }
@@ -88,66 +92,101 @@ export class Main extends React.Component<IMainProps & RouteComponentWithParams,
     history.replace('/login')
   }
 
-  private renderReport = () => (
-    <Report>
-      <Router>
-        <Switch>
-          <Route path="/project/:projectId/vizs" component={Viz} />
-          <Route path="/project/:projectId/widgets" component={Widget} />
-          <Route exact path="/project/:projectId/views" component={View} />
-          <Route path="/project/:projectId/sources" component={Source} />
-          <Route path="/project/:projectId/schedules" component={Schedule} />
-        </Switch>
-      </Router>
-    </Report>
-  )
-
   private renderAccount = () => (
     <Account>
-      <Router>
-        <Switch>
-          <Redirect from="/account" exact to="/account/profile" />
-          <Route path="/account/profile" component={Profile} />
-          <Route path="/account/profile/:userId" component={UserProfile} />
-          <Route path="/account/resetPassword" component={ResetPassword} />
-          <Route path="/account/organizations" component={OrganizationList} />
-          <Route path="/account/organization/:organizationId" component={Organization} />
-        </Switch>
-      </Router>
+      <Switch>
+        <Redirect from="/account" exact to="/account/profile" />
+        <Route path="/account/profile" component={Profile} />
+        <Route path="/account/profile/:userId" component={UserProfile} />
+        <Route path="/account/resetPassword" component={ResetPassword} />
+        <Route path="/account/organizations" component={OrganizationList} />
+        <Route
+          path="/account/organization/:organizationId"
+          component={Organization}
+        />
+      </Switch>
     </Account>
   )
 
-  public render () {
+  public render() {
     const { logged, navigator } = this.props
 
-    return logged
-      ? (
-        <div className={styles.container}>
-          <Navigator
-            show={navigator}
-            onLogout={this.logout}
-          />
-          <Router>
+    return logged ? (
+      <div className={styles.container}>
+        <Navigator show={navigator} onLogout={this.logout} />
+        <Switch>
+          <Route path="/project(s?)">
             <Switch>
-              <Route path="/project/:projectId/portal/:portalId" component={Dashboard} />
-              <Route exact path="/project/:projectId/display/:displayId" component={DisplayEditor} />
-              <Route exact path="/project/:projectId/display/preview/:displayId" component={DisplayPreview} />
-              <Route exact path="/project/:projectId/widget/:widgetId" component={Workbench} />
-              <Route exact path="/project/:projectId/view/:viewId?" component={ViewEditor} />
-              <Route exact path="/project/:projectId/schedule/:scheduleId?" component={ScheduleEditor} />
-
-              <Route path="/projects/" component={Project} />
-              <Route path="/project/:projectId" render={this.renderReport} />
-              <Route path="/account" render={this.renderAccount} />
-              <Route path="/noAuthorization" component={NoAuthorization} />
-              <Redirect to="/projects" />
+              <Route path="/projects" exact component={ProjectList} />
+              <Route path="/project/:projectId">
+                <Project>
+                  <Switch>
+                    <Route
+                      path="/project/:projectId/portal/:portalId"
+                      component={Dashboard}
+                    />
+                    <Route
+                      path="/project/:projectId/display/:displayId"
+                      component={Viz}
+                    />
+                    <Route
+                      exact
+                      path="/project/:projectId/widget/:widgetId?"
+                      component={Workbench}
+                    />
+                    <Route
+                      exact
+                      path="/project/:projectId/view/:viewId?"
+                      component={ViewEditor}
+                    />
+                    <Route
+                      exact
+                      path="/project/:projectId/schedule/:scheduleId?"
+                      component={ScheduleEditor}
+                    />
+                    <Sidebar>
+                      <Switch>
+                        <AuthorizedRoute
+                          permission="vizPermission"
+                          path="/project/:projectId/vizs"
+                          component={Viz}
+                        />
+                        <AuthorizedRoute
+                          permission="widgetPermission"
+                          path="/project/:projectId/widgets"
+                          component={Widget}
+                        />
+                        <AuthorizedRoute
+                          exact
+                          permission="viewPermission"
+                          path="/project/:projectId/views"
+                          component={View}
+                        />
+                        <AuthorizedRoute
+                          permission="sourcePermission"
+                          path="/project/:projectId/sources"
+                          component={Source}
+                        />
+                        <AuthorizedRoute
+                          permission="schedulePermission"
+                          path="/project/:projectId/schedules"
+                          component={Schedule}
+                        />
+                      </Switch>
+                    </Sidebar>
+                  </Switch>
+                </Project>
+              </Route>
             </Switch>
-          </Router>
-        </div>
-      )
-      : (
-        <div />
-      )
+          </Route>
+          <Route path="/account" render={this.renderAccount} />
+          <Route path="/noAuthorization" component={NoAuthorization} />
+          <Redirect to="/projects" />
+        </Switch>
+      </div>
+    ) : (
+      <div />
+    )
   }
 }
 
@@ -156,7 +195,7 @@ const mapStateToProps = createStructuredSelector({
   navigator: makeSelectNavigator()
 })
 
-export function mapDispatchToProps (dispatch) {
+export function mapDispatchToProps(dispatch) {
   return {
     onLogged: (user) => dispatch(logged(user)),
     onLogout: () => dispatch(logout()),
@@ -165,4 +204,7 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Main)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Main)

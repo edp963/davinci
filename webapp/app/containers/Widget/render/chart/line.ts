@@ -31,7 +31,7 @@ import {
   getLegendOption,
   getGridPositions,
   makeGrouped,
-  distinctXaxis,
+  getGroupedXaxis,
   getCartesianChartMetrics
 } from './util'
 import { getFormattedValue } from '../../components/Config/Format'
@@ -63,10 +63,11 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   }
 
   const xAxisColumnName = cols[0].name
-  let xAxisData = data.map((d) => d[xAxisColumnName] || '')
+  let xAxisData = []
   let grouped = {}
+
   if (color.items.length) {
-    xAxisData = distinctXaxis(data, xAxisColumnName)
+    xAxisData = getGroupedXaxis(data, xAxisColumnName, metrics)
     grouped = makeGrouped(
       data,
       color.items.map((c) => c.name),
@@ -74,6 +75,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       metrics,
       xAxisData
     )
+  } else {
+    xAxisData = data.map((d) => d[xAxisColumnName] || '')
   }
 
   const series = []

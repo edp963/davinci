@@ -20,7 +20,7 @@
 
 import * as React from 'react'
 import Canvas from './Canvas'
-import { Route, HashRouter as Router, Switch, Redirect } from 'react-router-dom'
+import { Route, Switch, Redirect } from 'react-router-dom'
 
 import Login from 'containers/Login'
 import Register from 'containers/Register'
@@ -33,14 +33,12 @@ export function Background () {
     <div className={styles.container}>
       <Canvas />
       <img className={styles.logo} src={require('assets/images/logo_light.svg')} />
-      <Router>
-        <Switch>
-          <Route path="/login" component={Login} />
-          <Route path="/register" component={Register} />
-          <Route path="/joinOrganization" component={JoinOrganization} />
-          <Redirect to="/login" />
-        </Switch>
-      </Router>
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
+        <Route path="/joinOrganization" component={JoinOrganization} />
+        <Redirect to="/login" />
+      </Switch>
     </div>
   )
 }

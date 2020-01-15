@@ -37,7 +37,7 @@ import Container from 'components/Container'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 import DashboardItem from 'containers/Dashboard/components/DashboardItem'
 import FullScreenPanel from 'containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
-import { Responsive, WidthProvider } from 'libs/react-grid-layout'
+import { Responsive, WidthProvider } from 'react-grid-layout'
 import { ChartTypes } from 'containers/Widget/config/chart/ChartTypes'
 import { IMapItemControlRequestParams, IMapControlOptions, IFilters } from 'components/Filters/types'
 import GlobalControlPanel from 'components/Filters/FilterPanel'
@@ -124,6 +124,7 @@ interface IDashboardProps {
       downloadCsvLoading: boolean
       renderType: RenderType,
       controlSelectOptions: IMapControlOptions
+      errorMessage: string
     }
   },
   widgets: any[],
@@ -411,8 +412,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let drillStatus
     let pagination
     let nativeQuery
-    const prevDrillHistory = cachedQueryConditions.drillHistory 
-    ? cachedQueryConditions.drillHistory[cachedQueryConditions.drillHistory.length - 1] 
+    const prevDrillHistory = cachedQueryConditions.drillHistory
+    ? cachedQueryConditions.drillHistory[cachedQueryConditions.drillHistory.length - 1]
     : {}
 
     if (queryConditions) {
@@ -650,14 +651,17 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     this.props.onGlobalControlChange(controlRequestParamsByItem)
   }
 
-  private globalControlSearch = (itemIds: number[]) => {
+  private globalControlSearch = (itemIds: number[], controlRequestParamsByItem?: IMapItemControlRequestParams) => {
     const { currentItems, widgets, currentItemsInfo } = this.props
+
     itemIds.forEach((itemId) => {
       const item = currentItems.find((ci) => ci.id === itemId)
+
       if (item) {
         const widget = widgets.find((w) => w.id === item.widgetId)
         let pagination = currentItemsInfo[itemId].queryConditions.pagination
         let noAggregators = false
+
         try {
           const widgetProps: IWidgetProps = JSON.parse(widget.config)
           const { mode, selectedChart, chartStyles } = widgetProps
@@ -674,32 +678,24 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         } catch (error) {
           message.error(error)
         }
+
+        let queryConditions: Partial<IQueryConditions> = {}
+        if (controlRequestParamsByItem && controlRequestParamsByItem[itemId]) {
+          const { filters: globalFilters, variables: globalVariables } = controlRequestParamsByItem[itemId]
+          queryConditions = {
+            ...globalFilters && { globalFilters },
+            ...globalVariables && { globalVariables }
+          }
+        }
+
         this.getChartData('rerender', itemId, item.widgetId, {
           pagination,
-          nativeQuery: noAggregators
+          nativeQuery: noAggregators,
+          ...queryConditions
         })
       }
     })
   }
-
-  private globalFilterChange = (queryConditions: IMapItemControlRequestParams) => {
-    const { currentItems, currentItemsInfo } = this.props
-    Object.entries(queryConditions).forEach(([itemId, condition]) => {
-      const item = currentItems.find((ci) => ci.id === +itemId)
-      if (item) {
-        let pageNo = 0
-        const { pagination } = currentItemsInfo[itemId].queryConditions
-        if (pagination.pageNo) { pageNo = 1 }
-        const { variables: globalVariables, filters: globalFilters } = condition
-        this.getChartData('rerender', +itemId, item.widgetId, {
-          globalVariables,
-          globalFilters,
-          pagination: { ...pagination, pageNo }
-        })
-      }
-    })
-  }
-
 
   private dataDrill = (e) => {
     const {
@@ -1076,9 +1072,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           {itemblocks}
         </ResponsiveReactGridLayout>
       )
-      fullScreenComponent = 
-        allowFullScreen
-        ? <FullScreenPanel
+      fullScreenComponent = allowFullScreen
+        ? (
+          <FullScreenPanel
             widgets={widgets}
             currentItems={currentItems}
             currentDashboard={dashboard}
@@ -1093,6 +1089,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
             onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
             chartDetail={this.state.currentDataInFullScreen}
           />
+        )
         : <div/>
     } else {
       grids = (

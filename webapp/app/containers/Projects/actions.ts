@@ -32,9 +32,9 @@ export const ProjectActions = {
     }
   },
 
-  killProjectDetail () {
+  clearCurrentProject () {
     return {
-      type: ActionTypes.KILL_PROJECT_DETAIL
+      type: ActionTypes.CLEAR_CURRENT_PROJECT
     }
   }
   ,

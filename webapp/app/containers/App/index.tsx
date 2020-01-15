@@ -82,23 +82,24 @@ export class App extends React.PureComponent<AppProps> {
     } = this.props
 
     const qs = this.getQs()
-    const token = qs['token']
+    const token = qs['usertoken']
     // TODO allow take other parameters
     // const dashboard = qs['dashboard']
 
-    if (token) {
-      setToken(token)
-      onGetLoginUser(() => {
-        history.replace('/projects')
-        // if (dashboard) {
-        //   router.replace(`/project/${this.props.params.projectId}/dashboard/${dashboard}`)
-        // } else {
+    // @FIXME login with token from url query
+    // if (token) {
+    //   setToken(token)
+    //   // onGetLoginUser(() => {
+    //     history.replace('/projects')
+    //     // if (dashboard) {
+    //     //   router.replace(`/project/${this.props.params.projectId}/dashboard/${dashboard}`)
+    //     // } else {
 
-        // }
-      })
-    } else {
-      this.checkNormalLogin()
-    }
+    //     // }
+    //   // })
+    // } else {
+    this.checkNormalLogin()
+    // }
   }
 
   private checkNormalLogin = () => {
@@ -144,6 +145,7 @@ export class App extends React.PureComponent<AppProps> {
         />
         <Router>
           <Switch>
+            <Route path="/joinOrganization" exact component={Background} />
             <Route path="/" exact render={this.renderRoute} />
             <Route path="/" component={logged ? Main : Background} />
             <Route path="/activate" component={Activate} />
