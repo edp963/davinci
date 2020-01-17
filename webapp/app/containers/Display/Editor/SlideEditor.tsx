@@ -147,9 +147,9 @@ const SlideEditor: React.FC = (props) => {
     <SplitPane
       className="display-layout-content"
       type="horizontal"
-      initialSize={160}
+      initialSize={240}
       minSize={160}
-      maxSize={250}
+      maxSize={480}
       invert
     >
       <DisplayContainer grid={grid}>
