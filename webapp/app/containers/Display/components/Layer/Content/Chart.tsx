@@ -94,7 +94,7 @@ const Chart: React.FC = () => {
 
   useEffect(() => {
     let timer: number
-    if (!operationInfo && polling === 'true') {
+    if (!operationInfo && polling === 'true' && +frequency > 0) {
       timer = window.setInterval(() => {
         getChartData(
           'refresh',
