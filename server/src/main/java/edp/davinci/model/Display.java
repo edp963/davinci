@@ -44,6 +44,8 @@ public class Display extends RecordInfo<Display> {
 
     private Boolean publish = false;
 
+    private String config;
+
     @Override
     public String toString() {
         return "Display{" +
@@ -52,7 +54,8 @@ public class Display extends RecordInfo<Display> {
                 ", description='" + description + '\'' +
                 ", projectId=" + projectId +
                 ", avatar='" + avatar + '\'' +
-                ", publish=" + publish +
+                ", publish=" + publish + '\'' +
+                ", config=" + config +
                 '}';
     }
 }

@@ -100,28 +100,27 @@
 
 
     <select id="queryDashboardsByIds" parameterType="java.util.Set" resultType="edp.davinci.model.Dashboard">
-        select * from dashboard where type = 1
+        select * from dashboard where
         <if test="set != null and set.size > 0">
-            and
             <foreach collection="set" index="index" item="item" open="(" close=")" separator="OR">
                 FIND_IN_SET(#{item},full_parent_Id) OR id = #{item}
             </foreach>
         </if>
         <if test="set == null or set.size == 0">
-            and 1=0
+             1=0
         </if>
     </select>
 
     <select id="queryByPortals" resultType="edp.davinci.model.Dashboard">
-        select * from dashboard where type = 1
+        select * from dashboard where
         <if test="set != null and set.size > 0">
-            and `dashboard_portal_id` in
+            `dashboard_portal_id` in
             <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
         <if test="set == null or set.size == 0">
-            and 1=0
+            1=0
         </if>
     </select>
 </mapper>

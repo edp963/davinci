@@ -79,6 +79,9 @@ public class ShareServiceImpl implements ShareService {
     private DisplayMapper displayMapper;
 
     @Autowired
+    private DisplaySlideMapper displaySlideMapper;
+
+    @Autowired
     private DashboardMapper dashboardMapper;
 
     @Autowired
@@ -207,25 +210,25 @@ public class ShareServiceImpl implements ShareService {
         BeanUtils.copyProperties(display, shareDisplay);
 
         List<MemDisplaySlideWidgetWithSlide> memWithSlides = memDisplaySlideWidgetMapper.getMemWithSlideByDisplayId(displayId);
+        List<DisplaySlide> displaySlides = displaySlideMapper.selectByDisplayId(displayId);
+        Set<MemDisplaySlideWidget> memDisplaySlideWidgetSet = null;
 
         if (!CollectionUtils.isEmpty(memWithSlides)) {
-            Set<DisplaySlide> displaySlideSet = new HashSet<>();
-            Set<MemDisplaySlideWidget> memDisplaySlideWidgetSet = new HashSet<>();
+            memDisplaySlideWidgetSet = new HashSet<>();
             for (MemDisplaySlideWidgetWithSlide memWithSlide : memWithSlides) {
-                displaySlideSet.add(memWithSlide.getDisplaySlide());
                 MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget();
                 BeanUtils.copyProperties(memWithSlide, memDisplaySlideWidget);
                 memDisplaySlideWidgetSet.add(memDisplaySlideWidget);
             }
+        }
 
-            if (!CollectionUtils.isEmpty(displaySlideSet)) {
-                Set<ShareDisplaySlide> shareDisplaySlideSet = new HashSet<>();
-                Iterator<DisplaySlide> slideIterator = displaySlideSet.iterator();
-                while (slideIterator.hasNext()) {
-                    DisplaySlide displaySlide = slideIterator.next();
-                    ShareDisplaySlide shareDisplaySlide = new ShareDisplaySlide();
-                    BeanUtils.copyProperties(displaySlide, shareDisplaySlide);
+        if (!CollectionUtils.isEmpty(displaySlides)) {
+            Set<ShareDisplaySlide> shareDisplaySlideSet = new HashSet<>();
+            for (DisplaySlide displaySlide : displaySlides) {
+                ShareDisplaySlide shareDisplaySlide = new ShareDisplaySlide();
+                BeanUtils.copyProperties(displaySlide, shareDisplaySlide);
 
+                if (!CollectionUtils.isEmpty(memDisplaySlideWidgetSet)) {
                     Iterator<MemDisplaySlideWidget> memIterator = memDisplaySlideWidgetSet.iterator();
                     Set<MemDisplaySlideWidget> relations = new HashSet<>();
                     while (memIterator.hasNext()) {
@@ -235,17 +238,15 @@ public class ShareServiceImpl implements ShareService {
                         }
                     }
                     shareDisplaySlide.setRelations(relations);
-                    shareDisplaySlideSet.add(shareDisplaySlide);
                 }
-                shareDisplay.setSlides(shareDisplaySlideSet);
+                shareDisplaySlideSet.add(shareDisplaySlide);
             }
+            shareDisplay.setSlides(shareDisplaySlideSet);
         }
 
         Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDisplayId(displayId);
         if (!CollectionUtils.isEmpty(shareWidgets)) {
-            Iterator<ShareWidget> widgetIterator = shareWidgets.iterator();
-            while (widgetIterator.hasNext()) {
-                ShareWidget shareWidget = widgetIterator.next();
+            for (ShareWidget shareWidget : shareWidgets) {
                 String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
                 shareWidget.setDataToken(dateToken);
             }

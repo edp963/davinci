@@ -21,9 +21,11 @@ package edp.davinci.dto.displayDto;
 
 import edp.davinci.model.Display;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class DisplayUpdate extends Display {
     private List<Long> roleIds;

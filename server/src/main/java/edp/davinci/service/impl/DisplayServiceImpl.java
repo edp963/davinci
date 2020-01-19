@@ -249,16 +249,18 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         int update = displayMapper.update(display);
         if (update > 0) {
             optLogger.info("display ({}) is update by (:{}), origin: ({})", display.toString(), user.getId(), origin);
-            relRoleDisplayMapper.deleteByDisplayId(display.getId());
-            if (!CollectionUtils.isEmpty(displayUpdate.getRoleIds())) {
-                List<Role> roles = roleMapper.getRolesByIds(displayUpdate.getRoleIds());
+            if (displayUpdate.getRoleIds() != null) {
+                relRoleDisplayMapper.deleteByDisplayId(display.getId());
+                if (!CollectionUtils.isEmpty(displayUpdate.getRoleIds())) {
+                    List<Role> roles = roleMapper.getRolesByIds(displayUpdate.getRoleIds());
 
-                List<RelRoleDisplay> list = roles.stream()
-                        .map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
-                        .collect(Collectors.toList());
-                if (!CollectionUtils.isEmpty(list)) {
-                    relRoleDisplayMapper.insertBatch(list);
-                    optLogger.info("update display ({}) limit role ({}) access", display.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                    List<RelRoleDisplay> list = roles.stream()
+                            .map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+                            .collect(Collectors.toList());
+                    if (!CollectionUtils.isEmpty(list)) {
+                        relRoleDisplayMapper.insertBatch(list);
+                        optLogger.info("update display ({}) limit role ({}) access", display.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                    }
                 }
             }
 
