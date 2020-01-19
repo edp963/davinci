@@ -176,10 +176,13 @@ public class ScreenshotUtil {
         options.addArguments("headless");
         options.addArguments("no-sandbox");
         options.addArguments("disable-gpu");
+        options.addArguments("disable-gpu");
         options.addArguments("disable-features=NetworkService");
         options.addArguments("ignore-certificate-errors");
         options.addArguments("silent");
-        options.addArguments("--disable-application-cache");
+        options.addArguments("disable-application-cache");
+        options.addArguments("disable-web-security");
+        options.addArguments("no-proxy-server");
 
         return new ChromeDriver(options);
     }
