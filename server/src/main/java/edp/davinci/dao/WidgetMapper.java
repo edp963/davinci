@@ -69,11 +69,19 @@ public interface WidgetMapper {
     Set<Long> getIdSetByIds(@Param("set") Set<Long> ids);
 
 
+//    @Select({
+//            "SELECT  w.* FROM widget w ",
+//            "LEFT JOIN mem_display_slide_widget m on w.id = m.widget_id",
+//            "LEFT JOIN display_slide s on m.display_slide_id = s.id",
+//            "WHERE s.display_id = #{displayId}",
+//    })
     @Select({
+            //暂时只支持第一页
             "SELECT  w.* FROM widget w ",
             "LEFT JOIN mem_display_slide_widget m on w.id = m.widget_id",
-            "LEFT JOIN display_slide s on m.display_slide_id = s.id",
+            "LEFT JOIN (SELECT * from display_slide where display_id = #{displayId} ORDER BY `index` LIMIT 1) s on m.display_slide_id = s.id",
             "WHERE s.display_id = #{displayId}",
+
     })
     Set<Widget> getByDisplayId(@Param("displayId") Long displayId);
 
