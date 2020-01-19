@@ -220,12 +220,13 @@
 			<version>4.5.7</version>
 		</dependency>
 
+		<!-- elasticsearch -->
 		<dependency>
 			<groupId>org.nlpcn</groupId>
 			<artifactId>elasticsearch-sql</artifactId>
 			<version>5.1.2.0</version>
 			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/elasticsearch-sql-5.1.2.jar</systemPath>
+			<systemPath>${project.basedir}/lib/davinci-elasticsearch-sql-5.1.2.jar</systemPath>
 		</dependency>
 
 		<dependency>
