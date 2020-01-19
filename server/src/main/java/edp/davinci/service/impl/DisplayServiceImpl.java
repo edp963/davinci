@@ -235,9 +235,9 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         }
 
         //删除原有封面图
-        if (!StringUtils.isEmpty(display.getAvatar()) && !display.getAvatar().equals(display.getAvatar())) {
+        if (!StringUtils.isEmpty(display.getAvatar()) && !displayUpdate.getAvatar().equals(display.getAvatar())) {
             File file = new File(display.getAvatar());
-            if (null != file && file.exists() && file.isFile() && fileUtils.isImage(file)) {
+            if (file.exists() && file.isFile() && fileUtils.isImage(file)) {
                 file.delete();
             }
         }
