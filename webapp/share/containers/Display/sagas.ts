@@ -94,11 +94,11 @@ export function* getData (action: ShareDisplayActionType) {
         pageNo
       }
     })
-    const { resultList } = response.payload
+    const resultList = response.payload ? response.payload.result : null
     response.payload.resultList = (resultList && resultList.slice(0, 600)) || []
     yield put(layerDataLoaded(renderType, slideNumber, layerId, response.payload, requestParams))
   } catch (err) {
-    yield put(loadLayerDataFail(err))
+    yield put(loadLayerDataFail(slideNumber, layerId, err))
   }
 }
 
