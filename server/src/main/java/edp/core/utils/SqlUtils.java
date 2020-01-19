@@ -61,7 +61,8 @@ import static edp.core.enums.DataTypeEnum.*;
 @Component
 @Scope("prototype")
 public class SqlUtils {
-    private static final Logger sqlLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SQL.getName());
+
+	private static final Logger sqlLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SQL.getName());
 
     @Autowired
     private JdbcDataSource jdbcDataSource;
@@ -118,19 +119,19 @@ public class SqlUtils {
                 .build();
     }
 
-    public void execute(String sql) throws ServerException {
-        sql = filterAnnotate(sql);
-        checkSensitiveSql(sql);
-        if (isQueryLogEnable) {
-            sqlLogger.info("{}", sql);
-        }
-        try {
-            jdbcTemplate().execute(sql);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServerException(e.getMessage());
-        }
-    }
+	public void execute(String sql) throws ServerException {
+		sql = filterAnnotate(sql);
+		checkSensitiveSql(sql);
+		if (isQueryLogEnable) {
+			sqlLogger.info("{}", sql);
+		}
+		try {
+			jdbcTemplate().execute(sql);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException(e.getMessage());
+		}
+	}
 
     @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
     public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer totalCount, Integer limit, Set<String> excludeColumns) throws Exception {
@@ -143,11 +144,9 @@ public class SqlUtils {
         if (null == totalCount || totalCount < 1) {
             totalCount = 0;
         }
-
         if (null == limit) {
             limit = -1;
         }
-
         PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit, excludeColumns);
         return paginate;
     }
@@ -182,7 +181,7 @@ public class SqlUtils {
 
         String md5 = MD5Util.getMD5(sql + pageNo + pageSize + limit, true, 16);
 
-        long befor = System.currentTimeMillis();
+        long before = System.currentTimeMillis();
 
         JdbcTemplate jdbcTemplate = jdbcTemplate();
         jdbcTemplate.setMaxRows(resultLimit);
@@ -192,25 +191,29 @@ public class SqlUtils {
             if (limit > 0) {
                 resultLimit = limit > resultLimit ? resultLimit : limit;
             }
+            
             if (isQueryLogEnable) {
                 sqlLogger.info("{}  >> \n{}", md5, sql);
             }
+            
             jdbcTemplate.setMaxRows(resultLimit);
             getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
             paginateWithQueryColumns.setPageNo(1);
             int size = paginateWithQueryColumns.getResultList().size();
             paginateWithQueryColumns.setPageSize(size);
             paginateWithQueryColumns.setTotalCount(size);
+        
         } else {
             paginateWithQueryColumns.setPageNo(pageNo);
             paginateWithQueryColumns.setPageSize(pageSize);
 
-            final int startRow = (pageNo - 1) * pageSize;
+            int startRow = (pageNo - 1) * pageSize;
 
             if (pageNo == 1 || totalCount == 0) {
-                Object o = jdbcTemplate.queryForObject(getCountSql(sql), Object.class);
+                Object o = jdbcTemplate.queryForList(getCountSql(sql), Object.class).get(0);
                 totalCount = Integer.parseInt(String.valueOf(o));
             }
+
             if (limit > 0) {
                 limit = limit > resultLimit ? resultLimit : limit;
                 totalCount = limit < totalCount ? limit : totalCount;
@@ -236,7 +239,7 @@ public class SqlUtils {
         }
 
         if (isQueryLogEnable) {
-            sqlLogger.info("{} query for >> {} ms", md5, System.currentTimeMillis() - befor);
+            sqlLogger.info("{} query for >> {} ms", md5, System.currentTimeMillis() - before);
         }
 
         return paginateWithQueryColumns;
@@ -305,6 +308,7 @@ public class SqlUtils {
             plainSelect.setOrderByElements(null);
             countSql = String.format(QUERY_COUNT_SQL, select.toString());
         } catch (JSQLParserException e) {
+        	log.error(e.getMessage(), e);
         }
         return SqlParseUtils.rebuildSqlWithFragment(countSql);
     }
@@ -331,7 +335,7 @@ public class SqlUtils {
                 columnPrefixExtractor(columnPrefixs, plainSelect);
             }
         } catch (JSQLParserException e) {
-//            log.warn("Get table name or alias Error: {}", e.getCause().getMessage());
+        	log.error(e.getMessage(), e);
         }
         return columnPrefixs;
     }
@@ -379,119 +383,126 @@ public class SqlUtils {
      * @return
      * @throws SourceException
      */
-    public List<String> getDatabases() throws SourceException {
-        if (this.dataTypeEnum == ELASTICSEARCH) {
-            return null;
-        }
-        List<String> dbList = new ArrayList<>();
-        Connection connection = null;
-        try {
-            connection = sourceUtils.getConnection(this.jdbcSourceInfo);
-            if (null != connection) {
-                if (this.dataTypeEnum == ORACLE) {
-                    dbList.add(this.jdbcSourceInfo.getUsername());
-                } else {
-                    String catalog = connection.getCatalog();
-                    if (!StringUtils.isEmpty(catalog)) {
-                        dbList.add(catalog);
-                    } else {
-                        DatabaseMetaData metaData = connection.getMetaData();
-                        ResultSet rs = metaData.getCatalogs();
-                        while (rs.next()) {
-                            dbList.add(rs.getString(1));
-                        }
-                    }
-                }
+    public List<String> getDatabases() throws SourceException { 
+		List<String> dbList = new ArrayList<>();
+		Connection connection = null;
+		try {
+			connection = sourceUtils.getConnection(this.jdbcSourceInfo);
+			if (null == connection) {
+				return dbList;
+			}
 
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcSourceInfo.getJdbcUrl());
-        } finally {
-            SourceUtils.releaseConnection(connection);
-        }
+			if (dataTypeEnum == ORACLE) {
+				dbList.add(this.jdbcSourceInfo.getUsername());
+				return dbList;
+			}
+			
+			if (dataTypeEnum == ELASTICSEARCH) {
+				if(StringUtils.isEmpty(this.jdbcSourceInfo.getUsername())) {
+					dbList.add(dataTypeEnum.getFeature());
+				}else {
+					dbList.add(this.jdbcSourceInfo.getUsername());
+				}
+				return dbList;
+			}
 
+			String catalog = connection.getCatalog();
+			if (!StringUtils.isEmpty(catalog)) {
+				dbList.add(catalog);
+			} else {
+				DatabaseMetaData metaData = connection.getMetaData();
+				ResultSet rs = metaData.getCatalogs();
+				while (rs.next()) {
+					dbList.add(rs.getString(1));
+				}
+			}
 
-        return dbList;
-    }
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			return dbList;
+		} finally {
+			SourceUtils.releaseConnection(connection);
+		}
+		return dbList;
+	}
 
-    /**
-     * 获取当前数据源表结构
-     *
-     * @return
-     * @throws SourceException
-     */
-    public List<QueryColumn> getTableList(String dbName) throws SourceException {
-        if (this.dataTypeEnum == ELASTICSEARCH) {
-            return null;
-        }
-        List<QueryColumn> tableList = null;
-        Connection connection = null;
-        ResultSet tables = null;
+	/**
+	 * 获取当前数据源表结构
+	 *
+	 * @return
+	 * @throws SourceException
+	 */
+	public List<QueryColumn> getTableList(String dbName) throws SourceException {
 
-        try {
-            connection = sourceUtils.getConnection(this.jdbcSourceInfo);
-            if (null != connection) {
-                DatabaseMetaData metaData = connection.getMetaData();
-                String schema = null;
-                try {
-                    schema = metaData.getConnection().getSchema();
-                } catch (Throwable t) {
-                    // ignore
-                }
+		List<QueryColumn> tableList = null;
+		Connection connection = null;
+		ResultSet tables = null;
 
-                tables = metaData.getTables(dbName, getDBSchemaPattern(schema), "%", TABLE_TYPES);
-                if (null != tables) {
-                    tableList = new ArrayList<>();
-                    while (tables.next()) {
-                        String name = tables.getString(TABLE_NAME);
-                        if (!StringUtils.isEmpty(name)) {
-                            String type = TABLE;
-                            try {
-                                type = tables.getString(TABLE_TYPE);
-                            } catch (Exception e) {
-                            }
-                            tableList.add(new QueryColumn(name, type));
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcSourceInfo.getJdbcUrl());
-        } finally {
-            SourceUtils.releaseConnection(connection);
-            SourceUtils.closeResult(tables);
-        }
-        return tableList;
-    }
+		try {
+			connection = sourceUtils.getConnection(this.jdbcSourceInfo);
+			if (null != connection) {
+				DatabaseMetaData metaData = connection.getMetaData();
+				String schema = null;
+				try {
+					schema = metaData.getConnection().getSchema();
+				} catch (Throwable t) {
+					// ignore
+				}
 
-    private String getDBSchemaPattern(String schema) {
-        if (dataTypeEnum == null || this.dataTypeEnum == ELASTICSEARCH) {
-            return null;
-        }
-        String schemaPattern = null;
-        switch (dataTypeEnum) {
-            case ORACLE:
-                schemaPattern = this.jdbcSourceInfo.getUsername();
-                if (null != schemaPattern) {
-                    schemaPattern = schemaPattern.toUpperCase();
-                }
-                break;
-            case SQLSERVER:
-                schemaPattern = "dbo";
+				tables = metaData.getTables(dbName, getDBSchemaPattern(schema), "%", TABLE_TYPES);
+				if (null == tables) {
+					return tableList;
+				}
+				
+				tableList = new ArrayList<>();
+				while (tables.next()) {
+					String name = tables.getString(TABLE_NAME);
+					if (!StringUtils.isEmpty(name)) {
+						String type = TABLE;
+						try {
+							type = tables.getString(TABLE_TYPE);
+						} catch (Exception e) {
+							// ignore
+						}
+						tableList.add(new QueryColumn(name, type));
+					}
+				}
+			}
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			return tableList;
+		} finally {
+			SourceUtils.releaseConnection(connection);
+			SourceUtils.closeResult(tables);
+		}
+		return tableList;
+	}
 
-            case PRESTO:
-                if (!StringUtils.isEmpty(schema)) {
-                    schemaPattern = schema;
-                }
-                break;
-            default:
-                break;
-        }
-        return schemaPattern;
-
-    }
+	private String getDBSchemaPattern(String schema) {
+		if (dataTypeEnum == null) {
+			return null;
+		}
+		String schemaPattern = null;
+		switch (dataTypeEnum) {
+		case ORACLE:
+			schemaPattern = this.jdbcSourceInfo.getUsername();
+			if (null != schemaPattern) {
+				schemaPattern = schemaPattern.toUpperCase();
+			}
+			break;
+		case SQLSERVER:
+			schemaPattern = "dbo";
+			break;
+		case PRESTO:
+			if (!StringUtils.isEmpty(schema)) {
+				schemaPattern = schema;
+			}
+			break;
+		default:
+			break;
+		}
+		return schemaPattern;
+	}
 
     /**
      * 获取指定表列信息
@@ -501,26 +512,23 @@ public class SqlUtils {
      * @throws SourceException
      */
     public TableInfo getTableInfo(String dbName, String tableName) throws SourceException {
-        if (this.dataTypeEnum == ELASTICSEARCH) {
-            return null;
-        }
-        TableInfo tableInfo = null;
-        Connection connection = null;
-        try {
-            connection = sourceUtils.getConnection(this.jdbcSourceInfo);
-            if (null != connection) {
-                DatabaseMetaData metaData = connection.getMetaData();
-                List<String> primaryKeys = getPrimaryKeys(dbName, tableName, metaData);
-                List<QueryColumn> columns = getColumns(dbName, tableName, metaData);
-                tableInfo = new TableInfo(tableName, primaryKeys, columns);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcSourceInfo.getJdbcUrl());
-        } finally {
-            SourceUtils.releaseConnection(connection);
-        }
-        return tableInfo;
+		TableInfo tableInfo = null;
+		Connection connection = null;
+		try {
+			connection = sourceUtils.getConnection(this.jdbcSourceInfo);
+			if (null != connection) {
+				DatabaseMetaData metaData = connection.getMetaData();
+				List<String> primaryKeys = getPrimaryKeys(dbName, tableName, metaData);
+				List<QueryColumn> columns = getColumns(dbName, tableName, metaData);
+				tableInfo = new TableInfo(tableName, primaryKeys, columns);
+			}
+		} catch (SQLException e) {
+			log.error(e.getMessage(), e);
+			throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcSourceInfo.getJdbcUrl());
+		} finally {
+			SourceUtils.releaseConnection(connection);
+		}
+		return tableInfo;
     }
 
 
@@ -546,12 +554,12 @@ public class SqlUtils {
                 }
             }
         } catch (Exception e) {
+        	log.error(e.getMessage(), e);
             throw new SourceException("Get connection meta data error, jdbcUrl=" + this.jdbcSourceInfo.getJdbcUrl());
         } finally {
             SourceUtils.releaseConnection(connection);
             SourceUtils.closeResult(rs);
         }
-
         return result;
     }
 
@@ -573,7 +581,7 @@ public class SqlUtils {
                 primaryKeys.add(rs.getString(4));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+        	log.error(e.getMessage(), e);
         } finally {
             SourceUtils.closeResult(rs);
         }
@@ -598,10 +606,10 @@ public class SqlUtils {
             }
             rs = metaData.getColumns(dbName, null, tableName, "%");
             while (rs.next()) {
-                columnList.add(new QueryColumn(rs.getString(4), rs.getString(6)));
+                columnList.add(new QueryColumn(rs.getString("COLUMN_NAME"), rs.getString("TYPE_NAME")));
             }
         } catch (Exception e) {
-            throw new ServerException(e.getMessage());
+        	log.error(e.getMessage(), e);
         } finally {
             SourceUtils.closeResult(rs);
         }
@@ -771,12 +779,12 @@ public class SqlUtils {
 
             }
         } catch (Exception e) {
-            e.printStackTrace();
+        	log.error(e.getMessage(), e);
             if (null != connection) {
                 try {
                     connection.rollback();
                 } catch (SQLException se) {
-                    se.printStackTrace();
+                	log.error(se.getMessage(), se);
                 }
             }
             throw new ServerException(e.getMessage());
@@ -785,7 +793,7 @@ public class SqlUtils {
                 try {
                     pstmt.close();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                	log.error(e.getMessage(), e);
                     throw new ServerException(e.getMessage());
                 }
             }
@@ -909,13 +917,14 @@ public class SqlUtils {
     }
 
 
-    public SqlUtils() {
-    }
+	public SqlUtils() {
 
-    public SqlUtils(JdbcSourceInfo jdbcSourceInfo) {
-        this.jdbcSourceInfo = jdbcSourceInfo;
-        this.dataTypeEnum = DataTypeEnum.urlOf(jdbcSourceInfo.getJdbcUrl());
-    }
+	}
+
+	public SqlUtils(JdbcSourceInfo jdbcSourceInfo) {
+		this.jdbcSourceInfo = jdbcSourceInfo;
+		this.dataTypeEnum = DataTypeEnum.urlOf(jdbcSourceInfo.getJdbcUrl());
+	}
 
     public static final class SqlUtilsBuilder {
         private JdbcDataSource jdbcDataSource;
