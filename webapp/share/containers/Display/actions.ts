@@ -76,10 +76,12 @@ export const ShareDisplayActions = {
       }
     }
   },
-  loadLayerDataFail(error) {
+  loadLayerDataFail(slideNumber, layerId, error) {
     return {
       type: ActionTypes.LOAD_LAYER_DATA_FAILURE,
       payload: {
+        slideNumber,
+        layerId,
         error
       }
     }
