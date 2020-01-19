@@ -23,7 +23,6 @@ import {
   LOGGED,
   LOGIN_ERROR,
   LOGOUT,
-  SET_LOGIN_USER,
   GET_LOGIN_USER,
   GET_LOGIN_USER_ERROR,
   SHOW_NAVIGATOR,
@@ -41,16 +40,17 @@ import {
   CHANGE_USER_PASSWORD,
   CHANGE_USER_PASSWORD_FAILURE,
   CHANGE_USER_PASSWORD_SUCCESS,
-  UPLOAD_AVATAR_SUCCESS
+  UPLOAD_AVATAR_SUCCESS,
+  LOAD_DOWNLOAD_LIST,
+  LOAD_DOWNLOAD_LIST_SUCCESS,
+  LOAD_DOWNLOAD_LIST_FAILURE,
+  DOWNLOAD_FILE,
+  DOWNLOAD_FILE_FAILURE,
+  DOWNLOAD_FILE_SUCCESS,
+  INITIATE_DOWNLOAD_TASK,
+  INITIATE_DOWNLOAD_TASK_SUCCESS,
+  INITIATE_DOWNLOAD_TASK_FAILURE
 } from './constants'
-
-import { promiseActionCreator } from '../../utils/reduxPromisation'
-
-
-
-export const logout = promiseActionCreator(LOGOUT)
-
-export const setLoginUser = promiseActionCreator(SET_LOGIN_USER, ['user'])
 
 export function login (username, password, resolve) {
   return {
@@ -75,6 +75,12 @@ export function logged (user) {
 export function loginError () {
   return {
     type: LOGIN_ERROR
+  }
+}
+
+export function logout () {
+  return {
+    type: LOGOUT
   }
 }
 
@@ -246,3 +252,85 @@ export function changeUserPasswordFail () {
   }
 }
 
+export function loadDownloadList () {
+  return {
+    type: LOAD_DOWNLOAD_LIST
+  }
+}
+
+export function downloadListLoaded (list) {
+  return {
+    type: LOAD_DOWNLOAD_LIST_SUCCESS,
+    payload: {
+      list
+    }
+  }
+}
+
+export function loadDownloadListFail (error) {
+  return {
+    type: LOAD_DOWNLOAD_LIST_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function downloadFile (id) {
+  return {
+    type: DOWNLOAD_FILE,
+    payload: {
+      id
+    }
+  }
+}
+
+export function fileDownloaded (id) {
+  return {
+    type: DOWNLOAD_FILE_SUCCESS,
+    payload: {
+      id
+    }
+  }
+}
+
+export function downloadFileFail (error) {
+  return {
+    type: DOWNLOAD_FILE_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function initiateDownloadTask (id, type, downloadParams?, itemId?) {
+  return {
+    type: INITIATE_DOWNLOAD_TASK,
+    payload: {
+      id,
+      type,
+      downloadParams,
+      itemId
+    }
+  }
+}
+
+export function DownloadTaskInitiated (type, itemId?, statistic?) {
+  return {
+    type: INITIATE_DOWNLOAD_TASK_SUCCESS,
+    payload: {
+      type,
+      itemId
+    },
+    statistic
+  }
+}
+
+export function initiateDownloadTaskFail (error) {
+  return {
+    type: INITIATE_DOWNLOAD_TASK_FAILURE,
+    payload: {
+      error
+    }
+  }
+}

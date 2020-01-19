@@ -19,12 +19,16 @@
  */
 
 import { IChartProps } from '../../components/Chart'
-import barDefaultConfig from '../../config/chart/bar'
+import { DEFAULT_SPLITER } from 'app/globalConstants'
+import {
+  IFieldFormatConfig,
+  getFormattedValue,
+  FieldFormatTypes
+} from 'containers/Widget/components/Config/Format'
 import {
   decodeMetricName,
   getChartTooltipLabel,
-  getAggregatorLocale,
-  getFormattedValue
+  getAggregatorLocale
 } from '../../components/util'
 import {
   getDimetionAxisOption,
@@ -35,36 +39,32 @@ import {
   makeGrouped,
   distinctXaxis
 } from './util'
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+import { getStackName, EmptyStack } from 'containers/Widget/components/Config/Stack'
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
-export default function (chartProps: IChartProps, drillOptions?: any) {
-  const {
-    data,
-    cols,
-    metrics,
-    chartStyles,
-    color,
-    tip
-  } = chartProps
+import { barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
 
-  const {
-    spec,
-    bar,
-    label,
-    legend,
-    xAxis,
-    yAxis,
-    splitLine
-  } = chartStyles
-  const { border: barBorder, gap: barGap, width: barWidth } = bar || (barDefaultConfig.style as any).bar
-  const { color: borderColor, width: borderWidth, type: borderType, radius: barBorderRadius } = barBorder
+export default function (chartProps: IChartProps, drillOptions) {
+  const { data, cols, metrics, chartStyles: prevChartStyles, color, tip } = chartProps
+  const chartStyles = barChartStylesMigrationRecorder(prevChartStyles)
 
+  const { bar, label, legend, xAxis, yAxis, splitLine } = chartStyles
   const {
-    stack,
     barChart,
-    percentage
-  } = spec
+    border: barBorder,
+    gap: barGap,
+    width: barWidth,
+    stack: stackConfig
+  } = bar
+  const {
+    color: borderColor,
+    width: borderWidth,
+    type: borderType,
+    radius: barBorderRadius
+  } = barBorder
+
+  const { on: turnOnStack, percentage } = stackConfig || EmptyStack
 
   const {
     showVerticalLine,
@@ -80,11 +80,22 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   const { selectedItems } = drillOptions
   const labelOption = {
     label: {
-      ...getLabelOption('bar', label, false, {
+      ...getLabelOption('bar', label, metrics, false, {
         formatter: (params) => {
-          const { value, seriesName } = params
-          const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
-          const formatted = getFormattedValue(value, m.format)
+          const { value, seriesId } = params
+          const m = metrics.find((m) => m.name === seriesId.split(`${DEFAULT_SPLITER}${DEFAULT_SPLITER}`)[0])
+          let format: IFieldFormatConfig = m.format
+          let formattedValue = value
+          if (percentage) {
+            format = {
+              formatType: FieldFormatTypes.Percentage,
+              [FieldFormatTypes.Percentage]: {
+                decimalPlaces: 0
+              }
+            }
+            formattedValue /= 100
+          }
+          const formatted = getFormattedValue(formattedValue, format)
           return formatted
         }
       })
@@ -98,83 +109,107 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   let percentGrouped = {}
   if (color.items.length) {
     xAxisData = distinctXaxis(data, xAxisColumnName)
-    grouped = makeGrouped(data, color.items.map((c) => c.name), xAxisColumnName, metrics, xAxisData)
+    grouped = makeGrouped(
+      data,
+      color.items.map((c) => c.name),
+      xAxisColumnName,
+      metrics,
+      xAxisData
+    )
 
     const configValue = color.items[0].config.values
     const configKeys = []
     Object.entries(configValue).forEach(([k, v]: [string, string]) => {
       configKeys.push(k)
     })
-    percentGrouped = makeGrouped(data, cols, color.items[0].name, metrics, configKeys)
+    percentGrouped = makeGrouped(
+      data,
+      cols.map((c) => c.name),
+      color.items[0].name,
+      metrics,
+      configKeys
+    )
   }
 
   const series = []
   const seriesData = []
   metrics.forEach((m, i) => {
     const decodedMetricName = decodeMetricName(m.name)
-    const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
-    const stackOption = (stack || percentage) ? { stack: 'stack' } : null
+    const localeMetricName = `[${getAggregatorLocale(
+      m.agg
+    )}] ${decodedMetricName}`
+    const stackOption = turnOnStack
+      ? { stack: getStackName(m.name, stackConfig) }
+      : null
     if (color.items.length) {
       const sumArr = []
       Object.entries(percentGrouped).forEach(([k, v]: [string, any[]]) => {
         sumArr.push(getColorDataSum(v, metrics))
       })
 
-      Object
-        .entries(grouped)
-        .forEach(([k, v]: [string, any[]]) => {
-          const serieObj = {
-            name: `${k} ${localeMetricName}`,
-            type: 'bar',
-            ...stackOption,
-            sampling: 'average',
-            data: v.map((g, index) => {
-              // if (index === interactIndex) {
-              //   return {
-              //     value: g[m],
-              //     itemStyle: {
-              //       normal: {
-              //         opacity: 1
-              //       }
-              //     }
-              //   }
-              // } else {
-              // if (percentage) {
-              //   return g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100
-              // } else {
-              //   return g[`${m.agg}(${decodedMetricName})`]
-              // }
-              // }
-               if (selectedItems && selectedItems.length && selectedItems.some((item) => item === index)) {
-                return {
-                  value: percentage ? g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100 : g[`${m.agg}(${decodedMetricName})`],
-                  itemStyle: {
-                    normal: {
-                      opacity: 1
-                    }
+      Object.entries(grouped).forEach(([k, v]: [string, any[]]) => {
+        const serieObj = {
+          id: `${m.name}${DEFAULT_SPLITER}${DEFAULT_SPLITER}${k}`,
+          name: `${k} ${localeMetricName}`,
+          type: 'bar',
+          ...stackOption,
+          sampling: 'average',
+          data: v.map((g, index) => {
+            // if (index === interactIndex) {
+            //   return {
+            //     value: g[m],
+            //     itemStyle: {
+            //       normal: {
+            //         opacity: 1
+            //       }
+            //     }
+            //   }
+            // } else {
+            // if (percentage) {
+            //   return g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100
+            // } else {
+            //   return g[`${m.agg}(${decodedMetricName})`]
+            // }
+            // }
+            if (
+              selectedItems &&
+              selectedItems.length &&
+              selectedItems.some((item) => item === index)
+            ) {
+              return {
+                value: percentage
+                  ? (g[`${m.agg}(${decodedMetricName})`] / sumArr[index]) * 100
+                  : g[`${m.agg}(${decodedMetricName})`],
+                itemStyle: {
+                  normal: {
+                    opacity: 1
                   }
                 }
+              }
+            } else {
+              if (percentage) {
+                return (
+                  (g[`${m.agg}(${decodedMetricName})`] / sumArr[index]) * 100
+                )
               } else {
-                if (percentage) {
-                  return g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100
-                } else {
-                  return g[`${m.agg}(${decodedMetricName})`]
-                }
+                return g[`${m.agg}(${decodedMetricName})`]
               }
-            }),
-            itemStyle: {
-              normal: {
-                opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
-                // color: color.items[0].config.values[k]
-              }
-            },
-            ...labelOption
-          }
-          series.push(serieObj)
-          seriesData.push(grouped[k])
-        })
+            }
+          }),
+          itemStyle: {
+            normal: {
+              opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1,
+              color: color.items[0].config.values[k]
+            }
+          },
+          ...labelOption
+        }
+        series.push(serieObj)
+        seriesData.push(grouped[k])
+      })
     } else {
       const serieObj = {
+        id: m.name,
         name: decodedMetricName,
         type: 'bar',
         ...stackOption,
@@ -195,15 +230,23 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
           //     }
           //   }
           // } else {
-            // if (percentage) {
-            //   return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
-            // } else {
-            //   return d[`${m.agg}(${decodedMetricName})`]
-            // }
+          // if (percentage) {
+          //   return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
+          // } else {
+          //   return d[`${m.agg}(${decodedMetricName})`]
           // }
-          if (selectedItems && selectedItems.length && selectedItems.some((item) => item === index)) {
+          // }
+          if (
+            selectedItems &&
+            selectedItems.length &&
+            selectedItems.some((item) => item === index)
+          ) {
             return {
-              value: percentage ? d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100 : d[`${m.agg}(${decodedMetricName})`],
+              value: percentage
+                ? (d[`${m.agg}(${decodedMetricName})`] /
+                    getDataSum(data, metrics)[index]) *
+                  100
+                : d[`${m.agg}(${decodedMetricName})`],
               itemStyle: {
                 normal: {
                   opacity: 1
@@ -211,8 +254,12 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
               }
             }
           } else {
-             if (percentage) {
-              return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
+            if (percentage) {
+              return (
+                (d[`${m.agg}(${decodedMetricName})`] /
+                  getDataSum(data, metrics)[index]) *
+                100
+              )
             } else {
               return d[`${m.agg}(${decodedMetricName})`]
             }
@@ -225,7 +272,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
             borderWidth,
             borderType,
             barBorderRadius,
-            color: color.value[m.name] || defaultThemeColors[i]
+            color: color.value[m.name] || defaultThemeColors[i % defaultThemeColors.length]
           }
         },
         barGap: `${barGap}%`,
@@ -237,9 +284,9 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         // },
         // itemStyle: {
         //   normal: {
-            // opacity: interactIndex === undefined ? 1 : 0.25
-            // color: color.value[m.name] || defaultThemeColors[i]
-          // }
+        // opacity: interactIndex === undefined ? 1 : 0.25
+        // color: color.value[m.name] || defaultThemeColors[i]
+        // }
         // },
         ...labelOption
       }
@@ -247,19 +294,74 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       seriesData.push([...data])
     }
   })
-  const {isDrilling, getDataDrillDetail, instance } = drillOptions
-  const brushedOptions = isDrilling === true ? {
-    brush: {
-      toolbox: ['rect', 'polygon', 'keep', 'clear'],
-      throttleType: 'debounce',
-      throttleDelay: 300,
-      brushStyle: {
-        borderWidth: 1,
-        color: 'rgba(255,255,255,0.2)',
-        borderColor: 'rgba(120,140,180,0.6)'
+  const seriesNames = series.map((s) => s.name)
+  if (turnOnStack && stackConfig.sum.show) {
+    const {
+      fontFamily,
+      fontStyle,
+      fontColor,
+      fontSize,
+      fontWeight
+    } = stackConfig.sum.font
+    const sumSeries = series.reduce((acc, serie, serieIdx) => {
+      const stackName = serie.stack
+      if (acc[stackName]) {
+        return acc
       }
-    }
-  } : null
+      acc[stackName] = {
+        name: stackName,
+        type: 'bar',
+        stack: stackName,
+        label: {
+          normal: {
+            show: true,
+            color: fontColor,
+            fontStyle,
+            fontWeight,
+            fontFamily,
+            fontSize,
+            position: barChart ? 'right' : 'top',
+            formatter: (params) => {
+              let val = series
+                .filter((s) => s.stack === stackName)
+                .reduce((acc, s) => acc + s.data[params.dataIndex], 0)
+              let format = metrics[serieIdx].format
+              if (percentage) {
+                format = {
+                  formatType: FieldFormatTypes.Percentage,
+                  [FieldFormatTypes.Percentage]: {
+                    decimalPlaces: 0
+                  }
+                }
+                val /= 100
+              }
+              const formattedValue = getFormattedValue(val, format)
+              return formattedValue
+            }
+          }
+        },
+        data: Array.from(xAxisData).fill(0)
+      }
+      return acc
+    }, {})
+    series.push(...Object.values(sumSeries))
+  }
+  const { isDrilling, getDataDrillDetail, instance } = drillOptions
+  const brushedOptions =
+    isDrilling === true
+      ? {
+          brush: {
+            toolbox: ['rect', 'polygon', 'keep', 'clear'],
+            throttleType: 'debounce',
+            throttleDelay: 300,
+            brushStyle: {
+              borderWidth: 1,
+              color: 'rgba(255,255,255,0.2)',
+              borderColor: 'rgba(120,140,180,0.6)'
+            }
+          }
+        }
+      : null
   // if (isDrilling) {
   //   //  instance.off('brushselected')
   //     instance.on('brushselected', brushselected)
@@ -284,18 +386,21 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         range = range.concat(area.range)
       })
     }
-    if (brushComponent && brushComponent.selected && brushComponent.selected.length) {
+    if (
+      brushComponent &&
+      brushComponent.selected &&
+      brushComponent.selected.length
+    ) {
       for (let i = 0; i < brushComponent.selected.length; i++) {
         const rawIndices = brushComponent.selected[i].dataIndex
         const seriesIndex = brushComponent.selected[i].seriesIndex
-        brushed.push({[i]: rawIndices})
+        brushed.push({ [i]: rawIndices })
       }
     }
     if (getDataDrillDetail) {
-      getDataDrillDetail(JSON.stringify({range, brushed, sourceData}))
+      getDataDrillDetail(JSON.stringify({ range, brushed, sourceData }))
     }
   }
-  const seriesNames = series.map((s) => s.name)
 
   // dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
   //   dataZoom: [{
@@ -331,18 +436,41 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     lineStyle: horizontalLineStyle
   }
 
-  const dimetionAxisOption = getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData)
-  const metricAxisOption = getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `), 'x', percentage)
+  const dimetionAxisOption = getDimetionAxisOption(
+    xAxis,
+    xAxisSplitLineConfig,
+    xAxisData
+  )
+  const metricAxisOption = getMetricAxisOption(
+    yAxis,
+    yAxisSplitLineConfig,
+    metrics.map((m) => decodeMetricName(m.name)).join(` / `),
+    'x',
+    percentage
+  )
   return {
     xAxis: barChart ? metricAxisOption : dimetionAxisOption,
     yAxis: barChart ? dimetionAxisOption : metricAxisOption,
     series,
     tooltip: {
-      formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
+      formatter: getChartTooltipLabel('bar', seriesData, {
+        cols,
+        metrics,
+        color,
+        tip
+      })
     },
     legend: getLegendOption(legend, seriesNames),
-    grid: getGridPositions(legend, seriesNames, '', barChart, yAxis, xAxis, xAxisData)
-   // ...brushedOptions
+    grid: getGridPositions(
+      legend,
+      seriesNames,
+      '',
+      barChart,
+      yAxis,
+      xAxis,
+      xAxisData
+    )
+    // ...brushedOptions
   }
 }
 

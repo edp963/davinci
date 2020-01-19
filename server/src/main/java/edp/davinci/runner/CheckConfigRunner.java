@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,22 +61,22 @@ public class CheckConfigRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         if (StringUtils.isEmpty(mailHost)) {
-            log.error("**************     Configuration error: mail host connot be EMPTY!      **************");
+            log.error("**************     Configuration error: mail host cannot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
 
         if (StringUtils.isEmpty(mailPort)) {
-            log.error("**************     Configuration error: mail port connot be EMPTY!      **************");
+            log.error("**************     Configuration error: mail port cannot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
 
         if (StringUtils.isEmpty(mailUserName)) {
-            log.error("**************     Configuration error: mail username connot be EMPTY!      **************");
+            log.error("**************     Configuration error: mail username cannot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
 
         if (StringUtils.isEmpty(mailUserName)) {
-            log.error("**************     Configuration error: mail nickname connot be EMPTY!      **************");
+            log.error("**************     Configuration error: mail nickname cannot be EMPTY!      **************");
             SpringApplication.exit(applicationContext);
         }
 

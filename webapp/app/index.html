@@ -119,7 +119,8 @@
   <body>
     <!-- Display a message if JS has been disabled on the browser. -->
     <noscript>如果你看到这条信息，说明<strong> 你的浏览器禁用了 JavaScript </strong>, 请 <strong>取消禁用</strong> 恢复应用程序正常工作。</noscript>
-
+    <!-- Prevent refresh page after keypress `Enter` to input when it is the only one input in document -->
+    <input type="text" style="display: none" />
     <!-- The app hooks into this div -->
     <div id="app">
       <div class="general-loading">

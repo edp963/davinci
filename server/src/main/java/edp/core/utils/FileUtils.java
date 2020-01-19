@@ -1,39 +1,42 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.consts.Consts;
+import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.service.excel.MsgWrapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static edp.core.consts.Consts.EMPTY;
+import static edp.core.consts.Consts.*;
 
 
 @Component
@@ -43,7 +46,6 @@ public class FileUtils {
     @Value("${file.userfiles-path}")
     public String fileBasePath;
 
-
     /**
      * 校验MultipartFile 是否图片
      *
@@ -51,18 +53,12 @@ public class FileUtils {
      * @return
      */
     public boolean isImage(MultipartFile file) {
-
-        Pattern pattern = Pattern.compile(Consts.REG_IMG_FORMAT);
-        Matcher matcher = pattern.matcher(file.getOriginalFilename());
-
+        Matcher matcher = PATTERN_IMG_FROMAT.matcher(file.getOriginalFilename());
         return matcher.find();
     }
 
     public boolean isImage(File file) {
-
-        Pattern pattern = Pattern.compile(Consts.REG_IMG_FORMAT);
-        Matcher matcher = pattern.matcher(file.getName());
-
+        Matcher matcher = PATTERN_IMG_FROMAT.matcher(file.getName());
         return matcher.find();
     }
 
@@ -135,7 +131,7 @@ public class FileUtils {
                 file = new File(filePath);
             }
             if (file.exists()) {
-                byte[] buffer = new byte[0];
+                byte[] buffer = null;
                 InputStream is = null;
                 OutputStream os = null;
                 try {
@@ -152,16 +148,8 @@ public class FileUtils {
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    try {
-                        if (null != is) {
-                            is.close();
-                        }
-                        if (null != os) {
-                            os.close();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    closeCloseable(os);
+                    closeCloseable(is);
                     remove(filePath);
                 }
             }
@@ -180,8 +168,7 @@ public class FileUtils {
         }
         File file = new File(filePath);
         if (file.exists() && file.isFile()) {
-            file.delete();
-            return true;
+            return file.delete();
         }
         return false;
     }
@@ -194,9 +181,11 @@ public class FileUtils {
      * @return
      */
     public static void deleteDir(File dir) {
+
         if (dir.isFile() || dir.list().length == 0) {
             dir.delete();
-        } else {
+        }
+        else {
             for (File f : dir.listFiles()) {
                 deleteDir(f);
             }
@@ -211,6 +200,9 @@ public class FileUtils {
      * @return
      */
     public String formatFilePath(String filePath) {
+        if(filePath == null) {
+            return null;
+        }
         return filePath.replace(fileBasePath, EMPTY).replaceAll(File.separator + "{2,}", File.separator);
     }
 
@@ -221,23 +213,81 @@ public class FileUtils {
      * @param targetFile
      */
     public static void zipFile(List<File> files, File targetFile) {
-        byte[] bytes = new byte[1024];
 
+        byte[] bytes = new byte[1024];
+        ZipOutputStream out = null;
+        FileInputStream in = null;
         try {
-            ZipOutputStream out = new ZipOutputStream(new FileOutputStream(targetFile));
+            out = new ZipOutputStream(new FileOutputStream(targetFile));
             for (File file : files) {
-                FileInputStream in = new FileInputStream(file);
-                out.putNextEntry(new ZipEntry(file.getName()));
-                int length;
-                while ((length = in.read(bytes)) > 0) {
-                    out.write(bytes, 0, length);
+                try {
+                    in = new FileInputStream(file);
+                    out.putNextEntry(new ZipEntry(file.getName()));
+                    int length;
+                    while ((length = in.read(bytes)) > 0) {
+                        out.write(bytes, 0, length);
+                    }
+                    out.closeEntry();
+                    closeCloseable(in);
                 }
-                out.closeEntry();
-                in.close();
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+                finally {
+                    closeCloseable(in);
+                }
             }
-            out.close();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
+        }finally {
+            closeCloseable(out);
+        }
+    }
+
+    public String getFilePath(FileTypeEnum type, MsgWrapper msgWrapper) {
+        StringBuilder sb = new StringBuilder(this.fileBasePath);
+        if (!sb.toString().endsWith(File.separator)) {
+            sb.append(File.separator);
+        }
+        if (msgWrapper.getAction() == ActionEnum.DOWNLOAD) {
+            sb.append(DIR_DOWNLOAD);
+        } else if (msgWrapper.getAction() == ActionEnum.SHAREDOWNLOAD) {
+            sb.append(DIR_SHARE_DOWNLOAD);
+        } else if (msgWrapper.getAction() == ActionEnum.MAIL) {
+            sb.append(DIR_EMAIL);
+        }
+        sb.append(new SimpleDateFormat("yyyyMMdd").format(new Date())).append(File.separator);
+        sb.append(type.getType()).append(File.separator);
+        File dir = new File(sb.toString());
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        if (msgWrapper.getAction() == ActionEnum.DOWNLOAD) {
+            sb.append(msgWrapper.getxId());
+        } else if (msgWrapper.getAction() == ActionEnum.SHAREDOWNLOAD || msgWrapper.getAction() == ActionEnum.MAIL) {
+            sb.append(msgWrapper.getxUUID());
+        }
+        sb.append(UNDERLINE).append(System.currentTimeMillis()).append(type.getFormat());
+        return sb.toString().replaceAll(File.separator + "{2,}", File.separator);
+    }
+
+    public static boolean delete(String filePath) {
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()) {
+            return file.delete();
+        }
+        return false;
+    }
+    
+    public static void closeCloseable(Closeable c) {
+        if(c != null) {
+            try {
+                c.close();
+            }
+            catch (IOException e) {
+                // ignore
+            }
         }
     }
 }

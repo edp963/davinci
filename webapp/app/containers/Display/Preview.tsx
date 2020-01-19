@@ -1,56 +1,44 @@
 import * as React from 'react'
-import * as classnames from 'classnames'
-import Helmet from 'react-helmet'
-import * as echarts from 'echarts/lib/echarts'
-import { Link, InjectedRouter } from 'react-router'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 
 import { compose } from 'redux'
 import reducer from './reducer'
-import reducerWidget from '../Widget/reducer'
+import reducerWidget from 'containers/Widget/reducer'
 import saga from './sagas'
-import sagaWidget from '../Widget/sagas'
-import reducerView from '../View/reducer'
-import sagaView from '../View/sagas'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import sagaWidget from 'containers/Widget/sagas'
+import reducerView from 'containers/View/reducer'
+import sagaView from 'containers/View/sagas'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 
-import { GraphTypes, SecondaryGraphTypes } from './components/util'
-
-import Container from '../../components/Container'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
-
-import { makeSelectWidgets } from '../Widget/selectors'
-import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
+import { makeSelectWidgets } from 'containers/Widget/selectors'
+import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
 import {
   makeSelectCurrentDisplay,
   makeSelectCurrentSlide,
   makeSelectDisplays,
   makeSelectCurrentLayers,
-  makeSelectCurrentLayersInfo } from './selectors'
+  makeSelectCurrentLayersInfo,
+  makeSelectCurrentProject
+} from './selectors'
 
-import { hideNavigator } from '../App/actions'
-import { ViewActions } from '../View/actions'
+import { FieldSortTypes } from 'containers/Widget/components/Config/Sort'
+import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
+
+import { hideNavigator } from 'containers/App/actions'
+import { ViewActions } from 'containers/View/actions'
 const { loadViewDataFromVizItem } = ViewActions // @TODO global filter in Display Preview
-import {
-  editCurrentDisplay,
-  loadDisplayDetail,
-  selectLayer,
-  addDisplayLayers,
-  deleteDisplayLayers,
-  editDisplayLayers } from './actions'
-import { DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
+import DisplayActions from './actions'
 import LayerItem from './components/LayerItem'
 
 const styles = require('./Display.less')
-const stylesDashboard = require('../Dashboard/Dashboard.less')
-
-import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
-import { decodeMetricName } from '../Widget/components/util'
-import { IQueryConditions, IDataRequestParams } from '../Dashboard/Grid'
-import { IFormedViews } from '../View/types'
-
+import { IWidgetConfig, RenderType } from 'containers/Widget/components/Widget'
+import { decodeMetricName } from 'containers/Widget/components/util'
+import { IQueryConditions, IDataRequestParams } from 'containers/Dashboard/Grid'
+import { IFormedViews } from 'containers/View/types'
+import { statistic } from 'utils/statistic/statistic.dv'
+import {IProject} from 'containers/Projects'
 interface IPreviewProps {
   params: any
   widgets: any[]
@@ -82,6 +70,11 @@ interface IPreviewProps {
     viewId: number,
     requestParams: IDataRequestParams
   ) => void
+  onMonitoredSyncDataAction: () => any
+  onMonitoredSearchDataAction: () => any
+  onMonitoredLinkageDataAction: () => any
+  currentProject: IProject
+  onloadProjectDetail: (pid) => any
 }
 
 interface IPreviewStates {
@@ -102,21 +95,66 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
   public componentWillMount () {
     const {
       params,
-      onLoadDisplayDetail
+      onLoadDisplayDetail,
+      onloadProjectDetail
     } = this.props
     const projectId = +params.pid
     const displayId = +params.displayId
     onLoadDisplayDetail(projectId, displayId)
+    onloadProjectDetail(projectId)
   }
 
   public componentDidMount () {
     this.props.onHideNavigator()
+    window.addEventListener('beforeunload', function (event) {
+      statistic.setDurations({
+        end_time: statistic.getCurrentDateTime()
+      }, (data) => {
+        statistic.setPrevDurationRecord(data, () => {
+          statistic.setDurations({
+            start_time: statistic.getCurrentDateTime(),
+            end_time: ''
+          })
+        })
+      })
+    }, false)
+    this.statisticFirstVisit = this.__once__(statistic.setOperations)
+    statistic.setDurations({
+      start_time: statistic.getCurrentDateTime()
+    })
+    statistic.startClock()
+    window.addEventListener('mousemove', this.statisticTimeFuc, false)
+    window.addEventListener('visibilitychange', this.onVisibilityChanged, false)
+    window.addEventListener('keydown', this.statisticTimeFuc, false)
+  }
+
+  private statisticTimeFuc = () => {
+    statistic.isTimeout()
   }
 
   public componentWillReceiveProps (nextProps: IPreviewProps) {
     const { currentSlide } = nextProps
     const { scale } = this.state
     const [scaleWidth, scaleHeight] = scale
+    const { params: {pid, displayId}, currentDisplay, currentProject} = this.props
+    if (this.props.currentSlide) {
+      this.statisticFirstVisit({
+        org_id: currentProject.orgId,
+        project_name: currentProject.name,
+        project_id: pid,
+        viz_type: 'display',
+        viz_id: displayId,
+        viz_name: currentDisplay['name'],
+        create_time:  statistic.getCurrentDateTime()
+      }, (data) => {
+        const visitRecord = {
+          ...data,
+          action: 'visit'
+        }
+        statistic.sendOperation(visitRecord)
+      })
+    }
+
     if (currentSlide && this.props.currentSlide !== currentSlide) {
       const { slideParams } = JSON.parse(currentSlide.config)
       const { scaleMode, width, height } = slideParams
@@ -135,20 +173,27 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           nextScaleWidth = clientWidth / width
       }
       if (scaleHeight !== nextScaleHeight || scaleWidth !== nextScaleWidth) {
-        if (nextScaleHeight === nextScaleWidth) {
-          this.scaleViewport(nextScaleHeight)
-          this.setState({ scale: [1, 1] })
-        } else {
-          this.setState({ scale: [nextScaleWidth, nextScaleHeight] })
-        }
+        this.setState({
+          scale: [nextScaleWidth, nextScaleHeight]
+        })
+      }
+
+    }
+  }
+
+  private __once__ (fn) {
+    let tag = true
+    return (...args) => {
+      if (tag) {
+        tag = !tag
+        return fn.apply(this, args)
+      } else {
+        return void 0
       }
     }
   }
 
-  private scaleViewport = (scale: number) => {
-    const viewport = document.querySelector('meta[name=viewport]')
-    viewport.setAttribute('content', `width=device-width, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=0`)
-  }
+  private statisticFirstVisit: any
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
     const {
@@ -160,30 +205,44 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
+    const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
+    const customOrders = updatedCols.concat(updatedRows)
+      .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+      .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
 
     const cachedQueryConditions = currentLayersInfo[itemId].queryConditions
 
     let tempFilters
     let linkageFilters
     let globalFilters
+    let tempOrders
     let variables
     let linkageVariables
     let globalVariables
+    let pagination
+    let nativeQuery
 
     if (queryConditions) {
       tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
       linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
       globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      tempOrders = queryConditions.orders !== void 0 ? queryConditions.orders : cachedQueryConditions.orders
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
+      pagination = queryConditions.pagination || cachedQueryConditions.pagination
+      nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
     } else {
       tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
       globalFilters = cachedQueryConditions.globalFilters
+      tempOrders = cachedQueryConditions.orders
       variables = cachedQueryConditions.variables
       linkageVariables = cachedQueryConditions.linkageVariables
       globalVariables = cachedQueryConditions.globalVariables
+      pagination = cachedQueryConditions.pagination
+      nativeQuery = cachedQueryConditions.nativeQuery
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -235,30 +294,62 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         })))
     }
 
+    const requestParamsFilters = filters.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
+
+    const requestParams = {
+      groups,
+      aggregators,
+      filters: requestParamsFilters,
+      tempFilters,
+      linkageFilters,
+      globalFilters,
+      variables,
+      linkageVariables,
+      globalVariables,
+      orders,
+      cache,
+      expired,
+      flush: renderType === 'flush',
+      pagination,
+      nativeQuery,
+      customOrders
+    }
+
+    if (tempOrders) {
+      requestParams.orders = requestParams.orders.concat(tempOrders)
+    }
+
     onLoadViewDataFromVizItem(
       renderType,
       itemId,
       widget.viewId,
-      {
-        groups,
-        aggregators,
-        filters: filters.map((i) => i.config.sql),
-        tempFilters,
-        linkageFilters,
-        globalFilters,
-        variables,
-        linkageVariables,
-        globalVariables,
-        orders,
-        cache,
-        expired
-      }
+      requestParams
     )
   }
 
-  private getSlideStyle = (slideParams) => {
-    const { scale } = this.state
+  private getPreviewStyle = (slideParams) => {
+    const { scaleMode } = slideParams
+    const previewStyle: React.CSSProperties = {}
+    switch (scaleMode) {
+      case 'scaleWidth':
+        previewStyle.overflowY = 'auto'
+        break
+      case 'scaleHeight':
+        previewStyle.overflowX = 'auto'
+        break
+      case 'noScale':
+        previewStyle.overflow = 'auto'
+        break
+      case 'scaleFull':
+      default:
+        break
+    }
+    return previewStyle
+  }
 
+  private getSlideStyle = (slideParams, scale: [number, number]) => {
     const {
       width,
       height,
@@ -268,14 +359,26 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     } = slideParams
 
     let slideStyle: React.CSSProperties
+
+    const { clientWidth, clientHeight } = document.body
+    const [scaleX, scaleY] = scale
+
+    let translateX = (scaleX - 1) / 2
+    let translateY = (scaleY - 1) / 2
+    translateX += Math.max(0, (clientWidth - scaleX * width) / (2 * width))
+    translateY += Math.max(0, (clientHeight - scaleY * height) / (2 * height))
+
+    const translate = `translate(${translateX * 100}%, ${translateY * 100}%)`
+
     slideStyle  = {
       overflow: 'visible',
-      width: `${width * scale[0]}px`,
-      height: `${height * scale[1]}px`,
+      width,
+      height,
+      transform: `${translate} scale(${scaleX}, ${scaleY})`
     }
 
     let backgroundStyle: React.CSSProperties | CSSStyleDeclaration = slideStyle
-    if (scaleMode === 'scaleWidth' && (document.documentElement.clientWidth / window.devicePixelRatio) < 600) {
+    if (scaleMode === 'scaleWidth' && screen.width <= 1024) {
       backgroundStyle = document.body.style
     }
     backgroundStyle.backgroundSize = 'cover'
@@ -290,6 +393,37 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     return slideStyle
   }
 
+  private onVisibilityChanged (event) {
+    const flag = event.target.webkitHidden
+    if (flag) {
+      statistic.setDurations({
+        end_time: statistic.getCurrentDateTime()
+      }, (data) => {
+        statistic.sendDuration([data]).then((res) => {
+          statistic.resetClock()
+        })
+      })
+    } else {
+      statistic.setDurations({
+        start_time: statistic.getCurrentDateTime()
+      }, (data) => {
+        statistic.startClock()
+      })
+    }
+  }
+
+  public componentWillUnmount () {
+    statistic.setDurations({
+      end_time: statistic.getCurrentDateTime()
+    }, (data) => {
+      statistic.sendDuration([data])
+    })
+    window.removeEventListener('mousemove', this.statisticTimeFuc, false)
+    window.removeEventListener('keydown', this.statisticTimeFuc, false)
+    window.removeEventListener('visibilitychange', this.onVisibilityChanged, false)
+    statistic.resetClock()
+  }
+
   public render () {
     const {
       widgets,
@@ -302,10 +436,12 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     if (!currentDisplay) { return null }
 
     const { scale } = this.state
-    const slideStyle = this.getSlideStyle(JSON.parse(currentSlide.config).slideParams)
+    const slideParams = JSON.parse(currentSlide.config).slideParams
+    const previewStyle = this.getPreviewStyle(slideParams)
+    const slideStyle = this.getSlideStyle(slideParams, scale)
     const layerItems =  Array.isArray(widgets) ? currentLayers.map((layer) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
-      const view = widget && formedViews[widget.viewId]
+      const model = widget && formedViews[widget.viewId].model
       const layerId = layer.id
 
       const { polling, frequency } = JSON.parse(layer.params)
@@ -316,11 +452,10 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           key={layer.id}
           ref={(f) => this[`layerId_${layer.id}`]}
           pure={true}
-          scale={scale}
           layer={layer}
           itemId={layerId}
           widget={widget}
-          view={view}
+          model={model}
           datasource={datasource}
           loading={loading}
           polling={polling}
@@ -333,7 +468,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       )
     }) : null
     return (
-      <div className={styles.preview}>
+      <div className={styles.preview} style={previewStyle}>
         <div className={styles.board} style={slideStyle}>
           {layerItems}
         </div>
@@ -350,14 +485,19 @@ const mapStateToProps = createStructuredSelector({
   currentSlide: makeSelectCurrentSlide(),
   displays: makeSelectDisplays(),
   currentLayers: makeSelectCurrentLayers(),
-  currentLayersInfo: makeSelectCurrentLayersInfo()
+  currentLayersInfo: makeSelectCurrentLayersInfo(),
+  currentProject: makeSelectCurrentProject()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
-    onLoadDisplayDetail: (projectId, displayId) => dispatch(loadDisplayDetail(projectId, displayId)),
-    onLoadViewDataFromVizItem: (renderType, itemId, viewId, requestParams) => dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'display'))
+    onLoadDisplayDetail: (projectId, displayId) => dispatch(DisplayActions.loadDisplayDetail(projectId, displayId)),
+    onLoadViewDataFromVizItem: (renderType, itemId, viewId, requestParams) => dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'display')),
+    onMonitoredSyncDataAction: () => dispatch(DisplayActions.monitoredSyncDataAction()),
+    onMonitoredSearchDataAction: () => dispatch(DisplayActions.monitoredSearchDataAction()),
+    onMonitoredLinkageDataAction: () => dispatch(DisplayActions.monitoredLinkageDataAction()),
+    onloadProjectDetail: (pid) => dispatch(DisplayActions.loadProjectDetail(pid))
   }
 }
 
@@ -369,6 +509,7 @@ const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
 
 const withReducerView = injectReducer({ key: 'view', reducer: reducerView })
 const withSagaView = injectSaga({ key: 'view', saga: sagaView })
+
 
 const withConnect = connect<{}, {}, IPreviewProps>(mapStateToProps, mapDispatchToProps)
 

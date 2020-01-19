@@ -67,10 +67,10 @@ import {
   loadWidgetCsvFail
 } from './actions'
 
-import request from '../../utils/request'
-import { errorHandler } from '../../utils/util'
-import api from '../../utils/api'
-import config, { env } from '../../globalConfig'
+import request from 'utils/request'
+import { errorHandler } from 'utils/util'
+import api from 'utils/api'
+import config, { env } from 'app/globalConfig'
 const shareHost = config[env].shareHost
 
 export function* getDashboards (action) {
@@ -301,7 +301,7 @@ export function* getWidgetCsv (action) {
 
 export default function* rootDashboardSaga (): IterableIterator<any> {
   yield all([
-    takeLatest(LOAD_DASHBOARDS, getDashboards),
+    takeEvery(LOAD_DASHBOARDS, getDashboards),
     takeLatest(ADD_DASHBOARD, addDashboard),
     takeEvery(EDIT_DASHBOARD, editDashboard),
     takeEvery(EDIT_CURRENT_DASHBOARD, editCurrentDashboard),

@@ -19,6 +19,7 @@
  */
 
 import { IChartProps } from '../../components/Chart'
+import { EChartOption } from 'echarts'
 import {
   decodeMetricName,
   getChartTooltipLabel,
@@ -32,12 +33,13 @@ import {
 } from './util'
 import {
   safeAddition
-} from '../../../../utils/util'
+} from 'utils/util'
 
 import {
   DEFAULT_ECHARTS_THEME
-} from '../../../../globalConstants'
-import geoData from '../../../../assets/js/geo.js'
+} from 'app/globalConstants'
+import geoData from 'assets/js/geo.js'
+import { getFormattedValue } from '../../components/Config/Format'
 
 const provinceSuffix = ['省', '自治区', '市']
 const citySuffix = ['自治州', '市', '区', '县', '旗', '盟', '镇']
@@ -71,15 +73,20 @@ export default function (chartProps: IChartProps) {
     symbolType
   } = spec
 
-  const tooltipOptions = {
-    tooltip: {
-      trigger: 'item',
-      formatter: (params) => {
-        const { name, data} = params
-        if (data) {
-          return name + ' : ' + data.value[2]
-        }
+  const tooltip: EChartOption.Tooltip = {
+    trigger: 'item',
+    formatter: (params: EChartOption.Tooltip.Format) => {
+      const { name, data, color } = params
+      const tooltipLabels = []
+      if (color) {
+        tooltipLabels.push(`<span class="widget-tooltip-circle" style="background: ${color}"></span>`)
       }
+      tooltipLabels.push(name)
+      if (data) {
+        tooltipLabels.push(': ')
+        tooltipLabels.push(getFormattedValue(data.value[2], metrics[0].format))
+      }
+      return tooltipLabels.join('')
     }
   }
 
@@ -97,12 +104,7 @@ export default function (chartProps: IChartProps) {
   }
 
   const labelOptionLines = {
-    label: getLabelOption('lines', label, true, {
-      formatter (param) {
-        const { name, data } = param
-        return `${name}(${data.value[2]})`
-      }
-    })
+    label: getLabelOption('lines', label, metrics, true)
   }
 
   let metricOptions
@@ -414,7 +416,7 @@ export default function (chartProps: IChartProps) {
       mapOptions = {
         ...metricOptions,
         ...visualMapOptions,
-        ...tooltipOptions
+        tooltip
       }
       break
     case 'lines':
@@ -446,7 +448,7 @@ export default function (chartProps: IChartProps) {
         },
         ...metricOptions,
         ...visualMapOptions,
-        ...tooltipOptions
+        tooltip
       }
       break
     case 'heatmap':

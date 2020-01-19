@@ -20,29 +20,36 @@
 
 import React, { createRef } from 'react'
 import { connect } from 'react-redux'
-import moment from 'moment'
 import {
-  getDefaultGlobalControl,
   OnGetControlOptions,
   IMapControlOptions,
   IGlobalControl,
   IGlobalControlRelatedItem,
   IControlRelatedField,
-  getRelatedFieldsInfo,
-  InteractionType
-} from '..'
+  InteractionType,
+  GlobalControlQueryMode
+} from '../types'
+import {
+  getDefaultGlobalControl,
+  deserializeDefaultValue,
+  serializeDefaultValue,
+  getRelatedFieldsInfo
+} from '../util'
 import { FilterTypes, IS_RANGE_TYPE} from '../filterTypes'
+import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 import FilterList from './FilterList'
 import FilterFormWithRedux, { FilterForm } from './FilterForm'
 import OptionSettingFormWithModal, { OptionSettingForm } from './OptionSettingForm'
 import RelatedInfoSelectors from './RelatedInfoSelectors'
-import { Button, Modal } from 'antd'
+import { Button, Modal, Radio } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
-import { ICurrentDashboard } from '../../../containers/Dashboard'
-import { setControlFormValues } from '../../../containers/Dashboard/actions'
+import { ICurrentDashboard } from 'containers/Dashboard'
+import { setControlFormValues } from 'containers/Dashboard/actions'
 import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
+const RadioGroup = Radio.Group
+const RadioButton = Radio.Button
 
 const styles = require('../filter.less')
 
@@ -68,7 +75,7 @@ interface IGlobalControlConfigProps {
   loading: boolean
   mapOptions: IMapControlOptions
   onCancel: () => void
-  onSave: (filterItems: any[]) => void
+  onSave: (filterItems: any[], queryMode: GlobalControlQueryMode) => void
   onGetOptions: OnGetControlOptions
   onSetControlFormValues: (values) => void
 }
@@ -80,6 +87,7 @@ interface IGlobalControlConfigStates {
   viewSelectorSource: IRelatedViewSource[]
   optionModalVisible: boolean,
   optionValues: string
+  queryMode: GlobalControlQueryMode
 }
 
 export class GlobalControlConfig extends React.Component<IGlobalControlConfigProps, IGlobalControlConfigStates> {
@@ -92,7 +100,8 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
       itemSelectorSource: [],
       viewSelectorSource: [],
       optionModalVisible: false,
-      optionValues: ''
+      optionValues: '',
+      queryMode: GlobalControlQueryMode.Immediately
     }
   }
 
@@ -107,9 +116,12 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
       if (currentDashboard) {
         const config = JSON.parse(currentDashboard.config || '{}')
         const globalControls = config.filters || []
+        const queryMode = config.queryMode || GlobalControlQueryMode.Immediately
 
         let selected
         const controls =  globalControls.map((control) => {
+          control = globalControlMigrationRecorder(control)
+
           const { relatedItems } = control
           Object.keys(relatedItems).forEach((itemId) => {
             if (!currentItems.find((ci) => ci.id === Number(itemId))) {
@@ -126,7 +138,8 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
 
         this.setState({
           controls,
-          selected
+          selected,
+          queryMode
         })
         this.setRelatedInfo(selected, currentItems, widgets, views)
         this.setFormData(selected)
@@ -181,12 +194,9 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
   private setFormData = (control: IGlobalControl) => {
     if (control) {
       const { type, interactionType, defaultValue, relatedItems, relatedViews, ...rest } = control
-      const isControlDateType = [FilterTypes.Date, FilterTypes.DateRange].includes(type)
       const fieldsValue = {
         type,
-        defaultValue: isControlDateType && defaultValue
-          ? moment(defaultValue)
-          : defaultValue,
+        defaultValue: deserializeDefaultValue(control),
         ...rest
       }
       this.props.onSetControlFormValues(fieldsValue)
@@ -327,17 +337,14 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
         return
       }
 
-      const { type, key, defaultValue, dateFormat } = values
-      const isControlDateType = [FilterTypes.Date, FilterTypes.DateRange].includes(type)
+      const { key, defaultValue } = values
       const cachedControls = controls.map((c) => {
         if (c.key === key) {
           return {
             ...c,
             ...values,
             interactionType: selected.interactionType,
-            defaultValue: isControlDateType
-              ? (defaultValue && defaultValue.format(dateFormat))
-              : defaultValue,
+            defaultValue: serializeDefaultValue(values, defaultValue),
             relatedItems: itemSelectorSource.reduce((obj, source) => {
               obj[source.id] = {
                 viewId: source.viewId,
@@ -363,13 +370,14 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
 
   private save = () => {
     const { onSave } = this.props
-    if (this.state.controls.length > 0) {
+    const { controls, queryMode } = this.state
+    if (controls.length > 0) {
       this.getCachedFormValues((err, cachedControls) => {
         if (err) { return }
-        onSave(cachedControls)
+        onSave(cachedControls, queryMode)
       })
     } else {
-      onSave([])
+      onSave([], queryMode)
     }
   }
 
@@ -582,6 +590,12 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     })
   }
 
+  private changeQueryMode = (e: RadioChangeEvent) => {
+    this.setState({
+      queryMode: e.target.value
+    })
+  }
+
   public render () {
     const { loading, visible, onCancel } = this.props
     const {
@@ -590,10 +604,21 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
       itemSelectorSource,
       viewSelectorSource,
       optionModalVisible,
-      optionValues
+      optionValues,
+      queryMode
     } = this.state
 
-    const modalButtons = [(
+    const modalFooter = [(
+      <RadioGroup
+        key="queryMode"
+        className={styles.queryMode}
+        value={queryMode}
+        onChange={this.changeQueryMode}
+      >
+        <RadioButton value={GlobalControlQueryMode.Immediately}>立即查询</RadioButton>
+        <RadioButton value={GlobalControlQueryMode.Manually}>手动查询</RadioButton>
+      </RadioGroup>
+    ), (
       <Button
         key="cancel"
         size="large"
@@ -620,7 +645,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
         title="全局控制器配置"
         maskClosable={false}
         visible={visible}
-        footer={modalButtons}
+        footer={modalFooter}
         onCancel={onCancel}
         afterClose={this.resetForm}
       >

@@ -6,14 +6,15 @@ import { ViewVariableTypes } from '../constants'
 
 import Styles from '../View.less'
 
-interface IViewVariableProps {
+export interface IViewVariableListProps {
   variables: IViewVariable[]
-  onAdd: () => void
-  onDelete: (key: string) => void
-  onEdit: (variable: IViewVariable) => void
+  className?: string
+  onAdd?: () => void
+  onDelete?: (key: string) => void
+  onEdit?: (variable: IViewVariable) => void
 }
 
-export class ViewVariableList extends React.Component<IViewVariableProps> {
+export class ViewVariableList extends React.Component<IViewVariableListProps> {
 
   private editItem = (variable: IViewVariable) => () => {
     this.props.onEdit({ ...variable })
@@ -57,11 +58,11 @@ export class ViewVariableList extends React.Component<IViewVariableProps> {
   }
 
   public render () {
-    const { variables, onAdd } = this.props
+    const { variables, className, onAdd } = this.props
 
     return (
       <List
-        className={Styles.viewVariable}
+        className={className}
         size="small"
         header={<div className={Styles.viewVariableHeader}><h4>变量</h4><Icon type="plus" onClick={onAdd} title="添加" /></div>}
         locale={{ emptyText: '暂无变量' }}

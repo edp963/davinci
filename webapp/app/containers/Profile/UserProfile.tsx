@@ -4,17 +4,17 @@ import { Link } from 'react-router'
 import { Icon, Col, Row, Input, Form, Tooltip, Breadcrumb } from 'antd'
 const FormItem = Form.Item
 const styles = require('./profile.less')
-import Box from '../../components/Box'
-import Avatar from '../../components/Avatar'
+import Box from 'components/Box'
+import Avatar from 'components/Avatar'
 import { createStructuredSelector } from 'reselect'
 import { makeSelectLoading, makeSelectUserProfile } from './selectors'
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
+import injectReducer from 'utils/injectReducer'
 import { getUserProfile } from './actions'
-import injectSaga from '../../utils/injectSaga'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IProfileProps {
   form: any

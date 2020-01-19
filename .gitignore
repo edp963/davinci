@@ -32,4 +32,4 @@ userfiles/
 .vscode
 *yarn.lock
 bin/upgrade.go
-bin/upgrade/
+bin/upgrade

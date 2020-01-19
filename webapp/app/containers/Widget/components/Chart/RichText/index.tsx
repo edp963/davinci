@@ -22,7 +22,7 @@ import React, { Suspense } from 'react'
 import { Spin } from 'antd'
 import { IChartProps } from '../'
 import { IWidgetDimension, IWidgetMetric } from 'containers/Widget/components/Widget'
-import { PIVOT_CHART_FONT_SIZES } from '../../../../../../app/globalConstants'
+import { PIVOT_CHART_FONT_SIZES } from 'app/globalConstants'
 import { decodeMetricName } from '../../util'
 import Preview from './Preview'
 const Editor = React.lazy(() => import('./Editor'))

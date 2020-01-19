@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { HashedModuleIdsPlugin } = require('webpack')
 const TerserPlugin = require('terser-webpack-plugin')
 const CompressionPlugin = require('compression-webpack-plugin')
+const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 
 module.exports = require('./webpack.base.babel')({
@@ -27,27 +28,9 @@ module.exports = require('./webpack.base.babel')({
     chunkFilename: '[name].[chunkhash].chunk.js'
   },
 
-  tsLoaders: [
-    // {
-    //   loader: 'awesome-typescript-loader',
-    //   options: {
-    //     useBabel: true,
-    //     babelOptions: {
-    //       babelrc: true
-    //     },
-    //     useCache: false
-    //   }
-    // }
-    {
-      loader: 'babel-loader'
-    },
-    {
-      loader: 'ts-loader',
-      options: {
-        transpileOnly: true
-      }
-    }
-  ],
+  tsLoaders: [{
+    loader: 'babel-loader'
+  }],
 
   optimization: {
     minimize: true,
@@ -82,7 +65,7 @@ module.exports = require('./webpack.base.babel')({
       name: true,
       cacheGroups: {
         vendors: {
-          test: /[\\/]node_modules[\\/](?!antd|jquery|three|bootstrap-datepicker|((react-)?quill))(.[a-zA-Z0-9.\-_]+)[\\/]/,
+          test: /[\\/]node_modules[\\/](?!antd|jquery|three|bootstrap-datepicker)(.[a-zA-Z0-9.\-_]+)[\\/]/,
           // test: /[\\/]node_modules[\\/]/,
           name: 'vendor',
           chunks: 'all'
@@ -149,6 +132,8 @@ module.exports = require('./webpack.base.babel')({
       hashDigest: 'hex',
       hashDigestLength: 20
     }),
+
+    new CaseSensitivePathsPlugin(),
 
     new BundleAnalyzerPlugin({
       analyzerMode: 'server',

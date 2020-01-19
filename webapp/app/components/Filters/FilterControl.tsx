@@ -1,15 +1,15 @@
 import React, { Component, PureComponent, Suspense, ReactNode } from 'react'
 import {
-  OnFilterControlValueChange,
-  ControlOptions,
   renderInputText,
   renderNumberRange,
   renderSelect,
   renderDate,
-  renderDateRange,
-  getDefaultValue,
-  IControlBase
+  renderDateRange
 } from './'
+import { IControlBase, ControlOptions } from './types'
+import {
+  deserializeDefaultValue
+} from './util'
 import { FilterTypes } from './filterTypes'
 import { Form } from 'antd'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
@@ -27,7 +27,7 @@ interface IFilterControlProps {
   control: IControlBase
   currentOptions: ControlOptions
   parentsInfo?: IParentInfo[]
-  onChange: OnFilterControlValueChange
+  onChange: (control: IControlBase, value, isInputChange?: boolean) => void
 }
 
 export class FilterControl extends PureComponent<IFilterControlProps, {}> {
@@ -38,10 +38,10 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
     let component
     switch (filter.type) {
       case FilterTypes.InputText:
-        component = renderInputText(this.onInputChange)
+        component = renderInputText(this.inputChange, this.change)
         break
       case FilterTypes.NumberRange:
-        component = renderNumberRange(this.change)
+        component = renderNumberRange(this.numberRangeChange, this.change)
         break
       case FilterTypes.Select:
         component = renderSelect(filter, this.change, options)
@@ -64,7 +64,7 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
     return (
       <FormItem label={control.name} className={styles.controlItem}>
         {getFieldDecorator(`${control.key}`, {
-          initialValue: getDefaultValue(control)
+          initialValue: deserializeDefaultValue(control)
         })(component)}
       </FormItem>
     )
@@ -75,11 +75,14 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
     onChange(control, val)
   }
 
-  private onInputChange = (e) => {
+  private inputChange = (e) => {
     const { control, onChange } = this.props
-    let val = e.target.value
-    if (val === '') { val = undefined }
-    onChange(control, val)
+    onChange(control, e.target.value, true)
+  }
+
+  private numberRangeChange = (val) => {
+    const { control, onChange } = this.props
+    onChange(control, val, true)
   }
 
   public render () {

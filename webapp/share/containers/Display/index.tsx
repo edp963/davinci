@@ -18,13 +18,11 @@
  * >>
  */
 
-import * as React from 'react'
+import React, { createRef, RefObject } from 'react'
 import { RouteComponentProps } from 'react-router'
 import Helmet from 'react-helmet'
-import * as echarts from 'echarts/lib/echarts'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import * as classnames from 'classnames'
 
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -32,15 +30,20 @@ import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import { DEFAULT_PRIMARY_COLOR } from '../../../app/globalConstants'
+import { FieldSortTypes } from 'containers/Widget/components/Config/Sort'
+import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
+
 import Login from '../../components/Login/index'
-import LayerItem from '../../../app/containers/Display/components/LayerItem'
-import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
-import { decodeMetricName } from '../../../app/containers/Widget/components/util'
+import LayerItem from 'app/containers/Display/components/LayerItem'
+import { RenderType, IWidgetConfig } from 'app/containers/Widget/components/Widget'
+import { decodeMetricName } from 'app/containers/Widget/components/util'
+import HeadlessBrowserIdentifier from '../../components/HeadlessBrowserIdentifier'
 
-const styles = require('../../../app/containers/Display/Display.less')
+const mainStyles = require('app/containers/Main/Main.less')
+const styles = require('app/containers/Display/Display.less')
 
-import { loadDisplay, loadLayerData } from './actions'
+import ShareDisplayActions from './actions'
+const { loadDisplay, loadLayerData } = ShareDisplayActions
 import {
   makeSelectTitle,
   makeSelectDisplay,
@@ -50,6 +53,8 @@ import {
   makeSelectLayersInfo
 } from './selectors'
 import { IQueryConditions, IDataRequestParams } from '../../../app/containers/Dashboard/Grid'
+import { DashboardItemStatus } from '../Dashboard'
+import { GraphTypes } from 'app/containers/Display/components/util'
 
 interface IDisplayProps extends RouteComponentProps<{}, {}> {
   title: string
@@ -65,6 +70,7 @@ interface IDisplayProps extends RouteComponentProps<{}, {}> {
         resultList: any[]
         totalCount: number
       }
+      status: DashboardItemStatus
       loading: boolean
       queryConditions: IQueryConditions
       downloadCsvLoading: boolean
@@ -85,18 +91,21 @@ interface IDisplayStates {
   scale: [number, number]
   showLogin: boolean
   shareInfo: string
+  headlessBrowserRenderSign: boolean
 }
 
 export class Display extends React.Component<IDisplayProps, IDisplayStates> {
 
   private charts: object = {}
+  private displayCanvas: RefObject<HTMLDivElement> = createRef()
 
   public constructor (props) {
     super(props)
     this.state = {
       scale: [1, 1],
       showLogin: false,
-      shareInfo: ''
+      shareInfo: '',
+      headlessBrowserRenderSign: false
     }
   }
 
@@ -110,7 +119,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
   }
 
   public componentWillReceiveProps (nextProps: IDisplayProps) {
-    const { slide } = nextProps
+    const { slide, layers, layersInfo } = nextProps
     const { scale } = this.state
     const [scaleWidth, scaleHeight] = scale
     if (slide && this.props.slide !== slide) {
@@ -134,6 +143,21 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         this.setState({ scale: [nextScaleWidth, nextScaleHeight] })
       }
     }
+    if (layersInfo) {
+      const widgetLayers = layers.filter((layer) => layer.type === GraphTypes.Chart)
+      const initialedItems = Object.entries(layersInfo)
+        .filter(([key, info]) => {
+          return widgetLayers.find((layer) => layer.id === Number(key))
+            && [DashboardItemStatus.Fulfilled, DashboardItemStatus.Error].includes(info.status)
+        })
+      if (initialedItems.length === widgetLayers.length) {
+        setTimeout(() => {
+          this.setState({
+            headlessBrowserRenderSign: true
+          })
+        }, 5000)
+      }
+    }
   }
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
@@ -146,30 +170,44 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
+    const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
+    const customOrders = updatedCols.concat(updatedRows)
+      .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+      .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
 
     const cachedQueryConditions = layersInfo[itemId].queryConditions
 
     let tempFilters
     let linkageFilters
     let globalFilters
+    let tempOrders
     let variables
     let linkageVariables
     let globalVariables
+    let pagination
+    let nativeQuery
 
     if (queryConditions) {
       tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
       linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
       globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      tempOrders = queryConditions.orders !== void 0 ? queryConditions.orders : cachedQueryConditions.orders
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
+      pagination = queryConditions.pagination || cachedQueryConditions.pagination
+      nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
     } else {
       tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
       globalFilters = cachedQueryConditions.globalFilters
+      tempOrders = cachedQueryConditions.orders
       variables = cachedQueryConditions.variables
       linkageVariables = cachedQueryConditions.linkageVariables
       globalVariables = cachedQueryConditions.globalVariables
+      pagination = cachedQueryConditions.pagination
+      nativeQuery = cachedQueryConditions.nativeQuery
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -221,51 +259,101 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         })))
     }
 
+    const requestParamsFilters = filters.reduce((a, b) => {
+      return a.concat(b.config.sqlModel)
+    }, [])
+
+    const requestParams = {
+      groups,
+      aggregators,
+      filters: requestParamsFilters,
+      tempFilters,
+      linkageFilters,
+      globalFilters,
+      variables,
+      linkageVariables,
+      globalVariables,
+      orders,
+      cache,
+      expired,
+      flush: renderType === 'flush',
+      pagination,
+      nativeQuery,
+      customOrders
+    }
+
+    if (tempOrders) {
+      requestParams.orders = requestParams.orders.concat(tempOrders)
+    }
+
     onLoadLayerData(
       renderType,
       itemId,
       widget.dataToken,
-      {
-        groups,
-        aggregators,
-        filters: filters.map((i) => i.config.sql),
-        tempFilters,
-        linkageFilters,
-        globalFilters,
-        variables,
-        linkageVariables,
-        globalVariables,
-        orders,
-        cache,
-        expired
-      }
+      requestParams
     )
   }
 
-  private getSlideStyle = (slideParams) => {
-    const { scale } = this.state
+  private getPreviewStyle = (slideParams) => {
+    const { scaleMode } = slideParams
+    const previewStyle: React.CSSProperties = {}
+    switch (scaleMode) {
+      case 'scaleWidth':
+        previewStyle.overflowY = 'auto'
+        break
+      case 'scaleHeight':
+        previewStyle.overflowX = 'auto'
+        break
+      case 'noScale':
+        previewStyle.overflow = 'auto'
+        break
+      case 'scaleFull':
+      default:
+        break
+    }
+    return previewStyle
+  }
 
+  private getSlideStyle = (slideParams, scale: [number, number]) => {
     const {
       width,
       height,
+      scaleMode,
       backgroundColor,
-      opacity,
       backgroundImage
     } = slideParams
 
     let slideStyle: React.CSSProperties
+
+    const { clientWidth, clientHeight } = document.body
+    const [scaleX, scaleY] = scale
+
+    let translateX = (scaleX - 1) / 2
+    let translateY = (scaleY - 1) / 2
+    translateX += Math.max(0, (clientWidth - scaleX * width) / (2 * width))
+    translateY += Math.max(0, (clientHeight - scaleY * height) / (2 * height))
+
+    const translate = `translate(${translateX * 100}%, ${translateY * 100}%)`
+
     slideStyle  = {
       overflow: 'visible',
-      width: `${width * scale[0]}px`,
-      height: `${height * scale[1]}px`
+      width,
+      height,
+      transform: `${translate} scale(${scaleX}, ${scaleY})`
     }
+
+    let backgroundStyle: React.CSSProperties | CSSStyleDeclaration = slideStyle
+    if (scaleMode === 'scaleWidth' && screen.width <= 1024) {
+      backgroundStyle = document.body.style
+    }
+    backgroundStyle.backgroundSize = 'cover'
 
     if (backgroundColor) {
       const rgb = backgroundColor.join()
-      slideStyle.backgroundColor = `rgb(${rgb})`
+      backgroundStyle.backgroundColor = `rgba(${rgb})`
     }
     if (backgroundImage) {
-      slideStyle.backgroundImage = `url("${backgroundImage}")`
+      backgroundStyle.backgroundImage = `url("${backgroundImage}")`
     }
     return slideStyle
   }
@@ -300,15 +388,25 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       layersInfo
     } = this.props
 
-    const { scale, showLogin, shareInfo } = this.state
+    const {
+      scale,
+      showLogin,
+      shareInfo,
+      headlessBrowserRenderSign
+    } = this.state
+
     const loginPanel = showLogin ? <Login shareInfo={shareInfo} legitimateUser={this.handleLegitimateUser} /> : null
 
     let content = null
+    let previewStyle = null
     if (display) {
-      const slideStyle = this.getSlideStyle(JSON.parse(slide.config).slideParams)
+      const { scale } = this.state
+      const slideParams = JSON.parse(slide.config).slideParams
+      previewStyle = this.getPreviewStyle(slideParams)
+      const slideStyle = this.getSlideStyle(slideParams, scale)
       const layerItems =  Array.isArray(widgets) ? layers.map((layer) => {
         const widget = widgets.find((w) => w.id === layer.widgetId)
-        const view = { model: widget && widget.model }
+        const model = widget && JSON.parse(widget.model)
         const layerId = layer.id
         const { polling, frequency } = JSON.parse(layer.params)
         const { datasource, loading, interactId, renderType } = layersInfo[layerId]
@@ -317,10 +415,9 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
           <LayerItem
             key={layer.id}
             pure={true}
-            scale={scale}
             itemId={layerId}
             widget={widget}
-            view={view}
+            model={model}
             datasource={datasource}
             layer={layer}
             loading={loading}
@@ -333,17 +430,27 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         )
       }) : null
       content = (
-        <div className={styles.board} style={slideStyle}>
+        <div
+          className={styles.board}
+          style={slideStyle}
+          ref={this.displayCanvas}
+        >
           {layerItems}
         </div>
       )
     }
 
     return (
-      <div className={styles.preview}>
-        <Helmet title={title} />
-        {content}
-        {loginPanel}
+      <div className={mainStyles.container}>
+        <div className={styles.preview} style={previewStyle}>
+          <Helmet title={title} />
+          {content}
+          {loginPanel}
+        </div>
+        <HeadlessBrowserIdentifier
+          renderSign={headlessBrowserRenderSign}
+          parentNode={this.displayCanvas.current}
+        />
       </div>
     )
   }

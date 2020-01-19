@@ -2,7 +2,7 @@
 import * as React from 'react'
 import { Row, Col, Input, Checkbox, Select } from 'antd'
 const Option = Select.Option
-import ColorPicker from '../../../../../components/ColorPicker'
+import ColorPicker from 'components/ColorPicker'
 import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_CHART_LINE_STYLES,
@@ -10,7 +10,7 @@ import {
   CHART_LABEL_POSITIONS,
   CHART_PIE_LABEL_POSITIONS,
   CHART_FUNNEL_LABEL_POSITIONS
-} from '../../../../../globalConstants'
+} from 'app/globalConstants'
 const styles = require('../Workbench.less')
 
 export interface IScorecardConfig {

@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.dao;
@@ -41,28 +42,10 @@ public interface ViewMapper {
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
 
 
-    @Select({
-            "SELECT ",
-            "	v.*,",
-            "	p.id 'project.id',",
-            "	p.`name` 'project.name',",
-            "	p.`description` 'project.description',",
-            "	p.`pic` 'project.pic',",
-            "	p.`org_id` 'project.orgId',",
-            "	p.`user_id` 'project.userId',",
-            "	p.`visibility` 'p.visibility',",
-            "	s.`id` 'source.id',",
-            "	s.`name` 'source.name',",
-            "	s.`description` 'source.description',",
-            "	s.`config` 'source.config',",
-            "	s.`project_id` 'source.projectId',",
-            "	s.`type` 'source.type'",
-            "FROM `view` v",
-            "	LEFT JOIN project p on p.id = v.project_id",
-            "	LEFT JOIN source s on s.id = v.source_id",
-            "WHERE v.id = #{id}",
-    })
     ViewWithProjectAndSource getViewWithProjectAndSourceById(@Param("id") Long id);
+
+    ViewWithProjectAndSource getViewWithProjectAndSourceByWidgetId(@Param("widgetId") Long widgetId);
+
 
 
     @Delete({"delete from `view` where id = #{id}"})
@@ -131,4 +114,5 @@ public interface ViewMapper {
     ViewWithSource getViewWithSource(Long id);
 
     Set<View> selectByWidgetIds(@Param("widgetIds") Set<Long> widgetIds);
+
 }

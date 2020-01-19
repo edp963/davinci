@@ -2,8 +2,8 @@ import * as React from 'react'
 import Avatar from '../Avatar'
 import { Upload, message as Message, Button } from 'antd'
 const styles = require('./UploadAvatar.less')
-import api from '../../utils/api'
-import { setToken, getToken } from '../../utils/request'
+import api from 'utils/api'
+import { setToken, getToken } from 'utils/request'
 
 interface IUploadAvatar {
   id?: number
@@ -56,7 +56,6 @@ export class UploadAvatar extends React.PureComponent<IUploadAvatarProps, IUploa
           xhrParams.callback(avatar)
         }
         setToken(token)
-        localStorage.setItem('TOKEN', token)
       }
     }
   }

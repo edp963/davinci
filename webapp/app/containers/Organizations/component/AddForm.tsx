@@ -1,12 +1,12 @@
 import React from 'react'
 import classnames from 'classnames'
 import debounce from 'lodash/debounce'
-import { IOrganizationMembers } from '../../Organizations/Organization'
+import { IOrganizationMembers } from 'containers/Organizations/Organization'
 import { Button, Form, Input, Icon } from 'antd'
 const FormItem = Form.Item
 const InputGroup = Input.Group
 const styles = require('../Team.less')
-const utilStyles =  require('../../../assets/less/util.less')
+const utilStyles =  require('assets/less/util.less')
 
 
 interface IAddFormProps {

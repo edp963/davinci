@@ -18,14 +18,25 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 import classnames from 'classnames'
+import DownloadList from '../DownloadList'
 
-import { makeSelectLoginUser } from '../../containers/App/selectors'
+import {
+  loadDownloadList,
+  downloadFile
+} from 'containers/App/actions'
+import {
+  makeSelectLoginUser,
+  makeSelectDownloadList,
+  makeSelectDownloadListLoading
+} from 'containers/App/selectors'
+
 import { Dropdown, Menu, Icon } from 'antd'
+import { IDownloadRecord } from 'app/containers/App/types'
 
 const styles = require('./Navigator.less')
 
@@ -35,13 +46,23 @@ const goDoc = () => window.open('https://edp963.github.io/davinci/')
 interface INavigatorProps {
   show: boolean
   loginUser: object
+  downloadList: IDownloadRecord[]
   onLogout: () => void
+  onLoadDownloadList: () => void
+  onDownloadFile: (id) => void
 }
 
 export function Navigator (props: INavigatorProps) {
+  const {
+    show,
+    downloadList,
+    onLogout,
+    onLoadDownloadList,
+    onDownloadFile
+  } = props
   const headerClass = classnames({
     [styles.header]: true,
-    [styles.hide]: !props.show
+    [styles.hide]: !show
   })
   const menu = (
     <Menu>
@@ -52,7 +73,7 @@ export function Navigator (props: INavigatorProps) {
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="3">
-        <a href="javascript:;" onClick={props.onLogout}>
+        <a href="javascript:;" onClick={onLogout}>
           退出登录
         </a>
       </Menu.Item>
@@ -64,18 +85,25 @@ export function Navigator (props: INavigatorProps) {
       <div className={styles.logoPc}>
         <div className={styles.logo}>
           <Link to="/projects">
-            <img src={require('../../assets/images/logo.svg')} />
+            <img src={require('assets/images/logo.svg')} />
           </Link>
         </div>
       </div>
       <div className={styles.logoMobile}>
         <div className={styles.logo}>
           <Link to="/projects">
-            <img src={require('../../assets/images/logo_mobile.svg')} />
+            <img src={require('assets/images/logo_mobile.svg')} />
           </Link>
         </div>
       </div>
       <ul className={styles.tools}>
+        <li>
+          <DownloadList
+            downloadList={downloadList}
+            onLoadDownloadList={onLoadDownloadList}
+            onDownloadFile={onDownloadFile}
+          />
+        </li>
         <li>
           <Icon type="file-text" onClick={goDoc} />
         </li>
@@ -83,7 +111,7 @@ export function Navigator (props: INavigatorProps) {
           <Icon type="github" onClick={goGithub}/>
         </li>
         <li>
-          <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+          <Dropdown overlay={menu} trigger={['click']} placement="bottomCenter">
             <Icon type="user" />
           </Dropdown>
         </li>
@@ -93,7 +121,15 @@ export function Navigator (props: INavigatorProps) {
 }
 
 const mapStateToProps = createStructuredSelector({
-  loginUser: makeSelectLoginUser()
+  loginUser: makeSelectLoginUser(),
+  downloadList: makeSelectDownloadList()
 })
 
-export default connect(mapStateToProps, null)(Navigator)
+function mapDispatchToProps (dispatch) {
+  return {
+    onLoadDownloadList: () => dispatch(loadDownloadList()),
+    onDownloadFile: (id) => dispatch(downloadFile(id))
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Navigator)

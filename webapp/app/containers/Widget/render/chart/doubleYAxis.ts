@@ -23,15 +23,18 @@ import {
   decodeMetricName,
   getChartTooltipLabel,
   getTextWidth,
-  getAggregatorLocale
+  getAggregatorLocale,
+  metricAxisLabelFormatter
 } from '../../components/util'
 import {
   getLegendOption,
   getGridPositions,
   getDimetionAxisOption
 } from './util'
+import { getFormattedValue } from '../../components/Config/Format'
+import { getFieldAlias } from '../../components/Config/Field'
 
-export default function (chartProps: IChartProps) {
+export default function (chartProps: IChartProps, drillOptions) {
   const {
     width,
     height,
@@ -104,10 +107,14 @@ export default function (chartProps: IChartProps) {
     }
   }
 
+  const { selectedItems } = drillOptions
   const { secondaryMetrics } = chartProps
+
+  const xAxisData = showLabel ? data.map((d) => d[cols[0].name]) : []
   const seriesData = secondaryMetrics
-    ? getAixsMetrics('metrics', metrics, data, stack, labelOption, yAxisLeft).concat(getAixsMetrics('secondaryMetrics', secondaryMetrics, data, stack, labelOption, yAxisRight))
-    : getAixsMetrics('metrics', metrics, data, stack, labelOption, yAxisLeft)
+    ? getAixsMetrics('metrics', metrics, data, stack, labelOption, selectedItems, {key: 'yAxisLeft', type: yAxisLeft})
+      .concat(getAixsMetrics('secondaryMetrics', secondaryMetrics, data, stack, labelOption, selectedItems, {key: 'yAxisRight', type: yAxisRight}))
+    : getAixsMetrics('metrics', metrics, data, stack, labelOption, selectedItems, {key: 'yAxisLeft', type: yAxisLeft})
 
   const seriesObj = {
     series: seriesData.map((series) => {
@@ -132,7 +139,7 @@ export default function (chartProps: IChartProps) {
       legend: getLegendOption(legend, seriesNames)
     }
     gridOptions = {
-      grid: getGridPositions(legend, seriesNames, 'doubleYAxis', false)
+      grid: getGridPositions(legend, seriesNames, 'doubleYAxis', false, null, xAxis, xAxisData)
     }
   }
 
@@ -158,12 +165,25 @@ export default function (chartProps: IChartProps) {
     lineSize: verticalLineSize,
     lineStyle: verticalLineStyle
   }
-  const xAxisData = showLabel ? data.map((d) => d[cols[0].name]) : []
 
+  const allMetrics = secondaryMetrics ? [].concat(metrics).concat(secondaryMetrics) : metrics
   const option = {
     tooltip: {
       trigger: 'axis',
-      axisPointer: {type: 'cross'}
+      axisPointer: {type: 'cross'},
+      formatter (params) {
+        const tooltipLabels = [getFormattedValue(params[0].name, cols[0].format), '<br/>']
+        params.reduce((acc, param) => {
+          const { color, value, seriesIndex } = param
+          if (color) {
+            acc.push(`<span class="widget-tooltip-circle" style="background: ${color}"></span>`)
+          }
+          acc.push(getFieldAlias(allMetrics[seriesIndex].field, {}) || decodeMetricName(allMetrics[seriesIndex].name))
+          acc.push(': ', getFormattedValue(value, allMetrics[seriesIndex].format), '<br/>')
+          return acc
+        }, tooltipLabels)
+        return tooltipLabels.join('')
+      }
     },
     xAxis: getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData),
     yAxis: [
@@ -194,31 +214,34 @@ export default function (chartProps: IChartProps) {
   return option
 }
 
-export function getAixsMetrics (type, axisMetrics, data, stack, labelOption, axisPosition?: string) {
+export function getAixsMetrics (type, axisMetrics, data, stack, labelOption, selectedItems, axisPosition?: {key: string, type: string}) {
   const seriesNames = []
   const seriesAxis = []
   axisMetrics.forEach((m) => {
     const decodedMetricName = decodeMetricName(m.name)
     const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
     seriesNames.push(decodedMetricName)
+    const stackOption = stack && axisPosition.type === 'bar' && axisMetrics.length > 1 ? { stack: axisPosition.key } : null
+    const itemData = data.map((g, index) => {
+      const itemStyle = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {normal: {opacity: 1, borderWidth: 6}}} : null
+      return {
+        value: g[`${m.agg}(${decodedMetricName})`],
+        ...itemStyle
+      }
+    })
 
-    const itemData = data.map((obj, val) => obj[`${m.agg}(${decodedMetricName})`])
-
-    // const stackOption = (axis) => {
-    //   console.log('axis', axis)
-    //   if (stack && stack.length) {
-    //     return { stack: axis }
-    //   } else {
-    //     return null
-    //   }
-    // }
     seriesAxis.push({
       name: decodedMetricName,
-      type: axisPosition ? axisPosition : type === 'metrics' ? 'line' : 'bar',
+      type: axisPosition && axisPosition.type ? axisPosition.type : type === 'metrics' ? 'line' : 'bar',
+      ...stackOption,
       yAxisIndex: type === 'metrics' ? 1 : 0,
       data: itemData,
-      ...labelOption
-      // ...stackOption(`${type === 'metrics' ? 'left' : 'right'}`)
+      ...labelOption,
+      itemStyle: {
+        normal: {
+          opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
+        }
+      }
     })
   })
   return seriesAxis
@@ -258,7 +281,7 @@ export function getDoubleYAxis (doubleYAxis) {
       color: labelColor,
       fontFamily: labelFontFamily,
       fontSize: Number(labelFontSize),
-      formatter: '{value}'
+      formatter: metricAxisLabelFormatter
     }
   }
 }

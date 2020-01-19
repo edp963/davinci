@@ -18,7 +18,9 @@
  * >>
  */
 
-export enum ActionTypes {
+import { createTypes } from 'utils/redux'
+
+enum Types {
   LOAD_DISPLAYS = 'davinci/Display/LOAD_DISPLAYS',
   LOAD_DISPLAYS_SUCCESS = 'davinci/Display/LOAD_DISPLAYS_SUCCESS',
   LOAD_DISPLAYS_FAILURE = 'davinci/Display/LOAD_DISPLAYS_FAILURE',
@@ -91,5 +93,14 @@ export enum ActionTypes {
   LOAD_DISPLAY_SECRET_LINK_SUCCESS = 'davinci/Display/LOAD_DISPLAY_SECRET_LINK_SUCCESS',
   LOAD_DISPLAY_SHARE_LINK_FAILURE = 'davinci/Display/LOAD_DISPLAY_SHARE_LINK_FAILURE',
 
-  RESET_DISPLAY_STATE = 'davinci/Display/RESET_DISPLAY_STATE'
+  RESET_DISPLAY_STATE = 'davinci/Display/RESET_DISPLAY_STATE',
+
+  MONITORED_SYNC_DATA_ACTION = 'davinci/Display/MONITORED_SYNC_DATA_ACTION',
+  MONITORED_SEARCH_DATA_ACTION = 'davinci/Display/MONITORED_SEARCH_DATA_ACTION',
+  MONITORED_LINKAGE_DATA_ACTION = 'davinci/Display/MONITORED_LINKAGE_DATA_ACTION',
+
+  LOAD_CURRENT_PROJECT = 'davinci/Display/LOAD_CURRENT_PROJECT',
+  LOAD_CURRENT_PROJECT_SUCCESS = 'davinci/Display/LOAD_CURRENT_PROJECT_SUCCESS'
 }
+
+export const ActionTypes = createTypes(Types)

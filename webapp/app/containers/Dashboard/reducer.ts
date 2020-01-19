@@ -61,19 +61,31 @@ import {
   DELETE_DRILL_HISTORY,
   DRILL_PATH_SETTING,
   SELECT_DASHBOARD_ITEM_CHART,
-  SET_SELECT_OPTIONS
+  SET_SELECT_OPTIONS,
+  GLOBAL_CONTROL_CHANGE
 } from './constants'
-
+import {
+  INITIATE_DOWNLOAD_TASK,
+  INITIATE_DOWNLOAD_TASK_SUCCESS,
+  INITIATE_DOWNLOAD_TASK_FAILURE
+} from '../App/constants'
 import { ActionTypes as ViewActionTypes } from '../View/constants'
 import { ViewActionType } from '../View/actions'
 
 import {
   IGlobalControl,
   IControlRelatedField,
+  IMapItemControlRequestParams,
+  IControlRequestParams
+} from 'components/Filters/types'
+import {
   getVariableValue,
   getModelValue,
-  getDefaultValue
-} from '../../components/Filters'
+  deserializeDefaultValue
+} from 'components/Filters/util'
+import { DownloadTypes } from '../App/types'
+import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
+import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 const initialState = fromJS({
   dashboards: null,
@@ -152,12 +164,12 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
       const { dashboardDetail } = payload
       const dashboardConfig = dashboardDetail.config ? JSON.parse(dashboardDetail.config) : {}
-      const globalControls = dashboardConfig.filters || []
+      const globalControls = (dashboardConfig.filters || []).map((c) => globalControlMigrationRecorder(c))
       const globalControlsInitialValue = {}
 
       globalControls.forEach((control: IGlobalControl) => {
         const { interactionType, relatedItems, relatedViews } = control
-        const defaultValue = getDefaultValue(control)
+        const defaultValue = deserializeDefaultValue(control)
         if (defaultValue) {
           Object.entries(relatedItems).forEach(([itemId, config]) => {
             Object.entries(relatedViews).forEach(([viewId, fields]) => {
@@ -209,7 +221,8 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
             interactId: '',
             rendered: false,
             renderType: 'rerender',
-            controlSelectOptions: {}
+            controlSelectOptions: {},
+            errorMessage: ''
           }
           return obj
         }, {}))
@@ -242,7 +255,8 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
               interactId: '',
               rendered: false,
               renderType: 'rerender',
-              controlSelectOptions: {}
+              controlSelectOptions: {},
+              errorMessage: ''
             }
             return obj
           }, {})
@@ -279,11 +293,13 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
           ...itemsInfo,
           [payload.itemId]: {
             ...itemsInfo[payload.itemId],
-            loading: true
+            loading: true,
+            errorMessage: ''
           }
         })
 
     case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS:
+      fieldGroupedSort(payload.result.resultList, payload.requestParams.customOrders)
       return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
@@ -305,6 +321,18 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
           }
         }
       })
+    case GLOBAL_CONTROL_CHANGE:
+      const controlRequestParamsByItem: IMapItemControlRequestParams = payload.controlRequestParamsByItem
+      Object.entries(controlRequestParamsByItem)
+        .forEach(([itemId, requestParams]: [string, IControlRequestParams]) => {
+          const { filters: globalFilters, variables: globalVariables } = requestParams
+          itemsInfo[itemId].queryConditions = {
+            ...itemsInfo[itemId].queryConditions,
+            ...globalFilters && { globalFilters },
+            ...globalVariables && { globalVariables }
+          }
+        })
+      return state.set('currentItemsInfo', itemsInfo)
     case SELECT_DASHBOARD_ITEM_CHART:
       return state.set('currentItemsInfo', {
         ...itemsInfo,
@@ -355,13 +383,18 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
         }
       })
     case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE:
-      return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
-        ...itemsInfo,
-        [payload.itemId]: {
-          ...itemsInfo[payload.itemId],
-          loading: false
-        }
-      })
+      return payload.vizType === 'dashboard'
+        ? !!itemsInfo
+          ? state.set('currentItemsInfo', {
+            ...itemsInfo,
+            [payload.itemId]: {
+              ...itemsInfo[payload.itemId],
+              loading: false,
+              errorMessage: payload.errorMessage
+            }
+          })
+          : state
+        : state
 
     case LOAD_DASHBOARD_SHARE_LINK:
       return state.set('currentDashboardShareInfoLoading', true)
@@ -430,6 +463,27 @@ function dashboardReducer (state = initialState, action: ViewActionType | any) {
           downloadCsvLoading: false
         }
       })
+    case INITIATE_DOWNLOAD_TASK:
+      return payload.type === DownloadTypes.Widget
+        ? state.set('currentItemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            downloadCsvLoading: true
+          }
+        })
+        : state
+    case INITIATE_DOWNLOAD_TASK_SUCCESS:
+    case INITIATE_DOWNLOAD_TASK_FAILURE:
+      return payload.type === DownloadTypes.Widget
+        ? state.set('currentItemsInfo', {
+          ...itemsInfo,
+          [payload.itemId]: {
+            ...itemsInfo[payload.itemId],
+            downloadCsvLoading: false
+          }
+        })
+        : state
     case ViewActionTypes.LOAD_SELECT_OPTIONS_SUCCESS:
       return payload.itemId
         ?  state.set('currentItemsInfo', {

@@ -354,11 +354,11 @@ export function clickCollectProjectFail () {
   }
 }
 
-export function addProjectAdmin (id, adminId, resolve) {
+export function addProjectAdmin (id, adminIds, resolve) {
   return {
     type: ADD_PROJECT_ADMIN,
     payload: {
-      id, adminId, resolve
+      id, adminIds, resolve
     }
   }
 }

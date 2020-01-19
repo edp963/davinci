@@ -21,7 +21,7 @@
 import React, { PureComponent } from 'react'
 import classnames from 'classnames'
 import { Form, Row, Col, Checkbox, Select, Radio, Empty } from 'antd'
-import { InteractionType, IControlRelatedField } from '..'
+import { InteractionType, IControlRelatedField } from '../types'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { IRelatedItemSource, IRelatedViewSource } from './FilterConfig'
@@ -214,37 +214,35 @@ export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsPro
 
     return (
       <div className={styles.itemSelector}>
+        <div className={styles.title}>
+          <h2>关联图表</h2>
+          <Checkbox
+            className={styles.checkAll}
+            checked={checkAll}
+            onChange={onToggleCheckAll}
+          >
+            全选
+          </Checkbox>
+        </div>
         <div className={styles.itemList}>
-          <div className={styles.title}>
-            <h2>关联图表</h2>
-            <Checkbox
-              className={styles.checkAll}
-              checked={checkAll}
-              onChange={onToggleCheckAll}
-            >
-              全选
-            </Checkbox>
-          </div>
           <ul>{widgetCheckboxes}</ul>
         </div>
-        <div className={styles.viewSet}>
-          <div className={styles.title}>
-            <h2>类别</h2>
-            <RadioGroup
-              className={styles.interactionType}
-              size="small"
-              value={interactionType}
-              onChange={onInteractionTypeChange}
-            >
-              <RadioButton value="column">字段</RadioButton>
-              <RadioButton value="variable">变量</RadioButton>
-            </RadioGroup>
-          </div>
+        <div className={`${styles.title} ${styles.subTitle}`}>
+          <h2>类别</h2>
+          <RadioGroup
+            className={styles.interactionType}
+            size="small"
+            value={interactionType}
+            onChange={onInteractionTypeChange}
+          >
+            <RadioButton value="column">字段</RadioButton>
+            <RadioButton value="variable">变量</RadioButton>
+          </RadioGroup>
         </div>
-        <div className={styles.viewSet} style={{flex:'1',overflowY: 'auto'}}>
-          <div className={styles.title}>
-            <h2>关联{interactionTypeContent}</h2>
-          </div>
+        <div className={`${styles.title} ${styles.subTitle}`}>
+          <h2>关联{interactionTypeContent}</h2>
+        </div>
+        <div className={styles.viewSet}>
           <div className={styles.related}>
             {viewVariableSelects}
           </div>

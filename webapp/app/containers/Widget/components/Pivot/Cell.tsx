@@ -2,7 +2,7 @@ import * as React from 'react'
 import { IWidgetMetric, IChartStyles } from '../Widget'
 import { ILegend } from './Pivot'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
-import { DEFAULT_SPLITER } from '../../../../globalConstants'
+import { DEFAULT_SPLITER } from 'app/globalConstants'
 import { decodeMetricName } from 'containers/Widget/components/util'
 
 const styles = require('./Pivot.less')
@@ -12,6 +12,7 @@ interface ICellProps {
   rowKey?: string
   width: number
   height?: number
+  interacting?: boolean
   metrics: IWidgetMetric[]
   chartStyles: IChartStyles
   color: IDataParamProperty
@@ -36,7 +37,10 @@ export class Cell extends React.PureComponent <ICellProps, ICellState> {
     if (nextProps.isDrilling === false) {
       this.setState({
         isSelected: false
-      }, () => console.log(this.state.isSelected))
+      })
+    }
+    if (this.props.interacting !== nextProps.interacting && !nextProps.interacting) {
+      this.setState({isSelected: false})
     }
   }
   private selectTd  = (event) => {
@@ -48,18 +52,18 @@ export class Cell extends React.PureComponent <ICellProps, ICellState> {
     }, () => {
       const {isSelected} = this.state
       const key = [colKey, rowKey].join(String.fromCharCode(0))
+      let obj = null
       if (ifSelectedTdToDrill && isSelected) {
-        const obj = {
+        obj = {
           data: {[key]: data && data.length === 1 ? data[0] : data},
           range: [[pagex, pagex], [pagey, pagey]]
         }
-        ifSelectedTdToDrill(obj)
       } else {
-        const obj = {
+        obj = {
           data: {[key]: false}
         }
-        ifSelectedTdToDrill(obj)
       }
+      ifSelectedTdToDrill(obj)
     })
   }
   public render () {

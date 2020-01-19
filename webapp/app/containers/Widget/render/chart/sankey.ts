@@ -34,6 +34,7 @@ import {
   getSymbolSize
 } from './util'
 import { EChartOption } from 'echarts'
+import { getFormattedValue } from '../../components/Config/Format'
 
 export default function (chartProps: IChartProps) {
   const {
@@ -60,7 +61,7 @@ export default function (chartProps: IChartProps) {
   } = spec
 
   const labelOption = {
-    label: getLabelOption('sankey', label)
+    label: getLabelOption('sankey', label, metrics)
   }
 
   let dimensions = []
@@ -74,13 +75,13 @@ export default function (chartProps: IChartProps) {
   const nodesValues = []
   const links = []
   data.forEach((row) => {
-    dimensions.forEach((dim, idx) => {
-      if (!nodesValues.includes(row[dim])) {
-        nodesValues.push(row[dim])
+    dimensions.forEach(({ name }, idx) => {
+      if (!nodesValues.includes(row[name])) {
+        nodesValues.push(row[name])
       }
       if (dimensions[idx - 1]) {
-        const source = row[dimensions[idx - 1]]
-        const target = row[dimensions[idx]]
+        const source = row[dimensions[idx - 1].name]
+        const target = row[dimensions[idx].name]
         const value = +row[`${agg}(${metricsName})`]
         if (isNaN(value)) { return }
         const existedLink = links.length && links.find((lnk) => lnk.source === source && lnk.target === target)
@@ -99,7 +100,20 @@ export default function (chartProps: IChartProps) {
 
   const tooltip: EChartOption.Tooltip = {
     trigger: 'item',
-    triggerOn: 'mousemove'
+    triggerOn: 'mousemove',
+    formatter (params: EChartOption.Tooltip.Format) {
+      const { name, value, color } = params
+      const tooltipLabels = []
+      if (color) {
+        tooltipLabels.push(`<span class="widget-tooltip-circle" style="background: ${color}"></span>`)
+      }
+      tooltipLabels.push(name)
+      if (value) {
+        tooltipLabels.push(': ')
+        tooltipLabels.push(getFormattedValue(value as number, metrics[0].format))
+      }
+      return tooltipLabels.join('')
+    }
   }
 
   return {

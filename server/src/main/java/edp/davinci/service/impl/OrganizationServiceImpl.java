@@ -1,27 +1,30 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
+import edp.core.enums.MailContentTypeEnum;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.model.MailContent;
 import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.LogNameEnum;
@@ -294,6 +297,11 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     public List<OrganizationInfo> getOrganizations(User user) {
         List<OrganizationInfo> organizationInfos = organizationMapper.getOrganizationByUser(user.getId());
+        organizationInfos.forEach(o -> {
+            if (o.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+                o.setAllowCreateProject(true);
+            }
+        });
         return organizationInfos;
     }
 
@@ -367,10 +375,15 @@ public class OrganizationServiceImpl implements OrganizationService {
         //aes加密token
         content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(orgInviteDetail), null));
         try {
-            mailUtils.sendTemplateEmail(member.getEmail(),
-                    String.format(Constants.INVITE_ORG_MEMBER_MAIL_SUBJECT, user.getUsername(), organization.getName()),
-                    Constants.INVITE_ORG_MEMBER_MAIL_TEMPLATE,
-                    content);
+            MailContent mailContent = MailContent.MailContentBuilder.builder()
+                    .withSubject(String.format(Constants.INVITE_ORG_MEMBER_MAIL_SUBJECT, user.getUsername(), organization.getName()))
+                    .withTo(member.getEmail())
+                    .withMainContent(MailContentTypeEnum.TEMPLATE)
+                    .withTemplate(Constants.INVITE_ORG_MEMBER_MAIL_TEMPLATE)
+                    .withTemplateContent(content)
+                    .build();
+
+            mailUtils.sendMail(mailContent, null);
         } catch (ServerException e) {
             log.info(e.getMessage());
             e.printStackTrace();
@@ -561,9 +574,9 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         if (i > 0) {
             //更新组织成员数量
-            organization.setMemberNum(organization.getMemberNum() > 0 ? organization.getMemberNum() - 1 : organization.getMemberNum());
+            int memberNum = organization.getMemberNum();
+            organization.setMemberNum(memberNum > 0 ? memberNum - 1 : memberNum);
             organizationMapper.updateMemberNum(organization);
-
             return true;
         } else {
             throw new ServerException("unknown fail");
@@ -581,14 +594,16 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     @Transactional
     public boolean updateMemberRole(Long relationId, User user, int role) throws NotFoundException, UnAuthorizedExecption, ServerException {
+
         RelUserOrganization rel = relUserOrganizationMapper.getById(relationId);
+        
         if (null == rel) {
             throw new ServerException("this member are no longer member of the organization");
         }
 
         Organization organization = organizationMapper.getById(rel.getOrgId());
         if (null == organization) {
-            log.info("organization(:{}) is not found", organization.getId());
+            log.info("organization(:{}) is not found", rel.getOrgId());
             throw new NotFoundException("organization is not found");
         }
 

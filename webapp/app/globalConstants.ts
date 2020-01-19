@@ -18,7 +18,7 @@
  * >>
  */
 
-const defaultEchartsTheme = require('./assets/json/echartsThemes/default.project.json')
+const defaultEchartsTheme = require('assets/json/echartsThemes/default.project.json')
 export const DEFAULT_ECHARTS_THEME = defaultEchartsTheme.theme
 export const DEFAULT_PRIMARY_COLOR = '#1B98E0'
 export const DEFAULT_SECONDARY_COLOR = '#223151'
@@ -80,7 +80,7 @@ export const PIVOT_CHART_LINE_STYLES = [
   { name: '虚线', value: 'dashed'},
   { name: '点', value: 'dotted'}
 ]
-export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64]
+export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 96, 128]
 export const PIVOT_CHART_FONT_WEIGHTS = ['normal', 'bold', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900']
 export const PIVOT_CHART_FONT_STYLE = [
   { name: '普通', value: 'normal' },
@@ -178,12 +178,15 @@ export const SQL_STRING_TYPES = [
   'STRING', 'TINYTEXT', 'TEXT', 'NTEXT', 'MEDIUMTEXT', 'LONGTEXT',
   'JSON', 'XML', 'LINESTRING', 'MULTILINESTRING',
   'TINYBLOB', 'MEDIUMBLOB', 'BLOB', 'LONGBLOB', 'CBLOB',
-  'BINARY', 'VARBINARY', 'LONGVARBINARY', 'ENUM', 'SET', 'NULL', 'ROWID'
+  'BINARY', 'VARBINARY', 'LONGVARBINARY', 'ENUM', 'SET', 'NULL', 'ROWID',
+  'FIXEDSTRING', 'IPV4', 'IPV6', 'UUID'
 ]
 export const SQL_NUMBER_TYPES = [
   'BIT', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'INTEGER', 'BIGINT',
   'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL', 'DECIMAL',
-  'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMBER', 'NUMERIC'
+  'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMBER', 'NUMERIC',
+  'UINT8', 'UINT16', 'UINT32', 'UINT64', 'INT8', 'INT16', 'INT32', 'INT64',
+  'FLOAT32', 'FLOAT64', 'DECIMAL32', 'DECIMAL64', 'DECIMAL128'
 ]
 export const SQL_DATE_TYPES = ['DATE', 'DATETIME', 'TIMESTAMP', 'TIME', 'YEAR']
 
@@ -201,3 +204,6 @@ export const DEFAULT_FONT_FAMILY = '"Chinese Quote", -apple-system, BlinkMacSyst
 
 export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD'
 export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
+
+export const DOWNLOAD_LIST_POLLING_FREQUENCY = 30000
+export const DEFAULT_CACHE_EXPIRED = 300

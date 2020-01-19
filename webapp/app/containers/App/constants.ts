@@ -18,6 +18,8 @@
  * >>
  */
 
+import { DownloadStatus } from './types'
+
 export const LOGIN = 'davinci/App/LOGIN'
 export const LOGGED = 'davinci/App/LOGGED'
 export const LOGIN_ERROR = 'davinci/App/LOGIN_ERROR'
@@ -30,7 +32,6 @@ export const JOIN_ORGANIZATION_SUCCESS = 'davinci/App/JOIN_ORGANIZATION_SUCCESS'
 export const JOIN_ORGANIZATION_ERROR = 'davinci/App/JOIN_ORGANIZATION_ERROR'
 
 export const LOGOUT = 'davinci/App/LOGOUT'
-export const SET_LOGIN_USER = 'davinci/App/SET_LOGIN_USER'
 export const GET_LOGIN_USER = 'davinci/App/GET_LOGIN_USER'
 export const GET_LOGIN_USER_ERROR = 'davinci/App/GET_LOGIN_USER_ERROR'
 export const SHOW_NAVIGATOR = 'davinci/App/SHOW_NAVIGATOR'
@@ -46,6 +47,16 @@ export const UPLOAD_AVATAR_SUCCESS = 'davinci/App/UPLOAD_AVATAR_SUCCESS'
 export const CHANGE_USER_PASSWORD = 'davinci/User/CHANGE_USER_PASSWORD'
 export const CHANGE_USER_PASSWORD_SUCCESS = 'davinci/User/CHANGE_USER_PASSWORD_SUCCESS'
 export const CHANGE_USER_PASSWORD_FAILURE = 'davinci/User/CHANGE_USER_PASSWORD_FAILURE'
+
+export const LOAD_DOWNLOAD_LIST = 'davinci/Download/LOAD_DOWNLOAD_LIST'
+export const LOAD_DOWNLOAD_LIST_SUCCESS = 'davinci/Download/LOAD_DOWNLOAD_LIST_SUCCESS'
+export const LOAD_DOWNLOAD_LIST_FAILURE = 'davinci/Download/LOAD_DOWNLOAD_LIST_FAILURE'
+export const DOWNLOAD_FILE = 'davinci/Download/DOWNLOAD_FILE'
+export const DOWNLOAD_FILE_SUCCESS = 'davinci/Download/DOWNLOAD_FILE_SUCCESS'
+export const DOWNLOAD_FILE_FAILURE = 'davinci/Download/DOWNLOAD_FILE_FAILURE'
+export const INITIATE_DOWNLOAD_TASK = 'davinci/Download/INITIATE_DOWNLOAD_TASK'
+export const INITIATE_DOWNLOAD_TASK_SUCCESS = 'davinci/Download/INITIATE_DOWNLOAD_TASK_SUCCESS'
+export const INITIATE_DOWNLOAD_TASK_FAILURE = 'davinci/Download/INITIATE_DOWNLOAD_TASK_FAILURE'
 
 export const CREATE_ORGANIZATION_PROJECT = 'davinci/permission/CREATE_ORGANIZATION_PROJECT'
 export const DELETE_ORGANIZATION_PROJECT = 'davinci/permission/DELETE_ORGANIZATION_PROJECT'
@@ -66,4 +77,16 @@ export const UPDATE_TEAM_PROJECT_PERMISSION = 'davinci/permission/UPDATE_TEAM_PR
 export const UPDATE_TEAM = 'davinci/permission/UPDATE_TEAM'
 export const DELETE_TEAM = 'davinci/permission/DELETE_TEAM'
 
+export const DOWNLOAD_STATUS_COLORS = {
+  [DownloadStatus.Processing]: 'blue',
+  [DownloadStatus.Success]: 'green',
+  [DownloadStatus.Failed]: 'red',
+  [DownloadStatus.Downloaded]: 'grey'
+}
 
+export const DOWNLOAD_STATUS_LOCALE = {
+  [DownloadStatus.Processing]: '处理中',
+  [DownloadStatus.Success]: '成功',
+  [DownloadStatus.Failed]: '失败',
+  [DownloadStatus.Downloaded]: '已下载'
+}

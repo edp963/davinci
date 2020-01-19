@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.core.utils;
@@ -30,22 +31,22 @@ import java.util.regex.Pattern;
 
 public class DateUtils {
 
-    public static final String DATE_BASE_REGEX = "\\d{4}-\\d{2}-\\d{2}";
+    public static final String DATE_BASE_REGEX = "\\d{4}-\\d{1,2}-\\d{1,2}";
     public static final String SEPARATOR_REGEX = "(T?|\\s*)";
 
     public static final String DATE_REGEX = "^\\s*" + DATE_BASE_REGEX + "\\s*$";
     public static final String DATE_H_REGEX = "^\\s*" + DATE_BASE_REGEX + SEPARATOR_REGEX + "\\d\\d\\s*$";
-    public static final String DATE_HM_REGEX = "^\\s*" + DATE_BASE_REGEX + SEPARATOR_REGEX + "\\d\\d:\\d\\d\\s*$";
-    public static final String DATE_HMS_REGEX = "^\\s*" + DATE_BASE_REGEX + SEPARATOR_REGEX + "\\d\\d:\\d\\d:\\d\\d\\s*$";
-    public static final String DATE_HMS_M_REGEX = "^\\s*" + DATE_BASE_REGEX + SEPARATOR_REGEX + "\\d\\d:\\d\\d:\\d\\d\\.\\d{1,3}\\s*$";
+    public static final String DATE_HM_REGEX = "^\\s*" + DATE_BASE_REGEX + SEPARATOR_REGEX + "\\d{1,2}:\\dd{1,2}\\s*$";
+    public static final String DATE_HMS_REGEX = "^\\s*" + DATE_BASE_REGEX + SEPARATOR_REGEX + "\\d{1,2}:\\d{1,2}:\\d{1,2}\\s*$";
+    public static final String DATE_HMS_M_REGEX = "^\\s*" + DATE_BASE_REGEX + SEPARATOR_REGEX + "\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d{1,3}\\s*$";
 
     private enum DATE_FORMAT_ENUM {
 
-        DATE(Pattern.compile(DATE_REGEX), "yyyy-MM-dd"),
-        DATE_H(Pattern.compile(DATE_H_REGEX), "yyyy-MM-dd HH"),
-        DATE_HM(Pattern.compile(DATE_HM_REGEX), "yyyy-MM-dd HH:mm"),
-        DATE_HMS(Pattern.compile(DATE_HMS_REGEX), "yyyy-MM-dd HH:mm:ss"),
-        DATE_HMS_M(Pattern.compile(DATE_HMS_M_REGEX), "yyyy-MM-dd HH:mm:ss.SSS");
+        DATE(Pattern.compile(DATE_REGEX), "yyyy-M-d"),
+        DATE_H(Pattern.compile(DATE_H_REGEX), "yyyy-M-d H"),
+        DATE_HM(Pattern.compile(DATE_HM_REGEX), "yyyy-M-d H:m"),
+        DATE_HMS(Pattern.compile(DATE_HMS_REGEX), "yyyy-M-d H:m:s"),
+        DATE_HMS_M(Pattern.compile(DATE_HMS_M_REGEX), "yyyy-M-d H:m:s.SSS");
 
         private Pattern pattern;
         private String format;
@@ -128,6 +129,16 @@ public class DateUtils {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(currentData());
         calendar.add(Calendar.DAY_OF_MONTH, -1);
+
+        return formatter.format(calendar.getTime());
+    }
+
+    public static String getTheDayBeforAWeekYYYYMMDD() {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentData());
+        calendar.add(Calendar.DAY_OF_MONTH, -7);
 
         return formatter.format(calendar.getTime());
     }

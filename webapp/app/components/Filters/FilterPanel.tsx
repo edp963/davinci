@@ -7,21 +7,24 @@ import {
   IControlRequestParams,
   IMapItemControlRequestParams,
   OnGetControlOptions,
-  OnFilterValueChange,
   IMapControlOptions,
+  IRenderTreeItem,
+  IGlobalRenderTreeItem,
+  GlobalControlQueryMode
+} from './types'
+import {
   getVariableValue,
   getModelValue,
-  getDefaultValue,
-  IRenderTreeItem,
+  deserializeDefaultValue,
   getControlRenderTree,
   getAllChildren,
-  getParents,
-  IGlobalRenderTreeItem
-} from './'
+  getParents
+} from './util'
 import { defaultFilterControlGridProps, SHOULD_LOAD_OPTIONS } from './filterTypes'
 import FilterControl from './FilterControl'
+import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
-import { Row, Col, Form } from 'antd'
+import { Row, Col, Form, Button } from 'antd'
 
 const styles = require('./filter.less')
 
@@ -30,7 +33,8 @@ interface IFilterPanelProps {
   currentItems: any[]
   mapOptions: IMapControlOptions
   onGetOptions: OnGetControlOptions
-  onChange: OnFilterValueChange
+  onChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
+  onSearch: (itemIds: number[]) => void
 }
 
 interface IFilterPanelStates {
@@ -40,7 +44,8 @@ interface IFilterPanelStates {
   },
   controlValues: {
     [key: string]: any
-  }
+  },
+  queryMode: GlobalControlQueryMode
 }
 
 export class FilterPanel extends Component<IFilterPanelProps & FormComponentProps, IFilterPanelStates> {
@@ -50,7 +55,8 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     this.state = {
       renderTree: [],
       flatTree: {},
-      controlValues: {}
+      controlValues: {},
+      queryMode: GlobalControlQueryMode.Immediately
     }
   }
 
@@ -62,21 +68,35 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
 
   public componentWillReceiveProps (nextProps: IFilterPanelProps & FormComponentProps) {
     const { currentDashboard, currentItems } = nextProps
-    if (currentDashboard !== this.props.currentDashboard || currentItems !== this.props.currentItems) {
-      this.initDerivedState(currentDashboard, currentItems)
+    if (currentDashboard !== this.props.currentDashboard
+        || this.dashboardItemsChange(currentItems, this.props.currentItems)) {
+      const isCurrentDashboardUpdated = this.props.currentDashboard && this.props.currentDashboard.id === currentDashboard.id
+      this.initDerivedState(currentDashboard, currentItems, isCurrentDashboardUpdated)
     }
   }
 
-  private initDerivedState = (currentDashboard, currentItems) => {
+  private dashboardItemsChange = (currentItems, previousItems) => {
+    if (currentItems && previousItems) {
+      const currentItemIds = currentItems.map((item) => item.id).sort().join(',')
+      const previousItemIds = previousItems.map((item) => item.id).sort().join(',')
+      return !(currentItems.length === previousItems.length && currentItemIds === previousItemIds)
+    }
+    return false
+  }
+
+  private initDerivedState = (currentDashboard, currentItems, isCurrentDashboardUpdated) => {
     if (currentDashboard) {
+      this.props.form.resetFields()
       const config = JSON.parse(currentDashboard.config || '{}')
       const globalControls = config.filters || []
+      const queryMode = config.queryMode || GlobalControlQueryMode.Immediately
 
       const controlValues = {}
 
       this.controlRequestParamsByItem = {}
 
       const controls: IGlobalControl[] = globalControls.map((control) => {
+        control = globalControlMigrationRecorder(control)
         const { relatedItems } = control
         Object.keys(relatedItems).forEach((itemId) => {
           if (!currentItems.find((ci) => ci.id === Number(itemId))) {
@@ -84,7 +104,7 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
           }
         })
 
-        const defaultFilterValue = getDefaultValue(control)
+        const defaultFilterValue = deserializeDefaultValue(control)
         if (defaultFilterValue) {
           controlValues[control.key] = defaultFilterValue
           this.setControlRequestParams(control, defaultFilterValue, currentItems)
@@ -104,11 +124,20 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
       this.setState({
         renderTree,
         flatTree,
-        controlValues
+        controlValues,
+        queryMode
+      }, () => {
+        if (isCurrentDashboardUpdated) {
+          this.batchChange()
+          if (queryMode === GlobalControlQueryMode.Immediately) {
+            this.search()
+          }
+        }
       })
     }
   }
 
+  // save defaultFilterValue
   private setControlRequestParams = (control: IGlobalControl, val, currentItems, callback?) => {
     const { key, interactionType, relatedItems, relatedViews } = control
 
@@ -144,7 +173,16 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     controlValues: { [key: string]: any }
   ) => {
     const { onGetOptions } = this.props
-    const { key, interactionType, relatedViews, parent, customOptions, options } = renderControl as IGlobalRenderTreeItem
+    const {
+      key,
+      interactionType,
+      relatedViews,
+      parent,
+      cache,
+      expired,
+      customOptions,
+      options
+    } = renderControl as IGlobalRenderTreeItem
 
     if (customOptions) {
       onGetOptions(key, true, options)
@@ -172,14 +210,18 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
           obj[viewId] = {
             columns: [(fields as IControlRelatedField).name],
             filters,
-            variables
+            variables,
+            cache,
+            expired
           }
         } else {
           if ((fields as IControlRelatedField).optionsFromColumn) {
             obj[viewId] = {
               columns: [(fields as IControlRelatedField).column],
               filters,
-              variables
+              variables,
+              cache,
+              expired
             }
           }
         }
@@ -193,23 +235,37 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
     }
   }
 
-  private change = (control: IGlobalControl, val) => {
-    const { currentItems } = this.props
-    const { flatTree } = this.state
+  private change = (control: IGlobalControl, val, isInputChange?: boolean) => {
+
+    const { currentItems, onChange } = this.props
+    const { flatTree, queryMode } = this.state
     const { key } = control
     const childrenKeys = getAllChildren(key, flatTree)
     const relatedItemIds = []
 
+    // console.log(control)
+    // console.log(currentItems)
     const controlValues = {
       ...this.state.controlValues,
       [key]: val
+    }
+
+    if (childrenKeys.length) {
+      childrenKeys.forEach((childKey) => {
+        const child = flatTree[childKey]
+        if (SHOULD_LOAD_OPTIONS[child.type]) {
+          this.loadOptions(child, flatTree, controlValues)
+        }
+      })
     }
 
     this.setControlRequestParams(control, val, currentItems, (itemId) => {
       relatedItemIds.push(itemId)
     })
 
-    const mapItemControlRequestParams: IMapItemControlRequestParams = relatedItemIds.reduce((acc, itemId) => {
+    this.setState({ controlValues })
+
+    const controlRequestParamsByItem: IMapItemControlRequestParams = relatedItemIds.reduce((acc, itemId) => {
       acc[itemId] = Object.values(this.controlRequestParamsByItem[itemId]).reduce((filterValue, val) => {
         filterValue.variables = filterValue.variables.concat(val.variables)
         filterValue.filters = filterValue.filters.concat(val.filters)
@@ -221,21 +277,63 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
       return acc
     }, {})
 
-    if (childrenKeys.length) {
-      childrenKeys.forEach((childKey) => {
-        const child = flatTree[childKey]
-        if (SHOULD_LOAD_OPTIONS[child.type]) {
-          this.loadOptions(child, flatTree, controlValues)
-        }
-      })
-    }
+    onChange(controlRequestParamsByItem)
 
-    this.setState({ controlValues })
-    this.props.onChange(mapItemControlRequestParams, key)
+    if (queryMode === GlobalControlQueryMode.Immediately && !isInputChange) {
+      this.search()
+    }
+  }
+
+  private search = () => {
+    const itemIds: number[] = Object.values(this.state.flatTree)
+      .reduce((arr: number[], item) => {
+        const { relatedItems } = item as IGlobalRenderTreeItem
+        return arr.concat(
+          Object.entries(relatedItems)
+            .filter(([itemId, info]) => info.checked)
+            .map(([itemId, info]) => Number(itemId))
+        )
+      }, [])
+    this.props.onSearch(Array.from(new Set(itemIds)))
+  }
+
+  private batchChange = () => {
+    const controlRequestParamsByItem = Object
+      .entries(this.controlRequestParamsByItem)
+      .reduce((paramsByItem, [itemId, expsByControl]) => {
+        paramsByItem[itemId] = Object
+          .values(expsByControl)
+          .reduce((params, exps) => {
+            params.variables = params.variables.concat(exps.variables)
+            params.filters = params.filters.concat(exps.filters)
+            return params
+          }, {
+            variables: [],
+            filters: []
+          })
+        return paramsByItem
+      }, {})
+
+    this.props.onChange(controlRequestParamsByItem)
+  }
+
+  private reset = () => {
+    this.props.form.resetFields()
+
+    const { currentItems } = this.props
+    const { flatTree } = this.state
+    const formValues = this.props.form.getFieldsValue()
+
+    Object.entries(formValues).forEach(([controlKey, value]) => {
+      const control = flatTree[controlKey]
+      this.setControlRequestParams(control as IGlobalRenderTreeItem, value, currentItems)
+    })
+
+    this.batchChange()
   }
 
   private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: IGlobalControl[]) => {
-    const { form, onGetOptions, mapOptions } = this.props
+    const { form, mapOptions } = this.props
     const { controlValues } = this.state
 
     let components = []
@@ -285,20 +383,26 @@ export class FilterPanel extends Component<IFilterPanelProps & FormComponentProp
   }
 
   public render () {
-    const { renderTree } = this.state
+    const { renderTree, queryMode } = this.state
     const panelClass = classnames({
       [styles.controlPanel]: true,
       [styles.empty]: !renderTree.length
     })
     return (
       <Form className={panelClass}>
-        <Row gutter={8}>
-          {this.renderFilterControls(renderTree)}
-          {/* <Col span={4}>
-            <Button type="primary" size="small" icon="search">查询</Button>
-            <Button size="small" icon="reload">重置</Button>
-          </Col> */}
-        </Row>
+        <div className={styles.controls}>
+          <Row gutter={8}>
+            {this.renderFilterControls(renderTree)}
+          </Row>
+        </div>
+        {
+          queryMode === GlobalControlQueryMode.Manually && (
+            <div className={styles.actions}>
+              <Button type="primary" icon="search" onClick={this.search}>查询</Button>
+              <Button icon="reload" onClick={this.reset}>重置</Button>
+            </div>
+          )
+        }
       </Form>
     )
   }

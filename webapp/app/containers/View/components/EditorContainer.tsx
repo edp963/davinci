@@ -19,52 +19,26 @@
  */
 
 import React from 'react'
-import memoizeOne from 'memoize-one'
-
-import { ISource, ISourceTable, IMapTableColumns } from 'containers/source/types'
-import {
-  IViewVariable, IView,
-  IExecuteSqlResponse, IViewLoading,
-  IDacChannel, IDacTenant, IDacBiz
-} from '../types'
+import { areComponentsEqual } from 'react-hot-loader'
 
 import { uuid } from 'utils/util'
-import { InputNumber, Button, Row, Col, Tooltip } from 'antd'
+import { IViewVariable } from '../types'
 import Resizable, { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
+
 import SourceTable from './SourceTable'
 import SqlEditor from './SqlEditor'
-import ViewVariableList from './ViewVariableList'
-import VariableModal from './VariableModal'
-import SqlPreview from './SqlPreview'
+import ViewVariableList, { IViewVariableListProps } from './ViewVariableList'
+import VariableModal, { IVariableModalProps } from './VariableModal'
+import SqlPreview, { ISqlPreviewProps } from './SqlPreview'
+import EditorBottom from './EditorBottom'
 
 import Styles from '../View.less'
 
 interface IEditorContainerProps {
   visible: boolean
-  view: IView
   variable: IViewVariable[]
-  sources: ISource[],
-  tables: ISourceTable[],
-  mapTableColumns: IMapTableColumns
-  sqlDataSource: IExecuteSqlResponse
-  sqlLimit: number
-  loading: IViewLoading
-  nextDisabled: boolean
-
-  channels: IDacChannel[]
-  tenants: IDacTenant[]
-  bizs: IDacBiz[]
-
-  onLoadSourceTables: (sourceId: number) => void
-  onLoadTableColumns: (sourceId: number, tableName: string) => void
-  onSetSqlLimit: (limit: number) => void
-  onExecuteSql: () => void
+  children?: React.ReactNode
   onVariableChange: (variable: IViewVariable[]) => void
-  onStepChange: (stepChange: number) => void
-  onViewChange: (propName: keyof(IView), value: string | number) => void
-
-  onLoadDacTenants: (channelName: string) => void
-  onLoadDacBizs: (channelName: string, tenantId: number) => void
 }
 
 interface IEditorContainerStates {
@@ -123,16 +97,6 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
     this.setState(({ editorHeight }) => ({ previewHeight: editorHeight - height }))
   }
 
-  private sourceSelect = (sourceId: number) => {
-    const { onViewChange, onLoadSourceTables } = this.props
-    onViewChange('sourceId', sourceId)
-    onLoadSourceTables(sourceId)
-  }
-
-  private tableSelect = (sourceId: number, tableName: string) => {
-    this.props.onLoadTableColumns(sourceId, tableName)
-  }
-
   private addVariable = () => {
     this.setState({
       editingVariable: null,
@@ -183,42 +147,54 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
     this.setState({ variableModalVisible: false })
   }
 
-  private sqlChange = (sql: string) => {
-    this.props.onViewChange('sql', sql)
-  }
+  private getChildren = (props: IEditorContainerProps, state: IEditorContainerStates) => {
+    let sourceTable: React.ReactElement<any>
+    let sqlEditor: React.ReactElement<any>
+    let sqlPreview: React.ReactElement<ISqlPreviewProps>
+    let editorBottom: React.ReactElement<any>
+    let viewVariableList: React.ReactElement<IViewVariableListProps>
+    let variableModal: React.ReactElement<IVariableModalProps>
 
-  private cancel = () => {
-    this.props.onStepChange(-1)
-  }
+    React.Children.forEach(props.children, (child) => {
+      const c = child as React.ReactElement<any>
+      const type = c.type as React.ComponentClass<any>
+      if (areComponentsEqual(type, SourceTable)) {
+        sourceTable = c
+      } else if (areComponentsEqual(type, SqlEditor)) {
+        sqlEditor = c
+      } else if (areComponentsEqual(type, SqlPreview)) {
+        const { previewHeight } = state
+        sqlPreview = React.cloneElement<ISqlPreviewProps>(c, { height: previewHeight })
+      } else if (areComponentsEqual(type, EditorBottom)) {
+        editorBottom = c
+      } else if (areComponentsEqual(type, ViewVariableList)) {
+        viewVariableList = React.cloneElement<IViewVariableListProps>(c, {
+          className: Styles.viewVariable,
+          onAdd: this.addVariable,
+          onDelete: this.deleteVariable,
+          onEdit: this.editVariable
+        })
+      } else if (areComponentsEqual(type, VariableModal)) {
+        const { variableModalVisible, editingVariable } = this.state
+        variableModal = React.cloneElement<IVariableModalProps>(c, {
+          visible: variableModalVisible,
+          variable: editingVariable,
+          nameValidator: this.variableNameValidate,
+          onCancel: this.closeVariableModal,
+          onSave: this.saveVariable
+        })
+      }
+    })
 
-  private nextStep = () => {
-    this.props.onStepChange(1)
+    return { sourceTable, sqlEditor, sqlPreview, editorBottom, viewVariableList, variableModal }
   }
-
-  private getSqlHints = memoizeOne((tables: string[], mapTableColumns: IMapTableColumns, variables: IViewVariable[]) => {
-    const variableHints = variables.reduce((acc, v) => {
-      acc[`$${v.name}$`] = []
-      return acc
-    }, {})
-    const hints = tables.reduce((acc, tableName) => {
-      acc[tableName] = !mapTableColumns[tableName] ? [] : mapTableColumns[tableName].columns.map((c) => c.name)
-      return acc
-    }, variableHints)
-    return hints
-  })
 
   public render () {
+    const { visible } = this.props
     const {
-      visible, view, variable, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
-      channels, tenants, bizs,
-      onViewChange, onSetSqlLimit, onExecuteSql, onLoadDacTenants, onLoadDacBizs
-    } = this.props
-    const {
-      editorHeight, siderWidth, previewHeight,
-      variableModalVisible, editingVariable } = this.state
-    const { execute: loadingExecute } = loading
+      editorHeight, siderWidth, previewHeight } = this.state
     const style = visible ? {} : { display: 'none' }
-    const hints = this.getSqlHints(tables, mapTableColumns, variable)
+    const { sourceTable, sqlEditor, sqlPreview, editorBottom, viewVariableList, variableModal } = this.getChildren(this.props, this.state)
 
     return (
       <>
@@ -229,20 +205,10 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
               width={siderWidth}
               height={0}
               minConstraints={[EditorContainer.SiderMinWidth, 0]}
-              maxConstraints={[EditorContainer.SiderMinWidth * 1.5, 0]}
+              maxConstraints={[EditorContainer.SiderMinWidth * 2, 0]}
               onResize={this.siderResize}
             >
-              <div>
-                <SourceTable
-                  view={view}
-                  sources={sources}
-                  tables={tables}
-                  mapTableColumns={mapTableColumns}
-                  onViewChange={onViewChange}
-                  onSourceSelect={this.sourceSelect}
-                  onTableSelect={this.tableSelect}
-                />
-              </div>
+              <div>{sourceTable}</div>
             </Resizable>
           </div>
           <div className={Styles.containerHorizontal}>
@@ -257,74 +223,19 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
                   onResize={this.previewResize}
                 >
                   <div className={Styles.containerVertical}>
-                    <div className={Styles.editor}>
-                      <SqlEditor
-                        value={view.sql}
-                        hints={hints}
-                        onSqlChange={this.sqlChange}
-                      />
-                    </div>
-                    <div className={Styles.list}>
-                      <ViewVariableList
-                        variables={variable}
-                        onAdd={this.addVariable}
-                        onDelete={this.deleteVariable}
-                        onEdit={this.editVariable}
-                      />
-                    </div>
+                    {sqlEditor}
+                    {viewVariableList}
                   </div>
                 </Resizable>
               </div>
               <div className={Styles.preview} style={{height: previewHeight}}>
-                  <SqlPreview
-                    size="small"
-                    loading={loadingExecute}
-                    response={sqlDataSource}
-                    height={previewHeight}
-                  />
+                  {sqlPreview}
               </div>
             </div>
-            <Row className={Styles.bottom} type="flex" align="middle" justify="start">
-              <Col span={12} className={Styles.previewInput}>
-                <span>展示前</span>
-                <InputNumber value={sqlLimit} onChange={onSetSqlLimit} />
-                <span>条数据</span>
-              </Col>
-              <Col span={12} className={Styles.toolBtns}>
-                <Button onClick={this.cancel}>取消</Button>
-                <Button
-                  type="primary"
-                  disabled={loadingExecute}
-                  loading={loadingExecute}
-                  icon="caret-right"
-                  onClick={onExecuteSql}
-                >
-                  执行
-                </Button>
-                <Tooltip title={nextDisabled ? '执行后下一步可用' : ''}>
-                  <Button onClick={this.nextStep} disabled={nextDisabled}>
-                    下一步
-                  </Button>
-                </Tooltip>
-              </Col>
-            </Row>
+            {editorBottom}
           </div>
         </div>
-        <VariableModal
-          visible={variableModalVisible}
-          variable={editingVariable}
-          nameValidator={this.variableNameValidate}
-
-          channels={channels}
-          tenants={tenants}
-          bizs={bizs}
-
-          onCancel={this.closeVariableModal}
-          onSave={this.saveVariable}
-
-          onLoadDacTenants={onLoadDacTenants}
-          onLoadDacBizs={onLoadDacBizs}
-        />
+        {variableModal}
       </>
     )
   }

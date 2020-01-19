@@ -20,9 +20,12 @@
 
 import * as React from 'react'
 import { Icon, Tooltip, Popover } from 'antd'
+import {IconProps} from 'antd/lib/icon'
 const styles = require('../Dashboard.less')
-import {IProject} from '../../Projects'
-
+import {IProject} from 'containers/Projects'
+import ShareDownloadPermission from 'containers/Account/components/checkShareDownloadPermission'
+import ModulePermission from 'containers/Account/components/checkModulePermission'
+import { getTextWidth } from 'utils/util'
 interface IDashboardActionProps {
   currentProject: IProject
   depth: number
@@ -66,6 +69,12 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     onInitOperateMore(item, type)
   }
 
+  private computeTitleWidth (text: string, wrapperWidth: number) {
+    const textWidth = getTextWidth(text)
+    const textLength = text.length
+    return text
+  }
+
   public render () {
     const {
       currentProject,
@@ -76,32 +85,50 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     } = this.props
     const { popoverVisible } = this.state
 
+    const EditActionButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>>(currentProject, 'viz')(Li)
     const editAction = (
-      <li onClick={this.operateMore(item, 'edit')}>
+      <EditActionButton onClick={this.operateMore(item, 'edit')}>
         <Icon type="edit" /> 编辑
-      </li>
+      </EditActionButton>
     )
 
+    const DownloadButton = ShareDownloadPermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>>(currentProject, 'download')(Li)
+
+    const downloadAction = (
+      <DownloadButton style={{cursor: 'pointer'}} onClick={this.operateMore(item, 'download')}>
+        <Icon type="download" className={styles.swap} /> 下载
+      </DownloadButton>
+    )
+
+
+
     const moveAction = (
-      <li onClick={this.operateMore(item, 'move')}>
+      <EditActionButton onClick={this.operateMore(item, 'move')}>
         <Icon type="swap" className={styles.swap} /> 移动
-      </li>
+      </EditActionButton>
+    )
+
+    const DeleteActionButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>>(currentProject, 'viz', true)(Li)
+    const deleteAction = (
+      <DeleteActionButton onClick={this.operateMore(item, 'delete')}>
+        <Icon type="delete" /> 删除
+      </DeleteActionButton>
     )
 
     const ulActionAll = (
       <ul className={styles.menu}>
-        {editAction}
-        {moveAction}
-        <li onClick={this.operateMore(item, 'delete')}>
-          <Icon type="delete" /> 删除
-        </li>
+        <li>{editAction}</li>
+        {/* <li>{downloadAction}</li> */}
+        <li>{moveAction}</li>
+        <li>{deleteAction}</li>
       </ul>
     )
 
     const ulActionPart = (
       <ul className={styles.menu}>
-        {editAction}
-        {moveAction}
+        <li>{editAction}</li>
+        {/* <li>{downloadAction}</li> */}
+        <li>{moveAction}</li>
       </ul>
     )
 
@@ -116,7 +143,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     let ulPopover
     if (currentProject && currentProject.permission) {
       const currentPermission = currentProject.permission.vizPermission
-      if (currentPermission === 0 || currentPermission === 1) {
+      if (currentPermission === 0) {
         ulPopover = null
       } else {
         ulPopover = (
@@ -132,17 +159,19 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       }
     }
 
-    const titleWidth = `${splitWidth - 60 - 18 * depth}px`
+    const computeWidth: number = splitWidth - 60 - 18 * depth - 6
+    const titleWidth: string = `${computeWidth}px`
 
+    const computeTitleWidth = this.computeTitleWidth
     return (
       <span className={styles.portalTreeItem}>
         <Tooltip placement="right" title={`名称：${item.name}`}>
           {
             item.type === 0
-              ? <h4 className={styles.dashboardTitle} style={{ width: titleWidth }}>{item.name}</h4>
+              ? <h4 className={styles.dashboardTitle} style={{ width: titleWidth }}>{computeTitleWidth(item.name, computeWidth)}</h4>
               : <span className={styles.dashboardTitle} style={{width: titleWidth}} onClick={initChangeDashboard(item.id)}>
-                  <Icon type="dot-chart" />
-                  <span className={styles.itemName}>{item.name}</span>
+                  <Icon type={`${item.type === 2 ? 'table' : 'dot-chart'}`} />
+                  <span className={styles.itemName}>{computeTitleWidth(item.name, computeWidth)}</span>
                 </span>
           }
           {ulPopover}
@@ -150,6 +179,12 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       </span>
     )
   }
+}
+
+function Li (props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>) {
+  return (
+    <span {...props} >{props.children}</span>
+  )
 }
 
 export default DashboardAction

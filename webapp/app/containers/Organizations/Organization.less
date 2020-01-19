@@ -1,4 +1,4 @@
-@import "../../assets/less/variable";
+@import "~assets/less/variable";
 
 .groupList {
   padding: 8px 24px;
@@ -296,13 +296,16 @@
 .radioWrapper {
   display: flex;
   margin-bottom: 8px;
-  .radio {
 
+  :global(.ant-radio-wrapper) {
+    padding-top: 9px;
   }
+
   .labelWrapper {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+
     .label{
       font-size: 14px;
       color: @rich-text;

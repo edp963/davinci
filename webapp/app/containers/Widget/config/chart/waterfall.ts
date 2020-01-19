@@ -4,9 +4,9 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const waterfall: IChartInfo = {
   id: ChartTypes.Waterfall,
@@ -14,8 +14,7 @@ const waterfall: IChartInfo = {
   title: '瀑布图',
   icon: 'icon-waterfall',
   coordinate: 'cartesian',
-  requireDimetions: 1,
-  requireMetrics: 1,
+  rules: [{ dimension: 1, metric: 1 }],
   dimetionAxis: 'col',
   data: {
     cols: {

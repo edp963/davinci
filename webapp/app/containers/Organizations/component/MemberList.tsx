@@ -2,12 +2,12 @@ import React from 'react'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { Row, Col, Tooltip, Button, Input, Popconfirm, Modal, Table } from 'antd'
 const styles = require('../Organization.less')
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 import MemberForm from './AddForm'
-import Avatar from '../../../components/Avatar'
+import Avatar from 'components/Avatar'
 import * as Organization from '../Organization'
 import ChangeRoleForm from './ChangeRoleForm'
-import ComponentPermission from '../../Account/components/checkMemberPermission'
+import ComponentPermission from 'containers/Account/components/checkMemberPermission'
 
 interface IMembersState {
   category?: string
@@ -22,6 +22,7 @@ interface IMembersState {
 }
 
 interface IMembersProps {
+  loginUser: any
   organizationId: number
   loadOrganizationsMembers: (id: number) => any
   deleteOrganizationMember: (id: number, resolve: () => any) => any
@@ -185,6 +186,9 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
   }
   public render () {
     const {
+      loginUser
+    } = this.props
+    const {
       formVisible,
       category,
       modalLoading,
@@ -193,13 +197,6 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       changeRoleFormCategory,
       organizationMembers
     } = this.state
-    let isHidden = void 0
-    if (organizationMembers && organizationMembers.length) {
-      isHidden = organizationMembers.every(isAllOwner)
-    }
-    function isAllOwner (m, index, array) {
-      return (m && m.user && m.user.role === 1)
-    }
     const { inviteMemberList, currentOrganization } = this.props
     let CreateButton = void 0
     if (currentOrganization) {
@@ -217,7 +214,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     let columns = []
     if (currentOrganization && currentOrganization.role === 1) {
       columns = [{
-        title: 'Name',
+        title: '姓名',
         dataIndex: 'user',
         key: 'user',
         render: (text) => (
@@ -227,30 +224,27 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           </div>
         )
       }, {
-        title: 'role',
+        title: '权限',
         dataIndex: 'user',
         key: 'userKey',
-        render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
+        render: (text) => <span>{text.role === 1 ? '拥有者' : '成员'}</span>
       }, {
-          title: 'settings',
+          title: '设置',
           dataIndex: 'user',
-          className: isHidden ? utilStyles.hide : '',
           key: 'settings',
           width: 200,
           render: (text, record) => {
-            if (text.role === 1) {
+            if (record.user.id === loginUser.id) {
               return ''
             }
             return (
               <span>
                 <Popconfirm
-                  title="确定删除此成员吗？"
+                  title="确定删除？"
                   placement="bottom"
                   onConfirm={this.removeMemberForm(text, record)}
                 >
-                  <Tooltip title="删除">
-                    <a href="javascript:;">从组织里移除</a>
-                  </Tooltip>
+                  <a href="javascript:;">从组织里移除</a>
                 </Popconfirm>
                 <span className="ant-divider" />
                 <a href="javascript:;" onClick={this.showChangeRoleForm('orgMember', record)}>改变角色</a>
@@ -260,7 +254,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         }]
     } else {
       columns = [{
-        title: 'Name',
+        title: '姓名',
         dataIndex: 'user',
         key: 'user',
         render: (text) => (
@@ -270,10 +264,10 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           </div>
         )
       }, {
-        title: 'role',
+        title: '权限',
         dataIndex: 'user',
         key: 'userKey',
-        render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
+        render: (text) => <span>{text.role === 1 ? '拥有者' : '成员'}</span>
       }]
     }
     return (

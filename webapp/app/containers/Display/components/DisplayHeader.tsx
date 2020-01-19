@@ -30,7 +30,7 @@ const styles = require('../Display.less')
 
 import { slideSettings, GraphTypes, SecondaryGraphTypes } from './util'
 import LayerSelector from './LayerSelector'
-import SharePanel from '../../../components/SharePanel'
+import SharePanel from 'components/SharePanel'
 
 import {
   makeSelectCurrentDisplayShareInfo,
@@ -49,7 +49,7 @@ interface IDisplayHeaderProps {
   currentDisplayShareInfoLoading?: boolean
   canUndo: boolean
   canRedo: boolean
-  onAddLayers: (layers: any[]) => void
+  onAddLayers: (layers: any[], viewId?: number[]) => void
   onDeleteLayers: () => void
   onCopyLayers: () => void
   onPasteLayers: () => void
@@ -116,8 +116,10 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
         frequency
       })
     }))
+    let viewIds = selectedWidgets.map((w) => w.viewId)
+    viewIds = viewIds.filter((viewId, idx) => viewIds.indexOf(viewId) === idx)
 
-    this.props.onAddLayers(layers)
+    this.props.onAddLayers(layers, viewIds)
     this.setState({
       widgetsSelected: [],
       widgetSelectorVisible: false

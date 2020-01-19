@@ -1,4 +1,4 @@
-@import "../../assets/less/variable";
+@import "~assets/less/variable";
 
 .unit {
   height: 120px;
@@ -78,6 +78,7 @@
   flex-direction: column;
   box-shadow: @block-box-shadow;
   transition: all 350ms ease;
+  position: relative;
 
   .header {
     width: 100%;
@@ -87,31 +88,28 @@
     .title {
       min-width: 0;
       height: 40px;
-      padding: 0 10px;
+      padding: 0 2px;
       line-height: 40px;
       display: flex;
       flex-direction: row;
+      align-items: center;
       cursor: move;
       flex: 1 1 auto;
 
       h4 {
         .ellipsis;
         cursor: default;
-      }
-
-      .control, .desc {
-        font-weight: normal;
-        cursor: pointer;
-        line-height: 40px;
-      }
-
-      .control {
-        font-size: 16px;
-        margin-right: 8px;
-      }
-
-      .desc {
         margin-left: 8px;
+      }
+
+      .toggle {
+        font-size: 16px;
+        margin-left: 8px;
+        cursor: pointer;
+      }
+
+      .error {
+        color: @error-color;
       }
     }
 
@@ -140,6 +138,16 @@
       .tools {
         opacity: 1;
       }
+    }
+  }
+
+  .trigger {
+    position: absolute;
+    top: 28px;
+    left: 10px;
+    i{
+      font-size: 14px;
+      color: @rich-text;
     }
   }
 
@@ -255,8 +263,10 @@
   }
 }
 
-.descPanel {
-  max-width: 256px;
+.widgetInfoContent {
+  max-width: 480px;
+  max-height: 360px;
+  overflow-y: auto;
 }
 
 .gridBottom {
@@ -279,7 +289,25 @@
 }
 
 .shareTitle {
+  padding: 0 50px;
   text-align: center;
+}
+
+.shareDownloadListToggle {
+  width: 50px;
+  height: 32px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  i {
+    font-size: 24px;
+    cursor: pointer;
+  }
 }
 
 .shareContentEmpty {
@@ -305,49 +333,6 @@
     text-align: right;
   }
 }
-
-// .scorecard {
-//   flex: 1;
-//   display: flex;
-//   flex-direction: column;
-//   justify-content: center;
-//   align-items: center;
-//   padding: 0 16px 40px;
-
-//   .scorecardContainer {
-//     max-width: 100%;
-
-//     .scorecardTitle {
-//       padding: 8px 0 0;
-//       display: block;
-
-//       .ellipsis;
-//     }
-
-//     .scorecardContent {
-//       padding: 8px 0;
-//       color: @light-text-color;
-//       display: block;
-
-//       .ellipsis;
-//     }
-//   }
-// }
-
-// .textEditorContainer {
-//   width: 100%;
-//   height: 100%;
-//   padding-bottom: 56px;
-
-//   .editor {
-//     width: 100%;
-//     height: 100%;
-//   }
-
-//   .textEditor {
-//     height: 100%;
-//   }
-// }
 
 .menuItem {
   padding: 0;
@@ -512,11 +497,14 @@
         overflow-y: auto;
         border-top: 1px solid #d9d9d9;
         padding-left: 8px;
+        margin-bottom: 34px;
       }
     }
 
     .gridClass {
       flex: 1;
+      min-width: 0;
+      min-height: 0;
       border-left: 1px solid #d9d9d9;
     }
   }
@@ -546,7 +534,7 @@
   }
 
   .itemAction {
-    display: none !important;
+    display: none;
   }
 
   &:hover {
@@ -555,11 +543,6 @@
       cursor: pointer;
       font-weight: 900;
       margin-bottom: 1px;
-      padding-left: 5px;
-
-      &:before {
-        // padding: 0 8px;
-      }
     }
   }
 
@@ -659,3 +642,17 @@
     }
   }
 }
+
+.reportMode {
+  display: flex;
+  overflow: auto;
+  flex: 1;
+  .authSizeTag {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background-color: #fff;
+  }
+}
+

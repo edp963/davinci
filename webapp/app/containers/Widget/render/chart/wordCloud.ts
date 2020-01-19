@@ -19,8 +19,10 @@
  */
 
 import { IChartProps } from '../../components/Chart'
+import { EChartOption } from 'echarts'
 import { decodeMetricName } from '../../components/util'
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+import { getFormattedValue } from '../../components/Config/Format'
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps) {
@@ -45,8 +47,24 @@ export default function (chartProps: IChartProps) {
   const agg = metrics[0].agg
   const metricName = decodeMetricName(metrics[0].name)
 
+  const tooltip: EChartOption.Tooltip = {
+    formatter (params: EChartOption.Tooltip.Format) {
+      const { name, value, color } = params
+      const tooltipLabels = []
+      if (color) {
+        tooltipLabels.push(`<span class="widget-tooltip-circle" style="background: ${color}"></span>`)
+      }
+      tooltipLabels.push(name)
+      if (data) {
+        tooltipLabels.push(': ')
+        tooltipLabels.push(getFormattedValue(value as number, metrics[0].format))
+      }
+      return tooltipLabels.join('')
+    }
+  }
+
   return {
-    tooltip: {},
+    tooltip,
     series: [{
       type: 'wordCloud',
       sizeRange: [12, 72],

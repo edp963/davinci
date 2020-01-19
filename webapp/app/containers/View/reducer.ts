@@ -18,9 +18,9 @@
  * >>
  */
 
-import { Record } from 'immutable'
+import produce from 'immer'
 import pick from 'lodash/pick'
-import { IViewState, IViewRoleRaw, IViewRole, IViewModel, IView, IFormedView, IFormedViews } from './types'
+import { IViewState, IView, IFormedViews, IViewBase } from './types'
 import { getFormedView, getValidModel } from './util'
 
 import { ActionTypes, DEFAULT_SQL_LIMIT } from './constants'
@@ -33,6 +33,7 @@ import { LOAD_WIDGET_DETAIL_SUCCESS } from 'containers/Widget/constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from 'containers/Dashboard/constants'
 
 import { ActionTypes as DisplayActionTypes } from 'containers/Display/constants'
+import { LOCATION_CHANGE } from 'react-router-redux'
 
 const emptyView: IView = {
   id: null,
@@ -47,7 +48,7 @@ const emptyView: IView = {
   sourceId: null
 }
 
-const ViewRecord = Record<IViewState>({
+const initialState: IViewState = {
   views: [],
   formedViews: {},
   editingView: emptyView,
@@ -57,8 +58,11 @@ const ViewRecord = Record<IViewState>({
     roles: []
   },
   sources: [],
-  tables: [],
-  mapTableColumns: {},
+  schema: {
+    mapDatabases: {},
+    mapTables: {},
+    mapColumns: {}
+  },
   sqlValidation: {
     code: null,
     message: null
@@ -73,40 +77,39 @@ const ViewRecord = Record<IViewState>({
     view: false,
     table: false,
     modal: false,
-    execute: false
+    execute: false,
+    copy: false
   },
 
   channels: [],
   tenants: [],
-  bizs: []
-})
-const initialState = new ViewRecord()
+  bizs: [],
+  cancelTokenSources: []
+}
 
-function viewReducer (state = initialState, action: ViewActionType | SourceActionType | any): ViewStateType {
-  const mapTableColumns = state.get('mapTableColumns')
-  const sqlDatasource = state.get('sqlDataSource')
-  const editingViewInfo = state.get('editingViewInfo')
-  const formedViews = state.get('formedViews')
-  const loading = state.get('loading')
-
-  switch (action.type) {
-    case ActionTypes.LOAD_VIEWS:
-    case ActionTypes.DELETE_VIEW:
-      return state.set('loading', { ...loading, view: true })
-    case ActionTypes.LOAD_VIEWS_FAILURE:
-    case ActionTypes.DELETE_VIEW_FAILURE:
-      return state.set('loading', { ...loading, view: false })
-    case ActionTypes.LOAD_VIEWS_SUCCESS:
-      return state
-        .set('views', action.payload.views)
-        .set('formedViews', {})
-        .set('loading', { ...loading, view: false })
-    case ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS:
-      const detailedViews = action.payload.views
-      return state
-        .set('editingView', detailedViews[0])
-        .set('editingViewInfo', pick(getFormedView(detailedViews[0]), ['model', 'variable', 'roles']))
-        .set('formedViews', detailedViews.reduce((acc, view) => {
+const viewReducer = (state = initialState, action: ViewActionType | SourceActionType): IViewState => (
+  produce(state, (draft) => {
+    switch (action.type) {
+      case ActionTypes.LOAD_VIEWS:
+      case ActionTypes.DELETE_VIEW:
+        draft.loading.view = true
+        break
+      case ActionTypes.LOAD_VIEWS_FAILURE:
+      case ActionTypes.DELETE_VIEW_FAILURE:
+        draft.loading.view = false
+        break
+      case ActionTypes.LOAD_VIEWS_SUCCESS:
+        draft.views = action.payload.views
+        draft.formedViews = {}
+        draft.loading.view = false
+        break
+      case ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS:
+        const detailedViews = action.payload.views
+        if (action.payload.isEditing) {
+          draft.editingView = detailedViews[0]
+          draft.editingViewInfo = pick(getFormedView(detailedViews[0]), ['model', 'variable', 'roles'])
+        }
+        draft.formedViews = detailedViews.reduce((acc, view) => {
           const { id, model, variable, roles } = getFormedView(view)
           acc[id] = {
             ...view,
@@ -115,104 +118,143 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
             roles
           }
           return acc
-        }, formedViews))
-
-    case SourceActionTypes.LOAD_SOURCES_SUCCESS:
-      return state.set('sources', action.payload.sources)
-    case SourceActionTypes.LOAD_SOURCE_TABLES_SUCCESS:
-      return state
-        .set('tables', action.payload.tables)
-        .set('mapTableColumns', {})
-    case SourceActionTypes.LOAD_SOURCE_TABLE_COLUMNS_SUCCESS:
-      const { tableColumns } = action.payload
-      return state.set('mapTableColumns', {
-        ...mapTableColumns,
-        [tableColumns.tableName]: tableColumns
-      })
-    case ActionTypes.EXECUTE_SQL:
-      return state
-        .set('loading', { ...loading, execute: true })
-        .set('sqlValidation', { code: null, message: null })
-    case ActionTypes.EXECUTE_SQL_SUCCESS:
-      const sqlResponse = action.payload.result
-      const validModel = getValidModel(editingViewInfo.model, sqlResponse.payload.columns)
-      return state
-        .set('sqlDataSource', sqlResponse.payload)
-        .set('editingViewInfo', {
-          ...editingViewInfo,
-          model: validModel
-        })
-        .set('loading', { ...loading, execute: false })
-        .set('sqlValidation', {
+        }, draft.formedViews)
+        break
+      case SourceActionTypes.LOAD_SOURCES_SUCCESS:
+        draft.sources = action.payload.sources
+        draft.schema = {
+          mapDatabases: {},
+          mapTables: {},
+          mapColumns: {}
+        }
+        break
+      case SourceActionTypes.LOAD_SOURCE_DATABASES_SUCCESS:
+        const { sourceDatabases } = action.payload
+        draft.schema.mapDatabases[sourceDatabases.sourceId] = sourceDatabases.databases
+        break
+      case SourceActionTypes.LOAD_SOURCE_DATABASE_TABLES_SUCCESS:
+        const { databaseTables } = action.payload
+        draft.schema.mapTables[`${databaseTables.sourceId}_${databaseTables.dbName}`] = databaseTables
+        break
+      case SourceActionTypes.LOAD_SOURCE_TABLE_COLUMNS_SUCCESS:
+        const { databaseName, tableColumns } = action.payload
+        draft.schema.mapColumns[`${tableColumns.sourceId}_${databaseName}_${tableColumns.tableName}`] = tableColumns
+        break
+      case ActionTypes.EXECUTE_SQL:
+        draft.loading.execute = true
+        draft.sqlValidation = { code: null, message: null }
+        break
+      case ActionTypes.EXECUTE_SQL_SUCCESS:
+        const sqlResponse = action.payload.result
+        const validModel = getValidModel(draft.editingViewInfo.model, sqlResponse.payload.columns)
+        draft.sqlDataSource = sqlResponse.payload
+        draft.editingViewInfo.model = validModel
+        draft.loading.execute = false
+        draft.sqlValidation = {
           code: sqlResponse.header.code,
           message: sqlResponse.header.msg
-        })
-    case ActionTypes.EXECUTE_SQL_FAILURE:
-      return state
-        .set('sqlDataSource', {
-          ...sqlDatasource,
+        }
+        break
+      case ActionTypes.EXECUTE_SQL_FAILURE:
+        draft.sqlDataSource = {
+          ...draft.sqlDataSource,
           columns: [],
           totalCount: 0,
           resultList: []
-        })
-        .set('loading', { ...loading, execute: false })
-        .set('sqlValidation', {
+        }
+        draft.loading.execute = false
+        draft.sqlValidation = {
           code: action.payload.err.code,
           message: action.payload.err.msg
-        })
-    case ActionTypes.UPDATE_EDITING_VIEW:
-      return state.set('editingView', action.payload.view)
-    case ActionTypes.UPDATE_EDITING_VIEW_INFO:
-      return state.set('editingViewInfo', action.payload.viewInfo)
-    case ActionTypes.SET_SQL_LIMIT:
-      return state.set('sqlLimit', action.payload.limit)
-    case ActionTypes.EDIT_VIEW_SUCCESS:
-      return state
-        .set('editingView', emptyView)
-        .set('editingViewInfo', { model: {}, variable: [], roles: [] })
-        .set('formedViews', {
-          ...formedViews,
-          [action.payload.result.id]: getFormedView(action.payload.result)
-        })
-    case ActionTypes.LOAD_DAC_CHANNELS_SUCCESS:
-      return state.set('channels', action.payload.channels)
-    case ActionTypes.LOAD_DAC_TENANTS_SUCCESS:
-      return state.set('tenants', action.payload.tenants)
-    case ActionTypes.LOAD_DAC_TENANTS_FAILURE:
-      return state.set('tenants', [])
-    case ActionTypes.LOAD_DAC_BIZS_SUCCESS:
-      return state.set('bizs', action.payload.bizs)
-    case ActionTypes.LOAD_DAC_BIZS_FAILURE:
-      return state.set('bizs', [])
+        }
+        break
+      case ActionTypes.UPDATE_EDITING_VIEW:
+        draft.editingView = action.payload.view
+        break
+      case ActionTypes.UPDATE_EDITING_VIEW_INFO:
+        draft.editingViewInfo = action.payload.viewInfo
+        break
+      case ActionTypes.SET_SQL_LIMIT:
+        draft.sqlLimit = action.payload.limit
+        break
+      case ActionTypes.EDIT_VIEW_SUCCESS:
+        draft.editingView = emptyView
+        draft.editingViewInfo = { model: {}, variable: [], roles: [] }
+        draft.formedViews[action.payload.result.id] = getFormedView(action.payload.result)
+        break
 
-    case ActionTypes.RESET_VIEW_STATE:
-      return new ViewRecord()
-    case LOAD_WIDGET_DETAIL_SUCCESS:
-      const widgetView = action.payload.view
-      return state.set('formedViews', {
-        ...formedViews,
-        [widgetView.id]: {
+      case ActionTypes.COPY_VIEW:
+        draft.loading.copy = true
+        break
+      case ActionTypes.COPY_VIEW_SUCCESS:
+        const fromViewId = action.payload.fromViewId
+        const copiedViewKeys: Array<keyof IViewBase> = ['id', 'name', 'description']
+        const copiedView: IViewBase = pick(action.payload.result, copiedViewKeys)
+        copiedView.sourceName = action.payload.result.source.name
+        draft.views.splice(draft.views.findIndex(({ id }) => id === fromViewId) + 1, 0, copiedView)
+        draft.loading.copy = false
+        break
+      case ActionTypes.COPY_VIEW_FAILURE:
+        draft.loading.copy = false
+        break
+
+      case ActionTypes.LOAD_DAC_CHANNELS_SUCCESS:
+        draft.channels = action.payload.channels
+        break
+      case ActionTypes.LOAD_DAC_TENANTS_SUCCESS:
+        draft.tenants = action.payload.tenants
+        break
+      case ActionTypes.LOAD_DAC_TENANTS_FAILURE:
+        draft.tenants = []
+        break
+      case ActionTypes.LOAD_DAC_BIZS_SUCCESS:
+        draft.bizs = action.payload.bizs
+        break
+      case ActionTypes.LOAD_DAC_BIZS_FAILURE:
+        draft.bizs = []
+        break
+      case ActionTypes.RESET_VIEW_STATE:
+        return initialState
+        break
+      case LOAD_WIDGET_DETAIL_SUCCESS:
+        const widgetView = action.payload.view
+        draft.formedViews[widgetView.id] = {
           ...widgetView,
           model: JSON.parse(widgetView.model || '{}'),
           variable: JSON.parse(widgetView.variable || '[]')
         }
-      })
-    case LOAD_DASHBOARD_DETAIL_SUCCESS:
-    case DisplayActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
-      const updatedViews: IFormedViews = (action.payload.views || []).reduce((obj, view) => {
-        obj[view.id] = {
-          ...view,
-          model: JSON.parse(view.model || '{}'),
-          variable: JSON.parse(view.variable || '[]')
+        break
+      case LOAD_DASHBOARD_DETAIL_SUCCESS:
+      case DisplayActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
+        const updatedViews: IFormedViews = (action.payload.views || []).reduce((obj, view) => {
+          obj[view.id] = {
+            ...view,
+            model: JSON.parse(view.model || '{}'),
+            variable: JSON.parse(view.variable || '[]')
+          }
+          return obj
+        }, {})
+        draft.formedViews = {
+          ...draft.formedViews,
+          ...updatedViews
         }
-        return obj
-      }, {})
-      return state.set('formedViews', { ...formedViews, ...updatedViews })
-    default:
-      return state
-  }
-}
-
-export type ViewStateType = typeof initialState
+        break
+      case ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
+      case ActionTypes.LOAD_SELECT_OPTIONS:
+        draft.cancelTokenSources.push(action.payload.cancelTokenSource)
+        break
+      case LOCATION_CHANGE:
+        if (state.cancelTokenSources.length) {
+          state.cancelTokenSources.forEach((source) => {
+            source.cancel()
+          })
+          draft.cancelTokenSources = []
+        }
+        break
+      default:
+        break
+    }
+  })
+)
 
 export default viewReducer

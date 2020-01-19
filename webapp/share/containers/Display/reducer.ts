@@ -22,6 +22,9 @@ import { fromJS } from 'immutable'
 import { ActionTypes } from './constants'
 import { GraphTypes } from '../../../app/containers/Display/components/util'
 
+import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
+import { DashboardItemStatus } from '../Dashboard'
+
 const initialState = fromJS({
   title: '',
   display: null,
@@ -44,6 +47,7 @@ function displayReducer (state = initialState, { type, payload }) {
         .set('widgets', payload.widgets)
         .set('layersInfo', payload.slide.relations.reduce((obj, layer) => {
           obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
+            status: DashboardItemStatus.Initial,
             datasource: { resultList: [] },
             loading: false,
             queryConditions: {
@@ -78,11 +82,13 @@ function displayReducer (state = initialState, { type, payload }) {
           }
         })
     case ActionTypes.LOAD_LAYER_DATA_SUCCESS:
+      fieldGroupedSort(payload.data.resultList, payload.requestParams.customOrders)
       return state
         .set('layersInfo', {
           ...layersInfo,
           [payload.layerId]: {
             ...layersInfo[payload.layerId],
+            status: DashboardItemStatus.Fulfilled,
             loading: false,
             datasource: payload.data,
             renderType: payload.renderType
@@ -94,6 +100,7 @@ function displayReducer (state = initialState, { type, payload }) {
           ...layersInfo,
           [payload.layerId]: {
             ...layersInfo[payload.layerId],
+            status: DashboardItemStatus.Error,
             loading: false
           }
         })

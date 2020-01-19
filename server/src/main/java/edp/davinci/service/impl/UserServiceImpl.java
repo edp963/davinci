@@ -1,26 +1,29 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 import edp.core.enums.HttpCodeEnum;
+import edp.core.enums.MailContentTypeEnum;
 import edp.core.exception.ServerException;
+import edp.core.model.MailContent;
 import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -46,8 +49,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
-
-import static edp.davinci.core.common.Constants.LDAP_USER_PASSWORD;
 
 
 @Slf4j
@@ -124,16 +125,7 @@ public class UserServiceImpl implements UserService {
         int insert = userMapper.insert(user);
         if (insert > 0) {
             //添加成功，发送激活邮件
-            Map content = new HashMap<String, Object>();
-            content.put("username", user.getUsername());
-            content.put("host", serverUtils.getHost());
-            content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(user), null));
-
-            mailUtils.sendTemplateEmail(user.getEmail(),
-                    Constants.USER_ACTIVATE_EMAIL_SUBJECT,
-                    Constants.USER_ACTIVATE_EMAIL_TEMPLATE,
-                    content);
-
+            sendMail(user.getEmail(), user);
             return user;
         } else {
             log.info("regist fail: {}", userRegist.toString());
@@ -195,20 +187,10 @@ public class UserServiceImpl implements UserService {
                         ldapPerson.setSAMAccountName(ldapPerson.getEmail());
                     }
                     user = ldapService.registPerson(ldapPerson);
+                } else if (user.getEmail().toLowerCase().equals(ldapPerson.getEmail().toLowerCase())) {
+                    return user;
                 } else {
-                    if (user.getPassword().equals(LDAP_USER_PASSWORD) && user.getEmail().equals(ldapPerson.getEmail())) {
-                        return user;
-                    } else if (!user.getEmail().equals(ldapPerson.getEmail())) {
-                        if (userMapper.existEmail(ldapPerson.getEmail()) || userMapper.existUsername(ldapPerson.getEmail())) {
-                            throw new ServerException("password is wrong");
-                        }
-                        if (userMapper.existUsername(ldapPerson.getSAMAccountName())) {
-                            ldapPerson.setSAMAccountName(ldapPerson.getEmail());
-                        }
-                        user = ldapService.registPerson(ldapPerson);
-                    } else {
-                        throw e;
-                    }
+                    throw e;
                 }
             }
         }
@@ -222,11 +204,16 @@ public class UserServiceImpl implements UserService {
      * @param keyword
      * @param user
      * @param orgId
+     * @param includeSelf
      * @return
      */
     @Override
-    public List<UserBaseInfo> getUsersByKeyword(String keyword, User user, Long orgId) {
+    public List<UserBaseInfo> getUsersByKeyword(String keyword, User user, Long orgId, Boolean includeSelf) {
         List<UserBaseInfo> users = userMapper.getUsersByKeyword(keyword, orgId);
+
+        if (includeSelf) {
+            return users;
+        }
 
         Iterator<UserBaseInfo> iterator = users.iterator();
         while (iterator.hasNext()) {
@@ -353,11 +340,16 @@ public class UserServiceImpl implements UserService {
         content.put("username", user.getUsername());
         content.put("host", serverUtils.getHost());
         content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(user), null));
-        mailUtils.sendTemplateEmail(user.getEmail(),
-                Constants.USER_ACTIVATE_EMAIL_SUBJECT,
-                Constants.USER_ACTIVATE_EMAIL_TEMPLATE,
-                content);
 
+        MailContent mailContent = MailContent.MailContentBuilder.builder()
+                .withSubject(Constants.USER_ACTIVATE_EMAIL_SUBJECT)
+                .withTo(user.getEmail())
+                .withMainContent(MailContentTypeEnum.TEMPLATE)
+                .withTemplate(Constants.USER_ACTIVATE_EMAIL_TEMPLATE)
+                .withTemplateContent(content)
+                .build();
+
+        mailUtils.sendMail(mailContent, null);
         return true;
     }
 

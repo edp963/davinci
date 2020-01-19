@@ -23,27 +23,30 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import classnames from 'classnames'
 
-import { Form, Row, Col, Input, Checkbox, Select, Button, Table } from 'antd'
+import { Form, Row, Col, Input, InputNumber, Radio, Checkbox, Select, Button, Table } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
 const FormItem = Form.Item
 const Option = Select.Option
+const RadioGroup = Radio.Group
+const RadioButton = Radio.Button
 
-import { FilterTypeList, FilterTypesLocale, FilterTypes } from '../filterTypes'
+import { FilterTypeList, FilterTypesLocale, FilterTypes, FilterTypesDynamicDefaultValueSetting } from '../filterTypes'
+import { renderDate } from '..'
+import { InteractionType } from '../types'
 import {
-  renderDate,
   getOperatorOptions,
   getDatePickerFormatOptions,
-  InteractionType
-} from '..'
+  getDynamicDefaultValueOptions
+} from '../util'
 import DatePickerFormats, {
   DatePickerFormatsLocale,
   DatePickerDefaultValuesLocales,
   DatePickerDefaultValues
 } from '../datePickerFormats'
-import { setControlFormValues } from '../../../containers/Dashboard/actions'
-import { makeSelectControlForm } from '../../../containers/Dashboard/selectors'
+import { setControlFormValues } from 'containers/Dashboard/actions'
+import { makeSelectControlForm } from 'containers/Dashboard/selectors'
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const styles = require('../filter.less')
 
 interface IFilterFormProps {
@@ -63,12 +66,13 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
 
     let container
     let type
+    let multiple
     let showDefaultValue
 
     if (controlFormValues) {
-      const { type: typeValue, dynamicDefaultValue } = controlFormValues
-      type = typeValue
-      showDefaultValue = dynamicDefaultValue === DatePickerDefaultValues.Custom
+      type = controlFormValues.type
+      multiple = controlFormValues.multiple
+      showDefaultValue = controlFormValues.dynamicDefaultValue === DatePickerDefaultValues.Custom
     }
 
     switch (type) {
@@ -84,23 +88,27 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
                     allowClear
                   >
                     {
-                      Object.entries(DatePickerDefaultValuesLocales).map(([value, label]) => (
-                        <Option key={value} value={value}>{label}</Option>
+                      getDynamicDefaultValueOptions(type, multiple).map((val) => (
+                        <Option key={val} value={val}>{DatePickerDefaultValuesLocales[val]}</Option>
                       ))
                     }
                   </Select>
                 )}
               </FormItem>
             </Col>
-            <Col span={8} className={classnames({[utilStyles.hide]: !showDefaultValue})}>
-              <FormItem label=" " colon={false}>
-                {getFieldDecorator('defaultValue', {})(
-                  <Suspense fallback={null}>
-                    {renderDate(controlFormValues, () => void 0, {size: 'small'})}
-                  </Suspense>
-                )}
-              </FormItem>
-            </Col>
+            {
+              showDefaultValue && (
+                <Suspense fallback={null}>
+                  <Col span={8}>
+                    <FormItem label=" " colon={false}>
+                      {getFieldDecorator('defaultValue', {})(
+                        renderDate(controlFormValues, null, {size: 'small'})
+                      )}
+                    </FormItem>
+                  </Col>
+                </Suspense>
+              )
+            }
           </>
         )
         break
@@ -244,6 +252,29 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
               )}
             </FormItem>
           </Col>
+          {
+            type === FilterTypes.Select && (
+              <>
+                <Col key="cache" span={6}>
+                  <FormItem label="缓存">
+                    {getFieldDecorator('cache', {})(
+                      <RadioGroup size="small">
+                        <RadioButton value={true}>开启</RadioButton>
+                        <RadioButton value={false}>关闭</RadioButton>
+                      </RadioGroup>
+                    )}
+                  </FormItem>
+                </Col>
+                <Col key="expired" span={8}>
+                  <FormItem label="有效期（秒）">
+                    {getFieldDecorator('expired', {})(
+                      <InputNumber size="small" />
+                    )}
+                  </FormItem>
+                </Col>
+              </>
+            )
+          }
         </Row>
         <Row gutter={8} className={styles.formBody}>
           {this.renderDefaultValueComponent()}
@@ -251,7 +282,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
         {
           type === FilterTypes.Select && (
             <Row gutter={8} className={styles.formBody}>
-              <Col span={6}>
+              <Col span={7}>
                 <FormItem label="选项">
                   {getFieldDecorator('customOptions', {
                     valuePropName: 'checked'
@@ -323,6 +354,11 @@ const formOptions = {
             }
             break
         }
+      }
+
+      if (changedValues.hasOwnProperty('multiple')) {
+        changedValues.dynamicDefaultValue = void 0
+        changedValues.defaultValue = void 0
       }
 
       if (changedValues.hasOwnProperty('type')) {

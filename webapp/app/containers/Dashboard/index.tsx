@@ -25,8 +25,8 @@ import { createStructuredSelector } from 'reselect'
 import { Link, InjectedRouter, routerShape } from 'react-router'
 
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 import projectReducer from '../Projects/reducer'
@@ -36,7 +36,6 @@ import portalSaga from '../Portal/sagas'
 import viewReducer from '../View/reducer'
 import viewSaga from '../View/sagas'
 
-import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
 import DashboardAction from './components/DashboardAction'
 
@@ -45,7 +44,6 @@ const TreeNode = Tree.TreeNode
 
 import { IconProps } from 'antd/lib/icon/index'
 import AntdFormType from 'antd/lib/form/Form'
-
 
 const Search = Input.Search
 
@@ -57,23 +55,32 @@ import {
   loadDashboardDetail
 } from './actions'
 import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
-import { hideNavigator, checkNameUniqueAction } from '../App/actions'
+import {
+  hideNavigator,
+  checkNameUniqueAction,
+  initiateDownloadTask,
+  loadDownloadList,
+  downloadFile
+} from '../App/actions'
+import { makeSelectDownloadList, makeSelectDownloadListLoading } from '../App/selectors'
+import { DownloadTypes, IDownloadRecord } from '../App/types'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 import { loadPortals } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
 import { loadProjectDetail, excludeRoles } from '../Projects/actions'
 import {IExludeRoles} from '../Portal/components/PortalList'
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 const styles = require('./Dashboard.less')
 const widgetStyles = require('../Widget/Widget.less')
 import {makeSelectCurrentProject, makeSelectProjectRoles} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects'
-import EditorHeader from '../../components/EditorHeader'
+import EditorHeader from 'components/EditorHeader'
 const SplitPane = React.lazy(() => import('react-split-pane'))
 import {IProjectRoles} from '../Organizations/component/ProjectRole'
 import { loadProjectRoles } from '../Organizations/actions'
+import { IGlobalControl, GlobalControlQueryMode } from 'app/components/Filters/types'
 
 interface IDashboardProps {
   modalLoading: boolean
@@ -83,6 +90,7 @@ interface IDashboardProps {
   currentProject: IProject
   portals: any[]
   projectRoles: IProjectRoles[]
+  downloadList: IDownloadRecord[]
   onLoadDashboards: (portalId: number, resolve: any) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
@@ -93,6 +101,9 @@ interface IDashboardProps {
   onLoadProjectDetail: (id) => any
   onExcludeRoles: (type: string, id: number, resolve?: any) => any
   onLoadProjectRoles: (id: number) => any
+  onInitiateDownloadTask: (id: number, type: DownloadTypes, downloadParams?: any[]) => void
+  onLoadDownloadList: () => void
+  onDownloadFile: (id) => void
 }
 
 export interface IDashboard {
@@ -104,6 +115,12 @@ export interface IDashboard {
   index?: number
   type?: number
   children?: any[]
+}
+
+export interface IDashboardConfig {
+  filters?: IGlobalControl[]
+  linkagers?: any[]
+  queryMode?: GlobalControlQueryMode
 }
 
 export interface ICurrentDashboard extends IDashboard {
@@ -225,12 +242,15 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
   private changeDashboard = (dashboardId) => (e) => {
     const { params, router } = this.props
-    const { pid, portalId, portalName } = params
-    this.setState({
-      isGrid: true
-    }, () => {
-      router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
-    })
+    const { pid, portalId, portalName, dashboardId: currentDashboardId } = params
+
+    if (Number(currentDashboardId) !== dashboardId) {
+      this.setState({
+        isGrid: true
+      }, () => {
+        router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
+      })
+    }
   }
 
   private hideDashboardForm = () => {
@@ -263,7 +283,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             config,
             dashboardPortalId: Number(params.portalId),
             name,
-            type: selectType ? 1 : 0
+           // type: selectType ? 1 : 0   // todo selectType 更改位置
+            type: Number(selectType)
           }
 
           const addObj = {
@@ -492,7 +513,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             folder: parentId ? `${(dashboards as any[]).find((g) => g.id === parentId).id}` : '0',
             config,
             name: formType === 'copy' ? `${name}_copy` : name,
-            selectType: type === 1,
+          //  selectType: type === 1,
+            selectType: type,
             index
           })
         }, 0)
@@ -514,11 +536,15 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
 
   private onOperateMore = (item, type) => {
-    this.setState({
-      formType: type
-    }, () => {
-      this.onShowDashboardForm(item, this.state.formType)
-    })
+    if (type === 'download') {
+      this.props.onInitiateDownloadTask(item.id, item.type === 0 ? DownloadTypes.Folder : DownloadTypes.Dashboard, [])
+    } else {
+      this.setState({
+        formType: type
+      }, () => {
+        this.onShowDashboardForm(item, this.state.formType)
+      })
+    }
   }
 
   private searchDashboard = (e) => {
@@ -650,8 +676,11 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       modalLoading,
       children,
       currentProject,
+      portals,
+      downloadList,
       onCheckUniqueName,
-      portals
+      onLoadDownloadList,
+      onDownloadFile
     } = this.props
 
     const {
@@ -665,7 +694,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       splitSize,
       portalTreeWidth
     } = this.state
-
     const items = searchValue.map((s) => {
       return <li key={s.id} onClick={this.pickSearchDashboard(s.id)}>{s.name}</li>
     })
@@ -737,6 +765,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     if (portals) {
       portalDec = portals.find((p) => p.id === Number(params.portalId)).description
     }
+
     return (
       <div className={styles.portal}>
         <EditorHeader
@@ -744,7 +773,10 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           currentType="dashboard"
           name={params.portalName}
           description={portalDec}
+          downloadList={downloadList}
           onCancel={this.cancel}
+          onLoadDownloadList={onLoadDownloadList}
+          onDownloadFile={onDownloadFile}
         />
         <Helmet title={params.portalName} />
         <div className={styles.portalBody}>
@@ -830,7 +862,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
                   ? children
                   : (
                     <div className={styles.noDashboard}>
-                      <img src={require('../../assets/images/noDashboard.png')} onClick={this.onAddItem}/>
+                      <img src={require('assets/images/noDashboard.png')} onClick={this.onAddItem}/>
                       <p>请创建文件夹或 Dashboard</p>
                     </div>
                   )
@@ -867,7 +899,8 @@ const mapStateToProps = createStructuredSelector({
   modalLoading: makeSelectModalLoading(),
   currentProject: makeSelectCurrentProject(),
   portals: makeSelectPortals(),
-  projectRoles: makeSelectProjectRoles()
+  projectRoles: makeSelectProjectRoles(),
+  downloadList: makeSelectDownloadList()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -881,7 +914,10 @@ export function mapDispatchToProps (dispatch) {
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
-    onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id))
+    onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
+    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(initiateDownloadTask(id, type, downloadParams)),
+    onLoadDownloadList: () => dispatch(loadDownloadList()),
+    onDownloadFile: (id) => dispatch(downloadFile(id))
   }
 }
 

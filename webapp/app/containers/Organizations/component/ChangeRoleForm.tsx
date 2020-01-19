@@ -3,7 +3,7 @@ import { Form, Input, Radio, Button } from 'antd'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const styles = require('../Organization.less')
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 
 interface IChangeRoleProps {
@@ -29,16 +29,16 @@ export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps, {}> {
         return (
           <RadioGroup>
             <div className={styles.radioWrapper}>
-              <Radio key={`radio${1}`} value={1} className={styles.radio}/>
+              <Radio key={`radio${1}`} value={1} />
               <div className={styles.labelWrapper}>
-                <div className={styles.label}>Owner</div>
+                <div className={styles.label}>拥有者</div>
                 <div className={styles.labelDesc}>组织的管理者，可以添加和删除组织成员并创建团队</div>
               </div>
             </div>
             <div className={styles.radioWrapper}>
-              <Radio key={`radio${2}`} value={0} className={styles.radio}/>
+              <Radio key={`radio${2}`} value={0} />
               <div className={styles.labelWrapper}>
-                <div className={styles.label}>Member</div>
+                <div className={styles.label}>成员</div>
                 <div className={styles.labelDesc}>组织内的普通成员，进入团队后，由团队的 Maintainer 分配项目模块权限</div>
               </div>
             </div>
@@ -48,14 +48,14 @@ export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps, {}> {
         return (
           <RadioGroup>
             <div className={styles.radioWrapper}>
-              <Radio key={`radio${1}`} value={1} className={styles.radio}/>
+              <Radio key={`radio${1}`} value={1} />
               <div className={styles.labelWrapper}>
                 <div className={styles.label}>Maintainer</div>
                 <div className={styles.labelDesc}>团队的管理者，可以指定该团队在项目中的模块权限</div>
               </div>
             </div>
             <div className={styles.radioWrapper}>
-              <Radio key={`radio${2}`} value={0} className={styles.radio}/>
+              <Radio key={`radio${2}`} value={0} />
               <div className={styles.labelWrapper}>
                 <div className={styles.label}>Member</div>
                 <div className={styles.labelDesc}>组织内的普通成员，进入团队后，由团队的 Maintainer 分配项目模块权限</div>

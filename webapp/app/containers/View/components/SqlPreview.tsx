@@ -11,10 +11,10 @@ import { IExecuteSqlResponse, ISqlColumn } from '../types'
 import { DEFAULT_SQL_PREVIEW_PAGE_SIZE, SQL_PREVIEW_PAGE_SIZE_OPTIONS } from '../constants'
 import { getTextWidth } from 'utils/util'
 
-interface ISqlPreviewProps {
+export interface ISqlPreviewProps {
   loading: boolean
   response: IExecuteSqlResponse
-  height: number
+  height?: number
   size: TableProps<any>['size']
 }
 
@@ -71,8 +71,10 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps, ISqlPrevie
   }
 
   public componentDidUpdate () {
-    const tableBodyHeight = this.computeTableBody()
-    this.setState({ tableBodyHeight })
+    const newTableBodyHeight = this.computeTableBody()
+    if (Math.abs(newTableBodyHeight - this.state.tableBodyHeight) > 5) { // FIXED table body compute vibration
+      this.setState({ tableBodyHeight: newTableBodyHeight })
+    }
   }
 
   private computeTableBody = () => {

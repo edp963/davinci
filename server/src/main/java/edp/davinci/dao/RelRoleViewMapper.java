@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -71,4 +71,9 @@ public interface RelRoleViewMapper {
            "select * from rel_role_view where  view_id = #{viewId}"
     })
     List<RelRoleView> getByView(Long viewId);
+
+    @Delete({
+            "delete from rel_role_view where view_id in (select id from view where project_id = #{projectId})"
+    })
+    int deleteByProject(Long projectId);
 }

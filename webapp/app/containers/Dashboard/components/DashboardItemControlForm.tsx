@@ -21,24 +21,27 @@
 import React, { PureComponent, Suspense } from 'react'
 import { Form, Button, Row, Col } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
-import { QueryVariable } from '../Grid'
+import { IQueryConditions } from '../Grid'
 import {
   IRenderTreeItem,
   ILocalRenderTreeItem,
   IControlRequestParams,
   ILocalControl,
-  getDefaultValue,
-  getControlRenderTree,
-  getModelValue,
-  getVariableValue,
   IControlRelatedField,
   OnGetControlOptions,
-  IMapControlOptions,
-  getParents,
-  getAllChildren
-} from 'app/components/Filters'
+  IMapControlOptions
+} from 'app/components/Filters/types'
+import {
+  getVariableValue,
+  getModelValue,
+  deserializeDefaultValue,
+  getControlRenderTree,
+  getAllChildren,
+  getParents
+} from 'app/components/Filters/util'
 import { SHOULD_LOAD_OPTIONS, defaultFilterControlGridProps } from 'app/components/Filters/filterTypes'
 import FilterControl from 'app/components/Filters/FilterControl'
+import { localControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 const styles = require('../Dashboard.less')
 
@@ -47,7 +50,7 @@ interface IDashboardItemControlFormProps {
   controls: ILocalControl[]
   mapOptions: IMapControlOptions
   onGetOptions: OnGetControlOptions
-  onSearch: (queayConditions: { variables: QueryVariable }) => void
+  onSearch: (queayConditions: Partial<IQueryConditions>) => void
   onHide: () => void
 }
 
@@ -93,7 +96,8 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
     this.controlRequestParams = {}
 
     const replica = controls.map((control) => {
-      const defaultFilterValue = getDefaultValue(control)
+      control = localControlMigrationRecorder(control)
+      const defaultFilterValue = deserializeDefaultValue(control)
       if (defaultFilterValue) {
         controlValues[control.key] = defaultFilterValue
         this.setControlRequestParams(control, defaultFilterValue)
@@ -138,8 +142,16 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
     controlValues: { [key: string]: any }
   ) => {
     const { viewId, onGetOptions } = this.props
-    const { key, interactionType, fields, parent, customOptions, options } = renderControl as ILocalRenderTreeItem
-
+    const {
+      key,
+      interactionType,
+      fields,
+      parent,
+      cache,
+      expired,
+      customOptions,
+      options
+    } = renderControl as ILocalRenderTreeItem
     if (customOptions) {
       onGetOptions(key, true, options)
     } else {
@@ -150,6 +162,7 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
       parents.forEach((parentControl) => {
         const parentValue = controlValues[parentControl.key]
         if (parentControl.interactionType === 'column') {
+          // get filters
           filters = filters.concat(getModelValue(parentControl, parentControl.fields as IControlRelatedField, parentValue))
         } else {
           variables = variables.concat(getVariableValue(parentControl, parentControl.fields, parentValue))
@@ -164,7 +177,13 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
 
       if (columns) {
         onGetOptions(key, false, {
-          [viewId]: { columns, filters, variables }
+          [viewId]: {
+            columns,
+            filters,
+            variables,
+            cache,
+            expired
+          }
         })
       }
     }
@@ -212,14 +231,14 @@ export class DashboardItemControlForm extends PureComponent<IDashboardItemContro
       variables: [],
       tempFilters: []
     })
-
     onSearch({ ...queryConditions })
 
     onHide()
+
   }
 
   private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: ILocalControl[]) => {
-    const { form, onGetOptions, mapOptions } = this.props
+    const { form, mapOptions } = this.props
     const { controlValues } = this.state
 
     let components = []

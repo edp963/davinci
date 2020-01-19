@@ -1,4 +1,4 @@
-@import "../../../../assets/less/variable";
+@import "~assets/less/variable";
 
 .wrapper {
   flex: 1;
@@ -6,36 +6,6 @@
   flex-direction: column;
   min-height: 0;
   position: relative;
-
-  .mask {
-    background-color: fade(@white, 60);
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: none;
-
-    &.active {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-
-    i {
-      font-size: 1.5em;
-
-      &.emptyIcon {
-        font-size: 2em;
-      }
-    }
-
-    p {
-      font-size: 1.25em;
-      line-height: 2.5em;
-    }
-  }
 }
 
 .block {
@@ -145,7 +115,7 @@
 
   .legend {
     flex-shrink: 0;
-    max-width: 180px; 
+    max-width: 180px;
     margin-bottom: 50px;
     overflow-y: auto;
     display: none;

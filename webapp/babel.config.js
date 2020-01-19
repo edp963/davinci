@@ -6,11 +6,17 @@ module.exports = {
         modules: false
       }
     ],
-    '@babel/preset-react'
+    '@babel/preset-react',
+    '@babel/preset-typescript'
   ],
   plugins: [
+    'react-hot-loader/babel',
     '@babel/plugin-proposal-class-properties',
-    '@babel/plugin-syntax-dynamic-import'
+    '@babel/plugin-syntax-dynamic-import',
+    ["import", {
+      "libraryName": "antd",
+      "style": true
+    }]
   ],
   env: {
     production: {
@@ -18,7 +24,7 @@ module.exports = {
       plugins: [
         'lodash',
         'transform-react-remove-prop-types',
-        '@babel/plugin-transform-react-inline-elements',
+        // '@babel/plugin-transform-react-inline-elements',
         '@babel/plugin-transform-react-constant-elements'
       ]
     },

@@ -6,7 +6,7 @@ import LinkageForm, { ILinkageForm } from './LinkageForm'
 import AntdFormType from 'antd/lib/form/Form'
 import { Table, Row, Col, Button, Modal } from 'antd'
 
-import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from '../../globalConstants'
+import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from 'app/globalConstants'
 import { uuid } from 'utils/util'
 const utilStyles = require('assets/less/util.less')
 const styles = require('./Linkage.less')
@@ -222,7 +222,7 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
                 render: (val) => {
                   const { cascaderSource } = this.props
                   const triggerData = cascaderSource.find((ts) => ts.value === val[0])
-                  const triggerColumnData = triggerData.children.columns.find((c) => c.value === val[1])
+                  const triggerColumnData = triggerData.children.triggerColumns.find((c) => c.value === val[1])
                   return `${triggerData.label} - ${triggerColumnData.label}`
                 }
               }, {

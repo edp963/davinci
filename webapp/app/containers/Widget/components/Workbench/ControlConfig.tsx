@@ -23,14 +23,19 @@ import { fromJS } from 'immutable'
 import { connect } from 'react-redux'
 import moment from 'moment'
 import {
-  getDefaultLocalControl,
   IGlobalControlRelatedItem,
   InteractionType,
   IControlRelatedField,
-  ILocalControl,
+  ILocalControl
+} from 'app/components/Filters/types'
+import {
+  getDefaultLocalControl,
+  deserializeDefaultValue,
+  serializeDefaultValue,
   getRelatedFieldsInfo
-} from 'app/components/Filters'
+} from 'app/components/Filters/util'
 import { FilterTypes, IS_RANGE_TYPE} from 'app/components/Filters/filterTypes'
+import { localControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 import FilterList from 'app/components/Filters/config/FilterList'
 import FilterFormWithRedux, { FilterForm } from 'app/components/Filters/config/FilterForm'
@@ -38,8 +43,7 @@ import OptionSettingFormWithModal, { OptionSettingForm } from 'app/components/Fi
 import { Form, Row, Col, Button, Modal, Radio, Select, Checkbox } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { setControlFormValues } from 'app/containers/Dashboard/actions'
-import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
-import { ViewVariableTypes } from 'app/containers/View/constants'
+import { IViewVariable, IFormedView, IViewModelProps } from 'app/containers/View/types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 
 const FormItem = Form.Item
@@ -97,6 +101,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
         || visible && !this.props.visible) {
       let selected
       const controls = fromJS(currentControls).toJS().map((control) => {
+        control = localControlMigrationRecorder(control)
         if (!selected && !control.parent) {
           selected = control
         }
@@ -125,12 +130,9 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
   private setFormData = (control: ILocalControl) => {
     if (control) {
       const { type, interactionType, defaultValue, ...rest } = control
-      const isControlDateType = [FilterTypes.Date, FilterTypes.DateRange].includes(type)
       const fieldsValue = {
         type,
-        defaultValue: isControlDateType && defaultValue
-          ? moment(defaultValue)
-          : defaultValue,
+        defaultValue: deserializeDefaultValue(control),
         ...rest
       }
       this.props.onSetControlFormValues(fieldsValue)
@@ -268,17 +270,14 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
         return
       }
 
-      const { type, key, defaultValue, dateFormat } = values
-      const isControlDateType = [FilterTypes.Date, FilterTypes.DateRange].includes(type)
+      const { key, defaultValue } = values
       const cachedControls = controls.map((c) => {
         if (c.key === key) {
           return {
             ...c,
             ...values,
             interactionType: selected.interactionType,
-            defaultValue: isControlDateType
-              ? (defaultValue && defaultValue.format(dateFormat))
-              : defaultValue,
+            defaultValue: serializeDefaultValue(values, defaultValue),
             fields: relatedFields.fields
           }
         } else {

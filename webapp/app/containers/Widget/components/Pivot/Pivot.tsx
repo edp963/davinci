@@ -22,7 +22,7 @@ import {
   PIVOT_LEGEND_PADDING,
   PIVOT_DEFAULT_SCATTER_SIZE,
   DEFAULT_SPLITER
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 import Corner from './Corner'
 import RowTitle from './RowTitle'
 import RowHeader from './RowHeader'
@@ -533,13 +533,15 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
 
   private ifSelectedTdToDrill = (obj) => {
-    const {getDataDrillDetail} = this.props
+    const {getDataDrillDetail, onCheckTableInteract, onDoInteract} = this.props
+    const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
     const {cellSelected} = this.state
     let assignObj = {}
     const values = Object.values(obj.data)
     if (values[0]) {
+      const isMultiObj = isInteractiveChart && onDoInteract ? null : cellSelected
       assignObj = {
-        ...cellSelected,
+        ...isMultiObj,
         ...obj.data
       }
     } else {
@@ -553,10 +555,14 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       cellSelected: assignObj
     }, () => {
       const {cellSelected} = this.state
+      const range = obj.range
+      const brushed = [{0: Object.values(cellSelected)}]
+      const sourceData = Object.values(cellSelected)
+      if (isInteractiveChart && onDoInteract) {
+        const triggerData = sourceData
+        onDoInteract(triggerData)
+      }
       setTimeout(() => {
-        const range = obj.range
-        const brushed = [{0: Object.values(this.state.cellSelected)}]
-        const sourceData = Object.values(this.state.cellSelected)
         getDataDrillDetail(JSON.stringify({range, brushed, sourceData}))
       }, 500)
     })
@@ -579,6 +585,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       getDataDrillDetail,
       isDrilling
     } = this.props
+
     const { legendSelected, renderType } = this.state
     const rowNames = rows.map((r) => r.name)
     const colNames = cols.map((c) => c.name)
@@ -659,6 +666,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             size={size}
             xAxis={xAxis}
             tip={tip}
+            interacting={this.props.interacting}
             renderType={renderType}
             legend={legendSelected}
             onCheckTableInteract={onCheckTableInteract}
@@ -667,6 +675,9 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             isDrilling={isDrilling}
             whichDataDrillBrushed={this.props.whichDataDrillBrushed}
             ifSelectedTdToDrill={this.ifSelectedTdToDrill}
+            onSelectChartsItems={this.props.onSelectChartsItems}
+            selectedItems={this.props.selectedItems}
+            selectedChart={this.props.selectedChart}
             // onHideDrillPanel={onHideDrillPanel}
             ref={(f) => this.tableBody = findDOMNode(f) as HTMLElement}
           />

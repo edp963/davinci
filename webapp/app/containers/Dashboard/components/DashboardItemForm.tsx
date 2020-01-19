@@ -28,16 +28,16 @@ const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
 
-import SearchFilterDropdown from '../../../components/SearchFilterDropdown'
+import SearchFilterDropdown from 'components/SearchFilterDropdown'
 
-const utilStyles = require('../../../assets/less/util.less')
-const widgetStyles = require('../../Widget/Widget.less')
-const styles = require('../Dashboard.less')
+const utilStyles = require('assets/less/util.less')
+import { ICurrentDashboard } from '../'
 
 interface IDashboardItemFormProps {
   type: string
   widgets: any[]
   selectedWidgets: number[]
+  currentDashboard?: ICurrentDashboard
   polling: boolean,
   step: number
   onWidgetSelect: (selectedRowKeys: any[]) => void
@@ -77,10 +77,23 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
   }
 
   public componentWillMount () {
-    const { widgets } = this.props
+    const { widgets, currentDashboard } = this.props
+    const dashboardType = currentDashboard.type
+    let tableWidget
+    if (dashboardType === 2) {  //
+      tableWidget = widgets.filter((widget) => {
+        console.log(widget.name)
+        const widgetConfig = JSON.parse(widget.config)
+        console.log(widgetConfig)
+        return widgetConfig['selectedChart'] === 1 && widgetConfig['mode'] === 'chart'
+      })
+    } else {
+      tableWidget = widgets
+    }
+
     if (widgets) {
       this.setState({
-        tableWidget: widgets.map((g) => {
+        tableWidget: tableWidget.map((g) => {
           g.key = g.id
           return g
         })
@@ -176,7 +189,8 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       polling,
       step,
       onWidgetSelect,
-      onPollingSelect
+      onPollingSelect,
+      currentDashboard
     } = this.props
     const {
       filteredWidgets,
@@ -189,7 +203,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       tableSortedInfo,
       selectedRowKeys
     } = this.state
-
+    const dashboardType = currentDashboard.type
     const columns = [{
       title: '名称',
       dataIndex: 'name',
@@ -223,14 +237,15 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     const rowSelection = {
       selectedRowKeys: selectedWidgets,
       onChange: this.onSelectChange,
-      onShowSizeChange: this.onShowSizeChange
+      onShowSizeChange: this.onShowSizeChange,
+      type: dashboardType === 2 ? 'radio' : 'checkbox'
     }
 
     const stepIndicator = type === 'add'
       ? (
         <Steps current={step}>
           <Step title="Widget" />
-          <Step title="Frequent" />
+          <Step title="数据更新" />
           <Step title="完成" />
         </Steps>
       )

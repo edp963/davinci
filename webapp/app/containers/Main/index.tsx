@@ -22,14 +22,14 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 
-import Navigator from '../../components/Navigator'
+import Navigator from 'components/Navigator'
 
-import { logged, logout, setLoginUser, getLoginUser } from '../App/actions'
+import { logged, logout, getLoginUser, loadDownloadList } from '../App/actions'
 import { makeSelectLogged, makeSelectNavigator } from '../App/selectors'
-import { promiseDispatcher } from '../../utils/reduxPromisation'
-import checkLogin from '../../utils/checkLogin'
-import { setToken } from '../../utils/request'
-
+import checkLogin from 'utils/checkLogin'
+import { setToken } from 'utils/request'
+import { DOWNLOAD_LIST_POLLING_FREQUENCY } from 'app/globalConstants'
+import { statistic } from 'utils/statistic/statistic.dv'
 const styles = require('./Main.less')
 
 interface IMainProps {
@@ -38,15 +38,24 @@ interface IMainProps {
   router: any
   logged: boolean
   navigator: boolean
-  onLogged: () => any
-  onLogout: () => any
-  onSetLoginUser: (user: object) => any
+  onLogged: (user) => void
+  onLogout: () => void
   onGetLoginUser: (resolve: () => void) => any
+  onLoadDownloadList: () => void
 }
 
 export class Main extends React.Component<IMainProps, {}> {
+
+  private downloadListPollingTimer: number
+
   public componentWillMount () {
     this.checkTokenLink()
+  }
+
+  public componentWillUnmount () {
+    if (this.downloadListPollingTimer) {
+      clearInterval(this.downloadListPollingTimer)
+    }
   }
 
   private checkTokenLink = () => {
@@ -57,23 +66,35 @@ export class Main extends React.Component<IMainProps, {}> {
 
     const qs = this.getQs()
     const token = qs['token']
-    const dashboard = qs['dashboard']
+    // TODO allow take other parameters
+    // const dashboard = qs['dashboard']
 
     if (token) {
       setToken(token)
-      localStorage.setItem('TOKEN', token)
-      localStorage.setItem('TOKEN_EXPIRE', `${new Date().getTime() + 3600000}`)
       onGetLoginUser(() => {
-        if (dashboard) {
-          //router.replace(`/report/dashboard/${dashboard}`)
-          router.replace(`/project/${this.props.params.pid}/dashboard/${dashboard}`)
-        } else {
-          //router.replace('/report')
-          router.replace('/projects')
-        }
+        router.replace('/projects')
+        // if (dashboard) {
+        //   router.replace(`/project/${this.props.params.pid}/dashboard/${dashboard}`)
+        // } else {
+
+        // }
       })
+      this.initPolling()
     } else {
       this.checkNormalLogin()
+    }
+  }
+
+  private checkNormalLogin = () => {
+    if (checkLogin()) {
+      const token = localStorage.getItem('TOKEN')
+      const loginUser = localStorage.getItem('loginUser')
+      setToken(token)
+      this.props.onLogged(JSON.parse(loginUser))
+      statistic.sendPrevDurationRecord()
+      this.initPolling()
+    } else {
+      this.props.router.replace('/login')
     }
   }
 
@@ -93,26 +114,16 @@ export class Main extends React.Component<IMainProps, {}> {
     }
   }
 
-  private checkNormalLogin = () => {
-    if (checkLogin()) {
-      const token = localStorage.getItem('TOKEN')
-      const loginUser = localStorage.getItem('loginUser')
-      setToken(token)
-      this.props.onLogged()
-      this.props.onSetLoginUser(JSON.parse(loginUser))
-    } else {
-      this.props.router.replace('/login')
-    }
+  private initPolling = () => {
+    this.props.onLoadDownloadList()
+    this.downloadListPollingTimer = window.setInterval(() => {
+      this.props.onLoadDownloadList()
+    }, DOWNLOAD_LIST_POLLING_FREQUENCY)
   }
 
   private logout = () => {
-    const {
-      router,
-      onLogout
-    } = this.props
+    const { router, onLogout } = this.props
     onLogout()
-    localStorage.removeItem('TOKEN')
-    localStorage.removeItem('TOKEN_EXPIRE')
     router.replace('/login')
   }
 
@@ -142,10 +153,10 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLogged: () => promiseDispatcher(dispatch, logged),
-    onLogout: () => promiseDispatcher(dispatch, logout),
-    onSetLoginUser: (user) => promiseDispatcher(dispatch, setLoginUser, user),
-    onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve))
+    onLogged: (user) => dispatch(logged(user)),
+    onLogout: () => dispatch(logout()),
+    onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve)),
+    onLoadDownloadList: () => dispatch(loadDownloadList())
   }
 }
 

@@ -4,7 +4,7 @@ import { IDrawingData, IMetricAxisConfig, ILegend } from './Pivot'
 import { IWidgetMetric, DimetionType, RenderType, IChartStyles } from '../Widget'
 import Cell from './Cell'
 import Chart, { IChartUnit, IChartLine, IChartBlock } from './Chart'
-import { PIVOT_CANVAS_SIZE_LIMIT, PIVOT_CANVAS_POLAR_SIZE_LIMIT } from '../../../../globalConstants'
+import { PIVOT_CANVAS_SIZE_LIMIT, PIVOT_CANVAS_POLAR_SIZE_LIMIT } from 'app/globalConstants'
 import {
   getPivotContentTextWidth,
   getPivotCellWidth,
@@ -12,7 +12,7 @@ import {
   getChartPieces,
   decodeMetricName
 } from '../util'
-import { uuid } from '../../../../utils/util'
+import { uuid } from 'utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 
 const styles = require('./Pivot.less')
@@ -23,9 +23,12 @@ export interface ITableBodyProps {
   rowKeys: string[][]
   colKeys: string[][]
   rowWidths: number[]
+  selectedChart: number
+  selectedItems?: number[]
   rowTree: object
   colTree: object
   tree: object
+  interacting?: boolean
   metrics: IWidgetMetric[]
   metricAxisConfig: IMetricAxisConfig
   chartStyles: IChartStyles
@@ -45,6 +48,7 @@ export interface ITableBodyProps {
   ifSelectedTdToDrill: (obj: any) => any
   whichDataDrillBrushed?: boolean | object []
   // onHideDrillPanel?: (swtich: boolean) => void
+  onSelectChartsItems?: (selectedItems: number[]) => void
 }
 
 interface ITableBodyState {
@@ -497,8 +501,11 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
           onDoInteract={onDoInteract}
           getDataDrillDetail={getDataDrillDetail}
           isDrilling={isDrilling}
+          selectedChart={this.props.selectedChart}
           whichDataDrillBrushed={this.props.whichDataDrillBrushed}
           // onHideDrillPanel={onHideDrillPanel}
+          selectedItems={this.props.selectedItems}
+          onSelectChartsItems={this.props.onSelectChartsItems}
         />
       )
     } else {
@@ -521,6 +528,7 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
                 colKey={flatColKey}
                 rowKey={flatRowKey}
                 width={cellWidth}
+                interacting={this.props.interacting}
                 height={getPivotCellHeight(height)}
                 metrics={metrics}
                 data={records}
@@ -552,6 +560,7 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
               key={flatColKey}
               colKey={flatColKey}
               width={cellWidth}
+              interacting={this.props.interacting}
               height={getPivotCellHeight(height)}
               metrics={metrics}
               data={records}
@@ -587,6 +596,7 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
               height={getPivotCellHeight(height)}
               metrics={metrics}
               data={records}
+              interacting={this.props.interacting}
               chartStyles={chartStyles}
               color={color}
               legend={legend}
@@ -620,6 +630,7 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
                 height={height}
                 metrics={metrics}
                 data={records}
+                interacting={this.props.interacting}
                 chartStyles={chartStyles}
                 color={color}
                 legend={legend}
@@ -644,7 +655,6 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
       [styles.bodyCollapsed]: tableBodyCollapsed,
       [styles.raw]: !dimetionAxis
     })
-
     return (
       <div className={containerClass}>
         {tableBody}

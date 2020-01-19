@@ -21,19 +21,20 @@
 import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import { ActionTypes } from './constants'
 import { SourceActions, SourceActionType } from './actions'
+import omit from 'lodash/omit'
 
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { errorHandler } from '../../utils/util'
+import request from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
 import { message } from 'antd'
-import { ISourceRaw } from './types'
+import { ISourceBase, ISourceRaw, ISource, ISourceDatabases, IDatabaseTables, ITableColumns } from './types'
 
 export function* getSources (action: SourceActionType) {
   if (action.type !== ActionTypes.LOAD_SOURCES) { return }
   const { payload } = action
   try {
     const asyncData = yield call(request, `${api.source}?projectId=${payload.projectId}`)
-    const sources = asyncData.payload as ISourceRaw[]
+    const sources = asyncData.payload as ISourceBase[]
     yield put(SourceActions.sourcesLoaded(sources))
   } catch (err) {
     yield put(SourceActions.loadSourcesFail())
@@ -54,6 +55,21 @@ export function* addSource (action: SourceActionType) {
     yield put(SourceActions.sourceAdded(asyncData.payload))
   } catch (err) {
     yield put(SourceActions.addSourceFail())
+    errorHandler(err)
+  }
+}
+
+export function* getSourceDetail (action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_SOURCE_DETAIL) { return }
+  const { sourceId, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, `${api.source}/${sourceId}`)
+    const sourceRaw = asyncData.payload as ISourceRaw
+    const source: ISource = { ...sourceRaw, config: JSON.parse(sourceRaw.config) }
+    yield put(SourceActions.sourceDetailLoaded(source))
+    if (resolve) { resolve(source) }
+  } catch (err) {
+    yield put(SourceActions.loadSourceDetailFail())
     errorHandler(err)
   }
 }
@@ -83,7 +99,8 @@ export function* editSource (action: SourceActionType) {
       url: `${api.source}/${source.id}`,
       data: source
     })
-    yield put(SourceActions.sourceEdited(source))
+    const sourceBase = omit(source, 'config')
+    yield put(SourceActions.sourceEdited(sourceBase))
     resolve()
   } catch (err) {
     yield put(SourceActions.editSourceFail())
@@ -98,12 +115,34 @@ export function* testSourceConnection (action: SourceActionType) {
     const res = yield call(request, {
       method: 'post',
       url: `${api.source}/test`,
-      data: payload.url
+      data: payload.testSource
     })
     yield put(SourceActions.sourceConnected())
     message.success('测试成功')
   } catch (err) {
     yield put(SourceActions.testSourceConnectionFail())
+    errorHandler(err)
+  }
+}
+
+export function* resetSourceConnection (action: SourceActionType) {
+  if (action.type !== ActionTypes.RESET_SOURCE_CONNECTION) { return }
+  const { properties, resolve } = action.payload
+  const { sourceId, username, password } = properties
+  try {
+    yield call(request, {
+      method: 'post',
+      url: `${api.source}/reconnect/${sourceId}`,
+      data: {
+        dbUser: username,
+        dbPassword: password
+      }
+    })
+    yield put(SourceActions.sourceReset())
+    message.success('连接重置成功')
+    resolve()
+  } catch (err) {
+    yield put(SourceActions.resetSourceConnectionFail())
     errorHandler(err)
   }
 }
@@ -129,26 +168,39 @@ export function* getCsvMetaId (action: SourceActionType) {
   }
 }
 
-export function* getSourceTables (action: SourceActionType) {
-  if (action.type !== ActionTypes.LOAD_SOURCE_TABLES) { return }
+export function* getSourceDatabases (action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_SOURCE_DATABASES) { return }
   const { sourceId } = action.payload
   try {
-    const asyncData = yield call(request, `${api.source}/${sourceId}/tables`)
-    const tables = asyncData.payload
-    yield put(SourceActions.sourceTablesLoaded(tables))
+    const asyncData = yield call(request, `${api.source}/${sourceId}/databases`)
+    const sourceDatabases: ISourceDatabases = asyncData.payload
+    yield put(SourceActions.sourceDatabasesLoaded(sourceDatabases))
   } catch (err) {
-    yield put(SourceActions.loadSourceTablesFail(err))
+    yield put(SourceActions.loadSourceDatabasesFail(err))
+    errorHandler(err)
+  }
+}
+
+export function* getDatabaseTables (action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_SOURCE_DATABASE_TABLES) { return }
+  const { databaseName, sourceId } = action.payload
+  try {
+    const asyncData = yield call(request, `${api.source}/${sourceId}/tables?dbName=${databaseName}`)
+    const databaseTables: IDatabaseTables = asyncData.payload
+    yield put(SourceActions.databaseTablesLoaded(databaseTables))
+  } catch (err) {
+    yield put(SourceActions.loadDatabaseTablesFail(err))
     errorHandler(err)
   }
 }
 
 export function* getTableColumns (action: SourceActionType) {
   if (action.type !== ActionTypes.LOAD_SOURCE_TABLE_COLUMNS) { return }
-  const { sourceId, tableName, resolve } = action.payload
+  const { sourceId, databaseName, tableName, resolve } = action.payload
   try {
-    const asyncData = yield call(request, `${api.source}/${sourceId}/table/columns?tableName=${tableName}`)
-    const tableColumns = asyncData.payload[0]
-    yield put(SourceActions.tableColumnsLoaded(sourceId, tableColumns))
+    const asyncData = yield call(request, `${api.source}/${sourceId}/table/columns?dbName=${databaseName}&tableName=${tableName}`)
+    const tableColumns: ITableColumns = { ...asyncData.payload, dbName: databaseName }
+    yield put(SourceActions.tableColumnsLoaded(databaseName, tableColumns))
     if (resolve) {
       resolve(tableColumns)
     }
@@ -158,15 +210,30 @@ export function* getTableColumns (action: SourceActionType) {
   }
 }
 
+export function* getDatasourcesInfo (action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_DATASOURCES_INFO) { return }
+  try {
+    const asyncData = yield call(request, `${api.source}/jdbc/datasources`)
+    yield put(SourceActions.datasourcesInfoLoaded(asyncData.payload))
+  } catch (err) {
+    yield put(SourceActions.loadDatasourcesInfoFail(err))
+    errorHandler(err)
+  }
+}
+
 export default function* rootSourceSaga (): IterableIterator<any> {
   yield all([
     takeLatest(ActionTypes.LOAD_SOURCES, getSources),
+    takeEvery(ActionTypes.LOAD_SOURCE_DETAIL, getSourceDetail),
     takeEvery(ActionTypes.ADD_SOURCE, addSource),
     takeEvery(ActionTypes.DELETE_SOURCE, deleteSource),
     takeEvery(ActionTypes.EDIT_SOURCE, editSource),
     takeEvery(ActionTypes.TEST_SOURCE_CONNECTION, testSourceConnection),
+    takeEvery(ActionTypes.RESET_SOURCE_CONNECTION, resetSourceConnection),
     takeEvery(ActionTypes.GET_CSV_META_ID, getCsvMetaId),
-    takeEvery(ActionTypes.LOAD_SOURCE_TABLES, getSourceTables),
-    takeEvery(ActionTypes.LOAD_SOURCE_TABLE_COLUMNS, getTableColumns)
+    takeEvery(ActionTypes.LOAD_SOURCE_DATABASES, getSourceDatabases),
+    takeEvery(ActionTypes.LOAD_SOURCE_DATABASE_TABLES, getDatabaseTables),
+    takeEvery(ActionTypes.LOAD_SOURCE_TABLE_COLUMNS, getTableColumns),
+    takeLatest(ActionTypes.LOAD_DATASOURCES_INFO, getDatasourcesInfo)
   ])
 }

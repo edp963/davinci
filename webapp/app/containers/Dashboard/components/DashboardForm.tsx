@@ -21,14 +21,14 @@
 import * as React from 'react'
 
 import { Form, Row, Col, Input, Radio, Select, Tabs, Checkbox} from 'antd'
-import {IExludeRoles} from '../../Portal/components/PortalList'
-const styles = require('../../Portal/Portal.less')
+import {IExludeRoles} from 'containers/Portal/components/PortalList'
+const styles = require('containers/Portal/Portal.less')
 const TabPane = Tabs.TabPane
 const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IDashboardFormProps {
   portalId: number
@@ -169,12 +169,18 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
               className={type === 'move' ? utilStyles.hide : ''}
             >
               {getFieldDecorator('selectType', {
-                initialValue: true
+                initialValue: 1
               })(
-                <RadioGroup disabled={type === 'edit' || type === 'copy' || type === 'move'}>
-                  <Radio value={false}>文件夹</Radio>
-                  <Radio value>Dashboard</Radio>
-                </RadioGroup>
+                 <RadioGroup disabled={type === 'edit' || type === 'copy' || type === 'move'}>
+                    <Radio value={0}>文件夹</Radio>
+                    <Radio value={1}>Dashboard</Radio>
+                    {/* <Radio value={2}>Report</Radio> */}
+                    {/* <Select disabled={type === 'edit' || type === 'copy' || type === 'move'}>
+                      <Option key="0" value="0">文件夹</Option>
+                      <Option key="Dashboard" value="1">Dashboard</Option>
+                      <Option key="Report" value="2">Report</Option>
+                    </Select> */}
+                  </RadioGroup>
               )}
             </FormItem>
           </Col>

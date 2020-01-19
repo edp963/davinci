@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.service.impl;
@@ -24,10 +25,9 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.CollectionUtils;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.dao.DashboardMapper;
-import edp.davinci.dao.DashboardPortalMapper;
-import edp.davinci.dao.RelRolePortalMapper;
-import edp.davinci.dao.RoleMapper;
+import edp.davinci.core.enums.VizEnum;
+import edp.davinci.dao.MemDashboardWidgetMapper;
+import edp.davinci.dao.RelRoleDashboardWidgetMapper;
 import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
 import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
 import edp.davinci.dto.projectDto.ProjectDetail;
@@ -53,23 +53,17 @@ import java.util.stream.Collectors;
 
 @Service("dashboardPortalService")
 @Slf4j
-public class DashboardPortalServiceImpl implements DashboardPortalService {
+public class DashboardPortalServiceImpl extends VizCommonService implements DashboardPortalService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
-
-    @Autowired
-    private DashboardPortalMapper dashboardPortalMapper;
-
-    @Autowired
-    private DashboardMapper dashboardMapper;
 
     @Autowired
     private ProjectService projectService;
 
     @Autowired
-    private RoleMapper roleMapper;
+    private RelRoleDashboardWidgetMapper relRoleDashboardWidgetMapper;
 
     @Autowired
-    private RelRolePortalMapper relRolePortalMapper;
+    private MemDashboardWidgetMapper memDashboardWidgetMapper;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -106,20 +100,26 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
 
         List<DashboardPortal> dashboardPortals = dashboardPortalMapper.getByProject(projectId);
 
+        if (!CollectionUtils.isEmpty(dashboardPortals)) {
 
-        List<Long> disbalePortals = relRolePortalMapper.getDisablePortalByUser(user.getId(), projectId);
+            List<Long> allPortals = dashboardPortals.stream().map(DashboardPortal::getId).collect(Collectors.toList());
 
-        if (CollectionUtils.isEmpty(disbalePortals)) {
-            return dashboardPortals;
-        }
+            List<Long> disbalePortals = getDisableVizs(user.getId(), projectId, allPortals, VizEnum.PORTAL);
 
-        Iterator<DashboardPortal> iterator = dashboardPortals.iterator();
-        while (iterator.hasNext()) {
-            DashboardPortal portal = iterator.next();
-            if (!projectPermission.isProjectMaintainer() && (disbalePortals.contains(portal.getId()) || !portal.getPublish())) {
-                iterator.remove();
+            Iterator<DashboardPortal> iterator = dashboardPortals.iterator();
+            while (iterator.hasNext()) {
+                DashboardPortal portal = iterator.next();
+
+                boolean disable = !projectPermission.isProjectMaintainer() && disbalePortals.contains(portal.getId());
+                boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !portal.getPublish();
+
+                if (disable || noPublish) {
+                    iterator.remove();
+                }
             }
+
         }
+
 
         return dashboardPortals;
     }
@@ -198,8 +198,7 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardPortal.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
-        List<Long> disbalePortals = relRolePortalMapper.getDisablePortalByUser(user.getId(), dashboardPortal.getProjectId());
-
+        List<Long> disbalePortals = getDisableVizs(user.getId(), projectDetail.getId(), null, VizEnum.PORTAL);
 
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() ||
@@ -291,8 +290,7 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
         ProjectDetail projectDetail = projectService.getProjectDetail(dashboardPortal.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
-        List<Long> disbalePortals = relRolePortalMapper.getDisablePortalByUser(user.getId(), dashboardPortal.getProjectId());
-
+        List<Long> disbalePortals = getDisableVizs(user.getId(), dashboardPortal.getProjectId(), null, VizEnum.PORTAL);
 
         //校验权限
         if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission() ||
@@ -301,7 +299,19 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
             throw new UnAuthorizedExecption("you have not permission to delete portal");
         }
 
+        //delete rel_role_dashboard_widget
+        relRoleDashboardWidgetMapper.deleteByPortalId(id);
+
+        //delete mem_dashboard_widget
+        memDashboardWidgetMapper.deleteByPortalId(id);
+
+        //delete rel_role_dashboard
+        relRoleDashboardMapper.deleteByPortalId(id);
+
+        //delete dashboard
         dashboardMapper.deleteByPortalId(id);
+
+        //delete dashboard_portal
         int i = dashboardPortalMapper.deleteById(id);
         if (i > 0) {
             relRolePortalMapper.deleteByProtalId(dashboardPortal.getId());

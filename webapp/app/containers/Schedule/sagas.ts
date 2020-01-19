@@ -1,119 +1,152 @@
-import { call, put, all, takeEvery } from 'redux-saga/effects'
+import { call, put, all, takeEvery, takeLatest } from 'redux-saga/effects'
 
-import {ADD_SCHEDULES, DELETE_SCHEDULES, LOAD_SCHEDULES, CHANGE_SCHEDULE_STATUS, UPDATE_SCHEDULES, LOAD_VIZS} from './constants'
-import {
-  schedulesLoaded,
-  loadSchedulesFail,
-  scheduleAdded,
-  addScheduleFail,
-  scheduleDeleted,
-  deleteScheduleFail,
-  currentScheduleStatusChanged,
-  changeSchedulesStatusFail,
-  scheduleUpdated,
-  updateScheduleFail,
-  vizsLoaded,
-  loadVizsFail
-} from './actions'
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { errorHandler } from '../../utils/util'
-import { PortalList } from '../Portal/components/PortalList'
+import { ActionTypes } from './constants'
+import { ScheduleActions, ScheduleActionType, loadVizsFail, vizsLoaded } from './actions'
+import request from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
 import { message } from 'antd'
+import { IScheduleRaw, ISchedule } from './components/types'
 
-export function* getSchedules ({payload}) {
+export function* getSchedules (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.LOAD_SCHEDULES) { return }
+
   try {
-    const asyncData = yield call(request, `${api.schedule}?projectId=${payload.pid}`)
-    const schedules = asyncData.payload
-    yield put(schedulesLoaded(schedules))
+    const asyncData = yield call(request, `${api.schedule}?projectId=${action.payload.projectId}`)
+    const rawSchedules: IScheduleRaw[] = asyncData.payload
+    const schedules = rawSchedules.map<ISchedule>((schedule) => ({ ...schedule, config: JSON.parse(schedule.config) }))
+    yield put(ScheduleActions.schedulesLoaded(schedules))
   } catch (err) {
-    yield put(loadSchedulesFail())
+    yield put(ScheduleActions.loadSchedulesFail())
     errorHandler(err)
   }
 }
 
-export function* addSchedules ({ payload }) {
+export function* getScheduleDetail (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.LOAD_SCHEDULE_DETAIL) { return }
+
+  try {
+    const asyncData = yield call(request, `${api.schedule}/${action.payload.scheduleId}`)
+    const schedule = asyncData.payload
+    schedule.config = JSON.parse(schedule.config)
+    yield put(ScheduleActions.scheduleDetailLoaded(schedule))
+  } catch (err) {
+    yield put(ScheduleActions.loadScheduleDetailFail())
+    errorHandler(err)
+  }
+}
+
+export function* addSchedule (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.ADD_SCHEDULE) { return }
+
+  const { schedule, resolve } = action.payload
+  const rawSchedule: IScheduleRaw = { ...schedule, config: JSON.stringify(schedule.config) }
   try {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.schedule,
-      data: payload.schedule
+      data: rawSchedule
     })
     const result = asyncData.payload
-    yield put(scheduleAdded(result))
-    payload.resolve()
+    result.config = JSON.parse(result.config)
+    yield put(ScheduleActions.scheduleAdded(result))
+    resolve()
   } catch (err) {
-    yield put(addScheduleFail())
+    yield put(ScheduleActions.addScheduleFail())
     errorHandler(err)
   }
 }
 
-export function* deleteSchedule ({ payload }) {
+export function* deleteSchedule (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.DELETE_SCHEDULE) { return }
+
+  const { id } = action.payload
   try {
     yield call(request, {
       method: 'delete',
-      url: `${api.schedule}/${payload.id}`
+      url: `${api.schedule}/${id}`
     })
-    yield put(scheduleDeleted(payload.id))
+    yield put(ScheduleActions.scheduleDeleted(id))
   } catch (err) {
-    yield put(deleteScheduleFail())
+    yield put(ScheduleActions.deleteScheduleFail())
     errorHandler(err)
   }
 }
 
-export function* changeScheduleStatus ({ payload }) {
+export function* changeScheduleStatus (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.CHANGE_SCHEDULE_STATUS) { return }
+
+  const { currentStatus, id } = action.payload
   try {
-    let status = ''
-    switch (payload.currentStatus) {
+    let nextStatus = ''
+    switch (currentStatus) {
       case 'new':
-        status = 'start'
-        break
+      case 'stopped':
       case 'failed':
-        status = 'start'
+        nextStatus = 'start'
         break
       case 'started':
-        status = 'stop'
-        break
-      case 'stopped':
-        status = 'start'
-        break
-      default:
+        nextStatus = 'stop'
         break
     }
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.schedule}/${status}/${payload.id}`
+      url: `${api.schedule}/${nextStatus}/${id}`
     })
     const result = asyncData.payload
-    yield put(currentScheduleStatusChanged(payload.id, result))
+    result.config = JSON.parse(result.config)
+    yield put(ScheduleActions.scheduleStatusChanged(result))
   } catch (err) {
-    yield put(changeSchedulesStatusFail())
+    yield put(ScheduleActions.changeSchedulesStatusFail())
     errorHandler(err)
   }
 }
 
-export function* updateSchedule ({ payload }) {
+export function* editSchedule (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.EDIT_SCHEDULE) { return }
+
+  const { schedule, resolve } = action.payload
+  try {
+    yield call(request, {
+      method: 'put',
+      url: `${api.schedule}/${schedule.id}`,
+      data: schedule
+    })
+    yield put(ScheduleActions.scheduleEdited(schedule))
+    resolve()
+  } catch (err) {
+    yield put(ScheduleActions.editScheduleFail())
+    errorHandler(err)
+  }
+}
+
+export function* getSuggestMails (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.LOAD_SUGGEST_MAILS) { return }
+
+  const { keyword } = action.payload
+  if (!keyword) {
+    yield put(ScheduleActions.suggestMailsLoaded([]))
+    return
+  }
   try {
     const asyncData = yield call(request, {
-      method: 'put',
-      url: `${api.schedule}/${payload.schedule.id}`,
-      data: payload.schedule
+      method: 'get',
+      url: `${api.user}?keyword=${keyword}&includeSelf=true`
     })
-    const result = asyncData.payload
-    yield put(scheduleUpdated(result))
-    payload.resolve()
+    const mails = asyncData.payload
+    yield put(ScheduleActions.suggestMailsLoaded(mails))
   } catch (err) {
-    yield put(updateScheduleFail())
+    yield put(ScheduleActions.loadSuggestMailsFail())
     errorHandler(err)
   }
 }
 
-export function* getVizsData ({ payload }) {
-  const { pid } = payload
+// @FIXME need remove
+export function* getVizsData (action) {
+  const { pid } = action.payload
   try {
     const portalsData = yield call(request, `${api.portal}?projectId=${pid}`)
     const portalsList = portalsData.payload
-
 
     const displayData = yield call(request, `${api.display}?projectId=${pid}`)
     const displayList = displayData.payload.map((display) => ({
@@ -217,13 +250,15 @@ export function* getVizsData ({ payload }) {
   }
 }
 
-export default function* rootScheduleSaga (): IterableIterator<any> {
+export default function* rootScheduleSaga () {
   yield all([
-    takeEvery(LOAD_SCHEDULES, getSchedules as any),
-    takeEvery(ADD_SCHEDULES, addSchedules as any),
-    takeEvery(DELETE_SCHEDULES, deleteSchedule as any),
-    takeEvery(CHANGE_SCHEDULE_STATUS, changeScheduleStatus as any),
-    takeEvery(UPDATE_SCHEDULES, updateSchedule as any),
-    takeEvery(LOAD_VIZS, getVizsData as any)
+    takeEvery(ActionTypes.LOAD_SCHEDULES, getSchedules),
+    takeEvery(ActionTypes.LOAD_SCHEDULE_DETAIL, getScheduleDetail),
+    takeEvery(ActionTypes.ADD_SCHEDULE, addSchedule),
+    takeEvery(ActionTypes.DELETE_SCHEDULE, deleteSchedule),
+    takeEvery(ActionTypes.CHANGE_SCHEDULE_STATUS, changeScheduleStatus),
+    takeEvery(ActionTypes.EDIT_SCHEDULE, editSchedule),
+    takeLatest(ActionTypes.LOAD_SUGGEST_MAILS, getSuggestMails),
+    takeEvery(ActionTypes.LOAD_VIZS, getVizsData)
   ])
 }

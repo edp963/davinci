@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2018 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.consts.Consts;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.io.File;
 
 import static edp.core.consts.Consts.*;
 
@@ -46,7 +48,11 @@ public class ServerUtils {
     @Value("${server.access.port:}")
     private String accessPort;
 
+    @Value("${file.base-path}")
+    private String basePath;
+
     public String getHost() {
+
         String pro = protocol.trim().toLowerCase();
         String accAddress = StringUtils.isEmpty(accessAddress) ? address : accessAddress;
         String accPort = StringUtils.isEmpty(accessPort) ? port : accessPort;
@@ -66,11 +72,19 @@ public class ServerUtils {
         }
 
         if (!StringUtils.isEmpty(contextPath)) {
-            contextPath.replaceAll(Consts.SLASH, EMPTY);
+            contextPath = contextPath.replaceAll(Consts.SLASH, EMPTY);
             sb.append(Consts.SLASH);
             sb.append(contextPath);
         }
 
         return sb.toString();
+    }
+
+    public String getLocalHost() {
+        return protocol + PROTOCOL_SEPARATOR + "localhost:" + port;
+    }
+
+    public String getBasePath() {
+        return basePath.replaceAll("/", File.separator).replaceAll(File.separator + "{2,}", File.separator);
     }
 }

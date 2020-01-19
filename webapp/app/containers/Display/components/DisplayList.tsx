@@ -1,7 +1,7 @@
 import React from 'react'
 import classnames from 'classnames'
 import {createStructuredSelector} from 'reselect'
-import { makeSelectProjectRoles } from '../../Projects/selectors'
+import { makeSelectProjectRoles } from 'containers/Projects/selectors'
 import {connect} from 'react-redux'
 import {compose} from 'redux'
 import { Col, Tooltip, Icon, Popconfirm, Row } from 'antd'
@@ -9,10 +9,10 @@ import { IconProps } from 'antd/lib/icon'
 const styles = require('../Display.less')
 
 import DisplayFormModal from './DisplayFormModal'
-import ModulePermission from '../../Account/components/checkModulePermission'
-import { IProject } from '../../Projects'
-import {IExludeRoles} from '../../Portal/components/PortalList'
-import {IProjectRoles} from '../../Organizations/component/ProjectRole'
+import ModulePermission from 'containers/Account/components/checkModulePermission'
+import { IProject } from 'containers/Projects'
+import {IExludeRoles} from 'containers/Portal/components/PortalList'
+import {IProjectRoles} from 'containers/Organizations/component/ProjectRole'
 export interface IDisplay {
   id: number
   name: string

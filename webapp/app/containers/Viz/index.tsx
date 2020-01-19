@@ -15,21 +15,20 @@ import portalReducer from '../Portal/reducer'
 import viewReducer from '../View/reducer'
 import viewSaga from '../View/sagas'
 
-import { loadDisplays, addDisplay, editDisplay, deleteDisplay } from '../Display/actions'
+import DisplayActions from '../Display/actions'
 import { loadPortals, addPortal, editPortal, deletePortal } from '../Portal/actions'
 import { makeSelectDisplays } from '../Display/selectors'
 import { makeSelectPortals } from '../Portal/selectors'
 import { checkNameUniqueAction } from '../App/actions'
 
 import { Icon, Row, Col, Breadcrumb } from 'antd'
-import Box from '../../components/Box'
+import Box from 'components/Box'
 const styles = require('./Viz.less')
-const utilStyles = require('../../assets/less/util.less')
-import Container from '../../components/Container'
+const utilStyles = require('assets/less/util.less')
+import Container from 'components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
 import { makeSelectCurrentProject } from '../Projects/selectors'
-import ModulePermission from '../Account/components/checkModulePermission'
 import { IProject } from '../Projects'
 import { excludeRoles } from '../Projects/actions'
 
@@ -83,8 +82,10 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
   }
 
   private goToDisplay = (display?: any) => () => {
-    const { params } = this.props
-    this.props.router.push(`/project/${params.pid}/display/${display ? display.id : -1}`)
+    const { params, currentProject: {permission: {vizPermission}} } = this.props
+    const isToPreview = vizPermission === 1
+    const path = isToPreview ? `/project/${params.pid}/display/preview/${display ? display.id : -1}` : `/project/${params.pid}/display/${display ? display.id : -1}`
+    this.props.router.push(path)
   }
 
   private onCopy = (display) => {
@@ -194,10 +195,10 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadDisplays: (projectId) => dispatch(loadDisplays(projectId)),
-    onAddDisplay: (display: IDisplay, resolve) => dispatch(addDisplay(display, resolve)),
-    onEditDisplay: (display: IDisplay, resolve) => dispatch(editDisplay(display, resolve)),
-    onDeleteDisplay: (id) => dispatch(deleteDisplay(id)),
+    onLoadDisplays: (projectId) => dispatch(DisplayActions.loadDisplays(projectId)),
+    onAddDisplay: (display: IDisplay, resolve) => dispatch(DisplayActions.addDisplay(display, resolve)),
+    onEditDisplay: (display: IDisplay, resolve) => dispatch(DisplayActions.editDisplay(display, resolve)),
+    onDeleteDisplay: (id) => dispatch(DisplayActions.deleteDisplay(id)),
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
     onAddPortal: (portal, resolve) => dispatch(addPortal(portal, resolve)),
     onEditPortal: (portal, resolve) => dispatch(editPortal(portal, resolve)),

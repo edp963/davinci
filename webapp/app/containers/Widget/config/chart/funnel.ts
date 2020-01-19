@@ -5,17 +5,16 @@ import {
   CHART_FUNNEL_LABEL_POSITIONS,
   CHART_SORT_MODES,
   CHART_ALIGNMENT_MODES
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 const funnel: IChartInfo = {
   id: ChartTypes.Funnel,
   name: 'funnel',
   title: '漏斗图',
   icon: 'icon-iconloudoutu',
   coordinate: 'cartesian',
-  requireDimetions: [0, 9999],
-  requireMetrics: 1,
+  rules: [{ dimension: [0, 9999], metric: 1 }, { dimension: 0, metric: [2, 9999] }],
   dimetionAxis: 'col',
   data: {
     cols: {
@@ -49,7 +48,8 @@ const funnel: IChartInfo = {
       funnelLabelPosition: CHART_FUNNEL_LABEL_POSITIONS[0].value,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_FONT_COLOR
+      labelColor: PIVOT_DEFAULT_FONT_COLOR,
+      labelParts: ['dimensionValue', 'indicatorValue', 'percentage']
     },
     legend: {
       showLegend: true,

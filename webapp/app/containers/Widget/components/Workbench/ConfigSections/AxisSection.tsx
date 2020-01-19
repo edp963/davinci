@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { Row, Col, Checkbox, Select, InputNumber } from 'antd'
 const Option = Select.Option
-import ColorPicker from '../../../../../components/ColorPicker'
-import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES } from '../../../../../globalConstants'
+import ColorPicker from 'components/ColorPicker'
+import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES } from 'app/globalConstants'
 import { getCorrectInputNumber } from '../../util'
 const styles = require('../Workbench.less')
 
@@ -190,46 +190,46 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
       <Row key="rotate" gutter={8} type="flex" align="middle" className={styles.blockRow}>
         <Col span={12}>标题旋转</Col>
         <Col span={10}>
-            <InputNumber
-              placeholder="width"
-              className={styles.blockElm}
-              value={nameRotate}
-              onChange={this.inputNumberChange('nameRotate')}
-            />
+          <InputNumber
+            placeholder="width"
+            className={styles.blockElm}
+            value={nameRotate}
+            onChange={this.inputNumberChange('nameRotate')}
+          />
         </Col>
       </Row>
     ), (
       <Row key="gap" gutter={8} type="flex" align="middle" className={styles.blockRow}>
         <Col span={12}>标题与轴线距离</Col>
         <Col span={10}>
-            <InputNumber
-              placeholder="nameGap"
-              className={styles.blockElm}
-              value={nameGap}
-              onChange={this.inputNumberChange('nameGap')}
-            />
+          <InputNumber
+            placeholder="nameGap"
+            className={styles.blockElm}
+            value={nameGap}
+            onChange={this.inputNumberChange('nameGap')}
+          />
         </Col>
       </Row>
     ), (
       <Row key="min" gutter={8} type="flex" align="middle" className={styles.blockRow}>
         <Col span={12}>最小值</Col>
         <Col span={10}>
-            <InputNumber
-              className={styles.blockElm}
-              value={min}
-              onChange={this.inputNumberChange('min')}
-            />
+          <InputNumber
+            className={styles.blockElm}
+            value={min}
+            onChange={this.inputNumberChange('min')}
+          />
         </Col>
       </Row>
     ), (
       <Row key="max" gutter={8} type="flex" align="middle" className={styles.blockRow}>
         <Col span={12}>最大值</Col>
         <Col span={10}>
-            <InputNumber
-              className={styles.blockElm}
-              value={max}
-              onChange={this.inputNumberChange('max')}
-            />
+          <InputNumber
+            className={styles.blockElm}
+            value={max}
+            onChange={this.inputNumberChange('max')}
+          />
         </Col>
       </Row>
     )]
@@ -274,8 +274,8 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
                 onChange={this.selectChange('lineSize')}
               >
                 {Array.from(Array(10), (o, i) => (
-                    <Option key={`${i}`} value={`${i + 1}`}>{i + 1}</Option>
-                  ))}
+                  <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                ))}
               </Select>
             </Col>
             <Col span={4}>
