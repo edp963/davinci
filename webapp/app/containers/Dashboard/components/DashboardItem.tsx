@@ -808,18 +808,22 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     if (container === 'share') {
       downloadButton = (
-        <Tooltip title="下载数据">
-          <i>
+        <Popconfirm
+          title={`确认下载数据`}
+          placement="bottom"
+          onConfirm={this.downloadCsv}>
+          <Tooltip title="下载数据">
+            <i>
           <DownloadCsv
             id={widget.id}
             type="widget"
             itemId={itemId}
             shareInfo={shareInfo}
             downloadCsvLoading={downloadCsvLoading}
-            onDownloadCsv={this.downloadCsv}
           />
           </i>
         </Tooltip>
+        </Popconfirm>
       )
     } else {
       const InfoButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>>(currentProject, 'viz', false)(Span)
