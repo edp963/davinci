@@ -23,6 +23,5 @@ public enum VizEnum {
     PORTAL,
     DISPLAY,
     DASHBOARD,
-    SLIDE,
-    ;
+    SLIDE;
 }

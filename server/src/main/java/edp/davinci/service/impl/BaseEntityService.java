@@ -84,6 +84,7 @@ public abstract class BaseEntityService {
 			permission = projectPermission.getSchedulePermission();
 			break;
 		case DISPLAY:
+		case DISPLAYSLIDE:
 		case DASHBOARDPORTAL:
 		case DASHBOARD:
 			permission = projectPermission.getVizPermission();
