@@ -83,6 +83,7 @@ public abstract class BaseEntityService {
 		case CRONJOB:
 			permission = projectPermission.getSchedulePermission();
 			break;
+		case DISPLAY:
 		case DASHBOARDPORTAL:
 		case DASHBOARD:
 			permission = projectPermission.getVizPermission();
