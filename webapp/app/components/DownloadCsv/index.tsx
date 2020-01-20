@@ -28,21 +28,15 @@ export interface IDownloadCsvProps {
   shareInfo: string
   shareInfoLoading?: boolean
   downloadCsvLoading: boolean
-  onDownloadCsv: () => void
+  // onDownloadCsv: () => void
 }
 
 export function DownloadCsv (props: IDownloadCsvProps) {
   const { shareInfoLoading, downloadCsvLoading } = props
   const iconType = shareInfoLoading || downloadCsvLoading ? 'loading' : 'download'
   return (
-    <Icon type={iconType} onClick={getShareInfo(props)} />
+    <Icon type={iconType} />
   )
-}
-
-function getShareInfo (props) {
-  return function () {
-    props.onDownloadCsv()
-  }
 }
 
 export default DownloadCsv

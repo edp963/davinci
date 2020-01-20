@@ -83,6 +83,7 @@ interface IDashboardItemProps {
   onCheckTableInteract: (itemId: number) => boolean
   onDoTableInteract: (itemId: number, triggerData: object) => void
   onEditWidget?: (itemId: number, widgetId: number) => void
+  onEditView?: (itemId: number, viewId: number) => void
   onDrillData?: (e: object) => void
   onDrillPathData?: (e: object) => void
   onSelectChartsItems?: (itemId: number, renderType: string, selectedItems: number[]) => void
@@ -388,6 +389,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   private toWorkbench = () => {
     const { itemId, widget } = this.props
     this.props.onEditWidget(itemId, widget.id)
+  }
+
+  private toViewWorkbench = () => {
+    const { itemId, view } = this.props
+    this.props.onEditView(itemId, view.id)
+    window.location.reload(true)
   }
 
   private getDataDrillDetail = (position) => {
@@ -707,8 +714,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       controlSelectOptions,
       currentProject,
       onShowEdit,
-      onShowDrillEdit,
-      onSelectDrillHistory,
       onDeleteDashboardItem,
       onLoadWidgetShareLink,
       container,
@@ -730,23 +735,32 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     let downloadButton
     let shareButton
     let widgetButton
+    let viewButton
     let dropdownMenu
 
     if (currentProject) {
       const DownloadButton = ShareDownloadPermission<IDownloadCsvProps>(currentProject, 'download')(DownloadCsv)
+
       downloadButton = (
+        <Popconfirm
+        title={`确认下载数据`}
+        placement="bottom"
+        onConfirm={this.downloadCsv} >
         <Tooltip title="下载数据">
+        <i>
           <DownloadButton
-            id={widget.id}
-            type="widget"
-            itemId={itemId}
-            shareInfo={shareInfo}
-            shareInfoLoading={shareInfoLoading}
-            downloadCsvLoading={downloadCsvLoading}
-            onDownloadCsv={this.downloadCsv}
+          id={widget.id}
+          type="widget"
+          itemId={itemId}
+          shareInfo={shareInfo}
+          shareInfoLoading={shareInfoLoading}
+          downloadCsvLoading={downloadCsvLoading}
           />
+        </i>
         </Tooltip>
+        </Popconfirm>
       )
+
 
       const ShareButton = ShareDownloadPermission<IconProps>(currentProject, 'share')(Icon)
       shareButton = (
@@ -774,6 +788,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       )
 
       const EditButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>>(currentProject, 'viz', false)(Span)
+      const EditViewButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>>(currentProject, 'view', false)(Span)
       widgetButton = (
         <Tooltip title="编辑widget">
           {/* <i className="iconfont icon-edit-2" onClick={this.toWorkbench} /> */}
@@ -782,11 +797,19 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           </i>
         </Tooltip>
       )
+      viewButton = (
+        <Tooltip title="编辑view">
+          <i>
+            <EditViewButton className="iconfont icon-xiugaimima1" onClick={this.toViewWorkbench}></EditViewButton>
+          </i>
+        </Tooltip>
+      )
     }
 
     if (container === 'share') {
       downloadButton = (
         <Tooltip title="下载数据">
+          <i>
           <DownloadCsv
             id={widget.id}
             type="widget"
@@ -795,6 +818,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             downloadCsvLoading={downloadCsvLoading}
             onDownloadCsv={this.downloadCsv}
           />
+          </i>
         </Tooltip>
       )
     } else {
@@ -985,6 +1009,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               {!loading && <Icon type="reload" onClick={this.onSyncBizdatas} />}
             </Tooltip>
             {widgetButton}
+            {viewButton}
             <Tooltip title="全屏">
               <Icon type="arrows-alt" onClick={this.onFullScreen} className={styles.fullScreen} />
             </Tooltip>

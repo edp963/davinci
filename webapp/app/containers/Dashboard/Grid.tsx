@@ -1185,6 +1185,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     this.props.router.push(`/project/${pid}/widget/${widgetId}`)
   }
 
+  private toViewWorkbench = (itemId, viewId) => {
+    const { pid, portalId, portalName, dashboardId } = this.props.params
+    const editSign = [pid, portalId, portalName, dashboardId, itemId].join(DEFAULT_SPLITER)
+    sessionStorage.setItem('editViewFromDashboard', editSign)
+    this.props.router.push(`/project/${pid}/view/${viewId}`)
+  }
+
   private onDrillPathData = (e) => {
     const {
       widgets,
@@ -1631,6 +1638,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onDoTableInteract={this.doInteract}
               onShowFullScreen={this.visibleFullScreen}
               onEditWidget={this.toWorkbench}
+              onEditView={this.toViewWorkbench}
               onDrillData={this.dataDrill}
               onDrillPathData={this.onDrillPathData}
               onSelectChartsItems={this.selectChartsItems}
