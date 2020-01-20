@@ -239,14 +239,15 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 		
 		try {
 
-			String avatar = display.getAvatar();
-	        if (!StringUtils.isEmpty(avatar) && !avatar.startsWith(Constants.DISPLAY_AVATAR_PATH)) {
+			String updateAvatar = displayUpdate.getAvatar();
+			String avatar = displayUpdate.getAvatar();
+	        if (!StringUtils.isEmpty(updateAvatar) && !updateAvatar.startsWith(Constants.DISPLAY_AVATAR_PATH)) {
 	            throw new ServerException("Invalid cover image");
 	        }
 
 	        //删除原有封面图
-	        if (!StringUtils.isEmpty(avatar) && !avatar.equals(avatar)) {
-	            File file = new File(display.getAvatar());
+	        if (!StringUtils.isEmpty(avatar) && !updateAvatar.equals(avatar)) {
+	            File file = new File(avatar);
 	            if (null != file && file.exists() && file.isFile() && fileUtils.isImage(file)) {
 	                file.delete();
 	            }
