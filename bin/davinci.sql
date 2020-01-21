@@ -89,6 +89,7 @@ CREATE TABLE `display`
     `project_id`  bigint(20)   NOT NULL,
     `avatar`      varchar(255) DEFAULT NULL,
     `publish`     tinyint(1)   NOT NULL,
+    `config`      text         NULL,
     `create_by`   bigint(20)   DEFAULT NULL,
     `create_time` datetime     DEFAULT NULL,
     `update_by`   bigint(20)   DEFAULT NULL,

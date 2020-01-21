@@ -14,3 +14,5 @@ ALTER TABLE `davinci_statistic_duration`
 ADD COLUMN `sub_viz_id` BIGINT(20) NULL   COMMENT '报表ID' AFTER `viz_name`;
 ALTER TABLE `davinci_statistic_duration`
 ADD COLUMN `sub_viz_name` VARCHAR(255) NULL   COMMENT '报表名称' AFTER `sub_viz_id`;
+ALTER TABLE `display`
+ADD COLUMN `config` text NULL AFTER `publish`;
