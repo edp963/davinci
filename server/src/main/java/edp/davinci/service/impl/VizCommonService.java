@@ -97,6 +97,11 @@ public class VizCommonService extends BaseEntityService {
         List<Long> disableVizs = getDisableVizs(user.getId(), projectId, null, VizEnum.DISPLAY);
         return isDisableVizs(projectPermission, disableVizs, displayId);
    }
+	
+	protected boolean isDisableDisplaySlide(Long slideId, Long displayId, User user, ProjectPermission projectPermission) {
+        List<Long> disableVizs = getDisableVizs(user.getId(), displayId, null, VizEnum.SLIDE);
+        return isDisableVizs(projectPermission, disableVizs, slideId);
+   }
 
     /**
      * 获取当前用户被禁viz
