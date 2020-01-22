@@ -1,1033 +1,707 @@
-import * as React from 'react'
+
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
+import React, { useMemo, useEffect, useState, ReactElement, useCallback, useRef, useImperativeHandle, useLayoutEffect } from 'react'
 import * as classnames from 'classnames'
 import { connect } from 'react-redux'
-import { Row, Col, Tooltip, Popconfirm, Icon, Modal, Button, Pagination } from 'antd'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import { Row, Col, Tooltip, Popconfirm, Icon, Modal, Button } from 'antd'
 const styles = require('../Organizations/Project.less')
 
-import { ProjectActions } from './actions'
+import { debounce } from 'lodash'
+import saga from './sagas'
+import reducer from './reducer'
 import { compose } from 'redux'
 import { makeSelectLoginUser } from '../App/selectors'
 import { makeSelectProjects, makeSelectSearchProject, makeSelectStarUserList, makeSelectCollectProjects } from './selectors'
+import { ProjectActions } from './actions'
 import injectReducer from 'utils/injectReducer'
 import { createStructuredSelector } from 'reselect'
+
 import injectSaga from 'utils/injectSaga'
-import ProjectsForm from '../Organizations/component/ProjectForm'
-import saga from './sagas'
-import reducer from './reducer'
+import ProjectsForm from './component/ProjectForm'
+
 import reducerOrganization from '../Organizations/reducer'
+import {IOrganization} from '../Organizations/types'
 import sagaOrganization from '../Organizations/sagas'
 import { OrganizationActions } from '../Organizations/actions'
-const { loadOrganizations } = OrganizationActions
 import { makeSelectOrganizations } from '../Organizations/selectors'
 import { checkNameUniqueAction } from '../App/actions'
 import ComponentPermission from '../Account/components/checkMemberPermission'
-import Avatar from 'components/Avatar'
-import Box from 'components/Box'
 import Star from 'components/StarPanel/Star'
-const utilStyles = require('assets/less/util.less')
 import HistoryStack from '../Organizations/component/historyStack'
-import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
 const historyStack = new HistoryStack()
-
 import { RouteComponentWithParams } from 'utils/types'
-import { IProject, IStarUser } from './types'
+import {
+  IProject, IProjectFormFieldProps, IProjectsFormProps ,
+  IProjectsProps, projectType, IProjectType, IToolbarProps, projectTypeSmall,
+  ItemToolbarProps, ITagProps, eTag, ItemProps, IContentProps
+} from './types'
+import { FormComponentProps } from 'antd/lib/form/Form'
+import { uuid } from 'app/utils/util'
+import { useResize } from './hooks/useResize'
+import ProjectItem from './component/ProjectItem'
 
-interface IProjectsProps {
-  projects: IProject[]
-  collectProjects: IProject[]
-  loginUser: any
-  searchProject?: {list: any[], total: number, pageNum: number, pageSize: number}
-  organizations: any
-  starUserList: IStarUser[]
-  onTransferProject: (id: number, orgId: number) => any
-  onEditProject: (project: any, resolve: () => any) => any
-  onLoadProjects: () => any
-  onAddProject: (project: any, resolve: () => any) => any
-  onLoadOrganizations: () => any
-  onLoadCollectProjects: () => any
-  onClickCollectProjects: (formType: string, project: object, resolve: (id: number) => any) => any
-  onDeleteProject: (id: number, resolve?: any) => any
-  onLoadProjectDetail: (id: number) => any
-  onStarProject: (id: number, resolve: () => any) => any,
-  onGetProjectStarUser: (id: number) => any,
-  onSearchProject: (param: {keywords: string, pageNum: number, pageSize: number }) => any
-  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
+
+function enhanceInput(props, ref) {
+  const inputRef = useRef(null)
+  useImperativeHandle(ref, () => ({}))
+
+  return <input
+          {...props}
+          ref = {inputRef}
+        />
 }
 
-interface IProjectsState {
-  formType?: string
-  formVisible: boolean
-  modalLoading: boolean
-  mimePanel: boolean
-  joinPanel: boolean
-  collectPanel: boolean
-  searchMaskVisible: boolean
-  searchKeywordsVisible: boolean
-  keywords: string
-  currentPage: number
-  pageSize: number
-  isDisableCollect: boolean
-}
+const EnhanceInput = React.forwardRef(enhanceInput)
 
-export class Projects extends React.PureComponent<IProjectsProps & RouteComponentWithParams, IProjectsState> {
-  constructor (props) {
-    super(props)
-    this.state = {
-      formType: '',
-      formVisible: false,
-      modalLoading: false,
-      mimePanel: true,
-      joinPanel: true,
-      collectPanel: true,
-      searchMaskVisible: true,
-      searchKeywordsVisible: false,
-      keywords: '',
-      currentPage: 1,
-      pageSize: 10,
-      isDisableCollect: false
+const Toolbar: React.FC<IToolbarProps>  = React.memo(({
+  pType, setPType, setKeywords, searchKeywords, showProForm
+}) => {
+  const searchRef = useRef(null)
+  const documentWidth = useResize()
+
+  const checkoutType = useCallback((type) => {
+    return () => {
+      setPType && setPType(type)
     }
-  }
-  private ProjectForm: WrappedFormUtils
-  private showProjectForm = (formType, project?: IProject) => (e) => {
-    this.stopPPG(e)
-    this.setState({
-      formType,
-      formVisible: true
-    }, () => {
-      setTimeout(() => {
-        if (project) {
-          const {orgId, id, name, pic, description, visibility} = project
-          this.widgetTypeChange(`${orgId}`).then(
-            () => {
-              if (this.state.formType === 'transfer') {
-                this.ProjectForm.setFieldsValue({id, name, orgId_hc: `${orgId}`, pic, description, visibility: `${visibility}`})
-                return
-              }
-              this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description, visibility: `${visibility}`})
-            }
-          )
-        }
-      }, 0)
-    })
-  }
+  }, [pType])
 
-  private collectProject = (formType, project?: IProject) => (e) => {
-    const { projects, collectProjects, onClickCollectProjects } = this.props
-    this.stopPPG(e)
-    this.setState({
-      formType
-    }, () => {
-      onClickCollectProjects(formType, project, () => {
-        this.setState({
-          isDisableCollect: this.state.formType === 'collect' ? true : false
-        })
+  const menus = useMemo(() => {
+    const types = ['all', 'join', 'create', 'favorite', 'history']
+
+    return types.map((t: IProjectType) => {
+      const classNames = classnames({
+        [styles.selectMenu] : pType === t,
+        [styles.menuitem] : true
       })
+      return (
+        <p key={t} className={classNames} onClick={checkoutType(t)}>
+          {
+            documentWidth < 1200 ? projectTypeSmall[t] : projectType[t]
+          }
+        </p>
+      )
     })
-  }
+  }, [pType, documentWidth])
 
-  public componentWillMount () {
-    this.props.onLoadProjects()
-    this.props.onLoadOrganizations()
-    this.props.onLoadCollectProjects()
-    // historyStack.init()
-  }
+  const getKeywords = useCallback((e) => {
+    setKeywords(e.target.value)
+  }, [setKeywords])
 
-  public componentWillReceiveProps (nextProps) {
-    // if (nextProps.loginUser !== this.props.loginUser) {
-    //   historyBrowser.init()
-    // }
-    const { projects, collectProjects } = nextProps
+  const addPro = useCallback((e) => {
+    showProForm && showProForm('add',{}, e)
+  }, [showProForm])
+
+
+  return (
+    <div className={styles.toolbar}>
+      <div className={styles.menu}>
+        {menus}
+      </div>
+      <div className={styles.searchs}>
+        <EnhanceInput
+          type="text"
+          ref={searchRef}
+          val={searchKeywords}
+          onChange={getKeywords}
+          placeholder="查找您的项目"
+        />
+        <span className={styles.searchButton}>
+          <i className="iconfont icon-search"/>
+        </span>
+      </div>
+      <div className={styles.create}>
+        <Button icon="plus" type="primary" shape="round" onClick={addPro}>创建</Button>
+      </div>
+    </div>
+  )
+})
+
+
+
+
+const ItemToolbar: React.FC<ItemToolbarProps> = React.memo(({
+  onStar, onTransfer, onEdit, onDelete, organization, isMimePro,
+  onFavorite, pType, isStar, isFavorite, StarCom
+}) => {
+  const CreateButton = useMemo(() => {
+    return ComponentPermission(organization, '')(Icon)
+  }, [organization])
+
+  const isHistoryType = useMemo(() =>pType && pType === 'history', [pType])
+
+  const { Favorite, Transfer, Edit, Delete} = useMemo(() => {
+
+    const favoriteClassName = classnames({
+      [styles.ft16]: true,
+      [styles.mainColor]: isFavorite
+    })
+
+    const themeFavorite = isFavorite ? 'filled' : 'outlined'
+
+    const Favorite = !isMimePro
+    ?   <Tooltip title="收藏">
+          <Icon type="heart" theme={themeFavorite}  className={favoriteClassName} onClick={onFavorite} />
+        </Tooltip>
+    :   []
+
+    const Transfer = (
+      <Tooltip title="移交">
+        <CreateButton type="swap"  className={styles.ft16} onClick={onTransfer} />
+      </Tooltip>
+    )
+
+    const Edit = (
+      <Tooltip title="编辑">
+        <CreateButton type="form"  className={styles.ft16}  onClick={onEdit}/>
+      </Tooltip>
+    )
+
+    const Delete = (
+      <Popconfirm
+        title="确定删除？"
+        placement="bottom"
+        onConfirm={onDelete}
+      >
+        <Tooltip title="删除">
+          <CreateButton type="delete"  className={styles.ft16} onClick={stopPPG} />
+        </Tooltip>
+      </Popconfirm>
+    )
+
+
+    return {
+      Edit,
+      Favorite,
+      Transfer,
+      Delete
+    }
+  }, [onStar, onTransfer, onEdit, onDelete, isMimePro, onFavorite])
+
+  return (
+    <>
+      <div className={styles.others}>
+        {!isHistoryType ? Edit: ''}
+        {Favorite}
+        {!isHistoryType ? Transfer: ''}
+        {!isHistoryType ? Delete: ''}
+      </div>
+      <div className={styles.stars}>
+        {StarCom}
+      </div>
+    </>
+  )
+})
+
+function stopPPG (e: React.MouseEvent<HTMLElement>)  {
+  e && e.stopPropagation()
+  return
+}
+
+const Tags: React.FC<ITagProps> = React.memo(({type}) => {
+  const tags = useMemo(() => {
+    return type.map((t) => {
+      const tagClassName = classnames({
+        [styles.tag]: true,
+        [styles.create]: t === 'create',
+        [styles.favorite]: t === 'favorite',
+        [styles.join]: t === 'join'
+      })
+      return  <span key={eTag[t]} className={tagClassName}>{eTag[t]}</span>
+    })
+  }, [type])
+
+  return (
+    <>
+      {tags}
+    </>
+  )
+})
+
+
+
+
+export const Items: React.FC<ItemProps & Partial<IProjectsProps>> = React.memo(({
+  pro, userId, history, organizations, onLoadProjects, showProForm, pType, deletePro: deleteProject,
+  favoritePro: favoriteProject, starUserList, onGetProjectStarUser, onStarProject,
+}) => {
+
+  const isMimePro = useMemo(() => {
+    return !!(pro.createBy && pro.createBy.id === userId)
+  }, [pro, userId])
+
+  const isStar = useMemo(() => {
+    return !!(pro && pro.isStar)
+  }, [pro])
+
+  const isFavorite = useMemo(() => {
+    return !!(pro && pro.isFavorites)
+  }, [pro])
+
+  const getTagType = useMemo(() => {
+    const tagType = []
+    const isMime = isMimePro
+    if (isMime) {
+      tagType.push('create')
+    } else {
+      tagType.push('join')
+    }
+
+    if (pro.isFavorites) {
+      tagType.push('favorite')
+    }
+
+    return tagType
+
+  }, [pro])
+
+  const starProject = useCallback((id) => () => {
+    onStarProject(id, () => {
+      onLoadProjects && onLoadProjects()
+    })
+  }, [pro, onLoadProjects])
+
+  const getStarProjectUserList = useCallback((id) => () => {
+    onGetProjectStarUser && onGetProjectStarUser(id)
+  }, [pro, onGetProjectStarUser])
+
+  const StarCom = useMemo(() => {
+    const { id, starNum, isStar} = pro
+      return <Star
+                proId={id}
+                starNum={starNum}
+                isStar={isStar}
+                starUser={starUserList}
+                unStar={starProject}
+                userList={getStarProjectUserList}
+              />
+  }, [pro, starProject, starUserList, getStarProjectUserList])
+
+
+  const toProject = useCallback((e) => {
+    history.push(`/project/${pro.id}`)
+    saveHistory(pro)
+  }, [pro])
+
+  const saveHistory = useCallback((pro) => {
+    historyStack.pushNode(pro)
+  }, ['nf'])
+
+
+  const editPro = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    stopPPG(e)
+    showProForm && showProForm('edit', pro, e)
+  }, [pro])
+
+  const starPro = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    stopPPG(e)
+  }, [pro])
+
+  const deletePro = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    const {id, isFavorites} = pro
+    deleteProject && deleteProject(id, isFavorites)
+    stopPPG(e)
+  }, [pro])
+
+  const transferPro = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    stopPPG(e)
+    showProForm && showProForm('transfer', pro, e)
+  }, [pro])
+
+  const favoritePro = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    const {id, isFavorites} = pro
+    stopPPG(e)
+    favoriteProject && favoriteProject(id, isFavorites)
+  }, [pro])
+
+  const currentOrganization: IOrganization = useMemo(() => {
+    return organizations.find((org) => org.id === pro.orgId)
+  }, [organizations, pro])
+
+  return (
+    <>
+     <Col
+        key={`pro${userId}orp`}
+        xxl={4} xl={6} lg={6} md={8} sm={12} xs={24}
+      >
+        <div className={styles.unit}
+          onClick={toProject}
+        >
+          <div
+            className={styles.thumbnail}
+            style={{backgroundImage: `url(${require(`assets/images/bg${pro.pic}.png`)})`}}
+          >
+            <header>
+              <div className={styles.tags}>
+                <Tags type={getTagType}/>
+              </div>
+              <h3 className={styles.title}>
+                {pro.name}
+              </h3>
+              <p className={styles.descs}>
+                {pro.description}
+              </p>
+            </header>
+          </div>
+          <div className={styles.itemToolbar}>
+            <ItemToolbar
+              pType={pType}
+              isStar={isStar}
+              onEdit={editPro}
+              onStar={starPro}
+              StarCom={StarCom}
+              onDelete={deletePro}
+              isMimePro={isMimePro}
+              isFavorite={isFavorite}
+              onFavorite={favoritePro}
+              onTransfer={transferPro}
+              organization={currentOrganization}
+            />
+          </div>
+        </div>
+      </Col>
+    </>
+  )
+})
+
+
+
+
+const Content: React.FC<IContentProps & Partial<IProjectsProps>> = React.memo(({
+  projects, organizations, userId, pType, searchKeywords, collectProjects, history, showProForm, deletePro,
+  favoritePro, starUserList, onStarProject, onGetProjectStarUser, onLoadProjects
+}) => {
+
+  const NoProjects:ReactElement = useMemo(() => {
+    return (
+      <div className={styles.desc}>
+        无项目
+      </div>
+    )
+  }, [])
+
+  const { proIdList } = historyStack.getAll()
+
+  const favoriteProjectsId = useMemo(() => {
+    return Array.isArray(collectProjects) && collectProjects.length > 0 && collectProjects.map((col) => col.id)
+  }, [collectProjects])
+
+  const getProjectsBySearch = useMemo(() => {
+
+    function filterByKeyword(arr: IProject[]) {
+      return Array.isArray(arr) && arr.filter((pro: IProject) => pro.name.toUpperCase().indexOf(searchKeywords.toUpperCase()) > -1 )
+    }
+
+    function filterByProjectType (arr: IProject[]) {
+      if (Array.isArray(arr)) {
+        switch (pType) {
+          case 'create':
+            return arr.filter((pro) => pro.createBy && pro.createBy.id === userId)
+          case 'join':
+            return arr.filter((pro) => pro.createBy && pro.createBy.id !== userId)
+          case 'favorite':
+            return arr.filter((pro) => pro.isFavorites)
+          case 'history':
+            return arr.filter((pro) => proIdList.includes(pro.id))
+          case 'all':
+            return arr
+          default:
+            return []
+        }
+      }
+    }
+
+    function pushForkTagProjects (arr: IProject[]) {
+      return Array.isArray(arr) ? arr.map((pro) => {
+        return   favoriteProjectsId.includes && favoriteProjectsId.includes(pro.id) ? {...pro, isFavorites: true} : pro
+      }) : []
+    }
+
+    return compose(filterByProjectType, filterByKeyword, pushForkTagProjects)(projects)
+
+  }, [projects, pType, searchKeywords, userId])
+
+
+  const ProjectItems:ReactElement[] = useMemo(() => {
+    const results = Array.isArray(projects) ? getProjectsBySearch.map((pro: IProject, index) => {
+      return  <Items
+                key={`pro${index}orp`}
+                pro={pro}
+                userId={userId}
+                pType={pType}
+                deletePro={deletePro}
+                favoritePro={favoritePro}
+                history={history}
+                showProForm={showProForm}
+                organizations={organizations}
+                starUserList={starUserList}
+                onLoadProjects={onLoadProjects}
+                onStarProject={onStarProject}
+                onGetProjectStarUser={onGetProjectStarUser}
+              />
+      })
+      :
+      []
+      results.push(
+        <>
+        <Col
+           key={`pro${userId}orp`}
+           xxl={4} xl={6} lg={6} md={8} sm={12} xs={24}
+         >
+           <ProjectItem/>
+         </Col>
+         </>
+      )
+      return results
+  }, [ getProjectsBySearch, pType, projects, starUserList,
+      onLoadProjects, onStarProject, onGetProjectStarUser,
+      userId,organizations
+    ])
+
+  return (
+    <div className={styles.content}>
+      <div className={styles.flex}>
+        {
+          projects ? projects.length > 0 ? ProjectItems : NoProjects : ''
+        }
+      </div>
+    </div>
+  )
+})
+
+
+
+
+const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo(({
+  projects, onLoadProjects, onLoadOrganizations, organizations,
+  loginUser, onLoadCollectProjects,collectProjects, history, onAddProject,
+  onCheckUniqueName, onTransferProject, onDeleteProject, onClickCollectProjects,
+  starUserList, onStarProject, onGetProjectStarUser, onEditProject
+}) => {
+
+  const [formKey, setFormKey] = useState(() => uuid(8, 16))
+  const [projectType, setProjectType] = useState('all')
+
+  const [formVisible, setFormVisible] = useState(false)
+
+  const [formType, setFormType] = useState('add')
+
+  const [currentPro, setCurrentPro] = useState({})
+
+  const [modalLoading, setModalLoading] = useState(false)
+
+  const [searchKeywords, setKeywords] = useState('')
+
+  let proForm: FormComponentProps<IProjectFormFieldProps> = null
+
+  useEffect(() => {
+    onLoadProjects && onLoadProjects()
+    onLoadOrganizations && onLoadOrganizations()
+    onLoadCollectProjects && onLoadCollectProjects()
+  }, ['nf'])
+
+  useEffect(() => {
     if (projects) {
       historyStack.init(projects)
     }
-  }
+  }, [projects])
 
-  private enterSearch: (e: KeyboardEvent) => any = null
+  const loginUserId = useMemo(() => {
+    return loginUser && loginUser.id
+  }, [loginUser])
 
-  public componentWillUnmount () {
-    this.unbindDocumentKeypress()
-  }
+  const checkoutFormVisible = useCallback(() => {
+    setFormVisible(true)
 
-  private bindDocumentKeypress = () => {
-    this.enterSearch = (e) => {
-      if (e.keyCode === 13) {
-        this.searchProject()
+  }, [formVisible])
+
+  const hideProForm = useCallback(() => {
+    setFormVisible(false)
+  }, [formVisible])
+
+  const deletePro = useCallback((proId: number, isFavorite: boolean) => {
+    onDeleteProject && onDeleteProject(proId, () => {
+      if (isFavorite) {
+        onLoadCollectProjects && onLoadCollectProjects()
       }
-    }
-
-    document.addEventListener('keypress', this.enterSearch, false)
-    this.setState({
-      searchMaskVisible: false,
-      searchKeywordsVisible: false
+      onLoadProjects && onLoadProjects()
     })
-  }
+  }, [formVisible])
 
-  private unbindDocumentKeypress = () => {
-    document.removeEventListener('keypress', this.enterSearch, false)
-    this.enterSearch = null
-  }
-
-  private stopPPG = (e) => {
-    e.stopPropagation()
-    return
-  }
-  private hideProjectForm = () => {
-    this.setState({
-      formVisible: false,
-      modalLoading: false
-    }, () => {
-      this.ProjectForm.resetFields()
+  const favoritePro = useCallback((proId: number, isFavorite: boolean) => {
+    onClickCollectProjects && onClickCollectProjects(isFavorite, proId, () => {
+      onLoadCollectProjects && onLoadCollectProjects()
+      onLoadProjects && onLoadProjects()
     })
-  }
+  }, [formVisible])
 
-  private onModalOk = () => {
-    this.ProjectForm.validateFieldsAndScroll((err, values) => {
+  const showProForm = useCallback((formType, project: IProject, e: React.MouseEvent<HTMLElement>) => {
+    stopPPG(e)
+    setFormVisible(true)
+    setCurrentPro(project)
+    setFormType(formType)
+  }, [formVisible, formType, currentPro])
+
+  const onModalOk = useCallback(() => {
+    proForm.form.validateFieldsAndScroll((err, values: IProjectFormFieldProps) => {
       if (!err) {
-        this.setState({ modalLoading: true })
-        values.visibility = values.visibility === 'true' ? true : false
-        if (this.state.formType === 'add') {
-          this.props.onAddProject({
+        setModalLoading(true)
+        if (formType === 'add') {
+          onAddProject({
             ...values,
+            visibility: values.visibility === 'true' ? true : false,
             pic: `${Math.ceil(Math.random() * 19)}`
-            // config: '{}'
           }, () => {
-            this.props.onLoadProjects()
-            this.hideProjectForm()
+            hideProForm()
+            onLoadProjects()
+            setModalLoading(false)
+            const newFormKey = uuid(8, 16)
+            setFormKey(newFormKey)
           })
         } else {
-          this.props.onEditProject({...values, ...{orgId: Number(values.orgId)}}, () => {
-            this.props.onLoadProjects()
-            this.hideProjectForm()
+          onEditProject({...values, ...{orgId: Number(values.orgId)}}, () => {
+            hideProForm()
+            onLoadProjects()
+            setModalLoading(false)
+            const newFormKey = uuid(8, 16)
+            setFormKey(newFormKey)
           })
         }
       }
     })
-  }
+  }, [formVisible, formType, setFormKey])
 
-  private foldPanel = (flag) => () => {
-    // this.setState({
-    //   [flag]: !this.state[flag]
-    // })
-    if (flag === 'mimePanel') {
-      this.setState({
-        mimePanel: !this.state.mimePanel
-      })
-    } else if (flag === 'joinPanel') {
-      this.setState({
-        joinPanel: !this.state.joinPanel
-      })
-    } else if (flag === 'collectPanel') {
-      this.setState({
-        collectPanel: !this.state.collectPanel
-      })
-    }
-  }
-
-  private onTransfer = () => {
-    this.ProjectForm.validateFieldsAndScroll((err, values) => {
+  const onTransfer = useCallback(() => {
+    proForm.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        this.setState({ modalLoading: true })
+        setModalLoading(true)
         const {id, orgId} = values
-        this.props.onTransferProject(id, Number(orgId))
-        this.hideProjectForm()
+        onTransferProject(id, Number(orgId))
+        hideProForm()
+        const newFormKey = uuid(8, 16)
+        setFormKey(newFormKey)
       }
     })
-  }
+  }, [formVisible, setFormKey])
 
-  private searchProject = () => {
-    const { onSearchProject } = this.props
-    const { keywords } = this.state
-    const param = {
-      keywords,
-      pageNum: this.state.currentPage,
-      pageSize: this.state.pageSize
-    }
-    this.setState({
-      searchMaskVisible: false
-    }, () => onSearchProject(param))
-  }
-  private widgetTypeChange = (val) =>
-    new Promise((resolve) => {
-      this.forceUpdate(() => resolve())
-    })
-
-  private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckUniqueName } = this.props
-    const { getFieldsValue } = this.ProjectForm
-    const fieldsValue = getFieldsValue()
-    const orgId = fieldsValue['orgId']
-    const id = fieldsValue['id']
-    const data = {
+  const checkNameUnique = useCallback((rule, value = '', callback) => {
+    const fieldsValue = proForm.form.getFieldsValue()
+    const {orgId, id} = fieldsValue
+    onCheckUniqueName('project', {
       name: value,
       orgId,
       id
-    }
-    onCheckUniqueName('project', data,
+    },
       () => {
         callback()
       }, (err) => {
         callback(err)
       })
-  }
+  }, [formVisible])
 
-  private toProject = (d: any) => () => {
-    const projectId = d.id
-    this.props.history.push(`/project/${projectId}`)
-   // this.props.onLoadProjectDetail(projectId)
-    this.saveHistory(d)
-  }
-
-  private saveHistory = (d: any) => {
-    historyStack.pushNode(d)
-  }
-
-  private hideSearchMask = () => {
-    this.setState({
-      searchMaskVisible: true,
-      searchKeywordsVisible: true
-    })
-  }
-  private onChangeKeywords = (e) => {
-      const param = {
-        keywords: e.target.value.trim(),
-        pageNum: this.state.currentPage,
-        pageSize: this.state.pageSize
-      }
-      this.setState({
-        keywords: e.target.value.trim()
-      }, () => this.props.onSearchProject(param))
-  }
-  private selectKeywords = (keyword) => () => {
-    const param = {
-      keywords: keyword,
-      pageNum: this.state.currentPage,
-      pageSize: this.state.pageSize
-    }
-    this.setState({
-      keywords: keyword,
-      searchKeywordsVisible: true
-    }, () => this.props.onSearchProject(param))
-  }
-  private computSearchListWrapperStyle = () => {
-    const {searchProject} = this.props
-    if (this.state.searchMaskVisible) {
-      return this.state.searchMaskVisible
-    } else {
-      if (searchProject && searchProject.list && searchProject.list.length !== 0) {
-        return this.state.searchMaskVisible
-      }
-      return true
-    }
-  }
-  private onShowSizeChange = (current, pageSize) => {
-    this.setState({
-      currentPage: current,
-      pageSize
-    }, () => {
-      const param = {
-        keywords: this.state.keywords,
-        pageNum: this.state.currentPage,
-        pageSize: this.state.pageSize
-      }
-      this.props.onSearchProject(param)
-    })
-  }
-  private onPaginationChange = (page) => {
-    this.setState({
-      currentPage: page
-    }, () => {
-      const param = {
-        keywords: this.state.keywords,
-        pageNum: this.state.currentPage,
-        pageSize: this.state.pageSize
-      }
-      this.props.onSearchProject(param)
-    })
-  }
-  private starProject = (id)  => () => {
-    const { onStarProject } = this.props
-    onStarProject(id, () => {
-      this.props.onLoadProjects()
-    })
-  }
-  private getStarProjectUserList = (id) => () => {
-    const { onGetProjectStarUser } = this.props
-    onGetProjectStarUser(id)
-  }
-
-  private confirmDeleteProject = (type, id) => (e) => {
-    this.stopPPG(e)
-    if (type === 'collect') {
-      this.props.onDeleteProject(id)
-    } else {
-      this.props.onDeleteProject(id, () => {
-        this.setState({
-        })
-      })
-    }
-  }
-
-  public render () {
-    const { formType, formVisible, modalLoading } = this.state
-    const {onDeleteProject, organizations, projects, searchProject, loginUser, starUserList, collectProjects } = this.props
-    const projectArr = Array.isArray(projects) ? [...projects, ...[{
-      id: 'add',
-      type: 'add'
-    }]] : [...[{
-      id: 'add',
-      type: 'add'
-    }]]
-
-    const starWrapperStyle = classnames({
-      [styles.starWrapperPosition]: true,
-      [styles.starWrapper]: true
-    })
-    const mimeProjects = projectArr
-      ? projectArr.map((d: IProject) => {
-        let CreateButton = void 0
-        let belongWhichOrganization = void 0
-        if (d.type && d.type === 'add') {
-          return (
-            <Col
-              key={d.id}
-              xxl={6}
-              xl={8}
-              lg={8}
-              md={12}
-              sm={24}
-            >
-              <div
-                className={styles.unit}
-                onClick={this.showProjectForm('add')}
-              >
-                <div className={styles.createNewWrapper}>
-                  <div className={styles.createIcon}>
-                    <Icon type="plus-circle-o" />
-                  </div>
-                  <div className={styles.createText}>
-                    创建新项目
-                  </div>
-                </div>
-              </div>
-            </Col>
-          )
-        }
-        if (loginUser && d.createBy && loginUser.id !== d.createBy.id) {
-          return []
-        }
-        if (organizations) {
-          belongWhichOrganization = organizations.find((org) => org.id === d.orgId)
-          CreateButton = ComponentPermission(belongWhichOrganization, '')(Icon)
-        }
-        let editButton = void 0
-        let deleteButton = void 0
-        let transfer = void 0
-        let star = void 0
-        let StarPanel = void 0
-        if (d && d.id) {
-          StarPanel = <Star d={d} starUser={starUserList} unStar={this.starProject} userList={this.getStarProjectUserList}/>
-        }
-        star = (
-          <Tooltip title="点赞项目">
-            <div className={styles.starWrapperPosition}>
-              {StarPanel}
-            </div>
-          </Tooltip>
-        )
-
-        transfer = (
-          <Tooltip title="移交项目">
-            <CreateButton className={styles.transfer} type="double-right" onClick={this.showProjectForm('transfer', d)} />
-          </Tooltip>
-        )
-        editButton =  (
-          <Tooltip title="编辑">
-            <CreateButton className={styles.edit} type="setting" onClick={this.showProjectForm('edit', d)} />
-          </Tooltip>
-        )
-        deleteButton = (
-          <Popconfirm
-            title="确定删除？"
-            placement="bottom"
-            onConfirm={this.confirmDeleteProject('collect', d.id)}
-          >
-            <Tooltip title="删除">
-              <CreateButton className={styles.delete} type="delete" onClick={this.stopPPG}/>
-            </Tooltip>
-          </Popconfirm>
-        )
-        let ProjectName
-        const org = organizations.find((org, index) => d.orgId === org.id)
-        if (d && organizations) {
-          ProjectName = `${d.name} (${org && org.name ? org.name : ''})`
-        }
-        const itemClass = classnames({
-          [styles.unit]: true
-        })
-        const colItems = (
-            <Col
-              key={d.id}
-              xxl={6}
-              xl={8}
-              lg={8}
-              md={12}
-              sm={24}
-            >
-              <div
-                className={itemClass}
-                style={{backgroundImage: `url(${require(`assets/images/bg${d.pic}.png`)})`}}
-                onClick={this.toProject(d)}
-              >
-                <header>
-                  <h3 className={styles.title}>
-                    {ProjectName}
-                    {/*{editHint}*/}
-                  </h3>
-                  <p className={styles.content}>
-                    {d.description}
-                  </p>
-                </header>
-                {star}
-                <div className={styles.mimeActions}>
-                  {transfer}
-                  {editButton}
-                  {deleteButton}
-                </div>
-              </div>
-            </Col>
-          )
-        return colItems
-      }) : ''
-    const joinProjects = projectArr
-      ? projectArr.map((d: IProject) => {
-        let CreateButton = void 0
-        let belongWhichOrganization = void 0
-        if (d.type && d.type === 'add') {
-          return []
-        }
-        if (loginUser && d.createBy && loginUser.id === d.createBy.id) {
-          return []
-        }
-
-        if (organizations) {
-          belongWhichOrganization = organizations.find((org) => org.id === d.orgId)
-          CreateButton = ComponentPermission(belongWhichOrganization, '')(Icon)
-        }
-        let StarPanel = void 0
-        if (d && d.id) {
-          StarPanel = <Star d={d} starUser={starUserList} unStar={this.starProject} userList={this.getStarProjectUserList}/>
-        }
-        let editButton = void 0
-        let deleteButton = void 0
-        let collectButton = void 0
-        let unCollectButton = void 0
-        let transfer = void 0
-        let star = void 0
-        let ProjectName
-        const org = organizations.find((org, index) => d.orgId === org.id)
-        if (d && organizations) {
-          ProjectName = `${d.name} (${org && org.name ? org.name : ''})`
-        }
-        star = (
-          <Tooltip title="点赞项目">
-            <div className={styles.starWrapperPosition}>
-              {StarPanel}
-            </div>
-          </Tooltip>
-        )
-
-        let currentCollectIds = []
-        if (collectProjects) {
-          currentCollectIds = collectProjects.map((cp) => cp.id)
-        }
-
-        collectButton = (
-          <Tooltip title="收藏">
-            <i
-              className={`iconfont icon-heart1 ${styles.collect}`}
-              onClick={this.collectProject('collect', d)}
-            />
-          </Tooltip>
-        )
-
-        unCollectButton = (
-          <Tooltip title="取消收藏">
-            <i
-              className={`iconfont icon-heart ${styles.unCollect}`}
-              onClick={this.collectProject('unCollect', d)}
-            />
-          </Tooltip>
-        )
-
-        transfer = (
-          <Tooltip title="移交项目">
-            <CreateButton
-              className={styles.transfer}
-              type="double-right"
-              onClick={this.showProjectForm('transfer', d)}
-            />
-          </Tooltip>
-        )
-        editButton =  (
-          <Tooltip title="编辑">
-            <CreateButton
-              className={styles.edit}
-              type="setting"
-              onClick={this.showProjectForm('edit', d)}
-            />
-          </Tooltip>
-        )
-        deleteButton = (
-          <Popconfirm
-            title="确定删除？"
-            placement="bottom"
-            onConfirm={this.confirmDeleteProject('onCollect', d.id)}
-          >
-            <Tooltip title="删除">
-              <CreateButton
-                className={styles.delete}
-                type="delete"
-                onClick={this.stopPPG}
-              />
-            </Tooltip>
-          </Popconfirm>
-        )
-
-        const itemClass = classnames({
-          [styles.unit]: true
-        })
-        const colItems = (
-          <Col
-            key={d.id}
-            xxl={6}
-            xl={8}
-            lg={8}
-            md={12}
-            sm={24}
-          >
-            <div
-              className={itemClass}
-              style={{backgroundImage: `url(${require(`assets/images/bg${d.pic}.png`)})`}}
-              onClick={this.toProject(d)}
-            >
-              <header>
-                <h3 className={styles.title}>
-                  {ProjectName}
-                  {/*{editHint}*/}
-                </h3>
-                <p className={styles.content}>
-                  {d.description}
-                </p>
-              </header>
-              {star}
-              <div className={styles.joinActions}>
-                {currentCollectIds.indexOf(d.id) < 0 ? collectButton : unCollectButton}
-                {transfer}
-                {editButton}
-                {deleteButton}
-              </div>
-            </div>
-          </Col>
-        )
-        return colItems
-      }) : ''
-
-    const collectProjectsArr = collectProjects
-    ? collectProjects.map((d: IProject) => {
-      let CreateButton = void 0
-      let belongWhichOrganization = void 0
-      if (d.type && d.type === 'add') {
-        return []
-      }
-      if (loginUser && d.createBy && loginUser.id === d.createBy.id) {
-        return []
-      }
-      if (organizations) {
-        belongWhichOrganization = organizations.find((org) => org.id === d.orgId)
-        CreateButton = ComponentPermission(belongWhichOrganization, '')(Icon)
-      }
-      let StarPanel = void 0
-      if (d && d.id) {
-        StarPanel = <Star d={d} starUser={starUserList} unStar={this.starProject} userList={this.getStarProjectUserList}/>
-      }
-      let collectButton = void 0
-      let star = void 0
-      let ProjectName
-      const org = organizations.find((org, index) => d.orgId === org.id)
-      if (d && organizations) {
-        ProjectName = `${d.name} (${org && org.name ? org.name : ''})`
-      }
-      star = (
-        <Tooltip title="点赞项目">
-          <div className={styles.starWrapperPosition}>
-            {StarPanel}
-          </div>
-        </Tooltip>
-      )
-
-      collectButton = (
-        <Tooltip title="取消收藏">
-          <i
-            className={`iconfont icon-heart ${styles.unCollect}`}
-            onClick={this.collectProject('unCollect', d)}
-          />
-        </Tooltip>
-      )
-
-      const itemClass = classnames({
-        [styles.unit]: true
-      })
-      const colItems = (
-        <Col
-          key={d.id}
-          xxl={6}
-          xl={8}
-          lg={8}
-          md={12}
-          sm={24}
-        >
-          <div
-            className={itemClass}
-            style={{backgroundImage: `url(${require(`assets/images/bg${d.pic}.png`)})`}}
-            onClick={this.toProject(d)}
-          >
-            <header>
-              <h3 className={styles.title}>
-                {ProjectName}
-                {/*{editHint}*/}
-              </h3>
-              <p className={styles.content}>
-                {d.description}
-              </p>
-            </header>
-            {star}
-            <div className={styles.collectActions}>
-              {collectButton}
-            </div>
-          </div>
-        </Col>
-      )
-      return colItems
-    }) : ''
-
-    const historyBrowserAll = historyStack.getAll()
-    const history = historyBrowserAll
-      ? historyBrowserAll.map((d: IProject) => {
-        const path = require(`assets/images/bg${d.pic}.png`)
-        const colItems = (
-          <div className={styles.groupList} key={d.id} onClick={this.toProject(d)}>
-            <div className={styles.orgHeader}>
-              <div className={styles.avatar}>
-                <Avatar path={path} enlarge={false} size="small"/>
-              </div>
-              <div className={styles.name}>
-                <div className={styles.title}>{d.name}</div>
-                <div className={styles.desc}>{d.description}</div>
-              </div>
-            </div>
-          </div>
-        )
-        return colItems
-      }) : ''
-
-    const projectSearchItems = searchProject && searchProject.list && searchProject.list.length ? searchProject.list.map((d: IProject) => {
-      const path = require(`assets/images/bg${d.pic}.png`)
-      let StarPanel = void 0
-      if (d && d.id) {
-        StarPanel = <Star d={d} starUser={starUserList} unStar={this.starProject} userList={this.getStarProjectUserList}/>
-      }
-      const colItems = (
-          <Col
-            xxl={6}
-            xl={8}
-            lg={8}
-            md={12}
-            sm={24}
-            key={d.id}
-          >
-            <div className={styles.searchList} key={d.id} onClick={this.toProject(d)}>
-              <div className={styles.orgHeader}>
-                <div className={styles.avatar}>
-                  <Avatar path={path} enlarge={false} size="small"/>
-                </div>
-                <div className={styles.name}>
-                  <div className={styles.title}>{d.name}</div>
-                  <div className={styles.desc}>{d.description}</div>
-                </div>
-              </div>
-              {/*<div className={styles.others}>*/}
-                {/*<div className={styles.star}>*/}
-                  {/*{StarPanel}*/}
-                {/*</div>*/}
-              {/*</div>*/}
-            </div>
-          </Col>
-      )
-      return colItems
-    }) : ''
-    let projectSearchPagination = void 0
-    if (searchProject) {
-      projectSearchPagination = (
-        <Pagination
-          // simple={screenWidth < 768 || screenWidth === 768}
-          showSizeChanger
-          defaultCurrent={2}
-          total={searchProject.total}
-          onShowSizeChange={this.onShowSizeChange}
-          onChange={this.onPaginationChange}
-          defaultPageSize={10}
-          pageSizeOptions={['10', '15', '18']}
-          current={this.state.currentPage}
+  return (
+    <div className={styles.wrapper}>
+      <Toolbar
+        pType={projectType}
+        showProForm={showProForm}
+        setPType={setProjectType}
+        setKeywords={setKeywords}
+        searchKeywords={searchKeywords}
+        setFormVisible={checkoutFormVisible}
+      />
+      <Content
+        history={history}
+        projects={projects}
+        pType={projectType}
+        userId={loginUserId}
+        deletePro={deletePro}
+        favoritePro={favoritePro}
+        showProForm={showProForm}
+        starUserList={starUserList}
+        onStarProject={onStarProject}
+        onLoadProjects={onLoadProjects}
+        organizations={organizations}
+        searchKeywords={searchKeywords}
+        collectProjects={collectProjects}
+        onGetProjectStarUser={onGetProjectStarUser}
+      />
+      <Modal
+        title={null}
+        footer={null}
+        visible={formVisible}
+        onCancel={hideProForm}
+        key={`modal${formKey}key`}
+      >
+        <ProjectsForm
+          key={`form${formKey}key`}
+          type={formType}
+          onModalOk={onModalOk}
+          onTransfer={onTransfer}
+          currentPro={currentPro}
+          modalLoading={modalLoading}
+          organizations={organizations}
+          onCheckUniqueName={checkNameUnique}
+          wrappedComponentRef = {(ref) => {proForm = ref}}
         />
-      )
-    }
-    const maskStyle = classnames({
-      [utilStyles.hide]: this.state.searchMaskVisible,
-      [styles.mask]: true
-    })
-
-    const searchKeywords = (
-      <ul>
-        {searchProject && searchProject.list.map((list, index) => <li key={`${list.name}of${index}`} onClick={this.selectKeywords(list.name)}><p>{list.name}</p></li>)}
-      </ul>
-    )
-
-    const searchKeywordsStyle = classnames({
-      [utilStyles.hide]: this.state.searchKeywordsVisible,
-      [styles.searchKeywords]: searchProject && searchProject.list.length !== 0
-    })
-
-    const isHoldMimeStyle = classnames({
-      [styles.listPadding]: true,
-      [utilStyles.hide]: !this.state.mimePanel
-    })
-
-    const isHoldJoinStyle = classnames({
-      [styles.listPadding]: true,
-      [utilStyles.hide]: !this.state.joinPanel
-    })
-
-    const isHoldCollectStyle = classnames({
-      [styles.listPadding]: true,
-      [utilStyles.hide]: !this.state.collectPanel
-    })
-
-    const searchListWrapperStyle = classnames({
-      [utilStyles.hide]: this.computSearchListWrapperStyle(),
-      [styles.searchListWrapper]: true
-    })
-    const wrapper = classnames({
-      [styles.wrapper]: true,
-      [styles.overflowY]: this.state.searchMaskVisible
-    })
-    const joinStyle = classnames({
-      [styles.join]: true,
-      [utilStyles.hide]: !(joinProjects && joinProjects.length > 0)
-    })
-    const collectStyle = classnames({
-      [styles.mime]: true,
-      [utilStyles.hide]: !(collectProjectsArr && collectProjectsArr.length > 0)
-    })
-    return (
-      <div className={wrapper}>
-        <div className={styles.search}>
-          <div  className={styles.searchWrapper}>
-            <label htmlFor="newtab-search-text" className={styles.searchLabel}/>
-            <input
-              id="newtab-search-text"
-              placeholder="Search the Davinci"
-              title="Search the Web"
-              autoComplete="off"
-              onFocus={this.bindDocumentKeypress}
-              onBlur={this.unbindDocumentKeypress}
-              onChange={this.onChangeKeywords}
-              value={this.state.keywords}
-              type="search"
-            />
-            <span className={styles.searchButton} onClick={this.searchProject}>
-              <i className="iconfont icon-forward"/>
-            </span>
-          </div>
-          {/*<div className={searchKeywordsStyle}>*/}
-            {/*{searchKeywords}*/}
-          {/*</div>*/}
-        </div>
-        <div className={searchListWrapperStyle}>
-          <Box>
-            <Box.Header>
-              <Box.Title>
-                <Row>
-                  <Col span={20}>
-                    <Icon type="bars" />搜索到的项目
-                  </Col>
-                </Row>
-              </Box.Title>
-            </Box.Header>
-            <div className={styles.listPadding} style={{overflow: 'auto'}}>
-              <Row gutter={16}>
-                {projectSearchItems}
-              </Row>
-              <Row type="flex" justify="end">
-                <Col>
-                  {projectSearchPagination}
-                </Col>
-              </Row>
-            </div>
-          </Box>
-        </div>
-        <div className={styles.wrap}>
-          <Row style={{width: '100%'}}>
-            <Col
-              xxl={18}
-              xl={18}
-              lg={24}
-              md={24}
-              sm={24}
-              key="projects"
-            >
-              <div className={styles.container}>
-                <div className={styles.projects}>
-                  <div className={styles.mime} id="mime">
-                    <Box>
-                      <Box.Header>
-                        <Box.Title>
-                          <Row onClick={this.foldPanel('mimePanel')}>
-                            <Col span={20}>
-                              <Icon type={`${this.state.mimePanel ? 'down' : 'right'}`} />我创建的项目
-                            </Col>
-                          </Row>
-                        </Box.Title>
-                      </Box.Header>
-                      <div className={isHoldMimeStyle}>
-                        <Row gutter={16}>
-                          {mimeProjects}
-                        </Row>
-                      </div>
-                    </Box>
-                  </div>
-                  <div className={joinStyle} id="join">
-                    <Box>
-                      <Box.Header>
-                        <Box.Title>
-                          <Row onClick={this.foldPanel('joinPanel')}>
-                            <Col span={20}>
-                              <Icon type={`${this.state.joinPanel ? 'down' : 'right'}`} />我参与的项目
-                            </Col>
-                          </Row>
-                        </Box.Title>
-                      </Box.Header>
-                      <div className={isHoldJoinStyle}>
-                        <Row gutter={16}>
-                          {joinProjects}
-                        </Row>
-                      </div>
-                    </Box>
-                  </div>
-                  <div className={collectStyle} id="collect">
-                    <Box>
-                      <Box.Header>
-                        <Box.Title>
-                          <Row onClick={this.foldPanel('collectPanel')}>
-                            <Col span={20}>
-                              <Icon type={`${this.state.collectPanel ? 'down' : 'right'}`} />我收藏的项目
-                            </Col>
-                          </Row>
-                        </Box.Title>
-                      </Box.Header>
-                      <div className={isHoldCollectStyle}>
-                        <Row gutter={16}>
-                          {collectProjectsArr}
-                        </Row>
-                      </div>
-                    </Box>
-                  </div>
-                </div>
-              </div>
-            </Col>
-            <Col
-              xxl={6}
-              xl={6}
-              lg={24}
-              md={24}
-              sm={24}
-              key="history"
-            >
-              <div className={styles.sideBox}>
-                <Box>
-                  <Box.Header>
-                    <Box.Title>
-                      <Row>
-                        <Col span={20}>
-                          <Icon type="bars" />浏览历史
-                        </Col>
-                      </Row>
-                    </Box.Title>
-                  </Box.Header>
-                  {history}
-                </Box>
-              </div>
-            </Col>
-          </Row>
-        </div>
-        <div className={maskStyle} onClick={this.hideSearchMask}/>
-        <Modal
-          title={null}
-          footer={null}
-          visible={formVisible}
-          onCancel={this.hideProjectForm}
-        >
-          <ProjectsForm
-            type={formType}
-            ref={(f) => { this.ProjectForm = f }}
-            modalLoading={modalLoading}
-            organizations={organizations}
-            onModalOk={this.onModalOk}
-            onTransfer={this.onTransfer}
-            onCheckUniqueName={this.checkNameUnique}
-            onWidgetTypeChange={this.widgetTypeChange}
-          />
-        </Modal>
-      </div>
-    )
-  }
-}
-
+      </Modal>
+    </div>
+  )
+})
 
 const mapStateToProps = createStructuredSelector({
-  organizations: makeSelectOrganizations(),
   projects: makeSelectProjects(),
   loginUser: makeSelectLoginUser(),
-  searchProject: makeSelectSearchProject(),
   starUserList: makeSelectStarUserList(),
+  organizations: makeSelectOrganizations(),
+  searchProject: makeSelectSearchProject(),
   collectProjects: makeSelectCollectProjects()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadProjects: () => dispatch(ProjectActions.loadProjects()),
-    onStarProject: (id, resolve) => dispatch(ProjectActions.unStarProject(id, resolve)),
-    onGetProjectStarUser: (id) => dispatch(ProjectActions.getProjectStarUser(id)),
+    onSearchProject: (param) => dispatch(ProjectActions.searchProject(param)),
     onLoadProjectDetail: (id) => dispatch(ProjectActions.loadProjectDetail(id)),
-    onLoadOrganizations: () => dispatch(OrganizationActions.loadOrganizations()),
     onLoadCollectProjects: () => dispatch(ProjectActions.loadCollectProjects()),
-    onClickCollectProjects: (formType, project, result) => dispatch(ProjectActions.clickCollectProjects(formType, project, result)),
-    onAddProject: (project, resolve) => dispatch(ProjectActions.addProject(project, resolve)),
-    onEditProject: (project, resolve) => dispatch(ProjectActions.editProject(project, resolve)),
+    onLoadOrganizations: () => dispatch(OrganizationActions.loadOrganizations()),
+    onGetProjectStarUser: (id) => dispatch(ProjectActions.getProjectStarUser(id)),
+    onStarProject: (id, resolve) => dispatch(ProjectActions.unStarProject(id, resolve)),
     onTransferProject: (id, orgId) => dispatch(ProjectActions.transferProject(id, orgId)),
     onDeleteProject: (id, resolve) => dispatch(ProjectActions.deleteProject(id, resolve)),
-    onSearchProject: (param) => dispatch(ProjectActions.searchProject(param)),
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+    onAddProject: (project, resolve) => dispatch(ProjectActions.addProject(project, resolve)),
+    onEditProject: (project, resolve) => dispatch(ProjectActions.editProject(project, resolve)),
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
+    onClickCollectProjects: (isFavorite, proId, result) => dispatch(ProjectActions.clickCollectProjects(isFavorite, proId, result))
   }
 }
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
-
 const withReducer = injectReducer({ key: 'project', reducer })
 const withSaga = injectSaga({ key: 'project', saga })
-
 const withOrganizationReducer = injectReducer({ key: 'organization', reducer: reducerOrganization })
 const withOrganizationSaga = injectSaga({ key: 'organization', saga: sagaOrganization })
+
+
+
 
 export default compose(
   withReducer,
@@ -1036,6 +710,3 @@ export default compose(
   withOrganizationSaga,
   withConnect
 )(Projects)
-
-
-
