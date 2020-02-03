@@ -295,7 +295,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 	public List<Display> getDisplayListByProject(Long projectId, User user)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-		if (checkReadPermission(entity, projectId, user)) {
+		if (!checkReadPermission(entity, projectId, user)) {
 			return null;
 		}
 

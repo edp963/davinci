@@ -198,7 +198,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		checkWritePermission(entity, projectId, user, "update");
 
 		String name = cronJobUpdate.getName();
-		checkIsExist(name, null, projectId);
+		checkIsExist(name, id, projectId);
 
 		if (CronJobStatusEnum.START.getStatus().equals(cronJob.getJobStatus())) {
 			throw new ServerException("Please stop the job before updating");

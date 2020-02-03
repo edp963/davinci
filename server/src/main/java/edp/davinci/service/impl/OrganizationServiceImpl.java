@@ -51,7 +51,8 @@ import java.util.*;
 @Slf4j
 @Service("organizationService")
 public class OrganizationServiceImpl implements OrganizationService {
-    private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
+
+	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
     private RelUserOrganizationMapper relUserOrganizationMapper;
