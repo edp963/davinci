@@ -515,7 +515,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         Long projectId = display.getProjectId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
         
-		if (checkReadPermission(entity, projectId, user)) {
+		if (!checkReadPermission(entity, projectId, user)) {
 			return null;
 		}
 
@@ -572,7 +572,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
 		boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
 				&& !display.getPublish();
-		if (noPublish || checkReadPermission(entity, projectId, user)) {
+		if (noPublish || !checkReadPermission(entity, projectId, user)) {
 			log.info("user (:{}) have not permission to view widgets in this display slide", user.getId());
 			throw new UnAuthorizedExecption("you have not permission to view widgets in this display slide");
 		}
