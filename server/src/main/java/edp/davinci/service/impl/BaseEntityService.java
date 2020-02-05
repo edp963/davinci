@@ -42,10 +42,10 @@ public abstract class BaseEntityService {
 	@Autowired
 	ProjectService projectService;
 
-	protected BaseLock getLock(CheckEntityEnum entity, String name, Long projectId) {
+	protected BaseLock getLock(CheckEntityEnum entity, String name, Long domainId) {
 
 		return LockFactory.getLock(
-				entity.getSource().toUpperCase() + Consts.AT_SYMBOL + name + Consts.AT_SYMBOL + projectId, 5,
+				entity.getSource().toUpperCase() + Consts.AT_SYMBOL + name + Consts.AT_SYMBOL + domainId, 5,
 				LockType.REDIS);
 	}
 
