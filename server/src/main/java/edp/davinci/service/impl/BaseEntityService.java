@@ -89,6 +89,9 @@ public abstract class BaseEntityService {
 		case DASHBOARD:
 			permission = projectPermission.getVizPermission();
 			break;
+		case VIEW:
+			permission = projectPermission.getViewPermission();
+			break;
 		default:
 			break;
 		}
