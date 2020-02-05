@@ -145,10 +145,10 @@ export class App extends React.PureComponent<AppProps> {
         />
         <Router>
           <Switch>
+            <Route path="/activate" component={Activate} />
             <Route path="/joinOrganization" exact component={Background} />
             <Route path="/" exact render={this.renderRoute} />
             <Route path="/" component={logged ? Main : Background} />
-            <Route path="/activate" component={Activate} />
           </Switch>
         </Router>
       </div>
