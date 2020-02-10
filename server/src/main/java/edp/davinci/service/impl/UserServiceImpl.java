@@ -196,11 +196,17 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 			} catch (Exception e) {
 
 			}
-			if (!checkpw) {
-				log.info("username({}) password is wrong", username);
-				throw new ServerException("username or password is wrong");
+
+			if (checkpw) {
+				return user;
 			}
-			return user;
+
+			if (ldapLogin(username, password)) {
+				return user;
+			}
+
+			log.info("username({}) password is wrong", username);
+			throw new ServerException("username or password is wrong");
         }
 
         user = ldapAutoRegist(username, password);
@@ -208,6 +214,19 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         	throw new ServerException("username or password is wrong");
         }
         return user;
+    }
+    
+    private boolean ldapLogin(String username, String password) {
+    	if (!ldapService.existLdapServer()) {
+			return false;
+		}
+		
+		LdapPerson ldapPerson = ldapService.findByUsername(username, password);
+		if (null == ldapPerson) {
+			return false;
+		}
+		
+		return true;
     }
     
 	private User ldapAutoRegist(String username, String password) {

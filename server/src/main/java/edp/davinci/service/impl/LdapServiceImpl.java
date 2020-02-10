@@ -59,20 +59,17 @@ public class LdapServiceImpl implements LdapService {
     @Value("${spring.ldap.domainName}")
     private String ldapDomainName;
 
-
     @Value("${spring.ldap.urls:''}")
     private String ldapUrls;
 
     @Autowired
     private UserMapper userMapper;
 
-
     @Autowired
     private OrganizationMapper organizationMapper;
 
     @Autowired
     private RelUserOrganizationMapper relUserOrganizationMapper;
-
 
     public boolean existLdapServer() {
         return !StringUtils.isEmpty(ldapUrls);
