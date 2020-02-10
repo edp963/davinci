@@ -192,12 +192,12 @@ public class TokenUtils {
      * @return
      */
     public String getUsername(String token) {
-        String username;
+        String username = null;
         try {
             final Claims claims = getClaims(token);
             username = claims.get(Consts.TOKEN_USER_NAME).toString();
         } catch (Exception e) {
-            username = null;
+
         }
         return username;
     }

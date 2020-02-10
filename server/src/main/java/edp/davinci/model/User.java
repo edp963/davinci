@@ -56,7 +56,6 @@ public class User extends TokenDetail {
     }
 
     public User(LdapPerson ldapPerson) {
-
         this.username = ldapPerson.getSAMAccountName();
         this.email = ldapPerson.getEmail();
         this.name = ldapPerson.getName();

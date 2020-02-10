@@ -44,8 +44,6 @@ public interface UserService extends CheckEntityService {
 
     User regist(UserRegist userRegist) throws ServerException;
 
-//    ResultMap activateUser(User user, String token, HttpServletRequest request);
-
     boolean sendMail(String email, User user) throws ServerException;
 
     ResultMap changeUserPassword(User user, String oldPassword, String password, HttpServletRequest request);
