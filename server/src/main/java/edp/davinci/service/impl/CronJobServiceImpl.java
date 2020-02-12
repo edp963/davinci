@@ -24,6 +24,8 @@ import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 import java.util.Date;
 import java.util.List;
 
+import edp.core.utils.*;
+import edp.davinci.core.enums.LockType;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,10 +42,6 @@ import edp.core.consts.Consts;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
-import edp.core.utils.BaseLock;
-import edp.core.utils.DateUtils;
-import edp.core.utils.QuartzHandler;
-import edp.core.utils.RedisUtils;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.CronJobStatusEnum;
 import edp.davinci.core.enums.LogNameEnum;
@@ -322,15 +320,15 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		jobList.forEach((cronJob) -> {
 			String key = entity.getSource().toUpperCase() + Consts.UNDERLINE + cronJob.getId() + Consts.UNDERLINE
 					+ cronJob.getProjectId();
-			if (redisUtils.setIfAbsent(key, 1, 300)) {
+			if (LockFactory.getLock(key, 300, LockType.REDIS).getLock()) {
 				try {
 					quartzHandler.addJob(cronJob);
 				} catch (SchedulerException e) {
-					log.error(e.getMessage(), e);
+					log.warn("CronJob: {} (id: {}), start error: {}", cronJob.getName(), cronJob.getId(),  e.getMessage());
 					cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
 					cronJobMapper.update(cronJob);
 				} catch (ServerException e) {
-					log.error(e.getMessage(), e);
+					log.warn("CronJob: {} (id: {}), start error: {}", cronJob.getName(), cronJob.getId(), e.getMessage());
 				}
 			}
 		});
