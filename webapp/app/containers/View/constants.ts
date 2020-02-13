@@ -124,6 +124,9 @@ export enum ViewModelTypes {
 
 export const ModelTypeSqlTypeSetting = {
   [ViewModelTypes.Value]: SQL_NUMBER_TYPES,
+
+  // except SQL_STRING_TYPES field
+  // SQL_NUMBER_TYPES and SQL_DATE_TYPES field can also take it as ViewModelTypes.Category
   [ViewModelTypes.Category]: SQL_TYPES
 }
 
@@ -143,7 +146,9 @@ export enum ViewModelVisualTypes {
 
 export const VisualTypeSqlTypeSetting = {
   [ViewModelVisualTypes.Number]: SQL_NUMBER_TYPES,
-  [ViewModelVisualTypes.String]: SQL_STRING_TYPES,
+
+  // SQL_NUMBER_TYPES field can also take it as ViewModelVisualTypes.String
+  [ViewModelVisualTypes.String]: SQL_STRING_TYPES.concat(SQL_NUMBER_TYPES),
   [ViewModelVisualTypes.Date]: SQL_DATE_TYPES
 }
 
