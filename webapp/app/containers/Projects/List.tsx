@@ -26,7 +26,6 @@ import { connect } from 'react-redux'
 import { Row, Col, Tooltip, Popconfirm, Icon, Modal, Button } from 'antd'
 const styles = require('../Organizations/Project.less')
 
-import { debounce } from 'lodash'
 import saga from './sagas'
 import reducer from './reducer'
 import { compose } from 'redux'
@@ -51,9 +50,8 @@ import HistoryStack from '../Organizations/component/historyStack'
 const historyStack = new HistoryStack()
 import { RouteComponentWithParams } from 'utils/types'
 import {
-  IProject, IProjectFormFieldProps, IProjectsFormProps ,
-  IProjectsProps, projectType, IProjectType, IToolbarProps, projectTypeSmall,
-  ItemToolbarProps, ITagProps, eTag, ItemProps, IContentProps
+  IProject, IProjectFormFieldProps,
+  IProjectsProps, projectType, IProjectType, IToolbarProps, projectTypeSmall
 } from './types'
 import { FormComponentProps } from 'antd/lib/form/Form'
 import { uuid } from 'app/utils/util'
@@ -138,357 +136,10 @@ const Toolbar: React.FC<IToolbarProps>  = React.memo(({
 
 
 
-
-const ItemToolbar: React.FC<ItemToolbarProps> = React.memo(({
-  onStar, onTransfer, onEdit, onDelete, organization, isMimePro,
-  onFavorite, pType, isStar, isFavorite, StarCom
-}) => {
-  const CreateButton = useMemo(() => {
-    return ComponentPermission(organization, '')(Icon)
-  }, [organization])
-
-  const isHistoryType = useMemo(() =>pType && pType === 'history', [pType])
-
-  const { Favorite, Transfer, Edit, Delete} = useMemo(() => {
-
-    const favoriteClassName = classnames({
-      [styles.ft16]: true,
-      [styles.mainColor]: isFavorite
-    })
-
-    const themeFavorite = isFavorite ? 'filled' : 'outlined'
-
-    const Favorite = !isMimePro
-    ?   <Tooltip title="收藏">
-          <Icon type="heart" theme={themeFavorite}  className={favoriteClassName} onClick={onFavorite} />
-        </Tooltip>
-    :   []
-
-    const Transfer = (
-      <Tooltip title="移交">
-        <CreateButton type="swap"  className={styles.ft16} onClick={onTransfer} />
-      </Tooltip>
-    )
-
-    const Edit = (
-      <Tooltip title="编辑">
-        <CreateButton type="form"  className={styles.ft16}  onClick={onEdit}/>
-      </Tooltip>
-    )
-
-    const Delete = (
-      <Popconfirm
-        title="确定删除？"
-        placement="bottom"
-        onConfirm={onDelete}
-      >
-        <Tooltip title="删除">
-          <CreateButton type="delete"  className={styles.ft16} onClick={stopPPG} />
-        </Tooltip>
-      </Popconfirm>
-    )
-
-
-    return {
-      Edit,
-      Favorite,
-      Transfer,
-      Delete
-    }
-  }, [onStar, onTransfer, onEdit, onDelete, isMimePro, onFavorite])
-
-  return (
-    <>
-      <div className={styles.others}>
-        {!isHistoryType ? Edit: ''}
-        {Favorite}
-        {!isHistoryType ? Transfer: ''}
-        {!isHistoryType ? Delete: ''}
-      </div>
-      <div className={styles.stars}>
-        {StarCom}
-      </div>
-    </>
-  )
-})
-
 function stopPPG (e: React.MouseEvent<HTMLElement>)  {
   e && e.stopPropagation()
   return
 }
-
-const Tags: React.FC<ITagProps> = React.memo(({type}) => {
-  const tags = useMemo(() => {
-    return type.map((t) => {
-      const tagClassName = classnames({
-        [styles.tag]: true,
-        [styles.create]: t === 'create',
-        [styles.favorite]: t === 'favorite',
-        [styles.join]: t === 'join'
-      })
-      return  <span key={eTag[t]} className={tagClassName}>{eTag[t]}</span>
-    })
-  }, [type])
-
-  return (
-    <>
-      {tags}
-    </>
-  )
-})
-
-
-
-
-export const Items: React.FC<ItemProps & Partial<IProjectsProps>> = React.memo(({
-  pro, userId, history, organizations, onLoadProjects, showProForm, pType, deletePro: deleteProject,
-  favoritePro: favoriteProject, starUserList, onGetProjectStarUser, onStarProject,
-}) => {
-
-  const isMimePro = useMemo(() => {
-    return !!(pro.createBy && pro.createBy.id === userId)
-  }, [pro, userId])
-
-  const isStar = useMemo(() => {
-    return !!(pro && pro.isStar)
-  }, [pro])
-
-  const isFavorite = useMemo(() => {
-    return !!(pro && pro.isFavorites)
-  }, [pro])
-
-  const getTagType = useMemo(() => {
-    const tagType = []
-    const isMime = isMimePro
-    if (isMime) {
-      tagType.push('create')
-    } else {
-      tagType.push('join')
-    }
-
-    if (pro.isFavorites) {
-      tagType.push('favorite')
-    }
-
-    return tagType
-
-  }, [pro])
-
-  const starProject = useCallback((id) => () => {
-    onStarProject(id, () => {
-      onLoadProjects && onLoadProjects()
-    })
-  }, [pro, onLoadProjects])
-
-  const getStarProjectUserList = useCallback((id) => () => {
-    onGetProjectStarUser && onGetProjectStarUser(id)
-  }, [pro, onGetProjectStarUser])
-
-  const StarCom = useMemo(() => {
-    const { id, starNum, isStar} = pro
-      return <Star
-                proId={id}
-                starNum={starNum}
-                isStar={isStar}
-                starUser={starUserList}
-                unStar={starProject}
-                userList={getStarProjectUserList}
-              />
-  }, [pro, starProject, starUserList, getStarProjectUserList])
-
-
-  const toProject = useCallback((e) => {
-    history.push(`/project/${pro.id}`)
-    saveHistory(pro)
-  }, [pro])
-
-  const saveHistory = useCallback((pro) => {
-    historyStack.pushNode(pro)
-  }, ['nf'])
-
-
-  const editPro = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    stopPPG(e)
-    showProForm && showProForm('edit', pro, e)
-  }, [pro])
-
-  const starPro = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    stopPPG(e)
-  }, [pro])
-
-  const deletePro = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    const {id, isFavorites} = pro
-    deleteProject && deleteProject(id, isFavorites)
-    stopPPG(e)
-  }, [pro])
-
-  const transferPro = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    stopPPG(e)
-    showProForm && showProForm('transfer', pro, e)
-  }, [pro])
-
-  const favoritePro = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    const {id, isFavorites} = pro
-    stopPPG(e)
-    favoriteProject && favoriteProject(id, isFavorites)
-  }, [pro])
-
-  const currentOrganization: IOrganization = useMemo(() => {
-    return organizations.find((org) => org.id === pro.orgId)
-  }, [organizations, pro])
-
-  return (
-    <>
-     <Col
-        key={`pro${userId}orp`}
-        xxl={4} xl={6} lg={6} md={8} sm={12} xs={24}
-      >
-        <div className={styles.unit}
-          onClick={toProject}
-        >
-          <div
-            className={styles.thumbnail}
-            style={{backgroundImage: `url(${require(`assets/images/bg${pro.pic}.png`)})`}}
-          >
-            <header>
-              <div className={styles.tags}>
-                <Tags type={getTagType}/>
-              </div>
-              <h3 className={styles.title}>
-                {pro.name}
-              </h3>
-              <p className={styles.descs}>
-                {pro.description}
-              </p>
-            </header>
-          </div>
-          <div className={styles.itemToolbar}>
-            <ItemToolbar
-              pType={pType}
-              isStar={isStar}
-              onEdit={editPro}
-              onStar={starPro}
-              StarCom={StarCom}
-              onDelete={deletePro}
-              isMimePro={isMimePro}
-              isFavorite={isFavorite}
-              onFavorite={favoritePro}
-              onTransfer={transferPro}
-              organization={currentOrganization}
-            />
-          </div>
-        </div>
-      </Col>
-    </>
-  )
-})
-
-
-
-
-const Content: React.FC<IContentProps & Partial<IProjectsProps>> = React.memo(({
-  projects, organizations, userId, pType, searchKeywords, collectProjects, history, showProForm, deletePro,
-  favoritePro, starUserList, onStarProject, onGetProjectStarUser, onLoadProjects
-}) => {
-
-  const NoProjects:ReactElement = useMemo(() => {
-    return (
-      <div className={styles.desc}>
-        无项目
-      </div>
-    )
-  }, [])
-
-  const { proIdList } = historyStack.getAll()
-
-  const favoriteProjectsId = useMemo(() => {
-    return Array.isArray(collectProjects) && collectProjects.length > 0 && collectProjects.map((col) => col.id)
-  }, [collectProjects])
-
-  const getProjectsBySearch = useMemo(() => {
-
-    function filterByKeyword(arr: IProject[]) {
-      return Array.isArray(arr) && arr.filter((pro: IProject) => pro.name.toUpperCase().indexOf(searchKeywords.toUpperCase()) > -1 )
-    }
-
-    function filterByProjectType (arr: IProject[]) {
-      if (Array.isArray(arr)) {
-        switch (pType) {
-          case 'create':
-            return arr.filter((pro) => pro.createBy && pro.createBy.id === userId)
-          case 'join':
-            return arr.filter((pro) => pro.createBy && pro.createBy.id !== userId)
-          case 'favorite':
-            return arr.filter((pro) => pro.isFavorites)
-          case 'history':
-            return arr.filter((pro) => proIdList.includes(pro.id))
-          case 'all':
-            return arr
-          default:
-            return []
-        }
-      }
-    }
-
-    function pushForkTagProjects (arr: IProject[]) {
-      return Array.isArray(arr) ? arr.map((pro) => {
-        return   favoriteProjectsId.includes && favoriteProjectsId.includes(pro.id) ? {...pro, isFavorites: true} : pro
-      }) : []
-    }
-
-    return compose(filterByProjectType, filterByKeyword, pushForkTagProjects)(projects)
-
-  }, [projects, pType, searchKeywords, userId])
-
-
-  const ProjectItems:ReactElement[] = useMemo(() => {
-    const results = Array.isArray(projects) ? getProjectsBySearch.map((pro: IProject, index) => {
-      return  <Items
-                key={`pro${index}orp`}
-                pro={pro}
-                userId={userId}
-                pType={pType}
-                deletePro={deletePro}
-                favoritePro={favoritePro}
-                history={history}
-                showProForm={showProForm}
-                organizations={organizations}
-                starUserList={starUserList}
-                onLoadProjects={onLoadProjects}
-                onStarProject={onStarProject}
-                onGetProjectStarUser={onGetProjectStarUser}
-              />
-      })
-      :
-      []
-      results.push(
-        <>
-        <Col
-           key={`pro${userId}orp`}
-           xxl={4} xl={6} lg={6} md={8} sm={12} xs={24}
-         >
-           <ProjectItem/>
-         </Col>
-         </>
-      )
-      return results
-  }, [ getProjectsBySearch, pType, projects, starUserList,
-      onLoadProjects, onStarProject, onGetProjectStarUser,
-      userId,organizations
-    ])
-
-  return (
-    <div className={styles.content}>
-      <div className={styles.flex}>
-        {
-          projects ? projects.length > 0 ? ProjectItems : NoProjects : ''
-        }
-      </div>
-    </div>
-  )
-})
-
-
 
 
 const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo(({
@@ -618,6 +269,211 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
       })
   }, [formVisible])
 
+  const getProjectsBySearch = useMemo(() => {
+
+    const { proIdList } = historyStack.getAll()
+
+    function filterByKeyword(arr: IProject[]) {
+      return Array.isArray(arr) && arr.filter((pro: IProject) => pro.name.toUpperCase().indexOf(searchKeywords.toUpperCase()) > -1 )
+    }
+
+    function filterByProjectType (arr: IProject[]) {
+      if (Array.isArray(arr)) {
+        switch (projectType) {
+          case 'create':
+            return arr.filter((pro) => pro.createBy && pro.createBy.id === loginUserId)
+          case 'join':
+            return arr.filter((pro) => pro.createBy && pro.createBy.id !== loginUserId)
+          case 'favorite':
+            return arr.filter((pro) => pro.isFavorites)
+          case 'history':
+            return arr.filter((pro) => proIdList.includes(pro.id))
+          case 'all':
+            return arr
+          default:
+            return []
+        }
+      }
+    }
+
+    function pushForkTagProjects (arr: IProject[]) {
+      const favoriteProjectsId =  Array.isArray(collectProjects) && collectProjects.length > 0 && collectProjects.map((col) => col.id)
+      return Array.isArray(arr) ? arr.map((pro) => {
+        return   favoriteProjectsId.includes && favoriteProjectsId.includes(pro.id) ? {...pro, isFavorites: true} : pro
+      }) : []
+    }
+
+    return compose(filterByProjectType, filterByKeyword, pushForkTagProjects)(projects)
+
+  }, [projects, projectType, searchKeywords, loginUserId, collectProjects])
+
+  const ProjectItems:ReactElement[] = useMemo(() => {
+  
+    const items = Array.isArray(projects) ? getProjectsBySearch.map((pro: IProject, index) => {
+
+      const {pic, name, description, createBy, isStar, isFavorites, id, starNum, orgId} = pro
+
+      const isMimePro = (!!(createBy && createBy.id === loginUserId))
+
+      const getTagType = (function(mime,favorite){
+
+        const tagType = []
+
+        if (mime) {
+          tagType.push({
+            text: '创建',
+            color: '#108EE9'
+          })
+        } else {
+          tagType.push({
+            text: '参与',
+            color: '#FA8C15'
+          })
+        }
+    
+        if (favorite) {
+          tagType.push({
+            text: '收藏',
+            color: '#F24724'
+          })
+        }
+    
+        return tagType
+    
+      }(isMimePro, isFavorites))
+
+      const starProject = (id) => () => {
+        onStarProject(id, () => {
+          onLoadProjects && onLoadProjects()
+        })
+      }
+
+      const getStarProjectUserList = (id) => () => {
+        onGetProjectStarUser && onGetProjectStarUser(id)
+      }
+
+      const StarCom = <Star
+                        proId={id}
+                        starNum={starNum}
+                        isStar={isStar}
+                        starUser={starUserList}
+                        unStar={starProject}
+                        userList={getStarProjectUserList}
+                      />
+
+      const toProject = () => {
+        history.push(`/project/${id}`)
+        saveHistory(pro)
+      }
+    
+      const saveHistory = (pro) => historyStack.pushNode(pro)
+
+      const currentOrganization: IOrganization =  organizations.find((org) => org.id === orgId)
+      
+      const CreateButton = ComponentPermission(currentOrganization, '')(Icon)
+    
+      const isHistoryType = !!(projectType && projectType === 'history')
+
+      const favoriteProject = (e: React.MouseEvent<HTMLElement>) => {
+        const {id, isFavorites} = pro
+        stopPPG(e)
+        favoritePro && favoritePro(id, isFavorites)
+      }
+
+      const transferPro = (e: React.MouseEvent<HTMLElement>) => {
+        stopPPG(e)
+        showProForm && showProForm('transfer', pro, e)
+      }
+
+      const editPro = (e: React.MouseEvent<HTMLElement>) => {
+        stopPPG(e)
+        showProForm && showProForm('edit', pro, e)
+      }
+
+      const deleteProject = (e: React.MouseEvent<HTMLElement>) => {
+        const {id, isFavorites} = pro
+        deletePro && deletePro(id, isFavorites)
+        stopPPG(e)
+      }
+
+      const { Favorite, Transfer, Edit, Delete} = (function(){
+
+        const favoriteClassName = classnames({
+          [styles.ft16]: true,
+          [styles.mainColor]: isFavorites
+        })
+    
+        const themeFavorite = isFavorites ? 'filled' : 'outlined'
+    
+        const Favorite = !isMimePro
+        ?   <Tooltip title="收藏">
+              <Icon type="heart" theme={themeFavorite}  className={favoriteClassName} onClick={favoriteProject} />
+            </Tooltip>
+        :   []
+    
+        const Transfer = (
+          <Tooltip title="移交">
+            <CreateButton type="swap"  className={styles.ft16} onClick={transferPro} />
+          </Tooltip>
+        )
+    
+        const Edit = (
+          <Tooltip title="编辑">
+            <CreateButton type="form"  className={styles.ft16}  onClick={editPro}/>
+          </Tooltip>
+        )
+    
+        const Delete = (
+          <Popconfirm
+            title="确定删除？"
+            placement="bottom"
+            onConfirm={deleteProject}
+          >
+            <Tooltip title="删除">
+              <CreateButton type="delete"  className={styles.ft16} onClick={stopPPG} />
+            </Tooltip>
+          </Popconfirm>
+        )
+    
+        return {
+          Edit,
+          Favorite,
+          Transfer,
+          Delete
+        }
+      })()
+
+      return  <Col
+                key={`pro${name}orp${description}`}
+                xxl={4} xl={6} lg={6} md={8} sm={12} xs={24}
+              >
+                <ProjectItem
+                  title={name}
+                  onClick={toProject}
+                  description={description}
+                  tags={getTagType}
+                  backgroundImg={`url(${require(`assets/images/bg${pic}.png`)})`}
+                >
+                  <div className={styles.others}>
+                    {!isHistoryType ? Edit: ''}
+                    {Favorite}
+                    {!isHistoryType ? Transfer: ''}
+                    {!isHistoryType ? Delete: ''}
+                  </div>
+                  <div className={styles.stars}>
+                    {StarCom}
+                  </div>
+                </ProjectItem>
+              </Col>
+    }) : []
+
+    return items
+  }, [ getProjectsBySearch, projectType, projects, starUserList,
+      onLoadProjects, onStarProject, onGetProjectStarUser,
+      loginUserId,organizations
+    ])
+
+
   return (
     <div className={styles.wrapper}>
       <Toolbar
@@ -628,22 +484,15 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
         searchKeywords={searchKeywords}
         setFormVisible={checkoutFormVisible}
       />
-      <Content
-        history={history}
-        projects={projects}
-        pType={projectType}
-        userId={loginUserId}
-        deletePro={deletePro}
-        favoritePro={favoritePro}
-        showProForm={showProForm}
-        starUserList={starUserList}
-        onStarProject={onStarProject}
-        onLoadProjects={onLoadProjects}
-        organizations={organizations}
-        searchKeywords={searchKeywords}
-        collectProjects={collectProjects}
-        onGetProjectStarUser={onGetProjectStarUser}
-      />
+      <div className={styles.content}>
+        {
+           projects ? 
+                    projects.length > 0
+                      ? <div className={styles.flex}>{ProjectItems}</div>
+                      : <div className={styles.noprojects}><p className={styles.desc}>无项目</p></div> 
+                    : ''
+        }
+      </div>
       <Modal
         title={null}
         footer={null}

@@ -75,13 +75,20 @@
   .content {
       flex: 1;
       margin: 24px 5%;
-      .flex{
+      .noprojects {
+        height: 100%;
         margin-bottom: -16px;
-        .desc {
+        background-color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        .desc{
           font-size: 24px;
           font-weight: 700;
-          align-self: center;
         }
+      }
+      .flex{
+        margin-bottom: -16px;
         .unit {
           height: 134px;
           background-color: #fff;
@@ -128,6 +135,7 @@
               text-align: right;
               height: 24px;
             //  padding: 4px;
+              padding-top: 4px;
               .tag {
                 font-size: 10px;
                 padding: 1px 4px;
