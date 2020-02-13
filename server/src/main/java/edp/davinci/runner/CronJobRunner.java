@@ -48,8 +48,11 @@ public class CronJobRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         if (startJob) {
-            cronJobService.startAllJobs();
-            log.info("Load cron job finish");
+            try {
+                cronJobService.startAllJobs();
+            } finally {
+                log.info("Load cron job finish");
+            }
         }
     }
 }

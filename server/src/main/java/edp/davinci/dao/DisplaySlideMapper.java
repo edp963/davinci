@@ -28,6 +28,7 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public interface DisplaySlideMapper {
@@ -87,4 +88,7 @@ public interface DisplaySlideMapper {
     SlideWithDisplayAndProject getSlideWithDispalyAndProjectById(@Param("slideId") Long slideId);
 
     int copySlide(@Param("originDisplayId") Long originDisplayId, @Param("displayId") Long displayId, @Param("userId") Long userId);
+
+
+    List<DisplaySlide> queryByDisplayIds(@Param("displayIds") Set<Long> displayIds);
 }

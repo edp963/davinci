@@ -82,8 +82,8 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     @Autowired
     private MailUtils mailUtils;
 
-    @Value("${file.userfiles-path}")
-    private String fileBasePath;
+    @Autowired
+    private DisplaySlideMapper displaySlideMapper;
 
     @Autowired
     private WidgetMapper widgetMapper;
@@ -147,7 +147,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         User creater = userMapper.getById(cronJob.getCreateBy());
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-            images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
+            images = generateImages(jobId, cronJobConfig, creater.getId());
         } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
             try {
                 excels = generateExcels(jobId, cronJobConfig, creater);
@@ -156,7 +156,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 scheduleLogger.error(e.getMessage());
             }
         } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
-            images = generateImages(jobId, cronJobConfig, cronJob.getCreateBy());
+            images = generateImages(jobId, cronJobConfig, creater.getId());
             excels = generateExcels(jobId, cronJobConfig, creater);
         }
 
@@ -217,25 +217,27 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         scheduleLogger.info("CronJob (:{}) fetching images contents", jobId);
 
         List<ImageContent> imageContents = new ArrayList<>();
+        List<CronJobContent> jobContentList = new ArrayList<>();
 
         Set<Long> dashboardIds = new HashSet<>();
         Set<Long> checkedPortalIds = new HashSet<>();
         Set<Long> refPortalIds = new HashSet<>();
 
-        List<CronJobContent> jobContentList = new ArrayList<>();
+        Set<Long> checkedDisplayIds = new HashSet<>();
 
-        Map<String, Integer> orderWidgetMap = new HashMap<>();
+        Map<String, Integer> orderWeightMap = new HashMap<>();
         Map<String, Integer> orderMap = new HashMap<>();
 
         for (int i = 0; i < cronJobConfig.getContentList().size(); i++) {
-            int orderWidget = i * 1000;
+            int orderWeight = i * 1000;
             CronJobContent cronJobContent = cronJobConfig.getContentList().get(i);
             if (cronJobContent.getContentType().equalsIgnoreCase(DISPLAY)) {
-                orderWidgetMap.put(DISPLAY + AT_SYMBOL + cronJobContent.getId(), orderWidget);
+                checkedDisplayIds.add(cronJobContent.getId());
+                orderWeightMap.put(DISPLAY + AT_SYMBOL + cronJobContent.getId(), orderWeight);
                 jobContentList.add(cronJobContent);
-                orderMap.put(DISPLAY + AT_SYMBOL + cronJobContent.getId(), orderWidget);
+                orderMap.put(DISPLAY + AT_SYMBOL + cronJobContent.getId(), orderWeight);
             } else {
-                orderWidgetMap.put(PORTAL + AT_SYMBOL + cronJobContent.getId(), orderWidget);
+                orderWeightMap.put(PORTAL + AT_SYMBOL + cronJobContent.getId(), orderWeight);
                 if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
                     checkedPortalIds.add(cronJobContent.getId());
                 } else {
@@ -245,6 +247,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             }
         }
 
+        // dashboard
         Set<Dashboard> dashboards = new HashSet<>();
         if (!CollectionUtils.isEmpty(dashboardIds)) {
             Set<Dashboard> checkDashboards = dashboardMapper.queryDashboardsByIds(dashboardIds);
@@ -280,10 +283,25 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     for (int i = 0; i < list.size(); i++) {
                         DashboardTree node = list.get(i);
                         if (!orderMap.containsKey(DASHBOARD + AT_SYMBOL + node.getId())) {
-                            orderMap.put(DASHBOARD + AT_SYMBOL + node.getId(), i + orderWidgetMap.get(PORTAL + AT_SYMBOL + pId));
+                            orderMap.put(DASHBOARD + AT_SYMBOL + node.getId(), i + orderWeightMap.get(PORTAL + AT_SYMBOL + pId));
                         }
                     }
                 }
+            });
+        }
+
+        //display
+        Map<Long, Map<Long, Integer>> displayPageMap = new HashMap<>();
+        List<DisplaySlide> displaySlides = displaySlideMapper.queryByDisplayIds(checkedDisplayIds);
+        if (!CollectionUtils.isEmpty(displaySlides)) {
+            Map<Long, List<DisplaySlide>> displaySlidesMap = displaySlides.stream().collect(Collectors.groupingBy(DisplaySlide::getDisplayId));
+            displaySlidesMap.forEach((displayId, slides) -> {
+                Map<Long, Integer> slidePageMap = new HashMap<>();
+                slides.sort(Comparator.comparing(DisplaySlide::getIndex));
+                for (int i = 0; i < slides.size(); i++) {
+                    slidePageMap.put(slides.get(i).getId(), i + 1);
+                }
+                displayPageMap.put(displayId, slidePageMap);
             });
         }
 
@@ -293,14 +311,32 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         }
 
         for (CronJobContent cronJobContent : jobContentList) {
-            String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId());
             int order = 0;
             if (cronJobContent.getContentType().equalsIgnoreCase(DISPLAY)) {
                 order = orderMap.get(DISPLAY + AT_SYMBOL + cronJobContent.getId());
+                if (!CollectionUtils.isEmpty(displayPageMap)) {
+                    Map<Long, Integer> slidePageMap = displayPageMap.get(cronJobContent.getId());
+                    if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
+                        int finalOrder = order;
+                        slidePageMap.forEach((slide, page) -> {
+                            String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId(), page);
+                            imageContents.add(new ImageContent(finalOrder + page, cronJobContent.getId(), cronJobContent.getContentType(), url));
+                        });
+                    } else {
+                        for (Long slideId : cronJobContent.getItems()) {
+                            if (slidePageMap.containsKey(slideId)) {
+                                int page = slidePageMap.get(slideId);
+                                String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId(), page);
+                                imageContents.add(new ImageContent(order + page, cronJobContent.getId(), cronJobContent.getContentType(), url));
+                            }
+                        }
+                    }
+                }
             } else {
+                String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId(), -1);
                 order = orderMap.get(DASHBOARD + AT_SYMBOL + cronJobContent.getId());
+                imageContents.add(new ImageContent(order, cronJobContent.getId(), cronJobContent.getContentType(), url));
             }
-            imageContents.add(new ImageContent(order, cronJobContent.getId(), cronJobContent.getContentType(), url));
         }
 
         if (!CollectionUtils.isEmpty(imageContents)) {
@@ -357,7 +393,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         return list;
     }
 
-    private String getContentUrl(Long userId, String contentType, Long contengId) {
+    private String getContentUrl(Long userId, String contentType, Long contengId, int index) {
         String shareToken = shareService.generateShareToken(contengId, null, userId);
         StringBuilder sb = new StringBuilder();
 
@@ -369,7 +405,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             type = "dashboard";
         } else {
             type = "";
-            page = "p=1";
+            page = "p=" + index;
         }
 
         sb.append(serverUtils.getLocalHost())
@@ -382,7 +418,6 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             sb.append("&type=").append(type);
         }
 
-        //TODO 多Slide暂时只支持1页
         if (!StringUtils.isEmpty(page)) {
             sb.append("&").append(page);
         }
