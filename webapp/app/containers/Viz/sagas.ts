@@ -270,6 +270,9 @@ export function* getDisplaySlides(action: VizActionType) {
     const location: Location = yield select(makeSelectLocation())
     const matchDisplay = matchDisplayPath(location.pathname)
     const matchDisplaySlide = matchDisplaySlidePath(location.pathname)
+    if (!matchDisplay && !matchDisplaySlide) {
+      return
+    }
 
     let previewSubPath: string = ''
     if (matchDisplay) {
