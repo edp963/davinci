@@ -195,7 +195,7 @@ public class ScreenshotUtil {
         File file = new File(PHANTOMJS_PATH);
         if (!file.canExecute()) {
             if (!file.setExecutable(true)) {
-                throw new ExecutionException(new Exception(PHANTOMJS_PATH + "is not executable!"));
+                throw new ExecutionException(new Exception(PHANTOMJS_PATH + " is not executable!"));
             }
         }
         log.info("Generating PhantomJs driver ({})...", PHANTOMJS_PATH);

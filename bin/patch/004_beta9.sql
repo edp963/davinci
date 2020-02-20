@@ -16,3 +16,5 @@ ALTER TABLE `davinci_statistic_duration`
 ADD COLUMN `sub_viz_name` VARCHAR(255) NULL   COMMENT '报表名称' AFTER `sub_viz_id`;
 ALTER TABLE `display`
 ADD COLUMN `config` text NULL AFTER `publish`;
+ALTER TABLE `cron_job`
+MODIFY COLUMN `update_by` bigint(20) NULL DEFAULT NULL AFTER `create_time`;

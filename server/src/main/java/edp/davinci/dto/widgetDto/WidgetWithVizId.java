@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,34 +14,15 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
- *
  */
 
-package edp.davinci.service.screenshot;
+package edp.davinci.dto.widgetDto;
 
+import edp.davinci.model.Widget;
 import lombok.Data;
 
-import java.io.File;
-
 @Data
-public class ImageContent {
-    private int order;
-    private Long cId;
-    private String desc;
-    private File imageFile;
-    private String url;
-
-    public ImageContent(int order, Long cid, String desc, String url) {
-        this.cId = cid;
-        this.order = order;
-        this.desc = desc;
-        this.url = url;
-    }
-
-    public void setContent(File file) {
-        this.imageFile = file;
-    }
-
-    public ImageContent() {
-    }
+public class WidgetWithVizId extends Widget {
+    private Long vizId;
+    private int vizIndex;
 }
