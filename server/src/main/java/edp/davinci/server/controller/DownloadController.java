@@ -17,22 +17,24 @@
  *
  */
 
-package edp.davinci.server.controller;
+package edp.davinci.controller;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.annotation.AuthIgnore;
-import edp.davinci.server.annotation.AuthShare;
-import edp.davinci.server.annotation.CurrentUser;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dto.view.DownloadViewExecuteParam;
-import edp.davinci.server.enums.DownloadType;
-import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.model.DownloadRecord;
-import edp.davinci.server.model.ShareDownloadRecord;
-import edp.davinci.server.model.User;
-import edp.davinci.server.service.DownloadService;
-import edp.davinci.server.service.ShareDownloadService;
-import edp.davinci.server.util.FileUtils;
+import edp.core.annotation.AuthIgnore;
+import edp.core.annotation.AuthShare;
+import edp.core.annotation.CurrentUser;
+import edp.core.utils.FileUtils;
+import edp.davinci.common.controller.BaseController;
+import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ResultMap;
+import edp.davinci.core.enums.DownloadType;
+import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
+import edp.davinci.model.DownloadRecord;
+import edp.davinci.model.ShareDownloadRecord;
+import edp.davinci.model.User;
+import edp.davinci.service.DownloadService;
+import edp.davinci.service.ShareDownloadService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;

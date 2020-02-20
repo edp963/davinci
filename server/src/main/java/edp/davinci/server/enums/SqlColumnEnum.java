@@ -17,18 +17,18 @@
  *
  */
 
-package edp.davinci.server.enums;
+package edp.davinci.core.enums;
 
-import edp.davinci.commons.util.DateUtils;
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.exception.ServerException;
+import edp.core.exception.ServerException;
+import edp.core.utils.DateUtils;
 
 import javax.sql.rowset.serial.SerialBlob;
 import javax.sql.rowset.serial.SerialClob;
-
 import java.math.BigDecimal;
 import java.sql.SQLException;
+
+import static edp.core.consts.Consts.EMPTY;
 
 public enum SqlColumnEnum {
 
@@ -119,7 +119,7 @@ public enum SqlColumnEnum {
 
             case "DECIMAL":
             case "NUMERIC":
-                if (Constants.EMPTY.equals(value.trim())) {
+                if (EMPTY.equals(value.trim())) {
                     result = new BigDecimal("0.0").stripTrailingZeros();
                 } else {
                     result = new BigDecimal(value.trim()).stripTrailingZeros();

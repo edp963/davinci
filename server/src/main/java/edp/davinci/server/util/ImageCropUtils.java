@@ -17,15 +17,13 @@
  *
  */
 
-package edp.davinci.server.util;
+package edp.davinci.core.utils;
 
 import edp.davinci.commons.util.StringUtils;
+import edp.core.utils.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.imageio.ImageIO;
-
-import static edp.davinci.server.commons.Constants.EMPTY;
-
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -35,13 +33,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static edp.core.consts.Consts.EMPTY;
+
 
 /**
  * 裁剪图片工具
  */
 
 @Slf4j
-public class ImageCropUtils {
+public class ImageCropUtil {
 
 
     /**

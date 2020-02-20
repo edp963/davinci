@@ -17,19 +17,19 @@
  *
  */
 
-package edp.davinci.server.dto.view;
+package edp.davinci.dto.viewDto;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.util.CollectionUtils;
-import edp.davinci.server.util.SqlUtils;
+import edp.core.utils.CollectionUtils;
+import edp.core.utils.SqlUtils;
 import lombok.Data;
-
-import static edp.davinci.server.commons.Constants.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static edp.core.consts.Consts.*;
 
 @Data
 public class ViewExecuteParam {

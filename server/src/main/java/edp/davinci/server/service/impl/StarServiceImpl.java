@@ -17,21 +17,20 @@
  *
  */
 
-package edp.davinci.server.service.impl;
+package edp.davinci.service.impl;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.dao.ProjectMapper;
-import edp.davinci.server.dao.StarMapper;
-import edp.davinci.server.dto.project.ProjectWithCreateBy;
-import edp.davinci.server.dto.star.StarUser;
-import edp.davinci.server.model.Project;
-import edp.davinci.server.model.Star;
-import edp.davinci.server.model.User;
-import edp.davinci.server.service.StarService;
-import edp.davinci.server.util.TokenUtils;
-
+import edp.core.utils.TokenUtils;
+import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ResultMap;
+import edp.davinci.dao.ProjectMapper;
+import edp.davinci.dao.StarMapper;
+import edp.davinci.dto.projectDto.ProjectWithCreateBy;
+import edp.davinci.dto.starDto.StarUser;
+import edp.davinci.model.Project;
+import edp.davinci.model.Star;
+import edp.davinci.model.User;
+import edp.davinci.service.StarService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

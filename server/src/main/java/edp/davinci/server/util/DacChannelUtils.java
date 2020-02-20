@@ -17,12 +17,12 @@
  *
  */
 
-package edp.davinci.server.util;
+package edp.davinci.core.utils;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.exception.NotFoundException;
-import edp.davinci.server.model.DacChannel;
+import edp.core.exception.NotFoundException;
+import edp.davinci.core.common.ResultMap;
+import edp.davinci.model.DacChannel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -46,7 +46,7 @@ import static java.util.stream.Collectors.groupingBy;
 @Slf4j
 @Component
 @ConfigurationProperties(prefix = "data-auth-center", ignoreInvalidFields = true)
-public class DacChannelUtils {
+public class DacChannelUtil {
 
     public static final Map<String, DacChannel> dacMap = new HashMap<>();
 
@@ -83,7 +83,7 @@ public class DacChannelUtils {
 
     public List getTenants(String dacName) throws NotFoundException {
         if (!dacMap.containsKey(dacName)) {
-            log.error("data-auth-center channel:{} is not found", dacName);
+            log.error("data-auth-center channel :{} is not found", dacName);
             throw new NotFoundException("Channel " + dacName + " is not found");
         }
 
@@ -99,7 +99,7 @@ public class DacChannelUtils {
                 return (List) resultMap.get(PAYLOAD);
             }
         } catch (RestClientException e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
         }
 
         return null;
@@ -107,7 +107,7 @@ public class DacChannelUtils {
 
     public List getBizs(String dacName, String tenantId) throws NotFoundException {
         if (!dacMap.containsKey(dacName)) {
-            log.error("data-auth-center channel:{} is not found", dacName);
+            log.error("data-auth-center channel :{} is not found", dacName);
             throw new NotFoundException("Channel " + dacName + " is not found");
         }
 
@@ -124,7 +124,7 @@ public class DacChannelUtils {
                 return (List) resultMap.get(PAYLOAD);
             }
         } catch (RestClientException e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
         }
 
         return null;
@@ -151,7 +151,7 @@ public class DacChannelUtils {
                     return (List<Object>) resultMap.get(PAYLOAD);
                 }
             } catch (RestClientException e) {
-                log.error(e.getMessage(), e);
+                log.error(e.getMessage());
             }
         }
         return null;

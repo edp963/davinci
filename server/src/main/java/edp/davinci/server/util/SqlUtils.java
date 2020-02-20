@@ -17,25 +17,19 @@
  *
  */
 
-package edp.davinci.server.util;
+package edp.core.utils;
 
-import edp.davinci.commons.util.DateUtils;
-import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.component.jdbc.JdbcDataSource;
-import edp.davinci.server.enums.DataTypeEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.SqlColumnEnum;
-import edp.davinci.server.enums.SqlTypeEnum;
-import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.SourceException;
-import edp.davinci.server.model.BaseSource;
-import edp.davinci.server.model.CustomDataSource;
-import edp.davinci.server.model.Dict;
-import edp.davinci.server.model.JdbcSourceInfo;
-import edp.davinci.server.model.PaginateWithQueryColumns;
-import edp.davinci.server.model.QueryColumn;
-import edp.davinci.server.model.TableInfo;
+import edp.core.common.jdbc.JdbcDataSource;
+import edp.core.consts.Consts;
+import edp.core.enums.DataTypeEnum;
+import edp.core.enums.SqlTypeEnum;
+import edp.core.exception.ServerException;
+import edp.core.exception.SourceException;
+import edp.core.model.*;
+import edp.davinci.core.enums.LogNameEnum;
+import edp.davinci.core.enums.SqlColumnEnum;
+import edp.davinci.core.utils.SqlParseUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
@@ -60,8 +54,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 
-import static edp.davinci.server.commons.Constants.*;
-import static edp.davinci.server.enums.DataTypeEnum.*;
+import static edp.core.consts.Consts.*;
+import static edp.core.enums.DataTypeEnum.*;
 
 @Slf4j
 @Component
@@ -161,7 +155,7 @@ public class SqlUtils {
     public List<Map<String, Object>> query4List(String sql, int limit) throws Exception {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
-        String md5 = MD5Utils.getMD5(sql, true, 16);
+        String md5 = MD5Util.getMD5(sql, true, 16);
         if (isQueryLogEnable) {
             sqlLogger.info("{}  >> \n{}", md5, sql);
         }
@@ -185,7 +179,7 @@ public class SqlUtils {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
 
-        String md5 = MD5Utils.getMD5(sql + pageNo + pageSize + limit, true, 16);
+        String md5 = MD5Util.getMD5(sql + pageNo + pageSize + limit, true, 16);
 
         long before = System.currentTimeMillis();
 
@@ -230,7 +224,7 @@ public class SqlUtils {
 
             if (this.dataTypeEnum == MYSQL) {
                 sql = sql + " LIMIT " + startRow + ", " + pageSize;
-                md5 = MD5Utils.getMD5(sql, true, 16);
+                md5 = MD5Util.getMD5(sql, true, 16);
                 if (isQueryLogEnable) {
                     sqlLogger.info("{}  >> \n{}", md5, sql);
                 }
@@ -310,7 +304,7 @@ public class SqlUtils {
     }
 
     public static String getCountSql(String sql) {
-        String countSql = String.format(QUERY_COUNT_SQL, sql);
+        String countSql = String.format(Consts.QUERY_COUNT_SQL, sql);
         try {
             Select select = (Select) CCJSqlParserUtil.parse(sql);
             PlainSelect plainSelect = (PlainSelect) select.getSelectBody();

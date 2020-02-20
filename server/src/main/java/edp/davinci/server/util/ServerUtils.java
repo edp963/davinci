@@ -17,16 +17,16 @@
  *
  */
 
-package edp.davinci.server.util;
+package edp.core.utils;
 
 import edp.davinci.commons.util.StringUtils;
-
+import edp.core.consts.Consts;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static edp.davinci.server.commons.Constants.*;
-
 import java.io.File;
+
+import static edp.core.consts.Consts.*;
 
 @Component
 public class ServerUtils {
@@ -72,8 +72,8 @@ public class ServerUtils {
         }
 
         if (!StringUtils.isEmpty(contextPath)) {
-            contextPath = contextPath.replaceAll(SLASH, EMPTY);
-            sb.append(SLASH);
+            contextPath = contextPath.replaceAll(Consts.SLASH, EMPTY);
+            sb.append(Consts.SLASH);
             sb.append(contextPath);
         }
 

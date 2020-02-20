@@ -17,14 +17,14 @@
  *
  */
 
-package edp.davinci.server.service.impl;
+package edp.davinci.service.impl;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.service.CheckEntityService;
-import edp.davinci.server.service.CheckService;
-import edp.davinci.server.util.TokenUtils;
+import edp.core.utils.TokenUtils;
+import edp.davinci.core.common.ResultMap;
+import edp.davinci.core.enums.CheckEntityEnum;
+import edp.davinci.core.service.CheckEntityService;
+import edp.davinci.service.CheckService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;

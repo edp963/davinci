@@ -17,9 +17,9 @@
  *
  */
 
-package edp.davinci.server.service.impl;
+package edp.davinci.service.impl;
 
-import static edp.davinci.server.commons.Constants.COMMA;
+import static edp.core.consts.Consts.COMMA;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,41 +37,41 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
+import com.alibaba.fastjson.JSON;
 
-import edp.davinci.server.dao.MemDashboardWidgetMapper;
-import edp.davinci.server.dao.RelRoleDashboardWidgetMapper;
-import edp.davinci.server.dao.ViewMapper;
-import edp.davinci.server.dao.WidgetMapper;
-import edp.davinci.server.dto.dashboard.DashboardCreate;
-import edp.davinci.server.dto.dashboard.DashboardDTO;
-import edp.davinci.server.dto.dashboard.DashboardWithMem;
-import edp.davinci.server.dto.dashboard.DashboardWithPortal;
-import edp.davinci.server.dto.dashboard.MemDashboardWidgetCreate;
-import edp.davinci.server.dto.dashboard.MemDashboardWidgetDTO;
-import edp.davinci.server.dto.project.ProjectPermission;
-import edp.davinci.server.dto.role.VizVisibility;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.UserPermissionEnum;
-import edp.davinci.server.enums.VizEnum;
-import edp.davinci.server.exception.NotFoundException;
-import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.Dashboard;
-import edp.davinci.server.model.DashboardPortal;
-import edp.davinci.server.model.MemDashboardWidget;
-import edp.davinci.server.model.RelRoleDashboard;
-import edp.davinci.server.model.RelRoleDashboardWidget;
-import edp.davinci.server.model.Role;
-import edp.davinci.server.model.User;
-import edp.davinci.server.model.View;
-import edp.davinci.server.model.Widget;
-import edp.davinci.server.service.DashboardService;
-import edp.davinci.server.service.ShareService;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CollectionUtils;
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
+import edp.core.utils.BaseLock;
+import edp.core.utils.CollectionUtils;
+import edp.davinci.core.enums.CheckEntityEnum;
+import edp.davinci.core.enums.LogNameEnum;
+import edp.davinci.core.enums.UserPermissionEnum;
+import edp.davinci.core.enums.VizEnum;
+import edp.davinci.dao.MemDashboardWidgetMapper;
+import edp.davinci.dao.RelRoleDashboardWidgetMapper;
+import edp.davinci.dao.ViewMapper;
+import edp.davinci.dao.WidgetMapper;
+import edp.davinci.dto.dashboardDto.DashboardCreate;
+import edp.davinci.dto.dashboardDto.DashboardDto;
+import edp.davinci.dto.dashboardDto.DashboardWithMem;
+import edp.davinci.dto.dashboardDto.DashboardWithPortal;
+import edp.davinci.dto.dashboardDto.MemDashboardWidgetCreate;
+import edp.davinci.dto.dashboardDto.MemDashboardWidgetDto;
+import edp.davinci.dto.projectDto.ProjectPermission;
+import edp.davinci.dto.roleDto.VizVisibility;
+import edp.davinci.model.Dashboard;
+import edp.davinci.model.DashboardPortal;
+import edp.davinci.model.MemDashboardWidget;
+import edp.davinci.model.RelRoleDashboard;
+import edp.davinci.model.RelRoleDashboardWidget;
+import edp.davinci.model.Role;
+import edp.davinci.model.User;
+import edp.davinci.model.View;
+import edp.davinci.model.Widget;
+import edp.davinci.service.DashboardService;
+import edp.davinci.service.ShareService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -298,7 +298,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      */
     @Override
     @Transactional
-    public void updateDashboards(Long portalId, DashboardDTO[] dashboards, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public void updateDashboards(Long portalId, DashboardDto[] dashboards, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
     	DashboardPortal dashboardPortal = getDashboardPortal(portalId, true);
     	Long projectId = dashboardPortal.getProjectId();
@@ -322,7 +322,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         List<Dashboard> dashboardList = new ArrayList<>();
         Map<Long, List<Long>> rolesMap = new HashMap<>();
         List<Long> disableDashboards = getDisableVizs(user.getId(), portalId, null, VizEnum.DASHBOARD);
-        for (DashboardDTO dashboardDto : dashboards) {
+        for (DashboardDto dashboardDto : dashboards) {
         	String name = dashboardDto.getName();
         	Long id = dashboardDto.getId();
         	if (isDisableVizs(projectPermission, disableDashboards, id)) {
@@ -438,7 +438,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 			dashboardMapper.deleteById(deletingDashboard.getId());
 		}
 
-		optLogger.info("dashboard ({}) delete by (:{})", JSONUtils.toString(deletingDashboards), user.getId());
+		optLogger.info("dashboard ({}) delete by (:{})", JSON.toJSON(deletingDashboards), user.getId());
 
 		return true;
     }
@@ -460,11 +460,11 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 		
 		MemDashboardWidgetCreate[] memDashboardWidgetCreates = new MemDashboardWidgetCreate[objs.length];
 		
-		if (objs[0] instanceof MemDashboardWidgetDTO) {
+		if (objs[0] instanceof MemDashboardWidgetDto) {
 			memDashboardWidgetCreates = new MemDashboardWidgetCreate[objs.length];
 			memDashboardWidgetCreates = Arrays.stream(objs).map(obj -> {
 				MemDashboardWidgetCreate create = new MemDashboardWidgetCreate();
-				BeanUtils.copyProperties((MemDashboardWidgetDTO)obj, create); 
+				BeanUtils.copyProperties((MemDashboardWidgetDto)obj, create); 
 				return create;
 			}).collect(Collectors.toList()).toArray(memDashboardWidgetCreates);
 		}else {
@@ -561,7 +561,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 	 */
 	@Override
 	@Transactional
-	public boolean updateMemDashboardWidgets(Long portalId, User user, MemDashboardWidgetDTO[] memDashboardWidgets)
+	public boolean updateMemDashboardWidgets(Long portalId, User user, MemDashboardWidgetDto[] memDashboardWidgets)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 
 		DashboardPortal dashboardPortal = getDashboardPortal(portalId, true);
@@ -573,11 +573,11 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 			alertUnAuthorized(entity, user, "update widget with");
 		}
 
-		List<MemDashboardWidgetDTO> dtoList = Arrays.asList(memDashboardWidgets);
+		List<MemDashboardWidgetDto> dtoList = Arrays.asList(memDashboardWidgets);
 		Set<Long> dashboardIds = dashboardMapper
-				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDTO::getDashboardId).collect(Collectors.toSet()));
+				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDto::getDashboardId).collect(Collectors.toSet()));
 		Set<Long> widgetIds = widgetMapper
-				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDTO::getWidgetId).collect(Collectors.toSet()));
+				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDto::getWidgetId).collect(Collectors.toSet()));
 		String before = dtoList.toString();
 		List<MemDashboardWidget> memDashboardWidgetList = new ArrayList<>(dtoList.size());
 		Map<Long, List<Long>> rolesMap = new HashMap<>();

@@ -3,7 +3,6 @@
 <generatorConfiguration>
 	<context id="davinci">
 		<property name="javaFileEncoding" value="UTF-8" />
-		<property name="autoDelimitKeywords" value="true" />
 		<property name="beginningDelimiter" value="`" />
 		<property name="endingDelimiter" value="`" />
 		<plugin
@@ -16,24 +15,20 @@
 			connectionURL="jdbc:mysql://localhost:3306/davinci?useUnicode=true&amp;characterEncoding=UTF-8&amp;zeroDateTimeBehavior=convertToNull&amp;allowMultiQueries=true"
 			driverClass="com.mysql.jdbc.Driver" userId="root"
 			password="xiaolong@0509" />
-		<javaTypeResolver>
-            <property name="forceBigDecimals" value="false"/>
-        </javaTypeResolver>
 		<javaModelGenerator
 			targetPackage="edp.davinci.core.dao.entity"
+			targetProject="D:\CE\UAVStackIDE\edpgitroot\davinci\core\src\main\java" />
+		<sqlMapGenerator
+			targetPackage="edp.davinci.core.dao.mapper"
 			targetProject="D:\CE\UAVStackIDE\edpgitroot\davinci\core\src\main\java" />
 		<javaClientGenerator
 			targetPackage="edp.davinci.core.dao"
 			targetProject="D:\CE\UAVStackIDE\edpgitroot\davinci\core\src\main\java"
-			type="ANNOTATEDMAPPER" />
+			type="MIXEDMAPPER" />
 		<table tableName="cron_job">
 			<columnOverride column="config"
 				javaType="java.lang.String" jdbcType="VARCHAR"></columnOverride>
 			<columnOverride column="exec_log"
-				javaType="java.lang.String" jdbcType="VARCHAR"></columnOverride>
-		</table>
-		<table tableName="dashboard">
-			<columnOverride column="config"
 				javaType="java.lang.String" jdbcType="VARCHAR"></columnOverride>
 		</table>
 	</context>

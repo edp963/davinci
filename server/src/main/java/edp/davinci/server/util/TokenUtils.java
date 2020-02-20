@@ -17,10 +17,11 @@
  *
  */
 
-package edp.davinci.server.util;
+package edp.core.utils;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.model.TokenDetail;
+import edp.core.consts.Consts;
+import edp.core.model.TokenDetail;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -28,12 +29,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static edp.davinci.server.commons.Constants.*;
-
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import static edp.core.consts.Consts.EMPTY;
 
 
 @Slf4j
@@ -67,9 +68,9 @@ public class TokenUtils {
      */
     public String generateToken(TokenDetail tokenDetail) {
         Map<String, Object> claims = new HashMap<String, Object>();
-        claims.put(TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
-        claims.put(TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
-        claims.put(TOKEN_CREATE_TIME, System.currentTimeMillis());
+        claims.put(Consts.TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
+        claims.put(Consts.TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
+        claims.put(Consts.TOKEN_CREATE_TIME, System.currentTimeMillis());
         return generate(claims);
     }
 
@@ -81,7 +82,7 @@ public class TokenUtils {
      */
     public String refreshToken(String token) {
         Claims claims = getClaims(token);
-        claims.put(TOKEN_CREATE_TIME, System.currentTimeMillis());
+        claims.put(Consts.TOKEN_CREATE_TIME, System.currentTimeMillis());
         return generate(claims);
     }
 
@@ -95,16 +96,16 @@ public class TokenUtils {
      */
     public String generateToken(TokenDetail tokenDetail, Long timeOutMillis) {
         Map<String, Object> claims = new HashMap<String, Object>();
-        claims.put(TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
-        claims.put(TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
-        claims.put(TOKEN_CREATE_TIME, System.currentTimeMillis());
+        claims.put(Consts.TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
+        claims.put(Consts.TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
+        claims.put(Consts.TOKEN_CREATE_TIME, System.currentTimeMillis());
 
-        Long expiration = Long.parseLong(claims.get(TOKEN_CREATE_TIME) + EMPTY) + timeOutMillis;
+        Long expiration = Long.parseLong(claims.get(Consts.TOKEN_CREATE_TIME) + EMPTY) + timeOutMillis;
 
         try {
             return Jwts.builder()
                     .setClaims(claims)
-                    .setSubject(claims.get(TOKEN_USER_NAME).toString())
+                    .setSubject(claims.get(Consts.TOKEN_USER_NAME).toString())
                     .setExpiration(new Date(expiration))
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
@@ -114,7 +115,7 @@ public class TokenUtils {
             log.warn(ex.getMessage());
             return Jwts.builder()
                     .setClaims(claims)
-                    .setSubject(claims.get(TOKEN_USER_NAME).toString())
+                    .setSubject(claims.get(Consts.TOKEN_USER_NAME).toString())
                     .setExpiration(new Date(expiration))
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
@@ -131,13 +132,13 @@ public class TokenUtils {
      */
     public String generateContinuousToken(TokenDetail tokenDetail) {
         Map<String, Object> claims = new HashMap<String, Object>();
-        claims.put(TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
-        claims.put(TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
-        claims.put(TOKEN_CREATE_TIME, System.currentTimeMillis());
+        claims.put(Consts.TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
+        claims.put(Consts.TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
+        claims.put(Consts.TOKEN_CREATE_TIME, System.currentTimeMillis());
         try {
             return Jwts.builder()
                     .setClaims(claims)
-                    .setSubject(claims.get(TOKEN_USER_NAME).toString())
+                    .setSubject(claims.get(Consts.TOKEN_USER_NAME).toString())
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
                             SignatureAlgorithm.HS512, SECRET.getBytes("UTF-8"))
@@ -146,7 +147,7 @@ public class TokenUtils {
             log.warn(ex.getMessage());
             return Jwts.builder()
                     .setClaims(claims)
-                    .setSubject(claims.get(TOKEN_USER_NAME).toString())
+                    .setSubject(claims.get(Consts.TOKEN_USER_NAME).toString())
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
                             SignatureAlgorithm.HS512, SECRET)
@@ -161,11 +162,11 @@ public class TokenUtils {
      * @return
      */
     private String generate(Map<String, Object> claims) {
-        Long expiration = Long.parseLong(claims.get(TOKEN_CREATE_TIME) + EMPTY) + TIMEOUT;
+        Long expiration = Long.parseLong(claims.get(Consts.TOKEN_CREATE_TIME) + EMPTY) + TIMEOUT;
         try {
             return Jwts.builder()
                     .setClaims(claims)
-                    .setSubject(claims.get(TOKEN_USER_NAME).toString())
+                    .setSubject(claims.get(Consts.TOKEN_USER_NAME).toString())
                     .setExpiration(new Date(expiration))
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
@@ -175,7 +176,7 @@ public class TokenUtils {
             log.warn(ex.getMessage());
             return Jwts.builder()
                     .setClaims(claims)
-                    .setSubject(claims.get(TOKEN_USER_NAME).toString())
+                    .setSubject(claims.get(Consts.TOKEN_USER_NAME).toString())
                     .setExpiration(new Date(expiration))
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
@@ -194,7 +195,7 @@ public class TokenUtils {
         String username = null;
         try {
             final Claims claims = getClaims(token);
-            username = claims.get(TOKEN_USER_NAME).toString();
+            username = claims.get(Consts.TOKEN_USER_NAME).toString();
         } catch (Exception e) {
 
         }
@@ -211,7 +212,7 @@ public class TokenUtils {
         String password;
         try {
             final Claims claims = getClaims(token);
-            password = claims.get(TOKEN_USER_PASSWORD).toString();
+            password = claims.get(Consts.TOKEN_USER_PASSWORD).toString();
         } catch (Exception e) {
             password = null;
         }
@@ -229,16 +230,16 @@ public class TokenUtils {
         try {
             claims = Jwts.parser()
                     .setSigningKey(SECRET.getBytes("UTF-8"))
-                    .parseClaimsJws(token.startsWith(TOKEN_PREFIX) ?
-                            token.substring(token.indexOf(TOKEN_PREFIX) + TOKEN_PREFIX.length()).trim() :
+                    .parseClaimsJws(token.startsWith(Consts.TOKEN_PREFIX) ?
+                            token.substring(token.indexOf(Consts.TOKEN_PREFIX) + Consts.TOKEN_PREFIX.length()).trim() :
                             token.trim())
                     .getBody();
         } catch (Exception e) {
             log.warn(e.getMessage());
             claims = Jwts.parser()
                     .setSigningKey(SECRET)
-                    .parseClaimsJws(token.startsWith(TOKEN_PREFIX) ?
-                            token.substring(token.indexOf(TOKEN_PREFIX) + TOKEN_PREFIX.length()).trim() :
+                    .parseClaimsJws(token.startsWith(Consts.TOKEN_PREFIX) ?
+                            token.substring(token.indexOf(Consts.TOKEN_PREFIX) + Consts.TOKEN_PREFIX.length()).trim() :
                             token.trim())
                     .getBody();
         }
@@ -283,7 +284,7 @@ public class TokenUtils {
         Date created;
         try {
             final Claims claims = getClaims(token);
-            created = new Date((Long) claims.get(TOKEN_CREATE_TIME));
+            created = new Date((Long) claims.get(Consts.TOKEN_CREATE_TIME));
         } catch (Exception e) {
             created = null;
         }

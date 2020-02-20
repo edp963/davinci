@@ -17,7 +17,7 @@
  *
  */
 
-package edp.davinci.server.controller;
+package edp.davinci.controller;
 
 import java.util.List;
 
@@ -42,24 +42,27 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.annotation.CurrentUser;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dto.source.DatasourceType;
-import edp.davinci.server.dto.source.DbBaseInfo;
-import edp.davinci.server.dto.source.SourceCatalogInfo;
-import edp.davinci.server.dto.source.SourceCreate;
-import edp.davinci.server.dto.source.SourceDBInfo;
-import edp.davinci.server.dto.source.SourceDataUpload;
-import edp.davinci.server.dto.source.SourceDetail;
-import edp.davinci.server.dto.source.SourceInfo;
-import edp.davinci.server.dto.source.SourceTableInfo;
-import edp.davinci.server.dto.source.SourceTest;
-import edp.davinci.server.dto.source.UploadMeta;
-import edp.davinci.server.model.DBTables;
-import edp.davinci.server.model.Source;
-import edp.davinci.server.model.TableInfo;
-import edp.davinci.server.model.User;
-import edp.davinci.server.service.SourceService;
+
+import edp.core.annotation.CurrentUser;
+import edp.core.model.DBTables;
+import edp.core.model.TableInfo;
+import edp.davinci.common.controller.BaseController;
+import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ResultMap;
+import edp.davinci.dto.sourceDto.DatasourceType;
+import edp.davinci.dto.sourceDto.DbBaseInfo;
+import edp.davinci.dto.sourceDto.SourceCatalogInfo;
+import edp.davinci.dto.sourceDto.SourceCreate;
+import edp.davinci.dto.sourceDto.SourceDBInfo;
+import edp.davinci.dto.sourceDto.SourceDataUpload;
+import edp.davinci.dto.sourceDto.SourceDetail;
+import edp.davinci.dto.sourceDto.SourceInfo;
+import edp.davinci.dto.sourceDto.SourceTableInfo;
+import edp.davinci.dto.sourceDto.SourceTest;
+import edp.davinci.dto.sourceDto.UploadMeta;
+import edp.davinci.model.Source;
+import edp.davinci.model.User;
+import edp.davinci.service.SourceService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;

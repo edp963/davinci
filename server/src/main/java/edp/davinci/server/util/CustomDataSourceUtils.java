@@ -17,17 +17,14 @@
  *
  */
 
-package edp.davinci.server.util;
+package edp.core.utils;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.model.CustomDataSource;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import edp.core.consts.Consts;
+import edp.core.model.CustomDataSource;
 import lombok.Getter;
 import org.yaml.snakeyaml.Yaml;
-
-import static edp.davinci.server.commons.Constants.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,6 +33,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
 
 public class CustomDataSourceUtils {
@@ -136,6 +135,6 @@ public class CustomDataSourceUtils {
     }
 
     private static String getKey(String database, String version) {
-        return database + COLON + (StringUtils.isEmpty(version) ? EMPTY : version);
+        return database + Consts.COLON + (StringUtils.isEmpty(version) ? Consts.EMPTY : version);
     }
 }

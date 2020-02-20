@@ -17,16 +17,18 @@
  *
  */
 
-package edp.davinci.server.controller;
+package edp.davinci.controller;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.annotation.AuthIgnore;
-import edp.davinci.server.annotation.CurrentUser;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dto.user.*;
-import edp.davinci.server.enums.HttpCodeEnum;
-import edp.davinci.server.model.User;
-import edp.davinci.server.service.UserService;
+import edp.core.annotation.AuthIgnore;
+import edp.core.annotation.CurrentUser;
+import edp.core.enums.HttpCodeEnum;
+import edp.davinci.common.controller.BaseController;
+import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ResultMap;
+import edp.davinci.dto.userDto.*;
+import edp.davinci.model.User;
+import edp.davinci.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;

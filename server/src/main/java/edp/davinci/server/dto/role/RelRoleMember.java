@@ -17,11 +17,11 @@
  *
  */
 
-package edp.davinci.server.dto.role;
+package edp.davinci.dto.roleDto;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.dto.user.UserBaseInfo;
-import edp.davinci.server.model.User;
+import edp.davinci.dto.userDto.UserBaseInfo;
+import edp.davinci.model.User;
 import lombok.Data;
 
 @Data

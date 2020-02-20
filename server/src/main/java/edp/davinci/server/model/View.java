@@ -17,13 +17,12 @@
  *
  */
 
-package edp.davinci.server.model;
+package edp.davinci.model;
 
 import edp.davinci.commons.util.StringUtils;
-
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
-
+import edp.core.model.RecordInfo;
 import lombok.Data;
 
 import java.util.List;

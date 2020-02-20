@@ -31,7 +31,7 @@ public class CronJob {
 
     private Date createTime;
 
-    private Long updateBy;
+    private String updateBy;
 
     private Date updateTime;
 

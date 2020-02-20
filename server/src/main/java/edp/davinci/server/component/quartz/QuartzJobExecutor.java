@@ -17,15 +17,15 @@
  *
  */
 
-package edp.davinci.server.component.quartz;
+package edp.core.common.quartz;
 
-import edp.davinci.commons.util.DateUtils;
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.core.dao.entity.CronJob;
-import edp.davinci.server.component.excel.ExecutorUtil;
-import edp.davinci.server.config.SpringContextHolder;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.util.QuartzHandler;
+import edp.core.model.ScheduleJob;
+import edp.core.utils.DateUtils;
+import edp.core.utils.QuartzHandler;
+import edp.davinci.core.config.SpringContextHolder;
+import edp.davinci.core.enums.LogNameEnum;
+import edp.davinci.service.excel.ExecutorUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
@@ -48,36 +48,36 @@ public class QuartzJobExecutor implements Job {
         ExecutorUtil.printThreadPoolStatusLog(executorService, "Cronjob_Executor", scheduleLogger);
         executorService.submit(() -> {
             TriggerKey triggerKey = jobExecutionContext.getTrigger().getKey();
-            CronJob cronJob = (CronJob) jobExecutionContext.getMergedJobDataMap().get(QuartzHandler.getJobDataKey(triggerKey));
-            if (cronJob == null) {
+            ScheduleJob scheduleJob = (ScheduleJob) jobExecutionContext.getMergedJobDataMap().get(QuartzHandler.getJobDataKey(triggerKey));
+            if (scheduleJob == null) {
                 log.warn("scheduleJob is not found, {}", triggerKey.getName());
                 return;
             }
 
-            if (cronJob.getStartDate().getTime() <= System.currentTimeMillis()
-                    && cronJob.getEndDate().getTime() >= System.currentTimeMillis()) {
-                String jobType = cronJob.getJobType().trim();
+            if (scheduleJob.getStartDate().getTime() <= System.currentTimeMillis()
+                    && scheduleJob.getEndDate().getTime() >= System.currentTimeMillis()) {
+                String jobType = scheduleJob.getJobType().trim();
 
                 if (!StringUtils.isEmpty(jobType)) {
                     ScheduleService scheduleService = (ScheduleService) SpringContextHolder.getBean(jobType + "ScheduleService");
                     try {
-                        scheduleService.execute(cronJob.getId());
+                        scheduleService.execute(scheduleJob.getId());
                     } catch (Exception e) {
                         e.printStackTrace();
                         log.error(e.getMessage());
                         scheduleLogger.error(e.getMessage());
                     }
                 } else {
-                    log.warn("Unknown job type [{}], job ID: (:{})", jobType, cronJob.getId());
-                    scheduleLogger.warn("Unknown job type [{}], job ID: (:{})", jobType, cronJob.getId());
+                    log.warn("Unknown job type [{}], job ID: (:{})", jobType, scheduleJob.getId());
+                    scheduleLogger.warn("Unknown job type [{}], job ID: (:{})", jobType, scheduleJob.getId());
                 }
             } else {
                 Object[] args = {
-                        cronJob.getId(),
+                        scheduleJob.getId(),
                         DateUtils.toyyyyMMddHHmmss(System.currentTimeMillis()),
-                        DateUtils.toyyyyMMddHHmmss(cronJob.getStartDate()),
-                        DateUtils.toyyyyMMddHHmmss(cronJob.getEndDate()),
-                        cronJob.getCronExpression()
+                        DateUtils.toyyyyMMddHHmmss(scheduleJob.getStartDate()),
+                        DateUtils.toyyyyMMddHHmmss(scheduleJob.getEndDate()),
+                        scheduleJob.getCronExpression()
                 };
                 log.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
                 scheduleLogger.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);

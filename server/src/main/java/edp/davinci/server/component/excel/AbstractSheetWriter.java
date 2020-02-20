@@ -17,28 +17,28 @@
  *
  */
 
-package edp.davinci.server.component.excel;
+package edp.davinci.service.excel;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.enums.NumericUnitEnum;
-import edp.davinci.server.enums.SqlTypeEnum;
-import edp.davinci.server.model.ExcelHeader;
-import edp.davinci.server.model.FieldCurrency;
-import edp.davinci.server.model.FieldNumeric;
-import edp.davinci.server.model.QueryColumn;
-import edp.davinci.server.util.CollectionUtils;
-import edp.davinci.server.util.ExcelUtils;
+import edp.core.enums.SqlTypeEnum;
+import edp.core.model.QueryColumn;
+import edp.core.utils.CollectionUtils;
+import edp.davinci.core.enums.NumericUnitEnum;
+import edp.davinci.core.model.ExcelHeader;
+import edp.davinci.core.model.FieldCurrency;
+import edp.davinci.core.model.FieldNumeric;
+import edp.davinci.core.utils.ExcelUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-
-import static edp.davinci.server.commons.Constants.EMPTY;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static edp.core.consts.Consts.EMPTY;
 
 /**
  * Created by IntelliJ IDEA.
@@ -90,7 +90,7 @@ public abstract class AbstractSheetWriter {
         if (context.getIsTable() && !CollectionUtils.isEmpty(context.getExcelHeaders())) {
             int rownum = 0;
             int colnum = 0;
-            Map<String, QueryColumn> columnMap = context.getQueryColumns().stream().collect(Collectors.toMap(x -> x.getName(), x -> x, (v1, v2) -> v1));
+            Map<String, QueryColumn> columnMap = context.getQueryColumns().stream().collect(Collectors.toMap(x -> x.getName(), x -> x));
             List<QueryColumn> queryColumns = new ArrayList<>();
             for (ExcelHeader excelHeader : context.getExcelHeaders()) {
                 //计算多级表头行

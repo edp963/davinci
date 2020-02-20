@@ -17,18 +17,20 @@
  *
  */
 
-package edp.davinci.server.controller;
+package edp.davinci.controller;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.annotation.CurrentUser;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dto.display.*;
-import edp.davinci.server.model.Display;
-import edp.davinci.server.model.DisplaySlide;
-import edp.davinci.server.model.MemDisplaySlideWidget;
-import edp.davinci.server.model.User;
-import edp.davinci.server.service.DisplayService;
-import edp.davinci.server.service.DisplaySlideService;
+import edp.core.annotation.CurrentUser;
+import edp.davinci.common.controller.BaseController;
+import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ResultMap;
+import edp.davinci.dto.displayDto.*;
+import edp.davinci.model.Display;
+import edp.davinci.model.DisplaySlide;
+import edp.davinci.model.MemDisplaySlideWidget;
+import edp.davinci.model.User;
+import edp.davinci.service.DisplayService;
+import edp.davinci.service.DisplaySlideService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -302,7 +304,7 @@ public class DisplayController extends BaseController {
     @PutMapping(value = "/{displayId}/slides/{slideId}/widgets", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateMemDisplaySlideWidgets(@PathVariable("displayId") Long displayId,
                                                        @PathVariable("slideId") Long slideId,
-                                                       @Valid @RequestBody MemDisplaySlideWidgetDTO[] memDisplaySlideWidgets,
+                                                       @Valid @RequestBody MemDisplaySlideWidgetDto[] memDisplaySlideWidgets,
                                                        @ApiIgnore BindingResult bindingResult,
                                                        @ApiIgnore @CurrentUser User user,
                                                        HttpServletRequest request) {
@@ -664,22 +666,14 @@ public class DisplayController extends BaseController {
     @ApiOperation(value = "copy a display", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(value = "/copy/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity copyDisplay(@PathVariable Long id,
-                                      @Valid @RequestBody DisplayCopy copy,
-                                      @ApiIgnore BindingResult bindingResult,
                                       @ApiIgnore @CurrentUser User user,
                                       HttpServletRequest request) {
-
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        if (bindingResult.hasErrors()) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        Display displayCopy = displayService.copyDisplay(id, copy, user);
+        Display displayCopy = displayService.copyDisplay(id, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(displayCopy));
     }
 }

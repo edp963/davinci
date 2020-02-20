@@ -17,10 +17,10 @@
  *
  */
 
-package edp.davinci.server.runner;
+package edp.davinci.runner;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.util.DacChannelUtils;
+import edp.davinci.core.utils.DacChannelUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,7 +55,7 @@ public class CheckConfigRunner implements ApplicationRunner {
     private ApplicationContext applicationContext;
 
     @Autowired
-    private DacChannelUtils dacChannelUtil;
+    private DacChannelUtil dacChannelUtil;
 
 
     @Override

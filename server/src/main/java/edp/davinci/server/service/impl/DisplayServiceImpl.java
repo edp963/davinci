@@ -17,9 +17,9 @@
  *
  */
 
-package edp.davinci.server.service.impl;
+package edp.davinci.service.impl;
 
-import static edp.davinci.server.commons.Constants.DEFAULT_COPY_SUFFIX;
+import static edp.core.consts.Consts.DEFAULT_COPY_SUFFIX;
 
 import java.io.File;
 import java.util.Iterator;
@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import edp.davinci.dto.displayDto.DisplayCopy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -37,31 +36,32 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dao.MemDisplaySlideWidgetMapper;
-import edp.davinci.server.dao.RelRoleDisplaySlideWidgetMapper;
-import edp.davinci.server.dto.display.DisplayInfo;
-import edp.davinci.server.dto.display.DisplayUpdate;
-import edp.davinci.server.dto.display.DisplayWithProject;
-import edp.davinci.server.dto.project.ProjectPermission;
-import edp.davinci.server.dto.role.VizVisibility;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.UserPermissionEnum;
-import edp.davinci.server.enums.VizEnum;
-import edp.davinci.server.exception.NotFoundException;
-import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.Display;
-import edp.davinci.server.model.RelRoleDisplay;
-import edp.davinci.server.model.Role;
-import edp.davinci.server.model.User;
-import edp.davinci.server.service.DisplayService;
-import edp.davinci.server.service.DisplaySlideService;
-import edp.davinci.server.service.ProjectService;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CollectionUtils;
-import edp.davinci.server.util.FileUtils;
+
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
+import edp.core.utils.BaseLock;
+import edp.core.utils.CollectionUtils;
+import edp.core.utils.FileUtils;
+import edp.davinci.core.common.Constants;
+import edp.davinci.core.enums.CheckEntityEnum;
+import edp.davinci.core.enums.LogNameEnum;
+import edp.davinci.core.enums.UserPermissionEnum;
+import edp.davinci.core.enums.VizEnum;
+import edp.davinci.dao.MemDisplaySlideWidgetMapper;
+import edp.davinci.dao.RelRoleDisplaySlideWidgetMapper;
+import edp.davinci.dto.displayDto.DisplayInfo;
+import edp.davinci.dto.displayDto.DisplayUpdate;
+import edp.davinci.dto.displayDto.DisplayWithProject;
+import edp.davinci.dto.projectDto.ProjectPermission;
+import edp.davinci.dto.roleDto.VizVisibility;
+import edp.davinci.model.Display;
+import edp.davinci.model.RelRoleDisplay;
+import edp.davinci.model.Role;
+import edp.davinci.model.User;
+import edp.davinci.service.DisplayService;
+import edp.davinci.service.DisplaySlideService;
+import edp.davinci.service.ProjectService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -401,21 +401,19 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
      * Copy a display
      *
      * @param id   displayId
-     * @param copy
-	 * @param user user
-	 * @return new display
+     * @param user user
+     * @return new display
      */
     @Override
     @Transactional
-    public Display copyDisplay(Long id, DisplayCopy copy, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Display copyDisplay(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+
     	DisplayWithProject originDisplay = getDisplayWithProject(id, true);
 
     	Long projectId = originDisplay.getProjectId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
-		checkIsExist(copy.getName(), null, projectId);
-
-		checkWritePermission(entity, projectId, user, "copy");
+        checkWritePermission(entity, projectId, user, "copy");
 
         if (isDisableDisplay(id, projectId, user, projectPermission)) {
             alertUnAuthorized(entity, user, "copy");
@@ -424,8 +422,8 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         // copy display entity
         Display display = new Display();
         BeanUtils.copyProperties(originDisplay, display, "id");
-
-		String name = copy.getName();
+        
+		String name = getCopyName(originDisplay.getName(), projectId);
         BaseLock lock = getLock(entity, name, projectId);
 		while(lock != null && !lock.getLock()) {
 			name = getCopyName(name, projectId);
@@ -433,28 +431,16 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 		}
 
 		display.setName(name);
-		display.setDescription(copy.getDescription());
-		display.setPublish(copy.getPublish());
         display.createdBy(user.getId());
         if (displayMapper.insert(display) <= 0) {
             throw new ServerException("copy display fail");
         }
-		optLogger.info("display ({}) is copied by user (:{}) from ({})", display.toString(), user.getId(), originDisplay.toString());
 
-		// copy relRoleDisplay
-		if (!CollectionUtils.isEmpty(copy.getRoleIds())) {
-			List<Role> roles = roleMapper.getRolesByIds(copy.getRoleIds());
-			List<RelRoleDisplay> list = roles.stream()
-					.map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
-					.collect(Collectors.toList());
-
-			if (!CollectionUtils.isEmpty(list)) {
-				relRoleDisplayMapper.insertBatch(list);
-				optLogger.info("display ({}) limit role ({}) access", display.getId(),
-						roles.stream().map(Role::getId).collect(Collectors.toList()));
-			}
-		}
-
+        // copy relRoleDisplay
+        optLogger.info("display ({}) is copied by user (:{}) from ({})", display.toString(), user.getId(), originDisplay.toString());
+        if (relRoleDisplayMapper.copyRoleRelation(originDisplay.getId(), display.getId(), user.getId()) > 0) {
+            optLogger.info("display (:{}) role is copied by user (:{}) from (:{})", display.getId(), user.getId(), originDisplay.getId());
+        }
         displaySlideService.copySlides(originDisplay.getId(), display.getId(), user);
         return display;
     }
@@ -477,11 +463,11 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     @Override
     @Transactional
     public void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException {
-        relRoleDisplaySlideWidgetMapper.deleteByProject(projectId);
+        relRoleDisplaySlideWidgetMapper.deleteByProjectId(projectId);
         memDisplaySlideWidgetMapper.deleteByProject(projectId);
-        relRoleSlideMapper.deleteByProject(projectId);
+        relRoleSlideMapper.deleteByProjectId(projectId);
         displaySlideMapper.deleteByProjectId(projectId);
-        relRoleDisplayMapper.deleteByProject(projectId);
+        relRoleDisplayMapper.deleteByProjectId(projectId);
         displayMapper.deleteByProject(projectId);
     }
 }

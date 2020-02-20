@@ -17,10 +17,10 @@
  *
  */
 
-package edp.davinci.server.component.screenshot;
+package edp.davinci.service.screenshot;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.exception.ServerException;
+import edp.core.exception.ServerException;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.openqa.selenium.TimeoutException;
@@ -35,13 +35,13 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static edp.davinci.server.component.screenshot.BrowserEnum.valueOf;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
+
+import static edp.davinci.service.screenshot.BrowserEnum.valueOf;
 
 @Slf4j
 @Component

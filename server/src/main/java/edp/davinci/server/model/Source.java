@@ -17,23 +17,23 @@
  *
  */
 
-package edp.davinci.server.model;
+package edp.davinci.model;
 
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.util.SourceUtils;
-
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
-
+import edp.core.model.BaseSource;
+import edp.core.model.Dict;
+import edp.core.utils.SourceUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 
-import static edp.davinci.server.commons.Constants.JDBC_DATASOURCE_DEFAULT_VERSION;
-
 import java.util.List;
+
+import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
 @Slf4j
 @Data

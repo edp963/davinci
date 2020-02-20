@@ -17,12 +17,12 @@
  *
  */
 
-package edp.davinci.server.model;
-
-import static edp.davinci.server.commons.Constants.EMPTY;
+package edp.core.model;
 
 import edp.davinci.commons.util.StringUtils;
 import lombok.Data;
+
+import static edp.core.consts.Consts.EMPTY;
 
 @Data
 public class CustomDataSource {

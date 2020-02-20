@@ -17,50 +17,49 @@
  *
  */
 
-package edp.davinci.server.service.impl;
+package edp.davinci.service.impl;
 
-import edp.davinci.commons.util.AESUtils;
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.dao.*;
-import edp.davinci.server.dto.display.MemDisplaySlideWidgetWithSlide;
-import edp.davinci.server.dto.project.ProjectDetail;
-import edp.davinci.server.dto.project.ProjectPermission;
-import edp.davinci.server.dto.share.*;
-import edp.davinci.server.dto.user.UserLogin;
-import edp.davinci.server.dto.view.DistinctParam;
-import edp.davinci.server.dto.view.ViewExecuteParam;
-import edp.davinci.server.dto.view.ViewWithProjectAndSource;
-import edp.davinci.server.dto.view.ViewWithSource;
-import edp.davinci.server.enums.HttpCodeEnum;
-import edp.davinci.server.exception.ForbiddenExecption;
-import edp.davinci.server.exception.NotFoundException;
-import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.*;
-import edp.davinci.server.service.ProjectService;
-import edp.davinci.server.service.ShareService;
-import edp.davinci.server.service.UserService;
-import edp.davinci.server.service.ViewService;
-import edp.davinci.server.util.CollectionUtils;
-import edp.davinci.server.util.CsvUtils;
-import edp.davinci.server.util.FileUtils;
-import edp.davinci.server.util.ServerUtils;
-import edp.davinci.server.util.TokenUtils;
+import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.ForbiddenExecption;
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
+import edp.core.model.Paginate;
+import edp.core.model.PaginateWithQueryColumns;
+import edp.core.model.QueryColumn;
+import edp.core.utils.*;
+import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ResultMap;
+import edp.davinci.core.model.TokenEntity;
+import edp.davinci.core.utils.CsvUtils;
+import edp.davinci.dao.*;
+import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
+import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.projectDto.ProjectPermission;
+import edp.davinci.dto.shareDto.*;
+import edp.davinci.dto.userDto.UserLogin;
+import edp.davinci.dto.viewDto.DistinctParam;
+import edp.davinci.dto.viewDto.ViewExecuteParam;
+import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
+import edp.davinci.dto.viewDto.ViewWithSource;
+import edp.davinci.model.*;
+import edp.davinci.service.ProjectService;
+import edp.davinci.service.ShareService;
+import edp.davinci.service.UserService;
+import edp.davinci.service.ViewService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-
-import static edp.davinci.server.commons.Constants.EMPTY;
-
 import java.io.File;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static edp.core.consts.Consts.EMPTY;
 
 
 @Service

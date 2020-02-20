@@ -24,10 +24,6 @@ package edp.davinci.commons.util;
  */
 public class StringUtils {
 	
-	private StringUtils() {
-
-	}
-	
 	public static boolean isEmpty(CharSequence value) {
 		return value == null || value.length() == 0;
 	}

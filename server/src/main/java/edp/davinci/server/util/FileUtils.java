@@ -17,21 +17,17 @@
  *
  */
 
-package edp.davinci.server.util;
+package edp.core.utils;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.component.excel.MsgWrapper;
-import edp.davinci.server.enums.ActionEnum;
-import edp.davinci.server.enums.FileTypeEnum;
-
+import edp.davinci.core.enums.ActionEnum;
+import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.service.excel.MsgWrapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-
-import static edp.davinci.server.commons.Constants.*;
-
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -39,6 +35,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import static edp.core.consts.Consts.*;
 
 
 @Component
