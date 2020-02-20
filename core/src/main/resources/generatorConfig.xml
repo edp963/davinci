@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN" "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+	<context id="davinci">
+		<property name="javaFileEncoding" value="UTF-8" />
+		<property name="autoDelimitKeywords" value="true" />
+		<property name="beginningDelimiter" value="`" />
+		<property name="endingDelimiter" value="`" />
+		<plugin
+			type="com.softwareloop.mybatis.generator.plugins.LombokPlugin" />
+		<commentGenerator>
+			<property name="suppressDate" value="true" />
+			<property name="suppressAllComments" value="true" />
+		</commentGenerator>
+		<jdbcConnection
+			connectionURL="jdbc:mysql://localhost:3306/davinci?useUnicode=true&amp;characterEncoding=UTF-8&amp;zeroDateTimeBehavior=convertToNull&amp;allowMultiQueries=true"
+			driverClass="com.mysql.jdbc.Driver" userId="root"
+			password="xiaolong@0509" />
+		<javaTypeResolver>
+            <property name="forceBigDecimals" value="false"/>
+        </javaTypeResolver>
+		<javaModelGenerator
+			targetPackage="edp.davinci.core.dao.entity"
+			targetProject="D:\CE\UAVStackIDE\edpgitroot\davinci\core\src\main\java" />
+		<javaClientGenerator
+			targetPackage="edp.davinci.core.dao"
+			targetProject="D:\CE\UAVStackIDE\edpgitroot\davinci\core\src\main\java"
+			type="ANNOTATEDMAPPER" />
+		<table tableName="cron_job">
+			<columnOverride column="config"
+				javaType="java.lang.String" jdbcType="VARCHAR"></columnOverride>
+			<columnOverride column="exec_log"
+				javaType="java.lang.String" jdbcType="VARCHAR"></columnOverride>
+		</table>
+		<table tableName="dashboard">
+			<columnOverride column="config"
+				javaType="java.lang.String" jdbcType="VARCHAR"></columnOverride>
+		</table>
+	</context>
+</generatorConfiguration>

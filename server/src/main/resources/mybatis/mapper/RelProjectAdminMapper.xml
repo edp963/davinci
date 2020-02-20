@@ -19,9 +19,9 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.RelProjectAdminMapper">
+<mapper namespace="edp.davinci.server.dao.RelProjectAdminMapper">
 
-    <insert id="insert" parameterType="edp.davinci.model.RelProjectAdmin">
+    <insert id="insert" parameterType="edp.davinci.server.model.RelProjectAdmin">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>

@@ -19,8 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.WidgetMapper">
-    <insert id="insert" parameterType="edp.davinci.model.Widget">
+<mapper namespace="edp.davinci.server.dao.WidgetMapper">
+    <insert id="insert" parameterType="edp.davinci.server.model.Widget">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
@@ -53,7 +53,6 @@
         </trim>
     </insert>
 
-
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert ignore into widget
         (`id`,`name`,`description`, view_id, `project_id`, `type`, `publish`,`config`)
@@ -84,7 +83,7 @@
     </update>
 
 
-    <select id="getByIds" resultType="edp.davinci.model.Widget" parameterType="java.util.Set">
+    <select id="getByIds" resultType="edp.davinci.server.model.Widget" parameterType="java.util.Set">
         select * from widget where
         <if test="list != null and list.size > 0">
             id in
@@ -96,7 +95,6 @@
             1=0
         </if>
     </select>
-
 
     <select id="getIdSetByIds" resultType="java.lang.Long" parameterType="java.util.Set">
         select id from widget where id in

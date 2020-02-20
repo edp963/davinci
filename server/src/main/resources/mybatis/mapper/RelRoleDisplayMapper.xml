@@ -19,8 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.RelRoleDisplayMapper">
-    <insert id="insert" parameterType="edp.davinci.model.RelRoleDisplay">
+<mapper namespace="edp.davinci.server.dao.RelRoleDisplayMapper">
+    <insert id="insert" parameterType="edp.davinci.server.model.RelRoleDisplay">
         insert ignore rel_role_display
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `role_id`,

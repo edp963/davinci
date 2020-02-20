@@ -18,9 +18,8 @@
   >>
   -->
 
-
 <assembly>
-    <id>dist-beta.8</id>
+    <id>dist-beta</id>
     <formats>
         <format>zip</format>
     </formats>
@@ -81,13 +80,6 @@
             </directory>
             <outputDirectory>davinci-ui</outputDirectory>
         </fileSet>
-        <!--<fileSet>-->
-            <!--<directory>-->
-                <!--${project.parent.basedir}/swagger-ui-->
-            <!--</directory>-->
-            <!--<outputDirectory>swagger-ui</outputDirectory>-->
-        <!--</fileSet>-->
-
     </fileSets>
 
     <dependencySets>
@@ -100,10 +92,4 @@
         </dependencySet>
     </dependencySets>
 
-    <!--<files>
-        <file>
-            <source>${project.parent.basedir}/server/target/davinci-server_2.11-${project.parent.version}-jar-with-dependencies.jar</source>
-            <outputDirectory>plugin</outputDirectory>
-        </file>
-    </files>-->
 </assembly>

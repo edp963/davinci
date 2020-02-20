@@ -19,9 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.RelRoleProjectMapper">
-
-    <insert id="insert" parameterType="edp.davinci.model.RelRoleProject">
+<mapper namespace="edp.davinci.server.dao.RelRoleProjectMapper">
+    <insert id="insert" parameterType="edp.davinci.server.model.RelRoleProject">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT id from rel_role_project where `role_id` = #{roleId} and `project_id` = #{projectId}
         </selectKey>
@@ -98,7 +97,6 @@
         </if>
     </delete>
 
-
     <sql id="userMaxPermissionBaseSql">
         SELECT rrp.project_id                          as projectId,
                IFNULL(max(rrp.viz_permission), 0)      as vizPermission,
@@ -112,7 +110,7 @@
                  left join rel_role_user rru on rru.role_id = rrp.role_id
     </sql>
 
-    <select id="getMaxPermissions" resultType="edp.davinci.dto.projectDto.UserMaxProjectPermission">
+    <select id="getMaxPermissions" resultType="edp.davinci.server.dto.project.UserMaxProjectPermission">
         <include refid="userMaxPermissionBaseSql"></include>
         WHERE rru.user_id = #{userId} and rrp.project_id in
         <foreach collection="projectIds" index="index" item="item" open="(" close=")" separator=",">
@@ -121,13 +119,12 @@
         GROUP BY rrp.project_id
     </select>
 
-
-    <select id="getMaxPermission" resultType="edp.davinci.dto.projectDto.UserMaxProjectPermission">
+    <select id="getMaxPermission" resultType="edp.davinci.server.dto.project.UserMaxProjectPermission">
         <include refid="userMaxPermissionBaseSql"></include>
         WHERE rru.user_id = #{userId} and rrp.project_id = #{projectId}
     </select>
 
-    <select id="getByProject" resultType="edp.davinci.model.RelRoleProject">
+    <select id="getByProject" resultType="edp.davinci.server.model.RelRoleProject">
         select *
         from rel_role_project
         where project_id = #{projectId}

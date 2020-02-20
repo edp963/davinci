@@ -19,8 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.RelRolePortalMapper">
-    <insert id="insert" parameterType="edp.davinci.model.RelRolePortal">
+<mapper namespace="edp.davinci.server.dao.RelRolePortalMapper">
+    <insert id="insert" parameterType="edp.davinci.server.model.RelRolePortal">
         insert ignore rel_role_portal
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `role_id`,
@@ -37,7 +37,6 @@
             #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
-
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         replace into rel_role_portal

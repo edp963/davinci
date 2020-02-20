@@ -19,8 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.DisplaySlideMapper">
-    <insert id="insert" parameterType="edp.davinci.model.DisplaySlide">
+<mapper namespace="edp.davinci.server.dao.DisplaySlideMapper">
+    <insert id="insert" parameterType="edp.davinci.server.model.DisplaySlide">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
@@ -70,7 +70,7 @@
         </foreach>
     </update>
 
-    <select id="queryByDisplayIds" resultType="edp.davinci.model.DisplaySlide">
+    <select id="queryByDisplayIds" resultType="edp.davinci.server.model.DisplaySlide">
         select `id`, `display_id`, `index` from display_slide
         <if test="displayIds != null and displayIds.size > 0">
             where `display_id` in

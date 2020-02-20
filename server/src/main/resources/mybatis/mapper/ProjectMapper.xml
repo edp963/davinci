@@ -19,9 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.ProjectMapper">
-
-    <insert id="insert" parameterType="edp.davinci.model.Project">
+<mapper namespace="edp.davinci.server.dao.ProjectMapper">
+    <insert id="insert" parameterType="edp.davinci.server.model.Project">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
@@ -181,7 +180,7 @@
     </sql>
 
 
-    <select id="getProjectsByKewordsWithUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+    <select id="getProjectsByKewordsWithUser" resultType="edp.davinci.server.dto.project.ProjectWithCreateBy">
         <include refid="selectProjectByUserBaseSql"></include>
         <if test="orgList != null">
             AND p.org_id IN
@@ -196,7 +195,7 @@
     </select>
 
 
-    <select id="getProjectsByOrgWithUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+    <select id="getProjectsByOrgWithUser" resultType="edp.davinci.server.dto.project.ProjectWithCreateBy">
         <include refid="selectProjectByUserBaseSql"></include>
         <if test="orgId != null">
             and p.org_id = #{orgId}
@@ -208,13 +207,13 @@
     </select>
 
 
-    <select id="getProejctsByUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+    <select id="getProejctsByUser" resultType="edp.davinci.server.dto.project.ProjectWithCreateBy">
         <include refid="selectProjectByUserBaseSql"></include>
         order by p.id
     </select>
 
 
-    <select id="getFavoriteProjects" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+    <select id="getFavoriteProjects" resultType="edp.davinci.server.dto.project.ProjectWithCreateBy">
         select t.* from (
         <include refid="selectProjectByUserBaseSql"></include>
         ) t LEFT JOIN favorite f on t.id = f.project_id
@@ -238,7 +237,7 @@
            or (ruo.user_id = #{userId} and ruo.role > 0)
     </select>
 
-    <select id="getProjectDetail" resultType="edp.davinci.dto.projectDto.ProjectDetail">
+    <select id="getProjectDetail" resultType="edp.davinci.server.dto.project.ProjectDetail">
         SELECT p.*,
                u.`id`                                       AS 'createBy.id',
                IF(u.`name` is NULL, u.`username`, u.`name`) AS 'createBy.username',

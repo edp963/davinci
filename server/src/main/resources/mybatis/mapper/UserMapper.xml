@@ -19,9 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.UserMapper">
-
-    <insert id="insert" parameterType="edp.davinci.model.User">
+<mapper namespace="edp.davinci.server.dao.UserMapper">
+    <insert id="insert" parameterType="edp.davinci.server.model.User">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
@@ -71,8 +70,7 @@
         </trim>
     </insert>
 
-
-    <select id="getUsersByKeyword" resultType="edp.davinci.dto.userDto.UserBaseInfo">
+    <select id="getUsersByKeyword" resultType="edp.davinci.server.dto.user.UserBaseInfo">
         select DISTINCT u.id, IF(u.`name` is NULL,u.`username`,u.`name`) as username, u.`email`, u.`avatar`
         from `user` u
         LEFT JOIN rel_user_organization r on r.user_id = u.id
@@ -85,7 +83,7 @@
         or LOWER(`email`) like CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
     </select>
 
-    <select id="getByIds" resultType="edp.davinci.model.User">
+    <select id="getByIds" resultType="edp.davinci.server.model.User">
         select * from `user` where
         <if test="userIds != null and userIds.size > 0">
             id in
