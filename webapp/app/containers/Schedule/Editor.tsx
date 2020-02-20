@@ -68,7 +68,8 @@ import {
   IUserInfo,
   IScheduleMailConfig,
   SchedulePeriodUnit,
-  ICronExpressionPartition
+  ICronExpressionPartition,
+  IScheduleVizConfigItem
 } from './components/types'
 
 import Styles from './Schedule.less'
@@ -169,27 +170,42 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
     onLoadDashboards
   } = props
 
-  useEffect(() => {
-    if (!editingSchedule.id) {
-      return
-    }
-    const { contentList } = editingSchedule.config
-    // initial Viz loading by contentList Portal or Display setting
-    contentList.forEach(({ contentType, id }) => {
-      switch (contentType) {
-        case 'portal':
-          if (~portals.findIndex((portal) => portal.id === id)) {
-            onLoadDashboards(id)
-          }
-          break
-        case 'display':
-          if (~displays.findIndex((display) => display.id === id)) {
-            onLoadDisplaySlides(id)
-          }
-          break
+  const loadVizDetail = useCallback(
+    (
+      type: IScheduleVizConfigItem['contentType'],
+      schedule: ISchedule,
+      vizs: IPortal[] | IDisplayFormed[]
+    ) => {
+      if (!schedule.id || !vizs.length) {
+        return
       }
-    })
-  }, [portals, displays, editingSchedule])
+      const { contentList } = schedule.config
+      // initial Viz loading by contentList Portal or Display setting
+      contentList.forEach(({ contentType, id: vizId }) => {
+        if (contentType !== type) {
+          return
+        }
+        if (~vizs.findIndex(({ id }) => id === vizId)) {
+          switch (type) {
+            case 'portal':
+              onLoadDashboards(vizId)
+              break
+            case 'display':
+              onLoadDisplaySlides(vizId)
+              break
+          }
+        }
+      })
+    },
+    []
+  )
+
+  useEffect(() => {
+    loadVizDetail('portal', editingSchedule, portals)
+  }, [portals, editingSchedule])
+  useEffect(() => {
+    loadVizDetail('display', editingSchedule, displays)
+  }, [displays, editingSchedule])
 
   const {
     suggestMails,
