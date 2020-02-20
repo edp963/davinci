@@ -135,7 +135,8 @@ const ScheduleVizConfig: React.FC<IScheduleVizConfigProps> = (props) => {
     ) => {
       // remove this Viz value first
       const newValue = value.filter(
-        ({ id, contentType }) => id !== vizId && contentType === type
+        ({ id, contentType }) =>
+          contentType !== type || (contentType === type && id !== vizId)
       )
       if (checked) {
         newValue.push({
