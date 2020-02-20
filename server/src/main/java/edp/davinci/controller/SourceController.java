@@ -41,7 +41,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 
 import edp.core.annotation.CurrentUser;
 import edp.core.model.DBTables;

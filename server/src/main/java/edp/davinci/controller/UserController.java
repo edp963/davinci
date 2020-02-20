@@ -19,7 +19,7 @@
 
 package edp.davinci.controller;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.CurrentUser;
 import edp.core.enums.HttpCodeEnum;

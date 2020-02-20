@@ -48,7 +48,7 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.ElasticSearchDruidDataSourceFactory;
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;

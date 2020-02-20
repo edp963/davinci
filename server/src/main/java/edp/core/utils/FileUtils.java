@@ -19,7 +19,7 @@
 
 package edp.core.utils;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.service.excel.MsgWrapper;

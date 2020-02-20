@@ -34,7 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import com.alibaba.fastjson.JSON;
 
 import edp.core.common.quartz.QuartzJobExecutor;

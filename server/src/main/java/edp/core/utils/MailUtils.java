@@ -19,7 +19,7 @@
 
 package edp.core.utils;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import com.google.common.base.Stopwatch;
 import edp.core.exception.ServerException;
 import edp.core.model.MailContent;

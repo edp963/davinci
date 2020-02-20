@@ -19,7 +19,7 @@
 
 package edp.davinci.core.utils;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.core.utils.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 

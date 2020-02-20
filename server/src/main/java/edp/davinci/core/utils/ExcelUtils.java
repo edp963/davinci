@@ -19,7 +19,7 @@
 
 package edp.davinci.core.utils;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.enums.SqlTypeEnum;
 import edp.core.exception.ServerException;

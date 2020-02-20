@@ -19,7 +19,7 @@
 
 package edp.core.model;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import lombok.Data;
 
 import static edp.core.consts.Consts.EMPTY;

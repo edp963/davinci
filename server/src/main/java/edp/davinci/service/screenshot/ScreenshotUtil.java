@@ -19,7 +19,7 @@
 
 package edp.davinci.service.screenshot;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.core.exception.ServerException;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;

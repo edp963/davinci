@@ -19,7 +19,7 @@
 
 package edp.davinci.service.excel;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.core.enums.SqlTypeEnum;
 import edp.core.model.QueryColumn;
 import edp.core.utils.CollectionUtils;

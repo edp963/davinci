@@ -19,7 +19,7 @@
 
 package edp.davinci.service.impl;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 
 import edp.core.consts.Consts;
 import edp.core.enums.HttpCodeEnum;

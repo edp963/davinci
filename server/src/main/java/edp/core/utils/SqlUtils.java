@@ -19,7 +19,7 @@
 
 package edp.core.utils;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.core.common.jdbc.JdbcDataSource;
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;

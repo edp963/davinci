@@ -19,7 +19,7 @@
 
 package edp.davinci.dto.roleDto;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.davinci.dto.userDto.UserBaseInfo;
 import edp.davinci.model.User;
 import lombok.Data;

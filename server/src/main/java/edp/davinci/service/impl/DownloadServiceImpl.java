@@ -19,7 +19,7 @@
 
 package edp.davinci.service.impl;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.DownloadTaskStatus;

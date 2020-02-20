@@ -19,7 +19,7 @@
 
 package edp.davinci.service.impl;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ForbiddenExecption;
 import edp.core.exception.NotFoundException;

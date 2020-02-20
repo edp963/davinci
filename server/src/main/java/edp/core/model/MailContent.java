@@ -19,7 +19,7 @@
 
 package edp.core.model;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.core.consts.Consts;
 import edp.core.enums.MailContentTypeEnum;
 import edp.core.exception.ServerException;

@@ -19,7 +19,7 @@
 
 package edp.core.common.quartz;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.core.model.ScheduleJob;
 import edp.core.utils.DateUtils;
 import edp.core.utils.QuartzHandler;

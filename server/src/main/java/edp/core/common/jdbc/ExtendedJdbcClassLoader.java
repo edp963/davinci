@@ -19,8 +19,8 @@
 
 package edp.core.common.jdbc;
 
-import com.alibaba.druid.util.StringUtils;
 import edp.core.utils.MD5Util;
+import edp.davinci.commons.util.StringUtils;
 
 import java.io.File;
 import java.net.MalformedURLException;

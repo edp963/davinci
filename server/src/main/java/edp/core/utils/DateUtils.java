@@ -19,7 +19,7 @@
 
 package edp.core.utils;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import org.joda.time.DateTime;
 
 import java.sql.Timestamp;

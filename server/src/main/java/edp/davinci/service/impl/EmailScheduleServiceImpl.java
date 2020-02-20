@@ -19,7 +19,7 @@
 
 package edp.davinci.service.impl;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.common.quartz.ScheduleService;
 import edp.core.enums.MailContentTypeEnum;

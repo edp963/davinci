@@ -19,7 +19,7 @@
 
 package edp.davinci.core.inteceptor;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.AuthShare;

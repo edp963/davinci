@@ -19,7 +19,7 @@
 
 package edp.davinci.core.utils;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import com.sun.tools.javac.util.ListBuffer;
 import edp.core.exception.ServerException;
 import edp.core.utils.CollectionUtils;

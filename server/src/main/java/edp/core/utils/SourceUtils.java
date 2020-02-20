@@ -38,7 +38,7 @@ import java.util.regex.Matcher;
 
 import javax.sql.DataSource;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 
 import edp.core.common.jdbc.ExtendedJdbcClassLoader;
 import edp.core.common.jdbc.JdbcDataSource;

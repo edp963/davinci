@@ -10,7 +10,7 @@
 
 package edp.davinci.common.utils;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.FieldFormatTypeEnum;

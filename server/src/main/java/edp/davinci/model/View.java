@@ -19,7 +19,7 @@
 
 package edp.davinci.model;
 
-import com.alibaba.druid.util.StringUtils;
+import edp.davinci.commons.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
 import edp.core.model.RecordInfo;
