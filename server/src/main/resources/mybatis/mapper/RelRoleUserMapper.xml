@@ -19,8 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.RelRoleUserMapper">
-    <insert id="insert" parameterType="edp.davinci.model.RelRoleUser">
+<mapper namespace="edp.davinci.server.dao.RelRoleUserMapper">
+    <insert id="insert" parameterType="edp.davinci.server.model.RelRoleUser">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT id from rel_role_user where role_id = #{roleId} and user_id = #{userId}
         </selectKey>
@@ -65,7 +65,7 @@
         </foreach>
     </select>
 
-    <select id="getByIds" resultType="edp.davinci.model.RelRoleUser">
+    <select id="getByIds" resultType="edp.davinci.server.model.RelRoleUser">
         select * from rel_role_user where user_id in
         <foreach collection="userList" item="item" index="index" open="(" close=")" separator=",">
             #{item}

@@ -19,9 +19,9 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.DashboardMapper">
+<mapper namespace="edp.davinci.server.dao.DashboardMapper">
 
-    <insert id="insert" parameterType="edp.davinci.model.Dashboard">
+    <insert id="insert" parameterType="edp.davinci.server.model.Dashboard">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
@@ -72,7 +72,7 @@
     </update>
 
 
-    <select id="queryByParentIds" resultType="edp.davinci.model.Dashboard" parameterType="java.util.Set">
+    <select id="queryByParentIds" resultType="edp.davinci.server.model.Dashboard" parameterType="java.util.Set">
         select `id`, `full_parent_Id` from dashboard
         <if test="parentIds != null and parentIds.size > 0">
             where `id` in
@@ -99,7 +99,7 @@
     </select>
 
 
-    <select id="queryDashboardsByIds" parameterType="java.util.Set" resultType="edp.davinci.model.Dashboard">
+    <select id="queryDashboardsByIds" parameterType="java.util.Set" resultType="edp.davinci.server.model.Dashboard">
         select * from dashboard where
         <if test="set != null and set.size > 0">
             <foreach collection="set" index="index" item="item" open="(" close=")" separator="OR">
@@ -111,7 +111,7 @@
         </if>
     </select>
 
-    <select id="queryByPortals" resultType="edp.davinci.model.Dashboard">
+    <select id="queryByPortals" resultType="edp.davinci.server.model.Dashboard">
         select * from dashboard where
         <if test="set != null and set.size > 0">
             `dashboard_portal_id` in

@@ -19,9 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.RelRoleViewMapper">
-
-    <insert id="insert" parameterType="edp.davinci.dao.RelRoleViewMapper">
+<mapper namespace="edp.davinci.server.dao.RelRoleViewMapper">
+    <insert id="insert" parameterType="edp.davinci.server.dao.RelRoleViewMapper">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT id from rel_role_view where `role_id` = #{roleId} and `view_id` = #{viewId}
         </selectKey>
@@ -45,7 +44,6 @@
         </trim>
     </insert>
 
-
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         replace into rel_role_view
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -68,5 +66,4 @@
             </trim>
         </foreach>
     </insert>
-
 </mapper>

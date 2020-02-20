@@ -19,8 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.OrganizationMapper">
-    <insert id="insert" parameterType="edp.davinci.model.Organization">
+<mapper namespace="edp.davinci.server.dao.OrganizationMapper">
+    <insert id="insert" parameterType="edp.davinci.server.model.Organization">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
@@ -62,7 +62,7 @@
         </trim>
     </insert>
 
-    <update id="updateProjectNum" parameterType="edp.davinci.model.Organization">
+    <update id="updateProjectNum" parameterType="edp.davinci.server.model.Organization">
         update organization
         <choose>
             <when test="projectNum > 0">
@@ -78,7 +78,7 @@
     </update>
 
 
-    <update id="updateMemberNum" parameterType="edp.davinci.model.Organization">
+    <update id="updateMemberNum" parameterType="edp.davinci.server.model.Organization">
         update organization
         <choose>
             <when test="memberNum > 0">
@@ -94,7 +94,7 @@
     </update>
 
 
-    <update id="updateRoleNum" parameterType="edp.davinci.model.Organization">
+    <update id="updateRoleNum" parameterType="edp.davinci.server.model.Organization">
         update organization
         <choose>
             <when test="roleNum > 0">
@@ -116,7 +116,7 @@
         </foreach>
     </update>
 
-    <select id="getJointlyOrganization" resultType="edp.davinci.dto.organizationDto.OrganizationInfo"
+    <select id="getJointlyOrganization" resultType="edp.davinci.server.dto.organization.OrganizationInfo"
             parameterType="java.util.Set">
         SELECT o.* FROM
         (organization o,

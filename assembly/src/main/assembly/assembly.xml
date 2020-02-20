@@ -18,9 +18,8 @@
   >>
   -->
 
-
 <assembly>
-    <id>dist-beta.9</id>
+    <id>dist-beta</id>
     <formats>
         <format>zip</format>
     </formats>
@@ -58,7 +57,7 @@
         </fileSet>
         <fileSet>
             <directory>
-                ${project.parent.basedir}
+                ${project.parent.basedir}/userfiles
             </directory>
             <outputDirectory>userfiles</outputDirectory>
             <excludes>
@@ -67,21 +66,13 @@
         </fileSet>
         <fileSet>
             <directory>
-                ${project.parent.basedir}
+                ${project.parent.basedir}/logs
             </directory>
-            <outputDirectory>logs/sys</outputDirectory>
-            <excludes>
-                <exclude>*/**</exclude>
-            </excludes>
-        </fileSet>
-        <fileSet>
-            <directory>
-                ${project.parent.basedir}
-            </directory>
-            <outputDirectory>logs/user</outputDirectory>
-            <excludes>
-                <exclude>*/**</exclude>
-            </excludes>
+            <outputDirectory>logs</outputDirectory>
+            <includes>
+                <include>sys</include>
+                <include>user</include>
+            </includes>
         </fileSet>
         <fileSet>
             <directory>
@@ -100,4 +91,5 @@
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
     </dependencySets>
+
 </assembly>

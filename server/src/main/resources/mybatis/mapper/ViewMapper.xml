@@ -19,8 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.ViewMapper">
-    <insert id="insert" parameterType="edp.davinci.model.View">
+<mapper namespace="edp.davinci.server.dao.ViewMapper">
+    <insert id="insert" parameterType="edp.davinci.server.model.View">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
@@ -71,7 +71,6 @@
         </trim>
     </insert>
 
-
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert into `view`
         (`id`,`name`,description, source_id, `project_id`, `sql`, `model`,`variable`,`config`)
@@ -91,7 +90,7 @@
         </foreach>
     </insert>
 
-    <select id="selectByWidgetIds" resultType="edp.davinci.model.View">
+    <select id="selectByWidgetIds" resultType="edp.davinci.server.model.View">
         select * from `view` where id in
         (
         select view_id from widget where
@@ -106,7 +105,6 @@
         </if>
         );
     </select>
-
 
     <sql id="selectViewWithProjectAndSourceBaseSql">
         SELECT v.*,
@@ -129,13 +127,13 @@
     </sql>
 
     <select id="getViewWithProjectAndSourceByWidgetId"
-            resultType="edp.davinci.dto.viewDto.ViewWithProjectAndSource">
+            resultType="edp.davinci.server.dto.view.ViewWithProjectAndSource">
         <include refid="selectViewWithProjectAndSourceBaseSql"></include>
         WHERE v.id = (select view_id from widget where id = #{widgetId})
     </select>
 
     <select id="getViewWithProjectAndSourceById"
-            resultType="edp.davinci.dto.viewDto.ViewWithProjectAndSource">
+            resultType="edp.davinci.server.dto.view.ViewWithProjectAndSource">
         <include refid="selectViewWithProjectAndSourceBaseSql"></include>
         WHERE v.id = #{id}
     </select>

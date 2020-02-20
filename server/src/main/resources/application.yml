@@ -23,7 +23,6 @@ file:
   phantomJs-path: ${DAVINCI3_HOME}/bin/phantom.js
   base-path: ${DAVINCI3_HOME}/lib/
 
-
 spring:
   servlet:
     multipart:
@@ -54,7 +53,6 @@ spring:
   mvc:
     static-path-pattern: /**
 
-
   thymeleaf:
     mode: HTML5
     cache: true
@@ -72,7 +70,6 @@ spring:
     caffeine:
       type: caffeine
 
-
 logging:
   config: file:${DAVINCI3_HOME}/config/logback.xml
 
@@ -81,7 +78,6 @@ springfox:
     swagger:
       v2:
         path: /api-doc
-
 
 pagehelper:
   supportMethodsArguments: true
@@ -101,7 +97,7 @@ mybatis:
 mapper:
   identity: MYSQL
   not-empty: false
-  mappers: edp.davinci.dao
+  mappers: edp.davinci.*.dao
 
 sql_template_delimiter: $
 

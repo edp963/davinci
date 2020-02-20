@@ -19,8 +19,8 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.StarMapper">
-    <insert id="insert" parameterType="edp.davinci.model.Star">
+<mapper namespace="edp.davinci.server.dao.StarMapper">
+    <insert id="insert" parameterType="edp.davinci.server.model.Star">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
