@@ -306,13 +306,13 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     order = vizOrderMap.get(DISPLAY + AT_SYMBOL + cronJobContent.getId());
                 }
                 Display display = displayMapper.getById(cronJobContent.getId());
-                Set<WidgetWithVizId> widgetsWithSlideIdSet = widgetMapper.queryByDisplayId(cronJobContent.getId());
-                if (display != null && !CollectionUtils.isEmpty(widgetsWithSlideIdSet)) {
+                List<WidgetWithVizId> widgetsWithSlideIdList = widgetMapper.queryByDisplayId(cronJobContent.getId());
+                if (display != null && !CollectionUtils.isEmpty(widgetsWithSlideIdList)) {
                     ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
                     boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
                     Map<Long, Integer> slidePageMap = displayPageMap.get(cronJobContent.getId());
 
-                    Map<Long, List<WidgetWithVizId>> slideWidgetsMap = widgetsWithSlideIdSet.stream().collect(Collectors.groupingBy(WidgetWithVizId::getVizId));
+                    Map<Long, List<WidgetWithVizId>> slideWidgetsMap = widgetsWithSlideIdList.stream().collect(Collectors.groupingBy(WidgetWithVizId::getVizId));
                     int slidePageSize = slideWidgetsMap.size();
                     List<Long> slideIds = new ArrayList<>();
                     if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
