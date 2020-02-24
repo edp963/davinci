@@ -238,7 +238,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       })
     }
   }
-  public componentWillMount () {
+
+  public componentDidMount () {
     // urlparse
     const qs = this.querystring(location.href.substr(location.href.indexOf('?') + 1))
     this.setState({
@@ -250,9 +251,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     delete qs.type
     delete qs.shareInfo
     this.props.onSendShareParams(qs)
-  }
-
-  public componentDidMount () {
     window.addEventListener('resize', this.onWindowResize, false)
   }
 
@@ -1101,7 +1099,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       fullScreenComponent = ''
     }
 
-    loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
+    loginPanel = showLogin ? <Login shareInfo={shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
 
     const headlessBrowserRenderParentNode = document.getElementById('app')
 
