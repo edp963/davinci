@@ -50,6 +50,17 @@ import { resizeTableColumns } from './components/HeadCell'
 interface IMapTableHeaderConfig {
   [key: string]: ITableHeaderConfig
 }
+interface TSelectItemCellProps {
+  index: number
+  value: string
+  key: string
+}
+type ISelectItemsCell = {[propName: string] : Array<TSelectItemCellProps>}
+type ISelectItems =  {
+  group: string[]
+  cell: ISelectItemsCell
+}
+
 
 interface ITableStates {
   chartStyles: IChartStyles
@@ -69,6 +80,7 @@ interface ITableStates {
   }
   selectedRow: object[]
   tableBodyHeight: number
+  selectItems: ISelectItems
 }
 
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
@@ -92,7 +104,11 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       total: void 0
     },
     tableBodyHeight: 0,
-    selectedRow: []
+    selectedRow: [],
+    selectItems: {
+      group: [],
+      cell: {}
+    }
   }
 
   private table = React.createRef<AntTable<any>>()
@@ -180,6 +196,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const tablePagination = getPaginationOptions(nextProps)
       return { tableColumns, mapTableHeaderConfig, containerWidthRatio, tablePagination, chartStyles, data, width }
     }
+
     return { chartStyles, data, width }
   }
 
@@ -245,6 +262,12 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return isb
   }
 
+  private matchAttrInBrackets(attr: string) {
+    const re = /\(\S+\)/
+    const key = re.test(attr) ? attr.match(/\((\S+)\)/)[1] : attr
+    return key
+  }
+
   private rowClick = (record, row, event) => {
     const { getDataDrillDetail, onCheckTableInteract, onDoInteract } = this.props
     let selectedRow = [...this.state.selectedRow]
@@ -252,8 +275,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     if (event.target && event.target.innerHTML) {
       for (const attr in record) {
         if (record[attr].toString() === event.target.innerText) {
-          const re = /\(\S+\)/
-          const key = re.test(attr) ? attr.match(/\((\S+)\)/)[1] : attr
+          const key = this.matchAttrInBrackets(attr)
           filterObj = {
             key,
             value: event.target.innerText
@@ -296,16 +318,38 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         const triggerData = sourceData
         onDoInteract(triggerData)
       }
-      setTimeout(() => {
-        if (getDataDrillDetail) {
-          getDataDrillDetail(JSON.stringify({filterObj, brushed, sourceData}))
-        }
-      }, 500)
+      // setTimeout(() => {
+      //   if (getDataDrillDetail) {
+      //     console.log(filterObj)
+      //     console.log(brushed)
+      //     console.log(sourceData) // 将selectItems 的数据组装成sourceData
+      //     getDataDrillDetail(JSON.stringify({filterObj, brushed, sourceData}))
+      //   }
+      // }, 500)
     })
   }
 
-  private setRowClassName = (record, row) =>
-   this.state.selectedRow.some((sr) => this.isSameObj(sr, record, true)) ? Styles.selectedRow : Styles.unSelectedRow
+  private asyncEmitDrillDetail() {
+    const { getDataDrillDetail } = this.props
+    setTimeout(() => {
+      if (this.props.getDataDrillDetail) {
+        const sourceData = this.combineFilter()
+        const brushed = [{0: Object.values(sourceData)}]
+        getDataDrillDetail(JSON.stringify({filterObj: sourceData, brushed, sourceData}))
+      }
+    }, 500)
+  }
+
+  private combineFilter() {
+    const {cell} = this.state.selectItems
+    return Object.keys(cell).reduce((iteratee, target) => {
+      iteratee = iteratee.concat(cell[target])
+      return iteratee
+    }, [])
+  }
+
+  // private setRowClassName = (record, row) =>
+  //  this.state.selectedRow.some((sr) => this.isSameObj(sr, record, true)) ? Styles.selectedRow : Styles.unSelectedRow
 
 
   private getTableStyle (
@@ -320,12 +364,169 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return tableStyle
   }
 
+  private collectCell = (target, index,dataIndex: string) => (event) => {
+    const groupName = this.matchAttrInBrackets(dataIndex)
+    if (this.isNumberVisualType(groupName)) {
+      return
+    }
+    let {group, cell} = this.state.selectItems
+    const { data} = this.props
+    if (group.includes(dataIndex)) {
+      group.forEach((g, i) => {
+        if (g === dataIndex) {
+          group.splice(i, 1)
+        }
+      })
+      cell[dataIndex] = data.reduce((obj: Array<TSelectItemCellProps>, d:{key: number}, arrayIndex) => {
+        if((d.key|| arrayIndex) !== index) {
+          obj.push({
+            ...target,
+            index: d.key || arrayIndex,
+            key: dataIndex,
+            value: target[dataIndex]
+          })
+        }
+        return obj
+      }, [])
+    } else {
+      let sourceCol = cell[dataIndex]
+      const currentValue = {
+        ...target,
+        index,
+        key: dataIndex,
+        value: target[dataIndex]
+      }
+      if (sourceCol && sourceCol.length) {
+        const isb = sourceCol.some((col) => col.index === index)
+        if(isb) {
+          cell[dataIndex] = cell[dataIndex].filter((c) => c.index !== index)
+        } else {
+          sourceCol.push(currentValue)
+        }
+      } else {
+        cell[dataIndex] = [currentValue]
+      }
+    }
+    
+    this.setState({
+      selectItems: {...this.state.selectItems}
+    }, () => {
+      this.asyncEmitDrillDetail()
+    })
+  }
+
+
+
+  private collectGroups = (target, dataIndex) => (event) => {
+      const groupName = this.matchAttrInBrackets(dataIndex)
+      if (this.isNumberVisualType(groupName)) {
+        return
+      }
+      const {group, cell} = this.state.selectItems
+      if (group.includes(dataIndex)) {
+        group.forEach((a, index) => {if (a === dataIndex) group.splice(index, 1)})
+      } else {
+        group.push(dataIndex)
+      }
+      delete cell[dataIndex]
+      this.setState({
+        selectItems: {...this.state.selectItems}
+      },() => {
+        this.asyncEmitDrillDetail()
+      })
+  }
+
+  private onCellClassName = (target, index, dataIndex) => {
+      const { group, cell } = this.state.selectItems
+      let result = ''
+      Object.keys(cell).forEach((key) => {
+        if (dataIndex === key){
+          cell[key].forEach(ck => {
+            if(index === ck.index) {
+              result = Styles.select
+            }
+          })
+        }
+      })
+      if (group && group.includes(dataIndex)) {
+        result = Styles.select
+      }
+      return result
+  }
+
+  private isNumberVisualType = (modelName) => {
+    const target = this.getVisualTypecollectByModel()
+    return this.hasProperty(target, modelName) === 'number'
+  }
+
+  private hasProperty<T extends Object, U extends keyof T>(obj:T, key:U){
+    return obj[key] ? obj[key] : false
+  }
+
+  private getVisualTypecollectByModel = () => {
+    const {model} = this.props
+    return Object.keys(model).reduce((iteratee, target) => {
+       iteratee[target] = this.hasProperty(model[target], 'visualType')
+       return iteratee
+    }, {})
+  }
+
+  private onHeadCellClassName = (target, dataIndex) => {
+      const {group} = this.state.selectItems
+      if(group && group.includes(dataIndex)){
+        return Styles.select
+      }
+      return ''
+  }
+
+  private loop = (col) => {
+    if (col && col.dataIndex) {
+      return {
+        ...col,
+        onHeaderCell: (target) => {
+          return {
+            ...col.onHeaderCell(target),
+            className: this.onHeadCellClassName(target, col.dataIndex),
+            onClick: this.collectGroups(target, col.dataIndex)
+          }
+        },
+        onCell: (target, index) => { // 这个index 在分页的场景下，不能作为判断依据
+          return {
+            ...col.onCell(target, index),
+            className: this.onCellClassName(target, index, col.dataIndex),
+            onClick: this.collectCell(target, index, col.dataIndex)
+          }
+        }
+      }
+    } else {
+      return {...col}
+    }
+  }
+
+  private enhancerColumns = (column) => {
+    const columns = column.map((col) => {
+      if (col.children && col.children.length) {
+        return {
+          ...this.loop(col),
+          children: this.enhancerColumns(col.children)
+        }
+      }
+      return this.loop(col)
+    })
+    return columns
+  }
+
+  private getEnhancerColumn = (column) => {
+    return this.enhancerColumns(column)
+  }
+
   public render () {
+
     const { data, chartStyles, width } = this.props
     const { headerFixed, bordered, withPaging, size } = chartStyles.table
     const { tablePagination, tableColumns, tableBodyHeight, mapTableHeaderConfig, containerWidthRatio } = this.state
     const adjustedTableColumns = this.adjustTableColumns(tableColumns, mapTableHeaderConfig, containerWidthRatio)
-
+    const getEnhancerColumn = this.getEnhancerColumn(adjustedTableColumns)
     const paginationConfig: PaginationConfig = {
       ...this.basePagination,
       ...tablePagination
@@ -355,11 +556,12 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
           dataSource={data}
           rowKey={this.getRowKey}
           components={tableComponents}
-          columns={adjustedTableColumns}
+          columns={getEnhancerColumn}
+          // columns={adjustedTableColumns}
           pagination={withPaging && tablePagination.total !== -1 ? paginationConfig : false}
           scroll={scroll}
           bordered={bordered}
-          rowClassName={this.setRowClassName}
+          // rowClassName={this.setRowClassName}
           onRowClick={this.rowClick}
           onChange={this.tableChange}
         />
