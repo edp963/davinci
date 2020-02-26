@@ -43,7 +43,7 @@ import edp.davinci.server.model.User;
 import edp.davinci.server.service.LdapService;
 import edp.davinci.server.service.UserService;
 import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.FileUtils;
 import edp.davinci.server.util.LockFactory;
 import edp.davinci.server.util.MailUtils;

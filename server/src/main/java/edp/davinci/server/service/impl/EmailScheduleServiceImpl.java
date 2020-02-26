@@ -47,7 +47,7 @@ import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.*;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ShareService;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.MailUtils;
 import edp.davinci.server.util.ServerUtils;
 import lombok.extern.slf4j.Slf4j;

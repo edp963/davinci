@@ -23,7 +23,7 @@ import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.enums.MailContentTypeEnum;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;

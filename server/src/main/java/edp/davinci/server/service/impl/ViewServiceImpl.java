@@ -45,7 +45,7 @@ import edp.davinci.server.model.*;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ViewService;
 import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.RedisUtils;
 import edp.davinci.server.util.SqlParseUtils;
 import edp.davinci.server.util.SqlUtils;

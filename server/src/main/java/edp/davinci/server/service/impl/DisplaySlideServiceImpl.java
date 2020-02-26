@@ -76,7 +76,7 @@ import edp.davinci.server.model.View;
 import edp.davinci.server.model.Widget;
 import edp.davinci.server.service.DisplaySlideService;
 import edp.davinci.server.service.ProjectService;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 

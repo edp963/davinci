@@ -19,6 +19,7 @@
 
 package edp.davinci.server.util;
 
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.DateUtils;
 import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;

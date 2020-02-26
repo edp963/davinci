@@ -20,7 +20,7 @@
 package edp.davinci.server.dto.view;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.SqlUtils;
 import lombok.Data;
 

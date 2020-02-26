@@ -39,7 +39,7 @@ import edp.davinci.server.model.TokenEntity;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.OrganizationService;
 import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.FileUtils;
 import edp.davinci.server.util.MailUtils;
 import edp.davinci.server.util.ServerUtils;

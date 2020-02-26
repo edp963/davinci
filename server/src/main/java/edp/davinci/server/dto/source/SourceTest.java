@@ -17,14 +17,14 @@
  *
  */
 
-package edp.davinci.dto.sourceDto;
+package edp.davinci.server.dto.source;
 
 
 import java.util.List;
 
 import javax.validation.constraints.NotBlank;
 
-import edp.core.model.Dict;
+import edp.davinci.server.model.Dict;
 import lombok.Data;
 
 @Data

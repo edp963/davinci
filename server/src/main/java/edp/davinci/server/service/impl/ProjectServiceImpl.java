@@ -42,7 +42,7 @@ import edp.davinci.server.service.DashboardService;
 import edp.davinci.server.service.DisplayService;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.PageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;

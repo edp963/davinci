@@ -23,7 +23,7 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 
 @Data
 public class DashboardTree {
