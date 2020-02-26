@@ -75,6 +75,7 @@ import edp.davinci.server.model.User;
 import edp.davinci.server.model.View;
 import edp.davinci.server.model.Widget;
 import edp.davinci.server.service.DisplaySlideService;
+import edp.davinci.server.service.ProjectService;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -579,38 +580,36 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			throw new ServerException("display slide is not found");
 		}
 
-		List<MemDisplaySlideWidget> memSlideWidgets = memDisplaySlideWidgetMapper.getMemDisplaySlideWidgetListBySlideId(slideId);
-		
-		if (CollectionUtils.isEmpty(memSlideWidgets)) {
+		List<MemDisplaySlideWidget> widgetList = memDisplaySlideWidgetMapper
+				.getMemDisplaySlideWidgetListBySlideId(slideId);
+		if (CollectionUtils.isEmpty(widgetList)) {
 			return null;
 		}
 
 		List<Long> disableList = getDisableVizs(user.getId(), display.getId(), null, VizEnum.SLIDE);
 		List<Long> disableMemDisplaySlideWidgets = relRoleDisplaySlideWidgetMapper.getDisableByUser(user.getId());
-		Iterator<MemDisplaySlideWidget> iterator = memSlideWidgets.iterator();
-        while (iterator.hasNext()) {
-            MemDisplaySlideWidget memDisplaySlideWidget = iterator.next();
-            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() &&
-                    (disableList.contains(memDisplaySlideWidget.getDisplaySlideId()) || disableMemDisplaySlideWidgets.contains(memDisplaySlideWidget.getId()))) {
-                iterator.remove();
-            }
-        }
-        
-        Set<Long> widgetIds = memSlideWidgets.stream().map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
-        Set<View> views = new HashSet<>();
-        List<Widget> widgets = null;
-        if (!CollectionUtils.isEmpty(widgetIds)) {
-            widgets = widgetMapper.getByIds(widgetIds);
-            views = viewMapper.selectByWidgetIds(widgetIds);
-        }
 
-        SlideWithMem slideWithMem = new SlideWithMem();
-        BeanUtils.copyProperties(displaySlide, slideWithMem);
-        slideWithMem.setItems(memSlideWidgets);
-        slideWithMem.setViews(views);
-        slideWithMem.setWidgets(widgets);
+		Iterator<MemDisplaySlideWidget> iterator = widgetList.iterator();
+		while (iterator.hasNext()) {
+			MemDisplaySlideWidget memDisplaySlideWidget = iterator.next();
+			if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission()
+					&& (disableList.contains(memDisplaySlideWidget.getDisplaySlideId())
+							|| disableMemDisplaySlideWidgets.contains(memDisplaySlideWidget.getId()))) {
+				iterator.remove();
+			}
+		}
 
-        return slideWithMem;
+		Set<Long> widgetIds = widgetList.stream().map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
+		Set<View> views = new HashSet<>();
+		if (!CollectionUtils.isEmpty(widgetIds)) {
+			views = viewMapper.selectByWidgetIds(widgetIds);
+		}
+
+		SlideWithMem slideWithMem = new SlideWithMem();
+		BeanUtils.copyProperties(displaySlide, slideWithMem);
+		slideWithMem.setWidgets(widgetList);
+		slideWithMem.setViews(views);
+		return slideWithMem;
     }
 
     /**
