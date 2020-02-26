@@ -40,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class BaseEntityService {
 
 	@Autowired
-	ProjectService projectService;
+	protected ProjectService projectService;
 
 	protected BaseLock getLock(CheckEntityEnum entity, String name, Long domainId) {
 

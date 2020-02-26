@@ -47,6 +47,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
 import edp.davinci.commons.util.DateUtils;
+import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.jdbc.JdbcDataSource;
 import edp.davinci.server.dao.SourceMapper;
@@ -229,7 +230,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			
 			Source source = new Source().createdBy(user.getId());
 			BeanUtils.copyProperties(sourceCreate, source);
-			source.setConfig(JSONObject.toJSONString(config));
+			source.setConfig(JSONUtils.toString(config));
 
 			if (sourceMapper.insert(source) != 1) {
 				log.info("create source fail:{}", source.toString());
@@ -306,7 +307,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 			BeanUtils.copyProperties(sourceInfo, source);
 			source.updatedBy(user.getId());
-			source.setConfig(JSONObject.toJSONString(sourceInfo.getConfig()));
+			source.setConfig(JSONUtils.toString(sourceInfo.getConfig()));
 
 			if (sourceMapper.update(source) != 1) {
 				log.info("update source fail:{}", source.toString());
@@ -660,7 +661,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			map.put("version", source.getDbVersion());
 			map.put("ext", source.isExt());
 			
-			publishReconnect(JSON.toJSONString(map));
+			publishReconnect(JSONUtils.toString(map));
 		} else {
 			SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
 			JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfoBuilder

@@ -17,7 +17,7 @@
  *
  */
 
-package edp.davinci.server.service.impl;
+package edp.davinci.service.impl;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -39,9 +39,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import edp.davinci.commons.util.JSONUtils;
-import edp.davinci.commons.util.StringUtils;
+import com.alibaba.fastjson.JSONObject;
 
+import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.MemDisplaySlideWidgetMapper;
 import edp.davinci.server.dao.RelRoleDisplaySlideWidgetMapper;
@@ -76,6 +76,7 @@ import edp.davinci.server.model.View;
 import edp.davinci.server.model.Widget;
 import edp.davinci.server.service.DisplaySlideService;
 import edp.davinci.server.service.ProjectService;
+import edp.davinci.server.service.impl.VizCommonService;
 import edp.davinci.server.util.CollectionUtils;
 import edp.davinci.server.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +86,9 @@ import lombok.extern.slf4j.Slf4j;
 public class DisplaySlideServiceImpl extends VizCommonService implements DisplaySlideService {
 
 	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
+
+    @Autowired
+    private ProjectService projectService;
 
     @Autowired
     private MemDisplaySlideWidgetMapper memDisplaySlideWidgetMapper;
@@ -678,7 +682,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		// 上传文件
 		String fileName = System.currentTimeMillis() + "_" + UUID.randomUUID();
 		String background = null;
-		Map<String, Object> jsonMap = null;
+		JSONObject jsonObject = null;
 		try {
 			background = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
 			if (StringUtils.isEmpty(background)) {
@@ -686,27 +690,27 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			}
 
 			if (!StringUtils.isEmpty(slideWithDispaly.getConfig())) {
-				jsonMap = JSONUtils.toObject(slideWithDispaly.getConfig(), Map.class);
-				if (null == jsonMap) {
-					jsonMap = new HashMap<>();
+				jsonObject = JSONObject.parseObject(slideWithDispaly.getConfig());
+				if (null == jsonObject) {
+					jsonObject = new JSONObject();
 				}
-				Map<String, Object> slideParams = (Map)jsonMap.get("slideParams");
+				JSONObject slideParams = jsonObject.getJSONObject("slideParams");
 				if (null != slideParams) {
 					// 删除原数据
-					if (!StringUtils.isEmpty((String)slideParams.get("backgroundImage"))) {
-						File bgFile = new File((String)slideParams.get("backgroundImage"));
+					if (!StringUtils.isEmpty(slideParams.getString("backgroundImage"))) {
+						File bgFile = new File(slideParams.getString("backgroundImage"));
 						if (null != bgFile && bgFile.exists() && bgFile.isFile() && fileUtils.isImage(bgFile)) {
 							bgFile.delete();
 						}
 					}
 				}
 				slideParams.put("backgroundImage", background);
-				jsonMap.put("slideParams", slideParams);
+				jsonObject.put("slideParams", slideParams);
 			} else {
-				jsonMap = new HashMap<>();
-				Map<String, Object> slideParams = new HashMap<>();
+				jsonObject = new JSONObject();
+				JSONObject slideParams = new JSONObject();
 				slideParams.put("backgroundImage", background);
-				jsonMap.put("slideParams", slideParams);
+				jsonObject.put("slideParams", slideParams);
 			}
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
@@ -717,7 +721,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		BeanUtils.copyProperties(slideWithDispaly, displaySlide);
 
 		displaySlide.updatedBy(user.getId());
-		displaySlide.setConfig(JSONUtils.toString(jsonMap));
+		displaySlide.setConfig(jsonObject.toString());
 		displaySlideMapper.update(displaySlide);
 		optLogger.info("displaySlide ({}) update by (:{}), origin: {}", displaySlide.toString(), user.getId(),
 				slideWithDispaly.toString());
@@ -759,7 +763,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		String fileName = System.currentTimeMillis() + "_" + UUID.randomUUID();
 		String background = null;
 
-		Map<String, Object> jsonMap = null;
+		JSONObject jsonObject = null;
 		String key = "backgroundImage";
 		try {
 			background = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
@@ -768,28 +772,28 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			}
 
 			if (!StringUtils.isEmpty(memDisplaySlideWidget.getParams())) {
-				jsonMap = JSONUtils.toObject(memDisplaySlideWidget.getParams(), Map.class);
-				if (null != jsonMap) {
-					if (jsonMap.containsKey(key)) {
-						String backgroundImage = (String)jsonMap.get(key);
+				jsonObject = JSONObject.parseObject(memDisplaySlideWidget.getParams());
+				if (null != jsonObject) {
+					if (jsonObject.containsKey(key)) {
+						String backgroundImage = jsonObject.getString(key);
 						if (!StringUtils.isEmpty(backgroundImage)) {
 							fileUtils.remove(backgroundImage);
 						}
 					}
 				} else {
-					jsonMap = new HashMap<>();
+					jsonObject = new JSONObject();
 				}
 			} else {
-				jsonMap = new HashMap<>();
+				jsonObject = new JSONObject();
 			}
-			jsonMap.put(key, background);
+			jsonObject.put(key, background);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			throw new ServerException("display slide sub widget backgroundImage upload error");
 		}
 
 		String origin = memDisplaySlideWidget.toString();
-		memDisplaySlideWidget.setParams(JSONUtils.toString(jsonMap));
+		memDisplaySlideWidget.setParams(jsonObject.toString());
 		memDisplaySlideWidget.updatedBy(user.getId());
 		memDisplaySlideWidgetMapper.update(memDisplaySlideWidget);
 		optLogger.info("memDisplaySlideWidget ({}) update by (:{}), origin: ({})", memDisplaySlideWidget.toString(),

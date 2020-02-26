@@ -17,12 +17,40 @@
  *
  */
 
-package edp.davinci.server.service.impl;
+package edp.davinci.service.impl;
 
-import edp.davinci.commons.util.JSONUtils;
-import edp.davinci.commons.util.StringUtils;
+import static edp.davinci.server.commons.Constants.AT_SYMBOL;
+import static edp.davinci.server.commons.Constants.EMPTY;
+import static edp.davinci.server.util.ScriptUtiils.getExecuptParamScriptEngine;
+import static edp.davinci.server.util.ScriptUtiils.getViewExecuteParam;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import javax.script.ScriptEngine;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import com.alibaba.fastjson.JSONObject;
 
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.CronJobMapper;
 import edp.davinci.core.dao.entity.CronJob;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.excel.ExecutorUtil;
@@ -31,8 +59,11 @@ import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.component.excel.WorkBookContext;
 import edp.davinci.server.component.quartz.ScheduleService;
 import edp.davinci.server.component.screenshot.ImageContent;
-import edp.davinci.server.component.screenshot.ScreenshotUtil;
-import edp.davinci.server.dao.*;
+import edp.davinci.server.dao.DashboardMapper;
+import edp.davinci.server.dao.DisplayMapper;
+import edp.davinci.server.dao.DisplaySlideMapper;
+import edp.davinci.server.dao.UserMapper;
+import edp.davinci.server.dao.WidgetMapper;
 import edp.davinci.server.dto.cronjob.CronJobConfig;
 import edp.davinci.server.dto.cronjob.CronJobContent;
 import edp.davinci.server.dto.cronjob.ExcelContent;
@@ -42,33 +73,27 @@ import edp.davinci.server.dto.dashboard.DashboardWithPortal;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.view.ViewExecuteParam;
 import edp.davinci.server.dto.widget.WidgetWithRelationDashboardId;
-import edp.davinci.server.enums.*;
+import edp.davinci.server.enums.ActionEnum;
+import edp.davinci.server.enums.CheckEntityEnum;
+import edp.davinci.server.enums.CronJobMediaType;
+import edp.davinci.server.enums.FileTypeEnum;
+import edp.davinci.server.enums.LogNameEnum;
+import edp.davinci.server.enums.MailContentTypeEnum;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.model.*;
+import edp.davinci.server.model.Dashboard;
+import edp.davinci.server.model.Display;
+import edp.davinci.server.model.DisplaySlide;
+import edp.davinci.server.model.MailAttachment;
+import edp.davinci.server.model.MailContent;
+import edp.davinci.server.model.User;
+import edp.davinci.server.model.Widget;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.util.CollectionUtils;
 import edp.davinci.server.util.MailUtils;
 import edp.davinci.server.util.ServerUtils;
+import edp.davinci.service.screenshot.ScreenshotUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import javax.script.ScriptEngine;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import static edp.davinci.server.commons.Constants.AT_SYMBOL;
-import static edp.davinci.server.commons.Constants.EMPTY;
-import static edp.davinci.server.util.ScriptUtiils.getExecuptParamScriptEngine;
-import static edp.davinci.server.util.ScriptUtiils.getViewExecuteParam;
 
 @Slf4j
 @Service("emailScheduleService")
@@ -77,7 +102,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
     @Autowired
-    private CronJobExtendMapper cronJobMapper;
+    private CronJobMapper cronJobMapper;
 
     @Autowired
     private MailUtils mailUtils;
@@ -129,7 +154,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         }
         CronJobConfig cronJobConfig = null;
         try {
-            cronJobConfig = JSONUtils.toObject(cronJob.getConfig(), CronJobConfig.class);
+            cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
         } catch (Exception e) {
             log.error("Cronjob (:{}), parse config ({}) error: {}", jobId, cronJob.getConfig(), e.getMessage());
             return;

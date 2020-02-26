@@ -32,9 +32,5 @@
 			<columnOverride column="exec_log"
 				javaType="java.lang.String" jdbcType="VARCHAR"></columnOverride>
 		</table>
-		<table tableName="dashboard">
-			<columnOverride column="config"
-				javaType="java.lang.String" jdbcType="VARCHAR"></columnOverride>
-		</table>
 	</context>
 </generatorConfiguration>
