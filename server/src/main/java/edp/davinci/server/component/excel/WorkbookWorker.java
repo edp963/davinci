@@ -31,7 +31,7 @@ import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.server.model.ExcelHeader;
 import edp.davinci.server.service.ViewService;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.ExcelUtils;
 import edp.davinci.server.util.FileUtils;
 import edp.davinci.server.util.ScriptUtiils;

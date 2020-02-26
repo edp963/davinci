@@ -50,7 +50,7 @@ import edp.davinci.server.model.User;
 import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Service("dashboardPortalService")

@@ -26,7 +26,7 @@ import edp.davinci.server.model.ExcelHeader;
 import edp.davinci.server.model.FieldCurrency;
 import edp.davinci.server.model.FieldNumeric;
 import edp.davinci.server.model.QueryColumn;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.ExcelUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;

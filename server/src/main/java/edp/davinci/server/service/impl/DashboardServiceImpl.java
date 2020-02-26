@@ -71,7 +71,7 @@ import edp.davinci.server.model.Widget;
 import edp.davinci.server.service.DashboardService;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

@@ -27,7 +27,7 @@ import edp.davinci.server.dao.ShareDownloadRecordMapper;
 import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.ShareDownloadRecord;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.FileUtils;
 import edp.davinci.server.util.QuartzHandler;
 

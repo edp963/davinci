@@ -45,7 +45,7 @@ import edp.davinci.server.dto.cronjob.CronJobBaseInfo;
 import edp.davinci.server.dto.cronjob.CronJobInfo;
 import edp.davinci.server.dto.cronjob.CronJobUpdate;
 import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.CronJobStatusEnum;
+import edp.davinci.core.enums.CronJobStatusEnum;
 import edp.davinci.server.enums.LockType;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.exception.NotFoundException;
@@ -120,7 +120,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		CronJob cronJob = cronJobMapper.selectByPrimaryKey(id);
 
 		if (null == cronJob) {
-			log.info("Cronjob ({}) is not found", id);
+			log.error("Cronjob({}) is not found", id);
 			throw new NotFoundException("Cronjob is not found");
 		}
 		
@@ -173,7 +173,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			cronJobInfo.setId(cronJob.getId());
 			cronJobInfo.setJobStatus(CronJobStatusEnum.NEW.getStatus());
 
-			optLogger.info("cronJob ({}) is create by ({})", cronJob.toString(), user.getId());
+			optLogger.info("CronJob({}) is create by user({})", cronJob.toString(), user.getId());
 			return cronJobInfo;
 
 		} finally {
@@ -224,7 +224,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
 			cronJob.setUpdateTime(new Date());
 			if (cronJobMapper.update(cronJob) == 1) {
-				optLogger.info("CronJob ({}) is update by ({}), origin:({})", cronJob.toString(), user.getId(), origin);
+				optLogger.info("CronJob({}) is update by user({}), origin:{}", cronJob.toString(), user.getId(), origin);
 				quartzHandler.modifyJob(cronJob);
 				res = true;
 			}
@@ -256,7 +256,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		checkWritePermission(entity, cronJob.getProjectId(), user, "delete");
 
 		if (cronJobMapper.deleteByPrimaryKey(id) == 1) {
-			optLogger.info("Cronjob ({}) is delete by ({})", cronJob.toString(), user.getId());
+			optLogger.info("Cronjob({}) is delete by user({})", cronJob.toString(), user.getId());
 			quartzHandler.removeJob(cronJob);
 			return true;
 		}
@@ -279,6 +279,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			cronJobMapper.update(cronJob);
 			return cronJob;
 		} catch (SchedulerException e) {
+			log.error(e.getMessage(), e);
 			cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
 			cronJob.setUpdateTime(new Date());
 			cronJobMapper.update(cronJob);
@@ -332,11 +333,13 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 				try {
 					quartzHandler.addJob(cronJob);
 				} catch (SchedulerException e) {
-					log.warn("CronJob() start error:{}", cronJob.getName(), cronJob.getId(),  e.getMessage());
+					log.warn("CronJob({}), name({}) is start error:{}", cronJob.getId(), cronJob.getName(),
+							e.getMessage());
 					cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
 					cronJobMapper.update(cronJob);
 				} catch (ServerException e) {
-					log.warn("CronJob: {} (id: {}), start error: {}", cronJob.getName(), cronJob.getId(), e.getMessage());
+					log.warn("CronJob({}), name({}) is start error:{}", cronJob.getId(), cronJob.getName(),
+							e.getMessage());
 				}
 			}
 		});
@@ -364,18 +367,18 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 						scheduleLogger.error(e.getMessage());
 					}
 				} else {
-					log.warn("Unknown job type [{}], jobId()", jobType, cronJob.getId());
-					scheduleLogger.warn("Unknown job type [{}], jobId()", jobType, cronJob.getId());
+					log.warn("CronJob({}) unknown job type {}", cronJob.getId(), jobType);
+					scheduleLogger.warn("CronJob({}) unknown job type {}", cronJob.getId(), jobType);
 				}
 			} else {
 				Object[] args = { cronJob.getId(), DateUtils.toyyyyMMddHHmmss(System.currentTimeMillis()),
 						DateUtils.toyyyyMMddHHmmss(cronJob.getStartDate()),
 						DateUtils.toyyyyMMddHHmmss(cronJob.getEndDate()), cronJob.getCronExpression() };
 				log.warn(
-						"ScheduleJob({}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]",
+						"CronJob({}), current time({}) is not within the planned execution time, StartTime:{}, EndTime:{}, Cron Expression:{}",
 						args);
 				scheduleLogger.warn(
-						"ScheduleJob({}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]",
+						"CronJob({}), current time({}) is not within the planned execution time, StartTime:{}, EndTime:{}, Cron Expression:{}",
 						args);
 			}
 		});

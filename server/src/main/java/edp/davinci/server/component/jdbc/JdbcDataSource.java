@@ -52,7 +52,7 @@ import edp.davinci.server.commons.Constants;
 import edp.davinci.server.enums.DataTypeEnum;
 import edp.davinci.server.exception.SourceException;
 import edp.davinci.server.model.JdbcSourceInfo;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.CustomDataSourceUtils;
 import edp.davinci.server.util.SourceUtils;
 import lombok.Getter;

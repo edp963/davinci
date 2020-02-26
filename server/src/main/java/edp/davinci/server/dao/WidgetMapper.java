@@ -21,6 +21,7 @@ package edp.davinci.server.dao;
 
 import edp.davinci.server.dto.share.ShareWidget;
 import edp.davinci.server.dto.widget.WidgetWithRelationDashboardId;
+import edp.davinci.server.dto.widget.WidgetWithVizId;
 import edp.davinci.server.model.Widget;
 
 import org.apache.ibatis.annotations.Delete;
@@ -45,9 +46,7 @@ public interface WidgetMapper {
     @Select({"select w.*,v.model from widget w LEFT JOIN `view` v on v.id = w.view_id where w.id = #{id}"})
     ShareWidget getShareWidgetById(@Param("id") Long id);
 
-
     int insertBatch(@Param("list") List<Widget> list);
-
 
     @Update({
             "update widget",
@@ -66,25 +65,16 @@ public interface WidgetMapper {
 
     List<Widget> getByIds(@Param("list") Set<Long> ids);
 
-
     Set<Long> getIdSetByIds(@Param("set") Set<Long> ids);
 
-
     @Select({
-            "SELECT  w.* FROM widget w ",
-            "LEFT JOIN mem_display_slide_widget m on w.id = m.widget_id",
-            "LEFT JOIN display_slide s on m.display_slide_id = s.id",
-            "WHERE s.display_id = #{displayId}",
+        "SELECT  w.* FROM widget w ",
+        "SELECT  w.*, s.id as 'vizId', s.index as 'vizIndex' FROM widget w ",
+        "LEFT JOIN mem_display_slide_widget m on w.id = m.widget_id",
+        "LEFT JOIN display_slide s on m.display_slide_id = s.id",
+        "WHERE s.display_id = #{displayId}",
     })
-//    @Select({
-//            //暂时只支持第一页
-//            "SELECT  w.* FROM widget w ",
-//            "LEFT JOIN mem_display_slide_widget m on w.id = m.widget_id",
-//            "LEFT JOIN (SELECT * from display_slide where display_id = #{displayId} ORDER BY `index` LIMIT 1) s on m.display_slide_id = s.id",
-//            "WHERE s.display_id = #{displayId}",
-//
-//    })
-    Set<Widget> getByDisplayId(@Param("displayId") Long displayId);
+    List<WidgetWithVizId> queryByDisplayId(@Param("displayId") Long displayId);
 
     @Select({
             "SELECT  w.*, v.model, v.variable FROM widget w ",
