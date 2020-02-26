@@ -25,7 +25,7 @@ import com.google.common.collect.Maps;
 import edp.davinci.server.dto.cronjob.MsgMailExcel;
 import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.model.QueryColumn;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.SqlParseUtils;
 import edp.davinci.server.util.SqlUtils;
 import lombok.extern.slf4j.Slf4j;

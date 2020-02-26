@@ -25,12 +25,12 @@ import java.io.File;
 
 @Data
 public class ExcelContent {
-    private int order;
+	private int order;
     private String name;
     private File file;
 
     public ExcelContent(int order, String name, String filePath) {
-        this.order = order;
+    	this.order = order;
         this.name = name;
         this.file = new File(filePath);
     }

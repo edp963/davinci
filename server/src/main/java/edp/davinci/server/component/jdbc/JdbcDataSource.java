@@ -17,7 +17,7 @@
  *
  */
 
-package edp.core.common.jdbc;
+package edp.davinci.server.component.jdbc;
 
 import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_CONNECTIONPROPERTIES;
 import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_INITIALSIZE;
@@ -32,7 +32,6 @@ import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TESTWHILEIDLE;
 import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TIMEBETWEENEVICTIONRUNSMILLIS;
 import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_URL;
 import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_USERNAME;
-import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
 import java.io.File;
 import java.util.Map;
@@ -49,14 +48,13 @@ import org.springframework.stereotype.Component;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.ElasticSearchDruidDataSourceFactory;
 import edp.davinci.commons.util.StringUtils;
-
-import edp.core.consts.Consts;
-import edp.core.enums.DataTypeEnum;
-import edp.core.exception.SourceException;
-import edp.core.model.JdbcSourceInfo;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.CustomDataSourceUtils;
-import edp.core.utils.SourceUtils;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.enums.DataTypeEnum;
+import edp.davinci.server.exception.SourceException;
+import edp.davinci.server.model.JdbcSourceInfo;
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.server.util.CustomDataSourceUtils;
+import edp.davinci.server.util.SourceUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -267,7 +265,7 @@ public class JdbcDataSource {
         try {
 
             if (StringUtils.isEmpty(dbVersion) ||
-                    !ext || JDBC_DATASOURCE_DEFAULT_VERSION.equals(dbVersion)) {
+                    !ext || Constants.JDBC_DATASOURCE_DEFAULT_VERSION.equals(dbVersion)) {
 
                 String className = SourceUtils.getDriverClassName(jdbcUrl, null);
                 try {
@@ -280,7 +278,7 @@ public class JdbcDataSource {
 
             } else {
             	druidDataSource.setDriverClassName(CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion).getDriver());
-            	String path = System.getenv("DAVINCI3_HOME") + File.separator  + String.format(Consts.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), dbVersion);
+            	String path = System.getenv("DAVINCI3_HOME") + File.separator  + String.format(Constants.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), dbVersion);
             	druidDataSource.setDriverClassLoader(ExtendedJdbcClassLoader.getExtJdbcClassLoader(path));
             }
 

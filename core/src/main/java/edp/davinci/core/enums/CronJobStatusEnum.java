@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,29 +17,22 @@
  *
  */
 
-package edp.davinci.dto.sourceDto;
+package edp.davinci.core.enums;
 
+public enum CronJobStatusEnum {
 
-import java.util.List;
+    NEW("new"),
+    START("started"),
+    STOP("stopped"),
+    FAILED("failed");
 
-import javax.validation.constraints.NotBlank;
+    private String status;
 
-import edp.core.model.Dict;
-import lombok.Data;
+    public String getStatus() {
+        return status;
+    }
 
-@Data
-public class SourceTest {
-
-    private String username;
-
-    private String password;
-
-    @NotBlank(message = "connection url cannot be EMPTY")
-    private String url;
-
-    private String version;
-
-    private List<Dict> properties;
-
-    private boolean isExt;
+    CronJobStatusEnum(String status) {
+        this.status = status;
+    }
 }

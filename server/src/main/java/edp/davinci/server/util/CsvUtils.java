@@ -19,6 +19,7 @@
 
 package edp.davinci.core.utils;
 
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.core.exception.ServerException;
 import edp.core.model.QueryColumn;

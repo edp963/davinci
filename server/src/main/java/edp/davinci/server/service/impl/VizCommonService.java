@@ -46,7 +46,7 @@ import edp.davinci.server.model.Display;
 import edp.davinci.server.model.DisplaySlide;
 import edp.davinci.server.model.RoleDisableViz;
 import edp.davinci.server.model.User;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 
 
 @Component

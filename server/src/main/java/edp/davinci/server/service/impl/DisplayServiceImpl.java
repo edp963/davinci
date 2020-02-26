@@ -17,9 +17,9 @@
  *
  */
 
-package edp.davinci.service.impl;
+package edp.davinci.server.service.impl;
 
-import static edp.core.consts.Consts.DEFAULT_COPY_SUFFIX;
+import static edp.davinci.server.commons.Constants.DEFAULT_COPY_SUFFIX;
 
 import java.io.File;
 import java.util.Iterator;
@@ -36,32 +36,31 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import edp.davinci.commons.util.StringUtils;
-
-import edp.core.exception.NotFoundException;
-import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
-import edp.core.utils.BaseLock;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.FileUtils;
-import edp.davinci.core.common.Constants;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.VizEnum;
-import edp.davinci.dao.MemDisplaySlideWidgetMapper;
-import edp.davinci.dao.RelRoleDisplaySlideWidgetMapper;
-import edp.davinci.dto.displayDto.DisplayInfo;
-import edp.davinci.dto.displayDto.DisplayUpdate;
-import edp.davinci.dto.displayDto.DisplayWithProject;
-import edp.davinci.dto.projectDto.ProjectPermission;
-import edp.davinci.dto.roleDto.VizVisibility;
-import edp.davinci.model.Display;
-import edp.davinci.model.RelRoleDisplay;
-import edp.davinci.model.Role;
-import edp.davinci.model.User;
-import edp.davinci.service.DisplayService;
-import edp.davinci.service.DisplaySlideService;
-import edp.davinci.service.ProjectService;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.dao.MemDisplaySlideWidgetMapper;
+import edp.davinci.server.dao.RelRoleDisplaySlideWidgetMapper;
+import edp.davinci.server.dto.display.DisplayInfo;
+import edp.davinci.server.dto.display.DisplayUpdate;
+import edp.davinci.server.dto.display.DisplayWithProject;
+import edp.davinci.server.dto.project.ProjectPermission;
+import edp.davinci.server.dto.role.VizVisibility;
+import edp.davinci.server.enums.CheckEntityEnum;
+import edp.davinci.server.enums.LogNameEnum;
+import edp.davinci.server.enums.UserPermissionEnum;
+import edp.davinci.server.enums.VizEnum;
+import edp.davinci.server.exception.NotFoundException;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.model.Display;
+import edp.davinci.server.model.RelRoleDisplay;
+import edp.davinci.server.model.Role;
+import edp.davinci.server.model.User;
+import edp.davinci.server.service.DisplayService;
+import edp.davinci.server.service.DisplaySlideService;
+import edp.davinci.server.service.ProjectService;
+import edp.davinci.server.util.BaseLock;
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.server.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

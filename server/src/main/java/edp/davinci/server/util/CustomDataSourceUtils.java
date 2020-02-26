@@ -19,6 +19,7 @@
 
 package edp.core.utils;
 
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edp.core.consts.Consts;

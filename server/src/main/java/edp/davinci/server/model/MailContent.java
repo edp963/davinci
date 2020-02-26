@@ -17,13 +17,13 @@
  *
  */
 
-package edp.core.model;
+package edp.davinci.server.model;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.core.consts.Consts;
-import edp.core.enums.MailContentTypeEnum;
-import edp.core.exception.ServerException;
-import edp.core.utils.CollectionUtils;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.enums.MailContentTypeEnum;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.commons.util.CollectionUtils;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -172,7 +172,7 @@ public class MailContent {
 
         private String[] fetchAddress(String address) {
             List<String> list = new ArrayList<>();
-            String[] addresses = address.split(Consts.SEMICOLON);
+            String[] addresses = address.split(Constants.SEMICOLON);
             for (String s : addresses) {
                 if (!StringUtils.isEmpty(s.trim())) {
                     list.add(s);

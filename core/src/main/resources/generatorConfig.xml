@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN" "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
 <generatorConfiguration>
-	<context id="davinci">
+	<context id="davinci" defaultModelType="flat">
 		<property name="javaFileEncoding" value="UTF-8" />
+		<property name="autoDelimitKeywords" value="true" />
 		<property name="beginningDelimiter" value="`" />
 		<property name="endingDelimiter" value="`" />
 		<plugin
@@ -15,21 +16,48 @@
 			connectionURL="jdbc:mysql://localhost:3306/davinci?useUnicode=true&amp;characterEncoding=UTF-8&amp;zeroDateTimeBehavior=convertToNull&amp;allowMultiQueries=true"
 			driverClass="com.mysql.jdbc.Driver" userId="root"
 			password="xiaolong@0509" />
+		<javaTypeResolver>
+            <property name="forceBigDecimals" value="false"/>
+        </javaTypeResolver>
 		<javaModelGenerator
 			targetPackage="edp.davinci.core.dao.entity"
-			targetProject="D:\CE\UAVStackIDE\edpgitroot\davinci\core\src\main\java" />
-		<sqlMapGenerator
-			targetPackage="edp.davinci.core.dao.mapper"
 			targetProject="D:\CE\UAVStackIDE\edpgitroot\davinci\core\src\main\java" />
 		<javaClientGenerator
 			targetPackage="edp.davinci.core.dao"
 			targetProject="D:\CE\UAVStackIDE\edpgitroot\davinci\core\src\main\java"
-			type="MIXEDMAPPER" />
-		<table tableName="cron_job">
-			<columnOverride column="config"
-				javaType="java.lang.String" jdbcType="VARCHAR"></columnOverride>
-			<columnOverride column="exec_log"
-				javaType="java.lang.String" jdbcType="VARCHAR"></columnOverride>
-		</table>
+			type="ANNOTATEDMAPPER" />
+		<table tableName="cron_job"></table>
+		<table tableName="dashboard"></table>
+		<table tableName="dashboard_portal"></table>
+		<table tableName="davinci_statistic_duration"></table>
+		<table tableName="davinci_statistic_terminal"></table>
+		<table tableName="davinci_statistic_visitor_operation"></table>
+		<table tableName="display"></table>
+		<table tableName="display_slide"></table>
+		<table tableName="download_record"></table>
+		<table tableName="favorite"></table>
+		<table tableName="mem_dashboard_widget"></table>
+		<table tableName="mem_display_slide_widget"></table>
+		<table tableName="organization"></table>
+		<table tableName="platform"></table>
+		<table tableName="project"></table>
+		<table tableName="rel_project_admin"></table>
+		<table tableName="rel_role_dashboard"></table>
+		<table tableName="rel_role_dashboard_widget"></table>
+		<table tableName="rel_role_display"></table>
+		<table tableName="rel_role_display_slide_widget"></table>
+		<table tableName="rel_role_portal"></table>
+		<table tableName="rel_role_project"></table>
+		<table tableName="rel_role_slide"></table>
+		<table tableName="rel_role_user"></table>
+		<table tableName="rel_role_view"></table>
+		<table tableName="rel_user_organization"></table>
+		<table tableName="role"></table>
+		<table tableName="share_download_record"></table>
+		<table tableName="source"></table>
+		<table tableName="star"></table>
+		<table tableName="user"></table>
+		<table tableName="view"></table>
+		<table tableName="widget"></table>
 	</context>
 </generatorConfiguration>

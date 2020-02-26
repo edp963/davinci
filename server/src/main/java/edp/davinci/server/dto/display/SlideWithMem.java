@@ -27,9 +27,11 @@ import java.util.Set;
 import edp.davinci.server.model.DisplaySlide;
 import edp.davinci.server.model.MemDisplaySlideWidget;
 import edp.davinci.server.model.View;
+import edp.davinci.server.model.Widget;
 
 @Data
 public class SlideWithMem extends DisplaySlide {
-    private List<MemDisplaySlideWidget> widgets;
+	private List<MemDisplaySlideWidget> items;
     private Set<View> views;
+    private List<Widget> widgets;
 }

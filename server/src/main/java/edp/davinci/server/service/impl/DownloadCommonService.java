@@ -37,7 +37,7 @@ import edp.davinci.server.model.MemDashboardWidget;
 import edp.davinci.server.model.User;
 import edp.davinci.server.model.Widget;
 import edp.davinci.server.service.ProjectService;
-import edp.davinci.server.util.CollectionUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -17,32 +17,38 @@
  *
  */
 
-package edp.davinci.service.impl;
+package edp.davinci.server.service.impl;
 
+import edp.davinci.commons.util.AESUtils;
 import edp.davinci.commons.util.StringUtils;
-
-import edp.core.consts.Consts;
-import edp.core.enums.HttpCodeEnum;
-import edp.core.enums.MailContentTypeEnum;
-import edp.core.exception.ServerException;
-import edp.core.model.MailContent;
-import edp.core.utils.*;
-import edp.davinci.core.common.Constants;
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.LockType;
-import edp.davinci.core.enums.UserOrgRoleEnum;
-import edp.davinci.dao.OrganizationMapper;
-import edp.davinci.dao.RelUserOrganizationMapper;
-import edp.davinci.dao.UserMapper;
-import edp.davinci.dto.organizationDto.OrganizationInfo;
-import edp.davinci.dto.userDto.*;
-import edp.davinci.model.LdapPerson;
-import edp.davinci.model.Organization;
-import edp.davinci.model.RelUserOrganization;
-import edp.davinci.model.User;
-import edp.davinci.service.LdapService;
-import edp.davinci.service.UserService;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.controller.ResultMap;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.dao.OrganizationMapper;
+import edp.davinci.server.dao.RelUserOrganizationMapper;
+import edp.davinci.server.dao.UserMapper;
+import edp.davinci.server.dto.organization.OrganizationInfo;
+import edp.davinci.server.dto.user.*;
+import edp.davinci.server.enums.CheckEntityEnum;
+import edp.davinci.server.enums.HttpCodeEnum;
+import edp.davinci.server.enums.LockType;
+import edp.davinci.server.enums.MailContentTypeEnum;
+import edp.davinci.server.enums.UserOrgRoleEnum;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.model.LdapPerson;
+import edp.davinci.server.model.MailContent;
+import edp.davinci.server.model.Organization;
+import edp.davinci.server.model.RelUserOrganization;
+import edp.davinci.server.model.User;
+import edp.davinci.server.service.LdapService;
+import edp.davinci.server.service.UserService;
+import edp.davinci.server.util.BaseLock;
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.server.util.FileUtils;
+import edp.davinci.server.util.LockFactory;
+import edp.davinci.server.util.MailUtils;
+import edp.davinci.server.util.ServerUtils;
+import edp.davinci.server.util.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.BeanUtils;
@@ -317,7 +323,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 			return resultMap.fail(302).message("The current user is activated and doesn't need to be reactivated");
 		}
 
-		BaseLock lock = LockFactory.getLock("ACTIVATE" + Consts.AT_SYMBOL + username.toUpperCase(), 5, LockType.REDIS);
+		BaseLock lock = LockFactory.getLock("ACTIVATE" + Constants.AT_SYMBOL + username.toUpperCase(), 5, LockType.REDIS);
 		if (lock != null && !lock.getLock()) {
 			return resultMap.fail().message("The current user is activating");
 		}

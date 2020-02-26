@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.core.dao.entity.CronJob;
 import edp.davinci.server.dao.CronJobExtendMapper;
-import edp.davinci.server.enums.CronJobStatusEnum;
+import edp.davinci.core.enums.CronJobStatusEnum;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.service.RedisMessageHandler;
 import edp.davinci.server.util.QuartzHandler;

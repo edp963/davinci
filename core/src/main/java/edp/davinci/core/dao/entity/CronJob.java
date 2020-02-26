@@ -21,11 +21,7 @@ public class CronJob {
 
     private Date endDate;
 
-    private String config;
-
     private String description;
-
-    private String execLog;
 
     private Long createBy;
 
@@ -42,4 +38,8 @@ public class CronJob {
     private Boolean isFolder;
 
     private Integer index;
+
+    private String config;
+
+    private String execLog;
 }

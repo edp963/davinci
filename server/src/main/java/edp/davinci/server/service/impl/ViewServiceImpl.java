@@ -17,43 +17,38 @@
  *
  */
 
-package edp.davinci.service.impl;
+package edp.davinci.server.service.impl;
 
+import edp.davinci.commons.util.JSONUtils;
+import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import edp.core.exception.NotFoundException;
-import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
-import edp.core.model.Paginate;
-import edp.core.model.PaginateWithQueryColumns;
-import edp.core.utils.BaseLock;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.MD5Util;
-import edp.core.utils.RedisUtils;
-import edp.core.utils.SqlUtils;
-import edp.davinci.core.common.Constants;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.SqlVariableTypeEnum;
-import edp.davinci.core.enums.SqlVariableValueTypeEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.model.SqlEntity;
-import edp.davinci.core.model.SqlFilter;
-import edp.davinci.core.utils.SqlParseUtils;
-import edp.davinci.dao.RelRoleViewMapper;
-import edp.davinci.dao.SourceMapper;
-import edp.davinci.dao.ViewMapper;
-import edp.davinci.dao.WidgetMapper;
-import edp.davinci.dto.projectDto.ProjectDetail;
-import edp.davinci.dto.projectDto.ProjectPermission;
-import edp.davinci.dto.sourceDto.SourceBaseInfo;
-import edp.davinci.dto.viewDto.*;
-import edp.davinci.model.*;
-import edp.davinci.service.ProjectService;
-import edp.davinci.service.ViewService;
-import edp.davinci.service.excel.SQLContext;
+
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.component.excel.SQLContext;
+import edp.davinci.server.dao.RelRoleViewMapper;
+import edp.davinci.server.dao.SourceMapper;
+import edp.davinci.server.dao.ViewMapper;
+import edp.davinci.server.dao.WidgetMapper;
+import edp.davinci.server.dto.project.ProjectDetail;
+import edp.davinci.server.dto.project.ProjectPermission;
+import edp.davinci.server.dto.source.SourceBaseInfo;
+import edp.davinci.server.dto.view.*;
+import edp.davinci.server.enums.CheckEntityEnum;
+import edp.davinci.server.enums.LogNameEnum;
+import edp.davinci.server.enums.SqlVariableTypeEnum;
+import edp.davinci.server.enums.SqlVariableValueTypeEnum;
+import edp.davinci.server.enums.UserPermissionEnum;
+import edp.davinci.server.exception.NotFoundException;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.model.*;
+import edp.davinci.server.service.ProjectService;
+import edp.davinci.server.service.ViewService;
+import edp.davinci.server.util.BaseLock;
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.server.util.RedisUtils;
+import edp.davinci.server.util.SqlParseUtils;
+import edp.davinci.server.util.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,11 +66,11 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static edp.core.consts.Consts.COMMA;
-import static edp.core.consts.Consts.MINUS;
-import static edp.davinci.core.common.Constants.NO_AUTH_PERMISSION;
-import static edp.davinci.core.enums.SqlVariableTypeEnum.AUTHVARE;
-import static edp.davinci.core.enums.SqlVariableTypeEnum.QUERYVAR;
+import static edp.davinci.server.commons.Constants.NO_AUTH_PERMISSION;
+import static edp.davinci.server.enums.SqlVariableTypeEnum.AUTHVARE;
+import static edp.davinci.server.enums.SqlVariableTypeEnum.QUERYVAR;
+import static edp.davinci.server.commons.Constants.COMMA;
+import static edp.davinci.server.commons.Constants.MINUS;
 
 @Slf4j
 @Service("viewService")
@@ -543,7 +538,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			}
 
 			for (String str : filterStrs) {
-				SqlFilter obj = JSON.parseObject(str, SqlFilter.class);
+				SqlFilter obj = JSONUtils.toObject(str, SqlFilter.class);
 				if (!StringUtils.isEmpty(obj.getName())) {
 					obj.setName(ViewExecuteParam.getField(obj.getName(), source.getJdbcUrl(), source.getDbVersion()));
 				}
@@ -553,7 +548,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
 		} catch (Exception e) {
 			log.error("convertFilters error . filterStrs = {}, source = {}, filters = {} , whereClauses = {} ",
-					JSON.toJSON(filterStrs), JSON.toJSON(source), JSON.toJSON(filters), JSON.toJSON(whereClauses));
+					JSONUtils.toString(filterStrs), JSONUtils.toString(source), JSONUtils.toString(filters), JSONUtils.toString(whereClauses));
 			throw e;
 		}
 		return whereClauses;
@@ -627,7 +622,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 					excludeColumns.forEach(slatBuilder::append);
 
 					if (!executeParam.getFlush()) {
-						cacheKey = MD5Util.getMD5(slatBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true,
+						cacheKey = MD5Utils.getMD5(slatBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true,
 								32);
 						try {
 							Object object = redisUtils.get(cacheKey);
@@ -713,7 +708,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                     querySqlList.set(querySqlList.size() - 1, sql);
 
                     if (null != param.getCache() && param.getCache() && param.getExpired().longValue() > 0L) {
-                        cacheKey = MD5Util.getMD5("DISTINCI" + sql, true, 32);
+                        cacheKey = MD5Utils.getMD5("DISTINCI" + sql, true, 32);
 
                         try {
                             Object object = redisUtils.get(cacheKey);
@@ -754,7 +749,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             boolean isFullAuth = false;
             for (RelRoleView r : roleViewList) {
                 if (!StringUtils.isEmpty(r.getColumnAuth())) {
-                    columns.addAll(JSONObject.parseArray(r.getColumnAuth(), String.class));
+                    columns.addAll(JSONUtils.toObjectArray(r.getColumnAuth(), String.class));
                 } else {
                     isFullAuth = true;
                     break;
@@ -800,7 +795,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
 		roleViewList.forEach(r -> {
 			if (!StringUtils.isEmpty(r.getRowAuth())) {
-				List<AuthParamValue> authParamValues = JSONObject.parseArray(r.getRowAuth(), AuthParamValue.class);
+				List<AuthParamValue> authParamValues = JSONUtils.toObjectArray(r.getRowAuth(), AuthParamValue.class);
 				authParamValues.forEach(v -> {
 					if (map.containsKey(v.getName())) {
 						SqlVariable sqlVariable = map.get(v.getName());
@@ -935,8 +930,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
 
-    private void checkAndInsertRoleParam(String sqlVarible, List<RelRoleViewDto> roles, User user, View view) {
-        List<SqlVariable> variables = JSONObject.parseArray(sqlVarible, SqlVariable.class);
+    private void checkAndInsertRoleParam(String sqlVarible, List<RelRoleViewDTO> roles, User user, View view) {
+        List<SqlVariable> variables = JSONUtils.toObjectArray(sqlVarible, SqlVariable.class);
         if (CollectionUtils.isEmpty(roles)) {
             relRoleViewMapper.deleteByViewId(view.getId());
             return;
@@ -949,7 +944,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 vars = variables.stream().map(SqlVariable::getName).collect(Collectors.toSet());
             }
             if (!StringUtils.isEmpty(view.getModel())) {
-                columns = JSONObject.parseObject(view.getModel(), HashMap.class).keySet();
+                columns = JSONUtils.toObject(view.getModel(), HashMap.class).keySet();
             }
 
             Set<String> finalColumns = columns;
@@ -963,25 +958,24 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 
                 String rowAuth = null, columnAuth = null;
                 if (!StringUtils.isEmpty(r.getRowAuth())) {
-                    JSONArray rowAuthArray = JSONObject.parseArray(r.getRowAuth());
-                    if (!CollectionUtils.isEmpty(rowAuthArray)) {
-                        JSONArray newRowAuthArray = new JSONArray();
-                        for (int i = 0; i < rowAuthArray.size(); i++) {
-                            JSONObject rowAuthObj = rowAuthArray.getJSONObject(i);
-                            String name = rowAuthObj.getString(SQL_VARABLE_KEY);
-                            if (finalVars.contains(name)) {
-                                newRowAuthArray.add(rowAuthObj);
+                	List<Map> rowAuthList = JSONUtils.toObjectArray(r.getRowAuth(), Map.class);
+                	if (!CollectionUtils.isEmpty(rowAuthList)) {
+                		List<String> nameList = new ArrayList<String>();
+                		for (Map jsonMap : rowAuthList) {
+                			String name = (String)jsonMap.get("SQL_VARABLE_KEY");
+                			if (finalVars.contains(name)) {
+                				nameList.add(name);
                             }
-                        }
-                        rowAuth = newRowAuthArray.toJSONString();
-                        newRowAuthArray.clear();
+						}
+                		rowAuth = JSONUtils.toString(nameList);
+                		nameList.clear();
                     }
                 }
 
                 if (null != finalColumns && !StringUtils.isEmpty(r.getColumnAuth())) {
-                    List<String> clms = JSONObject.parseArray(r.getColumnAuth(), String.class);
+                    List<String> clms = JSONUtils.toObjectArray(r.getColumnAuth(), String.class);
                     List<String> collect = clms.stream().filter(c -> finalColumns.contains(c)).collect(Collectors.toList());
-                    columnAuth = JSONObject.toJSONString(collect);
+                    columnAuth = JSONUtils.toString(collect);
                 }
 
                 RelRoleView relRoleView = new RelRoleView(view.getId(), r.getRoleId(), rowAuth, columnAuth)

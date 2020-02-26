@@ -19,6 +19,7 @@
 
 package edp.core.utils;
 
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import com.google.common.base.Stopwatch;
 import edp.core.exception.ServerException;

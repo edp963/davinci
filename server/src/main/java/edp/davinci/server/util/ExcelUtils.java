@@ -17,21 +17,28 @@
  *
  */
 
-package edp.davinci.core.utils;
+package edp.davinci.server.util;
 
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
-import edp.core.enums.SqlTypeEnum;
-import edp.core.exception.ServerException;
-import edp.core.model.QueryColumn;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.SqlUtils;
-import edp.davinci.core.enums.FileTypeEnum;
-import edp.davinci.core.enums.NumericUnitEnum;
-import edp.davinci.core.enums.SqlColumnEnum;
-import edp.davinci.core.model.*;
-import edp.davinci.dto.viewDto.Param;
+
+import edp.davinci.server.dto.view.Param;
+import edp.davinci.server.enums.FileTypeEnum;
+import edp.davinci.server.enums.NumericUnitEnum;
+import edp.davinci.server.enums.SqlColumnEnum;
+import edp.davinci.server.enums.SqlTypeEnum;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.model.DataUploadEntity;
+import edp.davinci.server.model.ExcelHeader;
+import edp.davinci.server.model.FieldCurrency;
+import edp.davinci.server.model.FieldCustom;
+import edp.davinci.server.model.FieldDate;
+import edp.davinci.server.model.FieldNumeric;
+import edp.davinci.server.model.FieldPercentage;
+import edp.davinci.server.model.FieldScientificNotation;
+import edp.davinci.server.model.QueryColumn;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
@@ -49,9 +56,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static edp.core.consts.Consts.*;
-import static edp.davinci.common.utils.ScriptUtiils.formatHeader;
-import static edp.davinci.common.utils.ScriptUtiils.getCellValueScriptEngine;
+import static edp.davinci.server.commons.Constants.*;
+import static edp.davinci.server.util.ScriptUtiils.formatHeader;
+import static edp.davinci.server.util.ScriptUtiils.getCellValueScriptEngine;
 
 public class ExcelUtils {
 
@@ -574,11 +581,11 @@ public class ExcelUtils {
     public static boolean isTable(String json) {
         if (!StringUtils.isEmpty(json)) {
             try {
-                JSONObject jsonObject = JSONObject.parseObject(json);
-                if (null != jsonObject) {
-                    if (jsonObject.containsKey("selectedChart") && jsonObject.containsKey("mode")) {
-                        Integer selectedChart = jsonObject.getInteger("selectedChart");
-                        String mode = jsonObject.getString("mode");
+                Map<String, Object> jsonMap = JSONUtils.toObject(json, Map.class);
+                if (null != jsonMap) {
+                    if (jsonMap.containsKey("selectedChart") && jsonMap.containsKey("mode")) {
+                        Integer selectedChart = (Integer)jsonMap.get("selectedChart");
+                        String mode = (String)jsonMap.get("mode");
                         if (selectedChart.equals(1) && mode.equals("chart")) {
                             return true;
                         }

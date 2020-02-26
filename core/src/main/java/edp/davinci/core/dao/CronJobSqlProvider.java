@@ -60,16 +60,8 @@ public class CronJobSqlProvider {
             sql.VALUES("end_date", "#{endDate,jdbcType=TIMESTAMP}");
         }
         
-        if (record.getConfig() != null) {
-            sql.VALUES("config", "#{config,jdbcType=VARCHAR}");
-        }
-        
         if (record.getDescription() != null) {
             sql.VALUES("description", "#{description,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getExecLog() != null) {
-            sql.VALUES("exec_log", "#{execLog,jdbcType=VARCHAR}");
         }
         
         if (record.getCreateBy() != null) {
@@ -104,6 +96,49 @@ public class CronJobSqlProvider {
             sql.VALUES("`index`", "#{index,jdbcType=INTEGER}");
         }
         
+        if (record.getConfig() != null) {
+            sql.VALUES("config", "#{config,jdbcType=LONGVARCHAR}");
+        }
+        
+        if (record.getExecLog() != null) {
+            sql.VALUES("exec_log", "#{execLog,jdbcType=LONGVARCHAR}");
+        }
+        
+        return sql.toString();
+    }
+
+    public String selectByExampleWithBLOBs(CronJobExample example) {
+        SQL sql = new SQL();
+        if (example != null && example.isDistinct()) {
+            sql.SELECT_DISTINCT("id");
+        } else {
+            sql.SELECT("id");
+        }
+        sql.SELECT("`name`");
+        sql.SELECT("project_id");
+        sql.SELECT("job_type");
+        sql.SELECT("job_status");
+        sql.SELECT("cron_expression");
+        sql.SELECT("start_date");
+        sql.SELECT("end_date");
+        sql.SELECT("description");
+        sql.SELECT("create_by");
+        sql.SELECT("create_time");
+        sql.SELECT("update_by");
+        sql.SELECT("update_time");
+        sql.SELECT("parent_id");
+        sql.SELECT("full_parent_id");
+        sql.SELECT("is_folder");
+        sql.SELECT("`index`");
+        sql.SELECT("config");
+        sql.SELECT("exec_log");
+        sql.FROM("cron_job");
+        applyWhere(sql, example, false);
+        
+        if (example != null && example.getOrderByClause() != null) {
+            sql.ORDER_BY(example.getOrderByClause());
+        }
+        
         return sql.toString();
     }
 
@@ -121,9 +156,7 @@ public class CronJobSqlProvider {
         sql.SELECT("cron_expression");
         sql.SELECT("start_date");
         sql.SELECT("end_date");
-        sql.SELECT("config");
         sql.SELECT("description");
-        sql.SELECT("exec_log");
         sql.SELECT("create_by");
         sql.SELECT("create_time");
         sql.SELECT("update_by");
@@ -181,16 +214,8 @@ public class CronJobSqlProvider {
             sql.SET("end_date = #{record.endDate,jdbcType=TIMESTAMP}");
         }
         
-        if (record.getConfig() != null) {
-            sql.SET("config = #{record.config,jdbcType=VARCHAR}");
-        }
-        
         if (record.getDescription() != null) {
             sql.SET("description = #{record.description,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getExecLog() != null) {
-            sql.SET("exec_log = #{record.execLog,jdbcType=VARCHAR}");
         }
         
         if (record.getCreateBy() != null) {
@@ -225,6 +250,43 @@ public class CronJobSqlProvider {
             sql.SET("`index` = #{record.index,jdbcType=INTEGER}");
         }
         
+        if (record.getConfig() != null) {
+            sql.SET("config = #{record.config,jdbcType=LONGVARCHAR}");
+        }
+        
+        if (record.getExecLog() != null) {
+            sql.SET("exec_log = #{record.execLog,jdbcType=LONGVARCHAR}");
+        }
+        
+        applyWhere(sql, example, true);
+        return sql.toString();
+    }
+
+    public String updateByExampleWithBLOBs(Map<String, Object> parameter) {
+        SQL sql = new SQL();
+        sql.UPDATE("cron_job");
+        
+        sql.SET("id = #{record.id,jdbcType=BIGINT}");
+        sql.SET("`name` = #{record.name,jdbcType=VARCHAR}");
+        sql.SET("project_id = #{record.projectId,jdbcType=BIGINT}");
+        sql.SET("job_type = #{record.jobType,jdbcType=VARCHAR}");
+        sql.SET("job_status = #{record.jobStatus,jdbcType=VARCHAR}");
+        sql.SET("cron_expression = #{record.cronExpression,jdbcType=VARCHAR}");
+        sql.SET("start_date = #{record.startDate,jdbcType=TIMESTAMP}");
+        sql.SET("end_date = #{record.endDate,jdbcType=TIMESTAMP}");
+        sql.SET("description = #{record.description,jdbcType=VARCHAR}");
+        sql.SET("create_by = #{record.createBy,jdbcType=BIGINT}");
+        sql.SET("create_time = #{record.createTime,jdbcType=TIMESTAMP}");
+        sql.SET("update_by = #{record.updateBy,jdbcType=BIGINT}");
+        sql.SET("update_time = #{record.updateTime,jdbcType=TIMESTAMP}");
+        sql.SET("parent_id = #{record.parentId,jdbcType=BIGINT}");
+        sql.SET("full_parent_id = #{record.fullParentId,jdbcType=VARCHAR}");
+        sql.SET("is_folder = #{record.isFolder,jdbcType=BIT}");
+        sql.SET("`index` = #{record.index,jdbcType=INTEGER}");
+        sql.SET("config = #{record.config,jdbcType=LONGVARCHAR}");
+        sql.SET("exec_log = #{record.execLog,jdbcType=LONGVARCHAR}");
+        
+        CronJobExample example = (CronJobExample) parameter.get("example");
         applyWhere(sql, example, true);
         return sql.toString();
     }
@@ -241,9 +303,7 @@ public class CronJobSqlProvider {
         sql.SET("cron_expression = #{record.cronExpression,jdbcType=VARCHAR}");
         sql.SET("start_date = #{record.startDate,jdbcType=TIMESTAMP}");
         sql.SET("end_date = #{record.endDate,jdbcType=TIMESTAMP}");
-        sql.SET("config = #{record.config,jdbcType=VARCHAR}");
         sql.SET("description = #{record.description,jdbcType=VARCHAR}");
-        sql.SET("exec_log = #{record.execLog,jdbcType=VARCHAR}");
         sql.SET("create_by = #{record.createBy,jdbcType=BIGINT}");
         sql.SET("create_time = #{record.createTime,jdbcType=TIMESTAMP}");
         sql.SET("update_by = #{record.updateBy,jdbcType=BIGINT}");
@@ -290,16 +350,8 @@ public class CronJobSqlProvider {
             sql.SET("end_date = #{endDate,jdbcType=TIMESTAMP}");
         }
         
-        if (record.getConfig() != null) {
-            sql.SET("config = #{config,jdbcType=VARCHAR}");
-        }
-        
         if (record.getDescription() != null) {
             sql.SET("description = #{description,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getExecLog() != null) {
-            sql.SET("exec_log = #{execLog,jdbcType=VARCHAR}");
         }
         
         if (record.getCreateBy() != null) {
@@ -332,6 +384,14 @@ public class CronJobSqlProvider {
         
         if (record.getIndex() != null) {
             sql.SET("`index` = #{index,jdbcType=INTEGER}");
+        }
+        
+        if (record.getConfig() != null) {
+            sql.SET("config = #{config,jdbcType=LONGVARCHAR}");
+        }
+        
+        if (record.getExecLog() != null) {
+            sql.SET("exec_log = #{execLog,jdbcType=LONGVARCHAR}");
         }
         
         sql.WHERE("id = #{id,jdbcType=BIGINT}");

@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,22 +17,13 @@
  *
  */
 
-package edp.davinci.server.enums;
+package edp.davinci.server.dto.widget;
 
-public enum CronJobStatusEnum {
+import edp.davinci.server.model.Widget;
+import lombok.Data;
 
-    NEW("new"),
-    START("started"),
-    STOP("stopped"),
-    FAILED("failed");
-
-    private String status;
-
-    public String getStatus() {
-        return status;
-    }
-
-    CronJobStatusEnum(String status) {
-        this.status = status;
-    }
+@Data
+public class WidgetWithVizId extends Widget {
+	private Long vizId;
+	private int vizIndex;
 }
