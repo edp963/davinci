@@ -311,21 +311,12 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     this.setState({
       selectedRow
     }, () => {
-      const brushed = [{0: Object.values(this.state.selectedRow)}]
       const sourceData = Object.values(this.state.selectedRow)
       const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
       if (isInteractiveChart && onDoInteract) {
         const triggerData = sourceData
         onDoInteract(triggerData)
       }
-      // setTimeout(() => {
-      //   if (getDataDrillDetail) {
-      //     console.log(filterObj)
-      //     console.log(brushed)
-      //     console.log(sourceData) // 将selectItems 的数据组装成sourceData
-      //     getDataDrillDetail(JSON.stringify({filterObj, brushed, sourceData}))
-      //   }
-      // }, 500)
     })
   }
 
@@ -348,10 +339,6 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     }, [])
   }
 
-  // private setRowClassName = (record, row) =>
-  //  this.state.selectedRow.some((sr) => this.isSameObj(sr, record, true)) ? Styles.selectedRow : Styles.unSelectedRow
-
-
   private getTableStyle (
     headerFixed: boolean,
     tableBodyHeght: number
@@ -364,42 +351,68 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return tableStyle
   }
 
+  private filterSameNeighbourSibings = (arr, targetIndex ) => {
+    let s = targetIndex, e = targetIndex;
+    let flag = -1;
+    let orgIndex = targetIndex;
+  
+    do {
+        let target = arr[targetIndex];
+        if (flag=== -1&&targetIndex > 0 && arr[targetIndex - 1] === target) {
+            s = targetIndex -= 1;
+       
+        }else if (flag===1&& arr[targetIndex + 1] === target) {
+            e = (targetIndex += 1);
+        
+        } else if (flag===-1) {
+          flag = 1;
+          targetIndex=orgIndex;
+        }
+        else {
+            break;
+        }
+  
+    } while (targetIndex > -1 && targetIndex < arr.length);
+    return { s, e }
+  }
+
+  private coustomFilter(array, column, index,) {
+    const nativeIndex = array.reduce((a , b, c) => {return b.index === index ? c : a}, 0)
+    const columns = array.map((a) => a[column])
+    const {s: start, e: end} = this.filterSameNeighbourSibings(columns, nativeIndex)
+    return array.filter((arr) => (arr['index'] < array[start]['index'] || arr.index > array[end]['index']))
+  }
+
   private collectCell = (target, index,dataIndex: string) => (event) => {
+    let {group, cell} = this.state.selectItems
+    const { data} = this.props
     const groupName = this.matchAttrInBrackets(dataIndex)
     if (this.isNumberVisualType(groupName)) {
       return
     }
-    let {group, cell} = this.state.selectItems
-    const { data} = this.props
+   
     if (group.includes(dataIndex)) {
-      group.forEach((g, i) => {
-        if (g === dataIndex) {
-          group.splice(i, 1)
-        }
-      })
-      cell[dataIndex] = data.reduce((obj: Array<TSelectItemCellProps>, d:{key: number}, arrayIndex) => {
-        if((d.key|| arrayIndex) !== index) {
-          obj.push({
-            ...target,
-            index: d.key || arrayIndex,
-            key: dataIndex,
-            value: target[dataIndex]
-          })
-        }
-        return obj
-      }, [])
+      group.forEach((g, i) => g === dataIndex ? group.splice(i, 1) : void 0)
+      const setKeyArray = data.map((obj: {key: number}, index) => ({
+        ...obj,
+        index: obj.key || index,
+        key: groupName,
+        value: data[dataIndex]
+      }))
+      cell[dataIndex] = this.coustomFilter(setKeyArray, groupName, index)
     } else {
       let sourceCol = cell[dataIndex]
       const currentValue = {
         ...target,
         index,
-        key: dataIndex,
+        key: groupName,
         value: target[dataIndex]
       }
+      
       if (sourceCol && sourceCol.length) {
         const isb = sourceCol.some((col) => col.index === index)
         if(isb) {
-          cell[dataIndex] = cell[dataIndex].filter((c) => c.index !== index)
+          cell[dataIndex] = this.coustomFilter(cell[dataIndex], groupName, index)
         } else {
           sourceCol.push(currentValue)
         }
@@ -418,40 +431,40 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
 
   private collectGroups = (target, dataIndex) => (event) => {
-      const groupName = this.matchAttrInBrackets(dataIndex)
-      if (this.isNumberVisualType(groupName)) {
-        return
-      }
-      const {group, cell} = this.state.selectItems
-      if (group.includes(dataIndex)) {
-        group.forEach((a, index) => {if (a === dataIndex) group.splice(index, 1)})
-      } else {
-        group.push(dataIndex)
-      }
-      delete cell[dataIndex]
-      this.setState({
-        selectItems: {...this.state.selectItems}
-      },() => {
-        this.asyncEmitDrillDetail()
-      })
+    const groupName = this.matchAttrInBrackets(dataIndex)
+    if (this.isNumberVisualType(groupName)) {
+      return
+    }
+    const {group, cell} = this.state.selectItems
+    if (group.includes(dataIndex)) {
+      group.forEach((a, index) => {if (a === dataIndex) group.splice(index, 1)})
+    } else {
+      group.push(dataIndex)
+    }
+    delete cell[dataIndex]
+    this.setState({
+      selectItems: {...this.state.selectItems}
+    },() => {
+      this.asyncEmitDrillDetail()
+    })
   }
 
   private onCellClassName = (target, index, dataIndex) => {
-      const { group, cell } = this.state.selectItems
-      let result = ''
-      Object.keys(cell).forEach((key) => {
-        if (dataIndex === key){
-          cell[key].forEach(ck => {
-            if(index === ck.index) {
-              result = Styles.select
-            }
-          })
-        }
-      })
-      if (group && group.includes(dataIndex)) {
-        result = Styles.select
+    const { group, cell } = this.state.selectItems
+    let result = ''
+    Object.keys(cell).forEach((key) => {
+      if (dataIndex === key){
+        cell[key].forEach(ck => {
+          if(index === ck.index) {
+            result = Styles.select
+          }
+        })
       }
-      return result
+    })
+    if (group && group.includes(dataIndex)) {
+      result = Styles.select
+    }
+    return result
   }
 
   private isNumberVisualType = (modelName) => {
@@ -472,11 +485,11 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private onHeadCellClassName = (target, dataIndex) => {
-      const {group} = this.state.selectItems
-      if(group && group.includes(dataIndex)){
-        return Styles.select
-      }
-      return ''
+    const {group} = this.state.selectItems
+    if(group && group.includes(dataIndex)){
+      return Styles.select
+    }
+    return ''
   }
 
   private loop = (col) => {
@@ -490,7 +503,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
             onClick: this.collectGroups(target, col.dataIndex)
           }
         },
-        onCell: (target, index) => { // 这个index 在分页的场景下，不能作为判断依据
+        onCell: (target, index) => { // fix index in pagination
           return {
             ...col.onCell(target, index),
             className: this.onCellClassName(target, index, col.dataIndex),
@@ -561,7 +574,6 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
           pagination={withPaging && tablePagination.total !== -1 ? paginationConfig : false}
           scroll={scroll}
           bordered={bordered}
-          // rowClassName={this.setRowClassName}
           onRowClick={this.rowClick}
           onChange={this.tableChange}
         />
