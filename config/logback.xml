@@ -32,7 +32,7 @@
     <property name="SCHEDULE" value="schedule"/>
     <property name="OPT" value="opt"/>
 
-    <property name="LOG_HOME_PATH" value="${DAVINCI3_HOME}/logs"/>
+    <property name="LOG_HOME_PATH" value="${DAVINCI_HOME}/logs"/>
 
     <property name="SYS_LOG_PATTERN"
               value="${FILE_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>

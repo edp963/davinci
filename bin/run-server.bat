@@ -15,5 +15,19 @@
 :: >>
 
 @echo off
-call run.bat stop
-exit
+
+for %%x in ("%JAVA_HOME%") do set JAVA_HOME=%%~sx
+
+if "%1" == "start" (
+	cd ..
+	set DAVINCI_HOME=%cd%
+    echo Start Davinci Server
+    start "Davinci Server" java -Dfile.encoding=UTF-8 -cp .;%JAVA_HOME%\lib\*;%DAVINCI_HOME%\lib\*; edp.davinci.server.DavinciServerApplication --spring.config.additional-location=file:%DAVINCI_HOME%\config\application.yml
+) else if "%1" == "stop" (
+    echo Stop Davinci Server
+    taskkill /fi "WINDOWTITLE eq Davinci Server"
+) else (
+    echo please use "run-server.bat start" or "run-server.bat stop"
+)
+
+pause

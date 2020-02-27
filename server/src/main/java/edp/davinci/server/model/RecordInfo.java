@@ -45,8 +45,9 @@ public class RecordInfo<T> {
         return (T) this;
     }
 
-    public void updatedBy(Long userId) {
+    public T updatedBy(Long userId) {
         this.updateBy = userId;
         this.updateTime = new Date();
+        return (T) this;
     }
 }

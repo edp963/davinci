@@ -24,16 +24,16 @@ title: 安装
 
    ![dir](./img/dir.png)
 
-2. **配置环境变量，将上述解压后的目录配置到环境变量 DAVINCI3_HOME**
+2. **配置环境变量，将上述解压后的目录配置到环境变量 DAVINCI_HOME**
 
    ```bash
-   export DAVINCI3_HOME=~/app/davinci/davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist
+   export DAVINCI_HOME=~/app/davinci/davinci-assembly-0.4.0-SNAPSHOT-server-beta
    ```
 
-3. **初始化数据库，修改 bin 目录下 initdb.sh 中要的数据库信息为要初始化的数据库，如 davinci0.3**
+3. **初始化数据库，修改 bin 目录下 initdb.sh 中要的数据库信息为要初始化的数据库，如 davinci0.4**
 
    ```bash
-   mysql -P 3306 -h localhost -u root -proot davinci0.3 < $DAVINCI3_HOME/bin/davinci.sql
+   mysql -P 3306 -h localhost -u root -proot davinci0.4 < $DAVINCI_HOME/bin/davinci.sql
    ```
 
    运行脚本初始化数据库（注：由于 Davinci0.3 系统数据库中包含存储过程，请务必在创建数据库时赋予执行权限）。

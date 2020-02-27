@@ -15,5 +15,5 @@
 :: >>
 
 @echo off
-call run.bat start
+call run-server.bat start
 exit

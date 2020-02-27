@@ -137,7 +137,7 @@ public class SourceUtils {
         }
         
 		if (isExt && !StringUtils.isEmpty(version) && !JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
-			String path = System.getenv("DAVINCI3_HOME") + File.separator
+			String path = System.getenv("DAVINCI_HOME") + File.separator
 					+ String.format(PATH_EXT_FORMATER, dataSourceName, version);
 			ExtendedJdbcClassLoader extendedJdbcClassLoader = ExtendedJdbcClassLoader.getExtJdbcClassLoader(path);
 			CustomDataSource dataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);

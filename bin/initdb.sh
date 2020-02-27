@@ -1,2 +1,4 @@
 #!/bin/bash
-mysql -P 3306 -h localhost -u root -proot davinci0.3 < $DAVINCI3_HOME/bin/davinci.sql
+cd ..
+export DAVINCI_HOME=`pwd`
+mysql -P 3306 -h localhost -u root -proot davinci0.4 < $DAVINCI_HOME/bin/davinci.sql
