@@ -325,7 +325,6 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     setTimeout(() => {
       if (this.props.getDataDrillDetail) {
         const sourceData = this.combineFilter()
-        console.log(sourceData)
         const brushed = [{0: Object.values(sourceData)}]
         getDataDrillDetail(JSON.stringify({filterObj: sourceData, brushed, sourceData}))
       }
