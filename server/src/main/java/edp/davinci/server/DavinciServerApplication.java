@@ -28,7 +28,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableAutoConfiguration(exclude = {org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration.class})
 @EnableScheduling
-@MapperScan({"edp.davinci.*.dao"}) 
+//@MapperScan({"edp.davinci.*.dao"})
 public class DavinciServerApplication {
 
     public static void main(String[] args) {

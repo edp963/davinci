@@ -930,7 +930,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
 
-    private void checkAndInsertRoleParam(String sqlVarible, List<RelRoleViewDTO> roles, User user, View view) {
+	private void checkAndInsertRoleParam(String sqlVarible, List<RelRoleViewDTO> roles, User user, View view) {
         List<SqlVariable> variables = JSONUtils.toObjectArray(sqlVarible, SqlVariable.class);
         if (CollectionUtils.isEmpty(roles)) {
             relRoleViewMapper.deleteByViewId(view.getId());
@@ -944,7 +944,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 vars = variables.stream().map(SqlVariable::getName).collect(Collectors.toSet());
             }
             if (!StringUtils.isEmpty(view.getModel())) {
-                columns = JSONUtils.toObject(view.getModel(), HashMap.class).keySet();
+                columns = JSONUtils.toObject(view.getModel(), Map.class).keySet();
             }
 
             Set<String> finalColumns = columns;
@@ -960,15 +960,15 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 if (!StringUtils.isEmpty(r.getRowAuth())) {
                 	List<Map> rowAuthList = JSONUtils.toObjectArray(r.getRowAuth(), Map.class);
                 	if (!CollectionUtils.isEmpty(rowAuthList)) {
-                		List<String> nameList = new ArrayList<String>();
+                		List<Map> newRowAuthList = new ArrayList<Map>();
                 		for (Map jsonMap : rowAuthList) {
-                			String name = (String)jsonMap.get("SQL_VARABLE_KEY");
+                			String name = (String)jsonMap.get(SQL_VARABLE_KEY);
                 			if (finalVars.contains(name)) {
-                				nameList.add(name);
+                				newRowAuthList.add(jsonMap);
                             }
 						}
-                		rowAuth = JSONUtils.toString(nameList);
-                		nameList.clear();
+                		rowAuth = JSONUtils.toString(newRowAuthList);
+                		newRowAuthList.clear();
                     }
                 }
 
