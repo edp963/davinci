@@ -394,7 +394,7 @@
 					<classesDirectory>target/classes/</classesDirectory>
 					<archive>
 						<manifest>
-							<mainClass>edp.DavinciServerApplication</mainClass>
+							<mainClass>edp.davinci.server.DavinciServerApplication</mainClass>
 							<!-- 打包时 MANIFEST.MF文件不记录的时间戳版本 -->
 							<useUniqueVersions>false</useUniqueVersions>
 							<addClasspath>false</addClasspath>

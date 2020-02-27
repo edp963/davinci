@@ -18,10 +18,10 @@ davinci:
   version: 0.3-beta.9
 
 file:
-  userfiles-path: ${DAVINCI3_HOME}/userfiles/
-  web_resources: ${DAVINCI3_HOME}/davinci-ui/
-  phantomJs-path: ${DAVINCI3_HOME}/bin/phantom.js
-  base-path: ${DAVINCI3_HOME}/lib/
+  userfiles-path: ${DAVINCI_HOME}/userfiles/
+  web_resources: ${DAVINCI_HOME}/davinci-ui/
+  phantomJs-path: ${DAVINCI_HOME}/bin/phantom.js
+  base-path: ${DAVINCI_HOME}/lib/
 
 spring:
   servlet:
@@ -32,7 +32,7 @@ spring:
 
   config:
     location: classpath:/
-    additional-location: file:${DAVINCI3_HOME}/config/
+    additional-location: file:${DAVINCI_HOME}/config/
     name: application
 
   datasource:
@@ -71,7 +71,7 @@ spring:
       type: caffeine
 
 logging:
-  config: file:${DAVINCI3_HOME}/config/logback.xml
+  config: file:${DAVINCI_HOME}/config/logback.xml
 
 springfox:
   documentation:
@@ -101,4 +101,4 @@ mapper:
 
 sql_template_delimiter: $
 
-custom-datasource-driver-path: ${DAVINCI3_HOME}/config/datasource_driver.yml
+custom-datasource-driver-path: ${DAVINCI_HOME}/config/datasource_driver.yml

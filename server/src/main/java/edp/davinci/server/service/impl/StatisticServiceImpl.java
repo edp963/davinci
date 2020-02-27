@@ -84,7 +84,7 @@ public class StatisticServiceImpl implements StatisticService {
             kafkaOperationService.send(topic, JSONUtils.toString(infoList));
             return;
         }
-
+        
         mysqlUrl = environment.getProperty("spring.datasource.url");
         String mysqlUsername = environment.getProperty("spring.datasource.username");
         String mysqlPassword = environment.getProperty("spring.datasource.password");

@@ -278,7 +278,7 @@ public class JdbcDataSource {
 
             } else {
             	druidDataSource.setDriverClassName(CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion).getDriver());
-            	String path = System.getenv("DAVINCI3_HOME") + File.separator  + String.format(Constants.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), dbVersion);
+            	String path = System.getenv("DAVINCI_HOME") + File.separator  + String.format(Constants.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), dbVersion);
             	druidDataSource.setDriverClassLoader(ExtendedJdbcClassLoader.getExtJdbcClassLoader(path));
             }
 

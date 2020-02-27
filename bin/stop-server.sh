@@ -17,9 +17,9 @@
 #  >>
 
 
-Server=`ps -ef | grep java | grep edp.DavinciServerApplication | grep -v grep | awk '{print $2}'`
-if [[ $Server -gt 0 ]]; then
-  kill -9 $Server
+server=`ps -ef | grep java | grep edp.davinci.server.DavinciServerApplication | grep -v grep | awk '{print $2}'`
+if [[ $server -gt 0 ]]; then
+  kill -9 $server
 else
-  echo "[Davinci Server] System did not run."
+  echo "[Davinci Server] is not run"
 fi

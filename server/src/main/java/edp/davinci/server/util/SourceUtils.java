@@ -17,17 +17,9 @@
  *
  */
 
-package edp.core.utils;
+package edp.davinci.server.util;
 
-import static edp.core.consts.Consts.AT_SYMBOL;
-import static edp.core.consts.Consts.COLON;
-import static edp.core.consts.Consts.DOUBLE_SLASH;
-import static edp.core.consts.Consts.EMPTY;
-import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
-import static edp.core.consts.Consts.JDBC_PREFIX_FORMATER;
-import static edp.core.consts.Consts.NEW_LINE_CHAR;
-import static edp.core.consts.Consts.PATTERN_JDBC_TYPE;
-import static edp.core.consts.Consts.SPACE;
+import static edp.davinci.server.commons.Constants.*;
 
 import java.io.File;
 import java.sql.Connection;
@@ -38,17 +30,16 @@ import java.util.regex.Matcher;
 
 import javax.sql.DataSource;
 
+import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;
-
-import edp.core.common.jdbc.ExtendedJdbcClassLoader;
-import edp.core.common.jdbc.JdbcDataSource;
-import edp.core.consts.Consts;
-import edp.core.enums.DataTypeEnum;
-import edp.core.exception.ServerException;
-import edp.core.exception.SourceException;
-import edp.core.model.CustomDataSource;
-import edp.core.model.JdbcSourceInfo;
-import edp.davinci.runner.LoadSupportDataSourceRunner;
+import edp.davinci.server.component.jdbc.ExtendedJdbcClassLoader;
+import edp.davinci.server.component.jdbc.JdbcDataSource;
+import edp.davinci.server.enums.DataTypeEnum;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.exception.SourceException;
+import edp.davinci.server.model.CustomDataSource;
+import edp.davinci.server.model.JdbcSourceInfo;
+import edp.davinci.server.runner.LoadSupportDataSourceRunner;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -146,8 +137,8 @@ public class SourceUtils {
         }
         
 		if (isExt && !StringUtils.isEmpty(version) && !JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
-			String path = System.getenv("DAVINCI3_HOME") + File.separator
-					+ String.format(Consts.PATH_EXT_FORMATER, dataSourceName, version);
+			String path = System.getenv("DAVINCI_HOME") + File.separator
+					+ String.format(PATH_EXT_FORMATER, dataSourceName, version);
 			ExtendedJdbcClassLoader extendedJdbcClassLoader = ExtendedJdbcClassLoader.getExtJdbcClassLoader(path);
 			CustomDataSource dataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
 			try {
@@ -259,15 +250,15 @@ public class SourceUtils {
         }
         
         if (!StringUtils.isEmpty(password)) {
-            sb.append(Consts.COLON).append(password);
+            sb.append(COLON).append(password);
         }
         
-        sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
+        sb.append(AT_SYMBOL).append(jdbcUrl.trim());
         
         if (isExt && !StringUtils.isEmpty(version)) {
-            sb.append(Consts.COLON).append(version);
+            sb.append(COLON).append(version);
         }
 
-        return MD5Util.getMD5(sb.toString(), true, 64);
+        return MD5Utils.getMD5(sb.toString(), true, 64);
     }
 }

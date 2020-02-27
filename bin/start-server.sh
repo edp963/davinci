@@ -19,29 +19,18 @@
 
 #start server
 
-if [ -z "$DAVINCI3_HOME" ]; then
-  echo "DAVINCI3_HOME not found"
-  echo "Please export DAVINCI3_HOME to your environment variable"
-  exit
-fi
-
-cd $DAVINCI3_HOME
-Lib_dir=`ls | grep lib`
-if [ -z "$Lib_dir" ]; then
-  echo "Invalid DAVINCI3_HOME"
-  exit
-fi
-
-Server=`ps -ef | grep java | grep edp.DavinciServerApplication | grep -v grep | awk '{print $2}'`
-if [[ $Server -gt 0 ]]; then
+server=`ps -ef | grep java | grep edp.davinci.server.DavinciServerApplication | grep -v grep | awk '{print $2}'`
+if [[ $server -gt 0 ]]; then
   echo "[Davinci Server] is already started"
   exit
 fi
 
-cd $DAVINCI3_HOME
+cd ..
+export DAVINCI_HOME=`pwd`
+
 TODAY=`date "+%Y-%m-%d"`
-LOG_PATH=$DAVINCI3_HOME/logs/sys/davinci.$TODAY.log
-nohup java -Dfile.encoding=UTF-8 -cp $JAVA_HOME/lib/*:lib/* edp.DavinciServerApplication > $LOG_PATH  2>&1 &
+LOG_PATH=$DAVINCI_HOME/logs/sys/davinci.$TODAY.log
+nohup java -Dfile.encoding=UTF-8 -cp $JAVA_HOME/lib/*:$DAVINCI_HOME/lib/* edp.davinci.server.DavinciServerApplication --spring.config.additional-location=file:$DAVINCI_HOME/config/application.yml > $LOG_PATH  2>&1 &
 
 echo "=========================================="
 echo "Starting..., press \`CRTL + C\` to exit log"
