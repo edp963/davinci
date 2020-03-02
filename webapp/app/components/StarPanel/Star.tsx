@@ -1,9 +1,8 @@
-import * as React from 'react'
+import React from 'react'
 import { Modal, Row, Col } from 'antd'
-import { IProject, IStarUser } from 'containers/Projects'
+import { IStarUser } from 'containers/Projects/types'
 const styles = require('./Star.less')
 import Avatar from 'components/Avatar'
-import * as Organization from 'containers/Organizations/Organization'
 
 interface IStar {
   unStar?: (id: number) => any

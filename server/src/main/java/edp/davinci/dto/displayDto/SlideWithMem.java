@@ -22,6 +22,7 @@ package edp.davinci.dto.displayDto;
 import edp.davinci.model.DisplaySlide;
 import edp.davinci.model.MemDisplaySlideWidget;
 import edp.davinci.model.View;
+import edp.davinci.model.Widget;
 import lombok.Data;
 
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.Set;
 
 @Data
 public class SlideWithMem extends DisplaySlide {
-    private List<MemDisplaySlideWidget> widgets;
+    private List<MemDisplaySlideWidget> items;
     private Set<View> views;
+    private List<Widget> widgets;
 }

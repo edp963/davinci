@@ -22,7 +22,8 @@ import React, { useMemo, useCallback, useEffect } from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { compose } from 'redux'
-import { Link, RouteComponentProps } from 'react-router'
+import { Link } from 'react-router-dom'
+import { RouteComponentWithParams } from 'utils/types'
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
 import { createStructuredSelector } from 'reselect'
@@ -53,8 +54,7 @@ import Container from 'components/Container'
 import Box from 'components/Box'
 
 import { ISchedule, JobStatus, IScheduleLoading } from './types'
-import { IRouteParams } from 'app/routes'
-import { IProject } from 'containers/Projects'
+import { IProject } from 'containers/Projects/types'
 
 import utilStyles from 'assets/less/util.less'
 import Styles from './Schedule.less'
@@ -73,7 +73,7 @@ interface IScheduleListDispatchProps {
 
 type ScheduleListProps = IScheduleListStateProps &
   IScheduleListDispatchProps &
-  RouteComponentProps<{}, IRouteParams>
+  RouteComponentWithParams
 
 const JobStatusNextOperations: { [key in JobStatus]: string } = {
   new: '启动',
@@ -137,8 +137,8 @@ const columns: Array<ColumnProps<ISchedule>> = [
 
 const ScheduleList: React.FC<ScheduleListProps> = (props) => {
   const {
-    params,
-    router,
+    match,
+    history,
     loading,
     schedules,
     currentProject,
@@ -149,13 +149,13 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
   const tablePagination = useTablePagination(0)
 
   useEffect(() => {
-    onLoadSchedules(+params.pid)
+    onLoadSchedules(+match.params.projectId)
   }, [])
 
   const addSchedule = useCallback(
     () => {
-      const { pid } = params
-      router.push(`/project/${pid}/schedule`)
+      const { projectId } = match.params
+      history.push(`/project/${projectId}/schedule`)
     },
     [currentProject]
   )
@@ -190,8 +190,8 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
 
   const editSchedule = useCallback(
     (scheduleId: number) => () => {
-      const { pid } = params
-      router.push(`/project/${pid}/schedule/${scheduleId}`)
+      const { projectId } = match.params
+      history.push(`/project/${projectId}/schedule/${scheduleId}`)
     },
     []
   )

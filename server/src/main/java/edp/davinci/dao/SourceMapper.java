@@ -37,7 +37,6 @@ public interface SourceMapper {
     @Delete({"delete from `source` where id = #{id}"})
     int deleteById(@Param("id") Long id);
 
-
     @Select({"select * from `source` where id = #{id}"})
     Source getById(@Param("id") Long id);
 

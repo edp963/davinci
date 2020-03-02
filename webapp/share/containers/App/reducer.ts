@@ -18,30 +18,29 @@
  * >>
  */
 
+import produce from 'immer'
 import {
   LOGGED,
   LOGOUT
 } from './constants'
-import { fromJS } from 'immutable'
 
-const initialState = fromJS({
+const initialState = {
   logged: false,
   loginUser: null
-})
-
-function appReducer (state = initialState, { type, payload }) {
-  switch (type) {
-    case LOGGED:
-      return state
-        .set('logged', true)
-        .set('loginUser', payload.user)
-    case LOGOUT:
-      return state
-        .set('logged', false)
-        .set('loginUser', null)
-    default:
-      return state
-  }
 }
+
+const appReducer = (state = initialState, action) =>
+  produce(state, (draft) => {
+    switch (action.type) {
+      case LOGGED:
+        draft.logged = true
+        draft.loginUser = action.payload.user
+        break
+      case LOGOUT:
+        draft.logged = false
+        draft.loginUser = null
+        break
+    }
+  })
 
 export default appReducer

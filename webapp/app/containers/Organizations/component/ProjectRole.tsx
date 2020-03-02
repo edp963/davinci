@@ -25,10 +25,12 @@ import { Button, Row, Col, Input, Tooltip, Popconfirm, Table, Modal, Form, Divid
 import RoleForm from './Transfer'
 import Auth from './ProjectAuth'
 import AntdFormType from 'antd/lib/form/Form'
-import { loadOrganizationRole, loadProjectRoles, getVizVisbility, postVizVisbility } from '../actions'
+import { OrganizationActions } from '../actions'
+const { loadOrganizationRole, loadProjectRoles, getVizVisbility, postVizVisbility } = OrganizationActions
 const styles = require('../Project.less')
 import {createStructuredSelector} from 'reselect'
-import { addProjectRole, addProjectRoleFail, loadRelRoleProject, updateRelRoleProject, deleteRelRoleProject} from 'containers/Projects/actions'
+import { ProjectActions } from 'containers/Projects/actions'
+const { addProjectRole, loadRelRoleProject, updateRelRoleProject, deleteRelRoleProject } = ProjectActions
 import {makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationRole, makeSelectCurrentOrganizationProjectRoles, makeSelectCurrentOrganizations } from '../selectors'
 import { makeSelectCurrentProjectRole} from 'containers/Projects/selectors'
 import { makeSelectVizs } from 'containers/Schedule/selectors'

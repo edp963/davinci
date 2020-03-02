@@ -58,13 +58,11 @@ export function getMappingLinkage (itemId: number, linkages: ILinkage[]) {
 }
 
 export function processLinkage (itemId: number, triggerData, mappingLinkage: IMappingLinkage, interactingLinkage) {
-  console.log(arguments)
   Object.keys(mappingLinkage).forEach((linkagerItemId) => {
     const linkage = mappingLinkage[+linkagerItemId]
 
     const linkageFilters: IFilters[] = []
     const linkageVariables: QueryVariable = []
-    console.log(linkage)
     linkage.forEach((l) => {
       const { triggerKey, triggerSqlType, triggerType, linkagerKey, linkagerSqlType, linkagerType, relation } = l
       const actuallyData = Array.isArray(triggerData) ? triggerData[0][triggerKey] : triggerData[triggerKey]
@@ -84,10 +82,8 @@ export function processLinkage (itemId: number, triggerData, mappingLinkage: IMa
           sqlType: linkagerSqlType,
           operator: relation
         }
-        console.log(filterJson)
         linkageFilters.push(filterJson)
        // linkageFilters.push(`${validLinkagerKey} ${relation} ${interactValue}`)   // 联动filter生成在此处
-        console.log(linkageFilters)
       } else if (linkagerType === 'variable') {
         linkageVariables.push({ name: linkagerKey, value: interactValue })
       }
@@ -106,7 +102,6 @@ export function processLinkage (itemId: number, triggerData, mappingLinkage: IMa
       }
     }
   })
-  console.log(interactingLinkage)
   return interactingLinkage
 }
 

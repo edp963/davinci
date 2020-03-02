@@ -18,7 +18,7 @@
  * >>
  */
 
-import { IProjectPermission } from 'app/containers/Projects'
+import { IProjectPermission } from 'app/containers/Projects/types'
 
 export function initializePermission (currentProject, permissionItem) {
   let isShow

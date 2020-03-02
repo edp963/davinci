@@ -7,7 +7,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -57,7 +57,7 @@ public class DavinciStatisticVisitorOperationInfo {
     private List<Object> groups;
 
     @NotNull
-    private Timestamp create_time;
+    private LocalDateTime create_time;
 
 }
 

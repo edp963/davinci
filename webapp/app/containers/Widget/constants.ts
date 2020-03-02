@@ -18,20 +18,36 @@
  * >>
  */
 
-export const LOAD_WIDGETS = 'davinci/Widget/LOAD_WIDGETS'
-export const LOAD_WIDGETS_SUCCESS = 'davinci/Widget/LOAD_WIDGETS_SUCCESS'
-export const LOAD_WIDGETS_FAILURE = 'davinci/Widget/LOAD_WIDGETS_FAILURE'
-export const ADD_WIDGET = 'davinci/Widget/ADD_WIDGET'
-export const ADD_WIDGET_SUCCESS = 'davinci/Widget/ADD_WIDGET_SUCCESS'
-export const ADD_WIDGET_FAILURE = 'davinci/Widget/ADD_WIDGET_FAILURE'
-export const LOAD_WIDGET_DETAIL = 'davinci/Widget/LOAD_WIDGET_DETAIL'
-export const LOAD_WIDGET_DETAIL_SUCCESS = 'davinci/Widget/LOAD_WIDGET_DETAIL_SUCCESS'
-export const LOAD_WIDGET_DETAIL_FAILURE = 'davinci/Widget/LOAD_WIDGET_DETAIL_FAILURE'
-export const EDIT_WIDGET = 'davinci/Widget/EDIT_WIDGET'
-export const EDIT_WIDGET_SUCCESS = 'davinci/Widget/EDIT_WIDGET_SUCCESS'
-export const EDIT_WIDGET_FAILURE = 'davinci/Widget/EDIT_WIDGET_FAILURE'
-export const DELETE_WIDGET = 'davinci/Widget/DELETE_WIDGET'
-export const DELETE_WIDGET_SUCCESS = 'davinci/Widget/DELETE_WIDGET_SUCCESS'
-export const DELETE_WIDGET_FAILURE = 'davinci/Widget/DELETE_WIDGET_FAILURE'
-export const CLEAR_CURRENT_WIDGET = 'davinci/Widget/CLEAR_CURRENT_WIDGET'
-export const EXECUTE_COMPUTED_SQL = 'davinci/Widget/EXECUTE_COMPUTED_SQL'
+import { createTypes } from 'utils/redux'
+
+enum Types {
+  LOAD_WIDGETS = 'davinci/Widget/LOAD_WIDGETS',
+  LOAD_WIDGETS_SUCCESS = 'davinci/Widget/LOAD_WIDGETS_SUCCESS',
+  LOAD_WIDGETS_FAILURE = 'davinci/Widget/LOAD_WIDGETS_FAILURE',
+
+  ADD_WIDGET = 'davinci/Widget/ADD_WIDGET',
+  ADD_WIDGET_SUCCESS = 'davinci/Widget/ADD_WIDGET_SUCCESS',
+  ADD_WIDGET_FAILURE = 'davinci/Widget/ADD_WIDGET_FAILURE',
+
+  LOAD_WIDGET_DETAIL = 'davinci/Widget/LOAD_WIDGET_DETAIL',
+  LOAD_WIDGET_DETAIL_SUCCESS = 'davinci/Widget/LOAD_WIDGET_DETAIL_SUCCESS',
+  LOAD_WIDGET_DETAIL_FAILURE = 'davinci/Widget/LOAD_WIDGET_DETAIL_FAILURE',
+
+  EDIT_WIDGET = 'davinci/Widget/EDIT_WIDGET',
+  EDIT_WIDGET_SUCCESS = 'davinci/Widget/EDIT_WIDGET_SUCCESS',
+  EDIT_WIDGET_FAILURE = 'davinci/Widget/EDIT_WIDGET_FAILURE',
+
+  COPY_WIDGET = 'davinci/Widget/COPY_WIDGET',
+  COPY_WIDGET_SUCCESS = 'davinci/Widget/COPY_WIDGET_SUCCESS',
+  COPY_WIDGET_FAILURE = 'davinci/Widget/COPY_WIDGET_FAILURE',
+
+  DELETE_WIDGET = 'davinci/Widget/DELETE_WIDGET',
+  DELETE_WIDGET_SUCCESS = 'davinci/Widget/DELETE_WIDGET_SUCCESS',
+  DELETE_WIDGET_FAILURE = 'davinci/Widget/DELETE_WIDGET_FAILURE',
+
+  CLEAR_CURRENT_WIDGET = 'davinci/Widget/CLEAR_CURRENT_WIDGET',
+  EXECUTE_COMPUTED_SQL = 'davinci/Widget/EXECUTE_COMPUTED_SQL'
+}
+
+export const ActionTypes = createTypes(Types)
+

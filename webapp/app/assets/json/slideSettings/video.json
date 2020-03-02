@@ -21,11 +21,15 @@
     "items": [{
       "name": "positionX",
       "title": "x轴位置（像素）",
-      "component": "inputnumber"
+      "component": "inputnumber",
+      "labelCol": 15,
+      "wrapperCol": 8
     }, {
       "name": "positionY",
       "title": "y轴位置（像素）",
-      "component": "inputnumber"
+      "component": "inputnumber",
+      "labelCol": 15,
+      "wrapperCol": 8
     }]
   }, {
     "name": "address",
@@ -54,7 +58,9 @@
         "label": "显示播放控制",
         "value": "controls"
       }],
-      "default": ["autoPlay", "loop"]
+      "default": ["autoPlay", "loop"],
+      "labelCol": 10,
+      "wrapperCol": 14
     }]
   }, {
     "name": "clip",

@@ -44,4 +44,6 @@ public class DisplayInfo {
     private Boolean publish = false;
 
     private List<Long> roleIds;
+
+    private String config;
 }

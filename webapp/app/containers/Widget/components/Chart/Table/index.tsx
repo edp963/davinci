@@ -18,14 +18,14 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { findDOMNode } from 'react-dom'
-import * as classnames from 'classnames'
+import classnames from 'classnames'
 import { IChartProps } from '../'
 import { IChartStyles, IPaginationParams } from '../../Widget'
 import { ITableHeaderConfig } from 'containers/Widget/components/Config/Table'
 
-import { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
+import { ResizeCallbackData } from 'libs/react-resizable'
 import { Table as AntTable, Tooltip, Icon } from 'antd'
 import { TableProps, ColumnProps, SorterResult } from 'antd/lib/table'
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
@@ -60,6 +60,7 @@ interface ITableStates {
 
   tableColumns: Array<ColumnProps<any>>
   mapTableHeaderConfig: IMapTableHeaderConfig
+  containerWidthRatio: number
   tablePagination: {
     current: number
     pageSize: number
@@ -83,6 +84,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
     tableColumns: [],
     mapTableHeaderConfig: {},
+    containerWidthRatio: 1,
     tablePagination: {
       current: void 0,
       pageSize: void 0,
@@ -95,8 +97,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private table = React.createRef<AntTable<any>>()
 
-  private handleResize = (idx: number) => (_, { size }: IResizeCallbackData) => {
-    const nextColumns = resizeTableColumns(this.state.tableColumns, idx, size.width)
+  private handleResize = (idx: number, containerWidthRatio: number) => (_, { size }: ResizeCallbackData) => {
+    const nextColumns = resizeTableColumns(this.state.tableColumns, idx, size.width, containerWidthRatio)
     this.setState({ tableColumns: nextColumns })
   }
 
@@ -174,22 +176,23 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       || data !== prevState.data
       || width !== prevState.width
     ) {
-      const { tableColumns, mapTableHeaderConfig } = getTableColumns(nextProps)
+      const { tableColumns, mapTableHeaderConfig, containerWidthRatio } = getTableColumns(nextProps)
       const tablePagination = getPaginationOptions(nextProps)
-      return { tableColumns, mapTableHeaderConfig, tablePagination, chartStyles, data, width }
+      return { tableColumns, mapTableHeaderConfig, containerWidthRatio, tablePagination, chartStyles, data, width }
     }
     return { chartStyles, data, width }
   }
 
-  private adjustTableColumns (tableColumns: Array<ColumnProps<any>>, mapTableHeaderConfig: IMapTableHeaderConfig, containerWidth: number) {
-    const totalWidth = tableColumns.reduce((acc, col) => acc + Number(col.width), 0)
-    const ratio = totalWidth < containerWidth ? containerWidth / totalWidth : 1
+  private adjustTableColumns (
+    tableColumns: Array<ColumnProps<any>>,
+    mapTableHeaderConfig: IMapTableHeaderConfig,
+    containerWidthRatio: number
+  ) {
     traverseConfig<ColumnProps<any>>(tableColumns, 'children', (column, idx, siblings) => {
-      column.width = ratio * Number(column.width)
       const canResize = siblings === tableColumns
       column.onHeaderCell = (col) => ({
         width: col.width,
-        onResize: canResize && this.handleResize(idx),
+        onResize: canResize && this.handleResize(idx, containerWidthRatio),
         config: mapTableHeaderConfig[column.key]
       })
     })
@@ -312,7 +315,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const tableStyle: React.CSSProperties = { }
     if (!headerFixed) {
       tableStyle.height = tableBodyHeght
-      tableStyle.overflowY = 'scroll'
+      tableStyle.overflowY = 'auto'
     }
     return tableStyle
   }
@@ -320,8 +323,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   public render () {
     const { data, chartStyles, width } = this.props
     const { headerFixed, bordered, withPaging, size } = chartStyles.table
-    const { tablePagination, tableColumns, tableBodyHeight, mapTableHeaderConfig } = this.state
-    const adjustedTableColumns = this.adjustTableColumns(tableColumns, mapTableHeaderConfig, width)
+    const { tablePagination, tableColumns, tableBodyHeight, mapTableHeaderConfig, containerWidthRatio } = this.state
+    const adjustedTableColumns = this.adjustTableColumns(tableColumns, mapTableHeaderConfig, containerWidthRatio)
 
     const paginationConfig: PaginationConfig = {
       ...this.basePagination,
@@ -370,7 +373,7 @@ export default Table
 
 
 function getTableColumns (props: IChartProps) {
-  const { chartStyles } = props
+  const { chartStyles, width } = props
   if (!chartStyles.table) {
     return {
       tableColumns: [],
@@ -381,6 +384,10 @@ function getTableColumns (props: IChartProps) {
   const { headerConfig, columnsConfig, autoMergeCell, leftFixedColumns, rightFixedColumns, withNoAggregators } = chartStyles.table
   const tableColumns: Array<ColumnProps<any>> = []
   const mapTableHeaderConfig: IMapTableHeaderConfig = {}
+  const fixedColumnInfo: {[key: string]: number} = {}
+  let calculatedTotalWidth = 0
+  let fixedTotalWidth = 0
+
   cols.concat(rows).forEach((dimension) => {
     const { name, field, format } = dimension
     const headerText = getFieldAlias(field, queryVariables || {}) || name
@@ -411,8 +418,17 @@ function getTableColumns (props: IChartProps) {
       headerConfigItem = config
     })
     const columnConfigItem = columnsConfig.find((cfg) => cfg.columnName === name)
-    column.width = getDataColumnWidth(name, columnConfigItem, format, data)
-    column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
+    const isFixed = columnConfigItem
+      && columnConfigItem.style
+      && columnConfigItem.style.inflexible
+    if (isFixed) {
+      column.width = fixedColumnInfo[column.key] = columnConfigItem.style.width
+      fixedTotalWidth += column.width
+    } else {
+      column.width = getDataColumnWidth(name, columnConfigItem, format, data)
+      column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
+    }
+    calculatedTotalWidth += column.width
     if (columnConfigItem) {
       column.sorter = columnConfigItem.sort
     }
@@ -452,11 +468,20 @@ function getTableColumns (props: IChartProps) {
       headerConfigItem = config
     })
     const columnConfigItem = columnsConfig.find((cfg) => cfg.columnName === name)
+    const isFixed = columnConfigItem
+      && columnConfigItem.style
+      && columnConfigItem.style.inflexible
+    if (isFixed) {
+      column.width = fixedColumnInfo[column.key] = columnConfigItem.style.width
+      fixedTotalWidth += column.width
+    } else {
+      column.width = getDataColumnWidth(expression, columnConfigItem, format, data)
+      column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
+    }
+    calculatedTotalWidth += column.width
     if (columnConfigItem) {
       column.sorter = columnConfigItem.sort
     }
-    column.width = getDataColumnWidth(expression, columnConfigItem, format, data)
-    column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
     mapTableHeaderConfig[name] = headerConfigItem
     column.onCell = (record) => ({
       config: columnConfigItem,
@@ -465,6 +490,20 @@ function getTableColumns (props: IChartProps) {
       cellValRange: getTableCellValueRange(data, expression, columnConfigItem)
     })
     tableColumns.push(column)
+  })
+
+  // adjust column width
+  const flexibleTotalWidth = calculatedTotalWidth - fixedTotalWidth
+  const flexibleContainerWidth = width - fixedTotalWidth
+  const containerWidthRatio = flexibleTotalWidth < flexibleContainerWidth
+    ? flexibleContainerWidth / flexibleTotalWidth
+    : 1
+  tableColumns.forEach((column) => {
+    if (fixedColumnInfo[column.key] === void 0) {
+      // Math.floor to avoid creating float column width value and scrollbar showing
+      // not use Math.ceil because it will exceed the container width in total
+      column.width = Math.floor(containerWidthRatio * Number(column.width))
+    }
   })
 
   const groupedColumns: Array<ColumnProps<any>> = []
@@ -516,7 +555,7 @@ function getTableColumns (props: IChartProps) {
     }
   })
 
-  return { tableColumns, mapTableHeaderConfig }
+  return { tableColumns, mapTableHeaderConfig, containerWidthRatio }
 }
 
 function getPaginationOptions (props: IChartProps) {

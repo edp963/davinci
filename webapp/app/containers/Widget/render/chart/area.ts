@@ -82,7 +82,7 @@ export default function (dataSource, flatInfo, chartParams) {
   let xAxisDistincted = []
 
   if (hasGroups && groups && groups.length) {
-    xAxisDistincted = distinctXaxis(dataSource, xAxis)
+    xAxisDistincted = getGroupedXaxis(dataSource, xAxis)
     grouped = makeGrouped(dataSource, [].concat(groups).filter((i) => !!i), xAxis, metrics, xAxisDistincted)
   }
 
@@ -290,7 +290,7 @@ export function makeGrouped (dataSource, groupColumns, xAxis, metrics, xAxisDist
   return grouped
 }
 
-export function distinctXaxis (dataSource, xAxis) {
+export function getGroupedXaxis (dataSource, xAxis) {
   return xAxis
     ? Object.keys(dataSource.reduce((distinct, ds) => {
       if (!distinct[ds[xAxis]]) {

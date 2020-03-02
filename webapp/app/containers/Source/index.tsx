@@ -23,7 +23,8 @@ import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import memoizeOne from 'memoize-one'
-import { Link, RouteComponentProps } from 'react-router'
+import { Link } from 'react-router-dom'
+import { RouteComponentWithParams } from 'utils/types'
 
 import { compose, Dispatch } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -58,8 +59,7 @@ import { checkNameUniqueAction } from '../App/actions'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
-import { IRouteParams } from 'app/routes'
-import { IProject } from '../Projects'
+import { IProject } from 'containers/Projects/types'
 import { ISource, ICSVMetaInfo, ISourceFormValues, IDatasourceInfo, SourceResetConnectionProperties } from './types'
 
 interface ISourceListStateProps {
@@ -85,7 +85,7 @@ interface ISourceListDispatchProps {
   onLoadDatasourcesInfo: () => void
 }
 
-type ISourceListProps = ISourceListStateProps & ISourceListDispatchProps & RouteComponentProps<{}, IRouteParams>
+type ISourceListProps = ISourceListStateProps & ISourceListDispatchProps & RouteComponentWithParams
 
 interface ISourceListStates {
   screenWidth: number
@@ -156,9 +156,9 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
   }
 
   public componentWillMount () {
-    const { onLoadSources, onLoadDatasourcesInfo, params } = this.props
-    const { pid: projectId } = params
-    onLoadSources(+projectId)
+    const { onLoadSources, onLoadDatasourcesInfo, match } = this.props
+    const projectId = +match.params.projectId
+    onLoadSources(projectId)
     onLoadDatasourcesInfo()
     window.addEventListener('resize', this.setScreenWidth, false)
   }
@@ -276,7 +276,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
 
   private addSource = () => {
     this.setState({
-      editingSource: { ...emptySource, projectId: +this.props.params.pid },
+      editingSource: { ...emptySource, projectId: +this.props.match.params.projectId },
       sourceModalVisible: true
     })
   }
@@ -328,7 +328,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
   }
 
   private deleteSource = (sourceId: number) => () => {
-    const { onDeleteSource, onLoadSources, params: { pid: projectId } } = this.props
+    const { onDeleteSource } = this.props
     onDeleteSource(sourceId)
   }
 
@@ -344,7 +344,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
   }
 
   private saveSourceForm = (values: ISourceFormValues) => {
-    const { params } = this.props
+    const { match } = this.props
     const { datasourceInfo, config, ...rest } = values
     const version = datasourceInfo[1] === 'Default' ? '' : (datasourceInfo[1] || '')
     const requestValue = {
@@ -354,7 +354,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
         ext: !!version,
         version
       },
-      projectId: Number(params.pid)
+      projectId: Number(match.params.projectId)
     }
 
     if (!values.id) {
@@ -600,7 +600,7 @@ export class SourceList extends React.PureComponent<ISourceListProps, ISourceLis
   }
 }
 
-const mapDispatchToProps = (dispatch: Dispatch<SourceActionType | any>) => ({
+const mapDispatchToProps = (dispatch: Dispatch<SourceActionType>) => ({
   onLoadSources: (projectId) => dispatch(SourceActions.loadSources(projectId)),
   onLoadSourceDetail: (sourceId, resolve) => dispatch(SourceActions.loadSourceDetail(sourceId, resolve)),
   onAddSource: (source, resolve) => dispatch(SourceActions.addSource(source, resolve)),

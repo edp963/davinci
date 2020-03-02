@@ -1,7 +1,6 @@
-import * as React from 'react'
-import * as PropTypes from 'prop-types'
-import * as hoistNonReactStatics from 'hoist-non-react-statics'
-import { IStore } from '../store'
+import React from 'react'
+import hoistNonReactStatics from 'hoist-non-react-statics'
+import { ReactReduxContext } from 'react-redux'
 
 import getInjectors from './reducerInjectors'
 
@@ -12,27 +11,21 @@ import getInjectors from './reducerInjectors'
  * @param {function} reducer A reducer that will be injected
  *
  */
-interface IReducerInjectorProps {
-  store: IStore<{}>
- }
-
 export default ({ key, reducer }) => (WrappedComponent) => {
-  class ReducerInjector extends React.PureComponent<IReducerInjectorProps, {}> {
-    private static WrappedComponent = WrappedComponent
+  class ReducerInjector extends React.Component {
+    public static WrappedComponent = WrappedComponent
 
-    private static contextTypes = {
-      store: PropTypes.object.isRequired
+    public static contextType = ReactReduxContext
+
+    public static displayName = `withReducer(${WrappedComponent.displayName ||
+      WrappedComponent.name ||
+      'Component'})`
+
+    constructor (props, context) {
+      super(props, context)
+
+      getInjectors(context.store).injectReducer(key, reducer)
     }
-
-    private static displayName = `withReducer(${(WrappedComponent.displayName || WrappedComponent.name || 'Component')})`
-
-    public componentWillMount () {
-      const { injectReducer } = this.injectors
-
-      injectReducer(key, reducer)
-    }
-
-    private injectors = getInjectors(this.context.store)
 
     public render () {
       return <WrappedComponent {...this.props} />
@@ -41,3 +34,12 @@ export default ({ key, reducer }) => (WrappedComponent) => {
 
   return hoistNonReactStatics(ReducerInjector, WrappedComponent)
 }
+
+const useInjectReducer = ({ key, reducer }) => {
+  const context = React.useContext(ReactReduxContext)
+  React.useEffect(() => {
+    getInjectors(context.store).injectReducer(key, reducer)
+  }, [])
+}
+
+export { useInjectReducer }
