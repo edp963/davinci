@@ -19,15 +19,16 @@
 
 package edp.davinci.dao;
 
-import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
-import edp.davinci.model.MemDisplaySlideWidget;
+import java.util.List;
+
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
+import edp.davinci.model.MemDisplaySlideWidget;
 
 @Component
 public interface MemDisplaySlideWidgetMapper {
@@ -45,10 +46,8 @@ public interface MemDisplaySlideWidgetMapper {
     })
     int deleteByProject(@Param("projectId") Long projectId);
 
-
     @Select({"select * from mem_display_slide_widget where id = #{id}"})
     MemDisplaySlideWidget getById(@Param("id") Long id);
-
 
     @Update({
             "update mem_display_slide_widget",

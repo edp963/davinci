@@ -125,6 +125,28 @@ export function* testSourceConnection (action: SourceActionType) {
   }
 }
 
+export function* resetSourceConnection (action: SourceActionType) {
+  if (action.type !== ActionTypes.RESET_SOURCE_CONNECTION) { return }
+  const { properties, resolve } = action.payload
+  const { sourceId, username, password } = properties
+  try {
+    yield call(request, {
+      method: 'post',
+      url: `${api.source}/reconnect/${sourceId}`,
+      data: {
+        dbUser: username,
+        dbPassword: password
+      }
+    })
+    yield put(SourceActions.sourceReset())
+    message.success('连接重置成功')
+    resolve()
+  } catch (err) {
+    yield put(SourceActions.resetSourceConnectionFail())
+    errorHandler(err)
+  }
+}
+
 export function* getCsvMetaId (action: SourceActionType) {
   if (action.type !== ActionTypes.GET_CSV_META_ID) { return }
   const { resolve } = action.payload
@@ -207,6 +229,7 @@ export default function* rootSourceSaga (): IterableIterator<any> {
     takeEvery(ActionTypes.DELETE_SOURCE, deleteSource),
     takeEvery(ActionTypes.EDIT_SOURCE, editSource),
     takeEvery(ActionTypes.TEST_SOURCE_CONNECTION, testSourceConnection),
+    takeEvery(ActionTypes.RESET_SOURCE_CONNECTION, resetSourceConnection),
     takeEvery(ActionTypes.GET_CSV_META_ID, getCsvMetaId),
     takeEvery(ActionTypes.LOAD_SOURCE_DATABASES, getSourceDatabases),
     takeEvery(ActionTypes.LOAD_SOURCE_DATABASE_TABLES, getDatabaseTables),

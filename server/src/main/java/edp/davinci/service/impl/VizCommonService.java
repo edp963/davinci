@@ -19,23 +19,38 @@
 
 package edp.davinci.service.impl;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import edp.core.utils.CollectionUtils;
 import edp.davinci.core.enums.VizEnum;
 import edp.davinci.core.model.RoleDisableViz;
-import edp.davinci.dao.*;
+import edp.davinci.dao.DashboardMapper;
+import edp.davinci.dao.DashboardPortalMapper;
+import edp.davinci.dao.DisplayMapper;
+import edp.davinci.dao.DisplaySlideMapper;
+import edp.davinci.dao.RelRoleDashboardMapper;
+import edp.davinci.dao.RelRoleDisplayMapper;
+import edp.davinci.dao.RelRolePortalMapper;
+import edp.davinci.dao.RelRoleSlideMapper;
+import edp.davinci.dao.RoleMapper;
+import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.model.Dashboard;
 import edp.davinci.model.DashboardPortal;
 import edp.davinci.model.Display;
 import edp.davinci.model.DisplaySlide;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.util.*;
-import java.util.stream.Collectors;
+import edp.davinci.model.User;
 
 
 @Component
-public class VizCommonService {
+public class VizCommonService extends BaseEntityService {
 
     @Autowired
     protected DashboardPortalMapper dashboardPortalMapper;
@@ -63,7 +78,30 @@ public class VizCommonService {
 
     @Autowired
     protected RoleMapper roleMapper;
+    
+	protected boolean isDisableVizs(ProjectPermission projectPermission, List<Long> disableVizs, Long id) {
+        return projectPermission == null || (!projectPermission.isProjectMaintainer() && disableVizs.contains(id));
+   }
 
+	protected boolean isDisablePortal(Long portalId, Long projectId, User user, ProjectPermission projectPermission) {
+        List<Long> disableVizs = getDisableVizs(user.getId(), projectId, null, VizEnum.PORTAL);
+        return isDisableVizs(projectPermission, disableVizs, portalId);
+   }
+	
+	protected boolean isDisableDashboard(Long dashboardId, Long portalId, User user, ProjectPermission projectPermission) {
+        List<Long> disableVizs = getDisableVizs(user.getId(), portalId, null, VizEnum.DASHBOARD);
+        return isDisableVizs(projectPermission, disableVizs, dashboardId);
+   }
+	
+	protected boolean isDisableDisplay(Long displayId, Long projectId, User user, ProjectPermission projectPermission) {
+        List<Long> disableVizs = getDisableVizs(user.getId(), projectId, null, VizEnum.DISPLAY);
+        return isDisableVizs(projectPermission, disableVizs, displayId);
+   }
+	
+	protected boolean isDisableDisplaySlide(Long slideId, Long displayId, User user, ProjectPermission projectPermission) {
+        List<Long> disableVizs = getDisableVizs(user.getId(), displayId, null, VizEnum.SLIDE);
+        return isDisableVizs(projectPermission, disableVizs, slideId);
+   }
 
     /**
      * 获取当前用户被禁viz
@@ -74,7 +112,7 @@ public class VizCommonService {
      * @param vizEnum
      * @return
      */
-    public List<Long> getDisableVizs(Long userId, Long featureId, List<Long> allVizs, VizEnum vizEnum) {
+    protected List<Long> getDisableVizs(Long userId, Long featureId, List<Long> allVizs, VizEnum vizEnum) {
         List<RoleDisableViz> disables = null;
         List<Long> allRoles = null;
         switch (vizEnum) {

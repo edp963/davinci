@@ -24,12 +24,12 @@ import edp.core.common.jdbc.JdbcDataSource;
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
 import edp.core.enums.SqlTypeEnum;
-import edp.core.enums.TypeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
+import edp.davinci.core.utils.SqlParseUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
@@ -50,18 +50,19 @@ import org.springframework.stereotype.Component;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 
 import static edp.core.consts.Consts.*;
-import static edp.core.enums.DataTypeEnum.MYSQL;
-import static edp.core.enums.DataTypeEnum.ORACLE;
+import static edp.core.enums.DataTypeEnum.*;
 
 @Slf4j
 @Component
 @Scope("prototype")
 public class SqlUtils {
-    private static final Logger sqlLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SQL.getName());
+
+	private static final Logger sqlLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SQL.getName());
 
     @Autowired
     private JdbcDataSource jdbcDataSource;
@@ -76,25 +77,13 @@ public class SqlUtils {
 
     private static final String VIEW = "VIEW";
 
-
     private static final String[] TABLE_TYPES = new String[]{TABLE, VIEW};
 
     private static final String TABLE_NAME = "TABLE_NAME";
 
     private static final String TABLE_TYPE = "TABLE_TYPE";
 
-
-    private String jdbcUrl;
-
-    private String username;
-
-    private String password;
-
-    private String database;
-
-    private String dbVersion;
-
-    private boolean isExt;
+    private JdbcSourceInfo jdbcSourceInfo;
 
     private DataTypeEnum dataTypeEnum;
 
@@ -102,11 +91,12 @@ public class SqlUtils {
 
     public SqlUtils init(BaseSource source) {
         return SqlUtilsBuilder
-                .SqlUtils()
+                .getBuilder()
                 .withJdbcUrl(source.getJdbcUrl())
                 .withUsername(source.getUsername())
                 .withPassword(source.getPassword())
                 .withDbVersion(source.getDbVersion())
+                .withProperties(source.getProperties())
                 .withIsExt(source.isExt())
                 .withJdbcDataSource(this.jdbcDataSource)
                 .withResultLimit(this.resultLimit)
@@ -114,13 +104,14 @@ public class SqlUtils {
                 .build();
     }
 
-    public SqlUtils init(String jdbcUrl, String username, String password, String dbVersion, boolean ext) {
+    public SqlUtils init(String jdbcUrl, String username, String password, String dbVersion, List<Dict> properties, boolean ext) {
         return SqlUtilsBuilder
-                .SqlUtils()
+                .getBuilder()
                 .withJdbcUrl(jdbcUrl)
                 .withUsername(username)
                 .withPassword(password)
                 .withDbVersion(dbVersion)
+                .withProperties(properties)
                 .withIsExt(ext)
                 .withJdbcDataSource(this.jdbcDataSource)
                 .withResultLimit(this.resultLimit)
@@ -128,19 +119,19 @@ public class SqlUtils {
                 .build();
     }
 
-    public void execute(String sql) throws ServerException {
-        sql = filterAnnotate(sql);
-        checkSensitiveSql(sql);
-        if (isQueryLogEnable) {
-            sqlLogger.info("{}", sql);
-        }
-        try {
-            jdbcTemplate().execute(sql);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServerException(e.getMessage());
-        }
-    }
+	public void execute(String sql) throws ServerException {
+		sql = filterAnnotate(sql);
+		checkSensitiveSql(sql);
+		if (isQueryLogEnable) {
+			sqlLogger.info("{}", sql);
+		}
+		try {
+			jdbcTemplate().execute(sql);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException(e.getMessage());
+		}
+	}
 
     @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
     public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer totalCount, Integer limit, Set<String> excludeColumns) throws Exception {
@@ -153,11 +144,9 @@ public class SqlUtils {
         if (null == totalCount || totalCount < 1) {
             totalCount = 0;
         }
-
         if (null == limit) {
             limit = -1;
         }
-
         PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit, excludeColumns);
         return paginate;
     }
@@ -173,12 +162,12 @@ public class SqlUtils {
         JdbcTemplate jdbcTemplate = jdbcTemplate();
         jdbcTemplate.setMaxRows(limit > resultLimit ? resultLimit : limit);
 
-        long befor = System.currentTimeMillis();
+        long before = System.currentTimeMillis();
 
         List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
 
         if (isQueryLogEnable) {
-            sqlLogger.info("{} query for >> {} ms", md5, System.currentTimeMillis() - befor);
+            sqlLogger.info("{} query for >> {} ms", md5, System.currentTimeMillis() - before);
         }
 
         return list;
@@ -192,7 +181,7 @@ public class SqlUtils {
 
         String md5 = MD5Util.getMD5(sql + pageNo + pageSize + limit, true, 16);
 
-        long befor = System.currentTimeMillis();
+        long before = System.currentTimeMillis();
 
         JdbcTemplate jdbcTemplate = jdbcTemplate();
         jdbcTemplate.setMaxRows(resultLimit);
@@ -202,25 +191,29 @@ public class SqlUtils {
             if (limit > 0) {
                 resultLimit = limit > resultLimit ? resultLimit : limit;
             }
+            
             if (isQueryLogEnable) {
                 sqlLogger.info("{}  >> \n{}", md5, sql);
             }
+            
             jdbcTemplate.setMaxRows(resultLimit);
             getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
             paginateWithQueryColumns.setPageNo(1);
             int size = paginateWithQueryColumns.getResultList().size();
             paginateWithQueryColumns.setPageSize(size);
             paginateWithQueryColumns.setTotalCount(size);
+        
         } else {
             paginateWithQueryColumns.setPageNo(pageNo);
             paginateWithQueryColumns.setPageSize(pageSize);
 
-            final int startRow = (pageNo - 1) * pageSize;
+            int startRow = (pageNo - 1) * pageSize;
 
             if (pageNo == 1 || totalCount == 0) {
-                Object o = jdbcTemplate.queryForObject(getCountSql(sql), Object.class);
+                Object o = jdbcTemplate.queryForList(getCountSql(sql), Object.class).get(0);
                 totalCount = Integer.parseInt(String.valueOf(o));
             }
+
             if (limit > 0) {
                 limit = limit > resultLimit ? resultLimit : limit;
                 totalCount = limit < totalCount ? limit : totalCount;
@@ -246,50 +239,53 @@ public class SqlUtils {
         }
 
         if (isQueryLogEnable) {
-            sqlLogger.info("{} query for >> {} ms", md5, System.currentTimeMillis() - befor);
+            sqlLogger.info("{} query for >> {} ms", md5, System.currentTimeMillis() - before);
         }
 
         return paginateWithQueryColumns;
     }
 
     private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns, int startRow) {
-        Set<String> queryFromsAndJoins = getQueryFromsAndJoins(sql);
-        jdbcTemplate.query(sql, rs -> {
-            if (null != rs) {
-                ResultSetMetaData metaData = rs.getMetaData();
-                List<QueryColumn> queryColumns = new ArrayList<>();
-                for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                    String key = getColumnLabel(queryFromsAndJoins, metaData.getColumnLabel(i));
-                    if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
-                        continue;
-                    }
-                    queryColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
-                }
-                paginateWithQueryColumns.setColumns(queryColumns);
+		Set<String> queryFromsAndJoins = getQueryFromsAndJoins(sql);
+		jdbcTemplate.query(sql, rs -> {
+			if (null == rs) {
+				return paginateWithQueryColumns;
+			}
 
-                List<Map<String, Object>> resultList = new ArrayList<>();
+			ResultSetMetaData metaData = rs.getMetaData();
+			List<QueryColumn> queryColumns = new ArrayList<>();
+			for (int i = 1; i <= metaData.getColumnCount(); i++) {
+				String key = getColumnLabel(queryFromsAndJoins, metaData.getColumnLabel(i));
+				if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(key)) {
+					continue;
+				}
+				queryColumns.add(new QueryColumn(key, metaData.getColumnTypeName(i)));
+			}
+			paginateWithQueryColumns.setColumns(queryColumns);
 
-                try {
-                    if (startRow > 0) {
-                        rs.absolute(startRow);
-                    }
-                    while (rs.next()) {
-                        resultList.add(getResultObjectMap(excludeColumns, rs, metaData, queryFromsAndJoins));
-                    }
-                } catch (Throwable e) {
-                    int currentRow = 0;
-                    while (rs.next()) {
-                        if (currentRow >= startRow) {
-                            resultList.add(getResultObjectMap(excludeColumns, rs, metaData, queryFromsAndJoins));
-                        }
-                        currentRow++;
-                    }
-                }
+			List<Map<String, Object>> resultList = new ArrayList<>();
 
-                paginateWithQueryColumns.setResultList(resultList);
-            }
-            return paginateWithQueryColumns;
-        });
+			try {
+				if (startRow > 0) {
+					rs.absolute(startRow);
+				}
+				while (rs.next()) {
+					resultList.add(getResultObjectMap(excludeColumns, rs, metaData, queryFromsAndJoins));
+				}
+			} catch (Throwable e) {
+				int currentRow = 0;
+				while (rs.next()) {
+					if (currentRow >= startRow) {
+						resultList.add(getResultObjectMap(excludeColumns, rs, metaData, queryFromsAndJoins));
+					}
+					currentRow++;
+				}
+			}
+
+			paginateWithQueryColumns.setResultList(resultList);
+
+			return paginateWithQueryColumns;
+		});
     }
 
     private Map<String, Object> getResultObjectMap(Set<String> excludeColumns, ResultSet rs, ResultSetMetaData metaData, Set<String> queryFromsAndJoins) throws SQLException {
@@ -308,41 +304,47 @@ public class SqlUtils {
     }
 
     public static String getCountSql(String sql) {
+        String countSql = String.format(Consts.QUERY_COUNT_SQL, sql);
         try {
             Select select = (Select) CCJSqlParserUtil.parse(sql);
             PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
             plainSelect.setOrderByElements(null);
-            return String.format(QUERY_COUNT_SQL, select.toString());
+            countSql = String.format(QUERY_COUNT_SQL, select.toString());
         } catch (JSQLParserException e) {
+        	log.error(e.getMessage(), e);
         }
-        return String.format(Consts.QUERY_COUNT_SQL, sql);
+        return SqlParseUtils.rebuildSqlWithFragment(countSql);
     }
 
+	public static Set<String> getQueryFromsAndJoins(String sql) {
+		Set<String> columnPrefixs = new HashSet<>();
+		try {
+			Select select = (Select) CCJSqlParserUtil.parse(sql);
+			SelectBody selectBody = select.getSelectBody();
+			if (selectBody instanceof PlainSelect) {
+				PlainSelect plainSelect = (PlainSelect) selectBody;
+				columnPrefixExtractor(columnPrefixs, plainSelect);
+			}
 
-    public static Set<String> getQueryFromsAndJoins(String sql) {
-        Set<String> columnPrefixs = new HashSet<>();
-        try {
-            Select select = (Select) CCJSqlParserUtil.parse(sql);
-            SelectBody selectBody = select.getSelectBody();
-            if (selectBody instanceof PlainSelect) {
-                PlainSelect plainSelect = (PlainSelect) selectBody;
-                columnPrefixExtractor(columnPrefixs, plainSelect);
-            } else if (selectBody instanceof SetOperationList) {
-                SetOperationList setOperationList = (SetOperationList) selectBody;
-                List<SelectBody> selects = setOperationList.getSelects();
-                for (SelectBody optSelectBody : selects) {
-                    PlainSelect plainSelect = (PlainSelect) optSelectBody;
-                    columnPrefixExtractor(columnPrefixs, plainSelect);
-                }
-            } else if (selectBody instanceof WithItem) {
-                WithItem withItem = (WithItem) selectBody;
-                PlainSelect plainSelect = (PlainSelect) withItem.getSelectBody();
-                columnPrefixExtractor(columnPrefixs, plainSelect);
-            }
-        } catch (JSQLParserException e) {
-        }
-        return columnPrefixs;
-    }
+			if (selectBody instanceof SetOperationList) {
+				SetOperationList setOperationList = (SetOperationList) selectBody;
+				List<SelectBody> selects = setOperationList.getSelects();
+				for (SelectBody optSelectBody : selects) {
+					PlainSelect plainSelect = (PlainSelect) optSelectBody;
+					columnPrefixExtractor(columnPrefixs, plainSelect);
+				}
+			}
+
+			if (selectBody instanceof WithItem) {
+				WithItem withItem = (WithItem) selectBody;
+				PlainSelect plainSelect = (PlainSelect) withItem.getSelectBody();
+				columnPrefixExtractor(columnPrefixs, plainSelect);
+			}
+		} catch (JSQLParserException e) {
+			log.error(e.getMessage(), e);
+		}
+		return columnPrefixs;
+	}
 
     private static void columnPrefixExtractor(Set<String> columnPrefixs, PlainSelect plainSelect) {
         getFromItemName(columnPrefixs, plainSelect.getFromItem());
@@ -365,21 +367,22 @@ public class SqlUtils {
         }
     }
 
-
-    public static String getColumnLabel(Set<String> columnPrefixs, String columnLable) {
-        if (!CollectionUtils.isEmpty(columnPrefixs)) {
-            for (String prefix : columnPrefixs) {
-                if (columnLable.startsWith(prefix)) {
-                    return columnLable.replaceFirst(prefix, EMPTY);
-                } else if (columnLable.startsWith(prefix.toLowerCase())) {
-                    return columnLable.replaceFirst(prefix.toLowerCase(), EMPTY);
-                } else if (columnLable.startsWith(prefix.toUpperCase())) {
-                    return columnLable.replaceFirst(prefix.toUpperCase(), EMPTY);
-                }
-            }
-        }
-        return columnLable;
-    }
+	public static String getColumnLabel(Set<String> columnPrefixs, String columnLable) {
+		if (!CollectionUtils.isEmpty(columnPrefixs)) {
+			for (String prefix : columnPrefixs) {
+				if (columnLable.startsWith(prefix)) {
+					return columnLable.replaceFirst(prefix, EMPTY);
+				}
+				if (columnLable.startsWith(prefix.toLowerCase())) {
+					return columnLable.replaceFirst(prefix.toLowerCase(), EMPTY);
+				}
+				if (columnLable.startsWith(prefix.toUpperCase())) {
+					return columnLable.replaceFirst(prefix.toUpperCase(), EMPTY);
+				}
+			}
+		}
+		return columnLable;
+	}
 
     /**
      * 获取当前连接数据库
@@ -387,108 +390,128 @@ public class SqlUtils {
      * @return
      * @throws SourceException
      */
-    public List<String> getDatabases() throws SourceException {
-        List<String> dbList = new ArrayList<>();
-        Connection connection = null;
-        try {
-            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
-            if (null != connection) {
-                if (this.dataTypeEnum == ORACLE) {
-                    dbList.add(this.username);
-                } else {
-                    String catalog = connection.getCatalog();
-                    if (!StringUtils.isEmpty(catalog)) {
-                        dbList.add(catalog);
-                    } else {
-                        DatabaseMetaData metaData = connection.getMetaData();
-                        ResultSet rs = metaData.getCatalogs();
-                        while (rs.next()) {
-                            dbList.add(rs.getString(1));
-                        }
-                    }
-                }
+    public List<String> getDatabases() throws SourceException { 
+		List<String> dbList = new ArrayList<>();
+		Connection connection = null;
+		try {
+			connection = sourceUtils.getConnection(this.jdbcSourceInfo);
+			if (null == connection) {
+				return dbList;
+			}
 
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
-        } finally {
-            sourceUtils.releaseConnection(connection);
-        }
+			if (dataTypeEnum == ORACLE) {
+				dbList.add(this.jdbcSourceInfo.getUsername());
+				return dbList;
+			}
+			
+			if (dataTypeEnum == ELASTICSEARCH) {
+				if(StringUtils.isEmpty(this.jdbcSourceInfo.getUsername())) {
+					dbList.add(dataTypeEnum.getFeature());
+				}else {
+					dbList.add(this.jdbcSourceInfo.getUsername());
+				}
+				return dbList;
+			}
 
+			String catalog = connection.getCatalog();
+			if (!StringUtils.isEmpty(catalog)) {
+				dbList.add(catalog);
+			} else {
+				DatabaseMetaData metaData = connection.getMetaData();
+				ResultSet rs = metaData.getCatalogs();
+				while (rs.next()) {
+					dbList.add(rs.getString(1));
+				}
+			}
 
-        return dbList;
-    }
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			return dbList;
+		} finally {
+			SourceUtils.releaseConnection(connection);
+		}
+		return dbList;
+	}
 
-    /**
-     * 获取当前数据源表结构
-     *
-     * @return
-     * @throws SourceException
-     */
-    public List<QueryColumn> getTableList(String dbName) throws SourceException {
-        List<QueryColumn> tableList = null;
-        Connection connection = null;
-        try {
-            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
-            if (null != connection) {
-                DatabaseMetaData metaData = connection.getMetaData();
-                String schema = null;
-                try {
-                    schema = metaData.getConnection().getSchema();
-                } catch (Throwable t) {
-                }
+	/**
+	 * 获取当前数据源表结构
+	 *
+	 * @return
+	 * @throws SourceException
+	 */
+	public List<QueryColumn> getTableList(String dbName) throws SourceException {
 
-                ResultSet tables = metaData.getTables(dbName, getDBSchemaPattern(schema), "%", TABLE_TYPES);
-                if (null != tables) {
-                    tableList = new ArrayList<>();
-                    while (tables.next()) {
-                        String name = tables.getString(TABLE_NAME);
-                        if (!StringUtils.isEmpty(name)) {
-                            String type = TABLE;
-                            try {
-                                type = tables.getString(TABLE_TYPE);
-                            } catch (Exception e) {
-                            }
-                            tableList.add(new QueryColumn(name, type));
-                        }
-                    }
-                }
-                tables.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
-        } finally {
-            sourceUtils.releaseConnection(connection);
-        }
-        return tableList;
-    }
+		List<QueryColumn> tableList = null;
+		Connection connection = null;
+		ResultSet tables = null;
 
-    private String getDBSchemaPattern(String schema) {
-        String schemaPattern = null;
-        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
-        if (null != dataTypeEnum) {
-            switch (dataTypeEnum) {
-                case ORACLE:
-                    schemaPattern = this.username;
-                    if (null != schemaPattern) {
-                        schemaPattern = schemaPattern.toUpperCase();
-                    }
-                    break;
-                case SQLSERVER:
-                    schemaPattern = "dbo";
+		try {
+			connection = sourceUtils.getConnection(this.jdbcSourceInfo);
+			if (null == connection) {
+				return tableList;
+			}
 
-                case PRESTO:
-                    if (!StringUtils.isEmpty(schema)) {
-                        schemaPattern = schema;
-                    }
-                    break;
-            }
-        }
-        return schemaPattern;
+			DatabaseMetaData metaData = connection.getMetaData();
+			String schema = null;
+			try {
+				schema = metaData.getConnection().getSchema();
+			} catch (Throwable t) {
+				// ignore
+			}
 
-    }
+			tables = metaData.getTables(dbName, getDBSchemaPattern(schema), "%", TABLE_TYPES);
+			if (null == tables) {
+				return tableList;
+			}
+			
+			tableList = new ArrayList<>();
+			while (tables.next()) {
+				String name = tables.getString(TABLE_NAME);
+				if (!StringUtils.isEmpty(name)) {
+					String type = TABLE;
+					try {
+						type = tables.getString(TABLE_TYPE);
+					} catch (Exception e) {
+						// ignore
+					}
+					tableList.add(new QueryColumn(name, type));
+				}
+			}
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			return tableList;
+		} finally {
+			SourceUtils.releaseConnection(connection);
+			SourceUtils.closeResult(tables);
+		}
+		return tableList;
+	}
+
+	private String getDBSchemaPattern(String schema) {
+		if (dataTypeEnum == null) {
+			return null;
+		}
+		String schemaPattern = null;
+		switch (dataTypeEnum) {
+		case ORACLE:
+			schemaPattern = this.jdbcSourceInfo.getUsername();
+			if (null != schemaPattern) {
+				schemaPattern = schemaPattern.toUpperCase();
+			}
+			break;
+		case SQLSERVER:
+			schemaPattern = "dbo";
+			break;
+		case PRESTO:
+			if (!StringUtils.isEmpty(schema)) {
+				schemaPattern = schema;
+			}
+			break;
+		default:
+			break;
+		}
+		return schemaPattern;
+	}
 
     /**
      * 获取指定表列信息
@@ -498,23 +521,23 @@ public class SqlUtils {
      * @throws SourceException
      */
     public TableInfo getTableInfo(String dbName, String tableName) throws SourceException {
-        TableInfo tableInfo = null;
-        Connection connection = null;
-        try {
-            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
-            if (null != connection) {
-                DatabaseMetaData metaData = connection.getMetaData();
-                List<String> primaryKeys = getPrimaryKeys(dbName, tableName, metaData);
-                List<QueryColumn> columns = getColumns(dbName, tableName, metaData);
-                tableInfo = new TableInfo(tableName, primaryKeys, columns);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
-        } finally {
-            sourceUtils.releaseConnection(connection);
-        }
-        return tableInfo;
+		TableInfo tableInfo = null;
+		Connection connection = null;
+		try {
+			connection = sourceUtils.getConnection(this.jdbcSourceInfo);
+			if (null != connection) {
+				DatabaseMetaData metaData = connection.getMetaData();
+				List<String> primaryKeys = getPrimaryKeys(dbName, tableName, metaData);
+				List<QueryColumn> columns = getColumns(dbName, tableName, metaData);
+				tableInfo = new TableInfo(tableName, primaryKeys, columns);
+			}
+		} catch (SQLException e) {
+			log.error(e.getMessage(), e);
+			throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcSourceInfo.getJdbcUrl());
+		} finally {
+			SourceUtils.releaseConnection(connection);
+		}
+		return tableInfo;
     }
 
 
@@ -528,63 +551,25 @@ public class SqlUtils {
     public boolean tableIsExist(String tableName) throws SourceException {
         boolean result = false;
         Connection connection = null;
+        ResultSet rs = null;
         try {
-            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
+            connection = sourceUtils.getConnection(this.jdbcSourceInfo);
             if (null != connection) {
-                ResultSet tables = connection.getMetaData().getTables(null, null, tableName, null);
-                if (null != tables && tables.next()) {
+                rs = connection.getMetaData().getTables(null, null, tableName, null);
+                if (null != rs && rs.next()) {
                     result = true;
                 } else {
                     result = false;
                 }
-                tables.close();
             }
         } catch (Exception e) {
-            throw new SourceException("Get connection meta data error, jdbcUrl=" + this.jdbcUrl);
+        	log.error(e.getMessage(), e);
+            throw new SourceException("Get connection meta data error, jdbcUrl=" + this.jdbcSourceInfo.getJdbcUrl());
         } finally {
-            sourceUtils.releaseConnection(connection);
+            SourceUtils.releaseConnection(connection);
+            SourceUtils.closeResult(rs);
         }
-
         return result;
-    }
-
-    /**
-     * 根据sql查询列
-     *
-     * @param sql
-     * @return
-     * @throws ServerException
-     */
-    public List<QueryColumn> getColumns(String sql) throws ServerException {
-        long l = System.currentTimeMillis();
-        checkSensitiveSql(sql);
-        Connection connection = null;
-        List<QueryColumn> columnList = new ArrayList<>();
-        try {
-            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
-            if (null != connection) {
-                Statement statement = connection.createStatement();
-                statement.setMaxRows(1);
-                ResultSet resultSet = statement.executeQuery(sql);
-                ResultSetMetaData rsmd = resultSet.getMetaData();
-                int columnCount = rsmd.getColumnCount();
-                for (int i = 1; i <= columnCount; i++) {
-                    QueryColumn queryColumn = new QueryColumn(
-                            rsmd.getColumnLabel(i),
-                            TypeEnum.getType(rsmd.getColumnType(i)));
-                    columnList.add(queryColumn);
-                }
-                resultSet.close();
-                statement.close();
-            }
-        } catch (Exception e) {
-            throw new ServerException(e.getMessage());
-        } finally {
-            sourceUtils.releaseConnection(connection);
-        }
-        long l1 = System.currentTimeMillis();
-        log.info("get columns for >>> {} ms", l1 - l);
-        return columnList;
     }
 
 
@@ -601,13 +586,16 @@ public class SqlUtils {
         List<String> primaryKeys = new ArrayList<>();
         try {
             rs = metaData.getPrimaryKeys(dbName, null, tableName);
+            if (rs == null) {
+            	return primaryKeys;
+            }
             while (rs.next()) {
-                primaryKeys.add(rs.getString(4));
+                primaryKeys.add(rs.getString("COLUMN_NAME"));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+        	log.error(e.getMessage(), e);
         } finally {
-            sourceUtils.closeResult(rs);
+            SourceUtils.closeResult(rs);
         }
         return primaryKeys;
     }
@@ -629,13 +617,16 @@ public class SqlUtils {
                 dbName = null;
             }
             rs = metaData.getColumns(dbName, null, tableName, "%");
+            if (rs == null) {
+            	return columnList;
+            }
             while (rs.next()) {
-                columnList.add(new QueryColumn(rs.getString(4), rs.getString(6)));
+                columnList.add(new QueryColumn(rs.getString("COLUMN_NAME"), rs.getString("TYPE_NAME")));
             }
         } catch (Exception e) {
-            throw new ServerException(e.getMessage());
+        	log.error(e.getMessage(), e);
         } finally {
-            sourceUtils.closeResult(rs);
+            SourceUtils.closeResult(rs);
         }
         return columnList;
     }
@@ -658,16 +649,26 @@ public class SqlUtils {
 
 
     public JdbcTemplate jdbcTemplate() throws SourceException {
-        DataSource dataSource = sourceUtils.getDataSource(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
+        Connection connection = null;
+        try {
+            connection = sourceUtils.getConnection(this.jdbcSourceInfo);
+        } catch (SourceException e) {
+        }
+        if (connection == null) {
+            sourceUtils.releaseDataSource(this.jdbcSourceInfo);
+        } else {
+            SourceUtils.releaseConnection(connection);
+        }
+        DataSource dataSource = sourceUtils.getDataSource(this.jdbcSourceInfo);
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.setFetchSize(1000);
         return jdbcTemplate;
     }
-
+    
     public boolean testConnection() throws SourceException {
         Connection connection = null;
         try {
-            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
+            connection = sourceUtils.getConnection(jdbcSourceInfo);
             if (null != connection) {
                 return true;
             } else {
@@ -676,7 +677,8 @@ public class SqlUtils {
         } catch (SourceException sourceException) {
             throw sourceException;
         } finally {
-            sourceUtils.releaseConnection(connection);
+            SourceUtils.releaseConnection(connection);
+            sourceUtils.releaseDataSource(jdbcSourceInfo);
         }
     }
 
@@ -695,7 +697,7 @@ public class SqlUtils {
         Connection connection = null;
         PreparedStatement pstmt = null;
         try {
-            connection = sourceUtils.getConnection(this.jdbcUrl, this.username, this.password, this.database, this.dbVersion, this.isExt);
+            connection = sourceUtils.getConnection(this.jdbcSourceInfo);
             if (null != connection) {
                 connection.setAutoCommit(false);
                 pstmt = connection.prepareStatement(sql);
@@ -746,12 +748,24 @@ public class SqlUtils {
                                 if (obj == null) {
                                     pstmt.setTimestamp(i, null);
                                 } else {
-                                    DateTime dateTime = (DateTime) obj;
-                                    pstmt.setTimestamp(i, DateUtils.toTimestamp(dateTime));
+                                    if(obj instanceof LocalDateTime){
+                                        pstmt.setTimestamp(i, Timestamp.valueOf((LocalDateTime) obj));
+                                    }else {
+                                        DateTime dateTime = (DateTime) obj;
+                                        pstmt.setTimestamp(i, DateUtils.toTimestamp(dateTime));
+                                    }
                                 }
                                 break;
                             case "Timestamp":
-                                pstmt.setTimestamp(i, null == obj ? null : (Timestamp) obj);
+                                if(obj == null){
+                                    pstmt.setTimestamp(i, null);
+                                }else{
+                                    if(obj instanceof LocalDateTime){
+                                        pstmt.setTimestamp(i, Timestamp.valueOf((LocalDateTime) obj));
+                                    }else {
+                                        pstmt.setTimestamp(i, (Timestamp) obj);
+                                    }
+                                }
                                 break;
                             case "Blob":
                                 pstmt.setBlob(i, null == obj ? null : (Blob) obj);
@@ -777,29 +791,28 @@ public class SqlUtils {
 
                 pstmt.executeBatch();
                 connection.commit();
-
             }
         } catch (Exception e) {
-            e.printStackTrace();
+        	log.error(e.getMessage(), e);
             if (null != connection) {
                 try {
                     connection.rollback();
                 } catch (SQLException se) {
-                    se.printStackTrace();
+                	log.error(se.getMessage(), se);
                 }
             }
-            throw new ServerException(e.getMessage());
-        } finally {
-            if (null != pstmt) {
-                try {
-                    pstmt.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new ServerException(e.getMessage());
-                }
-            }
-            sourceUtils.releaseConnection(connection);
-        }
+			throw new ServerException(e.getMessage(), e);
+		} finally {
+			if (null != pstmt) {
+				try {
+					pstmt.close();
+				} catch (SQLException e) {
+					log.error(e.getMessage(), e);
+					throw new ServerException(e.getMessage(), e);
+				}
+			}
+			SourceUtils.releaseConnection(connection);
+		}
     }
 
     public static String getKeywordPrefix(String jdbcUrl, String dbVersion) {
@@ -918,16 +931,14 @@ public class SqlUtils {
     }
 
 
-    public SqlUtils() {
-    }
+	public SqlUtils() {
 
-    public SqlUtils(String jdbcUrl, String username, String password, String dbVersion, boolean isExt) {
-        this.jdbcUrl = jdbcUrl;
-        this.username = username;
-        this.password = password;
-        this.dbVersion = dbVersion;
-        this.isExt = isExt;
-    }
+	}
+
+	public SqlUtils(JdbcSourceInfo jdbcSourceInfo) {
+		this.jdbcSourceInfo = jdbcSourceInfo;
+		this.dataTypeEnum = DataTypeEnum.urlOf(jdbcSourceInfo.getJdbcUrl());
+	}
 
     public static final class SqlUtilsBuilder {
         private JdbcDataSource jdbcDataSource;
@@ -936,13 +947,15 @@ public class SqlUtils {
         private String jdbcUrl;
         private String username;
         private String password;
+        private List<Dict> properties;
         private String dbVersion;
         private boolean isExt;
 
         private SqlUtilsBuilder() {
+
         }
 
-        public static SqlUtilsBuilder SqlUtils() {
+        public static SqlUtilsBuilder getBuilder() {
             return new SqlUtilsBuilder();
         }
 
@@ -976,6 +989,11 @@ public class SqlUtils {
             return this;
         }
 
+        SqlUtilsBuilder withProperties(List<Dict> properties) {
+            this.properties = properties;
+            return this;
+        }
+
         SqlUtilsBuilder withDbVersion(String dbVersion) {
             this.dbVersion = dbVersion;
             return this;
@@ -990,12 +1008,22 @@ public class SqlUtils {
             String datasource = SourceUtils.isSupportedDatasource(jdbcUrl);
             SourceUtils.checkDriver(datasource, jdbcUrl, dbVersion, isExt);
 
-            SqlUtils sqlUtils = new SqlUtils(jdbcUrl, username, password, dbVersion, isExt);
+            JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo
+                    .JdbcSourceInfoBuilder
+                    .aJdbcSourceInfo()
+                    .withJdbcUrl(this.jdbcUrl)
+                    .withUsername(this.username)
+                    .withPassword(this.password)
+                    .withDatabase(datasource)
+                    .withDbVersion(this.dbVersion)
+                    .withProperties(this.properties)
+                    .withExt(this.isExt)
+                    .build();
+
+            SqlUtils sqlUtils = new SqlUtils(jdbcSourceInfo);
             sqlUtils.jdbcDataSource = this.jdbcDataSource;
             sqlUtils.resultLimit = this.resultLimit;
             sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
-            sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-            sqlUtils.database = datasource;
             sqlUtils.sourceUtils = new SourceUtils(this.jdbcDataSource);
 
             return sqlUtils;
@@ -1003,7 +1031,10 @@ public class SqlUtils {
     }
 
     public String getJdbcUrl() {
-        return jdbcUrl;
+        if (this.jdbcSourceInfo == null) {
+            return null;
+        }
+        return this.jdbcSourceInfo.getJdbcUrl();
     }
 }
 

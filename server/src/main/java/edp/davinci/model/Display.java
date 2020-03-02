@@ -43,4 +43,19 @@ public class Display extends RecordInfo<Display> {
     private String avatar;
 
     private Boolean publish = false;
+
+    private String config;
+
+    @Override
+    public String toString() {
+        return "Display{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", projectId=" + projectId +
+                ", avatar='" + avatar + '\'' +
+                ", publish=" + publish + '\'' +
+                ", config=" + config +
+                '}';
+    }
 }

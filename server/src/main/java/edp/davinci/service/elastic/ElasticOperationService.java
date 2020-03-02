@@ -9,9 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.time.ZoneId;
 import java.util.List;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -20,34 +17,26 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 @Slf4j
 public class ElasticOperationService extends ElasticConfigration {
 
-    public final static ZoneId zone = ZoneId.systemDefault();
-
-    public final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-
     public void batchInsert(String index, String type, List<?> objects) {
+        
         try{
+
             BulkRequestBuilder bulkRequest = client.prepareBulk();
 
             for(Object object : objects){
                 XContentBuilder builder = jsonBuilder().startObject();
-
                 String[] fileNames = getFiledName(object);
                 for(String fileName : fileNames){
                     Object value = getFieldValueByName(fileName, object);
-                    if(value instanceof Timestamp){
-                        value = sdf.format(value);
-                    }
                     builder.field(fileName, value);
                 }
                 builder.endObject();
-
                 bulkRequest.add(client.prepareIndex(index, type).setSource(builder));
             }
 
             BulkResponse bulkResponse = bulkRequest.get();
             if (bulkResponse.hasFailures()) {
                 // process failures by iterating through each bulk response item
-
                 log.error("ElasticOperation batchInsert failed. {}", bulkResponse.toString());
             }
 
@@ -74,7 +63,8 @@ public class ElasticOperationService extends ElasticConfigration {
             Object value = method.invoke(o, new Object[]{});
             return value;
         } catch (Exception e) {
-            return null;
+            // ignore
         }
+        return null;
     }
 }

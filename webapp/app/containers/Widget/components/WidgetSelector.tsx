@@ -2,16 +2,18 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { iconMapping } from './util'
 
+import { IWidgetRaw } from '../types'
+
 import { Icon, Row, Col, Checkbox, Pagination, Input } from 'antd'
 const Search = Input.Search
 const styles = require('../Widget.less')
 
-interface IWidgetSelectorProps {
-  className: any
-  widgets: any[]
+export interface IWidgetSelectorProps {
+  className?: string
+  widgets: IWidgetRaw[]
   multiple: boolean
-  widgetsSelected: any[]
-  onWidgetsSelect: (widgets) => void
+  widgetsSelected: IWidgetRaw[]
+  onWidgetsSelect: (widgets: IWidgetRaw[]) => void
 }
 
 interface IWidgetSelectorStates {
@@ -167,7 +169,7 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
         <Col lg={8} md={12} sm={24} key={w.id} onClick={this.onWidgetSelect(w)}>
           <div className={widgetClassName}>
             <h3 className={styles.title}>{w.name}</h3>
-            <p className={styles.content}>{w.desc}</p>
+            <p className={styles.content}>{w.description}</p>
             <i className={`${styles.pic} iconfont ${iconMapping[widgetType]}`} />
             {checkmark}
           </div>
@@ -175,8 +177,11 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
       )
     })
 
+    const wrapperCls = classnames({
+      [className]: !!className
+    })
     return (
-      <div className={className}>
+      <div className={wrapperCls}>
         <Row gutter={20} className={`${styles.searchRow}`}>
           <Col span={17}>
             <Checkbox checked={showSelected} onChange={this.onShowTypeChange}>已选</Checkbox>

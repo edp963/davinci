@@ -1,0 +1,94 @@
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+@import '~assets/less/variable.less';
+
+:global {
+  .split-pane {
+    display: flex;
+
+    &-horizontal {
+      flex-direction: row;
+
+      &-spliter {
+        border-right: @border-width-base @border-style-base @border-color-split;
+      }
+    }
+
+    &-vertical {
+      flex-direction: column;
+
+      &-spliter {
+        border-bottom: @border-width-base @border-style-base @border-color-split;
+      }
+    }
+
+    &-1 {
+      display: flex;
+
+      & > .react-resizable {
+        display: flex;
+      }
+    }
+
+    &-2 {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+
+      & > .react-resizable {
+        display: flex;
+      }
+    }
+
+    &-resize-handle {
+      position: absolute;
+      width: 8px;
+      cursor: col-resize;
+      user-select: none;
+
+      &-horizontal {
+        top: 0;
+        bottom: 0;
+
+        &-1 {
+          right: -4px;
+        }
+
+        &-2 {
+          left: -4px;
+        }
+      }
+
+      &-vertical {
+        left: 0;
+        right: 0;
+
+        &-1 {
+          bottom: -4px;
+        }
+
+        &-2 {
+          top: -4px;
+        }
+      }
+    }
+  }
+}

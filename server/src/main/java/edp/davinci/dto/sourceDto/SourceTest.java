@@ -20,19 +20,26 @@
 package edp.davinci.dto.sourceDto;
 
 
-import lombok.Data;
+import java.util.List;
 
 import javax.validation.constraints.NotBlank;
+
+import edp.core.model.Dict;
+import lombok.Data;
 
 @Data
 public class SourceTest {
 
     private String username;
+
     private String password;
 
     @NotBlank(message = "connection url cannot be EMPTY")
     private String url;
 
     private String version;
+
+    private List<Dict> properties;
+
     private boolean isExt;
 }

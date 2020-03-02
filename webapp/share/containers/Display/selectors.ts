@@ -19,45 +19,86 @@
  */
 
 import { createSelector } from 'reselect'
+import { initialState } from './reducer'
+import { DashboardItemStatus } from '../Dashboard'
 
-const selectShare = (state) => state.get('shareDisplay')
+const selectShare = (state) => state.shareDisplay || initialState
+const selectPropsSlideNumber = (_, slideNumber: number) => slideNumber
+const selectPropsLayerId = (_1, _2, layerId: number) => layerId
 
-const makeSelectTitle = () => createSelector(
+const selectSlidesLayers = createSelector(
   selectShare,
-  (shareState) => shareState.get('title')
+  (shareState) => shareState.slidesLayers
 )
 
-const makeSelectDisplay = () => createSelector(
+const selectSlideLayersInfo = createSelector(
   selectShare,
-  (shareState) => shareState.get('display')
+  (shareState) => shareState.slideLayersInfo
 )
 
-const makeSelectSlide = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('slide')
-)
+const makeSelectTitle = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.title
+  )
 
-const makeSelectLayers = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('layers')
-)
+const makeSelectDisplay = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.display
+  )
 
-const makeSelectWidgets = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('widgets')
-)
+const makeSelectSlidesCount = () =>
+  createSelector(
+    selectSlidesLayers,
+    (slidesLayers) => slidesLayers.length
+  )
+const makeSelectSlideLayers = () =>
+  createSelector(
+    selectSlidesLayers,
+    selectPropsSlideNumber,
+    (slidesLayers, slideNumber) => slidesLayers[slideNumber - 1]
+  )
 
-const makeSelectLayersInfo = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('layersInfo')
-)
+const makeSelectWidgets = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.widgets
+  )
+
+const makeSelectSlideLayerContextValue = () =>
+  createSelector(
+    selectSlidesLayers,
+    selectSlideLayersInfo,
+    selectPropsSlideNumber,
+    selectPropsLayerId,
+    (slidesLayers, slideLayersInfo, slideNumber, layerId) => {
+      return {
+        layer: slidesLayers[slideNumber - 1].relations.find(
+          ({ id }) => id === layerId
+        ),
+        layerInfo: slideLayersInfo[slideNumber][layerId]
+      }
+    }
+  )
+
+const makeSelectSlideLayersLoaded = () =>
+  createSelector(
+    selectSlideLayersInfo,
+    selectPropsSlideNumber,
+    (slideLayersInfo, slideNumber) =>
+      Object.values(slideLayersInfo[slideNumber]).every(
+        ({ status }) => status !== DashboardItemStatus.Initial
+      )
+  )
 
 export {
   selectShare,
   makeSelectTitle,
   makeSelectDisplay,
-  makeSelectSlide,
-  makeSelectLayers,
+  makeSelectSlidesCount,
+  makeSelectSlideLayers,
   makeSelectWidgets,
-  makeSelectLayersInfo
+  makeSelectSlideLayerContextValue,
+  makeSelectSlideLayersLoaded
 }

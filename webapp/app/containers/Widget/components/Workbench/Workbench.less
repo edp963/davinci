@@ -68,12 +68,20 @@
 }
 
 .viewSelect {
-  display: flex;
   padding: 8px;
   line-height: 24px;
-  flex-shrink: 0;
-  justify-content: space-between;
-  align-items: center;
+
+  :global {
+    .ant-select {
+      width: 100%;
+    }
+
+    .ant-select-selection {
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+  }
 }
 
 .columnContainer {
@@ -342,14 +350,6 @@
 
       .blockElm {
         width: 100%;
-      }
-
-      .noVariable {
-        color: @disabled-text-color;
-
-        i {
-          margin-right: 4px;
-        }
       }
 
       .addVariable {

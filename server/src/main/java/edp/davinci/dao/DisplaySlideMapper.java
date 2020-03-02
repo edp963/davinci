@@ -28,24 +28,21 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public interface DisplaySlideMapper {
 
     int insert(DisplaySlide displaySlide);
 
-
     @Delete({"delete from display_slide where id = #{id}"})
     int deleteById(@Param("id") Long id);
-
 
     @Delete({"DELETE FROM display_slide where display_id in (SELECT id from display WHERE project_id = #{projectId})"})
     int deleteByProjectId(@Param("projectId") Long projectId);
 
-
     @Select({"select * from display_slide where id = #{id}"})
     DisplaySlide getById(Long id);
-
 
     @Update({
             "update display_slide",
@@ -60,13 +57,11 @@ public interface DisplaySlideMapper {
 
     int updateBatch(List<DisplaySlide> list);
 
-
     @Select({"select * from display_slide where display_id = #{displayId} order by `index`"})
     List<DisplaySlide> selectByDisplayId(@Param("displayId") Long displayId);
 
     @Delete({"delete from display_slide where display_id = #{displayId}"})
     int deleteByDisplayId(@Param("displayId") Long displayId);
-
 
     @Select({
             "SELECT ",
@@ -77,6 +72,7 @@ public interface DisplaySlideMapper {
             "	d.project_id as 'display.projectId',",
             "	d.avatar as 'display.avatar',",
             "	d.publish as 'display.publish',",
+            "	d.config as 'display.config',",
             "	p.id 'project.id',",
             "	p.`name` 'project.name',",
             "	p.description 'project.description',",
@@ -89,5 +85,10 @@ public interface DisplaySlideMapper {
             "   LEFT JOIN project p on p.id = d.project_id",
             "where s.id = #{slideId}",
     })
-    SlideWithDisplayAndProject getSlideWithDipalyAndProjectById(@Param("slideId") Long slideId);
+    SlideWithDisplayAndProject getSlideWithDispalyAndProjectById(@Param("slideId") Long slideId);
+
+    int copySlide(@Param("originDisplayId") Long originDisplayId, @Param("displayId") Long displayId, @Param("userId") Long userId);
+
+
+    List<DisplaySlide> queryByDisplayIds(@Param("displayIds") Set<Long> displayIds);
 }

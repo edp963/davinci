@@ -20,169 +20,64 @@
 
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
-import { IBaseline } from './components/LayerItem'
+
+import {
+  IBaseline,
+  ILayerFormed,
+  DeltaSize,
+  DeltaPosition,
+  ILayerParams
+} from './components/types'
+import { IWidgetFormed } from 'containers/Widget/types'
+import { IView } from 'containers/View/types'
+import { ISlideFormed, ISlideParams } from 'containers/Viz/types'
+import { LayerOperations, LayerAlignmentTypes } from './components/constants'
 
 export const DisplayActions = {
-  loadDisplays (projectId: number) {
+  loadSlideDetail(displayId: number, slideId: number) {
     return {
-      type: ActionTypes.LOAD_DISPLAYS,
+      type: ActionTypes.LOAD_SLIDE_DETAIL,
       payload: {
-        projectId
+        displayId,
+        slideId
       }
     }
   },
-  displaysLoaded (displays) {
+  slideDetailLoaded(
+    slideId: number,
+    layers: ILayerFormed[],
+    widgets: IWidgetFormed[],
+    views: IView[]
+  ) {
     return {
-      type: ActionTypes.LOAD_DISPLAYS_SUCCESS,
+      type: ActionTypes.LOAD_SLIDE_DETAIL_SUCCESS,
       payload: {
-        displays
-      }
-    }
-  },
-  loadDisplaysFail (error) {
-    return {
-      type: ActionTypes.LOAD_DISPLAYS_FAILURE,
-      payload: {
-        error
-      }
-    }
-  },
-
-  addDisplay (display, resolve) {
-    return {
-      type: ActionTypes.ADD_DISPLAY,
-      payload: {
-        display,
-        resolve
-      }
-    }
-  },
-  displayAdded (result) {
-    return {
-      type: ActionTypes.ADD_DISPLAY_SUCCESS,
-      payload: {
-        result
-      }
-    }
-  },
-  addDisplayFail () {
-    return {
-      type: ActionTypes.ADD_DISPLAY_FAILURE,
-      payload: {}
-    }
-  },
-
-  loadDisplayDetail (projectId, displayId) {
-    return {
-      type: ActionTypes.LOAD_DISPLAY_DETAIL,
-      payload: {
-        projectId,
-        displayId
-      }
-    }
-  },
-  displayDetailLoaded (display, slide, layers, widgets, views) {
-    return {
-      type: ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS,
-      payload: {
-        display,
-        slide,
+        slideId,
         layers,
         widgets,
         views
       }
     }
   },
-
-  editDisplay (display, resolve) {
+  loadSlideDetailFail(err) {
     return {
-      type: ActionTypes.EDIT_DISPLAY,
+      type: ActionTypes.LOAD_SLIDE_DETAIL_FAILURE,
       payload: {
-        display,
-        resolve
-      }
-    }
-  },
-  displayEdited (result) {
-    return {
-      type: ActionTypes.EDIT_DISPLAY_SUCCESS,
-      payload: {
-        result
-      }
-    }
-  },
-  editDisplayFail (error) {
-    return {
-      type: ActionTypes.EDIT_DISPLAY_FAILURE,
-      payload: {
-        error
+        err
       }
     }
   },
 
-  editCurrentDisplay (display, resolve?) {
-    return {
-      type: ActionTypes.EDIT_CURRENT_DISPLAY,
-      payload: {
-        display,
-        resolve
-      }
-    }
-  },
-  currentDisplayEdited (result) {
-    return {
-      type: ActionTypes.EDIT_CURRENT_DISPLAY_SUCCESS,
-      payload: {
-        result
-      }
-    }
-  },
-  editCurrentDisplayFail (error) {
-    return {
-      type: ActionTypes.EDIT_CURRENT_DISPLAY_FAILURE,
-      payload: {
-        error
-      }
-    }
-  },
-
-  editCurrentSlide (displayId, slide, resolve?) {
-    return {
-      type: ActionTypes.EDIT_CURRENT_SLIDE,
-      payload: {
-        displayId,
-        slide,
-        resolve
-      }
-    }
-  },
-  currentSlideEdited (result) {
-    return {
-      type: ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS,
-      payload: {
-        result
-      }
-    }
-  },
-  editCurrentSlideFail (error) {
-    return {
-      type: ActionTypes.EDIT_CURRENT_SLIDE_FAILURE,
-      payload: {
-        error
-      }
-    }
-  },
-
-  uploadCurrentSlideCover (cover, resolve) {
+  uploadCurrentSlideCover(cover: Blob, slide: ISlideFormed) {
     return {
       type: ActionTypes.UPLOAD_CURRENT_SLIDE_COVER,
       payload: {
         cover,
-        resolve
+        slide
       }
     }
   },
-  currentSlideCoverUploaded (result) {
+  currentSlideCoverUploaded(result: string) {
     return {
       type: ActionTypes.UPLOAD_CURRENT_SLIDE_COVER_SUCCESS,
       payload: {
@@ -190,7 +85,7 @@ export const DisplayActions = {
       }
     }
   },
-  uploadCurrentSlideCoverFail (error) {
+  uploadCurrentSlideCoverFail(error) {
     return {
       type: ActionTypes.UPLOAD_CURRENT_SLIDE_COVER_FAILURE,
       payload: {
@@ -199,93 +94,112 @@ export const DisplayActions = {
     }
   },
 
-  deleteDisplay (id) {
+  resizeLayer(
+    slideSize: Pick<ISlideParams, 'width' | 'height'>,
+    scale: number,
+    layerId: number,
+    deltaSize: DeltaSize,
+    finish: boolean
+  ) {
     return {
-      type: ActionTypes.DELETE_DISPLAY,
+      type: ActionTypes.RESIZE_LAYER,
       payload: {
-        id
+        slideSize,
+        scale,
+        layerId,
+        deltaSize,
+        finish
       }
     }
   },
-  displayDeleted (id) {
+  resizeLayerAdjusted(layerIds: number[], deltaSize: DeltaSize, finish: boolean) {
     return {
-      type: ActionTypes.DELETE_DISPLAY_SUCCESS,
+      type: ActionTypes.RESIZE_LAYER_ADJUSTED,
       payload: {
-        id
-      }
-    }
-  },
-  deleteDisplayFail () {
-    return {
-      type: ActionTypes.DELETE_DISPLAY_FAILURE,
-      payload: {}
-    }
-  },
-
-  dragSelectedLayer ({ id, deltaX, deltaY }) {
-    return {
-      type: ActionTypes.DRAG_SELECT_LAYER,
-      payload: {
-        id,
-        deltaX,
-        deltaY
+        layerIds,
+        deltaSize,
+        finish
       }
     }
   },
 
-  resizeLayers (layerIds) {
+  dragLayer(
+    slideSize: Pick<ISlideParams, 'width' | 'height'>,
+    scale: number,
+    deltaPosition: DeltaPosition,
+    finish: boolean,
+    layerId?: number
+  ) {
     return {
-      type: ActionTypes.RESIZE_LAYERS,
+      type: ActionTypes.DRAG_LAYER,
       payload: {
-        layerIds
+        slideSize,
+        scale,
+        layerId,
+        deltaPosition,
+        finish
+      }
+    }
+  },
+  dragLayerAdjusted(
+    layerIds: number[],
+    slideSize: Pick<ISlideParams, 'width' | 'height'>,
+    deltaPosition: DeltaPosition,
+    finish: boolean,
+  ) {
+    return {
+      type: ActionTypes.DRAG_LAYER_ADJUSTED,
+      payload: {
+        layerIds,
+        slideSize,
+        deltaPosition,
+        finish
       }
     }
   },
 
-  selectLayer ({ id, selected, exclusive }) {
+  changeLayersStack(operation: LayerOperations) {
+    return {
+      type: ActionTypes.CHANGE_LAYERS_STACK,
+      payload: {
+        operation
+      }
+    }
+  },
+  setLayersAlignment(alignmentType: LayerAlignmentTypes) {
+    return {
+      type: ActionTypes.SET_LAYERS_ALIGNMENT,
+      payload: {
+        alignmentType
+      }
+    }
+  },
+
+  selectLayer(layerId: number, selected: boolean, exclusive: boolean) {
     return {
       type: ActionTypes.SELECT_LAYER,
       payload: {
-        id,
+        layerId,
         selected,
         exclusive
       }
     }
   },
 
-  clearLayersSelection () {
+  clearLayersSelection() {
     return {
       type: ActionTypes.CLEAR_LAYERS_SELECTION,
       payload: {}
     }
   },
 
-  toggleLayersResizingStatus (layerIds: number[], resizing: boolean) {
-    return {
-      type: ActionTypes.TOGGLE_LAYERS_RESIZING_STATUS,
-      payload: {
-        layerIds,
-        resizing
-      }
-    }
-  },
-  toggleLayersDraggingStatus (layerIds: number[], dragging: boolean) {
-    return {
-      type: ActionTypes.TOGGLE_LAYERS_DRAGGING_STATUS,
-      payload: {
-        layerIds,
-        dragging
-      }
-    }
-  },
-
-  clearEditorBaselines () {
+  clearEditorBaselines() {
     return {
       type: ActionTypes.CLEAR_EDITOR_BASELINES,
       payload: {}
     }
   },
-  showEditorBaselines (baselines: IBaseline[]) {
+  showEditorBaselines(baselines: IBaseline[]) {
     return {
       type: ActionTypes.SHOW_EDITOR_BASELINES,
       payload: {
@@ -294,42 +208,29 @@ export const DisplayActions = {
     }
   },
 
-  copySlideLayers (slideId, layers: any[]) {
+  copySlideLayers() {
     return {
       type: ActionTypes.COPY_SLIDE_LAYERS,
+      payload: {}
+    }
+  },
+  slideLayersCopied(layers: ILayerFormed[]) {
+    return {
+      type: ActionTypes.COPY_SLIDE_LAYERS_SUCCESS,
       payload: {
-        slideId,
         layers
       }
     }
   },
 
-  pasteSlideLayers (displayId: number, slideId: number, layers: any[]) {
+  pasteSlideLayers() {
     return {
       type: ActionTypes.PASTE_SLIDE_LAYERS,
-      payload: {
-        displayId,
-        slideId,
-        layers
-      }
-    }
-  },
-  slideLayersPasted (result) {
-    return {
-      type: ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS,
-      payload: {
-        result
-      }
-    }
-  },
-  pasteSlideLayersFail () {
-    return {
-      type: ActionTypes.PASTE_SLIDE_LAYERS_FAILURE,
       payload: {}
     }
   },
 
-  undoOperation (currentState) {
+  undoOperation(currentState) {
     return {
       type: ActionTypes.UNDO_OPERATION,
       payload: {
@@ -337,19 +238,19 @@ export const DisplayActions = {
       }
     }
   },
-  undoOperationDone () {
+  undoOperationDone() {
     return {
       type: ActionTypes.UNDO_OPERATION_SUCCESS,
       payload: {}
     }
   },
-  undoOperationFail () {
+  undoOperationFail() {
     return {
       type: ActionTypes.UNDO_OPERATION_FAILURE,
       payload: {}
     }
   },
-  redoOperation (nextState) {
+  redoOperation(nextState) {
     return {
       type: ActionTypes.REDO_OPERATION,
       payload: {
@@ -357,22 +258,59 @@ export const DisplayActions = {
       }
     }
   },
-  redoOperationDone () {
+  redoOperationDone() {
     return {
       type: ActionTypes.REDO_OPERATION_SUCCESS,
       payload: {}
     }
   },
-  redoOperationFail () {
+  redoOperationFail() {
     return {
       type: ActionTypes.REDO_OPERATION_FAILURE,
       payload: {}
     }
   },
 
-  addDisplayLayers (displayId: any, slideId: any, layers: any[]) {
+  addSlideLayers(
+    displayId: number,
+    slideId: number,
+    layers: Array<Omit<ILayerFormed, 'id'>>,
+    widgets?: IWidgetFormed[]
+  ) {
     return {
-      type: ActionTypes.ADD_DISPLAY_LAYERS,
+      type: ActionTypes.ADD_SLIDE_LAYERS,
+      payload: {
+        displayId,
+        slideId,
+        layers,
+        widgets
+      }
+    }
+  },
+  slideLayersAdded(
+    slideId: number,
+    layers: ILayerFormed[],
+    widgets: IWidgetFormed[]
+  ) {
+    return {
+      type: ActionTypes.ADD_SLIDE_LAYERS_SUCCESS,
+      payload: {
+        slideId,
+        layers,
+        widgets
+      }
+    }
+  },
+  addSlideLayersFail() {
+    return {
+      type: ActionTypes.ADD_SLIDE_LAYERS_FAILURE,
+      payload: {}
+    }
+  },
+
+  editSlideLayers(displayId: number, slideId: number, layers: ILayerFormed[]) {
+    return {
+      type: ActionTypes.EDIT_SLIDE_LAYERS,
       payload: {
         displayId,
         slideId,
@@ -380,72 +318,57 @@ export const DisplayActions = {
       }
     }
   },
-  displayLayersAdded (result) {
+  slideLayersEdited(slideId: number, layers: ILayerFormed[]) {
     return {
-      type: ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS,
+      type: ActionTypes.EDIT_SLIDE_LAYERS_SUCCESS,
       payload: {
-        result
-      }
-    }
-  },
-  addDisplayLayersFail () {
-    return {
-      type: ActionTypes.ADD_DISPLAY_LAYERS_FAILURE,
-      payload: {}
-    }
-  },
-
-  editDisplayLayers (displayId: any, slideId: any, layers: any[]) {
-    return {
-      type: ActionTypes.EDIT_DISPLAY_LAYERS,
-      payload: {
-        displayId,
         slideId,
         layers
       }
     }
   },
-  displayLayersEdited (result) {
+  editSlideLayersFail() {
     return {
-      type: ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS,
-      payload: {
-        result
-      }
-    }
-  },
-  editDisplayLayersFail () {
-    return {
-      type: ActionTypes.EDIT_DISPLAY_LAYERS_FAILURE,
+      type: ActionTypes.EDIT_SLIDE_LAYERS_FAILURE,
       payload: {}
     }
   },
-
-  deleteDisplayLayers (displayId: any, slideId: any, ids: any[]) {
+  editSlideLayerParams(layerId: number, changedParams: Partial<ILayerParams>) {
     return {
-      type: ActionTypes.DELETE_DISPLAY_LAYERS,
+      type: ActionTypes.EDIT_SLIDE_LAYER_PARAMS,
+      payload: {
+        layerId,
+        changedParams
+      }
+    }
+  },
+
+  deleteSlideLayers(displayId: number, slideId: number) {
+    return {
+      type: ActionTypes.DELETE_SLIDE_LAYERS,
       payload: {
         displayId,
-        slideId,
-        ids
+        slideId
       }
     }
   },
-  displayLayersDeleted (ids) {
+  slideLayersDeleted(slideId: number, layerIds: number[]) {
     return {
-      type: ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS,
+      type: ActionTypes.DELETE_SLIDE_LAYERS_SUCCESS,
       payload: {
-        ids
+        slideId,
+        layerIds
       }
     }
   },
-  deleteDisplayLayersFail () {
+  deleteSlideLayersFail() {
     return {
-      type: ActionTypes.DELETE_DISPLAY_LAYERS_FAILURE,
+      type: ActionTypes.DELETE_SLIDE_LAYERS_FAILURE,
       payload: {}
     }
   },
 
-  loadDisplayShareLink (id, authName) {
+  loadDisplayShareLink(id: number, authName: string) {
     return {
       type: ActionTypes.LOAD_DISPLAY_SHARE_LINK,
       payload: {
@@ -455,7 +378,7 @@ export const DisplayActions = {
     }
   },
 
-  displayShareLinkLoaded (shareInfo) {
+  displayShareLinkLoaded(shareInfo: string) {
     return {
       type: ActionTypes.LOAD_DISPLAY_SHARE_LINK_SUCCESS,
       payload: {
@@ -464,7 +387,7 @@ export const DisplayActions = {
     }
   },
 
-  displaySecretLinkLoaded (secretInfo) {
+  displaySecretLinkLoaded(secretInfo: string) {
     return {
       type: ActionTypes.LOAD_DISPLAY_SECRET_LINK_SUCCESS,
       payload: {
@@ -473,56 +396,38 @@ export const DisplayActions = {
     }
   },
 
-  loadDisplayShareLinkFail () {
+  loadDisplayShareLinkFail() {
     return {
       type: ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE,
       payload: {}
     }
   },
 
-  resetDisplayState () {
+  resetDisplayState() {
     return {
       type: ActionTypes.RESET_DISPLAY_STATE,
       payload: {}
     }
   },
 
-  monitoredSyncDataAction () {
+  monitoredSyncDataAction() {
     return {
       type: ActionTypes.MONITORED_SYNC_DATA_ACTION,
       payload: {}
     }
   },
 
-  monitoredSearchDataAction () {
+  monitoredSearchDataAction() {
     return {
       type: ActionTypes.MONITORED_SEARCH_DATA_ACTION,
       payload: {}
     }
   },
 
-  monitoredLinkageDataAction () {
+  monitoredLinkageDataAction() {
     return {
       type: ActionTypes.MONITORED_LINKAGE_DATA_ACTION,
       payload: {}
-    }
-  },
-
-  loadProjectDetail (pid) {
-    return {
-      type: ActionTypes.LOAD_CURRENT_PROJECT,
-      payload: {
-        pid
-      }
-    }
-  },
-
-  projectLoaded (result) {
-    return {
-      type: ActionTypes.LOAD_CURRENT_PROJECT_SUCCESS,
-      payload: {
-        result
-      }
     }
   }
 }
@@ -531,4 +436,3 @@ const mockAction = returnType(DisplayActions)
 export type DisplayActionType = typeof mockAction
 
 export default DisplayActions
-

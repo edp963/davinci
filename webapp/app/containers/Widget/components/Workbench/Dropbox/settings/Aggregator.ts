@@ -27,8 +27,8 @@ const AggregatorDimension: ISettingItem = {
   name: '聚合计算',
   constrants: [{
     settingType: SettingTypes.Indicator | SettingTypes.Tip,
-    itemType: ItemTypes.Category,
-    itemValueType: null
+    itemType: ItemTypes.Value,
+    itemValueType: ItemValueTypes.Date | ItemValueTypes.GeoCity | ItemValueTypes.GeoCountry | ItemValueTypes.GeoProvince | ItemValueTypes.String
   }],
   sub: false,
   items: [{

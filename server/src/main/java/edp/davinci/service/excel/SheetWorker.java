@@ -25,14 +25,13 @@ import edp.core.model.QueryColumn;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.enums.ActionEnum;
+import edp.davinci.core.utils.SqlParseUtils;
+import edp.davinci.dto.cronJobDto.MsgMailExcel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.ResultSetMetaData;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +55,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
     }
 
     @Override
-    public T call() throws Exception {
+    public T call() {
         Stopwatch watch = Stopwatch.createStarted();
         Boolean rst = true;
         try {
@@ -69,7 +68,11 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             template.setFetchSize(500);
 
             String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
+            sql = SqlParseUtils.rebuildSqlWithFragment(sql);
             Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().info("Task ({}) -- {} start query", context.getTaskKey(), context.getName());
+            }
             template.query(sql, rs -> {
                 Map<String, Object> dataMap = Maps.newHashMap();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
@@ -77,22 +80,39 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
                 }
                 writeLine(context, dataMap);
             });
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().info("Task ({}) -- {} finish query", context.getTaskKey(), context.getName());
+            }
             super.refreshHeightWidth(context);
         } catch (Exception e) {
-            log.error("sheet worker error,context=" + context.toString(), e);
+            if (context.getWrapper().getAction() == ActionEnum.MAIL) {
+                MsgMailExcel msg = (MsgMailExcel) context.getWrapper().getMsg();
+                msg.setDate(new Date());
+                msg.setException(e);
+            }
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().error("sheet worker error,  task={}, context={}, error={}", context.getTaskKey(), context.toString(), e);
+            }
+            log.error("sheet worker error,  task={}, context={}, error={}", context.getTaskKey(), context.toString(), e.getMessage());
             rst = false;
         }
 
         if (context.getWrapper().getAction() == ActionEnum.DOWNLOAD) {
-            Object[] args = {rst, context.getWrapper().getAction(), context.getWrapper().getxId(),
+            Object[] args = {context.getTaskKey(), rst, context.getWrapper().getAction(), context.getWrapper().getxId(),
                     context.getSheet().getSheetName(), context.getDashboardId(), context.getWidgetId()
                     , watch.elapsed(TimeUnit.MILLISECONDS)};
-            log.info("sheet worker complete status={},action={},xid={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            log.info("sheet worker complete task={}, status={},action={},xid={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().info("sheet worker complete task={}, status={},action={},xid={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            }
         } else if (context.getWrapper().getAction() == ActionEnum.SHAREDOWNLOAD) {
-            Object[] args = {rst, context.getWrapper().getAction(), context.getWrapper().getxUUID(),
+            Object[] args = {context.getTaskKey(), rst, context.getWrapper().getAction(), context.getWrapper().getxUUID(),
                     context.getSheet().getSheetName(), context.getDashboardId(), context.getWidgetId()
                     , watch.elapsed(TimeUnit.MILLISECONDS)};
-            log.info("sheet worker complete status={},action={},xUUID={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            log.info("sheet worker complete task={}, status={},action={},xUUID={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            if (context.getCustomLogger() != null) {
+                context.getCustomLogger().info("sheet worker complete task={}, status={},action={},xUUID={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
+            }
         }
 
         return (T) rst;
@@ -120,6 +140,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         template.setMaxRows(1);
         String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
         sql = String.format(QUERY_META_SQL, sql);
+        sql = SqlParseUtils.rebuildSqlWithFragment(sql);
         Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
         template.query(sql, rs -> {
             ResultSetMetaData metaData = rs.getMetaData();

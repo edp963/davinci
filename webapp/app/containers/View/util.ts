@@ -1,6 +1,6 @@
 import { IViewModel, ISqlColumn, IView, IFormedView, IViewRoleRaw, IViewRole } from './types'
 
-import { SqlTypes } from 'app/globalConstants'
+import { SqlTypes, SQL_TYPES } from 'app/globalConstants'
 import { ModelTypeSqlTypeSetting, VisualTypeSqlTypeSetting, ViewModelVisualTypes, ViewModelTypes } from './constants'
 
 export function getFormedView (view: IView): IFormedView {
@@ -38,20 +38,25 @@ export function getValidModel (model: IViewModel, sqlColumns: ISqlColumn[]) {
     if (!modelItem) {
       accModel[columnName] = {
         sqlType: columnType,
+
+        // model item which columnType not registered with SQL_TYPES in globalConstants.ts
+        // its default visualType is String and modelType is Category
         visualType: getMapKeyByValue(columnType, VisualTypeSqlTypeSetting) || ViewModelVisualTypes.String,
         modelType: getMapKeyByValue(columnType, ModelTypeSqlTypeSetting) || ViewModelTypes.Category
       }
     } else {
-      accModel[columnName] = { ...modelItem }
-      // @TODO verify modelType & visualType are valid by the sqlType or not
-      // if (!VisualTypeSqlTypeSetting[item.visualType].includes(columnType)) {
-      //   needNotify = true
-      //   item.visualType = getMapKeyByValue(columnType, VisualTypeSqlTypeSetting)
-      // }
-      // if (!ModelTypeSqlTypeSetting[item.modelType].includes(columnType)) {
-      //   needNotify = true
-      //   item.modelType = getMapKeyByValue(columnType, ModelTypeSqlTypeSetting)
-      // }
+      accModel[columnName] = { ...modelItem, sqlType: columnType } // update newest sqlType
+      // verify modelType & visualType are valid by the sqlType or not
+      if (SQL_TYPES.includes(columnType)) { // model item which columnType not registered with SQL_TYPES do not need verify
+        if (!ModelTypeSqlTypeSetting[modelItem.modelType].includes(columnType)) {
+          accModel[columnName].modelType = getMapKeyByValue(columnType, ModelTypeSqlTypeSetting)
+        }
+        if (VisualTypeSqlTypeSetting[modelItem.visualType]
+            && !VisualTypeSqlTypeSetting[modelItem.visualType].includes(columnType)) {
+          accModel[columnName].visualType = getMapKeyByValue(columnType, VisualTypeSqlTypeSetting)
+        }
+        // @TODO changed modelType or visualType need be shown in step2 corresponding model table cell
+      }
     }
     return accModel
   }, {})

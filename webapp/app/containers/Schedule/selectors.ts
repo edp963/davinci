@@ -1,9 +1,29 @@
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
 import { createSelector } from 'reselect'
 
 /**
  * Direct selector to the schedule state domain
  */
-const selectSchedule = (state) => state.get('schedule')
+const selectSchedule = (state) => state.schedule
 
 /**
  * Other specific selectors
@@ -13,42 +33,42 @@ const selectSchedule = (state) => state.get('schedule')
  * Default selector used by Schedule
  */
 
-const makeSelectSchedule = () => createSelector(
+const makeSelectSchedules = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('schedule')
+  (scheduleState) => scheduleState.schedules
 )
-const makeSelectDashboards = () => createSelector(
+
+const makeSelectEditingSchedule = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('dashboards')
+  (scheduleState) => scheduleState.editingSchedule
 )
-const makeSelectCurrentDashboard = () => createSelector(
+
+const makeSelectLoading = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('currentDashboard')
+  (scheduleState) => scheduleState.loading
 )
-const makeSelectWidgets = () => createSelector(
+
+const makeSelectSuggestMails = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('widgets')
+  (scheduleState) => scheduleState.suggestMails
 )
-const makeSelectTableLoading = () => createSelector(
+
+const makeSelectPortalDashboards = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('tableLoading')
+  (scheduleState) => scheduleState.portalDashboards
 )
-const makeSelectFormLoading = () => createSelector(
-  selectSchedule,
-  (substate) => substate.get('formLoading')
-)
+
 const makeSelectVizs = () => createSelector(
   selectSchedule,
-  (substate) => substate.get('vizs')
+  (scheduleState) => scheduleState.vizs
 )
 
 export {
   selectSchedule,
-  makeSelectWidgets,
-  makeSelectSchedule,
-  makeSelectDashboards,
-  makeSelectCurrentDashboard,
-  makeSelectTableLoading,
-  makeSelectFormLoading,
+  makeSelectSchedules,
+  makeSelectEditingSchedule,
+  makeSelectLoading,
+  makeSelectSuggestMails,
+  makeSelectPortalDashboards,
   makeSelectVizs
 }

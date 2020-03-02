@@ -21,7 +21,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import classnames from 'classnames'
 import DownloadList from '../DownloadList'
 

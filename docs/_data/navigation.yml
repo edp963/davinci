@@ -1,0 +1,65 @@
+zh:
+  - title: "概览"
+    url: /
+  - title: "文档"
+    url: /docs/zh/1.1-deployment
+  - title: "更多"
+    url: /blueprint
+en:
+  - title: "Overview"
+    url: /
+  - title: "Docs"
+    url: /docs/en/1.1-deployment
+  - title: "More"
+    url: /blueprint
+
+zh_docs_sidebar:
+  - title: 快速上手
+    children:
+      - title: 1.1 安装
+        url: "/docs/zh/1.1-deployment"
+      - title: 1.2 第一个应用
+        url: "/docs/zh/1.2-quick_start"
+  - title: 功能详解
+    children:
+      - title: 2.1 数据源 - Source
+        url: "/docs/zh/2.1-source"
+      - title: 2.2 数据视图 - View
+        url: "/docs/zh/2.2-view"
+      - title: 2.3 可视化组件 - Widget
+        url: "/docs/zh/2.3-widget"
+      - title: 2.4 仪表板 - Dashboard
+        url: "/docs/zh/2.4-dashboard"
+      - title: 2.5 大屏 - Display
+        url: "/docs/zh/2.5-display"
+      - title: 2.6 定时任务 - Schedule
+        url: "/docs/zh/2.6-schedule"
+  - title: 用户与权限
+    children:
+      - title: 3.1 组织
+        url: "/docs/zh/3.1-organization"
+      - title: 3.2 成员
+        url: "/docs/zh/3.2-member"
+      - title: 3.3 角色
+        url: "/docs/zh/3.3-role"
+      - title: 3.4 项目
+        url: "/docs/zh/3.4-project"
+      - title: 3.5 用户设置
+        url: "/docs/zh/3.5-user_setting"
+  - title: 其他
+    children:
+      - title: 4.1 使用统计
+        url: "/docs/zh/4.1-statistic"
+  - title: 附录
+    children:
+      - title: 5.1 图表配置
+        url: "/docs/zh/5.1-chart_config"
+zh_more_sidebar:
+  - title: 其他
+    children:
+      - title: 蓝图
+        url: "/blueprint"
+      - title: 更多信息
+        url: "/more_info"
+      - title: 0.2版本文档
+        url: "/old_version"

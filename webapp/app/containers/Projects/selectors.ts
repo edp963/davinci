@@ -19,42 +19,44 @@
  */
 
 import { createSelector } from 'reselect'
+import { IProjectState } from './types'
+import { initialState } from './reducer'
 
-const selectProject = (state) => state.get('project')
+const selectProject = (state) => state.project || initialState
 
 const makeSelectProjects = () => createSelector(
   selectProject,
-  (projectState) => projectState.get('projects')
+  (projectState: IProjectState) => projectState.projects
 )
 
 const makeSelectCurrentProject = () => createSelector(
   selectProject,
-  (projectState) => projectState.get('currentProject')
+  (projectState: IProjectState) => projectState.currentProject
 )
 
 const makeSelectSearchProject = () => createSelector(
   selectProject,
-  (projectState) => projectState.get('searchProject')
+  (projectState: IProjectState) => projectState.searchProject
 )
 
 const makeSelectStarUserList = () => createSelector(
   selectProject,
-  (projectState) => projectState.get('starUserList')
+  (projectState: IProjectState) => projectState.starUserList
 )
 
 const makeSelectCollectProjects = () => createSelector(
   selectProject,
-  (projectState) => projectState.get('collectProjects')
+  (projectState: IProjectState) => projectState.collectProjects
 )
 
 const makeSelectCurrentProjectRole = () => createSelector(
   selectProject,
-  (projectState) => projectState.get('currentProjectRole')
+  (projectState: IProjectState) => projectState.currentProjectRole
 )
 
 const makeSelectProjectRoles = () => createSelector(
   selectProject,
-  (projectState) => projectState.get('projectRoles')
+  (projectState: IProjectState) => projectState.projectRoles
 )
 
 export {

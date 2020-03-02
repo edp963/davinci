@@ -87,7 +87,12 @@ export enum ChartTypes {
   /**
    * 双Y轴
    */
-  DoubleYAxis = 16
+  DoubleYAxis = 16,
+
+  /**
+   * 仪表盘
+   */
+  Gauge = 17
 }
 
 export default ChartTypes

@@ -21,6 +21,7 @@ package edp.davinci.dao;
 
 import edp.davinci.dto.shareDto.ShareWidget;
 import edp.davinci.dto.widgetDto.WidgetWithRelationDashboardId;
+import edp.davinci.dto.widgetDto.WidgetWithVizId;
 import edp.davinci.model.Widget;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -70,15 +71,15 @@ public interface WidgetMapper {
 
 
     @Select({
-            "SELECT  w.* FROM widget w ",
+            "SELECT  w.*, s.id as 'vizId', s.index as 'vizIndex' FROM widget w ",
             "LEFT JOIN mem_display_slide_widget m on w.id = m.widget_id",
             "LEFT JOIN display_slide s on m.display_slide_id = s.id",
             "WHERE s.display_id = #{displayId}",
     })
-    Set<Widget> getByDisplayId(@Param("displayId") Long displayId);
+    List<WidgetWithVizId> queryByDisplayId(@Param("displayId") Long displayId);
 
     @Select({
-            "SELECT  w.*, v.model FROM widget w ",
+            "SELECT  w.*, v.model, v.variable FROM widget w ",
             "LEFT JOIN mem_display_slide_widget m on w.id = m.widget_id",
             "LEFT JOIN display_slide s on m.display_slide_id = s.id",
             "LEFT JOIN `view` v on v.id = w.view_id",

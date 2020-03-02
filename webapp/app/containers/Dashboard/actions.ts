@@ -19,21 +19,6 @@
  */
 
 import {
-  LOAD_DASHBOARDS,
-  LOAD_DASHBOARDS_SUCCESS,
-  LOAD_DASHBOARDS_FAILURE,
-  ADD_DASHBOARD,
-  ADD_DASHBOARD_SUCCESS,
-  ADD_DASHBOARD_FAILURE,
-  EDIT_DASHBOARD,
-  EDIT_DASHBOARD_SUCCESS,
-  EDIT_DASHBOARD_FAILURE,
-  EDIT_CURRENT_DASHBOARD,
-  EDIT_CURRENT_DASHBOARD_SUCCESS,
-  EDIT_CURRENT_DASHBOARD_FAILURE,
-  DELETE_DASHBOARD,
-  DELETE_DASHBOARD_SUCCESS,
-  DELETE_DASHBOARD_FAILURE,
   LOAD_DASHBOARD_DETAIL,
   LOAD_DASHBOARD_DETAIL_SUCCESS,
   LOAD_DASHBOARD_DETAIL_FAILURE,
@@ -72,7 +57,6 @@ import {
   SELECT_DASHBOARD_ITEM_CHART,
   SET_SELECT_OPTIONS,
   SET_CONTROL_FORM_VALUES,
-  GLOBAL_CONTROL_CHANGE,
   MONITORED_SYNC_DATA_ACTION,
   MONITORED_SEARCH_DATA_ACTION,
   MONITORED_LINKAGE_DATA_ACTION
@@ -102,133 +86,6 @@ export function deleteDashboardItem (id, resolve) {
 export function clearCurrentDashboard () {
   return {
     type: CLEAR_CURRENT_DASHBOARD
-  }
-}
-
-export function loadDashboards (portalId, resolve) {
-  return {
-    type: LOAD_DASHBOARDS,
-    payload: {
-      portalId,
-      resolve
-    }
-  }
-}
-
-export function dashboardsLoaded (dashboards) {
-  return {
-    type: LOAD_DASHBOARDS_SUCCESS,
-    payload: {
-      dashboards
-    }
-  }
-}
-
-export function loadDashboardsFail () {
-  return {
-    type: LOAD_DASHBOARDS_FAILURE
-  }
-}
-
-export function addDashboard (dashboard, resolve) {
-  return {
-    type: ADD_DASHBOARD,
-    payload: {
-      dashboard,
-      resolve
-    }
-  }
-}
-
-export function dashboardAdded (result) {
-  return {
-    type: ADD_DASHBOARD_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function addDashboardFail () {
-  return {
-    type: ADD_DASHBOARD_FAILURE
-  }
-}
-
-export function editDashboard (formType, dashboard, resolve) {
-  return {
-    type: EDIT_DASHBOARD,
-    payload: {
-      formType,
-      dashboard,
-      resolve
-    }
-  }
-}
-
-export function dashboardEdited (result, formType) {
-  return {
-    type: EDIT_DASHBOARD_SUCCESS,
-    payload: {
-      result,
-      formType
-    }
-  }
-}
-
-export function editDashboardFail () {
-  return {
-    type: EDIT_DASHBOARD_FAILURE
-  }
-}
-
-export function editCurrentDashboard (dashboard, resolve) {
-  return {
-    type: EDIT_CURRENT_DASHBOARD,
-    payload: {
-      dashboard,
-      resolve
-    }
-  }
-}
-
-export function currentDashboardEdited (result) {
-  return {
-    type: EDIT_CURRENT_DASHBOARD_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function editCurrentDashboardFail () {
-  return {
-    type: EDIT_CURRENT_DASHBOARD_FAILURE
-  }
-}
-
-export function deleteDashboard (id, resolve) {
-  return {
-    type: DELETE_DASHBOARD,
-    payload: {
-      resolve,
-      id
-    }
-  }
-}
-
-export function dashboardDeleted (id) {
-  return {
-    type: DELETE_DASHBOARD_SUCCESS,
-    payload: {
-      id
-    }
-  }
-}
-
-export function deleteDashboardFail () {
-  return {
-    type: DELETE_DASHBOARD_FAILURE
   }
 }
 
@@ -527,15 +384,6 @@ export function setControlFormValues (formValues) {
     type: SET_CONTROL_FORM_VALUES,
     payload: {
       formValues
-    }
-  }
-}
-
-export function globalControlChange (controlRequestParamsByItem) {
-  return {
-    type: GLOBAL_CONTROL_CHANGE,
-    payload: {
-      controlRequestParamsByItem
     }
   }
 }

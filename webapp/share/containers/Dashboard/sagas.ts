@@ -19,8 +19,7 @@
  */
 
 import omit from 'lodash/omit'
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, put, all } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_SHARE_DASHBOARD,
   LOAD_SHARE_WIDGET,
@@ -49,13 +48,11 @@ import {
   initiateDownloadTaskFail
 } from './actions'
 
-import request from '../../../app/utils/request'
-import { errorHandler, getErrorMessage } from '../../../app/utils/util'
-import api from '../../../app/utils/api'
-import config, { env } from 'app/globalConfig'
-import { IDistinctValueReqeustParams } from '../../../app/components/Filters/types'
+import request from 'utils/request'
+import { errorHandler, getErrorMessage } from 'utils/util'
+import api from 'utils/api'
+import { IDistinctValueReqeustParams } from 'components/Filters/types'
 import { message } from 'antd'
-const shareHost = config[env].shareHost
 
 export function* getDashboard (action) {
   const { payload } = action
@@ -96,9 +93,16 @@ export function* getResultset (action) {
     linkageVariables,
     globalVariables,
     pagination,
+    drillStatus,
+    groups,
     ...rest
   } = requestParams
   const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
+
+  let searchFilters = filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters)
+  if (drillStatus && drillStatus.filter) {
+    searchFilters = searchFilters.concat( drillStatus.filter.sqls)
+  }
 
   try {
     const resultset = yield call(request, {
@@ -106,14 +110,15 @@ export function* getResultset (action) {
       url: `${api.share}/data/${dataToken}`,
       data: {
         ...omit(rest, 'customOrders'),
-        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
+        groups:  drillStatus && drillStatus.groups ? drillStatus.groups : groups,
+        filters: searchFilters,
         params: variables.concat(linkageVariables).concat(globalVariables),
         pageSize,
         pageNo
       }
     })
     const { resultList } = resultset.payload
-    resultset.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    resultset.payload.resultList = (resultList && resultList.slice(0, 600)) || []
     yield put(resultsetGetted(renderType, itemId, requestParams, resultset.payload))
   } catch (err) {
     yield put(getResultsetFail(itemId, getErrorMessage(err)))
@@ -237,7 +242,7 @@ export function* initiateDownloadTask (action): IterableIterator<any> {
 }
 
 export default function* rootDashboardSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_SHARE_DASHBOARD, getDashboard),
     takeEvery(LOAD_SHARE_WIDGET, getWidget),
     takeEvery(LOAD_SHARE_RESULTSET, getResultset),
@@ -246,5 +251,5 @@ export default function* rootDashboardSaga (): IterableIterator<any> {
     takeLatest(LOAD_DOWNLOAD_LIST, getDownloadList),
     takeLatest(DOWNLOAD_FILE, downloadFile),
     takeEvery(INITIATE_DOWNLOAD_TASK, initiateDownloadTask)
-  ]
+  ])
 }

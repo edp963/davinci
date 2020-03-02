@@ -21,6 +21,7 @@ package edp.davinci.service.excel;
 
 import edp.davinci.core.config.SpringContextHolder;
 import edp.davinci.core.enums.DownloadTaskStatus;
+import edp.davinci.dao.CronJobMapper;
 import edp.davinci.dao.DownloadRecordMapper;
 import edp.davinci.dao.ShareDownloadRecordMapper;
 import edp.davinci.dto.cronJobDto.MsgMailExcel;
@@ -28,8 +29,6 @@ import edp.davinci.model.DownloadRecord;
 import edp.davinci.model.ShareDownloadRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by IntelliJ IDEA.
@@ -64,20 +63,13 @@ public abstract class MsgNotifier {
                 log.info("DownloadAction record is updated status=" + record.getStatus());
                 break;
             case MAIL:
-                MsgMailExcel msgMailExcel = (MsgMailExcel) wrapper.getMsg();
-                if (msgMailExcel == null) {
-                    log.error("MailAction msg is null,nothing to do");
-                    break;
+                MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
+                if (msg.getException() != null) {
+                    ((CronJobMapper) SpringContextHolder.getBean(CronJobMapper.class)).updateExecLog(msg.getId(), msg.toString());
+                    log.error("MailAction error, CronJob: (:{}), {}", msg.getId(), msg.getException().getMessage());
+                } else {
+                    log.info("MailAction finish, CronJob: (:{}), {}", msg.getId(), wrapper.getxUUID());
                 }
-                ReentrantLock lock = msgMailExcel.getLock();
-                try {
-                    lock.lock();
-                    msgMailExcel.setFilePath(wrapper.getRst());
-                    msgMailExcel.getCondition().signal();
-                } finally {
-                    lock.unlock();
-                }
-                log.info("MailAction finish, condition signal");
                 break;
 
             case SHAREDOWNLOAD:

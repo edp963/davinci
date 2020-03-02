@@ -2,12 +2,12 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { Icon, Row, Col, Modal, Breadcrumb } from 'antd'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import Box from 'components/Box'
-import { InjectedRouter } from 'react-router/lib/Router'
 import { compose } from 'redux'
 import { makeSelectLoginUser } from '../App/selectors'
-import { addOrganization, loadOrganizations } from './actions'
+import { OrganizationActions } from './actions'
+const { addOrganization, loadOrganizations } = OrganizationActions
 import { createStructuredSelector } from 'reselect'
 import { makeSelectOrganizations } from './selectors'
 const styles = require('./Organization.less')
@@ -15,13 +15,13 @@ import OrganizationForm from './component/OrganizationForm'
 const utilStyles = require('assets/less/util.less')
 import Avatar from 'components/Avatar'
 import { checkNameUniqueAction } from '../App/actions'
+import { RouteComponentWithParams } from 'utils/types'
 
 interface IOrganizationsState {
   formVisible: boolean
   modalLoading: boolean
 }
 interface IOrganizationsProps {
-  router: InjectedRouter
   organizations: IOrganization[]
   onLoadOrganizations: () => any
   onAddOrganization: (organization: any, resolve: () => any) => any
@@ -34,7 +34,7 @@ interface IOrganization {
   avatar?: any
   role?: number
 }
-export class Organizations extends React.PureComponent<IOrganizationsProps, IOrganizationsState> {
+export class Organizations extends React.PureComponent<IOrganizationsProps & RouteComponentWithParams, IOrganizationsState> {
   constructor (props) {
     super(props)
     this.state = {
@@ -58,7 +58,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
       })
   }
   private toOrganization = (organization) => () => {
-    this.props.router.push(`/account/organization/${organization.id}`)
+    this.props.history.push(`/account/organization/${organization.id}`)
   }
   private OrganizationForm: WrappedFormUtils
   private showOrganizationForm = () => (e) => {

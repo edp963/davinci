@@ -18,160 +18,172 @@
  * >>
  */
 
-import {
-  LOAD_WIDGETS,
-  LOAD_WIDGETS_SUCCESS,
-  LOAD_WIDGETS_FAILURE,
-  ADD_WIDGET,
-  ADD_WIDGET_SUCCESS,
-  ADD_WIDGET_FAILURE,
-  LOAD_WIDGET_DETAIL,
-  LOAD_WIDGET_DETAIL_SUCCESS,
-  LOAD_WIDGET_DETAIL_FAILURE,
-  EDIT_WIDGET,
-  EDIT_WIDGET_SUCCESS,
-  EDIT_WIDGET_FAILURE,
-  DELETE_WIDGET,
-  DELETE_WIDGET_SUCCESS,
-  DELETE_WIDGET_FAILURE,
-  CLEAR_CURRENT_WIDGET,
-  EXECUTE_COMPUTED_SQL
-} from './constants'
+import { ActionTypes } from './constants'
+import { returnType } from 'utils/redux'
+import { IWidgetRaw, IWidgetBase } from './types'
 
-export function loadWidgets (projectId) {
-  return {
-    type: LOAD_WIDGETS,
-    payload: {
-      projectId
+export const WidgetActions = {
+  loadWidgets(projectId: number) {
+    return {
+      type: ActionTypes.LOAD_WIDGETS,
+      payload: {
+        projectId
+      }
+    }
+  },
+  widgetsLoaded(widgets: IWidgetRaw[]) {
+    return {
+      type: ActionTypes.LOAD_WIDGETS_SUCCESS,
+      payload: {
+        widgets
+      }
+    }
+  },
+  widgetsLoadedFail() {
+    return {
+      type: ActionTypes.LOAD_WIDGETS_FAILURE,
+      payload: {}
+    }
+  },
+
+  addWidget(widget: IWidgetRaw, resolve) {
+    return {
+      type: ActionTypes.ADD_WIDGET,
+      payload: {
+        widget,
+        resolve
+      }
+    }
+  },
+  widgetAdded(result) {
+    return {
+      type: ActionTypes.ADD_WIDGET_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  addWidgetFail() {
+    return {
+      type: ActionTypes.ADD_WIDGET_FAILURE,
+      payload: {}
+    }
+  },
+
+  loadWidgetDetail(id: number) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_DETAIL,
+      payload: {
+        id
+      }
+    }
+  },
+  widgetDetailLoaded(detail, view) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_DETAIL_SUCCESS,
+      payload: {
+        detail,
+        view
+      }
+    }
+  },
+  loadWidgetDetailFail(error) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_DETAIL_FAILURE,
+      payload: {
+        error
+      }
+    }
+  },
+
+  editWidget(widget, resolve) {
+    return {
+      type: ActionTypes.EDIT_WIDGET,
+      payload: {
+        widget,
+        resolve
+      }
+    }
+  },
+  widgetEdited() {
+    return {
+      type: ActionTypes.EDIT_WIDGET_SUCCESS,
+      payload: {}
+    }
+  },
+  editWidgetFail() {
+    return {
+      type: ActionTypes.EDIT_WIDGET_FAILURE,
+      payload: {}
+    }
+  },
+
+  copyWidget(widget: IWidgetBase, resolve: () => void) {
+    return {
+      type: ActionTypes.COPY_WIDGET,
+      payload: {
+        widget,
+        resolve
+      }
+    }
+  },
+  widgetCopied(fromWidgetId: number, result: IWidgetRaw) {
+    return {
+      type: ActionTypes.COPY_WIDGET_SUCCESS,
+      payload: {
+        fromWidgetId,
+        result
+      }
+    }
+  },
+  copyWidgetFail() {
+    return {
+      type: ActionTypes.COPY_WIDGET_FAILURE,
+      payload: {}
+    }
+  },
+
+  deleteWidget(id) {
+    return {
+      type: ActionTypes.DELETE_WIDGET,
+      payload: {
+        id
+      }
+    }
+  },
+  widgetDeleted(id: number) {
+    return {
+      type: ActionTypes.DELETE_WIDGET_SUCCESS,
+      payload: {
+        id
+      }
+    }
+  },
+  deleteWidgetFail() {
+    return {
+      type: ActionTypes.DELETE_WIDGET_FAILURE,
+      payload: {}
+    }
+  },
+
+  clearCurrentWidget() {
+    return {
+      type: ActionTypes.CLEAR_CURRENT_WIDGET,
+      payload: {}
+    }
+  },
+
+  executeComputed(sql) {
+    return {
+      type: ActionTypes.EXECUTE_COMPUTED_SQL,
+      payload: {
+        sql
+      }
     }
   }
 }
 
-export function widgetsLoaded (widgets) {
-  return {
-    type: LOAD_WIDGETS_SUCCESS,
-    payload: {
-      widgets
-    }
-  }
-}
+const mockAction = returnType(WidgetActions)
+export type WidgetActionType = typeof mockAction
 
-export function widgetsLoadedFail () {
-  return {
-    type: LOAD_WIDGETS_FAILURE
-  }
-}
-
-export function addWidget (widget, resolve) {
-  return {
-    type: ADD_WIDGET,
-    payload: {
-      widget,
-      resolve
-    }
-  }
-}
-
-export function widgetAdded (result) {
-  return {
-    type: ADD_WIDGET_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function addWidgetFail () {
-  return {
-    type: ADD_WIDGET_FAILURE
-  }
-}
-
-export function loadWidgetDetail (id) {
-  return {
-    type: LOAD_WIDGET_DETAIL,
-    payload: {
-      id
-    }
-  }
-}
-
-export function widgetDetailLoaded (detail, view) {
-  return {
-    type: LOAD_WIDGET_DETAIL_SUCCESS,
-    payload: {
-      detail,
-      view
-    }
-  }
-}
-
-export function loadWidgetDetailFail (error) {
-  return {
-    type: LOAD_WIDGET_DETAIL_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
-
-export function editWidget (widget, resolve) {
-  return {
-    type: EDIT_WIDGET,
-    payload: {
-      widget,
-      resolve
-    }
-  }
-}
-
-export function widgetEdited () {
-  return {
-    type: EDIT_WIDGET_SUCCESS
-  }
-}
-
-export function editWidgetFail () {
-  return {
-    type: EDIT_WIDGET_FAILURE
-  }
-}
-
-export function deleteWidget (id) {
-  return {
-    type: DELETE_WIDGET,
-    payload: {
-      id
-    }
-  }
-}
-
-export function widgetDeleted (id) {
-  return {
-    type: DELETE_WIDGET_SUCCESS,
-    payload: {
-      id
-    }
-  }
-}
-
-export function deleteWidgetFail () {
-  return {
-    type: DELETE_WIDGET_FAILURE
-  }
-}
-
-export function clearCurrentWidget () {
-  return {
-    type: CLEAR_CURRENT_WIDGET
-  }
-}
-
-export function executeComputed (sql) {
-  return {
-    type: EXECUTE_COMPUTED_SQL,
-    payload: {
-      sql
-    }
-  }
-}
+export default WidgetActions

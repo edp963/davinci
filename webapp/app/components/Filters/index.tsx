@@ -10,15 +10,15 @@ const { WeekPicker, MonthPicker, RangePicker } = DatePicker
 
 const styles = require('./filter.less')
 
-export function renderInputText (onChange, onSearch) {
+export function renderInputText (onChange) {
   return (
-    <Search placeholder="请输入" onBlur={onChange} onSearch={onSearch} />
+    <Search placeholder="请输入" onSearch={onChange} />
   )
 }
 
-export function renderNumberRange (onChange, onSearch) {
+export function renderNumberRange (onChange) {
   return (
-    <NumberRange onChange={onChange} onSearch={onSearch} />
+    <NumberRange onSearch={onChange} />
   )
 }
 
@@ -30,6 +30,7 @@ export function renderSelect (control: IGlobalControl, onChange, options) {
       allowClear
       placeholder="请选择"
       onChange={onChange}
+      dropdownMatchSelectWidth={false}
       {...multiple && {mode: 'multiple'}}
     >
       {options.map((o) => {

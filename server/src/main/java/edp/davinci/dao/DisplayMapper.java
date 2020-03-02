@@ -52,6 +52,7 @@ public interface DisplayMapper {
             "project_id = #{projectId,jdbcType=BIGINT},",
             "avatar = #{avatar,jdbcType=VARCHAR},",
             "publish = #{publish,jdbcType=BIT},",
+            "`config` = #{config,jdbcType=LONGVARCHAR},",
             "update_by = #{updateBy,jdbcType=BIGINT},",
             "update_time = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"
@@ -81,4 +82,10 @@ public interface DisplayMapper {
 
     @Select({"select id from display where project_id = #{projectId} and `name` = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
+
+    @Select({
+            "SELECT max(REPLACE(`name`,'${name}','')) ",
+            "FROM display WHERE project_id = #{projectId} and `name` REGEXP CONCAT('${name}','[0-9]+')"
+    })
+    Integer selectMaxNameOrderByName(@Param("name") String name, @Param("projectId") Long projectId);
 }

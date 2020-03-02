@@ -25,13 +25,15 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import memoizeOne from 'memoize-one'
 import Helmet from 'react-helmet'
-import { Link, RouteComponentProps } from 'react-router'
+import { Link } from 'react-router-dom'
+import { RouteComponentWithParams } from 'utils/types'
 
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import sagas from './sagas'
 
+import { checkNameUniqueAction } from 'containers/App/actions'
 import { ViewActions, ViewActionType } from './actions'
 import { makeSelectViews, makeSelectLoading } from './selectors'
 import { makeSelectCurrentProject } from 'containers/Projects/selectors'
@@ -39,16 +41,17 @@ import { makeSelectCurrentProject } from 'containers/Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 
-import { Table, Tooltip, Button, Row, Col, Breadcrumb, Icon, Popconfirm } from 'antd'
+import { Table, Tooltip, Button, Row, Col, Breadcrumb, Icon, Popconfirm, message } from 'antd'
 import { ColumnProps, PaginationConfig, SorterResult } from 'antd/lib/table'
 import { ButtonProps } from 'antd/lib/button'
 import Container from 'components/Container'
 import Box from 'components/Box'
 import SearchFilterDropdown from 'components/SearchFilterDropdown'
+import CopyModal from './components/CopyModal'
 
 import { IRouteParams } from 'app/routes'
 import { IViewBase, IView, IViewLoading } from './types'
-import { IProject } from '../Projects'
+import { IProject } from '../Projects/types'
 
 import utilStyles from 'assets/less/util.less'
 
@@ -61,9 +64,11 @@ interface IViewListStateProps {
 interface IViewListDispatchProps {
   onLoadViews: (projectId: number) => void
   onDeleteView: (viewId: number, resolve: () => void) => void
+  onCopyView: (view: IViewBase, resolve: () => void) => void
+  onCheckName: (data, resolve, reject) => void
 }
 
-type IViewListProps = IViewListStateProps & IViewListDispatchProps & RouteComponentProps<{}, IRouteParams>
+type IViewListProps = IViewListStateProps & IViewListDispatchProps & RouteComponentWithParams
 
 interface IViewListStates {
   screenWidth: number
@@ -71,6 +76,9 @@ interface IViewListStates {
   filterViewName: string
   filterDropdownVisible: boolean
   tableSorter: SorterResult<IViewBase>
+
+  copyModalVisible: boolean
+  copyFromView: IViewBase
 }
 
 export class ViewList extends React.PureComponent<IViewListProps, IViewListStates> {
@@ -80,16 +88,23 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
     tempFilterViewName: '',
     filterViewName: '',
     filterDropdownVisible: false,
-    tableSorter: null
+    tableSorter: null,
+
+    copyModalVisible: false,
+    copyFromView: null
   }
 
   public componentWillMount () {
-    const { onLoadViews, params } = this.props
-    const { pid: projectId } = params
+    this.loadViews()
+    window.addEventListener('resize', this.setScreenWidth, false)
+  }
+
+  private loadViews = () => {
+    const { onLoadViews, match } = this.props
+    const { projectId } = match.params
     if (projectId) {
       onLoadViews(+projectId)
     }
-    window.addEventListener('resize', this.setScreenWidth, false)
   }
 
   public componentWillUnmount () {
@@ -162,10 +177,13 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
     if (viewPermission) {
       columns.push({
         title: '操作',
-        width: 120,
+        width: 150,
         className: utilStyles.textAlignCenter,
         render: (_, record) => (
           <span className="ant-table-action-column">
+            <Tooltip title="复制">
+              <EditButton icon="copy" shape="circle" type="ghost" onClick={this.copyView(record)} />
+            </Tooltip>
             <Tooltip title="修改">
               <EditButton icon="edit" shape="circle" type="ghost" onClick={this.editView(record.id)} />
             </Tooltip>
@@ -211,24 +229,50 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
   }
 
   private addView = () => {
-    const { router, params } = this.props
-    router.push(`/project/${params.pid}/view`)
+    const { history, match } = this.props
+    history.push(`/project/${match.params.projectId}/view`)
   }
 
-  private editView = (viewId: number) => () => {
-    const { router, params } = this.props
-    router.push(`/project/${params.pid}/view/${viewId}`)
-  }
-
-  private deleteView = (viewId: number) => () => {
-    const { onDeleteView, onLoadViews, params: { pid: projectId } } = this.props
-    onDeleteView(viewId, () => {
-      onLoadViews(+projectId)
+  private copyView = (fromView: IViewBase) => () => {
+    this.setState({
+      copyModalVisible: true,
+      copyFromView: fromView
     })
   }
 
+  private copy = (view: IViewBase) => {
+    const { onCopyView } = this.props
+    onCopyView(view, () => {
+      this.setState({
+        copyModalVisible: false
+      })
+      message.info('View 复制成功')
+    })
+  }
+
+  private cancelCopy = () => {
+    this.setState({ copyModalVisible: false })
+  }
+
+  private editView = (viewId: number) => () => {
+    const { history, match } = this.props
+    history.push(`/project/${match.params.projectId}/view/${viewId}`)
+  }
+
+  private deleteView = (viewId: number) => () => {
+    const { onDeleteView } = this.props
+    onDeleteView(viewId, () => {
+      this.loadViews()
+    })
+  }
+
+  private checkViewUniqueName = (viewName: string, resolve: () => void, reject: (err: string) => void) => {
+    const { currentProject, onCheckName } = this.props
+    onCheckName({ name: viewName, projectId: currentProject.id }, resolve, reject)
+  }
+
   public render () {
-    const { currentProject, views, loading: { view: loadingView } } = this.props
+    const { currentProject, views, loading } = this.props
     const { screenWidth, filterViewName } = this.state
     const { viewPermission, AdminButton, EditButton } = ViewList.getViewPermission(currentProject)
     const tableColumns = this.getTableColumns({ viewPermission, AdminButton, EditButton })
@@ -238,51 +282,63 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
     }
     const filterViews = this.getFilterViews(filterViewName, views)
 
+    const { copyModalVisible, copyFromView } = this.state
+
     return (
-      <Container>
-        <Helmet title="View" />
-        <Container.Title>
-          <Row>
-            <Col span={24}>
-              <Breadcrumb className={utilStyles.breadcrumb}>
-                <Breadcrumb.Item>
-                  <Link to="">View</Link>
-                </Breadcrumb.Item>
-              </Breadcrumb>
-            </Col>
-          </Row>
-        </Container.Title>
-        <Container.Body>
-          <Box>
-            <Box.Header>
-              <Box.Title>
-                <Icon type="bars" />
-                View List
-              </Box.Title>
-              <Box.Tools>
-                <Tooltip placement="bottom" title="新增">
-                  <AdminButton type="primary" icon="plus" onClick={this.addView} />
-                </Tooltip>
-              </Box.Tools>
-            </Box.Header>
-            <Box.Body>
-              <Row>
-                <Col span={24}>
-                  <Table
-                    bordered
-                    rowKey="id"
-                    loading={loadingView}
-                    dataSource={filterViews}
-                    columns={tableColumns}
-                    pagination={tablePagination}
-                    onChange={this.tableChange}
-                  />
-                </Col>
-              </Row>
-            </Box.Body>
-          </Box>
-        </Container.Body>
-      </Container>
+      <>
+        <Container>
+          <Helmet title="View" />
+          <Container.Title>
+            <Row>
+              <Col span={24}>
+                <Breadcrumb className={utilStyles.breadcrumb}>
+                  <Breadcrumb.Item>
+                    <Link to="">View</Link>
+                  </Breadcrumb.Item>
+                </Breadcrumb>
+              </Col>
+            </Row>
+          </Container.Title>
+          <Container.Body>
+            <Box>
+              <Box.Header>
+                <Box.Title>
+                  <Icon type="bars" />
+                  View List
+                </Box.Title>
+                <Box.Tools>
+                  <Tooltip placement="bottom" title="新增">
+                    <AdminButton type="primary" icon="plus" onClick={this.addView} />
+                  </Tooltip>
+                </Box.Tools>
+              </Box.Header>
+              <Box.Body>
+                <Row>
+                  <Col span={24}>
+                    <Table
+                      bordered
+                      rowKey="id"
+                      loading={loading.view}
+                      dataSource={filterViews}
+                      columns={tableColumns}
+                      pagination={tablePagination}
+                      onChange={this.tableChange}
+                    />
+                  </Col>
+                </Row>
+              </Box.Body>
+            </Box>
+          </Container.Body>
+        </Container>
+        <CopyModal
+          visible={copyModalVisible}
+          loading={loading.copy}
+          fromView={copyFromView}
+          onCheckUniqueName={this.checkViewUniqueName}
+          onCopy={this.copy}
+          onCancel={this.cancelCopy}
+        />
+      </>
     )
   }
 
@@ -290,7 +346,9 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
 
 const mapDispatchToProps = (dispatch: Dispatch<ViewActionType>) => ({
   onLoadViews: (projectId) => dispatch(ViewActions.loadViews(projectId)),
-  onDeleteView: (viewId, resolve) => dispatch(ViewActions.deleteView(viewId, resolve))
+  onDeleteView: (viewId, resolve) => dispatch(ViewActions.deleteView(viewId, resolve)),
+  onCopyView: (view, resolve) => dispatch(ViewActions.copyView(view, resolve)),
+  onCheckName: (data, resolve, reject) => dispatch(checkNameUniqueAction('view', data, resolve, reject))
 })
 
 const mapStateToProps = createStructuredSelector({
@@ -299,7 +357,7 @@ const mapStateToProps = createStructuredSelector({
   loading: makeSelectLoading()
 })
 
-const withConnect = connect<IViewListStateProps, IViewListDispatchProps, RouteComponentProps<{}, IRouteParams>>(mapStateToProps, mapDispatchToProps)
+const withConnect = connect<IViewListStateProps, IViewListDispatchProps, RouteComponentWithParams>(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'view', reducer })
 const withSaga = injectSaga({ key: 'view', saga: sagas })
 

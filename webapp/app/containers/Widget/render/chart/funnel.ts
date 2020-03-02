@@ -21,12 +21,13 @@
 import { IChartProps } from '../../components/Chart'
 import {
   decodeMetricName,
-  getChartTooltipLabel,
   getTextWidth
 } from '../../components/util'
 import { getLegendOption, getLabelOption } from './util'
 import { EChartOption } from 'echarts'
 import { getFormattedValue } from '../../components/Config/Format'
+import defaultTheme from 'assets/json/echartsThemes/default.project.json'
+const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
@@ -54,7 +55,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   let seriesObj = {}
   const seriesArr = []
-  let legendData = []
+  const legendData = []
   let grouped: { [key: string]: object[] } = {}
 
   if (metrics.length <= 1) {
@@ -81,6 +82,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
     metrics.forEach((metric) => {
       const decodedMetricName = decodeMetricName(metric.name)
+      const metricNameWithAgg = `${metric.agg}(${decodedMetricName})`
 
       const seriesData = []
       Object.entries(grouped).forEach(([key, value]) => {
@@ -89,21 +91,21 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         value.forEach((v) => {
           const obj = {
             name: legendStr,
-            value: v[`${metric.agg}(${decodedMetricName})`]
+            value: v[metricNameWithAgg]
           }
           seriesData.push(obj)
         })
       })
 
       const maxValue = Math.max(
-        ...data.map((s) => s[`${metric.agg}(${decodedMetricName})`])
+        ...data.map((s) => s[metricNameWithAgg])
       )
       const minValue = Math.min(
-        ...data.map((s) => s[`${metric.agg}(${decodedMetricName})`])
+        ...data.map((s) => s[metricNameWithAgg])
       )
 
       const numValueArr = data.map(
-        (d) => d[`${metric.agg}(${decodedMetricName})`] >= 0
+        (d) => d[metricNameWithAgg] >= 0
       )
       const minSizePer = (minValue / maxValue) * 100
       const minSizeValue =
@@ -126,18 +128,6 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
           ? width - funnelLeft - width * 0.15 * 2
           : width - width * 0.15 * 2
 
-      let colorArr = []
-      if (color.items.length) {
-        const colorvaluesObj = color.items[0].config.values
-        for (const keys in colorvaluesObj) {
-          if (colorvaluesObj.hasOwnProperty(keys)) {
-            colorArr.push(colorvaluesObj[keys])
-          }
-        }
-      } else {
-        colorArr = ['#509af2']
-      }
-
       seriesObj = {
         name: '',
         type: 'funnel',
@@ -152,34 +142,27 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         top: topValue,
         width: widthValue,
         height: heightValue,
-        color: colorArr,
-        //  data: seriesData,
-        data: seriesData.map((data, index) => {
-          const itemStyleObj =
-            selectedItems &&
-            selectedItems.length &&
-            selectedItems.some((item) => item === index)
-              ? {
-                  itemStyle: {
-                    normal: {
-                      opacity: 1
-                    }
-                  }
+        data: getFunnelSeriesData(seriesData)
+          .map((data, index) => {
+            return {
+              ...data,
+              itemStyle: {
+                normal: {
+                  ...color.items.length && {
+                    color: color.items[0].config.values[data.name]
+                  },
+                  opacity: selectedItems && selectedItems.length
+                    ? selectedItems.includes(index) ? 1 : 0.25
+                    : 1
                 }
-              : {}
-          return {
-            ...data,
-            ...itemStyleObj
-          }
-        }),
+              }
+            }
+          }),
         itemStyle: {
           emphasis: {
             shadowBlur: 10,
             shadowOffsetX: 0,
             shadowColor: 'rgba(0, 0, 0, 0.5)'
-          },
-          normal: {
-            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
           }
         },
         ...labelOption
@@ -188,7 +171,17 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       seriesArr.push(seriesObj)
     })
   } else {
-    legendData = []
+    const seriesData = []
+    metrics.forEach((metric) => {
+      const decodedMetricName = decodeMetricName(metric.name)
+      legendData.push(decodedMetricName)
+      seriesData.push({
+        name: decodedMetricName,
+        metricName: metric.name,
+        value: data.reduce((sum, record) => sum + record[`${metric.agg}(${decodedMetricName})`], 0)
+      })
+    })
+
     seriesObj = {
       type: 'funnel',
       sort: sortMode,
@@ -198,37 +191,23 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       top: height * 0.12,
       width: width - width * 0.15 * 2,
       height: height - height * 0.12 * 2,
-      data: metrics.map((metric) => {
-        const decodedMetricName = decodeMetricName(metric.name)
-        legendData.push(decodedMetricName)
-
-        const itemStyleObj =
-          selectedItems &&
-          selectedItems.length &&
-          selectedItems.some((item) => item === 0)
-            ? {
-                itemStyle: {
-                  normal: {
-                    opacity: 1
-                  }
-                }
-              }
-            : {}
-
-        return {
-          name: decodedMetricName,
-          value: data.reduce((sum, record) => sum + record[`${metric.agg}(${decodedMetricName})`], 0),
-          ...itemStyleObj
-        }
-      }),
+      data: getFunnelSeriesData(seriesData)
+        .map((data, index) => ({
+          ...data,
+          itemStyle: {
+            normal: {
+              color: color.value[data.metricName] || defaultThemeColors[index % defaultThemeColors.length],
+              opacity: selectedItems && selectedItems.length
+                ? selectedItems.includes(index) ? 1 : 0.25
+                : 1
+            }
+          }
+        })),
       itemStyle: {
         emphasis: {
           shadowBlur: 10,
           shadowOffsetX: 0,
           shadowColor: 'rgba(0, 0, 0, 0.5)'
-        },
-        normal: {
-          opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
         }
       },
       ...labelOption
@@ -239,20 +218,25 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   const tooltip: EChartOption.Tooltip = {
     trigger: 'item',
     formatter (params: EChartOption.Tooltip.Format) {
-      const { color, name, value, percent, dataIndex } = params
-      const tooltipLabels = []
-      if (color) {
-        tooltipLabels.push(
-          `<span class="widget-tooltip-circle" style="background: ${color}"></span>`
-        )
-      }
-      tooltipLabels.push(
-        `${name}<br/>${getFormattedValue(
-          value as number,
-          metrics[metrics.length > 1 ? dataIndex : 0].format
-        )}（${percent}%）`
+      const { color, name, value, percent, dataIndex, data } = params
+      const formattedValue = getFormattedValue(
+        value as number,
+        metrics[metrics.length > 1 ? dataIndex : 0].format
       )
-      return tooltipLabels.join('')
+      const tooltipLabels = []
+      let basicInfo = `${name}: ${formattedValue}`
+      if (color) {
+        basicInfo = `<span class="widget-tooltip-circle" style="background: ${color}"></span> ${basicInfo}`
+      }
+      tooltipLabels.push(basicInfo)
+      if (data.conversion) {
+        tooltipLabels.push(`转化率: ${data.conversion}%`)
+      }
+      if (data.arrival) {
+        tooltipLabels.push(`到达率: ${data.arrival}%`)
+      }
+      tooltipLabels.push(`百分比: ${percent}%`)
+      return tooltipLabels.join('<br/>')
     }
   }
 
@@ -261,4 +245,23 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     legend: getLegendOption(legend, legendData),
     series: seriesArr
   }
+}
+
+function getFunnelSeriesData (seriesData) {
+  return seriesData
+    .sort((d1, d2) => d2.value - d1.value)
+    .map((d, index) => {
+      if (index) {
+        d.conversion = formatPercent(d.value / seriesData[index - 1].value * 100)
+        d.arrival = formatPercent(d.value / seriesData[0].value * 100)
+      }
+      return d
+    })
+}
+
+function formatPercent (per) {
+  const perStr = per + ''
+  return perStr.length - (perStr.indexOf('.') + 1) > 2
+    ? per.toFixed(2)
+    : perStr
 }

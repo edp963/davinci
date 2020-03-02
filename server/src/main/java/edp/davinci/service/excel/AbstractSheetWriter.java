@@ -87,7 +87,7 @@ public abstract class AbstractSheetWriter {
     }
 
     protected void writeHeader(SheetContext context) throws Exception {
-        if (context.getTable() && !CollectionUtils.isEmpty(context.getExcelHeaders())) {
+        if (context.getIsTable() && !CollectionUtils.isEmpty(context.getExcelHeaders())) {
             int rownum = 0;
             int colnum = 0;
             Map<String, QueryColumn> columnMap = context.getQueryColumns().stream().collect(Collectors.toMap(x -> x.getName(), x -> x));
@@ -167,7 +167,7 @@ public abstract class AbstractSheetWriter {
             Row row = context.getSheet().createRow(nextRowNum++);
             for (int i = 0; i < context.getQueryColumns().size(); i++) {
                 String type = context.getQueryColumns().get(i).getType();
-                if (context.getTable()) {
+                if (context.getIsTable()) {
                     type = SqlTypeEnum.VARCHAR.getName();
                 }
                 row.createCell(i).setCellValue(type);
@@ -223,7 +223,7 @@ public abstract class AbstractSheetWriter {
             context.getSheet().autoSizeColumn(i, true);
             QueryColumn queryColumn = context.getQueryColumns().get(i);
             if (columnWidthMap.containsKey(queryColumn.getName())) {
-                Integer width = columnWidthMap.get(queryColumn.getName());
+                int width = columnWidthMap.get(queryColumn.getName());
                 if (width > 0) {
                     width = width > 255 ? 255 : width;
                     context.getSheet().setColumnWidth(i, width * 256);
@@ -238,22 +238,22 @@ public abstract class AbstractSheetWriter {
 
     private Double formatNumber(Object value, NumericUnitEnum unitEnum) {
         try {
-            Double d = Double.parseDouble(String.valueOf(value));
+            return Double.parseDouble(String.valueOf(value));
 
-            if (null == unitEnum) {
-                return d;
-            }
+//            if (null == unitEnum) {
+//                return d;
+//            }
 
             //如果单位为"万"和"亿"，格式按照"k"和"M"，数据上除10计算渲染
-            switch (unitEnum) {
-                case TenThousand:
-                case OneHundredMillion:
-                    d = d / 10;
-                    break;
-                default:
-                    break;
-            }
-            return d;
+//            switch (unitEnum) {
+//                case TenThousand:
+//                case OneHundredMillion:
+//                    d = d / 10;
+//                    break;
+//                default:
+//                    break;
+//            }
+//            return d;
         } catch (NumberFormatException e) {
         }
         return null;

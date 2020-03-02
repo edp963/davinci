@@ -38,13 +38,11 @@ public interface UserService extends CheckEntityService {
 
     User userLogin(UserLogin userLogin) throws ServerException;
 
-    List<UserBaseInfo> getUsersByKeyword(String keyword, User user, Long orgId);
+    List<UserBaseInfo> getUsersByKeyword(String keyword, User user, Long orgId, Boolean includeSelf);
 
     boolean updateUser(User user) throws ServerException;
 
     User regist(UserRegist userRegist) throws ServerException;
-
-//    ResultMap activateUser(User user, String token, HttpServletRequest request);
 
     boolean sendMail(String email, User user) throws ServerException;
 

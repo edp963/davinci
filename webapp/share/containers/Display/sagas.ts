@@ -19,8 +19,7 @@
  */
 
 import omit from 'lodash/omit'
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import { call, fork, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
 import { message } from 'antd'
 import request from 'utils/request'
@@ -41,10 +40,22 @@ export function* getDisplay (action: ShareDisplayActionType) {
       yield put(loadDisplayFail(header.msg))
       return
     }
-    const display = payload
-    const { slides, widgets } = display
-    yield put(displayLoaded(display, slides[0], widgets || [])) // @FIXME should return empty array in response
-    resolve(display, slides[0], widgets)
+    const { slides, widgets, ...display } = payload
+    display.config = JSON.parse(display.config || '{}')
+    slides.sort((s1, s2) => s1.index - s2.index).forEach((slide) => {
+      slide.config = JSON.parse(slide.config)
+      slide.relations.forEach((layer) => {
+        layer.params = JSON.parse(layer.params)
+      })
+    })
+    if (Array.isArray(widgets)) {
+      widgets.forEach((widget) => {
+        widget.config = JSON.parse(widget.config)
+        widget.model = JSON.parse(widget.model)
+      })
+    }
+    yield put(displayLoaded(display, slides, widgets || [])) // @FIXME should return empty array in response
+    resolve(display, slides, widgets)
   } catch (err) {
     message.destroy()
     yield put(loadDisplayFail(err))
@@ -56,7 +67,7 @@ export function* getDisplay (action: ShareDisplayActionType) {
 export function* getData (action: ShareDisplayActionType) {
   if (action.type !== ActionTypes.LOAD_LAYER_DATA) { return }
 
-  const { renderType, layerId, dataToken, requestParams } = action.payload
+  const { renderType, slideNumber, layerId, dataToken, requestParams } = action.payload
   const {
     filters,
     tempFilters,
@@ -83,17 +94,18 @@ export function* getData (action: ShareDisplayActionType) {
         pageNo
       }
     })
-    const { resultList } = response.payload
-    response.payload.resultList = (resultList && resultList.slice(0, 500)) || []
-    yield put(layerDataLoaded(renderType, layerId, response.payload, requestParams))
+    let responsePayload = response.payload || { resultList: [] }
+    const { resultList } = responsePayload
+    responsePayload.resultList = (resultList && resultList.slice(0, 600)) || []
+    yield put(layerDataLoaded(renderType, slideNumber, layerId, responsePayload, requestParams))
   } catch (err) {
-    yield put(loadLayerDataFail(err))
+    yield put(loadLayerDataFail(slideNumber, layerId, err))
   }
 }
 
 export default function* rootDisplaySaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(ActionTypes.LOAD_SHARE_DISPLAY, getDisplay),
     takeEvery(ActionTypes.LOAD_LAYER_DATA, getData)
-  ]
+  ])
 }

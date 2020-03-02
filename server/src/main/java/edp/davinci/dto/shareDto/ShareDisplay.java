@@ -28,6 +28,7 @@ public class ShareDisplay {
     private Long id;
     private String name;
     private String description;
+    private String config;
     private Set<ShareDisplaySlide> slides;
     private Set<ShareWidget> widgets;
 }

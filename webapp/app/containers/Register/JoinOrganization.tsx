@@ -7,7 +7,6 @@ import { Icon } from 'antd'
 import { connect } from 'react-redux'
 import { joinOrganization, login } from '../App/actions'
 import { createStructuredSelector } from 'reselect'
-import { InjectedRouter } from 'react-router/lib/Router'
 import { makeSelectLoginLoading } from '../App/selectors'
 
 const styles = require('../Login/Login.less')
@@ -16,7 +15,6 @@ const registerStyles = require('./register.less')
 
 interface IJoinOrganizationProps {
   onJoinOrganization: (token?: string, resolve?: (res?: {id?: number}) => any, reject?: (err?: string) => any) => any
-  router: InjectedRouter
   loginLoading: boolean
   onLogin: (username: string, password: string, resolve?: () => any) => any
   onLogged: () => any
@@ -96,7 +94,7 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
   }
 
   private doLogin = () => {
-    const {onLogin, router, onJoinOrganization} = this.props
+    const {onLogin, onJoinOrganization} = this.props
     const {username, password} = this.state
     const token = this.getParamsByLocation('token')
     if (username && password) {

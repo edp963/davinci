@@ -21,8 +21,19 @@ package edp.davinci.dto.cronJobDto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class CronJobContent {
     private String contentType;
     private Long id;
+    private List<Long> items;
+
+    public CronJobContent(String contentType, Long id) {
+        this.contentType = contentType;
+        this.id = id;
+    }
+
+    public CronJobContent() {
+    }
 }

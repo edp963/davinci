@@ -22,6 +22,7 @@ package edp.davinci.runner;
 import edp.davinci.service.CronJobService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -35,6 +36,9 @@ public class CronJobRunner implements ApplicationRunner {
     @Autowired
     private CronJobService cronJobService;
 
+    @Value("${start_all_jobs_when_server_start:true}")
+    private boolean startJob;
+
     /**
      * 应用启动后开启已启动的cronjob
      *
@@ -43,11 +47,12 @@ public class CronJobRunner implements ApplicationRunner {
      */
     @Override
     public void run(ApplicationArguments args) {
-        try {
-            cronJobService.startAllJobs();
-        } catch (Exception e) {
-            log.error(e.getMessage());
+        if (startJob) {
+            try {
+                cronJobService.startAllJobs();
+            } finally {
+                log.info("Load cron job finish");
+            }
         }
-        log.info("Load cron job finish");
     }
 }

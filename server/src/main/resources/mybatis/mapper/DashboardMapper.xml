@@ -60,6 +60,7 @@
                 `type` = #{item.type,jdbcType=SMALLINT},
                 `index` = #{item.index,jdbcType=INTEGER},
                 `parent_id` = #{item.parentId,jdbcType=BIGINT},
+                `full_parent_id` = #{item.fullParentId,jdbcType=BIGINT},
                 `config` = #{item.config,jdbcType=LONGVARCHAR},
                 `update_by` = #{item.updateBy,jdbcType=BIGINT},
                 `update_time` = #{item.updateTime,jdbcType=TIMESTAMP}
@@ -71,7 +72,7 @@
     </update>
 
 
-    <select id="getFullParentIds" resultType="java.util.Map" parameterType="java.util.Set">
+    <select id="queryByParentIds" resultType="edp.davinci.model.Dashboard" parameterType="java.util.Set">
         select `id`, `full_parent_Id` from dashboard
         <if test="parentIds != null and parentIds.size > 0">
             where `id` in
@@ -83,6 +84,7 @@
             where 1=0
         </if>
     </select>
+
     <select id="getIdSetByIds" resultType="java.lang.Long" parameterType="java.util.Set">
         select `id` from dashboard
         <if test="set != null and set.size > 0">
@@ -93,6 +95,32 @@
         </if>
         <if test="set == null or set.size == 0">
             where 1=0
+        </if>
+    </select>
+
+
+    <select id="queryDashboardsByIds" parameterType="java.util.Set" resultType="edp.davinci.model.Dashboard">
+        select * from dashboard where
+        <if test="set != null and set.size > 0">
+            <foreach collection="set" index="index" item="item" open="(" close=")" separator="OR">
+                FIND_IN_SET(#{item},full_parent_Id) OR id = #{item}
+            </foreach>
+        </if>
+        <if test="set == null or set.size == 0">
+             1=0
+        </if>
+    </select>
+
+    <select id="queryByPortals" resultType="edp.davinci.model.Dashboard">
+        select * from dashboard where
+        <if test="set != null and set.size > 0">
+            `dashboard_portal_id` in
+            <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="set == null or set.size == 0">
+            1=0
         </if>
     </select>
 </mapper>

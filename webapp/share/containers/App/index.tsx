@@ -18,8 +18,9 @@
  * >>
  */
 
-import * as React from 'react'
+import React, { useEffect } from 'react'
 import Helmet from 'react-helmet'
+import { Route, HashRouter as Router, Switch, useHistory } from 'react-router-dom'
 
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -27,17 +28,46 @@ import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-export function App (props) {
+import { Display } from 'share/containers/Display/Loadable'
+import { Dashboard } from 'share/containers/Dashboard/Loadable'
+import { NotFound } from 'containers/NotFoundPage/Loadable'
+import { setToken } from 'app/utils/request'
+
+export const App: React.FC = () => {
+  const history = useHistory()
+  const currentPathname = history.location.pathname + history.location.search
+  useEffect(() => {
+    const pathname = sessionStorage.getItem('pathname')
+    if (pathname && pathname !== currentPathname) {
+      history.push(pathname)
+      sessionStorage.removeItem('pathname')
+    }
+
+    const token = localStorage.getItem('TOKEN')
+    if (token) {
+      setToken(token)
+    }
+  }, [])
+
   return (
     <div>
       <Helmet
         titleTemplate="%s - Davinci"
         defaultTitle="Davinci Web Application"
         meta={[
-          { name: 'description', content: 'Davinci web application built for data visualization' }
+          {
+            name: 'description',
+            content: 'Davinci web application built for data visualization'
+          }
         ]}
       />
-      {React.Children.toArray(props.children)}
+      <Router>
+        <Switch>
+          <Route exact path="/share/display" component={Display} />
+          <Route exact path="/share/dashboard" component={Dashboard} />
+          <Route path="*" component={NotFound} />
+        </Switch>
+      </Router>
     </div>
   )
 }

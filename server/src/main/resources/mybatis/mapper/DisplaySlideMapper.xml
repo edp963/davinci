@@ -41,6 +41,19 @@
         </trim>
     </insert>
 
+    <insert id="copySlide">
+        insert into display_slide
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            `display_id`,
+            `index`,
+            `config`,
+            `create_by`,
+            `create_time`
+        </trim>
+        select ${displayId}, `index`, `config`, ${useId}, NOW()
+        from display_slide where display_id = #{originDisplayId}
+    </insert>
+
     <update id="updateBatch" parameterType="java.util.List">
         <foreach collection="list" item="item" index="index" open="" close="" separator=";">
             update display_slide
@@ -56,5 +69,18 @@
             </where>
         </foreach>
     </update>
+
+    <select id="queryByDisplayIds" resultType="edp.davinci.model.DisplaySlide">
+        select `id`, `display_id`, `index` from display_slide
+        <if test="displayIds != null and displayIds.size > 0">
+            where `display_id` in
+            <foreach collection="displayIds" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="displayIds == null or displayIds.size == 0">
+            where 1=0
+        </if>
+    </select>
 
 </mapper>

@@ -19,43 +19,38 @@
  */
 
 import { createSelector } from 'reselect'
-import { SourceStateType } from './reducer'
+import { ISourceState } from './types'
 
-const selectSource = (state) => state.get('source')
+const selectSource = (state) => state.source
 
 const makeSelectSources = () => createSelector(
   selectSource,
-  (sourceState: SourceStateType) => sourceState.get('sources')
+  (sourceState: ISourceState) => sourceState.sources
 )
 
 const makeSelectListLoading = () => createSelector(
   selectSource,
-  (sourceState: SourceStateType) => sourceState.get('listLoading')
+  (sourceState: ISourceState) => sourceState.listLoading
 )
 
 const makeSelectFormLoading = () => createSelector(
   selectSource,
-  (sourceState: SourceStateType) => sourceState.get('formLoading')
+  (sourceState: ISourceState) => sourceState.formLoading
 )
 
 const makeSelectTestLoading = () => createSelector(
   selectSource,
-  (sourceState: SourceStateType) => sourceState.get('testLoading')
+  (sourceState: ISourceState) => sourceState.testLoading
+)
+
+const makeSelectResetLoading = () => createSelector(
+  selectSource,
+  (sourceState: ISourceState) => sourceState.resetLoading
 )
 
 const makeSelectDatasourcesInfo = () => createSelector(
   selectSource,
-  (sourceState: SourceStateType) => sourceState.get('datasourcesInfo')
-    .map((info) => ({
-      label: info.name,
-      value: info.name,
-      ...info.versions && {
-        children: info.versions.map((ver) => ({
-          label: ver,
-          value: ver
-        }))
-      }
-    }))
+  (sourceState: ISourceState) => sourceState.datasourcesInfo
 )
 
 export {
@@ -64,5 +59,6 @@ export {
   makeSelectListLoading,
   makeSelectFormLoading,
   makeSelectTestLoading,
+  makeSelectResetLoading,
   makeSelectDatasourcesInfo
 }

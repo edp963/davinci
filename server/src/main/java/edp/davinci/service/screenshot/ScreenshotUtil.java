@@ -20,8 +20,10 @@
 package edp.davinci.service.screenshot;
 
 import com.alibaba.druid.util.StringUtils;
+import edp.core.exception.ServerException;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -64,7 +66,7 @@ public class ScreenshotUtil {
     private static final ExecutorService executorService = Executors.newFixedThreadPool(8);
 
 
-    public void screenshot(long jobId, List<ImageContent> imageContents) {
+    public void screenshot(long jobId, List<ImageContent> imageContents, Integer imageWidth) {
         log.info("start screenshot for job: {}", jobId);
         try {
             CountDownLatch countDownLatch = new CountDownLatch(imageContents.size());
@@ -72,7 +74,7 @@ public class ScreenshotUtil {
             imageContents.forEach(content -> futures.add(executorService.submit(() -> {
                 log.info("thread for screenshot start, type: {}, id: {}", content.getDesc(), content.getCId());
                 try {
-                    File image = doScreenshot(content.getUrl());
+                    File image = doScreenshot(content.getUrl(), imageWidth);
                     content.setContent(image);
                 } catch (Exception e) {
                     log.error("error ScreenshotUtil.screenshot, ", e);
@@ -101,8 +103,8 @@ public class ScreenshotUtil {
     }
 
 
-    private File doScreenshot(String url) throws Exception {
-        WebDriver driver = generateWebDriver();
+    private File doScreenshot(String url, Integer imageWidth) throws Exception {
+        WebDriver driver = generateWebDriver(imageWidth);
         driver.get(url);
         log.info("getting... {}", url);
         try {
@@ -117,7 +119,7 @@ public class ScreenshotUtil {
             String widthVal = driver.findElement(By.id("width")).getAttribute("value");
             String heightVal = driver.findElement(By.id("height")).getAttribute("value");
 
-            int width = DEFAULT_SCREENSHOT_WIDTH;
+            int width = imageWidth != null && imageWidth > 0 ? imageWidth : DEFAULT_SCREENSHOT_WIDTH;
             int height = DEFAULT_SCREENSHOT_HEIGHT;
 
             if (!StringUtils.isEmpty(widthVal)) {
@@ -130,6 +132,8 @@ public class ScreenshotUtil {
             driver.manage().window().setSize(new Dimension(width, height));
             Thread.sleep(2000);
             return ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        } catch (TimeoutException te) {
+            throw new ServerException("Screenshot TIMEOUT: get data time more than: " + timeOutSecond + " ms");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
@@ -139,7 +143,7 @@ public class ScreenshotUtil {
         return null;
     }
 
-    private WebDriver generateWebDriver() throws ExecutionException {
+    private WebDriver generateWebDriver(Integer imageWidth) throws ExecutionException {
         WebDriver driver;
         BrowserEnum browserEnum = valueOf(DEFAULT_BROWSER);
         switch (browserEnum) {
@@ -155,7 +159,8 @@ public class ScreenshotUtil {
 
         driver.manage().timeouts().implicitlyWait(3, TimeUnit.MINUTES);
         driver.manage().window().maximize();
-        driver.manage().window().setSize(new Dimension(DEFAULT_SCREENSHOT_WIDTH, DEFAULT_SCREENSHOT_HEIGHT));
+        driver.manage().window().setSize(new Dimension(imageWidth != null && imageWidth > 0 ? imageWidth : DEFAULT_SCREENSHOT_WIDTH, DEFAULT_SCREENSHOT_HEIGHT));
+        
         return driver;
     }
 
@@ -164,7 +169,7 @@ public class ScreenshotUtil {
         File file = new File(CHROME_DRIVER_PATH);
         if (!file.canExecute()) {
             if (!file.setExecutable(true)) {
-                throw new ExecutionException(new Exception(CHROME_DRIVER_PATH + "is not executable!"));
+                throw new ExecutionException(new Exception(CHROME_DRIVER_PATH + " is not executable!"));
             }
         }
 
@@ -175,10 +180,13 @@ public class ScreenshotUtil {
         options.addArguments("headless");
         options.addArguments("no-sandbox");
         options.addArguments("disable-gpu");
+        options.addArguments("disable-gpu");
         options.addArguments("disable-features=NetworkService");
         options.addArguments("ignore-certificate-errors");
         options.addArguments("silent");
-        options.addArguments("--disable-application-cache");
+        options.addArguments("disable-application-cache");
+        options.addArguments("disable-web-security");
+        options.addArguments("no-proxy-server");
 
         return new ChromeDriver(options);
     }
@@ -187,7 +195,7 @@ public class ScreenshotUtil {
         File file = new File(PHANTOMJS_PATH);
         if (!file.canExecute()) {
             if (!file.setExecutable(true)) {
-                throw new ExecutionException(new Exception(PHANTOMJS_PATH + "is not executable!"));
+                throw new ExecutionException(new Exception(PHANTOMJS_PATH + " is not executable!"));
             }
         }
         log.info("Generating PhantomJs driver ({})...", PHANTOMJS_PATH);
