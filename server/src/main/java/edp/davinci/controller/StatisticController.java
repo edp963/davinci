@@ -24,7 +24,7 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.statistic.DavinciStatisticDurationInfo;
 import edp.davinci.dto.statistic.DavinciStatisticTerminalInfo;
 import edp.davinci.dto.statistic.DavinciStatisticVisitorOperationInfo;
-import edp.davinci.service.BuriedPointsService;
+import edp.davinci.service.StatisticService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -49,7 +49,7 @@ import javax.validation.Valid;
 public class StatisticController {
 
     @Autowired
-    private BuriedPointsService buriedPointsService;
+    private StatisticService statisticService;
 
     @Autowired
     public TokenUtils tokenUtils;
@@ -59,7 +59,7 @@ public class StatisticController {
     public ResponseEntity collectDurationInfo(@Valid @RequestBody ValidList<DavinciStatisticDurationInfo> durationInfos,
                                               HttpServletRequest request){
 
-        buriedPointsService.insert(durationInfos, DavinciStatisticDurationInfo.class);
+        statisticService.insert(durationInfos, DavinciStatisticDurationInfo.class);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
@@ -69,7 +69,7 @@ public class StatisticController {
     public ResponseEntity collectTerminalInfo(@Valid @RequestBody ValidList<DavinciStatisticTerminalInfo> terminalInfoInfos,
                                               HttpServletRequest request){
 
-        buriedPointsService.insert(terminalInfoInfos, DavinciStatisticTerminalInfo.class);
+        statisticService.insert(terminalInfoInfos, DavinciStatisticTerminalInfo.class);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
@@ -79,7 +79,7 @@ public class StatisticController {
     public ResponseEntity collectVisitorOperationInfo(@Valid @RequestBody ValidList<DavinciStatisticVisitorOperationInfo> visitorOperationInfos,
                                               HttpServletRequest request){
 
-        buriedPointsService.insert(visitorOperationInfos, DavinciStatisticVisitorOperationInfo.class);
+        statisticService.insert(visitorOperationInfos, DavinciStatisticVisitorOperationInfo.class);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }

@@ -25,7 +25,8 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import memoizeOne from 'memoize-one'
 import Helmet from 'react-helmet'
-import { Link, RouteComponentProps } from 'react-router'
+import { Link } from 'react-router-dom'
+import { RouteComponentWithParams } from 'utils/types'
 
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
@@ -50,7 +51,7 @@ import CopyModal from './components/CopyModal'
 
 import { IRouteParams } from 'app/routes'
 import { IViewBase, IView, IViewLoading } from './types'
-import { IProject } from '../Projects'
+import { IProject } from '../Projects/types'
 
 import utilStyles from 'assets/less/util.less'
 
@@ -67,7 +68,7 @@ interface IViewListDispatchProps {
   onCheckName: (data, resolve, reject) => void
 }
 
-type IViewListProps = IViewListStateProps & IViewListDispatchProps & RouteComponentProps<{}, IRouteParams>
+type IViewListProps = IViewListStateProps & IViewListDispatchProps & RouteComponentWithParams
 
 interface IViewListStates {
   screenWidth: number
@@ -99,8 +100,8 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
   }
 
   private loadViews = () => {
-    const { onLoadViews, params } = this.props
-    const { pid: projectId } = params
+    const { onLoadViews, match } = this.props
+    const { projectId } = match.params
     if (projectId) {
       onLoadViews(+projectId)
     }
@@ -228,8 +229,8 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
   }
 
   private addView = () => {
-    const { router, params } = this.props
-    router.push(`/project/${params.pid}/view`)
+    const { history, match } = this.props
+    history.push(`/project/${match.params.projectId}/view`)
   }
 
   private copyView = (fromView: IViewBase) => () => {
@@ -254,8 +255,8 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
   }
 
   private editView = (viewId: number) => () => {
-    const { router, params } = this.props
-    router.push(`/project/${params.pid}/view/${viewId}`)
+    const { history, match } = this.props
+    history.push(`/project/${match.params.projectId}/view/${viewId}`)
   }
 
   private deleteView = (viewId: number) => () => {
@@ -356,7 +357,7 @@ const mapStateToProps = createStructuredSelector({
   loading: makeSelectLoading()
 })
 
-const withConnect = connect<IViewListStateProps, IViewListDispatchProps, RouteComponentProps<{}, IRouteParams>>(mapStateToProps, mapDispatchToProps)
+const withConnect = connect<IViewListStateProps, IViewListDispatchProps, RouteComponentWithParams>(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'view', reducer })
 const withSaga = injectSaga({ key: 'view', saga: sagas })
 

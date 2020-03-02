@@ -36,10 +36,9 @@ const styles = require('../Login/Login.less')
 import { checkNameAction } from '../App/actions'
 import { signup, sendMailAgain } from './actions'
 import { makeSelectSignupLoading } from './selectors'
-import { InjectedRouter } from 'react-router/lib/Router'
+import { RouteComponentProps } from 'react-router-dom'
 
 interface IRegisterProps {
-  router: InjectedRouter
   signupLoading: boolean
   onSendEmailOnceMore: (email: string, resolve?: (res: any) => any) => any
   onSignup: (username: string, email: string, password: string, resolve?: (res: any) => any) => any
@@ -55,7 +54,7 @@ interface IRegisterStates {
 }
 
 
-export class Register extends React.PureComponent<IRegisterProps, IRegisterStates> {
+export class Register extends React.PureComponent<IRegisterProps & RouteComponentProps, IRegisterStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -123,8 +122,8 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
   }
 
   private toLogin = () => {
-    const { router } = this.props
-    router.replace('/login')
+    const { history } = this.props
+    history.replace('/login')
   }
 
   private sendEmailOnceMore = () => {

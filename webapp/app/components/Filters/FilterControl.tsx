@@ -27,7 +27,7 @@ interface IFilterControlProps {
   control: IControlBase
   currentOptions: ControlOptions
   parentsInfo?: IParentInfo[]
-  onChange: (control: IControlBase, value, isInputChange?: boolean) => void
+  onChange: (control: IControlBase, value) => void
 }
 
 export class FilterControl extends PureComponent<IFilterControlProps, {}> {
@@ -38,10 +38,10 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
     let component
     switch (filter.type) {
       case FilterTypes.InputText:
-        component = renderInputText(this.inputChange, this.change)
+        component = renderInputText(this.change)
         break
       case FilterTypes.NumberRange:
-        component = renderNumberRange(this.numberRangeChange, this.change)
+        component = renderNumberRange(this.change)
         break
       case FilterTypes.Select:
         component = renderSelect(filter, this.change, options)
@@ -73,16 +73,6 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
   private change = (val) => {
     const { control, onChange } = this.props
     onChange(control, val)
-  }
-
-  private inputChange = (e) => {
-    const { control, onChange } = this.props
-    onChange(control, e.target.value, true)
-  }
-
-  private numberRangeChange = (val) => {
-    const { control, onChange } = this.props
-    onChange(control, val, true)
   }
 
   public render () {

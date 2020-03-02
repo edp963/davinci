@@ -22,6 +22,7 @@ import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
+import { RouteComponentProps } from 'react-router-dom'
 
 import LoginForm from './LoginForm'
 import { Icon } from 'antd'
@@ -41,7 +42,6 @@ import { statistic } from 'utils/statistic/statistic.dv'
 const styles = require('./Login.less')
 
 interface ILoginProps {
-  router: any
   loginLoading: boolean
   onLogin: (username: string, password: string, resolve: () => any) => any
   onLogged: (user) => void
@@ -52,7 +52,7 @@ interface ILoginStates {
   password: string
 }
 
-export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
+export class Login extends React.PureComponent<ILoginProps & RouteComponentProps, ILoginStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -71,7 +71,7 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
       const loginUser = localStorage.getItem('loginUser')
       setToken(token)
       this.props.onLogged(JSON.parse(loginUser))
-      this.props.router.replace('/')
+      this.props.history.replace('/')
     }
   }
 
@@ -88,17 +88,17 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   }
 
   private toSignUp = () => {
-    const { router } = this.props
-    router.replace('/register')
+    const { history } = this.props
+    history.replace('/register')
   }
 
   private doLogin = () => {
-    const { onLogin, router } = this.props
+    const { onLogin, history } = this.props
     const { username, password } = this.state
 
     if (username && password) {
       onLogin(username, password, () => {
-        router.replace('/')
+        history.replace('/')
         statistic.whenSendTerminal()
         statistic.setOperations({
             create_time:  statistic.getCurrentDateTime()

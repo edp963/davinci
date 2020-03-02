@@ -25,7 +25,8 @@ import java.util.List;
 
 @Getter
 public class JdbcSourceInfo {
-    private String jdbcUrl;
+    
+	private String jdbcUrl;
 
     private String username;
 

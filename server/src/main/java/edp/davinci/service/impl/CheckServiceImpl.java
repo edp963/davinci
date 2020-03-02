@@ -44,10 +44,11 @@ public class CheckServiceImpl implements CheckService {
 
     @Override
     public ResultMap checkSource(String name, Long id, CheckEntityEnum checkEntityEnum, Long scopeId, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+
+    	ResultMap resultMap = new ResultMap(tokenUtils);
 
         if (StringUtils.isEmpty(name)) {
-            log.info("the name of entity({}) ie EMPTY", checkEntityEnum.getClazz());
+            log.info("the name of entity({}) is EMPTY", checkEntityEnum.getClazz());
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
                 return resultMap.fail().message("name is EMPTY");
             }
@@ -76,8 +77,8 @@ public class CheckServiceImpl implements CheckService {
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
                 return resultMap.fail().message("the current " + checkEntityEnum.getSource() + " name is already taken");
             }
-            return resultMap.failAndRefreshToken(request)
-                    .message("the current " + checkEntityEnum.getSource() + " name is already taken");
+			return resultMap.failAndRefreshToken(request)
+					.message("the current " + checkEntityEnum.getSource() + " name is already taken");
         } else {
             if (checkEntityEnum == CheckEntityEnum.USER) {
                 return resultMap.success();

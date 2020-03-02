@@ -22,6 +22,7 @@ import React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
+
 // import html2canvas from 'html2canvas'
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -32,21 +33,19 @@ import saga from './sagas'
 import { FieldSortTypes } from 'containers/Widget/components/Config/Sort'
 import { widgetDimensionMigrationRecorder } from 'utils/migrationRecorders'
 
-import Container from 'app/components/Container'
+import Container from 'components/Container'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
-import DashboardItem from 'app/containers/Dashboard/components/DashboardItem'
-import FullScreenPanel from 'app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
-import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
-import { ChartTypes } from 'app/containers/Widget/config/chart/ChartTypes'
-import { IMapItemControlRequestParams, IMapControlOptions, IFilters } from 'app/components/Filters/types'
-import GlobalControlPanel from 'app/components/Filters/FilterPanel'
-import DownloadList from 'app/components/DownloadList'
-import {getValidColumnValue} from 'app/components/Filters/util'
-import HeadlessBrowserIdentifier from '../../components/HeadlessBrowserIdentifier'
+import DashboardItem from 'containers/Dashboard/components/DashboardItem'
+import FullScreenPanel from 'containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
+import { Responsive, WidthProvider } from 'react-grid-layout'
+import { ChartTypes } from 'containers/Widget/config/chart/ChartTypes'
+import { IMapItemControlRequestParams, IMapControlOptions, IFilters } from 'components/Filters/types'
+import GlobalControlPanel from 'components/Filters/FilterPanel'
+import DownloadList from 'components/DownloadList'
+import { getValidColumnValue } from 'components/Filters/util'
+import HeadlessBrowserIdentifier from 'share/components/HeadlessBrowserIdentifier'
 
-import { RenderType, IWidgetConfig, IWidgetProps } from 'app/containers/Widget/components/Widget'
-import { ViewActions } from 'app/containers/View/actions'
-const { loadViewsDetail } = ViewActions
+import { RenderType, IWidgetConfig, IWidgetProps } from 'containers/Widget/components/Widget'
 import { Row, Col, message } from 'antd'
 
 import {
@@ -61,7 +60,6 @@ import {
   deleteDrillHistory,
   setSelectOptions,
   selectDashboardItemChart,
-  globalControlChange,
   loadDownloadList,
   downloadFile,
   initiateDownloadTask,
@@ -89,11 +87,11 @@ import {
   DOWNLOAD_LIST_POLLING_FREQUENCY
 } from 'app/globalConstants'
 
-const styles = require('app/containers/Dashboard/Dashboard.less')
+import styles from 'app/containers/Dashboard/Dashboard.less'
 
-import Login from '../../components/Login/index'
+import Login from 'share/components/Login'
 import { IQueryConditions, IDataRequestParams, QueryVariable, IDataDownloadParams } from 'app/containers/Dashboard/Grid'
-import { getShareClientId } from '../../util'
+import { getShareClientId } from 'share/util'
 import { IDownloadRecord, DownloadTypes } from 'app/containers/App/types'
 import { IFormedView } from 'app/containers/View/types'
 
@@ -125,6 +123,7 @@ interface IDashboardProps {
       downloadCsvLoading: boolean
       renderType: RenderType,
       controlSelectOptions: IMapControlOptions
+      errorMessage: string
     }
   },
   widgets: any[],
@@ -152,7 +151,6 @@ interface IDashboardProps {
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
   onSelectDashboardItemChart: (itemId: number, renderType: string, selectedItems: number[]) => void
-  onGlobalControlChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
   onInitiateDownloadTask: (shareClientId: string, dataToken: string, type: DownloadTypes, downloadParams?: IDataDownloadParams[], itemId?: number) => void
   onLoadDownloadList: (shareClientId: string, token: string) => void
   onDownloadFile: (id: number, shareClientId: string, token: string) => void
@@ -238,7 +236,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       })
     }
   }
-  public componentWillMount () {
+
+  public componentDidMount () {
     // urlparse
     const qs = this.querystring(location.href.substr(location.href.indexOf('?') + 1))
     this.setState({
@@ -250,9 +249,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     delete qs.type
     delete qs.shareInfo
     this.props.onSendShareParams(qs)
-  }
-
-  public componentDidMount () {
     window.addEventListener('resize', this.onWindowResize, false)
   }
 
@@ -315,11 +311,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let i = 0
     for (; i < path.length - 1; i++) {
         if (o[path[i]] === undefined) {
-          o[path[i]] = path[i + 1].match(/^\d+$/) ? [] : {}
+          o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
         }
-        o = o[path[i]]
+        o = o[decodeURIComponent(path[i])]
     }
-    o[path[i]] = decodeURIComponent(value)
+    o[decodeURIComponent(path[i])] = decodeURIComponent(value)
   }
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
@@ -412,6 +408,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let drillStatus
     let pagination
     let nativeQuery
+    const prevDrillHistory = cachedQueryConditions.drillHistory
+    ? cachedQueryConditions.drillHistory[cachedQueryConditions.drillHistory.length - 1]
+    : {}
 
     if (queryConditions) {
       tempFilters = queryConditions.tempFilters !== void 0 ? queryConditions.tempFilters : cachedQueryConditions.tempFilters
@@ -421,9 +420,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       variables = queryConditions.variables || cachedQueryConditions.variables
       linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
       globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
-      drillStatus = queryConditions.drillStatus || void 0
       pagination = queryConditions.pagination || cachedQueryConditions.pagination
       nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
+      drillStatus = queryConditions.drillStatus || prevDrillHistory
     } else {
       tempFilters = cachedQueryConditions.tempFilters
       linkageFilters = cachedQueryConditions.linkageFilters
@@ -434,6 +433,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       globalVariables = cachedQueryConditions.globalVariables
       pagination = cachedQueryConditions.pagination
       nativeQuery = cachedQueryConditions.nativeQuery
+      drillStatus = prevDrillHistory
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -484,16 +484,16 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           func: t.agg
         })))
     }
-    
+
     const requestParamsFilters = filters.reduce((a, b) => {
       return a.concat(b.config.sqlModel)
     }, [])
 
 
     const requestParams = {
-      groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
+      groups,
       aggregators,
-      filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : requestParamsFilters,
+      filters: requestParamsFilters,
       tempFilters,
       linkageFilters,
       globalFilters,
@@ -506,7 +506,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       flush: renderType === 'flush',
       pagination,
       nativeQuery,
-      customOrders
+      customOrders,
+      drillStatus
     }
 
     if (tempOrders) {
@@ -641,19 +642,17 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }
   }
 
-
-  private globalControlChange = (controlRequestParamsByItem: IMapItemControlRequestParams) => {
-    this.props.onGlobalControlChange(controlRequestParamsByItem)
-  }
-
-  private globalControlSearch = (itemIds: number[]) => {
+  private globalControlSearch = (requestParamsByItem: IMapItemControlRequestParams) => {
     const { currentItems, widgets, currentItemsInfo } = this.props
-    itemIds.forEach((itemId) => {
-      const item = currentItems.find((ci) => ci.id === itemId)
+
+    Object.entries(requestParamsByItem).forEach(([itemId, requestParams]) => {
+      const item = currentItems.find((ci) => ci.id === Number(itemId))
+
       if (item) {
         const widget = widgets.find((w) => w.id === item.widgetId)
         let pagination = currentItemsInfo[itemId].queryConditions.pagination
         let noAggregators = false
+
         try {
           const widgetProps: IWidgetProps = JSON.parse(widget.config)
           const { mode, selectedChart, chartStyles } = widgetProps
@@ -670,32 +669,21 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         } catch (error) {
           message.error(error)
         }
-        this.getChartData('rerender', itemId, item.widgetId, {
+
+        const { filters: globalFilters, variables: globalVariables } = requestParams
+        const queryConditions = {
+          ...globalFilters && { globalFilters },
+          ...globalVariables && { globalVariables }
+        }
+
+        this.getChartData('rerender', Number(itemId), item.widgetId, {
           pagination,
-          nativeQuery: noAggregators
+          nativeQuery: noAggregators,
+          ...queryConditions
         })
       }
     })
   }
-
-  private globalFilterChange = (queryConditions: IMapItemControlRequestParams) => {
-    const { currentItems, currentItemsInfo } = this.props
-    Object.entries(queryConditions).forEach(([itemId, condition]) => {
-      const item = currentItems.find((ci) => ci.id === +itemId)
-      if (item) {
-        let pageNo = 0
-        const { pagination } = currentItemsInfo[itemId].queryConditions
-        if (pagination.pageNo) { pageNo = 1 }
-        const { variables: globalVariables, filters: globalFilters } = condition
-        this.getChartData('rerender', +itemId, item.widgetId, {
-          globalVariables,
-          globalFilters,
-          pagination: { ...pagination, pageNo }
-        })
-      }
-    })
-  }
-
 
   private dataDrill = (e) => {
     const {
@@ -935,14 +923,16 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   private selectDrillHistory = (history, item, itemId, widgetId) => {
-    const { currentItemsInfo, onDeleteDrillHistory } = this.props
-    if (history) {
-      this.getChartData('rerender', itemId, widgetId, {
-        drillStatus: history
-      })
-    } else {
-      this.getChartData('rerender', itemId, widgetId)
-    }
+    const { onDeleteDrillHistory } = this.props
+    setTimeout(() => {
+      if (history) {
+        this.getChartData('rerender', itemId, widgetId, {
+          drillStatus: history
+        })
+      } else {
+        this.getChartData('rerender', itemId, widgetId)
+      }
+    }, 50)
     onDeleteDrillHistory(itemId, item)
   }
 
@@ -1070,19 +1060,24 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           {itemblocks}
         </ResponsiveReactGridLayout>
       )
-
-      fullScreenComponent = (
-        <FullScreenPanel
-          widgets={widgets}
-          currentItems={currentItems}
-          currentDashboard={{ widgets: currentItems }}
-          currentItemsInfo={currentItemsInfo}
-          visible={allowFullScreen}
-          isVisible={this.visibleFullScreen}
-          currentDataInFullScreen={this.state.currentDataInFullScreen}
-          onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
-        />
-      )
+      fullScreenComponent = allowFullScreen
+        ? (
+          <FullScreenPanel
+            widgets={widgets}
+            currentItems={currentItems}
+            currentDashboard={dashboard}
+            currentItemsInfo={currentItemsInfo}
+            visible={allowFullScreen}
+            isVisible={this.visibleFullScreen}
+            mapOptions={dashboardSelectOptions}
+            onSearch={this.globalControlSearch}
+            onGetControlOptions={this.getOptions}
+            onGetChartData={this.getChartData}
+            onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
+            chartDetail={this.state.currentDataInFullScreen}
+          />
+        )
+        : <div/>
     } else {
       grids = (
         <div className={styles.shareContentEmpty}>
@@ -1093,7 +1088,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       fullScreenComponent = ''
     }
 
-    loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
+    loginPanel = showLogin ? <Login shareInfo={shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
 
     const headlessBrowserRenderParentNode = document.getElementById('app')
 
@@ -1113,12 +1108,12 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               </div>
             </Col>
           </Row>
+
           <GlobalControlPanel
             currentDashboard={dashboard}
             currentItems={currentItems}
             onGetOptions={this.getOptions}
             mapOptions={dashboardSelectOptions}
-            onChange={this.globalControlChange}
             onSearch={this.globalControlSearch}
           />
         </Container.Title>
@@ -1150,7 +1145,6 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadViewsDetail: (viewIds, resolve) => dispatch(loadViewsDetail(viewIds, resolve)),
     onLoadDashboard: (token, reject) => dispatch(getDashboard(token, reject)),
     onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
     onLoadResultset: (renderType, itemid, dataToken, requestParams) => dispatch(getResultset(renderType, itemid, dataToken, requestParams)),
@@ -1162,7 +1156,6 @@ export function mapDispatchToProps (dispatch) {
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index)),
     onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems)),
-    onGlobalControlChange: (controlRequestParamsByItem) => dispatch(globalControlChange(controlRequestParamsByItem)),
     onInitiateDownloadTask: (shareClientId, id, type, downloadParams?) => dispatch(initiateDownloadTask(shareClientId, id, type, downloadParams)),
     onLoadDownloadList: (shareClinetId, token) => dispatch(loadDownloadList(shareClinetId, token)),
     onDownloadFile: (id, shareClientId, token) => dispatch(downloadFile(id, shareClientId, token)),

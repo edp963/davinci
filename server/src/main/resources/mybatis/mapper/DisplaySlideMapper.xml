@@ -70,4 +70,17 @@
         </foreach>
     </update>
 
+    <select id="queryByDisplayIds" resultType="edp.davinci.model.DisplaySlide">
+        select `id`, `display_id`, `index` from display_slide
+        <if test="displayIds != null and displayIds.size > 0">
+            where `display_id` in
+            <foreach collection="displayIds" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="displayIds == null or displayIds.size == 0">
+            where 1=0
+        </if>
+    </select>
+
 </mapper>

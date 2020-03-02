@@ -54,7 +54,7 @@ public enum SqlOperatorEnum {
 
     public static SqlOperatorEnum getSqlOperator(String src) {
         for (SqlOperatorEnum operatorEnum : SqlOperatorEnum.values()) {
-            if (src.toUpperCase().indexOf(operatorEnum.value) > -1) {
+            if (src.toUpperCase().contains(operatorEnum.value)) {
                 return operatorEnum;
             }
         }
@@ -221,6 +221,7 @@ public enum SqlOperatorEnum {
 
                 listBuffer.append(map);
             }
+
         };
     }
 }

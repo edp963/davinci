@@ -134,7 +134,21 @@ data-auth-center:
       auth-code:
 
 statistic:
-  enable: true
-  # You can use external elasticsearch storage [127.0.0.1:9300], default davinci datasouce
+  enable: false
+
+  # You can use external elasticsearch storage [127.0.0.1:9300]
   elastic_urls:
+  elastic_user:
   elastic_index_prefix:
+
+  # You can also use external mysql storage
+  mysql_url:
+  mysql_username:
+  mysql_password:
+
+  # You can also use external kafka
+  kafka.bootstrap.servers:
+  kafka.topic:
+  java.security.krb5.conf:
+  java.security.keytab:
+  java.security.principal:

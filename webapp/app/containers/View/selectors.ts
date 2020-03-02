@@ -21,7 +21,7 @@
 import { createSelector } from 'reselect'
 import { IViewState } from './types'
 
-const selectView = (state) => state.get('view')
+const selectView = (state) => state.view
 
 const makeSelectViews = () => createSelector(
   selectView,

@@ -17,3 +17,18 @@ export function fieldGroupedSort (data: object[], descriptors: IFieldSortDescrip
     return result
   })
 }
+
+export function inGroupColorSort (
+  groupEntries: Array<[string, unknown]>,
+  descriptor: IFieldSortDescriptor
+) {
+  groupEntries.sort((e1, e2) => {
+    let result = 0
+    const { list } = descriptor
+    const order = list.indexOf(e1[0]) - list.indexOf(e2[0])
+    if (order !== 0) {
+      result = order
+    }
+    return result
+  })
+}

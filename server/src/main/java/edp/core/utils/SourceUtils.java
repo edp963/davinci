@@ -19,8 +19,27 @@
 
 package edp.core.utils;
 
+import static edp.core.consts.Consts.AT_SYMBOL;
+import static edp.core.consts.Consts.COLON;
+import static edp.core.consts.Consts.DOUBLE_SLASH;
+import static edp.core.consts.Consts.EMPTY;
+import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
+import static edp.core.consts.Consts.JDBC_PREFIX_FORMATER;
+import static edp.core.consts.Consts.NEW_LINE_CHAR;
+import static edp.core.consts.Consts.PATTERN_JDBC_TYPE;
+import static edp.core.consts.Consts.SPACE;
+
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.regex.Matcher;
+
+import javax.sql.DataSource;
+
 import com.alibaba.druid.util.StringUtils;
-import edp.core.common.jdbc.ESDataSource;
+
 import edp.core.common.jdbc.ExtendedJdbcClassLoader;
 import edp.core.common.jdbc.JdbcDataSource;
 import edp.core.consts.Consts;
@@ -29,18 +48,8 @@ import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.model.CustomDataSource;
 import edp.core.model.JdbcSourceInfo;
-import edp.davinci.core.config.SpringContextHolder;
 import edp.davinci.runner.LoadSupportDataSourceRunner;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.regex.Matcher;
-
-import static edp.core.consts.Consts.*;
 
 @Slf4j
 public class SourceUtils {
@@ -58,13 +67,9 @@ public class SourceUtils {
      * @return
      * @throws SourceException
      */
-    DataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
-        if (jdbcSourceInfo.getJdbcUrl().toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
-            return ESDataSource.getDataSource(jdbcSourceInfo, jdbcDataSource);
-        } else {
-            return jdbcDataSource.getDataSource(jdbcSourceInfo);
-        }
-    }
+	DataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
+		return jdbcDataSource.getDataSource(jdbcSourceInfo);
+	}
 
     Connection getConnection(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
         DataSource dataSource = getDataSource(jdbcSourceInfo);
@@ -72,8 +77,9 @@ public class SourceUtils {
         try {
             connection = dataSource.getConnection();
         } catch (Exception e) {
-            connection = null;
+
         }
+        
         try {
             if (null == connection) {
                 log.info("connection is closed, retry get connection!");
@@ -93,6 +99,7 @@ public class SourceUtils {
                 connection = null;
             }
         } catch (Exception e) {
+
         }
 
         if (null == connection) {
@@ -120,7 +127,6 @@ public class SourceUtils {
         }
     }
 
-
     public static void closeResult(ResultSet rs) {
         if (rs != null) {
             try {
@@ -134,39 +140,40 @@ public class SourceUtils {
     }
 
     public static boolean checkDriver(String dataSourceName, String jdbcUrl, String version, boolean isExt) {
-        if (!StringUtils.isEmpty(dataSourceName) && LoadSupportDataSourceRunner.getSupportDatasourceMap().containsKey(dataSourceName)) {
-            if (isExt && !StringUtils.isEmpty(version) && !JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
-                String path = ((ServerUtils) SpringContextHolder.getBean(ServerUtils.class)).getBasePath()
-                        + String.format(Consts.PATH_EXT_FORMATER, dataSourceName, version);
-                ExtendedJdbcClassLoader extendedJdbcClassLoader = ExtendedJdbcClassLoader.getExtJdbcClassLoader(path);
-                CustomDataSource dataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
-                try {
-                    assert extendedJdbcClassLoader != null;
-                    Class<?> aClass = extendedJdbcClassLoader.loadClass(dataSource.getDriver());
-                    if (null == aClass) {
-                        throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
-                    }
-                } catch (NullPointerException en) {
-                    throw new ServerException("JDBC driver is not found: " + dataSourceName + ":" + version);
-                } catch (ClassNotFoundException ex) {
-                    throw new SourceException("Unable to get driver instance: " + jdbcUrl);
-                }
-            } else {
-                if (DataTypeEnum.ELASTICSEARCH.getDesc().equals(dataSourceName)) {
-                    return true;
-                } else {
-                    try {
-                        String className = getDriverClassName(jdbcUrl, null);
-                        Class.forName(className);
-                    } catch (Exception e) {
-                        throw new SourceException("Unable to get driver instance: " + jdbcUrl, e);
-                    }
-                }
-            }
-            return true;
-        } else {
+
+    	if (StringUtils.isEmpty(dataSourceName) || !LoadSupportDataSourceRunner.getSupportDatasourceMap().containsKey(dataSourceName)) {
             throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
         }
+        
+		if (isExt && !StringUtils.isEmpty(version) && !JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
+			String path = System.getenv("DAVINCI3_HOME") + File.separator
+					+ String.format(Consts.PATH_EXT_FORMATER, dataSourceName, version);
+			ExtendedJdbcClassLoader extendedJdbcClassLoader = ExtendedJdbcClassLoader.getExtJdbcClassLoader(path);
+			CustomDataSource dataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
+			try {
+				assert extendedJdbcClassLoader != null;
+				Class<?> aClass = extendedJdbcClassLoader.loadClass(dataSource.getDriver());
+				if (null == aClass) {
+					throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
+				}
+			} catch (NullPointerException en) {
+				throw new ServerException("JDBC driver is not found: " + dataSourceName + ":" + version);
+			} catch (ClassNotFoundException ex) {
+				throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
+			}
+		} else {
+			if (DataTypeEnum.ELASTICSEARCH.getDesc().equals(dataSourceName) && !isExt) {
+				return true;
+			} else {
+				try {
+					String className = getDriverClassName(jdbcUrl, null);
+					Class.forName(className);
+				} catch (Exception e) {
+					throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl, e);
+				}
+			}
+		}
+		return true;
     }
 
     public static String isSupportedDatasource(String jdbcUrl) {
@@ -198,28 +205,38 @@ public class SourceUtils {
     }
 
     public static String getDriverClassName(String jdbcUrl, String version) {
+        
         String className = null;
+        
         try {
             className = DriverManager.getDriver(jdbcUrl.trim()).getClass().getName();
         } catch (SQLException e) {
-        }
-        if (StringUtils.isEmpty(className)) {
-            DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-            CustomDataSource customDataSource = null;
-            if (null == dataTypeEnum) {
-                try {
-                    customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
-                } catch (Exception e) {
-                    throw new SourceException(e.getMessage());
-                }
-            }
 
-            if (null == dataTypeEnum && null == customDataSource) {
-                throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
-            }
-            className = null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver()) ? dataTypeEnum.getDriver() : customDataSource.getDriver().trim();
         }
-        return className;
+        
+        if (!StringUtils.isEmpty(className) && !className.contains("com.sun.proxy")
+                && !className.contains("net.sf.cglib.proxy")) {
+            return className;
+        }
+        
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+        CustomDataSource customDataSource = null;
+        if (null == dataTypeEnum) {
+            try {
+                customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
+            }
+            catch (Exception e) {
+                throw new SourceException(e.getMessage());
+            }
+        }
+
+        if (null == dataTypeEnum && null == customDataSource) {
+            throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
+        }
+
+        return className = null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver())
+                ? dataTypeEnum.getDriver()
+                : customDataSource.getDriver().trim();
     }
 
 
@@ -230,22 +247,23 @@ public class SourceUtils {
      * @return
      */
     public void releaseDataSource(JdbcSourceInfo jdbcSourceInfo) {
-        if (jdbcSourceInfo.getJdbcUrl().toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase())) {
-            ESDataSource.removeDataSource(jdbcSourceInfo.getJdbcUrl(), jdbcSourceInfo.getUsername(), jdbcSourceInfo.getPassword());
-        } else {
-            jdbcDataSource.removeDatasource(jdbcSourceInfo);
-        }
+		jdbcDataSource.removeDatasource(jdbcSourceInfo);
     }
 
     public static String getKey(String jdbcUrl, String username, String password, String version, boolean isExt) {
+
         StringBuilder sb = new StringBuilder();
+        
         if (!StringUtils.isEmpty(username)) {
             sb.append(username);
         }
+        
         if (!StringUtils.isEmpty(password)) {
             sb.append(Consts.COLON).append(password);
         }
+        
         sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
+        
         if (isExt && !StringUtils.isEmpty(version)) {
             sb.append(Consts.COLON).append(version);
         }

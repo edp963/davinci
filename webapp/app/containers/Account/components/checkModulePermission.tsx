@@ -1,5 +1,5 @@
-import * as React from 'react'
-import {IProject} from 'containers/Projects'
+import React from 'react'
+import { IProject } from 'containers/Projects/types'
 
 export default function<T> (project?: IProject, route?: string, isDelete?: boolean) {
   return (WrapperComponent) => {

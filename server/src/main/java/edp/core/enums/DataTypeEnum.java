@@ -21,9 +21,7 @@ package edp.core.enums;
 
 import edp.core.consts.Consts;
 import edp.core.exception.SourceException;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public enum DataTypeEnum {
 
     MYSQL("mysql", "mysql", "com.mysql.jdbc.Driver", "`", "`", "'", "'"),
@@ -38,7 +36,7 @@ public enum DataTypeEnum {
 
     MONGODB("mongo", "mongodb", "mongodb.jdbc.MongoDriver", "`", "`", "\"", "\""),
 
-    ELASTICSEARCH("elasticsearch", "elasticsearch", "nl.anchormen.sql4es.jdbc.ESDriver", "", "", "'", "'"),
+    ELASTICSEARCH("elasticsearch", "elasticsearch", "", "", "", "'", "'"),
 
     PRESTO("presto", "presto", "com.facebook.presto.jdbc.PrestoDriver", "\"", "\"", "\"", "\""),
 

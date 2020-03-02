@@ -25,6 +25,7 @@ import java.util.Date;
 
 @Data
 public class Organization {
+
     private Long id;
 
     private String name;
@@ -43,7 +44,7 @@ public class Organization {
 
     private Boolean allowCreateProject = true;
 
-    //成员默认对project权限（隐藏/预览）
+    // 成员默认对project权限（隐藏/预览）
     private Short memberPermission = (short) 1;
 
     private Date createTime = new Date();
@@ -55,9 +56,11 @@ public class Organization {
     private Long updateBy;
 
     public Organization() {
+
     }
 
     public Organization(String name, String description, Long userId) {
+
         this.name = name;
         this.description = description;
         this.userId = userId;

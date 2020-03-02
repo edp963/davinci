@@ -20,8 +20,10 @@
 package edp.davinci.service.screenshot;
 
 import com.alibaba.druid.util.StringUtils;
+import edp.core.exception.ServerException;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -130,6 +132,8 @@ public class ScreenshotUtil {
             driver.manage().window().setSize(new Dimension(width, height));
             Thread.sleep(2000);
             return ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        } catch (TimeoutException te) {
+            throw new ServerException("Screenshot TIMEOUT: get data time more than: " + timeOutSecond + " ms");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
@@ -176,10 +180,13 @@ public class ScreenshotUtil {
         options.addArguments("headless");
         options.addArguments("no-sandbox");
         options.addArguments("disable-gpu");
+        options.addArguments("disable-gpu");
         options.addArguments("disable-features=NetworkService");
         options.addArguments("ignore-certificate-errors");
         options.addArguments("silent");
-        options.addArguments("--disable-application-cache");
+        options.addArguments("disable-application-cache");
+        options.addArguments("disable-web-security");
+        options.addArguments("no-proxy-server");
 
         return new ChromeDriver(options);
     }
@@ -188,7 +195,7 @@ public class ScreenshotUtil {
         File file = new File(PHANTOMJS_PATH);
         if (!file.canExecute()) {
             if (!file.setExecutable(true)) {
-                throw new ExecutionException(new Exception(PHANTOMJS_PATH + "is not executable!"));
+                throw new ExecutionException(new Exception(PHANTOMJS_PATH + " is not executable!"));
             }
         }
         log.info("Generating PhantomJs driver ({})...", PHANTOMJS_PATH);
