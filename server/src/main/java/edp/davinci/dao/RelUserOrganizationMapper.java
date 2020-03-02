@@ -53,7 +53,6 @@ public interface RelUserOrganizationMapper {
     })
     List<OrganizationMember> getOrgMembers(@Param("orgId") Long orgId);
 
-
     @Select({"select * from rel_user_organization where id = #{id}"})
     RelUserOrganization getById(@Param("id") Long id);
 
@@ -70,7 +69,5 @@ public interface RelUserOrganizationMapper {
 
     int insertBatch(@Param("set") Set<RelUserOrganization> set);
 
-
     int deleteBatch(@Param("set") Set<Long> set);
-
 }

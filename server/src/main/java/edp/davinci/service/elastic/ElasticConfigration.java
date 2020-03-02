@@ -7,6 +7,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -37,10 +38,16 @@ public class ElasticConfigration {
             return;
         }
 
-        Settings settings = Settings.builder()
-                .put("client.transport.sniff", false)
-                .put("client.transport.ignore_cluster_name", true)
-                .build();
+        Settings.Builder builder = Settings.builder()
+                .put("client.transport.sniff", true)
+                .put("client.transport.ignore_cluster_name", true);
+
+        String elastic_user = environment.getProperty("statistic.elastic_user");
+        if(StringUtils.isNotBlank(elastic_user)) {
+            builder.put("xpack.security.user", elastic_user);
+        }
+
+        Settings settings = builder.build();
 
         Class transportaddress;
         try{
@@ -58,8 +65,13 @@ public class ElasticConfigration {
                     Integer.parseInt(addressArr[i].split(":")[1]));
         }
 
-        PreBuiltTransportClient preBuiltTransportClient = new PreBuiltTransportClient(settings);
-        this.client = preBuiltTransportClient.addTransportAddresses(transportAddresses);
+        if(StringUtils.isNotBlank(elastic_user)) {
+            PreBuiltXPackTransportClient preBuiltXPackTransportClient = new PreBuiltXPackTransportClient(settings);
+            this.client = preBuiltXPackTransportClient.addTransportAddresses(transportAddresses);
+        }else {
+            PreBuiltTransportClient preBuiltTransportClient = new PreBuiltTransportClient(settings);
+            this.client = preBuiltTransportClient.addTransportAddresses(transportAddresses);
+        }
 
         log.info("ElasticsearchClient connect success [{}].", JSON.toJSON(this.client.transportAddresses()));
     }

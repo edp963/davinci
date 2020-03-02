@@ -28,6 +28,7 @@ import edp.core.model.BaseSource;
 import edp.core.model.Dict;
 import edp.core.utils.SourceUtils;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -36,7 +37,9 @@ import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
 @Slf4j
 @Data
+@EqualsAndHashCode(callSuper=true)
 public class Source extends BaseSource {
+
     private Long id;
 
     private String name;
@@ -196,17 +199,5 @@ public class Source extends BaseSource {
         }
         return params;
     }
-
-    @Override
-    public String toString() {
-        return "Source{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", type='" + type + '\'' +
-                ", projectId=" + projectId +
-                ", config='" + config + '\'' +
-                '}';
-    }
-
+    
 }

@@ -27,6 +27,7 @@ public enum CheckEntityEnum {
     VIEW("view", "viewService", "edp.davinci.model.View"),
     WIDGET("widget", "widgetService", "edp.davinci.model.Widget"),
     DISPLAY("display", "displayService", "edp.davinci.model.Display"),
+    DISPLAYSLIDE("displaySlide", "displaySlideService", "edp.davinci.model.DisplaySlide"),
     DASHBOARD("dashboard", "dashboardService", "edp.davinci.model.Dashboard"),
     DASHBOARDPORTAL("dashboardPortal", "dashboardPortalService", "edp.davinci.model.DashboardPortal"),
     CRONJOB("cronJob", "cronJobService", "edp.davinci.model.CronJob");

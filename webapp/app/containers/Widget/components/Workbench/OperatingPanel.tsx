@@ -1768,32 +1768,17 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       case 'setting':
         tabPane = (
           <div className={styles.paramsPane}>
-            {
-              queryInfo.length
-                ? <div className={styles.paneBlock}>
-                    <h4>
-                      <span>控制器</span>
-                      <span
-                        className={styles.addVariable}
-                        onClick={this.showControlConfig}
-                      >
-                        <Icon type="edit" /> 点击配置
-                      </span>
-                    </h4>
-                  </div>
-                : <div className={styles.paneBlock}>
-                    <h4>控制器</h4>
-                    <Row
-                      gutter={8}
-                      type="flex"
-                      justify="center"
-                      align="middle"
-                      className={`${styles.blockRow} ${styles.noVariable}`}
-                    >
-                      <Icon type="stop" /> 没有变量可以设置
-                    </Row>
-                  </div>
-            }
+            <div className={styles.paneBlock}>
+              <h4>
+                <span>控制器</span>
+                <span
+                  className={styles.addVariable}
+                  onClick={this.showControlConfig}
+                >
+                  <Icon type="edit" /> 点击配置
+                </span>
+              </h4>
+            </div>
             <div className={styles.paneBlock}>
               <h4>开启缓存</h4>
               <div className={styles.blockBody}>
@@ -2079,23 +2064,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           onSave={this.saveControls}
           onCancel={this.closeControlConfig}
         />
-        {/* <Modal
-          title="控制器配置"
-          wrapClassName="ant-modal-large"
-          visible={variableConfigModalVisible}
-          onCancel={this.hideVariableConfigTable}
-          afterClose={this.resetVariableConfigForm}
-          footer={false}
-          maskClosable={false}
-        >
-          <VariableConfigForm
-            queryInfo={queryInfo}
-            control={variableConfigControl}
-            onSave={this.saveControl}
-            onClose={this.hideVariableConfigTable}
-            wrappedComponentRef={this.refHandlers.variableConfigForm}
-          />
-        </Modal> */}
         {!currentEditingItem ? null : [(
           <FieldConfigModal
             key="fieldConfigModal"

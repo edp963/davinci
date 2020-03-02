@@ -27,8 +27,7 @@ import {
 } from 'containers/Widget/components/Config/Format'
 import {
   decodeMetricName,
-  getChartTooltipLabel,
-  getAggregatorLocale
+  getChartTooltipLabel
 } from '../../components/util'
 import {
   getDimetionAxisOption,
@@ -37,16 +36,20 @@ import {
   getLegendOption,
   getGridPositions,
   makeGrouped,
-  distinctXaxis
+  getGroupedXaxis,
+  getCartesianChartMetrics
 } from './util'
 import { getStackName, EmptyStack } from 'containers/Widget/components/Config/Stack'
 const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 import { barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
+import { inGroupColorSort } from '../../components/Config/Sort/util'
+import { FieldSortTypes } from '../../components/Config/Sort'
 
 export default function (chartProps: IChartProps, drillOptions) {
-  const { data, cols, metrics, chartStyles: prevChartStyles, color, tip } = chartProps
+  const { data, cols, chartStyles: prevChartStyles, color, tip } = chartProps
+  const metrics =  getCartesianChartMetrics(chartProps.metrics)
   const chartStyles = barChartStylesMigrationRecorder(prevChartStyles)
 
   const { bar, label, legend, xAxis, yAxis, splitLine } = chartStyles
@@ -104,11 +107,12 @@ export default function (chartProps: IChartProps, drillOptions) {
 
   const xAxisColumnName = cols.length ? cols[0].name : ''
 
-  let xAxisData = data.map((d) => d[xAxisColumnName] || '')
+  let xAxisData = []
   let grouped = {}
   let percentGrouped = {}
+
   if (color.items.length) {
-    xAxisData = distinctXaxis(data, xAxisColumnName)
+    xAxisData = getGroupedXaxis(data, xAxisColumnName, metrics)
     grouped = makeGrouped(
       data,
       color.items.map((c) => c.name),
@@ -129,15 +133,14 @@ export default function (chartProps: IChartProps, drillOptions) {
       metrics,
       configKeys
     )
+  } else {
+    xAxisData = data.map((d) => d[xAxisColumnName] || '')
   }
 
   const series = []
   const seriesData = []
   metrics.forEach((m, i) => {
     const decodedMetricName = decodeMetricName(m.name)
-    const localeMetricName = `[${getAggregatorLocale(
-      m.agg
-    )}] ${decodedMetricName}`
     const stackOption = turnOnStack
       ? { stack: getStackName(m.name, stackConfig) }
       : null
@@ -147,10 +150,18 @@ export default function (chartProps: IChartProps, drillOptions) {
         sumArr.push(getColorDataSum(v, metrics))
       })
 
-      Object.entries(grouped).forEach(([k, v]: [string, any[]]) => {
+      const groupEntries = Object.entries(grouped)
+      const customColorSort = color.items
+        .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+        .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
+      if (customColorSort.length) {
+        inGroupColorSort(groupEntries, customColorSort[0])
+      }
+
+      groupEntries.forEach(([k, v]: [string, any[]]) => {
         const serieObj = {
           id: `${m.name}${DEFAULT_SPLITER}${DEFAULT_SPLITER}${k}`,
-          name: `${k} ${localeMetricName}`,
+          name: `${k}${metrics.length > 1 ? ` ${m.displayName}` : ''}`,
           type: 'bar',
           ...stackOption,
           sampling: 'average',
@@ -210,7 +221,7 @@ export default function (chartProps: IChartProps, drillOptions) {
     } else {
       const serieObj = {
         id: m.name,
-        name: decodedMetricName,
+        name: m.displayName,
         type: 'bar',
         ...stackOption,
         sampling: 'average',

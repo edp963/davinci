@@ -9,8 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -21,8 +19,6 @@ public class ElasticOperationService extends ElasticConfigration {
 
     public void batchInsert(String index, String type, List<?> objects) {
         
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-        
         try{
 
             BulkRequestBuilder bulkRequest = client.prepareBulk();
@@ -32,9 +28,6 @@ public class ElasticOperationService extends ElasticConfigration {
                 String[] fileNames = getFiledName(object);
                 for(String fileName : fileNames){
                     Object value = getFieldValueByName(fileName, object);
-                    if(value instanceof Timestamp){
-                        value = sdf.format(value);
-                    }
                     builder.field(fileName, value);
                 }
                 builder.endObject();

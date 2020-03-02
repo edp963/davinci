@@ -238,22 +238,22 @@ public abstract class AbstractSheetWriter {
 
     private Double formatNumber(Object value, NumericUnitEnum unitEnum) {
         try {
-            Double d = Double.parseDouble(String.valueOf(value));
+            return Double.parseDouble(String.valueOf(value));
 
-            if (null == unitEnum) {
-                return d;
-            }
+//            if (null == unitEnum) {
+//                return d;
+//            }
 
             //如果单位为"万"和"亿"，格式按照"k"和"M"，数据上除10计算渲染
-            switch (unitEnum) {
-                case TenThousand:
-                case OneHundredMillion:
-                    d = d / 10;
-                    break;
-                default:
-                    break;
-            }
-            return d;
+//            switch (unitEnum) {
+//                case TenThousand:
+//                case OneHundredMillion:
+//                    d = d / 10;
+//                    break;
+//                default:
+//                    break;
+//            }
+//            return d;
         } catch (NumberFormatException e) {
         }
         return null;

@@ -18,7 +18,7 @@
  * >>
  */
 
-import { uuid } from 'app/utils/util'
+import { uuid } from 'utils/util'
 import { message } from 'antd'
 
 export function getShareClientId (): string {

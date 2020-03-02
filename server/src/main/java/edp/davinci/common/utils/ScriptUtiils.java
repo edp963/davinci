@@ -30,30 +30,51 @@ import javax.script.ScriptException;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static edp.core.consts.Consts.EMPTY;
 import static edp.davinci.core.common.Constants.EXCEL_FORMAT_TYPE_KEY;
 
-@Component
 public class ScriptUtiils {
 
     private static ClassLoader classLoader = ScriptUtiils.class.getClassLoader();
 
-    public static ScriptEngine getCellValueScriptEngine() throws Exception {
+    private enum ScriptEngineEnum {
+        INSTANCE;
 
+        private ScriptEngine tableFormatEngine;
+        private ScriptEngine executeParamFormatEngine;
+
+        ScriptEngineEnum() {
+            try {
+                tableFormatEngine = createScriptEngine(Constants.TABLE_FORMAT_JS);
+                executeParamFormatEngine = createScriptEngine(Constants.EXECUTE_PARAM_FORMAT_JS);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        public ScriptEngine getTableFormatEngine() {
+            return tableFormatEngine;
+        }
+
+        public ScriptEngine getExecuteParamFormatEngine() {
+            return executeParamFormatEngine;
+        }
+    }
+
+    private static ScriptEngine createScriptEngine(String sourcePath) throws Exception {
         ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
-        engine.eval(new InputStreamReader(classLoader.getResourceAsStream(Constants.TABLE_FORMAT_JS)));
+        engine.eval(new InputStreamReader(classLoader.getResourceAsStream(sourcePath)));
         return engine;
     }
 
-    public static ScriptEngine getExecuptParamScriptEngine() throws Exception {
+    public static synchronized ScriptEngine getCellValueScriptEngine()  {
+        return ScriptEngineEnum.INSTANCE.getTableFormatEngine();
+    }
 
-        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
-        engine.eval(new InputStreamReader(classLoader.getResourceAsStream(Constants.EXECUTE_PARAM_FORMAT_JS)));
-        return engine;
+    public static ScriptEngine getExecuptParamScriptEngine() {
+        return ScriptEngineEnum.INSTANCE.getExecuteParamFormatEngine();
     }
 
     public static ViewExecuteParam getViewExecuteParam(ScriptEngine engine, String dashboardConfig, String widgetConfig,

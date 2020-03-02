@@ -24,7 +24,6 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import memoizeOne from 'memoize-one'
 import Helmet from 'react-helmet'
-import { RouteComponentProps } from 'react-router'
 
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
@@ -35,10 +34,12 @@ import sagasSource from 'containers/Source/sagas'
 import reducerProject from 'containers/Projects/reducer'
 import sagasProject from 'containers/Projects/sagas'
 
-import { IRouteParams } from 'app/routes'
+import { RouteComponentWithParams } from 'utils/types'
 import { hideNavigator } from '../App/actions'
 import { ViewActions, ViewActionType } from './actions'
 import { SourceActions, SourceActionType } from 'containers/Source/actions'
+import { OrganizationActions, OrganizationActionType } from 'containers/Organizations/actions'
+
 import {
   makeSelectEditingView,
   makeSelectEditingViewInfo,
@@ -54,7 +55,6 @@ import {
   makeSelectBizs
 } from './selectors'
 
-import { loadProjectRoles } from 'containers/Organizations/actions'
 import { makeSelectProjectRoles } from 'containers/Projects/selectors'
 
 import {
@@ -115,7 +115,7 @@ interface IViewEditorDispatchProps {
   onLoadProjectRoles: (projectId: number) => void
 }
 
-type IViewEditorProps = IViewEditorStateProps & IViewEditorDispatchProps & RouteComponentProps<{}, IRouteParams>
+type IViewEditorProps = IViewEditorStateProps & IViewEditorDispatchProps & RouteComponentWithParams
 
 interface IViewEditorStates {
   containerHeight: number
@@ -138,8 +138,9 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
 
   public constructor (props: IViewEditorProps) {
     super(props)
-    const { onLoadSources, onLoadViewDetail, onLoadProjectRoles, onLoadDacChannels, params } = this.props
-    const { viewId, pid: projectId } = params
+    const { onHideNavigator, onLoadSources, onLoadViewDetail, onLoadProjectRoles, onLoadDacChannels, match } = this.props
+    onHideNavigator()
+    const { viewId, projectId } = match.params
     if (projectId) {
       onLoadSources(+projectId)
       onLoadProjectRoles(+projectId)
@@ -153,8 +154,8 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
   public static getDerivedStateFromProps:
     React.GetDerivedStateFromProps<IViewEditorProps, IViewEditorStates>
   = (props, state) => {
-    const { params, editingView, sqlValidation } = props
-    const { viewId } = params
+    const { match, editingView, sqlValidation } = props
+    const { viewId } = match.params
     const { init, sqlValidationCode } = state
     let lastSuccessExecutedSql = state.lastSuccessExecutedSql
     if (sqlValidationCode !== sqlValidation.code && sqlValidation.code) {
@@ -194,11 +195,6 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
       }
     }
     return { sqlValidationCode: sqlValidation.code, lastSuccessExecutedSql }
-  }
-
-  public componentDidMount () {
-    this.props.onHideNavigator()
-
   }
 
   public componentWillUnmount () {
@@ -248,8 +244,8 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
   }
 
   private saveView = () => {
-    const { onAddView, onEditView, editingView, editingViewInfo, projectRoles, params } = this.props
-    const { pid: projectId } = params
+    const { onAddView, onEditView, editingView, editingViewInfo, projectRoles, match } = this.props
+    const { projectId } = match.params
     const { model, variable, roles } = editingViewInfo
     const { id: viewId } = editingView
     const validRoles = roles.filter(({ roleId }) => projectRoles && projectRoles.findIndex(({ id }) => id === roleId) >= 0)
@@ -276,9 +272,9 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
   }
 
   private goToViewList = () => {
-    const { router, params } = this.props
-    const { pid: projectId } = params
-    router.push(`/project/${projectId}/views`)
+    const { history, match } = this.props
+    const { projectId } = match.params
+    history.push(`/project/${projectId}/views`)
   }
 
   private viewChange = (propName: keyof IView, value: string | number) => {
@@ -433,7 +429,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
   }
 }
 
-const mapDispatchToProps = (dispatch: Dispatch<ViewActionType | SourceActionType | any>) => ({
+const mapDispatchToProps = (dispatch: Dispatch<ViewActionType | SourceActionType | OrganizationActionType>) => ({
   onHideNavigator: () => dispatch(hideNavigator()),
   onLoadViewDetail: (viewId: number) => dispatch(ViewActions.loadViewsDetail([viewId], null, true)),
   onLoadSources: (projectId) => dispatch(SourceActions.loadSources(projectId)),
@@ -452,7 +448,7 @@ const mapDispatchToProps = (dispatch: Dispatch<ViewActionType | SourceActionType
   onLoadDacBizs: (channelName, tenantId) => dispatch(ViewActions.loadDacBizs(channelName, tenantId)),
 
   onResetState: () => dispatch(ViewActions.resetViewState()),
-  onLoadProjectRoles: (projectId) => dispatch(loadProjectRoles(projectId))
+  onLoadProjectRoles: (projectId) => dispatch(OrganizationActions.loadProjectRoles(projectId))
 })
 
 const mapStateToProps = createStructuredSelector({

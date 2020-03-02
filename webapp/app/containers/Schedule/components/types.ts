@@ -18,6 +18,9 @@
  * >>
  */
 
+import { IScheduleVizConfigItem } from './ScheduleVizConfig/types'
+
+export * from './ScheduleVizConfig/types'
 export type JobStatus = 'new' | 'failed' | 'started' | 'stopped'
 export type JobType = 'email'
 export type ScheduleType = 'image' | 'excel' | 'imageAndExcel'
@@ -46,12 +49,6 @@ export interface IScheduleRaw extends IScheduleBase {
   config: string
 }
 
-export interface IScheduleVizItem {
-  contentType: 'portal' | 'display'
-  id: number
-  items: number[]
-}
-
 export interface IScheduleMailConfig {
   subject: string
   content: string
@@ -60,7 +57,7 @@ export interface IScheduleMailConfig {
   bcc: string
   type: ScheduleType
   imageWidth: number
-  contentList: IScheduleVizItem[]
+  contentList: IScheduleVizConfigItem[]
 }
 
 export interface ISchedule extends IScheduleBase {

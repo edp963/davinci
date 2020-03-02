@@ -36,6 +36,7 @@
                 `avatar`,
             </if>
             `publish`,
+            `config`,
             `create_by`,
             `create_time`
         </trim>
@@ -49,6 +50,7 @@
                 #{avatar,jdbcType=VARCHAR},
             </if>
             #{publish,jdbcType=BIT},
+            #{config,jdbcType=LONGVARCHAR},
             #{createBy,jdbcType=BIGINT},
             #{createTime,jdbcType=TIMESTAMP}
         </trim>

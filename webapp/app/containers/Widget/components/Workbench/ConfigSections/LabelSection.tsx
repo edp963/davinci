@@ -23,6 +23,8 @@ export interface ILabelConfig {
     | 'indicatorName'
     | 'indicatorValue'
     | 'percentage'
+    | 'conversion'
+    | 'arrival'
   >
   pieLabelPosition?: string
   funnelLabelPosition?: string
@@ -49,6 +51,8 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
       value: 'indicatorValue',
       charts: ['pie', 'funnel', 'radar']
     },
+    { label: '转化率', value: 'conversion', charts: ['funnel'] },
+    { label: '到达率', value: 'arrival', charts: ['funnel'] },
     { label: '百分比', value: 'percentage', charts: ['pie', 'funnel'] }
   ]
 
@@ -183,7 +187,6 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
               gutter={8}
               type="flex"
               align="middle"
-              className={styles.blockRow}
             >
               <Col span={24}>
                 <CheckboxGroup

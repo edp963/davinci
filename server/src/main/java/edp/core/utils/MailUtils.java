@@ -19,7 +19,6 @@
 
 package edp.core.utils;
 
-import com.alibaba.druid.Constants;
 import com.alibaba.druid.util.StringUtils;
 import com.google.common.base.Stopwatch;
 import edp.core.exception.ServerException;
@@ -71,6 +70,10 @@ public class MailUtils {
     public void sendMail(MailContent mailContent, Logger customLogger) throws ServerException {
         Stopwatch watch = Stopwatch.createStarted();
         if (mailContent == null) {
+            log.error("Mail content is null");
+            if (customLogger != null) {
+                customLogger.error("Mail content is null");
+            }
             throw new ServerException("Mail content is null");
         }
 

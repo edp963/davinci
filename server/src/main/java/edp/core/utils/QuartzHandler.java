@@ -40,7 +40,6 @@ public class QuartzHandler {
 
     private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
-
     @Autowired
     private SchedulerFactoryBean schedulerFactoryBean;
 

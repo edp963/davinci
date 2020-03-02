@@ -39,7 +39,6 @@ import {
   DELETE_DRILL_HISTORY,
   SET_SELECT_OPTIONS,
   SELECT_DASHBOARD_ITEM_CHART,
-  GLOBAL_CONTROL_CHANGE,
   LOAD_DOWNLOAD_LIST,
   LOAD_DOWNLOAD_LIST_SUCCESS,
   LOAD_DOWNLOAD_LIST_FAILURE,
@@ -247,15 +246,6 @@ export function selectDashboardItemChart (itemId, renderType, selectedItems) {
       itemId,
       renderType,
       selectedItems
-    }
-  }
-}
-
-export function globalControlChange (controlRequestParamsByItem) {
-  return {
-    type: GLOBAL_CONTROL_CHANGE,
-    payload: {
-      controlRequestParamsByItem
     }
   }
 }
