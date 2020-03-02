@@ -51,7 +51,8 @@ export function getValidModel (model: IViewModel, sqlColumns: ISqlColumn[]) {
         if (!ModelTypeSqlTypeSetting[modelItem.modelType].includes(columnType)) {
           accModel[columnName].modelType = getMapKeyByValue(columnType, ModelTypeSqlTypeSetting)
         }
-        if (!VisualTypeSqlTypeSetting[modelItem.visualType].includes(columnType)) {
+        if (VisualTypeSqlTypeSetting[modelItem.visualType]
+            && !VisualTypeSqlTypeSetting[modelItem.visualType].includes(columnType)) {
           accModel[columnName].visualType = getMapKeyByValue(columnType, VisualTypeSqlTypeSetting)
         }
         // @TODO changed modelType or visualType need be shown in step2 corresponding model table cell
