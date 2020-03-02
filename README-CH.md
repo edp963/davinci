@@ -74,7 +74,7 @@ Please refer to [Davinci用户手册](https://edp963.github.io/davinci/).
 
 Latest Release
 =============
-Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-beta.8/davinci-assembly_3.0.1-0.3.1-SNAPSHOT-dist-beta.8.zip).
+Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-beta.9/davinci-assembly_3.0.1-0.3.1-SNAPSHOT-dist-beta.9.zip).
 
 Get Help
 ============
