@@ -203,7 +203,7 @@ export class GaugeSection extends React.PureComponent<IGaugeSectionProps, {}> {
               </Col>
             </Row>
             <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-              <Col span={6}>半径</Col>
+              <Col span={6}>半径</Col>
               <Col span={6}>
                 <InputNumber
                   className={styles.blockElm}
@@ -388,7 +388,7 @@ export class GaugeSection extends React.PureComponent<IGaugeSectionProps, {}> {
           </div>
         </div>
         <div className={styles.paneBlock}>
-          <h4>指针</h4>
+          <h4>指针</h4>
           <div className={styles.blockBody}>
             <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
               <Col span={10}>
