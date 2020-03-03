@@ -109,6 +109,7 @@
     "reveal.js": "^3.8.0",
     "three": "^0.101.1",
     "ua-parser-js": "^0.7.20",
+    "url-search-params-polyfill": "^8.0.0",
     "warning": "4.0.2"
   },
   "devDependencies": {
