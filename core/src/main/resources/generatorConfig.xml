@@ -13,9 +13,9 @@
 			<property name="suppressAllComments" value="true" />
 		</commentGenerator>
 		<jdbcConnection
-			connectionURL="jdbc:mysql://localhost:3306/davinci?useUnicode=true&amp;characterEncoding=UTF-8&amp;zeroDateTimeBehavior=convertToNull&amp;allowMultiQueries=true"
-			driverClass="com.mysql.jdbc.Driver" userId="root"
-			password="xiaolong@0509" />
+			connectionURL="your davinci mysql database url"
+			driverClass="com.mysql.jdbc.Driver" userId="username"
+			password="password" />
 		<javaTypeResolver>
             <property name="forceBigDecimals" value="false"/>
         </javaTypeResolver>
