@@ -271,7 +271,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                 if (!(currentScatterXAxisItem && m.chart.id === PivotTypes.Scatter)) {
                   grid.push({
                     top: dimetionAxis === 'col' ? (xSum + l * height) : ySum,
-                    left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),    // 隐藏yaxisline
+                    left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),    // 隐藏yaxisline
                     width,
                     height
                   })
@@ -313,14 +313,14 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                         if (dimetionAxis === 'col') {
                           grid.push({
                             top: tempXsum + l * unitMetricHeight,
-                            left: tempYsum - 1,    // 隐藏yaxisline
+                            left: tempYsum - 1,    // 隐藏yaxisline
                             width: elementSize,
                             height: unitMetricHeight
                           })
                         } else {
                           grid.push({
                             top: tempYsum,
-                            left: tempXsum - 1 + l * unitMetricWidth,    // 隐藏yaxisline
+                            left: tempXsum - 1 + l * unitMetricWidth,    // 隐藏yaxisline
                             width: unitMetricWidth,
                             height: elementSize
                           })
@@ -436,14 +436,14 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                         if (dimetionAxis === 'col') {
                           grid.push({
                             top: tempXsum + l * unitMetricHeight,
-                            left: tempYsum - 1,    // 隐藏yaxisline
+                            left: tempYsum - 1,    // 隐藏yaxisline
                             width: elementSize,
                             height: unitMetricHeight
                           })
                         } else {
                           grid.push({
                             top: tempYsum,
-                            left: tempXsum - 1 + l * unitMetricWidth,    // 隐藏yaxisline
+                            left: tempXsum - 1 + l * unitMetricWidth,    // 隐藏yaxisline
                             width: unitMetricWidth,
                             height: elementSize
                           })
