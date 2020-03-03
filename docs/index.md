@@ -1,23 +1,20 @@
 ---
-layout: global
-displayTitle: Davinci Overview
-title: Overview
+layout: zh_splash
+title: 概览
 description: Davinci DAVINCI_VERSION_SHORT Documentation Homepage
 ---
 
-> 来自[宜信技术研发中心](http://www.creditease.com)的大数据可视化平台
-
 ## 1 平台介绍
 
-Davinci 是一个 DVAAS（Data Visualization as a Service）平台解决方案，面向业务人员/数据工程师/数据分析师/数据科学家，致力于提供一站式数据可视化解决方案。既可作为公有云/私有云独立部署使用，也可作为可视化插件集成到三方系统。用户只需在可视化 UI 上简单配置即可服务多种数据可视化应用，并支持高级交互/行业分析/模式探索/社交智能等可视化功能。
+Davinci 是一个 DVaaS（Data Visualization as a Service）平台解决方案，面向业务人员/数据工程师/数据分析师/数据科学家，致力于提供一站式数据可视化解决方案。既可作为公有云/私有云独立部署使用，也可作为可视化插件集成到三方系统。用户只需在可视化 UI 上简单配置即可服务多种数据可视化应用，并支持高级交互/行业分析/模式探索/社交智能等可视化功能。
 
 ## 2 模块架构
 
-![overview_architecture](./img/overview_architecture.jpg)
+![overview_architecture](assets/images/overview_architecture.jpg)
 
 ## 3 设计理念
 
-- **围绕 View（数据视图）与 Widget（可视组件）两个核心概念设计**
+- **围绕 View（数据视图）与 Widget（可视化组件）两个核心概念设计**
   - View 是数据的结构化形态，一切逻辑/权限/服务等相关都是从 View 展开。
   - Widget 是数据的可视化形态，一切展示/交互/引导等都是从 Widget 展开。
   - 作为数据的两种不同形态，二者相辅相成，让用户拥有一致的体验和认识。
@@ -107,7 +104,7 @@ Davinci 是一个 DVAAS（Data Visualization as a Service）平台解决方案�
 
   1. **全新协作流程**
 
-     多出“项目”的概念，Davinci 0.2 的 Source、View、Widget、Dashboard、Schedule 都从属于一个“项目”，Dashboard 这一层命名为“数据应用”，Dashboard 属于“数据应用”里其中的一种。
+     多出“项目”的概念，Davinci 0.2 的 Source、View、Widget、Dashboard、Schedule 都从属于一个“项目”，Dashboard 这一层命名为“可视化应用”，Dashboard 属于“可视化应用”里其中的一种。
 
   2. **全新用户系统**
 
@@ -121,6 +118,6 @@ Davinci 是一个 DVAAS（Data Visualization as a Service）平台解决方案�
 
      在 Davinci 0.3 中，用户通过预先配置好的数据模型，在 Widget 编辑器中可以选择想要显示的维度和指标，编辑器自动推荐出适合用来可视化的图形。可以通过颜色对字段进行分组编码。
 
-  5. **全新数据应用 Display**
+  5. **全新可视化应用 Display**
 
-     在 Davinci 0.3 中，数据应用里除了包含之前的 Dashboard 外，还多了 Display。Display 支持用户将 Widget 以自定义布局和背景的方式放置到画布中，同时 Display 本身也支持自定义尺寸和背景，在多种搭配之下用户可以自己打造多样化的可视化应用。
+     在 Davinci 0.3 中，可视化应用里除了包含之前的 Dashboard 外，还多了 Display。Display 支持用户将 Widget 以自定义布局和背景的方式放置到画布中，同时 Display 本身也支持自定义尺寸和背景，在多种搭配之下用户可以自己打造多样化的可视化应用。

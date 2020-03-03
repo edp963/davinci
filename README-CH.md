@@ -7,8 +7,6 @@ Davinci
 [![GitHub release](https://img.shields.io/github/release/edp963/davinci.svg)](https://github.com/edp963/davinci/releases)
 [![Stargazers over time](https://starcharts.herokuapp.com/edp963/davinci.svg)](https://starcharts.herokuapp.com/edp963/davinci)
 
-> 来自[宜信](https://www.creditease.cn/)[技术研发中心](http://crdc.creditease.cn/)的可视应用平台
-
 **Davinci是一个DVAAS（Data Visualization as a Service）平台解决方案。**
 
 Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致力于提供一站式数据可视化解决方案。既可作为公有云/私有云独立使用，也可作为可视化插件集成到三方系统。用户只需在可视化UI上简单配置即可满足多种数据可视化需求，并支持高级交互/行业分析/模式探索/社交智能等可视化功能。
@@ -26,196 +24,49 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
 
 ## 功能特点
 
-* **数据源**
-  * 支持JDBC数据源
-  * 支持CSV文件上传
-* **数据视图**
-  * 支持定义SQL模版
-  * 支持SQL高亮显示
-  * 支持SQL测试
-  * 支持回写操作
-* **可视组件**
-  * 支持预定义图表
-  * 支持控制器组件
-  * 支持自由样式
-* **交互能力**
-  * 支持可视组件全屏显示
-  * 支持可视组件本地控制器
-  * 支持可视组件间过滤联动
-  * 支持群控控制器可视组件
-  * 支持可视组件本地高级过滤器
-  * 支持大数据量展示分页和滑块
-* **集成能力**
-  * 支持可视组件CSV下载
-  * 支持可视组件公共分享
-  * 支持可视组件授权分享
-  * 支持仪表板公共分享
-  * 支持仪表板授权分享
-* **安全权限**
-  * 支持数据行列权限
-  * 支持LDAP登录集成
+- **数据源**
+  - 支持多种 JDBC 数据源
+  - 支持 CSV 数据文件上传
 
-## Quickstart  
+- **数据模型**
+  - 支持友好 SQL 编辑器进行数据处理和转换
+  - 支持自动和自定义数据模型设计和共享
 
-#### Setup
+- **可视化组件**
+  - 支持基于数据模型拖拽智能生成可视化组件
+  - 支持各种可视化组件样式配置
+  - 支持自由分析能力
 
-* **上传davinci zip包到系统某个目录下，如. /app/davinci，将其解压。解压之后的目录结构如下图所示：**
+- **数据门户**
+  - 支持基于可视化组件创建可视化仪表板
+  - 支持可视化组件自动布局
+  - 支持可视化组件全屏显示、本地控制器、高级过滤器、组件间联动、群控控制器可视组件
+  - 支持可视化组件大数据量展示分页和滑块
+  - 支持可视化组件 CSV 数据下载、公共分享授权分享以及可视化仪表板的公共分享和授权分享
+  - 支持基于可视化仪表板创建数据门户
 
-  <img src="https://github.com/edp963/davinci/raw/master/docs/img/dir.png" alt="" width="600"/>
+- **数据大屏**
+  - 支持可视化组件自由布局
+  - 支持图层、透明度设置、边框、背景色、对齐、标签等更丰富大屏美化功能
+  - 支持多种屏幕自适应方式
 
-  * 0.3版本使用 yaml 作为应用配置文件格式，主要配置项包括：server、datasource（请确保连接地址的正确性，初始化数据库时也会用到！！！）、mail（邮箱服务器必须配置）。
+- **用户体系**
+  - 支持多租户用户体系
+  - 支持每个用户自建一整套组织架构层级结构
+  - 支持浅社交能力
 
-     注： 1. 如需接入reids，可继续加入redis的相关配置。 
-          2. 由于 yaml 语法的特殊性，请务必确保每个配置项冒号和值之间至少有一个空格。
+- **安全权限**
+  - 支持 LDAP 登录认证
+  - 支持动态 Token 鉴权
+  - 支持细粒度操作权限矩阵配置
+  - 支持数据列权限、行权限
 
+- **集成能力**
+  - 支持安全 URL 嵌入式集成
+  - 支持 JS 融入式集成
 
-```
-   unzip davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist-beta.3.zip
-
-   cd config
-
-   mv application.yml.example application.yml
-
-   vim application.yml
-```
-
-  ```
-    server:
-      protocol: http
-      address: 127.0.0.1
-      port: 8080
-
-
-    ## jwt is one of the important configuration of the application
-    ## jwt config cannot be null or empty
-    jwtToken:
-      secret: secret
-      timeout: 1800000
-      algorithm: HS512
-
-
-    ##your datasouce config
-    source:
-      initial-size: 2
-      min-idle: 1
-      max-wait: 6000
-      max-active: 10
-
-
-    spring:
-      mvc:
-        async:
-          request-timeout: 30s
-
-      ## davinci datasouce config
-      datasource:
-        url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
-        username:
-        password:
-        driver-class-name: com.mysql.jdbc.Driver
-        initial-size: 2
-        min-idle: 1
-        max-wait: 60000
-        max-active: 10
-
-      ## redis config
-      ## please choose either of the two ways
-      redis:
-        isEnable: false
-
-      ## standalone config
-        host: 127.0.0.1
-        port: 6379
-
-      ## cluster config
-      #  cluster:
-      #       nodes:
-
-        password:
-        database: 0
-        timeout: 1000
-        jedis:
-          pool:
-            max-active: 8
-            max-wait: 1
-            max-idle: 8
-            min-idle: 0
-
-      ## mail is one of the important configurations of the application
-      ## mail config cannot be null or empty
-      ## some mailboxes need to be set password for the SMTP service separately)
-      mail:
-        host:
-        port:
-        username:
-        password:
-        nickname:
-
-        properties:
-          smtp:
-            starttls:
-              enable: false
-              required: true
-            auth: true
-          mail:
-            smtp:
-              ssl:
-                enable: false
-
-    phantomjs_home: "$your_phantomjs_path$/phantomjs"
-  ```
-
-* **配置log的存放位置（可配置为绝对路径）**
-
-   `vi config/logback.xml`
-* **配置DAVINCI3_HOME**
-
-```
-    vi /etc/profile 
-    
-    export DAVINCI3_HOME=/app/davinci
-    
-    source /etc/profile
-```
-
-* **初始化数据库, 修改port、ip、user 及 password，与application.yml里datasource的配置一致即可（只在首次启动前需要进行初始化）**
-
-```
-    cd /app/davinci/bin
-
-    vi initdb.sh
-
-    sh initdb.sh
-```
-
-  * **配置并且初始化完成后即可启动davinci server**
-
- ```
-    sh bin/start-server.sh
- ```
-  * **通过日志监控启动、运行状态**
-  
-  注： 默认的日志文件是以日期命名的，如不符合日期要求，可自行修改`config/logback.xml`中的日志模板
-  
-  ```
-    tail -200f logs/davinci.XXXX.log
-  ```
-
-* **输入http://localhost:8080，进入davinci登录界面(super@davinci.com/123456)**
-
-#### 创建source，指定用户名、密码和jdbc url即可
-<img src="https://github.com/edp963/davinci/raw/master/docs/img/source.png" alt="" width="600"/>
-
-#### 创建view，选择对应的source，编写sql（可定义变量）
-<img src="https://github.com/edp963/davinci/raw/master/docs/img/view.png" alt="" width="600"/>
-
-#### 创建widget，选择对应的view，指定图表类型，配置样式
-<img src="https://github.com/edp963/davinci/raw/master/docs/img/widget.png" alt="" width="600"/>
-
-#### 创建dashboard，加入widget，dashboard内widget可被自由拖拽也可全屏显示
-<img src="https://github.com/edp963/davinci/raw/master/docs/img/dashboard.png" alt="" width="600"/>
-
-#### 以上是简短的功能和用户体验预览，更多强大的细节功能请参见其他部分  
+- **多屏适应**
+  - 支持大屏、PC、Pad、手机移动端等多屏自适应
 
 Documentation
 =============
@@ -223,7 +74,7 @@ Please refer to [Davinci用户手册](https://edp963.github.io/davinci/).
 
 Latest Release
 =============
-Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-beta.7/davinci-assembly_3.0.1-0.3.1-SNAPSHOT-dist-beta.7.zip).
+Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-beta.9/davinci-assembly_3.0.1-0.3.1-SNAPSHOT-dist-beta.9.zip).
 
 Get Help
 ============
