@@ -19,8 +19,8 @@
 
 package edp.davinci.server.dto.dashboard;
 
-import edp.davinci.server.model.Dashboard;
-import edp.davinci.server.model.DashboardPortal;
+import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.DashboardPortal;
 import edp.davinci.server.model.Project;
 import lombok.Data;
 

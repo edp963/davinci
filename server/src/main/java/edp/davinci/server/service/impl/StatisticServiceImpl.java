@@ -1,6 +1,25 @@
 package edp.davinci.server.service.impl;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupFile;
+
 import edp.davinci.commons.util.JSONUtils;
+import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.elastic.ElasticOperationService;
 import edp.davinci.server.component.kafka.KafkaOperationService;
@@ -8,21 +27,8 @@ import edp.davinci.server.model.QueryColumn;
 import edp.davinci.server.model.TableInfo;
 import edp.davinci.server.service.StatisticService;
 import edp.davinci.server.util.SqlUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Service;
-import org.stringtemplate.v4.ST;
-import org.stringtemplate.v4.STGroup;
-import org.stringtemplate.v4.STGroupFile;
-
-import javax.annotation.PostConstruct;
-import java.lang.reflect.Method;
-import java.util.*;
 
 @Service("statisticService")
-@Slf4j
 public class StatisticServiceImpl implements StatisticService {
 
     @Autowired
@@ -48,73 +54,59 @@ public class StatisticServiceImpl implements StatisticService {
     }
 
     @Override
+    @Transactional
     public <T> void insert(List<T> infoList, Class clz){
         if(!statisticOpen) {
             return;
         }
 
-        String tableName = getTableName4Info(clz);
+		String tableName = getTableNameFromClass(clz);
 
-        String elastic_urls = environment.getProperty("statistic.elastic_urls");
-        if(StringUtils.isNotBlank(elastic_urls)) {
-            String elasticIndexPrefix = environment.getProperty("statistic.elastic_index_prefix");
-            String index = StringUtils.isBlank(elasticIndexPrefix) ? tableName : elasticIndexPrefix + "_" + tableName;
-            elasticOperationService.batchInsert(index, index, infoList);
-            return;
-        }
+		String elasticUrls = environment.getProperty("statistic.elastic_urls");
+		if (StringUtils.isNotBlank(elasticUrls)) {
+			String elasticIndexPrefix = environment.getProperty("statistic.elastic_index_prefix");
+			String index = StringUtils.isBlank(elasticIndexPrefix) ? tableName : elasticIndexPrefix + "_" + tableName;
+			elasticOperationService.batchInsert(index, index, infoList);
+			return;
+		}
+
+		String kafkaServers = environment.getProperty("statistic.kafka.bootstrap.servers");
+		if (StringUtils.isNotBlank(kafkaServers)) {
+			String topic = environment.getProperty("statistic.kafka.topic");
+			kafkaOperationService.send(topic, JSONUtils.toString(infoList));
+			return;
+		}
 
         String mysqlUrl = environment.getProperty("statistic.mysql_url");
-        if(StringUtils.isNotBlank(mysqlUrl)) {
-            String mysqlUsername = environment.getProperty("statistic.mysql_username");
-            String mysqlPassword = environment.getProperty("statistic.mysql_password");
-
-            this.sqlUtils = this.sqlUtils.init(mysqlUrl, mysqlUsername, mysqlPassword, null, null, false);
-
-            List<Map<String, Object>> values = entityConvertIntoMap(infoList);
-            Set<QueryColumn> headers = getHeaders(mysqlUrl, tableName);
-            String sql = getInsertSql(clz, headers);
-
-            sqlUtils.executeBatch(sql, headers, values);
-            return;
-        }
-
-        String kafkaServers = environment.getProperty("statistic.kafka.bootstrap.servers");
-        if(StringUtils.isNotBlank(kafkaServers)) {
-            String topic = environment.getProperty("statistic.kafka.topic");
-            kafkaOperationService.send(topic, JSONUtils.toString(infoList));
-            return;
+        String mysqlUsername = environment.getProperty("statistic.mysql_username");
+        String mysqlPassword = environment.getProperty("statistic.mysql_password");
+        
+        if(StringUtils.isBlank(mysqlUrl)){
+        	mysqlUrl = environment.getProperty("spring.datasource.url");
+            mysqlUsername = environment.getProperty("spring.datasource.username");
+            mysqlPassword = environment.getProperty("spring.datasource.password");
         }
         
-        mysqlUrl = environment.getProperty("spring.datasource.url");
-        String mysqlUsername = environment.getProperty("spring.datasource.username");
-        String mysqlPassword = environment.getProperty("spring.datasource.password");
+        sqlUtils = sqlUtils.init(mysqlUrl, mysqlUsername, mysqlPassword, null, null, false);
 
-        this.sqlUtils = this.sqlUtils.init(mysqlUrl, mysqlUsername, mysqlPassword, null, null, false);
-
-        List<Map<String, Object>> values = entityConvertIntoMap(infoList);
         Set<QueryColumn> headers = getHeaders(mysqlUrl, tableName);
-        String sql = getInsertSql(clz, headers);
-
-        sqlUtils.executeBatch(sql, headers, values);
+        List<Map<String, Object>> values = entityConvertIntoMap(infoList);
+        sqlUtils.executeBatch(getInsertSql(clz, headers), headers, values);
     }
 
     public Set<QueryColumn> getHeaders(String url, String tableName){
         String dbName = url.substring(0, url.indexOf("?"));
         dbName = dbName.substring(dbName.lastIndexOf("/")+1, dbName.length());
-
         TableInfo tableInfo = sqlUtils.getTableInfo(dbName, tableName);
-
         return new HashSet<>(tableInfo.getColumns());
     }
 
-    private String getTableName4Info(Class clz){
-        String className = clz.getSimpleName();
-        String tableName = humpToUnderline(className.substring(0, className.indexOf("Info")));
-        return tableName;
+    private String getTableNameFromClass(Class clz){
+        return humpToUnderline(clz.getSimpleName());
     }
 
     private String getInsertSql(Class clz, Set<QueryColumn> headers){
-        String tableName = getTableName4Info(clz);
+        String tableName = getTableNameFromClass(clz);
 
         STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
         ST st = stg.getInstanceOf("insertData");
@@ -167,6 +159,4 @@ public class StatisticServiceImpl implements StatisticService {
         }
         return l;
     }
-
-
 }

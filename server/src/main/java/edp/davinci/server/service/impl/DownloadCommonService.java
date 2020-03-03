@@ -22,8 +22,9 @@ package edp.davinci.server.service.impl;
 import com.google.common.collect.Lists;
 
 import edp.davinci.commons.util.DateUtils;
+import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.server.component.excel.WidgetContext;
-import edp.davinci.server.dao.DashboardMapper;
+import edp.davinci.server.dao.DashboardExtendMapper;
 import edp.davinci.server.dao.MemDashboardWidgetMapper;
 import edp.davinci.server.dao.WidgetMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
@@ -32,7 +33,6 @@ import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.dto.view.ViewExecuteParam;
 import edp.davinci.server.enums.DownloadType;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.Dashboard;
 import edp.davinci.server.model.MemDashboardWidget;
 import edp.davinci.server.model.User;
 import edp.davinci.server.model.Widget;
@@ -65,7 +65,7 @@ public class DownloadCommonService {
     protected WidgetMapper widgetMapper;
 
     @Autowired
-    protected DashboardMapper dashboardMapper;
+    protected DashboardExtendMapper dashboardMapper;
 
     @Autowired
     protected TokenUtils tokenUtils;
@@ -82,7 +82,7 @@ public class DownloadCommonService {
             if (dashboardId == null || dashboardId.longValue() <= 0) {
                 continue;
             }
-            Dashboard dashboard = dashboardMapper.getById(dashboardId);
+            Dashboard dashboard = dashboardMapper.selectByPrimaryKey(dashboardId);
             if (dashboard == null) {
                 continue;
             }
@@ -135,7 +135,7 @@ public class DownloadCommonService {
                 break;
             case DashBoard:
             case DashBoardFolder:
-                Dashboard dashboard = dashboardMapper.getById(id);
+                Dashboard dashboard = dashboardMapper.selectByPrimaryKey(id);
                 fileName = dashboard.getName();
                 break;
             default:

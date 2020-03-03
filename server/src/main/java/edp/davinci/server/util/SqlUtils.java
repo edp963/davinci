@@ -692,13 +692,13 @@ public class SqlUtils {
     public void executeBatch(String sql, Set<QueryColumn> headers, List<Map<String, Object>> datas) throws ServerException {
 
         if (StringUtils.isEmpty(sql)) {
-            log.info("execute batch sql is EMPTY");
-            throw new ServerException("execute batch sql is EMPTY");
+            log.info("Execute batch sql is empty");
+            throw new ServerException("Execute batch sql is empty");
         }
 
         if (CollectionUtils.isEmpty(datas)) {
-            log.info("execute batch data is EMPTY");
-            throw new ServerException("execute batch data is EMPTY");
+            log.info("Execute batch data is empty");
+            throw new ServerException("Execute batch data is empty");
         }
 
         Connection connection = null;
@@ -710,7 +710,6 @@ public class SqlUtils {
                 pstmt = connection.prepareStatement(sql);
                 //每1000条commit一次
                 int n = 10000;
-
                 for (Map<String, Object> map : datas) {
                     int i = 1;
                     for (QueryColumn queryColumn : headers) {
@@ -785,7 +784,6 @@ public class SqlUtils {
                         }
                         i++;
                     }
-
                     pstmt.addBatch();
                     if (i % n == 0) {
                         try {

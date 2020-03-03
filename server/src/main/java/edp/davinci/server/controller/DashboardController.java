@@ -20,11 +20,11 @@
 package edp.davinci.server.controller;
 
 
+import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.DashboardPortal;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.dashboard.*;
-import edp.davinci.server.model.Dashboard;
-import edp.davinci.server.model.DashboardPortal;
 import edp.davinci.server.model.MemDashboardWidget;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.DashboardPortalService;
@@ -47,7 +47,6 @@ import java.util.List;
 
 @Api(value = "/dashboardPortals", tags = "dashboardPortals", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "dashboardPortal not found"))
-@Slf4j
 @RestController
 @RequestMapping(value = Constants.BASE_API_PATH + "/dashboardPortals", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class DashboardController extends BaseController {

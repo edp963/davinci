@@ -19,6 +19,7 @@
 
 package edp.davinci.server.service.impl;
 
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,7 +44,6 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.DashboardPortal;
 import edp.davinci.server.model.RelRolePortal;
 import edp.davinci.server.model.Role;
 import edp.davinci.server.model.User;
@@ -51,6 +51,7 @@ import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.BaseLock;
 import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.core.dao.entity.DashboardPortal;
 import lombok.extern.slf4j.Slf4j;
 
 @Service("dashboardPortalService")
@@ -126,7 +127,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
     
 	private DashboardPortal getDashboardPortal(Long id) {
 		
-		DashboardPortal dashboardPortal = dashboardPortalMapper.getById(id);
+		DashboardPortal dashboardPortal = dashboardPortalMapper.selectByPrimaryKey(id);
         
 		if (null == dashboardPortal) {
 			log.warn("dashboardPortal ({}) is not found", id);
@@ -160,7 +161,9 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
 		try {
 
-			DashboardPortal dashboardPortal = new DashboardPortal().createdBy(user.getId());
+			DashboardPortal dashboardPortal = new DashboardPortal();
+			dashboardPortal.setCreateBy(user.getId());
+			dashboardPortal.setCreateTime(new Date());
 			BeanUtils.copyProperties(dashboardPortalCreate, dashboardPortal);
 
 			if (dashboardPortalMapper.insert(dashboardPortal) != 1) {
@@ -225,7 +228,8 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
 			String origin = dashboardPortal.toString();
 			BeanUtils.copyProperties(dashboardPortalUpdate, dashboardPortal);
-			dashboardPortal.updatedBy(user.getId());
+			dashboardPortal.setUpdateBy(user.getId());
+			dashboardPortal.setUpdateTime(new Date());
 
 			if (dashboardPortalMapper.update(dashboardPortal) != 1) {
 				throw new ServerException("update dashboardPortal fail");
@@ -303,9 +307,9 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
         relRoleDashboardWidgetMapper.deleteByPortalId(id);
         memDashboardWidgetMapper.deleteByPortalId(id);
         relRoleDashboardMapper.deleteByPortalId(id);
-        dashboardMapper.deleteByPortalId(id);
+        dashboardExtendMapper.deleteByPortalId(id);
 
-        if (dashboardPortalMapper.deleteById(id) == 1) {
+        if (dashboardPortalMapper.deleteByPrimaryKey(id) == 1) {
             relRolePortalMapper.deleteByProtalId(dashboardPortal.getId());
             optLogger.info("dashboaard portal ({}) delete by user (:{}) ", dashboardPortal.toString(), user.getId());
             return true;

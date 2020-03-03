@@ -21,6 +21,7 @@ package edp.davinci.server.service.impl;
 
 import edp.davinci.commons.util.AESUtils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.dao.*;
@@ -83,7 +84,7 @@ public class ShareServiceImpl implements ShareService {
     private DisplaySlideMapper displaySlideMapper;
 
     @Autowired
-    private DashboardMapper dashboardMapper;
+    private DashboardExtendMapper dashboardMapper;
 
     @Autowired
     private ProjectService projectService;
@@ -271,7 +272,7 @@ public class ShareServiceImpl implements ShareService {
         verifyShareUser(user, shareInfo);
 
         Long dashboardId = shareInfo.getShareId();
-        Dashboard dashboard = dashboardMapper.getById(dashboardId);
+        Dashboard dashboard = dashboardMapper.selectByPrimaryKey(dashboardId);
 
         if (null == dashboard) {
             throw new NotFoundException("dashboard is not found");

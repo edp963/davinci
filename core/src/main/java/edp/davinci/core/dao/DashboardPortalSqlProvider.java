@@ -1,32 +1,32 @@
 package edp.davinci.core.dao;
 
-import edp.davinci.core.dao.entity.CronJob;
-import edp.davinci.core.dao.entity.CronJobExample.Criteria;
-import edp.davinci.core.dao.entity.CronJobExample.Criterion;
-import edp.davinci.core.dao.entity.CronJobExample;
+import edp.davinci.core.dao.entity.DashboardPortal;
+import edp.davinci.core.dao.entity.DashboardPortalExample.Criteria;
+import edp.davinci.core.dao.entity.DashboardPortalExample.Criterion;
+import edp.davinci.core.dao.entity.DashboardPortalExample;
 import java.util.List;
 import java.util.Map;
 import org.apache.ibatis.jdbc.SQL;
 
-public class CronJobSqlProvider {
+public class DashboardPortalSqlProvider {
 
-    public String countByExample(CronJobExample example) {
+    public String countByExample(DashboardPortalExample example) {
         SQL sql = new SQL();
-        sql.SELECT("count(*)").FROM("cron_job");
+        sql.SELECT("count(*)").FROM("dashboard_portal");
         applyWhere(sql, example, false);
         return sql.toString();
     }
 
-    public String deleteByExample(CronJobExample example) {
+    public String deleteByExample(DashboardPortalExample example) {
         SQL sql = new SQL();
-        sql.DELETE_FROM("cron_job");
+        sql.DELETE_FROM("dashboard_portal");
         applyWhere(sql, example, false);
         return sql.toString();
     }
 
-    public String insertSelective(CronJob record) {
+    public String insertSelective(DashboardPortal record) {
         SQL sql = new SQL();
-        sql.INSERT_INTO("cron_job");
+        sql.INSERT_INTO("dashboard_portal");
         
         if (record.getId() != null) {
             sql.VALUES("id", "#{id,jdbcType=BIGINT}");
@@ -36,40 +36,20 @@ public class CronJobSqlProvider {
             sql.VALUES("`name`", "#{name,jdbcType=VARCHAR}");
         }
         
-        if (record.getProjectId() != null) {
-            sql.VALUES("project_id", "#{projectId,jdbcType=BIGINT}");
-        }
-        
-        if (record.getJobType() != null) {
-            sql.VALUES("job_type", "#{jobType,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getJobStatus() != null) {
-            sql.VALUES("job_status", "#{jobStatus,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getCronExpression() != null) {
-            sql.VALUES("cron_expression", "#{cronExpression,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getStartDate() != null) {
-            sql.VALUES("start_date", "#{startDate,jdbcType=TIMESTAMP}");
-        }
-        
-        if (record.getEndDate() != null) {
-            sql.VALUES("end_date", "#{endDate,jdbcType=TIMESTAMP}");
-        }
-        
-        if (record.getConfig() != null) {
-            sql.VALUES("config", "#{config,jdbcType=VARCHAR}");
-        }
-        
         if (record.getDescription() != null) {
             sql.VALUES("description", "#{description,jdbcType=VARCHAR}");
         }
         
-        if (record.getExecLog() != null) {
-            sql.VALUES("exec_log", "#{execLog,jdbcType=VARCHAR}");
+        if (record.getProjectId() != null) {
+            sql.VALUES("project_id", "#{projectId,jdbcType=BIGINT}");
+        }
+        
+        if (record.getAvatar() != null) {
+            sql.VALUES("avatar", "#{avatar,jdbcType=VARCHAR}");
+        }
+        
+        if (record.getPublish() != null) {
+            sql.VALUES("publish", "#{publish,jdbcType=BIT}");
         }
         
         if (record.getCreateBy() != null) {
@@ -88,26 +68,10 @@ public class CronJobSqlProvider {
             sql.VALUES("update_time", "#{updateTime,jdbcType=TIMESTAMP}");
         }
         
-        if (record.getParentId() != null) {
-            sql.VALUES("parent_id", "#{parentId,jdbcType=BIGINT}");
-        }
-        
-        if (record.getFullParentId() != null) {
-            sql.VALUES("full_parent_id", "#{fullParentId,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getIsFolder() != null) {
-            sql.VALUES("is_folder", "#{isFolder,jdbcType=BIT}");
-        }
-        
-        if (record.getIndex() != null) {
-            sql.VALUES("`index`", "#{index,jdbcType=INTEGER}");
-        }
-        
         return sql.toString();
     }
 
-    public String selectByExample(CronJobExample example) {
+    public String selectByExample(DashboardPortalExample example) {
         SQL sql = new SQL();
         if (example != null && example.isDistinct()) {
             sql.SELECT_DISTINCT("id");
@@ -115,24 +79,15 @@ public class CronJobSqlProvider {
             sql.SELECT("id");
         }
         sql.SELECT("`name`");
-        sql.SELECT("project_id");
-        sql.SELECT("job_type");
-        sql.SELECT("job_status");
-        sql.SELECT("cron_expression");
-        sql.SELECT("start_date");
-        sql.SELECT("end_date");
-        sql.SELECT("config");
         sql.SELECT("description");
-        sql.SELECT("exec_log");
+        sql.SELECT("project_id");
+        sql.SELECT("avatar");
+        sql.SELECT("publish");
         sql.SELECT("create_by");
         sql.SELECT("create_time");
         sql.SELECT("update_by");
         sql.SELECT("update_time");
-        sql.SELECT("parent_id");
-        sql.SELECT("full_parent_id");
-        sql.SELECT("is_folder");
-        sql.SELECT("`index`");
-        sql.FROM("cron_job");
+        sql.FROM("dashboard_portal");
         applyWhere(sql, example, false);
         
         if (example != null && example.getOrderByClause() != null) {
@@ -143,11 +98,11 @@ public class CronJobSqlProvider {
     }
 
     public String updateByExampleSelective(Map<String, Object> parameter) {
-        CronJob record = (CronJob) parameter.get("record");
-        CronJobExample example = (CronJobExample) parameter.get("example");
+        DashboardPortal record = (DashboardPortal) parameter.get("record");
+        DashboardPortalExample example = (DashboardPortalExample) parameter.get("example");
         
         SQL sql = new SQL();
-        sql.UPDATE("cron_job");
+        sql.UPDATE("dashboard_portal");
         
         if (record.getId() != null) {
             sql.SET("id = #{record.id,jdbcType=BIGINT}");
@@ -157,40 +112,20 @@ public class CronJobSqlProvider {
             sql.SET("`name` = #{record.name,jdbcType=VARCHAR}");
         }
         
-        if (record.getProjectId() != null) {
-            sql.SET("project_id = #{record.projectId,jdbcType=BIGINT}");
-        }
-        
-        if (record.getJobType() != null) {
-            sql.SET("job_type = #{record.jobType,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getJobStatus() != null) {
-            sql.SET("job_status = #{record.jobStatus,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getCronExpression() != null) {
-            sql.SET("cron_expression = #{record.cronExpression,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getStartDate() != null) {
-            sql.SET("start_date = #{record.startDate,jdbcType=TIMESTAMP}");
-        }
-        
-        if (record.getEndDate() != null) {
-            sql.SET("end_date = #{record.endDate,jdbcType=TIMESTAMP}");
-        }
-        
-        if (record.getConfig() != null) {
-            sql.SET("config = #{record.config,jdbcType=VARCHAR}");
-        }
-        
         if (record.getDescription() != null) {
             sql.SET("description = #{record.description,jdbcType=VARCHAR}");
         }
         
-        if (record.getExecLog() != null) {
-            sql.SET("exec_log = #{record.execLog,jdbcType=VARCHAR}");
+        if (record.getProjectId() != null) {
+            sql.SET("project_id = #{record.projectId,jdbcType=BIGINT}");
+        }
+        
+        if (record.getAvatar() != null) {
+            sql.SET("avatar = #{record.avatar,jdbcType=VARCHAR}");
+        }
+        
+        if (record.getPublish() != null) {
+            sql.SET("publish = #{record.publish,jdbcType=BIT}");
         }
         
         if (record.getCreateBy() != null) {
@@ -209,97 +144,52 @@ public class CronJobSqlProvider {
             sql.SET("update_time = #{record.updateTime,jdbcType=TIMESTAMP}");
         }
         
-        if (record.getParentId() != null) {
-            sql.SET("parent_id = #{record.parentId,jdbcType=BIGINT}");
-        }
-        
-        if (record.getFullParentId() != null) {
-            sql.SET("full_parent_id = #{record.fullParentId,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getIsFolder() != null) {
-            sql.SET("is_folder = #{record.isFolder,jdbcType=BIT}");
-        }
-        
-        if (record.getIndex() != null) {
-            sql.SET("`index` = #{record.index,jdbcType=INTEGER}");
-        }
-        
         applyWhere(sql, example, true);
         return sql.toString();
     }
 
     public String updateByExample(Map<String, Object> parameter) {
         SQL sql = new SQL();
-        sql.UPDATE("cron_job");
+        sql.UPDATE("dashboard_portal");
         
         sql.SET("id = #{record.id,jdbcType=BIGINT}");
         sql.SET("`name` = #{record.name,jdbcType=VARCHAR}");
-        sql.SET("project_id = #{record.projectId,jdbcType=BIGINT}");
-        sql.SET("job_type = #{record.jobType,jdbcType=VARCHAR}");
-        sql.SET("job_status = #{record.jobStatus,jdbcType=VARCHAR}");
-        sql.SET("cron_expression = #{record.cronExpression,jdbcType=VARCHAR}");
-        sql.SET("start_date = #{record.startDate,jdbcType=TIMESTAMP}");
-        sql.SET("end_date = #{record.endDate,jdbcType=TIMESTAMP}");
-        sql.SET("config = #{record.config,jdbcType=VARCHAR}");
         sql.SET("description = #{record.description,jdbcType=VARCHAR}");
-        sql.SET("exec_log = #{record.execLog,jdbcType=VARCHAR}");
+        sql.SET("project_id = #{record.projectId,jdbcType=BIGINT}");
+        sql.SET("avatar = #{record.avatar,jdbcType=VARCHAR}");
+        sql.SET("publish = #{record.publish,jdbcType=BIT}");
         sql.SET("create_by = #{record.createBy,jdbcType=BIGINT}");
         sql.SET("create_time = #{record.createTime,jdbcType=TIMESTAMP}");
         sql.SET("update_by = #{record.updateBy,jdbcType=BIGINT}");
         sql.SET("update_time = #{record.updateTime,jdbcType=TIMESTAMP}");
-        sql.SET("parent_id = #{record.parentId,jdbcType=BIGINT}");
-        sql.SET("full_parent_id = #{record.fullParentId,jdbcType=VARCHAR}");
-        sql.SET("is_folder = #{record.isFolder,jdbcType=BIT}");
-        sql.SET("`index` = #{record.index,jdbcType=INTEGER}");
         
-        CronJobExample example = (CronJobExample) parameter.get("example");
+        DashboardPortalExample example = (DashboardPortalExample) parameter.get("example");
         applyWhere(sql, example, true);
         return sql.toString();
     }
 
-    public String updateByPrimaryKeySelective(CronJob record) {
+    public String updateByPrimaryKeySelective(DashboardPortal record) {
         SQL sql = new SQL();
-        sql.UPDATE("cron_job");
+        sql.UPDATE("dashboard_portal");
         
         if (record.getName() != null) {
             sql.SET("`name` = #{name,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getProjectId() != null) {
-            sql.SET("project_id = #{projectId,jdbcType=BIGINT}");
-        }
-        
-        if (record.getJobType() != null) {
-            sql.SET("job_type = #{jobType,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getJobStatus() != null) {
-            sql.SET("job_status = #{jobStatus,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getCronExpression() != null) {
-            sql.SET("cron_expression = #{cronExpression,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getStartDate() != null) {
-            sql.SET("start_date = #{startDate,jdbcType=TIMESTAMP}");
-        }
-        
-        if (record.getEndDate() != null) {
-            sql.SET("end_date = #{endDate,jdbcType=TIMESTAMP}");
-        }
-        
-        if (record.getConfig() != null) {
-            sql.SET("config = #{config,jdbcType=VARCHAR}");
         }
         
         if (record.getDescription() != null) {
             sql.SET("description = #{description,jdbcType=VARCHAR}");
         }
         
-        if (record.getExecLog() != null) {
-            sql.SET("exec_log = #{execLog,jdbcType=VARCHAR}");
+        if (record.getProjectId() != null) {
+            sql.SET("project_id = #{projectId,jdbcType=BIGINT}");
+        }
+        
+        if (record.getAvatar() != null) {
+            sql.SET("avatar = #{avatar,jdbcType=VARCHAR}");
+        }
+        
+        if (record.getPublish() != null) {
+            sql.SET("publish = #{publish,jdbcType=BIT}");
         }
         
         if (record.getCreateBy() != null) {
@@ -318,28 +208,12 @@ public class CronJobSqlProvider {
             sql.SET("update_time = #{updateTime,jdbcType=TIMESTAMP}");
         }
         
-        if (record.getParentId() != null) {
-            sql.SET("parent_id = #{parentId,jdbcType=BIGINT}");
-        }
-        
-        if (record.getFullParentId() != null) {
-            sql.SET("full_parent_id = #{fullParentId,jdbcType=VARCHAR}");
-        }
-        
-        if (record.getIsFolder() != null) {
-            sql.SET("is_folder = #{isFolder,jdbcType=BIT}");
-        }
-        
-        if (record.getIndex() != null) {
-            sql.SET("`index` = #{index,jdbcType=INTEGER}");
-        }
-        
         sql.WHERE("id = #{id,jdbcType=BIGINT}");
         
         return sql.toString();
     }
 
-    protected void applyWhere(SQL sql, CronJobExample example, boolean includeExamplePhrase) {
+    protected void applyWhere(SQL sql, DashboardPortalExample example, boolean includeExamplePhrase) {
         if (example == null) {
             return;
         }

@@ -19,9 +19,9 @@ package edp.davinci.server.controller;
 
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.commons.ValidList;
-import edp.davinci.server.dto.statistic.DavinciStatisticDurationInfo;
-import edp.davinci.server.dto.statistic.DavinciStatisticTerminalInfo;
-import edp.davinci.server.dto.statistic.DavinciStatisticVisitorOperationInfo;
+import edp.davinci.server.dto.statistic.DavinciStatisticDuration;
+import edp.davinci.server.dto.statistic.DavinciStatisticTerminal;
+import edp.davinci.server.dto.statistic.DavinciStatisticVisitorOperation;
 import edp.davinci.server.service.StatisticService;
 import edp.davinci.server.util.TokenUtils;
 import io.swagger.annotations.Api;
@@ -42,7 +42,6 @@ import javax.validation.Valid;
 
 @Api(value = "/statistic", tags = "statistic", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "statistic not found"))
-@Slf4j
 @RestController
 @RequestMapping(value = Constants.BASE_API_PATH + "/statistic", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class StatisticController {
@@ -55,30 +54,30 @@ public class StatisticController {
 
     @ApiOperation(value = "collect duration info ")
     @PostMapping(value = "/duration", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity collectDurationInfo(@Valid @RequestBody ValidList<DavinciStatisticDurationInfo> durationInfos,
+    public ResponseEntity collectDurationInfo(@Valid @RequestBody ValidList<DavinciStatisticDuration> durationInfos,
                                               HttpServletRequest request){
 
-        statisticService.insert(durationInfos, DavinciStatisticDurationInfo.class);
+    	statisticService.insert(durationInfos, DavinciStatisticDuration.class);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
     @ApiOperation(value = "collect terminal info ")
     @PostMapping(value = "/terminal", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity collectTerminalInfo(@Valid @RequestBody ValidList<DavinciStatisticTerminalInfo> terminalInfoInfos,
+    public ResponseEntity collectTerminalInfo(@Valid @RequestBody ValidList<DavinciStatisticTerminal> terminalInfoInfos,
                                               HttpServletRequest request){
 
-        statisticService.insert(terminalInfoInfos, DavinciStatisticTerminalInfo.class);
+        statisticService.insert(terminalInfoInfos, DavinciStatisticTerminal.class);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
     @ApiOperation(value = "collect visitor operation info ")
     @PostMapping(value = "/visitoroperation", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity collectVisitorOperationInfo(@Valid @RequestBody ValidList<DavinciStatisticVisitorOperationInfo> visitorOperationInfos,
+    public ResponseEntity collectVisitorOperationInfo(@Valid @RequestBody ValidList<DavinciStatisticVisitorOperation> visitorOperationInfos,
                                               HttpServletRequest request){
 
-        statisticService.insert(visitorOperationInfos, DavinciStatisticVisitorOperationInfo.class);
+        statisticService.insert(visitorOperationInfos, DavinciStatisticVisitorOperation.class);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }

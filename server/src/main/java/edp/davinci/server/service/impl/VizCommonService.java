@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import edp.davinci.server.dao.DashboardMapper;
-import edp.davinci.server.dao.DashboardPortalMapper;
+import edp.davinci.server.dao.DashboardExtendMapper;
+import edp.davinci.server.dao.DashboardPortalExtendMapper;
 import edp.davinci.server.dao.DisplayMapper;
 import edp.davinci.server.dao.DisplaySlideMapper;
 import edp.davinci.server.dao.RelRoleDashboardMapper;
@@ -40,23 +40,23 @@ import edp.davinci.server.dao.RelRoleSlideMapper;
 import edp.davinci.server.dao.RoleMapper;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.enums.VizEnum;
-import edp.davinci.server.model.Dashboard;
-import edp.davinci.server.model.DashboardPortal;
 import edp.davinci.server.model.Display;
 import edp.davinci.server.model.DisplaySlide;
 import edp.davinci.server.model.RoleDisableViz;
 import edp.davinci.server.model.User;
 import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.DashboardPortal;
 
 
 @Component
 public class VizCommonService extends BaseEntityService {
 
     @Autowired
-    protected DashboardPortalMapper dashboardPortalMapper;
+    protected DashboardPortalExtendMapper dashboardPortalMapper;
 
     @Autowired
-    protected DashboardMapper dashboardMapper;
+    protected DashboardExtendMapper dashboardExtendMapper;
 
     @Autowired
     protected DisplayMapper displayMapper;
@@ -129,7 +129,7 @@ public class VizCommonService extends BaseEntityService {
             case DASHBOARD:
                 disables = relRoleDashboardMapper.getDisableByUser(userId, featureId);
                 if (null == allVizs) {
-                    List<Dashboard> dashboardList = dashboardMapper.getByPortalId(featureId);
+                    List<Dashboard> dashboardList = dashboardExtendMapper.getByPortalId(featureId);
                     if (!CollectionUtils.isEmpty(dashboardList)) {
                         allVizs = dashboardList.stream().map(Dashboard::getId).collect(Collectors.toList());
                     }

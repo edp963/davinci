@@ -19,8 +19,9 @@
 
 package edp.davinci.server.dao;
 
+import edp.davinci.core.dao.DashboardPortalMapper;
+import edp.davinci.core.dao.entity.DashboardPortal;
 import edp.davinci.server.dto.dashboard.PortalWithProject;
-import edp.davinci.server.model.DashboardPortal;
 
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -31,16 +32,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public interface DashboardPortalMapper {
-    int insert(DashboardPortal dashboardPortal);
-
-    @Delete({"delete from dashboard_portal where id = #{id}"})
-    int deleteById(@Param("id") Long id);
-
-
-    @Select({"select * from dashboard_portal where id = #{id}"})
-    DashboardPortal getById(@Param("id") Long id);
-
+public interface DashboardPortalExtendMapper extends DashboardPortalMapper {
 
     @Update({
             "update dashboard_portal",
@@ -60,7 +52,6 @@ public interface DashboardPortalMapper {
 
     @Select({"select * from dashboard_portal where project_id = #{projectId}"})
     List<DashboardPortal> getByProject(@Param("projectId") Long projectId);
-
 
     @Select({
             "SELECT ",

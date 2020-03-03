@@ -10,10 +10,11 @@ import javax.validation.constraints.Pattern;
 import edp.davinci.server.commons.Constants;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
-@NotNull(message = "duration info cannot be null")
-public class DavinciStatisticDurationInfo {
+@NotNull(message = "Visitor operation info cannot be null")
+public class DavinciStatisticVisitorOperation {
 
     @NotNull
     @Min(value = 1L)
@@ -23,26 +24,42 @@ public class DavinciStatisticDurationInfo {
     @Pattern(regexp = Constants.REG_EMAIL_FORMAT, message = "Illegal email format")
     private String email;
 
+    @NotBlank
+    private String action;
+
+    @Min(value = 1L)
     private Long org_id;
 
+    @Min(value = 1L)
     private Long project_id;
 
     private String project_name;
 
     private String viz_type;
 
+    @Min(value = 1L)
     private Long viz_id;
 
     private String viz_name;
 
+    @Min(value = 1L)
     private Long sub_viz_id;
 
     private String sub_viz_name;
 
-    @NotNull
-    private LocalDateTime start_time;
+    @Min(value = 1L)
+    private Long widget_id;
+
+    private String widget_name;
+
+    private List<Object> variables;
+
+    private List<Object> filters;
+
+    private List<Object> groups;
 
     @NotNull
-    private LocalDateTime end_time;
+    private LocalDateTime create_time;
 
 }
+

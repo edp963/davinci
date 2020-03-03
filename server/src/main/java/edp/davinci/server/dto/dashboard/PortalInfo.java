@@ -19,7 +19,7 @@
 
 package edp.davinci.server.dto.dashboard;
 
-import edp.davinci.server.model.DashboardPortal;
+import edp.davinci.core.dao.entity.DashboardPortal;
 import lombok.Data;
 
 @Data

@@ -23,7 +23,7 @@ import lombok.Data;
 
 import java.util.List;
 
-import edp.davinci.server.model.Dashboard;
+import edp.davinci.core.dao.entity.Dashboard;
 
 @Data
 public class DashboardDTO extends Dashboard {

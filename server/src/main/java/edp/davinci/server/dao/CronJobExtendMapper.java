@@ -26,9 +26,11 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface CronJobExtendMapper extends CronJobMapper {
 
     @Select({"select * from cron_job where  job_status in ('stopped','failed') and update_time > (NOW() - INTERVAL 3 MINUTE)"})

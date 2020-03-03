@@ -12,8 +12,8 @@ import edp.davinci.server.commons.Constants;
 import java.time.LocalDateTime;
 
 @Data
-@NotNull(message = "terminal info cannot be null")
-public class DavinciStatisticTerminalInfo {
+@NotNull(message = "Terminal info cannot be null")
+public class DavinciStatisticTerminal {
 
     @NotNull
     @Min(value = 1L)

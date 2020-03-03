@@ -51,6 +51,7 @@ import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.CronJob;
+import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.excel.ExecutorUtil;
 import edp.davinci.server.component.excel.MsgWrapper;
@@ -60,7 +61,7 @@ import edp.davinci.server.component.quartz.ScheduleService;
 import edp.davinci.server.component.screenshot.ImageContent;
 import edp.davinci.server.component.screenshot.ScreenshotUtil;
 import edp.davinci.server.dao.CronJobExtendMapper;
-import edp.davinci.server.dao.DashboardMapper;
+import edp.davinci.server.dao.DashboardExtendMapper;
 import edp.davinci.server.dao.DisplayMapper;
 import edp.davinci.server.dao.DisplaySlideMapper;
 import edp.davinci.server.dao.UserMapper;
@@ -81,7 +82,6 @@ import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.enums.MailContentTypeEnum;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.model.Dashboard;
 import edp.davinci.server.model.Display;
 import edp.davinci.server.model.DisplaySlide;
 import edp.davinci.server.model.MailAttachment;
@@ -116,7 +116,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     private UserMapper userMapper;
 
     @Autowired
-    private DashboardMapper dashboardMapper;
+    private DashboardExtendMapper dashboardMapper;
 
     @Autowired
     private DisplayMapper displayMapper;

@@ -23,6 +23,7 @@ import static edp.davinci.server.commons.Constants.COMMA;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +40,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
-
+import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.DashboardPortal;
 import edp.davinci.server.dao.MemDashboardWidgetMapper;
 import edp.davinci.server.dao.RelRoleDashboardWidgetMapper;
 import edp.davinci.server.dao.ViewMapper;
@@ -59,8 +61,6 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.Dashboard;
-import edp.davinci.server.model.DashboardPortal;
 import edp.davinci.server.model.MemDashboardWidget;
 import edp.davinci.server.model.RelRoleDashboard;
 import edp.davinci.server.model.RelRoleDashboardWidget;
@@ -99,7 +99,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
     @Override
     public boolean isExist(String name, Long id, Long portalId) {
-        Long dashboardId = dashboardMapper.getByNameWithPortalId(name, portalId);
+        Long dashboardId = dashboardExtendMapper.getByNameWithPortalId(name, portalId);
         if (null != id && null != dashboardId) {
             return !id.equals(dashboardId);
         }
@@ -113,7 +113,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 	}
     
     private DashboardPortal getDashboardPortal(Long portalId, boolean isThrow) {
-        DashboardPortal dashboardPortal = dashboardPortalMapper.getById(portalId);
+        DashboardPortal dashboardPortal = dashboardPortalMapper.selectByPrimaryKey(portalId);
         if (dashboardPortal == null && isThrow) {
         	throw new NotFoundException("dashboardPortal is not found");
         }
@@ -122,7 +122,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     }
     
     private Dashboard getDashboard(Long dashboardId) {
-        Dashboard dashboard = dashboardMapper.getById(dashboardId);
+        Dashboard dashboard = dashboardExtendMapper.selectByPrimaryKey(dashboardId);
         if (null == dashboard) {
             throw new NotFoundException("dashboard is not found");
         }
@@ -158,7 +158,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 			return null;
 		}
 
-        List<Dashboard> dashboardList = dashboardMapper.getByPortalId(portalId);
+        List<Dashboard> dashboardList = dashboardExtendMapper.getByPortalId(portalId);
 
         if (!CollectionUtils.isEmpty(dashboardList)) {
             List<Long> allDashboards = dashboardList.stream().map(Dashboard::getId).collect(Collectors.toList());
@@ -256,15 +256,17 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 		try {
 
 			Long userId = user.getId();
-			Dashboard dashboard = new Dashboard().createdBy(userId);
+			Dashboard dashboard = new Dashboard();
+			dashboard.setCreateBy(user.getId());
+			dashboard.setCreateTime(new Date());
 	        BeanUtils.copyProperties(dashboardCreate, dashboard);
 
 	        if (null != dashboard.getParentId() && dashboard.getParentId() > 0L) {
-	            String fullParentId = dashboardMapper.getFullParentId(dashboard.getParentId());
+	            String fullParentId = dashboardExtendMapper.getFullParentId(dashboard.getParentId());
 	            dashboard.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboard.getParentId().toString() : dashboard.getParentId() + COMMA + fullParentId);
 	        }
 
-	        if (dashboardMapper.insert(dashboard) != 1) {
+	        if (dashboardExtendMapper.insert(dashboard) != 1) {
 	        	throw new ServerException("create dashboard fail");
 	        }
 	        
@@ -312,7 +314,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         Set<Long> parentIds = Arrays.stream(dashboards).map(Dashboard::getParentId).filter(pId -> pId > 0).collect(Collectors.toSet());
         Map<Long, String> parentMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(parentIds)) {
-            List<Dashboard> parents = dashboardMapper.queryByParentIds(parentIds);
+            List<Dashboard> parents = dashboardExtendMapper.queryByParentIds(parentIds);
             if (!CollectionUtils.isEmpty(parents)) {
                 Map<Long, List<Dashboard>> dashboardMap = parents.stream().collect(Collectors.groupingBy(Dashboard::getId));
                 dashboardMap.forEach((k, v) -> v.stream().findFirst().ifPresent(d -> parentMap.put(k, d.getFullParentId())));
@@ -322,14 +324,14 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         List<Dashboard> dashboardList = new ArrayList<>();
         Map<Long, List<Long>> rolesMap = new HashMap<>();
         List<Long> disableDashboards = getDisableVizs(user.getId(), portalId, null, VizEnum.DASHBOARD);
-        for (DashboardDTO dashboardDto : dashboards) {
-        	String name = dashboardDto.getName();
-        	Long id = dashboardDto.getId();
+        for (DashboardDTO dashboardDTO : dashboards) {
+        	String name = dashboardDTO.getName();
+        	Long id = dashboardDTO.getId();
         	if (isDisableVizs(projectPermission, disableDashboards, id)) {
                 throw new UnAuthorizedExecption("you have not permission to update dashboard:\"" + name + "\"");
             }
 
-            if (!dashboardDto.getDashboardPortalId().equals(portalId)) {
+            if (!dashboardDTO.getDashboardPortalId().equals(portalId)) {
                 throw new ServerException("Invalid dashboard portal id");
             }
 
@@ -340,21 +342,22 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     			alertNameTaken(entity, name);
     		}
 
-            dashboardDto.updatedBy(user.getId());
+    		dashboardDTO.setUpdateBy(user.getId());
+			dashboardDTO.setUpdateTime(new Date());
 
-            Long parentId = dashboardDto.getParentId();
+            Long parentId = dashboardDTO.getParentId();
             if (null != parentId && parentId > 0L && parentMap.containsKey(parentId)) {
                 String fullParentId = parentMap.get(parentId);
-                dashboardDto.setFullParentId(StringUtils.isEmpty(fullParentId) ? parentId.toString() : parentId + COMMA + fullParentId);
+                dashboardDTO.setFullParentId(StringUtils.isEmpty(fullParentId) ? parentId.toString() : parentId + COMMA + fullParentId);
             } else {
-                dashboardDto.setFullParentId(null);
+                dashboardDTO.setFullParentId(null);
             }
 
-            dashboardList.add(dashboardDto);
-            rolesMap.put(id, dashboardDto.getRoleIds());
+            dashboardList.add(dashboardDTO);
+            rolesMap.put(id, dashboardDTO.getRoleIds());
         }
 
-        if (dashboardMapper.updateBatch(dashboardList) > 0) {
+        if (dashboardExtendMapper.updateBatch(dashboardList) > 0) {
             
         	optLogger.info("dashboard [{}]  is update by (:{}), origin : {}", dashboardList.toString(), user.getId(), dashboards);
             
@@ -376,7 +379,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     
 	private DashboardWithPortal getDashboardWithPortal(Long id, boolean isThrow) {
 
-		DashboardWithPortal dashboardWithPortal = dashboardMapper.getDashboardWithPortalAndProject(id);
+		DashboardWithPortal dashboardWithPortal = dashboardExtendMapper.getDashboardWithPortalAndProject(id);
 
 		if (null == dashboardWithPortal) {
 			log.info("dashboard (:{}) not found", id);
@@ -418,7 +421,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
 		List<Dashboard> deletingDashboards;
 		if (0 == dashboardWithPortal.getType()) { // folder
-			deletingDashboards = dashboardMapper.getByParentId(dashboardWithPortal.getId());
+			deletingDashboards = dashboardExtendMapper.getByParentId(dashboardWithPortal.getId());
 		} else {
 			deletingDashboards = new ArrayList<Dashboard>(1) {
 				{
@@ -435,7 +438,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 			relRoleDashboardWidgetMapper.deleteByDashboardId(deletingDashboard.getId());
 			memDashboardWidgetMapper.deleteByDashboardId(deletingDashboard.getId());
 			relRoleDashboardMapper.deleteByDashboardId(deletingDashboard.getId());
-			dashboardMapper.deleteById(deletingDashboard.getId());
+			dashboardExtendMapper.deleteByPrimaryKey(deletingDashboard.getId());
 		}
 
 		optLogger.info("dashboard ({}) delete by (:{})", JSONUtils.toString(deletingDashboards), user.getId());
@@ -574,7 +577,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 		}
 
 		List<MemDashboardWidgetDTO> dtoList = Arrays.asList(memDashboardWidgets);
-		Set<Long> dashboardIds = dashboardMapper
+		Set<Long> dashboardIds = dashboardExtendMapper
 				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDTO::getDashboardId).collect(Collectors.toSet()));
 		Set<Long> widgetIds = widgetMapper
 				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDTO::getWidgetId).collect(Collectors.toSet()));
@@ -635,7 +638,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
             return true;
         }
 
-        DashboardWithPortal dashboardWithPortal = dashboardMapper.getDashboardWithPortalAndProject(dashboardWidget.getDashboardId());
+        DashboardWithPortal dashboardWithPortal = dashboardExtendMapper.getDashboardWithPortalAndProject(dashboardWidget.getDashboardId());
 
         if (null == dashboardWithPortal) {
             throw new ServerException("Invalid dashboard id");
@@ -699,7 +702,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         relRoleDashboardWidgetMapper.deleteByProjectId(projectId);
         memDashboardWidgetMapper.deleteByProject(projectId);
         relRoleDashboardMapper.deleteByProject(projectId);
-        dashboardMapper.deleteByProject(projectId);
+        dashboardExtendMapper.deleteByProject(projectId);
         relRolePortalMapper.deleteByProject(projectId);
         dashboardPortalMapper.deleteByProject(projectId);
     }

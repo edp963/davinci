@@ -19,8 +19,8 @@
 
 package edp.davinci.server.component.excel;
 
+import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.server.dto.view.ViewExecuteParam;
-import edp.davinci.server.model.Dashboard;
 import edp.davinci.server.model.MemDashboardWidget;
 import edp.davinci.server.model.Widget;
 import lombok.Data;
