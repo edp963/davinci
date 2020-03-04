@@ -1272,7 +1272,9 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       currentItemsInfo,
       onDrillDashboardItem
     } = this.props
-    const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
+    const { itemId, groups, widgetId, sourceDataFilter, mode, col, row} = e
+    const sourceDataGroup = [...(e.sourceDataGroup as Array<string>)]
+    
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired, model } = widgetConfig
@@ -1350,7 +1352,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
              // coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
             }
           }
-          const drillKey = sourceDataFilter[sourceDataFilter.length - 1]['key']
+         // const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : ''
+          const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
           const newWidgetPropCols = widgetConfigCols.reduce((array, col) => {
             array.push(col)
             if (col.name === drillKey) {
@@ -1359,6 +1362,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
             return array
           }, [])
           currentCol = groups && groups.length ? newWidgetPropCols : void 0
+         
         }
       }
       filterSource = sourceDataFilter.map((source) => {
@@ -1440,7 +1444,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           sqls = sqls.concat(coustomTableSqls)
         }
         if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
-          const drillKey = sourceDataFilter[sourceDataFilter.length - 1]['key']
+          const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
           const cols = lastDrillHistory.col
           const newWidgetPropCols = cols.reduce((array, col) => {
             array.push(col)
