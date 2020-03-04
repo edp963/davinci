@@ -33,7 +33,7 @@ import PaginationWithoutTotal from 'components/PaginationWithoutTotal'
 import SearchFilterDropdown from 'components/SearchFilterDropdown/index'
 import NumberFilterDropdown from 'components/NumberFilterDropdown/index'
 import DateFilterDropdown from 'components/DateFilterDropdown/index'
-
+import {ViewModelTypes} from 'containers/View/constants'
 import { TABLE_PAGE_SIZES } from 'app/globalConstants'
 import { getFieldAlias } from 'containers/Widget/components/Config/Field'
 import { decodeMetricName } from 'containers/Widget/components/util'
@@ -393,7 +393,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     let {group, cell} = this.state.selectItems
     const { data} = this.props
     const groupName = this.matchAttrInBrackets(dataIndex)
-    if (this.isNumberVisualType(groupName)) {
+    if (this.isValueModelType(groupName)) {
       return
     }
    
@@ -438,7 +438,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private collectGroups = (target, dataIndex) => (event) => {
     const groupName = this.matchAttrInBrackets(dataIndex)
-    if (this.isNumberVisualType(groupName)) {
+    if (this.isValueModelType(groupName)) {
       return
     }
     const {group, cell} = this.state.selectItems
@@ -473,19 +473,19 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return result
   }
 
-  private isNumberVisualType = (modelName) => {
-    const target = this.getVisualTypecollectByModel()
-    return this.hasProperty(target, modelName) === 'number'
+  private isValueModelType = (modelName) => {
+    const target = this.getModelTypecollectByModel()
+    return this.hasProperty(target, modelName) === ViewModelTypes.Value
   }
 
   private hasProperty<T extends Object, U extends keyof T>(obj:T, key:U){
     return obj[key] ? obj[key] : false
   }
 
-  private getVisualTypecollectByModel = () => {
+  private getModelTypecollectByModel = () => {
     const {model} = this.props
     return Object.keys(model).reduce((iteratee, target) => {
-       iteratee[target] = this.hasProperty(model[target], 'visualType')
+       iteratee[target] = this.hasProperty(model[target], 'modelType')
        return iteratee
     }, {})
   }
