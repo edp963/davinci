@@ -132,9 +132,6 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
                 : (
                   <div className={styles.delete}>
                     {
-                      console.log(currentCollectIds)
-                    }
-                    {
                       currentCollectIds.indexOf(pro.id) < 0
                         ? (
                           <Tooltip title="收藏">
