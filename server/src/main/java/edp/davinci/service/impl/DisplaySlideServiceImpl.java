@@ -273,7 +273,9 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		List<MemDisplaySlideWidget> list = new ArrayList<>();
 		List<MemDisplaySlideWidget> clist = new ArrayList<>();
 		for (MemDisplaySlideWidgetCreate slideWidgetCreate : slideWidgetCreates) {
-			ids.add(slideWidgetCreate.getWidgetId());
+            if (null != slideWidgetCreate.getWidgetId()){
+			    ids.add(slideWidgetCreate.getWidgetId());
+            }
 			MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget().createdBy(user.getId());
 			BeanUtils.copyProperties(slideWidgetCreate, memDisplaySlideWidget);
 			list.add(memDisplaySlideWidget);
