@@ -29,15 +29,14 @@ import Avatar from 'components/Avatar'
 const utilStyles = require('assets/less/util.less')
 
 interface IProjectsFormProps {
-  type: string
+  type?: string
   form: any
-  onCheckName: (id, name, type, resolve, reject) => void
   organizations?: any
-  onTransfer: () => any
-  onModalOk: () => any
+  onTransfer?: () => any
+  onModalOk?: () => any
   modalLoading: boolean
-  onWidgetTypeChange: () => any
-  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onWidgetTypeChange?: () => any
+  onCheckUniqueName?: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
