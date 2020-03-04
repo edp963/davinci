@@ -35,6 +35,7 @@ import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.*;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -311,7 +312,7 @@ public class SqlUtils {
             plainSelect.setOrderByElements(null);
             countSql = String.format(QUERY_COUNT_SQL, select.toString());
         } catch (JSQLParserException e) {
-        	log.error(e.getMessage(), e);
+        	log.debug(e.getMessage(), e);
         }
         return SqlParseUtils.rebuildSqlWithFragment(countSql);
     }
@@ -319,7 +320,8 @@ public class SqlUtils {
 	public static Set<String> getQueryFromsAndJoins(String sql) {
 		Set<String> columnPrefixs = new HashSet<>();
 		try {
-			Select select = (Select) CCJSqlParserUtil.parse(sql);
+			Statement parse = CCJSqlParserUtil.parse(sql);
+			Select select = (Select) parse;
 			SelectBody selectBody = select.getSelectBody();
 			if (selectBody instanceof PlainSelect) {
 				PlainSelect plainSelect = (PlainSelect) selectBody;
@@ -341,7 +343,7 @@ public class SqlUtils {
 				columnPrefixExtractor(columnPrefixs, plainSelect);
 			}
 		} catch (JSQLParserException e) {
-			log.error(e.getMessage(), e);
+			log.debug(e.getMessage(), e);
 		}
 		return columnPrefixs;
 	}
