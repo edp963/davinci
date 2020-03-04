@@ -21,10 +21,12 @@ package edp.davinci.server.dto.dashboard;
 
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.DashboardPortal;
-import edp.davinci.server.model.Project;
+import edp.davinci.core.dao.entity.Project;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class DashboardWithPortal extends Dashboard {
     private DashboardPortal portal;
     private Project project;

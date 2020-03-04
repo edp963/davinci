@@ -125,36 +125,34 @@ public class FileUtils {
      * @param response
      */
     public void download(String filePath, HttpServletResponse response) {
-        if (!StringUtils.isEmpty(filePath)) {
-            File file = null;
-            if (!filePath.startsWith(fileBasePath)) {
-                file = new File(fileBasePath + filePath);
-            } else {
-                file = new File(filePath);
-            }
-            if (file.exists()) {
-                byte[] buffer = null;
-                InputStream is = null;
-                OutputStream os = null;
-                try {
-                    is = new BufferedInputStream(new FileInputStream(filePath));
-                    buffer = new byte[is.available()];
-                    is.read(buffer);
-                    response.reset();
-                    response.addHeader("Content-Disposition", "attachment;filename=" + new String(file.getName().getBytes(), "UTF-8"));
-                    response.addHeader("Content-Length", EMPTY + file.length());
-                    os = new BufferedOutputStream(response.getOutputStream());
-                    response.setContentType("application/octet-stream;charset=UTF-8");
-                    os.write(buffer);
-                    os.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    closeCloseable(os);
-                    closeCloseable(is);
-                    remove(filePath);
-                }
-            }
+        if (StringUtils.isEmpty(filePath)) {
+            return;
+        }
+        
+		File file = null;
+		if (!filePath.startsWith(fileBasePath)) {
+			file = new File(fileBasePath + filePath);
+		} else {
+			file = new File(filePath);
+		}
+		if (file.exists()) {
+			byte[] buffer = null;
+			try (InputStream is = new BufferedInputStream(new FileInputStream(filePath));
+					OutputStream os = new BufferedOutputStream(response.getOutputStream());) {
+				buffer = new byte[is.available()];
+				is.read(buffer);
+				response.reset();
+				response.addHeader("Content-Disposition",
+						"attachment;filename=" + new String(file.getName().getBytes(), "UTF-8"));
+				response.addHeader("Content-Length", EMPTY + file.length());
+				response.setContentType("application/octet-stream;charset=UTF-8");
+				os.write(buffer);
+				os.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				remove(filePath);
+			}
         }
     }
 
@@ -184,15 +182,14 @@ public class FileUtils {
      */
     public static void deleteDir(File dir) {
 
-        if (dir.isFile() || dir.list().length == 0) {
-            dir.delete();
-        }
-        else {
-            for (File f : dir.listFiles()) {
-                deleteDir(f);
-            }
-            dir.delete();
-        }
+		if (dir.isFile() || dir.list().length == 0) {
+			dir.delete();
+		} else {
+			for (File f : dir.listFiles()) {
+				deleteDir(f);
+			}
+			dir.delete();
+		}
     }
 
     /**
@@ -215,36 +212,23 @@ public class FileUtils {
      * @param targetFile
      */
     public static void zipFile(List<File> files, File targetFile) {
-
-        byte[] bytes = new byte[1024];
-        ZipOutputStream out = null;
-        FileInputStream in = null;
-        try {
-            out = new ZipOutputStream(new FileOutputStream(targetFile));
-            for (File file : files) {
-                try {
-                    in = new FileInputStream(file);
-                    out.putNextEntry(new ZipEntry(file.getName()));
-                    int length;
-                    while ((length = in.read(bytes)) > 0) {
-                        out.write(bytes, 0, length);
-                    }
-                    out.closeEntry();
-                    closeCloseable(in);
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-                finally {
-                    closeCloseable(in);
-                }
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }finally {
-            closeCloseable(out);
-        }
+		byte[] bytes = new byte[1024];
+		try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(targetFile));) {
+			for (File file : files) {
+				try (FileInputStream in = new FileInputStream(file);) {
+					out.putNextEntry(new ZipEntry(file.getName()));
+					int length;
+					while ((length = in.read(bytes)) > 0) {
+						out.write(bytes, 0, length);
+					}
+					out.closeEntry();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
 
     public String getFilePath(FileTypeEnum type, MsgWrapper msgWrapper) {
@@ -280,16 +264,5 @@ public class FileUtils {
             return file.delete();
         }
         return false;
-    }
-    
-    public static void closeCloseable(Closeable c) {
-        if(c != null) {
-            try {
-                c.close();
-            }
-            catch (IOException e) {
-                // ignore
-            }
-        }
     }
 }

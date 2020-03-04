@@ -21,7 +21,7 @@ package edp.davinci.server.dto.role;
 
 import com.alibaba.fastjson.annotation.JSONType;
 
-import edp.davinci.server.model.Project;
+import edp.davinci.core.dao.entity.Project;
 import edp.davinci.server.model.RelRoleProject;
 import lombok.Data;
 
@@ -35,5 +35,6 @@ public class RoleProject extends RelRoleProject {
     }
 
     public RoleProject() {
+
     }
 }

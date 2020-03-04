@@ -59,12 +59,10 @@ public class ScreenshotUtil {
     @Value("${screenshot.timeout_second:600}")
     private int timeOutSecond;
 
-
     private static final int DEFAULT_SCREENSHOT_WIDTH = 1920;
     private static final int DEFAULT_SCREENSHOT_HEIGHT = 1080;
 
     private static final ExecutorService executorService = Executors.newFixedThreadPool(8);
-
 
     public void screenshot(long jobId, List<ImageContent> imageContents, Integer imageWidth) {
         log.info("start screenshot for job: {}", jobId);
@@ -77,11 +75,10 @@ public class ScreenshotUtil {
                     File image = doScreenshot(content.getUrl(), imageWidth);
                     content.setContent(image);
                 } catch (Exception e) {
-                    log.error("error ScreenshotUtil.screenshot, ", e);
                     e.printStackTrace();
                 } finally {
                     countDownLatch.countDown();
-                    log.info("thread for screenshot finish, type: {}, id: {}", content.getDesc(), content.getCId());
+                    log.info("Thread for screenshot finish, type:{}, id:{}", content.getDesc(), content.getCId());
                 }
             })));
 
@@ -98,7 +95,7 @@ public class ScreenshotUtil {
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            log.info("finish screenshot for job: {}", jobId);
+            log.info("Finish screenshot for job({})", jobId);
         }
     }
 
@@ -133,11 +130,12 @@ public class ScreenshotUtil {
             Thread.sleep(2000);
             return ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
         } catch (TimeoutException te) {
-            throw new ServerException("Screenshot TIMEOUT: get data time more than: " + timeOutSecond + " ms");
+        	te.printStackTrace();
+            throw new ServerException("Screenshot timeout");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            log.info("finish get {}, webdriver will quit soon", url);
+            log.info("Finish get {}, webdriver will quit soon", url);
             driver.quit();
         }
         return null;
@@ -154,7 +152,7 @@ public class ScreenshotUtil {
                 driver = generatePhantomJsDriver();
                 break;
             default:
-                throw new IllegalArgumentException("Unknown Web browser :" + DEFAULT_BROWSER);
+                throw new IllegalArgumentException("Unknown Web Browser:" + DEFAULT_BROWSER);
         }
 
         driver.manage().timeouts().implicitlyWait(3, TimeUnit.MINUTES);
@@ -198,9 +196,8 @@ public class ScreenshotUtil {
                 throw new ExecutionException(new Exception(PHANTOMJS_PATH + " is not executable!"));
             }
         }
-        log.info("Generating PhantomJs driver ({})...", PHANTOMJS_PATH);
+        log.info("Generating PhantomJs driver({})...", PHANTOMJS_PATH);
         System.setProperty(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY, PHANTOMJS_PATH);
-
         return new PhantomJSDriver();
     }
 }

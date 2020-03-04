@@ -21,7 +21,7 @@ package edp.davinci.server.service;
 
 import java.util.Map;
 
-import edp.davinci.server.model.Platform;
+import edp.davinci.core.dao.entity.Platform;
 import edp.davinci.server.model.User;
 
 public interface AuthenticationService {

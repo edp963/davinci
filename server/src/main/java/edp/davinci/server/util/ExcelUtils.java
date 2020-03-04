@@ -136,10 +136,8 @@ public class ExcelUtils {
     }
 
     private static Workbook getReadWorkbook(MultipartFile excelFile) throws ServerException {
-        InputStream inputStream = null;
-        try {
+        try (InputStream inputStream = excelFile.getInputStream();){
             String originalFilename = excelFile.getOriginalFilename();
-            inputStream = excelFile.getInputStream();
             if (originalFilename.toLowerCase().endsWith(FileTypeEnum.XLSX.getFormat())) {
                 return new XSSFWorkbook(inputStream);
             } else if (originalFilename.toLowerCase().endsWith(FileTypeEnum.XLS.getFormat())) {
@@ -150,8 +148,6 @@ public class ExcelUtils {
         } catch (IOException e) {
             e.printStackTrace();
             throw new ServerException(e.getMessage());
-        } finally {
-            FileUtils.closeCloseable(inputStream);
         }
     }
 
@@ -179,7 +175,6 @@ public class ExcelUtils {
         //默认格式
         CellStyle cellStyle = workbook.createCellStyle();
         CellStyle headerCellStyle = workbook.createCellStyle();
-
 
         DataFormat format = workbook.createDataFormat();
 
@@ -211,12 +206,10 @@ public class ExcelUtils {
 
         int rownum = 0;
 
-
         //用于记录表头对应数据格式
         Map<String, CellStyle> headerFormatMap = null;
         //用于标记标记数字格式单位
         Map<String, NumericUnitEnum> dataUnitMap = null;
-
         //记录列最大字符数
         Map<String, Integer> columnWidthMap = new HashMap<>();
 

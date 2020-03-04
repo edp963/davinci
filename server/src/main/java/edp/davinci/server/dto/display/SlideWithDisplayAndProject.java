@@ -19,20 +19,18 @@
 
 package edp.davinci.server.dto.display;
 
-import edp.davinci.server.model.Display;
-import edp.davinci.server.model.DisplaySlide;
-import edp.davinci.server.model.Project;
+import edp.davinci.core.dao.entity.Display;
+import edp.davinci.core.dao.entity.DisplaySlide;
+import edp.davinci.core.dao.entity.Project;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class SlideWithDisplayAndProject extends DisplaySlide {
 
     private Display display;
 
     private Project project;
 
-    @Override
-    public String toString() {
-        return super.toString();
-    }
 }

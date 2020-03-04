@@ -38,11 +38,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.DashboardPortal;
-import edp.davinci.server.dao.MemDashboardWidgetMapper;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
+import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDashboardWidgetMapper;
 import edp.davinci.server.dao.ViewMapper;
 import edp.davinci.server.dao.WidgetMapper;
@@ -61,7 +61,6 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.MemDashboardWidget;
 import edp.davinci.server.model.RelRoleDashboard;
 import edp.davinci.server.model.RelRoleDashboardWidget;
 import edp.davinci.server.model.Role;
@@ -84,7 +83,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     private RelRoleDashboardWidgetMapper relRoleDashboardWidgetMapper;
 
     @Autowired
-    private MemDashboardWidgetMapper memDashboardWidgetMapper;
+    private MemDashboardWidgetExtendMapper memDashboardWidgetMapper;
 
     @Autowired
     private ViewMapper viewMapper;
@@ -115,7 +114,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     private DashboardPortal getDashboardPortal(Long portalId, boolean isThrow) {
         DashboardPortal dashboardPortal = dashboardPortalMapper.selectByPrimaryKey(portalId);
         if (dashboardPortal == null && isThrow) {
-        	throw new NotFoundException("dashboardPortal is not found");
+        	throw new NotFoundException("DashboardPortal is not found");
         }
         
         return dashboardPortal;
@@ -124,7 +123,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     private Dashboard getDashboard(Long dashboardId) {
         Dashboard dashboard = dashboardExtendMapper.selectByPrimaryKey(dashboardId);
         if (null == dashboard) {
-            throw new NotFoundException("dashboard is not found");
+            throw new NotFoundException("Dashboard is not found");
         }
         return dashboard;
     }
@@ -185,7 +184,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         DashboardPortal portal = getDashboardPortal(portalId, true);
 
         if (!portal.getId().equals(portalId)) {
-            throw new ServerException("Invalid dashboard");
+            throw new ServerException("Invalid dashboard portal id");
         }
 
        Long projectId = portal.getProjectId();
@@ -267,10 +266,10 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 	        }
 
 	        if (dashboardExtendMapper.insert(dashboard) != 1) {
-	        	throw new ServerException("create dashboard fail");
+	        	throw new ServerException("Create dashboard fail");
 	        }
 	        
-	        optLogger.info("dashboard ({}) is create by (:{})", dashboard.toString(), userId);
+	        optLogger.info("Dashboard({}) is create by user({})", dashboard.getId(), userId);
 
 	        if (!CollectionUtils.isEmpty(dashboardCreate.getRoleIds())) {
 	            List<Role> roles = roleMapper.getRolesByIds(dashboardCreate.getRoleIds());
@@ -279,7 +278,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 	                    .collect(Collectors.toList());
 	            if (!CollectionUtils.isEmpty(list)) {
 	                relRoleDashboardMapper.insertBatch(list);
-	                optLogger.info("dashboard (:{}) limit role ({}) access", dashboard.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+	                optLogger.info("Dashboard({}) limit role({}) access", dashboard.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
 	            }
 	        }
 	        
@@ -328,7 +327,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         	String name = dashboardDTO.getName();
         	Long id = dashboardDTO.getId();
         	if (isDisableVizs(projectPermission, disableDashboards, id)) {
-                throw new UnAuthorizedExecption("you have not permission to update dashboard:\"" + name + "\"");
+                throw new UnAuthorizedExecption("You have not permission to update dashboard:\"" + name + "\"");
             }
 
             if (!dashboardDTO.getDashboardPortalId().equals(portalId)) {
@@ -359,7 +358,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
         if (dashboardExtendMapper.updateBatch(dashboardList) > 0) {
             
-        	optLogger.info("dashboard [{}]  is update by (:{}), origin : {}", dashboardList.toString(), user.getId(), dashboards);
+        	optLogger.info("Dashboard({}) is update by user({}), origin:{}", dashboardList.stream().map(d -> d.getId()).collect(Collectors.toList()), user.getId(), dashboards);
             
         	if (!CollectionUtils.isEmpty(rolesMap)) {
                 Set<Long> ids = rolesMap.keySet();
@@ -382,11 +381,11 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 		DashboardWithPortal dashboardWithPortal = dashboardExtendMapper.getDashboardWithPortalAndProject(id);
 
 		if (null == dashboardWithPortal) {
-			log.info("dashboard (:{}) not found", id);
+			log.info("Dashboard({}) is not found", id);
 		}
 
 		if (null == dashboardWithPortal && isThrow) {
-			throw new NotFoundException("dashboard is not found");
+			throw new NotFoundException("Dashboard is not found");
 		}
 
 		return dashboardWithPortal;
@@ -441,7 +440,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 			dashboardExtendMapper.deleteByPrimaryKey(deletingDashboard.getId());
 		}
 
-		optLogger.info("dashboard ({}) delete by (:{})", JSONUtils.toString(deletingDashboards), user.getId());
+		optLogger.info("Dashboard({}) is delete by user({})", deletingDashboards.stream().map(d -> d.getId()).collect(Collectors.toList()), user.getId());
 
 		return true;
     }
@@ -491,8 +490,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
 		if (!CollectionUtils.isEmpty(relList)) {
 			relRoleDashboardWidgetMapper.insertBatch(relList);
-			optLogger.info("RelRoleDashboardWidgets ({}) batch insert by (:{})", relList.toString(),
-					user.getId());
+			optLogger.info("RelRoleDashboardWidgets({}) batch insert by user({})", relList.toString(), user.getId());
 		}
 	}
 
@@ -536,7 +534,9 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
             }
 
             ids.add(create.getWidgetId());
-            MemDashboardWidget memDashboardWidget = new MemDashboardWidget().createdBy(user.getId());
+            MemDashboardWidget memDashboardWidget = new MemDashboardWidget();
+            memDashboardWidget.setCreateBy(user.getId());
+            memDashboardWidget.setCreateTime(new Date());
             BeanUtils.copyProperties(create, memDashboardWidget);
             memDashboardWidgetList.add(memDashboardWidget);
         }
@@ -544,10 +544,10 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         checkWidgets(projectId, ids);
         
 		if (memDashboardWidgetMapper.insertBatch(memDashboardWidgetList) <= 0) {
-			throw new ServerException("create dashboardWidget fail");
+			throw new ServerException("Create dashboardWidget fail");
 		}
 
-		optLogger.info("MemDashboardWidgets ({}) batch insert by (:{})", memDashboardWidgetList.toString(), user.getId());
+		optLogger.info("MemDashboardWidgets({}) batch insert by user({})", memDashboardWidgetList.stream().map(m -> m.getId()).collect(Collectors.toList()), user.getId());
 
 		handleRel(memDashboardWidgetList, user, memDashboardWidgetCreates);
 
@@ -598,18 +598,19 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 				throw new ServerException("Invalid widget id");
 			}
 
-			m.updatedBy(user.getId());
+            m.setUpdateBy(user.getId());
+            m.setUpdateTime(new Date());
 
 			memDashboardWidgetList.add(m);
 			rolesMap.put(m.getId(), m.getRoleIds());
 		});
 
 		if (memDashboardWidgetMapper.updateBatch(memDashboardWidgetList) <= 0) {
-			throw new ServerException("update dashboardWidget fail");
+			throw new ServerException("Update dashboardWidget fail");
 		}
 
-		optLogger.info("MemDashboardWidget ({}) is update by (:{}), origin: ({})", memDashboardWidgetList.toString(),
-				user.getId(), before);
+		optLogger.info("MemDashboardWidget({}) is update by user({}), origin:{}",
+				memDashboardWidgetList.stream().map(m -> m.getId()).collect(Collectors.toList()), user.getId(), before);
 
 		if (!CollectionUtils.isEmpty(rolesMap)) {
 			Set<Long> memDashboardWidgetIds = rolesMap.keySet();
@@ -631,10 +632,10 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     @Transactional
     public boolean deleteMemDashboardWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         
-    	MemDashboardWidget dashboardWidget = memDashboardWidgetMapper.getById(relationId);
+    	MemDashboardWidget dashboardWidget = memDashboardWidgetMapper.selectByPrimaryKey(relationId);
         
     	if (null == dashboardWidget) {
-            optLogger.warn("MemDashboardWidget (:{}) is not found", relationId);
+            optLogger.warn("MemDashboardWidget({}) is not found", relationId);
             return true;
         }
 
@@ -659,11 +660,11 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
         relRoleDashboardWidgetMapper.deleteByMemDashboardWidgetId(relationId);
 
-        if (memDashboardWidgetMapper.deleteById(relationId) <= 0) {
-            throw new ServerException("delete dashboardWidget fail");
+        if (memDashboardWidgetMapper.deleteByPrimaryKey(relationId) <= 0) {
+            throw new ServerException("Delete dashboardWidget fail");
         }
         
-        optLogger.info("MemDashboardWidget ({}) is delete by (:{})", dashboardWidget.toString(), user.getId());
+        optLogger.info("MemDashboardWidget({}) is delete by user({})", dashboardWidget.getId(), user.getId());
         return true;
     }
 
@@ -681,7 +682,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
 		DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(dashboardId, true);
 		if (dashboardWithPortal.getType() == 0) {
-			throw new ServerException("dashboard folder cannot be shared");
+			throw new ServerException("Dashboard folder cannot be shared");
 		}
 
 		Long projectId = dashboardWithPortal.getProject().getId();
@@ -722,14 +723,14 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
         if (vizVisibility.isVisible()) {
             if (relRoleDashboardMapper.delete(dashboard.getId(), role.getId()) > 0) {
-                optLogger.info("dashboard ({}) can be accessed by role ({}), update by (:{})", (Dashboard) dashboard, role, user.getId());
+                optLogger.info("Dashboard({}) can be accessed by role({}), update by user({})", dashboard.getId(), role.getId(), user.getId());
             }else {
             	return false;
             }
         } else {
             RelRoleDashboard relRoleDashboard = new RelRoleDashboard(dashboard.getId(), role.getId()).createdBy(user.getId());
             relRoleDashboardMapper.insert(relRoleDashboard);
-            optLogger.info("dashboard ({}) limit role ({}) access, create by (:{})", (Dashboard) dashboard, role, user.getId());
+            optLogger.info("Dashboard({}) limit role({}) access, create by user({})", dashboard.getId(), role.getId(), user.getId());
         }
 
         return true;

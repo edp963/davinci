@@ -20,16 +20,18 @@
 package edp.davinci.server.dto.display;
 
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.List;
 import java.util.Set;
 
-import edp.davinci.server.model.DisplaySlide;
-import edp.davinci.server.model.MemDisplaySlideWidget;
+import edp.davinci.core.dao.entity.DisplaySlide;
+import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
 import edp.davinci.server.model.View;
 import edp.davinci.server.model.Widget;
 
 @Data
+@ToString(callSuper = true)
 public class SlideWithMem extends DisplaySlide {
 	private List<MemDisplaySlideWidget> items;
     private Set<View> views;

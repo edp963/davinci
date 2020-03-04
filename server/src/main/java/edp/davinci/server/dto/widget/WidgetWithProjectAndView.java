@@ -19,7 +19,7 @@
 
 package edp.davinci.server.dto.widget;
 
-import edp.davinci.server.model.Project;
+import edp.davinci.core.dao.entity.Project;
 import edp.davinci.server.model.View;
 import edp.davinci.server.model.Widget;
 import lombok.Data;

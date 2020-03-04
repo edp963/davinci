@@ -19,17 +19,18 @@
 
 package edp.davinci.server.inteceptor;
 
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
-import com.alibaba.fastjson.JSONObject;
-
+import edp.davinci.core.dao.PlatformMapper;
+import edp.davinci.core.dao.entity.Platform;
+import edp.davinci.core.dao.entity.PlatformExample;
 import edp.davinci.server.annotation.AuthIgnore;
 import edp.davinci.server.annotation.AuthShare;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.dao.PlatformMapper;
 import edp.davinci.server.dao.UserMapper;
 import edp.davinci.server.enums.HttpCodeEnum;
-import edp.davinci.server.model.Platform;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.AuthenticationService;
 import edp.davinci.server.util.TokenUtils;
@@ -43,6 +44,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 
 import static edp.davinci.server.commons.Constants.AUTH_CODE;
@@ -88,7 +90,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
                     .message("The resource requires authentication, which was not supplied with the request");
-            response.getWriter().print(JSONObject.toJSONString(resultMap));
+            response.getWriter().print(JSONUtils.toString(resultMap));
             return false;
         }
 
@@ -96,7 +98,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
                     .message("The resource requires authentication, which was not supplied with the request");
-            response.getWriter().print(JSONObject.toJSONString(resultMap));
+            response.getWriter().print(JSONUtils.toString(resultMap));
             return false;
         }
 
@@ -105,21 +107,24 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
                     .message("The resource requires authentication, which was not supplied with the request");
-            response.getWriter().print(JSONObject.toJSONString(resultMap));
+            response.getWriter().print(JSONUtils.toString(resultMap));
             return false;
         }
 
-        Platform platform = platformMapper.getPlatformByCode(authCode);
-        if (null == platform) {
+        PlatformExample example = new PlatformExample();
+        example.createCriteria().andCodeEqualTo(authCode);
+        List<Platform> list = platformMapper.selectByExample(example);
+        
+        if (CollectionUtils.isEmpty(list)) {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
                     .message("The resource requires authentication, which was not supplied with the request");
-            response.getWriter().print(JSONObject.toJSONString(resultMap));
+            response.getWriter().print(JSONUtils.toString(resultMap));
             return false;
         }
 
+        Platform platform = list.get(0); 
         User user = null;
-
         AuthShare authShareMethoed = method.getAnnotation(AuthShare.class);
         if (null != authShareMethoed) {
             String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
@@ -132,7 +137,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
                     response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
                     resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
                             .message("The resource requires authentication, which was not supplied with the request");
-                    response.getWriter().print(JSONObject.toJSONString(resultMap));
+                    response.getWriter().print(JSONUtils.toString(resultMap));
                     return false;
                 }
             }
@@ -143,21 +148,21 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
                 if (null == user) {
                     response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
                     resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode())
-                            .message("ERROR Permission denied");
-                    response.getWriter().print(JSONObject.toJSONString(resultMap));
+                            .message("Permission denied");
+                    response.getWriter().print(JSONUtils.toString(resultMap));
                     return false;
                 }
             } catch (Exception e) {
                 response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
                 resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode())
-                        .message("ERROR Permission denied");
-                response.getWriter().print(JSONObject.toJSONString(resultMap));
+                        .message("Permission denied");
+                response.getWriter().print(JSONUtils.toString(resultMap));
                 return false;
             }
         }
 
         request.setAttribute(Constants.CURRENT_USER, user);
-        request.setAttribute(Constants.CURRENT_PLATFORM, platform);
+        request.setAttribute(Constants.CURRENT_PLATFORM, list);
         return true;
     }
 }

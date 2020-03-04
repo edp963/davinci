@@ -54,19 +54,19 @@ public interface DashboardPortalExtendMapper extends DashboardPortalMapper {
     List<DashboardPortal> getByProject(@Param("projectId") Long projectId);
 
     @Select({
-            "SELECT ",
+            "select ",
             "	dp.*,",
             "	p.id 'project.id',",
             "	p.`name` 'project.name',",
             "	p.description 'project.description',",
             "	p.pic 'project.pic',",
-            "	p.org_id 'project.orgId',",
-            "	p.user_id 'project.userId',",
+            "	p.org_id 'project.orgid',",
+            "	p.user_id 'project.userid',",
             "	p.visibility 'p.visibility'",
-            "FROM",
+            "from",
             "	dashboard_portal dp ",
-            "	LEFT JOIN project p on p.id = dp.project_id",
-            "WHERE dp.id = #{id}",
+            "	left join project p on p.id = dp.project_id",
+            "where dp.id = #{id}",
     })
     PortalWithProject getPortalWithProjectById(@Param("id") Long id);
 

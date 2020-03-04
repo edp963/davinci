@@ -173,7 +173,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			cronJobInfo.setId(cronJob.getId());
 			cronJobInfo.setJobStatus(CronJobStatusEnum.NEW.getStatus());
 
-			optLogger.info("CronJob({}) is create by user({})", cronJob.toString(), user.getId());
+			optLogger.info("CronJob({}) is create by user({})", cronJob.getId(), user.getId());
 			return cronJobInfo;
 
 		} finally {
@@ -224,7 +224,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
 			cronJob.setUpdateTime(new Date());
 			if (cronJobMapper.update(cronJob) == 1) {
-				optLogger.info("CronJob({}) is update by user({}), origin:{}", cronJob.toString(), user.getId(), origin);
+				optLogger.info("CronJob({}) is update by user({}), origin:{}", id, user.getId(), origin);
 				quartzHandler.modifyJob(cronJob);
 				res = true;
 			}
@@ -256,7 +256,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		checkWritePermission(entity, cronJob.getProjectId(), user, "delete");
 
 		if (cronJobMapper.deleteByPrimaryKey(id) == 1) {
-			optLogger.info("Cronjob({}) is delete by user({})", cronJob.toString(), user.getId());
+			optLogger.info("Cronjob({}) is delete by user({})", id, user.getId());
 			quartzHandler.removeJob(cronJob);
 			return true;
 		}

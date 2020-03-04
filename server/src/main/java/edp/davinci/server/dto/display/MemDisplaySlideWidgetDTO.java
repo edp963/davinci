@@ -22,11 +22,32 @@ import lombok.Data;
 
 import java.util.List;
 
-import edp.davinci.server.model.MemDisplaySlideWidget;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
+import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
 
 @Data
+@NotNull(message = "display slide widget cannot be null")
 public class MemDisplaySlideWidgetDTO extends MemDisplaySlideWidget {
+	
+    @Min(value = 1L, message = "Invalid id")
+    private Long id;
 
+    @Min(value = 1L, message = "Invalid display slide id")
+    private Long displaySlideId;
+
+    @NotBlank(message = "Name cannot be empty")
+    private String name;
+
+    @Min(value = 0, message = "Invalid slide widget type")
+    private Short type;
+
+    private Integer index = 0;
+
+    @NotBlank(message = "Params cannot be empty")
+    private String params;
+	
     private List<Long> roleIds;
-
 }

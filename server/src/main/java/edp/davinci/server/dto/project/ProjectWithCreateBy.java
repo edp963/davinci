@@ -19,8 +19,8 @@
 
 package edp.davinci.server.dto.project;
 
+import edp.davinci.core.dao.entity.Project;
 import edp.davinci.server.dto.user.UserBaseInfo;
-import edp.davinci.server.model.Project;
 import lombok.Data;
 
 @Data
@@ -28,5 +28,5 @@ public class ProjectWithCreateBy extends Project {
 
     private Boolean isStar = false;
 
-    private UserBaseInfo createBy;
+    private UserBaseInfo createUser;
 }

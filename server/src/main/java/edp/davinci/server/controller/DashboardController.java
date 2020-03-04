@@ -22,10 +22,10 @@ package edp.davinci.server.controller;
 
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.DashboardPortal;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.dashboard.*;
-import edp.davinci.server.model.MemDashboardWidget;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.DashboardService;
@@ -373,7 +373,7 @@ public class DashboardController extends BaseController {
         }
 
         if (null == memDashboardWidgetCreates || memDashboardWidgetCreates.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("dashboard widgets info cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Dashboard widgets info cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 

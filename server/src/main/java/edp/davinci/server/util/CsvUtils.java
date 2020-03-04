@@ -20,6 +20,7 @@
 package edp.davinci.server.util;
 
 import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.IOUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.server.enums.SqlColumnEnum;
@@ -61,17 +62,11 @@ public class CsvUtils {
         }
 
         DataUploadEntity dataUploadEntity = null;
-        BufferedReader reader = null;
-        CSVParser csvParser = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(csvFile.getInputStream(), charsetName));
-            csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                    .withFirstRecordAsHeader()
-                    .withIgnoreHeaderCase()
-                    .withTrim());
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(csvFile.getInputStream(), charsetName));
+				CSVParser csvParser = new CSVParser(reader,
+						CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim());) {
 
-            Set<String> csvHeaders = csvParser.getHeaderMap().keySet();
-
+        	Set<String> csvHeaders = csvParser.getHeaderMap().keySet();
             List<CSVRecord> records = csvParser.getRecords();
             List<Map<String, Object>> values = null;
             Set<QueryColumn> headers = null;
@@ -100,12 +95,9 @@ public class CsvUtils {
         } catch (Exception e) {
             e.printStackTrace();
             throw new ServerException(e.getMessage());
-        } finally {
-            FileUtils.closeCloseable(csvParser);
-            FileUtils.closeCloseable(reader);
         }
 
-        return dataUploadEntity;
+		return dataUploadEntity;
     }
 
 
@@ -122,69 +114,63 @@ public class CsvUtils {
     public static String formatCsvWithFirstAsHeader(String filePath, String fileName, List<QueryColumn> columns, List<Map<String, Object>> dataList) throws ServerException {
 
         String csvFullName = null;
-        if (!CollectionUtils.isEmpty(columns)) {
+        if (CollectionUtils.isEmpty(columns)) {
+            return csvFullName;
+        }
+        
+        List<String> headers = new ArrayList<>();
+        List<String> headerTypes = new ArrayList<>();
+        for (QueryColumn column : columns) {
+            headers.add(column.getName());
+            headerTypes.add(column.getType());
+        }
 
-            List<String> headers = new ArrayList<>();
-            List<String> headerTypes = new ArrayList<>();
-            for (QueryColumn column : columns) {
-                headers.add(column.getName());
-                headerTypes.add(column.getType());
+        if (!fileName.toLowerCase().endsWith(FileTypeEnum.CSV.getFormat())) {
+            fileName = fileName.trim() + FileTypeEnum.CSV.getFormat();
+        }
+
+        if (!StringUtils.isEmpty(filePath)) {
+            File dir = new File(filePath);
+            if (!dir.exists() || !dir.isDirectory()) {
+                dir.mkdirs();
             }
+        }
 
-            if (!fileName.toLowerCase().endsWith(FileTypeEnum.CSV.getFormat())) {
-                fileName = fileName.trim() + FileTypeEnum.CSV.getFormat();
-            }
+        File file = new File(filePath + File.separator + fileName);
+        if (file.exists()) {
+            fileName = fileName.substring(0, fileName.lastIndexOf(".") - 1) + "_" + UUID.randomUUID() + FileTypeEnum.CSV.getFormat();
+        }
 
-            if (!StringUtils.isEmpty(filePath)) {
-                File dir = new File(filePath);
-                if (!dir.exists() || !dir.isDirectory()) {
-                    dir.mkdirs();
-                }
-            }
+        csvFullName = filePath + File.separator + fileName;
+        FileWriter fileWriter = null;
+        CSVPrinter csvPrinter = null;
+        CSVFormat csvFormat = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
+        try {
+            fileWriter = new FileWriter(csvFullName, true);
+            fileWriter.write("\uFEFF"); //解决csv用excel打开乱码问题
+            
+            csvPrinter = new CSVPrinter(fileWriter, csvFormat);
+            csvPrinter.printRecord(headers);
+            csvPrinter.printRecord(headerTypes);
 
-            File file = new File(filePath + File.separator + fileName);
-            if (file.exists()) {
-                fileName = fileName.substring(0, fileName.lastIndexOf(".") - 1) + "_" + UUID.randomUUID() + FileTypeEnum.CSV.getFormat();
-            }
-
-            csvFullName = filePath + File.separator + fileName;
-
-            FileWriter fileWriter = null;
-
-            CSVPrinter csvPrinter = null;
-
-            try {
-                CSVFormat csvFormat = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
-
-
-                fileWriter = new FileWriter(csvFullName, true);
-
-                fileWriter.write("\uFEFF"); //解决csv用excel打开乱码问题
-
-                csvPrinter = new CSVPrinter(fileWriter, csvFormat);
-
-                csvPrinter.printRecord(headers);
-                csvPrinter.printRecord(headerTypes);
-
-                if (!CollectionUtils.isEmpty(dataList)) {
-                    for (Map<String, Object> map : dataList) {
-                        List<Object> list = new ArrayList<>();
-                        for (String key : headers) {
-                            list.add(map.get(key));
-                        }
-                        csvPrinter.printRecord(list);
+            if (!CollectionUtils.isEmpty(dataList)) {
+                for (Map<String, Object> map : dataList) {
+                    List<Object> list = new ArrayList<>();
+                    for (String key : headers) {
+                        list.add(map.get(key));
                     }
+                    csvPrinter.printRecord(list);
                 }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new ServerException(e.getMessage());
-            } finally {
-                flushFlushable(csvPrinter);
-                flushFlushable(fileWriter);
-                FileUtils.closeCloseable(csvPrinter);
-                FileUtils.closeCloseable(fileWriter);
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServerException(e.getMessage());
+        } finally {
+            flushFlushable(csvPrinter);
+            flushFlushable(fileWriter);
+            IOUtils.closeCloseable(csvPrinter);
+            IOUtils.closeCloseable(fileWriter);
         }
         return csvFullName;
     }

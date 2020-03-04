@@ -19,7 +19,7 @@
 
 package edp.davinci.server.dto.role;
 
-import edp.davinci.server.model.Organization;
+import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.server.model.Role;
 import lombok.Data;
 

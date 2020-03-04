@@ -39,7 +39,7 @@ public class RelProjectAdminDTO {
         this.user = userBaseInfo;
     }
 
-
     public RelProjectAdminDTO() {
+
     }
 }

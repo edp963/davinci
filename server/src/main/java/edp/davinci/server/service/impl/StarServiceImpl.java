@@ -20,13 +20,13 @@
 package edp.davinci.server.service.impl;
 
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Project;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.dao.ProjectMapper;
+import edp.davinci.server.dao.ProjectExtendMapper;
 import edp.davinci.server.dao.StarMapper;
 import edp.davinci.server.dto.project.ProjectWithCreateBy;
 import edp.davinci.server.dto.star.StarUser;
-import edp.davinci.server.model.Project;
 import edp.davinci.server.model.Star;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.StarService;
@@ -46,7 +46,7 @@ public class StarServiceImpl implements StarService {
     private TokenUtils tokenUtils;
 
     @Autowired
-    private ProjectMapper projectMapper;
+    private ProjectExtendMapper projectExtendMapper;
 
     @Autowired
     private StarMapper starMapper;
@@ -58,7 +58,7 @@ public class StarServiceImpl implements StarService {
 
         if (!StringUtils.isEmpty(target)) {
             if (Constants.STAR_TARGET_PROJECT.equals(target)) {
-                Project project = projectMapper.getById(targetId);
+                Project project = projectExtendMapper.selectByPrimaryKey(targetId);
                 if (null == project) {
                     return resultMap.failAndRefreshToken(request).message("project not found");
                 }
@@ -70,7 +70,7 @@ public class StarServiceImpl implements StarService {
                     int i = starMapper.insert(star);
                     if (i > 0) {
                         synchronized (project) {
-                            projectMapper.starNumAdd(project.getId());
+                            projectExtendMapper.starNumAdd(project.getId());
                         }
                         return resultMap.successAndRefreshToken(request);
                     }
@@ -79,7 +79,7 @@ public class StarServiceImpl implements StarService {
                     int i = starMapper.deleteById(star.getId());
                     if (i > 0) {
                         synchronized (project) {
-                            projectMapper.starNumReduce(project.getId());
+                            projectExtendMapper.starNumReduce(project.getId());
                         }
                     }
                     return resultMap.successAndRefreshToken(request);
@@ -108,7 +108,7 @@ public class StarServiceImpl implements StarService {
         ResultMap resultMap = new ResultMap(tokenUtils);
         if (!StringUtils.isEmpty(target)) {
             if (Constants.STAR_TARGET_PROJECT.equals(target)) {
-                Project project = projectMapper.getById(targetId);
+                Project project = projectExtendMapper.selectByPrimaryKey(targetId);
                 if (null == project) {
                     return resultMap.failAndRefreshToken(request).message("project not found");
                 }

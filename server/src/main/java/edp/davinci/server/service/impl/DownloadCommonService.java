@@ -23,9 +23,10 @@ import com.google.common.collect.Lists;
 
 import edp.davinci.commons.util.DateUtils;
 import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.dao.DashboardExtendMapper;
-import edp.davinci.server.dao.MemDashboardWidgetMapper;
+import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
 import edp.davinci.server.dao.WidgetMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
@@ -33,7 +34,6 @@ import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.dto.view.ViewExecuteParam;
 import edp.davinci.server.enums.DownloadType;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.MemDashboardWidget;
 import edp.davinci.server.model.User;
 import edp.davinci.server.model.Widget;
 import edp.davinci.server.service.ProjectService;
@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
 public class DownloadCommonService {
 
     @Autowired
-    protected MemDashboardWidgetMapper memDashboardWidgetMapper;
+    protected MemDashboardWidgetExtendMapper memDashboardWidgetMapper;
 
     @Autowired
     protected ProjectService projectService;
@@ -139,7 +139,7 @@ public class DownloadCommonService {
                 fileName = dashboard.getName();
                 break;
             default:
-                throw new IllegalArgumentException("unsupported DownloadType=" + downloadType.name());
+                throw new IllegalArgumentException("Unsupported downloadType:" + downloadType.name());
         }
         return fileName + UNDERLINE + DateUtils.toyyyyMMddHHmmss(System.currentTimeMillis());
     }
@@ -177,18 +177,18 @@ public class DownloadCommonService {
                 }
                 break;
             default:
-                throw new IllegalArgumentException("unsupported DownloadType=" + downloadType.name());
+                throw new IllegalArgumentException("Unsupported downloadType:" + downloadType.name());
         }
         if (CollectionUtils.isEmpty(widgetList)) {
-            throw new IllegalArgumentException("has no widget to download");
+            throw new IllegalArgumentException("No widget to download");
         }
         for (WidgetContext context : widgetList) {
             ProjectDetail projectDetail = projectService.getProjectDetail(context.getWidget().getProjectId(), user, false);
             ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
             //校验权限
             if (!projectPermission.getDownloadPermission()) {
-                log.info("user {} have not permisson to download the widget {}", user.getUsername(), id);
-                throw new UnAuthorizedExecption("you have not permission to download the widget");
+                log.info("User({}) have not permisson to download the widget {}", user.getUsername(), id);
+                throw new UnAuthorizedExecption("You have not permission to download the widget");
             }
             context.setIsMaintainer(projectService.isMaintainer(projectDetail, user));
         }

@@ -21,8 +21,10 @@ package edp.davinci.server.dto.dashboard;
 
 import edp.davinci.core.dao.entity.DashboardPortal;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class PortalInfo extends DashboardPortal {
     private Short permission;
 }

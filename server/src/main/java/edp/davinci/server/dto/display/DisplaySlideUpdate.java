@@ -21,8 +21,12 @@ package edp.davinci.server.dto.display;
 
 import java.util.List;
 
-import edp.davinci.server.model.DisplaySlide;
+import edp.davinci.core.dao.entity.DisplaySlide;
+import lombok.Data;
+import lombok.ToString;
 
+@Data
+@ToString(callSuper = true)
 public class DisplaySlideUpdate extends DisplaySlide {
     private List<Long> rolesIds;
 }

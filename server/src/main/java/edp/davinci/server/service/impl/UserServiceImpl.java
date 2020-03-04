@@ -21,10 +21,10 @@ package edp.davinci.server.service.impl;
 
 import edp.davinci.commons.util.AESUtils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dao.OrganizationMapper;
+import edp.davinci.server.dao.OrganizationExtendMapper;
 import edp.davinci.server.dao.RelUserOrganizationMapper;
 import edp.davinci.server.dao.UserMapper;
 import edp.davinci.server.dto.organization.OrganizationInfo;
@@ -37,7 +37,6 @@ import edp.davinci.server.enums.UserOrgRoleEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.LdapPerson;
 import edp.davinci.server.model.MailContent;
-import edp.davinci.server.model.Organization;
 import edp.davinci.server.model.RelUserOrganization;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.LdapService;
@@ -69,7 +68,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
     private UserMapper userMapper;
 
     @Autowired
-    private OrganizationMapper organizationMapper;
+    private OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
     private RelUserOrganizationMapper relUserOrganizationMapper;
@@ -327,6 +326,8 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 		if (lock != null && !lock.getLock()) {
 			return resultMap.fail().message("The current user is activating");
 		}
+		
+		Long userId = user.getId();
 
 		try {
 			// 验证激活token
@@ -337,11 +338,15 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 
 				String orgName = user.getUsername() + "'s Organization";
 				// 激活成功，创建默认Orgnization
-				Organization organization = new Organization(orgName, null, user.getId());
-				organizationMapper.insert(organization);
+				Organization organization = new Organization();
+		        organization.setName(orgName);
+		        organization.setUserId(userId);
+		        organization.setCreateBy(userId);
+		        organization.setCreateTime(new Date());
+				organizationExtendMapper.insert(organization);
 
 				// 关联用户和组织，创建人是组织的owner
-				RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), user.getId(),
+				RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), userId,
 						UserOrgRoleEnum.OWNER.getRole());
 				relUserOrganizationMapper.insert(relUserOrganization);
 
@@ -485,13 +490,13 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         UserProfile userProfile = new UserProfile();
         BeanUtils.copyProperties(tempUser, userProfile);
         if (id.equals(user.getId())) {
-            List<OrganizationInfo> organizationInfos = organizationMapper.getOrganizationByUser(user.getId());
+            List<OrganizationInfo> organizationInfos = organizationExtendMapper.getOrganizationByUser(user.getId());
             userProfile.setOrganizations(organizationInfos);
             return resultMap.successAndRefreshToken(request).payload(userProfile);
         }
 
         Long[] userIds = {user.getId(), id};
-        List<OrganizationInfo> jointlyOrganization = organizationMapper.getJointlyOrganization(Arrays.asList(userIds), id);
+        List<OrganizationInfo> jointlyOrganization = organizationExtendMapper.getJointlyOrganization(Arrays.asList(userIds), id);
         if (!CollectionUtils.isEmpty(jointlyOrganization)) {
             BeanUtils.copyProperties(tempUser, userProfile);
             userProfile.setOrganizations(jointlyOrganization);

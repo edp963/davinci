@@ -626,7 +626,7 @@ CREATE TABLE `davinci_statistic_visitor_operation` (
   `widget_id` bigint(20) DEFAULT NULL,
   `widget_name` varchar(255) DEFAULT NULL,
   `variables` varchar(500) DEFAULT NULL,
-  `filters` varchar(500) DEFAULT NULL,
+  `filters` text COLLATE utf8_unicode_ci DEFAULT NULL,
   `groups` varchar(500) DEFAULT NULL,
   `create_time` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE

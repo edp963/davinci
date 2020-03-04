@@ -19,9 +19,9 @@
 
 package edp.davinci.server.service;
 
+import edp.davinci.core.dao.entity.Platform;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.model.Platform;
 import edp.davinci.server.model.User;
 
 import javax.servlet.http.HttpServletRequest;

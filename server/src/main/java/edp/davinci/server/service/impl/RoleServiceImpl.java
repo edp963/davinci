@@ -31,6 +31,8 @@ import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.*;
 import edp.davinci.server.service.*;
 import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.core.dao.entity.Organization;
+import edp.davinci.core.dao.entity.Project;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +54,7 @@ public class RoleServiceImpl implements RoleService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
-    private OrganizationMapper organizationMapper;
+    private OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
     private RelUserOrganizationMapper relUserOrganizationMapper;
@@ -67,7 +69,7 @@ public class RoleServiceImpl implements RoleService {
     private RelRoleUserMapper relRoleUserMapper;
 
     @Autowired
-    private ProjectMapper projectMapper;
+    private ProjectExtendMapper projectExtendMapper;
 
     @Autowired
     private RelRoleProjectMapper relRoleProjectMapper;
@@ -119,7 +121,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public Role createRole(RoleCreate roleCreate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
-        Organization organization = organizationMapper.getById(roleCreate.getOrgId());
+        Organization organization = organizationExtendMapper.selectByPrimaryKey(roleCreate.getOrgId());
         if (null == organization) {
             log.info("orgainzation (:{}) is not found", roleCreate.getOrgId());
             throw new NotFoundException("organization is not found");
@@ -139,7 +141,7 @@ public class RoleServiceImpl implements RoleService {
         if (insert > 0) {
             optLogger.info("role ( :{} ) create by user( :{} )", role.toString(), user.getId());
             organization.setRoleNum(organization.getRoleNum() + 1);
-            organizationMapper.updateRoleNum(organization);
+            organizationExtendMapper.updateRoleNum(organization);
             return role;
         } else {
             log.info("create role fail: {}", role.toString());
@@ -172,11 +174,11 @@ public class RoleServiceImpl implements RoleService {
         if (delete > 0) {
             optLogger.info("role ( {} ) delete by user( :{} )", role.toString(), user.getId());
 
-            Organization organization = organizationMapper.getById(role.getOrgId());
+            Organization organization = organizationExtendMapper.selectByPrimaryKey(role.getOrgId());
             if (null != organization) {
                 int roleNum = organization.getRoleNum() - 1;
                 organization.setRoleNum(roleNum > 0 ? roleNum : 0);
-                organizationMapper.updateRoleNum(organization);
+                organizationExtendMapper.updateRoleNum(organization);
             }
 
             //删除Role关联project
@@ -437,7 +439,7 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
-        Project project = projectMapper.getById(projectId);
+        Project project = projectExtendMapper.selectByPrimaryKey(projectId);
         if (null == project) {
             log.warn("project ( :{} ) is not found", projectId);
             throw new NotFoundException("project is not found");
@@ -598,7 +600,7 @@ public class RoleServiceImpl implements RoleService {
      */
     @Override
     public List<RoleBaseInfo> getRolesByOrgId(Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
-        Organization organization = organizationMapper.getById(orgId);
+        Organization organization = organizationExtendMapper.selectByPrimaryKey(orgId);
         if (null == organization) {
             log.info("orgainzation (:{}) is not found", orgId);
             throw new NotFoundException("organization is not found");

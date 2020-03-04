@@ -19,13 +19,12 @@
 
 package edp.davinci.server.dto.view;
 
-import edp.davinci.server.model.Project;
+import edp.davinci.core.dao.entity.Project;
 import edp.davinci.server.model.Source;
 import lombok.Data;
 
 @Data
 public class ViewWithProjectAndSource extends ViewWithSource {
-
     private Project project;
     private Source source;
 }

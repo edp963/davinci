@@ -19,12 +19,13 @@
 
 package edp.davinci.server.dto.display;
 
-import edp.davinci.server.model.Display;
-import edp.davinci.server.model.Project;
+import edp.davinci.core.dao.entity.Display;
+import edp.davinci.core.dao.entity.Project;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class DisplayWithProject extends Display {
-
     private Project project;
 }

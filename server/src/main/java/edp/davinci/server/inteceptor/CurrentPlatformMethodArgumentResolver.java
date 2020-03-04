@@ -19,9 +19,9 @@
 
 package edp.davinci.server.inteceptor;
 
+import edp.davinci.core.dao.entity.Platform;
 import edp.davinci.server.annotation.CurrentPlatform;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.model.Platform;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;

@@ -21,12 +21,12 @@ package edp.davinci.server.service;
 
 import com.github.pagehelper.PageInfo;
 
+import edp.davinci.core.dao.entity.Project;
 import edp.davinci.server.dto.project.*;
 import edp.davinci.server.dto.role.RoleProject;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.Project;
 import edp.davinci.server.model.User;
 
 import java.util.List;
