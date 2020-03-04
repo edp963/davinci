@@ -28,10 +28,10 @@ import java.util.Arrays;
 import java.util.List;
 
 @Data
-@NotNull(message = "display info cannot be null")
+@NotNull(message = "Display info cannot be null")
 public class DisplayInfo {
 
-    @NotBlank(message = "display name cannot be EMPTY")
+	@NotBlank(message = "Display name cannot be empty")
     private String name;
 
     private String description;

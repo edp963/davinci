@@ -19,8 +19,9 @@
 
 package edp.davinci.server.dao;
 
+import edp.davinci.core.dao.DisplayMapper;
+import edp.davinci.core.dao.entity.Display;
 import edp.davinci.server.dto.display.DisplayWithProject;
-import edp.davinci.server.model.Display;
 
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -31,20 +32,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public interface DisplayMapper {
-
-    int insert(Display display);
-
-    @Delete({"delete from display where id = #{id}"})
-    int deleteById(@Param("id") Long id);
+public interface DisplayExtendMapper extends DisplayMapper {
 
     @Delete({"delete from display where project_id = #{projectId}"})
     int deleteByProject(@Param("projectId") Long projectId);
-
-
-    @Select({"select * from display where id = #{id}"})
-    Display getById(@Param("id") Long id);
-
 
     @Update({
             "update display",
@@ -59,7 +50,6 @@ public interface DisplayMapper {
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(Display display);
-
 
     @Select({
             "SELECT ",

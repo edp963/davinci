@@ -92,18 +92,14 @@ public class DownloadController extends BaseController {
                                                 @PathVariable String token,
                                                 HttpServletRequest request,
                                                 HttpServletResponse response) {
-        DownloadRecord record = downloadService.downloadById(id, token);
-        FileInputStream is = null;
-        try {
-            encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
-            is = new FileInputStream(new File(record.getPath()));
-            Streams.copy(is, response.getOutputStream(), true);
-        } catch (Exception e) {
-            log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
-        } finally {
-            FileUtils.closeCloseable(is);
-        }
-        return null;
+		DownloadRecord record = downloadService.downloadById(id, token);
+		try (FileInputStream is = new FileInputStream(new File(record.getPath()));) {
+			encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
+			Streams.copy(is, response.getOutputStream(), true);
+		} catch (Exception e) {
+			log.error("Get downloadRecordFile error, id:" + id + ", e:", e.getMessage());
+		}
+		return null;
     }
 
 
@@ -180,17 +176,13 @@ public class DownloadController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        ShareDownloadRecord record = shareDownloadService.downloadById(id, uuid, token, user);
-        FileInputStream is = null;
-        try {
-            encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
-            is = new FileInputStream(new File(record.getPath()));
-            Streams.copy(is, response.getOutputStream(), true);
-        } catch (Exception e) {
-            log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
-        } finally {
-            FileUtils.closeCloseable(is);
-        }
+		ShareDownloadRecord record = shareDownloadService.downloadById(id, uuid, token, user);
+		try (FileInputStream is = new FileInputStream(new File(record.getPath()));) {
+			encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
+			Streams.copy(is, response.getOutputStream(), true);
+		} catch (Exception e) {
+			log.error("Get downloadRecordFile error, id:" + id + ", e:", e.getMessage());
+		}
         return null;
     }
 

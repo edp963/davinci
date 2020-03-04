@@ -23,9 +23,34 @@ import lombok.Data;
 
 import java.util.List;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
+import com.alibaba.fastjson.annotation.JSONField;
+
 import edp.davinci.core.dao.entity.Dashboard;
 
 @Data
+@NotNull(message = "Dashboard cannot be null")
 public class DashboardDTO extends Dashboard {
-    private List<Long> roleIds;
+
+	@Min(value = 1L, message = "Invalid dashboard id")
+	private Long id;
+	
+    @NotBlank(message = "Dashboard name cannot be empty")
+    private String name;
+    
+    @Min(value = 1L, message = "Invalid dashboard portal id")
+    private Long dashboardPortalId;
+    
+    @Min(value = (short) 0, message = "Invalid dashboard type")
+    @Max(value = (short) 2, message = "Invalid dashboard type")
+    private Short type;
+    
+    @JSONField(serialize = false)
+    private String fullParentId = null != getParentId() ? getParentId().toString() : null;
+
+	private List<Long> roleIds;
 }

@@ -20,7 +20,7 @@
 package edp.davinci.server.dto.display;
 
 
-import edp.davinci.server.model.DisplaySlide;
+import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.server.model.MemDisplaySlideWidget;
 import lombok.Data;
 

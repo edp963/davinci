@@ -19,12 +19,14 @@
 package edp.davinci.server.dto.dashboard;
 
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.List;
 
 import edp.davinci.server.model.MemDashboardWidget;
 
 @Data
+@ToString(callSuper = true)
 public class MemDashboardWidgetDTO extends MemDashboardWidget {
     private List<Long> roleIds;
 }

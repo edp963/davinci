@@ -24,10 +24,27 @@ import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
-import edp.davinci.server.model.Display;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
+import edp.davinci.core.dao.entity.Display;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
+@NotNull(message = "Display cannot be null")
 public class DisplayUpdate extends Display {
+    
+	@Min(value = 1L, message = "Invalid display id")
+    private Long id;
+
+    @NotBlank(message = "Display name cannot be empty")
+    private String name;
+    
+    @Min(value = 1L, message = "Invalid project id")
+    private Long projectId;
+    
+    private Boolean publish = false;
+    
     private List<Long> roleIds;
 }

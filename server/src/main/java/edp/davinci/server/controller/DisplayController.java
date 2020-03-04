@@ -20,11 +20,11 @@
 package edp.davinci.server.controller;
 
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Display;
+import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.display.*;
-import edp.davinci.server.model.Display;
-import edp.davinci.server.model.DisplaySlide;
 import edp.davinci.server.model.MemDisplaySlideWidget;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.DisplayService;
@@ -33,7 +33,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -48,7 +47,6 @@ import java.util.List;
 
 @Api(value = "/displays", tags = "displays", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "display not found"))
-@Slf4j
 @RestController
 @RequestMapping(value = Constants.BASE_API_PATH + "/displays", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class DisplayController extends BaseController {
@@ -199,7 +197,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == displaySlides || displaySlides.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide info cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Display slide info cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -263,7 +261,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == slideWidgetCreates || slideWidgetCreates.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide widget info cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Display slide widget info cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -318,7 +316,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == memDisplaySlideWidgets || memDisplaySlideWidgets.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide widget info cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Display slide widget info cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -436,7 +434,7 @@ public class DisplayController extends BaseController {
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
         if (invalidId(id)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid Display id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid display id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         DisplayWithSlides displayWithSlides = displaySlideService.getDisplaySlideList(id, user);
@@ -461,12 +459,12 @@ public class DisplayController extends BaseController {
                                                  HttpServletRequest request) {
 
         if (invalidId(displayId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid Display id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid display id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
         if (invalidId(slideId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid Display Slide id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid display slide id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -493,12 +491,12 @@ public class DisplayController extends BaseController {
                                                    HttpServletRequest request) {
 
         if (invalidId(displayId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid Display id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid display id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
         if (invalidId(slideId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid Display Slide id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid display Slide id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -526,7 +524,7 @@ public class DisplayController extends BaseController {
 
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("file can not be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("File can not be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -557,7 +555,7 @@ public class DisplayController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("file can not be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("File can not be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -587,7 +585,7 @@ public class DisplayController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("file can not be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("File can not be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 

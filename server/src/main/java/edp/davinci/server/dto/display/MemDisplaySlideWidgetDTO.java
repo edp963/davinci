@@ -26,7 +26,5 @@ import edp.davinci.server.model.MemDisplaySlideWidget;
 
 @Data
 public class MemDisplaySlideWidgetDTO extends MemDisplaySlideWidget {
-
     private List<Long> roleIds;
-
 }

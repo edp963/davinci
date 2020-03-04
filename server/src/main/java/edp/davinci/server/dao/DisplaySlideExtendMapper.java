@@ -19,10 +19,12 @@
 
 package edp.davinci.server.dao;
 
+import edp.davinci.core.dao.DisplaySlideMapper;
+import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.server.dto.display.SlideWithDisplayAndProject;
-import edp.davinci.server.model.DisplaySlide;
 
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -32,18 +34,10 @@ import java.util.List;
 import java.util.Set;
 
 @Component
-public interface DisplaySlideMapper {
+public interface DisplaySlideExtendMapper extends DisplaySlideMapper {
 
-    int insert(DisplaySlide displaySlide);
-
-    @Delete({"delete from display_slide where id = #{id}"})
-    int deleteById(@Param("id") Long id);
-
-    @Delete({"DELETE FROM display_slide where display_id in (SELECT id from display WHERE project_id = #{projectId})"})
+    @Delete({"delete from display_slide where display_id in (select id from display where project_id = #{projectId})"})
     int deleteByProjectId(@Param("projectId") Long projectId);
-
-    @Select({"select * from display_slide where id = #{id}"})
-    DisplaySlide getById(Long id);
 
     @Update({
             "update display_slide",
@@ -56,6 +50,25 @@ public interface DisplaySlideMapper {
     })
     int update(DisplaySlide record);
 
+	@Update({
+		"<script>",
+		"		<foreach collection='list' item='item' index='index' open='' close='' separator=';'>" + 
+		"            update display_slide" + 
+		"            <set>" + 
+		"                display_id = #{item.displayId,jdbcType=BIGINT}," + 
+		"                `index` = #{item.index,jdbcType=INTEGER}," + 
+		"                config = #{item.config,jdbcType=VARCHAR}," + 
+		"                create_by = #{item.createBy,jdbcType=BIGINT}," + 
+		"                create_time = #{item.createTime,jdbcType=TIMESTAMP}," + 
+		"                update_by = #{item.updateBy,jdbcType=BIGINT}," + 
+		"                update_time = #{item.updateTime,jdbcType=TIMESTAMP}" + 
+		"            </set>" + 
+		"            <where>" + 
+		"                id=#{item.id,jdbcType=BIGINT}" + 
+		"            </where>" + 
+		"		</foreach>",
+		"</script>"
+		})
     int updateBatch(List<DisplaySlide> list);
 
     @Select({"select * from display_slide where display_id = #{displayId} order by `index`"})
@@ -65,12 +78,12 @@ public interface DisplaySlideMapper {
     int deleteByDisplayId(@Param("displayId") Long displayId);
 
     @Select({
-            "SELECT ",
+            "select ",
             "	s.*,",
             "	d.id as 'display.id',",
             "	d.`name` as 'display.name',",
             "	d.description as 'display.description',",
-            "	d.project_id as 'display.projectId',",
+            "	d.project_id as 'display.projectid',",
             "	d.avatar as 'display.avatar',",
             "	d.publish as 'display.publish',",
             "	d.config as 'display.config',",
@@ -78,18 +91,45 @@ public interface DisplaySlideMapper {
             "	p.`name` 'project.name',",
             "	p.description 'project.description',",
             "	p.pic 'project.pic',",
-            "	p.org_id 'project.orgId',",
-            "	p.user_id 'project.userId',",
+            "	p.org_id 'project.orgid',",
+            "	p.user_id 'project.userid',",
             "	p.visibility 'p.visibility'",
-            "FROM display_slide s ",
-            "   LEFT JOIN display d on d.id = s.display_id",
-            "   LEFT JOIN project p on p.id = d.project_id",
+            "from display_slide s ",
+            "   left join display d on d.id = s.display_id",
+            "   left join project p on p.id = d.project_id",
             "where s.id = #{slideId}",
     })
     SlideWithDisplayAndProject getSlideWithDispalyAndProjectById(@Param("slideId") Long slideId);
 
+    @Insert({
+    	"<script>",
+    	"	insert into display_slide" + 
+    	"	<trim prefix='(' suffix=')' suffixOverrides=','>" + 
+    	"		`display_id`," + 
+    	"		`index`," + 
+    	"		`config`," + 
+    	"		`create_by`," + 
+    	"		`create_time`" + 
+    	"	</trim>" + 
+    	"	select ${displayId}, `index`, `config`, ${useId}, NOW()" + 
+    	"	from display_slide where display_id = #{originDisplayId}",
+		"</script>"
+    })
     int copySlide(@Param("originDisplayId") Long originDisplayId, @Param("displayId") Long displayId, @Param("userId") Long userId);
 
-
+    @Select({
+    	"<script>",
+    	"	select `id`, `display_id`, `index` from display_slide" + 
+    	"	<if test='displayIds != null and displayIds.size > 0'>" + 
+    	" 		where `display_id` in" + 
+    	"		<foreach collection='displayIds' index='index' item='item' open='(' close=')' separator=','>" + 
+    	"			#{item}" + 
+    	"		</foreach>" + 
+    	"	</if>" + 
+    	"	<if test='displayIds == null or displayIds.size == 0'>" + 
+    	"		where 1=0" + 
+    	"	</if>",
+		"</script>"
+    })
     List<DisplaySlide> queryByDisplayIds(@Param("displayIds") Set<Long> displayIds);
 }

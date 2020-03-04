@@ -21,6 +21,7 @@
 package edp.davinci.commons.util;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -522,4 +523,15 @@ public class IOUtils {
 		}
 		return count;
 	}
+	
+    public static void closeCloseable(Closeable c) {
+        if(c != null) {
+            try {
+                c.close();
+            }
+            catch (IOException e) {
+                // ignore
+            }
+        }
+    }
 }

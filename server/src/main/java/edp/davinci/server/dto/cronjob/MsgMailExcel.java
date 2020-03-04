@@ -42,8 +42,9 @@ public class MsgMailExcel {
         this.id = id;
     }
 
-    @Override
-    public String toString() {
-        return "Date:" + DateUtils.toyyyyMMddHHmmss(date) + ", exception:{" + exception.getMessage() + "}";
-    }
+	@Override
+	public String toString() {
+		return "MsgMailExcel{id:" + id + ", date:" + DateUtils.toyyyyMMddHHmmss(date) + ", exception:"
+				+ exception.getMessage() + "}";
+	}
 }

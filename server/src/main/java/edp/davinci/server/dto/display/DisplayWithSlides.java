@@ -23,10 +23,9 @@ import lombok.Data;
 
 import java.util.List;
 
-import edp.davinci.server.model.Display;
+import edp.davinci.core.dao.entity.Display;
 
 @Data
 public class DisplayWithSlides extends Display {
-
     private List<DisplaySlideInfo> slides;
 }

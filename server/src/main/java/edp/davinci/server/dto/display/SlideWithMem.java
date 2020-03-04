@@ -24,7 +24,7 @@ import lombok.Data;
 import java.util.List;
 import java.util.Set;
 
-import edp.davinci.server.model.DisplaySlide;
+import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.server.model.MemDisplaySlideWidget;
 import edp.davinci.server.model.View;
 import edp.davinci.server.model.Widget;

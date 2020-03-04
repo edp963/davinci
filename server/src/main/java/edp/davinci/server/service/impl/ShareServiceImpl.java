@@ -22,6 +22,8 @@ package edp.davinci.server.service.impl;
 import edp.davinci.commons.util.AESUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.Display;
+import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.dao.*;
@@ -78,10 +80,10 @@ public class ShareServiceImpl implements ShareService {
     private WidgetMapper widgetMapper;
 
     @Autowired
-    private DisplayMapper displayMapper;
+    private DisplayExtendMapper displayMapper;
 
     @Autowired
-    private DisplaySlideMapper displaySlideMapper;
+    private DisplaySlideExtendMapper displaySlideMapper;
 
     @Autowired
     private DashboardExtendMapper dashboardMapper;
@@ -202,7 +204,7 @@ public class ShareServiceImpl implements ShareService {
         verifyShareUser(user, shareInfo);
 
         Long displayId = shareInfo.getShareId();
-        Display display = displayMapper.getById(displayId);
+        Display display = displayMapper.selectByPrimaryKey(displayId);
         if (null == display) {
             throw new ServerException("display is not found");
         }

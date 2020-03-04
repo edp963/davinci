@@ -52,6 +52,8 @@ import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.CronJob;
 import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.Display;
+import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.excel.ExecutorUtil;
 import edp.davinci.server.component.excel.MsgWrapper;
@@ -62,8 +64,8 @@ import edp.davinci.server.component.screenshot.ImageContent;
 import edp.davinci.server.component.screenshot.ScreenshotUtil;
 import edp.davinci.server.dao.CronJobExtendMapper;
 import edp.davinci.server.dao.DashboardExtendMapper;
-import edp.davinci.server.dao.DisplayMapper;
-import edp.davinci.server.dao.DisplaySlideMapper;
+import edp.davinci.server.dao.DisplayExtendMapper;
+import edp.davinci.server.dao.DisplaySlideExtendMapper;
 import edp.davinci.server.dao.UserMapper;
 import edp.davinci.server.dao.WidgetMapper;
 import edp.davinci.server.dto.cronjob.CronJobConfig;
@@ -82,8 +84,6 @@ import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.enums.MailContentTypeEnum;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.model.Display;
-import edp.davinci.server.model.DisplaySlide;
 import edp.davinci.server.model.MailAttachment;
 import edp.davinci.server.model.MailContent;
 import edp.davinci.server.model.User;
@@ -107,7 +107,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     private MailUtils mailUtils;
 
     @Autowired
-    private DisplaySlideMapper displaySlideMapper;
+    private DisplaySlideExtendMapper displaySlideMapper;
 
     @Autowired
     private WidgetMapper widgetMapper;
@@ -119,7 +119,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     private DashboardExtendMapper dashboardMapper;
 
     @Autowired
-    private DisplayMapper displayMapper;
+    private DisplayExtendMapper displayMapper;
 
     @Autowired
     private ProjectService projectService;
@@ -323,7 +323,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 if (vizOrderMap.containsKey(DISPLAY + AT_SYMBOL + cronJobContent.getId())) {
                     order = vizOrderMap.get(DISPLAY + AT_SYMBOL + cronJobContent.getId());
                 }
-                Display display = displayMapper.getById(cronJobContent.getId());
+                Display display = displayMapper.selectByPrimaryKey(cronJobContent.getId());
                 List<WidgetWithVizId> widgetsWithSlideIdList = widgetMapper.queryByDisplayId(cronJobContent.getId());
                 if (display != null && !CollectionUtils.isEmpty(widgetsWithSlideIdList)) {
                     ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);

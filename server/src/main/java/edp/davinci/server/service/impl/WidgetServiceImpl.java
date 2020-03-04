@@ -475,17 +475,12 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             dir.mkdirs();
         }
 
-        FileOutputStream out = new FileOutputStream(filePath);
-        try {
-            wb.write(out);
-            out.flush();
-        }
-        catch (Exception e) {
-            // ignore
-        }
-        finally {
-            FileUtils.closeCloseable(out);
-        }
-        return file;
+		try (FileOutputStream out = new FileOutputStream(filePath);) {
+			wb.write(out);
+			out.flush();
+		} catch (Exception e) {
+			// ignore
+		}
+		return file;
     }
 }

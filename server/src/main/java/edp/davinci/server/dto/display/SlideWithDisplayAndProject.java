@@ -19,8 +19,8 @@
 
 package edp.davinci.server.dto.display;
 
-import edp.davinci.server.model.Display;
-import edp.davinci.server.model.DisplaySlide;
+import edp.davinci.core.dao.entity.Display;
+import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.server.model.Project;
 import lombok.Data;
 
@@ -31,8 +31,4 @@ public class SlideWithDisplayAndProject extends DisplaySlide {
 
     private Project project;
 
-    @Override
-    public String toString() {
-        return super.toString();
-    }
 }
