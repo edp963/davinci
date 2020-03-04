@@ -325,10 +325,16 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     setTimeout(() => {
       if (this.props.getDataDrillDetail) {
         const sourceData = this.combineFilter()
+        const sourceGroup = this.combineGroups()
         const brushed = [{0: Object.values(sourceData)}]
-        getDataDrillDetail(JSON.stringify({filterObj: sourceData, brushed, sourceData}))
+        getDataDrillDetail(JSON.stringify({filterObj: sourceData, brushed, sourceData, sourceGroup}))
       }
     }, 500)
+  }
+
+  private combineGroups() {
+    const {group} = this.state.selectItems
+    return group
   }
 
   private combineFilter() {
