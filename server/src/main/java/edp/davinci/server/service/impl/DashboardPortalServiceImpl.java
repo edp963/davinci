@@ -31,7 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import edp.davinci.server.dao.MemDashboardWidgetMapper;
+import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDashboardWidgetMapper;
 import edp.davinci.server.dto.dashboard.DashboardPortalCreate;
 import edp.davinci.server.dto.dashboard.DashboardPortalUpdate;
@@ -67,7 +67,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
     private RelRoleDashboardWidgetMapper relRoleDashboardWidgetMapper;
 
     @Autowired
-    private MemDashboardWidgetMapper memDashboardWidgetMapper;
+    private MemDashboardWidgetExtendMapper memDashboardWidgetMapper;
     
     private static final CheckEntityEnum entity = CheckEntityEnum.DASHBOARDPORTAL;
 

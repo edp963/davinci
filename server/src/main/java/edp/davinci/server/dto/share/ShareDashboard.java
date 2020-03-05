@@ -24,7 +24,7 @@ import lombok.Data;
 import java.util.List;
 import java.util.Set;
 
-import edp.davinci.server.model.MemDashboardWidget;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
 
 @Data
 public class ShareDashboard {

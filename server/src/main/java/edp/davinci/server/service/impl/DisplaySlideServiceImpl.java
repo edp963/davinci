@@ -44,8 +44,9 @@ import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Display;
 import edp.davinci.core.dao.entity.DisplaySlide;
+import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dao.MemDisplaySlideWidgetMapper;
+import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDisplaySlideWidgetMapper;
 import edp.davinci.server.dao.ViewMapper;
 import edp.davinci.server.dao.WidgetMapper;
@@ -67,7 +68,6 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.MemDisplaySlideWidget;
 import edp.davinci.server.model.RelRoleDisplaySlideWidget;
 import edp.davinci.server.model.RelRoleSlide;
 import edp.davinci.server.model.Role;
@@ -86,7 +86,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
-    private MemDisplaySlideWidgetMapper memDisplaySlideWidgetMapper;
+    private MemDisplaySlideWidgetExtendMapper memDisplaySlideWidgetExtendMapper;
 
     @Autowired
     private WidgetMapper widgetMapper;
@@ -190,7 +190,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		}
 
 		relRoleDisplaySlideWidgetMapper.deleteBySlideId(slideId);
-		memDisplaySlideWidgetMapper.deleteBySlideId(slideId);
+		memDisplaySlideWidgetExtendMapper.deleteBySlideId(slideId);
 		relRoleSlideMapper.deleteBySlideId(slideId);
 		displaySlideExtendMapper.deleteByPrimaryKey(slideId);
 		
@@ -272,12 +272,16 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		List<MemDisplaySlideWidget> clist = new ArrayList<>();
 		for (MemDisplaySlideWidgetCreate slideWidgetCreate : slideWidgetCreates) {
 			ids.add(slideWidgetCreate.getWidgetId());
-			MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget().createdBy(user.getId());
+			MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget();
+			memDisplaySlideWidget.setCreateBy(user.getId());
+			memDisplaySlideWidget.setCreateTime(new Date());
 			BeanUtils.copyProperties(slideWidgetCreate, memDisplaySlideWidget);
 			list.add(memDisplaySlideWidget);
 			// 自定义主键，copy一份修改内容作为返回值
 			if (null != slideWidgetCreate.getId() && slideWidgetCreate.getId().longValue() > 0L) {
-				MemDisplaySlideWidget cMemDisplaySlideWidget = new MemDisplaySlideWidget().createdBy(user.getId());
+				MemDisplaySlideWidget cMemDisplaySlideWidget = new MemDisplaySlideWidget();
+				cMemDisplaySlideWidget.setCreateBy(user.getId());
+				cMemDisplaySlideWidget.setCreateTime(new Date());
 				BeanUtils.copyProperties(slideWidgetCreate, cMemDisplaySlideWidget);
 				clist.add(cMemDisplaySlideWidget);
 			}
@@ -288,7 +292,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			throw new ServerException("Invalid widget id");
 		}
 
-		if (memDisplaySlideWidgetMapper.insertBatch(list) <= 0) {
+		if (memDisplaySlideWidgetExtendMapper.insertBatch(list) <= 0) {
 			log.error("Insert batch MemDisplaySlideWidget error displayId:{}, slideId:{}", displayId, slideId);
 			throw new ServerException("Add memDisplaySlideWidgets fail");
 		}
@@ -316,11 +320,11 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		}
 
 		if (null != clist && clist.size() > 1) {
-			optLogger.info("Insert batch MemDisplaySlideWidget({}) by user({})", clist.toString(), user.getId());
+			optLogger.info("Insert batch MemDisplaySlideWidget({}) by user({})", clist.stream().map(m -> m.getId()).collect(Collectors.toList()), user.getId());
 			// 自定义主键
 			return clist;
 		} else {
-			optLogger.info("Insert batch MemDisplaySlideWidget({}) by user({})", list.toString(), user.getId());
+			optLogger.info("Insert batch MemDisplaySlideWidget({}) by user({})", list.stream().map(m -> m.getId()).collect(Collectors.toList()), user.getId());
 			// 自增主键
 			return list;
 		}
@@ -378,12 +382,13 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		List<MemDisplaySlideWidget> memDisplaySlideWidgetList = new ArrayList<>(dtoList.size());
 		Map<Long, List<Long>> rolesMap = new HashMap<>();
 		dtoList.forEach(m -> {
-			m.updatedBy(user.getId());
+			m.setUpdateBy(user.getId());
+			m.setUpdateTime(new Date());
 			memDisplaySlideWidgetList.add(m);
 			rolesMap.put(m.getId(), m.getRoleIds());
 		});
 
-        if (memDisplaySlideWidgetMapper.updateBatch(memDisplaySlideWidgetList) <= 0) {
+        if (memDisplaySlideWidgetExtendMapper.updateBatch(memDisplaySlideWidgetList) <= 0) {
             log.error("Update batch MemDisplaySlideWidget error displayId:{}, slideId:{}", displayId, slideId);
 			throw new ServerException("updateMemDisplaySlideWidgets fail");
         }
@@ -444,10 +449,11 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         }
 
         String origin = slideWidget.toString();
-        slideWidget.updatedBy(user.getId());
+        slideWidget.setUpdateBy(user.getId());
+        slideWidget.setUpdateTime(new Date());
         BeanUtils.copyProperties(memDisplaySlideWidget, slideWidget);
 
-        if (memDisplaySlideWidgetMapper.update(slideWidget) <= 0) {
+        if (memDisplaySlideWidgetExtendMapper.update(slideWidget) <= 0) {
 			log.error("Update MemDisplaySlideWidget error slideId:{}", slideId);
             throw new ServerException("UpdateMemDisplaySlideWidget fail");
         }
@@ -457,7 +463,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     }
     
     private MemDisplaySlideWidget getMemDisplaySlideWidget(Long id) {
-        MemDisplaySlideWidget widget = memDisplaySlideWidgetMapper.getById(id);
+        MemDisplaySlideWidget widget = memDisplaySlideWidgetExtendMapper.selectByPrimaryKey(id);
         if (null == widget) {
             throw new ServerException("Display slide widget is not found");
         }
@@ -489,7 +495,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         	alertUnAuthorized(entity, user, "delete widget");
         }
         
-        if (memDisplaySlideWidgetMapper.deleteById(relationId) <= 0) {
+        if (memDisplaySlideWidgetExtendMapper.deleteByPrimaryKey(relationId) <= 0) {
         	log.error("Delete memDisplaySlideWidget error slideId:{}", slideId);
             throw new ServerException("Delete memDisplaySlideWidget fail");
         }
@@ -582,7 +588,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			throw new ServerException("Display slide is not found");
 		}
 
-		List<MemDisplaySlideWidget> memSlideWidgets = memDisplaySlideWidgetMapper.getMemDisplaySlideWidgetListBySlideId(slideId);
+		List<MemDisplaySlideWidget> memSlideWidgets = memDisplaySlideWidgetExtendMapper.getMemDisplaySlideWidgetListBySlideId(slideId);
 		
 		if (CollectionUtils.isEmpty(memSlideWidgets)) {
 			return null;
@@ -645,7 +651,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
             List<Long> idList = new ArrayList<>(Arrays.asList(memIds));
             Set<Long> idSet = new HashSet<>(idList);
             relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetIds(idSet);
-            memDisplaySlideWidgetMapper.deleteBatchById(idList);
+            memDisplaySlideWidgetExtendMapper.deleteBatchById(idList);
         }
         return true;
     }
@@ -795,8 +801,9 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
 		String origin = memDisplaySlideWidget.toString();
 		memDisplaySlideWidget.setParams(JSONUtils.toString(jsonMap));
-		memDisplaySlideWidget.updatedBy(user.getId());
-		memDisplaySlideWidgetMapper.update(memDisplaySlideWidget);
+		memDisplaySlideWidget.setUpdateBy(user.getId());
+		memDisplaySlideWidget.setUpdateTime(new Date());
+		memDisplaySlideWidgetExtendMapper.update(memDisplaySlideWidget);
 		optLogger.info("MemDisplaySlideWidget({}) update by user({}), origin:{}", memDisplaySlideWidget.getId(),
 				user.getId(), origin);
 
@@ -861,7 +868,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		}
 
 		// copy memDisplaySlideWidget
-		List<MemDisplaySlideWidgetWithSlide> memWithSlideWidgetList = memDisplaySlideWidgetMapper
+		List<MemDisplaySlideWidgetWithSlide> memWithSlideWidgetList = memDisplaySlideWidgetExtendMapper
 				.getMemWithSlideByDisplayId(originDisplayId);
 		if (CollectionUtils.isEmpty(memWithSlideWidgetList)) {
 			return true;
@@ -874,9 +881,9 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			MemDisplaySlideWidget mem = new MemDisplaySlideWidget();
 			BeanUtils.copyProperties(originMem, mem, "id");
 			mem.setDisplaySlideId(slideCopyIdMap.get(originMem.getDisplaySlideId()));
-			mem.createdBy(user.getId());
-			int insert = memDisplaySlideWidgetMapper.insert(mem);
-			if (insert > 0) {
+			mem.setCreateBy(user.getId());
+			mem.setCreateTime(new Date());
+			if (memDisplaySlideWidgetExtendMapper.insert(mem) > 0) {
 				optLogger.info("MemDisplaySlideWidget({}) is copied from({}) by user({})", mem.toString(),
 						originMem.getId(), user.getId());
 				memCopies.add(new RelModelCopy(originMem.getId(), mem.getId()));

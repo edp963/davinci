@@ -23,33 +23,21 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
-import edp.davinci.server.model.DownloadRecord;
+import edp.davinci.core.dao.DownloadRecordMapper;
+import edp.davinci.core.dao.entity.DownloadRecord;
 
 import java.util.List;
 
-public interface DownloadRecordMapper {
-
-    int insert(DownloadRecord downloadRecord);
+public interface DownloadRecordExtendMapper extends DownloadRecordMapper {
 
     @Delete({
-            "delete from download_record where id = #{id,jdbcType=BIGINT}"
+            "delete from download_record where create_time < date_format((now() - interval 1 month),'%y%m%d')"
     })
-    int deleteById(Long id);
-
-    @Select({
-            "select * from download_record where id = #{id,jdbcType=BIGINT}"
-    })
-    DownloadRecord getById(Long id);
-
-
-    @Delete({
-            "delete from download_record where create_time < DATE_FORMAT((NOW() - INTERVAL 1 MONTH),'%Y%m%d')"
-    })
-    int deleteBeforAMonthRecord();
+    int deleteBeforeAMonthRecord();
 
 
     @Select({
-            "select * from download_record where user_id = #{userId} and create_time > DATE_FORMAT((NOW() - INTERVAL 7 DAY),'%Y%m%d')  order by create_time desc"
+            "select * from download_record where user_id = #{userId} and create_time > date_format((now() - interval 7 day),'%y%m%d')  order by create_time desc"
     })
     List<DownloadRecord> getDownloadRecordsByUser(Long userId);
 

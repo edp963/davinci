@@ -19,17 +19,17 @@
 
 package edp.davinci.server.dto.project;
 
+import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.server.dto.user.UserBaseInfo;
-import edp.davinci.server.model.Organization;
 import edp.davinci.server.model.Project;
 import lombok.Data;
 
 @Data
 public class ProjectDetail extends Project {
-    private Organization organization;
+
+	private Organization organization;
 
     private UserBaseInfo createBy;
-
 
     @Override
     public String toString() {

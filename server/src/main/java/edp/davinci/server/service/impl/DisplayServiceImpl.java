@@ -39,7 +39,7 @@ import org.springframework.web.multipart.MultipartFile;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Display;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dao.MemDisplaySlideWidgetMapper;
+import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDisplaySlideWidgetMapper;
 import edp.davinci.server.dto.display.DisplayInfo;
 import edp.davinci.server.dto.display.DisplayUpdate;
@@ -78,7 +78,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     private ShareService shareService;
 
     @Autowired
-    private MemDisplaySlideWidgetMapper memDisplaySlideWidgetMapper;
+    private MemDisplaySlideWidgetExtendMapper memDisplaySlideWidgetExtendMapper;
 
     @Autowired
     private FileUtils fileUtils;
@@ -187,7 +187,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         }
 
         relRoleDisplaySlideWidgetMapper.deleteByDisplayId(id);
-        memDisplaySlideWidgetMapper.deleteByDisplayId(id);
+        memDisplaySlideWidgetExtendMapper.deleteByDisplayId(id);
         relRoleSlideMapper.deleteByDisplayId(id);
         displaySlideExtendMapper.deleteByDisplayId(id);
         relRoleDisplayMapper.deleteByDisplayId(id);
@@ -471,7 +471,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     @Transactional
     public void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException {
         relRoleDisplaySlideWidgetMapper.deleteByProjectId(projectId);
-        memDisplaySlideWidgetMapper.deleteByProject(projectId);
+        memDisplaySlideWidgetExtendMapper.deleteByProject(projectId);
         relRoleSlideMapper.deleteByProjectId(projectId);
         displaySlideExtendMapper.deleteByProjectId(projectId);
         relRoleDisplayMapper.deleteByProjectId(projectId);

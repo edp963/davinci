@@ -23,6 +23,8 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 
 import edp.davinci.core.dao.entity.CronJob;
+import edp.davinci.core.dao.entity.Favorite;
+import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.organization.OrganizationInfo;
@@ -65,7 +67,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private ProjectMapper projectMapper;
 
     @Autowired
-    private OrganizationMapper organizationMapper;
+    private OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
     private RelUserOrganizationMapper relUserOrganizationMapper;
@@ -92,7 +94,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private StarMapper starMapper;
 
     @Autowired
-    private FavoriteMapper favoriteMapper;
+    private FavoriteExtendMapper favoriteMapper;
 
     @Autowired
     private RelRoleProjectMapper relRoleProjectMapper;
@@ -167,7 +169,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             throw new ServerException("Invalid page info");
         }
 
-        List<OrganizationInfo> orgs = organizationMapper.getOrganizationByUser(user.getId());
+        List<OrganizationInfo> orgs = organizationExtendMapper.getOrganizationByUser(user.getId());
         if (CollectionUtils.isEmpty(orgs)) {
             throw new UnAuthorizedExecption();
         }
@@ -218,7 +220,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	        
 	        optLogger.info("project ({}) is create by user(:{})", project.toString(), user.getId());
 	        organization.setProjectNum(organization.getProjectNum() + 1);
-	        organizationMapper.updateProjectNum(organization);
+	        organizationExtendMapper.updateProjectNum(organization);
 
 	        ProjectInfo projectInfo = new ProjectInfo();
 	        UserBaseInfo userBaseInfo = new UserBaseInfo();
@@ -234,7 +236,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     }
     
     private Organization getOrganization(Long id) {
-        Organization organization = organizationMapper.getById(id);
+        Organization organization = organizationExtendMapper.selectByPrimaryKey(id);
         if (null == organization) {
         	log.info("organization(:{}) is not found", id);
             throw new NotFoundException("organization is not found");
@@ -304,12 +306,12 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         }
         projectMapper.changeTransferStatus(isTransfer, project.getId());
 
-        Organization beforeOrg = organizationMapper.getById(beforeOrgId);
+        Organization beforeOrg = organizationExtendMapper.selectByPrimaryKey(beforeOrgId);
         beforeOrg.setProjectNum(beforeOrg.getProjectNum() - 1);
-        organizationMapper.updateProjectNum(beforeOrg);
+        organizationExtendMapper.updateProjectNum(beforeOrg);
 
         organization.setProjectNum(organization.getProjectNum() + 1);
-        organizationMapper.updateProjectNum(organization);
+        organizationExtendMapper.updateProjectNum(organization);
 
         projectMapper.deleteBeforOrgRole(project.getId(), beforeOrgId);
 
@@ -356,9 +358,9 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         }
         
         optLogger.info("project ({}) delete by user(:{})", project.toString(), user.getId());
-        Organization organization = organizationMapper.getById(project.getOrgId());
+        Organization organization = organizationExtendMapper.selectByPrimaryKey(project.getOrgId());
         organization.setProjectNum(organization.getProjectNum() - 1);
-        organizationMapper.updateProjectNum(organization);
+        organizationExtendMapper.updateProjectNum(organization);
         return true;
     }
 
@@ -420,7 +422,11 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     @Transactional
     public boolean favoriteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         ProjectDetail project = getProjectDetail(id, user, false);
-        return favoriteMapper.insert(new Favorite(user.getId(), project.getId())) > 0;
+        Favorite favorite = new Favorite();
+        favorite.setUserId(user.getId());
+        favorite.setProjectId(project.getId());
+        favorite.setCreateTime(new Date());
+        return favoriteMapper.insert(favorite) > 0;
     }
 
 

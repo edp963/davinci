@@ -24,6 +24,8 @@ import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.Display;
 import edp.davinci.core.dao.entity.DisplaySlide;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
+import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.dao.*;
@@ -98,10 +100,10 @@ public class ShareServiceImpl implements ShareService {
     private ViewService viewService;
 
     @Autowired
-    private MemDisplaySlideWidgetMapper memDisplaySlideWidgetMapper;
+    private MemDisplaySlideWidgetExtendMapper memDisplaySlideWidgetExtendMapper;
 
     @Autowired
-    private MemDashboardWidgetMapper memDashboardWidgetMapper;
+    private MemDashboardWidgetExtendMapper memDashboardWidgetMapper;
 
     @Autowired
     private FileUtils fileUtils;
@@ -213,7 +215,7 @@ public class ShareServiceImpl implements ShareService {
 
         BeanUtils.copyProperties(display, shareDisplay);
 
-        List<MemDisplaySlideWidgetWithSlide> memWithSlides = memDisplaySlideWidgetMapper.getMemWithSlideByDisplayId(displayId);
+        List<MemDisplaySlideWidgetWithSlide> memWithSlides = memDisplaySlideWidgetExtendMapper.getMemWithSlideByDisplayId(displayId);
         List<DisplaySlide> displaySlides = displaySlideMapper.selectByDisplayId(displayId);
         Set<MemDisplaySlideWidget> memDisplaySlideWidgetSet = null;
 

@@ -23,7 +23,7 @@ import lombok.Data;
 
 import java.util.Set;
 
-import edp.davinci.server.model.MemDisplaySlideWidget;
+import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
 
 @Data
 public class ShareDisplaySlide {

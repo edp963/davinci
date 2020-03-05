@@ -22,10 +22,10 @@ package edp.davinci.server.controller;
 
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.DashboardPortal;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.dashboard.*;
-import edp.davinci.server.model.MemDashboardWidget;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.DashboardService;

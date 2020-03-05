@@ -20,6 +20,7 @@
 package edp.davinci.server.controller;
 
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.DownloadRecord;
 import edp.davinci.server.annotation.AuthIgnore;
 import edp.davinci.server.annotation.AuthShare;
 import edp.davinci.server.annotation.CurrentUser;
@@ -27,7 +28,6 @@ import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.DownloadType;
 import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.model.DownloadRecord;
 import edp.davinci.server.model.ShareDownloadRecord;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.DownloadService;

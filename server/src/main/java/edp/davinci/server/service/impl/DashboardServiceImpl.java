@@ -41,7 +41,8 @@ import org.springframework.transaction.annotation.Transactional;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.DashboardPortal;
-import edp.davinci.server.dao.MemDashboardWidgetMapper;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
+import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDashboardWidgetMapper;
 import edp.davinci.server.dao.ViewMapper;
 import edp.davinci.server.dao.WidgetMapper;
@@ -60,7 +61,6 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.MemDashboardWidget;
 import edp.davinci.server.model.RelRoleDashboard;
 import edp.davinci.server.model.RelRoleDashboardWidget;
 import edp.davinci.server.model.Role;
@@ -83,7 +83,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     private RelRoleDashboardWidgetMapper relRoleDashboardWidgetMapper;
 
     @Autowired
-    private MemDashboardWidgetMapper memDashboardWidgetMapper;
+    private MemDashboardWidgetExtendMapper memDashboardWidgetMapper;
 
     @Autowired
     private ViewMapper viewMapper;
@@ -534,7 +534,9 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
             }
 
             ids.add(create.getWidgetId());
-            MemDashboardWidget memDashboardWidget = new MemDashboardWidget().createdBy(user.getId());
+            MemDashboardWidget memDashboardWidget = new MemDashboardWidget();
+            memDashboardWidget.setCreateBy(user.getId());
+            memDashboardWidget.setCreateTime(new Date());
             BeanUtils.copyProperties(create, memDashboardWidget);
             memDashboardWidgetList.add(memDashboardWidget);
         }
@@ -596,7 +598,8 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 				throw new ServerException("Invalid widget id");
 			}
 
-			m.updatedBy(user.getId());
+            m.setUpdateBy(user.getId());
+            m.setUpdateTime(new Date());
 
 			memDashboardWidgetList.add(m);
 			rolesMap.put(m.getId(), m.getRoleIds());
@@ -629,7 +632,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     @Transactional
     public boolean deleteMemDashboardWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
         
-    	MemDashboardWidget dashboardWidget = memDashboardWidgetMapper.getById(relationId);
+    	MemDashboardWidget dashboardWidget = memDashboardWidgetMapper.selectByPrimaryKey(relationId);
         
     	if (null == dashboardWidget) {
             optLogger.warn("MemDashboardWidget({}) is not found", relationId);
@@ -657,7 +660,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
         relRoleDashboardWidgetMapper.deleteByMemDashboardWidgetId(relationId);
 
-        if (memDashboardWidgetMapper.deleteById(relationId) <= 0) {
+        if (memDashboardWidgetMapper.deleteByPrimaryKey(relationId) <= 0) {
             throw new ServerException("Delete dashboardWidget fail");
         }
         

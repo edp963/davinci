@@ -139,7 +139,7 @@ public class OrganizationController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("avatar file can not be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Avatar file can not be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -305,32 +305,6 @@ public class OrganizationController extends BaseController {
     }
 
 
-//    /**
-//     * 成员确认邀请
-//     *
-//     * @param request
-//     * @return
-//     */
-//    @ApiOperation(value = "member confirm invite")
-//    @AuthIgnore
-//    @PostMapping("/confirminvite/{token}")
-//    public ResponseEntity confirmInvite(@PathVariable("token") String token,
-//                                        HttpServletRequest request) {
-//        if (StringUtils.isEmpty(token)) {
-//            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be EMPTY");
-//            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-//        }
-//        try {
-//            ResultMap resultMap = organizationService.confirmInviteNoLogin(token);
-//            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error(e.getMessage());
-//            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-//        }
-//    }
-
-
     /**
      * 成员确认邀请
      *
@@ -344,7 +318,7 @@ public class OrganizationController extends BaseController {
                                         @ApiIgnore @CurrentUser User user,
                                         HttpServletRequest request) {
         if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         OrganizationInfo organizationInfo = organizationService.confirmInvite(token, user);

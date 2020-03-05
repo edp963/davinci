@@ -23,10 +23,30 @@ import lombok.ToString;
 
 import java.util.List;
 
-import edp.davinci.server.model.MemDashboardWidget;
+import javax.validation.constraints.Min;
+
+import edp.davinci.core.dao.entity.MemDashboardWidget;
 
 @Data
 @ToString(callSuper = true)
 public class MemDashboardWidgetDTO extends MemDashboardWidget {
-    private List<Long> roleIds;
+
+	@Min(value = 1L, message = "Invalid id")
+	private Long id;
+
+	@Min(value = 1L, message = "Invalid dashboard id")
+	private Long dashboardId;
+
+	@Min(value = 1L, message = "Invalid widget id")
+	private Long widgetId;
+
+	@Min(value = 0, message = "Invalid width")
+	private Integer width;
+
+	@Min(value = 0, message = "Invalid height")
+	private Integer height;
+
+	private Boolean polling = false;
+
+	private List<Long> roleIds;
 }

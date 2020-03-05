@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import edp.davinci.core.dao.entity.Dashboard;
-import edp.davinci.server.model.MemDashboardWidget;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
 import edp.davinci.server.model.View;
 
 @Data

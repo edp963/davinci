@@ -17,28 +17,28 @@
  *
  */
 
-package edp.davinci.server.model;
+package edp.davinci.core.enums;
 
-import lombok.Data;
+/**
+ * Created by IntelliJ IDEA.
+ *
+ * @Author daemon
+ * @Date 19/5/30 10:13
+ * To change this template use File | Settings | File Templates.
+ */
+public enum DownloadRecordStatusEnum {
+    PROCESSING((short) 1),
+    SUCCESS((short) 2),
+    FAILED((short) 3),
+    DOWNLOADED((short) 4);
 
-import java.util.Date;
+    private short status;
 
-@Data
-public class Favorite {
-    private Long id;
-
-    private Long userId;
-
-    private Long projectId;
-
-    private Date createTime;
-
-    public Favorite() {
+    private DownloadRecordStatusEnum(short status) {
+        this.status = status;
     }
 
-    public Favorite(Long userId, Long projectId) {
-        this.userId = userId;
-        this.projectId = projectId;
-        this.createTime = new Date();
+    public short getStatus() {
+        return status;
     }
 }

@@ -20,18 +20,18 @@
 package edp.davinci.server.service.impl;
 
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.DownloadRecord;
+import edp.davinci.core.enums.DownloadRecordStatusEnum;
 import edp.davinci.server.component.excel.ExecutorUtil;
 import edp.davinci.server.component.excel.MsgWrapper;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.component.excel.WorkBookContext;
-import edp.davinci.server.dao.DownloadRecordMapper;
+import edp.davinci.server.dao.DownloadRecordExtendMapper;
 import edp.davinci.server.dao.UserMapper;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.ActionEnum;
-import edp.davinci.server.enums.DownloadTaskStatusType;
 import edp.davinci.server.enums.DownloadType;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.DownloadRecord;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.DownloadService;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +54,7 @@ import java.util.List;
 public class DownloadServiceImpl extends DownloadCommonService implements DownloadService {
 
     @Autowired
-    private DownloadRecordMapper downloadRecordMapper;
+    private DownloadRecordExtendMapper downloadRecordMapper;
 
     @Autowired
     private UserMapper userMapper;
@@ -80,14 +80,14 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
             throw new UnAuthorizedExecption();
         }
 
-        DownloadRecord record = downloadRecordMapper.getById(id);
+        DownloadRecord record = downloadRecordMapper.selectByPrimaryKey(id);
 
         if (!record.getUserId().equals(user.getId())) {
             throw new UnAuthorizedExecption();
         }
 
         record.setLastDownloadTime(new Date());
-        record.setStatus(DownloadTaskStatusType.DOWNLOADED.getStatus());
+        record.setStatus(DownloadRecordStatusEnum.DOWNLOADED.getStatus());
         downloadRecordMapper.updateById(record);
         return record;
     }
@@ -100,7 +100,7 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
             record.setName(getDownloadFileName(type, id));
             record.setUserId(user.getId());
             record.setCreateTime(new Date());
-            record.setStatus(DownloadTaskStatusType.PROCESSING.getStatus());
+            record.setStatus(DownloadRecordStatusEnum.PROCESSING.getStatus());
             downloadRecordMapper.insert(record);
             MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.DOWNLOAD, record.getId());
 
@@ -114,9 +114,9 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
 
             ExecutorUtil.submitWorkbookTask(workBookContext, null);
 
-            log.info("Download task submit: {}", wrapper);
+            log.info("Download task submit:{}", wrapper);
         } catch (Exception e) {
-            log.error("submit download task error,e=", e);
+            log.error("Submit download task error, e=", e);
             return false;
         }
         return true;

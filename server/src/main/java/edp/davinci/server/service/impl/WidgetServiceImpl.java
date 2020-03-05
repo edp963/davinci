@@ -20,8 +20,8 @@
 package edp.davinci.server.service.impl;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.dao.MemDashboardWidgetMapper;
-import edp.davinci.server.dao.MemDisplaySlideWidgetMapper;
+import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
+import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
 import edp.davinci.server.dao.ViewMapper;
 import edp.davinci.server.dao.WidgetMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
@@ -89,10 +89,10 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
     private ViewMapper viewMapper;
 
     @Autowired
-    private MemDashboardWidgetMapper memDashboardWidgetMapper;
+    private MemDashboardWidgetExtendMapper memDashboardWidgetMapper;
 
     @Autowired
-    private MemDisplaySlideWidgetMapper memDisplaySlideWidgetMapper;
+    private MemDisplaySlideWidgetExtendMapper memDisplaySlideWidgetExtendMapper;
 
     @Autowired
     private ShareService shareService;
@@ -300,7 +300,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
        checkDeletePermission(entity, widget.getProjectId(), user);
 
         memDashboardWidgetMapper.deleteByWidget(id);
-        memDisplaySlideWidgetMapper.deleteByWidget(id);
+        memDisplaySlideWidgetExtendMapper.deleteByWidget(id);
         widgetMapper.deleteById(id);
         
         optLogger.info("widget ( {} ) delete by user( :{} )", widget.toString(), user.getId());

@@ -52,19 +52,19 @@ public interface DisplayExtendMapper extends DisplayMapper {
     int update(Display display);
 
     @Select({
-            "SELECT ",
+            "select ",
             "	d.*,",
             "	p.id 'project.id',",
             "	p.`name` 'project.name',",
             "	p.description 'project.description',",
             "	p.pic 'project.pic',",
-            "	p.org_id 'project.orgId',",
-            "	p.user_id 'project.userId',",
+            "	p.org_id 'project.orgid',",
+            "	p.user_id 'project.userid',",
             "	p.visibility 'p.visibility'",
-            "FROM",
+            "from",
             "	display d ",
-            "	LEFT JOIN project p on d.project_id = p.id",
-            "WHERE d.id = #{id}",
+            "	left join project p on d.project_id = p.id",
+            "where d.id = #{id}",
     })
     DisplayWithProject getDisplayWithProjectById(@Param("id") Long id);
 
@@ -75,8 +75,8 @@ public interface DisplayExtendMapper extends DisplayMapper {
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
 
     @Select({
-            "SELECT max(REPLACE(`name`,'${name}','')) ",
-            "FROM display WHERE project_id = #{projectId} and `name` REGEXP CONCAT('${name}','[0-9]+')"
+            "select max(replace(`name`,'${name}','')) ",
+            "from display where project_id = #{projectId} and `name` regexp concat('${name}','[0-9]+')"
     })
     Integer selectMaxNameOrderByName(@Param("name") String name, @Param("projectId") Long projectId);
 }

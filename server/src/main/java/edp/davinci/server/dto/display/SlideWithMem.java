@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import edp.davinci.core.dao.entity.DisplaySlide;
-import edp.davinci.server.model.MemDisplaySlideWidget;
+import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
 import edp.davinci.server.model.View;
 import edp.davinci.server.model.Widget;
 

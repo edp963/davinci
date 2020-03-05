@@ -20,33 +20,39 @@
 package edp.davinci.server.dao;
 
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Component;
 
-import edp.davinci.server.model.Favorite;
+import edp.davinci.core.dao.FavoriteMapper;
+import edp.davinci.core.dao.entity.Favorite;
 
 import java.util.List;
 
 @Component
-public interface FavoriteMapper {
+public interface FavoriteExtendMapper extends FavoriteMapper {
 
+    @Insert({
+        "insert ignore into favorite (id, user_id, ",
+        "project_id, create_time)",
+        "values (#{id,jdbcType=BIGINT}, #{userId,jdbcType=BIGINT}, ",
+        "#{projectId,jdbcType=BIGINT}, #{createTime,jdbcType=TIMESTAMP})"
+    })
     int insert(Favorite favorite);
 
-    @Delete({"delete from favorite where id = #{id,jdbcType=BIGINT}"})
-    int deleteById(Long id);
-
-    @Delete({"delete from favorite where id = #{id,jdbcType=BIGINT}"})
-    int delete(@Param("userId") Long userId, @Param("projectId") Long projectId);
-
-    @Select({
-            "select",
-            "id, user_id, project_id, create_time",
-            "from favorite",
-            "where id = #{id,jdbcType=BIGINT}"
+    @Delete({
+    	"<script>",
+    	"	delete from favorite where `user_id` = #{userId}" + 
+    	"		<if test='list != null and list.size > 0'>" + 
+    	"			and `project_id` in" + 
+    	"		<foreach collection='list' index='index' item='item' open='(' close=')' separator=','>" + 
+    	"			#{item}" + 
+    	"		</foreach>" + 
+    	"		</if>" + 
+    	"		<if test='list == null or list.size == 0'>" + 
+    	"			and 1=0" + 
+    	"		</if>",
+    	"</script>"
     })
-    Favorite selectById(Long id);
-
-
     int deleteBatch(@Param("list") List<Long> list, @Param("userId") Long userId);
 }

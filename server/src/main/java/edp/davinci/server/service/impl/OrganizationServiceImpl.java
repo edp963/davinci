@@ -21,6 +21,7 @@ package edp.davinci.server.service.impl;
 
 import edp.davinci.commons.util.AESUtils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.organization.*;
@@ -32,7 +33,6 @@ import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.MailContent;
-import edp.davinci.server.model.Organization;
 import edp.davinci.server.model.Project;
 import edp.davinci.server.model.RelUserOrganization;
 import edp.davinci.server.model.TokenEntity;
@@ -65,7 +65,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     private RelUserOrganizationMapper relUserOrganizationMapper;
 
     @Autowired
-    public OrganizationMapper organizationMapper;
+    public OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
     private UserMapper userMapper;
@@ -92,7 +92,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
     @Override
     public boolean isExist(String name, Long id, Long scopeId) {
-        Long orgId = organizationMapper.getIdByName(name);
+        Long orgId = organizationExtendMapper.getIdByName(name);
         if (null != id && null != orgId) {
             return !id.equals(orgId);
         }
@@ -119,18 +119,26 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		if (lock != null && !lock.getLock()) {
 			alertNameTaken(entity, name);
 		}
+		
+		Long userId = user.getId();
     	
     	try {
     		//新增组织
-            Organization organization = new Organization(organizationCreate.getName(), organizationCreate.getDescription(), user.getId());
-            if (organizationMapper.insert(organization) <= 0) {
-            	log.info("create organization error");
-                throw new ServerException("create organization error");
+            Organization organization = new Organization();
+            organization.setName(organizationCreate.getName());
+            organization.setDescription(organizationCreate.getDescription());
+            organization.setMemberPermission((short)1);
+            organization.setUserId(userId);
+            organization.setCreateBy(userId);
+            organization.setCreateTime(new Date());
+
+            if (organizationExtendMapper.insert(organization) <= 0) {
+                throw new ServerException("Create organization error");
             }
             
-            optLogger.info("organization ({}) create by (:{})", organization.toString(), user.getId());
+            optLogger.info("Organization({}) create by user({})", organization.getId(), userId);
             //用户-组织 建立关联
-            RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), user.getId(), UserOrgRoleEnum.OWNER.getRole());
+            RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), userId, UserOrgRoleEnum.OWNER.getRole());
             relUserOrganizationMapper.insert(relUserOrganization);
             
             OrganizationBaseInfo organizationBaseInfo = new OrganizationBaseInfo();
@@ -177,12 +185,11 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 	        organization.setUpdateBy(user.getId());
 	        organization.setUpdateTime(new Date());
 
-	        if (organizationMapper.update(organization) <= 0) {
-	        	log.info("update organization error");
-	            throw new ServerException("update organization error");
+	        if (organizationExtendMapper.update(organization) <= 0) {
+	            throw new ServerException("Update organization error");
 	        }
 
-	        optLogger.info("organization ({}) is update by (:{}), origin: ({})", organization.toString(), user.getId(), origin);
+	        optLogger.info("Organization({}) is update by user({}), origin:{}", organization.getId(), user.getId(), origin);
 	        return true;
 
 		}finally {
@@ -191,10 +198,10 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     }
     
     private Organization getOrganization(Long id) {
-        Organization organization = organizationMapper.getById(id);
+        Organization organization = organizationExtendMapper.selectByPrimaryKey(id);
         if (null == organization) {
-        	log.info("organization(:{}) is not found", id);
-            throw new NotFoundException("organization is not found");
+        	log.error("Organization({}) is not found", id);
+            throw new NotFoundException("Organization is not found");
         }
         return organization;
     }
@@ -203,7 +210,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		RelUserOrganization rel = relUserOrganizationMapper.getRel(userId, id);
 		if (!organization.getUserId().equals(userId)
 				&& (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
-			throw new UnAuthorizedExecption("you have not permission to " + operation + " this organization");
+			throw new UnAuthorizedExecption("You have not permission to " + operation + " this organization");
 		}
 	}
 
@@ -226,7 +233,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
         //校验文件是否图片
         if (!fileUtils.isImage(file)) {
-            throw new ServerException("file format error");
+            throw new ServerException("File format error");
         }
 
         //上传文件
@@ -235,11 +242,11 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         try {
             avatar = fileUtils.upload(file, Constants.ORG_AVATAR_PATH, fileName);
             if (StringUtils.isEmpty(avatar)) {
-                throw new ServerException("organization avatar upload error");
+                throw new ServerException("Organization avatar upload error");
             }
         } catch (Exception e) {
-            log.error("uploadAvatar: organization({}) avatar upload error, error: {}", organization.getName(), e.getMessage());
-            throw new ServerException("organization avatar upload error");
+            log.error("Organization({}) avatar upload error, e:{}", organization.getName(), e.getMessage());
+            throw new ServerException("Organization avatar upload error");
         }
 
         //删除原头像
@@ -252,8 +259,8 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         organization.setUpdateTime(new Date());
         organization.setUpdateBy(user.getId());
 
-        if (organizationMapper.update(organization) <= 0) {
-            throw new ServerException("organization avatar update fail");
+        if (organizationExtendMapper.update(organization) <= 0) {
+            throw new ServerException("Organization avatar update fail");
         }
         
         Map<String, String> map = new HashMap<>();
@@ -281,15 +288,15 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         //校验组织下是否有项目
         List<Project> projectList = projectMapper.getByOrgId(id);
         if (!CollectionUtils.isEmpty(projectList)) {
-            log.info("There is at least one project under the organization({}), it is can not be deleted", organization.getId());
+            log.error("There is at least one project under the organization({}), it is can not be deleted", organization.getId());
             throw new ServerException("There is at least one project under this organization, it is can not be deleted");
         }
 
         relUserOrganizationMapper.deleteByOrgId(id);
         roleMapper.deleteByOrg(id);
-        organizationMapper.deleteById(id);
+        organizationExtendMapper.deleteByPrimaryKey(id);
 
-        optLogger.info("organization ({}) is delete by (:{})", organization.toString(), user.getId());
+        optLogger.info("Organization({}) is delete by user({})", organization.getId(), user.getId());
         return true;
     }
 
@@ -325,7 +332,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
      */
     @Override
     public List<OrganizationInfo> getOrganizations(User user) {
-        List<OrganizationInfo> organizationInfos = organizationMapper.getOrganizationByUser(user.getId());
+        List<OrganizationInfo> organizationInfos = organizationExtendMapper.getOrganizationByUser(user.getId());
         organizationInfos.forEach(o -> {
             if (o.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
                 o.setAllowCreateProject(true);
@@ -369,18 +376,18 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         // 验证用户权限，只有organization的owner可以邀请
         RelUserOrganization relOwner = relUserOrganizationMapper.getRel(user.getId(), orgId);
         if (null == relOwner || relOwner.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
-            throw new UnAuthorizedExecption("you cannot invite anyone to join this orgainzation, cause you are not the owner of this orginzation");
+            throw new UnAuthorizedExecption("You can not invite anyone to join this orgainzation, cause you are not the owner of this orginzation");
         }
 
         //验证被邀请用户是否已经加入
         RelUserOrganization rel = relUserOrganizationMapper.getRel(memId, orgId);
         if (null != rel) {
-            throw new ServerException("the invitee is already a member of the this organization");
+            throw new ServerException("The invitee is already a member of  this organization");
         }
 
         //校验邮箱
         if (StringUtils.isEmpty(user.getEmail())) {
-            throw new ServerException("The email address of the invitee is EMPTY");
+            throw new ServerException("The email address of the invitee is empty");
         }
 
         /**
@@ -433,13 +440,13 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		String tokenUserName = tokenUtils.getUsername(token);
 		String tokenPassword = tokenUtils.getPassword(token);
 		if (StringUtils.isEmpty(tokenUserName) || StringUtils.isEmpty(tokenPassword)) {
-			log.error("confirmInvite error: token detail id EMPTY");
-			throw new ServerException("username or password cannot be EMPTY");
+			log.error("ConfirmInvite error: token detail id empty");
+			throw new ServerException("Username or password cannot be empty");
 		}
 
 		String[] ids = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
 		if (ids.length != 3) {
-			log.info("confirmInvite error: invalid token username");
+			log.error("ConfirmInvite error: invalid token username");
 			throw new ServerException("Invalid Token");
 		}
 
@@ -447,18 +454,18 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		Long memeberId = Long.parseLong(ids[1]);
 		Long orgId = Long.parseLong(ids[2]);
 		if (!user.getId().equals(memeberId)) {
-			log.info("confirmInvite error: invalid token member, username is wrong");
-			throw new ServerException("username is wrong");
+			log.error("ConfirmInvite error: invalid token member, username is wrong");
+			throw new ServerException("Username is wrong");
 		}
 
 		if (!user.getPassword().equals(tokenPassword)) {
-			log.info("confirmInvite error: invalid token password");
-			throw new ServerException("password is wrong");
+			log.error("ConfirmInvite error: invalid token password");
+			throw new ServerException("Password is wrong");
 		}
 
 		User inviter = userMapper.getById(inviterId);
 		if (null == inviter) {
-			log.info("confirmInvite error: invalid token inviter");
+			log.error("ConfirmInvite error: invalid token inviter");
 			throw new ServerException("Invalid Token");
 		}
 
@@ -468,7 +475,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
 		RelUserOrganization tokenRel = relUserOrganizationMapper.getRel(inviterId, orgId);
 		if (null != tokenRel && tokenRel.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
-			log.info("confirmInvite error: invalid token inviter permission");
+			log.info("ConfirmInvite error: invalid token inviter permission");
 			throw new ServerException("Invalid Token");
 		}
 
@@ -477,12 +484,12 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		RelUserOrganization rel = new RelUserOrganization(orgId, memeberId, UserOrgRoleEnum.MEMBER.getRole());
 
 		if (relUserOrganizationMapper.insert(rel) <= 0) {
-			throw new ServerException("unknown fail");
+			throw new ServerException("Unknown fail");
 		}
 
 		// 修改成员人数
 		organization.setMemberNum(organization.getMemberNum() + 1);
-		organizationMapper.updateMemberNum(organization);
+		organizationExtendMapper.updateMemberNum(organization);
 		organizationInfo.setRole(rel.getRole());
 		return organizationInfo;
     }
@@ -505,13 +512,13 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		String tokenPassword = tokenUtils.getPassword(token);
 
 		if (StringUtils.isEmpty(tokenUserName) || StringUtils.isEmpty(tokenPassword)) {
-			log.error("confirmInvite error: token detail id EMPTY");
+			log.error("ConfirmInvite error: token detail id empty");
 			throw new ServerException("Invalid Token");
 		}
 
 		String[] ids = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
 		if (ids.length != 3) {
-			log.error("confirmInvite error: invalid token username");
+			log.error("ConfirmInvite error: invalid token username");
 			throw new ServerException("Invalid Token");
 		}
 
@@ -520,7 +527,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		Long orgId = Long.parseLong(ids[2]);
 		User inviter = userMapper.getById(inviterId);
 		if (null == inviter) {
-			log.error("confirmInvite error: invalid token inviter");
+			log.error("ConfirmInvite error: invalid token inviter");
 			throw new ServerException("Invalid Token");
 		}
 
@@ -528,13 +535,13 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
 		RelUserOrganization tokenRel = relUserOrganizationMapper.getRel(inviterId, orgId);
 		if (null != tokenRel && tokenRel.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
-			log.info("confirmInvite error: invalid token inviter permission");
+			log.error("ConfirmInvite error: invalid token inviter permission");
 			throw new ServerException("Invalid Token");
 		}
 
 		User member = userMapper.getById(memeberId);
 		if (null == member) {
-			throw new NotFoundException("user is not found");
+			throw new NotFoundException("User is not found");
 		}
 
 		isJoined(memeberId, orgId);
@@ -543,7 +550,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		relUserOrganizationMapper.insert(rel);
 		// 修改成员人数
 		organization.setMemberNum(organization.getMemberNum() + 1);
-		organizationMapper.updateMemberNum(organization);
+		organizationExtendMapper.updateMemberNum(organization);
 	}
 
     /**
@@ -559,7 +566,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
     	RelUserOrganization rel = relUserOrganizationMapper.getById(relationId);
         if (null == rel) {
-            throw new ServerException("this member are no longer member of the organization");
+            throw new ServerException("This member is no longer the member of the organization");
         }
 
         Long orgId = rel.getOrgId();
@@ -568,28 +575,28 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
         Organization organization = getOrganization(orgId);
         if (organization.getUserId().equals(rel.getUserId())) {
-            throw new UnAuthorizedExecption("you have not permission delete the creator of the organization");
+            throw new UnAuthorizedExecption("You have not permission delete the creator of the organization");
         }
 
         if (rel.getUserId().equals(user.getId())) {
-            throw new ServerException("you cannot delete yourself in this organization");
+            throw new ServerException("You can not delete yourself in this organization");
         }
 
         if (relUserOrganizationMapper.deleteById(relationId) <= 0) {
-            throw new ServerException("unknown fail");
+            throw new ServerException("Unknown fail");
         }
         
 		// 更新组织成员数量
 		int memberNum = organization.getMemberNum();
 		organization.setMemberNum(memberNum > 0 ? memberNum - 1 : memberNum);
-		organizationMapper.updateMemberNum(organization);
+		organizationExtendMapper.updateMemberNum(organization);
 		return true;
     }
     
     private void checkOwner(Long userId, Long orgId, String operation) {
         RelUserOrganization ownerRel = relUserOrganizationMapper.getRel(userId, orgId);
         if (null != ownerRel && ownerRel.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
-            throw new UnAuthorizedExecption("you cannot " +operation+ " any member of this organization, cause you are not the owner of this ordination");
+            throw new UnAuthorizedExecption("You can not " +operation+ " any member of this organization, cause you are not the owner of this ordination");
         }
     }
 
@@ -624,12 +631,12 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
         //不可以更改自己的权限
         if (user.getId().equals(rel.getUserId())) {
-            throw new ServerException("you cannot change your own role");
+            throw new ServerException("You cannot change your own role");
         }
 
         //不需要更改
         if ((int) rel.getRole() == role) {
-            throw new ServerException("this member does not need to change role");
+            throw new ServerException("This member does not need to change role");
         }
 
         String origin = rel.toString();
@@ -637,10 +644,10 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         rel.setRole(userOrgRoleEnum.getRole());
         rel.updatedBy(user.getId());
         if (relUserOrganizationMapper.updateMemberRole(rel) <= 0) {
-            throw new ServerException("unknown fail");
+            throw new ServerException("Unknown fail");
         }
 
-        optLogger.info("RelUserOrganization ({}) is update by (:{}), origin", rel.toString(), user.getId(), origin);
+        optLogger.info("RelUserOrganization({}) is update by user({}), origin:{}", rel.toString(), user.getId(), origin);
         return true;
     }
 }
