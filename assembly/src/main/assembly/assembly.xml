@@ -20,7 +20,7 @@
 
 
 <assembly>
-    <id>dist-beta.8</id>
+    <id>dist-beta.9</id>
     <formats>
         <format>zip</format>
     </formats>

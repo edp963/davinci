@@ -74,7 +74,6 @@ import {
   drillPathsetting,
   selectDashboardItemChart,
   setSelectOptions,
-  globalControlChange,
   monitoredSyncDataAction,
   monitoredSearchDataAction,
   monitoredLinkageDataAction
@@ -161,7 +160,7 @@ export interface IDashboardItemInfo {
   rendered: boolean
   renderType: RenderType
   controlSelectOptions: IMapControlOptions
-  selectedItems?: number[]
+  selectedItems: number[]
   errorMessage: string
 }
 
@@ -242,7 +241,6 @@ interface IGridProps {
   onDrillPathSetting: (itemId: number, history: any[]) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
   onSelectDashboardItemChart: (itemId: number, renderType: string, selectedItems: number[]) => void
-  onGlobalControlChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
   onMonitoredSyncDataAction: () => any
   onMonitoredSearchDataAction: () => any
   onMonitoredLinkageDataAction: () => any
@@ -1161,15 +1159,11 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     }
   }
 
-  private globalControlChange = (controlRequestParamsByItem: IMapItemControlRequestParams) => {
-    this.props.onGlobalControlChange(controlRequestParamsByItem)
-  }
-
-  private globalControlSearch = (itemIds: number[], controlRequestParamsByItem?: IMapItemControlRequestParams) => {
+  private globalControlSearch = (requestParamsByItem: IMapItemControlRequestParams) => {
     const { currentItems, widgets, currentItemsInfo, onMonitoredSearchDataAction } = this.props
 
-    itemIds.forEach((itemId) => {
-      const item = currentItems.find((ci) => ci.id === itemId)
+    Object.entries(requestParamsByItem).forEach(([itemId, requestParams]) => {
+      const item = currentItems.find((ci) => ci.id === Number(itemId))
 
       if (item) {
         const widget = widgets.find((w) => w.id === item.widgetId)
@@ -1193,16 +1187,13 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           message.error(error)
         }
 
-        let queryConditions: Partial<IQueryConditions> = {}
-        if (controlRequestParamsByItem && controlRequestParamsByItem[itemId]) {
-          const { filters: globalFilters, variables: globalVariables } = controlRequestParamsByItem[itemId]
-          queryConditions = {
-            ...globalFilters && { globalFilters },
-            ...globalVariables && { globalVariables }
-          }
+        const { filters: globalFilters, variables: globalVariables } = requestParams
+        const queryConditions = {
+          ...globalFilters && { globalFilters },
+          ...globalVariables && { globalVariables }
         }
 
-        this.getChartData('rerender', itemId, item.widgetId, {
+        this.getChartData('rerender', Number(itemId), item.widgetId, {
           pagination,
           nativeQuery: noAggregators,
           ...queryConditions
@@ -1281,7 +1272,9 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       currentItemsInfo,
       onDrillDashboardItem
     } = this.props
-    const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
+    const { itemId, groups, widgetId, sourceDataFilter, mode, col, row} = e
+    const sourceDataGroup = [...(e.sourceDataGroup as Array<string>)]
+    
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired, model } = widgetConfig
@@ -1359,7 +1352,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
              // coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
             }
           }
-          const drillKey = sourceDataFilter[sourceDataFilter.length - 1]['key']
+         // const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : ''
+          const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
           const newWidgetPropCols = widgetConfigCols.reduce((array, col) => {
             array.push(col)
             if (col.name === drillKey) {
@@ -1368,6 +1362,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
             return array
           }, [])
           currentCol = groups && groups.length ? newWidgetPropCols : void 0
+         
         }
       }
       filterSource = sourceDataFilter.map((source) => {
@@ -1449,7 +1444,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           sqls = sqls.concat(coustomTableSqls)
         }
         if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
-          const drillKey = sourceDataFilter[sourceDataFilter.length - 1]['key']
+          const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
           const cols = lastDrillHistory.col
           const newWidgetPropCols = cols.reduce((array, col) => {
             array.push(col)
@@ -1717,7 +1712,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
               onDrillPathData={this.onDrillPathData}
               onSelectChartsItems={this.selectChartsItems}
               onGetControlOptions={this.getOptions}
-              selectedItems={selectedItems || []}
+              selectedItems={selectedItems}
               monitoredSyncDataAction={this.props.onMonitoredSyncDataAction}
               monitoredSearchDataAction={this.props.onMonitoredSearchDataAction}
               ref={(f) => this[`dashboardItem${id}`] = f}
@@ -1831,7 +1826,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
             currentItems={currentItems}
             onGetOptions={this.getOptions}
             mapOptions={currentDashboardSelectOptions}
-            onChange={this.globalControlChange}
             onSearch={this.globalControlSearch}
           />
         </Container.Title>
@@ -1919,7 +1913,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
               currentItemsInfo={currentItemsInfo}
               currentDashboard={currentDashboard}
               mapOptions={currentDashboardSelectOptions}
-              onChange={this.globalControlChange}
               onSearch={this.globalControlSearch}
               onGetControlOptions={this.getOptions}
               visible={allowFullScreen}
@@ -1979,7 +1972,6 @@ export function mapDispatchToProps (dispatch) {
     onDrillPathSetting: (itemId, history) => dispatch(drillPathsetting(itemId, history)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index)),
     onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems)),
-    onGlobalControlChange: (controlRequestParamsByItem) => dispatch(globalControlChange(controlRequestParamsByItem)),
     onMonitoredSyncDataAction: () => dispatch(monitoredSyncDataAction()),
     onMonitoredSearchDataAction: () => dispatch(monitoredSearchDataAction()),
     onMonitoredLinkageDataAction: () => dispatch(monitoredLinkageDataAction())

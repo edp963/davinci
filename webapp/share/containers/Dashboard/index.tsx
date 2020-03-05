@@ -60,7 +60,6 @@ import {
   deleteDrillHistory,
   setSelectOptions,
   selectDashboardItemChart,
-  globalControlChange,
   loadDownloadList,
   downloadFile,
   initiateDownloadTask,
@@ -152,7 +151,6 @@ interface IDashboardProps {
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
   onSelectDashboardItemChart: (itemId: number, renderType: string, selectedItems: number[]) => void
-  onGlobalControlChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
   onInitiateDownloadTask: (shareClientId: string, dataToken: string, type: DownloadTypes, downloadParams?: IDataDownloadParams[], itemId?: number) => void
   onLoadDownloadList: (shareClientId: string, token: string) => void
   onDownloadFile: (id: number, shareClientId: string, token: string) => void
@@ -238,7 +236,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       })
     }
   }
-  public componentWillMount () {
+
+  public componentDidMount () {
     // urlparse
     const qs = this.querystring(location.href.substr(location.href.indexOf('?') + 1))
     this.setState({
@@ -250,9 +249,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     delete qs.type
     delete qs.shareInfo
     this.props.onSendShareParams(qs)
-  }
-
-  public componentDidMount () {
     window.addEventListener('resize', this.onWindowResize, false)
   }
 
@@ -646,16 +642,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }
   }
 
-
-  private globalControlChange = (controlRequestParamsByItem: IMapItemControlRequestParams) => {
-    this.props.onGlobalControlChange(controlRequestParamsByItem)
-  }
-
-  private globalControlSearch = (itemIds: number[], controlRequestParamsByItem?: IMapItemControlRequestParams) => {
+  private globalControlSearch = (requestParamsByItem: IMapItemControlRequestParams) => {
     const { currentItems, widgets, currentItemsInfo } = this.props
 
-    itemIds.forEach((itemId) => {
-      const item = currentItems.find((ci) => ci.id === itemId)
+    Object.entries(requestParamsByItem).forEach(([itemId, requestParams]) => {
+      const item = currentItems.find((ci) => ci.id === Number(itemId))
 
       if (item) {
         const widget = widgets.find((w) => w.id === item.widgetId)
@@ -679,16 +670,13 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           message.error(error)
         }
 
-        let queryConditions: Partial<IQueryConditions> = {}
-        if (controlRequestParamsByItem && controlRequestParamsByItem[itemId]) {
-          const { filters: globalFilters, variables: globalVariables } = controlRequestParamsByItem[itemId]
-          queryConditions = {
-            ...globalFilters && { globalFilters },
-            ...globalVariables && { globalVariables }
-          }
+        const { filters: globalFilters, variables: globalVariables } = requestParams
+        const queryConditions = {
+          ...globalFilters && { globalFilters },
+          ...globalVariables && { globalVariables }
         }
 
-        this.getChartData('rerender', itemId, item.widgetId, {
+        this.getChartData('rerender', Number(itemId), item.widgetId, {
           pagination,
           nativeQuery: noAggregators,
           ...queryConditions
@@ -1082,7 +1070,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
             visible={allowFullScreen}
             isVisible={this.visibleFullScreen}
             mapOptions={dashboardSelectOptions}
-            onChange={this.globalControlChange}
             onSearch={this.globalControlSearch}
             onGetControlOptions={this.getOptions}
             onGetChartData={this.getChartData}
@@ -1101,7 +1088,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       fullScreenComponent = ''
     }
 
-    loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
+    loginPanel = showLogin ? <Login shareInfo={shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
 
     const headlessBrowserRenderParentNode = document.getElementById('app')
 
@@ -1127,7 +1114,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
             currentItems={currentItems}
             onGetOptions={this.getOptions}
             mapOptions={dashboardSelectOptions}
-            onChange={this.globalControlChange}
             onSearch={this.globalControlSearch}
           />
         </Container.Title>
@@ -1170,7 +1156,6 @@ export function mapDispatchToProps (dispatch) {
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index)),
     onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems)),
-    onGlobalControlChange: (controlRequestParamsByItem) => dispatch(globalControlChange(controlRequestParamsByItem)),
     onInitiateDownloadTask: (shareClientId, id, type, downloadParams?) => dispatch(initiateDownloadTask(shareClientId, id, type, downloadParams)),
     onLoadDownloadList: (shareClinetId, token) => dispatch(loadDownloadList(shareClinetId, token)),
     onDownloadFile: (id, shareClientId, token) => dispatch(downloadFile(id, shareClientId, token)),

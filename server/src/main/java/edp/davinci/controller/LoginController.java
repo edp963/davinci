@@ -82,7 +82,7 @@ public class LoginController {
         User user = userService.userLogin(userLogin);
         if (!user.getActive()) {
             log.info("this user is not active： {}", userLogin.getUsername());
-            ResultMap resultMap = new ResultMap().failWithToken(tokenUtils.generateToken(user)).message("this user is not active");
+            ResultMap resultMap = new ResultMap(tokenUtils).failWithToken(tokenUtils.generateToken(user)).message("this user is not active");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 

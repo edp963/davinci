@@ -66,8 +66,7 @@ interface IFullScreenPanelProps {
   chartDetail: ICurrentDataInFullScreenProps
   currentDashboard: any
   mapOptions: IMapControlOptions
-  onChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
-  onSearch: (itemIds: number[]) => void
+  onSearch: (requestParamsByItem: IMapItemControlRequestParams) => void
 }
 
 interface IFullScreenMenuProps {
@@ -98,8 +97,7 @@ interface IControlProps {
   monitoredSearchDataAction?: () => any
   currentDashboard: any
   mapOptions: IMapControlOptions
-  onChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
-  onSearch: (itemIds: number[]) => void
+  onSearch: (requestParamsByItem: IMapItemControlRequestParams) => void
 }
 
 
@@ -243,7 +241,7 @@ function getWidgetProps (chartDetail: ICurrentDataInFullScreenProps): IWidgetCon
 const Control: React.FC<IControlProps> = Memo(
   ({ visible, chartDetail, onGetOptions, currentItemsInfo,
     monitoredSearchDataAction, onGetChartData, toggleControl,
-    currentItems, currentDashboard, onChange, onSearch, mapOptions,
+    currentItems, currentDashboard, onSearch, mapOptions,
     hasGlobalCtrl, hasLocalCtrl
   }) => {
 
@@ -344,7 +342,6 @@ const Control: React.FC<IControlProps> = Memo(
               currentItems={currentItems}
               onGetOptions={onGetOptions}
               mapOptions={mapOptions}
-              onChange={onChange}
               onSearch={onSearch}
             />
           }    
@@ -358,7 +355,7 @@ const FullScreenPanel: React.FC<IFullScreenPanelProps> = Memo(
   ({ visible, isVisible, chartDetail, widgets, 
     currentItems, currentItemsInfo, onCurrentWidgetInFullScreen,
     onGetControlOptions, monitoredSearchDataAction, onGetChartData,
-    currentDashboard, mapOptions, onChange, onSearch
+    currentDashboard, mapOptions, onSearch
   }) => {
     const fsClassName = classnames({
       [styles.fullScreen]: true,
@@ -458,7 +455,6 @@ const FullScreenPanel: React.FC<IFullScreenPanelProps> = Memo(
               monitoredSearchDataAction={monitoredSearchDataAction}
               currentDashboard={currentDashboard}
               mapOptions={mapOptions}
-              onChange={onChange}
               onSearch={onSearch}
               hasLocalCtrl={hasLocalControl}
               hasGlobalCtrl={hasGlobalControl}

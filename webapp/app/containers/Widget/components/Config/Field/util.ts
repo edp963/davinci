@@ -40,7 +40,10 @@ export function getFieldAlias (fieldConfig: IFieldConfig, queryVariableMap: IQue
     if (queryValue === undefined) {
       vals.push('')
     } else {
-      vals.push(queryValue)
+      vals.push(
+        typeof queryValue === 'number'
+          ? queryValue
+          : queryValue.replace(/^(['"])|(['"])$/g, ''))
     }
   })
 

@@ -20,7 +20,7 @@ CREATE TABLE `cron_job`
     `exec_log`        text COLLATE utf8_unicode_ci,
     `create_by`       bigint(20)                          NOT NULL,
     `create_time`     timestamp                           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `update_by`       varchar(20) COLLATE utf8_unicode_ci          DEFAULT NULL,
+    `update_by`       bigint(20)                                  DEFAULT NULL,
     `update_time`     timestamp                           NULL     DEFAULT NULL,
     `parent_id`       bigint(20)                                   DEFAULT NULL,
     `full_parent_id`  varchar(255) COLLATE utf8_unicode_ci         DEFAULT NULL,

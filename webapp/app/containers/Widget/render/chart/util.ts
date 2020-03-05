@@ -246,26 +246,32 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, metrics
     case 'pie':
     case 'funnel':
       formatter = (params) => {
-        const { name, value, percent, dataIndex } = params
+        const { name, value, percent, dataIndex, data } = params
         const formattedValue = getFormattedValue(value, metrics[metrics.length > 1 ? dataIndex : 0].format)
         const { labelParts } = labelConfig
         if (!labelParts) {
           return `${name}\n${formattedValue}（${percent}%）`
         }
         const labels: string[] = []
+        const multiRate = labelParts
+          .filter((label) => ['percentage', 'conversion', 'arrival'].includes(label))
+          .length > 1
         if (labelParts.includes('dimensionValue')) {
           labels.push(name)
         }
         if (labelParts.includes('indicatorValue')) {
           labels.push(formattedValue)
         }
+        if (labelParts.includes('conversion') && data.conversion) {
+          labels.push(`${multiRate ? '转化率：' : ''}${data.conversion}%`)
+        }
+        if (labelParts.includes('arrival') && data.arrival) {
+          labels.push(`${multiRate ? '到达率：' : ''}${data.arrival}%`)
+        }
         if (labelParts.includes('percentage')) {
-          labels.push(labels.length ? `（${percent}%）` : `${percent}%`)
+          labels.push(`${multiRate ? '百分比：' : ''}${percent}%`)
         }
-        if (labels.length > 1 && labelParts.includes('dimensionValue')) {
-          labels.splice(1, 0, '\n')
-        }
-        return labels.join('')
+        return labels.join('\n')
       }
       break
     case 'radar':

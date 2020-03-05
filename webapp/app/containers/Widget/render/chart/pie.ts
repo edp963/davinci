@@ -23,6 +23,8 @@ import { decodeMetricName, getTextWidth } from '../../components/util'
 import { getLegendOption, getLabelOption } from './util'
 import { EChartOption } from 'echarts'
 import { getFormattedValue } from '../../components/Config/Format'
+import defaultTheme from 'assets/json/echartsThemes/default.project.json'
+const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
@@ -117,18 +119,6 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
           break
       }
 
-      let colorArr = []
-      if (color.items.length) {
-        const colorvaluesObj = color.items[0].config.values
-        for (const keys in colorvaluesObj) {
-          if (colorvaluesObj.hasOwnProperty(keys)) {
-            colorArr.push(colorvaluesObj[keys])
-          }
-        }
-      } else {
-        colorArr = ['#509af2']
-      }
-
       seriesObj = {
         name: '',
         type: 'pie',
@@ -136,23 +126,19 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         center: legend.showLegend
           ? [leftValue, topValue]
           : [width / 2, height / 2],
-        color: colorArr,
         data: seriesData.map((data, index) => {
-          const itemStyleObj =
-            selectedItems &&
-            selectedItems.length &&
-            selectedItems.some((item) => item === index)
-              ? {
-                  itemStyle: {
-                    normal: {
-                      opacity: 1
-                    }
-                  }
-                }
-              : {}
           return {
             ...data,
-            ...itemStyleObj
+            itemStyle: {
+              normal: {
+                ...color.items.length && {
+                  color: color.items[0].config.values[data.name]
+                },
+                opacity: selectedItems && selectedItems.length
+                  ? selectedItems.includes(index) ? 1 : 0.25
+                  : 1
+                }
+            }
           }
         }),
         itemStyle: {
@@ -160,9 +146,6 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
             shadowBlur: 10,
             shadowOffsetX: 0,
             shadowColor: 'rgba(0, 0, 0, 0.5)'
-          },
-          normal: {
-            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
           }
         },
         ...labelOption,
@@ -178,27 +161,21 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       type: 'pie',
       avoidLabelOverlap: false,
       center: [width / 2, height / 2],
-      data: metrics.map((metric) => {
+      data: metrics.map((metric, index) => {
         const decodedMetricName = decodeMetricName(metric.name)
         legendData.push(decodedMetricName)
-
-        const itemStyleObj =
-          selectedItems &&
-          selectedItems.length &&
-          selectedItems.some((item) => item === 0)
-            ? {
-                itemStyle: {
-                  normal: {
-                    opacity: 1
-                  }
-                }
-              }
-            : {}
 
         return {
           name: decodedMetricName,
           value: data.reduce((sum, record) => sum + record[`${metric.agg}(${decodedMetricName})`], 0),
-          ...itemStyleObj
+          itemStyle: {
+            normal: {
+              color: color.value[metric.name] || defaultThemeColors[index % defaultThemeColors.length],
+              opacity: selectedItems && selectedItems.length
+                ? selectedItems.includes(index) ? 1 : 0.25
+                : 1
+            }
+          }
         }
       }),
       itemStyle: {
@@ -206,9 +183,6 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
           shadowBlur: 10,
           shadowOffsetX: 0,
           shadowColor: 'rgba(0, 0, 0, 0.5)'
-        },
-        normal: {
-          opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
         }
       },
       ...labelOption,

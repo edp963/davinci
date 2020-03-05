@@ -31,6 +31,7 @@ import saga from './sagas'
 import { Display } from 'share/containers/Display/Loadable'
 import { Dashboard } from 'share/containers/Dashboard/Loadable'
 import { NotFound } from 'containers/NotFoundPage/Loadable'
+import { setToken } from 'app/utils/request'
 
 export const App: React.FC = () => {
   const history = useHistory()
@@ -40,6 +41,11 @@ export const App: React.FC = () => {
     if (pathname && pathname !== currentPathname) {
       history.push(pathname)
       sessionStorage.removeItem('pathname')
+    }
+
+    const token = localStorage.getItem('TOKEN')
+    if (token) {
+      setToken(token)
     }
   }, [])
 

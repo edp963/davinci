@@ -104,7 +104,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
     @Autowired
     private RelRoleDisplaySlideWidgetMapper relRoleDisplaySlideWidgetMapper;
-    
+
     private static final  CheckEntityEnum entity = CheckEntityEnum.DISPLAYSLIDE;
 
     @Override
@@ -128,7 +128,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
         Long projectId = display.getProjectId();
         checkWritePermission(entity, projectId, user, "create");
-        
+
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
 		if (isDisableDisplay(displayId, projectId, user, projectPermission)) {
 			alertUnAuthorized(entity, user, "create");
@@ -157,7 +157,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
         return displaySlide;
     }
-    
+
 	private Display getDisplay(Long id) {
 		Display display = displayMapper.getById(id);
 		if (null == display) {
@@ -196,7 +196,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		memDisplaySlideWidgetMapper.deleteBySlideId(slideId);
 		relRoleSlideMapper.deleteBySlideId(slideId);
 		displaySlideMapper.deleteById(slideId);
-		
+
 		optLogger.info("display slide ({}) is delete by (:{})", displaySlide.toString(), user.getId());
 		return true;
     }
@@ -214,13 +214,13 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     public boolean updateDisplaySildes(Long displayId, DisplaySlide[] displaySlides, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
     	Display display = getDisplay(displayId);
-        
+
     	Long projectId = display.getProjectId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
 		if (isDisableDisplay(display.getId(), projectId, user, projectPermission)) {
 			alertUnAuthorized(entity, user, "delete");
 		}
-		
+
 		List<Long> disableSlides = getDisableVizs(user.getId(), displayId, null, VizEnum.SLIDE);
 		List<DisplaySlide> displaySlideList = new ArrayList<>();
 		for (DisplaySlide displaySlide : displaySlides) {
@@ -273,7 +273,9 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		List<MemDisplaySlideWidget> list = new ArrayList<>();
 		List<MemDisplaySlideWidget> clist = new ArrayList<>();
 		for (MemDisplaySlideWidgetCreate slideWidgetCreate : slideWidgetCreates) {
-			ids.add(slideWidgetCreate.getWidgetId());
+			if (slideWidgetCreate.getWidgetId() != null && slideWidgetCreate.getWidgetId() > 0L) {
+				ids.add(slideWidgetCreate.getWidgetId());
+			}
 			MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget().createdBy(user.getId());
 			BeanUtils.copyProperties(slideWidgetCreate, memDisplaySlideWidget);
 			list.add(memDisplaySlideWidget);
@@ -294,7 +296,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			log.error("insert batch MemDisplaySlideWidget error displayId:{}, slideId:{}", displayId, slideId);
 			throw new ServerException("addMemDisplaySlideWidgets fail");
 		}
-		
+
 		List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
 		for (MemDisplaySlideWidget memDisplaySlideWidget : list) {
 			MemDisplaySlideWidgetCreate memDisplaySlideWidgetCreate = Arrays
@@ -327,7 +329,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			return list;
 		}
     }
-    
+
     private SlideWithDisplayAndProject getSlideWithDisplayAndProject(Long slideId) {
 
     	SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDispalyAndProjectById(slideId);
@@ -339,7 +341,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         if (null == slideWithDisplayAndProject.getDisplay()) {
             throw new ServerException("display is not found");
         }
-        
+
         return slideWithDisplayAndProject;
     }
 
@@ -372,7 +374,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
         Long projectId = slideWithDisplayAndProject.getProject().getId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
-        
+
 		if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(slideId, displayId, user, projectPermission)) {
 			alertUnAuthorized(entity, user, "update widgets");
 		}
@@ -389,7 +391,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
             log.error("update batch MemDisplaySlideWidget error displayId:{}, slideId:{}", displayId, slideId);
 			throw new ServerException("updateMemDisplaySlideWidgets fail");
         }
-        
+
 		if (!CollectionUtils.isEmpty(rolesMap)) {
 			Set<Long> memDisplaySlideWidgetIds = rolesMap.keySet();
 			relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetIds(memDisplaySlideWidgetIds);
@@ -439,7 +441,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         Long projectId = slideWithDisplayAndProject.getProject().getId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
         checkWritePermission(entity, projectId, user, "update widget");
-        
+
         Long displayId = slideWithDisplayAndProject.getDisplayId();
         if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(slideId, displayId, user, projectPermission)) {
         	alertUnAuthorized(entity, user, "update widget");
@@ -453,11 +455,11 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			log.error("update MemDisplaySlideWidget error slideId:{}", slideId);
             throw new ServerException("updateMemDisplaySlideWidget fail");
         }
-        
+
         optLogger.info("MemDisplaySlideWidget ({}) is update by (:{}), origin:{}", slideWidget.toString(), user.getId(), origin);
         return true;
     }
-    
+
     private MemDisplaySlideWidget getMemDisplaySlideWidget(Long id) {
         MemDisplaySlideWidget widget = memDisplaySlideWidgetMapper.getById(id);
         if (null == widget) {
@@ -481,17 +483,17 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         Long slideId = slideWidget.getDisplaySlideId();
         SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(slideId);
 
-        
+
         Long projectId = slideWithDisplayAndProject.getProject().getId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
         checkWritePermission(entity, projectId, user, "delete widget");
-        
+
         Long displayId = slideWithDisplayAndProject.getDisplayId();
         if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(slideId, displayId, user, projectPermission)) {
         	alertUnAuthorized(entity, user, "delete widget");
         }
-        
-        if (memDisplaySlideWidgetMapper.deleteById(relationId) > 0) {
+
+		if (memDisplaySlideWidgetMapper.deleteById(relationId) <= 0) {
         	log.error("delete MemDisplaySlideWidget error slideId:{}", slideId);
             throw new ServerException("deleteMemDisplaySlideWidget fail");
         }
@@ -514,7 +516,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
         Long projectId = display.getProjectId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
-        
+
 		if (!checkReadPermission(entity, projectId, user)) {
 			return null;
 		}
@@ -584,36 +586,42 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			throw new ServerException("display slide is not found");
 		}
 
-		List<MemDisplaySlideWidget> widgetList = memDisplaySlideWidgetMapper
-				.getMemDisplaySlideWidgetListBySlideId(slideId);
-		if (CollectionUtils.isEmpty(widgetList)) {
-			return null;
-		}
+        List<MemDisplaySlideWidget> memSlideWidgets = memDisplaySlideWidgetMapper.getMemDisplaySlideWidgetListBySlideId(slideId);
+
+        if (CollectionUtils.isEmpty(memSlideWidgets)) {
+            return null;
+        }
 
 		List<Long> disableList = getDisableVizs(user.getId(), display.getId(), null, VizEnum.SLIDE);
 		List<Long> disableMemDisplaySlideWidgets = relRoleDisplaySlideWidgetMapper.getDisableByUser(user.getId());
 
-		Iterator<MemDisplaySlideWidget> iterator = widgetList.iterator();
-		while (iterator.hasNext()) {
-			MemDisplaySlideWidget memDisplaySlideWidget = iterator.next();
-			if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission()
-					&& (disableList.contains(memDisplaySlideWidget.getDisplaySlideId())
-							|| disableMemDisplaySlideWidgets.contains(memDisplaySlideWidget.getId()))) {
-				iterator.remove();
-			}
-		}
+        Iterator<MemDisplaySlideWidget> iterator = memSlideWidgets.iterator();
 
-		Set<Long> widgetIds = widgetList.stream().map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
-		Set<View> views = new HashSet<>();
-		if (!CollectionUtils.isEmpty(widgetIds)) {
-			views = viewMapper.selectByWidgetIds(widgetIds);
-		}
+        while (iterator.hasNext()) {
+            MemDisplaySlideWidget memDisplaySlideWidget = iterator.next();
+            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() &&
+                    (disableList.contains(memDisplaySlideWidget.getDisplaySlideId()) || disableMemDisplaySlideWidgets.contains(memDisplaySlideWidget.getId()))) {
+                iterator.remove();
+            }
+        }
 
-		SlideWithMem slideWithMem = new SlideWithMem();
-		BeanUtils.copyProperties(displaySlide, slideWithMem);
-		slideWithMem.setWidgets(widgetList);
-		slideWithMem.setViews(views);
-		return slideWithMem;
+        Set<Long> widgetIds = memSlideWidgets.stream().map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
+
+
+        Set<View> views = new HashSet<>();
+        List<Widget> widgets = null;
+        if (!CollectionUtils.isEmpty(widgetIds)) {
+            widgets = widgetMapper.getByIds(widgetIds);
+            views = viewMapper.selectByWidgetIds(widgetIds);
+        }
+
+        SlideWithMem slideWithMem = new SlideWithMem();
+        BeanUtils.copyProperties(displaySlide, slideWithMem);
+        slideWithMem.setItems(memSlideWidgets);
+        slideWithMem.setViews(views);
+        slideWithMem.setWidgets(widgets);
+
+        return slideWithMem;
     }
 
     /**
@@ -636,7 +644,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
         Long projectId = slideWithDisplayAndProject.getProject().getId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
-        
+
 		if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission() || isDisableDisplay(displayId, projectId, user, projectPermission)) {
 			alertUnAuthorized(entity, user, "delete widgets");
 		}
@@ -661,15 +669,15 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Override
     @Transactional
     public String uploadSlideBGImage(Long slideId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        
+
     	SlideWithDisplayAndProject slideWithDispaly = getSlideWithDisplayAndProject(slideId);
         Display display = slideWithDispaly.getDisplay();
 
         Long projectId = display.getProjectId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
-        
+
         checkWritePermission(entity, projectId, user, "upload BGImage");
-        
+
        if (isDisableDisplay(display.getId(), projectId, user, projectPermission)) {
     	   alertUnAuthorized(entity, user, "upload BGImage");
        }
@@ -749,10 +757,10 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         }
 
         SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(memDisplaySlideWidget.getDisplaySlideId());
-        
+
         Long projectId = slideWithDisplayAndProject.getProject().getId();
         checkWritePermission(entity, projectId, user, "upload BGImage");
-        
+
         Long displayId = slideWithDisplayAndProject.getDisplayId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
         if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(relationId, displayId, user, projectPermission)) {
