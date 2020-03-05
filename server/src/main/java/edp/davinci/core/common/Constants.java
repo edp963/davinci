@@ -20,13 +20,20 @@
 package edp.davinci.core.common;
 
 import edp.core.consts.Consts;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.regex.Pattern;
 
 /**
  * 常量
  */
+@Component
 public class Constants extends Consts {
+
+    @Value("${server.cluster.id:}")
+    private String clusterId;
 
 
     /**
@@ -149,7 +156,14 @@ public class Constants extends Consts {
 
     public static final String NO_AUTH_PERMISSION = "@DAVINCI_DATA_ACCESS_DENIED@";
 
-    public static final String DAVINCI_TOPIC_CHANNEL = "DAVINCI_TOPIC_CHANNEL";
+    private static String DAVINCI_TOPIC_CHANNEL = "DAVINCI_TOPIC_CHANNEL";
+
+    @PostConstruct
+    public void init() {
+        if (clusterId != null && clusterId.length() > 0) {
+            DAVINCI_TOPIC_CHANNEL += "_" + clusterId;
+        }
+    }
 
 
     public static char getSqlTempDelimiter(String sqlTempDelimiter) {
@@ -166,5 +180,9 @@ public class Constants extends Consts {
         } else {
             return String.format(express, arg, arg);
         }
+    }
+
+    public static String DAVINCI_TOPIC_CHANNEL() {
+        return DAVINCI_TOPIC_CHANNEL;
     }
 }

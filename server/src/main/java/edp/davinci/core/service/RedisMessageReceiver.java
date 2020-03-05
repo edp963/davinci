@@ -20,14 +20,13 @@
 package edp.davinci.core.service;
 
 import edp.core.config.RedisEnableCondition;
+import edp.davinci.core.common.Constants;
 import edp.davinci.core.model.RedisMessageEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
-
-import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 
 @Component
 @Slf4j
@@ -39,7 +38,7 @@ public class RedisMessageReceiver {
 
     public void receive(RedisMessageEntity messageEntity) {
         if (messageEntity != null && messageEntity.getMessage() != null) {
-            log.info("[ Redis ({}) received message, start handle......]", DAVINCI_TOPIC_CHANNEL);
+            log.info("[ Redis ({}) received message, start handle......]", Constants.DAVINCI_TOPIC_CHANNEL());
             RedisMessageHandler handler = (RedisMessageHandler) beanFactory.getBean(messageEntity.getClazz());
             handler.handle(messageEntity.getMessage(), messageEntity.getFlag());
         }
