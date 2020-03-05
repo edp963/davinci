@@ -9,11 +9,11 @@ export function getFormedView (view: IView): IFormedView {
     ...view,
     model: JSON.parse((model || '{}')),
     variable: JSON.parse((variable || '[]')),
-    roles: (roles as IViewRoleRaw[]).map<IViewRole>(({ roleId, columnAuth, rowAuth }) => ({
+    roles: roles ? (roles as IViewRoleRaw[]).map<IViewRole>(({ roleId, columnAuth, rowAuth }) => ({
       roleId,
       columnAuth: JSON.parse(columnAuth || '[]'),
       rowAuth: JSON.parse(rowAuth || '[]')
-    }))
+    })) : []
   }
   return formedView
 }

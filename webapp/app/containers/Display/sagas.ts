@@ -96,6 +96,9 @@ export function* getSlideDetail(action: DisplayActionType) {
       widget.config = JSON.parse(widget.config)
     })
 
+    if (views) {
+      yield put(ViewActions.viewsDetailLoaded(views, false))
+    }
     yield put(slideDetailLoaded(slideId, items, widgets, views))
   } catch (err) {
     yield put(loadSlideDetailFail(err))
