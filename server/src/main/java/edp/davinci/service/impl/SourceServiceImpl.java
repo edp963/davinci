@@ -681,7 +681,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	/**
 	 * 向redis发布reconnect消息
 	 * 
-	 * @param id
+	 * @param message
 	 */
 	private void publishReconnect(String message) {
 

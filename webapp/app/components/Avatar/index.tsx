@@ -1,40 +1,29 @@
-import * as React from 'react'
+import  React, {useState, useCallback, useMemo} from 'react'
 import * as classnames from 'classnames'
 const styles = require('./Avatar.less')
 const logo = require('assets/images/profile.png')
 import { Modal } from 'antd'
+import {IAvatarProps} from './type'
 
-interface IAvatarProps {
-  path: string
-  size?: string
-  enlarge?: boolean
-}
-interface IAvatarState {
-  formVisible: boolean
-}
-export class Avatar extends React.PureComponent<IAvatarProps, IAvatarState> {
-  constructor (props) {
-   super(props)
-   this.state = {
-     formVisible: false
-   }
-  }
-  private showEnlarge = () => {
-    this.setState({
-      formVisible: true
-    })
-  }
-  private hideEnlarge = () => {
-    this.setState({
-      formVisible: false
-    })
-  }
-  public render () {
-    const {path, size, enlarge} = this.props
-    const {formVisible} = this.state
-    const src = path ? path : logo
+export const Avatar: React.FC<IAvatarProps> = ({
+  path, size, enlarge
+}) => {
 
-    const itemClass = classnames({
+  const [formVisible, setFormVisible] = useState(false)
+
+  const showEnlarge =  useCallback(() => {
+    setFormVisible(true)
+  }, [formVisible])
+
+  const hideEnlarge =   useCallback(() => {
+    setFormVisible(false)
+  }, [formVisible])
+
+
+  const src = useMemo(() => path ? path : logo, [path])
+
+  const itemClass =  useMemo(() => {
+    return classnames({
       [styles.img]: true,
       [styles.profile]: size === 'profile',
       [styles.large]: size === 'large',
@@ -42,32 +31,36 @@ export class Avatar extends React.PureComponent<IAvatarProps, IAvatarState> {
       [styles.small]: size === 'small',
       [styles.isEnlarge]: enlarge
     })
+  }, [size, enlarge])
 
-    const isEnlarge = enlarge
-      ? <img className={itemClass} src={src} alt="" onClick={this.showEnlarge}/>
-      : <img className={itemClass} src={src} alt=""/>
+  const isEnlarge = useMemo(() => {
+    return enlarge
+    ? <img className={itemClass} src={src} alt="" onClick={showEnlarge}/>
+    : <img className={itemClass} src={src} alt=""/>
+  }, [enlarge, showEnlarge])
 
-    const wrapper = classnames({
+  const wrapper = useMemo(() => {
+    return classnames({
       [styles.enlargeAvatarWrapper]: size === 'large',
       [styles.avatarWrapper]: size === 'profile'
     })
+  }, [size])
 
-    return (
-      <div className={wrapper}>
-        <div className={`${size === 'small' ? styles.imgWrapper : ''}`}>
-          {isEnlarge}
-        </div>
-        <Modal
-          title={null}
-          footer={null}
-          visible={formVisible}
-          onCancel={this.hideEnlarge}
-        >
-          <img src={src} alt="" className={styles.sourceSrc}/>
-        </Modal>
+  return (
+    <div className={wrapper}>
+      <div className={`${size === 'small' ? styles.imgWrapper : ''}`}>
+        {isEnlarge}
       </div>
-    )
-  }
+      <Modal
+        title={null}
+        footer={null}
+        visible={formVisible}
+        onCancel={hideEnlarge}
+      >
+        <img src={src} alt="" className={styles.sourceSrc}/>
+      </Modal>
+    </div>
+  )
 }
 
 export default Avatar

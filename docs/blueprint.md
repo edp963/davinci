@@ -1,23 +1,19 @@
 ---
-layout: global
+layout: zh_single
 title: 蓝图
+sidebar:
+  nav: "zh_more_sidebar"
+last_modified_at: "2019-08-20"
 ---
 
+## 代码贡献
 
-Davinci 将有更多的优化，更多的新功能，请保持关注！
+请参考 [Contributing](https://github.com/edp963/davinci/blob/master/CONTRIBUTING-CH.md)
 
-支持更多图表
+## 项目管理守则及版本发布周期
 
-支持更多交互
+请参考 [Maintaining](https://github.com/edp963/davinci/blob/master/MAINTAINING-CH.md)
 
-支持更多场景
+## 功能规划和问题维护清单
 
-支持更灵活的社交
-
-支持更自动化
-
-支持更智能化
-
-支持更敏捷化
-
-…...
+请关注 [Projects](https://github.com/edp963/davinci/projects)

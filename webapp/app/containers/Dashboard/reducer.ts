@@ -51,8 +51,7 @@ import {
   DELETE_DRILL_HISTORY,
   DRILL_PATH_SETTING,
   SELECT_DASHBOARD_ITEM_CHART,
-  SET_SELECT_OPTIONS,
-  GLOBAL_CONTROL_CHANGE
+  SET_SELECT_OPTIONS
 } from './constants'
 import {
   INITIATE_DOWNLOAD_TASK,
@@ -177,6 +176,7 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
               rendered: false,
               renderType: 'rerender',
               controlSelectOptions: {},
+              selectedItems: [],
               errorMessage: ''
             }
             return obj
@@ -211,6 +211,7 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
             rendered: false,
             renderType: 'rerender',
             controlSelectOptions: {},
+            selectedItems: [],
             errorMessage: ''
           }
         })
@@ -263,7 +264,6 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
             ...vizItemInfo,
             loading: false,
             datasource: action.payload.result,
-            selectedItems: [],
             renderType: action.payload.renderType,
             queryConditions: {
               ...vizItemInfo.queryConditions,
@@ -275,22 +275,10 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
               globalVariables: action.payload.requestParams.globalVariables,
               pagination: action.payload.requestParams.pagination,
               nativeQuery: action.payload.requestParams.nativeQuery
-            }
+            },
+            selectedItems: []
           }
         }
-        break
-
-      case GLOBAL_CONTROL_CHANGE:
-        const controlRequestParamsByItem: IMapItemControlRequestParams = action.payload.controlRequestParamsByItem
-        Object.entries(controlRequestParamsByItem)
-          .forEach(([itemId, requestParams]: [string, IControlRequestParams]) => {
-            const { filters: globalFilters, variables: globalVariables } = requestParams
-            draft.currentItemsInfo[itemId].queryConditions = {
-              ...draft.currentItemsInfo[itemId].queryConditions,
-              ...globalFilters && { globalFilters },
-              ...globalVariables && { globalVariables }
-            }
-          })
         break
 
       case SELECT_DASHBOARD_ITEM_CHART:

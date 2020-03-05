@@ -84,6 +84,18 @@ public class StatisticServiceImpl implements StatisticService {
             kafkaOperationService.send(topic, JSON.toJSONString(infoList));
             return;
         }
+
+        mysqlUrl = environment.getProperty("spring.datasource.url");
+        String mysqlUsername = environment.getProperty("spring.datasource.username");
+        String mysqlPassword = environment.getProperty("spring.datasource.password");
+
+        this.sqlUtils = this.sqlUtils.init(mysqlUrl, mysqlUsername, mysqlPassword, null, null, false);
+
+        List<Map<String, Object>> values = entityConvertIntoMap(infoList);
+        Set<QueryColumn> headers = getHeaders(mysqlUrl, tableName);
+        String sql = getInsertSql(clz, headers);
+
+        sqlUtils.executeBatch(sql, headers, values);
     }
 
     public Set<QueryColumn> getHeaders(String url, String tableName){

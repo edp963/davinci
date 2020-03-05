@@ -35,7 +35,6 @@ import {
   DELETE_DRILL_HISTORY,
   SET_SELECT_OPTIONS,
   SELECT_DASHBOARD_ITEM_CHART,
-  GLOBAL_CONTROL_CHANGE,
   LOAD_DOWNLOAD_LIST,
   LOAD_DOWNLOAD_LIST_SUCCESS,
   LOAD_DOWNLOAD_LIST_FAILURE,
@@ -266,24 +265,6 @@ const shareReducer = (state = initialState, action) =>
             nativeQuery: action.payload.requestParams.nativeQuery
           }
         }
-        break
-
-      case GLOBAL_CONTROL_CHANGE:
-        const controlRequestParamsByItem: IMapItemControlRequestParams =
-          action.payload.controlRequestParamsByItem
-        Object.entries(controlRequestParamsByItem).forEach(
-          ([itemId, requestParams]: [string, IControlRequestParams]) => {
-            const {
-              filters: globalFilters,
-              variables: globalVariables
-            } = requestParams
-            draft.itemsInfo[itemId].queryConditions = {
-              ...draft.itemsInfo[itemId].queryConditions,
-              ...(globalFilters && { globalFilters }),
-              ...(globalVariables && { globalVariables })
-            }
-          }
-        )
         break
 
       case DRILL_DASHBOARDITEM:

@@ -57,7 +57,6 @@ import {
   SELECT_DASHBOARD_ITEM_CHART,
   SET_SELECT_OPTIONS,
   SET_CONTROL_FORM_VALUES,
-  GLOBAL_CONTROL_CHANGE,
   MONITORED_SYNC_DATA_ACTION,
   MONITORED_SEARCH_DATA_ACTION,
   MONITORED_LINKAGE_DATA_ACTION
@@ -385,15 +384,6 @@ export function setControlFormValues (formValues) {
     type: SET_CONTROL_FORM_VALUES,
     payload: {
       formValues
-    }
-  }
-}
-
-export function globalControlChange (controlRequestParamsByItem) {
-  return {
-    type: GLOBAL_CONTROL_CHANGE,
-    payload: {
-      controlRequestParamsByItem
     }
   }
 }
