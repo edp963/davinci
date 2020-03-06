@@ -493,7 +493,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         	alertUnAuthorized(entity, user, "delete widget");
         }
 
-        if (memDisplaySlideWidgetMapper.deleteById(relationId) > 0) {
+		if (memDisplaySlideWidgetMapper.deleteById(relationId) <= 0) {
         	log.error("delete MemDisplaySlideWidget error slideId:{}", slideId);
             throw new ServerException("deleteMemDisplaySlideWidget fail");
         }
