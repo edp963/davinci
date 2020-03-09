@@ -24,20 +24,26 @@ Davinci 用户手册文档在 docs/ 目录下，我们使用了 [jekyll](https:/
 ### 分支结构
 Davinci 源码可能会产生一些临时分支，但真正有明确意义的只有以下三个分支：
 
+- dev-0.3: 默认分支，主要开发分支；
 - master: 最近一次稳定 release 的源码，偶尔会多几次 hotfix 提交；
-- dev-0.3: 主要开发分支；
 - dev-0.2: 0.2 版本源码，目前 0.2 版本已经停止更新，如有 0.2 版本使用者或是需要进行二次开发的用户可以参考此分支。
 
 ### 开发指引
 Davinci 前后端代码共用同一个代码库，但在开发上是分离的。在着手开发之前，请先将 Davinci 项目 fork 一份到自己的 Github Repositories 中， 开发时请基于自己 Github Repositories 中的 Davinci 代码库进行开发。
 
-我们建议克隆 dev-0.3 分支来开发，这样在向 Davinci 主项目提交 PR 时合并冲突的可能性会小很多
+如果你计划给 Davinci 贡献代码，我们建议克隆 dev-0.3 分支来开发，这样在向 Davinci 主项目提交 PR 时合并冲突的可能性会小很多。
 ```bash
-git clone https://github.com/yourname/davinci.git --branch dev-0.3
+git clone https://github.com/yourname/davinci.git
 ```
 
+如果你只是基于稳定功能做一些定制化满足使用需要，我们建议克隆 master 分支来开发。
+```bash
+git clone https://github.com/yourname/davinci.git --branch master
+```
+
+
 #### 前端
-前端代码在 webapp/ 目录中
+前端源代码在 webapp/ 目录中；davinci-ui/ 目录为编译后的前端文件
 
 ##### 目录结构
 ```
