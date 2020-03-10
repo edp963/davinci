@@ -203,9 +203,9 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
               <Tooltip title="编辑">
                 <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayFormModal('edit', display)} />
               </Tooltip>
-              <Tooltip title="复制">
+              {/* <Tooltip title="复制">
                 <AdminIcon className={styles.copy} type="copy" onClick={this.delegate(onCopy, display)} />
-              </Tooltip>
+              </Tooltip> */}
               <Popconfirm
                 title="确定删除？"
                 placement="bottom"
