@@ -816,6 +816,10 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     onEditDashboardItems(portalId, changedItems)
   }
 
+  private onBreakpointChange = () => {
+    this.props.onResizeAllDashboardItem()
+  }
+
   private onWindowResize = () => {
     if (this.resizeSign) {
       clearTimeout(this.resizeSign)
@@ -1740,6 +1744,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           layouts={layouts}
           onDragStop={this.onDragStop}
           onResizeStop={this.onResizeStop}
+          onBreakpointChange={this.onBreakpointChange}
           measureBeforeMount={false}
           draggableHandle={`.${styles.title}`}
           useCSSTransforms={mounted}
