@@ -878,17 +878,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         }
       })
     }
-    const categoriesCol = []
-    Object.entries(model).forEach(([key, m]) => {
-      if (m.modelType === 'category') {
-        categoriesCol.push({
-          name: key,
-          type: 'category',
-          visualType: m.visualType
-        })
-      }
-    })
-
 
     const dataDrillPanelClass = classnames({
       [styles.dataDrillPanel]: true,
@@ -909,7 +898,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       <div className={dataDrillPanelClass}>
         <DataDrill
           widgetConfig={cf}
-          categoriesCol={categoriesCol}
           onDataDrillPath={this.drillpathData}
           onDataDrill={this.drillData}
           drillHistory={drillHistory}
