@@ -27,6 +27,7 @@ import {
   takeEvery
 } from 'redux-saga/effects'
 import produce from 'immer'
+import { message } from 'antd'
 import { push, replace } from 'connected-react-router'
 import { Location } from 'history'
 import { matchDisplayPath, matchDisplaySlidePath } from 'utils/router'
@@ -243,9 +244,11 @@ export function* copyDisplay(action: VizActionType) {
   const { id } = action.payload
   try {
     const asyncData = yield call(request, `${api.display}/copy/${id}`, {
-      method: 'post'
+      method: 'post',
+      data: { id }
     })
     yield put(VizActions.displayCopied(id, asyncData.payload))
+    message.info('Display 复制成功')
   } catch (err) {
     yield put(VizActions.copyDisplayFail())
     errorHandler(err)

@@ -19,7 +19,7 @@ export interface IDisplayEvent {
   onDisplayClick: (displayId: number) => () => void
   onAdd: (display: Display, resolve: () => void) => void
   onEdit: (display: Display, resolve: () => void) => void
-  onCopy: (display: Display) => void
+  onCopy: (displayId: number) => void
   onDelete: (displayId: number) => void
 }
 
@@ -203,9 +203,15 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
               <Tooltip title="编辑">
                 <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayFormModal('edit', display)} />
               </Tooltip>
-              <Tooltip title="复制">
-                <AdminIcon className={styles.copy} type="copy" onClick={this.delegate(onCopy, display)} />
-              </Tooltip>
+              <Popconfirm
+                title="确定复制？"
+                placement="bottom"
+                onConfirm={this.delegate(onCopy, display.id)}
+              >
+                <Tooltip title="复制">
+                  <AdminIcon className={styles.copy} type="copy" onClick={this.stopPPG} />
+                </Tooltip>
+              </Popconfirm>
               <Popconfirm
                 title="确定删除？"
                 placement="bottom"
