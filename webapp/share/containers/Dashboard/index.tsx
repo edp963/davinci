@@ -522,6 +522,10 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     )
   }
 
+  private onBreakpointChange = () => {
+    this.onWindowResize()
+  }
+
   private onWindowResize = () => {
     if (this.resizeSign) {
       clearTimeout(this.resizeSign)
@@ -1052,6 +1056,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           breakpoints={GRID_BREAKPOINTS}
           cols={GRID_COLS}
           layouts={layouts}
+          onBreakpointChange={this.onBreakpointChange}
           measureBeforeMount={false}
           useCSSTransforms={false}
           isDraggable={false}

@@ -39,6 +39,7 @@ interface IVizProps {
   onAddDisplay: (display: IDisplayFormed, resolve: () => void) => void
   onEditDisplay: (display: IDisplayFormed, resolve: () => void) => void
   onDeleteDisplay: (displayId: number) => void
+  onCopyDisplay: (display: IDisplayFormed, resolve: () => void) => void
 
   onLoadPortals: (projectId: number) => void
   onAddPortal: (portal: IPortal, resolve) => void
@@ -98,10 +99,6 @@ export class VizList extends React.Component<
     this.props.history.push(path)
   }
 
-  private onCopy = (display) => {
-    console.log('onCopy: ', display)
-  }
-
   private onCollapseChange = (key: string) => () => {
     const { collapse } = this.state
     this.setState({
@@ -119,6 +116,7 @@ export class VizList extends React.Component<
       onAddDisplay,
       onEditDisplay,
       onDeleteDisplay,
+      onCopyDisplay,
       portals,
       onAddPortal,
       onEditPortal,
@@ -201,7 +199,7 @@ export class VizList extends React.Component<
                 onDisplayClick={this.goToDisplay}
                 onAdd={onAddDisplay}
                 onEdit={onEditDisplay}
-                onCopy={this.onCopy}
+                onCopy={onCopyDisplay}
                 onDelete={onDeleteDisplay}
                 onCheckName={onCheckUniqueName}
                 onExcludeRoles={this.props.onExcludeRoles}
@@ -228,6 +226,8 @@ export function mapDispatchToProps(dispatch) {
     onEditDisplay: (display: IDisplayFormed, resolve) =>
       dispatch(VizActions.editDisplay(display, resolve)),
     onDeleteDisplay: (id) => dispatch(VizActions.deleteDisplay(id)),
+    onCopyDisplay: (display: IDisplayFormed, resolve) =>
+      dispatch(VizActions.copyDisplay(display, resolve)),
     onLoadPortals: (projectId) => dispatch(VizActions.loadPortals(projectId)),
     onAddPortal: (portal, resolve) =>
       dispatch(VizActions.addPortal(portal, resolve)),

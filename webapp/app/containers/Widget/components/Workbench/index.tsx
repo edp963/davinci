@@ -394,9 +394,6 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
       }),
       publish: true
     }
-    console.info({
-      widget
-    })
     if (id) {
       onEditWidget({...widget, id}, () => {
         message.success('修改成功')

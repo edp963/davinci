@@ -13,13 +13,13 @@ import ModulePermission from 'containers/Account/components/checkModulePermissio
 import { IProject } from 'containers/Projects/types'
 import { IExludeRoles } from 'containers/Viz/components/PortalList'
 import { IProjectRoles } from 'containers/Organizations/component/ProjectRole'
-import { Display } from './types'
+import { Display, DisplayFormType } from './types'
 
 export interface IDisplayEvent {
   onDisplayClick: (displayId: number) => () => void
   onAdd: (display: Display, resolve: () => void) => void
   onEdit: (display: Display, resolve: () => void) => void
-  onCopy: (display: Display) => void
+  onCopy: (display: Display, resolve: () => void) => void
   onDelete: (displayId: number) => void
 }
 
@@ -35,7 +35,7 @@ interface IDisplayListProps extends IDisplayEvent {
 interface IDisplayListStates {
   editingDisplay: Display
   modalLoading: boolean
-  formType: 'edit' | 'add'
+  formType: DisplayFormType
   formVisible: boolean
   exludeRoles: IExludeRoles[]
 }
@@ -71,9 +71,9 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   }
 
 
-  private saveDisplay = (display: Display, type: 'edit' | 'add') => {
+  private saveDisplay = (display: Display, type: DisplayFormType) => {
     this.setState({ modalLoading: true })
-    const { onAdd, onEdit } = this.props
+    const { onAdd, onEdit, onCopy } = this.props
     const val = {
       ...display,
       roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id)
@@ -81,14 +81,22 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     if (typeof display.config === 'string' && display.config) {
       val.config = JSON.parse(display.config)
     }
-    if (type === 'add') {
-      onAdd({
-        ...val
-      }, () => { this.hideDisplayFormModal() })
-    } else {
-      onEdit({
-        ...val
-      }, () => { this.hideDisplayFormModal() })
+    switch (type) {
+      case 'add':
+        onAdd({
+          ...val
+        }, () => { this.hideDisplayFormModal() })
+        break
+      case 'edit':
+        onEdit({
+          ...val
+        }, () => { this.hideDisplayFormModal() })
+        break
+      case 'copy':
+        onCopy({
+          ...val
+        }, () => { this.hideDisplayFormModal() })
+        break
     }
   }
 
@@ -99,10 +107,15 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     })
   }
 
-  private showDisplayFormModal = (formType: 'edit' | 'add', display?: Display) => (e: React.MouseEvent<HTMLDivElement>) => {
+  private showDisplayFormModal = (formType: DisplayFormType, display?: Display) => (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation()
     this.setState({
-      editingDisplay: display,
+      editingDisplay: formType === 'copy'
+        ? {
+          ...display,
+          name: `${display.name}_copy`
+        }
+        : display,
       formType,
       formVisible: true
     })
@@ -172,7 +185,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     const coverStyle: React.CSSProperties = {
       backgroundImage: `url(${display.avatar})`
     }
-    const { onDisplayClick, onCopy, onDelete, currentProject } = this.props
+    const { onDisplayClick, onDelete, currentProject } = this.props
 
     const editHint = !display.publish && '(编辑中…)'
     const displayClass = classnames({
@@ -204,7 +217,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
                 <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayFormModal('edit', display)} />
               </Tooltip>
               <Tooltip title="复制">
-                <AdminIcon className={styles.copy} type="copy" onClick={this.delegate(onCopy, display)} />
+                <AdminIcon className={styles.copy} type="copy" onClick={this.showDisplayFormModal('copy', display)} />
               </Tooltip>
               <Popconfirm
                 title="确定删除？"
