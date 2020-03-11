@@ -38,7 +38,7 @@ import { TABLE_PAGE_SIZES } from 'app/globalConstants'
 import { getFieldAlias } from 'containers/Widget/components/Config/Field'
 import { decodeMetricName } from 'containers/Widget/components/util'
 import Styles from './Table.less'
-
+import { hasProperty } from 'components/DataDrill/util'
 import {
   findChildConfig, traverseConfig,
   computeCellWidth, getDataColumnWidth, getMergedCellSpan, getTableCellValueRange } from './util'
@@ -475,17 +475,15 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private isValueModelType = (modelName) => {
     const target = this.getModelTypecollectByModel()
-    return this.hasProperty(target, modelName) === ViewModelTypes.Value
+    return hasProperty(target, modelName) === ViewModelTypes.Value
   }
 
-  private hasProperty<T extends Object, U extends keyof T>(obj:T, key:U){
-    return obj[key] ? obj[key] : false
-  }
+ 
 
   private getModelTypecollectByModel = () => {
     const {model} = this.props
     return Object.keys(model).reduce((iteratee, target) => {
-       iteratee[target] = this.hasProperty(model[target], 'modelType')
+       iteratee[target] = hasProperty(model[target], 'modelType')
        return iteratee
     }, {})
   }
