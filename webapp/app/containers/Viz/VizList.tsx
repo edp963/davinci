@@ -39,7 +39,7 @@ interface IVizProps {
   onAddDisplay: (display: IDisplayFormed, resolve: () => void) => void
   onEditDisplay: (display: IDisplayFormed, resolve: () => void) => void
   onDeleteDisplay: (displayId: number) => void
-  onCopyDisplay: (displayId: number) => void
+  onCopyDisplay: (display: IDisplayFormed, resolve: () => void) => void
 
   onLoadPortals: (projectId: number) => void
   onAddPortal: (portal: IPortal, resolve) => void
@@ -226,7 +226,8 @@ export function mapDispatchToProps(dispatch) {
     onEditDisplay: (display: IDisplayFormed, resolve) =>
       dispatch(VizActions.editDisplay(display, resolve)),
     onDeleteDisplay: (id) => dispatch(VizActions.deleteDisplay(id)),
-    onCopyDisplay: (displayId) => dispatch(VizActions.copyDisplay(displayId)),
+    onCopyDisplay: (display: IDisplayFormed, resolve) =>
+      dispatch(VizActions.copyDisplay(display, resolve)),
     onLoadPortals: (projectId) => dispatch(VizActions.loadPortals(projectId)),
     onAddPortal: (portal, resolve) =>
       dispatch(VizActions.addPortal(portal, resolve)),

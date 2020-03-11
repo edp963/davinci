@@ -200,13 +200,7 @@ const vizReducer = (
         draft.loading.editing = false
         break
       case ActionTypes.COPY_DISPLAY_SUCCESS:
-        draft.displays.splice(
-          draft.displays.findIndex(
-            ({ id }) => id === action.payload.fromDisplayId
-          ),
-          0,
-          action.payload.display
-        )
+        draft.displays.unshift(action.payload.display)
         break
 
       case ActionTypes.ADD_DISPLAY_FAILURE:

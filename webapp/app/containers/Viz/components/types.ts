@@ -54,6 +54,7 @@ export interface IDisplayFormed extends IDisplayBase {
   config: {
     displayParams: IDisplayParams
   }
+  roleIds?: number[]
 }
 
 export type Display = IDisplayRaw | IDisplayFormed
@@ -105,3 +106,5 @@ export interface ISlideFormed extends ISlideBase {
     slideParams: ISlideParams
   }
 }
+
+export type DisplayFormType = 'add' | 'edit' | 'copy'
