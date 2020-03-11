@@ -25,7 +25,7 @@ const TextArea = Input.TextArea
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const TabPane = Tabs.TabPane
-import { Display } from './types'
+import { Display, DisplayFormType } from './types'
 const styles = require('containers/Viz/Viz.less')
 import {IExludeRoles} from 'containers/Viz/components/PortalList'
 const utilStyles = require('assets/less/util.less')
@@ -35,7 +35,7 @@ interface IDisplayFormModalProps {
   display: Display,
   visible: boolean
   loading: boolean
-  type: 'add' | 'edit'
+  type: DisplayFormType
   onCheckName: (type, data, resolve, reject) => void
   onSave: (display: Display, type: string) => void
   onCancel: () => void
@@ -44,6 +44,13 @@ interface IDisplayFormModalProps {
 }
 
 export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps & FormComponentProps, {}> {
+
+  private formTypeTitleMapping = {
+    add: '新增',
+    edit: '修改',
+    copy: '复制'
+  }
+
   public componentWillReceiveProps (nextProps: IDisplayFormModalProps & FormComponentProps) {
     const { form, display } = nextProps
     if (display !== this.props.display) {
@@ -66,14 +73,16 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
 
   private checkNameUnique = (_, value = '', callback) => {
     const { projectId, onCheckName, type, form } = this.props
-    const { id } = form.getFieldsValue() as any
+    const id = type === 'edit'
+      ? { id: form.getFieldsValue().id }
+      : void 0
     const typeName = 'display'
     if (!value) {
       callback()
     }
     onCheckName(typeName, {
       projectId,
-      id,
+      ...id,
       name: value
     },
       () => {
@@ -130,7 +139,7 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
 
     return (
       <Modal
-          title={`${type === 'add' ? '新增' : '修改'} Display`}
+          title={`${this.formTypeTitleMapping[type]} Display`}
           wrapClassName="ant-modal-small"
           visible={visible}
           footer={modalButtons}
