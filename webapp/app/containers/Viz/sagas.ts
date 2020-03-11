@@ -241,14 +241,21 @@ export function* copyDisplay(action: VizActionType) {
     return
   }
 
-  const { id } = action.payload
+  const { display, resolve } = action.payload
+  const { id, name, description, publish, roleIds} = display
   try {
     const asyncData = yield call(request, `${api.display}/copy/${id}`, {
       method: 'post',
-      data: { id }
+      data: {
+        name,
+        description,
+        publish,
+        roleIds
+      }
     })
-    yield put(VizActions.displayCopied(id, asyncData.payload))
-    message.info('Display 复制成功')
+    yield put(VizActions.displayCopied(asyncData.payload))
+    resolve()
+    message.success('Display 复制成功')
   } catch (err) {
     yield put(VizActions.copyDisplayFail())
     errorHandler(err)

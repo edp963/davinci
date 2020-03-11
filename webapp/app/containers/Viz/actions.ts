@@ -285,19 +285,19 @@ export const VizActions = {
     }
   },
 
-  copyDisplay(id: number) {
+  copyDisplay(display: IDisplayFormed, resolve) {
     return {
       type: ActionTypes.COPY_DISPLAY,
       payload: {
-        id
+        display,
+        resolve
       }
     }
   },
-  displayCopied(fromDisplayId: number, display: IDisplayFormed) {
+  displayCopied(display: IDisplayFormed) {
     return {
       type: ActionTypes.COPY_DISPLAY_SUCCESS,
       payload: {
-        fromDisplayId,
         display
       }
     }
