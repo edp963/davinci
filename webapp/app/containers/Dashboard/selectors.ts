@@ -27,6 +27,12 @@ const makeSelectCurrentDashboard = () => createSelector(
   selectDashboard,
   (dashboardState) => dashboardState.currentDashboard
 )
+
+const makeSelectCurrentDashboardControlParams = () => createSelector(
+  selectDashboard,
+  (dashboardState) => dashboardState.currentDashboardGlobalControlParams
+)
+
 const makeSelectCurrentDashboardLoading = () => createSelector(
   selectDashboard,
   (dashboardState) => dashboardState.currentDashboardLoading
@@ -91,5 +97,6 @@ export {
   makeSelectCurrentDashboardShareInfoLoading,
   makeSelectCurrentDashboardSelectOptions,
   makeSelectCurrentLinkages,
-  makeSelectControlForm
+  makeSelectControlForm,
+  makeSelectCurrentDashboardControlParams
 }
