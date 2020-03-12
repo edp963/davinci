@@ -10,7 +10,8 @@ import {
   IMapControlOptions,
   IRenderTreeItem,
   IGlobalRenderTreeItem,
-  GlobalControlQueryMode
+  GlobalControlQueryMode,
+  IGridCtrlParams
 } from './types'
 import {
   getVariableValue,
@@ -23,7 +24,6 @@ import {
 import { defaultFilterControlGridProps, SHOULD_LOAD_OPTIONS, fullScreenGlobalControlGridProps } from './filterTypes'
 import FilterControl from './FilterControl'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
-
 import { Row, Col, Form, Button } from 'antd'
 
 const styles = require('./filter.less')
@@ -31,9 +31,10 @@ const styles = require('./filter.less')
 interface IFilterPanelProps extends FormComponentProps {
   currentDashboard: any
   currentItems: any[]
+  gridCtrlParams?: IGridCtrlParams
   mapOptions: IMapControlOptions
   onGetOptions: OnGetControlOptions
-  onSearch: (requestParamsByItem: IMapItemControlRequestParams) => void
+  onSearch: (requestParamsByItem: IMapItemControlRequestParams, formValues?: object) => void
   isFullScreen?: boolean
 }
 
@@ -67,7 +68,7 @@ export class FilterPanel extends Component<IFilterPanelProps, IFilterPanelStates
     const { currentDashboard, currentItems } = nextProps
     if (currentDashboard !== this.props.currentDashboard
         || this.dashboardItemsChange(currentItems, this.props.currentItems)) {
-      const isCurrentDashboardUpdated = this.props.currentDashboard && this.props.currentDashboard.id === (currentDashboard && currentDashboard.id)
+      const isCurrentDashboardUpdated = (this.props.currentDashboard && this.props.currentDashboard.id) === (currentDashboard && currentDashboard.id)
       this.initDerivedState(nextProps, isCurrentDashboardUpdated)
     }
   }
@@ -294,7 +295,7 @@ export class FilterPanel extends Component<IFilterPanelProps, IFilterPanelStates
       })
     })
 
-    onSearch(requestParamsByItem)
+    onSearch(requestParamsByItem, allFormValues)
   }
 
   private partialFormValuesChanged = (changedValues, allValues) => {
@@ -315,7 +316,7 @@ export class FilterPanel extends Component<IFilterPanelProps, IFilterPanelStates
   }
 
   private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: IGlobalControl[]) => {
-    const { form, mapOptions, isFullScreen } = this.props
+    const { form, mapOptions, isFullScreen, gridCtrlParams } = this.props
     const controlValues = form.getFieldsValue()
 
     let components = []
@@ -354,6 +355,7 @@ export class FilterPanel extends Component<IFilterPanelProps, IFilterPanelStates
             currentOptions={mapOptions[key] || []}
             parentsInfo={parentsInfo}
             onChange={this.change}
+            gridCtrlParams={gridCtrlParams}
           />
         </Col>
       )

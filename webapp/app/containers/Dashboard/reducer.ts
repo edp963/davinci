@@ -51,7 +51,8 @@ import {
   DELETE_DRILL_HISTORY,
   DRILL_PATH_SETTING,
   SELECT_DASHBOARD_ITEM_CHART,
-  SET_SELECT_OPTIONS
+  SET_SELECT_OPTIONS,
+  SEND_CURRENT_DASHBOARD_CONTROL_PARAMS
 } from './constants'
 import {
   INITIATE_DOWNLOAD_TASK,
@@ -77,6 +78,7 @@ import {
 import { DownloadTypes } from '../App/types'
 import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
+import { clearCurrentDashboard } from './actions'
 
 const initialState = {
   currentDashboard: null,
@@ -86,7 +88,8 @@ const initialState = {
   currentDashboardShareInfoLoading: false,
   currentDashboardSelectOptions: {},
   currentItems: null,
-  currentItemsInfo: null
+  currentItemsInfo: null,
+  currentDashboardGlobalControlParams: null
 }
 
 const dashboardReducer = (state = initialState, action: ViewActionType | VizActionType | any) =>
@@ -114,6 +117,14 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
         draft.currentDashboardLoading = true
         draft.currentDashboardShareInfo = ''
         draft.currentDashboardSecretInfo = ''
+        break
+
+      case SEND_CURRENT_DASHBOARD_CONTROL_PARAMS:
+        const { params } = action.payload
+        draft.currentDashboardGlobalControlParams = {
+          currentDashboardId: draft.currentDashboard && draft.currentDashboard.id,
+          globalCtrlParams: params
+        }
         break
 
       case LOAD_DASHBOARD_DETAIL_SUCCESS:
