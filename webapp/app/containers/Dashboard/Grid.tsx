@@ -55,7 +55,7 @@ import AntdFormType from 'antd/lib/form/Form'
 import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu, message } from 'antd'
 import { uuid } from 'utils/util'
 import FullScreenPanel, { ICurrentDataInFullScreenProps } from './components/fullScreenPanel/FullScreenPanel'
-import { decodeMetricName, getTable } from 'containers/Widget/components/util'
+import { decodeMetricName } from 'containers/Widget/components/util'
 import { initiateDownloadTask } from 'containers/App/actions'
 import {
   loadDashboardDetail,
@@ -1177,13 +1177,13 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         try {
           const widgetProps: IWidgetProps = JSON.parse(widget.config)
           const { mode, selectedChart, chartStyles } = widgetProps
-          if (mode === 'chart'
-              && selectedChart === getTable().id
-              && chartStyles.table.withPaging) {
-            pagination = {
-              pageSize: Number(chartStyles.table.pageSize),
-              ...pagination,
-              pageNo: DEFAULT_TABLE_PAGE
+          if (mode === 'chart' && selectedChart === ChartTypes.Table) {
+            if (chartStyles.table.withPaging) {
+              pagination = {
+                pageSize: Number(chartStyles.table.pageSize),
+                ...pagination,
+                pageNo: DEFAULT_TABLE_PAGE
+              }
             }
             noAggregators = chartStyles.table.withNoAggregators
           }
@@ -1278,7 +1278,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     } = this.props
     const { itemId, groups, widgetId, sourceDataFilter, mode, col, row} = e
     const sourceDataGroup = [...(e.sourceDataGroup as Array<string>)]
-    
+
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired, model } = widgetConfig
@@ -1366,7 +1366,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
             return array
           }, [])
           currentCol = groups && groups.length ? newWidgetPropCols : void 0
-         
         }
       }
       filterSource = sourceDataFilter.map((source) => {
