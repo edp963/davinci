@@ -1173,13 +1173,13 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         try {
           const widgetProps: IWidgetProps = JSON.parse(widget.config)
           const { mode, selectedChart, chartStyles } = widgetProps
-          if (mode === 'chart'
-              && selectedChart === getTable().id
-              && chartStyles.table.withPaging) {
-            pagination = {
-              pageSize: Number(chartStyles.table.pageSize),
-              ...pagination,
-              pageNo: DEFAULT_TABLE_PAGE
+          if (mode === 'chart' && selectedChart === getTable().id) {
+            if (chartStyles.table.withPaging) {
+              pagination = {
+                pageSize: Number(chartStyles.table.pageSize),
+                ...pagination,
+                pageNo: DEFAULT_TABLE_PAGE
+              }
             }
             noAggregators = chartStyles.table.withNoAggregators
           }
