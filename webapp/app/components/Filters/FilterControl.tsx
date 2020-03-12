@@ -32,7 +32,6 @@ interface IFilterControlProps {
 }
 
 export class FilterControl extends PureComponent<IFilterControlProps, {}> {
-
   private renderControl = (filter) => {
     const { currentOptions } = this.props
     const options = currentOptions || []
@@ -58,6 +57,14 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
         break
     }
     return this.wrapFormItem(filter, component)
+  }
+
+  public componentWillReceiveProps(nextProps) {
+    const { gridCtrlParams } = this.props
+    if (gridCtrlParams !== nextProps.gridCtrlParams) {
+      const { globalCtrlParams } = nextProps.gridCtrlParams
+      this.props.form.setFieldsValue(globalCtrlParams)
+    }
   }
 
   private wrapFormItem = (control: IControlBase, component: Component): ReactNode => {

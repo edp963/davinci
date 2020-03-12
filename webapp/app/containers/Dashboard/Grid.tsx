@@ -1846,6 +1846,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
             onGetOptions={this.getOptions}
             mapOptions={currentDashboardSelectOptions}
             onSearch={this.globalControlSearch}
+            gridCtrlParams={currentDashboardCtrlParams}
           />
         </Container.Title>
         {
