@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import edp.davinci.dto.displayDto.DisplayCopy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -401,19 +402,21 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
      * Copy a display
      *
      * @param id   displayId
-     * @param user user
-     * @return new display
+     * @param copy
+	 * @param user user
+	 * @return new display
      */
     @Override
     @Transactional
-    public Display copyDisplay(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-
+    public Display copyDisplay(Long id, DisplayCopy copy, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
     	DisplayWithProject originDisplay = getDisplayWithProject(id, true);
 
     	Long projectId = originDisplay.getProjectId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
-        checkWritePermission(entity, projectId, user, "copy");
+		checkIsExist(copy.getName(), null, projectId);
+
+		checkWritePermission(entity, projectId, user, "copy");
 
         if (isDisableDisplay(id, projectId, user, projectPermission)) {
             alertUnAuthorized(entity, user, "copy");
@@ -422,8 +425,8 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         // copy display entity
         Display display = new Display();
         BeanUtils.copyProperties(originDisplay, display, "id");
-        
-		String name = getCopyName(originDisplay.getName(), projectId);
+
+		String name = copy.getName();
         BaseLock lock = getLock(entity, name, projectId);
 		while(lock != null && !lock.getLock()) {
 			name = getCopyName(name, projectId);
@@ -431,16 +434,28 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 		}
 
 		display.setName(name);
+		display.setDescription(copy.getDescription());
+		display.setPublish(copy.getPublish());
         display.createdBy(user.getId());
         if (displayMapper.insert(display) <= 0) {
             throw new ServerException("copy display fail");
         }
+		optLogger.info("display ({}) is copied by user (:{}) from ({})", display.toString(), user.getId(), originDisplay.toString());
 
-        // copy relRoleDisplay
-        optLogger.info("display ({}) is copied by user (:{}) from ({})", display.toString(), user.getId(), originDisplay.toString());
-        if (relRoleDisplayMapper.copyRoleRelation(originDisplay.getId(), display.getId(), user.getId()) > 0) {
-            optLogger.info("display (:{}) role is copied by user (:{}) from (:{})", display.getId(), user.getId(), originDisplay.getId());
-        }
+		// copy relRoleDisplay
+		if (!CollectionUtils.isEmpty(copy.getRoleIds())) {
+			List<Role> roles = roleMapper.getRolesByIds(copy.getRoleIds());
+			List<RelRoleDisplay> list = roles.stream()
+					.map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+					.collect(Collectors.toList());
+
+			if (!CollectionUtils.isEmpty(list)) {
+				relRoleDisplayMapper.insertBatch(list);
+				optLogger.info("display ({}) limit role ({}) access", display.getId(),
+						roles.stream().map(Role::getId).collect(Collectors.toList()));
+			}
+		}
+
         displaySlideService.copySlides(originDisplay.getId(), display.getId(), user);
         return display;
     }
