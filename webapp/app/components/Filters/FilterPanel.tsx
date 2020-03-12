@@ -295,7 +295,10 @@ export class FilterPanel extends Component<IFilterPanelProps, IFilterPanelStates
       })
     })
 
-    onSearch(requestParamsByItem, allFormValues)
+    onSearch(requestParamsByItem, {
+      ...allFormValues,
+      ...changedFormValues
+    })
   }
 
   private partialFormValuesChanged = (changedValues, allValues) => {
