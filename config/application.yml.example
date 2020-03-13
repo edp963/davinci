@@ -19,6 +19,10 @@ server:
   protocol: http
   address: 127.0.0.1
   port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
 
   servlet:
     context-path: /
