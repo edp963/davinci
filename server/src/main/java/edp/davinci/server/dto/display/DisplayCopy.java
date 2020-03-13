@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,25 +17,20 @@
  *
  */
 
-package edp.davinci.server.model;
+package edp.davinci.server.dto.display;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import java.util.List;
+
 @Data
-public class RelRoleDashboard extends RecordInfo<RelRoleDashboard> {
-    private Long id;
-
-    private Long roleId;
-
-    private Long dashboardId;
-
-    private Boolean visible = false; // 可见/不可见  true/false
-
-    public RelRoleDashboard(Long dashboardId, Long roleId) {
-        this.dashboardId = dashboardId;
-        this.roleId = roleId;
-    }
-
-    public RelRoleDashboard() {
-    }
+@NotNull(message = "Copy display info cannot be null")
+public class DisplayCopy {
+    @NotBlank(message = "Display name cannot be empty")
+    private String name;
+    private String description;
+    private Boolean publish = false;
+    private List<Long> roleIds;
 }

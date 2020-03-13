@@ -42,6 +42,7 @@ import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.DashboardPortal;
 import edp.davinci.core.dao.entity.MemDashboardWidget;
+import edp.davinci.core.dao.entity.RelRoleDashboard;
 import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDashboardWidgetMapper;
 import edp.davinci.server.dao.ViewMapper;
@@ -61,7 +62,6 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.RelRoleDashboard;
 import edp.davinci.server.model.RelRoleDashboardWidget;
 import edp.davinci.server.model.Role;
 import edp.davinci.server.model.User;
@@ -274,8 +274,15 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 	        if (!CollectionUtils.isEmpty(dashboardCreate.getRoleIds())) {
 	            List<Role> roles = roleMapper.getRolesByIds(dashboardCreate.getRoleIds());
 	            List<RelRoleDashboard> list = roles.stream()
-	                    .map(r -> new RelRoleDashboard(dashboard.getId(), r.getId()).createdBy(userId))
-	                    .collect(Collectors.toList());
+	                    .map(r -> {
+	                    	RelRoleDashboard rel = new RelRoleDashboard();
+                    		rel.setDashboardId(dashboard.getId());
+                    		rel.setRoleId(r.getId());
+                    		rel.setCreateBy(user.getId());
+                    		rel.setCreateTime(new Date());
+                    		rel.setVisible(false);
+	                    	return rel;
+	                    }).collect(Collectors.toList());
 	            if (!CollectionUtils.isEmpty(list)) {
 	                relRoleDashboardMapper.insertBatch(list);
 	                optLogger.info("Dashboard({}) limit role({}) access", dashboard.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
@@ -366,7 +373,15 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
                 List<RelRoleDashboard> relList = new ArrayList<>();
                 rolesMap.forEach((dashboardId, roles) -> {
                     if (!CollectionUtils.isEmpty(roles)) {
-                    	relList.addAll(roles.stream().map(roleId -> new RelRoleDashboard(dashboardId, roleId)).collect(Collectors.toList()));
+						relList.addAll(roles.stream().map(roleId -> {
+							RelRoleDashboard rel = new RelRoleDashboard();
+							rel.setDashboardId(dashboardId);
+							rel.setRoleId(roleId);
+							rel.setCreateBy(user.getId());
+							rel.setCreateTime(new Date());
+							rel.setVisible(false);
+							return rel;
+						}).collect(Collectors.toList()));
                     }
                 });
                 if (!CollectionUtils.isEmpty(relList)) {
@@ -702,7 +717,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     public void deleteDashboardAndPortalByProject(Long projectId) throws RuntimeException {
         relRoleDashboardWidgetMapper.deleteByProjectId(projectId);
         memDashboardWidgetMapper.deleteByProject(projectId);
-        relRoleDashboardMapper.deleteByProject(projectId);
+        relRoleDashboardMapper.deleteByProjectId(projectId);
         dashboardExtendMapper.deleteByProject(projectId);
         relRolePortalMapper.deleteByProject(projectId);
         dashboardPortalMapper.deleteByProject(projectId);
@@ -710,7 +725,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
     @Override
     public List<Long> getExcludeRoles(Long id) {
-        return relRoleDashboardMapper.getExecludeRoles(id);
+        return relRoleDashboardMapper.getExcludeRoles(id);
     }
 
     @Override
@@ -728,7 +743,12 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
             	return false;
             }
         } else {
-            RelRoleDashboard relRoleDashboard = new RelRoleDashboard(dashboard.getId(), role.getId()).createdBy(user.getId());
+            RelRoleDashboard relRoleDashboard = new RelRoleDashboard();
+            relRoleDashboard.setDashboardId(dashboard.getId());
+            relRoleDashboard.setRoleId(role.getId());
+            relRoleDashboard.setCreateBy(user.getId());
+            relRoleDashboard.setCreateTime(new Date());
+            relRoleDashboard.setVisible(false);
             relRoleDashboardMapper.insert(relRoleDashboard);
             optLogger.info("Dashboard({}) limit role({}) access, create by user({})", dashboard.getId(), role.getId(), user.getId());
         }

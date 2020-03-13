@@ -84,7 +84,7 @@ public class RoleServiceImpl implements RoleService {
     private RelRolePortalMapper relRolePortalMapper;
 
     @Autowired
-    private RelRoleDashboardMapper relRoleDashboardMapper;
+    private RelRoleDashboardExtendMapper relRoleDashboardMapper;
 
     @Autowired
     private RelRoleDisplayMapper relRoleDisplayMapper;
@@ -653,7 +653,7 @@ public class RoleServiceImpl implements RoleService {
         }
 
         vizPermission.setPortals(relRolePortalMapper.getExecludePortals(id, projectId));
-        vizPermission.setDashboards(relRoleDashboardMapper.getExecludeDashboards(id, projectId));
+        vizPermission.setDashboards(relRoleDashboardMapper.getExcludeDashboards(id, projectId));
         vizPermission.setDisplays(relRoleDisplayMapper.getExecludeDisplays(id, projectId));
         vizPermission.setSlides(relRoleSlideMapper.getExecludeSlides(id, projectId));
 

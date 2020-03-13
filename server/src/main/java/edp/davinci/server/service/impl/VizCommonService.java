@@ -33,7 +33,7 @@ import edp.davinci.server.dao.DashboardExtendMapper;
 import edp.davinci.server.dao.DashboardPortalExtendMapper;
 import edp.davinci.server.dao.DisplayExtendMapper;
 import edp.davinci.server.dao.DisplaySlideExtendMapper;
-import edp.davinci.server.dao.RelRoleDashboardMapper;
+import edp.davinci.server.dao.RelRoleDashboardExtendMapper;
 import edp.davinci.server.dao.RelRoleDisplayMapper;
 import edp.davinci.server.dao.RelRolePortalMapper;
 import edp.davinci.server.dao.RelRoleSlideMapper;
@@ -68,7 +68,7 @@ public class VizCommonService extends BaseEntityService {
     protected RelRolePortalMapper relRolePortalMapper;
 
     @Autowired
-    protected RelRoleDashboardMapper relRoleDashboardMapper;
+    protected RelRoleDashboardExtendMapper relRoleDashboardMapper;
 
     @Autowired
     protected RelRoleDisplayMapper relRoleDisplayMapper;

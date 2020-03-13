@@ -19,19 +19,30 @@
 
 package edp.davinci.server.dao;
 
+import edp.davinci.core.dao.RelProjectAdminMapper;
+import edp.davinci.core.dao.entity.RelProjectAdmin;
 import edp.davinci.server.dto.project.RelProjectAdminDTO;
-import edp.davinci.server.model.RelProjectAdmin;
 
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
-public interface RelProjectAdminMapper {
+public interface RelProjectAdminExtendMapper extends RelProjectAdminMapper {
 
+    @Insert({
+        "insert ignore into rel_project_admin (id, project_id, ",
+        "user_id, create_by, ",
+        "create_time, update_by, ",
+        "update_time)",
+        "values (#{id,jdbcType=BIGINT}, #{projectId,jdbcType=BIGINT}, ",
+        "#{userId,jdbcType=BIGINT}, #{createBy,jdbcType=BIGINT}, ",
+        "#{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=BIGINT}, ",
+        "#{updateTime,jdbcType=TIMESTAMP})"
+    })
     int insert(RelProjectAdmin relProjectAdmin);
-
 
     @Select({
             "select * from rel_project_admin where project_id = #{projectId} and user_id = #{userId}"
@@ -39,19 +50,9 @@ public interface RelProjectAdminMapper {
     RelProjectAdmin getByProjectAndUser(@Param("projectId") Long projectId, @Param("userId") Long userId);
 
     @Delete({
-            "delete from rel_project_admin where id = #{id,jdbcType=BIGINT}"
-    })
-    int deleteById(Long id);
-
-    @Delete({
             "delete from rel_project_admin where project_id = #{projectId} and user_id = #{userId}"
     })
     int delete(@Param("projectId") Long projectId, @Param("userId") Long userId);
-
-    @Select({
-            "select * from rel_project_admin where id = #{id,jdbcType=BIGINT}"
-    })
-    RelProjectAdmin getById(Long id);
 
     @Delete({
             "delete from rel_project_admin where project_id = #{projectId}"
@@ -69,7 +70,6 @@ public interface RelProjectAdminMapper {
     })
     List<RelProjectAdminDTO> getByProject(Long projectId);
 
-
     @Select({
             "select r.user_id",
             "from rel_project_admin r",
@@ -78,5 +78,20 @@ public interface RelProjectAdminMapper {
     })
     List<Long> getAdminIds(Long projectId);
 
+    @Insert({
+    	"<script>",
+    	"	insert ignore into rel_project_admin" + 
+    	"		(`project_id`, `user_id`, `create_by`, `create_time`)" + 
+    	"		values" + 
+    	"		<foreach collection='list' item='record' index='index' separator=','>" + 
+    	"		(" + 
+    	"		#{record.projectId,jdbcType=BIGINT}," + 
+    	"		#{record.userId,jdbcType=BIGINT}," + 
+    	"		#{record.createBy,jdbcType=BIGINT}," + 
+    	"		#{record.createTime,jdbcType=TIMESTAMP}" + 
+    	"		)" + 
+    	"		</foreach>",
+    	"</script>"
+    })
     int insertBatch(List<RelProjectAdmin> list);
 }

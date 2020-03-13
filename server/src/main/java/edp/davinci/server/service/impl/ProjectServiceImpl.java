@@ -26,6 +26,7 @@ import edp.davinci.core.dao.entity.CronJob;
 import edp.davinci.core.dao.entity.Favorite;
 import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.core.dao.entity.Project;
+import edp.davinci.core.dao.entity.RelProjectAdmin;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.organization.OrganizationInfo;
@@ -74,7 +75,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private RelUserOrganizationMapper relUserOrganizationMapper;
 
     @Autowired
-    public RelProjectAdminMapper relProjectAdminMapper;
+    public RelProjectAdminExtendMapper relProjectAdminExtendMapper;
 
     @Autowired
     private DashboardService dashboardService;
@@ -356,7 +357,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         viewMapper.deleteByPorject(project.getId());
         sourceMapper.deleteByProject(project.getId());
         relRoleProjectMapper.deleteByProjectId(project.getId());
-        relProjectAdminMapper.deleteByProjectId(project.getId());
+        relProjectAdminExtendMapper.deleteByProjectId(project.getId());
 
         if (projectExtendMapper.deleteByPrimaryKey(project.getId()) <= 0) {
             log.error("Delete project({}) fail", id);
@@ -383,7 +384,6 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     public Project updateProject(Long id, ProjectUpdate projectUpdate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
         ProjectDetail project = getProjectDetail(id, user, true);
-        String originInfo = project.toString();
         
         String name = projectUpdate.getName();
         Long orgId = project.getOrgId();
@@ -493,7 +493,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 			}
 		});
 
-		List<Long> oAdminIds = relProjectAdminMapper.getAdminIds(id);
+		List<Long> oAdminIds = relProjectAdminExtendMapper.getAdminIds(id);
 
 		admins.removeIf(u -> oAdminIds.contains(u.getId()));
 
@@ -502,8 +502,15 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		}
 
 		List<RelProjectAdmin> relProjectAdmins = new ArrayList<>();
-		admins.forEach(u -> relProjectAdmins.add(new RelProjectAdmin(id, u.getId()).createdBy(user.getId())));
-		if (relProjectAdminMapper.insertBatch(relProjectAdmins) <= 0) {
+		admins.forEach(u -> {
+			RelProjectAdmin rel = new RelProjectAdmin();
+			rel.setProjectId(id);
+			rel.setUserId(user.getId());
+			rel.setCreateBy(user.getId());
+			rel.setCreateTime(new Date());
+			relProjectAdmins.add(rel);
+		});
+		if (relProjectAdminExtendMapper.insertBatch(relProjectAdmins) <= 0) {
 			throw new ServerException("Add admins fail");
 		}
 
@@ -533,7 +540,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     @Transactional
     public boolean removeAdmin(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
-        RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getById(relationId);
+        RelProjectAdmin relProjectAdmin = relProjectAdminExtendMapper.selectByPrimaryKey(relationId);
         if (null == relProjectAdmin) {
             log.error("Project admin({}) dose not exist", relationId);
             throw new ServerException("this admin dose not exist");
@@ -545,7 +552,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             throw new ServerException("You cannot remove yourself");
         }
 
-        if (relProjectAdminMapper.deleteById(relationId) <= 0) {
+        if (relProjectAdminExtendMapper.deleteByPrimaryKey(relationId) <= 0) {
             throw new ServerException("Remove admin fail");
         }
         
@@ -574,7 +581,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         }
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
-        RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getByProjectAndUser(projectId, user.getId());
+        RelProjectAdmin relProjectAdmin = relProjectAdminExtendMapper.getByProjectAndUser(projectId, user.getId());
         boolean isCreater = projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer();
         boolean notOwner = !isCreater && null == relProjectAdmin && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole());
         if (modify) {
@@ -764,7 +771,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     @Override
     public List<RelProjectAdminDTO> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedExecption {
         getProjectDetail(id, user, false);
-        return relProjectAdminMapper.getByProject(id);
+        return relProjectAdminExtendMapper.getByProject(id);
     }
 
 
@@ -801,7 +808,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         }
 
         //project的admin
-        RelProjectAdmin projectAdmin = relProjectAdminMapper.getByProjectAndUser(projectDetail.getId(), user.getId());
+        RelProjectAdmin projectAdmin = relProjectAdminExtendMapper.getByProjectAndUser(projectDetail.getId(), user.getId());
         if (null != projectAdmin) {
             return true;
         }
