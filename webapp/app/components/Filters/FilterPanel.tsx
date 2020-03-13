@@ -60,7 +60,7 @@ export class FilterPanel extends Component<IFilterPanelProps, IFilterPanelStates
   public componentDidMount () {
     const { currentDashboard } = this.props
     if (currentDashboard && currentDashboard.id) {
-      this.initDerivedState(this.props, true)
+       this.initDerivedState(this.props, false) // fullscreen not need search at first
     }
   }
 
