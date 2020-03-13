@@ -91,9 +91,10 @@
     <sql id="selectProjectByUserBaseSql">
         select p.*,
         if(s.`id` is null, false, true) as 'isStar',
-        u.`id` as 'createBy.id',
-        IF(u.`name` is NULL, u.`username`, u.`name`) as 'createBy.username',
-        u.`avatar` as 'createBy.avatar'
+        u.`id` as 'createUser.id',
+        IF(u.`name` is null, u.`username`, u.`name`) as 'createUser.username',
+        u.`avatar` as 'createUser.avatar',
+        u.`email` as 'createUser.email'
         from project p
         left join `user` u on u.`id` = p.`user_id`
         left join star s on (s.target_id = p.id and s.`target` = 'project' and s.user_id = #{userId})
@@ -107,7 +108,7 @@
         union all
 
         <!-- 当前用户权限关联的project -->
-        select DISTINCT p.id
+        select distinct p.id
         from project p
         left join rel_role_project rrp on rrp.project_id = p.id
         left join rel_role_user rru on rru.role_id = rrp.role_id
@@ -170,46 +171,6 @@
         ) t left join favorite f on t.id = f.project_id
         where f.user_id = #{userId}
         order by t.id
-    </select>
-
-    <select id="getProjectIdsByAdmin" resultType="java.lang.Long">
-        select p.id
-        from project p
-                 left join rel_project_admin rpa on rpa.project_id = p.id
-        where p.user_id = #{userId}
-           or rpa.user_id = #{userId}
-        union
-        select p.id
-        from project p
-                 left join rel_user_organization ruo on ruo.org_id = p.org_id
-                 left join organization o on o.id = p.org_id
-        where o.user_id = #{userId}
-           or (ruo.user_id = #{userId} and ruo.role > 0)
-    </select>
-
-    <select id="getProjectDetail" resultType="edp.davinci.server.dto.project.ProjectDetail">
-        select p.*,
-               u.`id`                                       AS 'createBy.id',
-               if(u.`name` is null, u.`username`, u.`name`) AS 'createBy.username',
-               u.`avatar`                                   AS 'createBy.avatar',
-               o.`id`                                       AS 'organization.id',
-               o.`name`                                     AS 'organization.name',
-               o.`description`                              AS 'organization.description',
-               o.`avatar`                                   AS 'organization.avatar',
-               o.`user_id`                                  AS 'organization.userId',
-               o.`project_num`                              AS 'organization.projectNum',
-               o.`member_num`                               AS 'organization.memberNum',
-               o.`role_num`                                 AS 'organization.teamNum',
-               o.`allow_create_project`                     AS 'organization.allowCreateProject',
-               o.`member_permission`                        AS 'organization.memberPermission',
-               o.`create_time`                              AS 'organization.createTime',
-               o.`create_by`                                AS 'organization.createBy',
-               o.`update_time`                              AS 'organization.updateTime',
-               o.`update_by`                                AS 'organization.updateBy'
-        from project p
-                 left join organization o on o.`id` = p.`org_id`
-                 left join `user` u on u.`id` = p.`user_id`
-        where p.`id` = #{id}
     </select>
 
 </mapper>

@@ -212,15 +212,17 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 			Project project = new Project();
 	        BeanUtils.copyProperties(projectCreat, project);
 	        project.setUserId(user.getId());
+	        project.setIsTransfer(false);
+	        project.setInitialOrgId(orgId);
 	        project.setCreateBy(user.getId());
 	        project.setCreateTime(new Date());
 
 	        if (projectExtendMapper.insert(project) <= 0) {
-	            log.info("create project fail: {}", projectCreat.toString());
-	            throw new ServerException("create project fail: unspecified error");
+	            log.info("Create project fail:{}", projectCreat.toString());
+	            throw new ServerException("Create project fail");
 	        }
 	        
-	        optLogger.info("project ({}) is create by user(:{})", project.toString(), user.getId());
+	        optLogger.info("Project({}) is create by user({})", project.getId(), user.getId());
 	        organization.setProjectNum(organization.getProjectNum() + 1);
 	        organizationExtendMapper.updateProjectNum(organization);
 
@@ -240,8 +242,8 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private Organization getOrganization(Long id) {
         Organization organization = organizationExtendMapper.selectByPrimaryKey(id);
         if (null == organization) {
-        	log.info("organization(:{}) is not found", id);
-            throw new NotFoundException("organization is not found");
+        	log.error("Organization({}) is not found", id);
+            throw new NotFoundException("Organization is not found");
         }
         return organization;
     }
@@ -250,7 +252,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		RelUserOrganization rel = relUserOrganizationMapper.getRel(userId, orgId);
 		if (!organization.getUserId().equals(userId)
 				&& (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
-			throw new UnAuthorizedExecption("you have not permission to " + operation + " this project");
+			throw new UnAuthorizedExecption("You have not permission to " + operation + " this project");
 		}
 	}
 
@@ -272,31 +274,33 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 
         //不能移交给当前所在组织
         if (organization.getId().equals(project.getOrgId())) {
-            log.error("this project cannot be transferred to the current organization, name: {}", orgId);
-            throw new ServerException("the project can only be transferred to the non-current organizations");
+            log.error("This project({}) cannot be transferred to the current organization({})", id, orgId);
+            throw new ServerException("The project can only be transferred to the non-current organizations");
         }
 
         //当前用户在即将移交的组织下才能移交
         RelUserOrganization ucRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
         if (null == ucRel) {
-            log.error("user({}) must be a member of the organization {} that is about to be transfer", user.getId(), orgId);
-            throw new ServerException("you must be a member of the organization " + organization.getName() + " that is about to be transfer");
+            log.error("User({}) must be a member of the organization({}) that is about to be transfer", user.getId(), orgId);
+            throw new ServerException("You must be a member of the organization " + organization.getName() + " that is about to be transfer");
         }
 
         String name = project.getName();
-        if (isExist(name, null, orgId)) {
-            throw new ServerException("the project name \"" + name + "\" is already in the organization you will transfer");
-        }
+        BaseLock lock = getLock(entity, name, orgId);
+		if (isExist(name, null, orgId) || (lock != null && !lock.getLock())) {
+			throw new ServerException("The project name \"" + name + "\" is already in the organization you will transfer");
+		}
 
         Long beforeOrgId = project.getOrgId();
         project.setOrgId(organization.getId());
 
         if (projectExtendMapper.changeOrganization(project) <= 0) {
-            log.info("transfer project fail, {} -> {}", project.getOrgId(), organization.getId());
-            throw new ServerException("transfer project fail: unspecified error");
+            log.error("Transfer project({}) to organization({}) fail", project.getOrgId(), organization.getId());
+            throw new ServerException("Transfer project fail");
         }
         
-        optLogger.info("project (:{}) transferd from org(:{}) to org(:{})", project.getId(), beforeOrgId, orgId);
+		optLogger.info("Project({}) transferd from org({}) to org({}) by user({})", project.getId(), beforeOrgId, orgId,
+				user.getId());
 
         boolean isTransfer = true;
         //移交回原组织
@@ -355,11 +359,11 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         relProjectAdminMapper.deleteByProjectId(project.getId());
 
         if (projectExtendMapper.deleteByPrimaryKey(project.getId()) <= 0) {
-            log.error("delete project(:{}) fail", id);
-            throw new ServerException("delete project fail: unspecified error");
+            log.error("Delete project({}) fail", id);
+            throw new ServerException("Delete project fail");
         }
         
-        optLogger.info("project ({}) delete by user(:{})", project.toString(), user.getId());
+        optLogger.info("Project({}) is delete by user({})", project.getId(), user.getId());
         Organization organization = organizationExtendMapper.selectByPrimaryKey(project.getOrgId());
         organization.setProjectNum(organization.getProjectNum() - 1);
         organizationExtendMapper.updateProjectNum(organization);
@@ -401,11 +405,11 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	        project.setUpdateBy(user.getId());
 
 	        if (projectExtendMapper.updateBaseInfo(project) <= 0) {
-	            log.info("update project fail, {}", project.toString());
-	            throw new ServerException("update project fail: unspecified error");
+	            log.error("Update project({}) fail", project.getId());
+	            throw new ServerException("Update project fail");
 	        }
 	        
-	        optLogger.info("project ({}) update to ({}) by user(:{})", originInfo, project.getId(), user.getId());
+			optLogger.info("Project({}) is update by user({})", project.getId(), user.getId());
 	        return project;
 			
 		}finally {
@@ -480,12 +484,12 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		List<User> admins = userMapper.getByIds(adminIds);
 
 		if (null == admins || admins.isEmpty()) {
-			throw new NotFoundException("user is not found");
+			throw new NotFoundException("User is not found");
 		}
 
 		admins.forEach(u -> {
 			if (!adminIds.contains(u.getId())) {
-				throw new NotFoundException("user is not found");
+				throw new NotFoundException("User is not found");
 			}
 		});
 
@@ -500,7 +504,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		List<RelProjectAdmin> relProjectAdmins = new ArrayList<>();
 		admins.forEach(u -> relProjectAdmins.add(new RelProjectAdmin(id, u.getId()).createdBy(user.getId())));
 		if (relProjectAdminMapper.insertBatch(relProjectAdmins) <= 0) {
-			throw new ServerException("unspecified error");
+			throw new ServerException("Add admins fail");
 		}
 
 		Map<Long, User> userMap = new HashMap<>();
@@ -531,22 +535,21 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 
         RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getById(relationId);
         if (null == relProjectAdmin) {
-            log.warn("dose not exist this project admin (:{})", relationId);
+            log.error("Project admin({}) dose not exist", relationId);
             throw new ServerException("this admin dose not exist");
         }
 
         getProjectDetail(relProjectAdmin.getProjectId(), user, true);
 
         if (relProjectAdmin.getUserId().equals(user.getId())) {
-            throw new ServerException("you cannot remove yourself");
+            throw new ServerException("You cannot remove yourself");
         }
 
         if (relProjectAdminMapper.deleteById(relationId) <= 0) {
-            log.error("delete rel project admin fail: (relationId:{})", relationId);
-            throw new ServerException("unspecified error");
+            throw new ServerException("Remove admin fail");
         }
         
-        optLogger.info("relProjectAdmin ({}) delete by user(:{})", relProjectAdmin.toString(), user.getId());
+        optLogger.info("RelProjectAdmin({}) is delete by user({})", relProjectAdmin.toString(), user.getId());
         return true;
     }
 
@@ -566,8 +569,8 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     public ProjectDetail getProjectDetail(Long projectId, User user, boolean modify) throws NotFoundException, UnAuthorizedExecption {
         ProjectDetail projectDetail = projectExtendMapper.getProjectDetail(projectId);
         if (null == projectDetail) {
-            log.error("project (:{}) is not found", projectId);
-            throw new NotFoundException("project is not found");
+            log.error("Project({}) is not found", projectId);
+            throw new NotFoundException("Project is not found");
         }
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
@@ -577,7 +580,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         if (modify) {
             //项目的创建人和当前项目对应组织的owner可以修改
             if (notOwner) {
-                log.error("user(:{}) have not permission to modify project (:{})", user.getId(), projectId);
+                log.error("User({}) have not permission to modify project({})", user.getId(), projectId);
                 throw new UnAuthorizedExecption();
             }
         } else {
@@ -585,7 +588,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             if (notOwner
                     && projectDetail.getOrganization().getMemberPermission() < (short) 1
                     && !projectDetail.getVisibility()) {
-                log.error("user(:{}) have not permission to get project (:{})", user.getId(), projectId);
+            	log.error("User({}) have not permission to modify project({})", user.getId(), projectId);
                 throw new UnAuthorizedExecption();
             }
         }
