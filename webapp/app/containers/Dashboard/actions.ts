@@ -59,7 +59,8 @@ import {
   SET_CONTROL_FORM_VALUES,
   MONITORED_SYNC_DATA_ACTION,
   MONITORED_SEARCH_DATA_ACTION,
-  MONITORED_LINKAGE_DATA_ACTION
+  MONITORED_LINKAGE_DATA_ACTION,
+  SEND_CURRENT_DASHBOARD_CONTROL_PARAMS
 } from './constants'
 
 export function addDashboardItems (portalId, items, resolve) {
@@ -403,5 +404,14 @@ export function monitoredSearchDataAction () {
 export function monitoredLinkageDataAction () {
   return {
     type: MONITORED_LINKAGE_DATA_ACTION
+  }
+}
+
+export function sendCurrentDashboardControlParams (params) { 
+  return {
+    type: SEND_CURRENT_DASHBOARD_CONTROL_PARAMS,
+    payload: {
+      params
+    }
   }
 }
