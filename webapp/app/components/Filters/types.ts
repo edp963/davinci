@@ -19,6 +19,13 @@ export interface IControlRelatedField {
   column?: string
 }
 
+export interface IGridCtrlParams {
+  currentDashboardId: number
+  globalCtrlParams: {
+    [key: string]: string | number 
+  }
+}
+
 export interface IControlSelectOption {
   text: string
   value: string

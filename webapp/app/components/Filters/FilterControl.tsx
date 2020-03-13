@@ -6,7 +6,7 @@ import {
   renderDate,
   renderDateRange
 } from './'
-import { IControlBase, ControlOptions } from './types'
+import { IControlBase, ControlOptions, IGridCtrlParams } from './types'
 import {
   deserializeDefaultValue
 } from './util'
@@ -28,10 +28,10 @@ interface IFilterControlProps {
   currentOptions: ControlOptions
   parentsInfo?: IParentInfo[]
   onChange: (control: IControlBase, value) => void
+  gridCtrlParams: IGridCtrlParams
 }
 
 export class FilterControl extends PureComponent<IFilterControlProps, {}> {
-
   private renderControl = (filter) => {
     const { currentOptions } = this.props
     const options = currentOptions || []
@@ -59,12 +59,22 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
     return this.wrapFormItem(filter, component)
   }
 
+  public componentWillReceiveProps(nextProps) {
+    const { gridCtrlParams } = this.props
+    if (gridCtrlParams !== nextProps.gridCtrlParams) {
+      const { globalCtrlParams } = nextProps.gridCtrlParams
+      this.props.form.setFieldsValue(globalCtrlParams)
+    }
+  }
+
   private wrapFormItem = (control: IControlBase, component: Component): ReactNode => {
+    const { gridCtrlParams } = this.props
+    const initialValueFromGridControlCache = gridCtrlParams && gridCtrlParams.globalCtrlParams && gridCtrlParams.globalCtrlParams[`${control.key}`]
     const { getFieldDecorator } = this.props.form
     return (
       <FormItem label={control.name} className={styles.controlItem}>
         {getFieldDecorator(`${control.key}`, {
-          initialValue: deserializeDefaultValue(control)
+          initialValue: initialValueFromGridControlCache || deserializeDefaultValue(control)
         })(component)}
       </FormItem>
     )
