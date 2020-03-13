@@ -51,5 +51,5 @@ public interface DisplayService extends CheckEntityService {
 
     boolean postDisplayVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    Display copyDisplay(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    Display copyDisplay(Long id, DisplayCopy copy, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

@@ -50,7 +50,7 @@ public class QuartzJobExecutor implements Job {
             TriggerKey triggerKey = jobExecutionContext.getTrigger().getKey();
             CronJob cronJob = (CronJob) jobExecutionContext.getMergedJobDataMap().get(QuartzHandler.getJobDataKey(triggerKey));
             if (cronJob == null) {
-                log.warn("ScheduleJob({}) is not found", triggerKey.getName());
+            	scheduleLogger.warn("ScheduleJob({}) is not found", triggerKey.getName());
                 return;
             }
 
@@ -63,12 +63,11 @@ public class QuartzJobExecutor implements Job {
                     try {
                         scheduleService.execute(cronJob.getId());
                     } catch (Exception e) {
-						log.error(e.getMessage(), e);
-                        scheduleLogger.error(e.getMessage());
+                        scheduleLogger.error("ScheduleJob({}) execute error:{}", cronJob.getId(), e.getMessage());
+                        scheduleLogger.error(e.getMessage(), e);
                     }
                 } else {
-                    log.warn("Unknown job type:{}, jobId:{}", jobType, cronJob.getId());
-                    scheduleLogger.warn("Unknown job type:{}, jobId:{}", jobType, cronJob.getId());
+                	scheduleLogger.warn("ScheduleJob({}) Unknown job type {}", cronJob.getId(), jobType);
                 }
             } else {
                 Object[] args = {
@@ -78,8 +77,7 @@ public class QuartzJobExecutor implements Job {
                         DateUtils.toyyyyMMddHHmmss(cronJob.getEndDate()),
                         cronJob.getCronExpression()
                 };
-                log.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
-                scheduleLogger.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
+                scheduleLogger.warn("ScheduleJob({}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
             }
         });
     }

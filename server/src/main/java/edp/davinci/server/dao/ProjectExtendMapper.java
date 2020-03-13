@@ -44,10 +44,49 @@ public interface ProjectExtendMapper extends ProjectMapper {
 
     List<ProjectWithCreateBy> getProjectsByKewordsWithUser(@Param("keywords") String keywords, @Param("userId") Long userId, @Param("orgList") List<OrganizationInfo> list);
 
-    Set<Long> getProjectIdsByAdmin(@Param("userId") Long userId);
-
     int deleteAllRel(@Param("projectId") Long projectId, @Param("orgId") Long orgId);
     
+    @Select({
+    	"select p.id" + 
+    	"        from project p" + 
+    	"                 left join rel_project_admin rpa on rpa.project_id = p.id" + 
+    	"        where p.user_id = #{userId}" + 
+    	"           or rpa.user_id = #{userId}" + 
+    	"        union" + 
+    	"        select p.id" + 
+    	"        from project p" + 
+    	"                 left join rel_user_organization ruo on ruo.org_id = p.org_id" + 
+    	"                 left join organization o on o.id = p.org_id" + 
+    	"        where o.user_id = #{userId}" + 
+    	"           or (ruo.user_id = #{userId} and ruo.role > 0)"
+    })
+    Set<Long> getProjectIdsByAdmin(@Param("userId") Long userId);
+
+    @Select({
+    	"select p.*," + 
+    	"		u.`id`                                       as 'createUser.id'," + 
+    	"		if(u.`name` is null, u.`username`, u.`name`) as 'createUser.username'," + 
+    	"		u.`avatar`                                   as 'createUser.avatar'," + 
+    	"		u.`email`                                   as 'createUser.email'," + 
+    	"		o.`id`                                       as 'organization.id'," + 
+    	"		o.`name`                                     as 'organization.name'," + 
+    	"		o.`description`                              as 'organization.description'," + 
+    	"		o.`avatar`                                   as 'organization.avatar'," + 
+    	"		o.`user_id`                                  as 'organization.userId'," + 
+    	"		o.`project_num`                              as 'organization.projectNum'," + 
+    	"		o.`member_num`                               as 'organization.memberNum'," + 
+    	"		o.`role_num`                                 as 'organization.teamNum'," + 
+    	"		o.`allow_create_project`                     as 'organization.allowCreateProject'," + 
+    	"		o.`member_permission`                        as 'organization.memberPermission'," + 
+    	"		o.`create_time`                              as 'organization.createTime'," + 
+    	"		o.`create_by`                                as 'organization.createBy'," + 
+    	"		o.`update_time`                              as 'organization.updateTime'," + 
+    	"		o.`update_by`                                as 'organization.updateBy'" + 
+    	"	from project p" + 
+    	"		left join organization o on o.`id` = p.`org_id`" + 
+    	"		left join `user` u on u.`id` = p.`user_id`" + 
+    	"		where p.`id` = #{id}"
+    })
     ProjectDetail getProjectDetail(@Param("id") Long id);
     
     @Select({"select id from project where org_id = #{orgId} and `name` = #{name}"})

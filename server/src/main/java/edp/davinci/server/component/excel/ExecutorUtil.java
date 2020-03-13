@@ -36,10 +36,10 @@ import java.util.concurrent.*;
 public class ExecutorUtil {
 
     public static final ExecutorService WORKBOOK_WORKERS = Executors.newFixedThreadPool(4,
-            new ThreadFactoryBuilder().setNameFormat("workbook-worker-%d").setDaemon(true).build());
+            new ThreadFactoryBuilder().setNameFormat("Workbook-worker-%d").setDaemon(true).build());
 
     public static final ExecutorService SHEET_WORKERS = Executors.newFixedThreadPool(16,
-            new ThreadFactoryBuilder().setNameFormat("sheet-worker-%d").setDaemon(true).build());
+            new ThreadFactoryBuilder().setNameFormat("Sheet-worker-%d").setDaemon(true).build());
 
 
     public static <T> Future<T> submitWorkbookTask(WorkbookWorker worker, Logger customLogger) {
@@ -60,7 +60,6 @@ public class ExecutorUtil {
         return ExecutorUtil.submitSheetTask(new SheetWorker(context), customLogger);
     }
 
-
     public static void printThreadPoolStatusLog(ExecutorService executorService, String serviceName, Logger customLogger) {
         ThreadPoolExecutor executor = (ThreadPoolExecutor) executorService;
         Object[] args = {
@@ -71,9 +70,8 @@ public class ExecutorUtil {
                 executor.getTaskCount(),
                 executor.getCompletedTaskCount()
         };
-        log.info("{} keep alive time: {}, poolSize：{}, waiting queue size: {}, task count: {}, completed task size: {}", args);
         if (customLogger != null) {
-            customLogger.info("{} keep alive time: {}, poolSize：{}, waiting queue size: {}, task count: {}, completed task size: {}", args);
+        	customLogger.info("{} keep alive time:{}, poolSize:{}, waiting queue size:{}, task count:{}, completed task size:{}", args);
         }
     }
 }

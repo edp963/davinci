@@ -41,6 +41,7 @@ import edp.davinci.core.dao.entity.Display;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDisplaySlideWidgetMapper;
+import edp.davinci.server.dto.display.DisplayCopy;
 import edp.davinci.server.dto.display.DisplayInfo;
 import edp.davinci.server.dto.display.DisplayUpdate;
 import edp.davinci.server.dto.display.DisplayWithProject;
@@ -412,44 +413,59 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
      */
     @Override
     @Transactional
-    public Display copyDisplay(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Display copyDisplay(Long id, DisplayCopy copy, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-    	DisplayWithProject originDisplay = getDisplayWithProject(id, true);
+		DisplayWithProject originDisplay = getDisplayWithProject(id, true);
 
-    	Long projectId = originDisplay.getProjectId();
-        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+		Long projectId = originDisplay.getProjectId();
+		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
-        checkWritePermission(entity, projectId, user, "copy");
+		String name = copy.getName();
+		checkIsExist(copy.getName(), null, projectId);
 
-        if (isDisableDisplay(id, projectId, user, projectPermission)) {
-            alertUnAuthorized(entity, user, "copy");
-        }
+		checkWritePermission(entity, projectId, user, "copy");
 
-        // copy display entity
-        Display display = new Display();
-        BeanUtils.copyProperties(originDisplay, display, "id");
-        
-		String name = getCopyName(originDisplay.getName(), projectId);
-        BaseLock lock = getLock(entity, name, projectId);
-		while(lock != null && !lock.getLock()) {
+		if (isDisableDisplay(id, projectId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "copy");
+		}
+
+		// copy display entity
+		Display display = new Display();
+		BeanUtils.copyProperties(originDisplay, display, "id");
+
+		BaseLock lock = getLock(entity, name, projectId);
+		while (lock != null && !lock.getLock()) {
 			name = getCopyName(name, projectId);
 			lock = getLock(entity, name, projectId);
 		}
 
 		display.setName(name);
+		display.setDescription(copy.getDescription());
+		display.setPublish(copy.getPublish());
 		display.setCreateBy(user.getId());
 		display.setCreateTime(new Date());
-        if (displayExtendMapper.insert(display) <= 0) {
-            throw new ServerException("Copy display fail");
-        }
+		if (displayExtendMapper.insert(display) <= 0) {
+			throw new ServerException("Copy display fail");
+		}
+		optLogger.info("Display({}) is copied by user({}) from display({})", display.getId(), user.getId(),
+				originDisplay.getId());
 
-        // copy relRoleDisplay
-        optLogger.info("Display({}) is copied by user({}), from:{}", display.getId(), user.getId(), originDisplay.toString());
-        if (relRoleDisplayMapper.copyRoleRelation(originDisplay.getId(), display.getId(), user.getId()) > 0) {
-            optLogger.info("Display({}) role is copied by user({}), from:{}", display.getId(), user.getId(), originDisplay.getId());
-        }
-        displaySlideService.copySlides(originDisplay.getId(), display.getId(), user);
-        return display;
+		// copy relRoleDisplay
+		if (!CollectionUtils.isEmpty(copy.getRoleIds())) {
+			List<Role> roles = roleMapper.getRolesByIds(copy.getRoleIds());
+			List<RelRoleDisplay> list = roles.stream()
+					.map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+					.collect(Collectors.toList());
+
+			if (!CollectionUtils.isEmpty(list)) {
+				relRoleDisplayMapper.insertBatch(list);
+				optLogger.info("Display({}) limit role({}) access", display.getId(),
+						roles.stream().map(Role::getId).collect(Collectors.toList()));
+			}
+		}
+
+		displaySlideService.copySlides(originDisplay.getId(), display.getId(), user);
+		return display;
     }
     
 	private String getCopyName(String name, Long projectId) {
