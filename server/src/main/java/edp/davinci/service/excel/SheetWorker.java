@@ -23,6 +23,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Maps;
 import edp.core.model.QueryColumn;
 import edp.core.utils.CollectionUtils;
+import edp.core.utils.MD5Util;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.utils.SqlParseUtils;
@@ -34,6 +35,7 @@ import java.sql.ResultSetMetaData;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static edp.core.consts.Consts.QUERY_META_SQL;
 
@@ -58,6 +60,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
     public T call() {
         Stopwatch watch = Stopwatch.createStarted();
         Boolean rst = true;
+        String md5 = null;
         try {
             JdbcTemplate template = context.getSqlUtils().jdbcTemplate();
             propertiesSet(template);
@@ -69,19 +72,22 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
 
             String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
             sql = SqlParseUtils.rebuildSqlWithFragment(sql);
+            md5 = MD5Util.getMD5(sql, true, 16);
             Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
             if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("Task ({}) -- {} start query", context.getTaskKey(), context.getName());
+                context.getCustomLogger().info("Task({}) sheet worker({}) start query sql:{}, md5:{}", context.getTaskKey(), context.getName(), SqlUtils.formatSql(sql), md5);
             }
+            final AtomicInteger count = new AtomicInteger(0);
             template.query(sql, rs -> {
                 Map<String, Object> dataMap = Maps.newHashMap();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
                     dataMap.put(SqlUtils.getColumnLabel(queryFromsAndJoins, rs.getMetaData().getColumnLabel(i)), rs.getObject(rs.getMetaData().getColumnLabel(i)));
                 }
                 writeLine(context, dataMap);
+                count.incrementAndGet();
             });
             if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("Task ({}) -- {} finish query", context.getTaskKey(), context.getName());
+                context.getCustomLogger().info("Task({}) sheet worker({}) finish query md5:{}, count:{}", context.getTaskKey(), context.getName(), md5, count.get());
             }
             super.refreshHeightWidth(context);
         } catch (Exception e) {
@@ -91,31 +97,21 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
                 msg.setException(e);
             }
             if (context.getCustomLogger() != null) {
-                context.getCustomLogger().error("sheet worker error,  task={}, context={}, error={}", context.getTaskKey(), context.toString(), e);
+                context.getCustomLogger().error("Task({}) sheet worker({}) error, md5={}, error={}", context.getTaskKey(), context.getName(), md5, e.getMessage());
             }
-            log.error("sheet worker error,  task={}, context={}, error={}", context.getTaskKey(), context.toString(), e.getMessage());
             rst = false;
         }
 
-        if (context.getWrapper().getAction() == ActionEnum.DOWNLOAD) {
-            Object[] args = {context.getTaskKey(), rst, context.getWrapper().getAction(), context.getWrapper().getxId(),
-                    context.getSheet().getSheetName(), context.getDashboardId(), context.getWidgetId()
-                    , watch.elapsed(TimeUnit.MILLISECONDS)};
-            log.info("sheet worker complete task={}, status={},action={},xid={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
-            if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("sheet worker complete task={}, status={},action={},xid={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
-            }
-        } else if (context.getWrapper().getAction() == ActionEnum.SHAREDOWNLOAD) {
-            Object[] args = {context.getTaskKey(), rst, context.getWrapper().getAction(), context.getWrapper().getxUUID(),
-                    context.getSheet().getSheetName(), context.getDashboardId(), context.getWidgetId()
-                    , watch.elapsed(TimeUnit.MILLISECONDS)};
-            log.info("sheet worker complete task={}, status={},action={},xUUID={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
-            if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("sheet worker complete task={}, status={},action={},xUUID={},sheetName={},dashboardId={},widgetId={},cost={}ms", args);
-            }
-        }
+		Object[] args = { context.getTaskKey(), context.getName(), md5, rst, context.getWrapper().getAction(), context.getWrapper().getxId(),
+				context.getWrapper().getxUUID(), context.getSheet().getSheetName(), context.getDashboardId(),
+				context.getWidgetId(), watch.elapsed(TimeUnit.MILLISECONDS) };
+		if (context.getCustomLogger() != null) {
+			context.getCustomLogger().info(
+					"Task({}) sheet worker({}) complete md5={}, status={}, action={}, xid={}, xUUID={}, sheetName={}, dashboardId={}, widgetId={}, cost={}ms",
+					args);
+		}
 
-        return (T) rst;
+		return (T) rst;
     }
 
 
@@ -155,8 +151,8 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
                 queryColumns.add(new QueryColumn(label, metaData.getColumnTypeName(i)));
             }
             if (CollectionUtils.isEmpty(totalColumns) || CollectionUtils.isEmpty(queryColumns)) {
-                throw new IllegalArgumentException("can not find any QueryColumn,widgetId=" + context.getWidgetId()
-                        + ",sql=" + context.getQuerySql().get(context.getQuerySql().size() - 1));
+                throw new IllegalArgumentException("Can not find any query column, widgetId=" + context.getWidgetId()
+                        + ", sql=" + context.getQuerySql().get(context.getQuerySql().size() - 1));
             }
             context.setTotalColumns(totalColumns);
             context.setQueryColumns(queryColumns);

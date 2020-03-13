@@ -40,17 +40,16 @@ import org.apache.commons.lang.StringUtils;
 @Slf4j
 public abstract class MsgNotifier {
 
-
     protected void tell(MsgWrapper wrapper) {
         if (wrapper == null || wrapper.getMsg() == null) {
-            log.error("wrapper is null,nothing to do");
+            log.error("Wrapper is null,nothing to do");
             return;
         }
         switch (wrapper.getAction()) {
             case DOWNLOAD:
                 DownloadRecord record = (DownloadRecord) wrapper.getMsg();
                 if (record == null) {
-                    log.error("DownloadAction record is null,nothing to do");
+                    log.error("DownloadAction record is null, nothing to do");
                     break;
                 }
                 if (StringUtils.isNotEmpty(wrapper.getRst())) {
@@ -66,9 +65,9 @@ public abstract class MsgNotifier {
                 MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
                 if (msg.getException() != null) {
                     ((CronJobMapper) SpringContextHolder.getBean(CronJobMapper.class)).updateExecLog(msg.getId(), msg.toString());
-                    log.error("MailAction error, CronJob: (:{}), {}", msg.getId(), msg.getException().getMessage());
+                    log.error("Cronjob({}) send mail error:{}, xUUID:{}", msg.getId(), msg.getException().getMessage(), wrapper.getxUUID());
                 } else {
-                    log.info("MailAction finish, CronJob: (:{}), {}", msg.getId(), wrapper.getxUUID());
+                    log.info("Cronjob({}) send mail finish, xUUID:{}", msg.getId(), wrapper.getxUUID());
                 }
                 break;
 

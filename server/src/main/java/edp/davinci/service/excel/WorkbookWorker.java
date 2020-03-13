@@ -71,16 +71,16 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
 
         MsgWrapper wrapper = context.getWrapper();
         Object[] logArgs = {context.getTaskKey(), wrapper.getAction(), wrapper.getxId()};
-        log.info("workbook worker start: taksKey={}, action={}, xid={}", logArgs);
         if (context.getCustomLogger() != null) {
-            context.getCustomLogger().info("workbook worker start: taksKey={}, action={}, xid={}", logArgs);
+            context.getCustomLogger().info("Task({}) workbook worker start action={}, xid={}", logArgs);
         }
 
         String filePath = null;
         try {
             List<SheetContext> sheetContextList = buildSheetContextList();
             if (CollectionUtils.isEmpty(sheetContextList)) {
-                throw new IllegalArgumentException("sheetContextList is empty");
+				throw new IllegalArgumentException(
+						"Task(" + context.getTaskKey() + ") workbook worker sheetContextList is empty");
             }
             wb = new SXSSFWorkbook(1000);
             List<Future> futures = Lists.newArrayList();
@@ -95,8 +95,8 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 Future<Boolean> future = ExecutorUtil.submitSheetTask(sheetContext, context.getCustomLogger());
                 futures.add(future);
             }
-            Boolean rst = false;
 
+            Boolean rst = false;
             try {
                 for (Future<Boolean> future : futures) {
                     rst = future.get(1, TimeUnit.HOURS);
@@ -105,14 +105,12 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                     }
                 }
             } catch (InterruptedException | ExecutionException e) {
-                log.error("workbook worker error, task={}, e={}", context.getTaskKey(), e.getMessage());
                 if (context.getCustomLogger() != null) {
-                    context.getCustomLogger().error("workbook worker error, task={}, e={}", context.getTaskKey(), e.getMessage());
+                    context.getCustomLogger().error("Task({}) workbook worker error, e={}", context.getTaskKey(), e.getMessage());
                 }
             } catch (TimeoutException e) {
-                log.error("workbook worker error, task={} timeout, e={}", context.getTaskKey(), e.getMessage());
                 if (context.getCustomLogger() != null) {
-                    context.getCustomLogger().error("workbook worker error, task={} timeout, e={}", context.getTaskKey(), e.getMessage());
+                    context.getCustomLogger().error("Task({}) workbook worker error, e={}", context.getTaskKey(), e.getMessage());
                 }
                 if (wrapper.getAction() == ActionEnum.MAIL) {
                     MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
@@ -124,19 +122,13 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
 
             if (rst) {
                 filePath = ((FileUtils) SpringContextHolder.getBean(FileUtils.class)).getFilePath(FileTypeEnum.XLSX, this.context.getWrapper());
-                FileOutputStream out = null;
-                try {
-                    out = new FileOutputStream(filePath);
+                try (FileOutputStream out = new FileOutputStream(filePath);){
                     wb.write(out);
                     out.flush();
                     out.close();
                 } catch (Exception e) {
                     filePath = null;
                     throw e;
-                } finally {
-                    if (out != null) {
-                        out.close();
-                    }
                 }
                 wrapper.setRst(filePath);
             } else {
@@ -144,9 +136,8 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             }
             super.tell(wrapper);
         } catch (Exception e) {
-            log.error("workbook worker error, task={}, e={}", context.getTaskKey(), e.getMessage());
             if (context.getCustomLogger() != null) {
-                context.getCustomLogger().error("workbook worker error, task={}, e={}", context.getTaskKey(), e.getMessage());
+                context.getCustomLogger().error("Task({}) workbook worker error, e={}", context.getTaskKey(), e.getMessage());
             }
             if (wrapper.getAction() == ActionEnum.MAIL) {
                 MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
@@ -161,15 +152,13 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
         }
         if (wrapper.getAction() == ActionEnum.DOWNLOAD) {
             Object[] args = {context.getTaskKey(), StringUtils.isNotEmpty(filePath), wrapper.getAction(), wrapper.getxId(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
-            log.info("workbook worker complete task={}, status={},action={},xid={},filePath={},cost={}ms", args);
             if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("workbook worker complete task={}, status={},action={},xid={},filePath={},cost={}ms", args);
+                context.getCustomLogger().info("Task({}) workbook worker complete status={}, action={}, xid={}, filePath={}, cost={}ms", args);
             }
         } else if (wrapper.getAction() == ActionEnum.SHAREDOWNLOAD || wrapper.getAction() == ActionEnum.MAIL) {
             Object[] args = {context.getTaskKey(), StringUtils.isNotEmpty(filePath), wrapper.getAction(), wrapper.getxUUID(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
-            log.info("workbook worker complete task={}, status={},action={},xUUID={},filePath={},cost={}ms", args);
             if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("workbook worker complete task={}, status={},action={},xUUID={},filePath={},cost={}ms", args);
+                context.getCustomLogger().info("Task({}) workbook worker complete status={}, action={}, xUUID={}, filePath={}, cost={}ms", args);
             }
         }
 
@@ -180,7 +169,6 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
     private List<SheetContext> buildSheetContextList() throws Exception {
         List<SheetContext> sheetContextList = Lists.newArrayList();
         for (WidgetContext context : context.getWidgets()) {
-
             ViewExecuteParam executeParam = null;
             if (context.isHasExecuteParam() && null != context.getExecuteParam()) {
                 executeParam = context.getExecuteParam();

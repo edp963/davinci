@@ -269,7 +269,7 @@ public class FileUtils {
             sb.append(msgWrapper.getxUUID());
         }
         sb.append(UNDERLINE).append(System.currentTimeMillis()).append(type.getFormat());
-        return sb.toString().replaceAll(File.separator + "{2,}", File.separator);
+        return new File(sb.toString()).getAbsolutePath();
     }
 
     public static boolean delete(String filePath) {
