@@ -92,7 +92,7 @@ public class DownloadCommonService {
             Set<Long> widgetIds = mdw.stream().filter(y -> y != null).map(y -> y.getWidgetId()).collect(Collectors.toSet());
             List<Widget> widgets = widgetMapper.getByIds(widgetIds);
             if (!CollectionUtils.isEmpty(widgets)) {
-                Map<Long, MemDashboardWidget> map = mdw.stream().collect(Collectors.toMap(o -> o.getWidgetId(), o -> o));
+                Map<Long, MemDashboardWidget> map = mdw.stream().collect(Collectors.toMap(o -> o.getWidgetId(), o -> o, (oldV, newV)->oldV));
                 widgets.stream().forEach(t -> {
                     ViewExecuteParam executeParam = null;
                     if (!CollectionUtils.isEmpty(params) && map.containsKey(t.getId())) {
