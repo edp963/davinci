@@ -132,6 +132,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             scheduleLogger.error("CronJob({}) config is empty", jobId);
             return;
         }
+        cronJobMapper.updateExecLog(jobId, "");
         CronJobConfig cronJobConfig = null;
         try {
             cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);

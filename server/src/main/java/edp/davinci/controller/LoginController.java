@@ -71,7 +71,7 @@ public class LoginController {
     @Autowired
     private Environment environment;
 
-    @Autowired
+    @Autowired(required = false)
     private ClientRegistrationRepository clientRegistrationRepository;
 
     /**
@@ -109,6 +109,10 @@ public class LoginController {
     @GetMapping(value = "getOauth2Clients", consumes = MediaType.ALL_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @AuthIgnore
     public ResponseEntity getOauth2Clients(HttpServletRequest request) {
+
+        if (clientRegistrationRepository == null) {
+            return ResponseEntity.ok(new ResultMap().payloads(null));
+        }
 
         Iterable<ClientRegistration> clientRegistrations = (Iterable<ClientRegistration>) clientRegistrationRepository;
         List<HashMap<String, String>> clients = new ArrayList<>();
