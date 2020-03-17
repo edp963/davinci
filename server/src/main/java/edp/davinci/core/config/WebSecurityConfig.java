@@ -1,14 +1,15 @@
 package edp.davinci.core.config;
 
+import edp.core.config.OAuth2EnableCondition;
 import edp.davinci.core.common.Constants;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
 @Configuration
-@EnableWebSecurity
+@Conditional(value = OAuth2EnableCondition.class)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
