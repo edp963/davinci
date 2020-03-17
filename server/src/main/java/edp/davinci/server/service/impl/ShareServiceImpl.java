@@ -82,13 +82,13 @@ public class ShareServiceImpl implements ShareService {
     private WidgetMapper widgetMapper;
 
     @Autowired
-    private DisplayExtendMapper displayMapper;
+    private DisplayExtendMapper displayExtendMapper;
 
     @Autowired
-    private DisplaySlideExtendMapper displaySlideMapper;
+    private DisplaySlideExtendMapper displaySlideExtendMapper;
 
     @Autowired
-    private DashboardExtendMapper dashboardMapper;
+    private DashboardExtendMapper dashboardExtendMapper;
 
     @Autowired
     private ProjectService projectService;
@@ -103,7 +103,7 @@ public class ShareServiceImpl implements ShareService {
     private MemDisplaySlideWidgetExtendMapper memDisplaySlideWidgetExtendMapper;
 
     @Autowired
-    private MemDashboardWidgetExtendMapper memDashboardWidgetMapper;
+    private MemDashboardWidgetExtendMapper memDashboardWidgetExtendMapper;
 
     @Autowired
     private FileUtils fileUtils;
@@ -206,7 +206,7 @@ public class ShareServiceImpl implements ShareService {
         verifyShareUser(user, shareInfo);
 
         Long displayId = shareInfo.getShareId();
-        Display display = displayMapper.selectByPrimaryKey(displayId);
+        Display display = displayExtendMapper.selectByPrimaryKey(displayId);
         if (null == display) {
             throw new ServerException("display is not found");
         }
@@ -216,7 +216,7 @@ public class ShareServiceImpl implements ShareService {
         BeanUtils.copyProperties(display, shareDisplay);
 
         List<MemDisplaySlideWidgetWithSlide> memWithSlides = memDisplaySlideWidgetExtendMapper.getMemWithSlideByDisplayId(displayId);
-        List<DisplaySlide> displaySlides = displaySlideMapper.selectByDisplayId(displayId);
+        List<DisplaySlide> displaySlides = displaySlideExtendMapper.selectByDisplayId(displayId);
         Set<MemDisplaySlideWidget> memDisplaySlideWidgetSet = null;
 
         if (!CollectionUtils.isEmpty(memWithSlides)) {
@@ -276,7 +276,7 @@ public class ShareServiceImpl implements ShareService {
         verifyShareUser(user, shareInfo);
 
         Long dashboardId = shareInfo.getShareId();
-        Dashboard dashboard = dashboardMapper.selectByPrimaryKey(dashboardId);
+        Dashboard dashboard = dashboardExtendMapper.selectByPrimaryKey(dashboardId);
 
         if (null == dashboard) {
             throw new NotFoundException("dashboard is not found");
@@ -285,7 +285,7 @@ public class ShareServiceImpl implements ShareService {
         ShareDashboard shareDashboard = new ShareDashboard();
         BeanUtils.copyProperties(dashboard, shareDashboard);
 
-        List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetMapper.getByDashboardId(dashboardId);
+        List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetExtendMapper.getByDashboardId(dashboardId);
         shareDashboard.setRelations(memDashboardWidgets);
 
         Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDashboard(dashboardId);

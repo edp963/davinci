@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
-import edp.davinci.server.dao.RelRoleDashboardWidgetMapper;
+import edp.davinci.server.dao.RelRoleDashboardWidgetExtendMapper;
 import edp.davinci.server.dto.dashboard.DashboardPortalCreate;
 import edp.davinci.server.dto.dashboard.DashboardPortalUpdate;
 import edp.davinci.server.dto.project.ProjectPermission;
@@ -64,16 +64,16 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
     private ProjectService projectService;
     
     @Autowired
-    private RelRoleDashboardWidgetMapper relRoleDashboardWidgetMapper;
+    private RelRoleDashboardWidgetExtendMapper relRoleDashboardWidgetExtendMapper;
 
     @Autowired
-    private MemDashboardWidgetExtendMapper memDashboardWidgetMapper;
+    private MemDashboardWidgetExtendMapper memDashboardWidgetExtendMapper;
     
     private static final CheckEntityEnum entity = CheckEntityEnum.DASHBOARDPORTAL;
 
     @Override
     public boolean isExist(String name, Long id, Long projectId) {
-        Long portalId = dashboardPortalMapper.getByNameWithProjectId(name, projectId);
+        Long portalId = dashboardPortalExtendMapper.getByNameWithProjectId(name, projectId);
         if (null != id && null != portalId) {
             return id.longValue() != portalId.longValue();
         }
@@ -100,7 +100,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
             return null;
         }
 
-        List<DashboardPortal> dashboardPortals = dashboardPortalMapper.getByProject(projectId);
+        List<DashboardPortal> dashboardPortals = dashboardPortalExtendMapper.getByProject(projectId);
 
         if (!CollectionUtils.isEmpty(dashboardPortals)) {
         	
@@ -127,7 +127,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
     
 	private DashboardPortal getDashboardPortal(Long id) {
 		
-		DashboardPortal dashboardPortal = dashboardPortalMapper.selectByPrimaryKey(id);
+		DashboardPortal dashboardPortal = dashboardPortalExtendMapper.selectByPrimaryKey(id);
         
 		if (null == dashboardPortal) {
 			log.warn("DashboardPortal({}) is not found", id);
@@ -166,7 +166,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 			dashboardPortal.setCreateTime(new Date());
 			BeanUtils.copyProperties(dashboardPortalCreate, dashboardPortal);
 
-			if (dashboardPortalMapper.insert(dashboardPortal) != 1) {
+			if (dashboardPortalExtendMapper.insert(dashboardPortal) != 1) {
 				throw new ServerException("Create dashboardPortal fail");
 			}
 			
@@ -231,7 +231,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 			dashboardPortal.setUpdateBy(user.getId());
 			dashboardPortal.setUpdateTime(new Date());
 
-			if (dashboardPortalMapper.update(dashboardPortal) != 1) {
+			if (dashboardPortalExtendMapper.update(dashboardPortal) != 1) {
 				throw new ServerException("Update dashboardPortal fail");
 			}
 
@@ -303,12 +303,12 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 			alertUnAuthorized(entity, user, "delete");
 		}
 
-        relRoleDashboardWidgetMapper.deleteByPortalId(id);
-        memDashboardWidgetMapper.deleteByPortalId(id);
-        relRoleDashboardMapper.deleteByPortalId(id);
+        relRoleDashboardWidgetExtendMapper.deleteByPortalId(id);
+        memDashboardWidgetExtendMapper.deleteByPortalId(id);
+        relRoleDashboardExtendMapper.deleteByPortalId(id);
         dashboardExtendMapper.deleteByPortalId(id);
 
-        if (dashboardPortalMapper.deleteByPrimaryKey(id) == 1) {
+        if (dashboardPortalExtendMapper.deleteByPrimaryKey(id) == 1) {
             relRolePortalMapper.deleteByProtalId(dashboardPortal.getId());
             optLogger.info("DashboardPortal({}) is delete by user({})", id, user.getId());
             return true;

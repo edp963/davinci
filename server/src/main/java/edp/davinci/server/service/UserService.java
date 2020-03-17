@@ -27,6 +27,7 @@ import edp.davinci.server.dto.user.UserRegist;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.User;
 
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -53,4 +54,6 @@ public interface UserService extends CheckEntityService {
     ResultMap activateUserNoLogin(String token, HttpServletRequest request);
 
     ResultMap getUserProfile(Long id, User user, HttpServletRequest request);
+
+	User externalRegist(OAuth2AuthenticationToken oauthAuthToken) throws ServerException;
 }

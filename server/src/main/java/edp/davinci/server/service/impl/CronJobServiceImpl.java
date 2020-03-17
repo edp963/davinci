@@ -69,7 +69,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
 	@Autowired
-	private CronJobExtendMapper cronJobMapper;
+	private CronJobExtendMapper cronJobExtendMapper;
 
 	@Autowired
 	private QuartzHandler quartzHandler;
@@ -84,7 +84,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 
 	@Override
 	public boolean isExist(String name, Long id, Long projectId) {
-		Long cronJobId = cronJobMapper.getByNameWithProjectId(name, projectId);
+		Long cronJobId = cronJobExtendMapper.getByNameWithProjectId(name, projectId);
 		if (null != id && null != cronJobId) {
 			return !id.equals(cronJobId);
 		}
@@ -106,18 +106,18 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	 */
 	@Override
 	public List<CronJob> getCronJobs(Long projectId, User user) {
-		return checkReadPermission(entity, projectId, user) == true ? cronJobMapper.getByProject(projectId) : null;
+		return checkReadPermission(entity, projectId, user) == true ? cronJobExtendMapper.getByProject(projectId) : null;
 	}
 
 	@Override
 	public CronJob getCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-		CronJob cronJob = cronJobMapper.selectByPrimaryKey(id);
+		CronJob cronJob = cronJobExtendMapper.selectByPrimaryKey(id);
 		return checkReadPermission(entity, cronJob.getProjectId(), user) == true ? cronJob : null;
 	}
 	
 	private CronJob getCronJob(Long id) {
 	
-		CronJob cronJob = cronJobMapper.selectByPrimaryKey(id);
+		CronJob cronJob = cronJobExtendMapper.selectByPrimaryKey(id);
 
 		if (null == cronJob) {
 			log.error("Cronjob({}) is not found", id);
@@ -164,7 +164,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 
 		try {
 
-			if (cronJobMapper.insert(cronJob) != 1) {
+			if (cronJobExtendMapper.insert(cronJob) != 1) {
 				throw new ServerException("Create cronJob fail");
 			}
 
@@ -223,7 +223,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			cronJob.setStartDate(DateUtils.toDate(cronJobUpdate.getStartDate()));
 			cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
 			cronJob.setUpdateTime(new Date());
-			if (cronJobMapper.update(cronJob) == 1) {
+			if (cronJobExtendMapper.update(cronJob) == 1) {
 				optLogger.info("CronJob({}) is update by user({}), origin:{}", id, user.getId(), origin);
 				quartzHandler.modifyJob(cronJob);
 				res = true;
@@ -232,7 +232,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			log.error(e.getMessage(), e);
 			quartzHandler.removeJob(cronJob);
 			cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
-			cronJobMapper.update(cronJob);
+			cronJobExtendMapper.update(cronJob);
 		} finally {
 			releaseLock(lock);
 		}
@@ -255,7 +255,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 
 		checkWritePermission(entity, cronJob.getProjectId(), user, "delete");
 
-		if (cronJobMapper.deleteByPrimaryKey(id) == 1) {
+		if (cronJobExtendMapper.deleteByPrimaryKey(id) == 1) {
 			optLogger.info("Cronjob({}) is delete by user({})", id, user.getId());
 			quartzHandler.removeJob(cronJob);
 			return true;
@@ -276,13 +276,13 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			quartzHandler.addJob(cronJob);
 			cronJob.setJobStatus(CronJobStatusEnum.START.getStatus());
 			cronJob.setUpdateTime(new Date());
-			cronJobMapper.update(cronJob);
+			cronJobExtendMapper.update(cronJob);
 			return cronJob;
 		} catch (SchedulerException e) {
 			log.error(e.getMessage(), e);
 			cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
 			cronJob.setUpdateTime(new Date());
-			cronJobMapper.update(cronJob);
+			cronJobExtendMapper.update(cronJob);
 			throw new ServerException(e.getMessage());
 		}
 	}
@@ -313,11 +313,11 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		try {
 			quartzHandler.removeJob(cronJob);
 			cronJob.setUpdateTime(new Date());
-			cronJobMapper.update(cronJob);
+			cronJobExtendMapper.update(cronJob);
 		} catch (ServerException e) {
 			log.error(e.getMessage(), e);
 			cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
-			cronJobMapper.update(cronJob);
+			cronJobExtendMapper.update(cronJob);
 		}
 		
 		return cronJob;
@@ -325,7 +325,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 
 	@Override
 	public void startAllJobs() {
-		List<CronJob> jobList = cronJobMapper.getStartedJobs();
+		List<CronJob> jobList = cronJobExtendMapper.getStartedJobs();
 		jobList.forEach((cronJob) -> {
 			String key = entity.getSource().toUpperCase() + Constants.UNDERLINE + cronJob.getId() + Constants.UNDERLINE
 					+ cronJob.getProjectId();
@@ -336,7 +336,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 					log.warn("CronJob({}), name({}) is start error:{}", cronJob.getId(), cronJob.getName(),
 							e.getMessage());
 					cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
-					cronJobMapper.update(cronJob);
+					cronJobExtendMapper.update(cronJob);
 				} catch (ServerException e) {
 					log.warn("CronJob({}), name({}) is start error:{}", cronJob.getId(), cronJob.getName(),
 							e.getMessage());

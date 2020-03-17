@@ -89,7 +89,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
     private ViewMapper viewMapper;
 
     @Autowired
-    private MemDashboardWidgetExtendMapper memDashboardWidgetMapper;
+    private MemDashboardWidgetExtendMapper memDashboardWidgetExtendMapper;
 
     @Autowired
     private MemDisplaySlideWidgetExtendMapper memDisplaySlideWidgetExtendMapper;
@@ -299,7 +299,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
        checkDeletePermission(entity, widget.getProjectId(), user);
 
-        memDashboardWidgetMapper.deleteByWidget(id);
+        memDashboardWidgetExtendMapper.deleteByWidget(id);
         memDisplaySlideWidgetExtendMapper.deleteByWidget(id);
         widgetMapper.deleteById(id);
         

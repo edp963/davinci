@@ -38,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Display;
+import edp.davinci.core.dao.entity.RelRoleDisplay;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDisplaySlideWidgetMapper;
@@ -54,7 +55,6 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.RelRoleDisplay;
 import edp.davinci.server.model.Role;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.DisplayService;
@@ -145,11 +145,19 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 			if (!CollectionUtils.isEmpty(displayInfo.getRoleIds())) {
 				List<Role> roles = roleMapper.getRolesByIds(displayInfo.getRoleIds());
 				List<RelRoleDisplay> list = roles.stream()
-						.map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+						.map(r -> {
+							RelRoleDisplay rel = new RelRoleDisplay();
+							rel.setRoleId(r.getId());
+							rel.setDisplayId(display.getId());
+							rel.setVisible(false);
+							rel.setCreateBy(user.getId());
+							rel.setCreateTime(new Date());
+							return rel;
+						})
 						.collect(Collectors.toList());
 
 				if (!CollectionUtils.isEmpty(list)) {
-					relRoleDisplayMapper.insertBatch(list);
+					relRoleDisplayExtendMapper.insertBatch(list);
 					optLogger.info("Display({}) limit role({}) access, create by user({})", display.getId(),
 							roles.stream().map(r -> r.getId()).collect(Collectors.toList()), user.getId());
 				}
@@ -191,7 +199,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         memDisplaySlideWidgetExtendMapper.deleteByDisplayId(id);
         relRoleSlideMapper.deleteByDisplayId(id);
         displaySlideExtendMapper.deleteByDisplayId(id);
-        relRoleDisplayMapper.deleteByDisplayId(id);
+        relRoleDisplayExtendMapper.deleteByDisplayId(id);
         displayExtendMapper.deleteByPrimaryKey(id);
 
         return true;
@@ -269,14 +277,22 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 			
 			optLogger.info("Display({}) is update by user({}), origin:{}", display.getId(), user.getId(), origin);
 			if (displayUpdate.getRoleIds() != null) {
-				relRoleDisplayMapper.deleteByDisplayId(display.getId());
+				relRoleDisplayExtendMapper.deleteByDisplayId(display.getId());
 				if (!CollectionUtils.isEmpty(displayUpdate.getRoleIds())) {
 					List<Role> roles = roleMapper.getRolesByIds(displayUpdate.getRoleIds());
 					List<RelRoleDisplay> list = roles.stream()
-							.map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+							.map(r -> {
+								RelRoleDisplay rel = new RelRoleDisplay();
+								rel.setRoleId(r.getId());
+								rel.setDisplayId(display.getId());
+								rel.setVisible(false);
+								rel.setCreateBy(user.getId());
+								rel.setCreateTime(new Date());
+								return rel;
+							})
 							.collect(Collectors.toList());
 					if (!CollectionUtils.isEmpty(list)) {
-						relRoleDisplayMapper.insertBatch(list);
+						relRoleDisplayExtendMapper.insertBatch(list);
 						optLogger.info("Update display({}) limit role({}) access, create by user({})", display.getId(),
 								roles.stream().map(r -> r.getId()).collect(Collectors.toList()), user.getId());
 					}
@@ -377,7 +393,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
     @Override
     public List<Long> getDisplayExcludeRoles(Long id) {
-        return relRoleDisplayMapper.getById(id);
+        return relRoleDisplayExtendMapper.getByDisplayId(id);
     }
 
 	@Override
@@ -390,13 +406,18 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 		}
 
 		if (vizVisibility.isVisible()) {
-			if (relRoleDisplayMapper.delete(display.getId(), role.getId()) > 0) {
+			if (relRoleDisplayExtendMapper.deleteByPrimaryKey(role.getId(), display.getId()) > 0) {
 				optLogger.info("Display({}) can be accessed by role({}), update by user({})", display.getId(),
 						role.getId(), user.getId());
 			}
 		} else {
-			RelRoleDisplay relRoleDisplay = new RelRoleDisplay(display.getId(), role.getId());
-			relRoleDisplayMapper.insert(relRoleDisplay);
+			RelRoleDisplay relRoleDisplay = new RelRoleDisplay();
+			relRoleDisplay.setDisplayId(display.getId());
+			relRoleDisplay.setRoleId(role.getId());
+			relRoleDisplay.setCreateBy(user.getId());
+			relRoleDisplay.setCreateTime(new Date());
+			relRoleDisplay.setVisible(false);
+			relRoleDisplayExtendMapper.insert(relRoleDisplay);
 			optLogger.info("Display({}) can be accessed by role({}), create by user({})", display.getId(), role.getId(),
 					user.getId());
 		}
@@ -454,11 +475,18 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 		if (!CollectionUtils.isEmpty(copy.getRoleIds())) {
 			List<Role> roles = roleMapper.getRolesByIds(copy.getRoleIds());
 			List<RelRoleDisplay> list = roles.stream()
-					.map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
-					.collect(Collectors.toList());
+					.map(r -> {
+						RelRoleDisplay rel = new RelRoleDisplay();
+						rel.setRoleId(r.getId());
+						rel.setDisplayId(display.getId());
+						rel.setVisible(false);
+						rel.setCreateBy(user.getId());
+						rel.setCreateTime(new Date());
+						return rel;
+					}).collect(Collectors.toList());
 
 			if (!CollectionUtils.isEmpty(list)) {
-				relRoleDisplayMapper.insertBatch(list);
+				relRoleDisplayExtendMapper.insertBatch(list);
 				optLogger.info("Display({}) limit role({}) access", display.getId(),
 						roles.stream().map(Role::getId).collect(Collectors.toList()));
 			}
@@ -490,7 +518,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         memDisplaySlideWidgetExtendMapper.deleteByProject(projectId);
         relRoleSlideMapper.deleteByProjectId(projectId);
         displaySlideExtendMapper.deleteByProjectId(projectId);
-        relRoleDisplayMapper.deleteByProjectId(projectId);
+        relRoleDisplayExtendMapper.deleteByProjectId(projectId);
         displayExtendMapper.deleteByProject(projectId);
     }
 }

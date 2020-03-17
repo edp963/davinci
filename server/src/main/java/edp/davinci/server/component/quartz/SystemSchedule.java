@@ -45,7 +45,7 @@ public class SystemSchedule {
     private FileUtils fileUtils;
 
     @Autowired
-    private CronJobExtendMapper cronJobMapper;
+    private CronJobExtendMapper cronJobExtendMapper;
 
     @Autowired
     private QuartzHandler quartzHandler;
@@ -72,7 +72,7 @@ public class SystemSchedule {
 
     @Scheduled(cron = "0 0/2 * * * *")
     public void stopCronJob() {
-        List<CronJob> jobs = cronJobMapper.getStopedJob();
+        List<CronJob> jobs = cronJobExtendMapper.getStopedJob();
         if (!CollectionUtils.isEmpty(jobs)) {
             for (CronJob job : jobs) {
                 try {

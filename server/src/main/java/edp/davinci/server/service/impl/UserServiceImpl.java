@@ -52,9 +52,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.alibaba.fastjson.JSONObject;
+import com.jayway.jsonpath.JsonPath;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -88,6 +94,9 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 
     @Autowired
     private LdapService ldapService;
+
+	@Autowired
+	private Environment environment;
     
     private static final CheckEntityEnum entity = CheckEntityEnum.USER;
 
@@ -116,16 +125,16 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
     @Override
     @Transactional
     public User regist(UserRegist userRegist) throws ServerException {
-        
-    	String username = userRegist.getUsername();
-    	//用户名是否已经注册
+
+		String username = userRegist.getUsername();
+		// 用户名是否已经注册
         if (isExist(username, null, null)) {
             log.info("the username {} has been registered", username);
             throw new ServerException("the username:" + username + " has been registered");
         }
-        
-        String email = userRegist.getEmail();
-        //邮箱是否已经注册
+
+		String email = userRegist.getEmail();
+		// 邮箱是否已经注册
         if (isExist(email, null, null)) {
         	log.info("the email {} has been registered", email);
             throw new ServerException("the email:" + email + " has been registered");
@@ -137,31 +146,59 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 		}
 		
         BaseLock emailLock = null;
-        if (!username.toLowerCase().equals(email.toLowerCase())) {
-        	emailLock =getLock(entity, email, null);
-        }
+		if (!username.toLowerCase().equals(email.toLowerCase())) {
+			emailLock = getLock(entity, email, null);
+		}
 
         if (emailLock != null && !emailLock.getLock()) {
 			alertNameTaken(entity, email);
 		}
-		
+
 		try {
 			User user = new User();
-	        //密码加密
-	        userRegist.setPassword(BCrypt.hashpw(userRegist.getPassword(), BCrypt.gensalt()));
-	        BeanUtils.copyProperties(userRegist, user);
-	        //添加用户
-	        if (userMapper.insert(user) <= 0) {
-	            log.info("regist fail: {}", userRegist.toString());
-	            throw new ServerException("regist fail: unspecified error");
-	        }
-	        //添加成功，发送激活邮件
-            sendMail(user.getEmail(), user);
-            return user;
-		}finally {
+			// 密码加密
+			userRegist.setPassword(BCrypt.hashpw(userRegist.getPassword(), BCrypt.gensalt()));
+			BeanUtils.copyProperties(userRegist, user);
+			// 添加用户
+			if (userMapper.insert(user) <= 0) {
+				log.info("regist fail: {}", userRegist.toString());
+				throw new ServerException("regist fail: unspecified error");
+			}
+			// 添加成功，发送激活邮件
+			sendMail(user.getEmail(), user);
+			return user;
+		} finally {
 			releaseLock(usernameLock);
 			releaseLock(emailLock);
 		}
+    }
+    
+    @Override
+    public User externalRegist(OAuth2AuthenticationToken oauthAuthToken) throws ServerException {
+        OAuth2User oauthUser = oauthAuthToken.getPrincipal();
+
+        User user = getByUsername(oauthUser.getName());
+        if (user != null) {
+            return user;
+        }
+        user = new User();
+
+        String emailMapping = environment.getProperty(String.format("spring.security.oauth2.client.provider.%s.userMapping.email", oauthAuthToken.getAuthorizedClientRegistrationId()));
+        String nameMapping = environment.getProperty(String.format("spring.security.oauth2.client.provider.%s.userMapping.name", oauthAuthToken.getAuthorizedClientRegistrationId()));
+        String avatarMapping = environment.getProperty(String.format("spring.security.oauth2.client.provider.%s.userMapping.avatar", oauthAuthToken.getAuthorizedClientRegistrationId()));
+        JSONObject jsonObj = new JSONObject(oauthUser.getAttributes());
+
+        user.setName(JsonPath.read(jsonObj, nameMapping));
+        user.setUsername(oauthUser.getName());
+        user.setPassword("OAuth2");
+        user.setEmail(JsonPath.read(jsonObj, emailMapping));
+        user.setAvatar(JsonPath.read(jsonObj, avatarMapping));
+        if (userMapper.insert(user) > 0) {
+            return user;
+        } else {
+            log.info("regist fail: {}", oauthUser.getName());
+            throw new ServerException("regist fail: unspecified error");
+        }
     }
     
 	protected void alertNameTaken(CheckEntityEnum entity, String name) throws ServerException {

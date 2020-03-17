@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
 public class DownloadCommonService {
 
     @Autowired
-    protected MemDashboardWidgetExtendMapper memDashboardWidgetMapper;
+    protected MemDashboardWidgetExtendMapper memDashboardWidgetExtendMapper;
 
     @Autowired
     protected ProjectService projectService;
@@ -65,7 +65,7 @@ public class DownloadCommonService {
     protected WidgetMapper widgetMapper;
 
     @Autowired
-    protected DashboardExtendMapper dashboardMapper;
+    protected DashboardExtendMapper dashboardExtendMapper;
 
     @Autowired
     protected TokenUtils tokenUtils;
@@ -82,11 +82,11 @@ public class DownloadCommonService {
             if (dashboardId == null || dashboardId.longValue() <= 0) {
                 continue;
             }
-            Dashboard dashboard = dashboardMapper.selectByPrimaryKey(dashboardId);
+            Dashboard dashboard = dashboardExtendMapper.selectByPrimaryKey(dashboardId);
             if (dashboard == null) {
                 continue;
             }
-            List<MemDashboardWidget> mdw = memDashboardWidgetMapper.getByDashboardId(dashboardId);
+            List<MemDashboardWidget> mdw = memDashboardWidgetExtendMapper.getByDashboardId(dashboardId);
             if (CollectionUtils.isEmpty(mdw)) {
                 continue;
             }
@@ -115,7 +115,7 @@ public class DownloadCommonService {
         if (id == null || id.longValue() < 0L) {
             return widgetList;
         }
-        List<Dashboard> dashboardList = dashboardMapper.getSubDashboardById(id);
+        List<Dashboard> dashboardList = dashboardExtendMapper.getSubDashboardById(id);
         if (CollectionUtils.isEmpty(dashboardList)) {
             return widgetList;
         }
@@ -135,7 +135,7 @@ public class DownloadCommonService {
                 break;
             case DashBoard:
             case DashBoardFolder:
-                Dashboard dashboard = dashboardMapper.selectByPrimaryKey(id);
+                Dashboard dashboard = dashboardExtendMapper.selectByPrimaryKey(id);
                 fileName = dashboard.getName();
                 break;
             default:

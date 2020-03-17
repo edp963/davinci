@@ -54,14 +54,14 @@ import java.util.List;
 public class DownloadServiceImpl extends DownloadCommonService implements DownloadService {
 
     @Autowired
-    private DownloadRecordExtendMapper downloadRecordMapper;
+    private DownloadRecordExtendMapper downloadRecordExtendMapper;
 
     @Autowired
     private UserMapper userMapper;
 
     @Override
     public List<DownloadRecord> queryDownloadRecordPage(Long userId) {
-        return downloadRecordMapper.getDownloadRecordsByUser(userId);
+        return downloadRecordExtendMapper.getDownloadRecordsByUser(userId);
     }
 
     @Override
@@ -80,7 +80,7 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
             throw new UnAuthorizedExecption();
         }
 
-        DownloadRecord record = downloadRecordMapper.selectByPrimaryKey(id);
+        DownloadRecord record = downloadRecordExtendMapper.selectByPrimaryKey(id);
 
         if (!record.getUserId().equals(user.getId())) {
             throw new UnAuthorizedExecption();
@@ -88,7 +88,7 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
 
         record.setLastDownloadTime(new Date());
         record.setStatus(DownloadRecordStatusEnum.DOWNLOADED.getStatus());
-        downloadRecordMapper.updateById(record);
+        downloadRecordExtendMapper.updateById(record);
         return record;
     }
 
@@ -101,7 +101,7 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
             record.setUserId(user.getId());
             record.setCreateTime(new Date());
             record.setStatus(DownloadRecordStatusEnum.PROCESSING.getStatus());
-            downloadRecordMapper.insert(record);
+            downloadRecordExtendMapper.insert(record);
             MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.DOWNLOAD, record.getId());
 
             WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()

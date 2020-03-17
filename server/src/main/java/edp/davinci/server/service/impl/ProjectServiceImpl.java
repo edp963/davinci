@@ -96,7 +96,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private StarMapper starMapper;
 
     @Autowired
-    private FavoriteExtendMapper favoriteMapper;
+    private FavoriteExtendMapper favoriteExtendMapper;
 
     @Autowired
     private RelRoleProjectMapper relRoleProjectMapper;
@@ -108,7 +108,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private RoleMapper roleMapper;
 
     @Autowired
-    private CronJobExtendMapper cronJobMapper;
+    private CronJobExtendMapper cronJobExtendMapper;
 
     @Autowired
     private RelRoleViewMapper relRoleViewMapper;
@@ -338,7 +338,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 
         ProjectDetail project = getProjectDetail(id, user, true);
 
-        List<CronJob> cronJobs = cronJobMapper.getByProject(project.getId());
+        List<CronJob> cronJobs = cronJobExtendMapper.getByProject(project.getId());
         if (!CollectionUtils.isEmpty(cronJobs)) {
             List<CronJob> startedJobs = cronJobs.stream()
                     .filter(c -> c.getJobStatus().equals(CronJobStatusEnum.START.getStatus()))
@@ -349,7 +349,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             }
         }
 
-        cronJobMapper.deleteByProject(project.getId());
+        cronJobExtendMapper.deleteByProject(project.getId());
         displayService.deleteSlideAndDisplayByProject(project.getId());
         dashboardService.deleteDashboardAndPortalByProject(project.getId());
         widgetMapper.deleteByProject(project.getId());
@@ -432,7 +432,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         favorite.setUserId(user.getId());
         favorite.setProjectId(project.getId());
         favorite.setCreateTime(new Date());
-        return favoriteMapper.insert(favorite) > 0;
+        return favoriteExtendMapper.insert(favorite) > 0;
     }
 
 
@@ -459,7 +459,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     @Override
     @Transactional
     public boolean removeFavoriteProjects(User user, Long[] projectIds) {
-        return favoriteMapper.deleteBatch(Arrays.asList(projectIds), user.getId()) > 0;
+        return favoriteExtendMapper.deleteBatch(Arrays.asList(projectIds), user.getId()) > 0;
     }
 
 

@@ -93,9 +93,7 @@ import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.util.MailUtils;
 import edp.davinci.server.util.ServerUtils;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service("emailScheduleService")
 public class EmailScheduleServiceImpl implements ScheduleService {
 
@@ -108,7 +106,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     private MailUtils mailUtils;
 
     @Autowired
-    private DisplaySlideExtendMapper displaySlideMapper;
+    private DisplaySlideExtendMapper displaySlideExtendMapper;
 
     @Autowired
     private WidgetMapper widgetMapper;
@@ -117,10 +115,10 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     private UserMapper userMapper;
 
     @Autowired
-    private DashboardExtendMapper dashboardMapper;
+    private DashboardExtendMapper dashboardExtendMapper;
 
     @Autowired
-    private DisplayExtendMapper displayMapper;
+    private DisplayExtendMapper displayExtendMapper;
 
     @Autowired
     private ProjectService projectService;
@@ -150,6 +148,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         	scheduleLogger.error("CronJob({}) config is empty", jobId);
             return;
         }
+        cronJobExtendMapper.updateExecLog(jobId, "");
         CronJobConfig cronJobConfig = null;
         try {
             cronJobConfig = JSONUtils.toObject(cronJob.getConfig(), CronJobConfig.class);
@@ -324,7 +323,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 if (vizOrderMap.containsKey(DISPLAY + AT_SYMBOL + cronJobContent.getId())) {
                     order = vizOrderMap.get(DISPLAY + AT_SYMBOL + cronJobContent.getId());
                 }
-                Display display = displayMapper.selectByPrimaryKey(cronJobContent.getId());
+                Display display = displayExtendMapper.selectByPrimaryKey(cronJobContent.getId());
                 List<WidgetWithVizId> widgetsWithSlideIdList = widgetMapper.queryByDisplayId(cronJobContent.getId());
                 if (display != null && !CollectionUtils.isEmpty(widgetsWithSlideIdList)) {
                     ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
@@ -370,7 +369,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 if (vizOrderMap.containsKey(DASHBOARD + AT_SYMBOL + cronJobContent.getId())) {
                     order = vizOrderMap.get(DASHBOARD + AT_SYMBOL + cronJobContent.getId());
                 }
-                DashboardWithPortal dashboard = dashboardMapper.getDashboardWithPortalAndProject(cronJobContent.getId());
+                DashboardWithPortal dashboard = dashboardExtendMapper.getDashboardWithPortalAndProject(cronJobContent.getId());
                 excelEntityOrderMap.put(dashboard.getName(), vizOrderMap.get(DASHBOARD + AT_SYMBOL + cronJobContent.getId()));
 
                 ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
@@ -476,14 +475,14 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         // dashboard
         Set<Dashboard> dashboards = new HashSet<>();
         if (!CollectionUtils.isEmpty(dashboardIds)) {
-            Set<Dashboard> checkDashboards = dashboardMapper.queryDashboardsByIds(dashboardIds);
+            Set<Dashboard> checkDashboards = dashboardExtendMapper.queryDashboardsByIds(dashboardIds);
             if (!CollectionUtils.isEmpty(checkDashboards)) {
                 dashboards.addAll(checkDashboards);
             }
         }
 
         if (!CollectionUtils.isEmpty(checkedPortalIds)) {
-            Set<Dashboard> checkoutPortalDashboards = dashboardMapper.queryByPortals(checkedPortalIds);
+            Set<Dashboard> checkoutPortalDashboards = dashboardExtendMapper.queryByPortals(checkedPortalIds);
             if (!CollectionUtils.isEmpty(checkoutPortalDashboards)) {
                 dashboards.addAll(checkoutPortalDashboards);
             }
@@ -499,7 +498,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         }
 
         if (!CollectionUtils.isEmpty(refPortalIds)) {
-            Set<Dashboard> refPortalAllDashboards = dashboardMapper.queryByPortals(refPortalIds);
+            Set<Dashboard> refPortalAllDashboards = dashboardExtendMapper.queryByPortals(refPortalIds);
             Map<Long, List<Dashboard>> portalDashboardsMap = refPortalAllDashboards.stream().collect(Collectors.groupingBy(Dashboard::getDashboardPortalId));
             portalDashboardsMap.forEach((pId, ds) -> {
                 DashboardTree tree = new DashboardTree(pId, 0);
@@ -517,7 +516,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         }
 
         //display
-        List<DisplaySlide> displaySlides = displaySlideMapper.queryByDisplayIds(checkedDisplayIds);
+        List<DisplaySlide> displaySlides = displaySlideExtendMapper.queryByDisplayIds(checkedDisplayIds);
         if (!CollectionUtils.isEmpty(displaySlides)) {
             Map<Long, List<DisplaySlide>> displaySlidesMap = displaySlides.stream().collect(Collectors.groupingBy(DisplaySlide::getDisplayId));
             displaySlidesMap.forEach((displayId, slides) -> {

@@ -34,7 +34,7 @@ import edp.davinci.server.dao.DashboardPortalExtendMapper;
 import edp.davinci.server.dao.DisplayExtendMapper;
 import edp.davinci.server.dao.DisplaySlideExtendMapper;
 import edp.davinci.server.dao.RelRoleDashboardExtendMapper;
-import edp.davinci.server.dao.RelRoleDisplayMapper;
+import edp.davinci.server.dao.RelRoleDisplayExtendMapper;
 import edp.davinci.server.dao.RelRolePortalMapper;
 import edp.davinci.server.dao.RelRoleSlideMapper;
 import edp.davinci.server.dao.RoleMapper;
@@ -53,7 +53,7 @@ import edp.davinci.core.dao.entity.DisplaySlide;
 public class VizCommonService extends BaseEntityService {
 
     @Autowired
-    protected DashboardPortalExtendMapper dashboardPortalMapper;
+    protected DashboardPortalExtendMapper dashboardPortalExtendMapper;
 
     @Autowired
     protected DashboardExtendMapper dashboardExtendMapper;
@@ -68,10 +68,10 @@ public class VizCommonService extends BaseEntityService {
     protected RelRolePortalMapper relRolePortalMapper;
 
     @Autowired
-    protected RelRoleDashboardExtendMapper relRoleDashboardMapper;
+    protected RelRoleDashboardExtendMapper relRoleDashboardExtendMapper;
 
     @Autowired
-    protected RelRoleDisplayMapper relRoleDisplayMapper;
+    protected RelRoleDisplayExtendMapper relRoleDisplayExtendMapper;
 
     @Autowired
     protected RelRoleSlideMapper relRoleSlideMapper;
@@ -119,7 +119,7 @@ public class VizCommonService extends BaseEntityService {
             case PORTAL:
                 disables = relRolePortalMapper.getDisablePortalByUser(userId, featureId);
                 if (null == allVizs) {
-                    List<DashboardPortal> dashboardPortals = dashboardPortalMapper.getByProject(featureId);
+                    List<DashboardPortal> dashboardPortals = dashboardPortalExtendMapper.getByProject(featureId);
                     if (!CollectionUtils.isEmpty(dashboardPortals)) {
                         allVizs = dashboardPortals.stream().map(DashboardPortal::getId).collect(Collectors.toList());
                     }
@@ -127,7 +127,7 @@ public class VizCommonService extends BaseEntityService {
                 allRoles = roleMapper.getRolesByUserAndProject(userId, featureId);
                 break;
             case DASHBOARD:
-                disables = relRoleDashboardMapper.getDisableByUser(userId, featureId);
+                disables = relRoleDashboardExtendMapper.getDisableByUser(userId, featureId);
                 if (null == allVizs) {
                     List<Dashboard> dashboardList = dashboardExtendMapper.getByPortalId(featureId);
                     if (!CollectionUtils.isEmpty(dashboardList)) {
@@ -137,7 +137,7 @@ public class VizCommonService extends BaseEntityService {
                 allRoles = roleMapper.getRolesByUserAndPortal(userId, featureId);
                 break;
             case DISPLAY:
-                disables = relRoleDisplayMapper.getDisableDisplayByUser(userId, featureId);
+                disables = relRoleDisplayExtendMapper.getDisableDisplayByUser(userId, featureId);
                 if (null == allVizs) {
                     List<Display> displayList = displayExtendMapper.getByProject(featureId);
                     if (!CollectionUtils.isEmpty(displayList)) {

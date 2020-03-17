@@ -84,16 +84,16 @@ public class RoleServiceImpl implements RoleService {
     private RelRolePortalMapper relRolePortalMapper;
 
     @Autowired
-    private RelRoleDashboardExtendMapper relRoleDashboardMapper;
+    private RelRoleDashboardExtendMapper relRoleDashboardExtendMapper;
 
     @Autowired
-    private RelRoleDisplayMapper relRoleDisplayMapper;
+    private RelRoleDisplayExtendMapper relRoleDisplayExtendMapper;
 
     @Autowired
     private RelRoleSlideMapper relRoleSlideMapper;
 
     @Autowired
-    private RelRoleDashboardWidgetMapper relRoleDashboardWidgetMapper;
+    private RelRoleDashboardWidgetExtendMapper relRoleDashboardWidgetExtendMapper;
 
     @Autowired
     private RelRoleDisplaySlideWidgetMapper relRoleDisplaySlideWidgetMapper;
@@ -191,13 +191,13 @@ public class RoleServiceImpl implements RoleService {
 
             relRolePortalMapper.deleteByRoleId(id);
 
-            relRoleDashboardMapper.deleteByRoleId(id);
+            relRoleDashboardExtendMapper.deleteByRoleId(id);
 
-            relRoleDisplayMapper.deleteByRoleId(id);
+            relRoleDisplayExtendMapper.deleteByRoleId(id);
 
             relRoleSlideMapper.deleteByRoleId(id);
 
-            relRoleDashboardWidgetMapper.deleteByRoleId(id);
+            relRoleDashboardWidgetExtendMapper.deleteByRoleId(id);
 
             relRoleDisplaySlideWidgetMapper.deleteByRoleId(id);
 
@@ -653,8 +653,8 @@ public class RoleServiceImpl implements RoleService {
         }
 
         vizPermission.setPortals(relRolePortalMapper.getExecludePortals(id, projectId));
-        vizPermission.setDashboards(relRoleDashboardMapper.getExcludeDashboards(id, projectId));
-        vizPermission.setDisplays(relRoleDisplayMapper.getExecludeDisplays(id, projectId));
+        vizPermission.setDashboards(relRoleDashboardExtendMapper.getExcludeDashboards(id, projectId));
+        vizPermission.setDisplays(relRoleDisplayExtendMapper.getExcludeDisplays(id, projectId));
         vizPermission.setSlides(relRoleSlideMapper.getExecludeSlides(id, projectId));
 
         return vizPermission;

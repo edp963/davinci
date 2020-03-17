@@ -110,12 +110,9 @@ public interface RelRoleDashboardExtendMapper extends RelRoleDashboardMapper {
             "from rel_role_dashboard rrd",
             "inner join dashboard d on d.id = rrd.dashboard_id",
             "inner join dashboard_portal p on p.id = d.dashboard_portal_id",
-            "where rrd.role_id = #{id} and rrd.visible = 0 and p.project_id = #{projectId}"
+            "where rrd.role_id = #{roleId} and rrd.visible = 0 and p.project_id = #{projectId}"
     })
-    List<Long> getExcludeDashboards(@Param("id") Long id, @Param("projectId") Long projectId);
-
-    @Delete({"delete from rel_role_dashboard where dashboard_id = #{dashboardId} and role_id = #{roleId}"})
-    int delete(@Param("dashboardId") Long dashboardId, @Param("roleId") Long roleId);
+    List<Long> getExcludeDashboards(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
 
     @Delete({"delete from rel_role_dashboard where role_id = #{roleId}"})
     int deleteByRoleId(Long roleId);

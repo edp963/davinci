@@ -19,7 +19,8 @@
 
 package edp.davinci.server.dao;
 
-import edp.davinci.server.model.RelRoleDisplay;
+import edp.davinci.core.dao.RelRoleDisplayMapper;
+import edp.davinci.core.dao.entity.RelRoleDisplay;
 import edp.davinci.server.model.RoleDisableViz;
 
 import org.apache.ibatis.annotations.Delete;
@@ -29,10 +30,46 @@ import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
-public interface RelRoleDisplayMapper {
-    int insert(RelRoleDisplay record);
+public interface RelRoleDisplayExtendMapper extends RelRoleDisplayMapper {
 
-    void insertBatch(List<RelRoleDisplay> list);
+	@Insert({
+		"<script>",
+		"	insert ignore rel_role_display" + 
+		"		<trim prefix='(' suffix=')' suffixOverrides=','>" + 
+		"			`role_id`," + 
+		"			`display_id`," + 
+		"			`visible`," + 
+		"			`create_by`," + 
+		"			`create_time`" + 
+		"		</trim>" + 
+		"		<trim prefix='values (' suffix=')' suffixOverrides=','>" + 
+		"			#{roleId,jdbcType=BIGINT}," + 
+		"			#{displayId,jdbcType=BIGINT}," + 
+		"			#{visible,jdbcType=TINYINT}," + 
+		"			#{createBy,jdbcType=BIGINT}," + 
+		"			#{createTime,jdbcType=TIMESTAMP}" + 
+		"		</trim>",
+		"</script>"
+	})
+	int insert(RelRoleDisplay record);
+
+	@Insert({
+		"<script>",
+		"	replace into rel_role_display" + 
+		"		(`role_id`, `display_id`, `visible`, `create_by`, `create_time`)" + 
+		"		values" + 
+		"		<foreach collection='list' item='record' index='index' separator=','>" + 
+		"		(" + 
+		"			#{record.roleId,jdbcType=BIGINT}," + 
+		"			#{record.displayId,jdbcType=BIGINT}," + 
+		"			#{record.visible,jdbcType=TINYINT}," + 
+		"			#{record.createBy,jdbcType=BIGINT}," + 
+		"			#{record.createTime,jdbcType=TIMESTAMP}" + 
+		"		)" + 
+		"		</foreach>",
+		"</script>"
+	})
+	int insertBatch(List<RelRoleDisplay> list);
 
     @Delete({
             "delete from rel_role_display where display_id = #{id}"
@@ -51,18 +88,15 @@ public interface RelRoleDisplayMapper {
     @Select({
             "select role_id from rel_role_display where display_id = #{display_id} and visible = 0"
     })
-    List<Long> getById(Long displayId);
+    List<Long> getByDisplayId(Long displayId);
 
     @Select({
             "select rrd.display_id",
             "from rel_role_display rrd",
             "inner join display d on d.id = rrd.display_id",
-            "where rrd.role_id = #{id} and rrd.visible = 0 and d.project_id = #{projectId}"
+            "where rrd.role_id = #{roleId} and rrd.visible = 0 and d.project_id = #{projectId}"
     })
-    List<Long> getExecludeDisplays(@Param("id") Long id, @Param("projectId") Long projectId);
-
-    @Delete({"delete from rel_role_display where display_id = #{displayId} and role_id = #{roleId}"})
-    int delete(@Param("displayId") Long displayId, @Param("roleId") Long roleId);
+    List<Long> getExcludeDisplays(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
 
     @Delete({"delete from rel_role_display where role_id = #{roleId}"})
     int deleteByRoleId(Long roleId);
