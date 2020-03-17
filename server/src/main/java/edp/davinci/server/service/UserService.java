@@ -44,6 +44,8 @@ public interface UserService extends CheckEntityService {
     boolean updateUser(User user) throws ServerException;
 
     User regist(UserRegist userRegist) throws ServerException;
+    
+    User externalRegist(OAuth2AuthenticationToken oauthAuthToken) throws ServerException;
 
     boolean sendMail(String email, User user) throws ServerException;
 
@@ -54,6 +56,5 @@ public interface UserService extends CheckEntityService {
     ResultMap activateUserNoLogin(String token, HttpServletRequest request);
 
     ResultMap getUserProfile(Long id, User user, HttpServletRequest request);
-
-	User externalRegist(OAuth2AuthenticationToken oauthAuthToken) throws ServerException;
+	
 }

@@ -35,7 +35,6 @@ import {
   DELETE_DRILL_HISTORY,
   SET_SELECT_OPTIONS,
   SELECT_DASHBOARD_ITEM_CHART,
-  GLOBAL_CONTROL_CHANGE,
   LOAD_DOWNLOAD_LIST,
   LOAD_DOWNLOAD_LIST_SUCCESS,
   LOAD_DOWNLOAD_LIST_FAILURE,
@@ -268,24 +267,6 @@ const shareReducer = (state = initialState, action) =>
         }
         break
 
-      case GLOBAL_CONTROL_CHANGE:
-        const controlRequestParamsByItem: IMapItemControlRequestParams =
-          action.payload.controlRequestParamsByItem
-        Object.entries(controlRequestParamsByItem).forEach(
-          ([itemId, requestParams]: [string, IControlRequestParams]) => {
-            const {
-              filters: globalFilters,
-              variables: globalVariables
-            } = requestParams
-            draft.itemsInfo[itemId].queryConditions = {
-              ...draft.itemsInfo[itemId].queryConditions,
-              ...(globalFilters && { globalFilters }),
-              ...(globalVariables && { globalVariables })
-            }
-          }
-        )
-        break
-
       case DRILL_DASHBOARDITEM:
         drillHistory =
           draft.itemsInfo[action.payload.itemId].queryConditions.drillHistory
@@ -353,9 +334,9 @@ const shareReducer = (state = initialState, action) =>
       case SET_SELECT_OPTIONS:
         if (action.payload.itemId) {
           itemInfo = draft.itemsInfo[action.payload.itemId]
-          itemInfo.controlSelectOptions[action.payload.controlKey] = action.payload.values
+          itemInfo.controlSelectOptions[action.payload.controlKey] = action.payload.options
         } else {
-          draft.dashboardSelectOptions[action.payload.controlKey] = action.payload.values
+          draft.dashboardSelectOptions[action.payload.controlKey] = action.payload.options
         }
         break
 

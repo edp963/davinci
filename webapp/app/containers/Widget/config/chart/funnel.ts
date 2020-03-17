@@ -49,7 +49,7 @@ const funnel: IChartInfo = {
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
       labelColor: PIVOT_DEFAULT_FONT_COLOR,
-      labelParts: ['dimensionValue', 'indicatorValue', 'percentage']
+      labelParts: ['dimensionValue', 'indicatorValue']
     },
     legend: {
       showLegend: true,

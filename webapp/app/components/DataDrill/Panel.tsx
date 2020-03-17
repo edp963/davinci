@@ -18,90 +18,76 @@
  * >>
  */
 
-import * as React from 'react'
+import React, {useMemo, useCallback, useEffect} from 'react'
 import { Menu, Icon } from 'antd'
 import { getPivot } from 'containers/Widget/components/util'
+import { 
+  DrillType,
+  ModelTypeName,
+  getModelsByTypeName,
+  filterModelByModelType
+} from './util'
+import { ViewModelTypes } from 'containers/View/constants'
 const styles = require('./datadrill.less')
 export interface IDataDrillProps {
-  key?: string | number
-  widgetMode?: string
-  onDataDrill?: (name?: string, dimensions?: string) => any
-  onDataDrillPath?: () => any
-  drillHistory?: any
-  drillpathSetting?: any
-  categoriesCol: ICategories[]
-  currentData?: object[]
   widgetConfig: any
-}
-export interface ICategories {
-  name?: string,
-  type?: string
-  visualType?: string
+  drillHistory?: any
+  widgetMode?: string
+  key?: string | number
+  drillpathSetting?: any
+  currentData?: object[]
+  onDataDrillPath?: () => any
+  onDataDrill?: (name?: string, dimensions?: string) => any
 }
 
-export function DataDrill (props: IDataDrillProps) {
-  const { categoriesCol, onDataDrill, onDataDrillPath, currentData, widgetMode, drillHistory, widgetConfig, drillpathSetting } = props
-  let drilldownCategories = []
-  let drillupCategories = []
-  let drillOtherCategories = []
-  if (currentData && currentData.length) {
-    drilldownCategories = categoriesCol.filter((cate) => {
-      let vaildate = void 0
-      Object.keys(currentData[0]).some((data) => {
-        vaildate = cate.name !== data
-        if (cate.name === data) {
-          return true
-        }
-      })
-      return vaildate
-    }).map((down) => {
-      return {
-        ...down,
-        drillType: 'down'
-      }
-    })
-    drillupCategories = Object.keys(currentData[0]).filter((data) => {
-      let vaildate = void 0
-      categoriesCol.every((cate) => {
-        vaildate = data === cate.name
-        if (data !== cate.name) {
-          return true
-        }
-      })
-      return vaildate
-    }).map((up) => {
-      return {
-        name: up,
-        type: 'category',
-        visualType: 'string',
-        drillType: 'up'
-      }
-    })
-  }
-  if (drillHistory && drillHistory.length) {
-    const drillHistoryCol = drillHistory[drillHistory.length - 1]['groups']
-    drillOtherCategories = categoriesCol.filter((cate) => {
-      let vaildate = void 0
-      drillHistory.some((data) => {
-        vaildate = cate.name !== data.name
-        if (cate.name === data.name) {
-          return true
-        }
-      })
-      return vaildate
-    }).map((down) => {
-      return {
-        ...down,
-        drillType: drillHistoryCol.some((col) => col === down.name) ? 'up' : 'down'
-      }
-    })
-  } else {
-    drillOtherCategories = drilldownCategories
-  }
-  const isPivot = widgetMode === 'pivot'
-  const isPivotTableVal = isPivotTable(widgetConfig.metrics)
+
+const Datadrill: React.FC<IDataDrillProps> =  (props: IDataDrillProps) => {
+  const { onDataDrill, onDataDrillPath, currentData, widgetMode, drillHistory, widgetConfig, drillpathSetting } = props
+
   let renderComponent = void 0
+
   let menuDisabled = void 0
+
+  const modelWithModelType: getModelsByTypeName = useMemo(() => filterModelByModelType(widgetConfig && widgetConfig.model), [widgetConfig])
+
+  const getModelByModelType = useCallback((typeName: ModelTypeName) => {
+    return modelWithModelType(typeName)
+  }, [widgetConfig])
+
+  const currentCategories = useMemo(() => {
+    return currentData && currentData[0] ? Object.keys(currentData[0]) : []
+  }, [currentData])
+  
+  const getCategoriesModels = useMemo(() => {
+    return getModelByModelType(ViewModelTypes.Category)
+  }, [widgetConfig])
+
+  const {drilldownCategories, drillupCategories } = useMemo(() => {
+    return {
+      drillupCategories: getCategoriesModels.filter((cate) => currentCategories.includes(cate))
+      .map((c) => ({ name: c, modelType: ViewModelTypes.Category, drillType: DrillType.UP})),
+      drilldownCategories: getCategoriesModels.filter((cate) => !currentCategories.includes(cate))
+      .map((c) => ({name: c,  modelType: ViewModelTypes.Category, drillType: DrillType.DOWN}))
+    }
+  }, [widgetConfig, currentData])
+
+  const drillHistoryGroups = useMemo(() => {
+    if (drillHistory && drillHistory.length) {
+      return drillHistory[drillHistory.length - 1]['groups']
+    }
+  }, [drillHistory])
+
+  const drillOtherCategories = useMemo(() => {
+    return drillHistoryGroups && drillHistoryGroups.length 
+    ? getCategoriesModels.filter((cate) => !(drillHistory.some((his) => his.name === cate)))
+      .map((name) => ({name, modelType: ViewModelTypes.Category,  drillType: drillHistoryGroups.includes(name) ? DrillType.UP : DrillType.DOWN}))
+    : drilldownCategories
+  }, [drillHistory])
+
+  const isPivot = useMemo(() => widgetMode === 'pivot', [widgetMode])
+
+  const isPivotTableVal = useMemo(() => isPivotTable(widgetConfig.metrics), [widgetConfig])
+
   if (drillpathSetting && drillpathSetting.length) {
     if (drillHistory && drillHistory.length) {
       menuDisabled = drillHistory.length === drillpathSetting.length - 1
@@ -176,16 +162,11 @@ export function DataDrill (props: IDataDrillProps) {
   }
   function isPivotTable (selectedCharts) {
     const pivotChart = getPivot()
-    const result = Array.isArray(selectedCharts) && selectedCharts.every(function (sc) {
-      return sc.chart.id === pivotChart.id
-    })
-    if (!isPivot) {
-      return false
-    }
-    return result
+    const result = Array.isArray(selectedCharts) && selectedCharts.every((sc) => sc.chart.id === pivotChart.id)
+    return !isPivot ? false : result
   }
 }
 
 
 
-export default DataDrill
+export default Datadrill

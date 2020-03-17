@@ -23,6 +23,9 @@ import config, { env } from '../globalConfig'
 const host = config[env].host
 
 export default {
+  externalAuthProviders: `${host}/login/getOauth2Clients`,
+  tryExternalAuth: `${host}/login/externalLogin`,
+  externalLogout: `/login/oauth2/logout`,
   login: `${host}/login`,
   group: `${host}/groups`,
   user: `${host}/users`,

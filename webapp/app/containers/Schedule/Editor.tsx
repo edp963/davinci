@@ -33,7 +33,11 @@ import {
   makeSelectSuggestMails,
   makeSelectPortalDashboards
 } from './selectors'
-import { makeSelectPortals, makeSelectDisplays } from 'containers/Viz/selectors'
+import {
+  makeSelectPortals,
+  makeSelectDisplays,
+  makeSelectDisplaySlides
+} from 'containers/Viz/selectors'
 import { checkNameUniqueAction } from 'containers/App/actions'
 import { ScheduleActions } from './actions'
 import { hideNavigator } from 'containers/App/actions'
@@ -52,15 +56,20 @@ import ScheduleBaseConfig, {
 } from './components/ScheduleBaseConfig'
 import ScheduleMailConfig from './components/ScheduleMailConfig'
 import ScheduleVizConfig from './components/ScheduleVizConfig'
-import { IDashboard } from 'containers/Dashboard'
-import { IPortal, IDisplayFormed } from 'containers/Viz/types'
+import {
+  IPortal,
+  IDashboard,
+  IDisplayFormed,
+  ISlideFormed
+} from 'containers/Viz/types'
 import { IProject } from 'containers/Projects/types'
 import { ISchedule, IScheduleLoading } from './types'
 import {
   IUserInfo,
   IScheduleMailConfig,
   SchedulePeriodUnit,
-  ICronExpressionPartition
+  ICronExpressionPartition,
+  IScheduleVizConfigItem
 } from './components/types'
 
 import Styles from './Schedule.less'
@@ -96,6 +105,7 @@ interface IScheduleEditorStateProps {
   displays: IDisplayFormed[]
   portals: IPortal[]
   portalDashboards: { [key: number]: IDashboard[] }
+  displaySlides: { [key: number]: ISlideFormed[] }
   loading: IScheduleLoading
   editingSchedule: ISchedule
   suggestMails: IUserInfo[]
@@ -106,6 +116,7 @@ interface IScheduleEditorDispatchProps {
   onHideNavigator: () => void
   onLoadDisplays: (projectId: number) => void
   onLoadPortals: (projectId: number) => void
+  onLoadDisplaySlides: (displayId: number) => void
   onLoadDashboards: (portalId: number) => void
   onLoadScheduleDetail: (scheduleId: number) => void
   onAddSchedule: (schedule: ISchedule, resolve: () => void) => any
@@ -150,29 +161,56 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
     history.push(`/project/${projectId}/schedules`)
   }, [])
 
-  const { portals, loading, editingSchedule, onLoadDashboards } = props
+  const {
+    portals,
+    displays,
+    loading,
+    editingSchedule,
+    onLoadDisplaySlides,
+    onLoadDashboards
+  } = props
 
-  useEffect(() => {
-    if (!editingSchedule.id || !Array.isArray(portals)) {
-      return
-    }
-    const { contentList } = editingSchedule.config
-    // initial Dashboards loading by contentList Portal setting
-    contentList
-      .filter(({ contentType }) => contentType === 'portal')
-      .forEach(({ id }) => {
-        if (~portals.findIndex((portal) => portal.id === id)) {
-          onLoadDashboards(id)
+  const loadVizDetail = useCallback(
+    (
+      type: IScheduleVizConfigItem['contentType'],
+      schedule: ISchedule,
+      vizs: IPortal[] | IDisplayFormed[]
+    ) => {
+      if (!schedule.id || !vizs.length) {
+        return
+      }
+      const { contentList } = schedule.config
+      // initial Viz loading by contentList Portal or Display setting
+      contentList.forEach(({ contentType, id: vizId }) => {
+        if (contentType !== type) {
+          return
+        }
+        if (~vizs.findIndex(({ id }) => id === vizId)) {
+          switch (type) {
+            case 'portal':
+              onLoadDashboards(vizId)
+              break
+            case 'display':
+              onLoadDisplaySlides(vizId)
+              break
+          }
         }
       })
     },
-    [portals, editingSchedule]
+    []
   )
 
+  useEffect(() => {
+    loadVizDetail('portal', editingSchedule, portals)
+  }, [portals, editingSchedule])
+  useEffect(() => {
+    loadVizDetail('display', editingSchedule, displays)
+  }, [displays, editingSchedule])
+
   const {
-    displays,
     suggestMails,
     portalDashboards,
+    displaySlides,
     onAddSchedule,
     onEditSchedule,
     onCheckUniqueName,
@@ -282,7 +320,9 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
                   displays={displays}
                   portals={portals}
                   portalDashboards={portalDashboards}
+                  displaySlides={displaySlides}
                   value={localContentList}
+                  onLoadDisplaySlides={onLoadDisplaySlides}
                   onLoadPortalDashboards={onLoadDashboards}
                   onChange={setLocalContentList}
                 />
@@ -299,6 +339,7 @@ const mapStateToProps = createStructuredSelector({
   displays: makeSelectDisplays(),
   portals: makeSelectPortals(),
   portalDashboards: makeSelectPortalDashboards(),
+  displaySlides: makeSelectDisplaySlides(),
   loading: makeSelectLoading(),
   editingSchedule: makeSelectEditingSchedule(),
   suggestMails: makeSelectSuggestMails()
@@ -308,11 +349,18 @@ const mapDispatchToProps = (dispatch) => ({
   onHideNavigator: () => dispatch(hideNavigator()),
   onLoadDisplays: (projectId) => dispatch(VizActions.loadDisplays(projectId)),
   onLoadPortals: (projectId) => dispatch(VizActions.loadPortals(projectId)),
+  onLoadDisplaySlides: (displayId) =>
+    dispatch(VizActions.loadDisplaySlides(displayId)),
+  // @REFACTOR to use viz reducer portalDashboards
   onLoadDashboards: (portalId) =>
     dispatch(
-      VizActions.loadPortalDashboards(portalId, (dashboards) => {
-        dispatch(ScheduleActions.portalDashboardsLoaded(portalId, dashboards))
-      }, false)
+      VizActions.loadPortalDashboards(
+        portalId,
+        (dashboards) => {
+          dispatch(ScheduleActions.portalDashboardsLoaded(portalId, dashboards))
+        },
+        false
+      )
     ),
   onLoadScheduleDetail: (scheduleId) =>
     dispatch(ScheduleActions.loadScheduleDetail(scheduleId)),

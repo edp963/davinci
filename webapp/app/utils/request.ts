@@ -47,7 +47,6 @@ export default function request (url: string | AxiosRequestConfig, options?: Axi
 }
 
 export function setToken (token: string) {
-  window.addEventListener('storage', syncToken, false)
   localStorage.setItem('TOKEN', token)
   localStorage.setItem('TOKEN_EXPIRE', `${new Date().getTime() + 3600000}`)
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -64,7 +63,6 @@ function syncToken (e: StorageEvent) {
 }
 
 export function removeToken () {
-  window.addEventListener('storage', syncToken)
   localStorage.removeItem('TOKEN')
   localStorage.removeItem('TOKEN_EXPIRE')
   delete axios.defaults.headers.common['Authorization']
@@ -74,6 +72,8 @@ export function removeToken () {
 export function getToken () {
   return axios.defaults.headers.common['Authorization']
 }
+
+window.addEventListener('storage', syncToken)
 
 interface IDavinciResponseHeader {
   code: number

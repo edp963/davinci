@@ -59,7 +59,7 @@
     "antd/moment": "2.23.0"
   },
   "dependencies": {
-    "@babel/polyfill": "7.4.3",
+    "@babel/polyfill": "^7.8.3",
     "antd": "~3.26.0",
     "axios": "^0.19.0",
     "bootstrap-datepicker": "^1.8.0",
@@ -80,9 +80,9 @@
     "intl": "1.2.5",
     "invariant": "2.2.4",
     "ip": "1.1.5",
-    "lodash": "4.17.11",
+    "lodash": "4.17.13",
     "memoize-one": "^5.0.0",
-    "minimist": "1.2.0",
+    "minimist": "1.2.2",
     "moment": "2.23.0",
     "prop-types": "15.6.2",
     "quill-image-resize-module": "^3.0.0",
@@ -109,6 +109,7 @@
     "reveal.js": "^3.8.0",
     "three": "^0.101.1",
     "ua-parser-js": "^0.7.20",
+    "url-search-params-polyfill": "^8.0.0",
     "warning": "4.0.2"
   },
   "devDependencies": {

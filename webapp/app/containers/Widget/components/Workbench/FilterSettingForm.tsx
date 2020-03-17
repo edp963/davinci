@@ -362,18 +362,18 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
 
     if (type === 'number') {
       headerRadios.push(
-        <RadioButton key="conditional" value="conditional">条件筛选</RadioButton>
+        <RadioButton key="conditional" value="conditional">条件筛选</RadioButton>
       )
     } else if (type === 'date') {
       headerRadios.push(
-        <RadioButton key="date" value="date">日期筛选</RadioButton>
+        <RadioButton key="date" value="date">日期筛选</RadioButton>
       )
     } else {
       headerRadios.push(
-        <RadioButton key="value" value="value">值筛选</RadioButton>
+        <RadioButton key="value" value="value">值筛选</RadioButton>
       )
       headerRadios.push(
-        <RadioButton key="conditional" value="conditional">条件筛选</RadioButton>
+        <RadioButton key="conditional" value="conditional">条件筛选</RadioButton>
       )
     }
 

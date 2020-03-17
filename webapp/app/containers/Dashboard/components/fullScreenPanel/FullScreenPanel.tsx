@@ -32,7 +32,7 @@ import { getNativeQuery, getPagination } from 'containers/Viz/utils'
 import { IGetChartData } from 'containers/Dashboard/components/DashboardItem'
 import { IWidgetConfig } from 'containers/Widget/components/Widget'
 import { IQueryConditions, IDashboardItem, IDashboardItemInfo } from 'containers/Dashboard/Grid'
-import { OnGetControlOptions, IDistinctValueReqeustParams, IMapControlOptions, IMapItemControlRequestParams } from 'app/components/Filters/types'
+import { OnGetControlOptions, IDistinctValueReqeustParams, IMapControlOptions, IMapItemControlRequestParams, IGridCtrlParams } from 'app/components/Filters/types'
 
 type ICtrlType = 'local'|'global'
 type IcurrentWidgetInFullScreen = (id: number) => any
@@ -66,8 +66,8 @@ interface IFullScreenPanelProps {
   chartDetail: ICurrentDataInFullScreenProps
   currentDashboard: any
   mapOptions: IMapControlOptions
-  onChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
-  onSearch: (itemIds: number[]) => void
+  onSearch: (requestParamsByItem: IMapItemControlRequestParams) => void
+  gridCtrlParams: IGridCtrlParams
 }
 
 interface IFullScreenMenuProps {
@@ -98,8 +98,8 @@ interface IControlProps {
   monitoredSearchDataAction?: () => any
   currentDashboard: any
   mapOptions: IMapControlOptions
-  onChange: (controlRequestParamsByItem: IMapItemControlRequestParams) => void
-  onSearch: (itemIds: number[]) => void
+  onSearch: (requestParamsByItem: IMapItemControlRequestParams) => void
+  gridCtrlParams: IGridCtrlParams
 }
 
 
@@ -243,8 +243,8 @@ function getWidgetProps (chartDetail: ICurrentDataInFullScreenProps): IWidgetCon
 const Control: React.FC<IControlProps> = Memo(
   ({ visible, chartDetail, onGetOptions, currentItemsInfo,
     monitoredSearchDataAction, onGetChartData, toggleControl,
-    currentItems, currentDashboard, onChange, onSearch, mapOptions,
-    hasGlobalCtrl, hasLocalCtrl
+    currentItems, currentDashboard, onSearch, mapOptions,
+    hasGlobalCtrl, hasLocalCtrl, gridCtrlParams
   }) => {
 
     const [ctrlType, setCtrlType] = useState('local')
@@ -344,8 +344,8 @@ const Control: React.FC<IControlProps> = Memo(
               currentItems={currentItems}
               onGetOptions={onGetOptions}
               mapOptions={mapOptions}
-              onChange={onChange}
               onSearch={onSearch}
+              gridCtrlParams={gridCtrlParams}
             />
           }    
         </div>
@@ -358,7 +358,7 @@ const FullScreenPanel: React.FC<IFullScreenPanelProps> = Memo(
   ({ visible, isVisible, chartDetail, widgets, 
     currentItems, currentItemsInfo, onCurrentWidgetInFullScreen,
     onGetControlOptions, monitoredSearchDataAction, onGetChartData,
-    currentDashboard, mapOptions, onChange, onSearch
+    currentDashboard, mapOptions, onSearch, gridCtrlParams
   }) => {
     const fsClassName = classnames({
       [styles.fullScreen]: true,
@@ -458,11 +458,11 @@ const FullScreenPanel: React.FC<IFullScreenPanelProps> = Memo(
               monitoredSearchDataAction={monitoredSearchDataAction}
               currentDashboard={currentDashboard}
               mapOptions={mapOptions}
-              onChange={onChange}
               onSearch={onSearch}
               hasLocalCtrl={hasLocalControl}
               hasGlobalCtrl={hasGlobalControl}
               currentItems={currentItems}
+              gridCtrlParams={gridCtrlParams}
             /> 
           }
           </div> 

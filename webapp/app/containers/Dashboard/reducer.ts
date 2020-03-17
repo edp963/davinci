@@ -52,7 +52,7 @@ import {
   DRILL_PATH_SETTING,
   SELECT_DASHBOARD_ITEM_CHART,
   SET_SELECT_OPTIONS,
-  GLOBAL_CONTROL_CHANGE
+  SEND_CURRENT_DASHBOARD_CONTROL_PARAMS
 } from './constants'
 import {
   INITIATE_DOWNLOAD_TASK,
@@ -78,6 +78,7 @@ import {
 import { DownloadTypes } from '../App/types'
 import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
+import { clearCurrentDashboard } from './actions'
 
 const initialState = {
   currentDashboard: null,
@@ -87,7 +88,8 @@ const initialState = {
   currentDashboardShareInfoLoading: false,
   currentDashboardSelectOptions: {},
   currentItems: null,
-  currentItemsInfo: null
+  currentItemsInfo: null,
+  currentDashboardGlobalControlParams: null
 }
 
 const dashboardReducer = (state = initialState, action: ViewActionType | VizActionType | any) =>
@@ -115,6 +117,14 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
         draft.currentDashboardLoading = true
         draft.currentDashboardShareInfo = ''
         draft.currentDashboardSecretInfo = ''
+        break
+
+      case SEND_CURRENT_DASHBOARD_CONTROL_PARAMS:
+        const { params } = action.payload
+        draft.currentDashboardGlobalControlParams = {
+          currentDashboardId: draft.currentDashboard && draft.currentDashboard.id,
+          globalCtrlParams: params
+        }
         break
 
       case LOAD_DASHBOARD_DETAIL_SUCCESS:
@@ -177,6 +187,7 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
               rendered: false,
               renderType: 'rerender',
               controlSelectOptions: {},
+              selectedItems: [],
               errorMessage: ''
             }
             return obj
@@ -211,6 +222,7 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
             rendered: false,
             renderType: 'rerender',
             controlSelectOptions: {},
+            selectedItems: [],
             errorMessage: ''
           }
         })
@@ -263,7 +275,6 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
             ...vizItemInfo,
             loading: false,
             datasource: action.payload.result,
-            selectedItems: [],
             renderType: action.payload.renderType,
             queryConditions: {
               ...vizItemInfo.queryConditions,
@@ -275,22 +286,10 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
               globalVariables: action.payload.requestParams.globalVariables,
               pagination: action.payload.requestParams.pagination,
               nativeQuery: action.payload.requestParams.nativeQuery
-            }
+            },
+            selectedItems: []
           }
         }
-        break
-
-      case GLOBAL_CONTROL_CHANGE:
-        const controlRequestParamsByItem: IMapItemControlRequestParams = action.payload.controlRequestParamsByItem
-        Object.entries(controlRequestParamsByItem)
-          .forEach(([itemId, requestParams]: [string, IControlRequestParams]) => {
-            const { filters: globalFilters, variables: globalVariables } = requestParams
-            draft.currentItemsInfo[itemId].queryConditions = {
-              ...draft.currentItemsInfo[itemId].queryConditions,
-              ...globalFilters && { globalFilters },
-              ...globalVariables && { globalVariables }
-            }
-          })
         break
 
       case SELECT_DASHBOARD_ITEM_CHART:

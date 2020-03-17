@@ -106,6 +106,7 @@ interface IDashboardItemStates {
   dataDrillPanelPosition: boolean | object
   whichDataDrillBrushed: boolean | object []
   sourceDataOfBrushed: boolean | object []
+  sourceDataGroup: boolean | Array<string>
   // isShowDrillPanel: boolean
   cacheWidgetProps: IWidgetConfig
   cacheWidgetId: boolean | number
@@ -127,7 +128,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       whichDataDrillBrushed: false,
       sourceDataOfBrushed: false,
       cacheWidgetProps: null,
-      cacheWidgetId: false
+      cacheWidgetId: false,
+      sourceDataGroup: false
       //   isShowDrillPanel: true
     }
   }
@@ -365,14 +367,16 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     if (position && position.length) {
       try {
         const ps = JSON.parse(position)
-        const {range, brushed, sourceData} = ps
+        const {range, brushed, sourceData, sourceGroup} = ps
         const dataDrillPanelPosition = void 0
         const sourceDataOfBrushed = sourceData && sourceData.length ? sourceData : void 0
         const whichDataDrillBrushed = brushed && brushed.length ? brushed : void 0
+        const sourceDataGroup = sourceGroup && sourceGroup.length ? sourceGroup : void 0
         this.setState({
           dataDrillPanelPosition,
           whichDataDrillBrushed,
-          sourceDataOfBrushed
+          sourceDataOfBrushed,
+          sourceDataGroup
         })
       } catch (error) {
         throw error
@@ -518,12 +522,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
   private drillData = (name, dimensions) => {
     const { onDrillData, widget, itemId } = this.props
-    const { widgetProps, cacheWidgetProps } = this.state
+    const { widgetProps, cacheWidgetProps, sourceDataGroup } = this.state
     let mode = void 0
     if (widget && widget.config) {
       const cf = JSON.parse(widget.config)
       mode = cf.mode
     }
+  
     if (onDrillData) {
       onDrillData({
         row: dimensions === 'row' ? name : [],
@@ -533,7 +538,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         widgetId: widget.id,
         groups: name,
         filters: this.state.whichDataDrillBrushed,
-        sourceDataFilter: this.state.sourceDataOfBrushed
+        sourceDataFilter: this.state.sourceDataOfBrushed || [],
+        sourceDataGroup
       })
     }
     this.setState({whichDataDrillBrushed: false})
@@ -609,9 +615,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         }
       } else if (widgetProps.selectedChart === ChartTypes.Table) {
         const cols = widgetProps.cols
-        const { whichDataDrillBrushed } = this.state
+        const { whichDataDrillBrushed, sourceDataOfBrushed } = this.state
+        const sourceDataGroup = [...(this.state.sourceDataGroup as Array<string>)]
         const drillData = whichDataDrillBrushed[0][0]
-        const drillKey = drillData[drillData.length - 1]['key']
+        const drillKey = drillData&&drillData.length ? drillData[drillData.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
         const newWidgetPropCols = cols.reduce((array, col) => {
           array.push(col)
           if (col.name === drillKey) {
@@ -619,12 +626,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           }
           return array
         }, [])
+       
         this.setState({
           widgetProps: {
             ...widgetProps,
             ...{
               cols: name && name.length
-            //  ? widgetProps.cols.concat({name})
               ? newWidgetPropCols
               : cacheWidgetProps.cols
             }
@@ -871,20 +878,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         }
       })
     }
-    const categoriesCol = []
-    Object.entries(model).forEach(([key, m]) => {
-      if (m.modelType === 'category') {
-        categoriesCol.push({
-          name: key,
-          type: 'category',
-          visualType: m.visualType
-        })
-      }
-    })
 
     const dataDrillPanelClass = classnames({
       [styles.dataDrillPanel]: true,
-      [utilStyles.hide]: !isSelectedData
+     // [utilStyles.hide]: !isSelectedData
     })
     let positionStyle = {}
     if (this.state.dataDrillPanelPosition) {
@@ -901,7 +898,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       <div className={dataDrillPanelClass}>
         <DataDrill
           widgetConfig={cf}
-          categoriesCol={categoriesCol}
           onDataDrillPath={this.drillpathData}
           onDataDrill={this.drillData}
           drillHistory={drillHistory}
