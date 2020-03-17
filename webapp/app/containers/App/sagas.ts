@@ -82,6 +82,8 @@ export function* tryExternalAuth (action): IterableIterator<any> {
       method: 'post',
       url: api.tryExternalAuth
     })
+    const loginUser = asyncData.payload
+    localStorage.setItem('loginUser', JSON.stringify(loginUser))
     resolve()
   } catch (err) {
     console.error(err)
