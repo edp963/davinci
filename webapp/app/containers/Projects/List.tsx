@@ -37,7 +37,6 @@ import { createStructuredSelector } from 'reselect'
 
 import injectSaga from 'utils/injectSaga'
 import ProjectsForm from './component/ProjectForm'
-
 import reducerOrganization from '../Organizations/reducer'
 import {IOrganization} from '../Organizations/types'
 import sagaOrganization from '../Organizations/sagas'
@@ -85,7 +84,7 @@ const Toolbar: React.FC<IToolbarProps>  = React.memo(({
 
   const menus = useMemo(() => {
     const types = ['all', 'join', 'create', 'favorite', 'history']
-
+    types.splice(3, 1); // remove favorite
     return types.map((t: IProjectType) => {
       const classNames = classnames({
         [styles.selectMenu] : pType === t,
