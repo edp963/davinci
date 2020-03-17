@@ -121,6 +121,30 @@ spring:
     base:
     domainName:    # domainName 指 企业邮箱后缀，如企业邮箱为：xxx@example.com, 这里值为 '@example.com'
 
+  security:
+    oauth2:
+      client:
+        registration:
+          cas:
+            provider: cas
+            client-id: "xxxxx"
+            client-name: "Sign in with DingDing"
+            client-secret: "xxxxx"
+            authorization-grant-type: authorization_code
+            client-authentication-method: post
+            redirect-uri-template: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: userinfo
+        provider:
+          cas:
+            authorization-uri: https://cas.xxxxx.cn/cas/oauth2.0/authorize
+            token-uri: https://cas.xxxxx.cn/cas/oauth2.0/accessToken
+            user-info-uri: https://cas.xxxxx.cn/cas/oauth2.0/profile
+            user-name-attribute: id
+            userMapping:
+              email: "attributes.Email"
+              name: "attributes.CnName1"
+              avatar: "attributes.Avatar"
+
 screenshot:
   default_browser: PHANTOMJS                    # PHANTOMJS or CHROME
   timeout_second: 600

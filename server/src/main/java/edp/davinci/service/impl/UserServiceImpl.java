@@ -21,6 +21,8 @@ package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 
+import com.alibaba.fastjson.JSONObject;
+import com.jayway.jsonpath.JsonPath;
 import edp.core.consts.Consts;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.enums.MailContentTypeEnum;
@@ -47,6 +49,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -83,6 +88,9 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 
     @Autowired
     private LdapService ldapService;
+
+    @Autowired
+    private Environment environment;
     
     private static final CheckEntityEnum entity = CheckEntityEnum.USER;
 
@@ -157,6 +165,35 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 			releaseLock(usernameLock);
 			releaseLock(emailLock);
 		}
+    }
+
+    @Override
+    public User externalRegist(OAuth2AuthenticationToken oauthAuthToken) throws ServerException {
+        OAuth2User oauthUser = oauthAuthToken.getPrincipal();
+
+        User user = getByUsername(oauthUser.getName());
+        if (user != null) {
+            return user;
+        }
+        user = new User();
+
+        String  emailMapping= environment.getProperty(String.format("spring.security.oauth2.client.provider.%s.userMapping.email", oauthAuthToken.getAuthorizedClientRegistrationId()));
+        String  nameMapping= environment.getProperty(String.format("spring.security.oauth2.client.provider.%s.userMapping.name", oauthAuthToken.getAuthorizedClientRegistrationId()));
+        String  avatarMapping= environment.getProperty(String.format("spring.security.oauth2.client.provider.%s.userMapping.avatar", oauthAuthToken.getAuthorizedClientRegistrationId()));
+        JSONObject jsonObj=new JSONObject(oauthUser.getAttributes());
+
+        user.setName(JsonPath.read(jsonObj,nameMapping));
+        user.setUsername(oauthUser.getName());
+        user.setPassword("xxx");
+        user.setEmail(JsonPath.read(jsonObj,emailMapping));
+        user.setAvatar(JsonPath.read(jsonObj,avatarMapping));
+        int insert = userMapper.insert(user);
+        if (insert > 0) {
+            return user;
+        } else {
+            log.info("regist fail: {}", oauthUser.getName());
+            throw new ServerException("regist fail: unspecified error");
+        }
     }
     
 	protected void alertNameTaken(CheckEntityEnum entity, String name) throws ServerException {
