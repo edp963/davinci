@@ -27,6 +27,7 @@ import edp.davinci.dto.userDto.UserBaseInfo;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.userDto.UserRegist;
 import edp.davinci.model.User;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +44,8 @@ public interface UserService extends CheckEntityService {
     boolean updateUser(User user) throws ServerException;
 
     User regist(UserRegist userRegist) throws ServerException;
+
+    User externalRegist(OAuth2AuthenticationToken oauthAuthToken) throws ServerException;
 
     boolean sendMail(String email, User user) throws ServerException;
 

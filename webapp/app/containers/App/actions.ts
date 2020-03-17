@@ -19,6 +19,10 @@
  */
 
 import {
+  GET_EXTERNAL_AUTH_PROVIDERS,
+  GET_EXTERNAL_AUTH_PROVIDERS_SUCESS,
+  TRY_EXTERNAL_AUTH,
+  EXTERNAL_AUTH_LOGOUT,
   LOGIN,
   LOGGED,
   LOGIN_ERROR,
@@ -51,6 +55,35 @@ import {
   INITIATE_DOWNLOAD_TASK_SUCCESS,
   INITIATE_DOWNLOAD_TASK_FAILURE
 } from './constants'
+
+export function getExternalAuthProviders () {
+  return {
+    type: GET_EXTERNAL_AUTH_PROVIDERS
+  }
+}
+
+export function gotExternalAuthProviders (externalAuthProviders) {
+  return {
+    type: GET_EXTERNAL_AUTH_PROVIDERS_SUCESS,
+    payload: {
+      externalAuthProviders
+    }
+  }
+}
+
+export function tryExternalAuth (resolve) {
+  return {
+    type: TRY_EXTERNAL_AUTH,
+    payload: {
+      resolve
+    }
+  }
+}
+export function externalAuthlogout () {
+  return {
+    type: EXTERNAL_AUTH_LOGOUT
+  }
+}
 
 export function login (username, password, resolve) {
   return {
