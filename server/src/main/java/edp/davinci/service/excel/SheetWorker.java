@@ -75,7 +75,8 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             md5 = MD5Util.getMD5(sql, true, 16);
             Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
             if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("Task({}) sheet worker({}) start query sql:{}, md5:{}", context.getTaskKey(), context.getName(), SqlUtils.formatSql(sql), md5);
+                context.getCustomLogger().info("Task({}) sheet worker(name:{}, sheetNo: {}, sheetName:{}) start query sql:{}, md5:{}",
+                        context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), SqlUtils.formatSql(sql), md5);
             }
             final AtomicInteger count = new AtomicInteger(0);
             template.query(sql, rs -> {
@@ -87,7 +88,8 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
                 count.incrementAndGet();
             });
             if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("Task({}) sheet worker({}) finish query md5:{}, count:{}", context.getTaskKey(), context.getName(), md5, count.get());
+                context.getCustomLogger().info("Task({}) sheet  worker(name:{}, sheetNo: {}, sheetName:{}) finish query md5:{}, count:{}",
+                        context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), md5, count.get());
             }
             super.refreshHeightWidth(context);
         } catch (Exception e) {
@@ -97,21 +99,22 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
                 msg.setException(e);
             }
             if (context.getCustomLogger() != null) {
-                context.getCustomLogger().error("Task({}) sheet worker({}) error, md5={}, error={}", context.getTaskKey(), context.getName(), md5, e.getMessage());
+                context.getCustomLogger().error("Task({}) sheet worker(name:{}, sheetNo: {}, sheetName:{}) error, md5={}, error={}",
+                        context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), md5, e.getMessage());
             }
             rst = false;
         }
 
-		Object[] args = { context.getTaskKey(), context.getName(), md5, rst, context.getWrapper().getAction(), context.getWrapper().getxId(),
-				context.getWrapper().getxUUID(), context.getSheet().getSheetName(), context.getDashboardId(),
-				context.getWidgetId(), watch.elapsed(TimeUnit.MILLISECONDS) };
-		if (context.getCustomLogger() != null) {
-			context.getCustomLogger().info(
-					"Task({}) sheet worker({}) complete md5={}, status={}, action={}, xid={}, xUUID={}, sheetName={}, dashboardId={}, widgetId={}, cost={}ms",
-					args);
-		}
+        Object[] args = {context.getTaskKey(), context.getName(), md5, rst, context.getWrapper().getAction(), context.getWrapper().getxId(),
+                context.getWrapper().getxUUID(), context.getSheetNo(), context.getSheet().getSheetName(), context.getDashboardId(),
+                context.getWidgetId(), watch.elapsed(TimeUnit.MILLISECONDS)};
+        if (context.getCustomLogger() != null) {
+            context.getCustomLogger().info(
+                    "Task({}) sheet worker({}) complete md5={}, status={}, action={}, xid={}, xUUID={}, sheetNo={}, sheetName={}, dashboardId={}, widgetId={}, cost={}ms",
+                    args);
+        }
 
-		return (T) rst;
+        return (T) rst;
     }
 
 

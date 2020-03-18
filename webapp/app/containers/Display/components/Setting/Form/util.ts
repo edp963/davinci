@@ -25,6 +25,7 @@ export const SlideSettingContext = React.createContext<{
   form: WrappedFormUtils
   size: 'large' | 'small' | 'default'
   slideId?: number
+  layerId?: number
 }>({
   form: null,
   size: 'small'
