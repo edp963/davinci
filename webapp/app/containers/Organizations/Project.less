@@ -449,49 +449,130 @@
   }
 }
 @media only screen and (min-width: 1200px) and (max-width: 1400px) {
-  .wrap {
-    width: 1096px;
-  }
-  .search, .searchListWrapper, .searchKeywords{
-    width: 1096px;
-  }
-  .mime, .join{
-    margin: 0 16px 16px 0;
-  }
+ 
+  .wrapper {
+    .toolbar{
+     .menu {
+       p {
+         margin-right: 22px;
+       }
+     }
+     .searchs {
+       input {
+         width: 320px;
+       }
+       .searchButton{
+         left: 290px;
+       }
+     }
+    }
+   }
 }
 @media only screen and (max-width: 1199px) and (min-width: 991px) {
-  .wrap {
-    width: 900px;
-  }
-  .search, .searchListWrapper, .searchKeywords{
-    width: 900px;
-  }
-  .mime, .join{
-    margin: 0 0 16px 0;
-  }
+  .wrapper {
+    .toolbar{
+     .menu {
+       p {
+         margin-right: 30px;
+       }
+     }
+     .searchs {
+       input {
+         width: 320px;
+       }
+       .searchButton{
+         left: 290px;
+       }
+     }
+    }
+   }
 }
-@media only screen and (max-width: 990px) and (min-width: 768px) {
-  .wrap {
-    width: 636px;
-  }
-  .search, .searchListWrapper, .searchKeywords{
-    width: 636px;
-  }
-  .mime, .join{
-    margin: 0 0 16px 0;
+@media only screen and (max-width: 990px) and (min-width: 870px) {
+  .wrapper {
+    .toolbar{
+     .menu {
+      width: 46%;
+       p {
+         margin-right: 30px;
+       }
+     }
+     .searchs {
+      width: 38%;
+       input {
+         width: 320px;
+       }
+       .searchButton{
+         left: 290px;
+       }
+     }
+    }
   }
 }
 
-@media only screen and (max-width: 767px) and (min-width: 300px) {
-  .wrap {
-    width: 348px;
+@media only screen and (max-width: 870px) and (min-width: 768px) {
+  .wrapper {
+    .toolbar{
+     .menu {
+      width: 48%;
+       p {
+         margin-right: 28px;
+       }
+     }
+     .searchs {
+      width: 36%;
+       input {
+         width: 270px;
+       }
+       .searchButton{
+         left: 245px;
+       }
+     }
+    }
   }
-  .search, .searchListWrapper, .searchKeywords{
-    width: 348px;
+}
+
+@media only screen and (max-width: 767px) and (min-width: 640px) {
+  .wrapper {
+   .toolbar{
+    .menu {
+      width: 48%;
+      p {
+        margin-right: 19px;
+      }
+    }
+    .searchs {
+      width: 36%;
+      input {
+        width: 224px;
+      }
+      .searchButton{
+        left: 198px;
+      }
+    }
+   }
   }
-  .mime, .join{
-    margin: 0 0 16px 0;
-  }
+}
+
+@media only screen and (max-width: 640px) and (min-width: 300px) {
+  .wrapper {
+    .toolbar{
+     .menu {
+      width: 54%;
+       p {
+         margin-right: 13px;
+       }
+     }
+     .searchs {
+      width: 30%;
+       input {
+         width: 140px;
+       }
+       .searchButton{
+         left: 114px;
+       }
+     }
+    }
+   }
 }
 
 
