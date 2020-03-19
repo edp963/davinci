@@ -84,7 +84,6 @@ const Toolbar: React.FC<IToolbarProps>  = React.memo(({
 
   const menus = useMemo(() => {
     const types = ['all', 'join', 'create', 'favorite', 'history']
-    types.splice(3, 1); // remove favorite
     return types.map((t: IProjectType) => {
       const classNames = classnames({
         [styles.selectMenu] : pType === t,
@@ -93,7 +92,7 @@ const Toolbar: React.FC<IToolbarProps>  = React.memo(({
       return (
         <p key={t} className={classNames} onClick={checkoutType(t)}>
           {
-            documentWidth < 1200 ? projectTypeSmall[t] : projectType[t]
+            documentWidth <= 1200 ? projectTypeSmall[t] : projectType[t]
           }
         </p>
       )
@@ -127,7 +126,7 @@ const Toolbar: React.FC<IToolbarProps>  = React.memo(({
         </span>
       </div>
       <div className={styles.create}>
-        <Button icon="plus" type="primary" shape="round" onClick={addPro}>创建</Button>
+        <Button icon="plus" type="primary" shape="round" onClick={addPro}>{ documentWidth < 860 ? '' : '创建' }</Button>
       </div>
     </div>
   )
@@ -330,12 +329,12 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
           })
         }
     
-        if (favorite) {
-          tagType.push({
-            text: '收藏',
-            color: '#F24724'
-          })
-        }
+        // if (favorite) {
+        //   tagType.push({
+        //     text: '收藏',
+        //     color: '#F24724'
+        //   })
+        // }
     
         return tagType
     
