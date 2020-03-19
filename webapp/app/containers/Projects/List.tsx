@@ -306,7 +306,7 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
   }, [projects, projectType, searchKeywords, loginUserId, collectProjects])
 
   const ProjectItems:ReactElement[] = useMemo(() => {
-  
+
     const items = Array.isArray(projects) ? getProjectsBySearch.map((pro: IProject, index) => {
 
       const {pic, name, description, createBy, isStar, isFavorites, id, starNum, orgId} = pro
@@ -328,16 +328,16 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
             color: '#FA8C15'
           })
         }
-    
+
         // if (favorite) {
         //   tagType.push({
         //     text: '收藏',
         //     color: '#F24724'
         //   })
         // }
-    
+
         return tagType
-    
+
       }(isMimePro, isFavorites))
 
       const starProject = (id) => () => {
@@ -363,13 +363,13 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
         history.push(`/project/${id}`)
         saveHistory(pro)
       }
-    
+
       const saveHistory = (pro) => historyStack.pushNode(pro)
 
       const currentOrganization: IOrganization =  organizations.find((org) => org.id === orgId)
-      
+
       const CreateButton = ComponentPermission(currentOrganization, '')(Icon)
-    
+
       const isHistoryType = !!(projectType && projectType === 'history')
 
       const favoriteProject = (e: React.MouseEvent<HTMLElement>) => {
@@ -400,27 +400,27 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
           [styles.ft16]: true,
           [styles.mainColor]: isFavorites
         })
-    
+
         const themeFavorite = isFavorites ? 'filled' : 'outlined'
-    
+
         const Favorite = !isMimePro
         ?   <Tooltip title="收藏">
               <Icon type="heart" theme={themeFavorite}  className={favoriteClassName} onClick={favoriteProject} />
             </Tooltip>
         :   []
-    
+
         const Transfer = (
           <Tooltip title="移交">
             <CreateButton type="swap"  className={styles.ft16} onClick={transferPro} />
           </Tooltip>
         )
-    
+
         const Edit = (
           <Tooltip title="编辑">
             <CreateButton type="form"  className={styles.ft16}  onClick={editPro}/>
           </Tooltip>
         )
-    
+
         const Delete = (
           <Popconfirm
             title="确定删除？"
@@ -432,7 +432,7 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
             </Tooltip>
           </Popconfirm>
         )
-    
+
         return {
           Edit,
           Favorite,
@@ -484,10 +484,10 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
       />
       <div className={styles.content}>
         {
-           projects ? 
+           projects ?
                     projects.length > 0
                       ? <div className={styles.flex}>{ProjectItems}</div>
-                      : <div className={styles.noprojects}><p className={styles.desc}>无项目</p></div> 
+                      : <div className={styles.noprojects}><p className={styles.desc}>无项目</p></div>
                     : ''
         }
       </div>
