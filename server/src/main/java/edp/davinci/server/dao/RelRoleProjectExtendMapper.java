@@ -19,12 +19,14 @@
 
 package edp.davinci.server.dao;
 
+import edp.davinci.core.dao.RelRoleProjectMapper;
+import edp.davinci.core.dao.entity.RelRoleProject;
 import edp.davinci.server.dto.project.UserMaxProjectPermission;
 import edp.davinci.server.dto.role.RoleBaseInfo;
 import edp.davinci.server.dto.role.RoleWithProjectPermission;
-import edp.davinci.server.model.RelRoleProject;
 
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -32,20 +34,12 @@ import org.apache.ibatis.annotations.Update;
 import java.util.List;
 import java.util.Set;
 
-public interface RelRoleProjectMapper {
-
-    int insert(RelRoleProject record);
-
-    @Delete({
-            "delete from rel_role_project where id = #{relationId}"
-    })
-    int deleteById(@Param("relationId") Long relationId);
+public interface RelRoleProjectExtendMapper extends RelRoleProjectMapper {
 
     @Delete({
             "delete from rel_role_project where project_id = #{projectId}"
     })
     int deleteByProjectId(@Param("projectId") Long projectId);
-
 
     @Select({
             "select * from rel_role_project where id = #{id,jdbcType=BIGINT}"
@@ -78,13 +72,46 @@ public interface RelRoleProjectMapper {
 
     UserMaxProjectPermission getMaxPermission(@Param("projectId") Long projectId, @Param("userId") Long userId);
 
+    @Insert({
+    	"<script>",
+    	"	insert ignore rel_role_project" + 
+    	"		<trim prefix='(' suffix=')' suffixOverrides=','>" + 
+    	"			`project_id`," + 
+    	"			`role_id`," + 
+    	"			`source_permission`," + 
+    	"			`view_permission`," + 
+    	"			`widget_permission`," + 
+    	"			`viz_permission`," + 
+    	"			`schedule_permission`," + 
+    	"			`share_permission`," + 
+    	"			`download_permission`," + 
+    	"			`create_by`," + 
+    	"			`create_time`," + 
+    	"		</trim>" + 
+    	"		values" + 
+    	"		<foreach collection='list' item='record' index='index' separator=','>" + 
+    	"            <trim prefix='(' suffix=')' suffixOverrides=','>" + 
+    	"                #{record.projectId, jdbcType=BIGINT}," + 
+    	"                #{record.roleId, jdbcType=BIGINT}," + 
+    	"                #{record.sourcePermission, jdbcType=SMALLINT}," + 
+    	"                #{record.viewPermission, jdbcType=SMALLINT}," + 
+    	"                #{record.widgetPermission, jdbcType=SMALLINT}," + 
+    	"                #{record.vizPermission, jdbcType=SMALLINT}," + 
+    	"                #{record.schedulePermission, jdbcType=SMALLINT}," + 
+    	"                #{record.sharePermission, jdbcType=TINYINT}," + 
+    	"                #{record.downloadPermission, jdbcType=TINYINT}," + 
+    	"                #{record.createBy,jdbcType=BIGINT}," + 
+    	"                #{record.createTime,jdbcType=TIMESTAMP}" + 
+    	"            </trim>" + 
+    	"        </foreach>",
+    	"</script>"
+    })
     int insertBatch(@Param("list") List<RelRoleProject> list);
 
     @Delete({
             "delete from rel_role_project where role_id = #{roleId}"
     })
     int deleteByRoleId(Long roleId);
-
 
     @Select({
             "select r.id,",
@@ -118,7 +145,20 @@ public interface RelRoleProjectMapper {
     })
     int deleteByRoleAndProject(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
 
-    List<RelRoleProject> getByProject(@Param("projectId") Long id);
+    @Select({
+    	"select * from rel_role_project where project_id = #{projectId}"
+    })
+    List<RelRoleProject> getByProjectId(@Param("projectId") Long projectId);
 
+    @Delete({
+    	"<script>",
+    	"	<if test='list != null and list.size > 0'>" + 
+    	"		delete from rel_role_project where id in" + 
+    	"			<foreach collection='list' index='index' item='item' open='(' close=')' separator=','>" + 
+    	"				#{item}" + 
+    	"			</foreach>" + 
+    	"	</if>",
+    	"</script>"
+    })
     int deleteByIds(@Param("list") List<Long> list);
 }

@@ -33,6 +33,7 @@ import edp.davinci.server.service.*;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.core.dao.entity.Project;
+import edp.davinci.core.dao.entity.RelRoleProject;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +74,7 @@ public class RoleServiceImpl implements RoleService {
     private ProjectExtendMapper projectExtendMapper;
 
     @Autowired
-    private RelRoleProjectMapper relRoleProjectMapper;
+    private RelRoleProjectExtendMapper relRoleProjectMapper;
 
     @Autowired
     private ProjectService projectService;
@@ -81,7 +83,7 @@ public class RoleServiceImpl implements RoleService {
     private RelRoleViewMapper relRoleViewMapper;
 
     @Autowired
-    private RelRolePortalMapper relRolePortalMapper;
+    private RelRolePortalExtendMapper relRolePortalExtendMapper;
 
     @Autowired
     private RelRoleDashboardExtendMapper relRoleDashboardExtendMapper;
@@ -96,7 +98,7 @@ public class RoleServiceImpl implements RoleService {
     private RelRoleDashboardWidgetExtendMapper relRoleDashboardWidgetExtendMapper;
 
     @Autowired
-    private RelRoleDisplaySlideWidgetMapper relRoleDisplaySlideWidgetMapper;
+    private RelRoleDisplaySlideWidgetExtendMapper relRoleDisplaySlideWidgetExtendMapper;
 
     @Autowired
     private DisplayService displayService;
@@ -189,7 +191,7 @@ public class RoleServiceImpl implements RoleService {
 
             relRoleUserMapper.deleteByRoleId(id);
 
-            relRolePortalMapper.deleteByRoleId(id);
+            relRolePortalExtendMapper.deleteByRoleId(id);
 
             relRoleDashboardExtendMapper.deleteByRoleId(id);
 
@@ -199,7 +201,7 @@ public class RoleServiceImpl implements RoleService {
 
             relRoleDashboardWidgetExtendMapper.deleteByRoleId(id);
 
-            relRoleDisplaySlideWidgetMapper.deleteByRoleId(id);
+            relRoleDisplaySlideWidgetExtendMapper.deleteByRoleId(id);
 
             return true;
         } else {
@@ -451,7 +453,18 @@ public class RoleServiceImpl implements RoleService {
             throw new ServerException("Already exist");
         }
 
-        RelRoleProject relRoleProject = new RelRoleProject(projectId, id).createdBy(user.getId());
+        RelRoleProject relRoleProject = new RelRoleProject();
+        relRoleProject.setDownloadPermission(false);
+        relRoleProject.setSharePermission(false);
+		relRoleProject.setSourcePermission((short)0);
+		relRoleProject.setViewPermission((short)0);
+		relRoleProject.setWidgetPermission((short)0);
+		relRoleProject.setSchedulePermission((short)0);
+        relRoleProject.setVizPermission((short)1);
+        relRoleProject.setProjectId(projectId);
+        relRoleProject.setRoleId(id);
+        relRoleProject.setCreateBy(user.getId());
+        relRoleProject.setCreateTime(new Date());
 
         relRoleProjectMapper.insert(relRoleProject);
         if (null != relRoleProject.getId() && relRoleProject.getId().longValue() > 0L) {
@@ -575,7 +588,8 @@ public class RoleServiceImpl implements RoleService {
         }
 
         BeanUtils.copyProperties(projectRoleDto, relRoleProject);
-        relRoleProject.updatedBy(user.getId());
+        relRoleProject.setUpdateBy(user.getId());
+        relRoleProject.setUpdateTime(new Date());
         int i = relRoleProjectMapper.update(relRoleProject);
 
         if (i > 0) {
@@ -652,7 +666,7 @@ public class RoleServiceImpl implements RoleService {
             return vizPermission;
         }
 
-        vizPermission.setPortals(relRolePortalMapper.getExecludePortals(id, projectId));
+        vizPermission.setPortals(relRolePortalExtendMapper.getExcludePortals(id, projectId));
         vizPermission.setDashboards(relRoleDashboardExtendMapper.getExcludeDashboards(id, projectId));
         vizPermission.setDisplays(relRoleDisplayExtendMapper.getExcludeDisplays(id, projectId));
         vizPermission.setSlides(relRoleSlideMapper.getExecludeSlides(id, projectId));

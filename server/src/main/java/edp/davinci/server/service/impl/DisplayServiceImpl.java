@@ -41,7 +41,7 @@ import edp.davinci.core.dao.entity.Display;
 import edp.davinci.core.dao.entity.RelRoleDisplay;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
-import edp.davinci.server.dao.RelRoleDisplaySlideWidgetMapper;
+import edp.davinci.server.dao.RelRoleDisplaySlideWidgetExtendMapper;
 import edp.davinci.server.dto.display.DisplayCopy;
 import edp.davinci.server.dto.display.DisplayInfo;
 import edp.davinci.server.dto.display.DisplayUpdate;
@@ -85,7 +85,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     private FileUtils fileUtils;
 
     @Autowired
-    private RelRoleDisplaySlideWidgetMapper relRoleDisplaySlideWidgetMapper;
+    private RelRoleDisplaySlideWidgetExtendMapper relRoleDisplaySlideWidgetExtendMapper;
 
     @Autowired
     private DisplaySlideService displaySlideService;
@@ -195,7 +195,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         	alertUnAuthorized(entity, user, "copy");
         }
 
-        relRoleDisplaySlideWidgetMapper.deleteByDisplayId(id);
+        relRoleDisplaySlideWidgetExtendMapper.deleteByDisplayId(id);
         memDisplaySlideWidgetExtendMapper.deleteByDisplayId(id);
         relRoleSlideMapper.deleteByDisplayId(id);
         displaySlideExtendMapper.deleteByDisplayId(id);
@@ -514,7 +514,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     @Override
     @Transactional
     public void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException {
-        relRoleDisplaySlideWidgetMapper.deleteByProjectId(projectId);
+        relRoleDisplaySlideWidgetExtendMapper.deleteByProjectId(projectId);
         memDisplaySlideWidgetExtendMapper.deleteByProject(projectId);
         relRoleSlideMapper.deleteByProjectId(projectId);
         displaySlideExtendMapper.deleteByProjectId(projectId);

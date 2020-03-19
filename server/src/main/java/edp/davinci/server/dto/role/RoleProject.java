@@ -22,7 +22,7 @@ package edp.davinci.server.dto.role;
 import com.alibaba.fastjson.annotation.JSONType;
 
 import edp.davinci.core.dao.entity.Project;
-import edp.davinci.server.model.RelRoleProject;
+import edp.davinci.core.dao.entity.RelRoleProject;
 import lombok.Data;
 
 @Data

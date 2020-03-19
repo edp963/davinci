@@ -45,9 +45,10 @@ import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Display;
 import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
+import edp.davinci.core.dao.entity.RelRoleDisplaySlideWidget;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
-import edp.davinci.server.dao.RelRoleDisplaySlideWidgetMapper;
+import edp.davinci.server.dao.RelRoleDisplaySlideWidgetExtendMapper;
 import edp.davinci.server.dao.ViewMapper;
 import edp.davinci.server.dao.WidgetMapper;
 import edp.davinci.server.dto.display.DisplaySlideCreate;
@@ -68,7 +69,6 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.RelRoleDisplaySlideWidget;
 import edp.davinci.server.model.RelRoleSlide;
 import edp.davinci.server.model.Role;
 import edp.davinci.server.model.User;
@@ -98,7 +98,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     private ViewMapper viewMapper;
 
     @Autowired
-    private RelRoleDisplaySlideWidgetMapper relRoleDisplaySlideWidgetMapper;
+    private RelRoleDisplaySlideWidgetExtendMapper relRoleDisplaySlideWidgetExtendMapper;
     
     private static final  CheckEntityEnum entity = CheckEntityEnum.DISPLAYSLIDE;
 
@@ -189,7 +189,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			alertUnAuthorized(entity, user, "delete");
 		}
 
-		relRoleDisplaySlideWidgetMapper.deleteBySlideId(slideId);
+		relRoleDisplaySlideWidgetExtendMapper.deleteBySlideId(slideId);
 		memDisplaySlideWidgetExtendMapper.deleteBySlideId(slideId);
 		relRoleSlideMapper.deleteBySlideId(slideId);
 		displaySlideExtendMapper.deleteByPrimaryKey(slideId);
@@ -307,14 +307,21 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			if (!CollectionUtils.isEmpty(memDisplaySlideWidgetCreate.getRoleIds())) {
 				List<Role> roles = roleMapper.getRolesByIds(memDisplaySlideWidgetCreate.getRoleIds());
 				relRoleDisplaySlideWidgetList.addAll(roles.stream()
-						.map(r -> new RelRoleDisplaySlideWidget(r.getId(), memDisplaySlideWidget.getId())
-								.createdBy(user.getId()))
+						.map(r -> {
+							RelRoleDisplaySlideWidget rel = new RelRoleDisplaySlideWidget();
+							rel.setRoleId(r.getId());
+							rel.setMemDisplaySlideWidgetId(memDisplaySlideWidget.getId());
+							rel.setVisible(false);
+							rel.setCreateBy(user.getId());
+							rel.setCreateTime(new Date());
+							return rel;
+						})
 						.collect(Collectors.toList()));
 			}
 		}
 
 		if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
-			relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
+			relRoleDisplaySlideWidgetExtendMapper.insertBatch(relRoleDisplaySlideWidgetList);
 			optLogger.info("RoleDisplaySlideWidgets({}) batch insert by user({})",
 					relRoleDisplaySlideWidgetList.toString(), user.getId());
 		}
@@ -395,7 +402,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         
 		if (!CollectionUtils.isEmpty(rolesMap)) {
 			Set<Long> memDisplaySlideWidgetIds = rolesMap.keySet();
-			relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetIds(memDisplaySlideWidgetIds);
+			relRoleDisplaySlideWidgetExtendMapper.deleteByMemDisplaySlideWidgetIds(memDisplaySlideWidgetIds);
 
 			List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
 			for (MemDisplaySlideWidget memDisplaySlideWidget : memDisplaySlideWidgetList) {
@@ -407,14 +414,20 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 				if (!CollectionUtils.isEmpty(memDisplaySlideWidgetDto.getRoleIds())) {
 					List<Role> roles = roleMapper.getRolesByIds(memDisplaySlideWidgetDto.getRoleIds());
 					relRoleDisplaySlideWidgetList.addAll(roles.stream()
-							.map(r -> new RelRoleDisplaySlideWidget(r.getId(), memDisplaySlideWidget.getId())
-									.createdBy(user.getId()))
-							.collect(Collectors.toList()));
+							.map(r -> {
+								RelRoleDisplaySlideWidget rel = new RelRoleDisplaySlideWidget();
+								rel.setRoleId(r.getId());
+								rel.setMemDisplaySlideWidgetId(memDisplaySlideWidget.getId());
+								rel.setVisible(false);
+								rel.setCreateBy(user.getId());
+								rel.setCreateTime(new Date());
+								return rel;
+							}).collect(Collectors.toList()));
 				}
 			}
 
 			if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
-				relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
+				relRoleDisplaySlideWidgetExtendMapper.insertBatch(relRoleDisplaySlideWidgetList);
 				optLogger.info("RoleDisplaySlideWidgets({}) batch insert by user({})",
 						relRoleDisplaySlideWidgetList.toString(), user.getId());
 			}
@@ -500,7 +513,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
             throw new ServerException("Delete memDisplaySlideWidget fail");
         }
 
-        relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetId(relationId);
+        relRoleDisplaySlideWidgetExtendMapper.deleteByMemDisplaySlideWidgetId(relationId);
         optLogger.info("MemDisplaySlideWdget({}) is delete by user({})", slideWidget.getId(), user.getId());
         return true;
     }
@@ -595,7 +608,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		}
 
 		List<Long> disableList = getDisableVizs(user.getId(), display.getId(), null, VizEnum.SLIDE);
-		List<Long> disableMemDisplaySlideWidgets = relRoleDisplaySlideWidgetMapper.getDisableByUser(user.getId());
+		List<Long> disableMemDisplaySlideWidgets = relRoleDisplaySlideWidgetExtendMapper.getDisableByUser(user.getId());
 		Iterator<MemDisplaySlideWidget> iterator = memSlideWidgets.iterator();
         while (iterator.hasNext()) {
             MemDisplaySlideWidget memDisplaySlideWidget = iterator.next();
@@ -650,7 +663,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         if (memIds.length > 0) {
             List<Long> idList = new ArrayList<>(Arrays.asList(memIds));
             Set<Long> idSet = new HashSet<>(idList);
-            relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetIds(idSet);
+            relRoleDisplaySlideWidgetExtendMapper.deleteByMemDisplaySlideWidgetIds(idSet);
             memDisplaySlideWidgetExtendMapper.deleteBatchById(idList);
         }
         return true;
@@ -892,7 +905,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
 		// copy relRoleDisplaySlideWidget
 		if (!memCopies.isEmpty()) {
-			if (relRoleDisplaySlideWidgetMapper.copyRoleSlideWidgetRelation(memCopies, user.getId()) > 0) {
+			if (relRoleDisplaySlideWidgetExtendMapper.copyRoleSlideWidgetRelation(memCopies, user.getId()) > 0) {
 				optLogger.info("Display({}) relRoleDisplaySlideWidget is copied from({}) by user({})", displayId,
 						originDisplayId, user.getId());
 			}

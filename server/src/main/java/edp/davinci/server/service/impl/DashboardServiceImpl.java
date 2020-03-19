@@ -727,7 +727,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         memDashboardWidgetExtendMapper.deleteByProject(projectId);
         relRoleDashboardExtendMapper.deleteByProjectId(projectId);
         dashboardExtendMapper.deleteByProject(projectId);
-        relRolePortalMapper.deleteByProject(projectId);
+        relRolePortalExtendMapper.deleteByProject(projectId);
         dashboardPortalExtendMapper.deleteByProject(projectId);
     }
 

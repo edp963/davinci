@@ -27,6 +27,7 @@ import edp.davinci.core.dao.entity.Favorite;
 import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.core.dao.entity.Project;
 import edp.davinci.core.dao.entity.RelProjectAdmin;
+import edp.davinci.core.dao.entity.RelRoleProject;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.organization.OrganizationInfo;
@@ -99,7 +100,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private FavoriteExtendMapper favoriteExtendMapper;
 
     @Autowired
-    private RelRoleProjectMapper relRoleProjectMapper;
+    private RelRoleProjectExtendMapper relRoleProjectMapper;
 
     @Autowired
     private UserMapper userMapper;
@@ -628,7 +629,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 			return null;
 		}
 
-		List<RelRoleProject> originRels = relRoleProjectMapper.getByProject(projectId);
+		List<RelRoleProject> originRels = relRoleProjectMapper.getByProjectId(projectId);
 		List<Long> invariantRoleIds = new ArrayList<>();
 		if (!CollectionUtils.isEmpty(originRels)) {
 			invariantRoleIds.addAll(originRels.stream().map(RelRoleProject::getRoleId).filter(roleIds::contains)
@@ -644,7 +645,21 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		}
 
 		List<RelRoleProject> list = roleList.stream().filter(r -> !invariantRoleIds.contains(r.getId()))
-				.map(role -> new RelRoleProject(projectDetail.getId(), role.getId()).createdBy(user.getId()))
+				.map(role -> {
+					RelRoleProject rel = new RelRoleProject();
+					rel.setDownloadPermission(false);
+					rel.setSharePermission(false);
+					rel.setSourcePermission((short)0);
+					rel.setViewPermission((short)0);
+					rel.setWidgetPermission((short)0);
+					rel.setSchedulePermission((short)0);
+					rel.setVizPermission((short)1);
+					rel.setProjectId(projectDetail.getId());
+					rel.setRoleId(role.getId());
+					rel.setCreateBy(user.getId());
+					rel.setCreateTime(new Date());
+					return rel;
+				})
 				.collect(Collectors.toList());
 
 		if (CollectionUtils.isEmpty(list)) {
