@@ -22,7 +22,6 @@ package edp.davinci.server.service.impl;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.role.*;
 import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.UserOrgRoleEnum;
 import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.enums.VizVisiblityEnum;
 import edp.davinci.server.exception.NotFoundException;
@@ -34,6 +33,9 @@ import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.core.dao.entity.Project;
 import edp.davinci.core.dao.entity.RelRoleProject;
+import edp.davinci.core.dao.entity.RelRoleUser;
+import edp.davinci.core.dao.entity.RelUserOrganization;
+import edp.davinci.core.enums.UserOrgRoleEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +61,7 @@ public class RoleServiceImpl implements RoleService {
     private OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
-    private RelUserOrganizationMapper relUserOrganizationMapper;
+    private RelUserOrganizationExtendMapper relUserOrganizationMapper;
 
     @Autowired
     private RoleMapper roleMapper;
@@ -68,7 +70,7 @@ public class RoleServiceImpl implements RoleService {
     private UserMapper userMapper;
 
     @Autowired
-    private RelRoleUserMapper relRoleUserMapper;
+    private RelRoleUserExtendMapper relRoleUserExtendMapper;
 
     @Autowired
     private ProjectExtendMapper projectExtendMapper;
@@ -80,7 +82,7 @@ public class RoleServiceImpl implements RoleService {
     private ProjectService projectService;
 
     @Autowired
-    private RelRoleViewMapper relRoleViewMapper;
+    private RelRoleViewExtendMapper relRoleViewExtendMapper;
 
     @Autowired
     private RelRolePortalExtendMapper relRolePortalExtendMapper;
@@ -92,7 +94,7 @@ public class RoleServiceImpl implements RoleService {
     private RelRoleDisplayExtendMapper relRoleDisplayExtendMapper;
 
     @Autowired
-    private RelRoleSlideMapper relRoleSlideMapper;
+    private RelRoleSlideExtendMapper relRoleSlideExtendMapper;
 
     @Autowired
     private RelRoleDashboardWidgetExtendMapper relRoleDashboardWidgetExtendMapper;
@@ -187,9 +189,9 @@ public class RoleServiceImpl implements RoleService {
             relRoleProjectMapper.deleteByRoleId(id);
 
             //删除Role关联view
-            relRoleViewMapper.deleteByRoleId(id);
+            relRoleViewExtendMapper.deleteByRoleId(id);
 
-            relRoleUserMapper.deleteByRoleId(id);
+            relRoleUserExtendMapper.deleteByRoleId(id);
 
             relRolePortalExtendMapper.deleteByRoleId(id);
 
@@ -197,7 +199,7 @@ public class RoleServiceImpl implements RoleService {
 
             relRoleDisplayExtendMapper.deleteByRoleId(id);
 
-            relRoleSlideMapper.deleteByRoleId(id);
+            relRoleSlideExtendMapper.deleteByRoleId(id);
 
             relRoleDashboardWidgetExtendMapper.deleteByRoleId(id);
 
@@ -292,7 +294,7 @@ public class RoleServiceImpl implements RoleService {
         }
 
         if (CollectionUtils.isEmpty(memberIds)) {
-            relRoleUserMapper.deleteByRoleId(id);
+            relRoleUserExtendMapper.deleteByRoleId(id);
             return null;
         }
 
@@ -302,13 +304,20 @@ public class RoleServiceImpl implements RoleService {
             throw new NotFoundException("members is not found");
         }
 
-        relRoleUserMapper.deleteByRoleId(id);
+        relRoleUserExtendMapper.deleteByRoleId(id);
 
         List<RelRoleUser> relRoleUsers = members.stream()
-                .map(m -> new RelRoleUser(m.getId(), id).createdBy(user.getId()))
+                .map(m -> {
+                	RelRoleUser rel = new RelRoleUser();
+                	rel.setRoleId(id);
+                	rel.setUserId(m.getId());
+                	rel.setCreateBy(user.getId());
+                	rel.setCreateTime(new Date());
+                	return rel;
+                })
                 .collect(Collectors.toList());
 
-        int i = relRoleUserMapper.insertBatch(relRoleUsers);
+        int i = relRoleUserExtendMapper.insertBatch(relRoleUsers);
         if (i > 0) {
             Map<Long, User> map = new HashMap<>();
             members.forEach(m -> map.put(m.getId(), m));
@@ -334,7 +343,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public boolean deleteMember(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
-        RelRoleUser relRoleUser = relRoleUserMapper.getById(relationId);
+        RelRoleUser relRoleUser = relRoleUserExtendMapper.selectByPrimaryKey(relationId);
 
         if (null == relRoleUser) {
             log.error("RelRoleUser ( :{} ) is not found", relationId);
@@ -354,7 +363,7 @@ public class RoleServiceImpl implements RoleService {
             throw new ServerException("you cannot remove youself");
         }
 
-        int i = relRoleUserMapper.deleteById(relationId);
+        int i = relRoleUserExtendMapper.deleteByPrimaryKey(relationId);
         if (i > 0) {
             optLogger.info("relRoleUser ({}) delete by user(:{})", relRoleUser.toString(), user.getId());
             return true;
@@ -378,19 +387,26 @@ public class RoleServiceImpl implements RoleService {
 
         List<Long> userIds = users.stream().map(u -> u.getId()).collect(Collectors.toList());
 
-        List<Long> members = relRoleUserMapper.getUserIdsByRoleId(id);
+        List<Long> members = relRoleUserExtendMapper.getUserIdsByRoleId(id);
 
         List<Long> deleteIds = members.stream().filter(mId -> !userIds.contains(mId)).collect(Collectors.toList());
 
-        List<RelRoleUser> collect = userIds.stream().map(uId -> new RelRoleUser(uId, id)).collect(Collectors.toList());
+        List<RelRoleUser> collect = userIds.stream().map(uId -> {
+        	RelRoleUser rel = new RelRoleUser();
+        	rel.setRoleId(id);
+        	rel.setUserId(uId);
+        	rel.setCreateBy(user.getId());
+        	rel.setCreateTime(new Date());
+        	return rel;
+        }).collect(Collectors.toList());
 
         if (!CollectionUtils.isEmpty(deleteIds)) {
-            relRoleUserMapper.deleteByRoleIdAndMemberIds(id, deleteIds);
+            relRoleUserExtendMapper.deleteByRoleIdAndUserIds(id, deleteIds);
         }
-        relRoleUserMapper.insertBatch(collect);
+        relRoleUserExtendMapper.insertBatch(collect);
 
         optLogger.info("replace role(:{}) member by user(:{})", id, user.getId());
-        return relRoleUserMapper.getMembersByRoleId(id);
+        return relRoleUserExtendMapper.getMembersByRoleId(id);
     }
 
     /**
@@ -414,7 +430,7 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
-        return relRoleUserMapper.getMembersByRoleId(id);
+        return relRoleUserExtendMapper.getMembersByRoleId(id);
     }
 
 
@@ -669,7 +685,7 @@ public class RoleServiceImpl implements RoleService {
         vizPermission.setPortals(relRolePortalExtendMapper.getExcludePortals(id, projectId));
         vizPermission.setDashboards(relRoleDashboardExtendMapper.getExcludeDashboards(id, projectId));
         vizPermission.setDisplays(relRoleDisplayExtendMapper.getExcludeDisplays(id, projectId));
-        vizPermission.setSlides(relRoleSlideMapper.getExecludeSlides(id, projectId));
+        vizPermission.setSlides(relRoleSlideExtendMapper.getExcludeSlides(id, projectId));
 
         return vizPermission;
     }

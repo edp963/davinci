@@ -26,10 +26,10 @@ import lombok.Data;
 
 @Data
 public class RelRoleMember {
-    private Long id;
+
+	private Long id;
 
     private UserBaseInfo user;
-
 
     public RelRoleMember(Long id, User user) {
         this.id = id;
@@ -41,5 +41,6 @@ public class RelRoleMember {
     }
 
     public RelRoleMember() {
+
     }
 }

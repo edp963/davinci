@@ -52,7 +52,7 @@ public interface OrganizationService extends CheckEntityService {
 
     boolean deleteOrgMember(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    boolean updateMemberRole(Long relationId, User user, int role) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean updateMemberRole(Long relationId, User user, short role) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     void confirmInviteNoLogin(String token) throws NotFoundException, ServerException;
 }

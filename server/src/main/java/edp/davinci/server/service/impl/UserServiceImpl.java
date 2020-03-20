@@ -22,10 +22,12 @@ package edp.davinci.server.service.impl;
 import edp.davinci.commons.util.AESUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Organization;
+import edp.davinci.core.dao.entity.RelUserOrganization;
+import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.dao.OrganizationExtendMapper;
-import edp.davinci.server.dao.RelUserOrganizationMapper;
+import edp.davinci.server.dao.RelUserOrganizationExtendMapper;
 import edp.davinci.server.dao.UserMapper;
 import edp.davinci.server.dto.organization.OrganizationInfo;
 import edp.davinci.server.dto.user.*;
@@ -33,11 +35,9 @@ import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.server.enums.HttpCodeEnum;
 import edp.davinci.server.enums.LockType;
 import edp.davinci.server.enums.MailContentTypeEnum;
-import edp.davinci.server.enums.UserOrgRoleEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.LdapPerson;
 import edp.davinci.server.model.MailContent;
-import edp.davinci.server.model.RelUserOrganization;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.LdapService;
 import edp.davinci.server.service.UserService;
@@ -77,7 +77,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
     private OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
-    private RelUserOrganizationMapper relUserOrganizationMapper;
+    private RelUserOrganizationExtendMapper relUserOrganizationMapper;
 
     @Autowired
     private TokenUtils tokenUtils;
@@ -383,8 +383,12 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 				organizationExtendMapper.insert(organization);
 
 				// 关联用户和组织，创建人是组织的owner
-				RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), userId,
-						UserOrgRoleEnum.OWNER.getRole());
+	            RelUserOrganization relUserOrganization = new RelUserOrganization();
+	            relUserOrganization.setOrgId(organization.getId());
+	            relUserOrganization.setUserId(userId);
+	            relUserOrganization.setRole(UserOrgRoleEnum.OWNER.getRole());
+	            relUserOrganization.setCreateBy(userId);
+	            relUserOrganization.setCreateTime(new Date());
 				relUserOrganizationMapper.insert(relUserOrganization);
 
 				UserLoginResult userLoginResult = new UserLoginResult();

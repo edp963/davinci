@@ -19,10 +19,12 @@
 
 package edp.davinci.server.dao;
 
+import edp.davinci.core.dao.RelUserOrganizationMapper;
+import edp.davinci.core.dao.entity.RelUserOrganization;
 import edp.davinci.server.dto.organization.OrganizationMember;
-import edp.davinci.server.model.RelUserOrganization;
 
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -32,9 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
-public interface RelUserOrganizationMapper {
-
-    int insert(RelUserOrganization relUserOrganization);
+public interface RelUserOrganizationExtendMapper extends RelUserOrganizationMapper {
 
     @Select({"select * from rel_user_organization where user_id = #{userId} and org_id = #{orgId}"})
     RelUserOrganization getRel(@Param("userId") Long userId, @Param("orgId") Long orgId);
@@ -42,15 +42,14 @@ public interface RelUserOrganizationMapper {
     @Delete("delete from rel_user_organization where org_id = #{orgId}")
     int deleteByOrgId(@Param("orgId") Long orgId);
 
-
     @Select({
-            "SELECT ruo.id, u.id AS 'user.id', ",
-            "    IF(u.`name` is NULL,u.username,u.`name`) AS 'user.username', ",
-            "    u.email, u.avatar AS 'user.avatar', ruo.role AS 'user.role'",
-            "FROM `user` u",
-            "LEFT JOIN rel_user_organization ruo on ruo.user_id = u.id",
-            "LEFT JOIN organization o on o.id = ruo.org_id",
-            "WHERE ruo.org_id = #{orgId}"
+            "select ruo.id, u.id as 'user.id', ",
+            "    if(u.`name` is null,u.username,u.`name`) as 'user.username', ",
+            "    u.email, u.avatar as 'user.avatar', ruo.role as 'user.role'",
+            "from `user` u",
+            "left join rel_user_organization ruo on ruo.user_id = u.id",
+            "left join organization o on o.id = ruo.org_id",
+            "where ruo.org_id = #{orgId}"
     })
     List<OrganizationMember> getOrgMembers(@Param("orgId") Long orgId);
 
@@ -68,7 +67,37 @@ public interface RelUserOrganizationMapper {
     })
     int updateMemberRole(RelUserOrganization relUserOrganization);
 
+    @Insert({
+    	"<script>",
+    	"	insert rel_user_organization" + 
+    	"		(`org_id`,`user_id`, `role`, `create_by`, `create_time`)" + 
+    	"		VALUES" + 
+    	"		<foreach collection='set' item='record' index='index' separator=','>" + 
+    	"		(" + 
+    	"			#{record.orgId,jdbcType=BIGINT}," + 
+    	"			#{record.userId,jdbcType=BIGINT}," + 
+    	"			#{record.role,jdbcType=SMALLINT}," + 
+    	"			#{record.createBy,jdbcType=BIGINT}," + 
+    	"			#{record.createTime,jdbcType=TIMESTAMP}" + 
+    	"		)" + 
+    	"		</foreach>",
+    	"</script>"
+    })
     int insertBatch(@Param("set") Set<RelUserOrganization> set);
 
-    int deleteBatch(@Param("set") Set<Long> set);
+    @Delete({
+    	"<script>",
+    	"delete from rel_user_organization where" + 
+    	"        <if test='ids != null and ids.size > 0'>" + 
+    	"            id in" + 
+    	"            <foreach collection='ids' index='index' item='item' open='(' close=')' separator=','>" + 
+    	"                #{item}" + 
+    	"            </foreach>" + 
+    	"        </if>" + 
+    	"        <if test='ids == null or ids.size == 0'>" + 
+    	"            1=0" + 
+    	"        </if>",
+    	"</script>"
+    })
+    int deleteBatch(@Param("ids") Set<Long> ids);
 }

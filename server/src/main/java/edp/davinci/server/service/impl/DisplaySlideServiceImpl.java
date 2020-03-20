@@ -46,6 +46,7 @@ import edp.davinci.core.dao.entity.Display;
 import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
 import edp.davinci.core.dao.entity.RelRoleDisplaySlideWidget;
+import edp.davinci.core.dao.entity.RelRoleSlide;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDisplaySlideWidgetExtendMapper;
@@ -69,7 +70,6 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.RelRoleSlide;
 import edp.davinci.server.model.Role;
 import edp.davinci.server.model.User;
 import edp.davinci.server.model.View;
@@ -143,10 +143,18 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		if (!CollectionUtils.isEmpty(displaySlideCreate.getRoleIds())) {
 			List<Role> roles = roleMapper.getRolesByIds(displaySlideCreate.getRoleIds());
 			List<RelRoleSlide> list = roles.stream()
-					.map(r -> new RelRoleSlide(displaySlide.getId(), r.getId()).createdBy(user.getId()))
+					.map(r -> {
+						RelRoleSlide rel = new RelRoleSlide();
+						rel.setRoleId(r.getId());
+						rel.setSlideId(displaySlide.getId());
+						rel.setCreateBy(user.getId());
+						rel.setCreateTime(new Date());
+						rel.setVisible(false);
+						return rel;
+					})
 					.collect(Collectors.toList());
 			if (!CollectionUtils.isEmpty(list)) {
-				relRoleSlideMapper.insertBatch(list);
+				relRoleSlideExtendMapper.insertBatch(list);
 				optLogger.info("DisplaySlide({}) limit role({}) access", displaySlide.getId(),
 						roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
 			}
@@ -191,7 +199,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
 		relRoleDisplaySlideWidgetExtendMapper.deleteBySlideId(slideId);
 		memDisplaySlideWidgetExtendMapper.deleteBySlideId(slideId);
-		relRoleSlideMapper.deleteBySlideId(slideId);
+		relRoleSlideExtendMapper.deleteBySlideId(slideId);
 		displaySlideExtendMapper.deleteByPrimaryKey(slideId);
 		
 		optLogger.info("DisplaySlide({}) is delete by user({})", displaySlide.getId(), user.getId());
@@ -825,7 +833,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
     @Override
     public List<Long> getSlideExecludeRoles(Long id) {
-        return relRoleSlideMapper.getById(id);
+        return relRoleSlideExtendMapper.getBySlideId(id);
     }
 
     @Override
@@ -835,13 +843,18 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		SlideWithDisplayAndProject slide = getSlideWithDisplayAndProject(vizVisibility.getId());
 
 		if (vizVisibility.isVisible()) {
-			if (relRoleSlideMapper.delete(slide.getId(), role.getId()) > 0) {
+			if (relRoleSlideExtendMapper.deleteByPrimaryKey(role.getId(), slide.getId()) > 0) {
 				optLogger.info("DisplaySlide({}) can be accessed by role({}), update by user({})",
 						((DisplaySlide) slide).getId(), role.getId(), user.getId());
 			}
 		} else {
-			RelRoleSlide relRoleSlide = new RelRoleSlide(slide.getId(), role.getId());
-			relRoleSlideMapper.insert(relRoleSlide);
+			RelRoleSlide relRoleSlide = new RelRoleSlide();
+			relRoleSlide.setRoleId(role.getId());
+			relRoleSlide.setSlideId(slide.getId());
+			relRoleSlide.setCreateBy(user.getId());
+			relRoleSlide.setCreateTime(new Date());
+			relRoleSlide.setVisible(false);
+			relRoleSlideExtendMapper.insert(relRoleSlide);
 			optLogger.info("DisplaySlide({}) can be accessed by role({}), create by user({})",
 					((DisplaySlide) slide).getId(), role.getId(), user.getId());
 		}
@@ -874,7 +887,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
 		// copy relRoleSlide
 		if (!slideCopies.isEmpty()) {
-			if (relRoleSlideMapper.copyRoleSlideRelation(slideCopies, user.getId()) > 0) {
+			if (relRoleSlideExtendMapper.copyRoleSlideRelation(slideCopies, user.getId()) > 0) {
 				optLogger.info("Display({}) slides role is copied from ({}) by user({})", displayId, originDisplayId,
 						user.getId());
 			}

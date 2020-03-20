@@ -23,18 +23,18 @@ import edp.davinci.commons.util.AESUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.core.dao.entity.Project;
+import edp.davinci.core.dao.entity.RelUserOrganization;
+import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.organization.*;
 import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.enums.MailContentTypeEnum;
-import edp.davinci.server.enums.UserOrgRoleEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.MailContent;
-import edp.davinci.server.model.RelUserOrganization;
 import edp.davinci.server.model.TokenEntity;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.OrganizationService;
@@ -62,7 +62,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
-    private RelUserOrganizationMapper relUserOrganizationMapper;
+    private RelUserOrganizationExtendMapper relUserOrganizationMapper;
 
     @Autowired
     public OrganizationExtendMapper organizationExtendMapper;
@@ -138,7 +138,12 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             
             optLogger.info("Organization({}) create by user({})", organization.getId(), userId);
             //用户-组织 建立关联
-            RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), userId, UserOrgRoleEnum.OWNER.getRole());
+            RelUserOrganization relUserOrganization = new RelUserOrganization();
+            relUserOrganization.setOrgId(organization.getId());
+            relUserOrganization.setUserId(userId);
+            relUserOrganization.setRole(UserOrgRoleEnum.OWNER.getRole());
+            relUserOrganization.setCreateBy(userId);
+            relUserOrganization.setCreateTime(new Date());
             relUserOrganizationMapper.insert(relUserOrganization);
             
             OrganizationBaseInfo organizationBaseInfo = new OrganizationBaseInfo();
@@ -481,8 +486,12 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
 		isJoined(memeberId, orgId);
 		// 验证通过，建立关联
-		RelUserOrganization rel = new RelUserOrganization(orgId, memeberId, UserOrgRoleEnum.MEMBER.getRole());
-
+		 RelUserOrganization rel = new RelUserOrganization();
+		 rel.setOrgId(orgId);
+         rel.setUserId(memeberId);
+         rel.setRole(UserOrgRoleEnum.MEMBER.getRole());
+         rel.setCreateBy(user.getId());
+         rel.setCreateTime(new Date());
 		if (relUserOrganizationMapper.insert(rel) <= 0) {
 			throw new ServerException("Unknown fail");
 		}
@@ -546,7 +555,12 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
 		isJoined(memeberId, orgId);
 		// 验证通过，建立关联
-		RelUserOrganization rel = new RelUserOrganization(orgId, memeberId, UserOrgRoleEnum.MEMBER.getRole());
+		 RelUserOrganization rel = new RelUserOrganization();
+		 rel.setOrgId(orgId);
+        rel.setUserId(memeberId);
+        rel.setRole(UserOrgRoleEnum.MEMBER.getRole());
+        rel.setCreateBy(memeberId);
+        rel.setCreateTime(new Date());
 		relUserOrganizationMapper.insert(rel);
 		// 修改成员人数
 		organization.setMemberNum(organization.getMemberNum() + 1);
@@ -610,12 +624,12 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
      */
     @Override
     @Transactional
-    public boolean updateMemberRole(Long relationId, User user, int role) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean updateMemberRole(Long relationId, User user, short role) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         RelUserOrganization rel = relUserOrganizationMapper.getById(relationId);
         
         if (null == rel) {
-            throw new ServerException("this member are no longer member of the organization");
+            throw new ServerException("This member are no longer member of the organization");
         }
 
         Long orgId = rel.getOrgId();
@@ -642,7 +656,8 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         String origin = rel.toString();
 
         rel.setRole(userOrgRoleEnum.getRole());
-        rel.updatedBy(user.getId());
+        rel.setUpdateBy(user.getId());
+        rel.setUpdateTime(new Date());
         if (relUserOrganizationMapper.updateMemberRole(rel) <= 0) {
             throw new ServerException("Unknown fail");
         }

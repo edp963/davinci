@@ -20,13 +20,13 @@
 package edp.davinci.server.service.impl;
 
 import edp.davinci.core.dao.entity.Organization;
+import edp.davinci.core.dao.entity.RelUserOrganization;
+import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.server.dao.OrganizationExtendMapper;
-import edp.davinci.server.dao.RelUserOrganizationMapper;
+import edp.davinci.server.dao.RelUserOrganizationExtendMapper;
 import edp.davinci.server.dao.UserMapper;
-import edp.davinci.server.enums.UserOrgRoleEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.LdapPerson;
-import edp.davinci.server.model.RelUserOrganization;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.LdapService;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +71,7 @@ public class LdapServiceImpl implements LdapService {
     private OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
-    private RelUserOrganizationMapper relUserOrganizationMapper;
+    private RelUserOrganizationExtendMapper relUserOrganizationMapper;
 
     public boolean existLdapServer() {
         return !StringUtils.isEmpty(ldapUrls);
@@ -130,8 +130,8 @@ public class LdapServiceImpl implements LdapService {
         user.setPassword(LDAP_USER_PASSWORD);
 
         if (userMapper.insert(user) <= 0) {
-            log.error("ldap regist fail: email({})", user.getEmail());
-            throw new ServerException("ldap regist fail: unspecified error");
+            log.error("Ldap regist fail, email:{}", user.getEmail());
+            throw new ServerException("Ldap regist fail:unspecified error");
         }
         
         Long userId = user.getId();
@@ -144,7 +144,12 @@ public class LdapServiceImpl implements LdapService {
         organization.setCreateTime(new Date());
         
         if (organizationExtendMapper.insert(organization) > 0) {
-            RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), userId, UserOrgRoleEnum.OWNER.getRole());
+            RelUserOrganization relUserOrganization = new RelUserOrganization();
+            relUserOrganization.setOrgId(organization.getId());
+            relUserOrganization.setUserId(userId);
+            relUserOrganization.setRole(UserOrgRoleEnum.OWNER.getRole());
+            relUserOrganization.setCreateBy(userId);
+            relUserOrganization.setCreateTime(new Date());
             relUserOrganizationMapper.insert(relUserOrganization);
         }
 

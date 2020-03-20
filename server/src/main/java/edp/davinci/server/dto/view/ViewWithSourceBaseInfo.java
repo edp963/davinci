@@ -19,8 +19,8 @@
 
 package edp.davinci.server.dto.view;
 
+import edp.davinci.core.dao.entity.RelRoleView;
 import edp.davinci.server.dto.source.SourceBaseInfo;
-import edp.davinci.server.model.RelRoleView;
 import edp.davinci.server.model.View;
 import lombok.Data;
 

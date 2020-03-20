@@ -197,7 +197,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
         relRoleDisplaySlideWidgetExtendMapper.deleteByDisplayId(id);
         memDisplaySlideWidgetExtendMapper.deleteByDisplayId(id);
-        relRoleSlideMapper.deleteByDisplayId(id);
+        relRoleSlideExtendMapper.deleteByDisplayId(id);
         displaySlideExtendMapper.deleteByDisplayId(id);
         relRoleDisplayExtendMapper.deleteByDisplayId(id);
         displayExtendMapper.deleteByPrimaryKey(id);
@@ -516,7 +516,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     public void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException {
         relRoleDisplaySlideWidgetExtendMapper.deleteByProjectId(projectId);
         memDisplaySlideWidgetExtendMapper.deleteByProject(projectId);
-        relRoleSlideMapper.deleteByProjectId(projectId);
+        relRoleSlideExtendMapper.deleteByProjectId(projectId);
         displaySlideExtendMapper.deleteByProjectId(projectId);
         relRoleDisplayExtendMapper.deleteByProjectId(projectId);
         displayExtendMapper.deleteByProject(projectId);

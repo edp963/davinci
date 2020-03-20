@@ -20,28 +20,71 @@
 package edp.davinci.server.dao;
 
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
-import edp.davinci.server.model.RelRoleView;
+import edp.davinci.core.dao.RelRoleViewMapper;
+import edp.davinci.core.dao.entity.RelRoleView;
 
 import java.util.List;
 
-public interface RelRoleViewMapper {
+public interface RelRoleViewExtendMapper extends RelRoleViewMapper {
 
+	@Insert({
+		"<script>",
+		"	insert ignore rel_role_view" + 
+		"		<trim prefix='(' suffix=')' suffixOverrides=','>" + 
+		"			`view_id`," + 
+		"			`role_id`," + 
+		"			`row_auth`," + 
+		"			`column_auth`," + 
+		"			`create_by`," + 
+		"			`create_time`," + 
+		"		</trim>" + 
+		"		values" + 
+		"		<trim prefix=' (' suffix=')' suffixOverrides=','>" + 
+		"			#{viewId, jdbcType=BIGINT}," + 
+		"			#{roleId, jdbcType=BIGINT}," + 
+		"			#{rowAuth, jdbcType=LONGVARCHAR}," + 
+		"			#{columnAuth, jdbcType=LONGVARCHAR}," + 
+		"			#{createBy,jdbcType=BIGINT}," + 
+		"			#{createTime,jdbcType=TIMESTAMP}" + 
+		"		</trim>",
+		"</script>"
+	})
     int insert(RelRoleView relRoleView);
 
+	@Insert({
+		"<script>",
+		"	replace into rel_role_view" + 
+		"		<trim prefix='(' suffix=')' suffixOverrides=','>" + 
+		"			`view_id`," + 
+		"			`role_id`," + 
+		"			`row_auth`," + 
+		"			`column_auth`," + 
+		"			`create_by`," + 
+		"			`create_time`," + 
+		"		</trim>" + 
+		"		values" + 
+		"		<foreach collection='list' item='record' index='index' separator=','>" + 
+		"			<trim prefix=' (' suffix=')' suffixOverrides=','>" + 
+		"				#{record.viewId, jdbcType=BIGINT}," + 
+		"				#{record.roleId, jdbcType=BIGINT}," + 
+		"				#{record.rowAuth, jdbcType=LONGVARCHAR}," + 
+		"				#{record.columnAuth, jdbcType=LONGVARCHAR}," + 
+		"				#{record.createBy,jdbcType=BIGINT}," + 
+		"				#{record.createTime,jdbcType=TIMESTAMP}" + 
+		"			</trim>" + 
+		"		</foreach>",
+		"</script>"
+	})
     int insertBatch(@Param("list") List<RelRoleView> list);
 
-    @Delete({
-            "delete from rel_role_view where role_id = #{roleId} and view_id = #{viewId}"
-    })
-    int delete(@Param("roleId") Long roleId, @Param("viewId") Long viewId);
-
     @Update({
-            "update rel_role_view",
-            "set `row_auth` = #{rowAuth, jdbcType=LONGVARCHAR},",
+            "update rel_role_view set ",
+            "`row_auth` = #{rowAuth, jdbcType=LONGVARCHAR},",
             "`column_auth` = #{columnAuth, jdbcType=LONGVARCHAR},",
             "update_by = #{updateBy, jdbcType=BIGINT},",
             "update_time = #{updateTime, jdbcType=TIMESTAMP}",
@@ -53,7 +96,6 @@ public interface RelRoleViewMapper {
             "delete from rel_role_view where  view_id = #{viewId}"
     })
     int deleteByViewId(Long viewId);
-
 
     @Delete({
             "delete from rel_role_view where  role_id = #{roleId}"

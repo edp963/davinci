@@ -22,10 +22,10 @@ package edp.davinci.server.service.impl;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;
-
+import edp.davinci.core.dao.entity.RelRoleView;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.excel.SQLContext;
-import edp.davinci.server.dao.RelRoleViewMapper;
+import edp.davinci.server.dao.RelRoleViewExtendMapper;
 import edp.davinci.server.dao.SourceMapper;
 import edp.davinci.server.dao.ViewMapper;
 import edp.davinci.server.dao.WidgetMapper;
@@ -88,7 +88,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     private WidgetMapper widgetMapper;
 
     @Autowired
-    private RelRoleViewMapper relRoleViewMapper;
+    private RelRoleViewExtendMapper relRoleViewExtendMapper;
 
     @Autowired
     private SqlUtils sqlUtils;
@@ -166,7 +166,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         	throw new UnAuthorizedExecption("Insufficient permissions");
         }
 
-        List<RelRoleView> relRoleViews = relRoleViewMapper.getByView(view.getId());
+        List<RelRoleView> relRoleViews = relRoleViewExtendMapper.getByView(view.getId());
         view.setRoles(relRoleViews);
         return view;
     }
@@ -329,7 +329,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 	        optLogger.info("view ({}) is updated by user(:{}), origin: ({})", view.toString(), user.getId(), originStr);
             
 	        if (CollectionUtils.isEmpty(viewUpdate.getRoles())) {
-                relRoleViewMapper.deleteByViewId(id);
+                relRoleViewExtendMapper.deleteByViewId(id);
             }
 	        
 	        if (!StringUtils.isEmpty(viewUpdate.getVariable())) {
@@ -386,7 +386,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         }
         
         optLogger.info("view ( {} ) delete by user( :{} )", view.toString(), user.getId());
-        relRoleViewMapper.deleteByViewId(id);
+        relRoleViewExtendMapper.deleteByViewId(id);
         return true;
     }
 
@@ -830,7 +830,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         List<SqlVariable> queryVariables = getQueryVariables(variables);
         List<SqlVariable> authVariables = null;
         if (!isProjectMaintainer) {
-            List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewId);
+            List<RelRoleView> roleViewList = relRoleViewExtendMapper.getByUserAndView(user.getId(), viewId);
             authVariables = getAuthVariables(roleViewList, variables);
             if (null != excludeColumns) {
                 Set<String> eclmns = getExcludeColumnsViaOneView(roleViewList);
@@ -933,7 +933,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 	private void checkAndInsertRoleParam(String sqlVarible, List<RelRoleViewDTO> roles, User user, View view) {
         List<SqlVariable> variables = JSONUtils.toObjectArray(sqlVarible, SqlVariable.class);
         if (CollectionUtils.isEmpty(roles)) {
-            relRoleViewMapper.deleteByViewId(view.getId());
+            relRoleViewExtendMapper.deleteByViewId(view.getId());
             return;
         }
         
@@ -978,13 +978,18 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                     columnAuth = JSONUtils.toString(collect);
                 }
 
-                RelRoleView relRoleView = new RelRoleView(view.getId(), r.getRoleId(), rowAuth, columnAuth)
-                        .createdBy(user.getId());
+                RelRoleView relRoleView = new RelRoleView();
+                relRoleView.setRoleId(r.getRoleId());
+                relRoleView.setViewId(view.getId());
+                relRoleView.setRowAuth(rowAuth);
+                relRoleView.setColumnAuth(columnAuth);
+                relRoleView.setCreateBy(user.getId());
+                relRoleView.setCreateTime(new Date());
                 relRoleViews.add(relRoleView);
             });
 
             if (!CollectionUtils.isEmpty(relRoleViews)) {
-                relRoleViewMapper.insertBatch(relRoleViews);
+                relRoleViewExtendMapper.insertBatch(relRoleViews);
             }
 
         }).start();

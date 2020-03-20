@@ -36,7 +36,7 @@ import edp.davinci.server.dao.DisplaySlideExtendMapper;
 import edp.davinci.server.dao.RelRoleDashboardExtendMapper;
 import edp.davinci.server.dao.RelRoleDisplayExtendMapper;
 import edp.davinci.server.dao.RelRolePortalExtendMapper;
-import edp.davinci.server.dao.RelRoleSlideMapper;
+import edp.davinci.server.dao.RelRoleSlideExtendMapper;
 import edp.davinci.server.dao.RoleMapper;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.enums.VizEnum;
@@ -74,7 +74,7 @@ public class VizCommonService extends BaseEntityService {
     protected RelRoleDisplayExtendMapper relRoleDisplayExtendMapper;
 
     @Autowired
-    protected RelRoleSlideMapper relRoleSlideMapper;
+    protected RelRoleSlideExtendMapper relRoleSlideExtendMapper;
 
     @Autowired
     protected RoleMapper roleMapper;
@@ -147,7 +147,7 @@ public class VizCommonService extends BaseEntityService {
                 allRoles = roleMapper.getRolesByUserAndProject(userId, featureId);
                 break;
             case SLIDE:
-                disables = relRoleSlideMapper.getDisableSlides(userId, featureId);
+                disables = relRoleSlideExtendMapper.getDisableSlides(userId, featureId);
                 if (null == allVizs) {
                     List<DisplaySlide> slideList = displaySlideExtendMapper.selectByDisplayId(featureId);
                     if (!CollectionUtils.isEmpty(slideList)) {

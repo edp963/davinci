@@ -17,7 +17,7 @@
  *
  */
 
-package edp.davinci.server.enums;
+package edp.davinci.core.enums;
 
 public enum UserOrgRoleEnum {
 
@@ -32,9 +32,9 @@ public enum UserOrgRoleEnum {
         this.roleName = roleName;
     }
 
-    public static UserOrgRoleEnum roleOf(int role) {
+    public static UserOrgRoleEnum roleOf(short role) {
         for (UserOrgRoleEnum userOrgRoleEnum : values()) {
-            if ((int) userOrgRoleEnum.getRole() == role) {
+            if ((short) userOrgRoleEnum.getRole() == role) {
                 return userOrgRoleEnum;
             }
         }
@@ -43,5 +43,9 @@ public enum UserOrgRoleEnum {
 
     public short getRole() {
         return role;
+    }
+    
+    public String getRoleName() {
+        return roleName;
     }
 }

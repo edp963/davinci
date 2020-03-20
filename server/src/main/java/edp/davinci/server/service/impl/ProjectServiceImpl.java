@@ -28,6 +28,7 @@ import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.core.dao.entity.Project;
 import edp.davinci.core.dao.entity.RelProjectAdmin;
 import edp.davinci.core.dao.entity.RelRoleProject;
+import edp.davinci.core.dao.entity.RelUserOrganization;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.organization.OrganizationInfo;
@@ -36,8 +37,8 @@ import edp.davinci.server.dto.role.RoleProject;
 import edp.davinci.server.dto.user.UserBaseInfo;
 import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.core.enums.CronJobStatusEnum;
+import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.UserOrgRoleEnum;
 import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
@@ -73,7 +74,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
-    private RelUserOrganizationMapper relUserOrganizationMapper;
+    private RelUserOrganizationExtendMapper relUserOrganizationMapper;
 
     @Autowired
     public RelProjectAdminExtendMapper relProjectAdminExtendMapper;
@@ -112,7 +113,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private CronJobExtendMapper cronJobExtendMapper;
 
     @Autowired
-    private RelRoleViewMapper relRoleViewMapper;
+    private RelRoleViewExtendMapper relRoleViewExtendMapper;
 
     private static final CheckEntityEnum entity = CheckEntityEnum.PROJECT;
     
@@ -354,7 +355,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         displayService.deleteSlideAndDisplayByProject(project.getId());
         dashboardService.deleteDashboardAndPortalByProject(project.getId());
         widgetMapper.deleteByProject(project.getId());
-        relRoleViewMapper.deleteByProject(project.getId());
+        relRoleViewExtendMapper.deleteByProject(project.getId());
         viewMapper.deleteByPorject(project.getId());
         sourceMapper.deleteByProject(project.getId());
         relRoleProjectMapper.deleteByProjectId(project.getId());
