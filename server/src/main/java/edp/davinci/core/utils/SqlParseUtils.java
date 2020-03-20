@@ -28,9 +28,11 @@ import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.SqlOperatorEnum;
 import edp.davinci.core.enums.SqlVariableTypeEnum;
 import edp.davinci.core.enums.SqlVariableValueTypeEnum;
+import edp.davinci.core.enums.SystemVariableEnum;
 import edp.davinci.core.model.SqlEntity;
 import edp.davinci.model.SqlVariable;
 import edp.davinci.model.SqlVariableChannel;
+import edp.davinci.model.User;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
@@ -71,15 +73,17 @@ public class SqlParseUtils {
      * @param sqlStr           view sql 模版
      * @param variables        view 变量
      * @param sqlTempDelimiter ST 模板界定符
+     * @param user
      * @return
      */
-    public SqlEntity parseSql(String sqlStr, List<SqlVariable> variables, String sqlTempDelimiter) throws ServerException {
+    public SqlEntity parseSql(String sqlStr, List<SqlVariable> variables, String sqlTempDelimiter, User user) throws ServerException {
         if (StringUtils.isEmpty(sqlStr.trim())) {
             return null;
         }
 
         sqlStr = SqlUtils.filterAnnotate(sqlStr);
         sqlStr = sqlStr.replaceAll(NEW_LINE_CHAR, SPACE).trim();
+        sqlStr = replaceSystemVariables(sqlStr, user);
 
         char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
 
@@ -139,7 +143,6 @@ public class SqlParseUtils {
         }
         return new SqlEntity(sqlStr, queryParamMap, authParamMap);
     }
-
 
     public List<String> getAuthVarValue(SqlVariable variable, String email) {
         SqlVariableChannel channel = variable.getChannel();
@@ -421,5 +424,42 @@ public class SqlParseUtils {
         }
 
         return originExpression;
+    }
+
+    private String replaceSystemVariables(String sql, User user) {
+        if (user == null) {
+            if (sql.contains(SystemVariableEnum.USER_ID.getKey())) {
+                sql = sql.replaceAll(String.format(REG_SYSVAR, SystemVariableEnum.USER_ID.getRegex()), QUERY_WHERE_TRUE);
+            }
+            if (sql.contains(SystemVariableEnum.USER_NAME.getKey())) {
+                sql = sql.replaceAll(String.format(REG_SYSVAR, SystemVariableEnum.USER_NAME.getRegex()), QUERY_WHERE_TRUE);
+            }
+            if (sql.contains(SystemVariableEnum.USER_USERNAME.getKey())) {
+                sql = sql.replaceAll(String.format(REG_SYSVAR, SystemVariableEnum.USER_USERNAME.getRegex()), QUERY_WHERE_TRUE);
+            }
+            if (sql.contains(SystemVariableEnum.USER_EMAIL.getKey())) {
+                sql = sql.replaceAll(String.format(REG_SYSVAR, SystemVariableEnum.USER_EMAIL.getRegex()), QUERY_WHERE_TRUE);
+            }
+            if (sql.contains(SystemVariableEnum.USER_DEPARTMENT.getKey())) {
+                sql = sql.replaceAll(String.format(REG_SYSVAR, SystemVariableEnum.USER_DEPARTMENT.getRegex()), QUERY_WHERE_TRUE);
+            }
+            return sql;
+        }
+        if (sql.contains(SystemVariableEnum.USER_ID.getKey())) {
+            sql = sql.replaceAll(SystemVariableEnum.USER_ID.getRegex(), user.getId().toString());
+        }
+        if (sql.contains(SystemVariableEnum.USER_NAME.getKey())) {
+            sql = sql.replaceAll(SystemVariableEnum.USER_NAME.getRegex(), user.getName());
+        }
+        if (sql.contains(SystemVariableEnum.USER_USERNAME.getKey())) {
+            sql = sql.replaceAll(SystemVariableEnum.USER_USERNAME.getRegex(), user.getUsername());
+        }
+        if (sql.contains(SystemVariableEnum.USER_EMAIL.getKey())) {
+            sql = sql.replaceAll(SystemVariableEnum.USER_EMAIL.getRegex(), user.getEmail());
+        }
+        if (sql.contains(SystemVariableEnum.USER_DEPARTMENT.getKey())) {
+            sql = sql.replaceAll(SystemVariableEnum.USER_DEPARTMENT.getRegex(), user.getDepartment());
+        }
+        return sql;
     }
 }
