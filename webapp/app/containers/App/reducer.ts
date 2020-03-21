@@ -36,12 +36,14 @@ import {
   LOAD_DOWNLOAD_LIST_SUCCESS,
   LOAD_DOWNLOAD_LIST_FAILURE,
   DOWNLOAD_FILE_SUCCESS,
-  UPDATE_PROFILE_SUCCESS
+  UPDATE_PROFILE_SUCCESS,
+  GET_EXTERNAL_AUTH_PROVIDERS_SUCESS
 } from './constants'
 import { DownloadStatus } from './types'
 
 
 const initialState = {
+  externalAuthProviders: null,
   logged: null,
   loginUser: null,
   loginLoading: false,
@@ -54,6 +56,9 @@ const initialState = {
 const appReducer = (state = initialState, action) =>
   produce(state, (draft) => {
     switch (action.type) {
+      case GET_EXTERNAL_AUTH_PROVIDERS_SUCESS:
+        draft.externalAuthProviders = action.payload.externalAuthProviders
+        break
       case LOGIN:
         draft.loginLoading = true
         break

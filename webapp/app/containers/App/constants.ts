@@ -20,6 +20,10 @@
 
 import { DownloadStatus } from './types'
 
+export const GET_EXTERNAL_AUTH_PROVIDERS = 'davinci/App/GET_EXTERNAL_AUTH_PROVIDERS'
+export const GET_EXTERNAL_AUTH_PROVIDERS_SUCESS = 'davinci/App/GET_EXTERNAL_AUTH_PROVIDERS_SUCESS'
+export const TRY_EXTERNAL_AUTH = 'davinci/App/TRY_EXTERNAL_AUTH'
+export const EXTERNAL_AUTH_LOGOUT = 'davinci/App/EXTERNAL_AUTH_LOGOUT'
 export const LOGIN = 'davinci/App/LOGIN'
 export const LOGGED = 'davinci/App/LOGGED'
 export const LOGIN_ERROR = 'davinci/App/LOGIN_ERROR'

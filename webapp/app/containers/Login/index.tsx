@@ -38,6 +38,7 @@ import { makeSelectLoginLoading } from '../App/selectors'
 import checkLogin from 'utils/checkLogin'
 import { setToken } from 'utils/request'
 import { statistic } from 'utils/statistic/statistic.dv'
+import ExternalLogin from '../ExternalLogin'
 
 const styles = require('./Login.less')
 
@@ -141,6 +142,7 @@ export class Login extends React.PureComponent<ILoginProps & RouteComponentProps
           <span>还没有账号？ </span>
           <a href="javascript:;" onClick={this.toSignUp}>注册davinci账号</a>
         </p>
+        <ExternalLogin />
       </div>
     )
   }
