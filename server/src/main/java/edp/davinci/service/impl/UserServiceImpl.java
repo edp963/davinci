@@ -373,6 +373,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
                 // 关联用户和组织，创建人是组织的owner
                 RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), user.getId(),
                         UserOrgRoleEnum.OWNER.getRole());
+                relUserOrganization.createdBy(user.getId());
                 relUserOrganizationMapper.insert(relUserOrganization);
 
                 UserLoginResult userLoginResult = new UserLoginResult();
