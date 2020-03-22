@@ -44,7 +44,6 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.Role;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.ProjectService;
@@ -52,6 +51,7 @@ import edp.davinci.server.util.BaseLock;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.core.dao.entity.DashboardPortal;
 import edp.davinci.core.dao.entity.RelRolePortal;
+import edp.davinci.core.dao.entity.Role;
 import lombok.extern.slf4j.Slf4j;
 
 @Service("dashboardPortalService")
