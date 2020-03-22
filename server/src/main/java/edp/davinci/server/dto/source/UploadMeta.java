@@ -29,10 +29,10 @@ import javax.validation.constraints.NotNull;
 import edp.davinci.server.enums.UploadModeEnum;
 
 @Data
-@NotNull(message = "csv meta cannot be null")
+@NotNull(message = "Csv meta cannot be null")
 public class UploadMeta {
 
-    @NotBlank(message = "table name cannot be EMPTY")
+    @NotBlank(message = "table name cannot be empty")
     private String tableName;
 
     @Min(value = (short) 0, message = "Invalid mode")

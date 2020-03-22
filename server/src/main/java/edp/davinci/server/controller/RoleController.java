@@ -20,10 +20,10 @@
 package edp.davinci.server.controller;
 
 
+import edp.davinci.core.dao.entity.Role;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.role.*;
-import edp.davinci.server.model.Role;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.RoleService;
 import io.swagger.annotations.Api;
@@ -45,7 +45,6 @@ import java.util.List;
 
 @Api(value = "/roles", tags = "roles", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "role not found"))
-@Slf4j
 @RestController
 @RequestMapping(value = Constants.BASE_API_PATH + "/roles", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class RoleController extends BaseController {
@@ -65,7 +64,7 @@ public class RoleController extends BaseController {
      */
     @ApiOperation(value = "create role", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity createRole(@Valid @RequestBody RoleCreate role,
+    public ResponseEntity createRole(@Valid @RequestBody RoleCreate roleCreate,
                                      @ApiIgnore BindingResult bindingResult,
                                      @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
@@ -74,9 +73,9 @@ public class RoleController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        Role newRole = roleService.createRole(role, user);
+        Role role = roleService.createRole(roleCreate, user);
 
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(newRole));
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(role));
     }
 
 
@@ -229,7 +228,7 @@ public class RoleController extends BaseController {
         }
 
         if (null == memberIds || memberIds.length == 0) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("members cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Members cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -355,7 +354,7 @@ public class RoleController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        roleService.updateProjectRole(id, projectId, user, projectRole);
+        roleService.updateProject(id, projectId, user, projectRole);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
@@ -424,14 +423,14 @@ public class RoleController extends BaseController {
                                   @ApiIgnore @CurrentUser User user,
                                   HttpServletRequest request) {
         if (invalidId(orgId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid orgId id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         if (invalidId(userId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid userId id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid user id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        List<Role> roles = roleService.getRoleInfo(orgId, userId);
+        List<Role> roles = roleService.getRoleInfos(orgId, userId);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(roles));
     }
 }

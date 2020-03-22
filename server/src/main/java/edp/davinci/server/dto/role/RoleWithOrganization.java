@@ -20,10 +20,12 @@
 package edp.davinci.server.dto.role;
 
 import edp.davinci.core.dao.entity.Organization;
-import edp.davinci.server.model.Role;
+import edp.davinci.core.dao.entity.Role;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class RoleWithOrganization extends Role {
     private Organization organization;
 }

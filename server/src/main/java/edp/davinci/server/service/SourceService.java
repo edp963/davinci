@@ -19,12 +19,12 @@
 
 package edp.davinci.server.service;
 
+import edp.davinci.core.dao.entity.Source;
 import edp.davinci.server.dto.source.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.DBTables;
-import edp.davinci.server.model.Source;
 import edp.davinci.server.model.TableInfo;
 import edp.davinci.server.model.User;
 
@@ -48,15 +48,15 @@ public interface SourceService extends CheckEntityService {
 
     Boolean dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user, String type) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    List<String> getSourceDbs(Long id, User user) throws NotFoundException, ServerException;
+    List<String> getSourceDatabases(Long id, User user) throws NotFoundException, ServerException;
 
     DBTables getSourceTables(Long id, String dbName, User user) throws NotFoundException;
 
     TableInfo getTableInfo(Long id, String dbName, String tableName, User user) throws NotFoundException;
 
-    SourceDetail getSourceDetail(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    Source getSourceDetail(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    List<DatasourceType> getDatasources();
+    List<DatasourceType> getSupportDatasources();
 
     boolean reconnect(Long id, DbBaseInfo dbBaseInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

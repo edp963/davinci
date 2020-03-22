@@ -29,6 +29,7 @@ import edp.davinci.core.dao.entity.Project;
 import edp.davinci.core.dao.entity.RelProjectAdmin;
 import edp.davinci.core.dao.entity.RelRoleProject;
 import edp.davinci.core.dao.entity.RelUserOrganization;
+import edp.davinci.core.dao.entity.Role;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.organization.OrganizationInfo;
@@ -92,7 +93,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private ViewMapper viewMapper;
 
     @Autowired
-    private SourceMapper sourceMapper;
+    private SourceExtendMapper sourceExtendMapper;
 
     @Autowired
     private StarMapper starMapper;
@@ -107,7 +108,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private UserMapper userMapper;
 
     @Autowired
-    private RoleMapper roleMapper;
+    private RoleExtendMapper roleMapper;
 
     @Autowired
     private CronJobExtendMapper cronJobExtendMapper;
@@ -226,6 +227,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	        }
 	        
 	        optLogger.info("Project({}) is create by user({})", project.getId(), user.getId());
+	        // TODO num is wrong in concurrent cases
 	        organization.setProjectNum(organization.getProjectNum() + 1);
 	        organizationExtendMapper.updateProjectNum(organization);
 
@@ -316,9 +318,11 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         projectExtendMapper.changeTransferStatus(isTransfer, project.getId());
 
         Organization beforeOrg = organizationExtendMapper.selectByPrimaryKey(beforeOrgId);
+        // TODO num is wrong in concurrent cases
         beforeOrg.setProjectNum(beforeOrg.getProjectNum() - 1);
         organizationExtendMapper.updateProjectNum(beforeOrg);
 
+        // TODO num is wrong in concurrent cases
         organization.setProjectNum(organization.getProjectNum() + 1);
         organizationExtendMapper.updateProjectNum(organization);
 
@@ -357,7 +361,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         widgetMapper.deleteByProject(project.getId());
         relRoleViewExtendMapper.deleteByProject(project.getId());
         viewMapper.deleteByPorject(project.getId());
-        sourceMapper.deleteByProject(project.getId());
+        sourceExtendMapper.deleteByProject(project.getId());
         relRoleProjectMapper.deleteByProjectId(project.getId());
         relProjectAdminExtendMapper.deleteByProjectId(project.getId());
 
@@ -368,6 +372,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         
         optLogger.info("Project({}) is delete by user({})", project.getId(), user.getId());
         Organization organization = organizationExtendMapper.selectByPrimaryKey(project.getOrgId());
+        // TODO num is wrong in concurrent cases
         organization.setProjectNum(organization.getProjectNum() - 1);
         organizationExtendMapper.updateProjectNum(organization);
         return true;
@@ -623,7 +628,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 			throws ServerException, UnAuthorizedExecption, NotFoundException {
 
 		ProjectDetail projectDetail = getProjectDetail(projectId, user, true);
-		List<Role> roleList = roleMapper.selectByIdsAndOrgId(projectDetail.getOrgId(), roleIds);
+		List<Role> roleList = roleMapper.getByOrgIdAndIds(projectDetail.getOrgId(), roleIds);
 
 		if (CollectionUtils.isEmpty(roleList)) {
 			relRoleProjectMapper.deleteByProjectId(projectId);

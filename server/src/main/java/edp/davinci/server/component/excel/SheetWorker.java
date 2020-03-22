@@ -103,7 +103,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         }
 
 		Object[] args = { context.getTaskKey(), context.getName(), md5, rst, context.getWrapper().getAction(),
-				context.getWrapper().getxId(), context.getWrapper().getxUUID(), context.getSheetNo(),
+				context.getWrapper().getXId(), context.getWrapper().getXUUID(), context.getSheetNo(),
 				context.getSheet().getSheetName(), context.getDashboardId(), context.getWidgetId(),
 				watch.elapsed(TimeUnit.MILLISECONDS) };
 		if (context.getCustomLogger() != null) {

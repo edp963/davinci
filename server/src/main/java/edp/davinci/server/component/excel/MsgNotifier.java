@@ -20,13 +20,13 @@
 package edp.davinci.server.component.excel;
 
 import edp.davinci.core.dao.entity.DownloadRecord;
+import edp.davinci.core.dao.entity.ShareDownloadRecord;
 import edp.davinci.core.enums.DownloadRecordStatusEnum;
 import edp.davinci.server.config.SpringContextHolder;
 import edp.davinci.server.dao.CronJobExtendMapper;
 import edp.davinci.server.dao.DownloadRecordExtendMapper;
-import edp.davinci.server.dao.ShareDownloadRecordMapper;
+import edp.davinci.server.dao.ShareDownloadRecordExtendMapper;
 import edp.davinci.server.dto.cronjob.MsgMailExcel;
-import edp.davinci.server.model.ShareDownloadRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 
@@ -65,9 +65,9 @@ public abstract class MsgNotifier {
                 MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
                 if (msg.getException() != null) {
                     ((CronJobExtendMapper) SpringContextHolder.getBean(CronJobExtendMapper.class)).updateExecLog(msg.getId(), msg.toString());
-                    log.error("Cronjob({}) send mail error:{}, xUUID:{}", msg.getId(), msg.getException().getMessage(), wrapper.getxUUID());
+                    log.error("Cronjob({}) send mail error:{}, xUUID:{}", msg.getId(), msg.getException().getMessage(), wrapper.getXUUID());
                 } else {
-                	log.info("Cronjob({}) send mail finish, xUUID:{}", msg.getId(), wrapper.getxUUID());
+                	log.info("Cronjob({}) send mail finish, xUUID:{}", msg.getId(), wrapper.getXUUID());
                 }
                 break;
 
@@ -84,7 +84,7 @@ public abstract class MsgNotifier {
                 } else {
                     shareDownloadRecord.setStatus(DownloadRecordStatusEnum.FAILED.getStatus());
                 }
-                ((ShareDownloadRecordMapper) SpringContextHolder.getBean(ShareDownloadRecordMapper.class)).updateById(shareDownloadRecord);
+                ((ShareDownloadRecordExtendMapper) SpringContextHolder.getBean(ShareDownloadRecordExtendMapper.class)).update(shareDownloadRecord);
                 log.info("ShareDownload record is updated status:" + shareDownloadRecord.getStatus());
                 break;
         }

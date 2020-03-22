@@ -20,7 +20,7 @@
 package edp.davinci.server.component.excel;
 
 import edp.davinci.server.enums.ActionEnum;
-import lombok.ToString;
+import lombok.Data;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,18 +29,18 @@ import lombok.ToString;
  * @Date 19/5/30 16:32
  * To change this template use File | Settings | File Templates.
  */
-@ToString
+@Data
 public class MsgWrapper<T> {
 
-    public T msg;
+	private T msg;
 
     private ActionEnum action;
 
     private String rst;
 
-    public Long xId;
+    private Long xId;
 
-    public String xUUID;
+    private String xUUID;
 
     public MsgWrapper(T msg, ActionEnum action, Long xId) {
         this.msg=msg;
@@ -51,46 +51,6 @@ public class MsgWrapper<T> {
     public MsgWrapper(T msg, ActionEnum action, String xUUID) {
         this.msg = msg;
         this.action = action;
-        this.xUUID = xUUID;
-    }
-
-    public T getMsg() {
-        return msg;
-    }
-
-    public void setMsg(T msg) {
-        this.msg = msg;
-    }
-
-    public ActionEnum getAction() {
-        return action;
-    }
-
-    public void setAction(ActionEnum action) {
-        this.action = action;
-    }
-
-    public String getRst() {
-        return rst;
-    }
-
-    public void setRst(String rst) {
-        this.rst = rst;
-    }
-
-    public Long getxId() {
-        return xId;
-    }
-
-    public void setxId(Long xId) {
-        this.xId = xId;
-    }
-
-    public String getxUUID() {
-        return xUUID;
-    }
-
-    public void setxUUID(String xUUID) {
         this.xUUID = xUUID;
     }
 }

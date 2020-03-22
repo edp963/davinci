@@ -23,10 +23,11 @@ import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.RelRoleView;
+import edp.davinci.core.dao.entity.Source;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.excel.SQLContext;
 import edp.davinci.server.dao.RelRoleViewExtendMapper;
-import edp.davinci.server.dao.SourceMapper;
+import edp.davinci.server.dao.SourceExtendMapper;
 import edp.davinci.server.dao.ViewMapper;
 import edp.davinci.server.dao.WidgetMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
@@ -47,6 +48,7 @@ import edp.davinci.server.service.ViewService;
 import edp.davinci.server.util.BaseLock;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.RedisUtils;
+import edp.davinci.server.util.SourceUtils;
 import edp.davinci.server.util.SqlParseUtils;
 import edp.davinci.server.util.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -82,7 +84,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     private ViewMapper viewMapper;
 
     @Autowired
-    private SourceMapper sourceMapper;
+    private SourceExtendMapper sourceExtendMapper;
 
     @Autowired
     private WidgetMapper widgetMapper;
@@ -204,7 +206,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         List<String> querySqlList = sqlParseUtils.getSqls(srcSql, Boolean.TRUE);
         if (!CollectionUtils.isEmpty(querySqlList)) {
             buildQuerySql(querySqlList, source, executeParam);
-            executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl(), source.getDbVersion());
+            String config = source.getConfig();
+            executeParam.addExcludeColumn(excludeColumns, SourceUtils.getJdbcUrl(config), SourceUtils.getDbVersion(config));
             context.setQuerySql(querySqlList);
             context.setViewExecuteParam(executeParam);
         }
@@ -274,7 +277,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
     private Source getSource(Long id) {
-    	Source source = sourceMapper.getById(id);
+    	Source source = sourceExtendMapper.selectByPrimaryKey(id);
         if (null == source) {
             log.error("source (:{}) not found", id);
             throw new NotFoundException("source is not found");
@@ -506,6 +509,10 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 		if (null == executeParam) {
 			return;
 		}
+		
+		String config = source.getConfig();
+		String url = SourceUtils.getJdbcUrl(config);
+		String version = SourceUtils.getDbVersion(config);
 
 		// 构造参数， 原有的被传入的替换
 		STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
@@ -516,12 +523,12 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 		if (executeParam.isNativeQuery()) {
 			st.add("aggregators", executeParam.getAggregators());
 		} else {
-			st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl(), source.getDbVersion()));
+			st.add("aggregators", executeParam.getAggregators(url, version));
 		}
-		st.add("orders", executeParam.getOrders(source.getJdbcUrl(), source.getDbVersion()));
+		st.add("orders", executeParam.getOrders(url, version));
 		st.add("filters", convertFilters(executeParam.getFilters(), source));
-		st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl(), source.getDbVersion()));
-		st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl(), source.getDbVersion()));
+		st.add("keywordPrefix", SqlUtils.getKeywordPrefix(url, version));
+		st.add("keywordSuffix", SqlUtils.getKeywordSuffix(url, version));
 
 		for (int i = 0; i < querySqlList.size(); i++) {
 			st.add("sql", querySqlList.get(i));
@@ -540,7 +547,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			for (String str : filterStrs) {
 				SqlFilter obj = JSONUtils.toObject(str, SqlFilter.class);
 				if (!StringUtils.isEmpty(obj.getName())) {
-					obj.setName(ViewExecuteParam.getField(obj.getName(), source.getJdbcUrl(), source.getDbVersion()));
+					String config = source.getConfig();
+					obj.setName(ViewExecuteParam.getField(obj.getName(), SourceUtils.getJdbcUrl(config), SourceUtils.getDbVersion(config)));
 				}
 				filters.add(obj);
 			}
@@ -608,7 +616,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
 			if (!CollectionUtils.isEmpty(querySqlList)) {
 				buildQuerySql(querySqlList, source, executeParam);
-				executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl(), source.getDbVersion());
+				String config = source.getConfig();
+				executeParam.addExcludeColumn(excludeColumns, SourceUtils.getJdbcUrl(config), SourceUtils.getDbVersion(config));
 
 				if (null != executeParam && null != executeParam.getCache() && executeParam.getCache()
 						&& executeParam.getExpired() > 0L) {
@@ -701,8 +710,12 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                     st.add("columns", param.getColumns());
                     st.add("filters", convertFilters(param.getFilters(), source));
                     st.add("sql", querySqlList.get(querySqlList.size() - 1));
-                    st.add("keywordPrefix", SqlUtils.getKeywordPrefix(source.getJdbcUrl(), source.getDbVersion()));
-                    st.add("keywordSuffix", SqlUtils.getKeywordSuffix(source.getJdbcUrl(), source.getDbVersion()));
+                    
+            		String config = source.getConfig();
+            		String url = SourceUtils.getJdbcUrl(config);
+            		String version = SourceUtils.getDbVersion(config);
+                    st.add("keywordPrefix", SqlUtils.getKeywordPrefix(url, version));
+                    st.add("keywordSuffix", SqlUtils.getKeywordSuffix(url, version));
 
                     String sql = st.render();
                     querySqlList.set(querySqlList.size() - 1, sql);

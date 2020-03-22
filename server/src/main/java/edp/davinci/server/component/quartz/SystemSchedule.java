@@ -21,12 +21,12 @@ package edp.davinci.server.component.quartz;
 
 import edp.davinci.commons.util.DateUtils;
 import edp.davinci.core.dao.entity.CronJob;
+import edp.davinci.core.dao.entity.ShareDownloadRecord;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.CronJobExtendMapper;
-import edp.davinci.server.dao.ShareDownloadRecordMapper;
+import edp.davinci.server.dao.ShareDownloadRecordExtendMapper;
 import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.model.ShareDownloadRecord;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.FileUtils;
 import edp.davinci.server.util.QuartzHandler;
@@ -51,7 +51,7 @@ public class SystemSchedule {
     private QuartzHandler quartzHandler;
 
     @Autowired
-    private ShareDownloadRecordMapper shareDownloadRecordMapper;
+    private ShareDownloadRecordExtendMapper shareDownloadRecordExtendMapper;
 
     @Scheduled(cron = "0 0 1 * * *")
     public void clearTempDir() {
@@ -87,43 +87,43 @@ public class SystemSchedule {
     @Scheduled(cron = "0 0 1 * * *")
     public void clearShareDownloadRecord() {
 
-        List<ShareDownloadRecord> records = shareDownloadRecordMapper.getShareDownloadRecords();    //deleting
+        List<ShareDownloadRecord> records = shareDownloadRecordExtendMapper.getShareDownloadRecords();    //deleting
         for(ShareDownloadRecord record : records){
             deleteFile(new File(record.getPath()));
         }
 
-        shareDownloadRecordMapper.deleteByCondition();
+        shareDownloadRecordExtendMapper.delete();
     }
 
-    private void deleteFile(File file){
-        if(file == null || !file.exists()){
-            return;
-        }
+	private void deleteFile(File file) {
+		if (file == null || !file.exists()) {
+			return;
+		}
 
-        if(file.isDirectory()){
-            String fileName = file.getName();
-            if("download".equals(fileName)){
-                return;
-            }
+		if (file.isDirectory()) {
+			String fileName = file.getName();
+			if ("download".equals(fileName)) {
+				return;
+			}
 
-            File[] childs = file.listFiles();
-            if(childs.length == 0){
-                file.delete();
-                deleteFile(file.getParentFile());
-            }else{
-                return;
-            }
+			File[] childs = file.listFiles();
+			if (childs.length == 0) {
+				file.delete();
+				deleteFile(file.getParentFile());
+			} else {
+				return;
+			}
 
-        }else{
-            File parentDir = file.getParentFile();
-            File[] childs = parentDir.listFiles();
-            if(childs.length == 1){
-                file.delete();
-                deleteFile(parentDir);
-            }else{
-                file.delete();
-            }
-        }
-    }
+		} else {
+			File parentDir = file.getParentFile();
+			File[] childs = parentDir.listFiles();
+			if (childs.length == 1) {
+				file.delete();
+				deleteFile(parentDir);
+			} else {
+				file.delete();
+			}
+		}
+	}
 
 }

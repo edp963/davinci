@@ -74,7 +74,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     private ProjectExtendMapper projectExtendMapper;
 
     @Autowired
-    private RoleMapper roleMapper;
+    private RoleExtendMapper roleMapper;
 
     @Autowired
     private TokenUtils tokenUtils;
@@ -497,6 +497,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		}
 
 		// 修改成员人数
+		// TODO num is wrong in concurrent cases
 		organization.setMemberNum(organization.getMemberNum() + 1);
 		organizationExtendMapper.updateMemberNum(organization);
 		organizationInfo.setRole(rel.getRole());
@@ -563,6 +564,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         rel.setCreateTime(new Date());
 		relUserOrganizationMapper.insert(rel);
 		// 修改成员人数
+		// TODO num is wrong in concurrent cases
 		organization.setMemberNum(organization.getMemberNum() + 1);
 		organizationExtendMapper.updateMemberNum(organization);
 	}
@@ -601,6 +603,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         }
         
 		// 更新组织成员数量
+        // TODO num is wrong in concurrent cases
 		int memberNum = organization.getMemberNum();
 		organization.setMemberNum(memberNum > 0 ? memberNum - 1 : memberNum);
 		organizationExtendMapper.updateMemberNum(organization);

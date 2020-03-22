@@ -37,7 +37,7 @@ import edp.davinci.server.dao.RelRoleDashboardExtendMapper;
 import edp.davinci.server.dao.RelRoleDisplayExtendMapper;
 import edp.davinci.server.dao.RelRolePortalExtendMapper;
 import edp.davinci.server.dao.RelRoleSlideExtendMapper;
-import edp.davinci.server.dao.RoleMapper;
+import edp.davinci.server.dao.RoleExtendMapper;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.model.RoleDisableViz;
@@ -77,7 +77,7 @@ public class VizCommonService extends BaseEntityService {
     protected RelRoleSlideExtendMapper relRoleSlideExtendMapper;
 
     @Autowired
-    protected RoleMapper roleMapper;
+    protected RoleExtendMapper roleMapper;
     
 	protected boolean isDisableVizs(ProjectPermission projectPermission, List<Long> disableVizs, Long id) {
         return projectPermission == null || (!projectPermission.isProjectMaintainer() && disableVizs.contains(id));

@@ -24,7 +24,6 @@ import edp.davinci.core.dao.OrganizationMapper;
 import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.server.dto.organization.OrganizationInfo;
 
-import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -116,7 +115,7 @@ public interface OrganizationExtendMapper extends OrganizationMapper {
     	"	</foreach>",
     	"</script>"
     })
-    int addOneMemberNum(@Param("set") Set<Long> orgIds);
+    int addMemberNum(@Param("set") Set<Long> orgIds);
 
     @Update({
     	"<script>",

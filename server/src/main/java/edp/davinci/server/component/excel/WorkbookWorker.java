@@ -71,7 +71,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
         Workbook wb = null;
 
         MsgWrapper wrapper = context.getWrapper();
-        Object[] logArgs = {context.getTaskKey(), wrapper.getAction(), wrapper.getxId()};
+        Object[] logArgs = {context.getTaskKey(), wrapper.getAction(), wrapper.getXId()};
         log.info("workbook worker start: taksKey={}, action={}, xid={}", logArgs);
         if (context.getCustomLogger() != null) {
         	context.getCustomLogger().info("Task({}) workbook worker start action={}, xid={}", logArgs);
@@ -153,8 +153,8 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             wb = null;
         }
 
-        Object[] args = { context.getTaskKey(), StringUtils.isNotEmpty(filePath), wrapper.getAction(), wrapper.getxId(),
-				wrapper.getxUUID(), filePath, watch.elapsed(TimeUnit.MILLISECONDS) };
+        Object[] args = { context.getTaskKey(), StringUtils.isNotEmpty(filePath), wrapper.getAction(), wrapper.getXId(),
+				wrapper.getXUUID(), filePath, watch.elapsed(TimeUnit.MILLISECONDS) };
 		if (context.getCustomLogger() != null) {
 			context.getCustomLogger().info(
 					"Task({}) workbook worker complete status={}, action={}, xid={}, xUUID={}, filePath={}, cost={}ms",

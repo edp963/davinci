@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Source;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.source.DatasourceType;
@@ -50,13 +51,11 @@ import edp.davinci.server.dto.source.SourceCatalogInfo;
 import edp.davinci.server.dto.source.SourceCreate;
 import edp.davinci.server.dto.source.SourceDBInfo;
 import edp.davinci.server.dto.source.SourceDataUpload;
-import edp.davinci.server.dto.source.SourceDetail;
 import edp.davinci.server.dto.source.SourceInfo;
 import edp.davinci.server.dto.source.SourceTableInfo;
 import edp.davinci.server.dto.source.SourceTest;
 import edp.davinci.server.dto.source.UploadMeta;
 import edp.davinci.server.model.DBTables;
-import edp.davinci.server.model.Source;
 import edp.davinci.server.model.TableInfo;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.SourceService;
@@ -115,8 +114,8 @@ public class SourceController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        SourceDetail sourceDetail = sourceService.getSourceDetail(id, user);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(sourceDetail));
+        Source source = sourceService.getSourceDetail(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(source));
     }
 
 
@@ -312,7 +311,7 @@ public class SourceController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("upload file can not be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Upload file can not be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -339,7 +338,7 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<String> dbs = sourceService.getSourceDbs(id, user);
+        List<String> dbs = sourceService.getSourceDatabases(id, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(new SourceCatalogInfo(id, dbs)));
     }
 
@@ -392,7 +391,7 @@ public class SourceController extends BaseController {
         }
 
         if (StringUtils.isEmpty(tableName)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Table cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Table cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -417,7 +416,7 @@ public class SourceController extends BaseController {
     @ApiOperation(value = "get jdbc datasources")
     @GetMapping("/jdbc/datasources")
     public ResponseEntity getJdbcDataSources(@ApiIgnore @CurrentUser User user, HttpServletRequest request) {
-        List<DatasourceType> list = sourceService.getDatasources();
+        List<DatasourceType> list = sourceService.getSupportDatasources();
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(list));
     }
 

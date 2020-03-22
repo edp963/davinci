@@ -19,11 +19,11 @@
 
 package edp.davinci.server.service;
 
+import edp.davinci.core.dao.entity.Role;
 import edp.davinci.server.dto.role.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.Role;
 import edp.davinci.server.model.User;
 
 import java.util.List;
@@ -65,16 +65,16 @@ public interface RoleService {
     /**
      * 获取单条Role详情
      *
-     * @param id
+     * @param roleId
      * @param user
      * @return
      * @throws ServerException
      * @throws UnAuthorizedExecption
      * @throws NotFoundException
      */
-    Role getRoleInfo(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    Role getRoleInfo(Long roleId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
-    List<Role> getRoleInfo(Long orgId, Long userId);
+    List<Role> getRoleInfos(Long orgId, Long userId);
 
     /**
      * 添加Role与User关联
@@ -131,7 +131,7 @@ public interface RoleService {
     /**
      * 添加Role与Project关联
      *
-     * @param id
+     * @param roleId
      * @param projectId
      * @param user
      * @return
@@ -139,7 +139,7 @@ public interface RoleService {
      * @throws UnAuthorizedExecption
      * @throws NotFoundException
      */
-    RoleProject addProject(Long id, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    RoleProject addProject(Long roleId, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
     /**
      * 删除Role与Project关联
@@ -155,18 +155,18 @@ public interface RoleService {
     boolean deleteProject(Long roleId, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
     /**
-     * 修改Role与Project关联信息
+     * 修改Role与Project关联
      *
      * @param roleId
      * @param projectId
      * @param user
-     * @param projectRoleDto
+     * @param projectRoleDTO
      * @return
      * @throws ServerException
      * @throws UnAuthorizedExecption
      * @throws NotFoundException
      */
-    boolean updateProjectRole(Long roleId, Long projectId, User user, RelRoleProjectDTO projectRoleDto) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean updateProject(Long roleId, Long projectId, User user, RelRoleProjectDTO projectRoleDTO) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
 
     /**
@@ -195,7 +195,7 @@ public interface RoleService {
 
     RoleWithProjectPermission getRoleByProject(Long projectId, Long roleId, User user);
 
-    VizPermission getVizPermission(Long id, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    VizPermission getVizPermission(Long roleId, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
-    boolean postVizvisibility(Long id, VizVisibility vizVisibility, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean postVizvisibility(Long roleId, VizVisibility vizVisibility, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 }

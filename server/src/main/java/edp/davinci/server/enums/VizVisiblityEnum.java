@@ -43,4 +43,8 @@ public enum VizVisiblityEnum {
         }
         return null;
     }
+    
+    public String getViz() {
+    	return this.viz;
+    }
 }

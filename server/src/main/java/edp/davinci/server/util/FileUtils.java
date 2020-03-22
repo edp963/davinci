@@ -250,9 +250,9 @@ public class FileUtils {
             dir.mkdirs();
         }
         if (msgWrapper.getAction() == ActionEnum.DOWNLOAD) {
-            sb.append(msgWrapper.getxId());
+            sb.append(msgWrapper.getXId());
         } else if (msgWrapper.getAction() == ActionEnum.SHAREDOWNLOAD || msgWrapper.getAction() == ActionEnum.MAIL) {
-            sb.append(msgWrapper.getxUUID());
+            sb.append(msgWrapper.getXUUID());
         }
         sb.append(UNDERLINE).append(System.currentTimeMillis()).append(type.getFormat());
         return new File(sb.toString()).getAbsolutePath();
