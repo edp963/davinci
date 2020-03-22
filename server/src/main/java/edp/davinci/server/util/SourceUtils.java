@@ -26,10 +26,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 import javax.sql.DataSource;
 
+import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.component.jdbc.ExtendedJdbcClassLoader;
@@ -38,6 +41,7 @@ import edp.davinci.server.enums.DataTypeEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.SourceException;
 import edp.davinci.server.model.CustomDataSource;
+import edp.davinci.server.model.Dict;
 import edp.davinci.server.model.JdbcSourceInfo;
 import edp.davinci.server.runner.LoadSupportDataSourceRunner;
 import lombok.extern.slf4j.Slf4j;
@@ -261,4 +265,113 @@ public class SourceUtils {
 
         return MD5Utils.getMD5(sb.toString(), true, 64);
     }
+    
+    public static String getJdbcUrl(String config) {
+    	if (StringUtils.isEmpty(config)) {
+			return null;
+		}
+    	
+    	String url = null;
+		try {
+			url = (String) JSONUtils.toObject(config, Map.class).get("url");
+		} catch (Exception e) {
+			log.error("Get jdbc url from source config({}) error, e={}", config, e.getMessage());
+		}
+		return url;
+    }
+    
+    public static String getUsername(String config) {
+    	if (StringUtils.isEmpty(config)) {
+			return null;
+		}
+
+    	String username = null;
+		try {
+			username = (String) JSONUtils.toObject(config, Map.class).get("username");
+		} catch (Exception e) {
+			log.error("Get jdbc username from source config({}) error, e={}", config, e.getMessage());
+		}
+		return username;
+    }
+    
+    public static String getPassword(String config) {
+    	if (StringUtils.isEmpty(config)) {
+			return null;
+		}
+    	
+    	String password = null;
+		try {
+			password = (String) JSONUtils.toObject(config, Map.class).get("password");
+		} catch (Exception e) {
+			log.error("Get jdbc password from source config({}) error, e={}", config, e.getMessage());
+		}
+		return password;
+    }
+    
+    public static String getDbVersion(String config) {
+        String versoin = null;
+        if (StringUtils.isEmpty(config)) {
+            return null;
+        }
+        try {
+            versoin = (String) JSONUtils.toObject(config, Map.class).get("versoin");
+            if (JDBC_DATASOURCE_DEFAULT_VERSION.equals(versoin)) {
+                return null;
+            }
+        } catch (Exception e) {
+        	log.error("Get jdbc versoin from source config({}) error, e={}", config, e.getMessage());
+        }
+        return versoin;
+    }
+    
+    public static boolean isExt(String config) {
+        if (StringUtils.isEmpty(config)) {
+            return false;
+        }
+        
+        boolean ext = false;
+        
+        if (getDbVersion(config) == null) {
+            ext = false;
+        }
+        
+        try {
+            ext = (boolean) JSONUtils.toObject(config, Map.class).get("ext");
+        } catch (Exception e) {
+        	log.error("Get jdbc ext from source config({}) error, e={}", config, e.getMessage());
+        }
+        return ext;
+    }
+    
+    public static List<Dict> getProperties(String config) {
+        if (StringUtils.isEmpty(config)) {
+            return null;
+        }
+
+        List<Dict> dicts = null;
+        try {
+            Map<String, Object> configMap = JSONUtils.toObject(config, Map.class);
+            if (configMap != null && configMap.containsKey("properties")) {
+            	dicts = JSONUtils.toObjectArray((String)configMap.get("properties"), Dict.class);
+            }
+        } catch (Exception e) {
+        	log.error("Get jdbc properties from source config({}) error, e={}", config, e.getMessage());
+        }
+        return dicts;
+    }
+    
+    public String getConfigParams(String config) {
+        if (StringUtils.isEmpty(config)) {
+            return null;
+        }
+        
+        String params = null;
+        try {
+            params =(String) JSONUtils.toObject(config, Map.class).get("parameters");
+        } catch (Exception e) {
+            log.error("Get jdbc parameters from source config({}) error, e={}", config, e.getMessage());
+        }
+        return params;
+    }
+
 }

@@ -23,6 +23,13 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 
 import edp.davinci.core.dao.entity.CronJob;
+import edp.davinci.core.dao.entity.Favorite;
+import edp.davinci.core.dao.entity.Organization;
+import edp.davinci.core.dao.entity.Project;
+import edp.davinci.core.dao.entity.RelProjectAdmin;
+import edp.davinci.core.dao.entity.RelRoleProject;
+import edp.davinci.core.dao.entity.RelUserOrganization;
+import edp.davinci.core.dao.entity.Role;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.organization.OrganizationInfo;
@@ -31,8 +38,8 @@ import edp.davinci.server.dto.role.RoleProject;
 import edp.davinci.server.dto.user.UserBaseInfo;
 import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.core.enums.CronJobStatusEnum;
+import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.UserOrgRoleEnum;
 import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
@@ -62,16 +69,16 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
-    private ProjectMapper projectMapper;
+    private ProjectExtendMapper projectExtendMapper;
 
     @Autowired
-    private OrganizationMapper organizationMapper;
+    private OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
-    private RelUserOrganizationMapper relUserOrganizationMapper;
+    private RelUserOrganizationExtendMapper relUserOrganizationMapper;
 
     @Autowired
-    public RelProjectAdminMapper relProjectAdminMapper;
+    public RelProjectAdminExtendMapper relProjectAdminExtendMapper;
 
     @Autowired
     private DashboardService dashboardService;
@@ -86,34 +93,34 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private ViewMapper viewMapper;
 
     @Autowired
-    private SourceMapper sourceMapper;
+    private SourceExtendMapper sourceExtendMapper;
 
     @Autowired
     private StarMapper starMapper;
 
     @Autowired
-    private FavoriteMapper favoriteMapper;
+    private FavoriteExtendMapper favoriteExtendMapper;
 
     @Autowired
-    private RelRoleProjectMapper relRoleProjectMapper;
+    private RelRoleProjectExtendMapper relRoleProjectMapper;
 
     @Autowired
     private UserMapper userMapper;
 
     @Autowired
-    private RoleMapper roleMapper;
+    private RoleExtendMapper roleMapper;
 
     @Autowired
-    private CronJobExtendMapper cronJobMapper;
+    private CronJobExtendMapper cronJobExtendMapper;
 
     @Autowired
-    private RelRoleViewMapper relRoleViewMapper;
+    private RelRoleViewExtendMapper relRoleViewExtendMapper;
 
     private static final CheckEntityEnum entity = CheckEntityEnum.PROJECT;
     
     @Override
     public boolean isExist(String name, Long id, Long orgId) {
-        Long projectId = projectMapper.getByNameWithOrgId(name, orgId);
+        Long projectId = projectExtendMapper.getByNameWithOrgId(name, orgId);
         if (null != id && null != projectId) {
             return !id.equals(projectId);
         }
@@ -147,7 +154,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     @Override
     public List<ProjectInfo> getProjects(User user) {
         //当前用户能看到的所有project
-        List<ProjectWithCreateBy> projects = projectMapper.getProejctsByUser(user.getId());
+        List<ProjectWithCreateBy> projects = projectExtendMapper.getProejctsByUser(user.getId());
         return getProjectInfos(user, projects);
     }
 
@@ -167,13 +174,13 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             throw new ServerException("Invalid page info");
         }
 
-        List<OrganizationInfo> orgs = organizationMapper.getOrganizationByUser(user.getId());
+        List<OrganizationInfo> orgs = organizationExtendMapper.getOrganizationByUser(user.getId());
         if (CollectionUtils.isEmpty(orgs)) {
             throw new UnAuthorizedExecption();
         }
 
         PageHelper.startPage(pageNum, pageSize);
-        List<ProjectWithCreateBy> projects = projectMapper.getProjectsByKewordsWithUser(keywords, user.getId(), orgs);
+        List<ProjectWithCreateBy> projects = projectExtendMapper.getProjectsByKewordsWithUser(keywords, user.getId(), orgs);
         PageInfo<ProjectWithCreateBy> pageInfo = new PageInfo<>(projects);
         return pageInfo;
     }
@@ -209,21 +216,25 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 			Project project = new Project();
 	        BeanUtils.copyProperties(projectCreat, project);
 	        project.setUserId(user.getId());
-	        project.setCreateUserId(user.getId());
+	        project.setIsTransfer(false);
+	        project.setInitialOrgId(orgId);
+	        project.setCreateBy(user.getId());
+	        project.setCreateTime(new Date());
 
-	        if (projectMapper.insert(project) <= 0) {
-	            log.info("create project fail: {}", projectCreat.toString());
-	            throw new ServerException("create project fail: unspecified error");
+	        if (projectExtendMapper.insert(project) <= 0) {
+	            log.info("Create project fail:{}", projectCreat.toString());
+	            throw new ServerException("Create project fail");
 	        }
 	        
-	        optLogger.info("project ({}) is create by user(:{})", project.toString(), user.getId());
+	        optLogger.info("Project({}) is create by user({})", project.getId(), user.getId());
+	        // TODO num is wrong in concurrent cases
 	        organization.setProjectNum(organization.getProjectNum() + 1);
-	        organizationMapper.updateProjectNum(organization);
+	        organizationExtendMapper.updateProjectNum(organization);
 
 	        ProjectInfo projectInfo = new ProjectInfo();
 	        UserBaseInfo userBaseInfo = new UserBaseInfo();
 	        BeanUtils.copyProperties(user, userBaseInfo);
-	        projectInfo.setCreateBy(userBaseInfo);
+	        projectInfo.setCreateUser(userBaseInfo);
 	        BeanUtils.copyProperties(project, projectInfo);
 
 	        return projectInfo;
@@ -234,23 +245,19 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     }
     
     private Organization getOrganization(Long id) {
-        Organization organization = organizationMapper.getById(id);
+        Organization organization = organizationExtendMapper.selectByPrimaryKey(id);
         if (null == organization) {
-        	log.info("organization(:{}) is not found", id);
-            throw new NotFoundException("organization is not found");
+        	log.error("Organization({}) is not found", id);
+            throw new NotFoundException("Organization is not found");
         }
         return organization;
     }
     
-	private void checkOwner(Organization organization, Long userId, Long id, String operation) {
-		RelUserOrganization rel = relUserOrganizationMapper.getRel(userId, id);
-        if (rel != null && organization.getAllowCreateProject()) {
-            return;
-        }
-        
-        if (!organization.getUserId().equals(userId)
+	private void checkOwner(Organization organization, Long userId, Long orgId, String operation) {
+		RelUserOrganization rel = relUserOrganizationMapper.getRel(userId, orgId);
+		if (!organization.getUserId().equals(userId)
 				&& (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
-			throw new UnAuthorizedExecption("you have not permission to " + operation + " this project");
+			throw new UnAuthorizedExecption("You have not permission to " + operation + " this project");
 		}
 	}
 
@@ -272,31 +279,33 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 
         //不能移交给当前所在组织
         if (organization.getId().equals(project.getOrgId())) {
-            log.error("this project cannot be transferred to the current organization, name: {}", orgId);
-            throw new ServerException("the project can only be transferred to the non-current organizations");
+            log.error("This project({}) cannot be transferred to the current organization({})", id, orgId);
+            throw new ServerException("The project can only be transferred to the non-current organizations");
         }
 
         //当前用户在即将移交的组织下才能移交
         RelUserOrganization ucRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
         if (null == ucRel) {
-            log.error("user({}) must be a member of the organization {} that is about to be transfer", user.getId(), orgId);
-            throw new ServerException("you must be a member of the organization " + organization.getName() + " that is about to be transfer");
+            log.error("User({}) must be a member of the organization({}) that is about to be transfer", user.getId(), orgId);
+            throw new ServerException("You must be a member of the organization " + organization.getName() + " that is about to be transfer");
         }
 
         String name = project.getName();
-        if (isExist(name, null, orgId)) {
-            throw new ServerException("the project name \"" + name + "\" is already in the organization you will transfer");
-        }
+        BaseLock lock = getLock(entity, name, orgId);
+		if (isExist(name, null, orgId) || (lock != null && !lock.getLock())) {
+			throw new ServerException("The project name \"" + name + "\" is already in the organization you will transfer");
+		}
 
         Long beforeOrgId = project.getOrgId();
         project.setOrgId(organization.getId());
 
-        if (projectMapper.changeOrganization(project) <= 0) {
-            log.info("transfer project fail, {} -> {}", project.getOrgId(), organization.getId());
-            throw new ServerException("transfer project fail: unspecified error");
+        if (projectExtendMapper.changeOrganization(project) <= 0) {
+            log.error("Transfer project({}) to organization({}) fail", project.getOrgId(), organization.getId());
+            throw new ServerException("Transfer project fail");
         }
         
-        optLogger.info("project (:{}) transferd from org(:{}) to org(:{})", project.getId(), beforeOrgId, orgId);
+		optLogger.info("Project({}) transferd from org({}) to org({}) by user({})", project.getId(), beforeOrgId, orgId,
+				user.getId());
 
         boolean isTransfer = true;
         //移交回原组织
@@ -306,16 +315,18 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
                 isTransfer = false;
             }
         }
-        projectMapper.changeTransferStatus(isTransfer, project.getId());
+        projectExtendMapper.changeTransferStatus(isTransfer, project.getId());
 
-        Organization beforeOrg = organizationMapper.getById(beforeOrgId);
+        Organization beforeOrg = organizationExtendMapper.selectByPrimaryKey(beforeOrgId);
+        // TODO num is wrong in concurrent cases
         beforeOrg.setProjectNum(beforeOrg.getProjectNum() - 1);
-        organizationMapper.updateProjectNum(beforeOrg);
+        organizationExtendMapper.updateProjectNum(beforeOrg);
 
+        // TODO num is wrong in concurrent cases
         organization.setProjectNum(organization.getProjectNum() + 1);
-        organizationMapper.updateProjectNum(organization);
+        organizationExtendMapper.updateProjectNum(organization);
 
-        projectMapper.deleteBeforOrgRole(project.getId(), beforeOrgId);
+        projectExtendMapper.deleteAllRel(project.getId(), beforeOrgId);
 
         return project;
     }
@@ -333,7 +344,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 
         ProjectDetail project = getProjectDetail(id, user, true);
 
-        List<CronJob> cronJobs = cronJobMapper.getByProject(project.getId());
+        List<CronJob> cronJobs = cronJobExtendMapper.getByProject(project.getId());
         if (!CollectionUtils.isEmpty(cronJobs)) {
             List<CronJob> startedJobs = cronJobs.stream()
                     .filter(c -> c.getJobStatus().equals(CronJobStatusEnum.START.getStatus()))
@@ -344,25 +355,26 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             }
         }
 
-        cronJobMapper.deleteByProject(project.getId());
+        cronJobExtendMapper.deleteByProject(project.getId());
         displayService.deleteSlideAndDisplayByProject(project.getId());
         dashboardService.deleteDashboardAndPortalByProject(project.getId());
         widgetMapper.deleteByProject(project.getId());
-        relRoleViewMapper.deleteByProject(project.getId());
+        relRoleViewExtendMapper.deleteByProject(project.getId());
         viewMapper.deleteByPorject(project.getId());
-        sourceMapper.deleteByProject(project.getId());
+        sourceExtendMapper.deleteByProject(project.getId());
         relRoleProjectMapper.deleteByProjectId(project.getId());
-        relProjectAdminMapper.deleteByProjectId(project.getId());
+        relProjectAdminExtendMapper.deleteByProjectId(project.getId());
 
-        if (projectMapper.deleteById(project.getId()) <= 0) {
-            log.error("delete project(:{}) fail", id);
-            throw new ServerException("delete project fail: unspecified error");
+        if (projectExtendMapper.deleteByPrimaryKey(project.getId()) <= 0) {
+            log.error("Delete project({}) fail", id);
+            throw new ServerException("Delete project fail");
         }
         
-        optLogger.info("project ({}) delete by user(:{})", project.toString(), user.getId());
-        Organization organization = organizationMapper.getById(project.getOrgId());
+        optLogger.info("Project({}) is delete by user({})", project.getId(), user.getId());
+        Organization organization = organizationExtendMapper.selectByPrimaryKey(project.getOrgId());
+        // TODO num is wrong in concurrent cases
         organization.setProjectNum(organization.getProjectNum() - 1);
-        organizationMapper.updateProjectNum(organization);
+        organizationExtendMapper.updateProjectNum(organization);
         return true;
     }
 
@@ -379,7 +391,6 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     public Project updateProject(Long id, ProjectUpdate projectUpdate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
         ProjectDetail project = getProjectDetail(id, user, true);
-        String originInfo = project.baseInfoToString();
         
         String name = projectUpdate.getName();
         Long orgId = project.getOrgId();
@@ -400,12 +411,12 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	        project.setUpdateTime(new Date());
 	        project.setUpdateBy(user.getId());
 
-	        if (projectMapper.updateBaseInfo(project) <= 0) {
-	            log.info("update project fail, {}", project.toString());
-	            throw new ServerException("update project fail: unspecified error");
+	        if (projectExtendMapper.updateBaseInfo(project) <= 0) {
+	            log.error("Update project({}) fail", project.getId());
+	            throw new ServerException("Update project fail");
 	        }
 	        
-	        optLogger.info("project ({}) update to ({}) by user(:{})", originInfo, project.baseInfoToString(), user.getId());
+			optLogger.info("Project({}) is update by user({})", project.getId(), user.getId());
 	        return project;
 			
 		}finally {
@@ -424,7 +435,11 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     @Transactional
     public boolean favoriteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         ProjectDetail project = getProjectDetail(id, user, false);
-        return favoriteMapper.insert(new Favorite(user.getId(), project.getId())) > 0;
+        Favorite favorite = new Favorite();
+        favorite.setUserId(user.getId());
+        favorite.setProjectId(project.getId());
+        favorite.setCreateTime(new Date());
+        return favoriteExtendMapper.insert(favorite) > 0;
     }
 
 
@@ -436,7 +451,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      */
     @Override
     public List<ProjectInfo> getFavoriteProjects(User user) {
-        List<ProjectWithCreateBy> projects = projectMapper.getFavoriteProjects(user.getId());
+        List<ProjectWithCreateBy> projects = projectExtendMapper.getFavoriteProjects(user.getId());
         return getProjectInfos(user, projects);
     }
 
@@ -451,7 +466,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     @Override
     @Transactional
     public boolean removeFavoriteProjects(User user, Long[] projectIds) {
-        return favoriteMapper.deleteBatch(Arrays.asList(projectIds), user.getId()) > 0;
+        return favoriteExtendMapper.deleteBatch(Arrays.asList(projectIds), user.getId()) > 0;
     }
 
 
@@ -476,16 +491,16 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		List<User> admins = userMapper.getByIds(adminIds);
 
 		if (null == admins || admins.isEmpty()) {
-			throw new NotFoundException("user is not found");
+			throw new NotFoundException("User is not found");
 		}
 
 		admins.forEach(u -> {
 			if (!adminIds.contains(u.getId())) {
-				throw new NotFoundException("user is not found");
+				throw new NotFoundException("User is not found");
 			}
 		});
 
-		List<Long> oAdminIds = relProjectAdminMapper.getAdminIds(id);
+		List<Long> oAdminIds = relProjectAdminExtendMapper.getAdminIds(id);
 
 		admins.removeIf(u -> oAdminIds.contains(u.getId()));
 
@@ -494,9 +509,16 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		}
 
 		List<RelProjectAdmin> relProjectAdmins = new ArrayList<>();
-		admins.forEach(u -> relProjectAdmins.add(new RelProjectAdmin(id, u.getId()).createdBy(user.getId())));
-		if (relProjectAdminMapper.insertBatch(relProjectAdmins) <= 0) {
-			throw new ServerException("unspecified error");
+		admins.forEach(u -> {
+			RelProjectAdmin rel = new RelProjectAdmin();
+			rel.setProjectId(id);
+			rel.setUserId(user.getId());
+			rel.setCreateBy(user.getId());
+			rel.setCreateTime(new Date());
+			relProjectAdmins.add(rel);
+		});
+		if (relProjectAdminExtendMapper.insertBatch(relProjectAdmins) <= 0) {
+			throw new ServerException("Add admins fail");
 		}
 
 		Map<Long, User> userMap = new HashMap<>();
@@ -525,24 +547,23 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     @Transactional
     public boolean removeAdmin(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
-        RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getById(relationId);
+        RelProjectAdmin relProjectAdmin = relProjectAdminExtendMapper.selectByPrimaryKey(relationId);
         if (null == relProjectAdmin) {
-            log.warn("dose not exist this project admin (:{})", relationId);
+            log.error("Project admin({}) dose not exist", relationId);
             throw new ServerException("this admin dose not exist");
         }
 
         getProjectDetail(relProjectAdmin.getProjectId(), user, true);
 
         if (relProjectAdmin.getUserId().equals(user.getId())) {
-            throw new ServerException("you cannot remove yourself");
+            throw new ServerException("You cannot remove yourself");
         }
 
-        if (relProjectAdminMapper.deleteById(relationId) <= 0) {
-            log.error("delete rel project admin fail: (relationId:{})", relationId);
-            throw new ServerException("unspecified error");
+        if (relProjectAdminExtendMapper.deleteByPrimaryKey(relationId) <= 0) {
+            throw new ServerException("Remove admin fail");
         }
         
-        optLogger.info("relProjectAdmin ({}) delete by user(:{})", relProjectAdmin.toString(), user.getId());
+        optLogger.info("RelProjectAdmin({}) is delete by user({})", relProjectAdmin.toString(), user.getId());
         return true;
     }
 
@@ -550,7 +571,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     /**
      * 获取Project / project权限校验
      *
-     * @param id
+     * @param projectId
      * @param user
      * @param modify
      * @return
@@ -559,21 +580,21 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      * @throws NotFoundException
      */
     @Override
-    public ProjectDetail getProjectDetail(Long id, User user, boolean modify) throws NotFoundException, UnAuthorizedExecption {
-        ProjectDetail projectDetail = projectMapper.getProjectDetail(id);
+    public ProjectDetail getProjectDetail(Long projectId, User user, boolean modify) throws NotFoundException, UnAuthorizedExecption {
+        ProjectDetail projectDetail = projectExtendMapper.getProjectDetail(projectId);
         if (null == projectDetail) {
-            log.error("project (:{}) is not found", id);
-            throw new NotFoundException("project is not found");
+            log.error("Project({}) is not found", projectId);
+            throw new NotFoundException("Project is not found");
         }
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
-        RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getByProjectAndUser(id, user.getId());
+        RelProjectAdmin relProjectAdmin = relProjectAdminExtendMapper.getByProjectAndUser(projectId, user.getId());
         boolean isCreater = projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer();
         boolean notOwner = !isCreater && null == relProjectAdmin && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole());
         if (modify) {
             //项目的创建人和当前项目对应组织的owner可以修改
             if (notOwner) {
-                log.error("user(:{}) have not permission to modify project (:{})", user.getId(), id);
+                log.error("User({}) have not permission to modify project({})", user.getId(), projectId);
                 throw new UnAuthorizedExecption();
             }
         } else {
@@ -581,7 +602,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             if (notOwner
                     && projectDetail.getOrganization().getMemberPermission() < (short) 1
                     && !projectDetail.getVisibility()) {
-                log.error("user(:{}) have not permission to get project (:{})", user.getId(), id);
+            	log.error("User({}) have not permission to modify project({})", user.getId(), projectId);
                 throw new UnAuthorizedExecption();
             }
         }
@@ -593,7 +614,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	/**
 	 * 批量添加权限
 	 *
-	 * @param id
+	 * @param projectId
 	 * @param roleIds
 	 * @param user
 	 * @return
@@ -603,18 +624,18 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	 */
 	@Override
 	@Transactional
-	public List<RoleProject> postRoles(Long id, List<Long> roleIds, User user)
+	public List<RoleProject> postRoles(Long projectId, List<Long> roleIds, User user)
 			throws ServerException, UnAuthorizedExecption, NotFoundException {
 
-		ProjectDetail projectDetail = getProjectDetail(id, user, true);
-		List<Role> roleList = roleMapper.selectByIdsAndOrgId(projectDetail.getOrgId(), roleIds);
+		ProjectDetail projectDetail = getProjectDetail(projectId, user, true);
+		List<Role> roleList = roleMapper.getByOrgIdAndIds(projectDetail.getOrgId(), roleIds);
 
 		if (CollectionUtils.isEmpty(roleList)) {
-			relRoleProjectMapper.deleteByProjectId(id);
+			relRoleProjectMapper.deleteByProjectId(projectId);
 			return null;
 		}
 
-		List<RelRoleProject> originRels = relRoleProjectMapper.getByProject(id);
+		List<RelRoleProject> originRels = relRoleProjectMapper.getByProjectId(projectId);
 		List<Long> invariantRoleIds = new ArrayList<>();
 		if (!CollectionUtils.isEmpty(originRels)) {
 			invariantRoleIds.addAll(originRels.stream().map(RelRoleProject::getRoleId).filter(roleIds::contains)
@@ -630,7 +651,21 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		}
 
 		List<RelRoleProject> list = roleList.stream().filter(r -> !invariantRoleIds.contains(r.getId()))
-				.map(role -> new RelRoleProject(projectDetail.getId(), role.getId()).createdBy(user.getId()))
+				.map(role -> {
+					RelRoleProject rel = new RelRoleProject();
+					rel.setDownloadPermission(false);
+					rel.setSharePermission(false);
+					rel.setSourcePermission((short)0);
+					rel.setViewPermission((short)0);
+					rel.setWidgetPermission((short)0);
+					rel.setSchedulePermission((short)0);
+					rel.setVizPermission((short)1);
+					rel.setProjectId(projectDetail.getId());
+					rel.setRoleId(role.getId());
+					rel.setCreateBy(user.getId());
+					rel.setCreateTime(new Date());
+					return rel;
+				})
 				.collect(Collectors.toList());
 
 		if (CollectionUtils.isEmpty(list)) {
@@ -653,7 +688,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             throw new ServerException("Invalid page info");
         }
         PageHelper.startPage(pageNum, pageSize);
-        List<ProjectWithCreateBy> projects = projectMapper.getProjectsByOrgWithUser(orgId, user.getId(), keyword);
+        List<ProjectWithCreateBy> projects = projectExtendMapper.getProjectsByOrgWithUser(orgId, user.getId(), keyword);
         PageInfo<ProjectWithCreateBy> pageInfo = new PageInfo<>(projects);
         return pageInfo;
     }
@@ -667,7 +702,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		List<ProjectInfo> projectInfoList = new ArrayList<>();
 
 		// 管理员
-		Set<Long> idsByAdmin = projectMapper.getProjectIdsByAdmin(user.getId());
+		Set<Long> idsByAdmin = projectExtendMapper.getProjectIdsByAdmin(user.getId());
 		Set<Long> idsByMember = new HashSet<>();
 		Iterator<ProjectWithCreateBy> iterator = projects.iterator();
 		while (iterator.hasNext()) {
@@ -757,7 +792,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     @Override
     public List<RelProjectAdminDTO> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedExecption {
         getProjectDetail(id, user, false);
-        return relProjectAdminMapper.getByProject(id);
+        return relProjectAdminExtendMapper.getByProject(id);
     }
 
 
@@ -794,7 +829,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         }
 
         //project的admin
-        RelProjectAdmin projectAdmin = relProjectAdminMapper.getByProjectAndUser(projectDetail.getId(), user.getId());
+        RelProjectAdmin projectAdmin = relProjectAdminExtendMapper.getByProjectAndUser(projectDetail.getId(), user.getId());
         if (null != projectAdmin) {
             return true;
         }

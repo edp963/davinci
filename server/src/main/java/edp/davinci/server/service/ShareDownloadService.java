@@ -19,9 +19,9 @@
 
 package edp.davinci.server.service;
 
+import edp.davinci.core.dao.entity.ShareDownloadRecord;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.DownloadType;
-import edp.davinci.server.model.ShareDownloadRecord;
 import edp.davinci.server.model.User;
 
 import java.util.List;

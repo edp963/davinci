@@ -22,6 +22,7 @@ package edp.davinci.server.service.impl;
 import static edp.davinci.server.commons.Constants.DEFAULT_COPY_SUFFIX;
 
 import java.io.File;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -36,9 +37,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Display;
+import edp.davinci.core.dao.entity.RelRoleDisplay;
+import edp.davinci.core.dao.entity.Role;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dao.MemDisplaySlideWidgetMapper;
-import edp.davinci.server.dao.RelRoleDisplaySlideWidgetMapper;
+import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
+import edp.davinci.server.dao.RelRoleDisplaySlideWidgetExtendMapper;
+import edp.davinci.server.dto.display.DisplayCopy;
 import edp.davinci.server.dto.display.DisplayInfo;
 import edp.davinci.server.dto.display.DisplayUpdate;
 import edp.davinci.server.dto.display.DisplayWithProject;
@@ -51,13 +56,11 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.Display;
-import edp.davinci.server.model.RelRoleDisplay;
-import edp.davinci.server.model.Role;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.DisplayService;
 import edp.davinci.server.service.DisplaySlideService;
 import edp.davinci.server.service.ProjectService;
+import edp.davinci.server.service.ShareService;
 import edp.davinci.server.util.BaseLock;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.FileUtils;
@@ -66,22 +69,23 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service("displayService")
 public class DisplayServiceImpl extends VizCommonService implements DisplayService {
-    private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
+
+	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
     private ProjectService projectService;
 
     @Autowired
-    private ShareServiceImpl shareService;
+    private ShareService shareService;
 
     @Autowired
-    private MemDisplaySlideWidgetMapper memDisplaySlideWidgetMapper;
+    private MemDisplaySlideWidgetExtendMapper memDisplaySlideWidgetExtendMapper;
 
     @Autowired
     private FileUtils fileUtils;
 
     @Autowired
-    private RelRoleDisplaySlideWidgetMapper relRoleDisplaySlideWidgetMapper;
+    private RelRoleDisplaySlideWidgetExtendMapper relRoleDisplaySlideWidgetExtendMapper;
 
     @Autowired
     private DisplaySlideService displaySlideService;
@@ -90,7 +94,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
 	@Override
 	public boolean isExist(String name, Long id, Long projectId) {
-		Long displayId = displayMapper.getByNameWithProjectId(name, projectId);
+		Long displayId = displayExtendMapper.getByNameWithProjectId(name, projectId);
 		if (null != id && null != displayId) {
 			return !id.equals(displayId);
 		}
@@ -127,25 +131,35 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 		
 		try {
 			
-			Display display = new Display().createdBy(user.getId());
+			Display display = new Display();
+			display.setCreateBy(user.getId());
+			display.setCreateTime(new Date());
 	        BeanUtils.copyProperties(displayInfo, display);
 
-			if (displayMapper.insert(display) <= 0) {
-				throw new ServerException("create display fail");
+			if (displayExtendMapper.insert(display) <= 0) {
+				throw new ServerException("Create display fail");
 			}
 
-			optLogger.info("display ({}) is create by (:{})", display.toString(), user.getId());
+			optLogger.info("Display({}) is create by user({})", display.getId(), user.getId());
 
 			if (!CollectionUtils.isEmpty(displayInfo.getRoleIds())) {
 				List<Role> roles = roleMapper.getRolesByIds(displayInfo.getRoleIds());
 				List<RelRoleDisplay> list = roles.stream()
-						.map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+						.map(r -> {
+							RelRoleDisplay rel = new RelRoleDisplay();
+							rel.setRoleId(r.getId());
+							rel.setDisplayId(display.getId());
+							rel.setVisible(false);
+							rel.setCreateBy(user.getId());
+							rel.setCreateTime(new Date());
+							return rel;
+						})
 						.collect(Collectors.toList());
 
 				if (!CollectionUtils.isEmpty(list)) {
-					relRoleDisplayMapper.insertBatch(list);
-					optLogger.info("display ({}) limit role ({}) access", display.getId(),
-							roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+					relRoleDisplayExtendMapper.insertBatch(list);
+					optLogger.info("Display({}) limit role({}) access, create by user({})", display.getId(),
+							roles.stream().map(r -> r.getId()).collect(Collectors.toList()), user.getId());
 				}
 			}
 
@@ -181,22 +195,22 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         	alertUnAuthorized(entity, user, "copy");
         }
 
-        relRoleDisplaySlideWidgetMapper.deleteByDisplayId(id);
-        memDisplaySlideWidgetMapper.deleteByDisplayId(id);
-        relRoleSlideMapper.deleteByDisplayId(id);
-        displaySlideMapper.deleteByDisplayId(id);
-        relRoleDisplayMapper.deleteByDisplayId(id);
-        displayMapper.deleteById(id);
+        relRoleDisplaySlideWidgetExtendMapper.deleteByDisplayId(id);
+        memDisplaySlideWidgetExtendMapper.deleteByDisplayId(id);
+        relRoleSlideExtendMapper.deleteByDisplayId(id);
+        displaySlideExtendMapper.deleteByDisplayId(id);
+        relRoleDisplayExtendMapper.deleteByDisplayId(id);
+        displayExtendMapper.deleteByPrimaryKey(id);
 
         return true;
     }
     
     private DisplayWithProject getDisplayWithProject(Long id, boolean isThrow) {
 
-    	DisplayWithProject displayWithProject = displayMapper.getDisplayWithProjectById(id);
+    	DisplayWithProject displayWithProject = displayExtendMapper.getDisplayWithProjectById(id);
 
     	if (null == displayWithProject) {
-            log.info("display (:{}) is not found", id);
+            log.info("Display({}) is not found", id);
         }
         
 		if (null == displayWithProject && isThrow) {
@@ -217,9 +231,9 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     @Transactional
     public boolean updateDisplay(DisplayUpdate displayUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        Display display = displayMapper.getById(displayUpdate.getId());
+        Display display = displayExtendMapper.selectByPrimaryKey(displayUpdate.getId());
         if (null == display) {
-            throw new NotFoundException("display is not found");
+            throw new NotFoundException("Display is not found");
         }
 
         Long projectId = displayUpdate.getProjectId();
@@ -240,7 +254,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
 			String updateAvatar = displayUpdate.getAvatar();
 	        if (!StringUtils.isEmpty(updateAvatar) && !updateAvatar.startsWith(Constants.DISPLAY_AVATAR_PATH)) {
-	            throw new ServerException("Invalid cover image");
+	            throw new ServerException("Invalid avatar image");
 	        }
 
 	        String avatar = display.getAvatar();
@@ -254,24 +268,33 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 	        
 	        String origin = display.toString();
 	        BeanUtils.copyProperties(displayUpdate, display);
-	        display.updatedBy(user.getId());
+			display.setUpdateBy(user.getId());
+			display.setUpdateTime(new Date());
 
-			if (displayMapper.update(display) <= 0) {
-				throw new ServerException("update display fail");
+			if (displayExtendMapper.update(display) <= 0) {
+				throw new ServerException("Update display fail");
 			}
 			
-			optLogger.info("display ({}) is update by (:{}), origin: ({})", display.toString(), user.getId(), origin);
+			optLogger.info("Display({}) is update by user({}), origin:{}", display.getId(), user.getId(), origin);
 			if (displayUpdate.getRoleIds() != null) {
-				relRoleDisplayMapper.deleteByDisplayId(display.getId());
+				relRoleDisplayExtendMapper.deleteByDisplayId(display.getId());
 				if (!CollectionUtils.isEmpty(displayUpdate.getRoleIds())) {
 					List<Role> roles = roleMapper.getRolesByIds(displayUpdate.getRoleIds());
 					List<RelRoleDisplay> list = roles.stream()
-							.map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+							.map(r -> {
+								RelRoleDisplay rel = new RelRoleDisplay();
+								rel.setRoleId(r.getId());
+								rel.setDisplayId(display.getId());
+								rel.setVisible(false);
+								rel.setCreateBy(user.getId());
+								rel.setCreateTime(new Date());
+								return rel;
+							})
 							.collect(Collectors.toList());
 					if (!CollectionUtils.isEmpty(list)) {
-						relRoleDisplayMapper.insertBatch(list);
-						optLogger.info("update display ({}) limit role ({}) access", display.getId(),
-								roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+						relRoleDisplayExtendMapper.insertBatch(list);
+						optLogger.info("Update display({}) limit role({}) access, create by user({})", display.getId(),
+								roles.stream().map(r -> r.getId()).collect(Collectors.toList()), user.getId());
 					}
 				}
 			}
@@ -298,7 +321,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 			return null;
 		}
 
-		List<Display> displays = displayMapper.getByProject(projectId);
+		List<Display> displays = displayExtendMapper.getByProject(projectId);
 		if (CollectionUtils.isEmpty(displays)) {
 			return null;
 		}
@@ -331,7 +354,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     public String uploadAvatar(MultipartFile file) throws ServerException {
         //校验文件是否图片
         if (!fileUtils.isImage(file)) {
-            throw new ServerException("file format error");
+            throw new ServerException("File format error");
         }
 
         //上传文件
@@ -341,7 +364,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
             avatar = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new ServerException("display cover picture upload error");
+            throw new ServerException("Display avatar upload error");
         }
 
         return avatar;
@@ -354,8 +377,8 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 		DisplayWithProject displayWithProject = getDisplayWithProject(id, true);
 
 		if (null == displayWithProject.getProject()) {
-			log.info("project is not found");
-			throw new NotFoundException("project is not found");
+			log.info("Project is not found");
+			throw new NotFoundException("Project is not found");
 		}
 
 		Long projectId = displayWithProject.getProjectId();
@@ -370,27 +393,33 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
     @Override
     public List<Long> getDisplayExcludeRoles(Long id) {
-        return relRoleDisplayMapper.getById(id);
+        return relRoleDisplayExtendMapper.getByDisplayId(id);
     }
 
 	@Override
 	@Transactional
 	public boolean postDisplayVisibility(Role role, VizVisibility vizVisibility, User user)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
-		Display display = displayMapper.getById(vizVisibility.getId());
+		Display display = displayExtendMapper.selectByPrimaryKey(vizVisibility.getId());
 		if (null == display) {
-			throw new NotFoundException("display is not found");
+			throw new NotFoundException("Display is not found");
 		}
 
 		if (vizVisibility.isVisible()) {
-			if (relRoleDisplayMapper.delete(display.getId(), role.getId()) > 0) {
-				optLogger.info("display ({}) can be accessed by role ({}), update by (:{})", display, role,
-						user.getId());
+			if (relRoleDisplayExtendMapper.deleteByPrimaryKey(role.getId(), display.getId()) > 0) {
+				optLogger.info("Display({}) can be accessed by role({}), update by user({})", display.getId(),
+						role.getId(), user.getId());
 			}
 		} else {
-			RelRoleDisplay relRoleDisplay = new RelRoleDisplay(display.getId(), role.getId());
-			relRoleDisplayMapper.insert(relRoleDisplay);
-			optLogger.info("display ({}) limit role ({}) access, create by (:{})", display, role, user.getId());
+			RelRoleDisplay relRoleDisplay = new RelRoleDisplay();
+			relRoleDisplay.setDisplayId(display.getId());
+			relRoleDisplay.setRoleId(role.getId());
+			relRoleDisplay.setCreateBy(user.getId());
+			relRoleDisplay.setCreateTime(new Date());
+			relRoleDisplay.setVisible(false);
+			relRoleDisplayExtendMapper.insert(relRoleDisplay);
+			optLogger.info("Display({}) can be accessed by role({}), create by user({})", display.getId(), role.getId(),
+					user.getId());
 		}
 
 		return true;
@@ -405,50 +434,73 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
      */
     @Override
     @Transactional
-    public Display copyDisplay(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Display copyDisplay(Long id, DisplayCopy copy, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-    	DisplayWithProject originDisplay = getDisplayWithProject(id, true);
+		DisplayWithProject originDisplay = getDisplayWithProject(id, true);
 
-    	Long projectId = originDisplay.getProjectId();
-        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+		Long projectId = originDisplay.getProjectId();
+		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
-        checkWritePermission(entity, projectId, user, "copy");
+		String name = copy.getName();
+		checkIsExist(copy.getName(), null, projectId);
 
-        if (isDisableDisplay(id, projectId, user, projectPermission)) {
-            alertUnAuthorized(entity, user, "copy");
-        }
+		checkWritePermission(entity, projectId, user, "copy");
 
-        // copy display entity
-        Display display = new Display();
-        BeanUtils.copyProperties(originDisplay, display, "id");
-        
-		String name = getCopyName(originDisplay.getName(), projectId);
-        BaseLock lock = getLock(entity, name, projectId);
-		while(lock != null && !lock.getLock()) {
+		if (isDisableDisplay(id, projectId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "copy");
+		}
+
+		// copy display entity
+		Display display = new Display();
+		BeanUtils.copyProperties(originDisplay, display, "id");
+
+		BaseLock lock = getLock(entity, name, projectId);
+		while (lock != null && !lock.getLock()) {
 			name = getCopyName(name, projectId);
 			lock = getLock(entity, name, projectId);
 		}
 
 		display.setName(name);
-        display.createdBy(user.getId());
-        if (displayMapper.insert(display) <= 0) {
-            throw new ServerException("copy display fail");
-        }
+		display.setDescription(copy.getDescription());
+		display.setPublish(copy.getPublish());
+		display.setCreateBy(user.getId());
+		display.setCreateTime(new Date());
+		if (displayExtendMapper.insert(display) <= 0) {
+			throw new ServerException("Copy display fail");
+		}
+		optLogger.info("Display({}) is copied by user({}) from display({})", display.getId(), user.getId(),
+				originDisplay.getId());
 
-        // copy relRoleDisplay
-        optLogger.info("display ({}) is copied by user (:{}) from ({})", display.toString(), user.getId(), originDisplay.toString());
-        if (relRoleDisplayMapper.copyRoleRelation(originDisplay.getId(), display.getId(), user.getId()) > 0) {
-            optLogger.info("display (:{}) role is copied by user (:{}) from (:{})", display.getId(), user.getId(), originDisplay.getId());
-        }
-        displaySlideService.copySlides(originDisplay.getId(), display.getId(), user);
-        return display;
+		// copy relRoleDisplay
+		if (!CollectionUtils.isEmpty(copy.getRoleIds())) {
+			List<Role> roles = roleMapper.getRolesByIds(copy.getRoleIds());
+			List<RelRoleDisplay> list = roles.stream()
+					.map(r -> {
+						RelRoleDisplay rel = new RelRoleDisplay();
+						rel.setRoleId(r.getId());
+						rel.setDisplayId(display.getId());
+						rel.setVisible(false);
+						rel.setCreateBy(user.getId());
+						rel.setCreateTime(new Date());
+						return rel;
+					}).collect(Collectors.toList());
+
+			if (!CollectionUtils.isEmpty(list)) {
+				relRoleDisplayExtendMapper.insertBatch(list);
+				optLogger.info("Display({}) limit role({}) access", display.getId(),
+						roles.stream().map(Role::getId).collect(Collectors.toList()));
+			}
+		}
+
+		displaySlideService.copySlides(originDisplay.getId(), display.getId(), user);
+		return display;
     }
     
 	private String getCopyName(String name, Long projectId) {
 		
 		String copyName = name + DEFAULT_COPY_SUFFIX;
 		if (isExist(copyName, null, projectId)) {
-			Integer maxOrder = displayMapper.selectMaxNameOrderByName(copyName, projectId);
+			Integer maxOrder = displayExtendMapper.selectMaxNameOrderByName(copyName, projectId);
 			if (maxOrder == null) {
 				copyName += "2";
 			} else {
@@ -462,11 +514,11 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     @Override
     @Transactional
     public void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException {
-        relRoleDisplaySlideWidgetMapper.deleteByProjectId(projectId);
-        memDisplaySlideWidgetMapper.deleteByProject(projectId);
-        relRoleSlideMapper.deleteByProjectId(projectId);
-        displaySlideMapper.deleteByProjectId(projectId);
-        relRoleDisplayMapper.deleteByProjectId(projectId);
-        displayMapper.deleteByProject(projectId);
+        relRoleDisplaySlideWidgetExtendMapper.deleteByProjectId(projectId);
+        memDisplaySlideWidgetExtendMapper.deleteByProject(projectId);
+        relRoleSlideExtendMapper.deleteByProjectId(projectId);
+        displaySlideExtendMapper.deleteByProjectId(projectId);
+        relRoleDisplayExtendMapper.deleteByProjectId(projectId);
+        displayExtendMapper.deleteByProject(projectId);
     }
 }

@@ -29,55 +29,55 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import edp.davinci.server.dao.DashboardMapper;
-import edp.davinci.server.dao.DashboardPortalMapper;
-import edp.davinci.server.dao.DisplayMapper;
-import edp.davinci.server.dao.DisplaySlideMapper;
-import edp.davinci.server.dao.RelRoleDashboardMapper;
-import edp.davinci.server.dao.RelRoleDisplayMapper;
-import edp.davinci.server.dao.RelRolePortalMapper;
-import edp.davinci.server.dao.RelRoleSlideMapper;
-import edp.davinci.server.dao.RoleMapper;
+import edp.davinci.server.dao.DashboardExtendMapper;
+import edp.davinci.server.dao.DashboardPortalExtendMapper;
+import edp.davinci.server.dao.DisplayExtendMapper;
+import edp.davinci.server.dao.DisplaySlideExtendMapper;
+import edp.davinci.server.dao.RelRoleDashboardExtendMapper;
+import edp.davinci.server.dao.RelRoleDisplayExtendMapper;
+import edp.davinci.server.dao.RelRolePortalExtendMapper;
+import edp.davinci.server.dao.RelRoleSlideExtendMapper;
+import edp.davinci.server.dao.RoleExtendMapper;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.enums.VizEnum;
-import edp.davinci.server.model.Dashboard;
-import edp.davinci.server.model.DashboardPortal;
-import edp.davinci.server.model.Display;
-import edp.davinci.server.model.DisplaySlide;
 import edp.davinci.server.model.RoleDisableViz;
 import edp.davinci.server.model.User;
 import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.DashboardPortal;
+import edp.davinci.core.dao.entity.Display;
+import edp.davinci.core.dao.entity.DisplaySlide;
 
 
 @Component
 public class VizCommonService extends BaseEntityService {
 
     @Autowired
-    protected DashboardPortalMapper dashboardPortalMapper;
+    protected DashboardPortalExtendMapper dashboardPortalExtendMapper;
 
     @Autowired
-    protected DashboardMapper dashboardMapper;
+    protected DashboardExtendMapper dashboardExtendMapper;
 
     @Autowired
-    protected DisplayMapper displayMapper;
+    protected DisplayExtendMapper displayExtendMapper;
 
     @Autowired
-    protected DisplaySlideMapper displaySlideMapper;
+    protected DisplaySlideExtendMapper displaySlideExtendMapper;
 
     @Autowired
-    protected RelRolePortalMapper relRolePortalMapper;
+    protected RelRolePortalExtendMapper relRolePortalExtendMapper;
 
     @Autowired
-    protected RelRoleDashboardMapper relRoleDashboardMapper;
+    protected RelRoleDashboardExtendMapper relRoleDashboardExtendMapper;
 
     @Autowired
-    protected RelRoleDisplayMapper relRoleDisplayMapper;
+    protected RelRoleDisplayExtendMapper relRoleDisplayExtendMapper;
 
     @Autowired
-    protected RelRoleSlideMapper relRoleSlideMapper;
+    protected RelRoleSlideExtendMapper relRoleSlideExtendMapper;
 
     @Autowired
-    protected RoleMapper roleMapper;
+    protected RoleExtendMapper roleMapper;
     
 	protected boolean isDisableVizs(ProjectPermission projectPermission, List<Long> disableVizs, Long id) {
         return projectPermission == null || (!projectPermission.isProjectMaintainer() && disableVizs.contains(id));
@@ -117,9 +117,9 @@ public class VizCommonService extends BaseEntityService {
         List<Long> allRoles = null;
         switch (vizEnum) {
             case PORTAL:
-                disables = relRolePortalMapper.getDisablePortalByUser(userId, featureId);
+                disables = relRolePortalExtendMapper.getDisablePortalByUser(userId, featureId);
                 if (null == allVizs) {
-                    List<DashboardPortal> dashboardPortals = dashboardPortalMapper.getByProject(featureId);
+                    List<DashboardPortal> dashboardPortals = dashboardPortalExtendMapper.getByProject(featureId);
                     if (!CollectionUtils.isEmpty(dashboardPortals)) {
                         allVizs = dashboardPortals.stream().map(DashboardPortal::getId).collect(Collectors.toList());
                     }
@@ -127,9 +127,9 @@ public class VizCommonService extends BaseEntityService {
                 allRoles = roleMapper.getRolesByUserAndProject(userId, featureId);
                 break;
             case DASHBOARD:
-                disables = relRoleDashboardMapper.getDisableByUser(userId, featureId);
+                disables = relRoleDashboardExtendMapper.getDisableByUser(userId, featureId);
                 if (null == allVizs) {
-                    List<Dashboard> dashboardList = dashboardMapper.getByPortalId(featureId);
+                    List<Dashboard> dashboardList = dashboardExtendMapper.getByPortalId(featureId);
                     if (!CollectionUtils.isEmpty(dashboardList)) {
                         allVizs = dashboardList.stream().map(Dashboard::getId).collect(Collectors.toList());
                     }
@@ -137,9 +137,9 @@ public class VizCommonService extends BaseEntityService {
                 allRoles = roleMapper.getRolesByUserAndPortal(userId, featureId);
                 break;
             case DISPLAY:
-                disables = relRoleDisplayMapper.getDisableDisplayByUser(userId, featureId);
+                disables = relRoleDisplayExtendMapper.getDisableDisplayByUser(userId, featureId);
                 if (null == allVizs) {
-                    List<Display> displayList = displayMapper.getByProject(featureId);
+                    List<Display> displayList = displayExtendMapper.getByProject(featureId);
                     if (!CollectionUtils.isEmpty(displayList)) {
                         allVizs = displayList.stream().map(Display::getId).collect(Collectors.toList());
                     }
@@ -147,9 +147,9 @@ public class VizCommonService extends BaseEntityService {
                 allRoles = roleMapper.getRolesByUserAndProject(userId, featureId);
                 break;
             case SLIDE:
-                disables = relRoleSlideMapper.getDisableSlides(userId, featureId);
+                disables = relRoleSlideExtendMapper.getDisableSlides(userId, featureId);
                 if (null == allVizs) {
-                    List<DisplaySlide> slideList = displaySlideMapper.selectByDisplayId(featureId);
+                    List<DisplaySlide> slideList = displaySlideExtendMapper.selectByDisplayId(featureId);
                     if (!CollectionUtils.isEmpty(slideList)) {
                         allVizs = slideList.stream().map(DisplaySlide::getId).collect(Collectors.toList());
                     }

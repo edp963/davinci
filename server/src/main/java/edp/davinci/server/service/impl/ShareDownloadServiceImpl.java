@@ -19,17 +19,17 @@
 
 package edp.davinci.server.service.impl;
 
+import edp.davinci.core.dao.entity.ShareDownloadRecord;
+import edp.davinci.core.enums.DownloadRecordStatusEnum;
 import edp.davinci.server.component.excel.ExecutorUtil;
 import edp.davinci.server.component.excel.MsgWrapper;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.component.excel.WorkBookContext;
-import edp.davinci.server.dao.ShareDownloadRecordMapper;
+import edp.davinci.server.dao.ShareDownloadRecordExtendMapper;
 import edp.davinci.server.dto.share.ShareInfo;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.ActionEnum;
-import edp.davinci.server.enums.DownloadTaskStatusType;
 import edp.davinci.server.enums.DownloadType;
-import edp.davinci.server.model.ShareDownloadRecord;
 import edp.davinci.server.model.User;
 import edp.davinci.server.service.ShareDownloadService;
 import edp.davinci.server.service.ShareService;
@@ -45,7 +45,7 @@ import java.util.List;
 public class ShareDownloadServiceImpl extends DownloadCommonService implements ShareDownloadService {
 
     @Autowired
-    private ShareDownloadRecordMapper shareDownloadRecordMapper;
+    private ShareDownloadRecordExtendMapper shareDownloadRecordMapper;
 
     @Autowired
     private ShareService shareService;
@@ -60,7 +60,7 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
             ShareDownloadRecord record = new ShareDownloadRecord();
             record.setUuid(uuid);
             record.setName(getDownloadFileName(downloadType, shareInfo.getShareId()));
-            record.setStatus(DownloadTaskStatusType.PROCESSING.getStatus());
+            record.setStatus(DownloadRecordStatusEnum.PROCESSING.getStatus());
             record.setCreateTime(new Date());
             shareDownloadRecordMapper.insertSelective(record);
 
@@ -73,10 +73,10 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
                     .withTaskKey("ShareDownload_" + uuid)
                     .build();
             ExecutorUtil.submitWorkbookTask(workBookContext, null);
-            log.info("Share download task submit: {}", wrapper);
+            log.info("Share download task submit:{}", wrapper);
             return true;
         } catch (Exception e) {
-            log.error("submit download task error,e=", e);
+            log.error("Submit download task error, e=", e);
             return false;
         }
     }
@@ -86,19 +86,19 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
     public List<ShareDownloadRecord> queryDownloadRecordPage(String uuid, String token, User user) {
         shareService.getShareInfo(token, user);
 
-        return shareDownloadRecordMapper.getShareDownloadRecordsByUuid(uuid);
+        return shareDownloadRecordMapper.getByUuid(uuid);
     }
 
     @Override
     public ShareDownloadRecord downloadById(String id, String uuid, String token, User user) {
         shareService.getShareInfo(token, user);
 
-        ShareDownloadRecord record = shareDownloadRecordMapper.getShareDownloadRecordBy(Long.valueOf(id), uuid);
+        ShareDownloadRecord record = shareDownloadRecordMapper.getByIdAndUuid(Long.valueOf(id), uuid);
 
         if (record != null) {
             record.setLastDownloadTime(new Date());
-            record.setStatus(DownloadTaskStatusType.DOWNLOADED.getStatus());
-            shareDownloadRecordMapper.updateById(record);
+            record.setStatus(DownloadRecordStatusEnum.DOWNLOADED.getStatus());
+            shareDownloadRecordMapper.update(record);
             return record;
         } else {
             return null;

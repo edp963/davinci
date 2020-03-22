@@ -19,16 +19,13 @@
 
 package edp.davinci.server.dto.view;
 
-import edp.davinci.server.model.Source;
+import edp.davinci.core.dao.entity.Source;
 import edp.davinci.server.model.View;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class ViewWithSource extends View {
     private Source source;
-
-    @Override
-    public String toString() {
-        return super.toString();
-    }
 }

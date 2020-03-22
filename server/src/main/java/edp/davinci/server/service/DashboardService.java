@@ -19,14 +19,14 @@
 
 package edp.davinci.server.service;
 
+import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
+import edp.davinci.core.dao.entity.Role;
 import edp.davinci.server.dto.dashboard.*;
 import edp.davinci.server.dto.role.VizVisibility;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.Dashboard;
-import edp.davinci.server.model.MemDashboardWidget;
-import edp.davinci.server.model.Role;
 import edp.davinci.server.model.User;
 
 import java.util.List;
@@ -55,9 +55,5 @@ public interface DashboardService extends CheckEntityService {
 
     List<Long> getExcludeRoles(Long id);
 
-    boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
-
-    boolean updateMemDashboardWidgetAlias(Long relationId, String alias, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
-
-    ;
+    boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;;
 }

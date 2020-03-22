@@ -19,14 +19,14 @@
 
 package edp.davinci.server.service;
 
+import edp.davinci.core.dao.entity.DisplaySlide;
+import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
+import edp.davinci.core.dao.entity.Role;
 import edp.davinci.server.dto.display.*;
 import edp.davinci.server.dto.role.VizVisibility;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.DisplaySlide;
-import edp.davinci.server.model.MemDisplaySlideWidget;
-import edp.davinci.server.model.Role;
 import edp.davinci.server.model.User;
 
 import org.springframework.web.multipart.MultipartFile;

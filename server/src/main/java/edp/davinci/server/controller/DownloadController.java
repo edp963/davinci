@@ -17,24 +17,22 @@
  *
  */
 
-package edp.davinci.controller;
+package edp.davinci.server.controller;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.core.annotation.AuthIgnore;
-import edp.core.annotation.AuthShare;
-import edp.core.annotation.CurrentUser;
-import edp.core.utils.FileUtils;
-import edp.davinci.common.controller.BaseController;
-import edp.davinci.core.common.Constants;
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.core.enums.DownloadType;
-import edp.davinci.core.enums.FileTypeEnum;
-import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
-import edp.davinci.model.DownloadRecord;
-import edp.davinci.model.ShareDownloadRecord;
-import edp.davinci.model.User;
-import edp.davinci.service.DownloadService;
-import edp.davinci.service.ShareDownloadService;
+import edp.davinci.core.dao.entity.DownloadRecord;
+import edp.davinci.core.dao.entity.ShareDownloadRecord;
+import edp.davinci.server.annotation.AuthIgnore;
+import edp.davinci.server.annotation.AuthShare;
+import edp.davinci.server.annotation.CurrentUser;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.dto.view.DownloadViewExecuteParam;
+import edp.davinci.server.enums.DownloadType;
+import edp.davinci.server.enums.FileTypeEnum;
+import edp.davinci.server.model.User;
+import edp.davinci.server.service.DownloadService;
+import edp.davinci.server.service.ShareDownloadService;
+import edp.davinci.server.util.FileUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -94,18 +92,14 @@ public class DownloadController extends BaseController {
                                                 @PathVariable String token,
                                                 HttpServletRequest request,
                                                 HttpServletResponse response) {
-        DownloadRecord record = downloadService.downloadById(id, token);
-        FileInputStream is = null;
-        try {
-            encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
-            is = new FileInputStream(new File(record.getPath()));
-            Streams.copy(is, response.getOutputStream(), true);
-        } catch (Exception e) {
-            log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
-        } finally {
-            FileUtils.closeCloseable(is);
-        }
-        return null;
+		DownloadRecord record = downloadService.downloadById(id, token);
+		try (FileInputStream is = new FileInputStream(new File(record.getPath()));) {
+			encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
+			Streams.copy(is, response.getOutputStream(), true);
+		} catch (Exception e) {
+			log.error("Get downloadRecordFile error, id:" + id + ", e:", e.getMessage());
+		}
+		return null;
     }
 
 
@@ -182,17 +176,13 @@ public class DownloadController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        ShareDownloadRecord record = shareDownloadService.downloadById(id, uuid, token, user);
-        FileInputStream is = null;
-        try {
-            encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
-            is = new FileInputStream(new File(record.getPath()));
-            Streams.copy(is, response.getOutputStream(), true);
-        } catch (Exception e) {
-            log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
-        } finally {
-            FileUtils.closeCloseable(is);
-        }
+		ShareDownloadRecord record = shareDownloadService.downloadById(id, uuid, token, user);
+		try (FileInputStream is = new FileInputStream(new File(record.getPath()));) {
+			encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
+			Streams.copy(is, response.getOutputStream(), true);
+		} catch (Exception e) {
+			log.error("Get downloadRecordFile error, id:" + id + ", e:", e.getMessage());
+		}
         return null;
     }
 

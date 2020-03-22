@@ -19,8 +19,8 @@
 
 package edp.davinci.server.dto.source;
 
-import edp.davinci.server.model.Project;
-import edp.davinci.server.model.Source;
+import edp.davinci.core.dao.entity.Project;
+import edp.davinci.core.dao.entity.Source;
 import lombok.Data;
 
 @Data

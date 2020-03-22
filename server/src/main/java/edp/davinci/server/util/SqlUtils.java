@@ -23,6 +23,7 @@ import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.DateUtils;
 import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Source;
 import edp.davinci.server.component.jdbc.JdbcDataSource;
 import edp.davinci.server.enums.DataTypeEnum;
 import edp.davinci.server.enums.LogNameEnum;
@@ -30,7 +31,6 @@ import edp.davinci.server.enums.SqlColumnEnum;
 import edp.davinci.server.enums.SqlTypeEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.SourceException;
-import edp.davinci.server.model.BaseSource;
 import edp.davinci.server.model.CustomDataSource;
 import edp.davinci.server.model.Dict;
 import edp.davinci.server.model.JdbcSourceInfo;
@@ -96,15 +96,16 @@ public class SqlUtils {
 
     private SourceUtils sourceUtils;
 
-    public SqlUtils init(BaseSource source) {
-        return SqlUtilsBuilder
+    public SqlUtils init(Source source) {
+    	String config = source.getConfig();
+    	return SqlUtilsBuilder
                 .getBuilder()
-                .withJdbcUrl(source.getJdbcUrl())
-                .withUsername(source.getUsername())
-                .withPassword(source.getPassword())
-                .withDbVersion(source.getDbVersion())
-                .withProperties(source.getProperties())
-                .withIsExt(source.isExt())
+                .withJdbcUrl(SourceUtils.getJdbcUrl(config))
+                .withUsername(SourceUtils.getUsername(config))
+                .withPassword(SourceUtils.getPassword(config))
+                .withDbVersion(SourceUtils.getDbVersion(config))
+                .withProperties(SourceUtils.getProperties(config))
+                .withIsExt(SourceUtils.isExt(config))
                 .withJdbcDataSource(this.jdbcDataSource)
                 .withResultLimit(this.resultLimit)
                 .withIsQueryLogEnable(this.isQueryLogEnable)
