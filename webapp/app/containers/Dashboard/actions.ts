@@ -37,11 +37,11 @@ import {
   CLEAR_CURRENT_DASHBOARD,
   LOAD_DASHBOARD_SHARE_LINK,
   LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
-  LOAD_DASHBOARD_SECRET_LINK_SUCCESS,
+  LOAD_DASHBOARD_AUTHORIZED_SHARE_LINK_SUCCESS,
   LOAD_DASHBOARD_SHARE_LINK_FAILURE,
   LOAD_WIDGET_SHARE_LINK,
   LOAD_WIDGET_SHARE_LINK_SUCCESS,
-  LOAD_WIDGET_SECRET_LINK_SUCCESS,
+  LOAD_WIDGET_AUTHORIZED_SHARE_LINK_SUCCESS,
   LOAD_WIDGET_SHARE_LINK_FAILURE,
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
@@ -60,7 +60,9 @@ import {
   MONITORED_SYNC_DATA_ACTION,
   MONITORED_SEARCH_DATA_ACTION,
   MONITORED_LINKAGE_DATA_ACTION,
-  SEND_CURRENT_DASHBOARD_CONTROL_PARAMS
+  SEND_CURRENT_DASHBOARD_CONTROL_PARAMS,
+  OPEN_SHARE_PANEL,
+  CLOSE_SHARE_PANEL
 } from './constants'
 
 export function addDashboardItems (portalId, items, resolve) {
@@ -200,30 +202,30 @@ export function deleteDashboardItemFail () {
   }
 }
 
-export function loadDashboardShareLink (id, authName) {
+export function loadDashboardShareLink (id, authUser?) {
   return {
     type: LOAD_DASHBOARD_SHARE_LINK,
     payload: {
       id,
-      authName
+      authUser
     }
   }
 }
 
-export function dashboardShareLinkLoaded (shareInfo) {
+export function dashboardShareLinkLoaded (shareToken) {
   return {
     type: LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
     payload: {
-      shareInfo
+      shareToken
     }
   }
 }
 
-export function dashboardSecretLinkLoaded (secretInfo) {
+export function dashboardAuthorizedShareLinkLoaded (authorizedShareToken) {
   return {
-    type: LOAD_DASHBOARD_SECRET_LINK_SUCCESS,
+    type: LOAD_DASHBOARD_AUTHORIZED_SHARE_LINK_SUCCESS,
     payload: {
-      secretInfo
+      authorizedShareToken
     }
   }
 }
@@ -234,33 +236,32 @@ export function loadDashboardShareLinkFail () {
   }
 }
 
-export function loadWidgetShareLink (id, itemId, authName, resolve) {
+export function loadWidgetShareLink (id, itemId, authUser?) {
   return {
     type: LOAD_WIDGET_SHARE_LINK,
     payload: {
       id,
       itemId,
-      authName,
-      resolve
+      authUser
     }
   }
 }
 
-export function widgetShareLinkLoaded (shareInfo, itemId) {
+export function widgetShareLinkLoaded (shareToken, itemId) {
   return {
     type: LOAD_WIDGET_SHARE_LINK_SUCCESS,
     payload: {
-      shareInfo,
+      shareToken,
       itemId
     }
   }
 }
 
-export function widgetSecretLinkLoaded (shareInfo, itemId) {
+export function widgetAuthorizedShareLinkLoaded (shareToken, itemId) {
   return {
-    type: LOAD_WIDGET_SECRET_LINK_SUCCESS,
+    type: LOAD_WIDGET_AUTHORIZED_SHARE_LINK_SUCCESS,
     payload: {
-      shareInfo,
+      shareToken,
       itemId
     }
   }
@@ -272,6 +273,24 @@ export function loadWidgetShareLinkFail (itemId) {
     payload: {
       itemId
     }
+  }
+}
+
+export function openSharePanel (id, type, title, itemId?) {
+  return {
+    type: OPEN_SHARE_PANEL,
+    payload: {
+      id,
+      type,
+      title,
+      itemId
+    }
+  }
+}
+
+export function closeSharePanel () {
+  return {
+    type: CLOSE_SHARE_PANEL
   }
 }
 
@@ -407,7 +426,7 @@ export function monitoredLinkageDataAction () {
   }
 }
 
-export function sendCurrentDashboardControlParams (params) { 
+export function sendCurrentDashboardControlParams (params) {
   return {
     type: SEND_CURRENT_DASHBOARD_CONTROL_PARAMS,
     payload: {

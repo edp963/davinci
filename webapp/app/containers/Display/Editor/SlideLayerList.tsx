@@ -37,7 +37,7 @@ import {
 import ViewActions from '../../View/actions'
 import DisplayActions from '../actions'
 import { RenderType } from '../../Widget/components/Widget'
-import { IQueryConditions } from '../../Dashboard/Grid'
+import { IQueryConditions } from '../../Dashboard/types'
 import { getRequestParamsByWidgetConfig } from 'containers/Viz/util'
 import { makeSelectFormedViews } from '../../View/selectors'
 import {
@@ -127,8 +127,8 @@ const SlideLayerList: React.FC = (props) => {
       slideId: number,
       layerId: number,
       widget: IWidgetFormed,
-      prevQueryConditions: Partial<IQueryConditions>,
-      queryConditions?: Partial<IQueryConditions>
+      prevQueryConditions: IQueryConditions,
+      queryConditions?: IQueryConditions
     ) => {
       const requestParams = getRequestParamsByWidgetConfig(
         renderType,

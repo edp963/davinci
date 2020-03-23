@@ -35,11 +35,19 @@ import { DisplayActionType } from './actions'
 import { VizActionType } from '../Viz/actions'
 import { ViewActionType } from '../View/actions'
 
-import { IDisplayState } from './types'
+import { IDisplayState, IDisplaySharePanelState } from './types'
+
+const defaultSharePanelState: IDisplaySharePanelState = {
+  id: 0,
+  type: 'display',
+  title: '',
+  visible: false
+}
 
 export const initialState: IDisplayState = {
-  currentDisplayShareInfo: '',
-  currentDisplaySecretInfo: '',
+  currentDisplayShareToken: '',
+  currentDisplayAuthorizedShareToken: '',
+  sharePanel: defaultSharePanelState,
   currentDisplaySelectOptions: {},
 
   currentSlideId: 0,
@@ -59,7 +67,7 @@ export const initialState: IDisplayState = {
   editorBaselines: [],
 
   loading: {
-    shareInfo: false,
+    shareToken: false,
     slideLayers: false
   }
 }
@@ -364,21 +372,37 @@ const displayReducer = (
         break
 
       case ActionTypes.LOAD_DISPLAY_SHARE_LINK:
-        draft.loading.shareInfo = true
+        draft.loading.shareToken = true
+        if (action.payload.authUser) {
+          draft.currentDisplayAuthorizedShareToken = ''
+        }
         break
 
       case ActionTypes.LOAD_DISPLAY_SHARE_LINK_SUCCESS:
-        draft.currentDisplayShareInfo = action.payload.shareInfo
-        draft.loading.shareInfo = false
+        draft.currentDisplayShareToken = action.payload.shareToken
+        draft.loading.shareToken = false
         break
 
-      case ActionTypes.LOAD_DISPLAY_SECRET_LINK_SUCCESS:
-        draft.currentDisplaySecretInfo = action.payload.secretInfo
-        draft.loading.shareInfo = false
+      case ActionTypes.LOAD_DISPLAY_AUTHORIZED_SHARE_LINK_SUCCESS:
+        draft.currentDisplayAuthorizedShareToken = action.payload.authorizedShareToken
+        draft.loading.shareToken = false
         break
 
       case ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE:
-        draft.loading.shareInfo = false
+        draft.loading.shareToken = false
+        break
+
+      case ActionTypes.OPEN_SHARE_PANEL:
+        draft.sharePanel = {
+          id: action.payload.id,
+          type: 'display',
+          title: action.payload.title,
+          visible: true
+        }
+        break
+
+      case ActionTypes.CLOSE_SHARE_PANEL:
+        draft.sharePanel = defaultSharePanelState
         break
 
       case ActionTypes.RESET_DISPLAY_STATE:

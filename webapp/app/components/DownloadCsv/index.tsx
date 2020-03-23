@@ -18,28 +18,28 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { Icon } from 'antd'
 
 export interface IDownloadCsvProps {
   id?: number
   type?: string
   itemId?: number
-  shareInfo: string
-  shareInfoLoading?: boolean
+  shareToken: string
+  shareLoading?: boolean
   downloadCsvLoading: boolean
   onDownloadCsv: () => void
 }
 
 export function DownloadCsv (props: IDownloadCsvProps) {
-  const { shareInfoLoading, downloadCsvLoading } = props
-  const iconType = shareInfoLoading || downloadCsvLoading ? 'loading' : 'download'
+  const { shareLoading, downloadCsvLoading } = props
+  const iconType = shareLoading || downloadCsvLoading ? 'loading' : 'download'
   return (
-    <Icon type={iconType} onClick={getShareInfo(props)} />
+    <Icon type={iconType} onClick={getShareToken(props)} />
   )
 }
 
-function getShareInfo (props) {
+function getShareToken (props) {
   return function () {
     props.onDownloadCsv()
   }

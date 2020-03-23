@@ -38,7 +38,7 @@ import { FormComponentProps } from 'antd/lib/form'
 import useDashboardTreeNodes from '../hooks/dashboardTreeNodes'
 
 import { IDashboardWithRole } from './types'
-import { DashboardTypes } from './constants'
+import { DashboardTypes } from '../constants'
 import { IDashboardNode } from '../types'
 
 interface IDashboardConfigModalProps
