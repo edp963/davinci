@@ -125,6 +125,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             optLogger.info("organization ({}) create by (:{})", organization.toString(), user.getId());
             //用户-组织 建立关联
             RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), user.getId(), UserOrgRoleEnum.OWNER.getRole());
+            relUserOrganization.createdBy(user.getId());
             relUserOrganizationMapper.insert(relUserOrganization);
             
             OrganizationBaseInfo organizationBaseInfo = new OrganizationBaseInfo();
@@ -469,6 +470,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		isJoined(memeberId, orgId);
 		// 验证通过，建立关联
 		RelUserOrganization rel = new RelUserOrganization(orgId, memeberId, UserOrgRoleEnum.MEMBER.getRole());
+		rel.createdBy(memeberId);
 
 		if (relUserOrganizationMapper.insert(rel) <= 0) {
 			throw new ServerException("unknown fail");
@@ -534,6 +536,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		isJoined(memeberId, orgId);
 		// 验证通过，建立关联
 		RelUserOrganization rel = new RelUserOrganization(orgId, memeberId, UserOrgRoleEnum.MEMBER.getRole());
+		rel.createdBy(memeberId);
 		relUserOrganizationMapper.insert(rel);
 		// 修改成员人数
 		organization.setMemberNum(organization.getMemberNum() + 1);
