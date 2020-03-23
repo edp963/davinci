@@ -216,8 +216,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       onSetIndividualDashboard
     } = this.props
 
+    // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
     if (qs.type === 'dashboard') {
-      onLoadDashboard(qs.shareToken, (err) => {
+      onLoadDashboard(qs.shareInfo, (err) => {
         if (err.response.status === 403) {
           this.setState({
             showLogin: true
@@ -225,8 +226,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         }
       })
     } else {
-      onLoadWidget(qs.shareToken, (w) => {
-        onSetIndividualDashboard(w.id, qs.shareToken)
+      onLoadWidget(qs.shareInfo, (w) => {
+        onSetIndividualDashboard(w.id, qs.shareInfo)
       }, (err) => {
         if (err.response.status === 403) {
           this.setState({
@@ -240,14 +241,15 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   public componentDidMount () {
     // urlparse
     const qs = this.querystring(location.href.substr(location.href.indexOf('?') + 1))
+    // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
     this.setState({
       type: qs.type,
-      shareToken: qs.shareToken
+      shareToken: qs.shareInfo
     })
     this.loadShareContent(qs)
-    this.initPolling(qs.shareToken)
+    this.initPolling(qs.shareInfo)
     delete qs.type
-    delete qs.shareToken
+    delete qs.shareInfo
     this.props.onSendShareParams(qs)
     window.addEventListener('resize', this.onWindowResize, false)
   }
@@ -572,7 +574,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     this.setState({
       showLogin: false
     }, () => {
-      this.loadShareContent({type, shareToken})
+      // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
+      this.loadShareContent({
+        type,
+        shareInfo: shareToken
+      })
     })
   }
 
