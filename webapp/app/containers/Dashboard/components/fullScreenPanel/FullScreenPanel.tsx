@@ -31,7 +31,7 @@ import { IViewModel } from 'containers/View/types'
 import { getNativeQuery, getPagination } from 'containers/Viz/utils'
 import { IGetChartData } from 'containers/Dashboard/components/DashboardItem'
 import { IWidgetConfig } from 'containers/Widget/components/Widget'
-import { IQueryConditions, IDashboardItem, IDashboardItemInfo } from 'containers/Dashboard/Grid'
+import { IQueryConditions, IDashboardItem, IDashboardItemInfo } from 'containers/Dashboard/types'
 import { OnGetControlOptions, IDistinctValueReqeustParams, IMapControlOptions, IMapItemControlRequestParams, IGridCtrlParams } from 'app/components/Filters/types'
 
 type ICtrlType = 'local'|'global'
@@ -288,7 +288,7 @@ const Control: React.FC<IControlProps> = Memo(
       }
     }, [chartDetail, currentItemsInfo])
 
-    const onControlSearch = useCallback((queryConditions: Partial<IQueryConditions>) => {
+    const onControlSearch = useCallback((queryConditions: IQueryConditions) => {
       if (chartDetail && chartDetail.itemId) {
         const itemId = chartDetail.itemId
         const widget = chartDetail.widget
@@ -463,7 +463,7 @@ const FullScreenPanel: React.FC<IFullScreenPanelProps> = Memo(
               hasGlobalCtrl={hasGlobalControl}
               currentItems={currentItems}
               gridCtrlParams={gridCtrlParams}
-            /> 
+            />
           }
           </div> 
         </div>

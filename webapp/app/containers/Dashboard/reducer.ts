@@ -35,11 +35,11 @@ import {
   CLEAR_CURRENT_DASHBOARD,
   LOAD_DASHBOARD_SHARE_LINK,
   LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
-  LOAD_DASHBOARD_SECRET_LINK_SUCCESS,
+  LOAD_DASHBOARD_AUTHORIZED_SHARE_LINK_SUCCESS,
   LOAD_DASHBOARD_SHARE_LINK_FAILURE,
   LOAD_WIDGET_SHARE_LINK,
   LOAD_WIDGET_SHARE_LINK_SUCCESS,
-  LOAD_WIDGET_SECRET_LINK_SUCCESS,
+  LOAD_WIDGET_AUTHORIZED_SHARE_LINK_SUCCESS,
   LOAD_WIDGET_SHARE_LINK_FAILURE,
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
@@ -52,7 +52,9 @@ import {
   DRILL_PATH_SETTING,
   SELECT_DASHBOARD_ITEM_CHART,
   SET_SELECT_OPTIONS,
-  SEND_CURRENT_DASHBOARD_CONTROL_PARAMS
+  SEND_CURRENT_DASHBOARD_CONTROL_PARAMS,
+  OPEN_SHARE_PANEL,
+  CLOSE_SHARE_PANEL
 } from './constants'
 import {
   INITIATE_DOWNLOAD_TASK,
@@ -75,17 +77,25 @@ import {
   getModelValue,
   deserializeDefaultValue
 } from 'components/Filters/util'
-import { DownloadTypes } from '../App/types'
 import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
 import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
-import { clearCurrentDashboard } from './actions'
+import { DownloadTypes } from '../App/types'
+import { IDashboardState, IDashboardSharePanelState } from './types'
 
-const initialState = {
+const defaultSharePanelState: IDashboardSharePanelState = {
+  id: 0,
+  type: 'dashboard',
+  title: '',
+  visible: false
+}
+
+const initialState: IDashboardState = {
   currentDashboard: null,
   currentDashboardLoading: false,
-  currentDashboardShareInfo: '',
-  currentDashboardSecretInfo: '',
-  currentDashboardShareInfoLoading: false,
+  currentDashboardShareToken: '',
+  currentDashboardAuthorizedShareToken: '',
+  currentDashboardShareLoading: false,
+  sharePanel: defaultSharePanelState,
   currentDashboardSelectOptions: {},
   currentItems: null,
   currentItemsInfo: null,
@@ -115,8 +125,8 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
 
       case LOAD_DASHBOARD_DETAIL:
         draft.currentDashboardLoading = true
-        draft.currentDashboardShareInfo = ''
-        draft.currentDashboardSecretInfo = ''
+        draft.currentDashboardShareToken = ''
+        draft.currentDashboardAuthorizedShareToken = ''
         break
 
       case SEND_CURRENT_DASHBOARD_CONTROL_PARAMS:
@@ -179,9 +189,9 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
                 drillpathInstance: [],
                 ...drillpathSetting
               },
-              shareInfo: '',
-              shareInfoLoading: false,
-              secretInfo: '',
+              shareToken: '',
+              shareLoading: false,
+              authorizedShareToken: '',
               downloadCsvLoading: false,
               interactId: '',
               rendered: false,
@@ -202,21 +212,30 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
         draft.currentItems = (draft.currentItems || []).concat(action.payload.result)
         action.payload.result.forEach((item) => {
           draft.currentItemsInfo[item.id] = {
-            datasource: { resultList: [] },
+            datasource: {
+              pageNo: 0,
+              pageSize: 0,
+              totalCount: 0,
+              resultList: []
+            },
             loading: false,
             queryConditions: {
               tempFilters: [],
               linkageFilters: [],
               globalFilters: [],
+              orders: [],
               variables: [],
               linkageVariables: [],
               globalVariables: [],
-              pagination: {},
+              pagination: {
+                pageNo: 0,
+                pageSize: 0
+              },
               drillpathInstance: []
             },
-            shareInfo: '',
-            shareInfoLoading: false,
-            secretInfo: '',
+            shareToken: '',
+            shareLoading: false,
+            authorizedShareToken: '',
             downloadCsvLoading: false,
             interactId: '',
             rendered: false,
@@ -334,42 +353,61 @@ const dashboardReducer = (state = initialState, action: ViewActionType | VizActi
         break
 
       case LOAD_DASHBOARD_SHARE_LINK:
-        draft.currentDashboardShareInfoLoading = true
+        draft.currentDashboardShareLoading = true
+        if (action.payload.authUser) {
+          draft.currentDashboardAuthorizedShareToken = ''
+        }
         break
 
       case LOAD_DASHBOARD_SHARE_LINK_SUCCESS:
-        draft.currentDashboardShareInfo = action.payload.shareInfo
-        draft.currentDashboardShareInfoLoading = false
+        draft.currentDashboardShareToken = action.payload.shareToken
+        draft.currentDashboardShareLoading = false
         break
 
-      case LOAD_DASHBOARD_SECRET_LINK_SUCCESS:
-        draft.currentDashboardSecretInfo = action.payload.secretInfo
-        draft.currentDashboardShareInfoLoading = false
+      case LOAD_DASHBOARD_AUTHORIZED_SHARE_LINK_SUCCESS:
+        draft.currentDashboardAuthorizedShareToken = action.payload.authorizedShareToken
+        draft.currentDashboardShareLoading = false
         break
 
       case LOAD_DASHBOARD_SHARE_LINK_FAILURE:
-        draft.currentDashboardShareInfoLoading = false
+        draft.currentDashboardShareLoading = false
         break
 
       case LOAD_WIDGET_SHARE_LINK:
-        draft.currentItemsInfo[action.payload.itemId].shareInfoLoading = true
+        draft.currentItemsInfo[action.payload.itemId].shareLoading = true
+        if (action.payload.authUser) {
+          draft.currentItemsInfo[action.payload.itemId].authorizedShareToken = ''
+        }
         break
 
       case LOAD_WIDGET_SHARE_LINK_SUCCESS:
         targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
-        targetItemInfo.shareInfo = action.payload.shareInfo
-        targetItemInfo.shareInfoLoading = false
+        targetItemInfo.shareToken = action.payload.shareToken
+        targetItemInfo.shareLoading = false
         break
 
-      case LOAD_WIDGET_SECRET_LINK_SUCCESS:
+      case LOAD_WIDGET_AUTHORIZED_SHARE_LINK_SUCCESS:
         targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
-        targetItemInfo.secretInfo = action.payload.shareInfo
-        targetItemInfo.shareInfoLoading = false
+        targetItemInfo.authorizedShareToken = action.payload.shareToken
+        targetItemInfo.shareLoading = false
         break
 
       case LOAD_WIDGET_SHARE_LINK_FAILURE:
         targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
-        targetItemInfo.shareInfoLoading = false
+        targetItemInfo.shareLoading = false
+        break
+
+      case OPEN_SHARE_PANEL:
+        draft.sharePanel = {
+          id: action.payload.id,
+          type: action.payload.type,
+          title: action.payload.title,
+          itemId: action.payload.itemId,
+          visible: true
+        }
+        break
+      case CLOSE_SHARE_PANEL:
+        draft.sharePanel = defaultSharePanelState
         break
 
       case LOAD_WIDGET_CSV:

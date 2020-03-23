@@ -90,7 +90,7 @@ import {
 import styles from 'app/containers/Dashboard/Dashboard.less'
 
 import Login from 'share/components/Login'
-import { IQueryConditions, IDataRequestParams, QueryVariable, IDataDownloadParams } from 'app/containers/Dashboard/Grid'
+import { IQueryConditions, IDataRequestParams, QueryVariable, IDataDownloadParams } from 'app/containers/Dashboard/types'
 import { getShareClientId } from 'share/util'
 import { IDownloadRecord, DownloadTypes } from 'app/containers/App/types'
 import { IFormedView } from 'app/containers/View/types'
@@ -131,7 +131,7 @@ interface IDashboardProps {
   linkages: any[]
   shareParams: object
   downloadList: IDownloadRecord[]
-  onLoadDashboard: (shareInfo: any, error: (err) => void) => void,
+  onLoadDashboard: (shareToken: any, error: (err) => void) => void,
   onLoadWidget: (aesStr: string, success?: (widget) => void, error?: (err) => void) => void,
   onLoadResultset: (
     renderType: RenderType,
@@ -139,7 +139,7 @@ interface IDashboardProps {
     dataToken: string,
     requestParams: IDataRequestParams
   ) => void,
-  onSetIndividualDashboard: (id, shareInfo) => void,
+  onSetIndividualDashboard: (id, shareToken) => void,
   onLoadWidgetCsv: (
     itemId: number,
     requestParams: IDataRequestParams,
@@ -159,7 +159,7 @@ interface IDashboardProps {
 
 interface IDashboardStates {
   type: string,
-  shareInfo: string
+  shareToken: string
   views: {
     [key: string]: Partial<IFormedView>
   }
@@ -179,7 +179,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     super(props)
     this.state = {
       type: '',
-      shareInfo: '',
+      shareToken: '',
       views: {},
 
       modalLoading: false,
@@ -205,7 +205,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
    * object
    * {
    *  type: this.state.type,
-   *  shareInfo: this.state.shareInfo
+   *  shareToken: this.state.shareToken
    * }
    * @param qs
    */
@@ -217,7 +217,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     } = this.props
 
     if (qs.type === 'dashboard') {
-      onLoadDashboard(qs.shareInfo, (err) => {
+      onLoadDashboard(qs.shareToken, (err) => {
         if (err.response.status === 403) {
           this.setState({
             showLogin: true
@@ -225,8 +225,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         }
       })
     } else {
-      onLoadWidget(qs.shareInfo, (w) => {
-        onSetIndividualDashboard(w.id, qs.shareInfo)
+      onLoadWidget(qs.shareToken, (w) => {
+        onSetIndividualDashboard(w.id, qs.shareToken)
       }, (err) => {
         if (err.response.status === 403) {
           this.setState({
@@ -242,12 +242,12 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     const qs = this.querystring(location.href.substr(location.href.indexOf('?') + 1))
     this.setState({
       type: qs.type,
-      shareInfo: qs.shareInfo
+      shareToken: qs.shareToken
     })
     this.loadShareContent(qs)
-    this.initPolling(qs.shareInfo)
+    this.initPolling(qs.shareToken)
     delete qs.type
-    delete qs.shareInfo
+    delete qs.shareToken
     this.props.onSendShareParams(qs)
     window.addEventListener('resize', this.onWindowResize, false)
   }
@@ -318,7 +318,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     o[decodeURIComponent(path[i])] = decodeURIComponent(value)
   }
 
-  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: IQueryConditions) => {
     this.getData(this.props.onLoadResultset, renderType, itemId, widgetId, queryConditions)
   }
 
@@ -329,7 +329,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }, DOWNLOAD_LIST_POLLING_FREQUENCY)
   }
 
-  // private downloadCsv = (itemId: number, widgetId: number, shareInfo: string) => {
+  // private downloadCsv = (itemId: number, widgetId: number, shareToken: string) => {
   //   this.getData(
   //     (renderType, itemId, dataToken, queryConditions) => {
   //       this.props.onLoadWidgetCsv(itemId, queryConditions, dataToken)
@@ -343,7 +343,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   private initiateWidgetDownloadTask = (itemId: number, widgetId: number) => {
     const { widgets } = this.props
     const widget = widgets.find((w) => w.id === widgetId)
-    const queryConditions: Partial<IQueryConditions> = {
+    const queryConditions: IQueryConditions = {
       nativeQuery: false
     }
     try {
@@ -380,7 +380,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     renderType: RenderType,
     itemId: number,
     widgetId: number,
-    queryConditions?: Partial<IQueryConditions>
+    queryConditions?: IQueryConditions
   ) => {
     const {
       currentItemsInfo,
@@ -568,11 +568,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   private handleLegitimateUser = () => {
-    const {type, shareInfo} = this.state
+    const {type, shareToken} = this.state
     this.setState({
       showLogin: false
     }, () => {
-      this.loadShareContent({type, shareInfo})
+      this.loadShareContent({type, shareToken})
     })
   }
 
@@ -642,7 +642,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     if (useOptions) {
       this.props.onSetSelectOptions(controlKey, paramsOrOptions, itemId)
     } else {
-      this.props.onLoadSelectOptions(controlKey, this.state.shareInfo, paramsOrOptions, itemId)
+      this.props.onLoadSelectOptions(controlKey, this.state.shareToken, paramsOrOptions, itemId)
     }
   }
 
@@ -946,11 +946,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   private loadDownloadList = () => {
-    this.props.onLoadDownloadList(this.shareClientId, this.state.shareInfo)
+    this.props.onLoadDownloadList(this.shareClientId, this.state.shareToken)
   }
 
   private downloadFile = (id) => {
-    this.props.onDownloadFile(id, this.shareClientId, this.state.shareInfo)
+    this.props.onDownloadFile(id, this.shareClientId, this.state.shareToken)
   }
 
   public render () {
@@ -966,7 +966,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     } = this.props
 
     const {
-      shareInfo,
+      shareToken,
       showLogin,
       views,
       interactingStatus,
@@ -1018,7 +1018,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               interacting={interacting}
               drillHistory={drillHistory}
               frequency={frequency}
-              shareInfo={widget.dataToken}
+              shareToken={widget.dataToken}
               downloadCsvLoading={downloadCsvLoading}
               renderType={renderType}
               controlSelectOptions={controlSelectOptions}
@@ -1093,7 +1093,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       fullScreenComponent = ''
     }
 
-    loginPanel = showLogin ? <Login shareInfo={shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
+    loginPanel = showLogin ? <Login shareToken={shareToken} legitimateUser={this.handleLegitimateUser} /> : ''
 
     const headlessBrowserRenderParentNode = document.getElementById('app')
 

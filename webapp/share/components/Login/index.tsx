@@ -11,9 +11,9 @@ import { Icon } from 'antd'
 
 interface ILoginProps {
   loginLoading?: boolean
-  shareInfo: any,
+  shareToken: any,
   legitimateUser: () => void
-  onLogin?: (username: string, password: string, shareInfo: any, resolve: (res) => void) => void
+  onLogin?: (username: string, password: string, shareToken: any, resolve: (res) => void) => void
 }
 
 interface ILoginStates {
@@ -43,11 +43,11 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   }
 
   private doLogin = () => {
-    const { onLogin, shareInfo, legitimateUser } = this.props
+    const { onLogin, shareToken, legitimateUser } = this.props
     const { username, password } = this.state
 
     if (username && password) {
-      onLogin(username, password, shareInfo, () => {
+      onLogin(username, password, shareToken, () => {
         legitimateUser()
       })
     }
@@ -87,7 +87,7 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLogin: (username: string, password: string, shareInfo: any, resolve: () => void) => dispatch(login(username, password, shareInfo, resolve))
+    onLogin: (username: string, password: string, shareToken: any, resolve: () => void) => dispatch(login(username, password, shareToken, resolve))
   }
 }
 

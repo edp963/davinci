@@ -28,11 +28,11 @@ import { errorHandler } from 'utils/util'
 import api from 'utils/api'
 
 export function* login (action) {
-  const { username, password, shareInfo, resolve } = action.payload
+  const { username, password, shareToken, resolve } = action.payload
   try {
     const userInfo = yield call(request, {
       method: 'post',
-      url: `${api.share}/login/${shareInfo}`,
+      url: `${api.share}/login/${shareToken}`,
       data: {
         username,
         password

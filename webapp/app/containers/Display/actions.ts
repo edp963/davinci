@@ -368,30 +368,30 @@ export const DisplayActions = {
     }
   },
 
-  loadDisplayShareLink(id: number, authName: string) {
+  loadDisplayShareLink(id: number, authUser: string) {
     return {
       type: ActionTypes.LOAD_DISPLAY_SHARE_LINK,
       payload: {
         id,
-        authName
+        authUser
       }
     }
   },
 
-  displayShareLinkLoaded(shareInfo: string) {
+  displayShareLinkLoaded(shareToken: string) {
     return {
       type: ActionTypes.LOAD_DISPLAY_SHARE_LINK_SUCCESS,
       payload: {
-        shareInfo
+        shareToken
       }
     }
   },
 
-  displaySecretLinkLoaded(secretInfo: string) {
+  displayAuthorizedShareLinkLoaded(authorizedShareToken: string) {
     return {
-      type: ActionTypes.LOAD_DISPLAY_SECRET_LINK_SUCCESS,
+      type: ActionTypes.LOAD_DISPLAY_AUTHORIZED_SHARE_LINK_SUCCESS,
       payload: {
-        secretInfo
+        authorizedShareToken
       }
     }
   },
@@ -400,6 +400,22 @@ export const DisplayActions = {
     return {
       type: ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE,
       payload: {}
+    }
+  },
+
+  openSharePanel (id, title) {
+    return {
+      type: ActionTypes.OPEN_SHARE_PANEL,
+      payload: {
+        id,
+        title
+      }
+    }
+  },
+
+  closeSharePanel () {
+    return {
+      type: ActionTypes.CLOSE_SHARE_PANEL
     }
   },
 
