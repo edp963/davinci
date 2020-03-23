@@ -19,9 +19,10 @@
 
 package edp.davinci.server.dao;
 
+import edp.davinci.core.dao.StarMapper;
+import edp.davinci.core.dao.entity.Star;
 import edp.davinci.server.dto.project.ProjectWithCreateBy;
 import edp.davinci.server.dto.star.StarUser;
-import edp.davinci.server.model.Star;
 
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -31,15 +32,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public interface StarMapper {
-
-    int insert(Star star);
-
-    @Delete({
-            "delete from star",
-            "where id = #{id,jdbcType=BIGINT}"
-    })
-    int deleteById(Long id);
+public interface StarExtendMapper extends StarMapper {
 
     @Delete({
             "delete from star",
@@ -63,7 +56,7 @@ public interface StarMapper {
 
 
     @Select({
-            "select u.id, IF(u.`name` is NULL,u.username,u.`name`) as username, u.email, u.avatar, s.star_time from star s left join user u on u.id = s.user_id",
+            "select u.id, if(u.`name` is null,u.username,u.`name`) as username, u.email, u.avatar, s.star_time from star s left join user u on u.id = s.user_id",
             "where s.target = #{target} and s.target_id = #{targetId}"
     })
     List<StarUser> getStarUserListByTarget(@Param("targetId") Long targetId, @Param("target") String target);

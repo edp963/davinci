@@ -30,6 +30,7 @@ import edp.davinci.core.dao.entity.RelProjectAdmin;
 import edp.davinci.core.dao.entity.RelRoleProject;
 import edp.davinci.core.dao.entity.RelUserOrganization;
 import edp.davinci.core.dao.entity.Role;
+import edp.davinci.core.dao.entity.Star;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.organization.OrganizationInfo;
@@ -96,7 +97,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private SourceExtendMapper sourceExtendMapper;
 
     @Autowired
-    private StarMapper starMapper;
+    private StarExtendMapper starMapper;
 
     @Autowired
     private FavoriteExtendMapper favoriteExtendMapper;
