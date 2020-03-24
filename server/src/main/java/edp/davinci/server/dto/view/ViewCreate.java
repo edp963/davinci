@@ -27,10 +27,10 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
-@NotNull(message = "view cannot be null")
+@NotNull(message = "View cannot be null")
 public class ViewCreate {
 
-    @NotBlank(message = "view name cannot be EMPTY")
+    @NotBlank(message = "view name cannot be empty")
     private String name;
 
     private String description;
@@ -38,7 +38,7 @@ public class ViewCreate {
     @Min(value = 1, message = "Invalid project Id")
     private Long projectId;
 
-    @Min(value = 1, message = "Invalid source Id")
+    @Min(value = 1, message = "Invalid source id")
     private Long sourceId;
 
     private String sql;

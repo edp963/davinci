@@ -32,7 +32,7 @@ import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.Paginate;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
 import javax.servlet.http.HttpServletRequest;
 import java.sql.SQLException;

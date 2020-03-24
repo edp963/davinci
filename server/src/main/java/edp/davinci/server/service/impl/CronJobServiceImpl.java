@@ -52,7 +52,7 @@ import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.RedisMessageEntity;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.CronJobService;
 import edp.davinci.server.util.BaseLock;
 import edp.davinci.server.util.LockFactory;

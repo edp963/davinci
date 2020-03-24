@@ -21,8 +21,8 @@ package edp.davinci.server.component.excel;
 
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.MemDashboardWidget;
+import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.dto.view.ViewExecuteParam;
-import edp.davinci.server.model.Widget;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -49,7 +49,6 @@ public class WidgetContext implements Serializable {
 
     private boolean hasExecuteParam = false;
 
-
     public WidgetContext(Widget widget, Dashboard dashboard, MemDashboardWidget memDashboardWidget, ViewExecuteParam executeParam) {
         this.widget = widget;
         this.dashboard = dashboard;
@@ -68,5 +67,6 @@ public class WidgetContext implements Serializable {
     }
 
     public WidgetContext() {
+
     }
 }

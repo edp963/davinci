@@ -27,15 +27,15 @@ import edp.davinci.core.dao.entity.MemDashboardWidget;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.dao.DashboardExtendMapper;
 import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
-import edp.davinci.server.dao.WidgetMapper;
+import edp.davinci.server.dao.WidgetExtendMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.dto.view.ViewExecuteParam;
 import edp.davinci.server.enums.DownloadType;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.User;
-import edp.davinci.server.model.Widget;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.TokenUtils;
@@ -62,7 +62,7 @@ public class DownloadCommonService {
     protected ProjectService projectService;
 
     @Autowired
-    protected WidgetMapper widgetMapper;
+    protected WidgetExtendMapper widgetMapper;
 
     @Autowired
     protected DashboardExtendMapper dashboardExtendMapper;
@@ -130,7 +130,7 @@ public class DownloadCommonService {
         String fileName;
         switch (downloadType) {
             case Widget:
-                Widget widget = widgetMapper.getById(id);
+                Widget widget = widgetMapper.selectByPrimaryKey(id);
                 fileName = widget.getName();
                 break;
             case DashBoard:
@@ -148,7 +148,7 @@ public class DownloadCommonService {
         List<WidgetContext> widgetList = Lists.newArrayList();
         switch (downloadType) {
             case Widget:
-                Widget widget = widgetMapper.getById(id);
+                Widget widget = widgetMapper.selectByPrimaryKey(id);
                 if (widget != null) {
                     ViewExecuteParam executeParam = null;
                     if (!CollectionUtils.isEmpty(params)) {

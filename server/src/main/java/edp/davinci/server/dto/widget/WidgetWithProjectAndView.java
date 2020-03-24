@@ -20,11 +20,13 @@
 package edp.davinci.server.dto.widget;
 
 import edp.davinci.core.dao.entity.Project;
-import edp.davinci.server.model.View;
-import edp.davinci.server.model.Widget;
+import edp.davinci.core.dao.entity.View;
+import edp.davinci.core.dao.entity.Widget;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class WidgetWithProjectAndView extends Widget {
     private Project project;
     private View view;

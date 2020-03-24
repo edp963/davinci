@@ -46,7 +46,8 @@ import edp.davinci.server.annotation.AuthIgnore;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.user.UserLogin;
 import edp.davinci.server.dto.user.UserLoginResult;
-import edp.davinci.server.model.User;
+import edp.davinci.server.model.TokenEntity;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.UserService;
 import edp.davinci.server.util.TokenUtils;
 import io.swagger.annotations.Api;
@@ -95,9 +96,11 @@ public class LoginController {
         }
 
         User user = userService.userLogin(userLogin);
+        TokenEntity tokenDetail = new TokenEntity(user.getUsername(), user.getPassword());
+        
         if (!user.getActive()) {
             log.info("this user is not active： {}", userLogin.getUsername());
-            ResultMap resultMap = new ResultMap(tokenUtils).failWithToken(tokenUtils.generateToken(user)).message("this user is not active");
+            ResultMap resultMap = new ResultMap(tokenUtils).failWithToken(tokenUtils.generateToken(tokenDetail)).message("this user is not active");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -107,7 +110,7 @@ public class LoginController {
             userLoginResult.setStatisticOpen(true);
         }
 
-        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(user)).payload(userLoginResult));
+        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(tokenDetail)).payload(userLoginResult));
     }
     
     @ApiOperation(value = "get oauth2 clents")
@@ -136,7 +139,8 @@ public class LoginController {
     public ResponseEntity externalLogin(Principal principal) {
         if (null != principal && principal instanceof OAuth2AuthenticationToken) {
             User user = userService.externalRegist((OAuth2AuthenticationToken) principal);
-            String token = tokenUtils.generateToken(user);
+            TokenEntity tokenDetail = new TokenEntity(user.getUsername(), user.getPassword());
+            String token = tokenUtils.generateToken(tokenDetail);
             userService.activateUserNoLogin(token, null);
             UserLoginResult userLoginResult = new UserLoginResult(user);
             String statistic_open = environment.getProperty("statistic.enable");

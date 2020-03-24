@@ -56,7 +56,7 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DisplayService;
 import edp.davinci.server.service.DisplaySlideService;
 import edp.davinci.server.service.ProjectService;

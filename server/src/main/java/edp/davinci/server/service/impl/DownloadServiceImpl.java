@@ -27,12 +27,12 @@ import edp.davinci.server.component.excel.MsgWrapper;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.component.excel.WorkBookContext;
 import edp.davinci.server.dao.DownloadRecordExtendMapper;
-import edp.davinci.server.dao.UserMapper;
+import edp.davinci.server.dao.UserExtendMapper;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.enums.DownloadType;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DownloadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +57,7 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
     private DownloadRecordExtendMapper downloadRecordExtendMapper;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userMapper;
 
     @Override
     public List<DownloadRecord> queryDownloadRecordPage(Long userId) {

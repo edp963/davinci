@@ -27,7 +27,7 @@ import java.util.Set;
 
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.MemDashboardWidget;
-import edp.davinci.server.model.View;
+import edp.davinci.core.dao.entity.View;
 
 @Data
 @ToString(callSuper = true)

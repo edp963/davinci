@@ -24,10 +24,10 @@ import edp.davinci.core.dao.entity.RelUserOrganization;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.server.dao.OrganizationExtendMapper;
 import edp.davinci.server.dao.RelUserOrganizationExtendMapper;
-import edp.davinci.server.dao.UserMapper;
+import edp.davinci.server.dao.UserExtendMapper;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.LdapPerson;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.LdapService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -65,7 +65,7 @@ public class LdapServiceImpl implements LdapService {
     private String ldapUrls;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userExtendMapper;
 
     @Autowired
     private OrganizationExtendMapper organizationExtendMapper;
@@ -125,11 +125,14 @@ public class LdapServiceImpl implements LdapService {
     @Override
     @Transactional
     public User registPerson(LdapPerson ldapPerson) throws ServerException {
-        User user = new User(ldapPerson);
+        User user = new User();
+        user.setUsername(ldapPerson.getSAMAccountName());
+        user.setEmail(ldapPerson.getEmail());
+        user.setEmail(ldapPerson.getName());
         user.setActive(true);
         user.setPassword(LDAP_USER_PASSWORD);
 
-        if (userMapper.insert(user) <= 0) {
+        if (userExtendMapper.insert(user) <= 0) {
             log.error("Ldap regist fail, email:{}", user.getEmail());
             throw new ServerException("Ldap regist fail:unspecified error");
         }
@@ -139,6 +142,9 @@ public class LdapServiceImpl implements LdapService {
         String orgName = user.getUsername() + "'s Organization";
         Organization organization = new Organization();
         organization.setName(orgName);
+        organization.setMemberNum(1);
+        organization.setMemberPermission((short)1);
+        organization.setAllowCreateProject(true);
         organization.setUserId(userId);
         organization.setCreateBy(userId);
         organization.setCreateTime(new Date());

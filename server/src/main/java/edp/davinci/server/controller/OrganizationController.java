@@ -27,7 +27,7 @@ import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.organization.*;
 import edp.davinci.server.dto.project.ProjectWithCreateBy;
 import edp.davinci.server.dto.role.RoleBaseInfo;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.OrganizationService;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.RoleService;

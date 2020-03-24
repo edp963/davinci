@@ -26,7 +26,7 @@ import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.Paginate;
 import edp.davinci.server.model.PaginateWithQueryColumns;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
 import java.sql.SQLException;
 import java.util.List;

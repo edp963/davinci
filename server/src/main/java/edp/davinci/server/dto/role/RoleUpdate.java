@@ -25,10 +25,10 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-@NotNull(message = "role info cannot be EMPTY")
+@NotNull(message = "Role info cannot be empty")
 public class RoleUpdate {
 
-    @NotBlank(message = "role name cannot be EMPTY")
+    @NotBlank(message = "Role name cannot be empty")
     private String name;
 
     private String description;

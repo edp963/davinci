@@ -23,7 +23,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 
 import edp.davinci.server.config.SpringContextHolder;
-import edp.davinci.server.dao.ViewMapper;
+import edp.davinci.server.dao.ViewExtendMapper;
 import edp.davinci.server.dto.cronjob.MsgMailExcel;
 import edp.davinci.server.dto.view.ViewExecuteParam;
 import edp.davinci.server.dto.view.ViewWithProjectAndSource;
@@ -178,7 +178,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                         context.getMemDashboardWidget() != null ? context.getMemDashboardWidget().getId() : null);
             }
 
-            ViewWithProjectAndSource viewWithProjectAndSource = ((ViewMapper) SpringContextHolder.getBean(ViewMapper.class)).getViewWithProjectAndSourceById(context.getWidget().getViewId());
+            ViewWithProjectAndSource viewWithProjectAndSource = ((ViewExtendMapper) SpringContextHolder.getBean(ViewExtendMapper.class)).getViewWithProjectAndSourceById(context.getWidget().getViewId());
 
             SQLContext sqlContext = ((ViewService) SpringContextHolder.getBean(ViewService.class)).getSQLContext(context.getIsMaintainer(), viewWithProjectAndSource, executeParam, this.context.getUser());
 

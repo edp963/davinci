@@ -19,10 +19,35 @@
 
 package edp.davinci.server.model;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
+import java.util.Date;
+
 @Data
-public abstract class TokenDetail {
-    public String username;
-    public String password;
+public class CreaterInfo<T> {
+
+    @JSONField(serialize = false)
+    Long createBy;
+
+    @JSONField(serialize = false)
+    Date createTime;
+
+    @JSONField(serialize = false)
+    Long updateBy;
+
+    @JSONField(serialize = false)
+    Date updateTime;
+
+    public T createdBy(Long userId) {
+        this.createBy = userId;
+        this.createTime = new Date();
+        return (T) this;
+    }
+
+    public T updatedBy(Long userId) {
+        this.updateBy = userId;
+        this.updateTime = new Date();
+        return (T) this;
+    }
 }

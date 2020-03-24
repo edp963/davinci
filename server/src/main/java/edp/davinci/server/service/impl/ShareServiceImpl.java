@@ -26,6 +26,7 @@ import edp.davinci.core.dao.entity.Display;
 import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.core.dao.entity.MemDashboardWidget;
 import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.dao.*;
@@ -76,10 +77,10 @@ public class ShareServiceImpl implements ShareService {
     private TokenUtils tokenUtils;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userExtendMapper;
 
     @Autowired
-    private WidgetMapper widgetMapper;
+    private WidgetExtendMapper widgetMapper;
 
     @Autowired
     private DisplayExtendMapper displayExtendMapper;
@@ -94,7 +95,7 @@ public class ShareServiceImpl implements ShareService {
     private ProjectService projectService;
 
     @Autowired
-    private ViewMapper viewMapper;
+    private ViewExtendMapper viewMapper;
 
     @Autowired
     private ViewService viewService;
@@ -139,7 +140,7 @@ public class ShareServiceImpl implements ShareService {
             throw new ServerException("Invalid share token");
         }
 
-        User shareUser = userMapper.getById(shareUserId);
+        User shareUser = userExtendMapper.selectByPrimaryKey(shareUserId);
         if (null == shareUser) {
             throw new ServerException("Invalid share token");
         }
@@ -307,7 +308,7 @@ public class ShareServiceImpl implements ShareService {
         }
 
         if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-            User tokenUser = userMapper.selectByUsername(shareInfo.getSharedUserName());
+            User tokenUser = userExtendMapper.selectByUsername(shareInfo.getSharedUserName());
             if (tokenUser == null || !tokenUser.getId().equals(user.getId())) {
                 throw new ForbiddenExecption("ERROR Permission denied");
             }
@@ -454,14 +455,16 @@ public class ShareServiceImpl implements ShareService {
         TokenEntity shareToken = new TokenEntity();
         String tokenUserName = shareEntityId + Constants.SPLIT_CHAR_STRING + userId;
         String tokenPassword = shareEntityId + EMPTY;
+
         if (!StringUtils.isEmpty(username)) {
-            User shareUser = userMapper.selectByUsername(username);
+            User shareUser = userExtendMapper.selectByUsername(username);
             if (null == shareUser) {
-                throw new ServerException("user : \"" + username + "\" not found");
+                throw new ServerException("User " + username + " not found");
             }
             tokenUserName += Constants.SPLIT_CHAR_STRING + username;
             tokenPassword += (Constants.SPLIT_CHAR_STRING + shareUser.getId());
         }
+
         shareToken.setUsername(tokenUserName);
         shareToken.setPassword(tokenPassword);
 
@@ -502,7 +505,7 @@ public class ShareServiceImpl implements ShareService {
             throw new ServerException("Invalid share token");
         }
 
-        User shareUser = userMapper.getById(shareUserId);
+        User shareUser = userExtendMapper.selectByPrimaryKey(shareUserId);
         if (null == shareUser) {
             throw new ServerException("Invalid share token");
         }
@@ -514,7 +517,7 @@ public class ShareServiceImpl implements ShareService {
             }
             String username = tokenInfos[2];
             Long sharedUserId = Long.parseLong(tokenCrypts[1]);
-            User sharedUser = userMapper.selectByUsername(username);
+            User sharedUser = userExtendMapper.selectByUsername(username);
             if (null == sharedUser || !sharedUser.getId().equals(sharedUserId)) {
                 throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
             }

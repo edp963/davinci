@@ -28,17 +28,19 @@ import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.dao.OrganizationExtendMapper;
 import edp.davinci.server.dao.RelUserOrganizationExtendMapper;
-import edp.davinci.server.dao.UserMapper;
+import edp.davinci.server.dao.UserExtendMapper;
 import edp.davinci.server.dto.organization.OrganizationInfo;
 import edp.davinci.server.dto.user.*;
 import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.server.enums.HttpCodeEnum;
 import edp.davinci.server.enums.LockType;
+import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.enums.MailContentTypeEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.LdapPerson;
 import edp.davinci.server.model.MailContent;
-import edp.davinci.server.model.User;
+import edp.davinci.server.model.TokenEntity;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.LdapService;
 import edp.davinci.server.service.UserService;
 import edp.davinci.server.util.BaseLock;
@@ -50,6 +52,8 @@ import edp.davinci.server.util.ServerUtils;
 import edp.davinci.server.util.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.mindrot.jbcrypt.BCrypt;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -69,9 +73,11 @@ import java.util.*;
 @Slf4j
 @Service("userService")
 public class UserServiceImpl extends BaseEntityService implements UserService {
+	
+	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userExtendMapper;
 
     @Autowired
     private OrganizationExtendMapper organizationExtendMapper;
@@ -109,7 +115,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
      */
     @Override
     public boolean isExist(String name, Long id, Long scopeId) {
-        Long userId = userMapper.getIdByName(name);
+        Long userId = userExtendMapper.getIdByName(name);
         if (null != id && null != userId) {
             return !id.equals(userId);
         }
@@ -129,20 +135,21 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 		String username = userRegist.getUsername();
 		// 用户名是否已经注册
         if (isExist(username, null, null)) {
-            log.info("the username {} has been registered", username);
-            throw new ServerException("the username:" + username + " has been registered");
+            log.error("The username({}) has been registered", username);
+            throw new ServerException("The username has been registered");
         }
 
 		String email = userRegist.getEmail();
 		// 邮箱是否已经注册
         if (isExist(email, null, null)) {
-        	log.info("the email {} has been registered", email);
-            throw new ServerException("the email:" + email + " has been registered");
+        	log.error("The email({}) has been registered", email);
+            throw new ServerException("The email has been registered");
         }
         
         BaseLock usernameLock = getLock(entity, username, null);
 		if (usernameLock != null && !usernameLock.getLock()) {
-			alertNameTaken(entity, username);
+            log.error("The username({}) has been registered", username);
+            throw new ServerException("The username has been registered");
 		}
 		
         BaseLock emailLock = null;
@@ -151,7 +158,8 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 		}
 
         if (emailLock != null && !emailLock.getLock()) {
-			alertNameTaken(entity, email);
+        	log.error("The email({}) has been registered", email);
+            throw new ServerException("The email has been registered");
 		}
 
 		try {
@@ -159,10 +167,15 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 			// 密码加密
 			userRegist.setPassword(BCrypt.hashpw(userRegist.getPassword(), BCrypt.gensalt()));
 			BeanUtils.copyProperties(userRegist, user);
+			user.setActive(false);
+            user.setAdmin(true);
+    		user.setCreateBy(0L);
+    		user.setCreateTime(new Date());
+			
 			// 添加用户
-			if (userMapper.insert(user) <= 0) {
-				log.info("regist fail: {}", userRegist.toString());
-				throw new ServerException("regist fail: unspecified error");
+			if (userExtendMapper.insert(user) <= 0) {
+				log.error("User({}) regist fail", userRegist.toString());
+				throw new ServerException("Regist fail: unspecified error");
 			}
 			// 添加成功，发送激活邮件
 			sendMail(user.getEmail(), user);
@@ -181,6 +194,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         if (user != null) {
             return user;
         }
+
         user = new User();
 
         String emailMapping = environment.getProperty(String.format("spring.security.oauth2.client.provider.%s.userMapping.email", oauthAuthToken.getAuthorizedClientRegistrationId()));
@@ -193,19 +207,14 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         user.setPassword("OAuth2");
         user.setEmail(JsonPath.read(jsonObj, emailMapping));
         user.setAvatar(JsonPath.read(jsonObj, avatarMapping));
-        if (userMapper.insert(user) > 0) {
+        if (userExtendMapper.insert(user) > 0) {
             return user;
         } else {
-            log.info("regist fail: {}", oauthUser.getName());
-            throw new ServerException("regist fail: unspecified error");
+            log.error("User({}) regist fail", oauthUser.getName());
+            throw new ServerException("Regist fail: unspecified error");
         }
     }
     
-	protected void alertNameTaken(CheckEntityEnum entity, String name) throws ServerException {
-		log.warn("the {} username or email ({}) has been registered", entity.getSource(), name);
-		throw new ServerException("the " + entity.getSource() + " username or email has been registered");
-	}
-
     /**
      * 根据用户名获取用户
      *
@@ -214,7 +223,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
      */
     @Override
     public User getByUsername(String username) {
-        return userMapper.selectByUsername(username);
+        return userExtendMapper.selectByUsername(username);
     }
 
     /**
@@ -247,13 +256,13 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 				return user;
 			}
 
-			log.info("username({}) password is wrong", username);
-			throw new ServerException("username or password is wrong");
+			log.error("Username({}) or password is wrong", username);
+			throw new ServerException("Username or password is wrong");
         }
 
         user = ldapAutoRegist(username, password);
         if (user == null) {
-        	throw new ServerException("username or password is wrong");
+        	throw new ServerException("Username or password is wrong");
         }
         return user;
     }
@@ -279,16 +288,16 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 		
 		LdapPerson ldapPerson = ldapService.findByUsername(username, password);
 		if (null == ldapPerson) {
-			throw new ServerException("username or password is wrong");
+			throw new ServerException("Username or password is wrong");
 		}
 
 		String email = ldapPerson.getEmail();
-		if (userMapper.existEmail(ldapPerson.getEmail())) {
-			log.info("ldap auto regist fail: the email {} has been registered", email);
-			throw new ServerException("ldap auto regist fail: the email " + email + " has been registered");
+		if (userExtendMapper.existEmail(ldapPerson.getEmail())) {
+			log.error("The email({}) has been registered", email);
+			throw new ServerException("The email has been registered");
 		}
 
-		if (userMapper.existUsername(ldapPerson.getSAMAccountName())) {
+		if (userExtendMapper.existUsername(ldapPerson.getSAMAccountName())) {
 			ldapPerson.setSAMAccountName(email);
 		}
 
@@ -306,7 +315,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
      */
     @Override
 	public List<UserBaseInfo> getUsersByKeyword(String keyword, User user, Long orgId, Boolean includeSelf) {
-		List<UserBaseInfo> users = userMapper.getUsersByKeyword(keyword, orgId);
+		List<UserBaseInfo> users = userExtendMapper.getUsersByKeyword(keyword, orgId);
 		if (includeSelf) {
 			return users;
 		}
@@ -331,9 +340,9 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
     @Override
     @Transactional
     public boolean updateUser(User user) throws ServerException {
-        if (userMapper.updateBaseInfo(user) <= 0) {
-            log.info("update user fail, username: {}", user.getUsername());
-            throw new ServerException("update user fail");
+        if (userExtendMapper.updateBaseInfo(user) <= 0) {
+            log.info("Update user({}) fail", user.getId());
+            throw new ServerException("Update user fail");
         }
         return true;
     }
@@ -367,17 +376,21 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 		Long userId = user.getId();
 
 		try {
+			TokenEntity tokenDetail = new TokenEntity(user.getUsername(), user.getPassword());
 			// 验证激活token
-			if (tokenUtils.validateToken(token, user)) {
+			if (tokenUtils.validateToken(token, tokenDetail)) {
 				user.setActive(true);
 				user.setUpdateTime(new Date());
-				userMapper.activeUser(user);
+				userExtendMapper.activeUser(user);
 
 				String orgName = user.getUsername() + "'s Organization";
 				// 激活成功，创建默认Orgnization
 				Organization organization = new Organization();
 		        organization.setName(orgName);
 		        organization.setUserId(userId);
+		        organization.setMemberNum(1);
+		        organization.setMemberPermission((short)1);
+		        organization.setAllowCreateProject(true);
 		        organization.setCreateBy(userId);
 		        organization.setCreateTime(new Date());
 				organizationExtendMapper.insert(organization);
@@ -393,7 +406,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 
 				UserLoginResult userLoginResult = new UserLoginResult();
 				BeanUtils.copyProperties(user, userLoginResult);
-				return resultMap.success(tokenUtils.generateToken(user)).payload(userLoginResult);
+				return resultMap.success(tokenUtils.generateToken(tokenDetail)).payload(userLoginResult);
 			}
 
 			return resultMap.fail().message("The activate toke is invalid");
@@ -420,7 +433,8 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         Map<String, Object> content = new HashMap<String, Object>();
         content.put("username", user.getUsername());
         content.put("host", serverUtils.getHost());
-        content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(user), null));
+        TokenEntity tokenDetail = new TokenEntity(user.getUsername(), user.getPassword());
+        content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(tokenDetail), null));
 
         MailContent mailContent = MailContent.MailContentBuilder.builder()
                 .withSubject(Constants.USER_ACTIVATE_EMAIL_SUBJECT)
@@ -455,7 +469,8 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         //设置新密码
         user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
         user.setUpdateTime(new Date());
-        if (userMapper.changePassword(user) > 0) {
+        if (userExtendMapper.changePassword(user) > 0) {
+        	optLogger.info("Password is update by user({})", user.getId());
             return resultMap.success().message("Successful password modification");
         }
         
@@ -477,7 +492,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 
         //校验文件是否图片
         if (!fileUtils.isImage(file)) {
-            return resultMap.failAndRefreshToken(request).message("file format error");
+            return resultMap.failAndRefreshToken(request).message("File format error");
         }
 
         //上传文件
@@ -486,11 +501,11 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         try {
             avatar = fileUtils.upload(file, Constants.USER_AVATAR_PATH, fileName);
             if (StringUtils.isEmpty(avatar)) {
-                return resultMap.failAndRefreshToken(request).message("user avatar upload error");
+                return resultMap.failAndRefreshToken(request).message("User avatar upload error");
             }
         } catch (Exception e) {
-            log.error("user avatar upload error, username: {}, error: {}", user.getUsername(), e.getMessage());
-            return resultMap.failAndRefreshToken(request).message("user avatar upload error");
+            log.error("User({}) avatar upload error, e={}", user.getUsername(), e.getMessage());
+            return resultMap.failAndRefreshToken(request).message("User avatar upload error");
         }
 
         //删除原头像
@@ -501,13 +516,13 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         //修改用户头像
         user.setAvatar(avatar);
         user.setUpdateTime(new Date());
-        if (userMapper.updateAvatar(user) > 0) {
+        if (userExtendMapper.updateAvatar(user) > 0) {
             Map<String, String> map = new HashMap<>();
             map.put("avatar", avatar);
             return resultMap.successAndRefreshToken(request).payload(map);
         }
         
-        return resultMap.failAndRefreshToken(request).message("server error, user avatar update fail");
+        return resultMap.failAndRefreshToken(request).message("User avatar upload error");
     }
 
 
@@ -523,9 +538,9 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
     public ResultMap getUserProfile(Long id, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        User tempUser = userMapper.getById(id);
+        User tempUser = userExtendMapper.selectByPrimaryKey(id);
         if (null == tempUser) {
-            return resultMap.failAndRefreshToken(request).message("user not found");
+            return resultMap.failAndRefreshToken(request).message("User not found");
         }
         
         UserProfile userProfile = new UserProfile();

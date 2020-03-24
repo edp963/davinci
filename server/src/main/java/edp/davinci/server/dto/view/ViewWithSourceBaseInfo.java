@@ -20,8 +20,8 @@
 package edp.davinci.server.dto.view;
 
 import edp.davinci.core.dao.entity.RelRoleView;
+import edp.davinci.core.dao.entity.View;
 import edp.davinci.server.dto.source.SourceBaseInfo;
-import edp.davinci.server.model.View;
 import lombok.Data;
 
 import java.util.List;
@@ -29,6 +29,5 @@ import java.util.List;
 @Data
 public class ViewWithSourceBaseInfo extends View {
     private SourceBaseInfo source;
-
     private List<RelRoleView> roles;
 }

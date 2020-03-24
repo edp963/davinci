@@ -21,7 +21,7 @@ package edp.davinci.server.service;
 
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.LdapPerson;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
 public interface LdapService {
 

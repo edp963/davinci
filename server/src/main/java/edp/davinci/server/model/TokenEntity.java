@@ -20,14 +20,18 @@
 package edp.davinci.server.model;
 
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @Data
-public class TokenEntity extends TokenDetail {
+public class TokenEntity {
+    public String username;
+    public String password;
+    
+    public TokenEntity () {
 
-    @Autowired
-    private String username;
-
-    @Autowired
-    private String password;
+    }
+    
+    public TokenEntity(String username, String password) {
+    	this.username = username;
+    	this.password = password;
+    }
 }

@@ -20,7 +20,7 @@
 package edp.davinci.server.util;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.model.TokenDetail;
+import edp.davinci.server.model.TokenEntity;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -60,12 +60,12 @@ public class TokenUtils {
 
 
     /**
-     * 根据 TokenDetail 实体生成Token
+     * 根据 TokenEntity 实体生成Token
      *
      * @param tokenDetail
      * @return
      */
-    public String generateToken(TokenDetail tokenDetail) {
+    public String generateToken(TokenEntity tokenDetail) {
         Map<String, Object> claims = new HashMap<String, Object>();
         claims.put(TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
         claims.put(TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
@@ -87,13 +87,13 @@ public class TokenUtils {
 
 
     /**
-     * 根据 TokenDetail 实体和自定义超时时长生成Token
+     * 根据 TokenEntity 实体和自定义超时时长生成Token
      *
      * @param tokenDetail
      * @param timeOutMillis （毫秒）
      * @return
      */
-    public String generateToken(TokenDetail tokenDetail, Long timeOutMillis) {
+    public String generateToken(TokenEntity tokenDetail, Long timeOutMillis) {
         Map<String, Object> claims = new HashMap<String, Object>();
         claims.put(TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
         claims.put(TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
@@ -110,8 +110,8 @@ public class TokenUtils {
                             SignatureAlgorithm.valueOf(ALGORITHM) :
                             SignatureAlgorithm.HS512, SECRET.getBytes("UTF-8"))
                     .compact();
-        } catch (UnsupportedEncodingException ex) {
-            log.warn(ex.getMessage());
+        } catch (UnsupportedEncodingException e) {
+            log.warn(e.getMessage(), e);
             return Jwts.builder()
                     .setClaims(claims)
                     .setSubject(claims.get(TOKEN_USER_NAME).toString())
@@ -124,12 +124,12 @@ public class TokenUtils {
     }
 
     /**
-     * 根据 TokenDetail 实体生成永久 Token
+     * 根据 TokenEntity 实体生成永久 Token
      *
      * @param tokenDetail
      * @return
      */
-    public String generateContinuousToken(TokenDetail tokenDetail) {
+    public String generateContinuousToken(TokenEntity tokenDetail) {
         Map<String, Object> claims = new HashMap<String, Object>();
         claims.put(TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
         claims.put(TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
@@ -142,8 +142,8 @@ public class TokenUtils {
                             SignatureAlgorithm.valueOf(ALGORITHM) :
                             SignatureAlgorithm.HS512, SECRET.getBytes("UTF-8"))
                     .compact();
-        } catch (UnsupportedEncodingException ex) {
-            log.warn(ex.getMessage());
+        } catch (UnsupportedEncodingException e) {
+            log.warn(e.getMessage(), e);
             return Jwts.builder()
                     .setClaims(claims)
                     .setSubject(claims.get(TOKEN_USER_NAME).toString())
@@ -246,17 +246,16 @@ public class TokenUtils {
     }
 
     /**
-     * 根据 TokenDetail 验证token
+     * 根据 TokenEntity 验证token
      *
      * @param token
      * @param tokenDetail
      * @return
      */
-    public Boolean validateToken(String token, TokenDetail tokenDetail) {
-        TokenDetail user = (TokenDetail) tokenDetail;
+    public Boolean validateToken(String token, TokenEntity tokenDetail) {
         String username = getUsername(token);
         String password = getPassword(token);
-        return (username.equals(user.getUsername()) && password.equals(user.getPassword()) && !(isExpired(token)));
+        return (username.equals(tokenDetail.getUsername()) && password.equals(tokenDetail.getPassword()) && !(isExpired(token)));
     }
 
     /**

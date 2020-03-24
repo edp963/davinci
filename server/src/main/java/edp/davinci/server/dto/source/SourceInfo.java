@@ -26,20 +26,20 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-@NotNull(message = "source info cannot be null")
+@NotNull(message = "Source info cannot be null")
 public class SourceInfo {
 
     @Min(value = 1L, message = "Invalid source id")
     private Long id;
 
-    @NotBlank(message = "source name cannot be EMPTY")
+    @NotBlank(message = "Source name cannot be empty")
     private String name;
 
     private String description;
 
-    @NotBlank(message = "source type cannot be EMPTY")
+    @NotBlank(message = "Source type cannot be empty")
     private String type;
 
-    @NotNull(message = "source config cannot be null")
+    @NotNull(message = "Source config cannot be null")
     private SourceConfig config;
 }

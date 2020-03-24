@@ -20,7 +20,10 @@
 package edp.davinci.server.util;
 
 import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
+
+import com.alibaba.fastjson.JSONObject;
 import com.sun.tools.javac.util.ListBuffer;
 
 import edp.davinci.server.commons.Constants;
@@ -418,6 +421,21 @@ public class SqlParseUtils {
         }
 
         return originExpression;
+    }
+    
+    public static List<SqlVariable> getVariables(String variable, String sql) {
+
+    	if (StringUtils.isEmpty(variable) || StringUtils.isEmpty(sql)) {
+            return null;
+        }
+
+        try {
+            return JSONUtils.toObjectArray(variable, SqlVariable.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
     
 	private char getSqlTempDelimiter(String sqlTempDelimiter) {

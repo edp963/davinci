@@ -57,7 +57,7 @@ import edp.davinci.server.dto.source.SourceTest;
 import edp.davinci.server.dto.source.UploadMeta;
 import edp.davinci.server.model.DBTables;
 import edp.davinci.server.model.TableInfo;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.SourceService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

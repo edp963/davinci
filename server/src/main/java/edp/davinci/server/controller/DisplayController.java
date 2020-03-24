@@ -26,7 +26,7 @@ import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.display.*;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DisplayService;
 import edp.davinci.server.service.DisplaySlideService;
 import io.swagger.annotations.Api;

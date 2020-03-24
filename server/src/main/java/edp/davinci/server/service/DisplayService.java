@@ -21,6 +21,7 @@ package edp.davinci.server.service;
 
 import edp.davinci.core.dao.entity.Display;
 import edp.davinci.core.dao.entity.Role;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.dto.display.*;
 import edp.davinci.server.dto.role.VizVisibility;
 import edp.davinci.server.exception.NotFoundException;

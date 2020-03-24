@@ -26,9 +26,9 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
-@NotNull(message = "request parameter cannot be null")
+@NotNull(message = "Distinct parameter cannot be null")
 public class DistinctParam {
-    @NotEmpty(message = "distinct column cannot be EMPTY")
+    @NotEmpty(message = "Distinct column cannot be empty")
     private List<String> columns;
 
     private List<String> filters;

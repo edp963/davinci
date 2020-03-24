@@ -26,7 +26,7 @@ import edp.davinci.core.dao.entity.MemDashboardWidget;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.dashboard.*;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.DashboardService;
 import io.swagger.annotations.Api;

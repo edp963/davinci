@@ -27,8 +27,8 @@ import java.util.Set;
 
 import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
-import edp.davinci.server.model.View;
-import edp.davinci.server.model.Widget;
+import edp.davinci.core.dao.entity.View;
+import edp.davinci.core.dao.entity.Widget;
 
 @Data
 @ToString(callSuper = true)

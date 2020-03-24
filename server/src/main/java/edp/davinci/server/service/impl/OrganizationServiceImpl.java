@@ -36,7 +36,7 @@ import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.MailContent;
 import edp.davinci.server.model.TokenEntity;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.OrganizationService;
 import edp.davinci.server.util.BaseLock;
 import edp.davinci.commons.util.CollectionUtils;
@@ -68,7 +68,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     public OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userExtendMapper;
 
     @Autowired
     private ProjectExtendMapper projectExtendMapper;
@@ -127,7 +127,9 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             Organization organization = new Organization();
             organization.setName(organizationCreate.getName());
             organization.setDescription(organizationCreate.getDescription());
+            organization.setMemberNum(1);
             organization.setMemberPermission((short)1);
+            organization.setAllowCreateProject(true);
             organization.setUserId(userId);
             organization.setCreateBy(userId);
             organization.setCreateTime(new Date());
@@ -372,9 +374,9 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         Organization organization = getOrganization(orgId);
 
         //验证被邀请者
-        User member = userMapper.getById(memId);
+        User member = userExtendMapper.selectByPrimaryKey(memId);
         if (null == member) {
-            log.info("user (:{}) is not found", memId);
+            log.error("User({}) is not found", memId);
             throw new NotFoundException("user is not found");
         }
 
@@ -468,7 +470,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 			throw new ServerException("Password is wrong");
 		}
 
-		User inviter = userMapper.getById(inviterId);
+		User inviter = userExtendMapper.selectByPrimaryKey(inviterId);
 		if (null == inviter) {
 			log.error("ConfirmInvite error: invalid token inviter");
 			throw new ServerException("Invalid Token");
@@ -535,7 +537,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 		Long inviterId = Long.parseLong(ids[0]);
 		Long memeberId = Long.parseLong(ids[1]);
 		Long orgId = Long.parseLong(ids[2]);
-		User inviter = userMapper.getById(inviterId);
+		User inviter = userExtendMapper.selectByPrimaryKey(inviterId);
 		if (null == inviter) {
 			log.error("ConfirmInvite error: invalid token inviter");
 			throw new ServerException("Invalid Token");
@@ -549,7 +551,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 			throw new ServerException("Invalid Token");
 		}
 
-		User member = userMapper.getById(memeberId);
+		User member = userExtendMapper.selectByPrimaryKey(memeberId);
 		if (null == member) {
 			throw new NotFoundException("User is not found");
 		}

@@ -28,7 +28,7 @@ import edp.davinci.server.dao.ProjectExtendMapper;
 import edp.davinci.server.dao.StarExtendMapper;
 import edp.davinci.server.dto.project.ProjectWithCreateBy;
 import edp.davinci.server.dto.star.StarUser;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.StarService;
 import edp.davinci.server.util.TokenUtils;
 

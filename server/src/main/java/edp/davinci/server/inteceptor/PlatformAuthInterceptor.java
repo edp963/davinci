@@ -29,9 +29,9 @@ import edp.davinci.server.annotation.AuthIgnore;
 import edp.davinci.server.annotation.AuthShare;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.dao.UserMapper;
+import edp.davinci.server.dao.UserExtendMapper;
 import edp.davinci.server.enums.HttpCodeEnum;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.AuthenticationService;
 import edp.davinci.server.util.TokenUtils;
 
@@ -55,7 +55,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
     private PlatformMapper platformMapper;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userMapper;
 
     @Autowired
     private BeanFactory beanFactory;

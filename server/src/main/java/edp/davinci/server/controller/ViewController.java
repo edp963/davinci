@@ -25,7 +25,7 @@ import edp.davinci.server.dto.view.*;
 import edp.davinci.server.model.DacChannel;
 import edp.davinci.server.model.Paginate;
 import edp.davinci.server.model.PaginateWithQueryColumns;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.ViewService;
 import edp.davinci.server.util.DacChannelUtils;
 import io.swagger.annotations.Api;

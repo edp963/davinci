@@ -22,7 +22,7 @@ package edp.davinci.server.component.excel;
 import lombok.Data;
 import org.slf4j.Logger;
 
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
 import java.io.Serializable;
 import java.util.List;

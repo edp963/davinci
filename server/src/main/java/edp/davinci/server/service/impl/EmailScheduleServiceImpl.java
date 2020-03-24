@@ -67,8 +67,8 @@ import edp.davinci.server.dao.CronJobExtendMapper;
 import edp.davinci.server.dao.DashboardExtendMapper;
 import edp.davinci.server.dao.DisplayExtendMapper;
 import edp.davinci.server.dao.DisplaySlideExtendMapper;
-import edp.davinci.server.dao.UserMapper;
-import edp.davinci.server.dao.WidgetMapper;
+import edp.davinci.server.dao.UserExtendMapper;
+import edp.davinci.server.dao.WidgetExtendMapper;
 import edp.davinci.server.dto.cronjob.CronJobConfig;
 import edp.davinci.server.dto.cronjob.CronJobContent;
 import edp.davinci.server.dto.cronjob.ExcelContent;
@@ -87,8 +87,8 @@ import edp.davinci.server.enums.MailContentTypeEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.MailAttachment;
 import edp.davinci.server.model.MailContent;
-import edp.davinci.server.model.User;
-import edp.davinci.server.model.Widget;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.util.MailUtils;
@@ -109,10 +109,10 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     private DisplaySlideExtendMapper displaySlideExtendMapper;
 
     @Autowired
-    private WidgetMapper widgetMapper;
+    private WidgetExtendMapper widgetMapper;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userExtendMapper;
 
     @Autowired
     private DashboardExtendMapper dashboardExtendMapper;
@@ -167,7 +167,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         List<ExcelContent> excels = null;
         List<ImageContent> images = null;
 
-        User creater = userMapper.getById(cronJob.getCreateBy());
+        User creater = userExtendMapper.selectByPrimaryKey(cronJob.getCreateBy());
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
             images = generateImages(jobId, cronJobConfig, creater.getId());

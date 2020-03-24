@@ -29,7 +29,7 @@ import javax.validation.constraints.NotNull;
 import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
 
 @Data
-@NotNull(message = "display slide widget cannot be null")
+@NotNull(message = "Display slide widget cannot be null")
 public class MemDisplaySlideWidgetDTO extends MemDisplaySlideWidget {
 	
     @Min(value = 1L, message = "Invalid id")

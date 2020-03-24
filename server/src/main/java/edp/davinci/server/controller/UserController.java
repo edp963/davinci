@@ -25,7 +25,8 @@ import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.user.*;
 import edp.davinci.server.enums.HttpCodeEnum;
-import edp.davinci.server.model.User;
+import edp.davinci.server.model.TokenEntity;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -73,7 +74,8 @@ public class UserController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         User user = userService.regist(userRegist);
-        return ResponseEntity.ok(new ResultMap().success().payload(tokenUtils.generateToken(user)));
+		TokenEntity tokenDetail = new TokenEntity(user.getUsername(), user.getPassword());
+        return ResponseEntity.ok(new ResultMap().success().payload(tokenUtils.generateToken(tokenDetail)));
     }
 
 

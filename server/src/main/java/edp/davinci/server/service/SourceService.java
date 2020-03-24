@@ -26,7 +26,7 @@ import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.DBTables;
 import edp.davinci.server.model.TableInfo;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
 import org.springframework.web.multipart.MultipartFile;
 

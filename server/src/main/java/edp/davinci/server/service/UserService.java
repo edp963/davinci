@@ -25,7 +25,7 @@ import edp.davinci.server.dto.user.UserBaseInfo;
 import edp.davinci.server.dto.user.UserLogin;
 import edp.davinci.server.dto.user.UserRegist;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.multipart.MultipartFile;

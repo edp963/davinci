@@ -26,8 +26,8 @@ import edp.davinci.server.dto.widget.WidgetUpdate;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.User;
-import edp.davinci.server.model.Widget;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.Widget;
 
 import java.io.File;
 import java.util.List;

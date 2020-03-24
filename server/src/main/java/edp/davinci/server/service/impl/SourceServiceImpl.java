@@ -55,7 +55,7 @@ import edp.davinci.core.dao.entity.Source;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.jdbc.JdbcDataSource;
 import edp.davinci.server.dao.SourceExtendMapper;
-import edp.davinci.server.dao.ViewMapper;
+import edp.davinci.server.dao.ViewExtendMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.source.DatasourceType;
@@ -83,8 +83,8 @@ import edp.davinci.server.model.JdbcSourceInfo;
 import edp.davinci.server.model.QueryColumn;
 import edp.davinci.server.model.RedisMessageEntity;
 import edp.davinci.server.model.TableInfo;
-import edp.davinci.server.model.User;
-import edp.davinci.server.model.View;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.View;
 import edp.davinci.server.model.JdbcSourceInfo.JdbcSourceInfoBuilder;
 import edp.davinci.server.runner.LoadSupportDataSourceRunner;
 import edp.davinci.server.service.ProjectService;
@@ -112,7 +112,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	private SqlUtils sqlUtils;
 
 	@Autowired
-	private ViewMapper viewMapper;
+	private ViewExtendMapper viewMapper;
 
 	@Autowired
 	private ProjectService projectService;

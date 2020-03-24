@@ -26,6 +26,5 @@ import java.util.List;
 @Data
 public class WhereParam {
     private String column;
-
     private List<String> value;
 }

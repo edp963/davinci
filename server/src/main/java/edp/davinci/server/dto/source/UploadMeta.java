@@ -32,7 +32,7 @@ import edp.davinci.server.enums.UploadModeEnum;
 @NotNull(message = "Csv meta cannot be null")
 public class UploadMeta {
 
-    @NotBlank(message = "table name cannot be empty")
+    @NotBlank(message = "Table name cannot be empty")
     private String tableName;
 
     @Min(value = (short) 0, message = "Invalid mode")

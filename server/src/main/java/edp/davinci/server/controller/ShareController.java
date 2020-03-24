@@ -33,7 +33,8 @@ import edp.davinci.server.dto.view.DistinctParam;
 import edp.davinci.server.dto.view.ViewExecuteParam;
 import edp.davinci.server.enums.HttpCodeEnum;
 import edp.davinci.server.model.Paginate;
-import edp.davinci.server.model.User;
+import edp.davinci.server.model.TokenEntity;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.ShareService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -91,7 +92,8 @@ public class ShareController extends BaseController {
         }
 
         User user = shareService.shareLogin(token, userLogin);
-        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(user)).payload(new UserLoginResult(user)));
+        TokenEntity tokenDetail = new TokenEntity(user.getUsername(), user.getPassword());
+        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(tokenDetail)).payload(new UserLoginResult(user)));
     }
 
     /**

@@ -19,7 +19,7 @@
 
 package edp.davinci.server.dto.user;
 
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import lombok.Data;
 
 @Data

@@ -41,7 +41,7 @@ import edp.davinci.server.dao.RoleExtendMapper;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.model.RoleDisableViz;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.DashboardPortal;

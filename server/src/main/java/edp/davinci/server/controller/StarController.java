@@ -22,7 +22,7 @@ package edp.davinci.server.controller;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.enums.HttpCodeEnum;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.StarService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

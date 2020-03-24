@@ -27,13 +27,13 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
-@NotNull(message = "view cannot be null")
+@NotNull(message = "View cannot be null")
 public class ViewUpdate {
 
-    @Min(value = 1L, message = "Invalid view Id")
+    @Min(value = 1L, message = "Invalid view id")
     private Long id;
 
-    @NotBlank(message = "view name cannot be EMPTY")
+    @NotBlank(message = "View name cannot be empty")
     private String name;
 
     private String description;

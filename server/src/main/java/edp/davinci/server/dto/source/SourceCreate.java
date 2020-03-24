@@ -26,20 +26,20 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-@NotNull(message = "source info cannot be null")
+@NotNull(message = "Source info cannot be null")
 public class SourceCreate {
 
-    @NotBlank(message = "source name cannot be EMPTY")
+    @NotBlank(message = "Source name cannot be empty")
     private String name;
 
     private String description;
 
-    @NotBlank(message = "souce type cannot be EMPTY")
+    @NotBlank(message = "Source type cannot be empty")
     private String type;
 
     @Min(value = 1L, message = "Invalid project id")
     private Long projectId;
 
-    @NotNull(message = "source config cannot be null")
+    @NotNull(message = "Source config cannot be null")
     private SourceConfig config;
 }
