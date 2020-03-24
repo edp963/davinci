@@ -78,7 +78,7 @@ interface IDashboardItemProps {
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onShowDrillEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
-  onOpenSharePanel: (id: number, type: SharePanelType, title: string, itemId?: number) => void
+  onOpenSharePanel?: (id: number, type: SharePanelType, title: string, itemId?: number) => void
   onDownloadCsv: (itemId: number, widgetId: number, shareToken?: string) => void
   onTurnOffInteract: (itemId: number) => void
   onShowFullScreen: (chartData: any) => void
