@@ -36,8 +36,8 @@
         <trim prefix=" (" suffix=")" suffixOverrides=",">
             #{orgId, jdbcType=BIGINT},
             #{userId, jdbcType=BIGINT},
-            #{role, jdbcType=SMALLINT}
-            #{createBy, jdbcType=BIGINT}
+            #{role, jdbcType=SMALLINT},
+            #{createBy, jdbcType=BIGINT},
             #{createTime, jdbcType=TIMESTAMP}
         </trim>
     </insert>
