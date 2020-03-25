@@ -425,7 +425,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         }
 
         SXSSFWorkbook wb = new SXSSFWorkbook(1000);
-        ExecutorService executorService = Executors.newFixedThreadPool(8);
+        ExecutorService executorService = Executors.newFixedThreadPool(widgets.size() > 8 ? 8 : widgets.size());
         CountDownLatch countDownLatch = new CountDownLatch(widgets.size());
         int i = 1;
         ScriptEngine engine = getExecuptParamScriptEngine();
@@ -453,9 +453,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 					sheet = wb.createSheet(sheetName);
 					ExcelUtils.writeSheet(sheet, paginate.getColumns(), paginate.getResultList(), wb, containType,
 							widget.getConfig(), executeParam.getParams());
-				} catch (ServerException e) {
-					log.error(e.getMessage(), e);
-				} catch (SQLException e) {
+				} catch (Exception e) {
 					log.error(e.getMessage(), e);
 				} finally {
 					sheet = null;
@@ -467,7 +465,6 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         }
 
         countDownLatch.await();
-        //TODO performance problem need to fix 
         executorService.shutdown();
 
         File file = new File(filePath);

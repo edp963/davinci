@@ -97,4 +97,6 @@ enum Types {
   DELETE_SLIDES_FAILURE = 'davinci/Viz/DELETE_SLIDES_FAILURE'
 }
 
+export { DashboardTypes } from 'app/containers/Dashboard/constants'
+
 export const ActionTypes = createTypes(Types)

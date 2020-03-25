@@ -220,6 +220,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	        project.setUserId(user.getId());
 	        project.setIsTransfer(false);
 	        project.setInitialOrgId(orgId);
+	        project.setStarNum(0);
 	        project.setCreateBy(user.getId());
 	        project.setCreateTime(new Date());
 

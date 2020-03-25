@@ -10,7 +10,7 @@
 	~ -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.server.dao.ViewMapper">
+<mapper namespace="edp.davinci.server.dao.ViewExtendMapper">
 	<sql id="selectViewWithProjectAndSourceBaseSql">
 		select v.*,
 		p.id 'project.id',

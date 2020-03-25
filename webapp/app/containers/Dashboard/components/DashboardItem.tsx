@@ -40,14 +40,14 @@ import { getPagination, getNativeQuery} from 'containers/Viz/utils'
 import ModulePermission from 'containers/Account/components/checkModulePermission'
 import ShareDownloadPermission from 'containers/Account/components/checkShareDownloadPermission'
 import { IProject } from 'containers/Projects/types'
-import { IQueryConditions, IQueryVariableMap } from '../Grid'
+import { IQueryConditions, IQueryVariableMap, SharePanelType } from '../types'
 import { IMapControlOptions, OnGetControlOptions, IDistinctValueReqeustParams, IFilters } from 'app/components/Filters/types'
 import { ICurrentDataInFullScreenProps } from './fullScreenPanel/FullScreenPanel'
 const styles = require('../Dashboard.less')
 const utilStyles = require('assets/less/util.less')
 
 export type IGetChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: any) => void
- 
+
 interface IDashboardItemProps {
   itemId: number
   widget: any
@@ -56,12 +56,11 @@ interface IDashboardItemProps {
   isTrigger?: boolean
   datasource: any
   loading: boolean
-  polling: string
+  polling: boolean
   interacting: boolean
-  frequency: string
-  shareInfo: string
-  secretInfo?: string
-  shareInfoLoading?: boolean
+  frequency: number
+  shareToken: string
+  shareLoading?: boolean
   downloadCsvLoading: boolean
   drillHistory?: any
   drillpathSetting?: any
@@ -79,8 +78,8 @@ interface IDashboardItemProps {
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onShowDrillEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
-  onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
-  onDownloadCsv: (itemId: number, widgetId: number, shareInfo?: string) => void
+  onOpenSharePanel?: (id: number, type: SharePanelType, title: string, itemId?: number) => void
+  onDownloadCsv: (itemId: number, widgetId: number, shareToken?: string) => void
   onTurnOffInteract: (itemId: number) => void
   onShowFullScreen: (chartData: any) => void
   onCheckTableInteract: (itemId: number) => boolean
@@ -96,7 +95,6 @@ interface IDashboardItemProps {
 
 interface IDashboardItemStates {
   controlPanelVisible: boolean
-  sharePanelAuthorized: boolean
   widgetProps: IWidgetConfig
   pagination: IPaginationParams
   queryVariables: IQueryVariableMap
@@ -117,7 +115,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     super(props)
     this.state = {
       controlPanelVisible: false,
-      sharePanelAuthorized: false,
       widgetProps: null,
       pagination: null,
       queryVariables: {},
@@ -170,7 +167,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   public componentWillReceiveProps (nextProps: IDashboardItemProps) {
-    const { widget, queryConditions, renderType } = this.props
+    const { widget, queryConditions } = this.props
     let { widgetProps, pagination, model } = this.state
 
     if (nextProps.widget !== widget) {
@@ -263,7 +260,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
   }
 
-  private onControlSearch = (queryConditions: Partial<IQueryConditions>) => {
+  private onControlSearch = (queryConditions: IQueryConditions) => {
     const {
       itemId,
       widget,
@@ -304,14 +301,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private downloadCsv = () => {
-    const { widget, itemId, shareInfo, onDownloadCsv } = this.props
-    onDownloadCsv(itemId, widget.id, shareInfo)
+    const { widget, itemId, shareToken, onDownloadCsv } = this.props
+    onDownloadCsv(itemId, widget.id, shareToken)
   }
 
-  private changeSharePanelAuthorizeState = (state) => () => {
-    this.setState({
-      sharePanelAuthorized: state
-    })
+  private openSharePanel = () => {
+    const { itemId, widget, onOpenSharePanel } = this.props
+    const { id, name } = widget
+    onOpenSharePanel(id, 'widget', name, itemId)
   }
 
   private checkTableInteract = () => {
@@ -675,11 +672,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       datasource,
       loading,
       interacting,
-      shareInfo,
-      secretInfo,
+      shareToken,
       drillHistory,
       drillpathSetting,
-      shareInfoLoading,
+      shareLoading,
       downloadCsvLoading,
       renderType,
       controlSelectOptions,
@@ -688,7 +684,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onShowDrillEdit,
       onSelectDrillHistory,
       onDeleteDashboardItem,
-      onLoadWidgetShareLink,
       container,
       errorMessage
     } = this.props
@@ -696,7 +691,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const {
       controlPanelVisible,
-      sharePanelAuthorized,
       widgetProps,
       queryVariables,
       pagination,
@@ -717,8 +711,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             id={widget.id}
             type="widget"
             itemId={itemId}
-            shareInfo={shareInfo}
-            shareInfoLoading={shareInfoLoading}
+            shareToken={shareToken}
+            shareLoading={shareLoading}
             downloadCsvLoading={downloadCsvLoading}
             onDownloadCsv={this.downloadCsv}
           />
@@ -728,25 +722,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       const ShareButton = ShareDownloadPermission<IconProps>(currentProject, 'share')(Icon)
       shareButton = (
         <Tooltip title="分享">
-          <Popover
-            placement="bottomRight"
-            trigger="click"
-            content={
-              <SharePanel
-                id={widget.id}
-                type="widget"
-                itemId={itemId}
-                shareInfo={shareInfo}
-                secretInfo={secretInfo}
-                shareInfoLoading={shareInfoLoading}
-                authorized={sharePanelAuthorized}
-                onLoadWidgetShareLink={onLoadWidgetShareLink}
-                afterAuthorization={this.changeSharePanelAuthorizeState(true)}
-              />
-            }
-          >
-            <ShareButton type="share-alt" onClick={this.changeSharePanelAuthorizeState(false)} />
-          </Popover>
+          <ShareButton type="share-alt" onClick={this.openSharePanel} />
         </Tooltip>
       )
 
@@ -768,7 +744,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             id={widget.id}
             type="widget"
             itemId={itemId}
-            shareInfo={shareInfo}
+            shareToken={shareToken}
             downloadCsvLoading={downloadCsvLoading}
             onDownloadCsv={this.downloadCsv}
           />
@@ -807,26 +783,25 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const controlToggle = !!controls.length && (
       <Tooltip title="选择参数">
         <Icon
-          className={styles.toggle}
           type={controlPanelVisible ? 'up-square-o' : 'down-square-o'}
           onClick={this.toggleControlPanel}
         />
       </Tooltip>
     )
 
-    const loadingIcon = loading && <Icon className={styles.toggle} type="loading" />
+    const loadingIcon = loading && <Icon type="loading" />
 
-    const descToggle = widget.description && (
+    const descIcon = widget.description && (
       <Popover
         placement="bottomLeft"
         content={widget.description}
         overlayClassName={styles.widgetInfoContent}
       >
-        <Icon className={styles.toggle} type="info-circle" />
+        <Icon type="info-circle" />
       </Popover>
     )
 
-    const errorToggle = errorMessage && (
+    const errorIcon = errorMessage && (
       <Tooltip
         title={(
           <>
@@ -838,7 +813,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         overlayClassName={styles.widgetInfoContent}
       >
         <Icon
-          className={`${styles.toggle} ${styles.error}`}
+          className={styles.error}
           type="warning"
         />
       </Tooltip>
@@ -941,9 +916,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           <div className={styles.title}>
             {controlToggle}
             <h4>{widget.name}</h4>
+            {descIcon}
+            {errorIcon}
             {loadingIcon}
-            {descToggle}
-            {errorToggle}
             {}
           </div>
           <div className={styles.tools}>

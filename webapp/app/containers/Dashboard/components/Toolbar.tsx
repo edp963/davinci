@@ -1,34 +1,27 @@
 import React from 'react'
 
-import { Button, Tooltip, Popover, Col, Popconfirm } from 'antd'
+import { Button, Tooltip, Col, Popconfirm } from 'antd'
 import { ButtonProps } from 'antd/lib/button/button'
 
 import { IProject } from 'containers/Projects/types'
-import { ICurrentDashboard } from '../'
+import { ICurrentDashboard } from '..'
 
 import ModulePermission from 'containers/Account/components/checkModulePermission'
 import ShareDownloadPermission from 'containers/Account/components/checkShareDownloadPermission'
 
-import SharePanel from 'components/SharePanel'
-
 const utilStyles = require('assets/less/util.less')
 
-interface IDashboardToolbarProps {
+interface IToolbarProps {
   currentProject: IProject
   currentDashboard: ICurrentDashboard
-  currentDashboardShareInfo: string
-  currentDashboardSecretInfo: string
-  currentDashboardShareInfoLoading: boolean
-  dashboardSharePanelAuthorized: boolean
   showAddDashboardItem: () => void
-  onChangeDashboardAuthorize: (authorized: boolean) => () => void
-  onLoadDashboardShareLink: (id: number, authName: string) => void
+  onOpenSharePanel: () => void
   onToggleLinkageVisibility: (visible: boolean) => () => void
   onToggleGlobalFilterVisibility: (visible: boolean) => () => void
   onDownloadDashboard: () => void
 }
 
-export class DashboardToolbar extends React.PureComponent<IDashboardToolbarProps> {
+export class Toolbar extends React.PureComponent<IToolbarProps> {
 
   public render () {
     const { currentDashboard } = this.props
@@ -36,13 +29,8 @@ export class DashboardToolbar extends React.PureComponent<IDashboardToolbarProps
 
     const {
       currentProject,
-      currentDashboardShareInfo,
-      currentDashboardSecretInfo,
-      currentDashboardShareInfoLoading,
-      dashboardSharePanelAuthorized,
-      onChangeDashboardAuthorize,
       showAddDashboardItem,
-      onLoadDashboardShareLink,
+      onOpenSharePanel,
       onToggleLinkageVisibility,
       onToggleGlobalFilterVisibility,
       onDownloadDashboard
@@ -71,31 +59,14 @@ export class DashboardToolbar extends React.PureComponent<IDashboardToolbarProps
       </Tooltip>
     )
     shareButton = (
-      <Popover
-        placement="bottomRight"
-        content={
-          <SharePanel
-            id={currentDashboard.id}
-            type="dashboard"
-            shareInfo={currentDashboardShareInfo}
-            secretInfo={currentDashboardSecretInfo}
-            shareInfoLoading={currentDashboardShareInfoLoading}
-            authorized={dashboardSharePanelAuthorized}
-            afterAuthorization={onChangeDashboardAuthorize(true)}
-            onLoadDashboardShareLink={onLoadDashboardShareLink}
-          />
-        }
-        trigger="click"
-      >
-        <Tooltip placement="bottom" title="分享">
-          <ShareButton
-            type="primary"
-            icon="share-alt"
-            style={{marginLeft: '8px'}}
-            onClick={onChangeDashboardAuthorize(false)}
-          />
-        </Tooltip>
-      </Popover>
+      <Tooltip placement="bottom" title="分享">
+        <ShareButton
+          type="primary"
+          icon="share-alt"
+          style={{marginLeft: '8px'}}
+          onClick={onOpenSharePanel}
+        />
+      </Tooltip>
     )
     downloadButton = (
       <Tooltip placement="bottom" title="下载">
@@ -145,4 +116,4 @@ export class DashboardToolbar extends React.PureComponent<IDashboardToolbarProps
   }
 }
 
-export default DashboardToolbar
+export default Toolbar

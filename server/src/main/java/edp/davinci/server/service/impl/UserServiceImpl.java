@@ -389,6 +389,8 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 		        organization.setName(orgName);
 		        organization.setUserId(userId);
 		        organization.setMemberNum(1);
+		        organization.setProjectNum(0);
+		        organization.setRoleNum(0);
 		        organization.setMemberPermission((short)1);
 		        organization.setAllowCreateProject(true);
 		        organization.setCreateBy(userId);

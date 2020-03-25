@@ -33,11 +33,20 @@ import viewReducer from 'containers/View/reducer'
 import viewSaga from 'containers/View/sagas'
 import formReducer from './FormReducer'
 
+import {
+  IDashboardItem,
+  IDashboardItemInfo,
+  IDataRequestParams,
+  QueryVariable,
+  IQueryConditions,
+  IDataDownloadParams,
+  SharePanelType
+} from './types'
 import { RouteComponentWithParams } from 'utils/types'
 import { IViewBase, IFormedViews } from 'containers/View/types'
 
 import Container from 'components/Container'
-import DashboardToolbar from './components/DashboardToolbar'
+import Toolbar from './components/Toolbar'
 import DashboardItemForm from './components/DashboardItemForm'
 import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
@@ -47,12 +56,13 @@ import { IMapItemControlRequestParams, IMapControlOptions, IDistinctValueReqeust
 import {getValidColumnValue} from 'app/components/Filters/util'
 import GlobalControlPanel from 'components/Filters/FilterPanel'
 import GlobalControlConfig from 'components/Filters/config/FilterConfig'
+import SharePanel from './components/SharePanel'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 import { hasVizEditPermission } from '../Account/components/checkUtilPermission'
 
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
-import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu, message } from 'antd'
+import { Row, Col, Button, Modal, Breadcrumb, Menu, message } from 'antd'
 import { uuid } from 'utils/util'
 import FullScreenPanel, { ICurrentDataInFullScreenProps } from './components/fullScreenPanel/FullScreenPanel'
 import { decodeMetricName } from 'containers/Widget/components/util'
@@ -67,8 +77,7 @@ import {
   renderDashboardItem,
   resizeDashboardItem,
   resizeAllDashboardItem,
-  loadDashboardShareLink,
-  loadWidgetShareLink,
+  openSharePanel,
   drillDashboardItem,
   deleteDrillHistory,
   drillPathsetting,
@@ -84,9 +93,6 @@ import {
   makeSelectCurrentDashboardLoading,
   makeSelectCurrentItems,
   makeSelectCurrentItemsInfo,
-  makeSelectCurrentDashboardShareInfo,
-  makeSelectCurrentDashboardSecretInfo,
-  makeSelectCurrentDashboardShareInfoLoading,
   makeSelectCurrentDashboardSelectOptions,
   makeSelectCurrentLinkages,
   makeSelectCurrentDashboardControlParams
@@ -116,87 +122,10 @@ import { IProject } from '../Projects/types'
 import { ICurrentDashboard } from './'
 import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 import { DownloadTypes } from '../App/types'
+import { statistic, IVizData } from 'utils/statistic/statistic.dv'
 const utilStyles = require('assets/less/util.less')
 const styles = require('./Dashboard.less')
-import { statistic, IVizData } from 'utils/statistic/statistic.dv'
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
-
-export type QueryVariable = Array<{name: string, value: string | number}>
-export interface IQueryVariableMap {
-  [key: string]: string | number
-}
-export interface IQueryConditions {
-  filters: string[]
-  tempFilters: string[]
-  linkageFilters: string[]
-  globalFilters: string[]
-  orders: { column: string, direction: string }
-  variables: QueryVariable
-  linkageVariables: QueryVariable
-  globalVariables: QueryVariable
-  pagination?: {
-    pageNo: number
-    pageSize: number
-  }
-  nativeQuery?: boolean
-  drillStatus?: any
-  drillHistory?: Array<{filter?: any, type?: string, col?: string[], row?: string[], groups?: string[], name: string}>
-  drillpathSetting?: any
-  drillpathInstance?: any
-}
-
-export interface IDashboardItemInfo {
-  datasource: {
-    pageNo: number
-    pageSize: number
-    resultList: any[]
-    totalCount: number
-  }
-  loading: boolean
-  queryConditions: IQueryConditions
-  shareInfo: string
-  secretInfo: string
-  shareInfoLoading: boolean
-  downloadCsvLoading: boolean
-  interactId: string
-  rendered: boolean
-  renderType: RenderType
-  controlSelectOptions: IMapControlOptions
-  selectedItems: number[]
-  errorMessage: string
-}
-
-export interface IDataRequestParams {
-  groups: string[]
-  aggregators: Array<{column: string, func: string}>
-  filters: string[]
-  tempFilters?: string[]
-  linkageFilters?: string[]
-  globalFilters?: string[]
-  variables?: QueryVariable
-  linkageVariables?: QueryVariable
-  globalVariables?: QueryVariable
-  orders: Array<{column: string, direction: string}>
-  cache: boolean
-  expired: number
-  flush: boolean
-  pagination?: {
-    pageNo: number
-    pageSize: number
-  }
-  nativeQuery?: boolean
-  customOrders?: IFieldSortDescriptor[]
-  drillStatus?: {
-    filter: {
-      sqls: []
-    }
-    groups: string[]
-  }
-}
-
-export interface IDataDownloadParams extends IDataRequestParams {
-  id: number
-}
 
 interface IGridProps {
   dashboards: any[]
@@ -208,17 +137,14 @@ interface IGridProps {
   currentDashboardControlParams: IGridCtrlParams
   currentDashboard: ICurrentDashboard
   currentDashboardLoading: boolean
-  currentDashboardShareInfo: string
-  currentDashboardSecretInfo: string
-  currentDashboardShareInfoLoading: boolean
-  currentItems: any[]
+  currentItems: IDashboardItem[]
   currentItemsInfo: {
     [key: string]: IDashboardItemInfo
   }
   currentDashboardSelectOptions: IMapControlOptions
   currentLinkages: any[]
   onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
-  onAddDashboardItems: (portalId: number, items: IDashboardItem[], resolve: (items: IDashboardItem[]) => void) => any
+  onAddDashboardItems: (portalId: number, items: Array<Omit<Omit<IDashboardItem, 'id'>, 'config'>>, resolve: (items: IDashboardItem[]) => void) => any
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
   onEditDashboardItem: (portalId: number, item: IDashboardItem, resolve: () => void) => void
   onEditDashboardItems: (portalid: number, item: IDashboardItem[]) => void
@@ -238,8 +164,7 @@ interface IGridProps {
   onRenderDashboardItem: (itemId: number) => void
   onResizeDashboardItem: (itemId: number) => void
   onResizeAllDashboardItem: () => void
-  onLoadDashboardShareLink: (id: number, authName: string) => void
-  onLoadWidgetShareLink: (id: number, itemId: number, authName: string, resolve?: () => void) => void
+  onOpenSharePanel: (id: number, type: SharePanelType, title: string, itemId?: number) => void
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
   onDrillPathSetting: (itemId: number, history: any[]) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
@@ -265,26 +190,12 @@ interface IGridStates {
   linkageConfigVisible: boolean
   interactingStatus: { [itemId: number]: boolean }
   globalFilterConfigVisible: boolean
-  dashboardSharePanelAuthorized: boolean
   nextMenuTitle: string
   drillPathSettingVisible: boolean
 }
 
 interface IDashboardItemForm extends AntdFormType {
   onReset: () => void
-}
-
-export interface IDashboardItem {
-  id?: number
-  x?: number
-  y?: number
-  width?: number
-  height?: number
-  widgetId?: number
-  dashboardId?: number
-  polling?: boolean
-  frequency?: number
-  config?: string
 }
 
 export class Grid extends React.Component<IGridProps & RouteComponentWithParams, IGridStates> {
@@ -314,8 +225,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       linkageConfigVisible: false,
       interactingStatus: {},
       globalFilterConfigVisible: false,
-
-      dashboardSharePanelAuthorized: false,
 
       nextMenuTitle: ''
     }
@@ -369,7 +278,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       currentDashboard,
       currentDashboardLoading,
       currentItems,
-      currentItemsInfo,
       currentPortal,
       match: { params: nextParams }
     } = nextProps
@@ -566,7 +474,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
 
   private calcItemTop = (y: number) => Math.round((GRID_ROW_HEIGHT + GRID_ITEM_MARGIN) * y)
 
-  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: IQueryConditions) => {
     this.getData(
       (renderType, itemId, widget, requestParams) => {
         this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, requestParams, {...requestParams, widget})
@@ -581,13 +489,13 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
   private initiateWidgetDownloadTask = (itemId: number, widgetId: number) => {
     const { widgets } = this.props
     const widget = widgets.find((w) => w.id === widgetId)
-    const queryConditions: Partial<IQueryConditions> = {
+    const queryConditions: IQueryConditions = {
       nativeQuery: false
     }
     try {
       const widgetProps: IWidgetProps = JSON.parse(widget.config)
       const { mode, selectedChart, chartStyles } = widgetProps
-      if (mode === 'chart' && selectedChart === getTable().id) {
+      if (mode === 'chart' && selectedChart === ChartTypes.Table) {
         queryConditions.nativeQuery = chartStyles.table.withNoAggregators
       }
     } catch (error) {
@@ -616,13 +524,13 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     currentItems.forEach((item) => {
       const { id, widgetId } = item
       const widget = widgets.find((w) => w.id === widgetId)
-      const queryConditions: Partial<IQueryConditions> = {
+      const queryConditions: IQueryConditions = {
         nativeQuery: false
       }
       try {
         const widgetProps: IWidgetProps = JSON.parse(widget.config)
         const { mode, selectedChart, chartStyles } = widgetProps
-        if (mode === 'chart' && selectedChart === getTable().id) {
+        if (mode === 'chart' && selectedChart === ChartTypes.Table) {
           queryConditions.nativeQuery = chartStyles.table.withNoAggregators
         }
       } catch (error) {
@@ -656,7 +564,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     renderType: RenderType,
     itemId: number,
     widgetId: number,
-    queryConditions?: Partial<IQueryConditions>
+    queryConditions?: IQueryConditions
   ) => {
     const {
       currentItemsInfo,
@@ -1243,10 +1151,11 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       }
     })
   }
-  private changeDashboardSharePanelAuthorizeState = (state) => () => {
-    this.setState({
-      dashboardSharePanelAuthorized: state
-    })
+
+  private openDashboardSharePanel = () => {
+    const { currentDashboard, onOpenSharePanel } = this.props
+    const { id, name } = currentDashboard
+    onOpenSharePanel(id, 'dashboard', name)
   }
 
   private getWidgetInfo = (dashboardItemId) => {
@@ -1583,16 +1492,12 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       widgets,
       currentDashboard,
       currentDashboardLoading,
-      currentDashboardShareInfo,
-      currentDashboardSecretInfo,
-      currentDashboardShareInfoLoading,
+      onOpenSharePanel,
       currentItems,
       currentItemsInfo,
       currentDashboardSelectOptions,
       views,
       formedViews,
-      onLoadDashboardShareLink,
-      onLoadWidgetShareLink,
       currentProject,
       currentLinkages,
     } = this.props
@@ -1610,7 +1515,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       interactingStatus,
       globalFilterConfigVisible,
       allowFullScreen,
-      dashboardSharePanelAuthorized,
       drillPathSettingVisible
     } = this.state
     let dashboardType: number
@@ -1665,9 +1569,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         const {
           datasource,
           loading,
-          shareInfo,
-          secretInfo,
-          shareInfoLoading,
+          shareToken,
+          shareLoading,
           downloadCsvLoading,
           interactId,
           rendered,
@@ -1698,10 +1601,9 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
               polling={polling}
               interacting={interacting}
               frequency={frequency}
-              shareInfo={shareInfo}
-              secretInfo={secretInfo}
+              shareToken={shareToken}
               view={view}
-              shareInfoLoading={shareInfoLoading}
+              shareLoading={shareLoading}
               downloadCsvLoading={downloadCsvLoading}
               currentProject={currentProject}
               rendered={rendered}
@@ -1717,7 +1619,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
               onShowEdit={this.showEditDashboardItemForm}
               onShowDrillEdit={this.showDrillDashboardItemForm}
               onDeleteDashboardItem={this.deleteItem}
-              onLoadWidgetShareLink={onLoadWidgetShareLink}
+              onOpenSharePanel={onOpenSharePanel}
               onDownloadCsv={this.initiateWidgetDownloadTask}
               onTurnOffInteract={this.turnOffInteract}
               onCheckTableInteract={this.checkInteract}
@@ -1824,16 +1726,11 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
                 }
               </Breadcrumb>
             </Col>
-            <DashboardToolbar
+            <Toolbar
               currentProject={currentProject}
               currentDashboard={currentDashboard}
-              currentDashboardShareInfo={currentDashboardShareInfo}
-              currentDashboardSecretInfo={currentDashboardSecretInfo}
-              currentDashboardShareInfoLoading={currentDashboardShareInfoLoading}
-              dashboardSharePanelAuthorized={dashboardSharePanelAuthorized}
               showAddDashboardItem={this.showAddDashboardItemForm}
-              onChangeDashboardAuthorize={this.changeDashboardSharePanelAuthorizeState}
-              onLoadDashboardShareLink={onLoadDashboardShareLink}
+              onOpenSharePanel={this.openDashboardSharePanel}
               onToggleGlobalFilterVisibility={this.toggleGlobalFilterConfig}
               onToggleLinkageVisibility={this.toggleLinkageConfig}
               onDownloadDashboard={this.initiateDashboardDownloadTask}
@@ -1944,7 +1841,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
             />
           : <div/>
         }
-
+        <SharePanel />
       </Container>
     )
   }
@@ -1954,9 +1851,6 @@ const mapStateToProps = createStructuredSelector({
   dashboards: makeSelectCurrentDashboards(),
   currentDashboard: makeSelectCurrentDashboard(),
   currentDashboardLoading: makeSelectCurrentDashboardLoading(),
-  currentDashboardShareInfo: makeSelectCurrentDashboardShareInfo(),
-  currentDashboardSecretInfo: makeSelectCurrentDashboardSecretInfo(),
-  currentDashboardShareInfoLoading: makeSelectCurrentDashboardShareInfoLoading(),
   currentItems: makeSelectCurrentItems(),
   currentItemsInfo: makeSelectCurrentItemsInfo(),
   currentDashboardSelectOptions: makeSelectCurrentDashboardSelectOptions(),
@@ -1987,8 +1881,7 @@ export function mapDispatchToProps (dispatch) {
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),
     onResizeDashboardItem: (itemId) => dispatch(resizeDashboardItem(itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
-    onLoadDashboardShareLink: (id, authName) => dispatch(loadDashboardShareLink(id, authName)),
-    onLoadWidgetShareLink: (id, itemId, authName, resolve) => dispatch(loadWidgetShareLink(id, itemId, authName, resolve)),
+    onOpenSharePanel: (id, type, title, itemId) => dispatch(openSharePanel(id, type, title, itemId)),
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
     onDrillPathSetting: (itemId, history) => dispatch(drillPathsetting(itemId, history)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index)),

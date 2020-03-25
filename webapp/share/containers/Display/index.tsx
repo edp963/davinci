@@ -44,7 +44,8 @@ const ShareDisplayIndex: React.FC = () => {
   const dispatch = useDispatch()
   const location = useLocation()
 
-  const shareInfo = new URLSearchParams(location.search).get('shareInfo')
+  // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
+  const shareToken = new URLSearchParams(location.search).get('shareInfo')
   const [showLogin, setShowLogin] = useState(false)
 
   useEffect(() => {
@@ -54,7 +55,7 @@ const ShareDisplayIndex: React.FC = () => {
   const loadShareContent = useCallback(() => {
     dispatch(
       ShareDisplayActions.loadDisplay(
-        shareInfo,
+        shareToken,
         () => {
           console.log('share page need login...')
         },
@@ -78,7 +79,7 @@ const ShareDisplayIndex: React.FC = () => {
       <Helmet title={title} />
       <div className={mainStyles.container}>
         {title && <Reveal />}
-        {showLogin && <Login shareInfo={shareInfo} legitimateUser={login} />}
+        {showLogin && <Login shareToken={shareToken} legitimateUser={login} />}
       </div>
     </>
   )

@@ -19,6 +19,8 @@
 
 package edp.davinci.server.dto.project;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 import edp.davinci.core.dao.entity.Project;
 import edp.davinci.server.dto.user.UserBaseInfo;
 import lombok.Data;
@@ -28,5 +30,12 @@ public class ProjectWithCreateBy extends Project {
 
     private Boolean isStar = false;
 
+    /**
+     *	前端映射字段为createBy，与Project的createBy属性冲突， 兼容0.3前端代码
+     */
+    @JSONField(name = "createBy")
     private UserBaseInfo createUser;
+    
+    @JSONField(serialize = false)
+    private Long createBy;
 }

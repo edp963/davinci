@@ -32,8 +32,6 @@ import {
   ISlideFormed
 } from './components/types'
 
-import { DashboardTypes } from './components/constants'
-
 export interface ISlideRaw extends ISlideBase {
   config: string
 }
@@ -69,7 +67,6 @@ export {
   Display,
   IDashboard,
   IDashboardNode,
-  DashboardTypes,
   SlideScaleMode,
   ISlideParams,
   ISlideFormed,

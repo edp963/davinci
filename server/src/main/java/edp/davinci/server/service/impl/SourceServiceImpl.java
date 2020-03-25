@@ -45,9 +45,6 @@ import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-
 import edp.davinci.commons.util.DateUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.MD5Utils;
@@ -826,7 +823,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 				}
 			}
 
-			ExecutorService executorService = Executors.newFixedThreadPool(8);
+			ExecutorService executorService = Executors.newFixedThreadPool(totalPage > 8 ? 8 : totalPage);
 
 			STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
 			ST st = stg.getInstanceOf("insertData");
@@ -858,9 +855,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 				}
 				long endTime = System.currentTimeMillis();
 				log.info("execute insert end ---- {}, md5:{}, cost:{} ms", DateUtils.toyyyyMMddHHmmss(endTime), md5, endTime - startTime);
-			} catch (InterruptedException e) {
-				throw new ServerException(e.getMessage());
-			} catch (ExecutionException e) {
+			} catch (InterruptedException | ExecutionException e) {
 				throw new ServerException(e.getMessage());
 			} finally {
 				executorService.shutdown();

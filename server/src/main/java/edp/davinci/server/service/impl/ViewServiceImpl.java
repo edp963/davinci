@@ -897,7 +897,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         //权限参数
         if (!CollectionUtils.isEmpty(authVariables)) {
-            ExecutorService executorService = Executors.newFixedThreadPool(8);
+        	ExecutorService executorService = Executors.newFixedThreadPool(authVariables.size() > 8 ? 8 : authVariables.size());
             Map<String, Set<String>> map = new Hashtable<>();
             List<Future> futures = new ArrayList<>(authVariables.size());
             try {
@@ -926,11 +926,12 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 					try {
 						future.get();
 					} catch (ExecutionException e) {
-						// ignore
+						executorService.shutdownNow();
+						throw new ServerException(e.getMessage());
 					}
 				}
             } catch (Exception e) {
-            	log.error(e.getMessage(),e);
+				log.error(e.getMessage(), e);
             } finally {
                 executorService.shutdown();
             }

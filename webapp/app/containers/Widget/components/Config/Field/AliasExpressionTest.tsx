@@ -3,7 +3,7 @@ import * as React from 'react'
 import { Input, Button, Form, Modal } from 'antd'
 import { FormComponentProps } from 'antd/lib/form'
 const FormItem = Form.Item
-import { IQueryVariableMap } from 'app/containers/Dashboard/Grid'
+import { IQueryVariableMap } from 'app/containers/Dashboard/types'
 
 interface IAliasExpressionTestProps extends FormComponentProps {
   visible: boolean

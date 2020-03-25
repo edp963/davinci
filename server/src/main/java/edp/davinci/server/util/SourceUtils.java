@@ -352,7 +352,7 @@ public class SourceUtils {
         try {
             Map<String, Object> configMap = JSONUtils.toObject(config, Map.class);
             if (configMap != null && configMap.containsKey("properties")) {
-            	dicts = JSONUtils.toObjectArray((String)configMap.get("properties"), Dict.class);
+            	dicts = JSONUtils.toObjectArray(JSONUtils.toString(configMap.get("properties")), Dict.class);
             }
         } catch (Exception e) {
         	log.error("Get jdbc properties from source config({}) error, e={}", config, e.getMessage());
