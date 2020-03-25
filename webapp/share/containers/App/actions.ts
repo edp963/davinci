@@ -24,13 +24,13 @@ import {
   LOGOUT
 } from './constants'
 
-export function login (username, password, shareInfo, resolve) {
+export function login (username, password, shareToken, resolve) {
   return {
     type: LOGIN,
     payload: {
       username,
       password,
-      shareInfo,
+      shareToken,
       resolve
     }
   }

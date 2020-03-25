@@ -20,13 +20,13 @@
 
 import React, { useContext } from 'react'
 
-import { Button, Popover, Icon } from 'antd'
+import { Button, Icon } from 'antd'
 const ButtonGroup = Button.Group
 
 import { DisplayToolbarContext } from './util'
 
 interface IShareProps {
-  panel: React.ReactNode
+  onShare: () => void
 }
 
 const Share: React.FC<IShareProps> = (props) => {
@@ -34,16 +34,10 @@ const Share: React.FC<IShareProps> = (props) => {
 
   return (
     <ButtonGroup size={size}>
-      <Popover
-        content={props.panel}
-        placement="bottomLeft"
-        trigger='click'
-      >
-        <Button type="ghost">
-          <Icon type="share-alt" />
-          {comment && '分享'}
-        </Button>
-      </Popover>
+      <Button type="ghost" onClick={props.onShare}>
+        <Icon type="share-alt" />
+        {comment && '分享'}
+      </Button>
     </ButtonGroup>
   )
 }

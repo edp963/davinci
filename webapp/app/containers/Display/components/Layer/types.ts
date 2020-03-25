@@ -21,7 +21,7 @@
 import { IWidgetFormed } from 'containers/Widget/types'
 import { IViewModel } from 'app/containers/View/types'
 import { RenderType } from 'app/containers/Widget/components/Widget'
-import { IQueryConditions } from 'app/containers/Dashboard/Grid'
+import { IQueryConditions } from 'app/containers/Dashboard/types'
 import { ILayerFormed } from '../types'
 import { ILayerInfo } from '../../types'
 
@@ -60,8 +60,8 @@ export type LayerListContextValue = {
     slideId: number,
     layerId: number,
     widget: IWidgetFormed,
-    prevQueryCondition?: Partial<IQueryConditions>,
-    queryConditions?: Partial<IQueryConditions>
+    prevQueryCondition?: IQueryConditions,
+    queryConditions?: IQueryConditions
   ) => void
   onDrag?: (
     layerId: number,

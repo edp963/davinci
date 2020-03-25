@@ -1,6 +1,6 @@
 import { FilterTypes } from './filterTypes'
 import { OperatorTypes } from 'utils/operatorTypes'
-import { QueryVariable } from 'containers/Dashboard/Grid'
+import { QueryVariable } from 'containers/Dashboard/types'
 import { SqlTypes } from 'app/globalConstants'
 import { ViewVariableValueTypes } from 'app/containers/View/constants'
 import DatePickerFormats from './datePickerFormats'
@@ -22,7 +22,7 @@ export interface IControlRelatedField {
 export interface IGridCtrlParams {
   currentDashboardId: number
   globalCtrlParams: {
-    [key: string]: string | number 
+    [key: string]: string | number
   }
 }
 

@@ -10,7 +10,7 @@ const styles = require('./SharePanel.less')
 
 interface IShareFormProps {
   type: string
-  shareInfo: string
+  shareToken: string
 }
 
 export class ShareForm extends React.PureComponent<IShareFormProps, {}> {
@@ -25,20 +25,21 @@ export class ShareForm extends React.PureComponent<IShareFormProps, {}> {
   public render () {
     const {
       type,
-      shareInfo
+      shareToken
     } = this.props
 
     let linkValue = ''
 
+    // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
     switch (type) {
       case 'dashboard':
-        linkValue = `${shareHost}#share/dashboard?shareInfo=${encodeURI(shareInfo)}&type=dashboard`
+        linkValue = `${shareHost}#share/dashboard?shareInfo=${encodeURI(shareToken)}&type=dashboard`
         break
       case 'widget':
-        linkValue = `${shareHost}#share/dashboard?shareInfo=${encodeURI(shareInfo)}&type=widget`
+        linkValue = `${shareHost}#share/dashboard?shareInfo=${encodeURI(shareToken)}&type=widget`
         break
       case 'display':
-        linkValue = `${shareHost}#share/display?shareInfo=${encodeURI(shareInfo)}`
+        linkValue = `${shareHost}#share/display?shareInfo=${encodeURI(shareToken)}`
         break
       default:
         break
@@ -47,10 +48,7 @@ export class ShareForm extends React.PureComponent<IShareFormProps, {}> {
     return (
       <div>
         <Row className={styles.shareRow}>
-          <Col span={5}>
-            <span className={styles.shareText}>链接：</span>
-          </Col>
-          <Col span={19}>
+          <Col span={24}>
             <Input
               className={styles.shareInput}
               value={linkValue}
