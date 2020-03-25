@@ -13,18 +13,19 @@
 			<property name="suppressAllComments" value="true" />
 		</commentGenerator>
 		<jdbcConnection
-			connectionURL="jdbc:mysql://localhost:3306/davinci?useUnicode=true&amp;characterEncoding=UTF-8&amp;zeroDateTimeBehavior=convertToNull&amp;allowMultiQueries=true"
-			driverClass="com.mysql.jdbc.Driver" userId="root"
-			password="xiaolong@0509" />
+			driverClass="com.mysql.jdbc.Driver" 
+			connectionURL=""
+			userId=""
+			password="" />
 		<javaTypeResolver>
             <property name="forceBigDecimals" value="false"/>
         </javaTypeResolver>
 		<javaModelGenerator
 			targetPackage="edp.davinci.core.dao.entity"
-			targetProject="D:\CE\UAVStackIDE\edpgitroot\davinci\core\src\main\java" />
+			targetProject="" />
 		<javaClientGenerator
 			targetPackage="edp.davinci.core.dao"
-			targetProject="D:\CE\UAVStackIDE\edpgitroot\davinci\core\src\main\java"
+			targetProject=""
 			type="ANNOTATEDMAPPER" />
 		<table tableName="cron_job">
 			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
@@ -57,7 +58,6 @@
 		<table tableName="rel_role_dashboard"></table>
 		<table tableName="rel_role_dashboard_widget"></table>
 		<table tableName="rel_role_display"></table>
-		<!--
 		<table tableName="rel_role_display_slide_widget"></table>
 		<table tableName="rel_role_portal"></table>
 		<table tableName="rel_role_project"></table>
@@ -67,11 +67,19 @@
 		<table tableName="rel_user_organization"></table>
 		<table tableName="role"></table>
 		<table tableName="share_download_record"></table>
-		<table tableName="source"></table>
+		<table tableName="source">
+			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
 		<table tableName="star"></table>
 		<table tableName="user"></table>
-		<table tableName="view"></table>
-		<table tableName="widget"></table>
-		-->
+		<table tableName="view">
+			<columnOverride column="sql" javaType="java.lang.String" jdbcType="VARCHAR" />
+			<columnOverride column="model" javaType="java.lang.String" jdbcType="VARCHAR" />
+			<columnOverride column="variable" javaType="java.lang.String" jdbcType="VARCHAR" />
+			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
+		<table tableName="widget">
+			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
 	</context>
 </generatorConfiguration>

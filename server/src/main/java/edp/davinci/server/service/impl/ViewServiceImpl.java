@@ -198,7 +198,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         //解析变量
         List<SqlVariable> variables = SqlParseUtils.getVariables(viewWithSource.getVariable(), viewWithSource.getSql());
         //解析sql
-        SqlEntity sqlEntity = sqlParseUtils.parseSql(sql, variables, sqlTempDelimiter);
+        SqlEntity sqlEntity = sqlParseUtils.parseSql(sql, variables, sqlTempDelimiter, user, isMaintainer);
         //列权限（只记录被限制访问的字段）
         Set<String> excludeColumns = new HashSet<>();
 
@@ -431,7 +431,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         //结构化Sql
         PaginateWithQueryColumns paginateWithQueryColumns = null;
         try {
-            SqlEntity sqlEntity = sqlParseUtils.parseSql(executeSql.getSql(), executeSql.getVariables(), sqlTempDelimiter);
+            SqlEntity sqlEntity = sqlParseUtils.parseSql(executeSql.getSql(), executeSql.getVariables(), sqlTempDelimiter, user, true);
             if (null == sqlUtils || null == sqlEntity || StringUtils.isEmpty(sqlEntity.getSql())) {
                 return paginateWithQueryColumns;
             }
@@ -606,7 +606,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			// 解析变量
 			List<SqlVariable> variables = SqlParseUtils.getVariables(viewWithSource.getVariable(), viewWithSource.getSql());
 			// 解析sql
-			SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
+			SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter, user, isMaintainer);
 			// 列权限（只记录被限制访问的字段）
 			Set<String> excludeColumns = new HashSet<>();
 			packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(),
@@ -697,7 +697,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             }
             
             List<SqlVariable> variables = SqlParseUtils.getVariables(viewWithSource.getVariable(), viewWithSource.getSql());
-            SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
+            SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter, user, isMaintainer);
             packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, param.getParams(), null, user);
 
             String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);

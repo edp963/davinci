@@ -22,14 +22,15 @@ package edp.davinci.server.util;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.User;
 
-import com.alibaba.fastjson.JSONObject;
 import com.sun.tools.javac.util.ListBuffer;
 
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.enums.SqlOperatorEnum;
 import edp.davinci.server.enums.SqlVariableTypeEnum;
 import edp.davinci.server.enums.SqlVariableValueTypeEnum;
+import edp.davinci.server.enums.SystemVariableEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.SqlEntity;
 import edp.davinci.server.model.SqlVariable;
@@ -61,6 +62,7 @@ public class SqlParseUtils {
 
     private static final String QUERY_WHERE_TRUE = "1=1";
     private static final String QUERY_WHERE_FALSE = "1=0";
+    private static final String QUERY_WHERE_VALUE = "'%s'";
 
     @Autowired
     private DacChannelUtils dacChannelUtil;
@@ -71,15 +73,18 @@ public class SqlParseUtils {
      * @param sqlStr           view sql 模版
      * @param variables        view 变量
      * @param sqlTempDelimiter ST 模板界定符
+     * @param user
+     * @param isMaintainer
      * @return
      */
-    public SqlEntity parseSql(String sqlStr, List<SqlVariable> variables, String sqlTempDelimiter) throws ServerException {
+    public SqlEntity parseSql(String sqlStr, List<SqlVariable> variables, String sqlTempDelimiter, User user, boolean isMaintainer) throws ServerException {
         if (StringUtils.isEmpty(sqlStr.trim())) {
             return null;
         }
 
         sqlStr = SqlUtils.filterAnnotate(sqlStr);
         sqlStr = sqlStr.replaceAll(NEW_LINE_CHAR, SPACE).trim();
+        sqlStr = replaceSystemVariables(sqlStr, user, isMaintainer);
 
         char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
 
@@ -139,7 +144,6 @@ public class SqlParseUtils {
         }
         return new SqlEntity(sqlStr, queryParamMap, authParamMap);
     }
-
 
     public List<String> getAuthVarValue(SqlVariable variable, String email) {
         SqlVariableChannel channel = variable.getChannel();
@@ -453,4 +457,101 @@ public class SqlParseUtils {
             return String.format(express, arg, arg);
         }
     }
+	
+	private String replaceSystemVariables(String sql, User user, boolean isMaintainer) {
+		
+		boolean containId = sql.toUpperCase().contains(SystemVariableEnum.USER_ID.getKey());
+		boolean containName = sql.toUpperCase().contains(SystemVariableEnum.USER_NAME.getKey());
+		boolean containUserName = sql.toUpperCase().contains(SystemVariableEnum.USER_USERNAME.getKey());
+		boolean containEmail = sql.toUpperCase().contains(SystemVariableEnum.USER_EMAIL.getKey());
+		boolean containDepartment = sql.toUpperCase().contains(SystemVariableEnum.USER_DEPARTMENT.getKey());
+		
+		if (isMaintainer) {
+			if (containId) {
+				sql = sql.replaceAll(REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_ID.getRegex()),
+						QUERY_WHERE_TRUE);
+			}
+			if (containName) {
+				sql = sql.replaceAll(
+						REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_NAME.getRegex()),
+						QUERY_WHERE_TRUE);
+			}
+			if (containUserName) {
+				sql = sql.replaceAll(
+						REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_USERNAME.getRegex()),
+						QUERY_WHERE_TRUE);
+			}
+			if (containEmail) {
+				sql = sql.replaceAll(
+						REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_EMAIL.getRegex()),
+						QUERY_WHERE_TRUE);
+			}
+			if (containDepartment) {
+				sql = sql.replaceAll(
+						REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_DEPARTMENT.getRegex()),
+						QUERY_WHERE_TRUE);
+			}
+			if (SystemVariableEnum.isContains(sql)) {
+				throw new ServerException("Illegal system variables, only supports \"=\" or \"!=\"");
+			}
+			return sql;
+		}
+
+		if (user == null) {
+			if (containId) {
+				sql = sql.replaceAll(REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_ID.getRegex()),
+						QUERY_WHERE_FALSE);
+			}
+			if (containName) {
+				sql = sql.replaceAll(
+						REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_NAME.getRegex()),
+						QUERY_WHERE_FALSE);
+			}
+			if (containUserName) {
+				sql = sql.replaceAll(
+						REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_USERNAME.getRegex()),
+						QUERY_WHERE_FALSE);
+			}
+			if (containEmail) {
+				sql = sql.replaceAll(
+						REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_EMAIL.getRegex()),
+						QUERY_WHERE_FALSE);
+			}
+			if (containDepartment) {
+				sql = sql.replaceAll(
+						REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_DEPARTMENT.getRegex()),
+						QUERY_WHERE_FALSE);
+			}
+			if (SystemVariableEnum.isContains(sql)) {
+				throw new ServerException("Illegal system variables, only supports \"=\" or \"!=\"");
+			}
+			return sql;
+		}
+
+		if (containId) {
+			sql = sql.replaceAll(REG_IGNORE_CASE + SystemVariableEnum.USER_ID.getRegex(), user.getId().toString());
+		}
+		if (containName) {
+			sql = sql.replaceAll(REG_IGNORE_CASE + SystemVariableEnum.USER_NAME.getRegex(),
+					String.format(QUERY_WHERE_VALUE, user.getName()));
+		}
+		if (containUserName) {
+			sql = sql.replaceAll(REG_IGNORE_CASE + SystemVariableEnum.USER_USERNAME.getRegex(),
+					String.format(QUERY_WHERE_VALUE, user.getUsername()));
+		}
+		if (containEmail) {
+			sql = sql.replaceAll(REG_IGNORE_CASE + SystemVariableEnum.USER_EMAIL.getRegex(),
+					String.format(QUERY_WHERE_VALUE, user.getEmail()));
+		}
+		if (containDepartment) {
+			sql = sql.replaceAll(REG_IGNORE_CASE + SystemVariableEnum.USER_DEPARTMENT.getRegex(),
+					String.format(QUERY_WHERE_VALUE, user.getDepartment()));
+		}
+		
+		if (SystemVariableEnum.isContains(sql)) {
+			throw new ServerException("Illegal system variables, only supports \"=\" or \"!=\"");
+		}
+
+		return sql;
+	}
 }
