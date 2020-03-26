@@ -101,40 +101,34 @@ public class SqlParseUtils {
 
         // 解析参数
         if (!CollectionUtils.isEmpty(variables)) {
-            ExecutorService executorService = Executors.newFixedThreadPool(4);
+            ExecutorService executorService = Executors.newFixedThreadPool(variables.size() > 4 ? 4 : variables.size());
             try {
-                CountDownLatch countDownLatch = new CountDownLatch(variables.size());
                 List<Future> futures = new ArrayList<>(variables.size());
-                variables.forEach(variable -> futures.add(executorService.submit(() -> {
-                    try {
-                        SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
-                        if (null != typeEnum) {
-                            switch (typeEnum) {
-                                case QUERYVAR:
-                                    queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValues(
-                                            variable.getValueType(), variable.getDefaultValues(), variable.isUdf()));
-                                    break;
-                                case AUTHVARE:
-                                    if (null != variable) {
-                                        List<String> v = getAuthVarValue(variable, null);
-                                        authParamMap.put(variable.getName().trim(), null == v ? new ArrayList<>() : v);
-                                    }
-                                    break;
-                            }
-                        }
-                    } finally {
-                        countDownLatch.countDown();
-                    }
-                })));
+				variables.forEach(variable -> futures.add(executorService.submit(() -> {
+					SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(variable.getType());
+					if (null != typeEnum) {
+						switch (typeEnum) {
+						case QUERYVAR:
+							queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum
+									.getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf()));
+							break;
+						case AUTHVARE:
+							if (null != variable) {
+								List<String> v = getAuthVarValue(variable, null);
+								authParamMap.put(variable.getName().trim(), null == v ? new ArrayList<>() : v);
+							}
+							break;
+						}
+					}
+				})));
 
                 try {
                     for (Future future : futures) {
                         future.get();
                     }
-                    countDownLatch.await();
                 } catch (ExecutionException e) {
                     executorService.shutdownNow();
-                    throw (ServerException) e.getCause();
+                    throw new ServerException(e.getMessage());
                 }
 
             } catch (InterruptedException e) {

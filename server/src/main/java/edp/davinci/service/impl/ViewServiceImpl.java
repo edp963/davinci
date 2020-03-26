@@ -871,43 +871,37 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         //权限参数
         if (!CollectionUtils.isEmpty(authVariables)) {
-            ExecutorService executorService = Executors.newFixedThreadPool(8);
-            CountDownLatch countDownLatch = new CountDownLatch(authVariables.size());
+            ExecutorService executorService = Executors.newFixedThreadPool(authVariables.size() > 8 ? 8 : authVariables.size());
             Map<String, Set<String>> map = new Hashtable<>();
             List<Future> futures = new ArrayList<>(authVariables.size());
             try {
                 authVariables.forEach(sqlVariable -> {
-                    try {
                         futures.add(executorService.submit(() -> {
-                            if (null != sqlVariable) {
-                                Set<String> vSet = null;
-                                if (map.containsKey(sqlVariable.getName().trim())) {
-                                    vSet = map.get(sqlVariable.getName().trim());
-                                } else {
-                                    vSet = new HashSet<>();
-                                }
+							if (null != sqlVariable) {
+								Set<String> vSet = null;
+								if (map.containsKey(sqlVariable.getName().trim())) {
+									vSet = map.get(sqlVariable.getName().trim());
+								} else {
+									vSet = new HashSet<>();
+								}
 
-                                List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
-                                if (null == values) {
-                                    vSet.add(NO_AUTH_PERMISSION);
-                                } else if (!values.isEmpty()) {
-                                    vSet.addAll(values);
-                                }
-                                map.put(sqlVariable.getName().trim(), vSet);
-                            }
-                        }));
-                    } finally {
-                        countDownLatch.countDown();
-                    }
+								List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
+								if (null == values) {
+									vSet.add(NO_AUTH_PERMISSION);
+								} else if (!values.isEmpty()) {
+									vSet.addAll(values);
+								}
+								map.put(sqlVariable.getName().trim(), vSet);
+							}
+						}));
                 });
                 try {
                     for (Future future : futures) {
                         future.get();
                     }
-                    countDownLatch.await();
                 } catch (ExecutionException e) {
                     executorService.shutdownNow();
-                    throw (ServerException) e.getCause();
+                    throw new ServerException(e.getMessage());
                 }
             } catch (InterruptedException e) {
                 log.error(e.getMessage(), e);
