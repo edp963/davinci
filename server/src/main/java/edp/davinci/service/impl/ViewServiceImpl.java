@@ -617,10 +617,10 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                     slatBuilder.append(MINUS);
                     slatBuilder.append(executeParam.getPageSize());
                     excludeColumns.forEach(slatBuilder::append);
-
+                    cacheKey = MD5Util.getMD5(slatBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true,
+                            32);
                     if (!executeParam.getFlush()) {
-                        cacheKey = MD5Util.getMD5(slatBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true,
-                                32);
+
                         try {
                             Object object = redisUtils.get(cacheKey);
                             if (null != object && executeParam.getCache()) {
