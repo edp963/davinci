@@ -122,7 +122,7 @@ export enum ViewModelTypes {
   Value = 'value'
 }
 
-export const ModelTypeSqlTypeSetting = {
+export const DefaultModelTypeSqlTypeSetting = {
   [ViewModelTypes.Value]: SQL_NUMBER_TYPES,
 
   // except SQL_STRING_TYPES field

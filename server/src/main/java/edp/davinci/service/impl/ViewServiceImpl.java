@@ -105,6 +105,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     private static final String SQL_VARABLE_KEY = "name";
 
     private static final CheckEntityEnum entity = CheckEntityEnum.VIEW;
+    
+    private static final  ExecutorService ROLEPARAM_THREADPOOL = Executors.newFixedThreadPool(8);
 
     @Override
     public boolean isExist(String name, Long id, Long projectId) {
@@ -871,43 +873,37 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         //权限参数
         if (!CollectionUtils.isEmpty(authVariables)) {
-            ExecutorService executorService = Executors.newFixedThreadPool(8);
-            CountDownLatch countDownLatch = new CountDownLatch(authVariables.size());
+            ExecutorService executorService = Executors.newFixedThreadPool(authVariables.size() > 8 ? 8 : authVariables.size());
             Map<String, Set<String>> map = new Hashtable<>();
             List<Future> futures = new ArrayList<>(authVariables.size());
             try {
                 authVariables.forEach(sqlVariable -> {
-                    try {
                         futures.add(executorService.submit(() -> {
-                            if (null != sqlVariable) {
-                                Set<String> vSet = null;
-                                if (map.containsKey(sqlVariable.getName().trim())) {
-                                    vSet = map.get(sqlVariable.getName().trim());
-                                } else {
-                                    vSet = new HashSet<>();
-                                }
+							if (null != sqlVariable) {
+								Set<String> vSet = null;
+								if (map.containsKey(sqlVariable.getName().trim())) {
+									vSet = map.get(sqlVariable.getName().trim());
+								} else {
+									vSet = new HashSet<>();
+								}
 
-                                List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
-                                if (null == values) {
-                                    vSet.add(NO_AUTH_PERMISSION);
-                                } else if (!values.isEmpty()) {
-                                    vSet.addAll(values);
-                                }
-                                map.put(sqlVariable.getName().trim(), vSet);
-                            }
-                        }));
-                    } finally {
-                        countDownLatch.countDown();
-                    }
+								List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
+								if (null == values) {
+									vSet.add(NO_AUTH_PERMISSION);
+								} else if (!values.isEmpty()) {
+									vSet.addAll(values);
+								}
+								map.put(sqlVariable.getName().trim(), vSet);
+							}
+						}));
                 });
                 try {
                     for (Future future : futures) {
                         future.get();
                     }
-                    countDownLatch.await();
                 } catch (ExecutionException e) {
                     executorService.shutdownNow();
-                    throw (ServerException) e.getCause();
+                    throw new ServerException(e.getMessage());
                 }
             } catch (InterruptedException e) {
                 log.error(e.getMessage(), e);
@@ -933,60 +929,59 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             relRoleViewMapper.deleteByViewId(view.getId());
             return;
         }
+        
+        ROLEPARAM_THREADPOOL.execute(()->{
+			Set<String> vars = null, columns = null;
 
-        new Thread(() -> {
-            Set<String> vars = null, columns = null;
+			if (!CollectionUtils.isEmpty(variables)) {
+				vars = variables.stream().map(SqlVariable::getName).collect(Collectors.toSet());
+			}
+			if (!StringUtils.isEmpty(view.getModel())) {
+				columns = JSONObject.parseObject(view.getModel(), HashMap.class).keySet();
+			}
 
-            if (!CollectionUtils.isEmpty(variables)) {
-                vars = variables.stream().map(SqlVariable::getName).collect(Collectors.toSet());
-            }
-            if (!StringUtils.isEmpty(view.getModel())) {
-                columns = JSONObject.parseObject(view.getModel(), HashMap.class).keySet();
-            }
+			Set<String> finalColumns = columns;
+			Set<String> finalVars = vars;
 
-            Set<String> finalColumns = columns;
-            Set<String> finalVars = vars;
+			List<RelRoleView> relRoleViews = new ArrayList<>();
+			roles.forEach(r -> {
+				if (r.getRoleId().longValue() <= 0L) {
+					return;
+				}
 
-            List<RelRoleView> relRoleViews = new ArrayList<>();
-            roles.forEach(r -> {
-                if (r.getRoleId().longValue() <= 0L) {
-                    return;
-                }
+				String rowAuth = null, columnAuth = null;
+				if (!StringUtils.isEmpty(r.getRowAuth())) {
+					JSONArray rowAuthArray = JSONObject.parseArray(r.getRowAuth());
+					if (!CollectionUtils.isEmpty(rowAuthArray)) {
+						JSONArray newRowAuthArray = new JSONArray();
+						for (int i = 0; i < rowAuthArray.size(); i++) {
+							JSONObject rowAuthObj = rowAuthArray.getJSONObject(i);
+							String name = rowAuthObj.getString(SQL_VARABLE_KEY);
+							if (finalVars.contains(name)) {
+								newRowAuthArray.add(rowAuthObj);
+							}
+						}
+						rowAuth = newRowAuthArray.toJSONString();
+						newRowAuthArray.clear();
+					}
+				}
 
-                String rowAuth = null, columnAuth = null;
-                if (!StringUtils.isEmpty(r.getRowAuth())) {
-                    JSONArray rowAuthArray = JSONObject.parseArray(r.getRowAuth());
-                    if (!CollectionUtils.isEmpty(rowAuthArray)) {
-                        JSONArray newRowAuthArray = new JSONArray();
-                        for (int i = 0; i < rowAuthArray.size(); i++) {
-                            JSONObject rowAuthObj = rowAuthArray.getJSONObject(i);
-                            String name = rowAuthObj.getString(SQL_VARABLE_KEY);
-                            if (finalVars.contains(name)) {
-                                newRowAuthArray.add(rowAuthObj);
-                            }
-                        }
-                        rowAuth = newRowAuthArray.toJSONString();
-                        newRowAuthArray.clear();
-                    }
-                }
+				if (null != finalColumns && !StringUtils.isEmpty(r.getColumnAuth())) {
+					List<String> clms = JSONObject.parseArray(r.getColumnAuth(), String.class);
+					List<String> collect = clms.stream().filter(c -> finalColumns.contains(c))
+							.collect(Collectors.toList());
+					columnAuth = JSONObject.toJSONString(collect);
+				}
 
-                if (null != finalColumns && !StringUtils.isEmpty(r.getColumnAuth())) {
-                    List<String> clms = JSONObject.parseArray(r.getColumnAuth(), String.class);
-                    List<String> collect = clms.stream().filter(c -> finalColumns.contains(c)).collect(Collectors.toList());
-                    columnAuth = JSONObject.toJSONString(collect);
-                }
+				RelRoleView relRoleView = new RelRoleView(view.getId(), r.getRoleId(), rowAuth, columnAuth)
+						.createdBy(user.getId());
+				relRoleViews.add(relRoleView);
+			});
 
-                RelRoleView relRoleView = new RelRoleView(view.getId(), r.getRoleId(), rowAuth, columnAuth)
-                        .createdBy(user.getId());
-                relRoleViews.add(relRoleView);
-            });
-
-            if (!CollectionUtils.isEmpty(relRoleViews)) {
-                relRoleViewMapper.insertBatch(relRoleViews);
-            }
-
-        }).start();
+			if (!CollectionUtils.isEmpty(relRoleViews)) {
+				relRoleViewMapper.insertBatch(relRoleViews);
+			}
+        });
     }
-
 }
 
