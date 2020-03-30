@@ -17,23 +17,23 @@
  *
  */
 
-package edp.davinci.service.impl;
+package edp.davinci.server.service.impl;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.core.exception.UnAuthorizedExecption;
-import edp.davinci.core.enums.ActionEnum;
-import edp.davinci.core.enums.DownloadTaskStatus;
-import edp.davinci.core.enums.DownloadType;
-import edp.davinci.dao.DownloadRecordMapper;
-import edp.davinci.dao.UserMapper;
-import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
-import edp.davinci.model.DownloadRecord;
-import edp.davinci.model.User;
-import edp.davinci.service.DownloadService;
-import edp.davinci.service.excel.ExecutorUtil;
-import edp.davinci.service.excel.MsgWrapper;
-import edp.davinci.service.excel.WidgetContext;
-import edp.davinci.service.excel.WorkBookContext;
+import edp.davinci.core.dao.entity.DownloadRecord;
+import edp.davinci.core.enums.DownloadRecordStatusEnum;
+import edp.davinci.server.component.excel.ExecutorUtil;
+import edp.davinci.server.component.excel.MsgWrapper;
+import edp.davinci.server.component.excel.WidgetContext;
+import edp.davinci.server.component.excel.WorkBookContext;
+import edp.davinci.server.dao.DownloadRecordExtendMapper;
+import edp.davinci.server.dao.UserExtendMapper;
+import edp.davinci.server.dto.view.DownloadViewExecuteParam;
+import edp.davinci.server.enums.ActionEnum;
+import edp.davinci.server.enums.DownloadType;
+import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.service.DownloadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -54,14 +54,14 @@ import java.util.List;
 public class DownloadServiceImpl extends DownloadCommonService implements DownloadService {
 
     @Autowired
-    private DownloadRecordMapper downloadRecordMapper;
+    private DownloadRecordExtendMapper downloadRecordExtendMapper;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userMapper;
 
     @Override
     public List<DownloadRecord> queryDownloadRecordPage(Long userId) {
-        return downloadRecordMapper.getDownloadRecordsByUser(userId);
+        return downloadRecordExtendMapper.getDownloadRecordsByUser(userId);
     }
 
     @Override
@@ -80,15 +80,15 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
             throw new UnAuthorizedExecption();
         }
 
-        DownloadRecord record = downloadRecordMapper.getById(id);
+        DownloadRecord record = downloadRecordExtendMapper.selectByPrimaryKey(id);
 
         if (!record.getUserId().equals(user.getId())) {
             throw new UnAuthorizedExecption();
         }
 
         record.setLastDownloadTime(new Date());
-        record.setStatus(DownloadTaskStatus.DOWNLOADED.getStatus());
-        downloadRecordMapper.updateById(record);
+        record.setStatus(DownloadRecordStatusEnum.DOWNLOADED.getStatus());
+        downloadRecordExtendMapper.updateById(record);
         return record;
     }
 
@@ -100,8 +100,8 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
             record.setName(getDownloadFileName(type, id));
             record.setUserId(user.getId());
             record.setCreateTime(new Date());
-            record.setStatus(DownloadTaskStatus.PROCESSING.getStatus());
-            downloadRecordMapper.insert(record);
+            record.setStatus(DownloadRecordStatusEnum.PROCESSING.getStatus());
+            downloadRecordExtendMapper.insertSelective(record);
             MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.DOWNLOAD, record.getId());
 
             WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
@@ -114,9 +114,9 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
 
             ExecutorUtil.submitWorkbookTask(workBookContext, null);
 
-            log.info("Download task submit: {}", wrapper);
+            log.info("Download task submit:{}", wrapper);
         } catch (Exception e) {
-            log.error("submit download task error,e=", e);
+            log.error("Submit download task error, e=", e);
             return false;
         }
         return true;

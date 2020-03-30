@@ -94,7 +94,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     @Autowired
     private ShareService shareService;
 
-    private static final  CheckEntityEnum entity = CheckEntityEnum.DASHBOARD;
+    private static final CheckEntityEnum entity = CheckEntityEnum.DASHBOARD;
 
     @Override
     public boolean isExist(String name, Long id, Long portalId) {
@@ -234,7 +234,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     @Transactional
     public Dashboard createDashboard(DashboardCreate dashboardCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        DashboardPortal dashboardPortal =getDashboardPortal(dashboardCreate.getDashboardPortalId(), true);
+        DashboardPortal dashboardPortal = getDashboardPortal(dashboardCreate.getDashboardPortalId(), true);
 
         Long projectId = dashboardPortal.getProjectId();
         checkWritePermission(entity, projectId, user, "create");
@@ -265,7 +265,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 	            dashboard.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboard.getParentId().toString() : dashboard.getParentId() + COMMA + fullParentId);
 	        }
 
-	        if (dashboardExtendMapper.insert(dashboard) != 1) {
+	        if (dashboardExtendMapper.insertSelective(dashboard) != 1) {
 	        	throw new ServerException("Create dashboard fail");
 	        }
 	        
@@ -370,8 +370,13 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         	if (!CollectionUtils.isEmpty(rolesMap)) {
                 Set<Long> ids = rolesMap.keySet();
                 relRoleDashboardExtendMapper.deleteByDashboardIds(ids);
+                Set<Long> emptyRelDashboardId = new HashSet<>();
                 List<RelRoleDashboard> relList = new ArrayList<>();
                 rolesMap.forEach((dashboardId, roles) -> {
+					if (roles == null) {
+						return;
+					}
+                    emptyRelDashboardId.add(dashboardId);
                     if (!CollectionUtils.isEmpty(roles)) {
 						relList.addAll(roles.stream().map(roleId -> {
 							RelRoleDashboard rel = new RelRoleDashboard();
@@ -384,6 +389,9 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 						}).collect(Collectors.toList()));
                     }
                 });
+                if (!CollectionUtils.isEmpty(emptyRelDashboardId)) {
+                	relRoleDashboardExtendMapper.deleteByDashboardIds(emptyRelDashboardId);
+                }
                 if (!CollectionUtils.isEmpty(relList)) {
                     relRoleDashboardExtendMapper.insertBatch(relList);
                 }
@@ -536,12 +544,12 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         }
         
         Long projectId = dashboardWithPortal.getProject().getId();
-        checkWritePermission(entity, projectId, user, "create widget with");
+        checkWritePermission(entity, projectId, user, "create widget for");
         
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 		List<Long> disablePortals = getDisableVizs(user.getId(), projectId, null, VizEnum.PORTAL);
 		if (isDisableVizs(projectPermission, disablePortals, portalId)) {
-			alertUnAuthorized(entity, user, "create widget with");
+			alertUnAuthorized(entity, user, "create widget for");
 		}
         
         Set<Long> ids = new HashSet<>();
@@ -549,7 +557,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         for (MemDashboardWidgetCreate create : memDashboardWidgetCreates) {
 
         	if (isDisableDashboard(create.getDashboardId(), portalId, user, projectPermission)) {
-        		alertUnAuthorized(entity, user, "create widget with");
+        		alertUnAuthorized(entity, user, "create widget for");
         	}
 
         	if (create.getPolling() && create.getFrequency() < 1) {
@@ -592,11 +600,11 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
 		DashboardPortal dashboardPortal = getDashboardPortal(portalId, true);
 		Long projectId = dashboardPortal.getProjectId();
-		checkWritePermission(entity, projectId, user, "update widget with");
+		checkWritePermission(entity, projectId, user, "update widget for");
 		
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 		if (isDisablePortal(portalId, projectId, user, projectPermission)) {
-			alertUnAuthorized(entity, user, "update widget with");
+			alertUnAuthorized(entity, user, "update widget for");
 		}
 
 		List<MemDashboardWidgetDTO> dtoList = Arrays.asList(memDashboardWidgets);
@@ -610,7 +618,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 		dtoList.forEach(m -> {
 			
         	if (isDisableDashboard(m.getDashboardId(), portalId, user, projectPermission)) {
-        		alertUnAuthorized(entity, user, "update widget with");
+        		alertUnAuthorized(entity, user, "update widget for");
         	}
 			
 			if (!dashboardIds.contains(m.getDashboardId())) {
@@ -672,13 +680,13 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         Long portalId = dashboardWithPortal.getDashboardPortalId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
 		if (isDisablePortal(portalId, projectId, user, projectPermission)) {
-			alertUnAuthorized(entity, user, "delete widget with");
+			alertUnAuthorized(entity, user, "delete widget for");
 		}
 		
 		// 校验权限
 		if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission()
 				|| isDisableDashboard(dashboardWidget.getDashboardId(), portalId, user, projectPermission)) {
-			alertUnAuthorized(entity, user, "delete widget with");
+			alertUnAuthorized(entity, user, "delete widget for");
 		}
 
         relRoleDashboardWidgetExtendMapper.deleteByMemDashboardWidgetId(relationId);

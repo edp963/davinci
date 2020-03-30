@@ -473,7 +473,7 @@ public class RoleServiceImpl implements RoleService {
         relRoleProject.setCreateBy(user.getId());
         relRoleProject.setCreateTime(new Date());
 
-        relRoleProjectExtendMapper.insert(relRoleProject);
+        relRoleProjectExtendMapper.insertSelective(relRoleProject);
         if (null != relRoleProject.getId() && relRoleProject.getId().longValue() > 0L) {
             optLogger.info("RelRoleProject({}) create by user({})", relRoleProject.getId(), user.getId());
             RoleProject roleProject = new RoleProject(project);

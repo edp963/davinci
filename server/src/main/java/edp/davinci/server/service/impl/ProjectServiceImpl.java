@@ -221,7 +221,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	        project.setCreateBy(user.getId());
 	        project.setCreateTime(new Date());
 
-	        if (projectExtendMapper.insert(project) <= 0) {
+	        if (projectExtendMapper.insertSelective(project) <= 0) {
 	            log.info("Create project fail:{}", projectCreat.toString());
 	            throw new ServerException("Create project fail");
 	        }

@@ -19,15 +19,15 @@
 
 package edp.davinci.server.service.impl;
 
-import edp.davinci.server.dao.OrganizationMapper;
-import edp.davinci.server.dao.RelUserOrganizationMapper;
-import edp.davinci.server.dao.UserMapper;
-import edp.davinci.server.enums.UserOrgRoleEnum;
+import edp.davinci.core.dao.entity.Organization;
+import edp.davinci.core.dao.entity.RelUserOrganization;
+import edp.davinci.core.enums.UserOrgRoleEnum;
+import edp.davinci.server.dao.OrganizationExtendMapper;
+import edp.davinci.server.dao.RelUserOrganizationExtendMapper;
+import edp.davinci.server.dao.UserExtendMapper;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.LdapPerson;
-import edp.davinci.server.model.Organization;
-import edp.davinci.server.model.RelUserOrganization;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.LdapService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,6 +42,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.naming.directory.DirContext;
+
+import java.util.Date;
 import java.util.List;
 
 import static edp.davinci.server.commons.Constants.LDAP_USER_PASSWORD;
@@ -63,13 +65,13 @@ public class LdapServiceImpl implements LdapService {
     private String ldapUrls;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userExtendMapper;
 
     @Autowired
-    private OrganizationMapper organizationMapper;
+    private OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
-    private RelUserOrganizationMapper relUserOrganizationMapper;
+    private RelUserOrganizationExtendMapper relUserOrganizationMapper;
 
     public boolean existLdapServer() {
         return !StringUtils.isEmpty(ldapUrls);
@@ -123,20 +125,37 @@ public class LdapServiceImpl implements LdapService {
     @Override
     @Transactional
     public User registPerson(LdapPerson ldapPerson) throws ServerException {
-        User user = new User(ldapPerson);
+        User user = new User();
+        user.setUsername(ldapPerson.getSAMAccountName());
+        user.setEmail(ldapPerson.getEmail());
+        user.setEmail(ldapPerson.getName());
         user.setActive(true);
         user.setPassword(LDAP_USER_PASSWORD);
 
-        if (userMapper.insert(user) <= 0) {
-            log.error("ldap regist fail: email({})", user.getEmail());
-            throw new ServerException("ldap regist fail: unspecified error");
+        if (userExtendMapper.insert(user) <= 0) {
+            log.error("Ldap regist fail, email:{}", user.getEmail());
+            throw new ServerException("Ldap regist fail:unspecified error");
         }
         
+        Long userId = user.getId();
+        
         String orgName = user.getUsername() + "'s Organization";
-        Organization organization = new Organization(orgName, null, user.getId());
-        if (organizationMapper.insert(organization) > 0) {
-            RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), user.getId(), UserOrgRoleEnum.OWNER.getRole());
-            relUserOrganization.createdBy(user.getId());
+        Organization organization = new Organization();
+        organization.setName(orgName);
+        organization.setMemberNum(1);
+        organization.setMemberPermission((short)1);
+        organization.setAllowCreateProject(true);
+        organization.setUserId(userId);
+        organization.setCreateBy(userId);
+        organization.setCreateTime(new Date());
+        
+        if (organizationExtendMapper.insertSelective(organization) > 0) {
+            RelUserOrganization relUserOrganization = new RelUserOrganization();
+            relUserOrganization.setOrgId(organization.getId());
+            relUserOrganization.setUserId(userId);
+            relUserOrganization.setRole(UserOrgRoleEnum.OWNER.getRole());
+            relUserOrganization.setCreateBy(userId);
+            relUserOrganization.setCreateTime(new Date());
             relUserOrganizationMapper.insert(relUserOrganization);
         }
 

@@ -48,6 +48,7 @@ import edp.davinci.server.service.ViewService;
 import edp.davinci.server.service.WidgetService;
 import edp.davinci.server.util.BaseLock;
 import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.DateUtils;
 import edp.davinci.server.util.CsvUtils;
 import edp.davinci.server.util.ExcelUtils;
 import edp.davinci.server.util.FileUtils;
@@ -342,12 +343,11 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         executeParam.setPageSize(-1);
         executeParam.setLimit(-1);
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
         String rootPath = fileUtils.fileBasePath +
                 File.separator +
                 "download" +
                 File.separator +
-                sdf.format(new Date()) +
+                DateUtils.dateFormat(new Date(), "yyyyMMdd") +
                 File.separator +
                 type +
                 File.separator;

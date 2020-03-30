@@ -46,7 +46,6 @@ import java.util.List;
 
 @Api(value = "/cronjobs", tags = "cronjobs", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "cronjob not found"))
-@Slf4j
 @RestController
 @RequestMapping(value = Constants.BASE_API_PATH + "/cronjobs", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class CronJobController extends BaseController {

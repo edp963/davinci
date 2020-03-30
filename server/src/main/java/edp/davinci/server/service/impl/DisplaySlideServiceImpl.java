@@ -134,7 +134,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         displaySlide.setCreateTime(new Date());
         BeanUtils.copyProperties(displaySlideCreate, displaySlide);
 
-        if (displaySlideExtendMapper.insert(displaySlide) <= 0) {
+        if (displaySlideExtendMapper.insertSelective(displaySlide) <= 0) {
             throw new ServerException("Create display slide fail");
         }
 
@@ -269,10 +269,10 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
         Long projectId = slideWithDisplayAndProject.getProject().getId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
-        checkWritePermission(entity, projectId, user, "add widgets");
+        checkWritePermission(entity, projectId, user, "add widgets for");
 
 		if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(slideId, displayId, user, projectPermission)) {
-			alertUnAuthorized(entity, user, "add widgets");
+			alertUnAuthorized(entity, user, "add widgets for");
 		}
 
 		Set<Long> ids = new HashSet<>();
@@ -391,7 +391,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
         
 		if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(slideId, displayId, user, projectPermission)) {
-			alertUnAuthorized(entity, user, "update widgets");
+			alertUnAuthorized(entity, user, "update widgets for");
 		}
 
 		List<MemDisplaySlideWidget> memDisplaySlideWidgetList = new ArrayList<>(dtoList.size());
@@ -462,11 +462,11 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
         Long projectId = slideWithDisplayAndProject.getProject().getId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
-        checkWritePermission(entity, projectId, user, "update widget");
+        checkWritePermission(entity, projectId, user, "update widget for");
         
         Long displayId = slideWithDisplayAndProject.getDisplayId();
         if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(slideId, displayId, user, projectPermission)) {
-        	alertUnAuthorized(entity, user, "update widget");
+        	alertUnAuthorized(entity, user, "update widget for");
         }
 
         String origin = slideWidget.toString();
@@ -509,11 +509,11 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         
         Long projectId = slideWithDisplayAndProject.getProject().getId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
-        checkWritePermission(entity, projectId, user, "delete widget");
+        checkWritePermission(entity, projectId, user, "delete widget for");
         
         Long displayId = slideWithDisplayAndProject.getDisplayId();
         if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(slideId, displayId, user, projectPermission)) {
-        	alertUnAuthorized(entity, user, "delete widget");
+        	alertUnAuthorized(entity, user, "delete widget for");
         }
         
         if (memDisplaySlideWidgetExtendMapper.deleteByPrimaryKey(relationId) <= 0) {
@@ -665,7 +665,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
         
 		if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission() || isDisableDisplay(displayId, projectId, user, projectPermission)) {
-			alertUnAuthorized(entity, user, "delete widgets");
+			alertUnAuthorized(entity, user, "delete widgets for");
 		}
 
         if (memIds.length > 0) {
@@ -695,10 +695,10 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         Long projectId = display.getProjectId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
         
-        checkWritePermission(entity, projectId, user, "upload BGImage");
+        checkWritePermission(entity, projectId, user, "upload BGImage for");
         
        if (isDisableDisplay(display.getId(), projectId, user, projectPermission)) {
-    	   alertUnAuthorized(entity, user, "upload BGImage");
+    	   alertUnAuthorized(entity, user, "upload BGImage for");
        }
 
         //校验文件是否图片
@@ -779,12 +779,12 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(memDisplaySlideWidget.getDisplaySlideId());
         
         Long projectId = slideWithDisplayAndProject.getProject().getId();
-        checkWritePermission(entity, projectId, user, "upload BGImage");
+        checkWritePermission(entity, projectId, user, "upload BGImage for");
         
         Long displayId = slideWithDisplayAndProject.getDisplayId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
         if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(relationId, displayId, user, projectPermission)) {
-        	alertUnAuthorized(entity, user, "upload BGImage");
+        	alertUnAuthorized(entity, user, "upload BGImage for");
         }
 
 		// 上传文件
@@ -878,7 +878,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			slide.setDisplayId(displayId);
 			slide.setCreateBy(user.getId());
 			slide.setCreateTime(new Date());
-			if (displaySlideExtendMapper.insert(slide) > 0) {
+			if (displaySlideExtendMapper.insertSelective(slide) > 0) {
 				optLogger.info("Slide({}) is copied from({}) by user({})", slide.toString(), originDisplay.getId(),
 						user.getId());
 				slideCopies.add(new RelModelCopy(originDisplay.getId(), slide.getId()));
@@ -909,7 +909,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			mem.setDisplaySlideId(slideCopyIdMap.get(originMem.getDisplaySlideId()));
 			mem.setCreateBy(user.getId());
 			mem.setCreateTime(new Date());
-			if (memDisplaySlideWidgetExtendMapper.insert(mem) > 0) {
+			if (memDisplaySlideWidgetExtendMapper.insertSelective(mem) > 0) {
 				optLogger.info("MemDisplaySlideWidget({}) is copied from({}) by user({})", mem.toString(),
 						originMem.getId(), user.getId());
 				memCopies.add(new RelModelCopy(originMem.getId(), mem.getId()));
