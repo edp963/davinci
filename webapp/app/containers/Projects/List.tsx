@@ -442,7 +442,7 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
       })()
 
       return  <Col
-                key={`pro${name}orp${description}`}
+                key={`pro${name}${uuid(8, 16)}orp${description}`}
                 xxl={4} xl={6} lg={6} md={8} sm={12} xs={24}
               >
                 <ProjectItem
@@ -470,6 +470,8 @@ const Projects: React.FC<IProjectsProps & RouteComponentWithParams> = React.memo
       onLoadProjects, onStarProject, onGetProjectStarUser,
       loginUserId,organizations
     ])
+
+  
 
 
   return (
