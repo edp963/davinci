@@ -134,7 +134,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             organization.setCreateBy(userId);
             organization.setCreateTime(new Date());
 
-            if (organizationExtendMapper.insert(organization) <= 0) {
+            if (organizationExtendMapper.insertSelective(organization) <= 0) {
                 throw new ServerException("Create organization error");
             }
             

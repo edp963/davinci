@@ -46,7 +46,6 @@ import java.util.List;
 
 @Api(value = "/cronjobs", tags = "cronjobs", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "cronjob not found"))
-@Slf4j
 @RestController
 @RequestMapping(value = Constants.BASE_API_PATH + "/cronjobs", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class CronJobController extends BaseController {
@@ -120,13 +119,12 @@ public class CronJobController extends BaseController {
      * 立即执行 cronjob
      *
      * @param id
-     * @param bindingResult
      * @param user
      * @param request
      * @return
      */
     @ApiOperation(value = "execute job")
-    @PostMapping(value = "/execute/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/execute/{id}")
     public ResponseEntity executeCronJob(@PathVariable Long id,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {

@@ -75,7 +75,7 @@ public class StarServiceImpl implements StarService {
 			star.setTarget(target);
 			star.setTargetId(targetId);
 			star.setUserId(user.getId());
-			if (starExtendMapper.insert(star) > 0) {
+			if (starExtendMapper.insertSelective(star) > 0) {
 				projectExtendMapper.starNumAdd(project.getId());
 				return resultMap.successAndRefreshToken(request);
 			}

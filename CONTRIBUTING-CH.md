@@ -25,15 +25,16 @@ Davinci 用户手册文档在 docs/ 目录下，我们使用了 [jekyll](https:/
 Davinci 源码可能会产生一些临时分支，但真正有明确意义的只有以下三个分支：
 
 - master: 最近一次稳定 release 的源码，偶尔会多几次 hotfix 提交；
-- dev-0.3: 主要开发分支；
+- dev-0.4: 主要开发分支；
+- dev-0.3: 0.3 版本源码；
 - dev-0.2: 0.2 版本源码，目前 0.2 版本已经停止更新，如有 0.2 版本使用者或是需要进行二次开发的用户可以参考此分支。
 
 ### 开发指引
 Davinci 前后端代码共用同一个代码库，但在开发上是分离的。在着手开发之前，请先将 Davinci 项目 fork 一份到自己的 Github Repositories 中， 开发时请基于自己 Github Repositories 中的 Davinci 代码库进行开发。
 
-我们建议克隆 dev-0.3 分支来开发，这样在向 Davinci 主项目提交 PR 时合并冲突的可能性会小很多
+我们建议克隆 dev-0.4 分支来开发，这样在向 Davinci 主项目提交 PR 时合并冲突的可能性会小很多
 ```bash
-git clone https://github.com/yourname/davinci.git --branch dev-0.3
+git clone https://github.com/yourname/davinci.git --branch dev-0.4
 ```
 
 #### 前端
@@ -76,28 +77,27 @@ npm run build
 ```
 
 #### 后端
-用户配置在项目根目录 /config/ 下，项目启动脚本和升级补丁脚本在项目根目录 /bin/ 下， 后端代码及核心配置在 server/ 目录下, 日志在项目根目录 /log/ 下。注意：此处所指项目根目录都指环境变量 DAVINCI3_HOME 所配置的目录，在使用 IDE 开发过程中也需要配置环境变量，如 Idea 关于环境变量加载的优先级：`Run/Debug Configurations` 中配置的 `Environment variables` —>  IDE缓存的系统环境变量。
+用户配置在项目根目录 /config/ 下，项目启动脚本和升级补丁脚本在项目根目录 /bin/ 下， 后端代码及核心配置在 server/ 目录下, 日志在项目根目录 /log/ 下。注意：此处所指项目根目录都指环境变量 DAVINCI_HOME 所配置的目录，在使用 IDE 开发过程中也需要配置环境变量，如 Idea 关于环境变量加载的优先级：`Run/Debug Configurations` 中配置的 `Environment variables` —>  IDE缓存的系统环境变量。
 
 ##### 目录结构
 
 脚本
 ```
-├── bin                   # 脚本目录
-  ├── migration             # 较大版本变动迁移脚本目录
-  ├── patch                 # 数据库补丁
-  	 ├── 001_beta5.sql        # 已发布补丁（命名规则：“序列_版本”）
-  	 └── beta.sql             # 当期未发布补丁（固定名称）
-  ├── build.sh
-  ├── davinci.sql           # 完整系统数据库脚本（包含所有补丁）
-  ├── initdb.bat            # 针对 Windows 环境的初始化数据库批处理脚本
-  ├── initdb.sh             # 针对 Linux、Mac 环境的初始化数据库 Shell 脚本
-  ├── phantom.js            # 截图脚本（未来版本将不再使用）
-  ├── restart-server.sh     # 针对 Linux、Mac 环境的重启服务脚本
-  ├── run.bat               # 针对	Windows 环境的服务启停核心脚本						
-  ├── start.bat             # 针对 Windows 环境的服务启动脚本
-  ├── start-server.sh       # 针对 Linux、Mac 环境的服务启动脚本
-  ├── stop.bat              # 针对 Windows 环境的服务停止脚本
-  └── stop-server.sh        # 针对 Linux、Mac 环境的服务停止脚本
+├── bin                      # 脚本目录
+  ├── migration                # 较大版本变动迁移脚本目录
+  ├── patch                    # 数据库补丁
+    ├── 0.4                      # 0.4版本
+      ├── 001_beta0.sql            # 已发布补丁（命名规则：“序列_版本”）
+  ├── davinci.sql              # 完整系统数据库脚本（包含所有补丁）
+  ├── initdb.bat               # 针对 Windows 环境的初始化数据库批处理脚本
+  ├── initdb.sh                # 针对 Linux、Mac 环境的初始化数据库 Shell 脚本
+  ├── phantom.js               # 截图脚本（未来版本将不再使用）
+  ├── restart-server.sh        # 针对 Linux、Mac 环境的重启服务脚本
+  ├── run-server.bat           # 针对 Windows 环境的服务启停核心脚本                     
+  ├── start-server.bat         # 针对 Windows 环境的服务启动脚本
+  ├── start-server.sh          # 针对 Linux、Mac 环境的服务启动脚本
+  ├── stop-server.bat          # 针对 Windows 环境的服务停止脚本
+  └── stop-server.sh           # 针对 Linux、Mac 环境的服务停止脚本
 ```
 
 用户配置
@@ -112,20 +112,18 @@ npm run build
 ```
 ├── server                                  # Server 代码根目录
    ├── src                                    # 源码
-  	  ├── main
-  	  	 ├── java
-  	  	 	└── edp
-  	  	 	   ├── core                             # 核心配置及通用代码
-  	  	 	   ├── davinci                          # Davinci 业务代码 
-  	  	 	   ├── DavinciServerApplication         # 系统启动类
-  	  	 	   └── SwaggerConfiguration             # Swagger 配置类
-  	  	 └── resources
-  	  	 	├── generator
-  	  	 	├── mybatis                           # mybatis mapping 目录
-  	  	 	├── templates                         # 邮件、Sql 模板目录 
-  	  	 	├── application.yml                   # 系统核心配置文件
-  	  	 	└── banner.txt
-  	  └── test                                # 测试代码目录
+      ├── main
+         ├── java
+            └── edp
+               ├── davinci
+                 ├── server                          # Davinci 业务代码 
+                   ├── DavinciServerApplication         # 系统启动类
+         └── resources
+            ├── mybatis                           # mybatis mapping 目录
+            ├── templates                         # 邮件、Sql 模板目录 
+            ├── application.yml                   # 系统核心配置文件
+            └── banner.txt
+      └── test                                # 测试代码目录
    └── pom.xml                              # Davinci Server maven 配置文件，继承自项目根目录pom.xml
 ```
 
@@ -134,12 +132,12 @@ npm run build
 ├── logs        # 日志根目录
   ├── sys         # 系统日志目录
   └── user        # 用户日志目录
-  	 ├── opt        # 用户操作日志
-  	 └── sql        # 用户Sql日志
+     ├── opt        # 用户操作日志
+     └── sql        # 用户Sql日志
 ``` 
 
 ##### 环境变量
-配置系统环境变量或 IDE 环境变量 DAVINCI3_HOME，推荐优先使用 IDE 环境变量。
+配置系统环境变量或 IDE 环境变量 DAVINCI_HOME，推荐优先使用 IDE 环境变量。
 
 ##### 数据库
 1. 自行创建 Davinci 系统数据库；
@@ -154,11 +152,11 @@ npm run build
 
 ### Pull Request 指引
 - 如果你还不知道怎样向开源项目发起 PR，请参考[这篇说明](https://help.github.com/en/articles/about-pull-requests)
-- 无论是 Bug 修复，还是新功能开发，请将 PR 提交到 dev-0.3 分支。
+- 无论是 Bug 修复，还是新功能开发，请将 PR 提交到 dev-0.4 分支。
 - PR 和提交名称遵循 `<type>(<scope>): <subject>` 原则，详情可以参考阮一峰的 [Commit message 和 Change log 编写指南](http://www.ruanyifeng.com/blog/2016/01/commit_message_change_log.html) 这篇文章。
 - 如果 PR 中包含新功能，理应将文档更新包含在本次 PR 中。
 - 如果本次 PR 尚未准备好合并，请在名称头部加上 [WIP] 前缀（WIP = work-in-progress）。
-- 所有提交到 dev-0.3 分支的提交至少需要经过一次 Review 才可以被合并
+- 所有提交到 dev-0.4 分支的提交至少需要经过一次 Review 才可以被合并
 
 ### Review 标准
 
@@ -195,8 +193,8 @@ npm run build
 #### Committer 的权利
 - 可以加入官方开发者微信群，参与讨论和制定开发计划
 - 可以对 Issue 进行管理，包括关闭、添加标签
-- 可以创建和管理项目分支，master、dev-0.3、dev-0.2 分支除外
-- 可以对提交到 dev-0.3 分支的 PR 进行 Review
+- 可以创建和管理项目分支，master、dev-0.4、dev-0.3、dev-0.2 分支除外
+- 可以对提交到 dev-0.4 分支的 PR 进行 Review
 - 可以申请成为 Committee 成员
 
 ### 关于 Committee
@@ -205,4 +203,4 @@ npm run build
 如果你是 Davinci 项目的 Committer，并且你贡献的所有内容得到了其他 Committee 成员的认可，你可以申请成为 Davinci Committee 成员，其他 Committee 成员将会一起投票决定是否允许你的加入，如果全票通过，你将成为 Davinci Committee 成员。
 
 #### Committee 成员的权利
-- 可以合并其他 Committers 和贡献者提交到 dev-0.3 分支的 PR
+- 可以合并其他 Committers 和贡献者提交到 dev-0.4 分支的 PR

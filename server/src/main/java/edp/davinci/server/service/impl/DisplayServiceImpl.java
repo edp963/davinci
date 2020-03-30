@@ -136,7 +136,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 			display.setCreateTime(new Date());
 	        BeanUtils.copyProperties(displayInfo, display);
 
-			if (displayExtendMapper.insert(display) <= 0) {
+			if (displayExtendMapper.insertSelective(display) <= 0) {
 				throw new ServerException("Create display fail");
 			}
 
@@ -465,7 +465,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 		display.setPublish(copy.getPublish());
 		display.setCreateBy(user.getId());
 		display.setCreateTime(new Date());
-		if (displayExtendMapper.insert(display) <= 0) {
+		if (displayExtendMapper.insertSelective(display) <= 0) {
 			throw new ServerException("Copy display fail");
 		}
 		optLogger.info("Display({}) is copied by user({}) from display({})", display.getId(), user.getId(),

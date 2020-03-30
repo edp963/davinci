@@ -149,7 +149,7 @@ public class LdapServiceImpl implements LdapService {
         organization.setCreateBy(userId);
         organization.setCreateTime(new Date());
         
-        if (organizationExtendMapper.insert(organization) > 0) {
+        if (organizationExtendMapper.insertSelective(organization) > 0) {
             RelUserOrganization relUserOrganization = new RelUserOrganization();
             relUserOrganization.setOrgId(organization.getId());
             relUserOrganization.setUserId(userId);

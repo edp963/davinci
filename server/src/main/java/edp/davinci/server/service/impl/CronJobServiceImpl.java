@@ -164,7 +164,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 
 		try {
 
-			if (cronJobExtendMapper.insert(cronJob) != 1) {
+			if (cronJobExtendMapper.insertSelective(cronJob) != 1) {
 				throw new ServerException("Create cronJob fail");
 			}
 

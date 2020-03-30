@@ -419,13 +419,13 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         try {
             projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
         } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("you have not permission to execute sql");
+            throw new UnAuthorizedExecption("You have not permission to execute sql");
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()
                 || projectPermission.getViewPermission() < UserPermissionEnum.WRITE.getPermission()) {
-            throw new UnAuthorizedExecption("you have not permission to execute sql");
+            throw new UnAuthorizedExecption("You have not permission to execute sql");
         }
 
         //结构化Sql
@@ -500,7 +500,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         ViewWithSource viewWithSource = getViewWithSource(id);
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), user, false);
         if (!projectService.allowGetData(projectDetail, user)) {
-            alertUnAuthorized(entity, user, "get data");
+            alertUnAuthorized(entity, user, "get data for");
         }
 
         return getResultDataList(projectService.isMaintainer(projectDetail, user), viewWithSource, executeParam, user);
@@ -593,10 +593,12 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         }
 
         if (null == viewWithSource.getSource()) {
-            throw new NotFoundException("source is not found");
+            throw new NotFoundException("Source is not found");
         }
 
 		String cacheKey = null;
+		boolean withCache = null != executeParam && null != executeParam.getCache() && executeParam.getCache() && executeParam.getExpired() > 0L;
+
 		try {
 
 			if (StringUtils.isEmpty(viewWithSource.getSql())) {
@@ -628,9 +630,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 				buildQuerySql(querySqlList, source, executeParam);
 				String config = source.getConfig();
 				executeParam.addExcludeColumn(excludeColumns, SourceUtils.getJdbcUrl(config), SourceUtils.getDbVersion(config));
-
-				if (null != executeParam && null != executeParam.getCache() && executeParam.getCache()
-						&& executeParam.getExpired() > 0L) {
+				
+				if (withCache) {
 
 					StringBuilder slatBuilder = new StringBuilder();
 					slatBuilder.append(executeParam.getPageNo());
@@ -639,10 +640,10 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 					slatBuilder.append(MINUS);
 					slatBuilder.append(executeParam.getPageSize());
 					excludeColumns.forEach(slatBuilder::append);
+					cacheKey = MD5Utils.getMD5(slatBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true,
+							32);
 
 					if (!executeParam.getFlush()) {
-						cacheKey = MD5Utils.getMD5(slatBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true,
-								32);
 						try {
 							Object object = redisUtils.get(cacheKey);
 							if (null != object && executeParam.getCache()) {
@@ -656,6 +657,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 				}
 
 				for (String sql : querySqlList) {
+					// 最后执行的是数据查询SQL
 					paginate = sqlUtils.syncQuery4Paginate(SqlParseUtils.rebuildSqlWithFragment(sql),
 							executeParam.getPageNo(), executeParam.getPageSize(), executeParam.getTotalCount(),
 							executeParam.getLimit(), excludeColumns);
@@ -667,8 +669,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			throw new ServerException(e.getMessage());
 		}
 
-		if (null != executeParam.getCache() && executeParam.getCache() && executeParam.getExpired() > 0L
-				&& null != paginate && !CollectionUtils.isEmpty(paginate.getResultList())) {
+		if (withCache && null != paginate && !CollectionUtils.isEmpty(paginate.getResultList())) {
 			redisUtils.set(cacheKey, paginate, executeParam.getExpired(), TimeUnit.SECONDS);
 		}
 

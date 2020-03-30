@@ -63,14 +63,14 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
 
   <img src="https://github.com/edp963/davinci/raw/master/docs/img/dir.png" alt="" width="600"/>
 
-  * 0.3版本使用 yaml 作为应用配置文件格式，主要配置项包括：server、datasource（请确保连接地址的正确性，初始化数据库时也会用到！！！）、mail（邮箱服务器必须配置）。
+  * 0.3以上版本使用 yaml 作为应用配置文件格式，主要配置项包括：server、datasource（请确保连接地址的正确性，初始化数据库时也会用到！！！）、mail（邮箱服务器必须配置）。
 
-     注： 1. 如需接入reids，可继续加入redis的相关配置。 
-          2. 由于 yaml 语法的特殊性，请务必确保每个配置项冒号和值之间至少有一个空格。
+     注：1. 如需接入reids，可继续加入redis的相关配置。 
+            2. 由于 yaml 语法的特殊性，请务必确保每个配置项冒号和值之间至少有一个空格。
 
 
 ```
-   unzip davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist-beta.3.zip
+   unzip davinci-assembly-0.4.0-SNAPSHOT-server.zip
 
    cd config
 
@@ -173,7 +173,7 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
 ```
     vi /etc/profile 
     
-    export DAVINCI3_HOME=/app/davinci
+    export DAVINCI_HOME=/app/davinci/davinci-assembly-0.4.0-SNAPSHOT-dist
     
     source /etc/profile
 ```
@@ -223,7 +223,7 @@ Please refer to [Davinci用户手册](https://edp963.github.io/davinci/).
 
 Latest Release
 =============
-Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-beta.7/davinci-assembly_3.0.1-0.3.1-SNAPSHOT-dist-beta.7.zip).
+Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-beta.9/davinci-assembly_3.0.1-0.3.1-SNAPSHOT-dist-beta.9.zip).
 
 Get Help
 ============

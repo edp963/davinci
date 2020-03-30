@@ -101,7 +101,7 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
             record.setUserId(user.getId());
             record.setCreateTime(new Date());
             record.setStatus(DownloadRecordStatusEnum.PROCESSING.getStatus());
-            downloadRecordExtendMapper.insert(record);
+            downloadRecordExtendMapper.insertSelective(record);
             MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.DOWNLOAD, record.getId());
 
             WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()

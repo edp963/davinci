@@ -19,7 +19,7 @@
   -->
 
 <assembly>
-    <id>server-beta</id>
+    <id>dist</id>
     <formats>
         <format>zip</format>
     </formats>

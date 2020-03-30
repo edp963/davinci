@@ -395,7 +395,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 		        organization.setAllowCreateProject(true);
 		        organization.setCreateBy(userId);
 		        organization.setCreateTime(new Date());
-				organizationExtendMapper.insert(organization);
+				organizationExtendMapper.insertSelective(organization);
 
 				// 关联用户和组织，创建人是组织的owner
 	            RelUserOrganization relUserOrganization = new RelUserOrganization();

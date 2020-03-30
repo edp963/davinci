@@ -32,7 +32,6 @@ import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DownloadService;
 import edp.davinci.server.service.ShareDownloadService;
-import edp.davinci.server.util.FileUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;

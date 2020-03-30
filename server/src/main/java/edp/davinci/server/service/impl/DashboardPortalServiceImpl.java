@@ -166,7 +166,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 			dashboardPortal.setCreateTime(new Date());
 			BeanUtils.copyProperties(dashboardPortalCreate, dashboardPortal);
 
-			if (dashboardPortalExtendMapper.insert(dashboardPortal) != 1) {
+			if (dashboardPortalExtendMapper.insertSelective(dashboardPortal) != 1) {
 				throw new ServerException("Create dashboardPortal fail");
 			}
 			
