@@ -531,4 +531,21 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 
         return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("You have not permission to view the user's information because you don't have any organizations that join together");
     }
+
+    @Override
+    public ResultMap getUserProfileFromToken(String token) {
+        String username = tokenUtils.getUsername(Constants.TOKEN_PREFIX + Constants.SPACE + token);
+        User user = getByUsername(username);
+        if (null == user) {
+            return new ResultMap().fail(HttpCodeEnum.FORBIDDEN.getCode()).message("ERROR Permission denied");
+        }
+        if (!tokenUtils.validateToken(token, user)) {
+            return new ResultMap().fail(HttpCodeEnum.FORBIDDEN.getCode()).message("ERROR Permission denied");
+        }
+        UserProfile userProfile = new UserProfile();
+        BeanUtils.copyProperties(user, userProfile);
+        List<OrganizationInfo> organizationInfos = organizationMapper.getOrganizationByUser(user.getId());
+        userProfile.setOrganizations(organizationInfos);
+        return new ResultMap().success(tokenUtils.generateToken(user)).payload(userProfile);
+    }
 }

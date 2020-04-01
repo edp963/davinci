@@ -319,4 +319,21 @@ public class UserController extends BaseController {
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
+
+
+    /**
+     * 校验登录用户
+     *
+     * @param token
+     * @return
+     */
+    @ApiOperation(value = "get user profile from token")
+    @AuthIgnore
+    @GetMapping("/check/{token:.*}")
+    public ResponseEntity getUserFromToken(@PathVariable String token) {
+
+        ResultMap resultMap = userService.getUserProfileFromToken(token);
+        return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+    }
+
 }

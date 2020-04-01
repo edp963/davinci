@@ -56,4 +56,6 @@ public interface UserService extends CheckEntityService {
     ResultMap activateUserNoLogin(String token, HttpServletRequest request);
 
     ResultMap getUserProfile(Long id, User user, HttpServletRequest request);
+
+    ResultMap getUserProfileFromToken(String token);
 }
