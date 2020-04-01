@@ -1192,8 +1192,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       onDrillDashboardItem
     } = this.props
     const { itemId, groups, widgetId, sourceDataFilter, mode, col, row} = e
-    const sourceDataGroup = [...(e.sourceDataGroup as Array<string>)]
-
+    const sourceDataGroup = Array.isArray(e.sourceDataGroup) ? [...(e.sourceDataGroup as Array<string>)] : []
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired, model } = widgetConfig
@@ -1373,6 +1372,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           }, [])
           currentCol = groups && groups.length ? newWidgetPropCols : lastDrillHistory.col
         }
+        sqls = sqls.concat(lastDrillHistory.filter.sqls)
+      
       } else {
         name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
         filterSource = sourceDataFilter.map((source) => source[name])
