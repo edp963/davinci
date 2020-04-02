@@ -278,7 +278,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public List<RelRoleMember> addMembers(Long id, List<Long> memberIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
-        
+
         try {
             getRole(id, user, false);
         } catch (NotFoundException e) {
@@ -684,6 +684,21 @@ public class RoleServiceImpl implements RoleService {
                 break;
         }
         return result;
+    }
+
+    @Override
+    public List<Role> getMemberRoles(Long orgId, Long memberId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+        Organization organization = organizationMapper.getById(orgId);
+        if (organization == null) {
+            throw new NotFoundException("organization is not found");
+        }
+
+        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), orgId);
+        if (null == rel) {
+            throw new UnAuthorizedExecption();
+        }
+
+        return roleMapper.selectByOrgIdAndMemberId(orgId, memberId);
     }
 
     private Role getRole(Long id, User user, Boolean moidfy) throws NotFoundException, UnAuthorizedExecption {

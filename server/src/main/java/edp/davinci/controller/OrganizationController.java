@@ -28,6 +28,7 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.organizationDto.*;
 import edp.davinci.dto.projectDto.ProjectWithCreateBy;
 import edp.davinci.dto.roleDto.RoleBaseInfo;
+import edp.davinci.model.Role;
 import edp.davinci.model.User;
 import edp.davinci.service.OrganizationService;
 import edp.davinci.service.ProjectService;
@@ -401,6 +402,26 @@ public class OrganizationController extends BaseController {
 
         organizationService.updateMemberRole(relationId, user, organzationRole.getRole());
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
+    }
+
+    @ApiOperation(value = "get roles of member in organization")
+    @GetMapping(value = "/{id}/member/{memberId}/roles")
+    public ResponseEntity getMemberRole(@PathVariable Long id,
+                                        @PathVariable Long memberId,
+                                        @ApiIgnore @CurrentUser User user,
+                                        HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (invalidId(memberId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        List<Role> roles =  roleService.getMemberRoles(id, memberId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(roles));
     }
 
 }
