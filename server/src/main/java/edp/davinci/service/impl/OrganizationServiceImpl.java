@@ -157,7 +157,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     	checkOwner(organization, user.getId(), id, "update");
 
     	String name = organizationPut.getName();
-    	if (isExist(name, null, null)) {
+    	if (isExist(name, id, null)) {
 			alertNameTaken(entity, name);
 		}
     	
