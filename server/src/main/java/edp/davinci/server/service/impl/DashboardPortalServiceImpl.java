@@ -160,45 +160,46 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
         }
 
 		try {
-
 			DashboardPortal dashboardPortal = new DashboardPortal();
 			dashboardPortal.setCreateBy(user.getId());
 			dashboardPortal.setCreateTime(new Date());
 			BeanUtils.copyProperties(dashboardPortalCreate, dashboardPortal);
 
-			if (dashboardPortalExtendMapper.insertSelective(dashboardPortal) != 1) {
-				throw new ServerException("Create dashboardPortal fail");
-			}
-			
+			insertDashboardPortal(dashboardPortal, dashboardPortalCreate.getRoleIds(), user);
 			optLogger.info("DashboardPortal({}) is created by user({})", dashboardPortal.getId(), user.getId());
 
-			List<Long> roleIds = dashboardPortalCreate.getRoleIds();
-			
-			if (!CollectionUtils.isEmpty(roleIds)) {
-				List<Role> roles = roleMapper.getRolesByIds(roleIds);
-				List<RelRolePortal> rels = roles.stream()
-						.map(r -> {
-							RelRolePortal rel = new RelRolePortal();
-							rel.setRoleId(r.getId());
-							rel.setPortalId(dashboardPortal.getId());
-							rel.setCreateBy(user.getId());
-							rel.setUpdateTime(new Date());
-							rel.setVisible(false);
-							return rel;
-						})
-						.collect(Collectors.toList());
-
-				if (!CollectionUtils.isEmpty(rels)) {
-					relRolePortalExtendMapper.insertBatch(rels);
-					optLogger.info("Create dashboardPortal({}) limit role({}) access", dashboardPortal.getId(),
-							roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
-				}
-			}
-
 			return dashboardPortal;
-
 		} finally {
 			releaseLock(lock);
+		}
+    }
+    
+    @Transactional
+    private void insertDashboardPortal(DashboardPortal dashboardPortal, List<Long> roleIds, User user) {
+
+    	if (dashboardPortalExtendMapper.insertSelective(dashboardPortal) != 1) {
+			throw new ServerException("Create dashboardPortal fail");
+		}
+		
+		if (!CollectionUtils.isEmpty(roleIds)) {
+			List<Role> roles = roleMapper.getRolesByIds(roleIds);
+			List<RelRolePortal> rels = roles.stream()
+					.map(r -> {
+						RelRolePortal rel = new RelRolePortal();
+						rel.setRoleId(r.getId());
+						rel.setPortalId(dashboardPortal.getId());
+						rel.setCreateBy(user.getId());
+						rel.setUpdateTime(new Date());
+						rel.setVisible(false);
+						return rel;
+					})
+					.collect(Collectors.toList());
+
+			if (!CollectionUtils.isEmpty(rels)) {
+				relRolePortalExtendMapper.insertBatch(rels);
+				optLogger.info("Create dashboardPortal({}) limit role({}) access", dashboardPortal.getId(),
+						roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+			}
 		}
     }
 
@@ -233,46 +234,51 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 		}
 
 		try {
-
 			String origin = dashboardPortal.toString();
 			BeanUtils.copyProperties(dashboardPortalUpdate, dashboardPortal);
 			dashboardPortal.setUpdateBy(user.getId());
 			dashboardPortal.setUpdateTime(new Date());
 
-			if (dashboardPortalExtendMapper.update(dashboardPortal) != 1) {
-				throw new ServerException("Update dashboardPortal fail");
-			}
-
+			updateDashboardPortal(dashboardPortal, dashboardPortalUpdate.getRoleIds(), user);
 			optLogger.info("DashboardPortal({}) is update by user({}), origin:{}", id, user.getId(), origin);
 
-			relRolePortalExtendMapper.deleteByProtalId(id);
-			if (!CollectionUtils.isEmpty(dashboardPortalUpdate.getRoleIds())) {
-				List<Role> roles = roleMapper.getRolesByIds(dashboardPortalUpdate.getRoleIds());
-				List<RelRolePortal> list = roles.stream()
-						.map(r -> {
-							RelRolePortal rel = new RelRolePortal();
-							rel.setRoleId(r.getId());
-							rel.setPortalId(dashboardPortal.getId());
-							rel.setCreateBy(user.getId());
-							rel.setUpdateTime(new Date());
-							rel.setVisible(false);
-							return rel;
-						})
-						.collect(Collectors.toList());
-				if (!CollectionUtils.isEmpty(list)) {
-					relRolePortalExtendMapper.insertBatch(list);
-					optLogger.info("Update dashboardPortal({}) limit role({}) access", id,
-							roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
-				}
-			}
-			
 			return dashboardPortal;
-
 		}finally {
 			releaseLock(lock);
 		}
 	}
 
+	@Transactional
+	private void updateDashboardPortal(DashboardPortal dashboardPortal, List<Long> roleIds, User user) {
+		if (dashboardPortalExtendMapper.update(dashboardPortal) != 1) {
+			throw new ServerException("Update dashboardPortal fail");
+		}
+
+		relRolePortalExtendMapper.deleteByProtalId(dashboardPortal.getId());
+
+		if (CollectionUtils.isEmpty(roleIds)) {
+			return;
+		}
+		
+		List<Role> roles = roleMapper.getRolesByIds(roleIds);
+		List<RelRolePortal> list = roles.stream()
+				.map(r -> {
+					RelRolePortal rel = new RelRolePortal();
+					rel.setRoleId(r.getId());
+					rel.setPortalId(dashboardPortal.getId());
+					rel.setCreateBy(user.getId());
+					rel.setUpdateTime(new Date());
+					rel.setVisible(false);
+					return rel;
+				})
+				.collect(Collectors.toList());
+
+		if (!CollectionUtils.isEmpty(list)) {
+			relRolePortalExtendMapper.insertBatch(list);
+			optLogger.info("Update dashboardPortal({}) limit role({}) access", dashboardPortal.getId(),
+					roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+		}
+	}
 
     @Override
     public List<Long> getExcludeRoles(Long id) {

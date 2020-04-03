@@ -163,21 +163,24 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		}
 
 		try {
-
-			if (cronJobExtendMapper.insertSelective(cronJob) != 1) {
-				throw new ServerException("Create cronJob fail");
-			}
+			insertCronJob(cronJob);
+			optLogger.info("CronJob({}) is create by user({})", cronJob.getId(), user.getId());
 
 			CronJobInfo cronJobInfo = new CronJobInfo();
 			BeanUtils.copyProperties(cronJobBaseInfo, cronJobInfo);
 			cronJobInfo.setId(cronJob.getId());
 			cronJobInfo.setJobStatus(CronJobStatusEnum.NEW.getStatus());
-
-			optLogger.info("CronJob({}) is create by user({})", cronJob.getId(), user.getId());
 			return cronJobInfo;
 
 		} finally {
 			releaseLock(lock);
+		}
+	}
+	
+	@Transactional
+	private void insertCronJob(CronJob cronJob) {
+		if (cronJobExtendMapper.insertSelective(cronJob) != 1) {
+			throw new ServerException("Create cronJob fail");
 		}
 	}
 
@@ -218,26 +221,41 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		cronJob.setUpdateBy(user.getId());
 		cronJob.setUpdateTime(new Date());
 		String origin = cronJob.toString();
-		boolean res = false;
+		try {
+			cronJob.setStartDate(DateUtils.toDate(cronJobUpdate.getStartDate()));
+			cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
+			cronJob.setUpdateTime(new Date());
+			if(updateCronJob(cronJob, cronJobUpdate, user)) {
+				optLogger.info("CronJob({}) is update by user({}), origin:{}", id, user.getId(), origin);
+				return true;
+			}
+		}catch (Exception e) {
+			throw new ServerException(e.getMessage());
+		}finally {
+			releaseLock(lock);
+		}
+
+		return false;
+	}
+	
+	@Transactional
+	private boolean updateCronJob(CronJob cronJob, CronJobUpdate cronJobUpdate, User user) {
 		try {
 			cronJob.setStartDate(DateUtils.toDate(cronJobUpdate.getStartDate()));
 			cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
 			cronJob.setUpdateTime(new Date());
 			if (cronJobExtendMapper.update(cronJob) == 1) {
-				optLogger.info("CronJob({}) is update by user({}), origin:{}", id, user.getId(), origin);
 				quartzHandler.modifyJob(cronJob);
-				res = true;
+				return true;
 			}
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			quartzHandler.removeJob(cronJob);
 			cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
 			cronJobExtendMapper.update(cronJob);
-		} finally {
-			releaseLock(lock);
 		}
-
-		return res;
+		
+		return false;
 	}
 
 	/**

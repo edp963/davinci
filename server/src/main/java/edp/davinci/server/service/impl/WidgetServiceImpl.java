@@ -66,8 +66,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.script.ScriptEngine;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -211,17 +209,22 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         	widget.setCreateBy(user.getId());
         	widget.setCreateTime(new Date());
             BeanUtils.copyProperties(widgetCreate, widget);
-            if (widgetExtendMapper.insert(widget) <= 0) {
-                throw new ServerException("Create widget fail");
-            }
-            
+
+            insertWidget(widget);
             optLogger.info("Widget({}) is create by user({})", widget.getId(), user.getId());
+
             return widget;
-        	
         }finally {
 			releaseLock(lock);
 		}
     }
+    
+    @Transactional
+	private void insertWidget(Widget widget) {
+		if (widgetExtendMapper.insert(widget) <= 0) {
+			throw new ServerException("Create widget fail");
+		}
+	}
     
     private void checkView(Long id) {
         if (null == viewExtendMapper.selectByPrimaryKey(id)) {
@@ -261,23 +264,27 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 		}
 		
 		try {
-        	
 			String originStr = widget.toString();
 			BeanUtils.copyProperties(widgetUpdate, widget);
         	widget.setUpdateBy(user.getId());
         	widget.setUpdateTime(new Date());
-			if (widgetExtendMapper.update(widget) <= 0) {
-				throw new ServerException("Update widget fail");
-			}
-			
+
+        	updateWidget(widget);
 			optLogger.info("Widget({}) is updated by user({}), origin:{}", widget.getId(), user.getId(),
 					originStr);
+
 			return true;
-        	
         }finally {
 			releaseLock(lock);
 		}
     }
+    
+    @Transactional
+	private void updateWidget(Widget widget) {
+		if (widgetExtendMapper.update(widget) <= 0) {
+			throw new ServerException("Update widget fail");
+		}
+	}
 
     private Widget getWidget(Long id) {
         Widget widget = widgetExtendMapper.selectByPrimaryKey(id);

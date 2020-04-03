@@ -31,12 +31,15 @@ import edp.davinci.server.util.SqlUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import static edp.davinci.server.commons.Constants.QUERY_META_SQL;
+import static edp.davinci.server.enums.DataTypeEnum.MYSQL;
 
 import java.sql.ResultSetMetaData;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static edp.davinci.server.enums.DataTypeEnum.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -60,13 +63,21 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         Boolean rst = true;
         String md5 = null;
         try {
-            JdbcTemplate template = context.getSqlUtils().jdbcTemplate();
+        	SqlUtils sqlUtils = context.getSqlUtils();
+        	JdbcTemplate template = sqlUtils.jdbcTemplate();
             propertiesSet(template);
             buildQueryColumn(template);
             super.init(context);
             super.writeHeader(context);
             template.setMaxRows(context.getResultLimit() > 0 && context.getResultLimit() <= maxRows ? context.getResultLimit() : maxRows);
             template.setFetchSize(500);
+            
+            // special for mysql fetch size
+			if (sqlUtils.getDataTypeEnum() == MYSQL) {
+				if(!sqlUtils.getJdbcUrl().contains("useCursorFetch=true")) {
+					template.setFetchSize(Integer.MIN_VALUE);
+				}
+			}
 
             String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
             sql = SqlParseUtils.rebuildSqlWithFragment(sql);

@@ -133,20 +133,9 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             organization.setUserId(userId);
             organization.setCreateBy(userId);
             organization.setCreateTime(new Date());
-
-            if (organizationExtendMapper.insertSelective(organization) <= 0) {
-                throw new ServerException("Create organization error");
-            }
-            
-            optLogger.info("Organization({}) create by user({})", organization.getId(), userId);
-            //用户-组织 建立关联
             RelUserOrganization relUserOrganization = new RelUserOrganization();
-            relUserOrganization.setOrgId(organization.getId());
-            relUserOrganization.setUserId(userId);
-            relUserOrganization.setRole(UserOrgRoleEnum.OWNER.getRole());
-            relUserOrganization.setCreateBy(userId);
-            relUserOrganization.setCreateTime(new Date());
-            relUserOrganizationMapper.insert(relUserOrganization);
+            insertOrganization(organization, relUserOrganization, user);
+            optLogger.info("Organization({}) create by user({})", organization.getId(), userId);
             
             OrganizationBaseInfo organizationBaseInfo = new OrganizationBaseInfo();
             BeanUtils.copyProperties(organization, organizationBaseInfo);
@@ -154,8 +143,24 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             return organizationBaseInfo;
 
     	}finally {
-			lock.release();
+			releaseLock(lock);
 		}
+    }
+    
+    @Transactional
+    private void insertOrganization(Organization organization, RelUserOrganization relUserOrganization, User user) {
+
+    	if (organizationExtendMapper.insertSelective(organization) <= 0) {
+            throw new ServerException("Create organization error");
+        }
+        
+        //用户-组织 建立关联
+        relUserOrganization.setOrgId(organization.getId());
+        relUserOrganization.setUserId(user.getId());
+        relUserOrganization.setRole(UserOrgRoleEnum.OWNER.getRole());
+        relUserOrganization.setCreateBy(user.getId());
+        relUserOrganization.setCreateTime(new Date());
+        relUserOrganizationMapper.insert(relUserOrganization);
     }
 
     /**
@@ -177,7 +182,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     	checkOwner(organization, user.getId(), id, "update");
 
     	String name = organizationPut.getName();
-    	if (isExist(name, null, null)) {
+    	if (isExist(name, id, null)) {
 			alertNameTaken(entity, name);
 		}
     	
@@ -192,15 +197,19 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 	        organization.setUpdateBy(user.getId());
 	        organization.setUpdateTime(new Date());
 
-	        if (organizationExtendMapper.update(organization) <= 0) {
-	            throw new ServerException("Update organization error");
-	        }
-
+	        updateOrganization(organization);
 	        optLogger.info("Organization({}) is update by user({}), origin:{}", organization.getId(), user.getId(), origin);
-	        return true;
 
+	        return true;
 		}finally {
 			lock.release();
+		}
+    }
+    
+    @Transactional
+    private void updateOrganization(Organization organization) {
+		if (organizationExtendMapper.update(organization) <= 0) {
+			throw new ServerException("Update organization error");
 		}
     }
     

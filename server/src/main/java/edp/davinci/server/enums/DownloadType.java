@@ -36,6 +36,10 @@ public enum DownloadType {
     private DownloadType(String type){
         this.type=type;
     }
+    
+    public String getDownloadType(){
+        return this.type;
+    }
 
     public static DownloadType getDownloadType(String type){
         for(DownloadType em:DownloadType.values()){

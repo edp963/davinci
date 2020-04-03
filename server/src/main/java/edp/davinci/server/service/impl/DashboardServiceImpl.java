@@ -254,7 +254,6 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 		
 		try {
 
-			Long userId = user.getId();
 			Dashboard dashboard = new Dashboard();
 			dashboard.setCreateBy(user.getId());
 			dashboard.setCreateTime(new Date());
@@ -264,38 +263,44 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 	            String fullParentId = dashboardExtendMapper.getFullParentId(dashboard.getParentId());
 	            dashboard.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboard.getParentId().toString() : dashboard.getParentId() + COMMA + fullParentId);
 	        }
-
-	        if (dashboardExtendMapper.insertSelective(dashboard) != 1) {
-	        	throw new ServerException("Create dashboard fail");
-	        }
 	        
-	        optLogger.info("Dashboard({}) is create by user({})", dashboard.getId(), userId);
-
-	        if (!CollectionUtils.isEmpty(dashboardCreate.getRoleIds())) {
-	            List<Role> roles = roleMapper.getRolesByIds(dashboardCreate.getRoleIds());
-	            List<RelRoleDashboard> list = roles.stream()
-	                    .map(r -> {
-	                    	RelRoleDashboard rel = new RelRoleDashboard();
-                    		rel.setDashboardId(dashboard.getId());
-                    		rel.setRoleId(r.getId());
-                    		rel.setCreateBy(user.getId());
-                    		rel.setCreateTime(new Date());
-                    		rel.setVisible(false);
-	                    	return rel;
-	                    }).collect(Collectors.toList());
-	            if (!CollectionUtils.isEmpty(list)) {
-	                relRoleDashboardExtendMapper.insertBatch(list);
-	                optLogger.info("Dashboard({}) limit role({}) access", dashboard.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
-	            }
-	        }
+	        insertDashboard(dashboard, dashboardCreate.getRoleIds(), user);
+	        optLogger.info("Dashboard({}) is create by user({})", dashboard.getId(), user.getId());
 	        
 	        return dashboard;
-
 		}finally {
-			releaseLock(lock);
+			lock.release();
 		}
     }
+    
+    @Transactional
+    private void insertDashboard(Dashboard dashboard, List<Long> roleIds, User user) {
 
+    	if (dashboardExtendMapper.insertSelective(dashboard) != 1) {
+        	throw new ServerException("Create dashboard fail");
+        }
+        
+        if (CollectionUtils.isEmpty(roleIds)) {
+            return;
+        }
+        
+        List<Role> roles = roleMapper.getRolesByIds(roleIds);
+        List<RelRoleDashboard> list = roles.stream()
+                .map(r -> {
+                	RelRoleDashboard rel = new RelRoleDashboard();
+            		rel.setDashboardId(dashboard.getId());
+            		rel.setRoleId(r.getId());
+            		rel.setCreateBy(user.getId());
+            		rel.setCreateTime(new Date());
+            		rel.setVisible(false);
+                	return rel;
+                }).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(list)) {
+            relRoleDashboardExtendMapper.insertBatch(list);
+            optLogger.info("Dashboard({}) limit role({}) access", dashboard.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+        }
+    }
+    
     /**
      * 修改dashboard
      *
@@ -330,6 +335,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         List<Dashboard> dashboardList = new ArrayList<>();
         Map<Long, List<Long>> rolesMap = new HashMap<>();
         List<Long> disableDashboards = getDisableVizs(user.getId(), portalId, null, VizEnum.DASHBOARD);
+        List<BaseLock> locks = new ArrayList<>();
         for (DashboardDTO dashboardDTO : dashboards) {
         	String name = dashboardDTO.getName();
         	Long id = dashboardDTO.getId();
@@ -347,6 +353,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     		if (lock != null && !lock.getLock()) {
     			alertNameTaken(entity, name);
     		}
+    		locks.add(lock);
 
     		dashboardDTO.setUpdateBy(user.getId());
 			dashboardDTO.setUpdateTime(new Date());
@@ -363,39 +370,53 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
             rolesMap.put(id, dashboardDTO.getRoleIds());
         }
 
-        if (dashboardExtendMapper.updateBatch(dashboardList) > 0) {
-            
+        try {
+        	updateDashboards(dashboardList, rolesMap, user);
         	optLogger.info("Dashboard({}) is update by user({}), origin:{}", dashboardList.stream().map(d -> d.getId()).collect(Collectors.toList()), user.getId(), dashboards);
-            
-        	if (!CollectionUtils.isEmpty(rolesMap)) {
-                Set<Long> ids = rolesMap.keySet();
-                relRoleDashboardExtendMapper.deleteByDashboardIds(ids);
-                Set<Long> emptyRelDashboardId = new HashSet<>();
-                List<RelRoleDashboard> relList = new ArrayList<>();
-                rolesMap.forEach((dashboardId, roles) -> {
-					if (roles == null) {
-						return;
-					}
-                    emptyRelDashboardId.add(dashboardId);
-                    if (!CollectionUtils.isEmpty(roles)) {
-						relList.addAll(roles.stream().map(roleId -> {
-							RelRoleDashboard rel = new RelRoleDashboard();
-							rel.setDashboardId(dashboardId);
-							rel.setRoleId(roleId);
-							rel.setCreateBy(user.getId());
-							rel.setCreateTime(new Date());
-							rel.setVisible(false);
-							return rel;
-						}).collect(Collectors.toList()));
-                    }
-                });
-                if (!CollectionUtils.isEmpty(emptyRelDashboardId)) {
-                	relRoleDashboardExtendMapper.deleteByDashboardIds(emptyRelDashboardId);
-                }
-                if (!CollectionUtils.isEmpty(relList)) {
-                    relRoleDashboardExtendMapper.insertBatch(relList);
-                }
+        }finally {
+        	for (BaseLock lock : locks) {
+				lock.release();
+			}
+        }
+    }
+    
+    @Transactional
+    private void updateDashboards(List<Dashboard> dashboardList,  Map<Long, List<Long>> rolesMap, User user) {
+    	
+    	if (dashboardExtendMapper.updateBatch(dashboardList) <= 0) {
+        	throw new ServerException("Update dashboard fail");
+        }
+
+    	if (CollectionUtils.isEmpty(rolesMap)) {
+            return;
+        }
+    	
+    	Set<Long> ids = rolesMap.keySet();
+        relRoleDashboardExtendMapper.deleteByDashboardIds(ids);
+        Set<Long> emptyRelDashboardIds = new HashSet<>();
+        List<RelRoleDashboard> relList = new ArrayList<>();
+        rolesMap.forEach((dashboardId, roles) -> {
+			if (roles == null) {
+				return;
+			}
+            emptyRelDashboardIds.add(dashboardId);
+            if (!CollectionUtils.isEmpty(roles)) {
+				relList.addAll(roles.stream().map(roleId -> {
+					RelRoleDashboard rel = new RelRoleDashboard();
+					rel.setDashboardId(dashboardId);
+					rel.setRoleId(roleId);
+					rel.setCreateBy(user.getId());
+					rel.setCreateTime(new Date());
+					rel.setVisible(false);
+					return rel;
+				}).collect(Collectors.toList()));
             }
+        });
+        if (!CollectionUtils.isEmpty(emptyRelDashboardIds)) {
+        	relRoleDashboardExtendMapper.deleteByDashboardIds(emptyRelDashboardIds);
+        }
+        if (!CollectionUtils.isEmpty(relList)) {
+            relRoleDashboardExtendMapper.insertBatch(relList);
         }
     }
     

@@ -37,6 +37,7 @@ import edp.davinci.server.model.JdbcSourceInfo;
 import edp.davinci.server.model.PaginateWithQueryColumns;
 import edp.davinci.server.model.QueryColumn;
 import edp.davinci.server.model.TableInfo;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
@@ -94,6 +95,7 @@ public class SqlUtils {
 
     private JdbcSourceInfo jdbcSourceInfo;
 
+    @Getter
     private DataTypeEnum dataTypeEnum;
 
     private SourceUtils sourceUtils;
@@ -145,39 +147,22 @@ public class SqlUtils {
 	}
 
     @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
-    public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer totalCount, Integer limit, Set<String> excludeColumns) throws Exception {
-        if (null == pageNo || pageNo < 1) {
+    public PaginateWithQueryColumns syncQuery4Paginate(String sql, int pageNo, int pageSize, int totalCount, int limit, Set<String> excludeColumns) throws Exception {
+
+    	if (pageNo < 1) {
             pageNo = 0;
         }
-        if (null == pageSize || pageSize < 1) {
+
+    	if (pageSize < 1) {
             pageSize = 0;
         }
-        if (null == totalCount || totalCount < 1) {
+
+    	if (totalCount < 1) {
             totalCount = 0;
         }
-        if (null == limit) {
-            limit = -1;
-        }
-        PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit, excludeColumns);
+
+    	PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit, excludeColumns);
         return paginate;
-    }
-
-    @CachePut(value = "query", key = "#sql")
-    public List<Map<String, Object>> query4List(String sql, int limit) throws Exception {
-        sql = filterAnnotate(sql);
-        checkSensitiveSql(sql);
-
-        JdbcTemplate jdbcTemplate = jdbcTemplate();
-        jdbcTemplate.setMaxRows(limit > resultLimit ? resultLimit : limit);
-
-        long before = System.currentTimeMillis();
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
-		if (isQueryLogEnable) {
-			String md5 = MD5Utils.getMD5(sql, true, 16);
-			sqlLogger.info("{} query for({} ms) sql:{}", md5, System.currentTimeMillis() - before, formatSql(sql));
-		}
-
-		return list;
     }
 
     @CachePut(value = "query", keyGenerator = "keyGenerator")
@@ -224,7 +209,7 @@ public class SqlUtils {
             int maxRows = limit > 0 && limit < pageSize * pageNo ? limit : pageSize * pageNo;
 
             if (this.dataTypeEnum == MYSQL) {
-                sql = sql + " LIMIT " + startRow + ", " + pageSize;
+                sql = sql + " limit " + startRow + ", " + pageSize;
                 getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
             } else {
                 jdbcTemplate.setMaxRows(maxRows);
@@ -238,6 +223,24 @@ public class SqlUtils {
         }
 
         return paginateWithQueryColumns;
+    }
+    
+    @CachePut(value = "query", key = "#sql")
+    public List<Map<String, Object>> query4List(String sql, int limit) throws Exception {
+        sql = filterAnnotate(sql);
+        checkSensitiveSql(sql);
+
+        JdbcTemplate jdbcTemplate = jdbcTemplate();
+        jdbcTemplate.setMaxRows(limit > resultLimit ? resultLimit : limit);
+
+        long before = System.currentTimeMillis();
+        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
+		if (isQueryLogEnable) {
+			String md5 = MD5Utils.getMD5(sql, true, 16);
+			sqlLogger.info("{} query for({} ms) sql:{}", md5, System.currentTimeMillis() - before, formatSql(sql));
+		}
+
+		return list;
     }
 
     private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns, int startRow) {
@@ -656,7 +659,12 @@ public class SqlUtils {
         }
         DataSource dataSource = sourceUtils.getDataSource(this.jdbcSourceInfo);
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.setFetchSize(1000);
+        jdbcTemplate.setFetchSize(500);
+		if (this.dataTypeEnum == MYSQL) {
+			if(!getJdbcUrl().contains("useCursorFetch=true")) {
+				jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
+			}
+		}
         return jdbcTemplate;
     }
     

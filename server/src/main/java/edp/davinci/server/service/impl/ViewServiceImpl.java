@@ -261,10 +261,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			view.setCreateBy(user.getId());
 			view.setCreateTime(new Date());
 			BeanUtils.copyProperties(viewCreate, view);
-			if (viewExtendMapper.insert(view) <= 0) {
-				throw new ServerException("Create view fail");
-			}
-			
+
+			insertView(view);
 			optLogger.info("View({}) is create by user({})", view.getId(), user.getId());
 			
 			if (!CollectionUtils.isEmpty(viewCreate.getRoles()) && !StringUtils.isEmpty(viewCreate.getVariable())) {
@@ -283,6 +281,13 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			releaseLock(lock);
 		}
     }
+    
+    @Transactional
+	private void insertView(View view) {
+		if (viewExtendMapper.insert(view) <= 0) {
+			throw new ServerException("Create view fail");
+		}
+	}
 
     private Source getSource(Long id) {
     	Source source = sourceExtendMapper.selectByPrimaryKey(id);
@@ -328,16 +333,13 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 		}
 		
 		try {
-			
+
 			String originStr = view.toString();
 	        BeanUtils.copyProperties(viewUpdate, view);
 	        view.setUpdateBy(user.getId());
 	        view.setUpdateTime(new Date());
 
-	        if (viewExtendMapper.update(view) <= 0) {
-	            throw new ServerException("Update view fail");
-	        }
-	        
+	        updateView(view);
 	        optLogger.info("View({}) is updated by user({}), origin:{}", view.getId(), user.getId(), originStr);
             
 	        if (CollectionUtils.isEmpty(viewUpdate.getRoles())) {
@@ -354,6 +356,13 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			releaseLock(lock);
 		}
     }
+    
+	@Transactional
+	private void updateView(View view) {
+		if (viewExtendMapper.update(view) <= 0) {
+			throw new ServerException("Update view fail");
+		}
+	}
 
     private View getView(Long id) {
     	 View view = viewExtendMapper.selectByPrimaryKey(id);
@@ -465,8 +474,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			if (!CollectionUtils.isEmpty(querySqlList)) {
 				for (String sql : querySqlList) {
 					sql = SqlParseUtils.rebuildSqlWithFragment(sql);
-					paginateWithQueryColumns = sqlUtils.syncQuery4Paginate(sql, null, null, null, executeSql.getLimit(),
-							null);
+					paginateWithQueryColumns = sqlUtils.syncQuery4Paginate(sql, 0, 0, 0, executeSql.getLimit(), null);
 				}
 			}
 

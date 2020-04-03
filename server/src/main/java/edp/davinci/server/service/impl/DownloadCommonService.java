@@ -146,6 +146,7 @@ public class DownloadCommonService {
 
     protected List<WidgetContext> getWidgetContexts(DownloadType downloadType, Long id, User user, List<DownloadViewExecuteParam> params) {
         List<WidgetContext> widgetList = Lists.newArrayList();
+        String type = downloadType.getDownloadType();
         switch (downloadType) {
             case Widget:
                 Widget widget = widgetMapper.selectByPrimaryKey(id);
@@ -165,33 +166,36 @@ public class DownloadCommonService {
                 }
                 break;
             case DashBoard:
-                List<WidgetContext> widgets = getWidgetContextListByDashBoardId(Lists.newArrayList(id), params);
-                if (!CollectionUtils.isEmpty(widgets)) {
-                    widgetList.addAll(widgets);
+                List<WidgetContext> dashboards = getWidgetContextListByDashBoardId(Lists.newArrayList(id), params);
+                if (!CollectionUtils.isEmpty(dashboards)) {
+                    widgetList.addAll(dashboards);
                 }
                 break;
             case DashBoardFolder:
-                List<WidgetContext> widgets1 = getWidgetContextListByFolderDashBoardId(id);
-                if (!CollectionUtils.isEmpty(widgets1)) {
-                    widgetList.addAll(widgets1);
+                List<WidgetContext> folders = getWidgetContextListByFolderDashBoardId(id);
+                if (!CollectionUtils.isEmpty(folders)) {
+                    widgetList.addAll(folders);
                 }
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported downloadType:" + downloadType.name());
+                throw new IllegalArgumentException("Unsupported download type:" + downloadType.name());
         }
+        
         if (CollectionUtils.isEmpty(widgetList)) {
-            throw new IllegalArgumentException("No widget to download");
+            throw new IllegalArgumentException("No " + type + " to download");
         }
+        
         for (WidgetContext context : widgetList) {
             ProjectDetail projectDetail = projectService.getProjectDetail(context.getWidget().getProjectId(), user, false);
             ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
             //校验权限
             if (!projectPermission.getDownloadPermission()) {
-                log.info("User({}) have not permisson to download the widget {}", user.getUsername(), id);
-                throw new UnAuthorizedExecption("You have not permission to download the widget");
+                log.info("User({}) have not permisson to download the {}({})", user.getUsername(), type, id);
+                throw new UnAuthorizedExecption("You have not permission to download the " + type);
             }
             context.setIsMaintainer(projectService.isMaintainer(projectDetail, user));
         }
+        
         return widgetList;
     }
 }
