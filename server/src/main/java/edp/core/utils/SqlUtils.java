@@ -31,6 +31,7 @@ import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import edp.davinci.core.utils.SqlParseUtils;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
@@ -87,6 +88,7 @@ public class SqlUtils {
 
     private JdbcSourceInfo jdbcSourceInfo;
 
+    @Getter
     private DataTypeEnum dataTypeEnum;
 
     private SourceUtils sourceUtils;
@@ -650,8 +652,16 @@ public class SqlUtils {
         }
         DataSource dataSource = sourceUtils.getDataSource(this.jdbcSourceInfo);
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.setFetchSize(1000);
-        return jdbcTemplate;
+        jdbcTemplate.setFetchSize(500);
+        
+        // special for mysql fetch size
+		if (this.dataTypeEnum == MYSQL) {
+			if (!getJdbcUrl().contains("useCursorFetch=true")) {
+				jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
+			}
+		}
+
+		return jdbcTemplate;
     }
     
     public boolean testConnection() throws SourceException {

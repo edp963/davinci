@@ -28,7 +28,6 @@ import edp.core.utils.SqlUtils;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.utils.SqlParseUtils;
 import edp.davinci.dto.cronJobDto.MsgMailExcel;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.ResultSetMetaData;
@@ -38,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static edp.core.consts.Consts.QUERY_META_SQL;
+import static edp.core.enums.DataTypeEnum.MYSQL;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,7 +46,6 @@ import static edp.core.consts.Consts.QUERY_META_SQL;
  * @Date 19/5/28 18:23
  * To change this template use File | Settings | File Templates.
  */
-@Slf4j
 public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
     private SheetContext context;
 
@@ -61,14 +60,22 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         Stopwatch watch = Stopwatch.createStarted();
         Boolean rst = true;
         String md5 = null;
+        SqlUtils sqlUtils = context.getSqlUtils();
         try {
-            JdbcTemplate template = context.getSqlUtils().jdbcTemplate();
+            JdbcTemplate template = sqlUtils.jdbcTemplate();
             propertiesSet(template);
             buildQueryColumn(template);
             super.init(context);
             super.writeHeader(context);
             template.setMaxRows(context.getResultLimit() > 0 && context.getResultLimit() <= maxRows ? context.getResultLimit() : maxRows);
             template.setFetchSize(500);
+
+			// special for mysql fetch size
+			if (sqlUtils.getDataTypeEnum() == MYSQL) {
+				if (!sqlUtils.getJdbcUrl().contains("useCursorFetch=true")) {
+					template.setFetchSize(Integer.MIN_VALUE);
+				}
+			}
 
             String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
             sql = SqlParseUtils.rebuildSqlWithFragment(sql);
