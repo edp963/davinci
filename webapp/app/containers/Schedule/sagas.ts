@@ -102,6 +102,21 @@ export function* changeScheduleStatus (action: ScheduleActionType) {
   }
 }
 
+export function* executeScheduleImmediately (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.EXECUTE_SCHEDULE_IMMEDIATELY) { return }
+
+  const { id, resolve } = action.payload
+  try {
+    yield call(request, {
+      method: 'post',
+      url: `${api.schedule}/execute/${id}`
+    })
+    resolve()
+  } catch (err) {
+    errorHandler(err)
+  }
+}
+
 export function* editSchedule (action: ScheduleActionType) {
   if (action.type !== ActionTypes.EDIT_SCHEDULE) { return }
 
@@ -257,6 +272,7 @@ export default function* rootScheduleSaga () {
     takeEvery(ActionTypes.ADD_SCHEDULE, addSchedule),
     takeEvery(ActionTypes.DELETE_SCHEDULE, deleteSchedule),
     takeEvery(ActionTypes.CHANGE_SCHEDULE_STATUS, changeScheduleStatus),
+    takeEvery(ActionTypes.EXECUTE_SCHEDULE_IMMEDIATELY, executeScheduleImmediately),
     takeEvery(ActionTypes.EDIT_SCHEDULE, editSchedule),
     takeLatest(ActionTypes.LOAD_SUGGEST_MAILS, getSuggestMails),
     takeEvery(ActionTypes.LOAD_VIZS, getVizsData)

@@ -159,6 +159,16 @@ export const ScheduleActions = {
     }
   },
 
+  executeScheduleImmediately (id: number, resolve: () => void) {
+    return {
+      type: ActionTypes.EXECUTE_SCHEDULE_IMMEDIATELY,
+      payload: {
+        id,
+        resolve
+      }
+    }
+  },
+
   resetScheduleState () {
     return {
       type: ActionTypes.RESET_SCHEDULE_STATE,

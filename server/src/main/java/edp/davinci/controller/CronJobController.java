@@ -122,13 +122,12 @@ public class CronJobController extends BaseController {
      * 立即执行 cronjob
      *
      * @param id
-     * @param bindingResult
      * @param user
      * @param request
      * @return
      */
     @ApiOperation(value = "execute job")
-    @PostMapping(value = "/execute/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/execute/{id}")
     public ResponseEntity executeCronJob(@PathVariable Long id,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
