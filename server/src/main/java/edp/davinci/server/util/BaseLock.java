@@ -21,7 +21,7 @@ package edp.davinci.server.util;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class BaseLock {
+public abstract class BaseLock implements AutoCloseable {
 
 	public static class CacheLock extends BaseLock {
 
@@ -78,6 +78,11 @@ public abstract class BaseLock {
 
 			return false;
 		}
+
+		@Override
+		public void close() throws Exception {
+			release();
+		}
 	}
 
 	public static class RedisLock extends BaseLock {
@@ -119,6 +124,11 @@ public abstract class BaseLock {
 			}
 
 			return false;
+		}
+
+		@Override
+		public void close() throws Exception {
+			release();
 		}
 
 	}

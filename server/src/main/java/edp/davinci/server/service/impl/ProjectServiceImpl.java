@@ -44,7 +44,6 @@ import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.*;
 import edp.davinci.server.service.DashboardService;
 import edp.davinci.server.service.DisplayService;
 import edp.davinci.server.service.ProjectService;
@@ -221,15 +220,8 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	        project.setCreateBy(user.getId());
 	        project.setCreateTime(new Date());
 
-	        if (projectExtendMapper.insertSelective(project) <= 0) {
-	            log.info("Create project fail:{}", projectCreat.toString());
-	            throw new ServerException("Create project fail");
-	        }
-	        
+	        insertProject(project, organization);
 	        optLogger.info("Project({}) is create by user({})", project.getId(), user.getId());
-	        // TODO num is wrong in concurrent cases
-	        organization.setProjectNum(organization.getProjectNum() + 1);
-	        organizationExtendMapper.updateProjectNum(organization);
 
 	        ProjectInfo projectInfo = new ProjectInfo();
 	        UserBaseInfo userBaseInfo = new UserBaseInfo();
@@ -242,6 +234,17 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		}finally {
 			lock.release();
 		}
+    }
+    
+    @Transactional
+    private void insertProject(Project project, Organization organization) {
+    	if (projectExtendMapper.insertSelective(project) <= 0) {
+            throw new ServerException("Create project fail");
+        }
+        
+        // TODO num is wrong in concurrent cases
+        organization.setProjectNum(organization.getProjectNum() + 1);
+        organizationExtendMapper.updateProjectNum(organization);
     }
     
     private Organization getOrganization(Long id) {
@@ -296,17 +299,28 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 			throw new ServerException("The project name \"" + name + "\" is already in the organization you will transfer");
 		}
 
-        Long beforeOrgId = project.getOrgId();
-        project.setOrgId(organization.getId());
+		try {
+			project.setOrgId(organization.getId());
+			transferProject(project, organization);
+			optLogger.info("Project({}) transferd from org({}) to org({}) by user({})", project.getId(),
+					project.getOrgId(), orgId, user.getId());
+			return project;
+		}finally {
+			releaseLock(lock);
+		}
+    }
+    
+    @Transactional
+    private void transferProject(Project project, Organization organization) {
+    	
+    	Long beforeOrgId = project.getOrgId();
+    	Long orgId = organization.getId();
 
-        if (projectExtendMapper.changeOrganization(project) <= 0) {
+    	if (projectExtendMapper.changeOrganization(project) <= 0) {
             log.error("Transfer project({}) to organization({}) fail", project.getOrgId(), organization.getId());
             throw new ServerException("Transfer project fail");
         }
         
-		optLogger.info("Project({}) transferd from org({}) to org({}) by user({})", project.getId(), beforeOrgId, orgId,
-				user.getId());
-
         boolean isTransfer = true;
         //移交回原组织
         if (project.getInitialOrgId().equals(orgId)) {
@@ -327,8 +341,6 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         organizationExtendMapper.updateProjectNum(organization);
 
         projectExtendMapper.deleteAllRel(project.getId(), beforeOrgId);
-
-        return project;
     }
 
     /**
@@ -411,18 +423,22 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	        project.setUpdateTime(new Date());
 	        project.setUpdateBy(user.getId());
 
-	        if (projectExtendMapper.updateBaseInfo(project) <= 0) {
-	            log.error("Update project({}) fail", project.getId());
-	            throw new ServerException("Update project fail");
-	        }
-	        
+	        updateProject(project);
 			optLogger.info("Project({}) is update by user({})", project.getId(), user.getId());
-	        return project;
-			
+
+			return project;
 		}finally {
-			lock.release();
+			releaseLock(lock);
 		}
     }
+    
+    @Transactional
+	private void updateProject(Project project) {
+		if (projectExtendMapper.updateBaseInfo(project) <= 0) {
+			log.error("Update project({}) fail", project.getId());
+			throw new ServerException("Update project fail");
+		}
+	}
 
     /**
      * 收藏project

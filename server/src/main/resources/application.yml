@@ -89,7 +89,6 @@ pagehelper:
 mybatis:
   mapper-locations: classpath:mybatis/mapper/*Mapper.xml
   config-locations: classpath:mybatis/mybatis-config.xml
-  type-aliases-package: edp.davinci.model
   configuration:
     map-underscore-to-camel-case: true
     use-generated-keys: true
@@ -97,7 +96,7 @@ mybatis:
 mapper:
   identity: MYSQL
   not-empty: false
-  mappers: edp.davinci.*.dao
+  mappers: edp.davinci.server.dao
 
 sql_template_delimiter: $
 

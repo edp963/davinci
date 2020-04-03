@@ -232,17 +232,20 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			source.setCreateTime(new Date());
 			BeanUtils.copyProperties(sourceCreate, source);
 			source.setConfig(JSONUtils.toString(config));
-
-			if (sourceExtendMapper.insert(source) != 1) {
-				log.error("Create source({}) fail", source);
-				throw new ServerException("create source fail");
-			}
+			insertSource(source);
 
 			optLogger.info("Source({}) is create by user({})", source.getId(), user.getId());
 			return source;
-
 		}finally {
 			releaseLock(lock);
+		}
+	}
+	
+	@Transactional
+	private void insertSource(Source source) {
+		if (sourceExtendMapper.insert(source) != 1) {
+			log.error("Create source({}) fail", source);
+			throw new ServerException("Create source fail");
 		}
 	}
 	
@@ -311,10 +314,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			source.setUpdateTime(new Date());
 			source.setConfig(JSONUtils.toString(sourceInfo.getConfig()));
 
-			if (sourceExtendMapper.update(source) != 1) {
-				log.error("Update source({}) fail", source.getId());
-				throw new ServerException("Update source fail");
-			}
+			updateSource(source);
 			
 			String sourceCopyConfig = sourceCopy.getConfig();
 			// 释放失效数据源
@@ -341,6 +341,14 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			
 		} finally {
 			releaseLock(lock);
+		}
+	}
+	
+	@Transactional
+	private void updateSource(Source source) {
+		if (sourceExtendMapper.update(source) != 1) {
+			log.error("Update source({}) fail", source.getId());
+			throw new ServerException("Update source fail");
 		}
 	}
 
@@ -730,7 +738,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 					: sourceDataUpload.getPrimaryKeys().split(","));
 			st.add("indexKeys", sourceDataUpload.getIndexList());
 			sql = st.render();
-			String dropSql = "DROP TABLE IF EXISTS `" + sourceDataUpload.getTableName() + "`";
+			String dropSql = "drop table if exists `" + sourceDataUpload.getTableName() + "`";
 			sqlUtils.jdbcTemplate().execute(dropSql);
 			log.info("Drop table sql:{}", SqlUtils.formatSql(dropSql));
 		

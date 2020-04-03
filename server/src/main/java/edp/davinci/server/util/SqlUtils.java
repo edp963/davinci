@@ -37,6 +37,7 @@ import edp.davinci.server.model.JdbcSourceInfo;
 import edp.davinci.server.model.PaginateWithQueryColumns;
 import edp.davinci.server.model.QueryColumn;
 import edp.davinci.server.model.TableInfo;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
@@ -53,6 +54,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import com.alibaba.druid.sql.SQLUtils;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
@@ -92,6 +95,7 @@ public class SqlUtils {
 
     private JdbcSourceInfo jdbcSourceInfo;
 
+    @Getter
     private DataTypeEnum dataTypeEnum;
 
     private SourceUtils sourceUtils;
@@ -131,7 +135,8 @@ public class SqlUtils {
 		sql = filterAnnotate(sql);
 		checkSensitiveSql(sql);
 		if (isQueryLogEnable) {
-			sqlLogger.info("{}", sql);
+			String md5 = MD5Utils.getMD5(sql, true, 16);
+			sqlLogger.info("{} execute for sql:{}", md5, formatSql(sql));
 		}
 		try {
 			jdbcTemplate().execute(sql);
@@ -142,43 +147,22 @@ public class SqlUtils {
 	}
 
     @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
-    public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer totalCount, Integer limit, Set<String> excludeColumns) throws Exception {
-        if (null == pageNo || pageNo < 1) {
+    public PaginateWithQueryColumns syncQuery4Paginate(String sql, int pageNo, int pageSize, int totalCount, int limit, Set<String> excludeColumns) throws Exception {
+
+    	if (pageNo < 1) {
             pageNo = 0;
         }
-        if (null == pageSize || pageSize < 1) {
+
+    	if (pageSize < 1) {
             pageSize = 0;
         }
-        if (null == totalCount || totalCount < 1) {
+
+    	if (totalCount < 1) {
             totalCount = 0;
         }
-        if (null == limit) {
-            limit = -1;
-        }
-        PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit, excludeColumns);
+
+    	PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit, excludeColumns);
         return paginate;
-    }
-
-    @CachePut(value = "query", key = "#sql")
-    public List<Map<String, Object>> query4List(String sql, int limit) throws Exception {
-        sql = filterAnnotate(sql);
-        checkSensitiveSql(sql);
-        String md5 = MD5Utils.getMD5(sql, true, 16);
-        if (isQueryLogEnable) {
-            sqlLogger.info("{}  >> \n{}", md5, sql);
-        }
-        JdbcTemplate jdbcTemplate = jdbcTemplate();
-        jdbcTemplate.setMaxRows(limit > resultLimit ? resultLimit : limit);
-
-        long before = System.currentTimeMillis();
-
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
-
-        if (isQueryLogEnable) {
-            sqlLogger.info("{} query for >> {} ms", md5, System.currentTimeMillis() - before);
-        }
-
-        return list;
     }
 
     @CachePut(value = "query", keyGenerator = "keyGenerator")
@@ -186,8 +170,6 @@ public class SqlUtils {
         PaginateWithQueryColumns paginateWithQueryColumns = new PaginateWithQueryColumns();
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
-
-        String md5 = MD5Utils.getMD5(sql + pageNo + pageSize + limit, true, 16);
 
         long before = System.currentTimeMillis();
 
@@ -198,10 +180,6 @@ public class SqlUtils {
 
             if (limit > 0) {
                 resultLimit = limit > resultLimit ? resultLimit : limit;
-            }
-            
-            if (isQueryLogEnable) {
-                sqlLogger.info("{}  >> \n{}", md5, sql);
             }
             
             jdbcTemplate.setMaxRows(resultLimit);
@@ -231,26 +209,38 @@ public class SqlUtils {
             int maxRows = limit > 0 && limit < pageSize * pageNo ? limit : pageSize * pageNo;
 
             if (this.dataTypeEnum == MYSQL) {
-                sql = sql + " LIMIT " + startRow + ", " + pageSize;
-                md5 = MD5Utils.getMD5(sql, true, 16);
-                if (isQueryLogEnable) {
-                    sqlLogger.info("{}  >> \n{}", md5, sql);
-                }
+                sql = sql + " limit " + startRow + ", " + pageSize;
                 getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
             } else {
-                if (isQueryLogEnable) {
-                    sqlLogger.info("{}  >> \n{}", md5, sql);
-                }
                 jdbcTemplate.setMaxRows(maxRows);
                 getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, startRow);
             }
         }
 
         if (isQueryLogEnable) {
-            sqlLogger.info("{} query for >> {} ms", md5, System.currentTimeMillis() - before);
+			String md5 = MD5Utils.getMD5(sql + pageNo + pageSize + limit, true, 16);
+			sqlLogger.info("{} query for({} ms) sql:{}", md5, System.currentTimeMillis() - before, formatSql(sql));
         }
 
         return paginateWithQueryColumns;
+    }
+    
+    @CachePut(value = "query", key = "#sql")
+    public List<Map<String, Object>> query4List(String sql, int limit) throws Exception {
+        sql = filterAnnotate(sql);
+        checkSensitiveSql(sql);
+
+        JdbcTemplate jdbcTemplate = jdbcTemplate();
+        jdbcTemplate.setMaxRows(limit > resultLimit ? resultLimit : limit);
+
+        long before = System.currentTimeMillis();
+        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
+		if (isQueryLogEnable) {
+			String md5 = MD5Utils.getMD5(sql, true, 16);
+			sqlLogger.info("{} query for({} ms) sql:{}", md5, System.currentTimeMillis() - before, formatSql(sql));
+		}
+
+		return list;
     }
 
     private void getResultForPaginate(String sql, PaginateWithQueryColumns paginateWithQueryColumns, JdbcTemplate jdbcTemplate, Set<String> excludeColumns, int startRow) {
@@ -669,7 +659,12 @@ public class SqlUtils {
         }
         DataSource dataSource = sourceUtils.getDataSource(this.jdbcSourceInfo);
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.setFetchSize(1000);
+        jdbcTemplate.setFetchSize(500);
+		if (this.dataTypeEnum == MYSQL) {
+			if(!getJdbcUrl().contains("useCursorFetch=true")) {
+				jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
+			}
+		}
         return jdbcTemplate;
     }
     
@@ -693,13 +688,13 @@ public class SqlUtils {
     public void executeBatch(String sql, Set<QueryColumn> headers, List<Map<String, Object>> datas) throws ServerException {
 
         if (StringUtils.isEmpty(sql)) {
-            log.info("execute batch sql is EMPTY");
-            throw new ServerException("execute batch sql is EMPTY");
+            log.info("Execute batch sql is empty");
+            throw new ServerException("Execute batch sql is empty");
         }
 
         if (CollectionUtils.isEmpty(datas)) {
-            log.info("execute batch data is EMPTY");
-            throw new ServerException("execute batch data is EMPTY");
+            log.info("Execute batch data is empty");
+            throw new ServerException("Execute batch data is empty");
         }
 
         Connection connection = null;
@@ -711,7 +706,6 @@ public class SqlUtils {
                 pstmt = connection.prepareStatement(sql);
                 //每1000条commit一次
                 int n = 10000;
-
                 for (Map<String, Object> map : datas) {
                     int i = 1;
                     for (QueryColumn queryColumn : headers) {
@@ -786,7 +780,6 @@ public class SqlUtils {
                         }
                         i++;
                     }
-
                     pstmt.addBatch();
                     if (i % n == 0) {
                         try {
@@ -1043,6 +1036,10 @@ public class SqlUtils {
             return null;
         }
         return this.jdbcSourceInfo.getJdbcUrl();
+    }
+    
+    public static String formatSql(String sql) {
+    	return SQLUtils.formatMySql(sql);
     }
 }
 

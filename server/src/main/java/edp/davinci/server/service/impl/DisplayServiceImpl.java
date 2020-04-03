@@ -130,43 +130,48 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 		}
 		
 		try {
-			
 			Display display = new Display();
 			display.setCreateBy(user.getId());
 			display.setCreateTime(new Date());
 	        BeanUtils.copyProperties(displayInfo, display);
-
-			if (displayExtendMapper.insertSelective(display) <= 0) {
-				throw new ServerException("Create display fail");
-			}
-
+	        
+	        insertDisplay(display, displayInfo.getRoleIds(), user);
 			optLogger.info("Display({}) is create by user({})", display.getId(), user.getId());
 
-			if (!CollectionUtils.isEmpty(displayInfo.getRoleIds())) {
-				List<Role> roles = roleMapper.getRolesByIds(displayInfo.getRoleIds());
-				List<RelRoleDisplay> list = roles.stream()
-						.map(r -> {
-							RelRoleDisplay rel = new RelRoleDisplay();
-							rel.setRoleId(r.getId());
-							rel.setDisplayId(display.getId());
-							rel.setVisible(false);
-							rel.setCreateBy(user.getId());
-							rel.setCreateTime(new Date());
-							return rel;
-						})
-						.collect(Collectors.toList());
-
-				if (!CollectionUtils.isEmpty(list)) {
-					relRoleDisplayExtendMapper.insertBatch(list);
-					optLogger.info("Display({}) limit role({}) access, create by user({})", display.getId(),
-							roles.stream().map(r -> r.getId()).collect(Collectors.toList()), user.getId());
-				}
-			}
-
 			return display;
-			
 		}finally {
 			releaseLock(lock);
+		}
+    }
+    
+    @Transactional
+    private void insertDisplay(Display display, List<Long> roleIds, User user) {
+
+    	if (displayExtendMapper.insertSelective(display) <= 0) {
+			throw new ServerException("Create display fail");
+		}
+
+		if (CollectionUtils.isEmpty(roleIds)) {
+			return;
+		}
+		
+		List<Role> roles = roleMapper.getRolesByIds(roleIds);
+		List<RelRoleDisplay> list = roles.stream()
+				.map(r -> {
+					RelRoleDisplay rel = new RelRoleDisplay();
+					rel.setRoleId(r.getId());
+					rel.setDisplayId(display.getId());
+					rel.setVisible(false);
+					rel.setCreateBy(user.getId());
+					rel.setCreateTime(new Date());
+					return rel;
+				})
+				.collect(Collectors.toList());
+
+		if (!CollectionUtils.isEmpty(list)) {
+			relRoleDisplayExtendMapper.insertBatch(list);
+			optLogger.info("Display({}) limit role({}) access, create by user({})", display.getId(),
+					roles.stream().map(r -> r.getId()).collect(Collectors.toList()), user.getId());
 		}
     }
 
@@ -265,44 +270,49 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 	                file.delete();
 	            }
 	        }
-	        
+
 	        String origin = display.toString();
 	        BeanUtils.copyProperties(displayUpdate, display);
 			display.setUpdateBy(user.getId());
 			display.setUpdateTime(new Date());
 
-			if (displayExtendMapper.update(display) <= 0) {
-				throw new ServerException("Update display fail");
-			}
-			
+			updateDisplay(display, displayUpdate.getRoleIds(), user);
 			optLogger.info("Display({}) is update by user({}), origin:{}", display.getId(), user.getId(), origin);
-			if (displayUpdate.getRoleIds() != null) {
-				relRoleDisplayExtendMapper.deleteByDisplayId(display.getId());
-				if (!CollectionUtils.isEmpty(displayUpdate.getRoleIds())) {
-					List<Role> roles = roleMapper.getRolesByIds(displayUpdate.getRoleIds());
-					List<RelRoleDisplay> list = roles.stream()
-							.map(r -> {
-								RelRoleDisplay rel = new RelRoleDisplay();
-								rel.setRoleId(r.getId());
-								rel.setDisplayId(display.getId());
-								rel.setVisible(false);
-								rel.setCreateBy(user.getId());
-								rel.setCreateTime(new Date());
-								return rel;
-							})
-							.collect(Collectors.toList());
-					if (!CollectionUtils.isEmpty(list)) {
-						relRoleDisplayExtendMapper.insertBatch(list);
-						optLogger.info("Update display({}) limit role({}) access, create by user({})", display.getId(),
-								roles.stream().map(r -> r.getId()).collect(Collectors.toList()), user.getId());
-					}
-				}
-			}
 
 			return true;
-
 		}finally {
 			releaseLock(lock);
+		}
+    }
+    
+    @Transactional
+    private void updateDisplay(Display display, List<Long> roleIds, User user) {
+
+    	if (displayExtendMapper.update(display) <= 0) {
+			throw new ServerException("Update display fail");
+		}
+		
+		if (CollectionUtils.isEmpty(roleIds)) {
+			return;
+		}
+
+		relRoleDisplayExtendMapper.deleteByDisplayId(display.getId());
+		List<Role> roles = roleMapper.getRolesByIds(roleIds);
+		List<RelRoleDisplay> list = roles.stream()
+				.map(r -> {
+					RelRoleDisplay rel = new RelRoleDisplay();
+					rel.setRoleId(r.getId());
+					rel.setDisplayId(display.getId());
+					rel.setVisible(false);
+					rel.setCreateBy(user.getId());
+					rel.setCreateTime(new Date());
+					return rel;
+				})
+				.collect(Collectors.toList());
+		if (!CollectionUtils.isEmpty(list)) {
+			relRoleDisplayExtendMapper.insertBatch(list);
+			optLogger.info("Update display({}) limit role({}) access, create by user({})", display.getId(),
+					roles.stream().map(r -> r.getId()).collect(Collectors.toList()), user.getId());
 		}
     }
 
@@ -460,40 +470,54 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 			lock = getLock(entity, name, projectId);
 		}
 
-		display.setName(name);
-		display.setDescription(copy.getDescription());
-		display.setPublish(copy.getPublish());
-		display.setCreateBy(user.getId());
-		display.setCreateTime(new Date());
-		if (displayExtendMapper.insertSelective(display) <= 0) {
+		try {
+			display.setName(name);
+			display.setDescription(copy.getDescription());
+			display.setPublish(copy.getPublish());
+			display.setCreateBy(user.getId());
+			display.setCreateTime(new Date());
+			
+			copyDisplay(display, copy.getRoleIds(), user);
+			optLogger.info("Display({}) is copied by user({}) from display({})", display.getId(), user.getId(),
+					originDisplay.getId());
+			displaySlideService.copySlides(originDisplay.getId(), display.getId(), user);
+
+			return display;
+		}finally {
+			releaseLock(lock);
+		}
+
+    }
+    
+    @Transactional
+    private void copyDisplay(Display display, List<Long> roleIds, User user) {
+
+    	if (displayExtendMapper.insertSelective(display) <= 0) {
 			throw new ServerException("Copy display fail");
 		}
-		optLogger.info("Display({}) is copied by user({}) from display({})", display.getId(), user.getId(),
-				originDisplay.getId());
 
-		// copy relRoleDisplay
-		if (!CollectionUtils.isEmpty(copy.getRoleIds())) {
-			List<Role> roles = roleMapper.getRolesByIds(copy.getRoleIds());
-			List<RelRoleDisplay> list = roles.stream()
-					.map(r -> {
-						RelRoleDisplay rel = new RelRoleDisplay();
-						rel.setRoleId(r.getId());
-						rel.setDisplayId(display.getId());
-						rel.setVisible(false);
-						rel.setCreateBy(user.getId());
-						rel.setCreateTime(new Date());
-						return rel;
-					}).collect(Collectors.toList());
-
-			if (!CollectionUtils.isEmpty(list)) {
-				relRoleDisplayExtendMapper.insertBatch(list);
-				optLogger.info("Display({}) limit role({}) access", display.getId(),
-						roles.stream().map(Role::getId).collect(Collectors.toList()));
-			}
+    	// copy relRoleDisplay
+		if (CollectionUtils.isEmpty(roleIds)) {
+			return;
 		}
+		
+		List<Role> roles = roleMapper.getRolesByIds(roleIds);
+		List<RelRoleDisplay> list = roles.stream()
+				.map(r -> {
+					RelRoleDisplay rel = new RelRoleDisplay();
+					rel.setRoleId(r.getId());
+					rel.setDisplayId(display.getId());
+					rel.setVisible(false);
+					rel.setCreateBy(user.getId());
+					rel.setCreateTime(new Date());
+					return rel;
+				}).collect(Collectors.toList());
 
-		displaySlideService.copySlides(originDisplay.getId(), display.getId(), user);
-		return display;
+		if (!CollectionUtils.isEmpty(list)) {
+			relRoleDisplayExtendMapper.insertBatch(list);
+			optLogger.info("Display({}) limit role({}) access", display.getId(),
+					roles.stream().map(Role::getId).collect(Collectors.toList()));
+		}
     }
     
 	private String getCopyName(String name, Long projectId) {

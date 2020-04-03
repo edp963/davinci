@@ -50,8 +50,9 @@ public abstract class BaseEntityService {
 	}
 
 	protected void releaseLock(BaseLock lock) {
-		// workaround for very high concurrency
-		// do nothing, wait for the service layer transaction to commit
+		if (lock != null) {
+			lock.release();
+		}
 	}
 
 	protected void alertNameTaken(CheckEntityEnum entity, String name) throws ServerException {

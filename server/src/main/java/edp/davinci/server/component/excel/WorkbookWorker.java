@@ -127,7 +127,6 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 try (FileOutputStream out = new FileOutputStream(filePath);) {
                     wb.write(out);
                     out.flush();
-                    out.close();
                 } catch (Exception e) {
                     filePath = null;
                     throw e;
