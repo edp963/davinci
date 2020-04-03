@@ -33,7 +33,6 @@ import edp.davinci.core.model.SqlEntity;
 import edp.davinci.model.SqlVariable;
 import edp.davinci.model.SqlVariableChannel;
 import edp.davinci.model.User;
-import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.select.PlainSelect;
@@ -51,7 +50,6 @@ import java.util.stream.Collectors;
 import static edp.core.consts.Consts.*;
 import static edp.davinci.core.common.Constants.*;
 
-@Slf4j
 @Component
 public class SqlParseUtils {
 
