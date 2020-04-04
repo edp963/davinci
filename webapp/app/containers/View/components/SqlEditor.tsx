@@ -68,9 +68,6 @@ export class SqlEditor extends React.PureComponent<ISqlEditorProps> {
 
   private initEditor = (codeMirror, value: string) => {
     const { fromTextArea } = codeMirror
-    const sqlEnter = () => {
-      this.props.onSqlEnter()
-    }
     const config = {
       mode: 'text/x-sql',
       theme: '3024-day',
@@ -79,7 +76,10 @@ export class SqlEditor extends React.PureComponent<ISqlEditorProps> {
       autoCloseBrackets: true,
       matchBrackets: true,
       foldGutter: true,
-      extraKeys: {'Cmd-Enter': sqlEnter, 'Ctrl-Enter': sqlEnter}
+      extraKeys: {
+        'Cmd-Enter': () => { this.props.onSqlEnter() },
+        'Ctrl-Enter': () => { this.props.onSqlEnter() }
+      }
     }
     this.sqlEditor = fromTextArea(this.sqlEditorContainer.current, config)
     this.sqlEditor.doc.setValue(value)
