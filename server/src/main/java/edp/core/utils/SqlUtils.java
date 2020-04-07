@@ -167,7 +167,7 @@ public class SqlUtils {
 
         if (isQueryLogEnable) {
         	 String md5 = MD5Util.getMD5(sql, true, 16);
-            sqlLogger.info("{} query for({} ms) sql:{}", md5, System.currentTimeMillis() - before, formatSql(sql));
+            sqlLogger.info("{} query for({} ms) total count: {} sql:{}", md5, System.currentTimeMillis() - before, list.size(), formatSql(sql));
         }
 
         return list;
@@ -210,7 +210,7 @@ public class SqlUtils {
 
             if (limit > 0) {
                 limit = limit > resultLimit ? resultLimit : limit;
-                totalCount = limit < totalCount ? limit : totalCount;
+                totalCount = Math.min(limit, totalCount);
             }
 
             paginateWithQueryColumns.setTotalCount(totalCount);
@@ -227,7 +227,11 @@ public class SqlUtils {
 
         if (isQueryLogEnable) {
         	String md5 = MD5Util.getMD5(sql + pageNo + pageSize + limit, true, 16);
-        	sqlLogger.info("{} query for({} ms) sql:{}", md5, System.currentTimeMillis() - before, formatSql(sql));
+			sqlLogger.info("{} query for({} ms) total count: {}, page size: {}, sql:{}",
+					md5, System.currentTimeMillis() - before,
+					paginateWithQueryColumns.getTotalCount(),
+					paginateWithQueryColumns.getPageSize(),
+					formatSql(sql));
         }
 
         return paginateWithQueryColumns;
