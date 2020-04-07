@@ -31,7 +31,6 @@ import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import edp.davinci.core.utils.SqlParseUtils;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
@@ -88,7 +87,6 @@ public class SqlUtils {
 
     private JdbcSourceInfo jdbcSourceInfo;
 
-    @Getter
     private DataTypeEnum dataTypeEnum;
 
     private SourceUtils sourceUtils;
@@ -163,13 +161,8 @@ public class SqlUtils {
         JdbcTemplate jdbcTemplate = jdbcTemplate();
         jdbcTemplate.setMaxRows(limit > resultLimit ? resultLimit : limit);
 
-		// special for mysql fetch size
-        if (this.getDataTypeEnum() == MYSQL) {
-			jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
-		}
-
         long before = System.currentTimeMillis();
-        
+
         List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
 
         if (isQueryLogEnable) {
@@ -224,7 +217,7 @@ public class SqlUtils {
             int maxRows = limit > 0 && limit < pageSize * pageNo ? limit : pageSize * pageNo;
 
             if (this.dataTypeEnum == MYSQL) {
-                sql = sql + " limit " + startRow + ", " + pageSize;
+                sql = sql + " LIMIT " + startRow + ", " + pageSize;
                 getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
             } else {
                 jdbcTemplate.setMaxRows(maxRows);
@@ -649,19 +642,16 @@ public class SqlUtils {
         try {
             connection = sourceUtils.getConnection(this.jdbcSourceInfo);
         } catch (SourceException e) {
-
         }
-        
         if (connection == null) {
             sourceUtils.releaseDataSource(this.jdbcSourceInfo);
         } else {
             SourceUtils.releaseConnection(connection);
         }
-        
         DataSource dataSource = sourceUtils.getDataSource(this.jdbcSourceInfo);
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.setFetchSize(500);
-		return jdbcTemplate;
+        jdbcTemplate.setFetchSize(1000);
+        return jdbcTemplate;
     }
     
     public boolean testConnection() throws SourceException {

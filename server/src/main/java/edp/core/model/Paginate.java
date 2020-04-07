@@ -27,6 +27,7 @@ import java.util.List;
 
 @Data
 public class Paginate<T> implements Serializable {
+
     private int pageNo = -1;
     private int pageSize = -1;
     private long totalCount = -1;
