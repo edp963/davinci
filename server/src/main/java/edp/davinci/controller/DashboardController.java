@@ -381,6 +381,7 @@ public class DashboardController extends BaseController {
         }
 
         for (MemDashboardWidgetCreate memDashboardWidgetCreate : memDashboardWidgetCreates) {
+            Constants.checkSheetName("Alias", memDashboardWidgetCreate.getAlias());
             if (invalidId(dashboardId) || !dashboardId.equals(memDashboardWidgetCreate.getDashboardId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -422,6 +423,8 @@ public class DashboardController extends BaseController {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
             }
+
+            Constants.checkSheetName("Alias", memDashboardWidget.getAlias());
 
             if (invalidId(memDashboardWidget.getDashboardId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");

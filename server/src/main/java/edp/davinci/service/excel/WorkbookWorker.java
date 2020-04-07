@@ -79,8 +79,8 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
         try {
             List<SheetContext> sheetContextList = buildSheetContextList();
             if (CollectionUtils.isEmpty(sheetContextList)) {
-				throw new IllegalArgumentException(
-						"Task(" + context.getTaskKey() + ") workbook worker sheetContextList is empty");
+                throw new IllegalArgumentException(
+                        "Task(" + context.getTaskKey() + ") workbook worker sheetContextList is empty");
             }
             wb = new SXSSFWorkbook(1000);
             List<Future> futures = Lists.newArrayList();
@@ -122,7 +122,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
 
             if (rst) {
                 filePath = ((FileUtils) SpringContextHolder.getBean(FileUtils.class)).getFilePath(FileTypeEnum.XLSX, this.context.getWrapper());
-                try (FileOutputStream out = new FileOutputStream(filePath);){
+                try (FileOutputStream out = new FileOutputStream(filePath);) {
                     wb.write(out);
                     out.flush();
                     out.close();
@@ -201,7 +201,8 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                     .withExcelHeaders(excelHeaders)
                     .withDashboardId(null != context.getDashboard() ? context.getDashboard().getId() : null)
                     .withWidgetId(context.getWidget().getId())
-                    .withName(context.getWidget().getName())
+                    .withName(StringUtils.isEmpty(context.getMemDashboardWidget().getAlias())
+                            ? context.getWidget().getName() : context.getWidget().getName())
                     .withWrapper(this.context.getWrapper())
                     .withResultLimit(this.context.getResultLimit())
                     .withTaskKey(this.context.getTaskKey())

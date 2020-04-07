@@ -27,6 +27,8 @@ import java.util.List;
 @Data
 public class MemDashboardWidgetCreate {
 
+    private String alias;
+
     @Min(value = 1L, message = "Invalid dashboard id")
     private Long dashboardId;
 

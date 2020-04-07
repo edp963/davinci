@@ -19,8 +19,11 @@
 
 package edp.davinci.core.common;
 
+import com.alibaba.druid.util.StringUtils;
 import edp.core.consts.Consts;
+import edp.core.exception.ServerException;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -158,6 +161,19 @@ public class Constants extends Consts {
 
     public static char getSqlTempDelimiter(String sqlTempDelimiter) {
         return sqlTempDelimiter.charAt(sqlTempDelimiter.length() - 1);
+    }
+
+    public static boolean checkSheetName(String name, String value) {
+        if (!StringUtils.isEmpty(value)) {
+            if (value.length() > INVALID_SHEET_NAEM_LENGTH) {
+                throw new ServerException(name + " length cannot exceed 18 digits");
+            }
+            Matcher matcher = INVALID_SHEET_NAME.matcher(value);
+            if (matcher.find()) {
+                throw new ServerException(name + " cannot contain the following characters: !,:,\\,\\/,?,*,[,],");
+            }
+        }
+        return true;
     }
 
     public static String getReg(String express, char delimiter, boolean isAuthPress) {
