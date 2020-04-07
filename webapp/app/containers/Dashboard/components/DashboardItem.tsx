@@ -613,7 +613,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       } else if (widgetProps.selectedChart === ChartTypes.Table) {
         const cols = widgetProps.cols
         const { whichDataDrillBrushed, sourceDataOfBrushed } = this.state
-        const sourceDataGroup = [...(this.state.sourceDataGroup as Array<string>)]
+        const sourceDataGroup = Array.isArray(this.state.sourceDataGroup) ? [...(this.state.sourceDataGroup as Array<string>)] : []
         const drillData = whichDataDrillBrushed[0][0]
         const drillKey = drillData&&drillData.length ? drillData[drillData.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
         const newWidgetPropCols = cols.reduce((array, col) => {
