@@ -64,7 +64,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         Boolean rst = true;
         String md5 = null;
         try {
-        	SqlUtils utils = context.getSqlUtils();
+            SqlUtils utils = context.getSqlUtils();
             JdbcTemplate template = utils.jdbcTemplate();
             propertiesSet(template);
             buildQueryColumn(template);

@@ -192,6 +192,12 @@ public class SqlUtils {
             }
             
             jdbcTemplate.setMaxRows(resultLimit);
+
+            // special for mysql
+            if(getDataTypeEnum() == DataTypeEnum.MYSQL) {
+            	jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
+            }
+
             getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
             paginateWithQueryColumns.setPageNo(1);
             int size = paginateWithQueryColumns.getResultList().size();
