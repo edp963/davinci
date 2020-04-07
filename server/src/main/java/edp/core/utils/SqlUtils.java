@@ -258,7 +258,7 @@ public class SqlUtils {
 			}
 			paginateWithQueryColumns.setColumns(queryColumns);
 
-			List<Map<String, Object>> resultList = new LinkedList<>();
+			List<Map<String, Object>> resultList = new ArrayList<>();
 
 			try {
 				if (startRow > 0) {
