@@ -63,7 +63,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.alibaba.fastjson.JSONObject;
 import com.jayway.jsonpath.JsonPath;
 
 import javax.servlet.http.HttpServletRequest;
@@ -200,13 +199,13 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         String emailMapping = environment.getProperty(String.format("spring.security.oauth2.client.provider.%s.userMapping.email", oauthAuthToken.getAuthorizedClientRegistrationId()));
         String nameMapping = environment.getProperty(String.format("spring.security.oauth2.client.provider.%s.userMapping.name", oauthAuthToken.getAuthorizedClientRegistrationId()));
         String avatarMapping = environment.getProperty(String.format("spring.security.oauth2.client.provider.%s.userMapping.avatar", oauthAuthToken.getAuthorizedClientRegistrationId()));
-        JSONObject jsonObj = new JSONObject(oauthUser.getAttributes());
+        Map<String, Object> jsonMap = oauthUser.getAttributes();
 
-        user.setName(JsonPath.read(jsonObj, nameMapping));
+        user.setName(JsonPath.read(oauthUser.getAttributes(), nameMapping));
         user.setUsername(oauthUser.getName());
         user.setPassword("OAuth2");
-        user.setEmail(JsonPath.read(jsonObj, emailMapping));
-        user.setAvatar(JsonPath.read(jsonObj, avatarMapping));
+        user.setEmail(JsonPath.read(jsonMap, emailMapping));
+        user.setAvatar(JsonPath.read(jsonMap, avatarMapping));
         if (userExtendMapper.insert(user) > 0) {
             return user;
         } else {

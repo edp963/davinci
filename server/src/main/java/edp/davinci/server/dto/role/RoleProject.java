@@ -19,14 +19,14 @@
 
 package edp.davinci.server.dto.role;
 
-import com.alibaba.fastjson.annotation.JSONType;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import edp.davinci.core.dao.entity.Project;
 import edp.davinci.core.dao.entity.RelRoleProject;
 import lombok.Data;
 
 @Data
-@JSONType(ignores = {"projectId", "roleId", "id"})
+@JsonIgnoreProperties({ "projectId", "roleId", "id" })
 public class RoleProject extends RelRoleProject {
     private Project project;
 

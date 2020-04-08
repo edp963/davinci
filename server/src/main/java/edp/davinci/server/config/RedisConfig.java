@@ -39,22 +39,20 @@ public class RedisConfig {
     @Autowired
     private BeanFactory beanFactory;
 
-    @Bean
+    @SuppressWarnings("unchecked")
+	@Bean
     public RedisTemplate<String, Object> initRedisTemplate() {
         RedisTemplate<String, Object> redisTemplate = null;
         if (isRedisEnable) {
-            log.info("InitRedisTemplate");
             redisTemplate = (RedisTemplate<String, Object>) beanFactory.getBean("redisTemplate");
-
             redisTemplate.setKeySerializer(new StringRedisSerializer());
             redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
             redisTemplate.setHashKeySerializer(new GenericJackson2JsonRedisSerializer());
             redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
-
             redisTemplate.afterPropertiesSet();
 
             //用于测试连接
-            log.info("redis client count: {}", redisTemplate.getClientList().size());
+            log.info("InitRedisTemplate redis client count:{}", redisTemplate.getClientList().size());
         }
         return redisTemplate;
     }

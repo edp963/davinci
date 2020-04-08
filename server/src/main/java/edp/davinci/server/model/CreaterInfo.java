@@ -19,24 +19,25 @@
 
 package edp.davinci.server.model;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Data
 public class CreaterInfo<T> {
 
-    @JSONField(serialize = false)
+    @JsonIgnore
     Long createBy;
 
-    @JSONField(serialize = false)
+    @JsonIgnore
     Date createTime;
 
-    @JSONField(serialize = false)
+    @JsonIgnore
     Long updateBy;
 
-    @JSONField(serialize = false)
+    @JsonIgnore
     Date updateTime;
 
     public T createdBy(Long userId) {

@@ -19,31 +19,32 @@
 
 package edp.davinci.server.config;
 
-import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.alibaba.fastjson.serializer.ValueFilter;
-import com.alibaba.fastjson.support.config.FastJsonConfig;
-import com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter;
-
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.inteceptor.AuthenticationInterceptor;
-import edp.davinci.server.inteceptor.CurrentPlatformMethodArgumentResolver;
-import edp.davinci.server.inteceptor.CurrentUserMethodArgumentResolver;
-import edp.davinci.server.inteceptor.PlatformAuthInterceptor;
-import edp.davinci.server.inteceptor.RequestJsonHandlerArgumentResolver;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonParser.Feature;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.inteceptor.AuthenticationInterceptor;
+import edp.davinci.server.inteceptor.CurrentPlatformMethodArgumentResolver;
+import edp.davinci.server.inteceptor.CurrentUserMethodArgumentResolver;
+import edp.davinci.server.inteceptor.PlatformAuthInterceptor;
 
 @Configuration
 public class WebMvcConfig extends WebMvcConfigurationSupport {
@@ -95,16 +96,6 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
     }
 
     /**
-     * JsonParam 参数解析器
-     *
-     * @return
-     */
-    @Bean
-    public RequestJsonHandlerArgumentResolver requestJsonHandlerArgumentResolver() {
-        return new RequestJsonHandlerArgumentResolver();
-    }
-
-    /**
      * 参数解析器
      *
      * @param argumentResolvers
@@ -113,25 +104,19 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
     protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
         argumentResolvers.add(currentUserMethodArgumentResolver());
         argumentResolvers.add(currentPlatformMethodArgumentResolver());
-        argumentResolvers.add(requestJsonHandlerArgumentResolver());
         super.addArgumentResolvers(argumentResolvers);
     }
 
     @Override
     protected void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(loginRequiredInterceptor())
-                .addPathPatterns(Constants.BASE_API_PATH + "/**")
-                .excludePathPatterns(Constants.BASE_API_PATH + "/login");
-
-        registry.addInterceptor(platformAuthInterceptor())
-                .addPathPatterns(Constants.AUTH_API_PATH + "/**");
-
-        super.addInterceptors(registry);
+		registry.addInterceptor(loginRequiredInterceptor()).addPathPatterns(Constants.BASE_API_PATH + "/**")
+				.excludePathPatterns(Constants.BASE_API_PATH + "/login");
+		registry.addInterceptor(platformAuthInterceptor()).addPathPatterns(Constants.AUTH_API_PATH + "/**");
+		super.addInterceptors(registry);
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/META-INF/resources/")
                 .addResourceLocations("classpath:/META-INF/resources/webjars")
@@ -140,34 +125,30 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
                 .addResourceLocations("classpath:/static/templates/")
                 .addResourceLocations("file:" + webResources)
                 .addResourceLocations("file:" + filePath);
-
     }
 
 
     @Override
     protected void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-        FastJsonHttpMessageConverter fastConverter = new FastJsonHttpMessageConverter();
-        FastJsonConfig fastJsonConfig = new FastJsonConfig();
-        fastJsonConfig.setSerializerFeatures(SerializerFeature.QuoteFieldNames,
-                SerializerFeature.WriteEnumUsingToString,
-                SerializerFeature.WriteMapNullValue,
-                SerializerFeature.WriteDateUseDateFormat,
-                SerializerFeature.DisableCircularReferenceDetect);
-        fastJsonConfig.setSerializeFilters((ValueFilter) (o, s, source) -> {
-            if (null != source && (source instanceof Long || source instanceof BigInteger) && source.toString().length() > 15) {
-                return source.toString();
-            } else {
-                return null == source ? Constants.EMPTY : source;
-            }
-        });
+    	ObjectMapper mapper = new ObjectMapper();
+    	mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
+    	mapper.setSerializationInclusion(Include.NON_NULL); 
+    	mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+    	mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    	mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        mapper.enable(Feature.ALLOW_COMMENTS);
+        mapper.enable(Feature.ALLOW_UNQUOTED_FIELD_NAMES);
+        mapper.enable(Feature.ALLOW_SINGLE_QUOTES);
+        mapper.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
+        
+        MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter = new MappingJackson2HttpMessageConverter();
+        mappingJackson2HttpMessageConverter.setObjectMapper(mapper);
+    	List<MediaType> mediaTypes = new ArrayList<MediaType>();
+    	mediaTypes.add(MediaType.APPLICATION_JSON);
+    	mediaTypes.add(MediaType.APPLICATION_JSON_UTF8);
+    	mappingJackson2HttpMessageConverter.setSupportedMediaTypes(mediaTypes);
 
-        //处理中文乱码问题
-        List<MediaType> fastMediaTypes = new ArrayList<>();
-        fastMediaTypes.add(MediaType.APPLICATION_JSON_UTF8);
-        fastConverter.setSupportedMediaTypes(fastMediaTypes);
-        fastConverter.setFastJsonConfig(fastJsonConfig);
-        converters.add(fastConverter);
+    	converters.add(mappingJackson2HttpMessageConverter);
     }
-
 
 }

@@ -1,6 +1,6 @@
 package edp.davinci.server.dto.statistic;
 
-import lombok.Data;
+import java.util.Date;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
@@ -8,8 +8,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 import edp.davinci.server.commons.Constants;
-
-import java.time.LocalDateTime;
+import lombok.Data;
 
 @Data
 @NotNull(message = "Terminal info cannot be null")
@@ -44,6 +43,6 @@ public class DavinciStatisticTerminal {
     private String cpu_architecture;
 
     @NotNull
-    private LocalDateTime create_time;
+    private Date create_time;
     
 }

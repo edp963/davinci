@@ -51,17 +51,13 @@ spring:
     static-path-pattern: /**
 
   thymeleaf:
-    mode: HTML5
+    mode: HTML
     cache: true
     prefix: classpath:/templates/
     encoding: UTF-8
     suffix: .html
     check-template-location: true
     template-resolver-order: 1
-
-  jackson:
-    date-format: yyyy-MM-dd HH:mm:ss
-    time-zone: GMT+8
 
   cache:
     caffeine:

@@ -19,7 +19,8 @@
 
 package edp.davinci.server.model;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 @Data
@@ -27,9 +28,9 @@ public class DacChannel {
 
     private String name;
 
-    @JSONField(name = "base-url")
+    @JsonProperty("base-url")
     private String baseUrl;
 
-    @JSONField(name = "auth-code")
+    @JsonProperty("auth-code")
     private String authCode;
 }

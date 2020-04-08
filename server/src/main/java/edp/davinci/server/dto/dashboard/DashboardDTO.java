@@ -28,7 +28,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import edp.davinci.core.dao.entity.Dashboard;
 
@@ -49,7 +49,7 @@ public class DashboardDTO extends Dashboard {
     @Max(value = (short) 2, message = "Invalid dashboard type")
     private Short type;
     
-    @JSONField(serialize = false)
+    @JsonIgnore
     private String fullParentId = null != getParentId() ? getParentId().toString() : null;
 
 	private List<Long> roleIds;

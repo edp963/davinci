@@ -46,7 +46,6 @@ import java.security.NoSuchAlgorithmException;
 @Configuration
 public class RestClientConfig {
 
-
     /**
      * 最大连接数
      */
@@ -71,6 +70,7 @@ public class RestClientConfig {
      * 重试次数
      */
     private int retryTimes = 2;
+
     /**
      * 从连接池获取连接的超时时间, 单位ms
      */
@@ -113,7 +113,7 @@ public class RestClientConfig {
             return clientHttpRequestFactory;
         } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
             e.printStackTrace();
-            log.error("Initializing HTTP connection pool ERROR, {}", e);
+            log.error("Initializing HTTP connection pool error, {}", e);
         }
         return null;
     }

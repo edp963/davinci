@@ -19,7 +19,8 @@
 
 package edp.davinci.server.dto.project;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import edp.davinci.core.dao.entity.Project;
 import edp.davinci.server.dto.user.UserBaseInfo;
@@ -33,9 +34,9 @@ public class ProjectWithCreateBy extends Project {
     /**
      *	前端映射字段为createBy，与Project的createBy属性冲突， 兼容0.3前端代码
      */
-    @JSONField(name = "createBy")
+    @JsonProperty("createBy")
     private UserBaseInfo createUser;
     
-    @JSONField(serialize = false)
+    @JsonIgnore
     private Long createBy;
 }

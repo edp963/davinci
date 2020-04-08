@@ -1,6 +1,6 @@
 package edp.davinci.server.dto.statistic;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
@@ -39,9 +39,9 @@ public class DavinciStatisticDuration {
     private String sub_viz_name;
 
     @NotNull
-    private LocalDateTime start_time;
+    private Date start_time;
 
     @NotNull
-    private LocalDateTime end_time;
+    private Date end_time;
 
 }
