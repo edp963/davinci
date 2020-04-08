@@ -2,8 +2,6 @@ package edp.davinci.server.model;
 
 import static edp.davinci.server.commons.Constants.*;
 
-import com.alibaba.fastjson.JSONArray;
-
 import edp.davinci.server.enums.SqlOperatorEnum;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
@@ -87,7 +85,7 @@ public class SqlFilter {
 
         Criterion criterion;
         if(SqlOperatorEnum.BETWEEN.getValue().equalsIgnoreCase(operator)){
-            JSONArray values = (JSONArray) value;
+            List values = (List) value;
             criterion = new Criterion(name, operator, values.get(0), values.get(1), sqlType);
         }else{
             criterion = new Criterion(name, operator, value, sqlType);
@@ -130,7 +128,6 @@ public class SqlFilter {
 
         }else if(criterion.isListValue()){
             List values = (List) criterion.getValue();
-            //column in ()
             whereClause.append(criterion.getColumn() + SPACE + criterion.getOperator() + SPACE);
             whereClause.append(PARENTHESES_START);
             if(criterion.isNeedApostrophe() && !Pattern.matches(pattern, values.get(0).toString())){

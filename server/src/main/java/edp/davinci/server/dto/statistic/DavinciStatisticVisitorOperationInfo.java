@@ -1,6 +1,7 @@
 package edp.davinci.server.dto.statistic;
 
-import lombok.Data;
+import java.util.Date;
+import java.util.List;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
@@ -8,9 +9,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 import edp.davinci.server.commons.Constants;
-
-import java.time.LocalDateTime;
-import java.util.List;
+import lombok.Data;
 
 @Data
 @NotNull(message = "visitor operation info cannot be null")
@@ -59,7 +58,7 @@ public class DavinciStatisticVisitorOperationInfo {
     private List<Object> groups;
 
     @NotNull
-    private LocalDateTime create_time;
+    private Date create_time;
 
 }
 

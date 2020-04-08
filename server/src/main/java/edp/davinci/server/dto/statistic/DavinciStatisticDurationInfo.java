@@ -1,6 +1,6 @@
 package edp.davinci.server.dto.statistic;
 
-import lombok.Data;
+import java.util.Date;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
@@ -8,14 +8,13 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 import edp.davinci.server.commons.Constants;
-
-import java.time.LocalDateTime;
+import lombok.Data;
 
 @Data
-@NotNull(message = "duration info cannot be null")
-public class DavinciStatisticDurationInfo {
+@NotNull(message = "Duration cannot be null")
+public class DavinciStatisticDuration {
 
-    @NotNull
+	@NotNull
     @Min(value = 1L)
     private Long user_id;
 
@@ -40,9 +39,9 @@ public class DavinciStatisticDurationInfo {
     private String sub_viz_name;
 
     @NotNull
-    private LocalDateTime start_time;
+    private Date start_time;
 
     @NotNull
-    private LocalDateTime end_time;
+    private Date end_time;
 
 }

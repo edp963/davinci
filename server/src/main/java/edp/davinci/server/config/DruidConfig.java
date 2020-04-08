@@ -150,7 +150,7 @@ public class DruidConfig {
             druidDataSource.setFilters(filters);
             druidDataSource.init();
         } catch (SQLException e) {
-            log.error("druid datasource init fail! ", e);
+            log.error("Druid data source init fail!", e);
         }
         return druidDataSource;
     }

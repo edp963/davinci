@@ -19,7 +19,7 @@
 
 package edp.davinci.server.dto.project;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import edp.davinci.server.enums.UserPermissionEnum;
 import lombok.Data;
@@ -41,7 +41,7 @@ public class ProjectPermission {
 
     private Boolean downloadPermission = false;
 
-    @JSONField(serialize = false)
+    @JsonIgnore
     private boolean isProjectMaintainer = false;
 
 

@@ -19,8 +19,8 @@
 
 package edp.davinci.server.inteceptor;
 
+import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
-import com.alibaba.fastjson.JSONObject;
 
 import edp.davinci.server.annotation.AuthIgnore;
 import edp.davinci.server.annotation.AuthShare;
@@ -112,7 +112,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             log.info("current user is not activated, username: {}", user.getUsername());
             response.setStatus(HttpCodeEnum.FAIL.getCode());
             ResultMap resultMap = new ResultMap(tokenUtils);
-            response.getWriter().print(JSONObject.toJSONString(resultMap.failAndRefreshToken(request).message("Account not active yet. Please check your email to activate your account")));
+            response.getWriter().print(JSONUtils.toString(resultMap.failAndRefreshToken(request).message("Account not active yet. Please check your email to activate your account")));
             return false;
         }
         request.setAttribute(Constants.CURRENT_USER, user);

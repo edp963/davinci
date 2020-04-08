@@ -62,6 +62,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.Date;
 import java.util.regex.Matcher;
 
 import static edp.davinci.server.commons.Constants.*;
@@ -183,6 +184,12 @@ public class SqlUtils {
             }
             
             jdbcTemplate.setMaxRows(resultLimit);
+            
+			// special for mysql fetch size
+			if (getDataTypeEnum() == MYSQL) {
+				jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
+			}
+			
             getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
             paginateWithQueryColumns.setPageNo(1);
             int size = paginateWithQueryColumns.getResultList().size();
@@ -660,11 +667,6 @@ public class SqlUtils {
         DataSource dataSource = sourceUtils.getDataSource(this.jdbcSourceInfo);
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.setFetchSize(500);
-		if (this.dataTypeEnum == MYSQL) {
-			if(!getJdbcUrl().contains("useCursorFetch=true")) {
-				jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
-			}
-		}
         return jdbcTemplate;
     }
     
@@ -750,23 +752,26 @@ public class SqlUtils {
                                 if (obj == null) {
                                     pstmt.setTimestamp(i, null);
                                 } else {
-                                    if(obj instanceof LocalDateTime){
-                                        pstmt.setTimestamp(i, Timestamp.valueOf((LocalDateTime) obj));
-                                    }else {
-                                        DateTime dateTime = (DateTime) obj;
-                                        pstmt.setTimestamp(i, DateUtils.toTimestamp(dateTime));
-                                    }
+									if (obj instanceof LocalDateTime) {
+										pstmt.setTimestamp(i, Timestamp.valueOf((LocalDateTime) obj));
+									} else if (obj instanceof Date) {
+										pstmt.setTimestamp(i, new Timestamp(((Date) obj).getTime()));
+									} else {
+										pstmt.setTimestamp(i, DateUtils.toTimestamp((DateTime) obj));
+									}
                                 }
                                 break;
                             case "Timestamp":
                                 if(obj == null){
                                     pstmt.setTimestamp(i, null);
                                 }else{
-                                    if(obj instanceof LocalDateTime){
-                                        pstmt.setTimestamp(i, Timestamp.valueOf((LocalDateTime) obj));
-                                    }else {
-                                        pstmt.setTimestamp(i, (Timestamp) obj);
-                                    }
+									if (obj instanceof LocalDateTime) {
+										pstmt.setTimestamp(i, Timestamp.valueOf((LocalDateTime) obj));
+									} else if (obj instanceof Date) {
+										pstmt.setTimestamp(i, new Timestamp(((Date) obj).getTime()));
+									} else {
+										pstmt.setTimestamp(i, (Timestamp) obj);
+									}
                                 }
                                 break;
                             case "Blob":

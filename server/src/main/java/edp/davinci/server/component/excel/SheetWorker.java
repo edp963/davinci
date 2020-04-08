@@ -74,9 +74,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             
             // special for mysql fetch size
 			if (sqlUtils.getDataTypeEnum() == MYSQL) {
-				if(!sqlUtils.getJdbcUrl().contains("useCursorFetch=true")) {
-					template.setFetchSize(Integer.MIN_VALUE);
-				}
+				template.setFetchSize(Integer.MIN_VALUE);
 			}
 
             String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
