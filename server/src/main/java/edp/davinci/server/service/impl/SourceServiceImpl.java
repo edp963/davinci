@@ -61,7 +61,6 @@ import edp.davinci.server.dto.source.SourceConfig;
 import edp.davinci.server.dto.source.SourceCreate;
 import edp.davinci.server.dto.source.SourceDataUpload;
 import edp.davinci.server.dto.source.SourceInfo;
-import edp.davinci.server.dto.source.SourceTest;
 import edp.davinci.server.dto.source.UploadMeta;
 import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.server.enums.DataTypeEnum;
@@ -82,7 +81,6 @@ import edp.davinci.server.model.RedisMessageEntity;
 import edp.davinci.server.model.TableInfo;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.dao.entity.View;
-import edp.davinci.server.model.JdbcSourceInfo.JdbcSourceInfoBuilder;
 import edp.davinci.server.runner.LoadSupportDataSourceRunner;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.SourceService;
@@ -265,7 +263,8 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
                         config.getPassword(),
                         config.getVersion(),
                         config.getProperties(),
-                        config.isExt()
+                        config.isExt(),
+                        null
                 ).testConnection();
 	}
 
@@ -297,32 +296,23 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			
 			SourceConfig config = sourceInfo.getConfig();
 
-			// 测试连接
-			if (!testConnection(config)) {
-				throw new ServerException("Test source connection fail");
-			}
-
 			// 失效的数据源
 			Source sourceCopy = new Source();
 			BeanUtils.copyProperties(source, sourceCopy);
 
-			BeanUtils.copyProperties(sourceInfo, source);
-			source.setUpdateBy(user.getId());
-			source.setUpdateTime(new Date());
-			source.setConfig(JSONUtils.toString(sourceInfo.getConfig()));
-
-			updateSource(source);
-			
 			String sourceCopyConfig = sourceCopy.getConfig();
+			
 			// 释放失效数据源
-			String copyKey = SourceUtils.getKey(
+			String copyKey = SourceUtils.getSourceKey(
+					source.getName(),
 					SourceUtils.getJdbcUrl(sourceCopyConfig), 
 					SourceUtils.getUsername(sourceCopyConfig),
 					SourceUtils.getPassword(sourceCopyConfig), 
 					SourceUtils.getDbVersion(sourceCopyConfig), 
 					SourceUtils.isExt(sourceCopyConfig));
 			
-			String newKey = SourceUtils.getKey(
+			String newKey = SourceUtils.getSourceKey(
+					sourceInfo.getName(),
 					config.getUrl(), 
 					config.getUsername(), 
 					config.getPassword(),
@@ -331,7 +321,17 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			
 			if (!newKey.equals(copyKey)) {
 				releaseSource(sourceCopy);
+				// 测试连接
+				if (!testConnection(config)) {
+					throw new ServerException("Test source connection fail");
+				}
 			}
+			
+			BeanUtils.copyProperties(sourceInfo, source);
+			source.setUpdateBy(user.getId());
+			source.setUpdateTime(new Date());
+			source.setConfig(JSONUtils.toString(sourceInfo.getConfig()));
+			updateSource(source);
 
 			optLogger.info("Source({}) is update by user({})", source.getId(), user.getId());
 			return source;
@@ -386,31 +386,23 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	 * @return
 	 */
 	@Override
-	public boolean testSource(SourceTest sourceTest) throws ServerException {
+	public boolean testSource(SourceConfig config) throws ServerException {
 
 		boolean testConnection = false;
 		
 		try {
 
-			if (!sourceTest.isExt()) {
-				sourceTest.setVersion(null);
+			if (!config.isExt()) {
+				config.setVersion(null);
 			}
 
-			if (StringUtils.isEmpty(sourceTest.getVersion())
-					|| JDBC_DATASOURCE_DEFAULT_VERSION.equals(sourceTest.getVersion())) {
-				sourceTest.setVersion(null);
-				sourceTest.setExt(false);
+			if (StringUtils.isEmpty(config.getVersion())
+					|| JDBC_DATASOURCE_DEFAULT_VERSION.equals(config.getVersion())) {
+				config.setVersion(null);
+				config.setExt(false);
 			}
 
-            testConnection = sqlUtils
-                    .init(
-                            sourceTest.getUrl(),
-                            sourceTest.getUsername(),
-                            sourceTest.getPassword(),
-                            sourceTest.getVersion(),
-                            sourceTest.getProperties(),
-                            sourceTest.isExt()
-                    ).testConnection();
+            testConnection = testConnection(config);
 
 		} catch (SourceException e) {
 			log.error(e.getMessage(), e);
@@ -664,31 +656,24 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	private void releaseSource(Source source) {
 		
 		String config = source.getConfig();
+		
+		SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
+		String url = SourceUtils.getJdbcUrl(config);
+		JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo
+				 .builder()
+				.jdbcUrl(url)
+				.username(SourceUtils.getUsername(config))
+				.password(SourceUtils.getPassword(config))
+				.database(SourceUtils.getDataSourceName(url))
+				.dbVersion(SourceUtils.getDbVersion(config))
+				.properties(SourceUtils.getProperties(config))
+				.ext(SourceUtils.isExt(config))
+				.sourceName(SourceUtils.getSourceName(source.getName(), source.getProjectId()))
+				.build();
 
 		if (redisUtils.isRedisEnable()) {
-			Map<String,Object> map = new HashMap<>();
-			
-			map.put("url", SourceUtils.getJdbcUrl(config));
-			map.put("username", SourceUtils.getUsername(config));
-			map.put("password", SourceUtils.getPassword(config));
-			map.put("version", SourceUtils.getDbVersion(config));
-			map.put("ext", SourceUtils.isExt(config));
-			
-			publishReconnect(JSONUtils.toString(map));
+			publishReconnect(JSONUtils.toString(jdbcSourceInfo));
 		} else {
-			SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
-			String url = SourceUtils.getJdbcUrl(config);
-			JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfoBuilder
-					.aJdbcSourceInfo()
-					.withJdbcUrl(url)
-					.withUsername(SourceUtils.getUsername(config))
-					.withPassword(SourceUtils.getPassword(config))
-					.withDatabase(SourceUtils.getDataSourceName(url))
-					.withDbVersion(SourceUtils.getDbVersion(config))
-					.withProperties(SourceUtils.getProperties(config))
-					.withExt(SourceUtils.isExt(config))
-					.build();
-
 			sourceUtils.releaseDataSource(jdbcSourceInfo);
 		}
 	}

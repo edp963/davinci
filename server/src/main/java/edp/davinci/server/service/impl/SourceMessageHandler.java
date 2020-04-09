@@ -19,15 +19,12 @@
 
 package edp.davinci.server.service.impl;
 
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.server.component.jdbc.JdbcDataSource;
 import edp.davinci.server.model.JdbcSourceInfo;
-import edp.davinci.server.model.JdbcSourceInfo.JdbcSourceInfoBuilder;
 import edp.davinci.server.service.RedisMessageHandler;
 import edp.davinci.server.util.SourceUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -39,28 +36,16 @@ public class SourceMessageHandler implements RedisMessageHandler {
     @Autowired
     private JdbcDataSource jdbcDataSource;
 
-    @SuppressWarnings("unchecked")
 	@Override
     public void handle(Object message, String flag) {
-
-    	// the flag is deprecated
-        log.info("SourceHandler received release source message (:{}), and Flag is (:{})", message, flag);
         
         if (!(message instanceof String)) {
             return;
         }
         
-        Map<String,Object> map = JSONUtils.toObject((String)message, Map.class);
-        
+        JdbcSourceInfo sourceInfo = JSONUtils.toObject((String)message, JdbcSourceInfo.class);
         SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
-        JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfoBuilder
-        		.aJdbcSourceInfo()
-                .withJdbcUrl((String)map.get("url"))
-                .withUsername((String)map.get("username"))
-                .withPassword((String)map.get("password"))
-                .withDbVersion((String)map.get("version"))
-                .withExt((Boolean)map.get("ext")).build();
-
-        sourceUtils.releaseDataSource(jdbcSourceInfo);
+        sourceUtils.releaseDataSource(sourceInfo);
+        log.info("SourceMessageHandler release source whit message:{}", message);
     }
 }

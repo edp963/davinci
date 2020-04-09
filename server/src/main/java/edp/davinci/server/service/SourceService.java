@@ -42,7 +42,7 @@ public interface SourceService extends CheckEntityService {
 
     boolean deleteSrouce(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    boolean testSource(SourceTest sourceTest) throws ServerException;
+    boolean testSource(SourceConfig sourceConfig) throws ServerException;
 
     void validCsvmeta(Long sourceId, UploadMeta uploadMeta, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 

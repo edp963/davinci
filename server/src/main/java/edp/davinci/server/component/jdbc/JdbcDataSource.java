@@ -32,6 +32,7 @@ import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TESTWHILEIDLE;
 import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TIMEBETWEENEVICTIONRUNSMILLIS;
 import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_URL;
 import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_USERNAME;
+import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_FILTERS;
 
 import java.io.File;
 import java.util.Map;
@@ -67,6 +68,7 @@ public class JdbcDataSource {
 		
 		public DruidDataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
 	        
+			String name = jdbcSourceInfo.getSourceName();
 			String jdbcUrl = jdbcSourceInfo.getJdbcUrl();
 	        String username = jdbcSourceInfo.getUsername();
 	        String password = jdbcSourceInfo.getPassword();
@@ -108,6 +110,7 @@ public class JdbcDataSource {
             properties.setProperty(PROP_TESTWHILEIDLE, String.valueOf(false));
             properties.setProperty(PROP_TESTONBORROW, String.valueOf(testOnBorrow));
             properties.setProperty(PROP_TESTONRETURN, String.valueOf(testOnReturn));
+            properties.setProperty(PROP_FILTERS, String.valueOf(filters));
             properties.put(PROP_CONNECTIONPROPERTIES, "client.transport.ignore_cluster_name=true");
 
             if (!CollectionUtils.isEmpty(jdbcSourceInfo.getProperties())) {
@@ -116,6 +119,7 @@ public class JdbcDataSource {
 
             try {
             	druidDataSource = (DruidDataSource)ElasticSearchDruidDataSourceFactory.createDataSource(properties);
+            	druidDataSource.setName(name);
             	dataSourceMap.put(key, druidDataSource);
             } catch (Exception e) {
                 log.error("Exception during pool initialization", e);
@@ -169,6 +173,9 @@ public class JdbcDataSource {
     @Value("${spring.datasource.test-on-return}")
     @Getter
     protected boolean testOnReturn;
+    
+    @Value("${spring.datasource.filters}")
+    private String filters;
 
     @Value("${source.break-after-acquire-failure:true}")
     @Getter
@@ -181,7 +188,7 @@ public class JdbcDataSource {
     @Value("${source.query-timeout:600000}")
     @Getter
     protected int queryTimeout;
-
+    
     private static volatile Map<String, DruidDataSource> dataSourceMap = new ConcurrentHashMap<>();
     private static volatile Map<String, Lock> dataSourceLockMap = new ConcurrentHashMap<>();
     private static final Object lockLock = new Object();
@@ -237,6 +244,7 @@ public class JdbcDataSource {
             return esDataSource.getDataSource(jdbcSourceInfo);
         }
         
+    	String sourceName = jdbcSourceInfo.getSourceName();
         String jdbcUrl = jdbcSourceInfo.getJdbcUrl();
         String username = jdbcSourceInfo.getUsername();
         String password = jdbcSourceInfo.getPassword();
@@ -282,6 +290,7 @@ public class JdbcDataSource {
             	druidDataSource.setDriverClassLoader(ExtendedJdbcClassLoader.getExtJdbcClassLoader(path));
             }
 
+            druidDataSource.setName(sourceName);
             druidDataSource.setUrl(jdbcUrl);
             druidDataSource.setUsername(username);
 
@@ -308,7 +317,8 @@ public class JdbcDataSource {
             }
 
             try {
-                druidDataSource.init();
+				druidDataSource.setFilters("stat");
+				druidDataSource.init();
             } catch (Exception e) {
                 log.error("Exception during pool initialization", e);
                 throw new SourceException(e.getMessage());
@@ -324,7 +334,9 @@ public class JdbcDataSource {
     }
     
     private String getDataSourceKey (JdbcSourceInfo jdbcSourceInfo) {
-        return SourceUtils.getKey(jdbcSourceInfo.getJdbcUrl(),
+        return SourceUtils.getSourceKey(
+        		jdbcSourceInfo.getSourceName(),
+        		jdbcSourceInfo.getJdbcUrl(),
                 jdbcSourceInfo.getUsername(),
                 jdbcSourceInfo.getPassword(),
                 jdbcSourceInfo.getDbVersion(),

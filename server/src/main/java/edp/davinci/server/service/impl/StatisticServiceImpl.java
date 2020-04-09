@@ -87,7 +87,7 @@ public class StatisticServiceImpl implements StatisticService {
             mysqlPassword = environment.getProperty("spring.datasource.password");
         }
         
-        sqlUtils = sqlUtils.init(mysqlUrl, mysqlUsername, mysqlPassword, null, null, false);
+		sqlUtils = sqlUtils.init(mysqlUrl, mysqlUsername, mysqlPassword, null, null, false, "davinci@statistic");
 
         Set<QueryColumn> headers = getHeaders(mysqlUrl, tableName);
         List<Map<String, Object>> values = entityConvertIntoMap(infoList);
