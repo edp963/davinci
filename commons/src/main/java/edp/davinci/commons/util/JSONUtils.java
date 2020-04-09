@@ -51,7 +51,7 @@ public class JSONUtils {
 	public static boolean validateObj(String jsonString) {
 
 		jsonString = jsonString.trim();
-
+		
 		if (StringUtils.isEmpty(jsonString)) {
 			return false;
 		}

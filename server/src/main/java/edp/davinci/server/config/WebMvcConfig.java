@@ -19,6 +19,7 @@
 
 package edp.davinci.server.config;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,11 +35,13 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.SerializerProvider;
 
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.inteceptor.AuthenticationInterceptor;
@@ -132,7 +135,6 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
     protected void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
     	ObjectMapper mapper = new ObjectMapper();
     	mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
-    	mapper.setSerializationInclusion(Include.NON_NULL); 
     	mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
     	mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     	mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -140,6 +142,13 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
         mapper.enable(Feature.ALLOW_UNQUOTED_FIELD_NAMES);
         mapper.enable(Feature.ALLOW_SINGLE_QUOTES);
         mapper.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
+        
+        mapper.getSerializerProvider().setNullValueSerializer(new JsonSerializer<Object>() {
+        	@Override
+			public void serialize(Object value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        		gen.writeString(Constants.EMPTY);
+			}
+		});
         
         MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter = new MappingJackson2HttpMessageConverter();
         mappingJackson2HttpMessageConverter.setObjectMapper(mapper);

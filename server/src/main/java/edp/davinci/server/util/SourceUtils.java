@@ -38,7 +38,6 @@ import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.component.jdbc.ExtendedJdbcClassLoader;
 import edp.davinci.server.component.jdbc.JdbcDataSource;
 import edp.davinci.server.enums.DataTypeEnum;
-import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.SourceException;
 import edp.davinci.server.model.CustomDataSource;
 import edp.davinci.server.model.Dict;
@@ -77,19 +76,19 @@ public class SourceUtils {
         
         try {
             if (null == connection) {
-                log.info("connection is closed, retry get connection!");
+                log.info("Connection is closed, retry get connection!");
                 releaseDataSource(jdbcSourceInfo);
                 dataSource = getDataSource(jdbcSourceInfo);
                 connection = dataSource.getConnection();
             }
         } catch (Exception e) {
-            log.error("create connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
-            throw new SourceException("create connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
+            log.error("Create connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
+            throw new SourceException("Create connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
         }
 
         try {
             if (!connection.isValid(5)) {
-                log.info("connection is invalid, retry get connection!");
+                log.info("Connection is invalid, retry get connection!");
                 releaseDataSource(jdbcSourceInfo);
                 connection = null;
             }
@@ -102,8 +101,8 @@ public class SourceUtils {
                 dataSource = getDataSource(jdbcSourceInfo);
                 connection = dataSource.getConnection();
             } catch (SQLException e) {
-                log.error("create connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
-                throw new SourceException("create connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
+                log.error("Create connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
+                throw new SourceException("Create connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
             }
         }
 
@@ -117,7 +116,7 @@ public class SourceUtils {
                 connection = null;
             } catch (Exception e) {
                 e.printStackTrace();
-                log.error("connection close error", e.getMessage());
+                log.error("Connection close error", e.getMessage());
             }
         }
     }
@@ -129,7 +128,7 @@ public class SourceUtils {
                 rs = null;
             } catch (Exception e) {
                 e.printStackTrace();
-                log.error("resultSet close error", e.getMessage());
+                log.error("ResultSet close error", e.getMessage());
             }
         }
     }
@@ -137,7 +136,7 @@ public class SourceUtils {
     public static boolean checkDriver(String dataSourceName, String jdbcUrl, String version, boolean isExt) {
 
     	if (StringUtils.isEmpty(dataSourceName) || !LoadSupportDataSourceRunner.getSupportDatasourceMap().containsKey(dataSourceName)) {
-            throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
+            throw new SourceException("Not supported data type, jdbcUrl: " + jdbcUrl);
         }
         
 		if (isExt && !StringUtils.isEmpty(version) && !JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
@@ -151,9 +150,7 @@ public class SourceUtils {
 				if (null == aClass) {
 					throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
 				}
-			} catch (NullPointerException en) {
-				throw new ServerException("JDBC driver is not found: " + dataSourceName + ":" + version);
-			} catch (ClassNotFoundException ex) {
+			} catch (Exception ex) {
 				throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
 			}
 		} else {
@@ -244,26 +241,21 @@ public class SourceUtils {
     public void releaseDataSource(JdbcSourceInfo jdbcSourceInfo) {
 		jdbcDataSource.removeDatasource(jdbcSourceInfo);
     }
+    
+	public static String getSourceName(String name, Long projectId) {
+		return name + AT_SYMBOL + projectId;
+	}
 
-    public static String getKey(String jdbcUrl, String username, String password, String version, boolean isExt) {
+    public static String getSourceKey(String sourceName, String jdbcUrl, String username, String password, String version, boolean isExt) {
 
-        StringBuilder sb = new StringBuilder();
-        
-        if (!StringUtils.isEmpty(username)) {
-            sb.append(username);
-        }
-        
-        if (!StringUtils.isEmpty(password)) {
-            sb.append(COLON).append(password);
-        }
-        
-        sb.append(AT_SYMBOL).append(jdbcUrl.trim());
-        
-        if (isExt && !StringUtils.isEmpty(version)) {
-            sb.append(COLON).append(version);
-        }
+		StringBuilder sb = new StringBuilder();
+		sb.append(sourceName).append(AT_SYMBOL);
+		sb.append(jdbcUrl.trim()).append(AT_SYMBOL);
+		sb.append(version).append(AT_SYMBOL);
+		sb.append(username).append(AT_SYMBOL);
+		sb.append(password).append(AT_SYMBOL);
 
-        return MD5Utils.getMD5(sb.toString(), true, 64);
+		return MD5Utils.getMD5(sb.toString(), true, 64);
     }
     
     public static String getJdbcUrl(String config) {

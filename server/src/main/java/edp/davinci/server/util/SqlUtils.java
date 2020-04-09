@@ -114,10 +114,11 @@ public class SqlUtils {
                 .withJdbcDataSource(this.jdbcDataSource)
                 .withResultLimit(this.resultLimit)
                 .withIsQueryLogEnable(this.isQueryLogEnable)
+                .withSourceName(SourceUtils.getSourceName(source.getName(), source.getProjectId()))
                 .build();
     }
 
-    public SqlUtils init(String jdbcUrl, String username, String password, String dbVersion, List<Dict> properties, boolean ext) {
+    public SqlUtils init(String jdbcUrl, String username, String password, String dbVersion, List<Dict> properties, boolean ext, String sourceName) {
         return SqlUtilsBuilder
                 .getBuilder()
                 .withJdbcUrl(jdbcUrl)
@@ -129,6 +130,7 @@ public class SqlUtils {
                 .withJdbcDataSource(this.jdbcDataSource)
                 .withResultLimit(this.resultLimit)
                 .withIsQueryLogEnable(this.isQueryLogEnable)
+                .withSourceName(sourceName)
                 .build();
     }
 
@@ -956,6 +958,7 @@ public class SqlUtils {
         private List<Dict> properties;
         private String dbVersion;
         private boolean isExt;
+        private String sourceName;
 
         private SqlUtilsBuilder() {
 
@@ -963,6 +966,11 @@ public class SqlUtils {
 
         public static SqlUtilsBuilder getBuilder() {
             return new SqlUtilsBuilder();
+        }
+        
+        SqlUtilsBuilder withSourceName(String sourceName) {
+            this.sourceName = sourceName;
+            return this;
         }
 
         SqlUtilsBuilder withJdbcDataSource(JdbcDataSource jdbcDataSource) {
@@ -1015,15 +1023,15 @@ public class SqlUtils {
             SourceUtils.checkDriver(datasource, jdbcUrl, dbVersion, isExt);
 
             JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo
-                    .JdbcSourceInfoBuilder
-                    .aJdbcSourceInfo()
-                    .withJdbcUrl(this.jdbcUrl)
-                    .withUsername(this.username)
-                    .withPassword(this.password)
-                    .withDatabase(datasource)
-                    .withDbVersion(this.dbVersion)
-                    .withProperties(this.properties)
-                    .withExt(this.isExt)
+                    .builder()
+                    .jdbcUrl(this.jdbcUrl)
+                    .username(this.username)
+                    .password(this.password)
+                    .database(datasource)
+                    .dbVersion(this.dbVersion)
+                    .properties(this.properties)
+                    .ext(this.isExt)
+                    .sourceName(this.sourceName)
                     .build();
 
             SqlUtils sqlUtils = new SqlUtils(jdbcSourceInfo);

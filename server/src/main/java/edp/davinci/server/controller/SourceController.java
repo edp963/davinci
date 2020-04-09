@@ -48,12 +48,12 @@ import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.source.DatasourceType;
 import edp.davinci.server.dto.source.DbBaseInfo;
 import edp.davinci.server.dto.source.SourceCatalogInfo;
+import edp.davinci.server.dto.source.SourceConfig;
 import edp.davinci.server.dto.source.SourceCreate;
 import edp.davinci.server.dto.source.SourceDBInfo;
 import edp.davinci.server.dto.source.SourceDataUpload;
 import edp.davinci.server.dto.source.SourceInfo;
 import edp.davinci.server.dto.source.SourceTableInfo;
-import edp.davinci.server.dto.source.SourceTest;
 import edp.davinci.server.dto.source.UploadMeta;
 import edp.davinci.server.model.DBTables;
 import edp.davinci.server.model.TableInfo;
@@ -213,7 +213,7 @@ public class SourceController extends BaseController {
      */
     @ApiOperation(value = "test source", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(value = "/test", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity testSource(@Valid @RequestBody SourceTest sourceTest,
+    public ResponseEntity testSource(@Valid @RequestBody SourceConfig sourceConfig,
                                      @ApiIgnore BindingResult bindingResult,
                                      @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
@@ -223,7 +223,7 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        sourceService.testSource(sourceTest);
+        sourceService.testSource(sourceConfig);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 

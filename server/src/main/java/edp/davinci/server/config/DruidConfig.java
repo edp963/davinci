@@ -92,6 +92,9 @@ public class DruidConfig {
 
     @Value("${spring.datasource.validation-query}")
     private String validationQuery;
+    
+    @Value("${spring.datasource.name:davinci}")
+    private String name;
 
     /**
      * druid监控
@@ -145,6 +148,7 @@ public class DruidConfig {
         druidDataSource.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
         druidDataSource.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
         druidDataSource.setValidationQuery(validationQuery);
+        druidDataSource.setName(name);
 
         try {
             druidDataSource.setFilters(filters);
