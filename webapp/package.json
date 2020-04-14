@@ -60,6 +60,7 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.8.3",
+    "ace-builds": "^1.4.9",
     "antd": "~3.26.0",
     "axios": "^0.19.0",
     "bootstrap-datepicker": "^1.8.0",
@@ -88,6 +89,7 @@
     "quill-image-resize-module": "^3.0.0",
     "rc-animate": "2.10.2",
     "react": "16.8.6",
+    "react-ace": "^8.1.0",
     "react-color": "^2.17.3",
     "react-dnd": "^9.4.0",
     "react-dnd-html5-backend": "^9.4.0",
@@ -201,7 +203,7 @@
     "shelljs": "0.8.3",
     "style-loader": "0.23.1",
     "svg-url-loader": "2.3.2",
-    "terser-webpack-plugin": "1.2.3",
+    "terser-webpack-plugin": "^1.2.3",
     "ts-jest": "^24.1.0",
     "ts-node": "^7.0.0",
     "tsconfig-paths": "^3.4.1",
@@ -212,11 +214,11 @@
     "typescript": "^3.7.2",
     "url-loader": "1.1.2",
     "webpack": "4.30.0",
-    "webpack-bundle-analyzer": "^3.0.4",
+    "webpack-bundle-analyzer": "^3.6.1",
     "webpack-cli": "3.3.0",
     "webpack-dev-middleware": "3.6.2",
     "webpack-hot-middleware": "2.24.3",
-    "webpack-pwa-manifest": "4.0.0",
+    "webpack-pwa-manifest": "^4.2.0",
     "whatwg-fetch": "3.0.0"
   }
 }
