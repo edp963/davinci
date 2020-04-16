@@ -48,6 +48,8 @@ public interface OrganizationService extends CheckEntityService {
 
     void inviteMember(Long orgId, Long memId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
+    BatchInviteMemberResult batchInviteMembers(Long orgId, InviteMembers inviteMembers, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+
     OrganizationInfo confirmInvite(String token, User user) throws ServerException;
 
     boolean deleteOrgMember(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;

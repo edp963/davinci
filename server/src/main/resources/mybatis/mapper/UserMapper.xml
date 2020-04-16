@@ -98,4 +98,17 @@
         </if>
     </select>
 
+    <select id="selectByEmails" resultType="edp.davinci.model.User">
+        select * from `user` where
+        <if test="emails != null and emails.size > 0">
+            `email` in
+            <foreach collection="emails" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="emails == null or emails.size == 0">
+            1=0
+        </if>
+    </select>
+
 </mapper>

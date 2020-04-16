@@ -53,6 +53,8 @@ public interface RelUserOrganizationMapper {
     })
     List<OrganizationMember> getOrgMembers(@Param("orgId") Long orgId);
 
+    Set<String> selectOrgMemberEmails(@Param("orgId") Long orgId, @Param("emails") Set<String> emails);
+
     @Select({"select * from rel_user_organization where id = #{id}"})
     RelUserOrganization getById(@Param("id") Long id);
 

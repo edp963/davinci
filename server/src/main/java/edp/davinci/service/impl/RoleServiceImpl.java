@@ -280,7 +280,7 @@ public class RoleServiceImpl implements RoleService {
     public List<RelRoleMember> addMembers(Long id, List<Long> memberIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
         try {
-            getRole(id, user, false);
+            getRole(id, user, true);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -701,7 +701,7 @@ public class RoleServiceImpl implements RoleService {
         return roleMapper.selectByOrgIdAndMemberId(orgId, memberId);
     }
 
-    private Role getRole(Long id, User user, Boolean moidfy) throws NotFoundException, UnAuthorizedExecption {
+    private Role getRole(Long id, User user, boolean moidfy) throws NotFoundException, UnAuthorizedExecption {
         Role role = roleMapper.getById(id);
         if (null == role) {
             log.warn("role (:{}) is not found", id);
@@ -713,7 +713,7 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedExecption();
         }
 
-        if (true == moidfy && !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
+        if (moidfy && !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
             throw new UnAuthorizedExecption();
         }
 

@@ -306,6 +306,38 @@ public class OrganizationController extends BaseController {
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
+    /**
+     * 邀请组织成员
+     *
+     * @param orgId
+     * @param inviteMembers
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "invite members to join the organization")
+    @PostMapping("{orgId}/invite/members")
+    public ResponseEntity batchInviteMembers(@PathVariable("orgId") Long orgId,
+                                             @Valid @RequestBody InviteMembers inviteMembers,
+                                             @ApiIgnore BindingResult bindingResult,
+                                             @ApiIgnore @CurrentUser User user,
+                                             HttpServletRequest request) {
+
+        if (invalidId(orgId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+
+        BatchInviteMemberResult result = organizationService.batchInviteMembers(orgId, inviteMembers, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(result));
+    }
+
 
 //    /**
 //     * 成员确认邀请
@@ -420,7 +452,7 @@ public class OrganizationController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<Role> roles =  roleService.getMemberRoles(id, memberId, user);
+        List<Role> roles = roleService.getMemberRoles(id, memberId, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(roles));
     }
 
