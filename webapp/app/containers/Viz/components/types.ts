@@ -18,7 +18,7 @@
  * >>
  */
 
-import { DashboardTypes } from './constants'
+import { DashboardTypes } from '../constants'
 
 export interface IPortal {
   projectId?: number

@@ -22,7 +22,7 @@ import { IDashboard, IDashboardNode } from './types'
 import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { widgetDimensionMigrationRecorder } from 'app/utils/migrationRecorders'
 import { FieldSortTypes } from '../Widget/components/Config/Sort'
-import { IQueryConditions } from '../Dashboard/Grid'
+import { IQueryConditions } from '../Dashboard/types'
 import { decodeMetricName } from '../Widget/components/util'
 
 type MapDashboardNodes = { [parentId: number]: IDashboardNode[] }
@@ -57,8 +57,8 @@ export function getDashboardNodes(dashboards: IDashboard[]): IDashboardNode[] {
 export function getRequestParamsByWidgetConfig(
   renderType: RenderType,
   widgetConfig: IWidgetConfig,
-  prevQueryConditions: Partial<IQueryConditions>,
-  queryConditions?: Partial<IQueryConditions>
+  prevQueryConditions: IQueryConditions,
+  queryConditions?: IQueryConditions
 ) {
   const {
     cols,

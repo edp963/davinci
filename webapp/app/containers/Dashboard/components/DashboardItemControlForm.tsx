@@ -22,7 +22,7 @@ import React, { PureComponent, Suspense } from 'react'
 import { Form, Button, Row, Col } from 'antd'
 import classnames from 'classnames'
 import { FormComponentProps } from 'antd/lib/form/Form'
-import { IQueryConditions } from '../Grid'
+import { IQueryConditions } from '../types'
 import {
   IRenderTreeItem,
   ILocalRenderTreeItem,
@@ -51,7 +51,7 @@ interface IDashboardItemControlFormProps {
   controls: ILocalControl[]
   mapOptions: IMapControlOptions
   onGetOptions: OnGetControlOptions
-  onSearch: (queayConditions: Partial<IQueryConditions>) => void
+  onSearch: (queayConditions: IQueryConditions) => void
   onHide: () => void
   isFullScreen?: boolean
 }

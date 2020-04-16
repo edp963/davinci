@@ -28,26 +28,32 @@
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `org_id`,
             `user_id`,
-            `role`
+            `role`,
+            `create_by`,
+            `create_time`
         </trim>
         values
         <trim prefix=" (" suffix=")" suffixOverrides=",">
             #{orgId, jdbcType=BIGINT},
             #{userId, jdbcType=BIGINT},
-            #{role, jdbcType=SMALLINT}
+            #{role, jdbcType=SMALLINT},
+            #{createBy, jdbcType=BIGINT},
+            #{createTime, jdbcType=TIMESTAMP}
         </trim>
     </insert>
 
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert ignore into rel_user_organization
-        (`org_id`,`user_id`, `role`)
-        VALUES
+        (`org_id`,`user_id`, `role`, `create_by`, `create_time`)
+        values
         <foreach collection="set" item="record" index="index" separator=",">
             (
             #{record.orgId,jdbcType=BIGINT},
             #{record.userId,jdbcType=BIGINT},
-            #{record.role,jdbcType=SMALLINT}
+            #{record.role,jdbcType=SMALLINT},
+            #{record.createBy,jdbcType=BIGINT},
+            #{record.createTime,jdbcType=TIMESTAMP}
             )
         </foreach>
     </insert>

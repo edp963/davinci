@@ -43,8 +43,8 @@ import {
   dashboardItemDeleted,
   deleteDashboardItemFail,
   dashboardShareLinkLoaded,
-  dashboardSecretLinkLoaded,
-  widgetSecretLinkLoaded,
+  dashboardAuthorizedShareLinkLoaded,
+  widgetAuthorizedShareLinkLoaded,
   loadDashboardShareLinkFail,
   widgetShareLinkLoaded,
   loadWidgetShareLinkFail,
@@ -140,17 +140,17 @@ export function* deleteDashboardItem (action) {
 }
 
 export function* getDashboardShareLink (action) {
-  const { id, authName } = action.payload
+  const { id, authUser } = action.payload
   try {
-    const shareInfo = yield call(request, {
+    const result = yield call(request, {
       method: 'get',
       url: `${api.portal}/dashboards/${id}/share`,
-      params: {username: authName}
+      params: {username: authUser || ''}
     })
-    if (authName) {
-      yield put(dashboardSecretLinkLoaded(shareInfo.payload))
+    if (authUser) {
+      yield put(dashboardAuthorizedShareLinkLoaded(result.payload))
     } else {
-      yield put(dashboardShareLinkLoaded(shareInfo.payload))
+      yield put(dashboardShareLinkLoaded(result.payload))
     }
   } catch (err) {
     yield put(loadDashboardShareLinkFail())
@@ -159,20 +159,17 @@ export function* getDashboardShareLink (action) {
 }
 
 export function* getWidgetShareLink (action) {
-  const { id, authName, itemId, resolve } = action.payload
+  const { id, authUser, itemId } = action.payload
   try {
-    const shareInfo = yield call(request, {
+    const result = yield call(request, {
       method: 'get',
       url: `${api.widget}/${id}/share`,
-      params: {username: authName}
+      params: {username: authUser || ''}
     })
-    if (authName) {
-      yield put(widgetSecretLinkLoaded(shareInfo.payload, itemId))
+    if (authUser) {
+      yield put(widgetAuthorizedShareLinkLoaded(result.payload, itemId))
     } else {
-      yield put(widgetShareLinkLoaded(shareInfo.payload, itemId))
-    }
-    if (resolve) {
-      resolve()
+      yield put(widgetShareLinkLoaded(result.payload, itemId))
     }
   } catch (err) {
     yield put(loadWidgetShareLinkFail(itemId))
