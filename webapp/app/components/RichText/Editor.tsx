@@ -87,10 +87,7 @@ const Editor: React.FC<IEditorProps> = (props, ref) => {
       <Slate
         editor={editor}
         value={initialValue}
-        onChange={(value) => {
-          console.log(value)
-          onChange(value)
-        }}
+        onChange={onChange}
       >
         {toolbar === false ? null : toolbar || <Toolbar.Toolbar />}
         <Editable

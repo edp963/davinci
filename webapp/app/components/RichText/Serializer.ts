@@ -60,7 +60,6 @@ const serializeNode = (node: Node) => {
     }
     span.innerHTML = text
     text = span.outerHTML
-    console.log(text)
     return text
   }
   const children = node.children.map((n) => serializeNode(n)).join('')

@@ -29,7 +29,6 @@ const ElementPropertyList = [BlockProperties.TextAlign]
 
 const Element: React.FC<RenderElementProps> = (props) => {
   const { attributes, children, element } = props
-  console.log(attributes)
   const cssStyle: React.CSSProperties = ElementPropertyList.reduce(
     (obj, propertyName) => {
       if (element[propertyName]) {

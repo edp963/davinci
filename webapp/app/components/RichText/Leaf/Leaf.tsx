@@ -31,7 +31,6 @@ interface ILeafProps extends RenderLeafProps {
 const Leaf: React.FC<ILeafProps> = (props) => {
   const { attributes, children, leaf, onFormatText } = props
   let wrappedChildren = children
-  console.log(attributes, leaf)
   if (leaf.text && onFormatText) {
     leaf.text = onFormatText(leaf.text)
   }
