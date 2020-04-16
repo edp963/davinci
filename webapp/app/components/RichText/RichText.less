@@ -18,7 +18,7 @@
  * >>
  */
 
-@import "~antd/lib/style/themes/default";
+@import '~antd/lib/style/themes/default';
 
 :global {
   .richtext {
@@ -38,15 +38,18 @@
     }
 
     ol {
-      list-style: decimal;
+      li {
+        list-style-type: decimal;
+      }
     }
 
     ul {
       padding-left: 1.5em;
-    }
 
-    ul li {
-      margin-left: 1.5em;
+      li {
+        margin-left: 1.5em;
+        list-style-type: disc;
+      }
     }
   }
 }
