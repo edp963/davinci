@@ -18,75 +18,96 @@
  * >>
  */
 
-import React, { Suspense } from 'react'
-import { Spin } from 'antd'
-import { IChartProps } from '../'
-import { IWidgetDimension, IWidgetMetric } from 'containers/Widget/components/Widget'
-import { PIVOT_CHART_FONT_SIZES } from 'app/globalConstants'
+import React, { useMemo, useCallback } from 'react'
+
+import { RichTextNode } from 'components/RichText'
+import { IChartProps } from '..'
 import { decodeMetricName } from '../../util'
+import { getFormattedValue } from '../../Config/Format'
+import { FieldBoundaries, FieldRegx } from './constants'
+
+import Editor from './Editor'
 import Preview from './Preview'
-const Editor = React.lazy(() => import('./Editor'))
 
-export class RichText extends React.Component<IChartProps> {
-  public static FieldPrefix = '〖@dv_'
-  public static FieldSuffix = '_dv@〗'
-  public static FieldBoundaries: [string, string] = [RichText.FieldPrefix, RichText.FieldSuffix]
-  public static FieldRegx = new RegExp(`${RichText.FieldPrefix}(.+?)${RichText.FieldSuffix}`, 'g')
+const ChartRichText: React.FC<IChartProps> = (props) => {
+  const {
+    editing,
+    data,
+    cols,
+    rows,
+    metrics,
+    chartStyles,
+    onChartStylesChange
+  } = props
+  const { content } = chartStyles.richText
 
-  // @FIXME use memoizeOne
-  private getFields = (cols: IWidgetDimension[], rows: IWidgetDimension[], metrics: IWidgetMetric[]) => {
-    let map =  cols.concat(rows).reduce((mapFields, field) => {
-      mapFields[field.name] = {
+  const mapFields = useMemo(() => {
+    let map = cols.concat(rows).reduce((obj, field) => {
+      obj[field.name] = {
         name: field.name,
         field: field.field,
         format: field.format
       }
-      return mapFields
+      return obj
     }, {})
-    map = metrics.reduce((mapFields, field) => {
+    map = metrics.reduce((obj, field) => {
       const name = `${field.agg}(${decodeMetricName(field.name)})`
-      mapFields[name] = {
+      obj[name] = {
         name,
         field: field.field,
         format: field.format
       }
-      return mapFields
+      return obj
     }, map)
     return map
-  }
+  }, [cols, rows, metrics])
 
-  private editorChange = (updatedContent: string) => {
-    const { onChartStylesChange } = this.props
-    onChartStylesChange(['richText', 'content'], updatedContent) // @FIXME ts typing
-  }
-
-  public render () {
-    const { editing, data, cols, rows, metrics, chartStyles } = this.props
-    const { content } = chartStyles.richText
-    const mapFields = this.getFields(cols, rows, metrics)
-
-    return (
-      <Suspense fallback={<Spin />}>
-        {!editing ?
-          <Preview
-            content={content}
-            fieldBoundaries={RichText.FieldBoundaries}
-            mapFields={mapFields}
-            data={data}
-          /> :
-          <Editor
-            content={content}
-            fontSizes={PIVOT_CHART_FONT_SIZES}
-            mapFields={mapFields}
-            data={data}
-            fieldBoundaries={RichText.FieldBoundaries}
-            onChange={this.editorChange}
-          />
+  const formatText = useCallback(
+    (text: string) => {
+      if (!text.length) {
+        return text
+      }
+      const formattedText = text.replace(FieldRegx, (_, p1: string) => {
+        if (!data.length || data[0][p1] === null) {
+          return ''
         }
-      </Suspense>
-    )
-  }
+        let text = data.map((item) => item[p1])
+        const config = mapFields[p1]
+        if (config) {
+          text = text.map((item) => getFormattedValue(item, config.format))
+        }
+        return text.join(', ')
+      })
+      return formattedText
+    },
+    [data, mapFields]
+  )
 
+  const editorChange = useCallback(
+    (updatedContent: RichTextNode[]) => {
+      if (updatedContent === content) { return }
+      onChartStylesChange(['richText', 'content'], updatedContent)
+    },
+    [content, onChartStylesChange]
+  )
+
+  return (
+    <>
+      {!editing ? (
+        <Preview key="preview" content={content} onFormatText={formatText} />
+      ) : (
+        <Editor
+          key="editor"
+          content={content}
+          mapFields={mapFields}
+          fieldBoundaries={FieldBoundaries}
+          onChange={editorChange}
+        >
+          <Preview content={content} onFormatText={formatText} />
+        </Editor>
+      )}
+    </>
+  )
 }
 
-export default RichText
+export default ChartRichText
