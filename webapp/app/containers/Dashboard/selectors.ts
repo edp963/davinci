@@ -19,8 +19,9 @@
  */
 
 import { createSelector } from 'reselect'
+import { IDashboardState } from './types'
 
-const selectDashboard = (state) => state.dashboard
+const selectDashboard = (state: { dashboard: IDashboardState }) => state.dashboard
 const selectForm = (state) => state.form
 
 const makeSelectCurrentDashboard = () => createSelector(
@@ -37,17 +38,21 @@ const makeSelectCurrentDashboardLoading = () => createSelector(
   selectDashboard,
   (dashboardState) => dashboardState.currentDashboardLoading
 )
-const makeSelectCurrentDashboardShareInfo = () => createSelector(
+const makeSelectCurrentDashboardShareToken = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.currentDashboardShareInfo
+  (dashboardState) => dashboardState.currentDashboardShareToken
 )
-const makeSelectCurrentDashboardSecretInfo = () => createSelector(
+const makeSelectCurrentDashboardAuthorizedShareToken = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.currentDashboardSecretInfo
+  (dashboardState) => dashboardState.currentDashboardAuthorizedShareToken
 )
-const makeSelectCurrentDashboardShareInfoLoading = () => createSelector(
+const makeSelectCurrentDashboardShareLoading = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.currentDashboardShareInfoLoading
+  (dashboardState) => dashboardState.currentDashboardShareLoading
+)
+const makeSelectSharePanel = () => createSelector(
+  selectDashboard,
+  (dashboardState) => dashboardState.sharePanel
 )
 const makeSelectCurrentDashboardSelectOptions = () => createSelector(
   selectDashboard,
@@ -92,9 +97,10 @@ export {
   makeSelectCurrentDashboardLoading,
   makeSelectCurrentItems,
   makeSelectCurrentItemsInfo,
-  makeSelectCurrentDashboardShareInfo,
-  makeSelectCurrentDashboardSecretInfo,
-  makeSelectCurrentDashboardShareInfoLoading,
+  makeSelectCurrentDashboardShareToken,
+  makeSelectCurrentDashboardAuthorizedShareToken,
+  makeSelectCurrentDashboardShareLoading,
+  makeSelectSharePanel,
   makeSelectCurrentDashboardSelectOptions,
   makeSelectCurrentLinkages,
   makeSelectControlForm,

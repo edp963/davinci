@@ -18,68 +18,57 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 
 import ShareForm from './ShareForm'
-import { Icon, Input, Button, Row, Col, Radio } from 'antd'
+import { Icon, Input, Button, Row, Col, Radio, Modal } from 'antd'
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 
 const styles = require('./SharePanel.less')
 
 interface ISharePanelProps {
-  id?: number
-  type: string
+  visible: boolean
+  id: number
   itemId?: number
-  active?: string
-  shareInfo: string
-  secretInfo: string
-  shareInfoLoading: boolean
-  authorized: boolean
-  afterAuthorization: () => void
-  onLoadDashboardShareLink?: (id: number, authName: string) => void
-  onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
-  onLoadDisplayShareLink?: (id: number, authName: string) => void
+  type: string
+  title: string
+  shareToken: string
+  authorizedShareToken: string
+  loading: boolean
+  onLoadDashboardShareLink?: (id: number, authUser?: string) => void
+  onLoadWidgetShareLink?: (id: number, itemId: number, authUser?: string) => void
+  onLoadDisplayShareLink?: (id: number, authUser?: string) => void
+  onClose: () => void
 }
 
 interface ISharePanelStates {
-  active: string
-  authName: string
+  activeTab: 'regular' | 'auth'
+  authUser: string
+  authorized: boolean
 }
 
 export class SharePanel extends React.PureComponent<ISharePanelProps, ISharePanelStates> {
   constructor (props) {
     super(props)
     this.state = {
-      active: this.props.active,
-      authName: ''
+      activeTab: 'regular',
+      authUser: '',
+      authorized: false
     }
   }
 
-  public static defaultProps = {
-    active: 'normal'
-  }
-
-  public componentWillMount () {
-    if (!this.props.shareInfo) {
-      this.getShareInfo('')
+  public componentWillReceiveProps (nextProps: ISharePanelProps) {
+    const { id, visible, shareToken } = nextProps
+    if (id
+      && visible
+      && !shareToken
+      && id !== this.props.id) {
+      this.getShareToken(nextProps)
     }
   }
 
-  public componentWillReceiveProps () {
-    this.setState({
-      authName: ''
-    })
-  }
-
-  public componentDidUpdate () {
-    const { shareInfo, shareInfoLoading } = this.props
-    if (!shareInfo && !shareInfoLoading) {
-      this.getShareInfo('')
-    }
-  }
-
-  private getShareInfo = (authName) => {
+  private getShareToken = (props: ISharePanelProps, authUser?: string) => {
     const {
       id,
       type,
@@ -87,21 +76,17 @@ export class SharePanel extends React.PureComponent<ISharePanelProps, ISharePane
       onLoadDashboardShareLink,
       onLoadWidgetShareLink,
       onLoadDisplayShareLink
-    } = this.props
-
-    const name = authName.target
-      ? authName.target.value
-      : authName
+    } = props
 
     switch (type) {
       case 'dashboard':
-        onLoadDashboardShareLink(id, name)
+        onLoadDashboardShareLink(id, authUser)
         break
       case 'widget':
-        onLoadWidgetShareLink(id, itemId, name)
+        onLoadWidgetShareLink(id, itemId, authUser)
         break
       case 'display':
-        onLoadDisplayShareLink(id, name)
+        onLoadDisplayShareLink(id, authUser)
       default:
         break
     }
@@ -109,79 +94,94 @@ export class SharePanel extends React.PureComponent<ISharePanelProps, ISharePane
 
   private radioChange = (e) => {
     this.setState({
-      active: e.target.value
+      activeTab: e.target.value
     })
   }
 
   private creditShare = () => {
-    this.getShareInfo(this.state.authName)
-    this.props.afterAuthorization()
+    this.getShareToken(this.props, this.state.authUser)
+    this.setState({ authorized: true })
   }
 
-  private authNameChange = (event) => {
-    this.setState({authName: event.target.value})
+  private authUserChange = (event) => {
+    this.setState({authUser: event.target.value})
+  }
+
+  private reloadShareToken = () => {
+    this.getShareToken(this.props)
+  }
+
+  private afterModalClose = () => {
+    this.setState({
+      activeTab: 'regular',
+      authUser: '',
+      authorized: false
+    })
   }
 
   public render () {
     const {
+      visible,
       type,
-      shareInfo,
-      secretInfo,
-      shareInfoLoading,
-      authorized
+      title,
+      shareToken,
+      authorizedShareToken,
+      loading,
+      onClose
     } = this.props
 
     const {
-      active,
-      authName
+      activeTab,
+      authUser,
+      authorized
     } = this.state
 
     const segmentControl = (
       <div className={styles.panelHead}>
-        <RadioGroup defaultValue={active} onChange={this.radioChange}>
-          <RadioButton value="normal">普通分享</RadioButton>
-          <RadioButton value="secret">授权分享</RadioButton>
+        <RadioGroup defaultValue={activeTab} onChange={this.radioChange}>
+          <RadioButton value="regular">普通分享</RadioButton>
+          <RadioButton value="auth">授权分享</RadioButton>
         </RadioGroup>
       </div>
       )
 
     let content
-    let secretContent
+    let authorizedShareContent
 
-    if (shareInfo) {
+    if (shareToken) {
       content = (
         <ShareForm
           type={type}
-          shareInfo={shareInfo}
+          shareToken={shareToken}
         />
       )
     } else {
-      if (shareInfoLoading) {
+      if (loading) {
         content = (<Icon type="loading" />)
       } else {
-        content = (<Button size="small" onClick={this.getShareInfo}>点击重新加载</Button>)
+        content = (<Button size="small" onClick={this.reloadShareToken}>点击重新加载</Button>)
       }
     }
 
-    if (secretInfo && authorized) {
-      secretContent = (
+    if (authorizedShareToken && authorized) {
+      authorizedShareContent = (
         <ShareForm
           type={type}
-          shareInfo={secretInfo}
+          shareToken={authorizedShareToken}
         />
       )
     } else {
-      if (shareInfoLoading) {
-        secretContent = (<Icon type="loading" />)
+      if (loading) {
+        authorizedShareContent = (<Icon type="loading" />)
       } else {
-        secretContent = (
+        authorizedShareContent = (
           <Row gutter={8} className={styles.shareRow}>
             <Col span={24}>
               <Input
                 className={styles.shareInput}
                 placeholder="请输入要分享的用户名"
-                onChange={this.authNameChange}
-                value={authName}
+                onChange={this.authUserChange}
+                value={authUser}
                 addonAfter={
                   <span
                     style={{cursor: 'pointer'}}
@@ -198,14 +198,22 @@ export class SharePanel extends React.PureComponent<ISharePanelProps, ISharePane
     }
 
     return (
-      <div className={styles.sharePanel}>
-        {segmentControl}
-        <div className={styles.panelContent}>
-          {
-            active === 'normal' ? content : secretContent
-          }
+      <Modal
+        title={`分享-${title}`}
+        visible={visible}
+        wrapClassName="ant-modal-small"
+        footer={false}
+        onCancel={onClose}
+        afterClose={this.afterModalClose}
+        destroyOnClose
+      >
+        <div className={styles.sharePanel}>
+          {segmentControl}
+          <div className={styles.panelContent}>
+            {activeTab === 'regular' ? content : authorizedShareContent}
+          </div>
         </div>
-      </div>
+      </Modal>
     )
   }
 }

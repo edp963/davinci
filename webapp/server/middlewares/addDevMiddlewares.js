@@ -21,8 +21,21 @@ module.exports = function addDevMiddlewares (app, webpackConfig) {
   )
 
   // FIXME
-  app.use(['/api/v3'], proxy({target: 'http://localhost:8080/', changeOrigin: true}))
-  app.use(['/image'], proxy({target: 'http://localhost:8080/', changeOrigin: true}))
+  // app.use(['/api/v3'], proxy({target: 'http://localhost:8080/', changeOrigin: true}))
+  // app.use(['/image'], proxy({target: 'http://localhost:8080/', changeOrigin: true}))
+
+  // app.use(['/api/v3'], proxy({target: 'http://test.davinci.creditease.corp/', changeOrigin: true}))
+  // app.use(['/image'], proxy({target: 'http://test.davinci.creditease.corp/', changeOrigin: true}))
+
+  app.use(['/api/v3'], proxy({target: 'http://davinci3.edp.creditease.corp/', changeOrigin: true}))
+  app.use(['/image'], proxy({target: 'http://davinci3.edp.creditease.corp/', changeOrigin: true}))
+
+  // app.use(['/api/v3'], proxy({target: 'http://10.143.252.54:8080/', changeOrigin: true}))
+  // app.use(['/image'], proxy({target: 'http://10.143.252.54:8080/', changeOrigin: true}))
+
+  // app.use(['/api/v3'], proxy({target: 'http://10.143.131.33:8081/', changeOrigin: true}))
+  // app.use(['/image'], proxy({target: 'http://10.143.131.33:8081/', changeOrigin: true}))
+
   app.use(middleware)
   app.use(webpackHotMiddleware(compiler))
 

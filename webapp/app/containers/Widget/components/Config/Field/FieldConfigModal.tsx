@@ -22,7 +22,7 @@ require('codemirror/addon/display/placeholder')
 
 import { IFieldConfig } from './types'
 import { getDefaultFieldConfig, extractQueryVariableNames, getFieldAlias } from './util'
-import { IQueryVariableMap } from 'containers/Dashboard/Grid'
+import { IQueryVariableMap } from 'containers/Dashboard/types'
 import AliasExpressionTestModal from './AliasExpressionTest'
 
 const utilStyles = require('assets/less/util.less')

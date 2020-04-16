@@ -459,9 +459,9 @@ export function* getDisplayShareLink(action: DisplayActionType) {
     return
   }
 
-  const { id, authName } = action.payload
+  const { id, authUser } = action.payload
   const {
-    displaySecretLinkLoaded,
+    displayAuthorizedShareLinkLoaded,
     displayShareLinkLoaded,
     loadDisplayShareLinkFail
   } = DisplayActions
@@ -469,13 +469,13 @@ export function* getDisplayShareLink(action: DisplayActionType) {
     const asyncData = yield call(request, {
       method: 'get',
       url: `${api.display}/${id}/share`,
-      params: { username: authName }
+      params: { username: authUser || '' }
     })
-    const shareInfo = asyncData.payload
-    if (authName) {
-      yield put(displaySecretLinkLoaded(shareInfo))
+    const shareToken = asyncData.payload
+    if (authUser) {
+      yield put(displayAuthorizedShareLinkLoaded(shareToken))
     } else {
-      yield put(displayShareLinkLoaded(shareInfo))
+      yield put(displayShareLinkLoaded(shareToken))
     }
   } catch (err) {
     yield put(loadDisplayShareLinkFail())

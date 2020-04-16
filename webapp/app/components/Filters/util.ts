@@ -265,6 +265,8 @@ export function getValidVariableValue (value, valueType: ViewVariableValueTypes)
 export function deserializeDefaultValue (control: IControlBase) {
   const { type, dynamicDefaultValue, defaultValue, multiple } = control
   switch (type) {
+    case FilterTypes.DateRange:
+      return Array.isArray(defaultValue) ? defaultValue.map((val) => moment(val)) : defaultValue
     case FilterTypes.Date:
       if (dynamicDefaultValue) {
         switch (dynamicDefaultValue) {
@@ -306,6 +308,7 @@ export function deserializeDefaultValue (control: IControlBase) {
       return defaultValue
   }
 }
+
 
 export function serializeDefaultValue (
   control: IControlBase,

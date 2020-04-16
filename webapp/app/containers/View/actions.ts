@@ -26,7 +26,7 @@ import {
   IViewBase, IView, IExecuteSqlParams, IExecuteSqlResponse, IViewInfo,
   IDacChannel, IDacTenant, IDacBiz
 } from './types'
-import { IDataRequestParams } from 'containers/Dashboard/Grid'
+import { IDataRequestParams } from 'containers/Dashboard/types'
 import { RenderType } from 'containers/Widget/components/Widget'
 import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 const CancelToken = axios.CancelToken
