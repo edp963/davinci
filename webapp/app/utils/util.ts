@@ -19,7 +19,11 @@
  */
 
 import { removeToken } from './request'
-import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, DEFAULT_FONT_WEIGHT } from 'app/globalConstants'
+import {
+  DEFAULT_FONT_FAMILY,
+  DEFAULT_FONT_SIZE,
+  DEFAULT_FONT_WEIGHT
+} from 'app/globalConstants'
 import { message } from 'antd'
 
 /**
@@ -29,7 +33,9 @@ import { message } from 'antd'
  * @returns {string}
  */
 export const uuid = (len: number, radix: number = 62) => {
-  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('')
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split(
+    ''
+  )
   const uuid = []
   let i
 
@@ -51,17 +57,21 @@ export const uuid = (len: number, radix: number = 62) => {
     for (i = 0; i < 36; i++) {
       if (!uuid[i]) {
         r = Math.floor(Math.random() * 16)
-        uuid[i] = chars[(i === 19) ? ((r % 4) % 8) + 8 : r]
+        uuid[i] = chars[i === 19 ? ((r % 4) % 8) + 8 : r]
       }
     }
   }
   return uuid.join('')
 }
 
-export function safeAddition (num1, num2) {
+export function safeAddition(num1, num2) {
   const decimalDigits = Math.max(
-    `${num1}`.indexOf('.') >= 0 ? `${num1}`.substr(`${num1}`.indexOf('.') + 1).length : 0,
-    `${num2}`.indexOf('.') >= 0 ? `${num2}`.substr(`${num2}`.indexOf('.') + 1).length : 0
+    `${num1}`.indexOf('.') >= 0
+      ? `${num1}`.substr(`${num1}`.indexOf('.') + 1).length
+      : 0,
+    `${num2}`.indexOf('.') >= 0
+      ? `${num2}`.substr(`${num2}`.indexOf('.') + 1).length
+      : 0
   )
   if (decimalDigits) {
     const times = Math.pow(10, decimalDigits)
@@ -75,7 +85,7 @@ export function safeAddition (num1, num2) {
  * 通用saga异常处理
  * @param error 异常内容: Error
  */
-export function errorHandler (error) {
+export function errorHandler(error) {
   if (error.response) {
     switch (error.response.status) {
       case 403:
@@ -99,7 +109,7 @@ export function errorHandler (error) {
   }
 }
 
-export function getErrorMessage (error) {
+export function getErrorMessage(error) {
   return error.response
     ? error.response.data.header
       ? error.response.data.header.msg
@@ -107,7 +117,7 @@ export function getErrorMessage (error) {
     : error.message
 }
 
-export function getBase64 (img, callback) {
+export function getBase64(img, callback) {
   const reader = new FileReader()
   reader.addEventListener('load', () => callback(reader.result))
   reader.readAsDataURL(img)
@@ -128,28 +138,39 @@ export const getTextWidth = (
   return Math.ceil(metrics.width)
 }
 
-/**
- * View 组件
- */
-export function generateData (sourceData) {
-  const tableArr = []
-  if (sourceData.length) {
-    sourceData.forEach((i) => {
-      const children = []
-      if (i.columns && i.columns.length) {
-        i.columns.forEach((j) => {
-          children.push({
-            title: j.name,
-            key: j.name
-          })
-        })
-      }
-      tableArr.push({
-        title: i.tableName,
-        key: i.tableName,
-        children
-      })
-    })
+// ref: https://github.com/segmentio/is-url/blob/master/index.js
+const protocolAndDomainReg = /^(?:\w+:)?\/\/(\S+)$/
+const localhostDomainReg = /^localhost[\:?\d]*(?:[^\:?\d]\S*)?$/
+const nonLocalhostDomainReg = /^[^\s\.]+\.\S{2,}$/
+export function isUrl(str: string) {
+  if (typeof str !== 'string') {
+    return false
   }
-  return tableArr
+
+  const match = str.match(protocolAndDomainReg)
+  if (!match) {
+    return false
+  }
+
+  const everythingAfterProtocol = match[1]
+  if (!everythingAfterProtocol) {
+    return false
+  }
+
+  if (
+    localhostDomainReg.test(everythingAfterProtocol) ||
+    nonLocalhostDomainReg.test(everythingAfterProtocol)
+  ) {
+    return true
+  }
+
+  return false
+}
+
+const imageReg = /\.(bmp|png|jpg|jpeg|gif)$/
+export function isImagePath(pathname: string) {
+  if (typeof pathname !== 'string') {
+    return false
+  }
+  return imageReg.test(pathname)
 }

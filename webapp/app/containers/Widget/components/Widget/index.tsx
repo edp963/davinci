@@ -31,6 +31,7 @@ import { IViewModel } from 'containers/View/types'
 import { IQueryVariableMap } from 'containers/Dashboard/types'
 import { getStyleConfig } from '../util'
 import ChartTypes from '../../config/chart/ChartTypes'
+import { RichTextNode } from 'app/components/RichText'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
@@ -152,7 +153,7 @@ export interface IWidgetProps {
   onDoInteract?: (triggerData: object) => void
   getDataDrillDetail?: (position: string) => void
   onPaginationChange?: (pageNo: number, pageSize: number, order?: { column: string, direction: string }) => void
-  onChartStylesChange?: (propPath: string[], value: string) => void
+  onChartStylesChange?: (propPath: string[], value: string | RichTextNode[]) => void
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object[]
   computed?: any[]
