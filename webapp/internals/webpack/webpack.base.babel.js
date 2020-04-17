@@ -36,7 +36,6 @@ module.exports = options => ({
       },
       {
         test: /\.js$/, // Transform all .js files required somewhere with Babel
-        exclude: /node_modules(?!\/quill-image-drop-module|quill-image-resize-module)/,
         use: 'happypack/loader?id=js'
       },
       {
@@ -174,9 +173,6 @@ module.exports = options => ({
           regExp: /^\.\/\w+/,
           request: '../../locale', // resolved relatively
       });
-    }),
-    new webpack.ProvidePlugin({
-      'window.Quill': 'quill'
     }),
     new HappyPack({
       id: 'typescript',
