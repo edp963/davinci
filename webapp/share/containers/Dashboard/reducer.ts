@@ -334,9 +334,9 @@ const shareReducer = (state = initialState, action) =>
       case SET_SELECT_OPTIONS:
         if (action.payload.itemId) {
           itemInfo = draft.itemsInfo[action.payload.itemId]
-          itemInfo.controlSelectOptions[action.payload.controlKey] = action.payload.values
+          itemInfo.controlSelectOptions[action.payload.controlKey] = action.payload.options
         } else {
-          draft.dashboardSelectOptions[action.payload.controlKey] = action.payload.values
+          draft.dashboardSelectOptions[action.payload.controlKey] = action.payload.options
         }
         break
 

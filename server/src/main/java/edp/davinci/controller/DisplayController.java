@@ -666,14 +666,22 @@ public class DisplayController extends BaseController {
     @ApiOperation(value = "copy a display", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(value = "/copy/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity copyDisplay(@PathVariable Long id,
+                                      @Valid @RequestBody DisplayCopy copy,
+                                      @ApiIgnore BindingResult bindingResult,
                                       @ApiIgnore @CurrentUser User user,
                                       HttpServletRequest request) {
+
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        Display displayCopy = displayService.copyDisplay(id, user);
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        Display displayCopy = displayService.copyDisplay(id, copy, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(displayCopy));
     }
 }

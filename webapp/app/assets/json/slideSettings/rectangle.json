@@ -44,7 +44,7 @@
       "name": "backgroundImage",
       "title": "背景图片",
       "component": "upload",
-      "action": "slide/widget/{id}/bgImage",
+      "action": "slide/widget/{layerId}/bgImage",
       "accept": "image/*",
       "autoUpdate": true,
       "labelCol": 12,

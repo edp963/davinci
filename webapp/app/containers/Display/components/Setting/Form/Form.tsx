@@ -42,13 +42,13 @@ interface ISettingFormProps extends FormComponentProps {
 }
 
 const SettingForm: React.FC<ISettingFormProps> = (props, ref) => {
-  const { form, setting, slideId } = props
+  const { form, setting, slideId, layerId } = props
 
   useImperativeHandle(ref, () => form)
 
   return (
     <Form className="display-setting-form" labelAlign="left">
-      <SlideSettingContext.Provider value={{ form, slideId, size: 'small' }}>
+      <SlideSettingContext.Provider value={{ form, slideId, layerId, size: 'small' }}>
         {setting.params.map((param) => (
           <ItemGroup key={param.name} param={param} />
         ))}
@@ -58,7 +58,6 @@ const SettingForm: React.FC<ISettingFormProps> = (props, ref) => {
 }
 
 let cachedValues = {}
-let debouncedChange = null
 
 export default Form.create<ISettingFormProps>({
   onValuesChange: (props, changedValues) => {
@@ -67,12 +66,10 @@ export default Form.create<ISettingFormProps>({
     }
     cachedValues = { ...cachedValues, ...changedValues }
     const { onChange, layerId } = props
-    if (!debouncedChange) {
-      debouncedChange = debounce((layerId) => {
-        onChange({ ...cachedValues }, layerId)
-        cachedValues = {}
-      }, 1000)
-    }
+    const debouncedChange = debounce((layerId) => {
+      onChange({ ...cachedValues }, layerId)
+      cachedValues = {}
+    }, 1000)
     debouncedChange(layerId)
   }
 })(forwardRef(SettingForm))

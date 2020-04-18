@@ -81,7 +81,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 
         if (StringUtils.isEmpty(token) || !token.startsWith(Constants.TOKEN_PREFIX)) {
             if (!request.getServletPath().endsWith("/download/page")) {
-                log.info("{} : Unknown token", request.getServletPath());
+                log.debug("{} : Unknown token", request.getServletPath());
             }
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
             response.getWriter().print("The resource requires authentication, which was not supplied with the request");
@@ -90,14 +90,18 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         String username = tokenUtils.getUsername(token);
         User user = userService.getByUsername(username);
         if (null == user) {
-            log.info("{} : token user not found", request.getServletPath());
+            if (!request.getServletPath().endsWith("/download/page")) {
+                log.debug("{} : token user not found", request.getServletPath());
+            }
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
             response.getWriter().print("ERROR Permission denied");
             return false;
 
         }
         if (!tokenUtils.validateToken(token, user)) {
-            log.info("{} : token validation fails", request.getServletPath());
+            if (!request.getServletPath().endsWith("/download/page")) {
+                log.debug("{} : token validation fails", request.getServletPath());
+            }
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
             response.getWriter().print("Invalid token ");
             return false;

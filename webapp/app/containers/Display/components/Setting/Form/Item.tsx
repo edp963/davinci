@@ -52,7 +52,7 @@ interface IItemProps {
 
 const Item: React.FC<IItemProps> = (props) => {
   const { item } = props
-  const { form, size, slideId } = useContext(SlideSettingContext)
+  const { form, size, slideId, layerId } = useContext(SlideSettingContext)
   let visible = true
   const { relatedItems } = item
   if (Array.isArray(relatedItems)) {
@@ -131,10 +131,9 @@ const Item: React.FC<IItemProps> = (props) => {
       )
       break
     case 'upload':
-      const action = `${api.display}/${item.action}`.replace(
-        /({id})/,
-        slideId.toString()
-      )
+      const action = `${api.display}/${item.action}`
+        .replace(/({slideId})/, slideId ? `${slideId}` : '')
+        .replace(/({layerId})/, layerId ? `${layerId}` : '')
       const img = form.getFieldValue(item.name)
       control = (
         <Upload name={item.name} action={action}>
