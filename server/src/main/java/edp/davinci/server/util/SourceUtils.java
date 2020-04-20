@@ -168,7 +168,7 @@ public class SourceUtils {
 		return true;
     }
 
-    public static String isSupportedDatasource(String jdbcUrl) {
+    public static String isSupportedDataSource(String jdbcUrl) {
         String dataSourceName = getDataSourceName(jdbcUrl);
         if (StringUtils.isEmpty(dataSourceName)) {
             throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
@@ -242,10 +242,28 @@ public class SourceUtils {
 		jdbcDataSource.removeDatasource(jdbcSourceInfo);
     }
     
+    /**
+     * get data source name for druid stat filter
+     * 
+     * @param name
+     * @param projectId
+     * @return
+     */
 	public static String getSourceName(String name, Long projectId) {
 		return name + AT_SYMBOL + projectId;
 	}
 
+	/**
+	 * get data source uuid
+	 * 
+	 * @param sourceName
+	 * @param jdbcUrl
+	 * @param username
+	 * @param password
+	 * @param version
+	 * @param isExt
+	 * @return
+	 */
     public static String getSourceKey(String sourceName, String jdbcUrl, String username, String password, String version, boolean isExt) {
 
 		StringBuilder sb = new StringBuilder();
@@ -352,18 +370,4 @@ public class SourceUtils {
         return dicts;
     }
     
-    public String getConfigParams(String config) {
-        if (StringUtils.isEmpty(config)) {
-            return null;
-        }
-        
-        String params = null;
-        try {
-            params =(String) JSONUtils.toObject(config, Map.class).get("parameters");
-        } catch (Exception e) {
-            log.error("Get jdbc parameters from source config({}) error, e={}", config, e.getMessage());
-        }
-        return params;
-    }
-
 }

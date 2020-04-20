@@ -39,8 +39,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static edp.davinci.server.enums.DataTypeEnum.*;
-
 /**
  * Created by IntelliJ IDEA.
  *
