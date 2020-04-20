@@ -50,6 +50,5 @@ public class ThymeleafConfig {
         resolver.setCacheable(false);
 
         templateEngine.addTemplateResolver(resolver);
-
     }
 }

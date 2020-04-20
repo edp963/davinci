@@ -83,7 +83,7 @@ public class DacChannelUtils {
 
     public List getTenants(String dacName) throws NotFoundException {
         if (!dacMap.containsKey(dacName)) {
-            log.error("data-auth-center channel :{} is not found", dacName);
+            log.error("Data auth center channel:{} is not found", dacName);
             throw new NotFoundException("Channel " + dacName + " is not found");
         }
 
@@ -99,7 +99,7 @@ public class DacChannelUtils {
                 return (List) resultMap.get(PAYLOAD);
             }
         } catch (RestClientException e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
         }
 
         return null;
@@ -107,7 +107,7 @@ public class DacChannelUtils {
 
     public List getBizs(String dacName, String tenantId) throws NotFoundException {
         if (!dacMap.containsKey(dacName)) {
-            log.error("data-auth-center channel :{} is not found", dacName);
+            log.error("Data auth center channel:{} is not found", dacName);
             throw new NotFoundException("Channel " + dacName + " is not found");
         }
 
@@ -124,12 +124,11 @@ public class DacChannelUtils {
                 return (List) resultMap.get(PAYLOAD);
             }
         } catch (RestClientException e) {
-            log.error(e.getMessage());
+        	log.error(e.getMessage(), e);
         }
 
         return null;
     }
-
 
     public List<Object> getData(String dacName, String bizId, String email) {
         if (dacMap.containsKey(dacName) && !StringUtils.isEmpty(email)) {
@@ -151,7 +150,7 @@ public class DacChannelUtils {
                     return (List<Object>) resultMap.get(PAYLOAD);
                 }
             } catch (RestClientException e) {
-                log.error(e.getMessage());
+				log.error(e.getMessage(), e);
             }
         }
         return null;

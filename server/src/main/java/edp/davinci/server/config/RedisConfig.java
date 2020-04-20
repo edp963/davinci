@@ -52,7 +52,7 @@ public class RedisConfig {
             redisTemplate.afterPropertiesSet();
 
             //用于测试连接
-            log.info("InitRedisTemplate redis client count:{}", redisTemplate.getClientList().size());
+            log.info("Init redis template redis client count:{}", redisTemplate.getClientList().size());
         }
         return redisTemplate;
     }

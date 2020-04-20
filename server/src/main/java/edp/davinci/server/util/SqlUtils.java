@@ -137,12 +137,13 @@ public class SqlUtils {
 	public void execute(String sql) throws ServerException {
 		sql = filterAnnotate(sql);
 		checkSensitiveSql(sql);
-		if (isQueryLogEnable) {
-			String md5 = MD5Utils.getMD5(sql, true, 16);
-			sqlLogger.info("{} execute for sql:{}", md5, formatSql(sql));
-		}
 		try {
+			long before = System.currentTimeMillis();
 			jdbcTemplate().execute(sql);
+			if (isQueryLogEnable) {
+				String md5 = MD5Utils.getMD5(sql, true, 16);
+				sqlLogger.info("{} query for({} ms) sql:{}", md5, System.currentTimeMillis() - before, formatSql(sql));
+			}
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			throw new ServerException(e.getMessage());
@@ -227,8 +228,9 @@ public class SqlUtils {
         }
 
         if (isQueryLogEnable) {
-			String md5 = MD5Utils.getMD5(sql + pageNo + pageSize + limit, true, 16);
-			sqlLogger.info("{} query for({} ms) sql:{}", md5, System.currentTimeMillis() - before, formatSql(sql));
+			String md5 = MD5Utils.getMD5(sql, true, 16);
+			sqlLogger.info("{} query for({} ms) sql:{}, pageNo:{}, pageSize:{}, limit:{}", md5,
+					System.currentTimeMillis() - before, formatSql(sql), pageNo, pageSize, limit);
         }
 
         return paginateWithQueryColumns;
@@ -1019,7 +1021,7 @@ public class SqlUtils {
         }
 
         public SqlUtils build() throws ServerException {
-            String datasource = SourceUtils.isSupportedDatasource(jdbcUrl);
+            String datasource = SourceUtils.isSupportedDataSource(jdbcUrl);
             SourceUtils.checkDriver(datasource, jdbcUrl, dbVersion, isExt);
 
             JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo

@@ -24,7 +24,6 @@ import static edp.davinci.server.commons.Constants.JDBC_DATASOURCE_DEFAULT_VERSI
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +44,6 @@ import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
-import edp.davinci.commons.util.DateUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.core.dao.entity.Source;
@@ -824,19 +822,18 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			st.add("columns", headers);
 			String sql = st.render();
 			String md5 = MD5Utils.getMD5(sql, true, 16);
-			log.info("execute insert md5:{} sql:{}", md5, SqlUtils.formatSql(sql));
+			log.info("Execute insert start md5:{} sql:{}", md5, SqlUtils.formatSql(sql));
 			
 			List<Future> futures = new ArrayList<>();
 			// 分页批量插入
 			long startTime = System.currentTimeMillis();
-			log.info("execute insert start ---- {}, md5:{}", DateUtils.toyyyyMMddHHmmss(startTime), md5);
 			for (int pageNum = 1; pageNum < totalPage + 1; pageNum++) {
 				int localPageNum = pageNum;
 				int localPageSize = pageSize;
 				Future future = executorService.submit(() -> {
 					int starNum = (localPageNum - 1) * localPageSize;
 					int endNum = localPageNum * localPageSize > totalSize ? (totalSize) : localPageNum * localPageSize;
-					log.info("execute insert thread-{} : start:{}, end:{}, md5:{}", localPageNum, starNum, endNum, md5);
+					log.info("Execute insert thread-{} : start:{}, end:{}, md5:{}", localPageNum, starNum, endNum, md5);
 					sqlUtils.executeBatch(sql, headers, values.subList(starNum, endNum));
 				});
 				futures.add(future);
@@ -847,7 +844,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 					future.get();
 				}
 				long endTime = System.currentTimeMillis();
-				log.info("execute insert end ---- {}, md5:{}, cost:{} ms", DateUtils.toyyyyMMddHHmmss(endTime), md5, endTime - startTime);
+				log.info("Execute insert end md5:{}, cost:{} ms", md5, endTime - startTime);
 			} catch (InterruptedException | ExecutionException e) {
 				throw new ServerException(e.getMessage());
 			} finally {
