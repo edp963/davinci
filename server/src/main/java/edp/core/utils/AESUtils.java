@@ -43,6 +43,16 @@ public class AESUtils {
         }
     }
 
+
+    private static String garbleSalt(String src) {
+        if (StringUtils.isEmpty(src)) {
+            return AES_KEY;
+        } else {
+            src += AES_KEY;
+            return src.substring(0, 16);
+        }
+    }
+
     public static String encrypt(String src, String key) {
         key = garbleSalt(key);
         try {
