@@ -26,6 +26,7 @@ import edp.davinci.core.dao.entity.RelRoleView;
 import edp.davinci.core.dao.entity.Source;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.dao.entity.View;
+import edp.davinci.data.pojo.PagingParam;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.excel.SQLContext;
 import edp.davinci.server.dao.RelRoleViewExtendMapper;
@@ -114,6 +115,9 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     private static final CheckEntityEnum entity = CheckEntityEnum.VIEW;
     
     private static final ExecutorService roleParamThreadPool = Executors.newFixedThreadPool(8);
+    
+    @Value("${source.query-model:default}")
+    private String queryModel;
 
     @Override
     public boolean isExist(String name, Long id, Long projectId) {
@@ -204,14 +208,14 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(), excludeColumns, user);
 
-        String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
+        String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQueryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
         context.setExecuteSql(sqlParseUtils.getSqls(srcSql, Boolean.FALSE));
 
         List<String> querySqlList = sqlParseUtils.getSqls(srcSql, Boolean.TRUE);
         if (!CollectionUtils.isEmpty(querySqlList)) {
             buildQuerySql(querySqlList, source, executeParam);
             String config = source.getConfig();
-            executeParam.addExcludeColumn(excludeColumns, SourceUtils.getJdbcUrl(config), SourceUtils.getDbVersion(config));
+            executeParam.addExcludeColumn(excludeColumns, SourceUtils.getUrl(config), SourceUtils.getVersion(config));
             context.setQuerySql(querySqlList);
             context.setViewExecuteParam(executeParam);
         }
@@ -411,17 +415,97 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         return true;
     }
 
-
     /**
      * 执行sql
-     *
+     * 
      * @param executeSql
      * @param user
      * @return
+     * @throws NotFoundException
+     * @throws UnAuthorizedExecption
+     * @throws ServerException
      */
-    @Override
-    public PaginateWithQueryColumns executeSql(ViewExecuteSql executeSql, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public PagingWithQueryColumns executeSqlByProvider(ViewExecuteSql executeSql, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
+    	Source source = getSource(executeSql.getSourceId());
+        
+        ProjectDetail projectDetail = null;
+        try {
+            projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
+        } catch (UnAuthorizedExecption e) {
+            throw new UnAuthorizedExecption("You have not permission to execute sql");
+        }
+
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()
+                || projectPermission.getViewPermission() < UserPermissionEnum.WRITE.getPermission()) {
+            throw new UnAuthorizedExecption("You have not permission to execute sql");
+        }
+
+        //结构化Sql
+        PagingWithQueryColumns pagingWithQueryColumns = null;
+        try {
+            SqlEntity sqlEntity = sqlParseUtils.parseSql(executeSql.getSql(), executeSql.getVariables(), sqlTempDelimiter, user, true);
+            if (null == sqlEntity || StringUtils.isEmpty(sqlEntity.getSql())) {
+                return pagingWithQueryColumns;
+            }
+
+            if (isMaintainer(user, projectDetail)) {
+				sqlEntity.setAuthParams(null);
+			}
+
+			if (!CollectionUtils.isEmpty(sqlEntity.getQueryParams())) {
+				sqlEntity.getQueryParams().forEach((k, v) -> {
+					if (v instanceof List && ((List) v).size() > 0) {
+						v = ((List) v).stream().collect(Collectors.joining(COMMA)).toString();
+					}
+					sqlEntity.getQueryParams().put(k, v);
+				});
+			}
+
+			String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQueryParams(),
+					sqlEntity.getAuthParams(), sqlTempDelimiter);
+			List<String> executeSqlList = sqlParseUtils.getSqls(srcSql, false);
+			List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
+
+			if (!CollectionUtils.isEmpty(executeSqlList)) {
+				executeSqlList.forEach(sql -> {
+					SqlUtils.executeByProvider(source, user, sql);
+				});
+			}
+			
+			if (!CollectionUtils.isEmpty(querySqlList)) {
+				for (String sql : querySqlList) {
+					PagingParam paging = new PagingParam(0, 0, executeSql.getLimit());
+					pagingWithQueryColumns = sqlUtils.syncQuery4PaginateByProvider(source, user, SqlParseUtils.rebuildSqlWithFragment(sql), paging, new HashSet<String>());
+				}
+			}
+
+        } catch (Exception e) {
+        	log.error(e.getMessage(), e);
+            throw new ServerException(e.getMessage());
+        }
+
+        return pagingWithQueryColumns;
+    }
+    
+
+    /**
+     * 执行sql
+     * 
+     * @param executeSql
+     * @param user
+     * @return
+     * @throws NotFoundException
+     * @throws UnAuthorizedExecption
+     * @throws ServerException
+     */
+    public PagingWithQueryColumns executeSql(ViewExecuteSql executeSql, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+
+    	if ("provider".equals(queryModel.toLowerCase())) {
+    		return executeSqlByProvider(executeSql, user);
+    	}
+    	
         Source source = getSource(executeSql.getSourceId());
         
         ProjectDetail projectDetail = null;
@@ -438,7 +522,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         }
 
         //结构化Sql
-        PaginateWithQueryColumns paginateWithQueryColumns = null;
+        PagingWithQueryColumns paginateWithQueryColumns = null;
         try {
             SqlEntity sqlEntity = sqlParseUtils.parseSql(executeSql.getSql(), executeSql.getVariables(), sqlTempDelimiter, user, true);
             if (null == sqlUtils || null == sqlEntity || StringUtils.isEmpty(sqlEntity.getSql())) {
@@ -449,16 +533,16 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 				sqlEntity.setAuthParams(null);
 			}
 
-			if (!CollectionUtils.isEmpty(sqlEntity.getQuaryParams())) {
-				sqlEntity.getQuaryParams().forEach((k, v) -> {
+			if (!CollectionUtils.isEmpty(sqlEntity.getQueryParams())) {
+				sqlEntity.getQueryParams().forEach((k, v) -> {
 					if (v instanceof List && ((List) v).size() > 0) {
 						v = ((List) v).stream().collect(Collectors.joining(COMMA)).toString();
 					}
-					sqlEntity.getQuaryParams().put(k, v);
+					sqlEntity.getQueryParams().put(k, v);
 				});
 			}
 
-			String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(),
+			String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQueryParams(),
 					sqlEntity.getAuthParams(), sqlTempDelimiter);
 
 			SqlUtils sqlUtils = this.sqlUtils.init(source);
@@ -473,8 +557,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			
 			if (!CollectionUtils.isEmpty(querySqlList)) {
 				for (String sql : querySqlList) {
-					sql = SqlParseUtils.rebuildSqlWithFragment(sql);
-					paginateWithQueryColumns = sqlUtils.syncQuery4Paginate(sql, 0, 0, 0, executeSql.getLimit(), null);
+					paginateWithQueryColumns = sqlUtils.syncQuery4Paginate(SqlParseUtils.rebuildSqlWithFragment(sql), 0, 0, 0, executeSql.getLimit(), null);
 				}
 			}
 
@@ -499,8 +582,12 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      * @return
      */
     @Override
-    public Paginate<Map<String, Object>> getData(Long id, ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException, SQLException {
+    public Paging<Map<String, Object>> getData(Long id, ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException, SQLException {
 
+    	if ("provider".equals(queryModel.toLowerCase())) {
+    		return getDataByProvider(id, executeParam, user);
+    	}
+    	
     	if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
             return null;
         }
@@ -511,8 +598,26 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             alertUnAuthorized(entity, user, "get data for");
         }
 
-        return getResultDataList(projectService.isMaintainer(projectDetail, user), viewWithSource, executeParam, user);
+        return getPagingData(projectService.isMaintainer(projectDetail, user), viewWithSource, executeParam, user);
     }
+    
+	private Paging<Map<String, Object>> getDataByProvider(Long id, ViewExecuteParam executeParam, User user)
+			throws NotFoundException, UnAuthorizedExecption, ServerException, SQLException {
+
+		if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups())
+				&& CollectionUtils.isEmpty(executeParam.getAggregators()))) {
+			return null;
+		}
+
+		ViewWithSource viewWithSource = getViewWithSource(id);
+		ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), user, false);
+		if (!projectService.allowGetData(projectDetail, user)) {
+			alertUnAuthorized(entity, user, "get data for");
+		}
+
+		return getPagingDataByProvider(projectService.isMaintainer(projectDetail, user), viewWithSource, executeParam,
+				user);
+	}
 
     private ViewWithSource getViewWithSource(Long id) {
     	 ViewWithSource viewWithSource = viewExtendMapper.getViewWithSource(id);
@@ -523,14 +628,14 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
          return viewWithSource;
     }
 
-    public void buildQuerySql(List<String> querySqlList, Source source, ViewExecuteParam executeParam) {
+    private void buildQuerySql(List<String> querySqlList, Source source, ViewExecuteParam executeParam) {
 		if (null == executeParam) {
 			return;
 		}
 		
 		String config = source.getConfig();
-		String url = SourceUtils.getJdbcUrl(config);
-		String version = SourceUtils.getDbVersion(config);
+		String url = SourceUtils.getUrl(config);
+		String version = SourceUtils.getVersion(config);
 
 		// 构造参数， 原有的被传入的替换
 		STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
@@ -554,7 +659,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 		}
     }
 
-	public List<String> convertFilters(List<String> filterStrs, Source source) {
+	private List<String> convertFilters(List<String> filterStrs, Source source) {
 		List<String> whereClauses = new ArrayList<>();
 		List<SqlFilter> filters = new ArrayList<>();
 		try {
@@ -566,7 +671,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 				SqlFilter obj = JSONUtils.toObject(str, SqlFilter.class);
 				if (!StringUtils.isEmpty(obj.getName())) {
 					String config = source.getConfig();
-					obj.setName(ViewExecuteParam.getField(obj.getName(), SourceUtils.getJdbcUrl(config), SourceUtils.getDbVersion(config)));
+					obj.setName(ViewExecuteParam.getField(obj.getName(), SourceUtils.getUrl(config), SourceUtils.getVersion(config)));
 				}
 				filters.add(obj);
 			}
@@ -580,6 +685,106 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 		return whereClauses;
 	}
 
+	/**
+	 * 获取结果集
+	 *
+	 * @param isMaintainer
+	 * @param viewWithSource
+	 * @param executeParam
+	 * @param user
+	 * @return
+	 * @throws ServerException
+	 */
+    private PagingWithQueryColumns getPagingDataByProvider(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException {
+
+    	PagingWithQueryColumns pagingWithQueryColumns = null;
+
+        if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
+            return null;
+        }
+
+        if (null == viewWithSource.getSource()) {
+            throw new NotFoundException("Source is not found");
+        }
+
+		String cacheKey = null;
+		boolean withCache = null != executeParam && null != executeParam.getCache() && executeParam.getCache() && executeParam.getExpired() > 0L;
+
+		try {
+
+			if (StringUtils.isEmpty(viewWithSource.getSql())) {
+				return pagingWithQueryColumns;
+			}
+			
+			// 解析变量
+			List<SqlVariable> variables = SqlParseUtils.getVariables(viewWithSource.getVariable(), viewWithSource.getSql());
+			// 解析sql
+			SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter, user, isMaintainer);
+			// 列权限（只记录被限制访问的字段）
+			Set<String> excludeColumns = new HashSet<>();
+			packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(),
+					excludeColumns, user);
+
+			Source source = viewWithSource.getSource();
+			String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQueryParams(),
+					sqlEntity.getAuthParams(), sqlTempDelimiter);
+
+			List<String> executeSqlList = sqlParseUtils.getSqls(srcSql, false);
+			if (!CollectionUtils.isEmpty(executeSqlList)) {
+				executeSqlList.forEach(sql -> {
+					SqlUtils.executeByProvider(source, user, sql);
+				});
+			}
+
+			List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
+			if (!CollectionUtils.isEmpty(querySqlList)) {
+				buildQuerySql(querySqlList, source, executeParam);
+				String config = source.getConfig();
+				executeParam.addExcludeColumn(excludeColumns, SourceUtils.getUrl(config), SourceUtils.getVersion(config));
+				
+				if (withCache) {
+
+					StringBuilder slatBuilder = new StringBuilder();
+					slatBuilder.append(executeParam.getPageNo());
+					slatBuilder.append(MINUS);
+					slatBuilder.append(executeParam.getLimit());
+					slatBuilder.append(MINUS);
+					slatBuilder.append(executeParam.getPageSize());
+					excludeColumns.forEach(slatBuilder::append);
+					cacheKey = MD5Utils.getMD5(slatBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true,
+							32);
+
+					if (!executeParam.getFlush()) {
+						try {
+							Object object = redisUtils.get(cacheKey);
+							if (null != object && executeParam.getCache()) {
+								pagingWithQueryColumns = (PagingWithQueryColumns) object;
+								return pagingWithQueryColumns;
+							}
+						} catch (Exception e) {
+							log.warn(e.getMessage(), e);
+						}
+					}
+				}
+
+				for (String sql : querySqlList) {
+					// 最后执行的是数据查询SQL
+					PagingParam paging = new PagingParam(executeParam.getPageNo(), executeParam.getPageSize(), executeParam.getLimit());
+					pagingWithQueryColumns = sqlUtils.syncQuery4PaginateByProvider(source, user, SqlParseUtils.rebuildSqlWithFragment(sql), paging, excludeColumns);
+				}
+			}
+
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException(e.getMessage());
+		}
+
+		if (withCache && null != pagingWithQueryColumns && !CollectionUtils.isEmpty(pagingWithQueryColumns.getResultList())) {
+			redisUtils.set(cacheKey, pagingWithQueryColumns, executeParam.getExpired(), TimeUnit.SECONDS);
+		}
+
+		return pagingWithQueryColumns;
+    }
 
     /**
      * 获取结果集
@@ -592,9 +797,9 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      * @throws ServerException
      */
     @Override
-    public PaginateWithQueryColumns getResultDataList(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException {
+    public PagingWithQueryColumns getPagingData(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException {
 
-    	PaginateWithQueryColumns paginate = null;
+    	PagingWithQueryColumns paginate = null;
 
         if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
             return null;
@@ -621,7 +826,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			Set<String> excludeColumns = new HashSet<>();
 			packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(),
 					excludeColumns, user);
-			String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(),
+			String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQueryParams(),
 					sqlEntity.getAuthParams(), sqlTempDelimiter);
 
 			Source source = viewWithSource.getSource();
@@ -637,7 +842,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			if (!CollectionUtils.isEmpty(querySqlList)) {
 				buildQuerySql(querySqlList, source, executeParam);
 				String config = source.getConfig();
-				executeParam.addExcludeColumn(excludeColumns, SourceUtils.getJdbcUrl(config), SourceUtils.getDbVersion(config));
+				executeParam.addExcludeColumn(excludeColumns, SourceUtils.getUrl(config), SourceUtils.getVersion(config));
 				
 				if (withCache) {
 
@@ -655,7 +860,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 						try {
 							Object object = redisUtils.get(cacheKey);
 							if (null != object && executeParam.getCache()) {
-								paginate = (PaginateWithQueryColumns) object;
+								paginate = (PagingWithQueryColumns) object;
 								return paginate;
 							}
 						} catch (Exception e) {
@@ -709,7 +914,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter, user, isMaintainer);
             packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, param.getParams(), null, user);
 
-            String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
+            String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQueryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
             Source source = viewWithSource.getSource();
 
@@ -731,8 +936,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                     st.add("sql", querySqlList.get(querySqlList.size() - 1));
                     
             		String config = source.getConfig();
-            		String url = SourceUtils.getJdbcUrl(config);
-            		String version = SourceUtils.getDbVersion(config);
+            		String url = SourceUtils.getUrl(config);
+            		String version = SourceUtils.getVersion(config);
                     st.add("keywordPrefix", SqlUtils.getKeywordPrefix(url, version));
                     st.add("keywordSuffix", SqlUtils.getKeywordSuffix(url, version));
 
@@ -873,7 +1078,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         }
 
         //查询参数
-        if (!CollectionUtils.isEmpty(queryVariables) && !CollectionUtils.isEmpty(sqlEntity.getQuaryParams())) {
+        if (!CollectionUtils.isEmpty(queryVariables) && !CollectionUtils.isEmpty(sqlEntity.getQueryParams())) {
             if (!CollectionUtils.isEmpty(paramList)) {
                 Map<String, List<SqlVariable>> map = queryVariables.stream().collect(Collectors.groupingBy(SqlVariable::getName));
                 paramList.forEach(p -> {
@@ -881,20 +1086,20 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                         List<SqlVariable> list = map.get(p.getName());
                         if (!CollectionUtils.isEmpty(list)) {
                             SqlVariable v = list.get(list.size() - 1);
-                            if (null == sqlEntity.getQuaryParams()) {
-                                sqlEntity.setQuaryParams(new HashMap<>());
+                            if (null == sqlEntity.getQueryParams()) {
+                                sqlEntity.setQueryParams(new HashMap<>());
                             }
-                            sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue(), v.isUdf()));
+                            sqlEntity.getQueryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue(), v.isUdf()));
                         }
                     }
                 });
             }
 
-            sqlEntity.getQuaryParams().forEach((k, v) -> {
+            sqlEntity.getQueryParams().forEach((k, v) -> {
                 if (v instanceof List && ((List) v).size() > 0) {
                     v = ((List) v).stream().collect(Collectors.joining(COMMA)).toString();
                 }
-                sqlEntity.getQuaryParams().put(k, v);
+                sqlEntity.getQueryParams().put(k, v);
             });
         }
 

@@ -35,14 +35,15 @@ import javax.sql.DataSource;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.data.runner.LoadSupportDatabaseRunner;
 import edp.davinci.server.component.jdbc.ExtendedJdbcClassLoader;
 import edp.davinci.server.component.jdbc.JdbcDataSource;
-import edp.davinci.server.enums.DataTypeEnum;
+import edp.davinci.server.dto.source.SourceConfig;
+import edp.davinci.server.enums.DatabaseTypeEnum;
 import edp.davinci.server.exception.SourceException;
 import edp.davinci.server.model.CustomDataSource;
 import edp.davinci.server.model.Dict;
 import edp.davinci.server.model.JdbcSourceInfo;
-import edp.davinci.server.runner.LoadSupportDataSourceRunner;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -82,8 +83,8 @@ public class SourceUtils {
                 connection = dataSource.getConnection();
             }
         } catch (Exception e) {
-            log.error("Create connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
-            throw new SourceException("Create connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
+            log.error("Create connection error, jdbcUrl: {}", jdbcSourceInfo.getUrl());
+            throw new SourceException("Create connection error, jdbcUrl: " + jdbcSourceInfo.getUrl());
         }
 
         try {
@@ -101,8 +102,8 @@ public class SourceUtils {
                 dataSource = getDataSource(jdbcSourceInfo);
                 connection = dataSource.getConnection();
             } catch (SQLException e) {
-                log.error("Create connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
-                throw new SourceException("Create connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
+                log.error("Create connection error, jdbcUrl: {}", jdbcSourceInfo.getUrl());
+                throw new SourceException("Create connection error, jdbcUrl: " + jdbcSourceInfo.getUrl());
             }
         }
 
@@ -133,17 +134,17 @@ public class SourceUtils {
         }
     }
 
-    public static boolean checkDriver(String dataSourceName, String jdbcUrl, String version, boolean isExt) {
+    public static boolean checkDriver(String databaseName, String jdbcUrl, String version, boolean isExt) {
 
-    	if (StringUtils.isEmpty(dataSourceName) || !LoadSupportDataSourceRunner.getSupportDatasourceMap().containsKey(dataSourceName)) {
+    	if (StringUtils.isEmpty(databaseName) || !LoadSupportDatabaseRunner.getSupportDatabaseMap().containsKey(databaseName)) {
             throw new SourceException("Not supported data type, jdbcUrl: " + jdbcUrl);
         }
         
 		if (isExt && !StringUtils.isEmpty(version) && !JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
 			String path = System.getenv("DAVINCI_HOME") + File.separator
-					+ String.format(PATH_EXT_FORMATER, dataSourceName, version);
+					+ String.format(PATH_EXT_FORMATER, databaseName, version);
 			ExtendedJdbcClassLoader extendedJdbcClassLoader = ExtendedJdbcClassLoader.getExtJdbcClassLoader(path);
-			CustomDataSource dataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
+			CustomDataSource dataSource = CustomDatabaseUtils.getInstance(jdbcUrl, version);
 			try {
 				assert extendedJdbcClassLoader != null;
 				Class<?> aClass = extendedJdbcClassLoader.loadClass(dataSource.getDriver());
@@ -154,7 +155,7 @@ public class SourceUtils {
 				throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
 			}
 		} else {
-			if (DataTypeEnum.ELASTICSEARCH.getDesc().equals(dataSourceName) && !isExt) {
+			if (DatabaseTypeEnum.ELASTICSEARCH.getDesc().equals(databaseName) && !isExt) {
 				return true;
 			} else {
 				try {
@@ -168,40 +169,40 @@ public class SourceUtils {
 		return true;
     }
 
-    public static String isSupportedDataSource(String jdbcUrl) {
-        String dataSourceName = getDataSourceName(jdbcUrl);
-        if (StringUtils.isEmpty(dataSourceName)) {
-            throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
+    public static String isSupportedDatabase(String url) {
+        String database = getDatabase(url);
+        if (StringUtils.isEmpty(database)) {
+            throw new SourceException("Not supported database: url=" + url);
         }
-        if (!LoadSupportDataSourceRunner.getSupportDatasourceMap().containsKey(dataSourceName)) {
-            throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
+        if (!LoadSupportDatabaseRunner.getSupportDatabaseMap().containsKey(database)) {
+            throw new SourceException("Not supported database: url=" + url);
         }
 
-        String urlPrefix = String.format(JDBC_PREFIX_FORMATER, dataSourceName);
-        String checkUrl = jdbcUrl.replaceFirst(DOUBLE_SLASH, EMPTY).replaceFirst(AT_SYMBOL, EMPTY);
+        String urlPrefix = String.format(JDBC_PREFIX_FORMATER, database);
+        String checkUrl = url.replaceFirst(DOUBLE_SLASH, EMPTY).replaceFirst(AT_SYMBOL, EMPTY);
         if (urlPrefix.equals(checkUrl)) {
             throw new SourceException("Communications link failure");
         }
 
-        return dataSourceName;
+        return database;
     }
 
-    public static String getDataSourceName(String jdbcUrl) {
+    public static String getDatabase(String url) {
         String dataSourceName = null;
-        jdbcUrl = jdbcUrl.replaceAll(NEW_LINE_CHAR, EMPTY).replaceAll(SPACE, EMPTY).trim().toLowerCase();
-        Matcher matcher = PATTERN_JDBC_TYPE.matcher(jdbcUrl);
+        url = url.replaceAll(NEW_LINE_CHAR, EMPTY).replaceAll(SPACE, EMPTY).trim().toLowerCase();
+        Matcher matcher = PATTERN_JDBC_TYPE.matcher(url);
         if (matcher.find()) {
             dataSourceName = matcher.group().split(COLON)[1];
         }
         return dataSourceName;
     }
 
-    public static String getDriverClassName(String jdbcUrl, String version) {
+    public static String getDriverClassName(String url, String version) {
         
         String className = null;
         
         try {
-            className = DriverManager.getDriver(jdbcUrl.trim()).getClass().getName();
+            className = DriverManager.getDriver(url.trim()).getClass().getName();
         } catch (SQLException e) {
 
         }
@@ -211,11 +212,11 @@ public class SourceUtils {
             return className;
         }
         
-        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+        DatabaseTypeEnum dataTypeEnum = DatabaseTypeEnum.urlOf(url);
         CustomDataSource customDataSource = null;
         if (null == dataTypeEnum) {
             try {
-                customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
+                customDataSource = CustomDatabaseUtils.getInstance(url, version);
             }
             catch (Exception e) {
                 throw new SourceException(e.getMessage());
@@ -223,7 +224,7 @@ public class SourceUtils {
         }
 
         if (null == dataTypeEnum && null == customDataSource) {
-            throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
+            throw new SourceException("Not supported data type: jdbcUrl=" + url);
         }
 
         return className = null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver())
@@ -239,36 +240,36 @@ public class SourceUtils {
      * @return
      */
     public void releaseDataSource(JdbcSourceInfo jdbcSourceInfo) {
-		jdbcDataSource.removeDatasource(jdbcSourceInfo);
+		jdbcDataSource.releaseDatasource(jdbcSourceInfo);
     }
     
     /**
-     * get data source name for druid stat filter
+     * get data source unique name
      * 
      * @param name
      * @param projectId
      * @return
      */
-	public static String getSourceName(String name, Long projectId) {
-		return name + AT_SYMBOL + projectId;
+	public static String getSourceUName(Long projectId, String name) {
+		return projectId + AT_SYMBOL + name;
 	}
 
 	/**
-	 * get data source uuid
+	 * get data source unique identification
 	 * 
-	 * @param sourceName
-	 * @param jdbcUrl
+	 * @param name
+	 * @param url
 	 * @param username
 	 * @param password
 	 * @param version
 	 * @param isExt
 	 * @return
 	 */
-    public static String getSourceKey(String sourceName, String jdbcUrl, String username, String password, String version, boolean isExt) {
+    public static String getSourceUID(String name, String url, String username, String password, String version, boolean isExt) {
 
 		StringBuilder sb = new StringBuilder();
-		sb.append(sourceName).append(AT_SYMBOL);
-		sb.append(jdbcUrl.trim()).append(AT_SYMBOL);
+		sb.append(name).append(AT_SYMBOL);
+		sb.append(url.trim()).append(AT_SYMBOL);
 		sb.append(version).append(AT_SYMBOL);
 		sb.append(username).append(AT_SYMBOL);
 		sb.append(password).append(AT_SYMBOL);
@@ -276,7 +277,7 @@ public class SourceUtils {
 		return MD5Utils.getMD5(sb.toString(), true, 64);
     }
     
-    public static String getJdbcUrl(String config) {
+    public static String getUrl(String config) {
     	if (StringUtils.isEmpty(config)) {
 			return null;
 		}
@@ -318,20 +319,21 @@ public class SourceUtils {
 		return password;
     }
     
-    public static String getDbVersion(String config) {
-        String versoin = null;
-        if (StringUtils.isEmpty(config)) {
+    public static String getVersion(String config) {
+    	if (StringUtils.isEmpty(config)) {
             return null;
         }
+    	
+    	String version = null;
         try {
-            versoin = (String) JSONUtils.toObject(config, Map.class).get("versoin");
-            if (JDBC_DATASOURCE_DEFAULT_VERSION.equals(versoin)) {
+            version = (String) JSONUtils.toObject(config, Map.class).get("versoin");
+            if (JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
                 return null;
             }
         } catch (Exception e) {
         	log.error("Get jdbc versoin from source config({}) error, e={}", config, e.getMessage());
         }
-        return versoin;
+        return version;
     }
     
     public static boolean isExt(String config) {
@@ -341,7 +343,7 @@ public class SourceUtils {
         
         boolean ext = false;
         
-        if (getDbVersion(config) == null) {
+        if (getVersion(config) == null) {
             ext = false;
         }
         
@@ -370,4 +372,73 @@ public class SourceUtils {
         return dicts;
     }
     
+    public static JdbcSourceInfo getJdbcSourceInfo(SourceConfig config) {
+		String url = config.getUrl();
+    	String database = SourceUtils.isSupportedDatabase(url);
+    	String username = config.getUsername();
+    	String password = config.getPassword();
+		String version = config.getVersion();
+
+		boolean isExt = false;
+        if (StringUtils.isEmpty(version)) {
+        	isExt = false;
+        }else {
+        	isExt = (boolean) config.isExt();
+        }
+        
+        List<Dict> properties = config.getProperties();
+    	
+        JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo
+                .builder()
+                .url(url)
+                .username(username)
+                .password(password)
+                .database(database)
+                .version(version)
+                .properties(properties)
+                .ext(isExt)
+                .name(null)
+                .build();
+
+        return jdbcSourceInfo;
+	}
+    
+    public static JdbcSourceInfo getJdbcSourceInfo(Long projectId, String name, String config) {
+
+    	if (StringUtils.isEmpty(config)) {
+            return null;
+        }
+    	
+    	Map<String, Object> configMap = JSONUtils.toObject(config, Map.class);
+    	
+    	String url = (String) configMap.get("url");
+    	String database = isSupportedDatabase(url);
+    	String username = (String) configMap.get("username");
+    	String password = (String) configMap.get("password");
+		String version = (String) configMap.get("versoin");
+
+		boolean isExt = false;
+        if (StringUtils.isEmpty(version)) {
+        	isExt = false;
+        }else {
+        	isExt = (boolean) configMap.get("ext");
+        }
+        
+        List<Dict> properties = null;
+    	if (configMap.containsKey("properties")) {
+    		properties = JSONUtils.toObjectArray(JSONUtils.toString(configMap.get("properties")), Dict.class);
+    	}
+    	
+    	return JdbcSourceInfo
+                .builder()
+                .url(url)
+                .username(username)
+                .password(password)
+                .database(database)
+                .version(version)
+                .properties(properties)
+                .ext(isExt)
+                .name(getSourceUName(projectId, name))
+                .build();
+    }
 }

@@ -53,6 +53,13 @@ public class StringUtils {
 		return value == null || value.length() == 0;
 	}
 	
+	public static boolean isNull(CharSequence value) {
+		if (isEmpty(value) || "null".equals(value.toString().trim().toLowerCase())) {
+			return true;
+		}
+		return false;
+	}
+	
 	public static boolean isNumber(String str) {
         if (str.length() == 0) {
             return false;

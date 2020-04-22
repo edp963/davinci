@@ -37,12 +37,12 @@ public class SourceConfig {
     @NotBlank(message = "Connection url cannot be empty")
     private String url;
 
-    private String parameters;
-
     private String version;
 
     private List<Dict> properties;
 
     private boolean isExt;
+    
+    private String type;
 
 }

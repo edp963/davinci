@@ -24,8 +24,8 @@ import edp.davinci.server.dto.view.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.Paginate;
-import edp.davinci.server.model.PaginateWithQueryColumns;
+import edp.davinci.server.model.Paging;
+import edp.davinci.server.model.PagingWithQueryColumns;
 import edp.davinci.core.dao.entity.User;
 
 import java.sql.SQLException;
@@ -42,11 +42,11 @@ public interface ViewService extends CheckEntityService {
 
     boolean deleteView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    PaginateWithQueryColumns executeSql(ViewExecuteSql executeSql, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    PagingWithQueryColumns executeSql(ViewExecuteSql executeSql, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    Paginate<Map<String, Object>> getData(Long id, ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException, SQLException;
+    Paging<Map<String, Object>> getData(Long id, ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException, SQLException;
 
-    PaginateWithQueryColumns getResultDataList(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException;
+    PagingWithQueryColumns getPagingData(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException;
 
     List<Map<String, Object>> getDistinctValue(Long id, DistinctParam param, User user) throws NotFoundException, ServerException, UnAuthorizedExecption;
 

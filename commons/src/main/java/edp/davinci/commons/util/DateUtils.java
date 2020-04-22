@@ -19,8 +19,6 @@
 
 package edp.davinci.commons.util;
 
-import edp.davinci.commons.util.StringUtils;
-
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

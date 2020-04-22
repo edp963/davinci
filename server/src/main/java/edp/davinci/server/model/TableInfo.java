@@ -39,5 +39,6 @@ public class TableInfo {
     }
 
     public TableInfo() {
+
     }
 }

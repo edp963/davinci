@@ -32,7 +32,7 @@ import edp.davinci.server.dto.user.UserLoginResult;
 import edp.davinci.server.dto.view.DistinctParam;
 import edp.davinci.server.dto.view.ViewExecuteParam;
 import edp.davinci.server.enums.HttpCodeEnum;
-import edp.davinci.server.model.Paginate;
+import edp.davinci.server.model.Paging;
 import edp.davinci.server.model.TokenEntity;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.ShareService;
@@ -202,7 +202,7 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        Paginate<Map<String, Object>> shareData = shareService.getShareData(token, executeParam, user);
+        Paging<Map<String, Object>> shareData = shareService.getShareData(token, executeParam, user);
         if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareData));
         } else {

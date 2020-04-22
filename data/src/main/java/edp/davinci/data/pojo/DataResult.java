@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,23 +17,16 @@
  *
  */
 
-package edp.davinci.server.dto.source;
+package edp.davinci.data.pojo;
 
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.enums.DataTypeEnum;
-import lombok.Getter;
-
+import java.util.ArrayList;
 import java.util.List;
 
-@Getter
-public class DatasourceType {
-    private String name;
-    private String prefix;
-    private List<String> versions;
+import lombok.Data;
 
-    public DatasourceType(String name, List<String> versions) {
-        this.name = name;
-        this.prefix = name.equalsIgnoreCase(DataTypeEnum.ORACLE.getFeature()) ? Constants.ORACLE_JDBC_PREFIX : String.format(Constants.JDBC_PREFIX_FORMATER, name);
-        this.versions = versions;
-    }
+@Data
+public class DataResult {
+	private List<DataColumn> header = new ArrayList<DataColumn>();
+	private List<List<Object>> data = new ArrayList<List<Object>>();
+	private int count = 0;
 }

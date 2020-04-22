@@ -324,7 +324,7 @@ public class ShareServiceImpl implements ShareService {
      * @return
      */
     @Override
-    public Paginate<Map<String, Object>> getShareData(String token, ViewExecuteParam executeParam, User user)
+    public Paging<Map<String, Object>> getShareData(String token, ViewExecuteParam executeParam, User user)
             throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException {
         ShareInfo shareInfo = getShareInfo(token, user);
         verifyShareUser(user, shareInfo);
@@ -334,7 +334,7 @@ public class ShareServiceImpl implements ShareService {
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareInfo.getShareUser(), false);
         boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
 
-        Paginate paginate = viewService.getResultDataList(maintainer, viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
+        Paging paginate = viewService.getPagingData(maintainer, viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
         return paginate;
     }
 
@@ -365,10 +365,10 @@ public class ShareServiceImpl implements ShareService {
         executeParam.setPageSize(-1);
         executeParam.setPageNo(-1);
 
-        PaginateWithQueryColumns paginate = null;
+        PagingWithQueryColumns paginate = null;
         try {
             boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
-            paginate = viewService.getResultDataList(maintainer, viewWithSource, executeParam, shareInfo.getShareUser());
+            paginate = viewService.getPagingData(maintainer, viewWithSource, executeParam, shareInfo.getShareUser());
         } catch (SQLException e) {
             e.printStackTrace();
             throw new ServerException(HttpCodeEnum.SERVER_ERROR.getMessage());

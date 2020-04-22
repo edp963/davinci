@@ -19,21 +19,6 @@
 
 package edp.davinci.server.component.jdbc;
 
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_CONNECTIONPROPERTIES;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_INITIALSIZE;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_MAXACTIVE;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_MAXWAIT;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_MINEVICTABLEIDLETIMEMILLIS;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_MINIDLE;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_PASSWORD;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TESTONBORROW;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TESTONRETURN;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TESTWHILEIDLE;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_TIMEBETWEENEVICTIONRUNSMILLIS;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_URL;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_USERNAME;
-import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_FILTERS;
-
 import java.io.File;
 import java.util.Map;
 import java.util.Properties;
@@ -42,19 +27,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.druid.pool.DruidDataSource;
-import com.alibaba.druid.pool.ElasticSearchDruidDataSourceFactory;
+
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.enums.DataTypeEnum;
+import edp.davinci.server.enums.DatabaseTypeEnum;
 import edp.davinci.server.exception.SourceException;
 import edp.davinci.server.model.JdbcSourceInfo;
-import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.server.util.CustomDataSourceUtils;
+import edp.davinci.server.util.CustomDatabaseUtils;
 import edp.davinci.server.util.SourceUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -63,78 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class JdbcDataSource {
 	
-	@Component
-	private class ESDataSource extends JdbcDataSource {
-		
-		public DruidDataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
-	        
-			String name = jdbcSourceInfo.getSourceName();
-			String jdbcUrl = jdbcSourceInfo.getJdbcUrl();
-	        String username = jdbcSourceInfo.getUsername();
-	        String password = jdbcSourceInfo.getPassword();
-	        
-	        String key = getDataSourceKey(jdbcSourceInfo);
-
-	        DruidDataSource druidDataSource = dataSourceMap.get(key);
-	        if (druidDataSource != null && !druidDataSource.isClosed()) {
-	                return druidDataSource;
-	        }
-	        
-	        Lock lock = getDataSourceLock(key);
-	        
-	        try {
-	            if (!lock.tryLock(5L, TimeUnit.SECONDS)) {
-	                throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
-	            }
-	        }
-	        catch (InterruptedException e) {
-	            throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
-	        }
-	        
-            Properties properties = new Properties();
-            properties.setProperty(PROP_URL, jdbcUrl.trim());
-            if (!StringUtils.isEmpty(username)) {
-                properties.setProperty(PROP_USERNAME, username);
-            }
-            
-            if (!StringUtils.isEmpty(password)) {
-                properties.setProperty(PROP_PASSWORD, password);
-            }
-            
-            properties.setProperty(PROP_MAXACTIVE, String.valueOf(maxActive));
-            properties.setProperty(PROP_INITIALSIZE, String.valueOf(initialSize));
-            properties.setProperty(PROP_MINIDLE, String.valueOf(minIdle));
-            properties.setProperty(PROP_MAXWAIT, String.valueOf(maxWait));
-            properties.setProperty(PROP_TIMEBETWEENEVICTIONRUNSMILLIS, String.valueOf(timeBetweenEvictionRunsMillis));
-            properties.setProperty(PROP_MINEVICTABLEIDLETIMEMILLIS, String.valueOf(minEvictableIdleTimeMillis));
-            properties.setProperty(PROP_TESTWHILEIDLE, String.valueOf(false));
-            properties.setProperty(PROP_TESTONBORROW, String.valueOf(testOnBorrow));
-            properties.setProperty(PROP_TESTONRETURN, String.valueOf(testOnReturn));
-            properties.setProperty(PROP_FILTERS, String.valueOf(filters));
-            properties.put(PROP_CONNECTIONPROPERTIES, "client.transport.ignore_cluster_name=true");
-
-            if (!CollectionUtils.isEmpty(jdbcSourceInfo.getProperties())) {
-                jdbcSourceInfo.getProperties().forEach(dict -> properties.setProperty(dict.getKey(), dict.getValue()));
-            }
-
-            try {
-            	druidDataSource = (DruidDataSource)ElasticSearchDruidDataSourceFactory.createDataSource(properties);
-            	druidDataSource.setName(name);
-            	dataSourceMap.put(key, druidDataSource);
-            } catch (Exception e) {
-                log.error("Exception during pool initialization", e);
-                throw new SourceException(e.getMessage());
-            }finally {
-                lock.unlock();
-            }
-
-            return druidDataSource;
-	    }
-	}
-	
-	@Autowired
-	private ESDataSource esDataSource;
-
     @Value("${spring.datasource.type}")
     protected String type;
 
@@ -205,17 +117,11 @@ public class JdbcDataSource {
         }
     }
     
-    /**
-     * only for test
-     * @param jdbcSourceInfo
-     * @return
-     */
-    public boolean isDataSourceExist(JdbcSourceInfo jdbcSourceInfo) {
-        
+    public boolean isExist(JdbcSourceInfo jdbcSourceInfo) {
         return dataSourceMap.containsKey(getDataSourceKey(jdbcSourceInfo));
     }
     
-    public void removeDatasource(JdbcSourceInfo jdbcSourceInfo) {
+    public void releaseDatasource(JdbcSourceInfo jdbcSourceInfo) {
         
         String key = getDataSourceKey(jdbcSourceInfo);
 
@@ -240,15 +146,11 @@ public class JdbcDataSource {
     public DruidDataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
 
     	boolean ext = jdbcSourceInfo.isExt();
-    	if (jdbcSourceInfo.getJdbcUrl().toLowerCase().contains(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase()) && !ext) {
-            return esDataSource.getDataSource(jdbcSourceInfo);
-        }
-        
-    	String sourceName = jdbcSourceInfo.getSourceName();
-        String jdbcUrl = jdbcSourceInfo.getJdbcUrl();
+    	String name = jdbcSourceInfo.getName();
+        String url = jdbcSourceInfo.getUrl();
         String username = jdbcSourceInfo.getUsername();
         String password = jdbcSourceInfo.getPassword();
-        String dbVersion = jdbcSourceInfo.getDbVersion();
+        String version = jdbcSourceInfo.getVersion();
         
         String key = getDataSourceKey(jdbcSourceInfo);
 
@@ -261,40 +163,40 @@ public class JdbcDataSource {
         
         try {
             if (!lock.tryLock(5L, TimeUnit.SECONDS)) {
-                throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
+                throw new SourceException("Unable to get driver instance for jdbcUrl: " + url);
             }
         }
         catch (InterruptedException e) {
-            throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
+            throw new SourceException("Unable to get driver instance for jdbcUrl: " + url);
         }
         
         druidDataSource = new DruidDataSource();
         
         try {
 
-            if (StringUtils.isEmpty(dbVersion) ||
-                    !ext || Constants.JDBC_DATASOURCE_DEFAULT_VERSION.equals(dbVersion)) {
+            if (StringUtils.isEmpty(version) ||
+                    !ext || Constants.JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
 
-                String className = SourceUtils.getDriverClassName(jdbcUrl, null);
+                String className = SourceUtils.getDriverClassName(url, null);
                 try {
                     Class.forName(className);
                 } catch (ClassNotFoundException e) {
-                    throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
+                    throw new SourceException("Unable to get driver instance for jdbcUrl: " + url);
                 }
 
                 druidDataSource.setDriverClassName(className);
 
             } else {
-            	druidDataSource.setDriverClassName(CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion).getDriver());
-            	String path = System.getenv("DAVINCI_HOME") + File.separator  + String.format(Constants.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), dbVersion);
+            	druidDataSource.setDriverClassName(CustomDatabaseUtils.getInstance(url, version).getDriver());
+            	String path = System.getenv("DAVINCI_HOME") + File.separator  + String.format(Constants.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), version);
             	druidDataSource.setDriverClassLoader(ExtendedJdbcClassLoader.getExtJdbcClassLoader(path));
             }
 
-            druidDataSource.setName(sourceName);
-            druidDataSource.setUrl(jdbcUrl);
+            druidDataSource.setName(name);
+            druidDataSource.setUrl(url);
             druidDataSource.setUsername(username);
 
-            if (!jdbcUrl.toLowerCase().contains(DataTypeEnum.PRESTO.getFeature())) {
+            if (!url.toLowerCase().contains(DatabaseTypeEnum.PRESTO.getFeature())) {
                 druidDataSource.setPassword(password);
             }
 
@@ -334,12 +236,12 @@ public class JdbcDataSource {
     }
     
     private String getDataSourceKey (JdbcSourceInfo jdbcSourceInfo) {
-        return SourceUtils.getSourceKey(
-        		jdbcSourceInfo.getSourceName(),
-        		jdbcSourceInfo.getJdbcUrl(),
+        return SourceUtils.getSourceUID(
+        		jdbcSourceInfo.getName(),
+        		jdbcSourceInfo.getUrl(),
                 jdbcSourceInfo.getUsername(),
                 jdbcSourceInfo.getPassword(),
-                jdbcSourceInfo.getDbVersion(),
+                jdbcSourceInfo.getVersion(),
                 jdbcSourceInfo.isExt());
     }
     

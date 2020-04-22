@@ -22,6 +22,7 @@ package edp.davinci.server;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
@@ -31,13 +32,13 @@ import org.springframework.scheduling.annotation.EnableScheduling;
                 org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
         })
 @EnableScheduling
+@ComponentScan(value="edp.davinci.*")
 public class DavinciServerApplication {
 
-    public static void main(String[] args) {
+	public static void main(String[] args) {
 		System.out.println("DAVINCI_HOME:" + System.getenv("DAVINCI_HOME"));
 		System.setProperty("mail.mime.splitlongparameters", "false");
 		SpringApplication.run(DavinciServerApplication.class, args);
-    }
-
+	}
 }
 

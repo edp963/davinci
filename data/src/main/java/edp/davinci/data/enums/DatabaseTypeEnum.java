@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@
  *
  */
 
-package edp.davinci.server.enums;
+package edp.davinci.data.enums;
 
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.exception.SourceException;
+import edp.davinci.data.commons.Constants;
 
-public enum DataTypeEnum {
+public enum DatabaseTypeEnum {
 
     MYSQL("mysql", "mysql", "com.mysql.jdbc.Driver", "`", "`", "'", "'"),
 
@@ -54,7 +53,6 @@ public enum DataTypeEnum {
 
     IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver", "", "", "'", "'");
 
-
     private String feature;
     private String desc;
     private String driver;
@@ -63,7 +61,7 @@ public enum DataTypeEnum {
     private String aliasPrefix;
     private String aliasSuffix;
 
-    DataTypeEnum(String feature, String desc, String driver, String keywordPrefix, String keywordSuffix, String aliasPrefix, String aliasSuffix) {
+    DatabaseTypeEnum(String feature, String desc, String driver, String keywordPrefix, String keywordSuffix, String aliasPrefix, String aliasSuffix) {
         this.feature = feature;
         this.desc = desc;
         this.driver = driver;
@@ -73,11 +71,20 @@ public enum DataTypeEnum {
         this.aliasSuffix = aliasSuffix;
     }
 
-    public static DataTypeEnum urlOf(String jdbcUrl) throws SourceException {
-        String url = jdbcUrl.toLowerCase().trim();
-        for (DataTypeEnum dataTypeEnum : values()) {
-            if (url.startsWith(String.format(Constants.JDBC_PREFIX_FORMATER, dataTypeEnum.feature))) {
+    public static DatabaseTypeEnum urlOf(String url) {
+        url = url.toLowerCase().trim();
+        for (DatabaseTypeEnum dataTypeEnum : values()) {
+            if (url.startsWith(String.format(Constants.JDBC_URL_PREFIX_FORMATER, dataTypeEnum.feature))) {
                 return dataTypeEnum;
+            }
+        }
+        return null;
+    }
+    
+    public static DatabaseTypeEnum featureOf(String feature) {
+        for (DatabaseTypeEnum databaseTypeEnum : values()) {
+            if (databaseTypeEnum.getFeature().equals(feature)) {
+            	return databaseTypeEnum;
             }
         }
         return null;

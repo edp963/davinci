@@ -17,7 +17,6 @@
 	<properties>
 		<skipTests>true</skipTests>
 		<lucene.version>6.4.2</lucene.version>
-		<elasticsearch.version>5.1.2</elasticsearch.version>
 	</properties>
 
 	<repositories>
@@ -34,19 +33,25 @@
 	</repositories>
 
 	<dependencies>
-		
+
 		<dependency>
 			<groupId>edp.davinci</groupId>
 			<artifactId>davinci-commons</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>edp.davinci</groupId>
 			<artifactId>davinci-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-	
+
+		<dependency>
+			<groupId>edp.davinci</groupId>
+			<artifactId>davinci-data</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
@@ -75,9 +80,9 @@
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
- 			<artifactId>spring-boot-starter-security</artifactId>
+			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-oauth2-client</artifactId>
@@ -164,7 +169,6 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>5.1.44</version>
 		</dependency>
 
 		<dependency>
@@ -226,22 +230,11 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
-			<version>4.5.7</version>
-		</dependency>
-
-		<!-- elasticsearch -->
-		<dependency>
-			<groupId>org.nlpcn</groupId>
-			<artifactId>elasticsearch-sql</artifactId>
-			<version>5.1.2.0</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/davinci-elasticsearch-sql-5.1.2.jar</systemPath>
 		</dependency>
 
 		<dependency>
 			<groupId>org.elasticsearch.client</groupId>
 			<artifactId>transport</artifactId>
-			<version>${elasticsearch.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>commons-logging</artifactId>
@@ -257,7 +250,6 @@
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
-			<version>${elasticsearch.version}</version>
 		</dependency>
 
 		<dependency>
@@ -270,7 +262,6 @@
 		<dependency>
 			<groupId>org.apache.kafka</groupId>
 			<artifactId>kafka-clients</artifactId>
-			<version>2.3.0</version>
 		</dependency>
 
 		<dependency>
@@ -294,7 +285,6 @@
 		<dependency>
 			<groupId>javax.xml.bind</groupId>
 			<artifactId>jaxb-api</artifactId>
-			<version>2.3.0</version>
 		</dependency>
 
 		<dependency>

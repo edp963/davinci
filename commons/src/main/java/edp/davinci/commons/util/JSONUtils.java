@@ -113,7 +113,7 @@ public class JSONUtils {
 
         try {
 			return mapper.readValue(jsonString, c);
-		} catch (JsonProcessingException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
         
@@ -131,7 +131,7 @@ public class JSONUtils {
 
     	try {
 			return mapper.readValue(jsonString, mapper.getTypeFactory().constructParametricType(ArrayList.class, c));
-		} catch (JsonProcessingException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
     	
