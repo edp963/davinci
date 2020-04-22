@@ -19,8 +19,6 @@
 
 package edp.davinci.commons.util;
 
-import edp.davinci.commons.util.StringUtils;
-
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 

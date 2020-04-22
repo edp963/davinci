@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,38 +19,24 @@
 
 package edp.davinci.server.runner;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import edp.davinci.server.util.CustomDataSourceUtils;
+import edp.davinci.server.util.DacChannelUtils;
 
 @Order(1)
 @Component
-@Slf4j
-public class CustomDataSourceRunner implements ApplicationRunner {
-
-    @Value("${custom-datasource-driver-path}")
-    private String dataSourceYamlPath;
+public class DacRunner implements ApplicationRunner {
 
     @Autowired
-    private ApplicationContext applicationContext;
+    private DacChannelUtils dacChannelUtils;
 
     @Override
     public void run(ApplicationArguments args) {
-        try {
-            CustomDataSourceUtils.loadAllFromYaml(dataSourceYamlPath);
-        } catch (Exception e) {
-            log.error("{}", e.getMessage());
-            SpringApplication.exit(applicationContext);
-            log.info("Server shutdown");
-        }
-        log.info("Load custom datasource finish");
+        dacChannelUtils.loadDacMap();
     }
+
 }

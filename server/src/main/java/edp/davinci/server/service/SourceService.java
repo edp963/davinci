@@ -26,7 +26,8 @@ import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.DBTables;
 import edp.davinci.server.model.TableInfo;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.data.pojo.DatabaseType;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,7 +43,7 @@ public interface SourceService extends CheckEntityService {
 
     boolean deleteSrouce(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    boolean testSource(SourceConfig sourceConfig) throws ServerException;
+    boolean testSource(SourceConfig sourceConfig, User user) throws ServerException;
 
     void validCsvmeta(Long sourceId, UploadMeta uploadMeta, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
@@ -56,7 +57,7 @@ public interface SourceService extends CheckEntityService {
 
     Source getSourceDetail(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    List<DatasourceType> getSupportDatasources();
+    List<DatabaseType> getSupportDatabases();
 
     boolean reconnect(Long id, DbBaseInfo dbBaseInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

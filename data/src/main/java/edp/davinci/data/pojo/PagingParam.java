@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,19 @@
  *
  */
 
-package edp.davinci.server.model;
+package edp.davinci.data.pojo;
 
 import lombok.Data;
 
-import java.util.List;
-import java.util.Map;
-
 @Data
-public class PaginateWithQueryColumns extends Paginate<Map<String, Object>> {
-    List<QueryColumn> columns;
+public class PagingParam {
+	private int pageNo = 0;
+	private int pageSize = 0;
+	private int maxRows = 0;
+	
+	public PagingParam(int pageNo, int pageSize, int maxRows) {
+		this.pageNo = pageNo;
+		this.pageSize = pageSize;
+		this.maxRows = maxRows;
+	}
 }

@@ -17,26 +17,25 @@
  *
  */
 
-package edp.davinci.controller;
+package edp.davinci.server.controller;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.core.annotation.AuthIgnore;
-import edp.core.annotation.AuthShare;
-import edp.core.annotation.CurrentUser;
-import edp.core.enums.HttpCodeEnum;
-import edp.core.model.Paginate;
-import edp.davinci.common.controller.BaseController;
-import edp.davinci.core.common.Constants;
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.dto.shareDto.ShareDashboard;
-import edp.davinci.dto.shareDto.ShareDisplay;
-import edp.davinci.dto.shareDto.ShareWidget;
-import edp.davinci.dto.userDto.UserLogin;
-import edp.davinci.dto.userDto.UserLoginResult;
-import edp.davinci.dto.viewDto.DistinctParam;
-import edp.davinci.dto.viewDto.ViewExecuteParam;
-import edp.davinci.model.User;
-import edp.davinci.service.ShareService;
+import edp.davinci.server.annotation.AuthIgnore;
+import edp.davinci.server.annotation.AuthShare;
+import edp.davinci.server.annotation.CurrentUser;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.dto.share.ShareDashboard;
+import edp.davinci.server.dto.share.ShareDisplay;
+import edp.davinci.server.dto.share.ShareWidget;
+import edp.davinci.server.dto.user.UserLogin;
+import edp.davinci.server.dto.user.UserLoginResult;
+import edp.davinci.server.dto.view.DistinctParam;
+import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.enums.HttpCodeEnum;
+import edp.davinci.server.model.Paging;
+import edp.davinci.server.model.TokenEntity;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.service.ShareService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -93,7 +92,8 @@ public class ShareController extends BaseController {
         }
 
         User user = shareService.shareLogin(token, userLogin);
-        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(user)).payload(new UserLoginResult(user)));
+        TokenEntity tokenDetail = new TokenEntity(user.getUsername(), user.getPassword());
+        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(tokenDetail)).payload(new UserLoginResult(user)));
     }
 
     /**
@@ -202,7 +202,7 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        Paginate<Map<String, Object>> shareData = shareService.getShareData(token, executeParam, user);
+        Paging<Map<String, Object>> shareData = shareService.getShareData(token, executeParam, user);
         if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareData));
         } else {

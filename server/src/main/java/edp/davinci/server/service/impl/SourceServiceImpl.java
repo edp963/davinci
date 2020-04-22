@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -53,7 +54,6 @@ import edp.davinci.server.dao.SourceExtendMapper;
 import edp.davinci.server.dao.ViewExtendMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
-import edp.davinci.server.dto.source.DatasourceType;
 import edp.davinci.server.dto.source.DbBaseInfo;
 import edp.davinci.server.dto.source.SourceConfig;
 import edp.davinci.server.dto.source.SourceCreate;
@@ -61,7 +61,7 @@ import edp.davinci.server.dto.source.SourceDataUpload;
 import edp.davinci.server.dto.source.SourceInfo;
 import edp.davinci.server.dto.source.UploadMeta;
 import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.DataTypeEnum;
+import edp.davinci.server.enums.DatabaseTypeEnum;
 import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.enums.SourceTypeEnum;
@@ -79,7 +79,9 @@ import edp.davinci.server.model.RedisMessageEntity;
 import edp.davinci.server.model.TableInfo;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.dao.entity.View;
-import edp.davinci.server.runner.LoadSupportDataSourceRunner;
+import edp.davinci.data.pojo.DatabaseType;
+import edp.davinci.data.provider.DataProviderFactory;
+import edp.davinci.data.runner.LoadSupportDatabaseRunner;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.SourceService;
 import edp.davinci.server.util.BaseLock;
@@ -115,6 +117,9 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 	@Autowired
 	private RedisUtils redisUtils;
+	
+    @Value("${source.query-model:default}")
+    private String queryModel;
 	
 	private static final CheckEntityEnum entity = CheckEntityEnum.SOURCE;
 
@@ -215,9 +220,14 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 			SourceConfig config = sourceCreate.getConfig();
 			
-			// 测试连接
-			if (!testConnection(config)) {
-				throw new ServerException("Test source connection fail");
+			if (queryModel.equals("provider")) {
+				if (!testConnectionByProvider(config, user)) {
+					throw new ServerException("Test source connection fail");
+				}
+			} else {
+				if (!testConnection(config)) {
+					throw new ServerException("Test source connection fail");
+				}
 			}
 			
 			Source source = new Source();
@@ -252,6 +262,12 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		}
 
 		return source;
+	}
+	
+	private boolean testConnectionByProvider(SourceConfig config, User user) {
+		Source source = new Source();
+		source.setConfig(JSONUtils.toString(config));
+		return DataProviderFactory.getProvider(config.getType()).test(source, user);
 	}
 
 	private boolean testConnection(SourceConfig config) {
@@ -301,15 +317,15 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			String sourceCopyConfig = sourceCopy.getConfig();
 			
 			// 释放失效数据源
-			String copyKey = SourceUtils.getSourceKey(
+			String copyKey = SourceUtils.getSourceUID(
 					source.getName(),
-					SourceUtils.getJdbcUrl(sourceCopyConfig), 
+					SourceUtils.getUrl(sourceCopyConfig), 
 					SourceUtils.getUsername(sourceCopyConfig),
 					SourceUtils.getPassword(sourceCopyConfig), 
-					SourceUtils.getDbVersion(sourceCopyConfig), 
+					SourceUtils.getVersion(sourceCopyConfig), 
 					SourceUtils.isExt(sourceCopyConfig));
 			
-			String newKey = SourceUtils.getSourceKey(
+			String newKey = SourceUtils.getSourceUID(
 					sourceInfo.getName(),
 					config.getUrl(), 
 					config.getUsername(), 
@@ -384,7 +400,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	 * @return
 	 */
 	@Override
-	public boolean testSource(SourceConfig config) throws ServerException {
+	public boolean testSource(SourceConfig config, User user) throws ServerException {
 
 		boolean testConnection = false;
 		
@@ -400,7 +416,11 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 				config.setExt(false);
 			}
 
-            testConnection = testConnection(config);
+			if (queryModel.equals("provider")) {
+				testConnection = testConnectionByProvider(config, user);
+			}else {
+				testConnection = testConnection(config);
+			}
 
 		} catch (SourceException e) {
 			log.error(e.getMessage(), e);
@@ -485,9 +505,9 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		}
 
 		String config = source.getConfig();
-		String url = SourceUtils.getJdbcUrl(config);
-		DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(url);
-		if (dataTypeEnum != DataTypeEnum.MYSQL) {
+		String url = SourceUtils.getUrl(config);
+		DatabaseTypeEnum dataTypeEnum = DatabaseTypeEnum.urlOf(url);
+		if (dataTypeEnum != DatabaseTypeEnum.MYSQL) {
 			log.error("Unsupported data source, url:{}", url);
 			throw new ServerException("Unsupported data source, url:" + url);
 		}
@@ -545,7 +565,13 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		List<String> dbList = null;
 
 		try {
-			dbList = sqlUtils.init(source).getDatabases();
+
+			if (queryModel.equals("provider")) {
+				dbList = sqlUtils.getDatabaseByProvider(source, user);
+			} else {
+				dbList = sqlUtils.init(source).getDatabases();
+			}
+
 		} catch (SourceException e) {
 			throw new ServerException(e.getMessage());
 		}
@@ -575,7 +601,13 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		List<QueryColumn> tableList = null;
 		try {
-			tableList = sqlUtils.init(source).getTableList(dbName);
+		
+			if (queryModel.equals("provider")) {
+				tableList = sqlUtils.getTableListByProvider(source, user, dbName);
+			}else {
+				tableList = sqlUtils.init(source).getTableList(dbName);
+			}
+		
 		} catch (SourceException e) {
 			throw new ServerException(e.getMessage());
 		}
@@ -607,9 +639,14 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		TableInfo tableInfo = null;
 		try {
-			tableInfo = sqlUtils.init(source).getTableInfo(dbName, tableName);
+			
+			if (queryModel.equals("provider")) {
+				tableInfo = sqlUtils.getTableInfoByProvider(source, user, dbName, tableName);
+			}else {
+				tableInfo = sqlUtils.init(source).getTableInfo(dbName, tableName);
+			}
+			
 		} catch (SourceException e) {
-			e.printStackTrace();
 			throw new ServerException(e.getMessage());
 		}
 
@@ -621,9 +658,8 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	}
 
 	@Override
-	public List<DatasourceType> getSupportDatasources() {
-
-		return LoadSupportDataSourceRunner.getSupportDatasourceList();
+	public List<DatabaseType> getSupportDatabases() {
+		return LoadSupportDatabaseRunner.getSupportDatabaseList();
 	}
 
 	@Override
@@ -656,17 +692,17 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		String config = source.getConfig();
 		
 		SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
-		String url = SourceUtils.getJdbcUrl(config);
+		String url = SourceUtils.getUrl(config);
 		JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo
 				 .builder()
-				.jdbcUrl(url)
+				.url(url)
 				.username(SourceUtils.getUsername(config))
 				.password(SourceUtils.getPassword(config))
-				.database(SourceUtils.getDataSourceName(url))
-				.dbVersion(SourceUtils.getDbVersion(config))
+				.database(SourceUtils.getDatabase(url))
+				.version(SourceUtils.getVersion(config))
 				.properties(SourceUtils.getProperties(config))
 				.ext(SourceUtils.isExt(config))
-				.sourceName(SourceUtils.getSourceName(source.getName(), source.getProjectId()))
+				.name(SourceUtils.getSourceUName(source.getProjectId(), source.getName()))
 				.build();
 
 		if (redisUtils.isRedisEnable()) {

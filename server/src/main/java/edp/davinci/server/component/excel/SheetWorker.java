@@ -31,7 +31,7 @@ import edp.davinci.server.util.SqlUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import static edp.davinci.server.commons.Constants.QUERY_META_SQL;
-import static edp.davinci.server.enums.DataTypeEnum.MYSQL;
+import static edp.davinci.server.enums.DatabaseTypeEnum.MYSQL;
 
 import java.sql.ResultSetMetaData;
 import java.util.*;
@@ -71,7 +71,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             template.setFetchSize(500);
             
             // special for mysql fetch size
-			if (sqlUtils.getDataTypeEnum() == MYSQL) {
+			if (sqlUtils.getDatabaseTypeEnum() == MYSQL) {
 				template.setFetchSize(Integer.MIN_VALUE);
 			}
 
@@ -125,14 +125,14 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
     private void propertiesSet(JdbcTemplate template) {
         if (!CollectionUtils.isEmpty(context.getExecuteSql())) {
             context.getExecuteSql().stream().filter(x -> x != null).forEach(x -> {
-                String sql = SqlUtils.filterAnnotate(x);
+                String sql = SqlUtils.removeAnnotation(x);
                 SqlUtils.checkSensitiveSql(sql);
                 template.execute(sql);
             });
         }
         if (!CollectionUtils.isEmpty(context.getQuerySql())) {
             for (int i = 0; i < context.getQuerySql().size() - 1; i++) {
-                String sql = SqlUtils.filterAnnotate(context.getQuerySql().get(i));
+                String sql = SqlUtils.removeAnnotation(context.getQuerySql().get(i));
                 SqlUtils.checkSensitiveSql(sql);
                 template.execute(sql);
             }

@@ -38,7 +38,7 @@ import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.PaginateWithQueryColumns;
+import edp.davinci.server.model.PagingWithQueryColumns;
 import edp.davinci.server.model.QueryColumn;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.dao.entity.Widget;
@@ -366,7 +366,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             if (type.equals(FileTypeEnum.CSV.getType())) {
                 ViewWithSource viewWithSource = viewExtendMapper.getViewWithSource(widget.getViewId());
                 boolean maintainer = projectService.isMaintainer(projectDetail, user);
-                PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer, viewWithSource, executeParam, user);
+                PagingWithQueryColumns paginate = viewService.getPagingData(maintainer, viewWithSource, executeParam, user);
                 List<QueryColumn> columns = paginate.getColumns();
                 if (!CollectionUtils.isEmpty(columns)) {
                     File file = new File(rootPath);
@@ -454,7 +454,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 						executeParam = getViewExecuteParam((engine), null, widget.getConfig(), null);
 					}
 
-					PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer,
+					PagingWithQueryColumns paginate = viewService.getPagingData(maintainer,
 							viewWithProjectAndSource, executeParam, user);
 
 					sheet = wb.createSheet(sheetName);

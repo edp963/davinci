@@ -17,15 +17,18 @@
  *
  */
 
-package edp.core.utils;
+package edp.davinci.server.util;
 
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.server.model.CustomDataSource;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edp.core.consts.Consts;
-import edp.core.model.CustomDataSource;
+
 import lombok.Getter;
 import org.yaml.snakeyaml.Yaml;
+
+import static edp.davinci.server.commons.Constants.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -35,21 +38,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 
+public class CustomDatabaseUtils {
 
-public class CustomDataSourceUtils {
-
-    private static volatile Map<String, CustomDataSource> customDataSourceMap = new HashMap<>();
+    private static volatile Map<String, CustomDataSource> customDatabaseMap = new HashMap<>();
 
     @Getter
-    private static volatile Map<String, List<String>> dataSourceVersoin = new HashMap<String, List<String>>();
+    private static volatile Map<String, List<String>> databaseVersionMap = new HashMap<String, List<String>>();
 
     public static CustomDataSource getInstance(String jdbcUrl, String version) {
-        String dataSourceName = SourceUtils.getDataSourceName(jdbcUrl);
-        String key = getKey(dataSourceName, version);
-        if (customDataSourceMap.containsKey(key) && null != customDataSourceMap.get(key)) {
-            CustomDataSource customDataSource = customDataSourceMap.get(key);
+        String databaseName = SourceUtils.getDatabase(jdbcUrl);
+        String key = getKey(databaseName, version);
+        if (customDatabaseMap.containsKey(key) && null != customDatabaseMap.get(key)) {
+            CustomDataSource customDataSource = customDatabaseMap.get(key);
             if (null != customDataSource) {
                 return customDataSource;
             }
@@ -115,8 +116,8 @@ public class CustomDataSourceUtils {
             }
 
             List<String> versoins = null;
-            if (dataSourceVersoin.containsKey(customDataSource.getName())) {
-                versoins = dataSourceVersoin.get(customDataSource.getName());
+            if (databaseVersionMap.containsKey(customDataSource.getName())) {
+                versoins = databaseVersionMap.get(customDataSource.getName());
             } else {
                 versoins = new ArrayList<>();
             }
@@ -130,12 +131,12 @@ public class CustomDataSourceUtils {
                 versoins.remove(0);
             }
 
-            dataSourceVersoin.put(customDataSource.getName(), versoins);
-            customDataSourceMap.put(getKey(customDataSource.getName(), customDataSource.getVersion()), customDataSource);
+            databaseVersionMap.put(customDataSource.getName(), versoins);
+            customDatabaseMap.put(getKey(customDataSource.getName(), customDataSource.getVersion()), customDataSource);
         }
     }
 
-    private static String getKey(String database, String version) {
-        return database + Consts.COLON + (StringUtils.isEmpty(version) ? Consts.EMPTY : version);
+	private static String getKey(String database, String version) {
+        return database + COLON + (StringUtils.isEmpty(version) ? EMPTY : version);
     }
 }

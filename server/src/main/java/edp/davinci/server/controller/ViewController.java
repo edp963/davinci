@@ -23,9 +23,9 @@ import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.view.*;
 import edp.davinci.server.model.DacChannel;
-import edp.davinci.server.model.Paginate;
-import edp.davinci.server.model.PaginateWithQueryColumns;
-import edp.davinci.server.model.User;
+import edp.davinci.server.model.Paging;
+import edp.davinci.server.model.PagingWithQueryColumns;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.ViewService;
 import edp.davinci.server.util.DacChannelUtils;
 import io.swagger.annotations.Api;
@@ -34,12 +34,10 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.async.DeferredResult;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
@@ -47,8 +45,6 @@ import javax.validation.Valid;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Api(value = "/views", tags = "views", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "view not found"))
@@ -216,7 +212,7 @@ public class ViewController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        PaginateWithQueryColumns paginateWithQueryColumns = viewService.executeSql(executeSql, user);
+        PagingWithQueryColumns paginateWithQueryColumns = viewService.executeSql(executeSql, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(paginateWithQueryColumns));
     }
 
@@ -241,7 +237,7 @@ public class ViewController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        Paginate<Map<String, Object>> paginate = viewService.getData(id, executeParam, user);
+        Paging<Map<String, Object>> paginate = viewService.getData(id, executeParam, user);
         return ResponseEntity.ok().cacheControl(CacheControl.noCache()).body(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(paginate));
     }
 

@@ -96,4 +96,4 @@ mapper:
 
 sql_template_delimiter: $
 
-custom-datasource-driver-path: ${DAVINCI_HOME}/config/datasource_driver.yml
+custom-database-driver-path: ${DAVINCI_HOME}/config/database_driver.yml

@@ -17,11 +17,8 @@
  *
  */
 
-package edp.davinci.runner;
+package edp.davinci.server.runner;
 
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.core.utils.DacChannelUtil;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
@@ -31,6 +28,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import edp.davinci.commons.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 
 @Order(0)
 @Component
@@ -46,40 +45,36 @@ public class CheckConfigRunner implements ApplicationRunner {
     @Value("${spring.mail.username}")
     private String mailUserName;
 
-
     @Value("${spring.mail.nickname}")
     private String nickName;
-
 
     @Autowired
     private ApplicationContext applicationContext;
 
-    @Autowired
-    private DacChannelUtil dacChannelUtil;
-
-
     @Override
     public void run(ApplicationArguments args) {
-        if (StringUtils.isEmpty(mailHost)) {
-            log.error("**************     Configuration error: mail host cannot be EMPTY!      **************");
-            SpringApplication.exit(applicationContext);
-        }
-
-        if (StringUtils.isEmpty(mailPort)) {
-            log.error("**************     Configuration error: mail port cannot be EMPTY!      **************");
-            SpringApplication.exit(applicationContext);
-        }
-
-        if (StringUtils.isEmpty(mailUserName)) {
-            log.error("**************     Configuration error: mail username cannot be EMPTY!      **************");
-            SpringApplication.exit(applicationContext);
-        }
-
-        if (StringUtils.isEmpty(mailUserName)) {
-            log.error("**************     Configuration error: mail nickname cannot be EMPTY!      **************");
-            SpringApplication.exit(applicationContext);
-        }
-
-        dacChannelUtil.loadDacMap();
+    	checkMailConfig();
     }
+    
+	private void checkMailConfig() {
+		if (StringUtils.isEmpty(mailHost)) {
+			log.error("**************     Configuration error: mail host cannot be empty!      **************");
+			SpringApplication.exit(applicationContext);
+		}
+
+		if (StringUtils.isEmpty(mailPort)) {
+			log.error("**************     Configuration error: mail port cannot be empty!      **************");
+			SpringApplication.exit(applicationContext);
+		}
+
+		if (StringUtils.isEmpty(mailUserName)) {
+			log.error("**************     Configuration error: mail username cannot be empty!      **************");
+			SpringApplication.exit(applicationContext);
+		}
+
+		if (StringUtils.isEmpty(nickName)) {
+			log.error("**************     Configuration error: mail nickname cannot be empty!      **************");
+			SpringApplication.exit(applicationContext);
+		}
+	}
 }

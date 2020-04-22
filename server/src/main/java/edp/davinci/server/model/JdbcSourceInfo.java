@@ -32,18 +32,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class JdbcSourceInfo {
-	
-	private String sourceName;
 
-	private String jdbcUrl;
+	private String database;
+	
+	private String name;
+
+	private String url;
 
     private String username;
 
     private String password;
 
-    private String database;
-
-    private String dbVersion;
+    private String version;
 
     private List<Dict> properties;
 

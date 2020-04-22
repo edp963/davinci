@@ -45,7 +45,6 @@ import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Source;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dto.source.DatasourceType;
 import edp.davinci.server.dto.source.DbBaseInfo;
 import edp.davinci.server.dto.source.SourceCatalogInfo;
 import edp.davinci.server.dto.source.SourceConfig;
@@ -57,7 +56,8 @@ import edp.davinci.server.dto.source.SourceTableInfo;
 import edp.davinci.server.dto.source.UploadMeta;
 import edp.davinci.server.model.DBTables;
 import edp.davinci.server.model.TableInfo;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.data.pojo.DatabaseType;
 import edp.davinci.server.service.SourceService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -223,7 +223,7 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        sourceService.testSource(sourceConfig);
+        sourceService.testSource(sourceConfig, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
@@ -416,7 +416,7 @@ public class SourceController extends BaseController {
     @ApiOperation(value = "get jdbc datasources")
     @GetMapping("/jdbc/datasources")
     public ResponseEntity getJdbcDataSources(@ApiIgnore @CurrentUser User user, HttpServletRequest request) {
-        List<DatasourceType> list = sourceService.getSupportDatasources();
+        List<DatabaseType> list = sourceService.getSupportDatabases();
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(list));
     }
 

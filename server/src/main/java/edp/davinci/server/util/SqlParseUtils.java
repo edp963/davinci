@@ -75,7 +75,7 @@ public class SqlParseUtils {
             return null;
         }
 
-        sqlStr = SqlUtils.filterAnnotate(sqlStr);
+        sqlStr = SqlUtils.removeAnnotation(sqlStr);
         sqlStr = sqlStr.replaceAll(NEW_LINE_CHAR, SPACE).trim();
 
         char delimiter = getSqlTempDelimiter(sqlTempDelimiter);

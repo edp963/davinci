@@ -19,22 +19,26 @@
 
 package edp.davinci.server;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@EnableAutoConfiguration(exclude = {org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration.class})
+@EnableAutoConfiguration(
+        exclude = {
+                org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration.class,
+                org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
+        })
 @EnableScheduling
-//@MapperScan({"edp.davinci.*.dao"})
+@ComponentScan(value="edp.davinci.*")
 public class DavinciServerApplication {
 
-    public static void main(String[] args) {
-        System.setProperty("mail.mime.splitlongparameters", "false");
-        SpringApplication.run(DavinciServerApplication.class, args);
-    }
-
+	public static void main(String[] args) {
+		System.out.println("DAVINCI_HOME:" + System.getenv("DAVINCI_HOME"));
+		System.setProperty("mail.mime.splitlongparameters", "false");
+		SpringApplication.run(DavinciServerApplication.class, args);
+	}
 }
 

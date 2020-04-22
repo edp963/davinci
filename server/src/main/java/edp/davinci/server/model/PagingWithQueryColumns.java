@@ -21,15 +21,10 @@ package edp.davinci.server.model;
 
 import lombok.Data;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Data
-public class Paginate<T> implements Serializable {
-
-    private int pageNo = -1;
-    private int pageSize = -1;
-    private long totalCount = -1;
-    private List<T> resultList = new ArrayList<T>();
+public class PagingWithQueryColumns extends Paging<Map<String, Object>> {
+    List<QueryColumn> columns;
 }
