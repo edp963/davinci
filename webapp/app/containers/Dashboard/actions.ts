@@ -25,12 +25,14 @@ import {
   IDashboard,
   IDashboardItem,
   IQueryConditions,
-  IDataRequestParams
+  IDataRequestParams,
+  IDataDownloadStatistic
 } from './types'
 import { IWidgetFormed } from '../Widget/types'
 import { IView, IViewQueryResponse } from '../View/types'
 import { RenderType } from '../Widget/components/Widget'
 import { ControlPanelTypes } from 'app/components/Filters/constants'
+import { DownloadTypes } from '../App/constants'
 const CancelToken = axios.CancelToken
 
 export const DashboardActions = {
@@ -120,6 +122,51 @@ export const DashboardActions = {
         formValues,
         itemId,
         cancelTokenSource: CancelToken.source()
+      }
+    }
+  },
+
+  initiateDownloadTask (
+    type: DownloadTypes,
+    id?: number,
+    itemId?: number
+  ) {
+    return {
+      type: ActionTypes.INITIATE_DOWNLOAD_TASK,
+      payload: {
+        type,
+        id,
+        itemId
+      }
+    }
+  },
+
+  DownloadTaskInitiated (
+    type: DownloadTypes,
+    statistic: IDataDownloadStatistic[],
+    itemId?: number
+  ) {
+    return {
+      type: ActionTypes.INITIATE_DOWNLOAD_TASK_SUCCESS,
+      payload: {
+        type,
+        itemId
+      },
+      statistic
+    }
+  },
+
+  initiateDownloadTaskFail (
+    error,
+    type: DownloadTypes,
+    itemId?: number
+  ) {
+    return {
+      type: ActionTypes.INITIATE_DOWNLOAD_TASK_FAILURE,
+      payload: {
+        error,
+        type,
+        itemId
       }
     }
   },

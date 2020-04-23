@@ -64,7 +64,6 @@ import { Row, Col, Button, Modal, Breadcrumb, Menu, message } from 'antd'
 import { uuid } from 'utils/util'
 import FullScreenPanel from './FullScreenPanel'
 import { decodeMetricName } from 'containers/Widget/components/util'
-import { initiateDownloadTask } from 'containers/App/actions'
 import { DashboardActions } from './actions'
 const {
   loadDashboardDetail,
@@ -75,6 +74,7 @@ const {
   clearCurrentDashboard,
   loadDashboardItemData,
   loadBatchDataWithControlValues,
+  initiateDownloadTask,
   renderDashboardItem,
   resizeDashboardItem,
   resizeAllDashboardItem,

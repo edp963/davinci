@@ -22,12 +22,10 @@ import {
   call,
   put,
   all,
-  select,
   takeLatest,
   throttle,
   takeEvery
 } from 'redux-saga/effects'
-import omit from 'lodash/omit'
 import { message } from 'antd'
 import {
   LOGIN,
@@ -40,11 +38,9 @@ import {
   JOIN_ORGANIZATION,
   LOAD_DOWNLOAD_LIST,
   DOWNLOAD_FILE,
-  INITIATE_DOWNLOAD_TASK,
   GET_EXTERNAL_AUTH_PROVIDERS,
   TRY_EXTERNAL_AUTH,
-  EXTERNAL_AUTH_LOGOUT,
-  DownloadTypes
+  EXTERNAL_AUTH_LOGOUT
 } from './constants'
 import {
   logged,
@@ -62,38 +58,11 @@ import {
   loadDownloadListFail,
   fileDownloaded,
   downloadFileFail,
-  DownloadTaskInitiated,
-  initiateDownloadTaskFail,
   gotExternalAuthProviders
 } from './actions'
-import {
-  makeSelectCurrentDashboard,
-  makeSelectItemRelatedWidget,
-  makeSelectItemInfo
-} from 'containers/Dashboard/selectors'
-import {
-  makeSelectGlobalControlPanelFormValues,
-  makeSelectLocalControlPanelFormValues
-} from 'containers/ControlPanel/selectors'
-import {
-  getCurrentControlValues,
-  getRequestParams,
-  getRequestBody
-} from '../Dashboard/util'
-import {
-  IDashboard,
-  IDashboardItemInfo,
-  IDataDownloadStatistic
-} from '../Dashboard/types'
 import request, { removeToken, getToken } from 'utils/request'
-import api from 'utils/api'
 import { errorHandler } from 'utils/util'
-import {
-  IGlobalControlConditionsByItem,
-  IGlobalControlConditions
-} from 'app/components/Filters/types'
-import { IWidgetFormed } from '../Widget/types'
-import { ControlPanelTypes } from 'app/components/Filters/constants'
+import api from 'utils/api'
 
 export function* getExternalAuthProviders(): IterableIterator<any> {
   try {
@@ -354,141 +323,20 @@ export function* downloadFile(action): IterableIterator<any> {
   }
 }
 
-function getDownloadInfo(
-  type: DownloadTypes,
-  itemId: number,
-  itemInfo: IDashboardItemInfo,
-  relatedWidget: IWidgetFormed,
-  localControlFormValues: object,
-  globalControlConditions: IGlobalControlConditions
-): IDataDownloadStatistic {
-  const localControlConditions = getCurrentControlValues(
-    ControlPanelTypes.Local,
-    relatedWidget.config.controls,
-    localControlFormValues
-  )
-  const requestParams = getRequestParams(
-    relatedWidget,
-    itemInfo.queryConditions,
-    false,
-    {
-      ...globalControlConditions,
-      ...localControlConditions
-    }
-  )
-  const id = type === DownloadTypes.Dashboard ? itemId : relatedWidget.id
-  return {
-    id,
-    param: {
-      ...getRequestBody(requestParams),
-      flush: true,
-      pageNo: 0,
-      pageSize: 0
-    },
-    itemId,
-    widget: relatedWidget
-  }
-}
-
-export function* initiateDownloadTask(action): IterableIterator<any> {
-  const { type, itemId } = action.payload
-  const currentDashboard: IDashboard = yield select(
-    makeSelectCurrentDashboard()
-  )
-  const globalControlFormValues = yield select(
-    makeSelectGlobalControlPanelFormValues()
-  )
-  const globalControlConditionsByItem: IGlobalControlConditionsByItem = getCurrentControlValues(
-    ControlPanelTypes.Global,
-    currentDashboard.config.filters,
-    globalControlFormValues
-  )
-
-  let id = action.payload.id
-  const downloadInfo: IDataDownloadStatistic[] = []
-
-  if (type === DownloadTypes.Dashboard) {
-    const globalControlConditionsByItemEntries: Array<
-      [string, IGlobalControlConditions]
-    > = Object.entries(globalControlConditionsByItem)
-    while (globalControlConditionsByItemEntries.length) {
-      const [
-        relatedItemId,
-        globalControlConditions
-      ] = globalControlConditionsByItemEntries[0]
-      const itemInfo: IDashboardItemInfo = yield select((state) =>
-        makeSelectItemInfo()(state, Number(relatedItemId))
-      )
-      const relatedWidget: IWidgetFormed = yield select((state) =>
-        makeSelectItemRelatedWidget()(state, Number(relatedItemId))
-      )
-      const localControlFormValues = yield select((state) =>
-        makeSelectLocalControlPanelFormValues()(state, Number(relatedItemId))
-      )
-      downloadInfo.push(
-        getDownloadInfo(
-          type,
-          Number(relatedItemId),
-          itemInfo,
-          relatedWidget,
-          localControlFormValues,
-          globalControlConditions
-        )
-      )
-      globalControlConditionsByItemEntries.shift()
-    }
-  } else {
-    const itemInfo: IDashboardItemInfo = yield select((state) =>
-      makeSelectItemInfo()(state, itemId)
-    )
-    const relatedWidget: IWidgetFormed = yield select((state) =>
-      makeSelectItemRelatedWidget()(state, itemId)
-    )
-    const localControlFormValues = yield select((state) =>
-      makeSelectLocalControlPanelFormValues()(state, itemId)
-    )
-    id = relatedWidget.id
-    downloadInfo.push(
-      getDownloadInfo(
-        type,
-        itemId,
-        itemInfo,
-        relatedWidget,
-        localControlFormValues,
-        globalControlConditionsByItem[itemId]
-      )
-    )
-  }
-
-  try {
-    yield call(request, {
-      method: 'POST',
-      url: `${api.download}/submit/${type}/${id}`,
-      data: downloadInfo.map((d) => omit(d, 'widget', 'itemId'))
-    })
-    message.success('下载任务创建成功！')
-    yield put(DownloadTaskInitiated(type, downloadInfo, itemId))
-  } catch (err) {
-    yield put(initiateDownloadTaskFail(err, itemId))
-    errorHandler(err)
-  }
-}
-
 export default function* rootGroupSaga(): IterableIterator<any> {
   yield all([
     throttle(1000, CHECK_NAME, checkNameUnique as any),
     takeLatest(GET_LOGIN_USER, getLoginUser as any),
-    takeLatest(ACTIVE, activeUser as any),
+    takeEvery(ACTIVE, activeUser as any),
     takeLatest(GET_EXTERNAL_AUTH_PROVIDERS, getExternalAuthProviders as any),
-    takeLatest(TRY_EXTERNAL_AUTH, tryExternalAuth as any),
-    takeLatest(EXTERNAL_AUTH_LOGOUT, externalAuthlogout as any),
-    takeLatest(LOGIN, login as any),
-    takeLatest(LOGOUT, logout),
-    takeLatest(UPDATE_PROFILE, updateProfile as any),
-    takeLatest(CHANGE_USER_PASSWORD, changeUserPassword as any),
-    takeLatest(JOIN_ORGANIZATION, joinOrganization as any),
+    takeEvery(TRY_EXTERNAL_AUTH, tryExternalAuth as any),
+    takeEvery(EXTERNAL_AUTH_LOGOUT, externalAuthlogout as any),
+    takeEvery(LOGIN, login as any),
+    takeEvery(LOGOUT, logout),
+    takeEvery(UPDATE_PROFILE, updateProfile as any),
+    takeEvery(CHANGE_USER_PASSWORD, changeUserPassword as any),
+    takeEvery(JOIN_ORGANIZATION, joinOrganization as any),
     takeLatest(LOAD_DOWNLOAD_LIST, getDownloadList),
-    takeLatest(DOWNLOAD_FILE, downloadFile),
-    takeEvery(INITIATE_DOWNLOAD_TASK, initiateDownloadTask)
+    takeLatest(DOWNLOAD_FILE, downloadFile)
   ])
 }

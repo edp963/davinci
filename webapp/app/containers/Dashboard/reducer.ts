@@ -23,12 +23,7 @@ import produce from 'immer'
 import { ActionTypes } from './constants'
 import { DashboardActionType } from './actions'
 import { getInitialItemInfo, getGlobalControlInitialValues } from './util'
-import {
-  INITIATE_DOWNLOAD_TASK,
-  INITIATE_DOWNLOAD_TASK_SUCCESS,
-  INITIATE_DOWNLOAD_TASK_FAILURE,
-  DownloadTypes
-} from '../App/constants'
+import { DownloadTypes } from '../App/constants'
 import { LOCATION_CHANGE, LocationChangeAction } from 'connected-react-router'
 import { ActionTypes as VizActionTypes } from 'containers/Viz/constants'
 import { VizActionType } from '../Viz/actions'
@@ -343,15 +338,15 @@ const dashboardReducer = (
         targetItemInfo.downloadCsvLoading = false
         break
 
-      case INITIATE_DOWNLOAD_TASK:
+      case ActionTypes.INITIATE_DOWNLOAD_TASK:
         if (action.payload.type === DownloadTypes.Widget) {
           targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
           targetItemInfo.downloadCsvLoading = true
         }
         break
 
-      case INITIATE_DOWNLOAD_TASK_SUCCESS:
-      case INITIATE_DOWNLOAD_TASK_FAILURE:
+      case ActionTypes.INITIATE_DOWNLOAD_TASK_SUCCESS:
+      case ActionTypes.INITIATE_DOWNLOAD_TASK_FAILURE:
         if (action.payload.type === DownloadTypes.Widget) {
           targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
           targetItemInfo.downloadCsvLoading = false

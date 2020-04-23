@@ -48,12 +48,12 @@ import AntdFormType from 'antd/lib/form/Form'
 const Search = Input.Search
 
 import { VizActions } from 'containers/Viz/actions'
+import DashboardActions from './actions'
 import { makeSelectCurrentDashboards, makeSelectCurrentPortal, makeSelectVizLoading } from 'containers/Viz/selectors'
 import { makeSelectCurrentDashboard } from './selectors'
 import {
   hideNavigator,
   checkNameUniqueAction,
-  initiateDownloadTask,
   loadDownloadList,
   downloadFile
 } from '../App/actions'
@@ -900,7 +900,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
     onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
-    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(initiateDownloadTask(id, type, downloadParams)),
+    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(DashboardActions.initiateDownloadTask(id, type, downloadParams)),
     onLoadDownloadList: () => dispatch(loadDownloadList()),
     onDownloadFile: (id) => dispatch(downloadFile(id))
   }

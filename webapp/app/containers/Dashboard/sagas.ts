@@ -27,6 +27,7 @@ import {
   takeLatest,
   takeEvery
 } from 'redux-saga/effects'
+import omit from 'lodash/omit'
 import { ActionTypes } from './constants'
 import { DashboardActions, DashboardActionType } from './actions'
 import {
@@ -51,7 +52,8 @@ import {
   IDashboardConfig,
   IDashboardItemInfo,
   IDashboard,
-  IQueryConditions
+  IQueryConditions,
+  IDataDownloadStatistic
 } from './types'
 import {
   GlobalControlQueryMode,
@@ -60,6 +62,7 @@ import {
   ILocalControlConditions
 } from 'app/components/Filters/types'
 import { IWidgetRaw, IWidgetFormed } from '../Widget/types'
+import { DownloadTypes } from '../App/constants'
 import {
   globalControlMigrationRecorder,
   localControlMigrationRecorder
@@ -69,6 +72,7 @@ import { RenderType, IWidgetConfig } from '../Widget/components/Widget'
 import { CancelTokenSource } from 'axios'
 import request from 'utils/request'
 import { errorHandler, getErrorMessage } from 'utils/util'
+import { message } from 'antd'
 import api from 'utils/api'
 
 export function* getDashboardDetail(action: DashboardActionType) {
@@ -350,6 +354,130 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
   }
 }
 
+function getDownloadInfo(
+  type: DownloadTypes,
+  itemId: number,
+  itemInfo: IDashboardItemInfo,
+  relatedWidget: IWidgetFormed,
+  localControlFormValues: object,
+  globalControlConditions: IGlobalControlConditions
+): IDataDownloadStatistic {
+  const localControlConditions = getCurrentControlValues(
+    ControlPanelTypes.Local,
+    relatedWidget.config.controls,
+    localControlFormValues
+  )
+  const requestParams = getRequestParams(
+    relatedWidget,
+    itemInfo.queryConditions,
+    false,
+    {
+      ...globalControlConditions,
+      ...localControlConditions
+    }
+  )
+  const id = type === DownloadTypes.Dashboard ? itemId : relatedWidget.id
+  return {
+    id,
+    param: {
+      ...getRequestBody(requestParams),
+      flush: true,
+      pageNo: 0,
+      pageSize: 0
+    },
+    itemId,
+    widget: relatedWidget
+  }
+}
+
+export function* initiateDownloadTask(action: DashboardActionType) {
+  if (action.type !== ActionTypes.INITIATE_DOWNLOAD_TASK) {
+    return
+  }
+  const { DownloadTaskInitiated, initiateDownloadTaskFail } = DashboardActions
+  const { type, itemId } = action.payload
+  const currentDashboard: IDashboard = yield select(
+    makeSelectCurrentDashboard()
+  )
+  const globalControlFormValues = yield select(
+    makeSelectGlobalControlPanelFormValues()
+  )
+  const globalControlConditionsByItem: IGlobalControlConditionsByItem = getCurrentControlValues(
+    ControlPanelTypes.Global,
+    currentDashboard.config.filters,
+    globalControlFormValues
+  )
+
+  let id = action.payload.id
+  const downloadInfo: IDataDownloadStatistic[] = []
+
+  if (type === DownloadTypes.Dashboard) {
+    const globalControlConditionsByItemEntries: Array<
+      [string, IGlobalControlConditions]
+    > = Object.entries(globalControlConditionsByItem)
+    while (globalControlConditionsByItemEntries.length) {
+      const [
+        relatedItemId,
+        globalControlConditions
+      ] = globalControlConditionsByItemEntries[0]
+      const itemInfo: IDashboardItemInfo = yield select((state) =>
+        makeSelectItemInfo()(state, Number(relatedItemId))
+      )
+      const relatedWidget: IWidgetFormed = yield select((state) =>
+        makeSelectItemRelatedWidget()(state, Number(relatedItemId))
+      )
+      const localControlFormValues = yield select((state) =>
+        makeSelectLocalControlPanelFormValues()(state, Number(relatedItemId))
+      )
+      downloadInfo.push(
+        getDownloadInfo(
+          type,
+          Number(relatedItemId),
+          itemInfo,
+          relatedWidget,
+          localControlFormValues,
+          globalControlConditions
+        )
+      )
+      globalControlConditionsByItemEntries.shift()
+    }
+  } else {
+    const itemInfo: IDashboardItemInfo = yield select((state) =>
+      makeSelectItemInfo()(state, itemId)
+    )
+    const relatedWidget: IWidgetFormed = yield select((state) =>
+      makeSelectItemRelatedWidget()(state, itemId)
+    )
+    const localControlFormValues = yield select((state) =>
+      makeSelectLocalControlPanelFormValues()(state, itemId)
+    )
+    id = relatedWidget.id
+    downloadInfo.push(
+      getDownloadInfo(
+        type,
+        itemId,
+        itemInfo,
+        relatedWidget,
+        localControlFormValues,
+        globalControlConditionsByItem[itemId]
+      )
+    )
+  }
+
+  try {
+    yield call(request, {
+      method: 'POST',
+      url: `${api.download}/submit/${type}/${id}`,
+      data: downloadInfo.map((d) => omit(d, 'widget', 'itemId'))
+    })
+    message.success('下载任务创建成功！')
+    yield put(DownloadTaskInitiated(type, downloadInfo, itemId))
+  } catch (err) {
+    yield put(initiateDownloadTaskFail(err, type, itemId))
+    errorHandler(err)
+  }
+}
+
 export function* getDashboardShareLink(action: DashboardActionType) {
   if (action.type !== ActionTypes.LOAD_DASHBOARD_SHARE_LINK) {
     return
@@ -456,6 +584,7 @@ export default function* rootDashboardSaga(): IterableIterator<any> {
       ActionTypes.LOAD_BATCH_DATA_WITH_CONTROL_VALUES,
       getBatchDataWithControlValues
     ),
+    takeEvery(ActionTypes.INITIATE_DOWNLOAD_TASK, initiateDownloadTask),
     takeLatest(ActionTypes.LOAD_DASHBOARD_SHARE_LINK, getDashboardShareLink),
     takeLatest(ActionTypes.LOAD_WIDGET_SHARE_LINK, getWidgetShareLink),
     takeLatest(ActionTypes.LOAD_WIDGET_CSV, getWidgetCsv)

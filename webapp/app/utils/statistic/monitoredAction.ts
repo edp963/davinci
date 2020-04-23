@@ -2,8 +2,6 @@ import {ActionTypes} from 'containers/View/constants'
 import {
   LOGIN,
   LOGGED,
-  INITIATE_DOWNLOAD_TASK,
-  INITIATE_DOWNLOAD_TASK_SUCCESS,
   DOWNLOAD_FILE
 } from 'containers/App/constants'
 
@@ -55,7 +53,7 @@ const dataAction = {
 
 const otherAction = {
   [LOGGED]: 'login',
-  [INITIATE_DOWNLOAD_TASK_SUCCESS]: 'download'
+  [DashboardActionTypes.INITIATE_DOWNLOAD_TASK_SUCCESS]: 'download'
 }
 
 export const monitoreAction = (action: {type: string, payload: object}) => {

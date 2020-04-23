@@ -50,13 +50,8 @@ import {
   LOAD_DOWNLOAD_LIST_FAILURE,
   DOWNLOAD_FILE,
   DOWNLOAD_FILE_FAILURE,
-  DOWNLOAD_FILE_SUCCESS,
-  INITIATE_DOWNLOAD_TASK,
-  INITIATE_DOWNLOAD_TASK_SUCCESS,
-  INITIATE_DOWNLOAD_TASK_FAILURE,
-  DownloadTypes
+  DOWNLOAD_FILE_SUCCESS
 } from './constants'
-import { IDataDownloadStatistic } from '../Dashboard/types'
 
 export function getExternalAuthProviders () {
   return {
@@ -334,46 +329,6 @@ export function downloadFileFail (error) {
     type: DOWNLOAD_FILE_FAILURE,
     payload: {
       error
-    }
-  }
-}
-
-export function initiateDownloadTask (
-  type: DownloadTypes,
-  id?: number,
-  itemId?: number
-) {
-  return {
-    type: INITIATE_DOWNLOAD_TASK,
-    payload: {
-      type,
-      id,
-      itemId
-    }
-  }
-}
-
-export function DownloadTaskInitiated (
-  type: DownloadTypes,
-  statistic: IDataDownloadStatistic[],
-  itemId?: number
-) {
-  return {
-    type: INITIATE_DOWNLOAD_TASK_SUCCESS,
-    payload: {
-      type,
-      itemId
-    },
-    statistic
-  }
-}
-
-export function initiateDownloadTaskFail (error, itemId?) {
-  return {
-    type: INITIATE_DOWNLOAD_TASK_FAILURE,
-    payload: {
-      error,
-      itemId
     }
   }
 }
