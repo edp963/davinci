@@ -220,13 +220,13 @@ public class WidgetController extends BaseController {
      * 分享widget
      *
      * @param id
-     * @param shareFactor
+     * @param shareEntity
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "share widget")
-    @PostMapping("/{id}/share")
+    @ApiOperation(value = "share widget", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{id}/share", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity shareWidget(@PathVariable Long id,
                                       @RequestBody ShareEntity shareEntity,
                                       @ApiIgnore @CurrentUser User user,

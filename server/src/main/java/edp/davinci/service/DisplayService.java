@@ -25,7 +25,9 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.displayDto.*;
 import edp.davinci.dto.roleDto.VizVisibility;
+import edp.davinci.dto.shareDto.ShareEntity;
 import edp.davinci.model.*;
+import edp.davinci.service.share.ShareResult;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -42,7 +44,7 @@ public interface DisplayService extends CheckEntityService {
 
     String uploadAvatar(MultipartFile file) throws ServerException;
 
-    String shareDisplay(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    ShareResult shareDisplay(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException;
 
