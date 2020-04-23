@@ -16,29 +16,31 @@
  *  >>
  */
 
-package edp.davinci.core.enums;
+package edp.davinci.service.share;
 
 import lombok.Getter;
 
-public enum ShareDataPermission {
-    SHARER(0),
-    VIEWER(1);
+public enum ShareMode {
 
+    COMPATIBLE(0),  // 兼容模式
+    NORMAL(1),      // 普通分享
+    PASSWORD(2),    // 口令分享
+    AUTH(3),        // 权限分享（用户、角色）
+    ;
     @Getter
-    private int permission;
+    private int mode;
 
-    ShareDataPermission(int permission) {
-        this.permission = permission;
+    ShareMode(int mode) {
+        this.mode = mode;
     }
 
-    public static ShareDataPermission valueOf(int permission) {
-        switch (permission) {
-            case 0:
-                return SHARER;
-            case 1:
-                return VIEWER;
-            default:
-                return null;
+    public static ShareMode valueOf(int mode) {
+        for (ShareMode shareMode : ShareMode.values()) {
+            if (shareMode.mode == mode) {
+                return shareMode;
+            }
         }
+        return null;
     }
+
 }

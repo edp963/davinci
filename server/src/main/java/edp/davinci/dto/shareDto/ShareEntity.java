@@ -20,8 +20,8 @@ package edp.davinci.dto.shareDto;
 
 import edp.core.utils.CollectionUtils;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.enums.ShareDataPermission;
-import edp.davinci.core.enums.ShareMode;
+import edp.davinci.service.share.ShareDataPermission;
+import edp.davinci.service.share.ShareMode;
 import lombok.Data;
 
 import java.util.Set;
