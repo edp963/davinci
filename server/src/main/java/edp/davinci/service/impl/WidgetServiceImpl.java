@@ -25,7 +25,10 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.PaginateWithQueryColumns;
 import edp.core.model.QueryColumn;
-import edp.core.utils.*;
+import edp.core.utils.BaseLock;
+import edp.core.utils.CollectionUtils;
+import edp.core.utils.FileUtils;
+import edp.core.utils.ServerUtils;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.LogNameEnum;
@@ -40,12 +43,12 @@ import edp.davinci.dao.ViewMapper;
 import edp.davinci.dao.WidgetMapper;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
+import edp.davinci.dto.shareDto.ShareEntity;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
-import edp.davinci.model.Source;
 import edp.davinci.model.SqlVariable;
 import edp.davinci.model.User;
 import edp.davinci.model.Widget;
@@ -53,8 +56,9 @@ import edp.davinci.service.ProjectService;
 import edp.davinci.service.ShareService;
 import edp.davinci.service.ViewService;
 import edp.davinci.service.WidgetService;
+import edp.davinci.service.share.ShareFactor;
+import edp.davinci.service.share.ShareResult;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.curator.retry.RetryUntilElapsed;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
@@ -117,6 +121,9 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
     @Value("${sql_template_delimiter:$}")
     private String sqlTempDelimiter;
+
+    @Autowired
+    private String TOKEN_SECRET;
 
     private static final CheckEntityEnum entity = CheckEntityEnum.WIDGET;
 
@@ -322,15 +329,23 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      *
      * @param id
      * @param user
-     * @param username
+     * @param shareEntity
      * @return
      */
     @Override
-    public String shareWidget(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public ShareResult shareWidget(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         Widget widget = getWidget(id);
         checkSharePermission(entity, widget.getProjectId(), user);
-        return shareService.generateShareToken(id, username, user.getId());
+        shareService.formatShareParam(widget.getProjectId(), shareEntity);
+        ShareFactor shareFactor = ShareFactor.Builder
+                .shareFactor()
+                .withShareEntity(shareEntity)
+                .withEntityId(id)
+                .withSharerId(user.getId())
+                .build();
+
+        return shareFactor.toShareResult(TOKEN_SECRET);
     }
 
 

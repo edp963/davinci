@@ -31,6 +31,7 @@ import edp.core.model.QueryColumn;
 import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
+import edp.davinci.core.enums.ShareMode;
 import edp.davinci.core.model.TokenEntity;
 import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.dao.*;
@@ -107,6 +108,12 @@ public class ShareServiceImpl implements ShareService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private RoleMapper roleMapper;
+
+    @Autowired
+    private ProjectMapper projectMapper;
 
     @Override
     public User shareLogin(String token, UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption {
@@ -429,6 +436,33 @@ public class ShareServiceImpl implements ShareService {
     }
 
 
+    public void formatShareParam(Long projectId, ShareEntity entity) {
+        if (entity.getMode() != ShareMode.AUTH) {
+            return;
+        }
+
+        Set<Long> viewers = new HashSet<>();
+        Set<Long> roleIds = new HashSet<>();
+
+        if (!CollectionUtils.isEmpty(entity.getViewerIds())) {
+            List<User> users = userMapper.getByIds(new ArrayList<>(entity.getViewerIds()));
+            users.stream().map(User::getId).forEach(viewers::add);
+        }
+        if (!CollectionUtils.isEmpty(entity.getViewerEmails())) {
+            List<User> users = userMapper.selectByEmails(entity.getViewerEmails());
+            users.stream().map(User::getId).forEach(viewers::add);
+        }
+
+        if (!CollectionUtils.isEmpty(entity.getRoles())) {
+            Project project = projectMapper.getById(projectId);
+            List<Role> roles = roleMapper.selectByIdsAndOrgId(project.getOrgId(), new ArrayList<>(entity.getRoles()));
+            roles.stream().map(Role::getId).forEach(roleIds::add);
+        }
+
+        entity.setViewerIds(viewers);
+        entity.setRoles(roleIds);
+    }
+
     /**
      * 生成分享token
      *
@@ -438,6 +472,7 @@ public class ShareServiceImpl implements ShareService {
      * @throws ServerException
      */
     @Override
+    @Deprecated
     public String generateShareToken(Long shareEntityId, String username, Long userId) throws ServerException {
         /**
          * username: share实体Id:-:分享人id[:-:被分享人用户名]
@@ -470,6 +505,7 @@ public class ShareServiceImpl implements ShareService {
      * @throws ServerException
      * @throws UnAuthorizedExecption
      */
+    @Deprecated
     public ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption {
 
         if (StringUtils.isEmpty(token)) {
