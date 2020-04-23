@@ -16,31 +16,24 @@
  *  >>
  */
 
-package edp.davinci.core.enums;
+package edp.davinci.service.share;
 
-import lombok.Getter;
+import lombok.Data;
 
-public enum ShareMode {
+@Data
+public class ShareResult {
+    String token;
 
-    COMPATIBLE(0),  // 兼容模式
-    NORMAL(1),      // 普通分享
-    PASSWORD(2),    // 口令分享
-    AUTH(3),        // 权限分享（用户、角色）
-    ;
-    @Getter
-    private int mode;
+    /**
+     * only for share mode is <code>{@link edp.davinci.core.enums.ShareMode}</code> is password
+     */
+    String password;
 
-    ShareMode(int mode) {
-        this.mode = mode;
+    public ShareResult(String token, String password) {
+        this.token = token;
+        this.password = password;
     }
 
-    public static ShareMode valueOf(int mode) {
-        for (ShareMode shareMode : ShareMode.values()) {
-            if (shareMode.mode == mode) {
-                return shareMode;
-            }
-        }
-        return null;
+    public ShareResult() {
     }
-
 }

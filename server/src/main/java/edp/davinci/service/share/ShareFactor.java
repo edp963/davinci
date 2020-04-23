@@ -16,7 +16,7 @@
  *  >>
  */
 
-package edp.davinci.dto.shareDto;
+package edp.davinci.service.share;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
@@ -25,10 +25,15 @@ import edp.core.utils.AESUtils;
 import edp.core.utils.StringZipUtil;
 import edp.davinci.core.enums.ShareDataPermission;
 import edp.davinci.core.enums.ShareMode;
+import edp.davinci.dto.shareDto.ShareEntity;
 import lombok.Data;
+import org.springframework.beans.BeanUtils;
 
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Data
 public class ShareFactor {
@@ -55,6 +60,14 @@ public class ShareFactor {
         }
     }
 
+    private static final char[] PASSWORD_SEEDS = {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
+            'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+    };
+
+    private static final int PASSWORD_LEN = 8;
+
     private static final SerializerFeature[] serializerFeatures = {
             SerializerFeature.QuoteFieldNames,
             SerializerFeature.DisableCircularReferenceDetect,
@@ -69,8 +82,7 @@ public class ShareFactor {
      * 0: compatible
      * 1: normal
      * 2: password
-     * 3: auth (user)
-     * 4: auth (role)
+     * 3: auth
      */
     private ShareMode mode = ShareMode.COMPATIBLE;
 
@@ -116,15 +128,14 @@ public class ShareFactor {
      */
     private Set<Long> roles;
 
-
     private Long expire = null;
 
 
-    public static ShareFactor parseShareFactor(String token, String slat) throws IllegalArgumentException {
+    public static ShareFactor parseShareFactor(String token, String secret) throws IllegalArgumentException {
         ShareFactor factor = null;
         try {
             String uncompress = StringZipUtil.uncompress(token);
-            String decrypt = AESUtils.decrypt(uncompress, slat);
+            String decrypt = AESUtils.decrypt(uncompress, secret);
             factor = JSONObject.parseObject(decrypt, ShareFactor.class);
             factor.format();
         } catch (Exception e) {
@@ -140,13 +151,16 @@ public class ShareFactor {
         return factor;
     }
 
-    public String toShareToken(String slat) {
+    public ShareResult toShareResult(String secret) {
+        if (this.mode == ShareMode.PASSWORD) {
+            this.password = randomPassword();
+        }
         format();
         String jsonString = JSONObject.toJSONString(this, serializeFilter, serializerFeatures);
-        return StringZipUtil.compress(AESUtils.encrypt(jsonString, slat));
+        return new ShareResult(StringZipUtil.compress(AESUtils.encrypt(jsonString, secret)), this.password);
     }
 
-    public void format() {
+    private void format() {
         switch (this.getMode()) {
             case COMPATIBLE:
                 this.setPermission(null);
@@ -172,6 +186,77 @@ public class ShareFactor {
             case AUTH:
                 this.setPassword(null);
                 break;
+        }
+    }
+
+
+    private static String randomPassword() {
+        IntStream intStream = new Random().ints(0, PASSWORD_SEEDS.length);
+        return intStream.limit(PASSWORD_LEN).mapToObj(i -> PASSWORD_SEEDS[i]).map(String::valueOf).collect(Collectors.joining());
+    }
+
+    public static class Builder {
+        private ShareFactor shareFactor;
+
+        private Builder() {
+            shareFactor = new ShareFactor();
+        }
+
+        public Builder withShareEntity(ShareEntity shareEntity) {
+            BeanUtils.copyProperties(shareEntity, shareFactor);
+            return this;
+        }
+
+        public Builder withMode(ShareMode mode) {
+            shareFactor.mode = mode;
+            return this;
+        }
+
+        public Builder withPermission(ShareDataPermission permission) {
+            shareFactor.permission = permission;
+            return this;
+        }
+
+        public Builder withEntityId(Long entityId) {
+            shareFactor.entityId = entityId;
+            return this;
+        }
+
+        public Builder withSharerId(Long sharerId) {
+            shareFactor.sharerId = sharerId;
+            return this;
+        }
+
+        public Builder withPassword(String password) {
+            shareFactor.password = password;
+            return this;
+        }
+
+        public Builder withViewers(Set<Long> viewers) {
+            shareFactor.viewers = viewers;
+            return this;
+        }
+
+        public Builder withRoles(Set<Long> roles) {
+            shareFactor.roles = roles;
+            return this;
+        }
+
+        public Builder withExpire(Long expire) {
+            shareFactor.expire = expire;
+            return this;
+        }
+
+        public static Builder shareFactor() {
+            return new Builder();
+        }
+
+        public ShareFactor build() {
+            assert shareFactor.entityId > 0L;
+            assert shareFactor.sharerId > 0L;
+
+            shareFactor.format();
+            return shareFactor;
         }
     }
 }
