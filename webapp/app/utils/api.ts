@@ -31,7 +31,6 @@ export default {
   user: `${host}/users`,
   changepwd: `${host}/changepwd`,
   source: `${host}/sources`,
-  bizlogic: `${host}/views`,
   view: `${host}/views`,
   // bizdata: `${host}/bizdatas`,
   widget: `${host}/widgets`,

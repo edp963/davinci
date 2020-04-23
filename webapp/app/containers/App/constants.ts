@@ -18,8 +18,6 @@
  * >>
  */
 
-import { DownloadStatus } from './types'
-
 export const GET_EXTERNAL_AUTH_PROVIDERS = 'davinci/App/GET_EXTERNAL_AUTH_PROVIDERS'
 export const GET_EXTERNAL_AUTH_PROVIDERS_SUCESS = 'davinci/App/GET_EXTERNAL_AUTH_PROVIDERS_SUCESS'
 export const TRY_EXTERNAL_AUTH = 'davinci/App/TRY_EXTERNAL_AUTH'
@@ -80,6 +78,19 @@ export const DELETE_TEAM_PROJECT = 'davinci/permission/DELETE_TEAM_PROJECT'
 export const UPDATE_TEAM_PROJECT_PERMISSION = 'davinci/permission/UPDATE_TEAM_PROJECT_PERMISSION'
 export const UPDATE_TEAM = 'davinci/permission/UPDATE_TEAM'
 export const DELETE_TEAM = 'davinci/permission/DELETE_TEAM'
+
+export enum DownloadTypes {
+  Folder = 'folder',
+  Dashboard = 'dashboard',
+  Widget = 'widget'
+}
+
+export enum DownloadStatus {
+  Processing = 1,
+  Success = 2,
+  Failed = 3,
+  Downloaded = 4
+}
 
 export const DOWNLOAD_STATUS_COLORS = {
   [DownloadStatus.Processing]: 'blue',

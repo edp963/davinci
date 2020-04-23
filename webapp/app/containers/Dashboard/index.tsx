@@ -58,7 +58,8 @@ import {
   downloadFile
 } from '../App/actions'
 import { makeSelectDownloadList, makeSelectDownloadListLoading } from '../App/selectors'
-import { DownloadTypes, IDownloadRecord } from '../App/types'
+import { IDownloadRecord } from '../App/types'
+import { DownloadTypes } from '../App/constants'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 import { ProjectActions } from '../Projects/actions'
 const { loadProjectDetail, excludeRoles } = ProjectActions
@@ -117,16 +118,6 @@ export interface IDashboard {
   index?: number
   type?: number
   children?: any[]
-}
-
-export interface IDashboardConfig {
-  filters?: IGlobalControl[]
-  linkagers?: any[]
-  queryMode?: GlobalControlQueryMode
-}
-
-export interface ICurrentDashboard extends IDashboard {
-  widgets: any[]
 }
 
 interface IDashboardStates {

@@ -7,14 +7,8 @@ import {
   DOWNLOAD_FILE
 } from 'containers/App/constants'
 
-import {
-  DRILL_DASHBOARDITEM,
-  DELETE_DRILL_HISTORY,
-  SELECT_DASHBOARD_ITEM_CHART,
-  MONITORED_SYNC_DATA_ACTION,
-  MONITORED_SEARCH_DATA_ACTION,
-  MONITORED_LINKAGE_DATA_ACTION
-} from 'containers/Dashboard/constants'
+import { ActionTypes as DashboardActionTypes } from 'containers/Dashboard/constants'
+import { IDataDownloadStatistic } from 'app/containers/Dashboard/types'
 import {uuid} from 'utils/util'
 
 interface IDownloadFields {
@@ -52,11 +46,11 @@ import { statistic, IOperation } from './statistic.dv'
 
 
 const dataAction = {
-  [DRILL_DASHBOARDITEM]: 'drill',
-  [DELETE_DRILL_HISTORY]: 'drill',
-  [MONITORED_SYNC_DATA_ACTION]: 'sync',
-  [MONITORED_SEARCH_DATA_ACTION]: 'search',
-  [MONITORED_LINKAGE_DATA_ACTION]: 'linkage'
+  [DashboardActionTypes.DRILL_DASHBOARDITEM]: 'drill',
+  [DashboardActionTypes.DELETE_DRILL_HISTORY]: 'drill',
+  [DashboardActionTypes.MONITORED_SYNC_DATA_ACTION]: 'sync',
+  [DashboardActionTypes.MONITORED_SEARCH_DATA_ACTION]: 'search',
+  [DashboardActionTypes.MONITORED_LINKAGE_DATA_ACTION]: 'linkage'
 }
 
 const otherAction = {
@@ -74,13 +68,14 @@ function getWidgetDetailFieldsbyDownload (action) {
   const taskType = action.payload.type
   const taskId = uuid(8, 16)
   const downloadDetails: IDownloadFields[] = action.statistic && action.statistic.length ? action.statistic.map((statistic) => {
-      const {widget: {id, name}, filters, tempFilters, params, groups, itemId} = statistic.param
+      const { widget: {id, name}, itemId, param } = statistic as IDataDownloadStatistic
+      const { filters, params, groups } = param
       return {
         widget_id: id,
         widget_name: name,
         variables: params,
         groups,
-        filters: tempFilters ? filters.concat(tempFilters) : filters,
+        filters,
         dashboard_rel_widget: itemId,
         task_type: taskType,
         task_id: taskId

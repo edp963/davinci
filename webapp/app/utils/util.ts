@@ -106,6 +106,9 @@ export function errorHandler(error) {
     }
   } else if (error.message) {
     message.error(error.message, 3)
+    throw error
+  } else {
+    throw error
   }
 }
 

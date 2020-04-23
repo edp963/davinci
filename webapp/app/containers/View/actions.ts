@@ -24,9 +24,9 @@ import { returnType } from 'utils/redux'
 import { IDavinciResponse } from 'utils/request'
 import {
   IViewBase, IView, IExecuteSqlParams, IExecuteSqlResponse, IViewInfo,
-  IDacChannel, IDacTenant, IDacBiz
+  IDacChannel, IDacTenant, IDacBiz, IViewQueryResponse
 } from './types'
-import { IDataRequestParams } from 'containers/Dashboard/types'
+import { IDataRequestBody } from '../Dashboard/types'
 import { RenderType } from 'containers/Widget/components/Widget'
 import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
 const CancelToken = axios.CancelToken
@@ -340,7 +340,7 @@ export const ViewActions = {
 
   loadViewData (
     id: number,
-    requestParams: IDataRequestParams,
+    requestParams: IDataRequestBody,
     resolve: (data: any[]) => void,
     reject: (error) => void
   ) {
@@ -399,7 +399,7 @@ export const ViewActions = {
     renderType: RenderType,
     itemId: number | [number, number],
     viewId: number,
-    requestParams: IDataRequestParams,
+    requestParams: any,
     vizType: 'dashboard' | 'display',
     statistic
   ) {
@@ -419,8 +419,8 @@ export const ViewActions = {
   viewDataFromVizItemLoaded (
     renderType: RenderType,
     itemId: number | [number, number],
-    requestParams: IDataRequestParams,
-    result: any[],
+    requestParams: any,
+    result: IViewQueryResponse,
     vizType: 'dashboard' | 'display',
     statistic
   ) {

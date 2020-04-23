@@ -18,8 +18,16 @@
  * >>
  */
 
-import { call, put, all, takeLatest, throttle, takeEvery } from 'redux-saga/effects'
-
+import {
+  call,
+  put,
+  all,
+  select,
+  takeLatest,
+  throttle,
+  takeEvery
+} from 'redux-saga/effects'
+import omit from 'lodash/omit'
 import { message } from 'antd'
 import {
   LOGIN,
@@ -35,7 +43,8 @@ import {
   INITIATE_DOWNLOAD_TASK,
   GET_EXTERNAL_AUTH_PROVIDERS,
   TRY_EXTERNAL_AUTH,
-  EXTERNAL_AUTH_LOGOUT
+  EXTERNAL_AUTH_LOGOUT,
+  DownloadTypes
 } from './constants'
 import {
   logged,
@@ -57,11 +66,36 @@ import {
   initiateDownloadTaskFail,
   gotExternalAuthProviders
 } from './actions'
+import {
+  makeSelectCurrentDashboard,
+  makeSelectItemRelatedWidget,
+  makeSelectItemInfo
+} from 'containers/Dashboard/selectors'
+import {
+  makeSelectGlobalControlPanelFormValues,
+  makeSelectLocalControlPanelFormValues
+} from 'containers/ControlPanel/selectors'
+import {
+  getCurrentControlValues,
+  getRequestParams,
+  getRequestBody
+} from '../Dashboard/util'
+import {
+  IDashboard,
+  IDashboardItemInfo,
+  IDataDownloadStatistic
+} from '../Dashboard/types'
 import request, { removeToken, getToken } from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
+import {
+  IGlobalControlConditionsByItem,
+  IGlobalControlConditions
+} from 'app/components/Filters/types'
+import { IWidgetFormed } from '../Widget/types'
+import { ControlPanelTypes } from 'app/components/Filters/constants'
 
-export function* getExternalAuthProviders (): IterableIterator<any> {
+export function* getExternalAuthProviders(): IterableIterator<any> {
   try {
     const asyncData = yield call(request, {
       method: 'get',
@@ -75,7 +109,7 @@ export function* getExternalAuthProviders (): IterableIterator<any> {
   }
 }
 
-export function* tryExternalAuth (action): IterableIterator<any> {
+export function* tryExternalAuth(action): IterableIterator<any> {
   const { resolve } = action.payload
   try {
     const asyncData = yield call(request, {
@@ -90,7 +124,7 @@ export function* tryExternalAuth (action): IterableIterator<any> {
   }
 }
 
-export function* login (action): IterableIterator<any> {
+export function* login(action): IterableIterator<any> {
   const { username, password, resolve } = action.payload
 
   try {
@@ -112,11 +146,11 @@ export function* login (action): IterableIterator<any> {
   }
 }
 
-export function* externalAuthlogout (): IterableIterator<any> {
+export function* externalAuthlogout(): IterableIterator<any> {
   location.replace(`${api.externalLogout}`)
 }
 
-export function* logout (): IterableIterator<any> {
+export function* logout(): IterableIterator<any> {
   try {
     removeToken()
     localStorage.removeItem('loginUser')
@@ -125,8 +159,8 @@ export function* logout (): IterableIterator<any> {
   }
 }
 
-export function* activeUser (action): IterableIterator<any> {
-  const {token, resolve} = action.payload
+export function* activeUser(action): IterableIterator<any> {
+  const { token, resolve } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
@@ -154,7 +188,7 @@ export function* activeUser (action): IterableIterator<any> {
   }
 }
 
-export function* getLoginUser (action): IterableIterator<any> {
+export function* getLoginUser(action): IterableIterator<any> {
   try {
     const asyncData = yield call(request, `${api.user}/token`)
     const loginUser = asyncData.payload
@@ -167,7 +201,7 @@ export function* getLoginUser (action): IterableIterator<any> {
   }
 }
 
-export function* checkName (action): IterableIterator<any> {
+export function* checkName(action): IterableIterator<any> {
   const { id, name, type, params, resolve, reject } = action.payload
   try {
     const asyncData = yield call(request, `${api.checkName}/${type}`, {
@@ -178,15 +212,21 @@ export function* checkName (action): IterableIterator<any> {
         name
       }
     })
-    const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
-    const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
+    const msg =
+      asyncData && asyncData.header && asyncData.header.msg
+        ? asyncData.header.msg
+        : ''
+    const code =
+      asyncData && asyncData.header && asyncData.header.code
+        ? asyncData.header.code
+        : ''
     resolve(msg)
   } catch (err) {
     errorHandler(err)
   }
 }
 
-export function* checkNameUnique (action): IterableIterator<any> {
+export function* checkNameUnique(action): IterableIterator<any> {
   const { pathname, data, resolve, reject } = action.payload
   try {
     if (!data.name) {
@@ -197,16 +237,22 @@ export function* checkNameUnique (action): IterableIterator<any> {
       url: `${api.checkNameUnique}/${pathname}`,
       params: data
     })
-    const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
-    const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
+    const msg =
+      asyncData && asyncData.header && asyncData.header.msg
+        ? asyncData.header.msg
+        : ''
+    const code =
+      asyncData && asyncData.header && asyncData.header.code
+        ? asyncData.header.code
+        : ''
     resolve(msg)
   } catch (err) {
     errorHandler(err)
   }
 }
 
-export function* updateProfile (action): IterableIterator<any> {
-  const {  id, name, description, department, resolve } = action.payload
+export function* updateProfile(action): IterableIterator<any> {
+  const { id, name, description, department, resolve } = action.payload
 
   try {
     const asyncData = yield call(request, {
@@ -218,10 +264,13 @@ export function* updateProfile (action): IterableIterator<any> {
         department
       }
     })
-    const updateUserProfile = {id, name, department, description}
+    const updateUserProfile = { id, name, department, description }
     yield put(updateProfileSuccess(updateUserProfile))
-    const prevLoginUser = JSON.parse(localStorage.getItem('loginUser')) 
-    localStorage.setItem('loginUser', JSON.stringify({...prevLoginUser, ...updateUserProfile}))  
+    const prevLoginUser = JSON.parse(localStorage.getItem('loginUser'))
+    localStorage.setItem(
+      'loginUser',
+      JSON.stringify({ ...prevLoginUser, ...updateUserProfile })
+    )
     resolve(asyncData)
   } catch (err) {
     yield put(updateProfileError())
@@ -229,8 +278,8 @@ export function* updateProfile (action): IterableIterator<any> {
   }
 }
 
-export function* changeUserPassword ({ payload }) {
-  const {user} = payload
+export function* changeUserPassword({ payload }) {
+  const { user } = payload
   try {
     const result = yield call(request, {
       method: 'put',
@@ -245,8 +294,8 @@ export function* changeUserPassword ({ payload }) {
   }
 }
 
-export function* joinOrganization (action): IterableIterator<any> {
-  const {token, resolve, reject} = action.payload
+export function* joinOrganization(action): IterableIterator<any> {
+  const { token, resolve, reject } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
@@ -284,7 +333,7 @@ export function* joinOrganization (action): IterableIterator<any> {
   }
 }
 
-export function* getDownloadList (): IterableIterator<any> {
+export function* getDownloadList(): IterableIterator<any> {
   try {
     const result = yield call(request, `${api.download}/page`)
     yield put(downloadListLoaded(result.payload))
@@ -294,7 +343,7 @@ export function* getDownloadList (): IterableIterator<any> {
   }
 }
 
-export function* downloadFile (action): IterableIterator<any> {
+export function* downloadFile(action): IterableIterator<any> {
   const { id } = action.payload
   try {
     location.href = `${api.download}/record/file/${id}/${getToken()}`
@@ -305,44 +354,127 @@ export function* downloadFile (action): IterableIterator<any> {
   }
 }
 
-export function* initiateDownloadTask (action): IterableIterator<any> {
-  const { id, type, itemId } = action.payload
+function getDownloadInfo(
+  type: DownloadTypes,
+  itemId: number,
+  itemInfo: IDashboardItemInfo,
+  relatedWidget: IWidgetFormed,
+  localControlFormValues: object,
+  globalControlConditions: IGlobalControlConditions
+): IDataDownloadStatistic {
+  const localControlConditions = getCurrentControlValues(
+    ControlPanelTypes.Local,
+    relatedWidget.config.controls,
+    localControlFormValues
+  )
+  const requestParams = getRequestParams(
+    relatedWidget,
+    itemInfo.queryConditions,
+    false,
+    {
+      ...globalControlConditions,
+      ...localControlConditions
+    }
+  )
+  const id = type === DownloadTypes.Dashboard ? itemId : relatedWidget.id
+  return {
+    id,
+    param: {
+      ...getRequestBody(requestParams),
+      flush: true,
+      pageNo: 0,
+      pageSize: 0
+    },
+    itemId,
+    widget: relatedWidget
+  }
+}
+
+export function* initiateDownloadTask(action): IterableIterator<any> {
+  const { type, itemId } = action.payload
+  const currentDashboard: IDashboard = yield select(
+    makeSelectCurrentDashboard()
+  )
+  const globalControlFormValues = yield select(
+    makeSelectGlobalControlPanelFormValues()
+  )
+  const globalControlConditionsByItem: IGlobalControlConditionsByItem = getCurrentControlValues(
+    ControlPanelTypes.Global,
+    currentDashboard.config.filters,
+    globalControlFormValues
+  )
+
+  let id = action.payload.id
+  const downloadInfo: IDataDownloadStatistic[] = []
+
+  if (type === DownloadTypes.Dashboard) {
+    const globalControlConditionsByItemEntries: Array<
+      [string, IGlobalControlConditions]
+    > = Object.entries(globalControlConditionsByItem)
+    while (globalControlConditionsByItemEntries.length) {
+      const [
+        relatedItemId,
+        globalControlConditions
+      ] = globalControlConditionsByItemEntries[0]
+      const itemInfo: IDashboardItemInfo = yield select((state) =>
+        makeSelectItemInfo()(state, Number(relatedItemId))
+      )
+      const relatedWidget: IWidgetFormed = yield select((state) =>
+        makeSelectItemRelatedWidget()(state, Number(relatedItemId))
+      )
+      const localControlFormValues = yield select((state) =>
+        makeSelectLocalControlPanelFormValues()(state, Number(relatedItemId))
+      )
+      downloadInfo.push(
+        getDownloadInfo(
+          type,
+          Number(relatedItemId),
+          itemInfo,
+          relatedWidget,
+          localControlFormValues,
+          globalControlConditions
+        )
+      )
+      globalControlConditionsByItemEntries.shift()
+    }
+  } else {
+    const itemInfo: IDashboardItemInfo = yield select((state) =>
+      makeSelectItemInfo()(state, itemId)
+    )
+    const relatedWidget: IWidgetFormed = yield select((state) =>
+      makeSelectItemRelatedWidget()(state, itemId)
+    )
+    const localControlFormValues = yield select((state) =>
+      makeSelectLocalControlPanelFormValues()(state, itemId)
+    )
+    id = relatedWidget.id
+    downloadInfo.push(
+      getDownloadInfo(
+        type,
+        itemId,
+        itemInfo,
+        relatedWidget,
+        localControlFormValues,
+        globalControlConditionsByItem[itemId]
+      )
+    )
+  }
+
   try {
-    const downloadParams = action.payload.downloadParams.map((params) => {
-      const {
-        id,
-        filters,
-        tempFilters,
-        linkageFilters,
-        globalFilters,
-        variables,
-        linkageVariables,
-        globalVariables,
-        ...rest
-      } = params
-      return {
-        id,
-        param: {
-          ...rest,
-          filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
-          params: variables.concat(linkageVariables).concat(globalVariables)
-        }
-      }
-    })
     yield call(request, {
       method: 'POST',
       url: `${api.download}/submit/${type}/${id}`,
-      data: downloadParams
+      data: downloadInfo.map((d) => omit(d, 'widget', 'itemId'))
     })
     message.success('下载任务创建成功！')
-    yield put(DownloadTaskInitiated(type, itemId, downloadParams))
+    yield put(DownloadTaskInitiated(type, downloadInfo, itemId))
   } catch (err) {
-    yield put(initiateDownloadTaskFail(err))
+    yield put(initiateDownloadTaskFail(err, itemId))
     errorHandler(err)
   }
 }
 
-export default function* rootGroupSaga (): IterableIterator<any> {
+export default function* rootGroupSaga(): IterableIterator<any> {
   yield all([
     throttle(1000, CHECK_NAME, checkNameUnique as any),
     takeLatest(GET_LOGIN_USER, getLoginUser as any),
@@ -360,4 +492,3 @@ export default function* rootGroupSaga (): IterableIterator<any> {
     takeEvery(INITIATE_DOWNLOAD_TASK, initiateDownloadTask)
   ])
 }
-

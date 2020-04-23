@@ -18,11 +18,32 @@
  * >>
  */
 
-import { IDashboard } from 'app/containers/Viz/types'
-import { IMapControlOptions, IGridCtrlParams } from 'app/components/Filters/types'
-import { RenderType } from '../Widget/components/Widget'
+import { IDashboardBase, IDashboardRaw } from 'app/containers/Viz/types'
+import {
+  GlobalControlQueryMode,
+  IGlobalControl
+} from 'app/components/Filters/types'
+import { RenderType, IPaginationParams } from '../Widget/components/Widget'
 import { IFieldSortDescriptor } from '../Widget/components/Config/Sort'
 import { SharePanelType, ISharePanel } from 'app/components/SharePanel/type'
+import { IWidgetFormed } from '../Widget/types'
+import { IView, IViewQueryResponse } from '../View/types'
+import { CancelTokenSource } from 'axios'
+
+export interface IDashboard extends IDashboardBase {
+  config: IDashboardConfig
+}
+
+export interface IDashboardConfig {
+  filters: IGlobalControl[]
+  linkages: any[]
+  queryMode: GlobalControlQueryMode
+}
+
+export interface IDashboardDetailRaw extends IDashboardRaw {
+  widgets: IDashboardItem[]
+  views: IView[]
+}
 
 export interface IDashboardItem {
   id: number
@@ -38,12 +59,7 @@ export interface IDashboardItem {
 }
 
 export interface IDashboardItemInfo {
-  datasource: {
-    pageNo: number
-    pageSize: number
-    resultList: any[]
-    totalCount: number
-  }
+  datasource: IViewQueryResponse
   loading: boolean
   queryConditions: IQueryConditions
   shareToken: string
@@ -53,32 +69,35 @@ export interface IDashboardItemInfo {
   interactId: string
   rendered: boolean
   renderType: RenderType
-  controlSelectOptions: IMapControlOptions
   selectedItems: number[]
   errorMessage: string
 }
 
-export type QueryVariable = Array<{name: string, value: string | number}>
+export type QueryVariable = Array<{ name: string; value: string | number }>
 
 export interface IQueryVariableMap {
   [key: string]: string | number
 }
 
 export interface IQueryConditions {
-  tempFilters?: string[]
-  linkageFilters?: string[]
-  globalFilters?: string[]
-  orders?: Array<{column: string, direction: string}>
-  variables?: QueryVariable
-  linkageVariables?: QueryVariable
-  globalVariables?: QueryVariable
-  pagination?: {
-    pageNo: number
-    pageSize: number
-  }
-  nativeQuery?: boolean
+  tempFilters: string[] // @TODO combine widget static filters with local filters
+  linkageFilters: string[]
+  globalFilters: string[]
+  variables: QueryVariable
+  linkageVariables: QueryVariable
+  globalVariables: QueryVariable
+  pagination: IPaginationParams
+  nativeQuery: boolean
+  orders?: Array<{ column: string; direction: string }>
   drillStatus?: any
-  drillHistory?: Array<{filter?: any, type?: string, col?: string[], row?: string[], groups?: string[], name: string}>
+  drillHistory?: Array<{
+    filter?: any
+    type?: string
+    col?: string[]
+    row?: string[]
+    groups?: string[]
+    name: string
+  }>
   drillpathSetting?: any
   drillpathInstance?: any
   drillSetting?: any
@@ -86,23 +105,20 @@ export interface IQueryConditions {
 
 export interface IDataRequestParams {
   groups: string[]
-  aggregators: Array<{column: string, func: string}>
+  aggregators: Array<{ column: string; func: string }>
   filters: string[]
-  tempFilters?: string[]
-  linkageFilters?: string[]
-  globalFilters?: string[]
-  variables?: QueryVariable
-  linkageVariables?: QueryVariable
-  globalVariables?: QueryVariable
-  orders: Array<{column: string, direction: string}>
+  tempFilters: string[]
+  linkageFilters: string[]
+  globalFilters: string[]
+  variables: QueryVariable
+  linkageVariables: QueryVariable
+  globalVariables: QueryVariable
+  orders: Array<{ column: string; direction: string }>
   cache: boolean
   expired: number
   flush: boolean
-  pagination?: {
-    pageNo: number
-    pageSize: number
-  }
-  nativeQuery?: boolean
+  pagination?: IPaginationParams
+  nativeQuery: boolean
   customOrders?: IFieldSortDescriptor[]
   drillStatus?: {
     filter: {
@@ -112,8 +128,25 @@ export interface IDataRequestParams {
   }
 }
 
-export interface IDataDownloadParams extends IDataRequestParams {
-  id: number
+export interface IDataRequestBody {
+  groups: string[]
+  aggregators: Array<{ column: string; func: string }>
+  filters: string[]
+  params?: QueryVariable
+  orders?: Array<{ column: string; direction: string }>
+  cache: boolean
+  expired: number
+  flush: boolean
+  pageNo: number
+  pageSize: number
+  nativeQuery: boolean
+}
+
+export interface IDataDownloadStatistic {
+  id: number,
+  param: IDataRequestBody
+  itemId: number
+  widget: IWidgetFormed
 }
 
 export interface IDashboardState {
@@ -123,16 +156,23 @@ export interface IDashboardState {
   currentDashboardAuthorizedShareToken: string
   currentDashboardShareLoading: boolean
   sharePanel: IDashboardSharePanelState
-  currentDashboardSelectOptions: IMapControlOptions
   currentItems: IDashboardItem[]
   currentItemsInfo: {
-    [key: string]: IDashboardItemInfo
+    [itemId: string]: IDashboardItemInfo
   }
-  currentDashboardGlobalControlParams: IGridCtrlParams
+  fullScreenPanelItemId: number
+  cancelTokenSources: CancelTokenSource[]
 }
 
-export interface IDashboardSharePanelState extends Pick<ISharePanel, 'id' | 'itemId' | 'type' | 'title'> {
+export interface IDashboardSharePanelState
+  extends Pick<ISharePanel, 'id' | 'itemId' | 'type' | 'title'> {
   visible: boolean
 }
 
-export { IDashboard, SharePanelType }
+export type ILoadData = (
+  renderType: RenderType,
+  itemId: number,
+  queryConditions?: Partial<IQueryConditions>
+) => void
+
+export { IDashboardRaw, SharePanelType }

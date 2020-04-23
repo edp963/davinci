@@ -29,8 +29,7 @@ import { IRichTextConfig, IBarConfig, IRadarConfig } from '../Workbench/ConfigSe
 import { IDoubleYAxisConfig } from '../Workbench/ConfigSections/DoubleYAxisSection'
 import { IViewModel } from 'containers/View/types'
 import { IQueryVariableMap } from 'containers/Dashboard/types'
-import { getStyleConfig } from '../util'
-import ChartTypes from '../../config/chart/ChartTypes'
+import { ILocalControl } from 'app/components/Filters/types'
 import { RichTextNode } from 'app/components/RichText'
 const styles = require('../Pivot/Pivot.less')
 
@@ -125,7 +124,7 @@ export interface IPaginationParams {
   withPaging: boolean
 }
 
-export interface IWidgetProps {
+interface IWidgetConfigBase {
   data: object[]
   cols: IWidgetDimension[]
   rows: IWidgetDimension[]
@@ -134,7 +133,6 @@ export interface IWidgetProps {
   filters: IWidgetFilter[]
   chartStyles: IChartStyles
   selectedChart: number
-  interacting?: boolean
   color?: IDataParamProperty
   label?: IDataParamProperty
   size?: IDataParamProperty
@@ -149,6 +147,11 @@ export interface IWidgetProps {
   pagination?: IPaginationParams
   editing?: boolean
   queryVariables?: IQueryVariableMap
+  computed?: any[]
+}
+
+export interface IWidgetProps extends IWidgetConfigBase {
+  interacting?: boolean
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
   getDataDrillDetail?: (position: string) => void
@@ -156,14 +159,13 @@ export interface IWidgetProps {
   onChartStylesChange?: (propPath: string[], value: string | RichTextNode[]) => void
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object[]
-  computed?: any[]
   selectedItems?: number[]
   onSelectChartsItems?: (selectedItems: number[]) => void
   // onHideDrillPanel?: (swtich: boolean) => void
 }
 
-export interface IWidgetConfig extends IWidgetProps {
-  controls: any[]
+export interface IWidgetConfig extends IWidgetConfigBase {
+  controls: ILocalControl[]
   cache: boolean
   expired: number
   autoLoadData: boolean
@@ -196,13 +198,14 @@ export class Widget extends React.Component<
   }
 
   private container = createRef<HTMLDivElement>()
+  private remeasureRenderTypes = ['rerender', 'clear', 'refresh', 'resize', 'flush']
 
   public componentDidMount () {
     this.getContainerSize()
   }
 
   public componentWillReceiveProps (nextProps: IWidgetProps) {
-    if (nextProps.renderType === 'resize') {
+    if (this.remeasureRenderTypes.includes(nextProps.renderType)) {
       this.getContainerSize()
     }
   }
@@ -224,12 +227,10 @@ export class Widget extends React.Component<
   }
 
   public render () {
-    const { loading, empty } = this.props
+    const { loading, empty, ...rest } = this.props
     const { width, height } = this.state
 
-    const widgetProps = { width, height, ...this.props }
-
-    delete widgetProps.loading
+    const widgetProps = { width, height, ...rest }
 
     let widgetContent: JSX.Element
     if (width && height) {

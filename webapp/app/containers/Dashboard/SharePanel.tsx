@@ -21,18 +21,19 @@
 import React, { FC, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import SharePanelComponent from 'app/components/SharePanel'
-import {
+import DashboardActions from './actions'
+const {
   loadDashboardShareLink,
   loadWidgetShareLink,
   closeSharePanel
-} from '../actions'
+} = DashboardActions
 import {
   makeSelectSharePanel,
   makeSelectCurrentDashboardShareToken,
   makeSelectCurrentDashboardAuthorizedShareToken,
   makeSelectCurrentDashboardShareLoading,
   makeSelectCurrentItemsInfo
-} from '../selectors'
+} from './selectors'
 
 const SharePanel: FC = () => {
   const dispatch = useDispatch()
