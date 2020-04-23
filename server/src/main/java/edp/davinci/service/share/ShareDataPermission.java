@@ -18,22 +18,27 @@
 
 package edp.davinci.service.share;
 
-import lombok.Data;
+import lombok.Getter;
 
-@Data
-public class ShareResult {
-    String token;
+public enum ShareDataPermission {
+    SHARER(0),
+    VIEWER(1);
 
-    /**
-     * only for share mode is <code>{@link ShareMode}</code> is password
-     */
-    String password;
+    @Getter
+    private int permission;
 
-    public ShareResult(String token, String password) {
-        this.token = token;
-        this.password = password;
+    ShareDataPermission(int permission) {
+        this.permission = permission;
     }
 
-    public ShareResult() {
+    public static ShareDataPermission valueOf(int permission) {
+        switch (permission) {
+            case 0:
+                return SHARER;
+            case 1:
+                return VIEWER;
+            default:
+                return null;
+        }
     }
 }

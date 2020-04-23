@@ -58,6 +58,7 @@ import edp.davinci.service.ViewService;
 import edp.davinci.service.WidgetService;
 import edp.davinci.service.share.ShareFactor;
 import edp.davinci.service.share.ShareResult;
+import edp.davinci.service.share.ShareType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -338,6 +339,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         shareService.formatShareParam(widget.getProjectId(), shareEntity);
         ShareFactor shareFactor = ShareFactor.Builder
                 .shareFactor()
+                .withType(ShareType.WIDGET)
                 .withShareEntity(shareEntity)
                 .withEntityId(id)
                 .withSharerId(user.getId())

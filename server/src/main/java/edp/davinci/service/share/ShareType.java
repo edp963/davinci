@@ -16,31 +16,20 @@
  *  >>
  */
 
-package edp.davinci.core.enums;
+package edp.davinci.service.share;
 
 import lombok.Getter;
 
-public enum ShareMode {
-
-    COMPATIBLE(0),  // 兼容模式
-    NORMAL(1),      // 普通分享
-    PASSWORD(2),    // 口令分享
-    AUTH(3),        // 权限分享（用户、角色）
+public enum ShareType {
+    WIDGET(0),
+    DASHBOARD(1),
+    DISPLAY(2),
     ;
+
     @Getter
-    private int mode;
+    private int type;
 
-    ShareMode(int mode) {
-        this.mode = mode;
+    ShareType(int type) {
+        this.type = type;
     }
-
-    public static ShareMode valueOf(int mode) {
-        for (ShareMode shareMode : ShareMode.values()) {
-            if (shareMode.mode == mode) {
-                return shareMode;
-            }
-        }
-        return null;
-    }
-
 }

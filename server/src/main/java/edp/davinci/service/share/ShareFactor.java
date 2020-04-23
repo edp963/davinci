@@ -23,8 +23,6 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.alibaba.fastjson.serializer.ValueFilter;
 import edp.core.utils.AESUtils;
 import edp.core.utils.StringZipUtil;
-import edp.davinci.core.enums.ShareDataPermission;
-import edp.davinci.core.enums.ShareMode;
 import edp.davinci.dto.shareDto.ShareEntity;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
@@ -47,8 +45,11 @@ public class ShareFactor {
             if (value instanceof String && ((String) value).trim().length() == 0) {
                 return null;
             }
-            if (value instanceof List && ((List) value).isEmpty()) {
+            if (value instanceof List && ((Set) value).isEmpty()) {
                 return null;
+            }
+            if (value instanceof ShareType) {
+                return ((ShareType) value).getType();
             }
             if (value instanceof ShareMode) {
                 return ((ShareMode) value).getMode();
@@ -95,6 +96,14 @@ public class ShareFactor {
      */
     private ShareDataPermission permission = ShareDataPermission.SHARER;
 
+    /**
+     * share type
+     * <p>
+     * <code>{@link ShareType}</code>
+     * 0: sharer
+     * 1: viewer
+     */
+    private ShareType type;
 
     /**
      * share entity id
@@ -217,6 +226,11 @@ public class ShareFactor {
             return this;
         }
 
+        public Builder withType(ShareType type) {
+            shareFactor.type = type;
+            return this;
+        }
+
         public Builder withEntityId(Long entityId) {
             shareFactor.entityId = entityId;
             return this;
@@ -254,6 +268,7 @@ public class ShareFactor {
         public ShareFactor build() {
             assert shareFactor.entityId > 0L;
             assert shareFactor.sharerId > 0L;
+            assert shareFactor.type != null;
 
             shareFactor.format();
             return shareFactor;
