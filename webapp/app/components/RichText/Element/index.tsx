@@ -19,15 +19,5 @@
  */
 
 export { default as Element } from './Element'
-export {
-  ElementTypes,
-  ElementType,
-  ListElementTypes,
-  ElementTags,
-  TextTags,
-  TextStyles,
-  TextProperties,
-  BlockProperties,
-  BlockAlignments
-} from './constants'
+export * from './constants'
 export { default as withElements } from './decorators'
