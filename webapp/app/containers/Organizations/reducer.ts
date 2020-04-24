@@ -50,7 +50,7 @@ const organizationReducer = (
     switch (action.type) {
       case ActionTypes.DELETE_ORGANIZATION_MEMBER_SUCCESS:
         if (draft.currentOrganizationMembers) {
-          draft.currentTeamMembers = draft.currentOrganizationMembers.filter(
+          draft.currentOrganizationMembers = draft.currentOrganizationMembers.filter(
             (d) => d.id !== action.payload.id
           )
         }

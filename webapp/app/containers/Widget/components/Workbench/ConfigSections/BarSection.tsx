@@ -155,7 +155,7 @@ export class BarSection extends React.PureComponent<
               <Col span={4}>
                 <ColorPicker
                   value={color}
-                  onChange={this.propChange('color', 'border')}
+                  onChange={this.propChange('color', 'border') as (e: string) => void}
                 />
               </Col>
             </Row>

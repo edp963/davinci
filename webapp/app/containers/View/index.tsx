@@ -49,7 +49,6 @@ import Box from 'components/Box'
 import SearchFilterDropdown from 'components/SearchFilterDropdown'
 import CopyModal from './components/CopyModal'
 
-import { IRouteParams } from 'app/routes'
 import { IViewBase, IView, IViewLoading } from './types'
 import { IProject } from '../Projects/types'
 
