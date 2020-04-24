@@ -259,8 +259,10 @@ function* getData(
       data: getRequestBody(requestParams),
       cancelToken: cancelTokenSource.token
     })
-    const { resultList } = result.payload
-    result.payload.resultList = (resultList && resultList.slice(0, 600)) || []
+    result.payload = result.payload || {}
+    const { payload } = result
+    payload.resultList = payload.resultList || []
+    payload.resultList = payload.resultList.slice(0, 600)
     requestParams.pagination = getUpdatedPagination(
       requestParams.pagination,
       result.payload
