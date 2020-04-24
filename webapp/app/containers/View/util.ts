@@ -1,7 +1,9 @@
-import { IViewModel, ISqlColumn, IView, IFormedView, IViewRoleRaw, IViewRole } from './types'
+import { IViewModel, ISqlColumn, IView, IFormedView, IViewRoleRaw, IViewRole, IKeyOfViewModelProps } from './types'
 
 import { SqlTypes } from 'app/globalConstants'
 import { DefaultModelTypeSqlTypeSetting, VisualTypeSqlTypeSetting, ViewModelVisualTypes, ViewModelTypes } from './constants'
+import { hasProperty } from 'utils/util'
+
 
 export function getFormedView (view: IView): IFormedView {
   const { model, variable, roles } = view
@@ -67,4 +69,48 @@ export function getValidRoleModelNames (model: IViewModel, modelNames: string[])
 
   const validModelNames = modelNames.filter((name) => !!model[name])
   return validModelNames
+}
+
+
+export function getTypesOfModelCollect (model: IViewModel, type: IKeyOfViewModelProps) {
+  let target = {}
+  if (model) {
+    return target = Object.keys(model).reduce((iteratee, current) => {
+      iteratee[current] = hasProperty(model[current], type)
+      return iteratee
+    }, {})
+  }
+  return target
+}
+
+
+function cacheManager (model: IViewModel, type: IKeyOfViewModelProps) {
+  const cache = {}
+  return function (name: string, callback) {
+    if (cache['prevModel'] === model) {
+      cache[type] = cache[type] || getTypesOfModelCollect(model, type)
+    } else {
+      cache['prevModel'] = model
+      cache[type] = getTypesOfModelCollect(model, type)
+    }
+    return callback(cache)
+  }
+}
+
+export const getTypesOfModelByKeyName = (model: IViewModel, type: IKeyOfViewModelProps) => (name: string) => {
+  return cacheManager(model, type)(name, (cache) => {
+    if (cache && cache[type]) {
+      return hasProperty(cache[type], name)
+    }
+  })
+}
+
+
+export const getListsByViewModelTypes = (model: IViewModel, type: IKeyOfViewModelProps) => (modelType: ViewModelTypes) => {
+  return cacheManager(model, type)(name, (cache) => {
+    const target = cache[type]
+    return Object.keys(target).reduce((iteratee, current) => {
+      return iteratee.concat(target[current] === modelType ? current : [])
+    }, [])
+  })
 }

@@ -74,7 +74,7 @@ import request from 'utils/request'
 import { errorHandler, getErrorMessage } from 'utils/util'
 import { message } from 'antd'
 import api from 'utils/api'
-
+import { operationWidgetProps } from 'components/DataDrill/abstract/widgetOperating'
 export function* getDashboardDetail(action: DashboardActionType) {
   if (action.type !== ActionTypes.LOAD_DASHBOARD_DETAIL) {
     return
@@ -91,7 +91,7 @@ export function* getDashboardDetail(action: DashboardActionType) {
       widgets: call(request, `${api.widget}?projectId=${projectId}`)
     })
     const { dashboardDetail, widgets } = result
-
+    operationWidgetProps.widgetIntoPool(widgets.payload)
     const {
       widgets: items,
       views,

@@ -120,7 +120,7 @@ import { statistic, IVizData } from 'utils/statistic/statistic.dv'
 const utilStyles = require('assets/less/util.less')
 const styles = require('./Dashboard.less')
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
-
+import { IDrillDetail } from 'components/DataDrill/types'
 type MappedStates = ReturnType<typeof mapStateToProps>
 type MappedDispatches = ReturnType<typeof mapDispatchToProps>
 
@@ -835,21 +835,33 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     onDrillDashboardItem(itemId, currentDrillStatus)
   }
 
-  private dataDrill = (e) => {
+  private dataDrill = (drillDetail) => {
+    const { onDrillDashboardItem, onLoadDashboardItemData } = this.props
+    const { itemId, widgetId, cols, rows, type, groups, filters, currentGroup } = drillDetail
+    const currentDrillStatus: IDrillDetail = { cols, rows, type, groups, filters, currentGroup }
+
+    onDrillDashboardItem(itemId, currentDrillStatus)
+    onLoadDashboardItemData('rerender', itemId, widgetId, {
+        drillStatus: currentDrillStatus
+    })
+  }
+
+  private dataDrill1 = (e) => {
     const {
       widgets,
       currentItemsInfo,
-      onLoadDashboardItemData,
       onDrillDashboardItem
     } = this.props
     const { itemId, groups, widgetId, sourceDataFilter, mode, col, row} = e
     const sourceDataGroup = Array.isArray(e.sourceDataGroup) ? [...(e.sourceDataGroup as Array<string>)] : []
     const widget = widgets.find((w) => w.id === widgetId)
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired, model, dimetionAxis, selectedChart } = widget.config
+    const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired, model } = widgetConfig
     const drillHistory = currentItemsInfo[itemId].queryConditions.drillHistory
     let sql = void 0
     let name = void 0
     let filterSource = void 0
+
     let widgetConfigGroups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
@@ -876,31 +888,37 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     const coustomTableSqls = []
    // let sqls = widgetConfig.filters.map((i) => i.config.sqlModel)
     let sqls = []
-    filters.forEach((item) => {
+    widgetConfig.filters.forEach((item) => {
       sqls = sqls.concat(item.config.sqlModel)
     })
     if ((!drillHistory) || drillHistory.length === 0) {
       let currentCol = void 0
-      if (widget.config) {
-        widgetConfigRows = rows && rows.length ? rows : []
-        widgetConfigCols = cols && cols.length ? cols : []
-        const mode = widget.config.mode
+      if (widgetConfig) {
+        const dimetionAxis = widgetConfig.dimetionAxis
+        widgetConfigRows = widgetConfig.rows && widgetConfig.rows.length ? widgetConfig.rows : []
+        widgetConfigCols = widgetConfig.cols && widgetConfig.cols.length ? widgetConfig.cols : []
+        const mode = widgetConfig.mode
         if (mode && mode === 'pivot') {
           if (cols && cols.length !== 0) {
+            const cols = widgetConfig.cols
             name = cols[cols.length - 1]['name']
           } else {
+            const rows = widgetConfig.rows
             name = rows[rows.length - 1]['name']
           }
-        } else if (dimetionAxis === 'col') {
+        } else if (dimetionAxis === 'col') { // bar图
+          const cols = widgetConfig.cols
           name = cols[cols.length - 1]['name']
         } else if (dimetionAxis === 'row') {
+          const rows = widgetConfig.rows
           name = rows[rows.length - 1]['name']
-        } else if (mode === 'chart'  && selectedChart === ChartTypes.Table) {
+        } else if (mode === 'chart'  && widgetConfig.selectedChart === ChartTypes.Table) {
           // todo coustomTable
           const coustomTable = sourceDataFilter.reduce((a, b) => {
             a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
             return a
           }, {})
+
           for (const attr in coustomTable) {
             if (coustomTable[attr] !== undefined && attr) {
               const sqlType = model[attr] && model[attr]['sqlType'] ? model[attr]['sqlType'] : 'VARCHAR'
@@ -915,6 +933,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
              // coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
             }
           }
+
          // const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : ''
           const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
           const newWidgetPropCols = widgetConfigCols.reduce((array, col) => {
@@ -927,6 +946,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           currentCol = groups && groups.length ? newWidgetPropCols : void 0
         }
       }
+      //} if (widgetConfig)
       filterSource = sourceDataFilter.map((source) => {
         if (source && source[name]) {
           return source[name]
@@ -934,7 +954,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       })
 
       if (name && name.length) {
-        // todo filter
+        // todo filter currentCol 是除了 coustomTable 之外所有 cols取值
         currentCol = col && col.length ? widgetConfigCols.concat([{name: col}]) : void 0
         const sqlType = model[name] && model[name]['sqlType'] ? model[name]['sqlType'] : 'VARCHAR'
         sql = {
@@ -947,6 +967,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         // sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
         sqls.push(sql)
       }
+
       if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
         sqls = sqls.concat(coustomTableSqls)
       }
@@ -957,7 +978,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       } else {
         if (mode === 'pivot') {
           currentDrillGroups = widgetConfigGroups.concat([groups])
-        } else if (mode === 'chart' && selectedChart === ChartTypes.Table) {
+        } else if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
           currentDrillGroups = widgetConfigGroups.concat([groups])
         } else {
           currentDrillGroups = [groups]
@@ -982,7 +1003,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       let currentCol = void 0
       let currentRow = void 0
      // todo
-      if (mode === 'chart' && selectedChart === ChartTypes.Table) {
+      if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
         const coustomTable = sourceDataFilter.reduce((a, b) => {
           a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
           return a
@@ -1006,7 +1027,11 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           sqls = sqls.concat(coustomTableSqls)
         }
         if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
-          const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
+          const drillKey = sourceDataFilter && sourceDataFilter.length
+          ? sourceDataFilter[sourceDataFilter.length - 1]['key']
+          : sourceDataGroup && sourceDataGroup.length
+            ? sourceDataGroup.pop()
+            : ''
           const cols = lastDrillHistory.col
           const newWidgetPropCols = cols.reduce((array, col) => {
             array.push(col)
@@ -1018,8 +1043,9 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           currentCol = groups && groups.length ? newWidgetPropCols : lastDrillHistory.col
         }
         sqls = sqls.concat(lastDrillHistory.filter.sqls)
-      
+
       } else {
+        // 非coustomTable 的 filters 生成方式
         name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
         filterSource = sourceDataFilter.map((source) => source[name])
        // sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
@@ -1043,7 +1069,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       } else {
         if (mode === 'pivot') {
           currentDrillGroups = lastDrillHistory.groups.concat([groups])
-        } else if (mode === 'chart' && selectedChart === ChartTypes.Table) {
+        } else if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
           currentDrillGroups = lastDrillHistory.groups.concat([groups])
         } else {
           currentDrillGroups = [groups]

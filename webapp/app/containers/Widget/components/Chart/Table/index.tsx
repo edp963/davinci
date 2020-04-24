@@ -38,7 +38,7 @@ import { TABLE_PAGE_SIZES } from 'app/globalConstants'
 import { getFieldAlias } from 'containers/Widget/components/Config/Field'
 import { decodeMetricName } from 'containers/Widget/components/util'
 import Styles from './Table.less'
-import { hasProperty } from 'components/DataDrill/util'
+import { hasProperty } from 'utils/util'
 import {
   findChildConfig, traverseConfig,
   computeCellWidth, getDataColumnWidth, getMergedCellSpan, getTableCellValueRange } from './util'
@@ -50,13 +50,16 @@ import { resizeTableColumns } from './components/HeadCell'
 interface IMapTableHeaderConfig {
   [key: string]: ITableHeaderConfig
 }
-interface TSelectItemCellProps {
+interface ISelectItemCellProps {
   index: number
   value: string
   key: string
 }
-type ISelectItemsCell = {[propName: string] : Array<TSelectItemCellProps>}
-type ISelectItems =  {
+interface ISelectItemsCell {
+  [propName: string]: ISelectItemCellProps[]
+}
+
+interface ISelectItems {
   group: string[]
   cell: ISelectItemsCell
 }
@@ -320,7 +323,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     })
   }
 
-  private asyncEmitDrillDetail() {
+  private asyncEmitDrillDetail () {
     const { getDataDrillDetail } = this.props
     setTimeout(() => {
       if (this.props.getDataDrillDetail) {
@@ -332,12 +335,12 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     }, 500)
   }
 
-  private combineGroups() {
+  private combineGroups () {
     const {group} = this.state.selectItems
     return group
   }
 
-  private combineFilter() {
+  private combineFilter () {
     const {cell} = this.state.selectItems
     return Object.keys(cell).reduce((iteratee, target) => {
       iteratee = iteratee.concat(cell[target])
@@ -358,45 +361,43 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private filterSameNeighbourSibings = (arr, targetIndex ) => {
-    let s = targetIndex, e = targetIndex;
-    let flag = -1;
-    let orgIndex = targetIndex;
-  
+    let s = targetIndex
+    let e = targetIndex
+    let flag = -1
+    const orgIndex = targetIndex
+
     do {
-        let target = arr[targetIndex];
-        if (flag=== -1&&targetIndex > 0 && arr[targetIndex - 1] === target) {
-            s = targetIndex -= 1;
-       
-        }else if (flag===1&& arr[targetIndex + 1] === target) {
-            e = (targetIndex += 1);
-        
-        } else if (flag===-1) {
-          flag = 1;
-          targetIndex=orgIndex;
+        const target = arr[targetIndex]
+        if (flag === -1 && targetIndex > 0 && arr[targetIndex - 1] === target) {
+            s = targetIndex -= 1
+        } else if (flag === 1 && arr[targetIndex + 1] === target) {
+            e = (targetIndex += 1)
+        } else if (flag === -1) {
+          flag = 1
+          targetIndex = orgIndex
+        } else {
+            break
         }
-        else {
-            break;
-        }
-  
-    } while (targetIndex > -1 && targetIndex < arr.length);
+
+    } while (targetIndex > -1 && targetIndex < arr.length)
     return { s, e }
   }
 
-  private coustomFilter(array, column, index,) {
-    const nativeIndex = array.reduce((a , b, c) => {return b.index === index ? c : a}, 0)
+  private coustomFilter (array, column, index) {
+    const nativeIndex = array.reduce((a , b, c) => b.index === index ? c : a, 0)
     const columns = array.map((a) => a[column])
     const {s: start, e: end} = this.filterSameNeighbourSibings(columns, nativeIndex)
     return array.filter((arr) => (arr['index'] < array[start]['index'] || arr.index > array[end]['index']))
   }
 
-  private collectCell = (target, index,dataIndex: string) => (event) => {
-    let {group, cell} = this.state.selectItems
+  private collectCell = (target, index, dataIndex: string) => (event) => {
+    const { group, cell } = this.state.selectItems
     const { data} = this.props
     const groupName = this.matchAttrInBrackets(dataIndex)
     if (this.isValueModelType(groupName)) {
       return
     }
-   
+
     if (group.includes(dataIndex)) {
       group.forEach((g, i) => g === dataIndex ? group.splice(i, 1) : void 0)
       const setKeyArray = data.map((obj: {key: number}, index) => ({
@@ -407,17 +408,17 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       }))
       cell[dataIndex] = this.coustomFilter(setKeyArray, groupName, index)
     } else {
-      let sourceCol = cell[dataIndex]
+      const sourceCol = cell[dataIndex]
       const currentValue = {
         ...target,
         index,
         key: groupName,
         value: target[dataIndex]
       }
-      
+
       if (sourceCol && sourceCol.length) {
         const isb = sourceCol.some((col) => col.index === index)
-        if(isb) {
+        if (isb) {
           cell[dataIndex] = this.coustomFilter(cell[dataIndex], groupName, index)
         } else {
           sourceCol.push(currentValue)
@@ -426,7 +427,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         cell[dataIndex] = [currentValue]
       }
     }
-    
+
     this.setState({
       selectItems: {...this.state.selectItems}
     }, () => {
@@ -443,14 +444,14 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     }
     const {group, cell} = this.state.selectItems
     if (group.includes(dataIndex)) {
-      group.forEach((a, index) => {if (a === dataIndex) group.splice(index, 1)})
+      group.forEach((a, index) => a === dataIndex ? group.splice(index, 1) : void 0)
     } else {
       group.push(dataIndex)
     }
     delete cell[dataIndex]
     this.setState({
       selectItems: {...this.state.selectItems}
-    },() => {
+    }, () => {
       this.asyncEmitDrillDetail()
     })
   }
@@ -459,9 +460,9 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const { group, cell } = this.state.selectItems
     let result = ''
     Object.keys(cell).forEach((key) => {
-      if (dataIndex === key){
-        cell[key].forEach(ck => {
-          if(index === ck.index) {
+      if (dataIndex === key) {
+        cell[key].forEach((ck) => {
+          if (index === ck.index) {
             result = Styles.select
           }
         })
@@ -478,8 +479,6 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return hasProperty(target, modelName) === ViewModelTypes.Value
   }
 
- 
-
   private getModelTypecollectByModel = () => {
     const {model} = this.props
     return Object.keys(model).reduce((iteratee, target) => {
@@ -490,7 +489,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private onHeadCellClassName = (target, dataIndex) => {
     const {group} = this.state.selectItems
-    if(group && group.includes(dataIndex)){
+    if (group && group.includes(dataIndex)){
       return Styles.select
     }
     return ''

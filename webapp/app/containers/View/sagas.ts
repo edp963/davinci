@@ -275,8 +275,8 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
   const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   let searchFilters = filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters)
-  if (drillStatus && drillStatus.filter) {
-    searchFilters = searchFilters.concat( drillStatus.filter.sqls)
+  if (drillStatus && drillStatus.filters) {
+    searchFilters = searchFilters.concat(drillStatus.filters)  // 改成 drillStatus.filters
   }
 
   try {
