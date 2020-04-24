@@ -18,23 +18,13 @@
  * >>
  */
 
+import { IViewModel } from 'containers/View/types'
 
-import {
-  IViewModel
-} from 'containers/View/types'
+import { Merge } from 'utils/types'
 
-import {
-  Merge
-} from 'utils/types'
+import { IFilters } from 'components/Filters/types'
 
-import {
-  IFilters
-} from 'components/Filters/types'
-
-
-import {
-  IQueryVariableMap
-} from 'containers/Dashboard/types'
+import { IQueryVariableMap } from 'containers/Dashboard/types'
 
 import {
   IWidgetDimension,
@@ -48,9 +38,7 @@ import {
   IPaginationParams
 } from 'containers/Widget/components/Widget'
 
-import {
-  IDataParamProperty
-} from 'containers/Widget/components/Workbench/OperatingPanel'
+import { IDataParamProperty } from 'containers/Widget/components/Workbench/OperatingPanel'
 import { number } from 'prop-types'
 
 export enum DrillType {
@@ -102,7 +90,7 @@ export default class WidgetAbstract {
   public yAxis?: IDataParamProperty
   public dimetionAxis?: DimetionType
   public renderType?: RenderType
-  public orders: Array<{ column: string, direction: string }>
+  public orders: Array<{ column: string; direction: string }>
   public mode: WidgetMode
   public model: IViewModel
   public pagination?: IPaginationParams
@@ -118,15 +106,17 @@ export interface IDrillDetail {
   type: DrillType
   groups: string[]
   filters: IFilters[]
-  currentGroup: string   // 对应原 name
+  currentGroup: string // 对应原 name
   [WidgetDimensions.COL]?: IWidgetDimension[]
   [WidgetDimensions.ROW]?: IWidgetDimension[]
 }
 
-export type IDrillStrategies = Merge<Required<IDrillDetail>, {widgetProps: WidgetAbstract}>
+export type IDrillStrategies = Merge<
+  Required<IDrillDetail>,
+  { widgetProps: WidgetAbstract }
+>
 
-export interface ISourceDataFilter  {
+export interface ISourceDataFilter {
   key: string
   value: string
 }
-

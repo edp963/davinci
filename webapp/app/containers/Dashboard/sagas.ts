@@ -91,7 +91,7 @@ export function* getDashboardDetail(action: DashboardActionType) {
       widgets: call(request, `${api.widget}?projectId=${projectId}`)
     })
     const { dashboardDetail, widgets } = result
-    operationWidgetProps.widgetIntoPool(widgets.payload)
+
     const {
       widgets: items,
       views,
@@ -126,6 +126,8 @@ export function* getDashboardDetail(action: DashboardActionType) {
         }
       }
     )
+
+    operationWidgetProps.widgetIntoPool(formedWidgets)
 
     yield put(dashboardDetailLoaded(dashboard, items, formedWidgets, views))
   } catch (err) {

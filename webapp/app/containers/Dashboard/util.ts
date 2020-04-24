@@ -354,8 +354,8 @@ export function getRequestBody(
     .concat(tempFilters)
     .concat(linkageFilters)
     .concat(globalFilters)
-  if (drillStatus && drillStatus.filter) {
-    combinedFilters = combinedFilters.concat(drillStatus.filter.sqls)
+  if (drillStatus && drillStatus.filters) {
+    combinedFilters = combinedFilters.concat(drillStatus.filters)
   }
 
   return {
