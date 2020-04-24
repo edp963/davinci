@@ -18,16 +18,11 @@
  * >>
  */
 
-import React, {useMemo} from 'react'
+import React, { useMemo } from 'react'
 import { Menu, Icon } from 'antd'
 import { getPivot } from 'containers/Widget/components/util'
-import {
-  DrillType,
-  WidgetDimension
-} from './types'
-import {
-  getListsByViewModelTypes
-} from 'containers/View/util'
+import { DrillType, WidgetDimension } from './types'
+import { getListsByViewModelTypes } from 'containers/View/util'
 import { ViewModelTypes } from 'containers/View/constants'
 
 const styles = require('./datadrill.less')
@@ -43,16 +38,27 @@ export interface IDataDrillProps {
   onDataDrillUp?: (name: string) => any
 }
 
-
-const Datadrill: React.FC<IDataDrillProps> =  (props: IDataDrillProps) => {
-  const {onDataDrillUp, onDataDrillDown, onDataDrillPath, currentData, widgetMode, drillHistory, widgetConfig, drillpathSetting } = props
+const Datadrill: React.FC<IDataDrillProps> = (props: IDataDrillProps) => {
+  const {
+    onDataDrillUp,
+    onDataDrillDown,
+    onDataDrillPath,
+    currentData,
+    widgetMode,
+    drillHistory,
+    widgetConfig,
+    drillpathSetting
+  } = props
 
   let renderComponent = void 0
 
   let menuDisabled = void 0
 
   const getCategoriesModels = useMemo(() => {
-    return getListsByViewModelTypes(widgetConfig && widgetConfig.model, 'modelType')(ViewModelTypes.Category)
+    return getListsByViewModelTypes(
+      widgetConfig && widgetConfig.model,
+      'modelType'
+    )(ViewModelTypes.Category)
   }, [widgetConfig])
 
   const currentCategories = useMemo(() => {
@@ -66,32 +72,53 @@ const Datadrill: React.FC<IDataDrillProps> =  (props: IDataDrillProps) => {
   }, [drillHistory])
 
   const getDrilledGroup = useMemo(() => {
-    return drillHistory && drillHistory.length ? drillHistory.map((history) => history.currentGroup) : []
+    return drillHistory && drillHistory.length
+      ? drillHistory.map((history) => history.currentGroup)
+      : []
   }, [drillHistory])
 
   const modelsfilterDrilledGroup = useMemo(() => {
     return getCategoriesModels.filter((cate) => !getDrilledGroup.includes(cate))
   }, [drillHistory, widgetConfig, getCategoriesModels, getDrilledGroup])
 
-  const {drilldownCategories, drillupCategories } = useMemo(() => {
+  const { drilldownCategories, drillupCategories } = useMemo(() => {
     return {
-      drillupCategories: modelsfilterDrilledGroup.filter((cate) => currentCategories.includes(cate))
-      .map((c) => ({ name: c, modelType: ViewModelTypes.Category, drillType: DrillType.UP})),
-      drilldownCategories: modelsfilterDrilledGroup.filter((cate) => !currentCategories.includes(cate))
-      .map((c) => ({name: c,  modelType: ViewModelTypes.Category, drillType: DrillType.DOWN}))
+      drillupCategories: modelsfilterDrilledGroup
+        .filter((cate) => currentCategories.includes(cate))
+        .map((c) => ({
+          name: c,
+          modelType: ViewModelTypes.Category,
+          drillType: DrillType.UP
+        })),
+      drilldownCategories: modelsfilterDrilledGroup
+        .filter((cate) => !currentCategories.includes(cate))
+        .map((c) => ({
+          name: c,
+          modelType: ViewModelTypes.Category,
+          drillType: DrillType.DOWN
+        }))
     }
   }, [widgetConfig, currentData, currentCategories])
 
   const drillOtherCategories = useMemo(() => {
     return drillHistoryGroups && drillHistoryGroups.length
-    ? modelsfilterDrilledGroup.filter((cate) => !(drillHistory.some((his) => his.name === cate)))
-      .map((name) => ({name, modelType: ViewModelTypes.Category,  drillType: drillHistoryGroups.includes(name) ? DrillType.UP : DrillType.DOWN}))
-    : drilldownCategories
+      ? modelsfilterDrilledGroup
+          .filter((cate) => !drillHistory.some((his) => his.name === cate))
+          .map((name) => ({
+            name,
+            modelType: ViewModelTypes.Category,
+            drillType: drillHistoryGroups.includes(name)
+              ? DrillType.UP
+              : DrillType.DOWN
+          }))
+      : drilldownCategories
   }, [drillHistory])
 
   const isPivot = useMemo(() => widgetMode === 'pivot', [widgetMode])
 
-  const isPivotTableVal = useMemo(() => isPivotTable(widgetConfig.metrics), [widgetConfig])
+  const isPivotTableVal = useMemo(() => isPivotTable(widgetConfig.metrics), [
+    widgetConfig
+  ])
 
   if (drillpathSetting && drillpathSetting.length) {
     if (drillHistory && drillHistory.length) {
@@ -100,61 +127,106 @@ const Datadrill: React.FC<IDataDrillProps> =  (props: IDataDrillProps) => {
     renderComponent = (
       <Menu onClick={drillpath} style={{ width: 120 }} mode="vertical">
         <Menu.Item key="drillpath" disabled={menuDisabled}>
-        <span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan">
-            <span style={{marginLeft: '8px'}}>下钻</span></span>
+          <span
+            style={{ fontSize: '14px' }}
+            className="iconfont icon-iconxiazuan"
+          >
+            <span style={{ marginLeft: '8px' }}>下钻</span>
+          </span>
         </Menu.Item>
       </Menu>
     )
   } else {
     renderComponent = (
       <Menu onClick={drill} style={{ width: 120 }} mode="vertical">
-      {
-        isPivot ?
-        <Menu.SubMenu
-          key={`${DrillType.UP}`}
-          disabled={drillupCategories.length < 2}
-          title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan1">
-          <span style={{marginLeft: '8px'}}>上卷</span></span>}
-        >
-          {drillupCategories ? drillupCategories.map((col) => <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
-        </Menu.SubMenu> :
-        <Menu.SubMenu
-          key="drillAll"
-          disabled={drillOtherCategories.length < 1}
-          title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan">
-          <span style={{marginLeft: '8px'}}>钻取</span></span>}
-        >
-          {drillOtherCategories ?
-            drillOtherCategories.map((col) =>
-            <Menu.Item key={`${col.name}|${col.drillType}`}>
-              <span className={styles.items}>
-                <span>{col.name}</span>
-                <span><Icon type={`${col.drillType === DrillType.UP ? 'arrow-up' : 'arrow-down'}`} /></span>
+        {isPivot ? (
+          <Menu.SubMenu
+            key={`${DrillType.UP}`}
+            disabled={drillupCategories.length < 2}
+            title={
+              <span
+                style={{ fontSize: '14px' }}
+                className="iconfont icon-iconxiazuan1"
+              >
+                <span style={{ marginLeft: '8px' }}>上卷</span>
               </span>
-            </Menu.Item>)
-            : ''}
-        </Menu.SubMenu>
-      }
-      {
-        isPivot ?
-        <Menu.SubMenu
-          key={`${DrillType.DOWN}`}
-          disabled={drilldownCategories.length < 1}
-          title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan">
-          <span style={{marginLeft: '8px'}}>下钻</span></span>}
-        >
-          {drilldownCategories ? drilldownCategories.map((col) => isPivotTableVal ? <Menu.SubMenu key={col.name} title={col.name}><Menu.Item key="row">行</Menu.Item>
-          <Menu.Item key="col">列</Menu.Item>
-          </Menu.SubMenu> : <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
-        </Menu.SubMenu> : ''
-      }
+            }
+          >
+            {drillupCategories
+              ? drillupCategories.map((col) => (
+                  <Menu.Item key={col.name}>{col.name}</Menu.Item>
+                ))
+              : ''}
+          </Menu.SubMenu>
+        ) : (
+          <Menu.SubMenu
+            key="drillAll"
+            disabled={drillOtherCategories.length < 1}
+            title={
+              <span
+                style={{ fontSize: '14px' }}
+                className="iconfont icon-iconxiazuan"
+              >
+                <span style={{ marginLeft: '8px' }}>钻取</span>
+              </span>
+            }
+          >
+            {drillOtherCategories
+              ? drillOtherCategories.map((col) => (
+                  <Menu.Item key={`${col.name}|${col.drillType}`}>
+                    <span className={styles.items}>
+                      <span>{col.name}</span>
+                      <span>
+                        <Icon
+                          type={`${
+                            col.drillType === DrillType.UP
+                              ? 'arrow-up'
+                              : 'arrow-down'
+                          }`}
+                        />
+                      </span>
+                    </span>
+                  </Menu.Item>
+                ))
+              : ''}
+          </Menu.SubMenu>
+        )}
+        {isPivot ? (
+          <Menu.SubMenu
+            key={`${DrillType.DOWN}`}
+            disabled={drilldownCategories.length < 1}
+            title={
+              <span
+                style={{ fontSize: '14px' }}
+                className="iconfont icon-iconxiazuan"
+              >
+                <span style={{ marginLeft: '8px' }}>下钻</span>
+              </span>
+            }
+          >
+            {drilldownCategories
+              ? drilldownCategories.map((col) =>
+                  isPivotTableVal ? (
+                    <Menu.SubMenu key={col.name} title={col.name}>
+                      <Menu.Item key="row">行</Menu.Item>
+                      <Menu.Item key="col">列</Menu.Item>
+                    </Menu.SubMenu>
+                  ) : (
+                    <Menu.Item key={col.name}>{col.name}</Menu.Item>
+                  )
+                )
+              : ''}
+          </Menu.SubMenu>
+        ) : (
+          ''
+        )}
       </Menu>
     )
   }
 
   return renderComponent
 
-  function drill (e) {
+  function drill(e) {
     const path = e.keyPath
     if (path && path.length > 2) {
       onDataDrillDown(path[1], path[0])
@@ -178,16 +250,16 @@ const Datadrill: React.FC<IDataDrillProps> =  (props: IDataDrillProps) => {
       }
     }
   }
-  function drillpath () {
+  function drillpath() {
     onDataDrillPath()
   }
-  function isPivotTable (selectedCharts) {
+  function isPivotTable(selectedCharts) {
     const pivotChart = getPivot()
-    const result = Array.isArray(selectedCharts) && selectedCharts.every((sc) => sc.chart.id === pivotChart.id)
+    const result =
+      Array.isArray(selectedCharts) &&
+      selectedCharts.every((sc) => sc.chart.id === pivotChart.id)
     return !isPivot ? false : result
   }
 }
-
-
 
 export default Datadrill

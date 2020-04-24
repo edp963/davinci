@@ -17,20 +17,13 @@
  * limitations under the License.
  * >>
  */
-import {
-  compose
-} from 'redux'
+import { compose } from 'redux'
 
-import {
-  getLastItemValueOfArray
-} from './util'
+import { getLastItemValueOfArray } from './util'
 
-import {
-  RequireAtLeastOne
-} from 'utils/types'
+import { RequireAtLeastOne } from 'utils/types'
 
-import WidgetAbstract,
-{
+import WidgetAbstract, {
   DrillCharts,
   DrillType,
   WidgetDimensions,
@@ -39,60 +32,78 @@ import WidgetAbstract,
   ISourceDataFilter
 } from './types'
 
-import {
-  IFilters
-} from '../Filters/types'
+import { IFilters } from '../Filters/types'
 
-import {
-  getValidColumnValue
-} from 'components/Filters/util'
+import { getValidColumnValue } from 'components/Filters/util'
 
 import OperatingWidget, {
   operationWidgetProps,
   setDefaultReplaceNull
- } from './abstract/widgetOperating'
+} from './abstract/widgetOperating'
 
-import {
-  IWidgetDimension
-} from 'containers/Widget/components/Widget'
+import { IWidgetDimension } from 'containers/Widget/components/Widget'
 
 const setDefaultEmptyArray = setDefaultReplaceNull((f) => f, [])
 
-export const strategiesOfDrillUpHasDrillHistory = (lastDrillHistory: IDrillDetail, currentWidgetProps: WidgetAbstract) => (
+export const strategiesOfDrillUpHasDrillHistory = (
+  lastDrillHistory: IDrillDetail,
+  currentWidgetProps: WidgetAbstract
+) => (
   widgetDimension: RequireAtLeastOne<IWidgetDimension, keyof IWidgetDimension>,
   sourceData?,
   sourceGroup?: string[]
 ) => {
   return {
-    [DrillCharts.PIVOT] :  (): IDrillDetail => {
-      const drillStragegies: IDrillStrategies = common.call(null, widgetDimension, currentWidgetProps)
+    [DrillCharts.PIVOT]: (): IDrillDetail => {
+      const drillStragegies: IDrillStrategies = common.call(
+        null,
+        widgetDimension,
+        currentWidgetProps
+      )
       const { widgetProps, filters } = drillStragegies
-      const lastGroupOfCols = currentWidgetProps.cols && currentWidgetProps.cols.length !== 0 ? getLastItemValueOfArray(currentWidgetProps.cols, 'name') : null
-      const lastGroupOfRows = currentWidgetProps.rows && currentWidgetProps.rows.length !== 0 ? getLastItemValueOfArray(currentWidgetProps.rows, 'name') : null
+      const lastGroupOfCols =
+        currentWidgetProps.cols && currentWidgetProps.cols.length !== 0
+          ? getLastItemValueOfArray(currentWidgetProps.cols, 'name')
+          : null
+      const lastGroupOfRows =
+        currentWidgetProps.rows && currentWidgetProps.rows.length !== 0
+          ? getLastItemValueOfArray(currentWidgetProps.rows, 'name')
+          : null
 
       return {
         ...drillStragegies,
-        filters: mappingFilters(sourceData, lastGroupOfCols || lastGroupOfRows).concat(filters)
+        filters: mappingFilters(
+          sourceData,
+          lastGroupOfCols || lastGroupOfRows
+        ).concat(filters)
       }
     },
-    [DrillCharts.COUSTOMTABLE] : (): IDrillStrategies => {
+    [DrillCharts.COUSTOMTABLE]: (): IDrillStrategies => {
       // 缺少对 sourceDataGroup 的处理, sourceDataGroup 只是对cols有影响，对filters没有影响。cols又决定table的表头
-      const drillStragegies: IDrillStrategies = common.call(null, widgetDimension)
-      const coustomTableFilters = compose(combineFilters, collectKeyValue, setDefaultEmptyArray)(sourceData)
+      const drillStragegies: IDrillStrategies = common.call(
+        null,
+        widgetDimension
+      )
+      const coustomTableFilters = compose(
+        combineFilters,
+        collectKeyValue,
+        setDefaultEmptyArray
+      )(sourceData)
       return {
         ...drillStragegies,
         filters: coustomTableFilters.concat(drillStragegies.filters)
       }
     }
   }
-  function common (): IDrillStrategies {
+  function common(): IDrillStrategies {
     const WP = operationWidgetProps
-    const {
-      groups,
-      filters
-    } = lastDrillHistory
+    const { groups, filters } = lastDrillHistory
     const widgetProps = WP.deleteWithSthRowsOrCols(
-      WP.deleteWithSthRowsOrCols(currentWidgetProps, WidgetDimensions.ROW, widgetDimension),
+      WP.deleteWithSthRowsOrCols(
+        currentWidgetProps,
+        WidgetDimensions.ROW,
+        widgetDimension
+      ),
       WidgetDimensions.COL,
       widgetDimension
     )
@@ -108,21 +119,25 @@ export const strategiesOfDrillUpHasDrillHistory = (lastDrillHistory: IDrillDetai
   }
 }
 
-export const strategiesOfDrillDownHasDrillHistory = (lastDrillHistory: IDrillDetail, currentWidgetProps: WidgetAbstract) => (
+export const strategiesOfDrillDownHasDrillHistory = (
+  lastDrillHistory: IDrillDetail,
+  currentWidgetProps: WidgetAbstract
+) => (
   widgetDimension: RequireAtLeastOne<IWidgetDimension, keyof IWidgetDimension>,
   sourceData,
   sourceDataGroup
 ) => {
   const WP = operationWidgetProps
-  const cursor: Pick<IWidgetDimension, 'name'> = coustomTableCursor(sourceData, sourceDataGroup)
+  const cursor: Pick<IWidgetDimension, 'name'> = coustomTableCursor(
+    sourceData,
+    sourceDataGroup
+  )
 
-  function common (widgetDimension: IWidgetDimension, currentWidgetProps: WidgetAbstract): IDrillStrategies {
-    const {
-      cols,
-      rows,
-      groups,
-      filters
-    } = lastDrillHistory
+  function common(
+    widgetDimension: IWidgetDimension,
+    currentWidgetProps: WidgetAbstract
+  ): IDrillStrategies {
+    const { cols, rows, groups, filters } = lastDrillHistory
     return {
       cols,
       rows,
@@ -135,11 +150,13 @@ export const strategiesOfDrillDownHasDrillHistory = (lastDrillHistory: IDrillDet
   }
 
   return {
-    [DrillCharts.PIVOTCOL] : (): IDrillStrategies => {
-      const drillStragegies: IDrillStrategies = common.call(null, widgetDimension, currentWidgetProps)
-      const {
-        groups, filters, widgetProps
-      } = drillStragegies
+    [DrillCharts.PIVOTCOL]: (): IDrillStrategies => {
+      const drillStragegies: IDrillStrategies = common.call(
+        null,
+        widgetDimension,
+        currentWidgetProps
+      )
+      const { groups, filters, widgetProps } = drillStragegies
       const nextWidgetProps = WP.insertWithSthRowsOrCols(
         widgetProps,
         WidgetDimensions.COL,
@@ -155,11 +172,13 @@ export const strategiesOfDrillDownHasDrillHistory = (lastDrillHistory: IDrillDet
         rows: nextWidgetProps.rows
       }
     },
-    [DrillCharts.PIVOTROW] : (): IDrillStrategies => {
-      const drillStragegies: IDrillStrategies = common.call(null, widgetDimension, currentWidgetProps)
-      const {
-        groups, filters, widgetProps
-      } = drillStragegies
+    [DrillCharts.PIVOTROW]: (): IDrillStrategies => {
+      const drillStragegies: IDrillStrategies = common.call(
+        null,
+        widgetDimension,
+        currentWidgetProps
+      )
+      const { groups, filters, widgetProps } = drillStragegies
       const nextWidgetProps = WP.insertWithSthRowsOrCols(
         widgetProps,
         WidgetDimensions.ROW,
@@ -175,18 +194,24 @@ export const strategiesOfDrillDownHasDrillHistory = (lastDrillHistory: IDrillDet
         rows: nextWidgetProps.rows
       }
     },
-    [DrillCharts.COUSTOMTABLE] : (): IDrillStrategies => {
-      const drillStragegies: IDrillStrategies = common.call(null, widgetDimension, currentWidgetProps)
-      const {
-        groups, filters, widgetProps
-      } = drillStragegies
+    [DrillCharts.COUSTOMTABLE]: (): IDrillStrategies => {
+      const drillStragegies: IDrillStrategies = common.call(
+        null,
+        widgetDimension,
+        currentWidgetProps
+      )
+      const { groups, filters, widgetProps } = drillStragegies
       const nextWidgetProps = WP.insertWithSthRowsOrCols(
         widgetProps,
         WidgetDimensions.COL,
         widgetDimension,
         cursor
       )
-      const coustomTableFilters = compose(combineFilters, collectKeyValue, setDefaultEmptyArray)(sourceData)
+      const coustomTableFilters = compose(
+        combineFilters,
+        collectKeyValue,
+        setDefaultEmptyArray
+      )(sourceData)
       return {
         ...drillStragegies,
         groups: groups.concat(widgetDimension.name),
@@ -196,12 +221,14 @@ export const strategiesOfDrillDownHasDrillHistory = (lastDrillHistory: IDrillDet
         widgetProps: nextWidgetProps
       }
     },
-    [DrillCharts.DIMETIONAXISCOL] : defaultStrategies,
-    [DrillCharts.DIMETIONAXISROW] : (): IDrillStrategies => {
-      const drillStragegies: IDrillStrategies = common.call(null, widgetDimension, currentWidgetProps)
-      const {
-        groups, filters, widgetProps
-      } = drillStragegies
+    [DrillCharts.DIMETIONAXISCOL]: defaultStrategies,
+    [DrillCharts.DIMETIONAXISROW]: (): IDrillStrategies => {
+      const drillStragegies: IDrillStrategies = common.call(
+        null,
+        widgetDimension,
+        currentWidgetProps
+      )
+      const { groups, filters, widgetProps } = drillStragegies
       const nextWidgetProps = WP.overWriteRowsOrCols(
         widgetProps,
         WidgetDimensions.ROW,
@@ -217,13 +244,15 @@ export const strategiesOfDrillDownHasDrillHistory = (lastDrillHistory: IDrillDet
         rows: nextWidgetProps.rows
       }
     },
-    [DrillCharts.DEFAULT] : defaultStrategies
+    [DrillCharts.DEFAULT]: defaultStrategies
   }
-  function defaultStrategies (): IDrillStrategies {
-    const drillStragegies: IDrillStrategies = common.call(null, widgetDimension, currentWidgetProps)
-    const {
-      groups, filters, widgetProps
-    } = drillStragegies
+  function defaultStrategies(): IDrillStrategies {
+    const drillStragegies: IDrillStrategies = common.call(
+      null,
+      widgetDimension,
+      currentWidgetProps
+    )
+    const { groups, filters, widgetProps } = drillStragegies
     const nextWidgetProps = WP.overWriteRowsOrCols(
       widgetProps,
       WidgetDimensions.COL,
@@ -241,7 +270,10 @@ export const strategiesOfDrillDownHasDrillHistory = (lastDrillHistory: IDrillDet
   }
 }
 
-export const strategiesOfDrillUpNullDrillHistory = (WP: OperatingWidget, target: WidgetAbstract) => (
+export const strategiesOfDrillUpNullDrillHistory = (
+  WP: OperatingWidget,
+  target: WidgetAbstract
+) => (
   widgetDimension: RequireAtLeastOne<IWidgetDimension, keyof IWidgetDimension>,
   sourceData?
 ) => {
@@ -249,27 +281,46 @@ export const strategiesOfDrillUpNullDrillHistory = (WP: OperatingWidget, target:
   const initNativeFilters = WP.initWidgetNativeFilters()
 
   return {
-    [DrillCharts.PIVOT] : (): IDrillStrategies => {
-      const drillStragegies: IDrillStrategies = common.call(null, widgetDimension)
+    [DrillCharts.PIVOT]: (): IDrillStrategies => {
+      const drillStragegies: IDrillStrategies = common.call(
+        null,
+        widgetDimension
+      )
       const { widgetProps } = drillStragegies
-      const lastGroupOfCols = target.cols && target.cols.length !== 0 ? getLastItemValueOfArray(target.cols, 'name') : null
-      const lastGroupOfRows = target.rows && target.rows.length !== 0 ? getLastItemValueOfArray(target.rows, 'name') : null
+      const lastGroupOfCols =
+        target.cols && target.cols.length !== 0
+          ? getLastItemValueOfArray(target.cols, 'name')
+          : null
+      const lastGroupOfRows =
+        target.rows && target.rows.length !== 0
+          ? getLastItemValueOfArray(target.rows, 'name')
+          : null
 
       return {
         ...drillStragegies,
-        filters: mappingFilters(sourceData, lastGroupOfCols || lastGroupOfRows).concat(initNativeFilters)
+        filters: mappingFilters(
+          sourceData,
+          lastGroupOfCols || lastGroupOfRows
+        ).concat(initNativeFilters)
       }
     },
-    [DrillCharts.COUSTOMTABLE] : (): IDrillStrategies => {
-      const drillStragegies: IDrillStrategies = common.call(null, widgetDimension)
-      const coustomTableFilters = compose(combineFilters, collectKeyValue, setDefaultEmptyArray)(sourceData)
+    [DrillCharts.COUSTOMTABLE]: (): IDrillStrategies => {
+      const drillStragegies: IDrillStrategies = common.call(
+        null,
+        widgetDimension
+      )
+      const coustomTableFilters = compose(
+        combineFilters,
+        collectKeyValue,
+        setDefaultEmptyArray
+      )(sourceData)
       return {
         ...drillStragegies,
         filters: coustomTableFilters.concat(initNativeFilters)
       }
     }
   }
-  function common (): IDrillStrategies {
+  function common(): IDrillStrategies {
     const widgetProps = WP.deleteWithSthRowsOrCols(
       WP.deleteWithSthRowsOrCols(target, WidgetDimensions.ROW, widgetDimension),
       WidgetDimensions.COL,
@@ -277,7 +328,7 @@ export const strategiesOfDrillUpNullDrillHistory = (WP: OperatingWidget, target:
     )
     return {
       widgetProps,
-      type:  DrillType.UP,
+      type: DrillType.UP,
       groups: initGroups.filter((group) => group !== widgetDimension.name),
       currentGroup: widgetDimension.name,
       filters: initNativeFilters,
@@ -287,7 +338,10 @@ export const strategiesOfDrillUpNullDrillHistory = (WP: OperatingWidget, target:
   }
 }
 
-export const strategiesOfDrillDownNullDrillHistory = (WP: OperatingWidget, target: WidgetAbstract) => (
+export const strategiesOfDrillDownNullDrillHistory = (
+  WP: OperatingWidget,
+  target: WidgetAbstract
+) => (
   widgetDimension: RequireAtLeastOne<IWidgetDimension, keyof IWidgetDimension>,
   sourceData,
   sourceDataGroup
@@ -296,57 +350,73 @@ export const strategiesOfDrillDownNullDrillHistory = (WP: OperatingWidget, targe
   const initNativeFilters = WP.initWidgetNativeFilters()
   const getCols = WP.getRowsOrCols(WidgetDimensions.COL)
   const getRows = WP.getRowsOrCols(WidgetDimensions.ROW)
-  const cursor: Pick<IWidgetDimension, 'name'> = coustomTableCursor(sourceData, sourceDataGroup)
-
+  const cursor: Pick<IWidgetDimension, 'name'> = coustomTableCursor(
+    sourceData,
+    sourceDataGroup
+  )
 
   return {
-    [DrillCharts.PIVOTCOL] : (): IDrillStrategies => {
-      const widgetProps =  WP.insertWithSthRowsOrCols(
+    [DrillCharts.PIVOTCOL]: (): IDrillStrategies => {
+      const widgetProps = WP.insertWithSthRowsOrCols(
         target,
         WidgetDimensions.COL,
         widgetDimension
       )
-      const lastGroupOfCols = getCols.length !== 0 ? getLastItemValueOfArray(getCols, 'name') : null
-      const lastGroupOfRows = getRows.length !== 0 ? getLastItemValueOfArray(getRows, 'name') : null
-      return {
-        widgetProps,
-        type:  DrillType.DOWN,
-        groups: initGroups.concat(widgetDimension.name),
-        currentGroup: widgetDimension.name,
-        filters: mappingFilters(sourceData, lastGroupOfCols || lastGroupOfRows).concat(initNativeFilters),
-        cols: widgetProps.cols,
-        rows: widgetProps.rows
-      }
-    },
-    [DrillCharts.PIVOTROW] : (): IDrillStrategies => {
-      const widgetProps = WP.insertWithSthRowsOrCols(
-        target,
-        WidgetDimensions.ROW,
-        widgetDimension
-      )
-      const lastGroupOfCols = getCols.length !== 0 ? getLastItemValueOfArray(getCols, 'name') : null
-      const lastGroupOfRows = getRows.length !== 0 ? getLastItemValueOfArray(getRows, 'name') : null
+      const lastGroupOfCols =
+        getCols.length !== 0 ? getLastItemValueOfArray(getCols, 'name') : null
+      const lastGroupOfRows =
+        getRows.length !== 0 ? getLastItemValueOfArray(getRows, 'name') : null
       return {
         widgetProps,
         type: DrillType.DOWN,
         groups: initGroups.concat(widgetDimension.name),
         currentGroup: widgetDimension.name,
-        filters: mappingFilters(sourceData, lastGroupOfCols || lastGroupOfRows).concat(initNativeFilters),
+        filters: mappingFilters(
+          sourceData,
+          lastGroupOfCols || lastGroupOfRows
+        ).concat(initNativeFilters),
         cols: widgetProps.cols,
         rows: widgetProps.rows
       }
     },
-    [DrillCharts.COUSTOMTABLE] : (): IDrillStrategies => {
+    [DrillCharts.PIVOTROW]: (): IDrillStrategies => {
+      const widgetProps = WP.insertWithSthRowsOrCols(
+        target,
+        WidgetDimensions.ROW,
+        widgetDimension
+      )
+      const lastGroupOfCols =
+        getCols.length !== 0 ? getLastItemValueOfArray(getCols, 'name') : null
+      const lastGroupOfRows =
+        getRows.length !== 0 ? getLastItemValueOfArray(getRows, 'name') : null
+      return {
+        widgetProps,
+        type: DrillType.DOWN,
+        groups: initGroups.concat(widgetDimension.name),
+        currentGroup: widgetDimension.name,
+        filters: mappingFilters(
+          sourceData,
+          lastGroupOfCols || lastGroupOfRows
+        ).concat(initNativeFilters),
+        cols: widgetProps.cols,
+        rows: widgetProps.rows
+      }
+    },
+    [DrillCharts.COUSTOMTABLE]: (): IDrillStrategies => {
       const widgetProps = WP.insertWithSthRowsOrCols(
         target,
         WidgetDimensions.COL,
         widgetDimension,
         cursor
       )
-      const coustomTableFilters = compose(combineFilters, collectKeyValue, setDefaultEmptyArray)(sourceData)
+      const coustomTableFilters = compose(
+        combineFilters,
+        collectKeyValue,
+        setDefaultEmptyArray
+      )(sourceData)
       return {
         widgetProps,
-        type:  DrillType.DOWN,
+        type: DrillType.DOWN,
         // groups only determine the result of the data set, the order of the table header is determined by cols
         groups: initGroups.concat(widgetDimension.name),
         currentGroup: widgetDimension.name,
@@ -355,37 +425,41 @@ export const strategiesOfDrillDownNullDrillHistory = (WP: OperatingWidget, targe
         rows: widgetProps.rows
       }
     },
-    [DrillCharts.DIMETIONAXISCOL] : defaultStrategies,
-    [DrillCharts.DIMETIONAXISROW] : (): IDrillStrategies => {
+    [DrillCharts.DIMETIONAXISCOL]: defaultStrategies,
+    [DrillCharts.DIMETIONAXISROW]: (): IDrillStrategies => {
       const widgetProps = WP.overWriteRowsOrCols(
         target,
         WidgetDimensions.ROW,
         widgetDimension
       )
-      const lastGroup = getRows.length !== 0 ? getLastItemValueOfArray(getRows, 'name') : null
+      const lastGroup =
+        getRows.length !== 0 ? getLastItemValueOfArray(getRows, 'name') : null
       return {
         widgetProps,
-        type:  DrillType.DOWN,
+        type: DrillType.DOWN,
         groups: [widgetDimension.name],
         currentGroup: widgetDimension.name,
-        filters: mappingFilters(sourceData, lastGroup).concat(initNativeFilters),
+        filters: mappingFilters(sourceData, lastGroup).concat(
+          initNativeFilters
+        ),
         cols: widgetProps.cols,
         rows: widgetProps.rows
       }
     },
-    [DrillCharts.DEFAULT] : defaultStrategies
+    [DrillCharts.DEFAULT]: defaultStrategies
   }
 
-  function defaultStrategies (): IDrillStrategies {
+  function defaultStrategies(): IDrillStrategies {
     const widgetProps = WP.overWriteRowsOrCols(
       target,
       WidgetDimensions.COL,
       widgetDimension
     )
-    const lastGroup = getCols.length !== 0 ? getLastItemValueOfArray(getCols, 'name') : null
+    const lastGroup =
+      getCols.length !== 0 ? getLastItemValueOfArray(getCols, 'name') : null
     return {
       widgetProps,
-      type:  DrillType.DOWN,
+      type: DrillType.DOWN,
       groups: [widgetDimension.name],
       currentGroup: widgetDimension.name,
       filters: mappingFilters(sourceData, lastGroup).concat(initNativeFilters),
@@ -395,34 +469,39 @@ export const strategiesOfDrillDownNullDrillHistory = (WP: OperatingWidget, targe
   }
 }
 
-function collectKeyValue (sourceDataFilter) {
+function collectKeyValue(sourceDataFilter) {
   return sourceDataFilter.reduce((iteratee, target) => {
     iteratee[target['key']] === undefined
-      ? iteratee[target['key']] = [target['value']]
+      ? (iteratee[target['key']] = [target['value']])
       : iteratee[target['key']].push(target['value'])
     return iteratee
   }, {})
 }
 
-function mappingFilters (sourceDataFilter, group): IFilters[] {
-  const mappgingSource =  sourceDataFilter.map((source) => source && source[group] ? source[group] : source)
+function mappingFilters(sourceDataFilter, group): IFilters[] {
+  const mappgingSource = sourceDataFilter.map((source) =>
+    source && source[group] ? source[group] : source
+  )
   const sqlType = getSqlType(group)
-  return [{
-    name: group,
-    operator: 'in',
-    type: 'filter',
-    value: mappgingSource.map((val) => getValidColumnValue(val, sqlType)),
-    sqlType
-  }]
+  return [
+    {
+      name: group,
+      operator: 'in',
+      type: 'filter',
+      value: mappgingSource.map((val) => getValidColumnValue(val, sqlType)),
+      sqlType
+    }
+  ]
 }
 
-function getSqlType (target: string) {
+function getSqlType(target: string) {
   return operationWidgetProps.getTypesOfModelByKeyName(
-    operationWidgetProps.getModel(), 'sqlType'
-    )(target)
+    operationWidgetProps.getModel(),
+    'sqlType'
+  )(target)
 }
 
-function combineFilters (keyValuds): IFilters[] {
+function combineFilters(keyValuds): IFilters[] {
   return Object.keys(keyValuds).reduce((iteratee, target) => {
     const sqlType = getSqlType(target)
     return iteratee.concat({
@@ -435,43 +514,16 @@ function combineFilters (keyValuds): IFilters[] {
   }, [])
 }
 
-function coustomTableCursor (sourceDataFilter: ISourceDataFilter[], sourceDataGroup?) {
+function coustomTableCursor(
+  sourceDataFilter: ISourceDataFilter[],
+  sourceDataGroup?
+) {
   return {
-    name: sourceDataFilter && sourceDataFilter.length
-    ? getLastItemValueOfArray(sourceDataFilter, 'key')
-    : sourceDataGroup && sourceDataGroup.length
-      ? sourceDataGroup.pop()
-      : ''
+    name:
+      sourceDataFilter && sourceDataFilter.length
+        ? getLastItemValueOfArray(sourceDataFilter, 'key')
+        : sourceDataGroup && sourceDataGroup.length
+        ? sourceDataGroup.pop()
+        : ''
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
