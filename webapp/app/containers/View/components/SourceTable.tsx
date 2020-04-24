@@ -147,7 +147,7 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
     }
   )
 
-  private loadTreeData = (node: AntTreeNode) => new Promise((resolve) => {
+  private loadTreeData = (node: AntTreeNode) => new Promise<void>((resolve) => {
     const { dataRef } = node.props
     if (dataRef === 'column') {
       resolve()

@@ -1,5 +1,5 @@
 import React from 'react'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import FormType from 'antd/lib/form/Form'
 import { Row, Col, Tooltip, Button, Input, Popconfirm, Modal, Table } from 'antd'
 const styles = require('../Organization.less')
 const utilStyles = require('assets/less/util.less')
@@ -8,13 +8,14 @@ import Avatar from 'components/Avatar'
 import * as Organization from '../Organization'
 import ChangeRoleForm from './ChangeRoleForm'
 import ComponentPermission from 'containers/Account/components/checkMemberPermission'
+import { IOrganization, IOrganizationMember } from '../types'
 
 interface IMembersState {
   category?: string
   formKey?: number
   formVisible: boolean
   modalLoading: boolean
-  currentMember: {id?: number, name?: string}
+  currentMember: IOrganizationMember
   changeRoleFormCategory: string
   changeRoleFormVisible: boolean
   changeRoleModalLoading: boolean
@@ -28,7 +29,7 @@ interface IMembersProps {
   deleteOrganizationMember: (id: number, resolve: () => any) => any
   organizationMembers: any[]
   changeOrganizationMemberRole: (id: number, role: number, resolve: () => any) => any
-  currentOrganization: Organization.IOrganization
+  currentOrganization: IOrganization
   inviteMemberList: any
   onInviteMember: (ordId: number, memId: number) => any
   handleSearchMember: (keywords: string) => any
@@ -42,7 +43,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       formKey: 0,
       category: '',
       changeRoleFormCategory: '',
-      currentMember: {},
+      currentMember: null,
       formVisible: false,
       modalLoading: false,
       changeRoleFormVisible: false,
@@ -51,8 +52,13 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     }
   }
 
-  private MemberForm: WrappedFormUtils
-  private ChangeRoleForm: WrappedFormUtils
+  private MemberForm: FormType
+  private ChangeRoleForm: FormType
+
+  private refHandles = {
+    MemberForm: (ref) => this.MemberForm = ref,
+    ChangeRoleForm: (ref) => this.ChangeRoleForm = ref
+  }
 
   private showMemberForm = (type: string) => (e) => {
     e.stopPropagation()
@@ -62,16 +68,16 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     })
   }
 
-  private showChangeRoleForm = (type: string, obj: { id?: number, user?: {role?: number}}) => (e) => {
+  private showChangeRoleForm = (type: string, member: IOrganizationMember) => (e) => {
     e.stopPropagation()
     this.setState({
-      currentMember: obj,
+      currentMember: member,
       changeRoleFormVisible: true,
       changeRoleFormCategory: type
     }, () => {
       setTimeout(() => {
-        const {user: {role}, id} = obj
-        this.ChangeRoleForm.setFieldsValue({id, role})
+        const {user: {role}, id} = member
+        this.ChangeRoleForm.props.form.setFieldsValue({id, role})
       }, 0)
     })
   }
@@ -85,7 +91,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
   }
 
   private afterMemberFormClose = () => {
-    this.MemberForm.resetFields()
+    this.MemberForm.props.form.resetFields()
   }
 
   private removeMemberForm = (text, obj) => () => {
@@ -98,7 +104,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
   }
 
   private changRole = () => {
-    this.ChangeRoleForm.validateFieldsAndScroll((err, values) => {
+    this.ChangeRoleForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const { id, role } = values
         this.props.changeOrganizationMemberRole(id, role, () => {
@@ -114,7 +120,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
 
   private add = () => {
     const { currentOrganization } = this.props
-    this.MemberForm.validateFieldsAndScroll((err, values) => {
+    this.MemberForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
          const { projectId } = values
          const orgId = currentOrganization.id
@@ -127,7 +133,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
   private search = (event) => {
     const value = event.target.value
     const {organizationMembers} = this.props
-    const result = (organizationMembers as Organization.IOrganizationMembers[]).filter((member, index) => {
+    const result = (organizationMembers as IOrganizationMember[]).filter((member, index) => {
       return member && member.user && member.user.username.indexOf(value.trim()) > -1
     })
     this.setState({
@@ -156,7 +162,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
 
   private searchMember = () => {
     this.forceUpdate(() => {
-      this.MemberForm.validateFieldsAndScroll((err, values) => {
+      this.MemberForm.props.form.validateFieldsAndScroll((err, values) => {
         if (!err) {
           const { searchValue } = values
           if (searchValue) {
@@ -175,7 +181,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
   }
 
   private afterChangeRoleFormClose = () => {
-    this.ChangeRoleForm.resetFields()
+    this.ChangeRoleForm.props.form.resetFields()
   }
 
   private toUserProfile = (obj) => () => {
@@ -191,6 +197,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     const {
       formVisible,
       category,
+      currentMember,
       modalLoading,
       changeRoleFormVisible,
       changeRoleModalLoading,
@@ -306,7 +313,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
             inviteMemberList={inviteMemberList}
             handleSearchMember={this.searchMember}
             organizationOrTeam={this.props.currentOrganization}
-            ref={(f) => { this.MemberForm = f }}
+            wrappedComponentRef={this.refHandles.MemberForm}
             addHandler={this.add}
           />
         </Modal>
@@ -320,8 +327,9 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           <ChangeRoleForm
             category={changeRoleFormCategory}
             organizationOrTeam={this.props.currentOrganization}
+            member={currentMember}
             submitLoading={changeRoleModalLoading}
-            ref={(f) => { this.ChangeRoleForm = f }}
+            wrappedComponentRef={this.refHandles.ChangeRoleForm}
             changeHandler={this.changRole}
           />
         </Modal>

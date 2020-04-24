@@ -18,7 +18,6 @@
  * >>
  */
 import React from 'react'
-import {Icon, IconProps} from 'antd/lib/icon'
 
 export const tuple = <T extends string[]>(...args: T) => args
 

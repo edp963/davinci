@@ -158,7 +158,6 @@ export class ColorSettingForm extends React.PureComponent<IColorSettingFormProps
           </div>
           <div className={styles.picker}>
             <SketchPicker
-              className="sketchpickerinpanel"
               color={selected.color}
               presetColors={defaultThemeColors}
               onChangeComplete={this.colorChange}
