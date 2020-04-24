@@ -18,16 +18,18 @@
  * >>
  */
 
-import React, {useMemo, useCallback, useEffect} from 'react'
+import React, {useMemo} from 'react'
 import { Menu, Icon } from 'antd'
 import { getPivot } from 'containers/Widget/components/util'
-import { 
+import {
   DrillType,
-  ModelTypeName,
-  getModelsByTypeName,
-  filterModelByModelType
-} from './util'
+  WidgetDimension
+} from './types'
+import {
+  getListsByViewModelTypes
+} from 'containers/View/util'
 import { ViewModelTypes } from 'containers/View/constants'
+
 const styles = require('./datadrill.less')
 export interface IDataDrillProps {
   widgetConfig: any
@@ -37,39 +39,25 @@ export interface IDataDrillProps {
   drillpathSetting?: any
   currentData?: object[]
   onDataDrillPath?: () => any
-  onDataDrill?: (name?: string, dimensions?: string) => any
+  onDataDrillDown?: (name: string, dimensions?: WidgetDimension) => any
+  onDataDrillUp?: (name: string) => any
 }
 
 
 const Datadrill: React.FC<IDataDrillProps> =  (props: IDataDrillProps) => {
-  const { onDataDrill, onDataDrillPath, currentData, widgetMode, drillHistory, widgetConfig, drillpathSetting } = props
+  const {onDataDrillUp, onDataDrillDown, onDataDrillPath, currentData, widgetMode, drillHistory, widgetConfig, drillpathSetting } = props
 
   let renderComponent = void 0
 
   let menuDisabled = void 0
 
-  const modelWithModelType: getModelsByTypeName = useMemo(() => filterModelByModelType(widgetConfig && widgetConfig.model), [widgetConfig])
-
-  const getModelByModelType = useCallback((typeName: ModelTypeName) => {
-    return modelWithModelType(typeName)
+  const getCategoriesModels = useMemo(() => {
+    return getListsByViewModelTypes(widgetConfig && widgetConfig.model, 'modelType')(ViewModelTypes.Category)
   }, [widgetConfig])
 
   const currentCategories = useMemo(() => {
     return currentData && currentData[0] ? Object.keys(currentData[0]) : []
   }, [currentData])
-  
-  const getCategoriesModels = useMemo(() => {
-    return getModelByModelType(ViewModelTypes.Category)
-  }, [widgetConfig])
-
-  const {drilldownCategories, drillupCategories } = useMemo(() => {
-    return {
-      drillupCategories: getCategoriesModels.filter((cate) => currentCategories.includes(cate))
-      .map((c) => ({ name: c, modelType: ViewModelTypes.Category, drillType: DrillType.UP})),
-      drilldownCategories: getCategoriesModels.filter((cate) => !currentCategories.includes(cate))
-      .map((c) => ({name: c,  modelType: ViewModelTypes.Category, drillType: DrillType.DOWN}))
-    }
-  }, [widgetConfig, currentData])
 
   const drillHistoryGroups = useMemo(() => {
     if (drillHistory && drillHistory.length) {
@@ -77,9 +65,26 @@ const Datadrill: React.FC<IDataDrillProps> =  (props: IDataDrillProps) => {
     }
   }, [drillHistory])
 
+  const getDrilledGroup = useMemo(() => {
+    return drillHistory && drillHistory.length ? drillHistory.map((history) => history.currentGroup) : []
+  }, [drillHistory])
+
+  const modelsfilterDrilledGroup = useMemo(() => {
+    return getCategoriesModels.filter((cate) => !getDrilledGroup.includes(cate))
+  }, [drillHistory, widgetConfig, getCategoriesModels, getDrilledGroup])
+
+  const {drilldownCategories, drillupCategories } = useMemo(() => {
+    return {
+      drillupCategories: modelsfilterDrilledGroup.filter((cate) => currentCategories.includes(cate))
+      .map((c) => ({ name: c, modelType: ViewModelTypes.Category, drillType: DrillType.UP})),
+      drilldownCategories: modelsfilterDrilledGroup.filter((cate) => !currentCategories.includes(cate))
+      .map((c) => ({name: c,  modelType: ViewModelTypes.Category, drillType: DrillType.DOWN}))
+    }
+  }, [widgetConfig, currentData, currentCategories])
+
   const drillOtherCategories = useMemo(() => {
-    return drillHistoryGroups && drillHistoryGroups.length 
-    ? getCategoriesModels.filter((cate) => !(drillHistory.some((his) => his.name === cate)))
+    return drillHistoryGroups && drillHistoryGroups.length
+    ? modelsfilterDrilledGroup.filter((cate) => !(drillHistory.some((his) => his.name === cate)))
       .map((name) => ({name, modelType: ViewModelTypes.Category,  drillType: drillHistoryGroups.includes(name) ? DrillType.UP : DrillType.DOWN}))
     : drilldownCategories
   }, [drillHistory])
@@ -106,7 +111,7 @@ const Datadrill: React.FC<IDataDrillProps> =  (props: IDataDrillProps) => {
       {
         isPivot ?
         <Menu.SubMenu
-          key="sub2"
+          key={`${DrillType.UP}`}
           disabled={drillupCategories.length < 2}
           title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan1">
           <span style={{marginLeft: '8px'}}>上卷</span></span>}
@@ -114,17 +119,17 @@ const Datadrill: React.FC<IDataDrillProps> =  (props: IDataDrillProps) => {
           {drillupCategories ? drillupCategories.map((col) => <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
         </Menu.SubMenu> :
         <Menu.SubMenu
-          key="sub3"
+          key="drillAll"
           disabled={drillOtherCategories.length < 1}
           title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan">
           <span style={{marginLeft: '8px'}}>钻取</span></span>}
         >
           {drillOtherCategories ?
             drillOtherCategories.map((col) =>
-            <Menu.Item key={col.name}>
+            <Menu.Item key={`${col.name}|${col.drillType}`}>
               <span className={styles.items}>
                 <span>{col.name}</span>
-                <span><Icon type={`${col.drillType === 'up' ? 'arrow-up' : 'arrow-down'}`} /></span>
+                <span><Icon type={`${col.drillType === DrillType.UP ? 'arrow-up' : 'arrow-down'}`} /></span>
               </span>
             </Menu.Item>)
             : ''}
@@ -133,7 +138,7 @@ const Datadrill: React.FC<IDataDrillProps> =  (props: IDataDrillProps) => {
       {
         isPivot ?
         <Menu.SubMenu
-          key="sub1"
+          key={`${DrillType.DOWN}`}
           disabled={drilldownCategories.length < 1}
           title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan">
           <span style={{marginLeft: '8px'}}>下钻</span></span>}
@@ -152,9 +157,25 @@ const Datadrill: React.FC<IDataDrillProps> =  (props: IDataDrillProps) => {
   function drill (e) {
     const path = e.keyPath
     if (path && path.length > 2) {
-      onDataDrill(path[1], path[0])
+      onDataDrillDown(path[1], path[0])
     } else {
-      onDataDrill(path[0])
+      switch (path[1]) {
+        case DrillType.UP:
+          onDataDrillUp(path[0])
+          break
+        case 'drillAll':
+          const type = path[0].split('|')
+          if (type) {
+            if (type[1] === DrillType.UP) {
+              onDataDrillUp(type[0])
+            } else if (type[1] === DrillType.DOWN) {
+              onDataDrillDown(type[0])
+            }
+          }
+          break
+        default:
+          break
+      }
     }
   }
   function drillpath () {

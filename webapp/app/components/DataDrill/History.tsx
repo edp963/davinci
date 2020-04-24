@@ -36,7 +36,7 @@ export function DataDrillHistory (props: IDataDrillHistoryProps) {
       {
         drillHistory && drillHistory.length ? drillHistory.map((history, index) => (
           <Breadcrumb.Item onClick={drill(history, index)} key={`dh${index}`}>
-            {history.name}<Icon type={`${history.type === 'up' ? 'arrow-up' : 'arrow-down'}`} />
+            {history.currentGroup}<Icon type={`${history.type === 'up' ? 'arrow-up' : 'arrow-down'}`} />
           </Breadcrumb.Item>
         )) : ''
       }

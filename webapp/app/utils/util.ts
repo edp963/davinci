@@ -177,3 +177,7 @@ export function isImagePath(pathname: string) {
   }
   return imageReg.test(pathname)
 }
+
+export function hasProperty<T extends object, U extends keyof T> (obj: T, key: U) {
+  return obj[key] ? obj[key] : false
+}

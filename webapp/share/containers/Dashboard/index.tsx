@@ -185,6 +185,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       )
     }
   }
+  public componentWillMount () {
+    console.log('onLoadProjectDetail')
+  }
 
   public componentDidMount() {
     // urlparse

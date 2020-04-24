@@ -121,9 +121,7 @@ export interface IDataRequestParams {
   nativeQuery: boolean
   customOrders?: IFieldSortDescriptor[]
   drillStatus?: {
-    filter: {
-      sqls: []
-    }
+    filters: any[]
     groups: string[]
   }
 }

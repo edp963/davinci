@@ -23,8 +23,17 @@ import classnames from 'classnames'
 import LocalControlPanel from 'containers/ControlPanel/Local'
 import DashboardItemMask from './DashboardItemMask'
 import DownloadCsv, { IDownloadCsvProps } from 'components/DownloadCsv'
+import { DrillCharts, WidgetDimension, DrillType, IDrillDetail } from 'components/DataDrill/types'
 import DataDrill from 'components/DataDrill/Panel'
 import DataDrillHistory from 'components/DataDrill/History'
+import { operationWidgetProps } from 'components/DataDrill/abstract/widgetOperating'
+import {
+  strategiesOfDrillUpHasDrillHistory,
+  strategiesOfDrillUpNullDrillHistory,
+  strategiesOfDrillDownHasDrillHistory,
+  strategiesOfDrillDownNullDrillHistory
+} from 'components/DataDrill/strategies'
+import { getLastItemValueOfArray } from 'components/DataDrill/util'
 import { IFormedView, IViewModel } from 'containers/View/types'
 
 import Widget, { IWidgetConfig, IPaginationParams, RenderType } from 'containers/Widget/components/Widget'
@@ -57,7 +66,7 @@ interface IDashboardItemProps {
   shareToken: string
   shareLoading?: boolean
   downloadCsvLoading: boolean
-  drillHistory?: any
+  drillHistory?: IDrillDetail[]
   drillpathSetting?: any
   drillpathInstance?: any
   rendered?: boolean
@@ -102,7 +111,7 @@ interface IDashboardItemStates {
   dataDrillPanelPosition: boolean | object
   whichDataDrillBrushed: boolean | object []
   sourceDataOfBrushed: boolean | object []
-  sourceDataGroup: boolean | Array<string>
+  sourceDataGroup: boolean | string[]
   // isShowDrillPanel: boolean
   cacheWidgetProps: IWidgetConfig
   cacheWidgetId: boolean | number
@@ -334,21 +343,90 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
   }
 
-  private drillDataHistory = (history, item, itemId, widgetId) => {
-    const {onSelectDrillHistory, drillHistory} = this.props
+  private drillDataHistory = (history, item: number, itemId, widgetId) => {
+    const { onSelectDrillHistory, drillHistory } = this.props
+    const { widgetProps, cacheWidgetProps, cacheWidgetId } = this.state
     if (onSelectDrillHistory) {
+      const wid = !history && item > -1 ? widgetId : cacheWidgetId
+      if (item === -1 && !history) {
+        this.setState({widgetProps: cacheWidgetProps})
+      } else {
+        const { cols, rows } = drillHistory[item]
+        this.setState({ widgetProps: {...widgetProps, cols, rows}})
+      }
+      onSelectDrillHistory(history, item, itemId, wid)
+    }
+  }
+
+  private drillDataHistory1 = (history, item, itemId, widgetId) => {
+    console.log('drillHistory')
+    const {onSelectDrillHistory, drillHistory, widget, onGetChartData} = this.props
+    const { widgetProps, cacheWidgetProps } = this.state
+    const wid = !history && item > -1 ? widgetId : this.state.cacheWidgetId
+    if (onSelectDrillHistory) {
+      const historyGroups = history ? drillHistory[item]['groups'] : []
+      const historyCols = history && drillHistory[item]['col'] ? drillHistory[item]['col'] : cacheWidgetProps.cols
+      const historyRows = history && drillHistory[item]['row'] ? drillHistory[item]['row'] : cacheWidgetProps.rows
       if (drillHistory && drillHistory[item] && drillHistory[item]['widgetConfig']) {
-        onSelectDrillHistory(history, item, itemId)
+        const dw = drillHistory[item].widgetConfig
+        this.setState({
+          widgetProps: dw
+        })
+        onSelectDrillHistory(history, item, itemId, wid)
         return
       }
-      onSelectDrillHistory(history, item, itemId)
+      if (widgetProps.dimetionAxis) {
+        if (widgetProps.dimetionAxis === 'col') {
+          this.setState({
+            widgetProps: {
+              ...widgetProps,
+              ...{
+                cols: historyGroups && historyGroups.length ? historyGroups.map((history) => ({name: history})) : cacheWidgetProps.cols
+              }
+            }
+          })
+        } else if (widgetProps.dimetionAxis === 'row') {
+          this.setState({
+            widgetProps: {
+              ...widgetProps,
+              ...{
+                rows: historyGroups && historyGroups.length ? historyGroups.map((history) => ({name: history})) : cacheWidgetProps.rows
+              }
+            }
+          })
+        } else {
+          this.setState({
+            widgetProps: {
+              ...widgetProps,
+              ...{
+                cols: historyCols,
+                rows: historyRows
+              }
+            }
+          })
+        }
+      } else {
+        this.setState({
+          widgetProps: {
+            ...widgetProps,
+            ...{
+              cols: historyCols,
+              rows: historyRows
+            }
+          }
+        })
+      }
+      if (item === -1 && !history) {
+        this.setState({widgetProps: {...this.state.cacheWidgetProps}})
+      }
+      onSelectDrillHistory(history, item, itemId, wid)
     }
   }
   private drillpathData = () => {
     // todo
     // 由于前端拿不到全量数据，所以在model中选取的没有数值的纬度列，可能会导致filter不合法的情况。
     const { whichDataDrillBrushed, sourceDataOfBrushed } = this.state
-    const { drillpathInstance, drillpathSetting, drillHistory, itemId, widgets, onDrillPathData, onLoadData } = this.props
+    const { drillpathInstance, drillpathSetting, drillHistory, itemId, widgets, onDrillPathData, onGetChartData } = this.props
     let out = void 0
     let enter = void 0
     let widget = void 0
@@ -368,15 +446,16 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       return source[out]
     })
     const nextWidget = widgets.find((w) => w.id === Number(widget))
+    const widgetProps = JSON.parse(nextWidget.config)
     // todo  filter 重构
     const sql = `${enter} in (${value.map((key) => `'${key}'`).join(',')})`
-    let sqls = nextWidget.config.filters.map((i) => i.config.sql)
+    let sqls = widgetProps.filters.map((i) => i.config.sql)
     sqls.push(sql)
     if (prevDrillHistory && prevDrillHistory.filter.sqls) {
       const prevSqls = prevDrillHistory.filter.sqls
       sqls = sqls.concat(prevSqls)
     }
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = nextWidget.config
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetProps
     let widgetConfigGroups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
 
     if (color) {
@@ -397,80 +476,260 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       },
       groups: widgetConfigGroups,
       name: nextWidget.name,
-      widgetConfig: nextWidget.config
+      widgetConfig: widgetProps
     }
-    onLoadData('rerender', itemId, {
+    this.setState({
+      widgetProps
+    })
+    onGetChartData('rerender', itemId, Number(widget), {
       drillStatus: currentDrillStatus
     })
     onDrillPathData({
        sourceDataFilter: sourceDataOfBrushed,
        widget,
        itemId,
-       widgetProps: nextWidget.config,
+       widgetProps,
        out,
        enter,
        value,
        currentDrillStatus
     })
   }
-  private drillData = (name, dimensions) => {
+
+  private receiveWidgetId () {
+    const { widget } = this.props
+    operationWidgetProps.receive(widget.id)
+  }
+
+  private isHasDrillHistory (): boolean {
+    const { drillHistory } = this.props
+    return !!(drillHistory && (drillHistory.length !== 0))
+  }
+
+  private getLastDrillHistory () {
+    const { drillHistory } = this.props
+    return [...drillHistory].pop()
+  }
+
+  private sendDrillDetail (e) {
+    const { itemId, widget, onDrillData } = this.props
+    if (onDrillData) {
+      onDrillData({
+        ...e,
+        itemId,
+        widgetId: widget.id
+      })
+    }
+  }
+
+  private drillUp = (name: string) => {
+    this.receiveWidgetId()
+    const { sourceDataOfBrushed } = this.state
+    const isHasDrillHistory = this.isHasDrillHistory()
+    let set
+
+    if (isHasDrillHistory) {
+      const getLastDrillHistory = this.getLastDrillHistory()
+      set = strategiesOfDrillUpHasDrillHistory(getLastDrillHistory, this.state.widgetProps)({name}, sourceDataOfBrushed)
+    } else {
+      set = strategiesOfDrillUpNullDrillHistory(operationWidgetProps, this.state.widgetProps)({name}, sourceDataOfBrushed)
+    }
+
+    const { pivot, coustomTable } = set
+
+    if (operationWidgetProps.isPivot()) {
+      const {
+        cols, rows, type, groups, filters, widgetProps, currentGroup
+      } = pivot()
+      this.setState({widgetProps})
+      this.sendDrillDetail({ cols, rows, type, groups, filters, currentGroup})
+      return
+    }
+
+    if (this.isCoustomTable()) {
+      const {
+        cols, rows, type, groups, filters, widgetProps, currentGroup
+      } = coustomTable()
+      this.setState({widgetProps})
+      this.sendDrillDetail({ cols, rows, type, groups, filters, currentGroup})
+      return
+    }
+  }
+
+  private isCoustomTable () {
+    return operationWidgetProps.isCoustomTable()
+  }
+
+  private drillDown = (name: string, dimensions?: WidgetDimension) => {
+    const { sourceDataOfBrushed, sourceDataGroup } = this.state
+    this.receiveWidgetId()
+    const isHasDrillHistory = this.isHasDrillHistory()
+    const dimetionAxis = operationWidgetProps.getDimetionAxis()
+    let set
+    let strategiteStream
+
+    if (isHasDrillHistory) {
+      const getLastDrillHistory = this.getLastDrillHistory()
+      set = strategiesOfDrillDownHasDrillHistory(getLastDrillHistory, this.state.widgetProps)({name}, sourceDataOfBrushed, sourceDataGroup)
+    } else {
+      set = strategiesOfDrillDownNullDrillHistory(operationWidgetProps, this.state.widgetProps)({name}, sourceDataOfBrushed, sourceDataGroup)
+    }
+
+    const { dimetionAxisCol, dimetionAxisRow, pivotCol, pivotRow, coustomTable, defaultScenes } = set
+
+    if (dimensions && dimensions.length) {
+      if (dimensions === WidgetDimension.COL) {
+        strategiteStream = pivotCol()
+      } else if (dimensions === WidgetDimension.ROW) {
+        strategiteStream = pivotRow()
+      }
+    } else if (operationWidgetProps.isCoustomTable()) {
+        strategiteStream = coustomTable()
+    } else if (dimetionAxis && dimetionAxis.length) {
+      if (dimetionAxis === WidgetDimension.ROW) {
+        strategiteStream = dimetionAxisRow()
+      } else if (dimetionAxis === WidgetDimension.COL) {
+        strategiteStream = dimetionAxisCol()
+      }
+    } else {
+      strategiteStream = defaultScenes()
+    }
+
+    const { cols, rows, type, groups, filters, widgetProps, currentGroup } = strategiteStream
+    this.sendDrillDetail({ cols, rows, type, groups, filters, currentGroup})
+    this.setState({widgetProps})
+  }
+
+  private drillData = (name, dimensions?) => {
     const { onDrillData, widget, itemId } = this.props
-    const { cacheWidgetProps, sourceDataGroup } = this.state
+    const { widgetProps, cacheWidgetProps, sourceDataGroup } = this.state
+
     let mode = void 0
     if (widget && widget.config) {
-      mode = widget.config.mode
+      const cf = JSON.parse(widget.config)
+      mode = cf.mode
     }
-  
+
     if (onDrillData) {
       onDrillData({
         row: dimensions === 'row' ? name : [],
         col: dimensions === 'col' ? name : [],
-        mode,
-        itemId,
-        widgetId: widget.id,
-        groups: name,
+        mode, // mode 外层widgetProps 可以获取，不需要重复传递
+        itemId,  // 保留
+        widgetId: widget.id, // 保留
+        groups: name, // 保留 ，改为 drillGroup
         filters: this.state.whichDataDrillBrushed,
         sourceDataFilter: this.state.sourceDataOfBrushed || [],
-        sourceDataGroup
+        sourceDataGroup // selectdGroups   coustom table 独享
       })
     }
     this.setState({whichDataDrillBrushed: false})
-    const isDrillUp = widget.config.cols.some((col) => col.name === name) || widget.config.rows.some((row) => row.name === name)
+    const isDrillUp = widgetProps.cols.some((col) => col.name === name) || widgetProps.rows.some((row) => row.name === name)
     if (isDrillUp) {
-      const newCols = widget.config.cols.filter((col) => col.name !== name)
-      const newRows = widget.config.rows.filter((row) => row.name !== name)
+      const newCols = widgetProps.cols.filter((col) => col.name !== name)
+      const newRows = widgetProps.rows.filter((row) => row.name !== name)
+      this.setState({
+        widgetProps: {
+          ...widgetProps,
+          ...{
+            cols: newCols,
+            rows: newRows
+          }
+        }
+      })
     } else {
       if (dimensions && dimensions.length) { // pivot table
         switch (dimensions) {
           case 'row':
+            this.setState({
+              widgetProps: {
+                ...widgetProps,
+                ...{
+                  rows: name && name.length
+                  ? widgetProps.rows.concat({name})
+                  : cacheWidgetProps.rows
+                }
+              }
+            })
             break
           case 'col':
+            this.setState({
+              widgetProps: {
+                ...widgetProps,
+                cols: name && name.length
+                ? widgetProps.cols.concat({name})
+                : cacheWidgetProps.cols
+              }
+            })
             break
           default:
             return
         }
-      } else if (widget.config && widget.config.dimetionAxis) {
-        switch (widget.config.dimetionAxis) {
+      } else if (widgetProps && widgetProps.dimetionAxis) {
+        switch (widgetProps.dimetionAxis) {
           case 'col':
+            this.setState({
+                widgetProps: {
+                  ...widgetProps,
+                  ...{
+                    cols: name && name.length
+                    ? mode === 'pivot' ? widgetProps.cols.concat({name}) : [{name}]
+                    : cacheWidgetProps.cols
+                  }
+                }
+            })
             break
           case 'row':
+            this.setState({
+              widgetProps: {
+                ...widgetProps,
+                ...{
+                  rows: name && name.length
+                  ? mode === 'pivot' ? widgetProps.rows.concat({name}) : [{name}]
+                  : cacheWidgetProps.rows
+                }
+              }
+            })
             break
           default:
             break
         }
-      } else if (widget.config.selectedChart === ChartTypes.Table) {
-        const cols = widget.config.cols
+      } else if (widgetProps.selectedChart === ChartTypes.Table) {
+        const cols = widgetProps.cols
         const { whichDataDrillBrushed, sourceDataOfBrushed } = this.state
         const sourceDataGroup = Array.isArray(this.state.sourceDataGroup) ? [...(this.state.sourceDataGroup as Array<string>)] : []
         const drillData = whichDataDrillBrushed[0][0]
-        const drillKey = drillData&&drillData.length ? drillData[drillData.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
+        const drillKey = drillData && drillData.length ? drillData[drillData.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
+
         const newWidgetPropCols = cols.reduce((array, col) => {
           array.push(col)
-          if (col.name === drillKey) {
+          if (col.name === drillKey) { // name 插入的位置标识
             array.push({name})
           }
           return array
         }, [])
+
+        this.setState({
+          widgetProps: {
+            ...widgetProps,
+            ...{
+              cols: name && name.length
+              ? newWidgetPropCols
+              : cacheWidgetProps.cols
+            }
+          }
+        })
+      } else {
+        this.setState({
+          widgetProps: {
+            ...widgetProps,
+            ...{
+              cols: name && name.length
+              ? mode === 'pivot' ? widgetProps.cols.concat({name}) : [{name}]
+              : cacheWidgetProps.cols
+            }
+          }
+        })
       }
     }
   }
@@ -680,7 +939,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         <DataDrill
           widgetConfig={widget.config}
           onDataDrillPath={this.drillpathData}
-          onDataDrill={this.drillData}
+          onDataDrillDown={this.drillDown}
+          onDataDrillUp={this.drillUp}
           drillHistory={drillHistory}
           drillpathSetting={drillpathSetting}
           widgetMode={mode}
