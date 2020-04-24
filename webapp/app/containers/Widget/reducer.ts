@@ -21,9 +21,10 @@
 import produce from 'immer'
 import { IWidgetState } from './types'
 import { ActionTypes } from './constants'
-import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
+import { ActionTypes as DashboardActionTypes } from '../Dashboard/constants'
 import { ActionTypes as ViewActionTypes } from '../View/constants'
 import { WidgetActionType } from './actions'
+import { DashboardActionType } from 'containers/Dashboard/actions'
 import { ViewActionType } from 'containers/View/actions'
 import { DisplayActionType } from 'containers/Display/actions'
 
@@ -38,7 +39,7 @@ export const initialState: IWidgetState = {
 
 const widgetReducer = (
   state = initialState,
-  action: WidgetActionType | ViewActionType | DisplayActionType
+  action: WidgetActionType | ViewActionType | DashboardActionType | DisplayActionType
 ) =>
   produce(state, (draft) => {
     switch (action.type) {
@@ -128,7 +129,7 @@ const widgetReducer = (
         draft.dataLoading = false
         break
 
-      case LOAD_DASHBOARD_DETAIL_SUCCESS:
+      case DashboardActionTypes.LOAD_DASHBOARD_DETAIL_SUCCESS:
         draft.widgets = action.payload.widgets
         break
 

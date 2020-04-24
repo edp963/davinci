@@ -70,7 +70,7 @@ export function* getData (action: ShareDisplayActionType) {
   const { renderType, slideNumber, layerId, dataToken, requestParams } = action.payload
   const {
     filters,
-    tempFilters,
+    tempFilters,  // @TODO combine widget static filters with local filters
     linkageFilters,
     globalFilters,
     variables,

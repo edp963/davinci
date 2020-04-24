@@ -1,22 +1,39 @@
-import React, { Component } from 'react'
-import PropTypes from 'prop-types'
+import React, { Component, GetDerivedStateFromProps, createRef, RefObject } from 'react'
 import $ from 'jquery'
 import moment from 'moment'
+import classnames from 'classnames'
 import 'bootstrap-datepicker'
 
 import { Icon } from 'antd'
 
 import styles from './MultiDatePicker.less'
 
-export class MultiDatePicker extends Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      value: this.props.value || ''
-    }
+interface IMultiDatePickerProps {
+  value: string
+  format: string
+  size?: 'default' | 'large' | 'small'
+  placeholder: string
+  onChange: (value: string) => any
+}
+
+interface IMultiDatePickerStates {
+  value: string
+}
+
+class MultiDatePicker extends Component<IMultiDatePickerProps, IMultiDatePickerStates> {
+
+  public state: IMultiDatePickerStates = {
+    value: this.props.value || ''
   }
 
-  componentWillMount () {
+  public static defaultProps: Partial<IMultiDatePickerProps> = {
+    format: 'YYYY-MM-DD'
+  }
+
+  private input: RefObject<HTMLInputElement> = createRef()
+
+  constructor (props) {
+    super(props)
     $.fn.datepicker.dates['zh'] = {
       days: ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'],
       daysShort: ['日', '一', '二', '三', '四', '五', '六'],
@@ -31,48 +48,49 @@ export class MultiDatePicker extends Component {
     }
   }
 
-  componentDidMount () {
-    $(this.refs.input)
+  public componentDidMount () {
+    $(this.input.current)
       .datepicker({
         multidate: true,
         clearBtn: true,
         language: 'zh'
       })
       .on('changeDate', (e) => {
-        const val = e.dates.map(d => moment(d).format(this.props.format)).join(',')
+        const val = e.dates.map((d) => moment(d).format(this.props.format)).join(',')
         this.props.onChange(val)
-        this.setState({
-          value: val
-        })
       })
   }
 
-  render () {
+  public static getDerivedStateFromProps: GetDerivedStateFromProps<
+    IMultiDatePickerProps,
+    IMultiDatePickerStates
+  > = (props) => {
+    return {
+      value: props.value
+    }
+  }
+
+  public render () {
+    const { size } = this.props
+    const inputClassNames = classnames({
+      'ant-input': true,
+      'ant-input-lg': size === 'large',
+      'ant-input-sm': size === 'small'
+    })
     return (
       <span className={styles.datepicker}>
         <input
           type="text"
           placeholder={this.props.placeholder || '请选择日期（多选）'}
-          className="ant-input"
+          className={inputClassNames}
           value={this.state.value}
-          ref="input"
+          ref={this.input}
           readOnly
         />
         <Icon type="calendar" />
       </span>
     )
   }
-}
-
-MultiDatePicker.propTypes = {
-  value: PropTypes.string,
-  format: PropTypes.string,
-  placeholder: PropTypes.string,
-  onChange: PropTypes.func
-}
-
-MultiDatePicker.defaultProps = {
-  format: 'YYYY-MM-DD'
 }
 
 export default MultiDatePicker

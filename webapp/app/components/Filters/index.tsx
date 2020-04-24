@@ -1,34 +1,53 @@
-import React from 'react'
+import React, { FC } from 'react'
+import moment from 'moment'
+import { IControlBase } from './types'
 import { Input, Select, TreeSelect, DatePicker } from 'antd'
 const Search = Input.Search
 const Option = Select.Option
+const { WeekPicker, MonthPicker, RangePicker } = DatePicker
 import NumberRange from '../NumberRange'
 const MultiDatePicker = React.lazy(() => import('../MultiDatePicker'))
-import DatePickerFormats from './datePickerFormats'
-import { IGlobalControl } from './types'
-const { WeekPicker, MonthPicker, RangePicker } = DatePicker
+import { DatePickerFormats } from './constants'
+import styles from './Layouts/Layouts.less'
 
-const styles = require('./filter.less')
-
-export function renderInputText (onChange) {
+export function renderInputText (value, size, onChange, onSearch) {
   return (
-    <Search placeholder="请输入" onSearch={onChange} />
+    <Search
+      placeholder="请输入"
+      value={value}
+      size={size}
+      onChange={onChange}
+      onSearch={onSearch}
+    />
   )
 }
 
-export function renderNumberRange (onChange) {
+export function renderNumberRange (value, size, onChange, onSearch) {
   return (
-    <NumberRange onSearch={onChange} />
+    <NumberRange
+      value={value}
+      size={size}
+      onChange={onChange}
+      onSearch={onSearch}
+    />
   )
 }
 
-export function renderSelect (control: IGlobalControl, onChange, options) {
+export function renderSelect (
+  control: IControlBase,
+  value,
+  size,
+  onChange,
+  options
+) {
   const { multiple } = control
   return (
     <Select
       showSearch
       allowClear
       placeholder="请选择"
+      value={value}
+      size={size}
       onChange={onChange}
       dropdownMatchSelectWidth={false}
       {...multiple && {mode: 'multiple'}}
@@ -42,7 +61,7 @@ export function renderSelect (control: IGlobalControl, onChange, options) {
   )
 }
 
-export function renderTreeSelect (filter: IGlobalControl, onChange, options) {
+export function renderTreeSelect (filter: IControlBase, onChange, options) {
   // const { name, textColumn, valueColumn, parentColumn } = filter
   // const treeData = options.map((item) => ({
   //   id: item[valueColumn],
@@ -63,7 +82,12 @@ export function renderTreeSelect (filter: IGlobalControl, onChange, options) {
   // )
 }
 
-export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
+export function renderDate (
+  control: IControlBase,
+  value,
+  size,
+  onChange
+) {
   const {
     Week,
     Month,
@@ -71,23 +95,31 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
     Datetime,
     DatetimeMinute
   } = DatePickerFormats
-  if (filter.multiple) {
+  const {
+    multiple,
+    dateFormat
+  } = control
+  const controlled = !!onChange
+  if (multiple) {
+    value = value || ''
     return (
       <MultiDatePicker
         placeholder="请选择"
-        format={filter.dateFormat}
-        {...onChange && {onChange}}
+        size={size}
+        format={dateFormat}
+        {...controlled && {value, onChange}}
       />
     )
   } else {
-    switch (filter.dateFormat) {
+    value = moment.isMoment(value) ? value : null
+    switch (dateFormat) {
       case Week:
         return (
           <WeekPicker
             className={styles.controlComponent}
             placeholder="请选择"
-            {...onChange && {onChange}}
-            {...extraProps}
+            size={size}
+            {...controlled && {value, onChange}}
           />
         )
       case Month:
@@ -96,38 +128,42 @@ export function renderDate (filter: IGlobalControl, onChange, extraProps?) {
           <MonthPicker
             className={styles.controlComponent}
             placeholder="请选择"
-            format={filter.dateFormat}
-            {...onChange && {onChange}}
-            {...extraProps}
+            format={dateFormat}
+            size={size}
+            {...controlled && {value, onChange}}
           />
         )
       default:
-        const isDatetimePicker = [Datetime, DatetimeMinute].includes(filter.dateFormat)
+        const isDatetimePicker = [Datetime, DatetimeMinute].includes(dateFormat)
         return (
           <DatePicker
             className={styles.controlComponent}
             placeholder="请选择"
             showTime={isDatetimePicker}
-            format={filter.dateFormat}
-            {...onChange && {onChange: isDatetimePicker ? datetimePickerChange(onChange) : onChange}}
-            {...onChange && {onOk: onChange}}
-            {...extraProps}
+            format={dateFormat}
+            size={size}
+            {...controlled && {value}}
+            {...controlled && {onChange: isDatetimePicker ? datetimePickerChange(onChange) : onChange}}
+            {...controlled && {onOk: onChange}}
           />
         )
     }
   }
 }
 
-export function renderDateRange (filter, onChange) {
+export function renderDateRange (control, value, size, onChange) {
+  const { dateFormat } = control
   const placeholder: [string, string] = ['从', '到']
   const { Datetime, DatetimeMinute } = DatePickerFormats
-  const isDatetimePicker = [Datetime, DatetimeMinute].includes(filter.dateFormat)
+  const isDatetimePicker = [Datetime, DatetimeMinute].includes(dateFormat)
   return (
     <RangePicker
       className={styles.controlComponent}
       placeholder={placeholder}
+      value={value}
+      size={size}
       showTime={isDatetimePicker}
-      format={filter.dateFormat}
+      format={dateFormat}
       onChange={isDatetimePicker ? datetimePickerChange(onChange) : onChange}
       onOk={onChange}
     />

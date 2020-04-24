@@ -3,7 +3,7 @@ import classnames from 'classnames'
 import set from 'lodash/set'
 
 import widgetlibs from '../../config'
-import { IDataRequestParams } from 'app/containers/Dashboard/types'
+import { IDataRequestBody } from 'app/containers/Dashboard/types'
 import { IViewBase, IFormedView } from 'containers/View/types'
 import { ViewModelVisualTypes, ViewModelTypes } from 'containers/View/constants'
 import Dropbox, { DropboxType, DropType, AggregatorType, IDataParamSource, IDataParamConfig, DragType, IDragItem} from './Dropbox'
@@ -91,7 +91,7 @@ interface IOperatingPanelProps {
   onSetWidgetProps: (widgetProps: IWidgetProps) => void
   onLoadData: (
     viewId: number,
-    requestParams: IDataRequestParams,
+    requestParams: IDataRequestBody,
     resolve: (data) => void,
     reject: (error) => void
   ) => void

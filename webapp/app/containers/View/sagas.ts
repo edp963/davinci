@@ -202,7 +202,7 @@ export function* getSelectOptions (action: ViewActionType) {
       const { columns, filters, variables, cache, expired } = params
       return call(request, {
         method: 'post',
-        url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
+        url: `${api.view}/${viewId}/getdistinctvalue`,
         data: {
           columns,
           filters,
@@ -261,7 +261,7 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
   const { viewDataFromVizItemLoaded, loadViewDataFromVizItemFail } = ViewActions
   const {
     filters,
-    tempFilters,
+    tempFilters,  // @TODO combine widget static filters with local filters
     linkageFilters,
     globalFilters,
     variables,
