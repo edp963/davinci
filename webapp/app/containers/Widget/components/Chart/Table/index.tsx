@@ -816,7 +816,7 @@ function getTableColumns(props: IChartProps) {
         headerText
       )
       if (metric.field?.desc) {
-        headerWidth += 14
+        headerWidth += 14 + 16
       }
       column.width = Math.max(+column.width, headerWidth)
     }
