@@ -18,27 +18,18 @@
  * >>
  */
 
-import RichTextToolbar from './Toolbar'
+import React, { useContext } from 'react'
 
-import Font from './Font'
-import Heading from './Heading'
-import Format from './Format'
-import Alignment from './Alignment'
-import Link from './Link'
-import Image from './Image'
-import Marquee from './Marquee'
-import Field from './Field'
-import Reset from './Reset'
+import { Tooltip, Icon } from 'antd'
+import { EditorContext } from '../context'
 
-export default {
-  Toolbar: RichTextToolbar,
-  Font,
-  Heading,
-  Format,
-  Alignment,
-  Link,
-  Image,
-  Marquee,
-  Field,
-  Reset
+const Reset: React.FC = () => {
+  const { clearTextFormat } = useContext(EditorContext)
+  return (
+    <Tooltip title="清除格式">
+      <Icon type="close-circle" onClick={clearTextFormat} />
+    </Tooltip>
+  )
 }
+
+export default Reset

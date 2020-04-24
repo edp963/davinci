@@ -70,6 +70,7 @@ const RichTextEditor: React.FC<IRichTextEditorProps> = (props) => {
               mapFields={mapFields}
               fieldBoundaries={fieldBoundaries}
             />
+            <Toolbar.Reset />
           </Toolbar.Toolbar>
         }
         onChange={onChange}
