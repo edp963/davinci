@@ -19,10 +19,12 @@
  */
 
 import React, { useState, useCallback } from 'react'
+import cloneDeep from 'lodash/cloneDeep'
 
 import { Row, Button, Modal } from 'antd'
 import { RichText, RichTextNode } from 'components/RichText'
 import Toolbar from 'components/RichText/Toolbar'
+import Preview from './Preview'
 
 import Styles from './RichText.less'
 
@@ -31,15 +33,21 @@ interface IRichTextEditorProps {
   mapFields: object
   fieldBoundaries: [string, string]
   onChange: (value: RichTextNode[]) => void
+  onFormatText: (text: string) => string
 }
 
 const RichTextEditor: React.FC<IRichTextEditorProps> = (props) => {
-  const { content, mapFields, fieldBoundaries, onChange } = props
+  const { content, mapFields, fieldBoundaries, onChange, onFormatText } = props
   const [previewVisible, setPreviewVisible] = useState(false)
+  const [previewContent, setPreviewContent] = useState(null)
 
   const openPreview = useCallback(() => {
+    // @REFACTOR temporarily resolve range selection error in Editor
+    // caused by same content value reference in Editor & Preview
+    const clonedContent = cloneDeep(content)
+    setPreviewContent(clonedContent)
     setPreviewVisible(true)
-  }, [])
+  }, [content])
   const closePreview = useCallback(() => {
     setPreviewVisible(false)
   }, [])
@@ -62,6 +70,7 @@ const RichTextEditor: React.FC<IRichTextEditorProps> = (props) => {
               mapFields={mapFields}
               fieldBoundaries={fieldBoundaries}
             />
+            <Toolbar.Reset />
           </Toolbar.Toolbar>
         }
         onChange={onChange}
@@ -78,7 +87,7 @@ const RichTextEditor: React.FC<IRichTextEditorProps> = (props) => {
         footer={null}
         onCancel={closePreview}
       >
-        {props.children}
+        <Preview content={previewContent} onFormatText={onFormatText} />
       </Modal>
     </div>
   )

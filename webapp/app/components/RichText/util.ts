@@ -19,15 +19,7 @@
  */
 
 import { deserialize } from './Serializer'
-import {
-  ElementTypes,
-  ElementType,
-  TextStyles,
-  TextProperties,
-  BlockProperties,
-  BlockAlignments
-} from './Element'
-import { Editor, Node, Element, Transforms } from 'slate'
+import { ElementTypes } from './Element'
 
 export const parseHtml = (html: string) => {
   const parsed = new DOMParser().parseFromString(html, 'text/html')

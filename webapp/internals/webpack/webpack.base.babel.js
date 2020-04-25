@@ -46,50 +46,22 @@ module.exports = options => ({
         // So, no need for ExtractTextPlugin here.
         test: /\.css$/,
         include: /node_modules|libs/,
-        use: ['style-loader', 'css-loader']
+        use: 'happypack/loader?id=css'
       },
       {
         test: /\.css$/,
         include: [/app[\\\/]assets/],
-        use: ['style-loader', 'css-loader', 'postcss-loader']
+        use: 'happypack/loader?id=assets-css'
       },
       {
         test: /\.less$/,
         include: /node_modules/,
-        use: [
-          'style-loader',
-          'css-loader',
-          {
-            loader: 'less-loader',
-            options: {
-              sourceMap: true,
-              javascriptEnabled: true,
-              modifyVars: overrideLessVariables
-            }
-          }
-        ]
+        use: 'happypack/loader?id=less'
       },
       {
         test: /\.less$/,
         exclude: /node_modules/,
-        use: [
-          'style-loader',
-          {
-            loader: 'css-loader',
-            options: {
-              modules: true,
-              importLoaders: 1
-            }
-          },
-          'postcss-loader',
-          {
-            loader: 'less-loader',
-            options: {
-              sourceMap: true,
-              javascriptEnabled: true
-            }
-          }
-        ]
+        use: 'happypack/loader?id=assets-less'
       },
       {
         test: /\.(eot|otf|ttf|woff|woff2)$/,
@@ -185,7 +157,59 @@ module.exports = options => ({
       loaders: ['babel-loader'],
       threadPool: happyThreadPool,
       verbose: true
-    })
+    }),
+    new HappyPack({
+      id: 'css',
+      loaders: ['style-loader', 'css-loader'],
+      threadPool: happyThreadPool,
+      verbose: true
+    }),
+    new HappyPack({
+      id: 'assets-css',
+      loaders: ['style-loader', 'css-loader', 'postcss-loader'],
+      threadPool: happyThreadPool,
+      verbose: true
+    }),
+    new HappyPack({
+      id: 'less',
+      loaders: [
+        'style-loader',
+        'css-loader',
+        {
+          loader: 'less-loader',
+          options: {
+            sourceMap: true,
+            javascriptEnabled: true,
+            modifyVars: overrideLessVariables
+          }
+        }
+      ],
+      threadPool: happyThreadPool,
+      verbose: true
+    }),
+    new HappyPack({
+      id: 'assets-less',
+      loaders: [
+        'style-loader',
+        {
+          loader: 'css-loader',
+          options: {
+            modules: true,
+            importLoaders: 1
+          }
+        },
+        'postcss-loader',
+        {
+          loader: 'less-loader',
+          options: {
+            sourceMap: true,
+            javascriptEnabled: true
+          }
+        }
+      ],
+      threadPool: happyThreadPool,
+      verbose: true
+    }),
   ]),
   resolve: {
     modules: ['node_modules', 'app'],

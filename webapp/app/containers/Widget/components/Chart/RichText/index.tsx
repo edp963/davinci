@@ -85,7 +85,9 @@ const ChartRichText: React.FC<IChartProps> = (props) => {
 
   const editorChange = useCallback(
     (updatedContent: RichTextNode[]) => {
-      if (updatedContent === content) { return }
+      if (updatedContent === content) {
+        return
+      }
       onChartStylesChange(['richText', 'content'], updatedContent)
     },
     [content, onChartStylesChange]
@@ -102,9 +104,8 @@ const ChartRichText: React.FC<IChartProps> = (props) => {
           mapFields={mapFields}
           fieldBoundaries={FieldBoundaries}
           onChange={editorChange}
-        >
-          <Preview content={content} onFormatText={formatText} />
-        </Editor>
+          onFormatText={formatText}
+        />
       )}
     </>
   )

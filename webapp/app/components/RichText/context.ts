@@ -138,6 +138,15 @@ export const useEditorContext = () => {
     [editor]
   )
 
+  const clearTextFormat = useCallback(() => {
+    Object.values(TextStyles).forEach((style) => {
+      Editor.removeMark(editor, style)
+    })
+    Object.values(TextProperties).forEach((property) => {
+      Editor.removeMark(editor, property)
+    })
+  }, [editor])
+
   const toggleTextProperty = useCallback(
     (textProperty: TextProperties, value: string | number) => {
       const isActive = isTextPropertyActive(textProperty)
@@ -191,7 +200,8 @@ export const useEditorContext = () => {
     toggleTextStyle,
     toggleTextProperty,
     toggleBlockProperty,
-    insertElement
+    insertElement,
+    clearTextFormat
   }
 }
 

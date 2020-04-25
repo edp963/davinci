@@ -27,6 +27,7 @@ import Format from './Format'
 import Alignment from './Alignment'
 import Link from './Link'
 import Image from './Image'
+import Reset from './Reset'
 
 import './Toolbar.less'
 
@@ -45,6 +46,7 @@ const Toolbar: React.FC = (props) => {
             <Alignment />
             <Link />
             <Image />
+            <Reset />
           </>
         )}
       </EditorContext.Provider>

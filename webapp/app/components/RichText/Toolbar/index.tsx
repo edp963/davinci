@@ -28,6 +28,7 @@ import Link from './Link'
 import Image from './Image'
 import Marquee from './Marquee'
 import Field from './Field'
+import Reset from './Reset'
 
 export default {
   Toolbar: RichTextToolbar,
@@ -38,5 +39,6 @@ export default {
   Link,
   Image,
   Marquee,
-  Field
+  Field,
+  Reset
 }
