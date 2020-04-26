@@ -29,6 +29,7 @@ import edp.core.utils.BaseLock;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.ServerUtils;
+import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.LogNameEnum;
@@ -59,6 +60,7 @@ import edp.davinci.service.WidgetService;
 import edp.davinci.service.share.ShareFactor;
 import edp.davinci.service.share.ShareResult;
 import edp.davinci.service.share.ShareType;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -188,7 +190,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getWidgetPermission() < UserPermissionEnum.READ.getPermission()) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
         }
 
         return widget;

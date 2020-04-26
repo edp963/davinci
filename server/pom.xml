@@ -51,6 +51,10 @@
 			<artifactId>mybatis-spring-boot-starter</artifactId>
 			<version>1.3.2</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -383,8 +387,14 @@
 			<artifactId>commons-collections4</artifactId>
 			<version>4.3</version>
 		</dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>RELEASE</version>
+            <scope>compile</scope>
+        </dependency>
 
-		<!--oracle -->
+        <!--oracle -->
 		<!--<dependency> -->
 		<!--<groupId>com.oracle</groupId> -->
 		<!--<artifactId>ojdbc6</artifactId> -->

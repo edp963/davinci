@@ -27,6 +27,7 @@ import edp.core.utils.BaseLock;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
@@ -60,6 +61,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -288,6 +290,26 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         } finally {
             releaseLock(lock);
         }
+    }
+
+    public Display getDisplay(Long displayId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Display display = displayMapper.getById(displayId);
+        if (display == null) {
+            throw new NotFoundException("Display is not found");
+        }
+
+        if (!checkReadPermission(entity, display.getProjectId(), user)) {
+            return null;
+        }
+        ProjectPermission projectPermission = getProjectPermission(display.getProjectId(), user);
+        List<Long> disableList = getDisableVizs(user.getId(), display.getProjectId(), Arrays.asList(displayId), VizEnum.DISPLAY);
+        boolean disable = !projectPermission.isProjectMaintainer() && disableList.contains(display.getId());
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                && !display.getPublish();
+        if (disable || noPublish) {
+            throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
+        }
+        return display;
     }
 
     /**
