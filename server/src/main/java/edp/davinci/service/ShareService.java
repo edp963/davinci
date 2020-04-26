@@ -29,6 +29,7 @@ import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.viewDto.DistinctParam;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.model.User;
+import edp.davinci.service.share.ShareWidget;
 
 import javax.servlet.http.HttpServletRequest;
 import java.sql.SQLException;
@@ -36,19 +37,19 @@ import java.util.List;
 import java.util.Map;
 
 public interface ShareService {
-    ShareWidget getShareWidget(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    ShareWidget getShareWidget(User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
 
     String generateShareToken(Long shareEntityId, String username, Long userId) throws ServerException;
 
     User shareLogin(String token, UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption;
 
-    ShareDisplay getShareDisplay(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    ShareDisplay getShareDisplay(User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
 
-    ShareDashboard getShareDashboard(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    ShareDashboard getShareDashboard(User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
 
-    Paginate<Map<String, Object>> getShareData(String token, ViewExecuteParam executeParam, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException;
+    Paginate<Map<String, Object>> getShareData(ViewExecuteParam executeParam, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException;
 
-    List<Map<String, Object>> getDistinctValue(String token, Long viewId, DistinctParam param, User user, HttpServletRequest request);
+    List<Map<String, Object>> getDistinctValue(Long viewId, DistinctParam param, User user);
 
     void formatShareParam(Long projectId, ShareEntity entity);
 
