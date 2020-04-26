@@ -107,10 +107,36 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         return dashboardPortal;
     }
 
-    private Dashboard getDashboard(Long dashboardId) {
+    public Dashboard getDashboard(Long dashboardId) {
         Dashboard dashboard = dashboardMapper.getById(dashboardId);
         if (null == dashboard) {
             throw new NotFoundException("dashboard is not found");
+        }
+        return dashboard;
+    }
+
+    public Dashboard getDashboard(Long dashboardId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Dashboard dashboard = getDashboard(dashboardId);
+        if (dashboard == null) {
+            return null;
+        }
+        DashboardPortal dashboardPortal = getDashboardPortal(dashboard.getDashboardPortalId(), false);
+        if (dashboardPortal == null) {
+            return null;
+        }
+
+        Long projectId = dashboardPortal.getProjectId();
+
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+
+        List<Long> disablePortals = getDisableVizs(user.getId(), projectId, null, VizEnum.PORTAL);
+
+        boolean isDisable = isDisableVizs(projectPermission, disablePortals, dashboardPortal.getId());
+        boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
+
+        if (hidden || isDisable || noPublish) {
+            throw new UnAuthorizedExecption();
         }
         return dashboard;
     }
@@ -138,9 +164,9 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
         boolean isDisable = isDisableVizs(projectPermission, disablePortals, portalId);
         boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
-        boolean noRublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
 
-        if (hidden || isDisable || noRublish) {
+        if (hidden || isDisable || noPublish) {
             return null;
         }
 
