@@ -28,7 +28,7 @@ public class ShareWidget {
     private Long type;
     private String config;
     private String dataToken;
-    private String dataPwd;
+    private String password;
     private String model;
     private Long viewId;
     private String variable;
