@@ -85,12 +85,8 @@ function mapDispatchToProps (dispatch) {
 }
 
 const withConnect = connect<{}, {}, IResetPasswordProps>(mapStateToProps, mapDispatchToProps)
-// const withReducer = injectReducer({ key: 'global', reducer })
-// const withSaga = injectSaga({ key: 'global', saga })
 
 export default compose(
-  // withReducer,
-  // withSaga,
   withConnect
 )(ResetPassword)
 

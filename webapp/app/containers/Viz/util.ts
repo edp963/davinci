@@ -18,7 +18,7 @@
  * >>
  */
 
-import { IDashboard, IDashboardNode } from './types'
+import { IDashboardRaw, IDashboardNode } from './types'
 import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { widgetDimensionMigrationRecorder } from 'app/utils/migrationRecorders'
 import { FieldSortTypes } from '../Widget/components/Config/Sort'
@@ -27,7 +27,7 @@ import { decodeMetricName } from '../Widget/components/util'
 
 type MapDashboardNodes = { [parentId: number]: IDashboardNode[] }
 
-export function getDashboardNodes(dashboards: IDashboard[]): IDashboardNode[] {
+export function getDashboardNodes(dashboards: IDashboardRaw[]): IDashboardNode[] {
   if (!Array.isArray(dashboards)) {
     return []
   }
@@ -57,8 +57,8 @@ export function getDashboardNodes(dashboards: IDashboard[]): IDashboardNode[] {
 export function getRequestParamsByWidgetConfig(
   renderType: RenderType,
   widgetConfig: IWidgetConfig,
-  prevQueryConditions: IQueryConditions,
-  queryConditions?: IQueryConditions
+  prevQueryConditions: Partial<IQueryConditions>,
+  queryConditions?: Partial<IQueryConditions>
 ) {
   const {
     cols,
@@ -86,7 +86,7 @@ export function getRequestParamsByWidgetConfig(
       list: sort[FieldSortTypes.Custom].sortList
     }))
 
-  let tempFilters
+  let tempFilters // @TODO combine widget static filters with local filters
   let linkageFilters
   let globalFilters
   let tempOrders

@@ -37,9 +37,9 @@ import {
   LOAD_DOWNLOAD_LIST_FAILURE,
   DOWNLOAD_FILE_SUCCESS,
   UPDATE_PROFILE_SUCCESS,
-  GET_EXTERNAL_AUTH_PROVIDERS_SUCESS
+  GET_EXTERNAL_AUTH_PROVIDERS_SUCESS,
+  DownloadStatus
 } from './constants'
-import { DownloadStatus } from './types'
 
 
 const initialState = {

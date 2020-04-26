@@ -34,7 +34,7 @@ import {
   serializeDefaultValue,
   getRelatedFieldsInfo
 } from 'app/components/Filters/util'
-import { FilterTypes, IS_RANGE_TYPE} from 'app/components/Filters/filterTypes'
+import { FilterTypes, IS_RANGE_TYPE} from 'app/components/Filters/constants'
 import { localControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 import FilterList from 'app/components/Filters/config/FilterList'
@@ -42,7 +42,7 @@ import FilterFormWithRedux, { FilterForm } from 'app/components/Filters/config/F
 import OptionSettingFormWithModal, { OptionSettingForm } from 'app/components/Filters/config/OptionSettingForm'
 import { Form, Row, Col, Button, Modal, Radio, Select, Checkbox } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
-import { setControlFormValues } from 'app/containers/Dashboard/actions'
+import ControlActions from 'containers/ControlPanel/actions'
 import { IViewVariable, IFormedView, IViewModelProps } from 'app/containers/View/types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 
@@ -68,7 +68,7 @@ interface ILocalControlConfigProps {
   visible: boolean
   onCancel: () => void
   onSave: (filterItems: any[]) => void
-  onSetControlFormValues: (values) => void
+  onSetConfigFormValues: (values) => void
 }
 
 interface ILocalControlConfigStates {
@@ -135,9 +135,9 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
         defaultValue: deserializeDefaultValue(control),
         ...rest
       }
-      this.props.onSetControlFormValues(fieldsValue)
+      this.props.onSetConfigFormValues(fieldsValue)
     } else {
-      this.props.onSetControlFormValues(null)
+      this.props.onSetConfigFormValues(null)
     }
   }
 
@@ -656,7 +656,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
 
 function mapDispatchToProps (dispatch) {
   return {
-    onSetControlFormValues: (values) => dispatch(setControlFormValues(values))
+    onSetConfigFormValues: (values) => dispatch(ControlActions.setConfigFormValues(values))
   }
 }
 

@@ -20,7 +20,7 @@
 
 import { createSelector } from 'reselect'
 import { initialState } from './reducer'
-import { DashboardItemStatus } from '../Dashboard'
+import { DashboardItemStatus } from '../Dashboard/constants'
 
 const selectShare = (state) => state.shareDisplay || initialState
 const selectPropsSlideNumber = (_, slideNumber: number) => slideNumber
@@ -88,7 +88,7 @@ const makeSelectSlideLayersLoaded = () =>
     selectPropsSlideNumber,
     (slideLayersInfo, slideNumber) =>
       Object.values(slideLayersInfo[slideNumber]).every(
-        ({ status }) => status !== DashboardItemStatus.Initial
+        ({ status }) => status !== DashboardItemStatus.Pending
       )
   )
 

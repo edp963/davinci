@@ -31,11 +31,12 @@ import { SourceActionType } from 'containers/Source/actions'
 
 import { ActionTypes as WidgetActionTypes } from 'containers/Widget/constants'
 import { WidgetActionType } from 'containers/Widget/actions'
-import { LOAD_DASHBOARD_DETAIL_SUCCESS } from 'containers/Dashboard/constants'
+import { ActionTypes as DashboardActionTypes } from 'containers/Dashboard/constants'
+import { DashboardActionType } from 'containers/Dashboard/actions'
 
 import { ActionTypes as DisplayActionTypes } from 'containers/Display/constants'
 import { DisplayActionType } from 'containers/Display/actions'
-import { LOCATION_CHANGE } from 'connected-react-router'
+import { LOCATION_CHANGE, LocationChangeAction } from 'connected-react-router'
 
 const emptyView: IView = {
   id: null,
@@ -91,7 +92,13 @@ const initialState: IViewState = {
 
 const viewReducer = (
   state = initialState,
-  action: ViewActionType | WidgetActionType | DisplayActionType | SourceActionType
+  action:
+    | ViewActionType
+    | WidgetActionType
+    | DashboardActionType
+    | DisplayActionType
+    | SourceActionType
+    | LocationChangeAction
 ): IViewState =>
   produce(state, (draft) => {
     switch (action.type) {
@@ -254,7 +261,7 @@ const viewReducer = (
           variable: JSON.parse(widgetView.variable || '[]')
         }
         break
-      case LOAD_DASHBOARD_DETAIL_SUCCESS:
+      case DashboardActionTypes.LOAD_DASHBOARD_DETAIL_SUCCESS:
       case DisplayActionTypes.LOAD_SLIDE_DETAIL_SUCCESS:
         const updatedViews: IFormedViews = (action.payload.views || []).reduce(
           (obj, view) => {

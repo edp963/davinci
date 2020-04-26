@@ -1,7 +1,8 @@
 import { StackConfig } from '../../Config/Stack'
+import { RichTextNode } from 'components/RichText'
 
 export interface IRichTextConfig {
-  content: string
+  content: string | RichTextNode[]
 }
 
 export interface IBarConfig {
