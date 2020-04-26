@@ -24,6 +24,7 @@ import com.alibaba.fastjson.serializer.ValueFilter;
 import edp.core.model.RecordInfo;
 import edp.core.utils.AESUtils;
 import edp.core.utils.StringZipUtil;
+import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.shareDto.ShareEntity;
 import edp.davinci.model.User;
 import lombok.Data;
@@ -39,7 +40,7 @@ public class ShareFactor {
     private static class ShareFactorSerializeFilter implements ValueFilter {
         @Override
         public Object process(Object object, String name, Object value) {
-            if (value == null || value instanceof User || value instanceof RecordInfo) {
+            if (value == null || value instanceof User || value instanceof RecordInfo || value instanceof ProjectDetail) {
                 return null;
             }
             if (value instanceof String && ((String) value).trim().length() == 0) {
@@ -146,6 +147,7 @@ public class ShareFactor {
      */
     private User user;
     private Object shareEntity;
+    private ProjectDetail projectDetail;
 
     public static ShareFactor parseShareFactor(String token, String secret) throws IllegalArgumentException {
         ShareFactor factor = null;
@@ -186,7 +188,7 @@ public class ShareFactor {
         this.setType(ShareType.WIDGET);
         ShareResult shareResult = this.toShareResult(secret);
         shareWidget.setDataToken(shareResult.getToken());
-        shareWidget.setDataPwd(shareResult.getPassword());
+        shareWidget.setPassword(shareResult.getPassword());
         return shareResult;
     }
 
