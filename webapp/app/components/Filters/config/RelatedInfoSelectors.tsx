@@ -26,7 +26,7 @@ import { RadioChangeEvent } from 'antd/lib/radio'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { IRelatedItemSource, IRelatedViewSource } from './FilterConfig'
 import { IViewModelProps } from 'app/containers/View/types'
-import FilterTypes from '../filterTypes'
+import { FilterTypes } from '../constants'
 
 const FormItem = Form.Item
 const Option = Select.Option

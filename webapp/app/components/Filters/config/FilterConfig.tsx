@@ -22,7 +22,6 @@ import React, { createRef } from 'react'
 import { connect } from 'react-redux'
 import {
   OnGetControlOptions,
-  IMapControlOptions,
   IGlobalControl,
   IGlobalControlRelatedItem,
   IControlRelatedField,
@@ -35,8 +34,7 @@ import {
   serializeDefaultValue,
   getRelatedFieldsInfo
 } from '../util'
-import { FilterTypes, IS_RANGE_TYPE} from '../filterTypes'
-import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
+import { FilterTypes, IS_RANGE_TYPE} from '../constants'
 
 import FilterList from './FilterList'
 import FilterFormWithRedux, { FilterForm } from './FilterForm'
@@ -45,8 +43,8 @@ import RelatedInfoSelectors from './RelatedInfoSelectors'
 import { Button, Modal, Radio } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
-import { ICurrentDashboard } from 'containers/Dashboard'
-import { setControlFormValues } from 'containers/Dashboard/actions'
+import { IDashboard } from 'containers/Dashboard/types'
+import ControlActions from 'containers/ControlPanel/actions'
 import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
@@ -67,17 +65,16 @@ export interface IRelatedViewSource {
 }
 
 interface IGlobalControlConfigProps {
-  currentDashboard: ICurrentDashboard
+  currentDashboard: IDashboard
   currentItems: any[]
   views: IFormedViews
   widgets: any[]
   visible: boolean
   loading: boolean
-  mapOptions: IMapControlOptions
   onCancel: () => void
   onSave: (filterItems: any[], queryMode: GlobalControlQueryMode) => void
   onGetOptions: OnGetControlOptions
-  onSetControlFormValues: (values) => void
+  onSetConfigFormValues: (values) => void
 }
 
 interface IGlobalControlConfigStates {
@@ -114,14 +111,10 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
         || currentItems !== this.props.currentItems
         || visible && !this.props.visible) {
       if (currentDashboard) {
-        const config = JSON.parse(currentDashboard.config || '{}')
-        const globalControls = config.filters || []
-        const queryMode = config.queryMode || GlobalControlQueryMode.Immediately
+        const { filters: globalControls, queryMode} = currentDashboard.config
 
         let selected
         const controls =  globalControls.map((control) => {
-          control = globalControlMigrationRecorder(control)
-
           const { relatedItems } = control
           Object.keys(relatedItems).forEach((itemId) => {
             if (!currentItems.find((ci) => ci.id === Number(itemId))) {
@@ -199,9 +192,9 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
         defaultValue: deserializeDefaultValue(control),
         ...rest
       }
-      this.props.onSetControlFormValues(fieldsValue)
+      this.props.onSetConfigFormValues(fieldsValue)
     } else {
-      this.props.onSetControlFormValues(null)
+      this.props.onSetConfigFormValues(null)
     }
   }
 
@@ -702,7 +695,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
 
 function mapDispatchToProps (dispatch) {
   return {
-    onSetControlFormValues: (values) => dispatch(setControlFormValues(values))
+    onSetConfigFormValues: (values) => dispatch(ControlActions.setConfigFormValues(values))
   }
 }
 

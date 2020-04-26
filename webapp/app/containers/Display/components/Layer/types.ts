@@ -60,8 +60,8 @@ export type LayerListContextValue = {
     slideId: number,
     layerId: number,
     widget: IWidgetFormed,
-    prevQueryCondition?: IQueryConditions,
-    queryConditions?: IQueryConditions
+    prevQueryCondition?: Partial<IQueryConditions>,
+    queryConditions?: Partial<IQueryConditions>
   ) => void
   onDrag?: (
     layerId: number,

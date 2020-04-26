@@ -23,7 +23,7 @@ import { ActionTypes } from './constants'
 
 import { GraphTypes } from 'containers/Display/constants'
 import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
-import { DashboardItemStatus } from '../Dashboard'
+import { DashboardItemStatus } from '../Dashboard/constants'
 
 export const initialState = {
   title: '',
@@ -50,11 +50,11 @@ const displayReducer = (state = initialState, action) =>
               info[layer.id] =
                 layer.type === GraphTypes.Chart
                   ? {
-                      status: DashboardItemStatus.Initial,
+                      status: DashboardItemStatus.Pending,
                       datasource: { resultList: [] },
                       loading: false,
                       queryConditions: {
-                        tempFilters: [],
+                        tempFilters: [],  // @TODO combine widget static filters with local filters
                         linkageFilters: [],
                         globalFilters: [],
                         variables: [],

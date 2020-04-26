@@ -20,7 +20,12 @@
 
 import { SqlTypes } from 'app/globalConstants'
 import { ISourceSimple, ISourceBase, ISchema } from 'containers/Source/types'
-import { ViewModelTypes, ViewModelVisualTypes, ViewVariableTypes, ViewVariableValueTypes } from './constants'
+import {
+  ViewModelTypes,
+  ViewModelVisualTypes,
+  ViewVariableTypes,
+  ViewVariableValueTypes
+} from './constants'
 import { CancelTokenSource } from 'axios'
 
 export interface IViewBase {
@@ -79,13 +84,13 @@ export interface ISqlColumn {
 export interface IExecuteSqlResponse {
   columns: ISqlColumn[]
   totalCount: number
-  resultList: Array<{[key: string]: string | number}>
+  resultList: Array<{ [key: string]: string | number }>
 }
 
 export interface IViewModelProps {
   name: string
-  sqlType: SqlTypes,
-  visualType: ViewModelVisualTypes,
+  sqlType: SqlTypes
+  visualType: ViewModelVisualTypes
   modelType: ViewModelTypes
 }
 
@@ -161,6 +166,14 @@ export interface IDacTenant {
 export interface IDacBiz {
   id: number
   name: string
+}
+
+export interface IViewQueryResponse {
+  columns: Array<{ name: string; type: SqlTypes }>
+  pageNo: number
+  pageSize: number
+  totalCount: number
+  resultList: any[]
 }
 
 export interface IViewState {

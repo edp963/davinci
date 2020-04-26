@@ -1,133 +1,141 @@
-import React, { Component } from 'react'
-import classnames from 'classnames'
-import { FormComponentProps } from 'antd/lib/form/Form'
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+import React, { PureComponent, GetDerivedStateFromProps } from 'react'
 import {
   IGlobalControl,
+  ILocalControl,
   IControlRelatedField,
-  IControlRequestParams,
-  IMapItemControlRequestParams,
   OnGetControlOptions,
   IMapControlOptions,
   IRenderTreeItem,
   IGlobalRenderTreeItem,
-  GlobalControlQueryMode,
-  IGridCtrlParams
+  ILocalRenderTreeItem,
+  GlobalControlQueryMode
 } from './types'
 import {
   getVariableValue,
   getModelValue,
-  deserializeDefaultValue,
-  getControlRenderTree,
   getAllChildren,
-  getParents
+  getParents,
+  getPanelRenderState
 } from './util'
-import { defaultFilterControlGridProps, SHOULD_LOAD_OPTIONS, fullScreenGlobalControlGridProps } from './filterTypes'
-import FilterControl from './FilterControl'
-import { globalControlMigrationRecorder } from 'app/utils/migrationRecorders'
-import { Row, Col, Form, Button } from 'antd'
+import {
+  SHOULD_LOAD_OPTIONS,
+  CHANGE_IMMEDIATELY,
+  ControlPanelTypes,
+  ControlPanelLayoutTypes
+} from './constants'
+import DashboardControlPanelLayout from './Layouts/Dashboard'
+import DashboardItemControlPanelLayout from './Layouts/DashboardItem'
+import FullScreenControlPanelLayout from './Layouts/FullScreen'
 
-const styles = require('./filter.less')
-
-interface IFilterPanelProps extends FormComponentProps {
-  currentDashboard: any
-  currentItems: any[]
-  gridCtrlParams?: IGridCtrlParams
+interface IFilterPanelProps {
+  controls: IGlobalControl[] | ILocalControl[]
+  items: string
+  type: ControlPanelTypes
+  layoutType: ControlPanelLayoutTypes
+  viewId?: number
+  reload: boolean
+  queryMode: GlobalControlQueryMode
+  formValues: object
   mapOptions: IMapControlOptions
   onGetOptions: OnGetControlOptions
-  onSearch: (requestParamsByItem: IMapItemControlRequestParams, formValues?: object) => void
-  isFullScreen?: boolean
+  onChange: (formValues: object) => void
+  onSearch: (formValues?: object) => void
 }
 
 interface IFilterPanelStates {
-  renderTree: IRenderTreeItem[],
+  renderTree: IRenderTreeItem[]
   flatTree: {
     [key: string]: IRenderTreeItem
-  },
-  queryMode: GlobalControlQueryMode
+  }
+  defaultValues: object
+  prevControls: IGlobalControl[] | ILocalControl[]
+  prevItems: string
 }
 
-export class FilterPanel extends Component<IFilterPanelProps, IFilterPanelStates> {
+class FilterPanel extends PureComponent<IFilterPanelProps, IFilterPanelStates> {
+  public state: IFilterPanelStates = {
+    renderTree: [],
+    flatTree: {},
+    defaultValues: {},
+    prevControls: [],
+    prevItems: ''
+  }
 
-  public constructor (props: IFilterPanelProps) {
-    super(props)
-    this.state = {
-      renderTree: [],
-      flatTree: {},
-      queryMode: GlobalControlQueryMode.Immediately
+  public static getDerivedStateFromProps: GetDerivedStateFromProps<
+    IFilterPanelProps,
+    IFilterPanelStates
+  > = (props, state) => {
+    const { type, controls, items } = props
+    let nextState: Partial<IFilterPanelStates> = {
+      prevControls: controls,
+      prevItems: items
+    }
+
+    if (state.prevControls !== controls || state.prevItems !== items) {
+      nextState = {
+        ...nextState,
+        ...getPanelRenderState(type, controls, items)
+      }
+    }
+
+    return nextState
+  }
+
+  public componentDidMount() {
+    this.initFormValuesAndSelectOptions(
+      this.props,
+      this.state,
+      Object.keys(this.props.formValues).length > 0
+    )
+  }
+
+  public componentDidUpdate(prevProps: IFilterPanelProps) {
+    const { controls, reload, onSearch } = this.props
+    const { defaultValues } = this.state
+
+    if (prevProps.controls !== controls) {
+      this.initFormValuesAndSelectOptions(this.props, this.state, false)
+    }
+
+    if (reload) {
+      onSearch(defaultValues)
     }
   }
 
-  public componentDidMount () {
-    const { currentDashboard } = this.props
-    if (currentDashboard && currentDashboard.id) {
-       this.initDerivedState(this.props, false) // fullscreen not need search at first
-    }
-  }
-
-  public componentWillReceiveProps (nextProps: IFilterPanelProps) {
-    const { currentDashboard, currentItems } = nextProps
-    if (currentDashboard !== this.props.currentDashboard
-        || this.dashboardItemsChange(currentItems, this.props.currentItems)) {
-      const isCurrentDashboardUpdated = (this.props.currentDashboard && this.props.currentDashboard.id) === (currentDashboard && currentDashboard.id)
-      this.initDerivedState(nextProps, isCurrentDashboardUpdated)
-    }
-  }
-
-  private dashboardItemsChange = (currentItems, previousItems) => {
-    if (currentItems && previousItems) {
-      const currentItemIds = currentItems.map((item) => item.id).sort().join(',')
-      const previousItemIds = previousItems.map((item) => item.id).sort().join(',')
-      return !(currentItems.length === previousItems.length && currentItemIds === previousItemIds)
-    }
-    return false
-  }
-
-  private initDerivedState = (props: IFilterPanelProps, isCurrentDashboardUpdated) => {
-    const { currentDashboard, currentItems } = props
-    if (currentDashboard) {
-      this.props.form.resetFields()
-
-      const config = JSON.parse(currentDashboard.config || '{}')
-      const globalControls = config.filters || []
-      const queryMode = config.queryMode || GlobalControlQueryMode.Immediately
-
-      const controls: IGlobalControl[] = []
-      const defaultValues = {}
-
-      globalControls.forEach((control) => {
-        control = globalControlMigrationRecorder(control)
-        const { relatedItems } = control
-        Object.keys(relatedItems).forEach((itemId) => {
-          if (!currentItems.find((ci) => ci.id === Number(itemId))) {
-            delete relatedItems[itemId]
-          }
-        })
-
-        const defaultFilterValue = deserializeDefaultValue(control)
-        if (defaultFilterValue) {
-          defaultValues[control.key] = defaultFilterValue
-        }
-
-        controls.push(control)
-      })
-
-      const { renderTree, flatTree } = getControlRenderTree<IGlobalControl, IRenderTreeItem>(controls)
-      Object.values(flatTree).forEach((control) => {
-        if (SHOULD_LOAD_OPTIONS[control.type]) {
-          this.loadOptions(control, flatTree, defaultValues)
-        }
-      })
-
-      this.setState({
-        renderTree,
-        flatTree,
-        queryMode
-      }, () => {
-        if (isCurrentDashboardUpdated) {
-          this.search(props.form.getFieldsValue(), props)
-        }
-      })
-    }
+  private initFormValuesAndSelectOptions(
+    props: IFilterPanelProps,
+    state: IFilterPanelStates,
+    initiated: boolean
+  ) {
+    const { formValues, onChange } = props
+    const { flatTree, defaultValues } = state
+    const initialFormValues = initiated ? formValues : defaultValues
+    onChange(initialFormValues)
+    Object.values(flatTree).forEach((control) => {
+      if (SHOULD_LOAD_OPTIONS[control.type]) {
+        this.loadOptions(control, flatTree, initialFormValues)
+      }
+    })
   }
 
   private loadOptions = (
@@ -135,42 +143,109 @@ export class FilterPanel extends Component<IFilterPanelProps, IFilterPanelStates
     flatTree: { [key: string]: IRenderTreeItem },
     controlValues: { [key: string]: any }
   ) => {
-    const { onGetOptions } = this.props
+    const { type, viewId, items, onGetOptions } = this.props
     const {
       key,
       interactionType,
-      relatedViews,
       parent,
       cache,
       expired,
       customOptions,
       options
-    } = renderControl as IGlobalRenderTreeItem
+    } = renderControl
 
     if (customOptions) {
-      onGetOptions(key, true, options)
+      onGetOptions(
+        key,
+        true,
+        options,
+        type === ControlPanelTypes.Local ? Number(items) : void 0
+      )
     } else {
-      const parents = getParents<IGlobalControl>(parent, flatTree)
+      const parents = getParents<IGlobalControl | ILocalControl>(
+        parent,
+        flatTree
+      )
+      const requestParams = {}
 
-      const requestParams = Object.entries(relatedViews).reduce((obj, [viewId, fields]) => {
+      if (type === ControlPanelTypes.Global) {
+        const { relatedViews } = renderControl as IGlobalRenderTreeItem
+
+        Object.entries(relatedViews).forEach(([relatedViewId, fields]) => {
+          let filters = []
+          let variables = []
+
+          parents.forEach((parentControl: IGlobalControl) => {
+            const parentValue = controlValues[parentControl.key]
+            Object.entries(parentControl.relatedViews).forEach(
+              ([parentViewId, parentFields]) => {
+                if (relatedViews[parentViewId]) {
+                  if (parentControl.interactionType === 'column') {
+                    filters = filters.concat(
+                      getModelValue(
+                        parentControl,
+                        parentFields as IControlRelatedField,
+                        parentValue
+                      )
+                    )
+                  } else {
+                    variables = variables.concat(
+                      getVariableValue(parentControl, parentFields, parentValue)
+                    )
+                  }
+                }
+              }
+            )
+          })
+
+          if (interactionType === 'column') {
+            requestParams[relatedViewId] = {
+              columns: [(fields as IControlRelatedField).name],
+              filters,
+              variables,
+              cache,
+              expired
+            }
+          } else {
+            if ((fields as IControlRelatedField).optionsFromColumn) {
+              requestParams[relatedViewId] = {
+                columns: [(fields as IControlRelatedField).column],
+                filters,
+                variables,
+                cache,
+                expired
+              }
+            }
+          }
+        })
+
+        if (Object.keys(requestParams).length) {
+          onGetOptions(key, false, requestParams)
+        }
+      } else {
+        const { fields } = renderControl as ILocalRenderTreeItem
         let filters = []
         let variables = []
 
-        parents.forEach((parentControl) => {
+        parents.forEach((parentControl: ILocalControl) => {
           const parentValue = controlValues[parentControl.key]
-          Object.entries(parentControl.relatedViews).forEach(([parentViewId, parentFields]) => {
-            if (relatedViews[parentViewId]) {
-              if (parentControl.interactionType === 'column') {
-                filters = filters.concat(getModelValue(parentControl, parentFields as IControlRelatedField, parentValue))
-              } else {
-                variables = variables.concat(getVariableValue(parentControl, parentFields, parentValue))
-              }
-            }
-          })
+          if (parentControl.interactionType === 'column') {
+            filters = filters.concat(
+              getModelValue(
+                parentControl,
+                parentControl.fields as IControlRelatedField,
+                parentValue
+              )
+            )
+          } else {
+            variables = variables.concat(
+              getVariableValue(parentControl, parentControl.fields, parentValue)
+            )
+          }
         })
 
         if (interactionType === 'column') {
-          obj[viewId] = {
+          requestParams[viewId] = {
             columns: [(fields as IControlRelatedField).name],
             filters,
             variables,
@@ -179,7 +254,7 @@ export class FilterPanel extends Component<IFilterPanelProps, IFilterPanelStates
           }
         } else {
           if ((fields as IControlRelatedField).optionsFromColumn) {
-            obj[viewId] = {
+            requestParams[viewId] = {
               columns: [(fields as IControlRelatedField).column],
               filters,
               variables,
@@ -189,228 +264,80 @@ export class FilterPanel extends Component<IFilterPanelProps, IFilterPanelStates
           }
         }
 
-        return obj
-      }, {})
-
-      if (Object.keys(requestParams).length) {
-        onGetOptions(key, false, requestParams)
+        if (Object.keys(requestParams).length) {
+          onGetOptions(key, false, requestParams, Number(items))
+        }
       }
     }
   }
 
-  private change = (control: IGlobalControl, val) => {
-    const { form } = this.props
-    const { flatTree, queryMode } = this.state
-    const { key } = control
+  private change = (control: IGlobalControl | ILocalControl, val) => {
+    const { queryMode, formValues, onChange, onSearch } = this.props
+    const { flatTree } = this.state
+    const { key, type } = control
     const childrenKeys = getAllChildren(key, flatTree)
-
     const controlValue = {
       [key]: val
+    }
+    const updatedFormValues = {
+      ...formValues,
+      ...controlValue
     }
 
     if (childrenKeys.length) {
       childrenKeys.forEach((childKey) => {
         const child = flatTree[childKey]
         if (SHOULD_LOAD_OPTIONS[child.type]) {
-          this.loadOptions(child, flatTree, {
-            ...form.getFieldsValue(),
-            ...controlValue
-          })
+          this.loadOptions(child, flatTree, updatedFormValues)
         }
       })
     }
 
-    if (queryMode === GlobalControlQueryMode.Immediately) {
-      this.search(controlValue)
+    onChange(updatedFormValues)
+
+    if (
+      queryMode === GlobalControlQueryMode.Immediately &&
+      CHANGE_IMMEDIATELY[type]
+    ) {
+      onSearch(controlValue)
     }
-  }
-
-  private search = (changedFormValues, props: IFilterPanelProps = this.props) => {
-    const { onSearch, form } = props
-    const { flatTree } = this.state
-    const allFormValues = form.getFieldsValue()
-
-    const changedFormValuesRelatedItems = Object.keys(changedFormValues)
-      .reduce((items, key) => {
-        const { relatedItems } = flatTree[key] as IGlobalRenderTreeItem
-        const checkedItems = Object.entries(relatedItems)
-          .filter(([itemId, config]) => config.checked)
-          .map(([itemId]) => itemId)
-
-        return Array.from(new Set([
-          ...items,
-          ...checkedItems
-        ]))
-      }, [])
-
-    // get other values that have affected the dashboard items associated with this search
-    if (this.partialFormValuesChanged(changedFormValues, allFormValues)) {
-      const changedFormValuesRelatedItemsRelatedValues = Object.entries(allFormValues)
-        .reduce((values, [key, value]) => {
-          if (!changedFormValues.hasOwnProperty(key)) {
-            const { relatedItems } = flatTree[key] as IGlobalRenderTreeItem
-            const checkedItems = Object.entries(relatedItems)
-              .filter(([itemId, config]) => config.checked)
-              .map(([itemId]) => itemId)
-
-            if (checkedItems.some(
-              (itemId) => changedFormValuesRelatedItems.includes(itemId)
-            )) {
-              values[key] = value
-            }
-          }
-          return values
-        }, {})
-
-      changedFormValues = {
-        ...changedFormValues,
-        ...changedFormValuesRelatedItemsRelatedValues
-      }
-    }
-
-    const requestParamsByItem: IMapItemControlRequestParams = {}
-
-    changedFormValuesRelatedItems.forEach((itemId) => {
-      Object.entries(changedFormValues).forEach(([key, value]) => {
-        const control = flatTree[key] as IGlobalRenderTreeItem
-        const { interactionType, relatedViews, relatedItems} = control
-        const relatedItem = relatedItems[itemId]
-
-        if (relatedItem && relatedItem.checked) {
-          const fields = relatedViews[relatedItem.viewId]
-          if (!requestParamsByItem[itemId]) {
-            requestParamsByItem[itemId] = {
-              variables: [],
-              filters: []
-            }
-          }
-          if (interactionType === 'column') {
-            const controlFilters = getModelValue(control, fields as IControlRelatedField, value)
-            requestParamsByItem[itemId].filters = requestParamsByItem[itemId].filters.concat(controlFilters)
-          } else {
-            const controlVariables = getVariableValue(control, fields, value)
-            requestParamsByItem[itemId].variables = requestParamsByItem[itemId].variables.concat(controlVariables)
-          }
-        }
-      })
-    })
-
-    onSearch(requestParamsByItem, {
-      ...allFormValues,
-      ...changedFormValues
-    })
-  }
-
-  private partialFormValuesChanged = (changedValues, allValues) => {
-    return Object.keys(changedValues).sort().join(',')
-      !== Object.keys(allValues).sort().join(',')
-  }
-
-  private manualSearch = () => {
-    this.search(this.props.form.getFieldsValue())
   }
 
   private reset = () => {
-    this.props.form.resetFields()
-    if (this.state.queryMode === GlobalControlQueryMode.Immediately) {
-      const formValues = this.props.form.getFieldsValue()
-      this.search(formValues)
+    const { queryMode, onChange, onSearch } = this.props
+    const { defaultValues } = this.state
+    onChange(defaultValues)
+    if (queryMode === GlobalControlQueryMode.Immediately) {
+      onSearch(defaultValues)
     }
   }
 
-  private renderFilterControls = (renderTree: IRenderTreeItem[], parents?: IGlobalControl[]) => {
-    const { form, mapOptions, isFullScreen, gridCtrlParams } = this.props
-    const controlValues = form.getFieldsValue()
+  public render() {
+    const { layoutType, queryMode, formValues, mapOptions, onSearch } = this.props
 
-    let components = []
+    const { renderTree } = this.state
 
-    renderTree.forEach((control) => {
-      const { key, width, children, ...rest } = control as IGlobalRenderTreeItem
-      const parentsInfo = parents
-        ? parents.reduce((values, parentControl) => {
-            const parentSelectedValue = controlValues[parentControl.key]
-            if (parentSelectedValue && !(Array.isArray(parentSelectedValue) && !parentSelectedValue.length)) {
-              values = values.concat({
-                control: parentControl,
-                value: parentSelectedValue
-              })
-            }
-            return values
-          }, [])
-        : null
-      let controlGridProps = width
-          ? {
-              lg: width,
-              md: width < 8 ? 12 : 24
-            }
-          : defaultFilterControlGridProps
-      if (isFullScreen) {
-        controlGridProps = fullScreenGlobalControlGridProps
-      }
-      components = components.concat(
-        <Col
-          key={key}
-          {...controlGridProps}
-        >
-          <FilterControl
-            form={form}
-            control={control}
-            currentOptions={mapOptions[key] || []}
-            parentsInfo={parentsInfo}
-            onChange={this.change}
-            gridCtrlParams={gridCtrlParams}
-          />
-        </Col>
-      )
-      if (children) {
-        const controlWithOutChildren = { key, width, ...rest }
-        components = components.concat(
-          this.renderFilterControls(children, parents ? parents.concat(controlWithOutChildren) : [controlWithOutChildren])
-        )
-      }
-    })
-    return components
+    const layoutProps = {
+      queryMode,
+      renderTree,
+      formValues,
+      mapOptions,
+      onChange: this.change,
+      onSearch,
+      onReset: this.reset
+    }
+
+    switch (layoutType) {
+      case ControlPanelLayoutTypes.Dashboard:
+        return <DashboardControlPanelLayout {...layoutProps} />
+      case ControlPanelLayoutTypes.DashboardItem:
+        return <DashboardItemControlPanelLayout {...layoutProps} />
+      case ControlPanelLayoutTypes.Fullscreen:
+        return <FullScreenControlPanelLayout {...layoutProps} />
+      default:
+        return null
+    }
   }
-
-  public render () {
-    const { renderTree, queryMode } = this.state
-    const { isFullScreen } = this.props
-    const panelClass = classnames({
-      [styles.controlPanel]: true,
-      [styles.empty]: !renderTree.length,
-      [styles.flexColumn]: isFullScreen
-    })
-
-    const controlClass = classnames({
-      [styles.wfull]: isFullScreen,
-      [styles.controls]: true
-    })
-
-    const actionClass = classnames({
-      [styles.actions]: true,
-      [styles.flexEnd]: isFullScreen,
-      [styles.mt16]: isFullScreen
-    })
-
-    return (
-      <Form className={panelClass}>
-        <div className={controlClass}>
-          <Row gutter={8}>
-            {this.renderFilterControls(renderTree)}
-          </Row>
-        </div>
-        {
-          queryMode === GlobalControlQueryMode.Manually && (
-            <div className={actionClass}>
-              <Button type="primary" icon="search" onClick={this.manualSearch}>查询</Button>
-              <Button icon="reload" onClick={this.reset}>重置</Button>
-            </div>
-          )
-        }
-      </Form>
-    )
-  }
-
 }
 
-export default Form.create<IFilterPanelProps>()(FilterPanel)
+export default FilterPanel

@@ -160,12 +160,8 @@ export function mapDispatchToProps (dispatch) {
 }
 
 const withConnect = connect<{}, {}, ILoginProps>(mapStateToProps, mapDispatchToProps)
-// const withReducer = injectReducer({ key: 'global', reducer })
-// const withSaga = injectSaga({ key: 'global', saga })
 
 export default compose(
-//  withReducer,
-//  withSaga,
  withConnect
 )(Login)
 

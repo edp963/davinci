@@ -4,7 +4,9 @@ const webpackDevMiddleware = require('webpack-dev-middleware')
 const webpackHotMiddleware = require('webpack-hot-middleware')
 const proxy = require('http-proxy-middleware')
 
-function createWebpackMiddleware (compiler, publicPath) {
+const fs = require('fs')
+
+function createWebpackMiddleware(compiler, publicPath) {
   return webpackDevMiddleware(compiler, {
     logLevel: 'warn',
     publicPath,
@@ -13,25 +15,34 @@ function createWebpackMiddleware (compiler, publicPath) {
   })
 }
 
-module.exports = function addDevMiddlewares (app, webpackConfig) {
+module.exports = function addDevMiddlewares(app, webpackConfig) {
   const compiler = webpack(webpackConfig)
   const middleware = createWebpackMiddleware(
     compiler,
     webpackConfig.output.publicPath
   )
 
-  // FIXME
-  app.use(['/api/v3'], proxy({target: 'http://localhost:8080/', changeOrigin: true}))
-  app.use(['/image'], proxy({target: 'http://localhost:8080/', changeOrigin: true}))
+  let proxyTarget = 'http://localhost:8080/'
+  const configFilePath = path.resolve(__dirname, '../config.json')
+
+  if (fs.existsSync(configFilePath)) {
+    const jsonConfig = fs.readFileSync(configFilePath)
+    const { proxies } = JSON.parse(jsonConfig)
+    proxyTarget = proxies.find((proxy) => proxy.enabled).target
+  } else {
+    fs.writeFileSync(configFilePath, JSON.stringify({ proxies: [{ target: proxyTarget, enabled: true }] }))
+  }
+
+  app.use(['/api/v3', '/image'], proxy({ target: proxyTarget, changeOrigin: true }))
   app.use(middleware)
   app.use(webpackHotMiddleware(compiler))
 
   // Since webpackDevMiddleware uses memory-fs internally to store build
   // artifacts, we use it instead
-  const fs = middleware.fileSystem
+  const fsMemory = middleware.fileSystem
 
   app.get('*', (req, res) => {
-    fs.readFile(path.join(compiler.outputPath, 'index.html'), (err, file) => {
+    fsMemory.readFile(path.join(compiler.outputPath, 'index.html'), (err, file) => {
       if (err) {
         res.sendStatus(404)
       } else {
