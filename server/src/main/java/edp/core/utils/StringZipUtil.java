@@ -19,12 +19,15 @@
 package edp.core.utils;
 
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.ByteArrayOutputStream;
 import java.util.Base64;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
+@Slf4j
 public class StringZipUtil {
 
     private static final int BYTES_LENGTH = 256;
@@ -70,7 +73,7 @@ public class StringZipUtil {
                 outputStream.write(bytes, 0, length);
             }
         } catch (DataFormatException e) {
-            e.printStackTrace();
+            log.debug(e.getMessage(), e);
             return null;
         } finally {
             inflater.end();

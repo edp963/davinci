@@ -34,7 +34,7 @@ public class AESUtils {
     public static final String AES_KEY = "sM7!tsv?5ygRo;h.";
 
 
-    private static String garbleSlat(String src) {
+    private static String garbleSalt(String src) {
         if (StringUtils.isEmpty(src)) {
             return AES_KEY;
         } else {
@@ -44,7 +44,7 @@ public class AESUtils {
     }
 
     public static String encrypt(String src, String key) {
-        key = garbleSlat(key);
+        key = garbleSalt(key);
         try {
             byte[] raw = key.getBytes();
             SecretKeySpec skeySpec = new SecretKeySpec(raw, KEY_AES);
@@ -59,7 +59,7 @@ public class AESUtils {
     }
 
     public static String decrypt(String src, String key) {
-        key = garbleSlat(key);
+        key = garbleSalt(key);
         try {
             byte[] raw = key.getBytes();
             SecretKeySpec skeySpec = new SecretKeySpec(raw, KEY_AES);

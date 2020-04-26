@@ -19,7 +19,7 @@
 
 package edp.davinci.dao;
 
-import edp.davinci.dto.shareDto.ShareWidget;
+import edp.davinci.service.share.ShareWidget;
 import edp.davinci.dto.widgetDto.WidgetWithRelationDashboardId;
 import edp.davinci.dto.widgetDto.WidgetWithVizId;
 import edp.davinci.model.Widget;
