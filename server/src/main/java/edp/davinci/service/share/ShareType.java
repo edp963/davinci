@@ -38,7 +38,17 @@ public enum ShareType {
     /**
      * 文件
      */
-    FILE(5);
+    FILE(5),
+
+    /**
+     * 登录
+     */
+    LOGIN(6),
+
+    /**
+     *
+     */
+    PERMISSION(7);
 
     @Getter
     private int type;

@@ -34,6 +34,7 @@ import edp.davinci.core.model.TokenEntity;
 import edp.davinci.dao.*;
 import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
 import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.shareDto.*;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.viewDto.DistinctParam;
@@ -44,6 +45,7 @@ import edp.davinci.service.ProjectService;
 import edp.davinci.service.ShareService;
 import edp.davinci.service.UserService;
 import edp.davinci.service.ViewService;
+import edp.davinci.service.share.ShareDataPermission;
 import edp.davinci.service.share.ShareFactor;
 import edp.davinci.service.share.ShareMode;
 import edp.davinci.service.share.ShareWidget;
@@ -83,6 +85,9 @@ public class ShareServiceImpl implements ShareService {
     private ViewMapper viewMapper;
 
     @Autowired
+    private DashboardPortalMapper dashboardPortalMapper;
+
+    @Autowired
     private ViewService viewService;
 
     @Autowired
@@ -101,58 +106,32 @@ public class ShareServiceImpl implements ShareService {
     private ProjectMapper projectMapper;
 
     @Autowired
+    private RelRoleUserMapper relRoleUserMapper;
+
+    @Autowired
     private String TOKEN_SECRET;
 
     @Override
-    public User shareLogin(String token, UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption {
-        //AES解密
-        String decrypt = AESUtils.decrypt(token, null);
-        //获取分享信息
-        String tokenUserName = tokenUtils.getUsername(decrypt);
-        String tokenPassword = tokenUtils.getPassword(decrypt);
-
-        String[] tokenInfos = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
-        String[] tokenCrypts = tokenPassword.split(Constants.SPLIT_CHAR_STRING);
-
-        if (tokenInfos.length < 2) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
-        }
-
+    public User shareLogin(UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption {
+        ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         User loginUser = userService.userLogin(userLogin);
         if (null == loginUser) {
             throw new NotFoundException("user is not found");
         }
-
-        Long shareUserId = Long.parseLong(tokenInfos[1]);
-        if (shareUserId.longValue() < 1L) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
-        }
-
-        User shareUser = userMapper.getById(shareUserId);
-        if (null == shareUser) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
-        }
-
-        if (tokenInfos.length == 3) {
-            if (tokenCrypts.length < 2) {
-                throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
+        if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
+            if (!loginUser.getId().equals(shareFactor.getSharerId())) {
+                throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
             }
-            try {
-                String sharedUserName = tokenInfos[2];
-                Long sharedUserId = Long.parseLong(tokenCrypts[1]);
-                if (!(loginUser.getUsername().equals(sharedUserName) && loginUser.getId().equals(sharedUserId)) && !loginUser.getId().equals(shareUserId)) {
-                    throw new ForbiddenExecption(ErrorMsg.ERR_MSG_AUTHENTICATION);
-                }
-            } catch (NumberFormatException e) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_MSG_AUTHENTICATION);
+        } else {
+            Set<RelRoleUser> relRoleUsers = relRoleUserMapper.selectByUserAndRoles(loginUser.getId(), shareFactor.getRoles());
+            if (!shareFactor.getViewers().contains(loginUser.getId()) && CollectionUtils.isEmpty(relRoleUsers)) {
+                throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
             }
         }
-
         //是否激活
         if (!loginUser.getActive()) {
             throw new ServerException("this user is not active");
         }
-
         return loginUser;
     }
 
@@ -341,6 +320,46 @@ public class ShareServiceImpl implements ShareService {
 
         entity.setViewers(viewers);
         entity.setRoles(roleIds);
+    }
+
+    /**
+     * 获取登录用户权限
+     *
+     * @return
+     * @throws ServerException
+     * @throws ForbiddenExecption
+     */
+    @Override
+    public Map<String, Object> getSharePermissions() throws ServerException, ForbiddenExecption {
+        Map<String, Object> map = new HashMap<>(1);
+        ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
+        ProjectDetail projectDetail = shareFactor.getProjectDetail();
+        if (projectDetail == null) {
+            map.put("download", false);
+            return map;
+        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareFactor.getUser());
+        if (projectPermission == null) {
+            map.put("download", false);
+            return map;
+        }
+        map.put("download", projectPermission.getDownloadPermission());
+        return map;
+    }
+
+    /**
+     * 前置接口：获取分享模式
+     *
+     * @return
+     * @throws ServerException
+     * @throws ForbiddenExecption
+     */
+    @Override
+    public Map<String, Object> checkShareToken() throws ServerException, ForbiddenExecption {
+        ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
+        Map<String, Object> map = new HashMap<>(1);
+        map.put("type", shareFactor.getMode().name());
+        return map;
     }
 
     /**

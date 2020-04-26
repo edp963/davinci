@@ -41,7 +41,7 @@ public interface ShareService {
 
     String generateShareToken(Long shareEntityId, String username, Long userId) throws ServerException;
 
-    User shareLogin(String token, UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption;
+    User shareLogin(UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption;
 
     ShareDisplay getShareDisplay(User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
 
@@ -52,6 +52,10 @@ public interface ShareService {
     List<Map<String, Object>> getDistinctValue(Long viewId, DistinctParam param, User user);
 
     void formatShareParam(Long projectId, ShareEntity entity);
+
+    Map<String, Object> checkShareToken() throws ServerException, ForbiddenExecption;
+
+    Map<String, Object> getSharePermissions() throws ServerException, ForbiddenExecption;
 
     @Deprecated
     ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption;
