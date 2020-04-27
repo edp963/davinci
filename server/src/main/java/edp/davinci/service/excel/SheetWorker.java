@@ -21,6 +21,8 @@ package edp.davinci.service.excel;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Maps;
+
+import edp.core.enums.DataTypeEnum;
 import edp.core.model.QueryColumn;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.MD5Util;
@@ -62,13 +64,19 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         Boolean rst = true;
         String md5 = null;
         try {
-            JdbcTemplate template = context.getSqlUtils().jdbcTemplate();
+            SqlUtils utils = context.getSqlUtils();
+            JdbcTemplate template = utils.jdbcTemplate();
             propertiesSet(template);
             buildQueryColumn(template);
             super.init(context);
             super.writeHeader(context);
             template.setMaxRows(context.getResultLimit() > 0 && context.getResultLimit() <= maxRows ? context.getResultLimit() : maxRows);
             template.setFetchSize(500);
+            
+            // special for mysql
+            if(utils.getDataTypeEnum() == DataTypeEnum.MYSQL) {
+            	template.setFetchSize(Integer.MIN_VALUE);
+            }
 
             String sql = context.getQuerySql().get(context.getQuerySql().size() - 1);
             sql = SqlParseUtils.rebuildSqlWithFragment(sql);
@@ -102,6 +110,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
                 context.getCustomLogger().error("Task({}) sheet worker(name:{}, sheetNo: {}, sheetName:{}) error, md5={}, error={}",
                         context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), md5, e.getMessage());
             }
+            e.printStackTrace();
             rst = false;
         }
 

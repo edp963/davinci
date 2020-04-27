@@ -27,6 +27,8 @@ import { RouteComponentWithParams } from 'utils/types'
 
 import { compose } from 'redux'
 import { logged, logout, getLoginUser } from './actions'
+import injectReducer from 'utils/injectReducer'
+import reducer from './reducer'
 import injectSaga from 'utils/injectSaga'
 import saga from './sagas'
 
@@ -156,6 +158,7 @@ export class App extends React.PureComponent<AppProps> {
   }
 }
 
+const withReducer = injectReducer({ key: 'global', reducer })
 const withSaga = injectSaga({ key: 'global', saga })
 
 const mapStateToProps = createStructuredSelector({
@@ -174,6 +177,7 @@ const withConnect = connect(
 )
 
 export default compose(
+  withReducer,
   withSaga,
   withConnect
 )(App)

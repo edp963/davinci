@@ -50,10 +50,7 @@ import {
   LOAD_DOWNLOAD_LIST_FAILURE,
   DOWNLOAD_FILE,
   DOWNLOAD_FILE_FAILURE,
-  DOWNLOAD_FILE_SUCCESS,
-  INITIATE_DOWNLOAD_TASK,
-  INITIATE_DOWNLOAD_TASK_SUCCESS,
-  INITIATE_DOWNLOAD_TASK_FAILURE
+  DOWNLOAD_FILE_SUCCESS
 } from './constants'
 
 export function getExternalAuthProviders () {
@@ -330,38 +327,6 @@ export function fileDownloaded (id) {
 export function downloadFileFail (error) {
   return {
     type: DOWNLOAD_FILE_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
-
-export function initiateDownloadTask (id, type, downloadParams?, itemId?) {
-  return {
-    type: INITIATE_DOWNLOAD_TASK,
-    payload: {
-      id,
-      type,
-      downloadParams,
-      itemId
-    }
-  }
-}
-
-export function DownloadTaskInitiated (type, itemId?, statistic?) {
-  return {
-    type: INITIATE_DOWNLOAD_TASK_SUCCESS,
-    payload: {
-      type,
-      itemId
-    },
-    statistic
-  }
-}
-
-export function initiateDownloadTaskFail (error) {
-  return {
-    type: INITIATE_DOWNLOAD_TASK_FAILURE,
     payload: {
       error
     }

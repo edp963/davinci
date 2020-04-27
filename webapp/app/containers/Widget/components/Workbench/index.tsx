@@ -9,7 +9,7 @@ import reducer from 'containers/Widget/reducer'
 import viewReducer from 'containers/View/reducer'
 import saga from 'containers/Widget/sagas'
 import viewSaga from 'containers/View/sagas'
-import formReducer from 'containers/Dashboard/FormReducer'
+import controlReducer from 'containers/ControlPanel/reducer'
 import { hideNavigator } from 'containers/App/actions'
 import { ViewActions } from 'containers/View/actions'
 const { loadViews, loadViewsDetail, loadViewData, loadViewDistinctValue } = ViewActions
@@ -21,7 +21,7 @@ import { RouteComponentWithParams } from 'utils/types'
 import { IViewBase, IFormedViews, IFormedView } from 'containers/View/types'
 import OperatingPanel from './OperatingPanel'
 import Widget, { IWidgetProps } from '../Widget'
-import { IDataRequestParams } from 'app/containers/Dashboard/types'
+import { IDataRequestBody } from 'app/containers/Dashboard/types'
 import EditorHeader from 'components/EditorHeader'
 import WorkbenchSettingForm from './WorkbenchSettingForm'
 import DashboardItemMask, { IDashboardItemMaskProps } from 'containers/Dashboard/components/DashboardItemMask'
@@ -63,7 +63,7 @@ interface IWorkbenchProps {
   onLoadWidgetDetail: (id: number) => void
   onLoadViewData: (
     viewId: number,
-    requestParams: IDataRequestParams,
+    requestParams: IDataRequestBody,
     resolve: (data) => void,
     reject: (error) => void
   ) => void
@@ -167,7 +167,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
       const { controls, cache, expired, computed, autoLoadData, cols, rows, ...rest } = JSON.parse(currentWidget.config)
       const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
       const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
-      if (rest.selectedChart === ChartTypes.Bar) {
+      if (rest.mode === 'chart' && rest.selectedChart === ChartTypes.Bar) {
         rest.chartStyles = barChartStylesMigrationRecorder(rest.chartStyles)
       }
       this.setState({
@@ -639,12 +639,12 @@ const withSagaWidget = injectSaga({ key: 'widget', saga })
 const withReducerView = injectReducer({ key: 'view', reducer: viewReducer })
 const withSagaView = injectSaga({ key: 'view', saga: viewSaga })
 
-const withFormReducer = injectReducer({ key: 'form', reducer: formReducer })
+const withControlReducer = injectReducer({ key: 'control', reducer: controlReducer })
 
 export default compose(
   withReducerWidget,
   withReducerView,
-  withFormReducer,
+  withControlReducer,
   withSagaView,
   withSagaWidget,
   withConnect

@@ -127,8 +127,8 @@ const SlideLayerList: React.FC = (props) => {
       slideId: number,
       layerId: number,
       widget: IWidgetFormed,
-      prevQueryConditions: IQueryConditions,
-      queryConditions?: IQueryConditions
+      prevQueryConditions: Partial<IQueryConditions>,
+      queryConditions?: Partial<IQueryConditions>
     ) => {
       const requestParams = getRequestParamsByWidgetConfig(
         renderType,

@@ -29,11 +29,19 @@ import {
   IFilters
 } from './types'
 import { uuid } from 'app/utils/util'
-import FilterTypes, { FilterTypesOperatorSetting, IS_RANGE_TYPE, FilterTypesDynamicDefaultValueSetting } from './filterTypes'
+import {
+  FilterTypes,
+  FilterTypesOperatorSetting,
+  IS_RANGE_TYPE,
+  FilterTypesDynamicDefaultValueSetting,
+  ControlPanelTypes,
+  DatePickerFormats,
+  DatePickerDefaultValues,
+  DatePickerFormatsSelectSetting
+} from './constants'
 import { DEFAULT_CACHE_EXPIRED, SQL_NUMBER_TYPES, SQL_DATE_TYPES } from 'app/globalConstants'
 import { IFormedView, IViewModelProps, IViewVariable } from 'app/containers/View/types'
 import { ViewVariableValueTypes, ViewVariableTypes, ViewModelTypes } from 'app/containers/View/constants'
-import DatePickerFormats, { DatePickerDefaultValues, DatePickerFormatsSelectSetting } from './datePickerFormats'
 import OperatorTypes from 'app/utils/operatorTypes'
 
 export function getDefaultGlobalControl (): IGlobalControl {
@@ -366,7 +374,7 @@ export function getControlRenderTree<T extends IControlBase, U extends IControlB
   const flatTree = {}
 
   while (controls.length) {
-    const control = controls[0]
+    const control = { ...controls[0] }
     flatTree[control.key] = control
     if (control.parent) {
       if (!flatTree[control.parent]) {
@@ -483,5 +491,40 @@ export function getRelatedFieldsInfo (
     model,
     variables,
     fields
+  }
+}
+
+export function getPanelRenderState (
+  type: ControlPanelTypes,
+  controls: IGlobalControl[] | ILocalControl[],
+  items: string
+) {
+  const validControls: IGlobalControl[] = []
+  const itemIds = items.split(',')
+  const defaultValues = {}
+
+  controls.forEach((control) => {
+    if (type === ControlPanelTypes.Global) {
+      const { relatedItems } = control
+      Object.keys(relatedItems).forEach((itemId) => {
+        if (!itemIds.find((id) => id === itemId)) {
+          delete relatedItems[itemId]
+        }
+      })
+    }
+
+    defaultValues[control.key] = deserializeDefaultValue(control)
+    validControls.push(control)
+  })
+
+  const { renderTree, flatTree } = getControlRenderTree<
+    IGlobalControl,
+    IRenderTreeItem
+  >(validControls)
+
+  return {
+    renderTree,
+    flatTree,
+    defaultValues
   }
 }

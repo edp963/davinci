@@ -19,7 +19,7 @@
  */
 
 export const DEFAULT_LOCALE = 'en'
-export const LOGIN = 'davinci/App/LOGIN'
-export const LOGGED = 'davinci/App/LOGGED'
-export const LOGOUT = 'davinci/App/LOGOUT'
-export const GET_LOGIN_USER = 'davinci/App/GET_LOGIN_USER'
+export const LOGIN = 'davinci/Share/App/LOGIN'
+export const LOGGED = 'davinci/Share/App/LOGGED'
+export const LOGOUT = 'davinci/Share/App/LOGOUT'
+export const GET_LOGIN_USER = 'davinci/Share/App/GET_LOGIN_USER'

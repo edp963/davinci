@@ -72,8 +72,8 @@ const DisplayPreview: React.FC<IDisplayPreviewProps> = (props) => {
         slideId: number,
         layerId: number,
         widget: IWidgetFormed,
-        prevQueryConditions: IQueryConditions,
-        queryConditions?: IQueryConditions
+        prevQueryConditions: Partial<IQueryConditions>,
+        queryConditions?: Partial<IQueryConditions>
       ) => {
         const requestParams = getRequestParamsByWidgetConfig(
           renderType,

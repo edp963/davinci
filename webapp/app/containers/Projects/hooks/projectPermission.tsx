@@ -26,17 +26,17 @@ import { IProjectPermission } from '../types'
 function useProjectPermission<T>(
   component: T,
   permissionNames: keyof IProjectPermission,
-  isDeleting?: boolean
+  type?: 2 | 3
 ): T
 function useProjectPermission<T>(
   component: T,
   permissionNames: keyof IProjectPermission | Array<keyof IProjectPermission>,
-  isDeleting?: boolean
+  type?: 2 | 3
 ): T[]
 function useProjectPermission<T>(
   component: T,
   permissionNames: keyof IProjectPermission | Array<keyof IProjectPermission>,
-  isDeleting?: boolean
+  type?: 2 | 3
 ) {
   const currentProject = useSelector(makeSelectCurrentProject())
   const names: Array<keyof IProjectPermission> = [].concat(permissionNames)
@@ -53,12 +53,17 @@ function useProjectPermission<T>(
     if (typeof typePermission === 'boolean') {
       hasPermission = typePermission
     } else {
+      // 0 隐藏
+      // 1 只读
+      // 2 修改
+      // 3 删除
       switch (+typePermission) {
         case 3:
           hasPermission = true
           break
         case 2:
-          hasPermission = !isDeleting
+        case 1:
+          hasPermission = type ? typePermission >= type : true // default readonly
           break
       }
     }
