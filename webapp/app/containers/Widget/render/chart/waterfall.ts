@@ -195,7 +195,7 @@ export default function (chartProps: IChartProps) {
       if (xAxis === '累计') {
         return ''
       } else {
-        text.unshift(xAxis)
+        text.unshift(xAxis as string)
         if (color) {
           text[0] = `<span class="widget-tooltip-circle" style="background: ${color}"></span>` + text[0]
         }

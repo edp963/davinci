@@ -20,6 +20,7 @@
 
 import React from 'react'
 import { Form, Row, Col, Input, Button } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
 const FormItem = Form.Item
 const TextArea = Input.TextArea
 const styles = require('../Organization.less')
@@ -32,7 +33,7 @@ interface IProjectsFormProps {
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}> {
+export class OrganizationForm extends React.PureComponent<IProjectsFormProps & FormComponentProps, {}> {
   public render () {
     const { getFieldDecorator } = this.props.form
     const { modalLoading } = this.props
@@ -103,4 +104,4 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
 }
 
 
-export default Form.create()((OrganizationForm))
+export default Form.create<IProjectsFormProps & FormComponentProps>()((OrganizationForm))
