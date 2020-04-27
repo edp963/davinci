@@ -3,9 +3,9 @@ import classnames from 'classnames'
 import set from 'lodash/set'
 
 import widgetlibs from '../../config'
-import { IDataRequestParams } from 'app/containers/Dashboard/types'
+import { IDataRequestBody } from 'app/containers/Dashboard/types'
 import { IViewBase, IFormedView } from 'containers/View/types'
-import { ViewModelVisualTypes } from 'containers/View/constants'
+import { ViewModelVisualTypes, ViewModelTypes } from 'containers/View/constants'
 import Dropbox, { DropboxType, DropType, AggregatorType, IDataParamSource, IDataParamConfig, DragType, IDragItem} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, IPaginationParams, WidgetMode, RenderType, DimetionType } from '../Widget'
 import { IFieldConfig, getDefaultFieldConfig, FieldConfigModal } from '../Config/Field'
@@ -91,7 +91,7 @@ interface IOperatingPanelProps {
   onSetWidgetProps: (widgetProps: IWidgetProps) => void
   onLoadData: (
     viewId: number,
-    requestParams: IDataRequestParams,
+    requestParams: IDataRequestBody,
     resolve: (data) => void,
     reject: (error) => void
   ) => void
@@ -232,7 +232,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       const { dataParams } = this.state
       const model = selectedView.model
       const currentWidgetlibs = widgetlibs[mode || 'pivot'] // FIXME 兼容 0.3.0-beta.1 之前版本
-
+      if (mode === 'pivot') {
+        model['指标名称']   = ({sqlType: 'VARCHAR', visualType: ViewModelVisualTypes.String, modelType: ViewModelTypes.Category})
+      }
       cols.forEach((c) => {
         const modelColumn = model[c.name]
         if (modelColumn) {

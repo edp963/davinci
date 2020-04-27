@@ -4,7 +4,7 @@ import { Button, Tooltip, Col, Popconfirm } from 'antd'
 import { ButtonProps } from 'antd/lib/button/button'
 
 import { IProject } from 'containers/Projects/types'
-import { ICurrentDashboard } from '..'
+import { IDashboard } from '../types'
 
 import ModulePermission from 'containers/Account/components/checkModulePermission'
 import ShareDownloadPermission from 'containers/Account/components/checkShareDownloadPermission'
@@ -13,7 +13,7 @@ const utilStyles = require('assets/less/util.less')
 
 interface IToolbarProps {
   currentProject: IProject
-  currentDashboard: ICurrentDashboard
+  currentDashboard: IDashboard
   showAddDashboardItem: () => void
   onOpenSharePanel: () => void
   onToggleLinkageVisibility: (visible: boolean) => () => void

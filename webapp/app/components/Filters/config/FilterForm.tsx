@@ -21,7 +21,6 @@
 import React, { Suspense } from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import classnames from 'classnames'
 
 import { Form, Row, Col, Input, InputNumber, Radio, Checkbox, Select, Button, Table } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
@@ -30,7 +29,15 @@ const Option = Select.Option
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 
-import { FilterTypeList, FilterTypesLocale, FilterTypes, FilterTypesDynamicDefaultValueSetting } from '../filterTypes'
+import {
+  FilterTypeList,
+  FilterTypesLocale,
+  FilterTypes,
+  DatePickerFormats,
+  DatePickerFormatsLocale,
+  DatePickerDefaultValuesLocales,
+  DatePickerDefaultValues
+} from '../constants'
 import { renderDate } from '..'
 import { InteractionType } from '../types'
 import {
@@ -38,30 +45,28 @@ import {
   getDatePickerFormatOptions,
   getDynamicDefaultValueOptions
 } from '../util'
-import DatePickerFormats, {
-  DatePickerFormatsLocale,
-  DatePickerDefaultValuesLocales,
-  DatePickerDefaultValues
-} from '../datePickerFormats'
-import { setControlFormValues } from 'containers/Dashboard/actions'
-import { makeSelectControlForm } from 'containers/Dashboard/selectors'
+import ControlActions from 'containers/ControlPanel/actions'
+import { makeSelectConfigFormValues } from 'containers/ControlPanel/selectors'
 
 const utilStyles = require('assets/less/util.less')
 const styles = require('../filter.less')
 
-interface IFilterFormProps {
+interface IFilterFormBaseProps {
   form: any
   interactionType: InteractionType
-  controlFormValues: any
   onControlTypeChange: (value) => void
-  onSetControlFormValues: (values) => void
   onOpenOptionModal: () => void
 }
+
+type MappedStates = ReturnType<typeof mapStateToProps>
+type MappedDispatches = ReturnType<typeof mapDispatchToProps>
+
+type IFilterFormProps = IFilterFormBaseProps & MappedStates & MappedDispatches
 
 export class FilterForm extends React.Component<IFilterFormProps, {}> {
 
   private renderDefaultValueComponent = () => {
-    const { form, controlFormValues } = this.props
+    const { form, configFormValues } = this.props
     const { getFieldDecorator } = form
 
     let container
@@ -69,10 +74,10 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
     let multiple
     let showDefaultValue
 
-    if (controlFormValues) {
-      type = controlFormValues.type
-      multiple = controlFormValues.multiple
-      showDefaultValue = controlFormValues.dynamicDefaultValue === DatePickerDefaultValues.Custom
+    if (configFormValues) {
+      type = configFormValues.type
+      multiple = configFormValues.multiple
+      showDefaultValue = configFormValues.dynamicDefaultValue === DatePickerDefaultValues.Custom
     }
 
     switch (type) {
@@ -102,7 +107,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
                   <Col span={8}>
                     <FormItem label=" " colon={false}>
                       {getFieldDecorator('defaultValue', {})(
-                        renderDate(controlFormValues, null, {size: 'small'})
+                        renderDate(configFormValues, null, 'small', null)
                       )}
                     </FormItem>
                   </Col>
@@ -118,7 +123,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
   }
 
   public render () {
-    const { form, interactionType, controlFormValues, onOpenOptionModal } = this.props
+    const { form, interactionType, configFormValues, onOpenOptionModal } = this.props
     const { getFieldDecorator } = form
 
     let type
@@ -128,8 +133,8 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
     let options
     const filterTypeRelatedInput = []
 
-    if (controlFormValues) {
-      const { type: t, multiple, customOptions: co, options: o } = controlFormValues
+    if (configFormValues) {
+      const { type: t, multiple, customOptions: co, options: o } = configFormValues
       type = t
       operatorOptions = getOperatorOptions(type, multiple)
       datePickerFormatOptions = getDatePickerFormatOptions(type, multiple)
@@ -331,14 +336,14 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
 
 const formOptions = {
   onValuesChange: (props: IFilterFormProps, changedValues) => {
-    const { controlFormValues, onControlTypeChange, onSetControlFormValues } = props
-    const { operator, dateFormat } = controlFormValues
+    const { configFormValues, onControlTypeChange, onSetConfigFormValues } = props
+    const { operator, dateFormat } = configFormValues
 
     if (Object.keys(changedValues).length === 1) {
       if (changedValues.hasOwnProperty('type')
           || changedValues.hasOwnProperty('multiple')) {
-        const type = changedValues.type || controlFormValues.type
-        const multiple = changedValues.multiple !== void 0 ? changedValues.multiple : controlFormValues.multiple
+        const type = changedValues.type || configFormValues.type
+        const multiple = changedValues.multiple !== void 0 ? changedValues.multiple : configFormValues.multiple
         const operatorOptions = getOperatorOptions(type, multiple)
         const datePickerFormatOptions = getDatePickerFormatOptions(type, multiple)
 
@@ -366,14 +371,14 @@ const formOptions = {
       }
     }
 
-    onSetControlFormValues({
-      ...controlFormValues,
+    onSetConfigFormValues({
+      ...configFormValues,
       ...changedValues
     })
   },
   mapPropsToFields (props: IFilterFormProps) {
-    return props.controlFormValues
-      ? Object.entries(props.controlFormValues)
+    return props.configFormValues
+      ? Object.entries(props.configFormValues)
           .reduce((result, [key, value]) => {
             result[key] = Form.createFormField({ value })
             return result
@@ -383,12 +388,12 @@ const formOptions = {
 }
 
 const mapStateToProps = createStructuredSelector({
-  controlFormValues: makeSelectControlForm()
+  configFormValues: makeSelectConfigFormValues()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onSetControlFormValues: (values) => dispatch(setControlFormValues(values))
+    onSetConfigFormValues: (values) => dispatch(ControlActions.setConfigFormValues(values))
   }
 }
 

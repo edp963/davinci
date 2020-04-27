@@ -125,7 +125,7 @@ const displayReducer = (
                     datasource: { resultList: [] },
                     loading: false,
                     queryConditions: {
-                      tempFilters: [],
+                      tempFilters: [],  // @TODO combine widget static filters with local filters
                       linkageFilters: [],
                       globalFilters: [],
                       variables: [],

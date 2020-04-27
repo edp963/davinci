@@ -28,6 +28,7 @@ const styles = require('./NumberRange.less')
 interface INumberRangeProps {
   placeholder?: string
   value?: string[]
+  size?: 'default' | 'large' | 'small'
   onChange?: (value: string[]) => void
   onSearch: (value: string[]) => void
 }
@@ -45,7 +46,8 @@ export class NumberRange extends PureComponent<INumberRangeProps, INumberRangeSt
   }
 
   private static defaultProps = {
-    placeholder: ''
+    placeholder: '',
+    size: 'default'
   }
 
   public componentWillReceiveProps (nextProps) {
@@ -58,6 +60,10 @@ export class NumberRange extends PureComponent<INumberRangeProps, INumberRangeSt
           value: nextValue.slice()
         })
       }
+    } else {
+      this.setState({
+        value: ['', '']
+      })
     }
   }
 
@@ -79,11 +85,11 @@ export class NumberRange extends PureComponent<INumberRangeProps, INumberRangeSt
   }
 
   public render () {
-    const { placeholder } = this.props
+    const { placeholder, size } = this.props
     const { value } = this.state
 
     return (
-      <InputGroup className={styles.range} compact>
+      <InputGroup className={styles.range} size={size} compact>
         <Input
           className={styles.number}
           value={value[0]}

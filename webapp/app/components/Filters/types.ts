@@ -1,9 +1,8 @@
-import { FilterTypes } from './filterTypes'
+import { FilterTypes, DatePickerFormats } from './constants'
 import { OperatorTypes } from 'utils/operatorTypes'
-import { QueryVariable } from 'containers/Dashboard/types'
+import { IQueryConditions } from 'containers/Dashboard/types'
 import { SqlTypes } from 'app/globalConstants'
 import { ViewVariableValueTypes } from 'app/containers/View/constants'
-import DatePickerFormats from './datePickerFormats'
 
 export type InteractionType = 'column' | 'variable'
 
@@ -17,13 +16,6 @@ export interface IControlRelatedField {
   type: SqlTypes | ViewVariableValueTypes
   optionsFromColumn?: boolean
   column?: string
-}
-
-export interface IGridCtrlParams {
-  currentDashboardId: number
-  globalCtrlParams: {
-    [key: string]: string | number
-  }
 }
 
 export interface IControlSelectOption {
@@ -80,19 +72,23 @@ export interface ILocalRenderTreeItem extends IRenderTreeItem {
   fields: IControlRelatedField | IControlRelatedField[]
 }
 
-export interface IControlRequestParams {
-  variables: QueryVariable
-  filters: string[]
-}
+export type ILocalControlConditions = Pick<
+  IQueryConditions,
+  'tempFilters' | 'variables'
+>
+export type IGlobalControlConditions = Pick<
+  IQueryConditions,
+  'globalFilters' | 'globalVariables'
+>
 
-export interface IMapItemControlRequestParams {
-  [itemId: number]: IControlRequestParams
+export interface IGlobalControlConditionsByItem {
+  [itemId: number]: IGlobalControlConditions
 }
 
 export interface IDistinctValueReqeustParams {
   columns: string[]
   filters?: string[]
-  variables?: Array<{name: string, value: string | number}>
+  variables?: Array<{ name: string; value: string | number }>
   cache: boolean
   expired: number
 }

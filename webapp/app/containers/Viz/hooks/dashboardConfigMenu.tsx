@@ -26,8 +26,8 @@ const MenuItem = Menu.Item
 import useProjectPermission from 'containers/Projects/hooks/projectPermission'
 
 const useDashboardConfigMenu = (style: React.CSSProperties = {}) => {
-  const EditMenuItem = useProjectPermission(MenuItem, 'vizPermission')
-  const DeleteMenuItem = useProjectPermission(MenuItem, 'vizPermission', true)
+  const EditMenuItem = useProjectPermission(MenuItem, 'vizPermission', 2)
+  const DeleteMenuItem = useProjectPermission(MenuItem, 'vizPermission', 3)
 
   console.log(EditMenuItem, DeleteMenuItem)
   return (
