@@ -33,7 +33,6 @@ export function* getWidgets(action: WidgetActionType) {
   if (action.type !== ActionTypes.LOAD_WIDGETS) {
     return
   }
-
   const { projectId } = action.payload
   try {
     const result = yield call(request, `${api.widget}?projectId=${projectId}`)
