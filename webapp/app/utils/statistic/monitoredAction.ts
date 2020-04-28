@@ -150,7 +150,8 @@ function mapMonitoreToAction (action: {type: string, payload: object}, initialTy
   }
 
 
-  if (action.type === LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS) {
+  if (action.type === LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS ||
+      action.type === DashboardActionTypes.LOAD_DASHBOARD_ITEM_DATA_SUCCESS) {
     // todo 重启定时器
     statistic.isResetTime()
     const widgetDetailFields = getWidgetDetailFieldsByOthers(action)
