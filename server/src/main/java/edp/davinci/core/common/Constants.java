@@ -50,7 +50,7 @@ public class Constants extends Consts {
 
 
     /**
-     * TODO 用户重置密码邮件模板
+     * 用户重置密码邮件模板
      */
     public static final String USER_REST_PASSWORD_EMAIL_TEMPLATE = "mail/userRestPasswordEmailTemplate";
 

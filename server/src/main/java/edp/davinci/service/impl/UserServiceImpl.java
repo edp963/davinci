@@ -606,9 +606,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
                 .withTemplateContent(content)
                 .build();
 
-//        mailUtils.sendMail(mailContent, null);
-
-        System.out.println(checkCode);
+        mailUtils.sendMail(mailContent, null);
         return StringZipUtil.compress(checkToken);
     }
 
