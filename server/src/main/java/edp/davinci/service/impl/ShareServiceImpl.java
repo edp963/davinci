@@ -85,9 +85,6 @@ public class ShareServiceImpl implements ShareService {
     private ViewMapper viewMapper;
 
     @Autowired
-    private DashboardPortalMapper dashboardPortalMapper;
-
-    @Autowired
     private ViewService viewService;
 
     @Autowired
