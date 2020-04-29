@@ -23,9 +23,11 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.CurrentUser;
 import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.ServerException;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
+import edp.davinci.core.enums.UserDistinctType;
 import edp.davinci.dto.userDto.*;
 import edp.davinci.model.User;
 import edp.davinci.service.UserService;
@@ -334,6 +336,30 @@ public class UserController extends BaseController {
 
         ResultMap resultMap = userService.getUserProfileFromToken(token);
         return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+    }
+
+    @ApiOperation(value = "forget password", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @AuthIgnore
+    @PostMapping(value = "/forget/password/{type}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ResultMap> forgetPassword(@PathVariable String type,
+                                                    @RequestBody UserDistinctTicket ticket) {
+
+        String token = userService.forgetPassword(UserDistinctType.typeOf(type), ticket);
+        return ResponseEntity.ok(new ResultMap().success().payload(token));
+    }
+
+    @ApiOperation(value = "reset password", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @AuthIgnore
+    @PostMapping(value = "/reset/password/{type}/{token}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ResultMap> resetPassword(@PathVariable(name = "type") String type,
+                                                   @PathVariable(name = "token") String token,
+                                                   @RequestBody UserDistinctTicket ticket) {
+        boolean res = userService.resetPassword(UserDistinctType.typeOf(type), token, ticket);
+        if (res) {
+            return ResponseEntity.ok(new ResultMap().success());
+        } else {
+            throw new ServerException("reset password fail");
+        }
     }
 
 }

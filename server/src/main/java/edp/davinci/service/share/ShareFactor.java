@@ -24,6 +24,7 @@ import com.alibaba.fastjson.serializer.ValueFilter;
 import edp.core.model.RecordInfo;
 import edp.core.utils.AESUtils;
 import edp.core.utils.StringZipUtil;
+import edp.core.utils.TokenUtils;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.shareDto.ShareEntity;
 import edp.davinci.model.User;
@@ -61,14 +62,6 @@ public class ShareFactor {
             return value;
         }
     }
-
-    private static final char[] PASSWORD_SEEDS = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
-            'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
-    };
-
-    private static final int PASSWORD_LEN = 8;
 
     private static final int DEFAULT_TOKEN_EXPIRE_DAYS = 7;
 
@@ -171,7 +164,7 @@ public class ShareFactor {
 
     public ShareResult toShareResult(String secret) {
         if (this.mode == ShareMode.PASSWORD) {
-            this.password = randomPassword();
+            this.password = TokenUtils.randomPassword();
         }
         format();
         String jsonString = JSONObject.toJSONString(this, serializeFilter, serializerFeatures);
@@ -216,12 +209,6 @@ public class ShareFactor {
             default:
                 break;
         }
-    }
-
-
-    private static String randomPassword() {
-        IntStream intStream = new Random().ints(0, PASSWORD_SEEDS.length);
-        return intStream.limit(PASSWORD_LEN).mapToObj(i -> PASSWORD_SEEDS[i]).map(String::valueOf).collect(Collectors.joining());
     }
 
     public static class Builder {

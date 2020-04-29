@@ -49,12 +49,24 @@ public class Constants extends Consts {
     public static final String USER_ACTIVATE_EMAIL_TEMPLATE = "mail/userActivateEmailTemplate";
 
 
+    /**
+     * TODO 用户重置密码邮件模板
+     */
+    public static final String USER_REST_PASSWORD_EMAIL_TEMPLATE = "mail/userRestPasswordEmailTemplate";
+
+
     public static final String EMAIL_DEFAULT_TEMPLATE = "mail/emaiDefaultTemplate";
 
     /**
      * 用户激活 / 重发激活邮件主题
      */
     public static final String USER_ACTIVATE_EMAIL_SUBJECT = "[Davinci] 用户激活";
+
+
+    /**
+     * 用户重置密码邮件主题
+     */
+    public static final String USER_REST_PASSWORD_EMAIL_SUBJECT = "[Davinci] 重置密码";
 
     /**
      * 用户默认Organization描述

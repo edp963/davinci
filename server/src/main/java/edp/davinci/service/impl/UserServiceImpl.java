@@ -25,6 +25,7 @@ import com.jayway.jsonpath.JsonPath;
 import edp.core.consts.Consts;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.enums.MailContentTypeEnum;
+import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.model.MailContent;
 import edp.core.utils.*;
@@ -33,6 +34,7 @@ import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.LockType;
+import edp.davinci.core.enums.UserDistinctType;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.dao.OrganizationMapper;
 import edp.davinci.dao.RelUserOrganizationMapper;
@@ -58,6 +60,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.regex.Matcher;
 
 
 @Slf4j
@@ -94,6 +97,9 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 
     private static final CheckEntityEnum entity = CheckEntityEnum.USER;
 
+
+    private static final Long TOKEN_TIMEOUT_MILLIS = 10 * 60 * 1000L;
+
     /**
      * 用户是否存在
      *
@@ -102,6 +108,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
      * @return
      */
     @Override
+
     public boolean isExist(String name, Long id, Long scopeId) {
         Long userId = userMapper.getIdByName(name);
         if (null != id && null != userId) {
@@ -548,5 +555,109 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         List<OrganizationInfo> organizationInfos = organizationMapper.getOrganizationByUser(user.getId());
         userProfile.setOrganizations(organizationInfos);
         return new ResultMap().success(tokenUtils.generateToken(user)).payload(userProfile);
+    }
+
+    @Override
+    public String forgetPassword(UserDistinctType userDistinctType, UserDistinctTicket ticket) {
+        User user = null;
+        switch (userDistinctType) {
+            case EMAIL:
+                String email = ticket.getTicket();
+                if (StringUtils.isEmpty(email)) {
+                    throw new ServerException("email cannot be EMPTY!");
+                }
+                Matcher matcher = Constants.PATTERN_EMAIL_FORMAT.matcher(email);
+                if (!matcher.find()) {
+                    throw new ServerException("invalid email format!");
+                }
+                user = userMapper.selectByUsername(email);
+                if (user == null) {
+                    throw new ServerException("The current email is not registered in Davinci");
+                }
+                break;
+            case USERNAME:
+                String username = ticket.getTicket();
+                if (StringUtils.isEmpty(username)) {
+                    throw new ServerException("username cannot be EMPTY!");
+                }
+                user = userMapper.selectByUsername(username);
+                if (user == null) {
+                    throw new ServerException("The current username is not registered in Davinci");
+                }
+                break;
+            default:
+                throw new NotFoundException("Unknown request uri");
+        }
+
+        String checkCode = TokenUtils.randomPassword();
+        user.setPassword(checkCode);
+        String checkToken = tokenUtils.generateToken(user, TOKEN_TIMEOUT_MILLIS);
+
+        Map<String, Object> content = new HashMap<>(2);
+        content.put("username", ticket.getTicket());
+        content.put("checkCode", checkCode);
+
+
+        MailContent mailContent = MailContent.MailContentBuilder.builder()
+                .withSubject(Constants.USER_REST_PASSWORD_EMAIL_SUBJECT)
+                .withTo(user.getEmail())
+                .withMainContent(MailContentTypeEnum.TEMPLATE)
+                .withTemplate(Constants.USER_REST_PASSWORD_EMAIL_TEMPLATE)
+                .withTemplateContent(content)
+                .build();
+
+//        mailUtils.sendMail(mailContent, null);
+
+        System.out.println(checkCode);
+        return StringZipUtil.compress(checkToken);
+    }
+
+    @Override
+    @Transactional
+    public boolean resetPassword(UserDistinctType userDistinctType, String token, UserDistinctTicket ticket) {
+        User user = null;
+        switch (userDistinctType) {
+            case EMAIL:
+                String email = ticket.getTicket();
+                if (StringUtils.isEmpty(email)) {
+                    throw new ServerException("Email cannot be EMPTY!");
+                }
+                Matcher matcher = Constants.PATTERN_EMAIL_FORMAT.matcher(email);
+                if (!matcher.find()) {
+                    throw new ServerException("Invalid email format!");
+                }
+                user = userMapper.selectByUsername(email);
+                if (user == null) {
+                    throw new ServerException("The current email is not registered in Davinci");
+                }
+                break;
+            case USERNAME:
+                String username = ticket.getTicket();
+                if (StringUtils.isEmpty(username)) {
+                    throw new ServerException("Username cannot be EMPTY!");
+                }
+                user = userMapper.selectByUsername(username);
+                if (user == null) {
+                    throw new ServerException("The current username is not registered in Davinci");
+                }
+                break;
+            default:
+                throw new NotFoundException("Unknown request uri");
+        }
+
+        if (StringUtils.isEmpty(ticket.getCheckCode())) {
+            throw new ServerException("Check code cannot be Empty");
+        }
+        if (StringUtils.isEmpty(ticket.getPassword())) {
+            throw new ServerException("Password cannot be Empty");
+        }
+
+        String uncompress = StringZipUtil.uncompress(token);
+        user.setPassword(ticket.getCheckCode());
+        if (!tokenUtils.validateToken(uncompress, user)) {
+            throw new ServerException("Invalid check code, check code is wrong or has expired");
+        }
+        user.setPassword(BCrypt.hashpw(ticket.getPassword(), BCrypt.gensalt()));
+        return userMapper.changePassword(user) > 0;
     }
 }
