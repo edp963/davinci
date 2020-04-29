@@ -593,8 +593,8 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         user.setPassword(checkCode);
         String checkToken = tokenUtils.generateToken(user, TOKEN_TIMEOUT_MILLIS);
 
-        Map<String, Object> content = new HashMap<>(2);
-        content.put("username", ticket.getTicket());
+        Map<String, Object> content = new HashMap<>(3);
+        content.put("ticket", ticket.getTicket());
         content.put("checkCode", checkCode);
 
 
