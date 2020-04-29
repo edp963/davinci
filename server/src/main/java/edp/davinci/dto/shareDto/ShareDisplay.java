@@ -19,6 +19,7 @@
 
 package edp.davinci.dto.shareDto;
 
+import edp.davinci.service.share.ShareWidget;
 import lombok.Data;
 
 import java.util.Set;

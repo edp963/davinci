@@ -37,9 +37,13 @@ import edp.davinci.dao.WidgetMapper;
 import edp.davinci.dto.dashboardDto.*;
 import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.roleDto.VizVisibility;
+import edp.davinci.dto.shareDto.ShareEntity;
 import edp.davinci.model.*;
 import edp.davinci.service.DashboardService;
 import edp.davinci.service.ShareService;
+import edp.davinci.service.share.ShareFactor;
+import edp.davinci.service.share.ShareResult;
+import edp.davinci.service.share.ShareType;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +78,9 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     @Autowired
     private ShareService shareService;
 
+    @Autowired
+    private String TOKEN_SECRET;
+
     private static final CheckEntityEnum entity = CheckEntityEnum.DASHBOARD;
 
     @Override
@@ -100,10 +107,36 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         return dashboardPortal;
     }
 
-    private Dashboard getDashboard(Long dashboardId) {
+    public Dashboard getDashboard(Long dashboardId) {
         Dashboard dashboard = dashboardMapper.getById(dashboardId);
         if (null == dashboard) {
             throw new NotFoundException("dashboard is not found");
+        }
+        return dashboard;
+    }
+
+    public Dashboard getDashboard(Long dashboardId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Dashboard dashboard = getDashboard(dashboardId);
+        if (dashboard == null) {
+            return null;
+        }
+        DashboardPortal dashboardPortal = getDashboardPortal(dashboard.getDashboardPortalId(), false);
+        if (dashboardPortal == null) {
+            return null;
+        }
+
+        Long projectId = dashboardPortal.getProjectId();
+
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+
+        List<Long> disablePortals = getDisableVizs(user.getId(), projectId, null, VizEnum.PORTAL);
+
+        boolean isDisable = isDisableVizs(projectPermission, disablePortals, dashboardPortal.getId());
+        boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
+
+        if (hidden || isDisable || noPublish) {
+            throw new UnAuthorizedExecption();
         }
         return dashboard;
     }
@@ -131,9 +164,9 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
         boolean isDisable = isDisableVizs(projectPermission, disablePortals, portalId);
         boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
-        boolean noRublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
 
-        if (hidden || isDisable || noRublish) {
+        if (hidden || isDisable || noPublish) {
             return null;
         }
 
@@ -649,12 +682,12 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      * 分享dashboard
      *
      * @param dashboardId
-     * @param username
      * @param user
+     * @param shareEntity
      * @return
      */
     @Override
-    public String shareDashboard(Long dashboardId, String username, User user)
+    public ShareResult shareDashboard(Long dashboardId, User user, ShareEntity shareEntity)
             throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(dashboardId, true);
@@ -671,7 +704,16 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
             alertUnAuthorized(entity, user, "share");
         }
 
-        return shareService.generateShareToken(dashboardId, username, user.getId());
+        shareService.formatShareParam(projectId, shareEntity);
+        ShareFactor shareFactor = ShareFactor.Builder
+                .shareFactor()
+                .withType(ShareType.DASHBOARD)
+                .withShareEntity(shareEntity)
+                .withEntityId(dashboardId)
+                .withSharerId(user.getId())
+                .build();
+
+        return shareFactor.toShareResult(TOKEN_SECRET);
     }
 
     @Override

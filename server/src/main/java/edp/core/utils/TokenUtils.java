@@ -26,10 +26,12 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,8 +46,8 @@ public class TokenUtils {
     /**
      * 自定义 token 私钥
      */
-    @Value("${jwtToken.secret:Pa@ss@Word}")
-    private String SECRET;
+    @Autowired
+    private String TOKEN_SECRET;
 
     /**
      * 默认 token 超时时间
@@ -109,7 +111,7 @@ public class TokenUtils {
                     .setExpiration(new Date(expiration))
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET.getBytes("UTF-8"))
+                            SignatureAlgorithm.HS512, TOKEN_SECRET.getBytes("UTF-8"))
                     .compact();
         } catch (UnsupportedEncodingException ex) {
             log.warn(ex.getMessage());
@@ -119,7 +121,7 @@ public class TokenUtils {
                     .setExpiration(new Date(expiration))
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET)
+                            SignatureAlgorithm.HS512, TOKEN_SECRET)
                     .compact();
         }
     }
@@ -141,7 +143,7 @@ public class TokenUtils {
                     .setSubject(claims.get(Consts.TOKEN_USER_NAME).toString())
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET.getBytes("UTF-8"))
+                            SignatureAlgorithm.HS512, TOKEN_SECRET.getBytes("UTF-8"))
                     .compact();
         } catch (UnsupportedEncodingException ex) {
             log.warn(ex.getMessage());
@@ -150,7 +152,7 @@ public class TokenUtils {
                     .setSubject(claims.get(Consts.TOKEN_USER_NAME).toString())
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET)
+                            SignatureAlgorithm.HS512, TOKEN_SECRET)
                     .compact();
         }
     }
@@ -170,7 +172,7 @@ public class TokenUtils {
                     .setExpiration(new Date(expiration))
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET.getBytes("UTF-8"))
+                            SignatureAlgorithm.HS512, TOKEN_SECRET.getBytes("UTF-8"))
                     .compact();
         } catch (UnsupportedEncodingException ex) {
             log.warn(ex.getMessage());
@@ -180,7 +182,7 @@ public class TokenUtils {
                     .setExpiration(new Date(expiration))
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET)
+                            SignatureAlgorithm.HS512, TOKEN_SECRET)
                     .compact();
         }
     }
@@ -229,7 +231,7 @@ public class TokenUtils {
         Claims claims;
         try {
             claims = Jwts.parser()
-                    .setSigningKey(SECRET.getBytes("UTF-8"))
+                    .setSigningKey(TOKEN_SECRET.getBytes("UTF-8"))
                     .parseClaimsJws(token.startsWith(Consts.TOKEN_PREFIX) ?
                             token.substring(token.indexOf(Consts.TOKEN_PREFIX) + Consts.TOKEN_PREFIX.length()).trim() :
                             token.trim())
@@ -237,7 +239,7 @@ public class TokenUtils {
         } catch (Exception e) {
             log.debug(e.getMessage());
             claims = Jwts.parser()
-                    .setSigningKey(SECRET)
+                    .setSigningKey(TOKEN_SECRET)
                     .parseClaimsJws(token.startsWith(Consts.TOKEN_PREFIX) ?
                             token.substring(token.indexOf(Consts.TOKEN_PREFIX) + Consts.TOKEN_PREFIX.length()).trim() :
                             token.trim())

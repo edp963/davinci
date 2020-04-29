@@ -25,10 +25,12 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.dashboardDto.*;
 import edp.davinci.dto.roleDto.VizVisibility;
+import edp.davinci.dto.shareDto.ShareEntity;
 import edp.davinci.model.Dashboard;
 import edp.davinci.model.MemDashboardWidget;
 import edp.davinci.model.Role;
 import edp.davinci.model.User;
+import edp.davinci.service.share.ShareResult;
 
 import java.util.List;
 
@@ -50,7 +52,7 @@ public interface DashboardService extends CheckEntityService {
 
     boolean deleteMemDashboardWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    String shareDashboard(Long dashboardId, String username, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    ShareResult shareDashboard(Long dashboardId, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     void deleteDashboardAndPortalByProject(Long projectId) throws RuntimeException;
 

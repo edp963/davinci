@@ -20,6 +20,7 @@
 package edp.davinci.dto.shareDto;
 
 import edp.davinci.model.MemDashboardWidget;
+import edp.davinci.service.share.ShareWidget;
 import lombok.Data;
 
 import java.util.List;
