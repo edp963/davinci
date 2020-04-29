@@ -41,6 +41,7 @@ import DisplayHeader from 'containers/Display/Editor/Header'
 import { Display } from 'containers/Display/Loadable'
 
 import styles from '../Viz.less'
+import {ISlideFormed} from "containers/Viz/components/types";
 
 const VizDisplayEditor: React.FC<RouteComponentWithParams> = (props) => {
   const dispatch = useDispatch()
@@ -51,7 +52,9 @@ const VizDisplayEditor: React.FC<RouteComponentWithParams> = (props) => {
   const currentSlides = useSelector(makeSelectCurrentSlides())
   const { history } = props
 
-  const [selectedSlideIds, setSelectedSlideIds] = useState([])
+  const [selectedSlideIds, setSelectedSlideIds] = useState([])//nx-test
+  // const [slides, setSlides] = useState(currentSlides)//nx-test
+
   const clearSelectedSlide = useCallback(() => {
     setSelectedSlideIds([])
   }, [])
@@ -76,6 +79,66 @@ const VizDisplayEditor: React.FC<RouteComponentWithParams> = (props) => {
     },
     [projectId, displayId]
   )
+
+  //test-nx
+  const changeDisplayAvatar = useCallback(
+    (avatar: string) => {
+      dispatch(
+        VizActions.editDisplay({
+          ...currentDisplay,
+          avatar,
+          config: {
+            ...currentDisplay.config
+          }
+        }, () => {})
+      )
+    }, [])
+
+  const multiSelect = useCallback(
+    (slideId: number) => {
+      setSelectedSlideIds(() => {
+        let tmp = selectedSlideIds.concat([slideId]);
+        // console.log(tmp)
+        return tmp;
+      })
+      // console.log('multi', selectedSlideIds)
+    },
+    [selectedSlideIds, displayId]
+  )
+
+  // const moveSlide = useCallback(
+  //   (slideId: number, newPos:number ) => {
+  //       let moveItem = null;
+  //       let tmpSlides = currentSlides.filter((slide) => {
+  //           if(slide.id !== slideId){
+  //             return true
+  //           } else {
+  //             moveItem = JSON.parse(JSON.stringify(slide))
+  //             return false
+  //           }}
+  //         );
+  //       if(moveItem.index === newPos-1){
+  //         console.log('no move')
+  //       }
+  //       // console.log('slideId:', slideId, 'newPos:', newPos)
+  //       tmpSlides.splice(newPos-1,0,moveItem)
+  //       const newSlides = tmpSlides.map((slide, index) => {
+  //         slide.index = index;
+  //         return slide;
+  //       })
+  //       console.log(tmpSlides, newSlides)
+  //       dispatch(VizActions.editSlides(newSlides))
+  //   },
+  //   []
+  // )
+
+  const moveSlide = useCallback(
+    (newSlides: ISlideFormed[]) => {
+        dispatch(VizActions.editSlides(newSlides))
+    },
+    []
+  )
+  //test-nx
 
   const deleteSlides = useCallback(
     (slideIds: number[]) => {
@@ -111,8 +174,12 @@ const VizDisplayEditor: React.FC<RouteComponentWithParams> = (props) => {
             currentSlideId={slideId}
             selectedSlideIds={selectedSlideIds}
             slides={currentSlides}
+            // slides={slides}//test-nx
+            onMoveSlide={moveSlide}//test-nx
             onSelect={goToSlide}
+            onMultiSelect={multiSelect}//test-nx
             onDelete={deleteSlides}
+            onChangeDisplayAvatar={changeDisplayAvatar}
           />
           <Route
             path="/project/:projectId/display/:displayId/slide/:slideId"

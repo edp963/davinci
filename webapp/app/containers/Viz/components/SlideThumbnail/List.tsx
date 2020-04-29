@@ -19,6 +19,8 @@
  */
 
 import React, { useCallback, useEffect } from 'react'
+import { DndProvider } from 'react-dnd'
+import HTML5Backend from 'react-dnd-html5-backend'
 import classnames from 'classnames'
 
 import { ISlideFormed } from '../types'
@@ -34,8 +36,12 @@ interface ISlideThumbnailListProps {
   currentSlideId: number
   // @TODO multi selection for slides
   selectedSlideIds: number[]
+  onMultiSelect: (slideId: number) => void,//test-nx
+  // onMoveSlide: (slideId: number, newPos: number) => void,//test-nx
+  onMoveSlide: (newSlides: ISlideFormed[]) => void,//test-nx
   onSelect: (slideId: number) => void
   onDelete: (slideIds: number[]) => void
+  onChangeDisplayAvatar: (avatar: string) => void
 }
 
 const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
@@ -45,6 +51,9 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
     currentSlideId,
     selectedSlideIds,
     onSelect,
+    onMultiSelect,//test-nx
+    onMoveSlide,//test-nx
+    onChangeDisplayAvatar,//test-nx
     onDelete
   } = props
 
@@ -58,12 +67,13 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
       }
       window.removeEventListener('keydown', deleteSlides, false)
       Modal.confirm({
-        title: '确认删除此大屏页？',
+        title: selectedSlideIds.length > 1 ? '确认删除选中所有大屏页？' : '确认删除此大屏页？',
         onOk: () => {
           onDelete([...selectedSlideIds])
         }
       })
-    }
+    };
+
     window.addEventListener('keydown', deleteSlides, false)
     return () => {
       window.removeEventListener('keydown', deleteSlides, false)
@@ -82,19 +92,74 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
     [className]: !!className
   })
 
+  //test-nx
+  const multiSelectSlides = useCallback(
+    (slideId: number) => {
+      onMultiSelect(slideId)
+    },
+    [onMultiSelect]
+  )
+
+  // const moveSlide = useCallback(
+  //   (slideId: number, newPos: number) => {
+  //     onMoveSlide(slideId, newPos)
+  //   },
+  //   [onMoveSlide]
+  // )
+
+  const moveSlide = useCallback(
+    (slideId: number, newPos: number) => {
+      let moveItem = null;
+      let tmpSlides = slides.filter((slide) => {
+          if(slide.id !== slideId){
+            return true
+          } else {
+            moveItem = JSON.parse(JSON.stringify(slide))
+            return false
+          }}
+        );
+      if(moveItem.index === newPos-1){
+        console.log('nothing move')
+      }
+      // console.log('slideId:', slideId, 'newPos:', newPos)
+      tmpSlides.splice(newPos-1,0,moveItem)
+      const newSlides = tmpSlides.map((slide, index) => {
+        slide.index = index;
+        return slide;
+      })
+      onMoveSlide(newSlides)
+    },
+    [onMoveSlide]
+  )
+
+  const changeDisplayAvatar = useCallback(
+    (avatar: string) => {
+      onChangeDisplayAvatar(avatar)
+    },
+    [onChangeDisplayAvatar]
+  )
+  //test-nx
+
   return (
-    <ul className={cls}>
-      {slides.map((slide, idx) => (
-        <Item
-          key={slide.id}
-          slide={slide}
-          serial={idx + 1}
-          current={currentSlideId === slide.id}
-          selected={selectedSlideIds.includes(slide.id)}
-          onSelect={selectSlide}
-        />
-      ))}
-    </ul>
+    <DndProvider backend={ HTML5Backend }>
+        <ul className={cls}>
+          {slides.map((slide, idx) => (
+            <Item
+              key={slide.id}
+              slide={slide}
+              serial={idx + 1}
+              current={currentSlideId === slide.id}
+              selected={selectedSlideIds.includes(slide.id)}
+              onSelect={selectSlide}
+              selectedIds={selectedSlideIds}
+              onMultiSelect={multiSelectSlides}
+              onDelete={onDelete}
+              onMoveSlide={moveSlide}
+              onChangeDisplayAvatar={changeDisplayAvatar}
+            />
+          ))}
+        </ul>
+    </DndProvider>
   )
 }
 
