@@ -12,15 +12,15 @@ CREATE TABLE `cron_job` (
 	`job_type` VARCHAR ( 45 ) COLLATE utf8_unicode_ci NOT NULL,
 	`job_status` VARCHAR ( 10 ) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
 	`cron_expression` VARCHAR ( 45 ) COLLATE utf8_unicode_ci NOT NULL,
-	`start_date` datetime NOT NULL,
-	`end_date` datetime NOT NULL,
-	`config` text COLLATE utf8_unicode_ci NOT NULL,
+	`start_date` DATETIME NOT NULL,
+	`end_date` DATETIME NOT NULL,
+	`config` TEXT COLLATE utf8_unicode_ci NOT NULL,
 	`description` VARCHAR ( 255 ) COLLATE utf8_unicode_ci DEFAULT NULL,
-	`exec_log` text COLLATE utf8_unicode_ci,
+	`exec_log` TEXT COLLATE utf8_unicode_ci,
 	`create_by` BIGINT ( 20 ) NOT NULL,
 	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` TIMESTAMP DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	`parent_id` BIGINT ( 20 ) DEFAULT NULL,
 	`full_parent_id` VARCHAR ( 255 ) COLLATE utf8_unicode_ci DEFAULT NULL,
 	`is_folder` TINYINT ( 1 ) DEFAULT NULL,
@@ -40,12 +40,12 @@ CREATE TABLE `dashboard` (
 	`type` SMALLINT ( 1 ) NOT NULL,
 	`index` INT ( 4 ) NOT NULL,
 	`parent_id` BIGINT ( 20 ) NOT NULL DEFAULT '0',
-	`config` text,
+	`config` TEXT,
 	`full_parent_id` VARCHAR ( 255 ) DEFAULT NULL,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	KEY `idx_dashboard_id` ( `dashboard_portal_id` ) USING BTREE,
 	KEY `idx_parent_id` ( `parent_id` ) USING BTREE 
@@ -63,9 +63,9 @@ CREATE TABLE `dashboard_portal` (
 	`avatar` VARCHAR ( 255 ) DEFAULT NULL,
 	`publish` TINYINT ( 1 ) NOT NULL DEFAULT '0',
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	KEY `idx_project_id` ( `project_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
@@ -83,9 +83,9 @@ CREATE TABLE `display` (
 	`publish` TINYINT ( 1 ) NOT NULL,
 	`config` text NULL,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	KEY `idx_project_id` ( `project_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
@@ -100,9 +100,9 @@ CREATE TABLE `display_slide` (
 	`index` INT ( 12 ) NOT NULL,
 	`config` text NOT NULL,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	KEY `idx_display_id` ( `display_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
@@ -117,8 +117,8 @@ CREATE TABLE `download_record` (
 	`user_id` BIGINT ( 20 ) NOT NULL,
 	`path` VARCHAR ( 255 ) DEFAULT NULL,
 	`status` SMALLINT ( 1 ) NOT NULL,
-	`create_time` datetime NOT NULL,
-	`last_download_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`last_download_time` DATETIME DEFAULT NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	KEY `idx_user` ( `user_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
@@ -131,7 +131,7 @@ CREATE TABLE `favorite` (
 	`id` BIGINT ( 20 ) NOT NULL AUTO_INCREMENT,
 	`user_id` BIGINT ( 20 ) NOT NULL,
 	`project_id` BIGINT ( 20 ) NOT NULL,
-	`create_time` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	UNIQUE KEY `idx_user_project` ( `user_id`, `project_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
@@ -152,9 +152,9 @@ CREATE TABLE `mem_dashboard_widget` (
 	`frequency` INT ( 12 ) DEFAULT NULL,
 	`config` text,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	KEY `idx_protal_id` ( `dashboard_id` ) USING BTREE,
 	KEY `idx_widget_id` ( `widget_Id` ) USING BTREE 
@@ -174,9 +174,9 @@ CREATE TABLE `mem_display_slide_widget` (
 	`sub_type` SMALLINT ( 2 ) DEFAULT NULL,
 	`index` INT ( 12 ) NOT NULL DEFAULT '0',
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	KEY `idx_slide_id` ( `display_slide_id` ) USING BTREE,
 	KEY `idx_widget_id` ( `widget_id` ) USING BTREE 
@@ -199,7 +199,7 @@ CREATE TABLE `organization` (
 	`member_permission` SMALLINT ( 1 ) NOT NULL DEFAULT '0',
 	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`create_by` BIGINT ( 20 ) NOT NULL DEFAULT '0',
-	`update_time` TIMESTAMP NULL DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	`update_by` BIGINT ( 20 ) DEFAULT '0',
 	PRIMARY KEY ( `id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
@@ -240,9 +240,9 @@ CREATE TABLE `project` (
 	`is_transfer` TINYINT ( 1 ) NOT NULL DEFAULT '0',
 	`initial_org_id` BIGINT ( 20 ) NOT NULL,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
 
@@ -255,9 +255,9 @@ CREATE TABLE `rel_project_admin` (
 	`project_id` BIGINT ( 20 ) NOT NULL,
 	`user_id` BIGINT ( 20 ) NOT NULL,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	UNIQUE KEY `idx_project_user` ( `project_id`, `user_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
@@ -271,9 +271,9 @@ CREATE TABLE `rel_role_dashboard` (
 	`dashboard_id` BIGINT ( 20 ) NOT NULL,
 	`visible` TINYINT ( 1 ) NOT NULL DEFAULT '0',
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `role_id`, `dashboard_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
 
@@ -286,9 +286,9 @@ CREATE TABLE `rel_role_display` (
 	`display_id` BIGINT ( 20 ) NOT NULL,
 	`visible` TINYINT ( 1 ) NOT NULL DEFAULT '0',
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `role_id`, `display_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
 
@@ -301,9 +301,9 @@ CREATE TABLE `rel_role_portal` (
 	`portal_id` BIGINT ( 20 ) NOT NULL,
 	`visible` TINYINT ( 1 ) NOT NULL DEFAULT '0',
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `role_id`, `portal_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
 
@@ -323,9 +323,9 @@ CREATE TABLE `rel_role_project` (
 	`share_permission` TINYINT ( 1 ) NOT NULL DEFAULT '0',
 	`download_permission` TINYINT ( 1 ) NOT NULL DEFAULT '0',
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	UNIQUE KEY `idx_role_project` ( `project_id`, `role_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
@@ -339,9 +339,9 @@ CREATE TABLE `rel_role_slide` (
 	`slide_id` BIGINT ( 20 ) NOT NULL,
 	`visible` TINYINT ( 1 ) NOT NULL DEFAULT '0',
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `role_id`, `slide_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
 
@@ -354,9 +354,9 @@ CREATE TABLE `rel_role_user` (
 	`user_id` BIGINT ( 20 ) NOT NULL,
 	`role_id` BIGINT ( 20 ) NOT NULL,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	UNIQUE KEY `idx_role_user` ( `user_id`, `role_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
@@ -371,9 +371,9 @@ CREATE TABLE `rel_role_view` (
 	`row_auth` text,
 	`column_auth` text,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `view_id`, `role_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
 
@@ -387,9 +387,9 @@ CREATE TABLE `rel_user_organization` (
 	`user_id` BIGINT ( 20 ) NOT NULL,
 	`role` SMALLINT ( 1 ) NOT NULL DEFAULT '0',
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	UNIQUE KEY `idx_org_user` ( `org_id`, `user_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
@@ -404,9 +404,9 @@ CREATE TABLE `role` (
 	`name` VARCHAR ( 100 ) NOT NULL,
 	`description` VARCHAR ( 255 ) DEFAULT NULL,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	`avatar` VARCHAR ( 255 ) DEFAULT NULL,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	KEY `idx_orgid` ( `org_id` ) USING BTREE 
@@ -424,9 +424,9 @@ CREATE TABLE `source` (
 	`type` VARCHAR ( 10 ) NOT NULL,
 	`project_id` BIGINT ( 20 ) NOT NULL,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	`parent_id` BIGINT ( 20 ) DEFAULT NULL,
 	`full_parent_id` VARCHAR ( 255 ) DEFAULT NULL,
 	`is_folder` TINYINT ( 1 ) DEFAULT NULL,
@@ -444,7 +444,7 @@ CREATE TABLE `star` (
 	`target` VARCHAR ( 20 ) NOT NULL,
 	`target_id` BIGINT ( 20 ) NOT NULL,
 	`user_id` BIGINT ( 20 ) NOT NULL,
-	`star_time` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+	`star_time` DATETIME NOT NULL ON UPDATE CURRENT_TIMESTAMP,
 	PRIMARY KEY ( `id` ) USING BTREE,
 	KEY `idx_target_id` ( `target_id` ) USING BTREE,
 	KEY `idx_user_id` ( `user_id` ) USING BTREE 
@@ -468,7 +468,7 @@ CREATE TABLE `user` (
 	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`create_by` BIGINT ( 20 ) NOT NULL DEFAULT '0',
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` TIMESTAMP DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
 
@@ -482,14 +482,14 @@ CREATE TABLE `view` (
 	`description` VARCHAR ( 255 ) DEFAULT NULL,
 	`project_id` BIGINT ( 20 ) NOT NULL,
 	`source_id` BIGINT ( 20 ) NOT NULL,
-	`sql` text,
-	`model` text,
-	`variable` text,
-	`config` text,
+	`sql` TEXT,
+	`model` TEXT,
+	`variable` TEXT,
+	`config` TEXT,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	`parent_id` BIGINT ( 20 ) DEFAULT NULL,
 	`full_parent_id` VARCHAR ( 255 ) DEFAULT NULL,
 	`is_folder` TINYINT ( 1 ) DEFAULT NULL,
@@ -512,9 +512,9 @@ CREATE TABLE `widget` (
 	`publish` TINYINT ( 1 ) NOT NULL,
 	`config` LONGTEXT NOT NULL,
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	`parent_id` BIGINT ( 20 ) DEFAULT NULL,
 	`full_parent_id` VARCHAR ( 255 ) DEFAULT NULL,
 	`is_folder` TINYINT ( 1 ) DEFAULT NULL,
@@ -533,9 +533,9 @@ CREATE TABLE `rel_role_display_slide_widget` (
 	`mem_display_slide_widget_id` BIGINT ( 20 ) NOT NULL,
 	`visible` TINYINT ( 1 ) NOT NULL DEFAULT '0',
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `role_id`, `mem_display_slide_widget_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
 
@@ -548,9 +548,9 @@ CREATE TABLE `rel_role_dashboard_widget` (
 	`mem_dashboard_widget_id` BIGINT ( 20 ) NOT NULL,
 	`visible` TINYINT ( 1 ) NOT NULL DEFAULT '0',
 	`create_by` BIGINT ( 20 ) DEFAULT NULL,
-	`create_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`update_by` BIGINT ( 20 ) DEFAULT NULL,
-	`update_time` datetime DEFAULT NULL,
+	`update_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `role_id`, `mem_dashboard_widget_id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
 
@@ -576,7 +576,7 @@ CREATE TABLE `davinci_statistic_visitor_operation` (
 	`variables` VARCHAR ( 500 ) DEFAULT NULL,
 	`filters` text COLLATE utf8_unicode_ci DEFAULT NULL,
 	`groups` VARCHAR ( 500 ) DEFAULT NULL,
-	`create_time` TIMESTAMP NULL DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY ( `id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
 
@@ -598,7 +598,7 @@ CREATE TABLE `davinci_statistic_terminal` (
 	`device_type` VARCHAR ( 255 ) DEFAULT NULL,
 	`device_vendor` VARCHAR ( 255 ) DEFAULT NULL,
 	`cpu_architecture` VARCHAR ( 255 ) DEFAULT NULL,
-	`create_time` TIMESTAMP NULL DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY ( `id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
 
@@ -618,8 +618,8 @@ CREATE TABLE `davinci_statistic_duration` (
 	`viz_name` VARCHAR ( 255 ) DEFAULT NULL COMMENT '报表关联应用名称',
 	`sub_viz_id` BIGINT ( 20 ) DEFAULT NULL COMMENT '报表ID',
 	`sub_viz_name` VARCHAR ( 255 ) DEFAULT NULL COMMENT '报表名称',
-	`start_time` TIMESTAMP NULL DEFAULT NULL,
-	`end_time` TIMESTAMP NULL DEFAULT NULL,
+	`start_time` TIMESTAMP NULL,
+	`end_time` TIMESTAMP NULL,
 	PRIMARY KEY ( `id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
 
@@ -633,8 +633,8 @@ CREATE TABLE `share_download_record` (
 	`name` VARCHAR ( 255 ) NOT NULL,
 	`path` VARCHAR ( 255 ) DEFAULT NULL,
 	`status` SMALLINT ( 1 ) NOT NULL,
-	`create_time` datetime NOT NULL,
-	`last_download_time` datetime DEFAULT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`last_download_time` DATETIME DEFAULT NULL,
 	PRIMARY KEY ( `id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;
 

@@ -35,6 +35,7 @@ public class SqlEntity {
     private Map<String, List<String>> authParams;
 
     public SqlEntity() {
+
     }
 
     public SqlEntity(String sql, Map<String, Object> queryParams, Map<String, List<String>> authParams) {
