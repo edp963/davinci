@@ -110,6 +110,9 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 if (context.getCustomLogger() != null) {
                 	 context.getCustomLogger().error("Task({}) workbook worker error, e={}", context.getTaskKey(), e.getMessage());
                 }
+                
+                log.error(e.getMessage(), e);
+                
             } catch (TimeoutException e) {
                 if (context.getCustomLogger() != null) {
                 	context.getCustomLogger().error("Task({}) workbook worker error, e={}", context.getTaskKey(), e.getMessage());
@@ -133,6 +136,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 }
                 wrapper.setRst(filePath);
             } else {
+            	log.info("Task({}) workbook worker fail, xid={}, xUUID={}", context.getTaskKey(), wrapper.getXId(), wrapper.getXUUID());
                 wrapper.setRst(null);
             }
             super.tell(wrapper);
@@ -144,6 +148,9 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
                 msg.setException(e);
             }
+
+            log.error(e.getMessage(), e);
+
             super.tell(wrapper);
             if (StringUtils.isNotEmpty(filePath)) {
                 FileUtils.delete(filePath);

@@ -39,7 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
@@ -47,6 +46,7 @@ import org.stringtemplate.v4.STGroupFile;
 
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.MD5Utils;
+import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Source;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.jdbc.JdbcDataSource;
@@ -267,6 +267,10 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	private boolean testConnectionByProvider(SourceConfig config, User user) {
 		Source source = new Source();
 		source.setConfig(JSONUtils.toString(config));
+		//TODO 等前端添加了type参数以后删除
+		if (StringUtils.isNull(config.getType())) {
+			config.setType("jdbc");
+		}
 		return DataProviderFactory.getProvider(config.getType()).test(source, user);
 	}
 

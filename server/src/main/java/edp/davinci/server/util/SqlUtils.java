@@ -71,7 +71,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.Date;
 import java.util.regex.Matcher;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static edp.davinci.server.commons.Constants.*;
@@ -253,10 +252,10 @@ public class SqlUtils {
             if (limit > 0) {
                 resultLimit = limit > resultLimit ? resultLimit : limit;
             }
-            
+
             jdbcTemplate.setMaxRows(resultLimit);
-            
-			// special for mysql fetch size
+
+            // special for mysql fetch size
 			if (getDatabaseTypeEnum() == MYSQL) {
 				jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
 			}
@@ -266,7 +265,7 @@ public class SqlUtils {
             int size = paginateWithQueryColumns.getResultList().size();
             paginateWithQueryColumns.setPageSize(size);
             paginateWithQueryColumns.setTotalCount(size);
-        
+
         } else {
             paginateWithQueryColumns.setPageNo(pageNo);
             paginateWithQueryColumns.setPageSize(pageSize);
@@ -280,7 +279,7 @@ public class SqlUtils {
 
             if (limit > 0) {
                 limit = limit > resultLimit ? resultLimit : limit;
-                totalCount = limit < totalCount ? limit : totalCount;
+                totalCount = Math.min(limit, totalCount);
             }
 
             paginateWithQueryColumns.setTotalCount(totalCount);
@@ -297,8 +296,9 @@ public class SqlUtils {
 
         if (isQueryLogEnable) {
 			String md5 = MD5Utils.getMD5(sql, true, 16);
-			sqlLogger.info("{} query for({} ms) sql:{}, pageNo:{}, pageSize:{}, limit:{}", md5,
-					System.currentTimeMillis() - before, formatSql(sql), pageNo, pageSize, limit);
+			sqlLogger.info("{} query for({} ms) total count:{}, page size:{}, sql:{}", md5,
+					System.currentTimeMillis() - before, paginateWithQueryColumns.getTotalCount(),
+					paginateWithQueryColumns.getPageSize(), formatSql(sql));
         }
 
         return paginateWithQueryColumns;
@@ -306,17 +306,18 @@ public class SqlUtils {
     
     @CachePut(value = "query", key = "#sql")
     public List<Map<String, Object>> query4List(String sql, int limit) throws Exception {
-        sql = removeAnnotation(sql);
-        checkSensitiveSql(sql);
+		sql = removeAnnotation(sql);
+		checkSensitiveSql(sql);
 
-        JdbcTemplate jdbcTemplate = jdbcTemplate();
-        jdbcTemplate.setMaxRows(limit > resultLimit ? resultLimit : limit);
+		JdbcTemplate jdbcTemplate = jdbcTemplate();
+		jdbcTemplate.setMaxRows(limit > resultLimit ? resultLimit : limit);
 
-        long before = System.currentTimeMillis();
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
+		long before = System.currentTimeMillis();
+		List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
 		if (isQueryLogEnable) {
 			String md5 = MD5Utils.getMD5(sql, true, 16);
-			sqlLogger.info("{} query for({} ms) sql:{}", md5, System.currentTimeMillis() - before, formatSql(sql));
+			sqlLogger.info("{} query for({} ms) total count:{} sql:{}", md5, System.currentTimeMillis() - before,
+					list.size(), formatSql(sql));
 		}
 
 		return list;
@@ -366,18 +367,18 @@ public class SqlUtils {
     }
 
     private Map<String, Object> getResultObjectMap(Set<String> excludeColumns, ResultSet rs, ResultSetMetaData metaData, Set<String> queryFromsAndJoins) throws SQLException {
-        Map<String, Object> map = new LinkedHashMap<>();
+		Map<String, Object> map = new LinkedHashMap<>();
 
-        for (int i = 1; i <= metaData.getColumnCount(); i++) {
-            String key = metaData.getColumnLabel(i);
-            String label = getColumnLabel(queryFromsAndJoins, key);
+		for (int i = 1; i <= metaData.getColumnCount(); i++) {
+			String key = metaData.getColumnLabel(i);
+			String label = getColumnLabel(queryFromsAndJoins, key);
 
-            if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(label)) {
-                continue;
-            }
-            map.put(label, rs.getObject(key));
-        }
-        return map;
+			if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(label)) {
+				continue;
+			}
+			map.put(label, rs.getObject(key));
+		}
+		return map;
     }
 
     public static String getCountSql(String sql) {
@@ -388,7 +389,7 @@ public class SqlUtils {
             plainSelect.setOrderByElements(null);
             countSql = String.format(QUERY_COUNT_SQL, select.toString());
         } catch (JSQLParserException e) {
-        	log.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
         }
         return SqlParseUtils.rebuildSqlWithFragment(countSql);
     }
@@ -432,7 +433,11 @@ public class SqlUtils {
     }
 
     private static void getFromItemName(Set<String> columnPrefixs, FromItem fromItem) {
-        Alias alias = fromItem.getAlias();
+    	if (fromItem == null) {
+    		return;
+    	}
+
+    	Alias alias = fromItem.getAlias();
         if (alias != null) {
             if (alias.isUseAs()) {
                 columnPrefixs.add(alias.getName().trim() + DOT);
@@ -445,19 +450,22 @@ public class SqlUtils {
     }
 
 	public static String getColumnLabel(Set<String> columnPrefixs, String columnLable) {
-		if (!CollectionUtils.isEmpty(columnPrefixs)) {
-			for (String prefix : columnPrefixs) {
-				if (columnLable.startsWith(prefix)) {
-					return columnLable.replaceFirst(prefix, EMPTY);
-				}
-				if (columnLable.startsWith(prefix.toLowerCase())) {
-					return columnLable.replaceFirst(prefix.toLowerCase(), EMPTY);
-				}
-				if (columnLable.startsWith(prefix.toUpperCase())) {
-					return columnLable.replaceFirst(prefix.toUpperCase(), EMPTY);
-				}
+		if (CollectionUtils.isEmpty(columnPrefixs)) {
+			return columnLable;
+		}
+
+		for (String prefix : columnPrefixs) {
+			if (columnLable.startsWith(prefix)) {
+				return columnLable.replaceFirst(prefix, EMPTY);
+			}
+			if (columnLable.startsWith(prefix.toLowerCase())) {
+				return columnLable.replaceFirst(prefix.toLowerCase(), EMPTY);
+			}
+			if (columnLable.startsWith(prefix.toUpperCase())) {
+				return columnLable.replaceFirst(prefix.toUpperCase(), EMPTY);
 			}
 		}
+
 		return columnLable;
 	}
 
@@ -467,7 +475,7 @@ public class SqlUtils {
      * @return
      * @throws SourceException
      */
-    public List<String> getDatabases() throws SourceException { 
+	public List<String> getDatabases() throws SourceException {
 		List<String> dbList = new ArrayList<>();
 		Connection connection = null;
 		try {
@@ -480,11 +488,11 @@ public class SqlUtils {
 				dbList.add(this.jdbcSourceInfo.getUsername());
 				return dbList;
 			}
-			
+
 			if (databaseTypeEnum == ELASTICSEARCH) {
-				if(StringUtils.isEmpty(this.jdbcSourceInfo.getUsername())) {
+				if (StringUtils.isEmpty(this.jdbcSourceInfo.getUsername())) {
 					dbList.add(databaseTypeEnum.getFeature());
-				}else {
+				} else {
 					dbList.add(this.jdbcSourceInfo.getUsername());
 				}
 				return dbList;
@@ -544,7 +552,7 @@ public class SqlUtils {
 			if (null == tables) {
 				return tableList;
 			}
-			
+
 			tableList = new ArrayList<>();
 			while (tables.next()) {
 				String name = tables.getString(TABLE_NAME);
@@ -627,7 +635,7 @@ public class SqlUtils {
 			SourceUtils.releaseConnection(connection);
 		}
 		return tableInfo;
-    }
+	}
     
     /**
      * 获取指定表列信息
@@ -674,7 +682,7 @@ public class SqlUtils {
                 }
             }
         } catch (Exception e) {
-        	log.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
             throw new SourceException("Get connection meta data error, jdbcUrl=" + this.jdbcSourceInfo.getUrl());
         } finally {
             SourceUtils.releaseConnection(connection);
@@ -698,13 +706,13 @@ public class SqlUtils {
         try {
             rs = metaData.getPrimaryKeys(dbName, null, tableName);
             if (rs == null) {
-            	return primaryKeys;
+				return primaryKeys;
             }
             while (rs.next()) {
                 primaryKeys.add(rs.getString("COLUMN_NAME"));
             }
         } catch (Exception e) {
-        	log.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
         } finally {
             SourceUtils.closeResult(rs);
         }
@@ -775,7 +783,7 @@ public class SqlUtils {
         jdbcTemplate.setFetchSize(500);
         return jdbcTemplate;
     }
-    
+
     public boolean testConnection() throws SourceException {
 		Connection connection = null;
 		try {
@@ -868,9 +876,9 @@ public class SqlUtils {
                                 }
                                 break;
                             case "Timestamp":
-                                if(obj == null){
-                                    pstmt.setTimestamp(i, null);
-                                }else{
+								if (obj == null) {
+									pstmt.setTimestamp(i, null);
+								} else {
 									if (obj instanceof LocalDateTime) {
 										pstmt.setTimestamp(i, Timestamp.valueOf((LocalDateTime) obj));
 									} else if (obj instanceof Date) {
@@ -878,7 +886,7 @@ public class SqlUtils {
 									} else {
 										pstmt.setTimestamp(i, (Timestamp) obj);
 									}
-                                }
+								}
                                 break;
                             case "Blob":
                                 pstmt.setBlob(i, null == obj ? null : (Blob) obj);
@@ -905,14 +913,14 @@ public class SqlUtils {
                 connection.commit();
             }
         } catch (Exception e) {
-        	log.error(e.getMessage(), e);
-            if (null != connection) {
-                try {
-                    connection.rollback();
-                } catch (SQLException se) {
-                	log.error(se.getMessage(), se);
-                }
-            }
+			log.error(e.getMessage(), e);
+			if (null != connection) {
+				try {
+					connection.rollback();
+				} catch (SQLException se) {
+					log.error(se.getMessage(), se);
+				}
+			}
 			throw new ServerException(e.getMessage(), e);
 		} finally {
 			if (null != pstmt) {
@@ -1042,7 +1050,6 @@ public class SqlUtils {
         };
     }
 
-
 	public SqlUtils() {
 
 	}
@@ -1154,9 +1161,9 @@ public class SqlUtils {
         }
         return this.jdbcSourceInfo.getUrl();
     }
-    
-    public static String formatSql(String sql) {
-    	return SQLUtils.formatMySql(sql);
-    }
+
+	public static String formatSql(String sql) {
+		return SQLUtils.formatMySql(sql);
+	}
 }
 

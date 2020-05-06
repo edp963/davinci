@@ -28,7 +28,6 @@ import edp.davinci.server.model.FieldNumeric;
 import edp.davinci.server.model.QueryColumn;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.ExcelUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 
@@ -47,7 +46,6 @@ import java.util.stream.Collectors;
  * @Date 19/5/28 18:24
  * To change this template use File | Settings | File Templates.
  */
-@Slf4j
 public abstract class AbstractSheetWriter {
 
     private CellStyle header;
@@ -61,11 +59,11 @@ public abstract class AbstractSheetWriter {
     private int nextRowNum = 0;
 
     //用于记录表头对应数据格式
-    Map<String, CellStyle> headerFormatMap = new HashMap();
+    Map<String, CellStyle> headerFormatMap = new HashMap<>();
     //用于标记标记数字格式单位
-    Map<String, NumericUnitEnum> dataUnitMap = new HashMap();
+    Map<String, NumericUnitEnum> dataUnitMap = new HashMap<>();
     //记录列最大字符数
-    Map<String, Integer> columnWidthMap = new HashMap();
+    Map<String, Integer> columnWidthMap = new HashMap<>();
 
 
     protected void init(SheetContext context) throws Exception {
@@ -214,9 +212,6 @@ public abstract class AbstractSheetWriter {
         }
     }
 
-    protected void writeBody(SheetContext context) {
-    }
-
     protected Boolean refreshHeightWidth(SheetContext context) {
         context.getSheet().setDefaultRowHeight((short) (20 * 20));
         for (int i = 0; i < context.getQueryColumns().size(); i++) {
@@ -235,26 +230,11 @@ public abstract class AbstractSheetWriter {
         return true;
     }
 
-
     private Double formatNumber(Object value, NumericUnitEnum unitEnum) {
         try {
             return Double.parseDouble(String.valueOf(value));
-
-//            if (null == unitEnum) {
-//                return d;
-//            }
-
-            //如果单位为"万"和"亿"，格式按照"k"和"M"，数据上除10计算渲染
-//            switch (unitEnum) {
-//                case TenThousand:
-//                case OneHundredMillion:
-//                    d = d / 10;
-//                    break;
-//                default:
-//                    break;
-//            }
-//            return d;
         } catch (NumberFormatException e) {
+
         }
         return null;
     }

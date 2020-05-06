@@ -28,6 +28,8 @@ import edp.davinci.server.model.QueryColumn;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.SqlParseUtils;
 import edp.davinci.server.util.SqlUtils;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import static edp.davinci.server.commons.Constants.QUERY_META_SQL;
@@ -46,8 +48,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @Date 19/5/28 18:23
  * To change this template use File | Settings | File Templates.
  */
+@Slf4j
 public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
-    private SheetContext context;
+
+	private SheetContext context;
 
     private int maxRows = 1000000;
 
@@ -106,6 +110,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             	context.getCustomLogger().error("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) error, md5={}, error={}",
                         context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), md5, e.getMessage());
             }
+            log.error(e.getMessage(), e);
             rst = false;
         }
 
