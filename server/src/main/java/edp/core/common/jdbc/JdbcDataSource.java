@@ -75,10 +75,10 @@ public class JdbcDataSource {
 	        
 	        String key = getDataSourceKey(jdbcSourceInfo);
 
-	        DruidDataSource druidDataSource = dataSourceMap.get(key);
-	        if (druidDataSource != null && !druidDataSource.isClosed()) {
-	                return druidDataSource;
-	        }
+			DruidDataSource druidDataSource = dataSourceMap.get(key);
+			if (druidDataSource != null && !druidDataSource.isClosed()) {
+				return druidDataSource;
+			}
 	        
 	        Lock lock = getDataSourceLock(key);
 	        
@@ -90,6 +90,11 @@ public class JdbcDataSource {
 	        catch (InterruptedException e) {
 	            throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
 	        }
+	        
+	        druidDataSource = dataSourceMap.get(key);
+			if (druidDataSource != null && !druidDataSource.isClosed()) {
+				return druidDataSource;
+			}
 	        
             Properties properties = new Properties();
             properties.setProperty(PROP_URL, jdbcUrl.trim());
@@ -189,15 +194,18 @@ public class JdbcDataSource {
     private static final Object lockLock = new Object();
     
     private Lock getDataSourceLock(String key) {
-        if (dataSourceLockMap.containsKey(key)) {
-            return dataSourceLockMap.get(key);
-        }
-        
-        synchronized (lockLock) {
-            Lock lock = new ReentrantLock();
-            dataSourceLockMap.put(key, lock);
-            return lock;
-        }
+		if (dataSourceLockMap.containsKey(key)) {
+			return dataSourceLockMap.get(key);
+		}
+
+		synchronized (lockLock) {
+			if (dataSourceLockMap.containsKey(key)) {
+				return dataSourceLockMap.get(key);
+			}
+			Lock lock = new ReentrantLock();
+			dataSourceLockMap.put(key, lock);
+			return lock;
+		}
     }
     
     /**
@@ -246,10 +254,10 @@ public class JdbcDataSource {
         
         String key = getDataSourceKey(jdbcSourceInfo);
 
-        DruidDataSource druidDataSource = dataSourceMap.get(key);
-        if (druidDataSource != null && !druidDataSource.isClosed()) {
-                return druidDataSource;
-        }
+		DruidDataSource druidDataSource = dataSourceMap.get(key);
+		if (druidDataSource != null && !druidDataSource.isClosed()) {
+			return druidDataSource;
+		}
         
         Lock lock = getDataSourceLock(key);
         
@@ -261,6 +269,11 @@ public class JdbcDataSource {
         catch (InterruptedException e) {
             throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
         }
+        
+		druidDataSource = dataSourceMap.get(key);
+		if (druidDataSource != null && !druidDataSource.isClosed()) {
+			return druidDataSource;
+		}
         
         druidDataSource = new DruidDataSource();
         
