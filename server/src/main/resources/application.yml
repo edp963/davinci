@@ -14,6 +14,9 @@
 #   limitations under the License.
 #  >>
 
+davinci:
+  version: 0.3-beta.9
+
 file:
   userfiles-path: ${DAVINCI3_HOME}/userfiles/
   web_resources: ${DAVINCI3_HOME}/davinci-ui/

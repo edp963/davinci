@@ -19,13 +19,18 @@
 
 package edp.davinci.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import springfox.documentation.annotations.ApiIgnore;
 
 @ApiIgnore
 @Controller
 public class HomeController {
+
+    @Value("${davinci.version:}")
+    private String version;
 
     @RequestMapping("swagger")
     public String swagger() {
@@ -40,5 +45,11 @@ public class HomeController {
     @RequestMapping("share/")
     public String shareIndex() {
         return "share";
+    }
+
+    @RequestMapping("version")
+    @ResponseBody
+    public String version() {
+        return version;
     }
 }
