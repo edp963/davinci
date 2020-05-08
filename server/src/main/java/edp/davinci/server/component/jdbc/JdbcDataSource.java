@@ -110,11 +110,16 @@ public class JdbcDataSource {
             return dataSourceLockMap.get(key);
         }
         
-        synchronized (lockLock) {
-            Lock lock = new ReentrantLock();
-            dataSourceLockMap.put(key, lock);
-            return lock;
-        }
+		synchronized (lockLock) {
+
+			if (dataSourceLockMap.containsKey(key)) {
+				return dataSourceLockMap.get(key);
+			}
+
+			Lock lock = new ReentrantLock();
+			dataSourceLockMap.put(key, lock);
+			return lock;
+		}
     }
     
     public boolean isExist(JdbcSourceInfo jdbcSourceInfo) {
@@ -154,10 +159,10 @@ public class JdbcDataSource {
         
         String key = getDataSourceKey(jdbcSourceInfo);
 
-        DruidDataSource druidDataSource = dataSourceMap.get(key);
-        if (druidDataSource != null && !druidDataSource.isClosed()) {
-                return druidDataSource;
-        }
+		DruidDataSource druidDataSource = dataSourceMap.get(key);
+		if (druidDataSource != null && !druidDataSource.isClosed()) {
+			return druidDataSource;
+		}
         
         Lock lock = getDataSourceLock(key);
         
@@ -169,6 +174,11 @@ public class JdbcDataSource {
         catch (InterruptedException e) {
             throw new SourceException("Unable to get driver instance for jdbcUrl: " + url);
         }
+        
+		druidDataSource = dataSourceMap.get(key);
+		if (druidDataSource != null && !druidDataSource.isClosed()) {
+			return druidDataSource;
+		}
         
         druidDataSource = new DruidDataSource();
         
