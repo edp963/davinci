@@ -50,16 +50,26 @@ import {
   LOAD_DOWNLOAD_LIST_FAILURE,
   DOWNLOAD_FILE,
   DOWNLOAD_FILE_FAILURE,
-  DOWNLOAD_FILE_SUCCESS
+  DOWNLOAD_FILE_SUCCESS,
+  GET_CAPTCHA_FOR_RESET_PASSWORD,
+  GET_CAPTCHA_FOR_RESET_PASSWORD_SUCCESS,
+  GET_CAPTCHA_FOR_RESET_PASSWORD_ERROE,
+  RESET_PASSWORD_UNLOGGED,
+  RESET_PASSWORD_UNLOGGED_ERROR,
+  RESET_PASSWORD_UNLOGGED_SUCCESS
 } from './constants'
 
-export function getExternalAuthProviders () {
+import { IGetgetCaptchaParams, IResetPasswordParams } from '../FindPassword/types'
+
+import { IRudexActionStruct } from 'utils/types'
+
+export function getExternalAuthProviders() {
   return {
     type: GET_EXTERNAL_AUTH_PROVIDERS
   }
 }
 
-export function gotExternalAuthProviders (externalAuthProviders) {
+export function gotExternalAuthProviders(externalAuthProviders) {
   return {
     type: GET_EXTERNAL_AUTH_PROVIDERS_SUCESS,
     payload: {
@@ -68,7 +78,7 @@ export function gotExternalAuthProviders (externalAuthProviders) {
   }
 }
 
-export function tryExternalAuth (resolve) {
+export function tryExternalAuth(resolve) {
   return {
     type: TRY_EXTERNAL_AUTH,
     payload: {
@@ -76,13 +86,13 @@ export function tryExternalAuth (resolve) {
     }
   }
 }
-export function externalAuthlogout () {
+export function externalAuthlogout() {
   return {
     type: EXTERNAL_AUTH_LOGOUT
   }
 }
 
-export function login (username, password, resolve) {
+export function login(username, password, resolve) {
   return {
     type: LOGIN,
     payload: {
@@ -93,7 +103,7 @@ export function login (username, password, resolve) {
   }
 }
 
-export function logged (user) {
+export function logged(user) {
   return {
     type: LOGGED,
     payload: {
@@ -102,19 +112,19 @@ export function logged (user) {
   }
 }
 
-export function loginError () {
+export function loginError() {
   return {
     type: LOGIN_ERROR
   }
 }
 
-export function logout () {
+export function logout() {
   return {
     type: LOGOUT
   }
 }
 
-export function active (token, resolve) {
+export function active(token, resolve) {
   return {
     type: ACTIVE,
     payload: {
@@ -124,7 +134,7 @@ export function active (token, resolve) {
   }
 }
 
-export function activeSuccess (user) {
+export function activeSuccess(user) {
   return {
     type: ACTIVE_SUCCESS,
     payload: {
@@ -133,13 +143,13 @@ export function activeSuccess (user) {
   }
 }
 
-export function activeError () {
+export function activeError() {
   return {
     type: ACTIVE_ERROR
   }
 }
 
-export function joinOrganization (token, resolve, reject) {
+export function joinOrganization(token, resolve, reject) {
   return {
     type: JOIN_ORGANIZATION,
     payload: {
@@ -150,7 +160,7 @@ export function joinOrganization (token, resolve, reject) {
   }
 }
 
-export function joinOrganizationSuccess (user) {
+export function joinOrganizationSuccess(user) {
   return {
     type: JOIN_ORGANIZATION_SUCCESS,
     payload: {
@@ -159,13 +169,13 @@ export function joinOrganizationSuccess (user) {
   }
 }
 
-export function joinOrganizationError () {
+export function joinOrganizationError() {
   return {
     type: JOIN_ORGANIZATION_ERROR
   }
 }
 
-export function getLoginUser (resolve) {
+export function getLoginUser(resolve) {
   return {
     type: GET_LOGIN_USER,
     payload: {
@@ -174,25 +184,25 @@ export function getLoginUser (resolve) {
   }
 }
 
-export function getLoginUserError () {
+export function getLoginUserError() {
   return {
     type: GET_LOGIN_USER_ERROR
   }
 }
 
-export function showNavigator () {
+export function showNavigator() {
   return {
     type: SHOW_NAVIGATOR
   }
 }
 
-export function hideNavigator () {
+export function hideNavigator() {
   return {
     type: HIDE_NAVIGATOR
   }
 }
 
-export function checkNameAction (id, name, type, params, resolve, reject) {
+export function checkNameAction(id, name, type, params, resolve, reject) {
   return {
     type: CHECK_NAME,
     payload: {
@@ -206,7 +216,7 @@ export function checkNameAction (id, name, type, params, resolve, reject) {
   }
 }
 
-export function checkNameUniqueAction (pathname, data, resolve, reject) {
+export function checkNameUniqueAction(pathname, data, resolve, reject) {
   return {
     type: CHECK_NAME,
     payload: {
@@ -218,7 +228,7 @@ export function checkNameUniqueAction (pathname, data, resolve, reject) {
   }
 }
 
-export function updateProfile (id, name, description, department, resolve) {
+export function updateProfile(id, name, description, department, resolve) {
   return {
     type: UPDATE_PROFILE,
     payload: {
@@ -231,7 +241,7 @@ export function updateProfile (id, name, description, department, resolve) {
   }
 }
 
-export function uploadAvatarSuccess (path) {
+export function uploadAvatarSuccess(path) {
   return {
     type: UPLOAD_AVATAR_SUCCESS,
     payload: {
@@ -240,7 +250,7 @@ export function uploadAvatarSuccess (path) {
   }
 }
 
-export function updateProfileSuccess (user) {
+export function updateProfileSuccess(user) {
   return {
     type: UPDATE_PROFILE_SUCCESS,
     payload: {
@@ -249,14 +259,13 @@ export function updateProfileSuccess (user) {
   }
 }
 
-export function updateProfileError () {
+export function updateProfileError() {
   return {
     type: UPDATE_PROFILE_ERROR
   }
 }
 
-
-export function changeUserPassword (user, resolve, reject) {
+export function changeUserPassword(user, resolve, reject) {
   return {
     type: CHANGE_USER_PASSWORD,
     payload: {
@@ -267,7 +276,7 @@ export function changeUserPassword (user, resolve, reject) {
   }
 }
 
-export function userPasswordChanged (result) {
+export function userPasswordChanged(result) {
   return {
     type: CHANGE_USER_PASSWORD_SUCCESS,
     payload: {
@@ -276,19 +285,19 @@ export function userPasswordChanged (result) {
   }
 }
 
-export function changeUserPasswordFail () {
+export function changeUserPasswordFail() {
   return {
     type: CHANGE_USER_PASSWORD_FAILURE
   }
 }
 
-export function loadDownloadList () {
+export function loadDownloadList() {
   return {
     type: LOAD_DOWNLOAD_LIST
   }
 }
 
-export function downloadListLoaded (list) {
+export function downloadListLoaded(list) {
   return {
     type: LOAD_DOWNLOAD_LIST_SUCCESS,
     payload: {
@@ -297,7 +306,7 @@ export function downloadListLoaded (list) {
   }
 }
 
-export function loadDownloadListFail (error) {
+export function loadDownloadListFail(error) {
   return {
     type: LOAD_DOWNLOAD_LIST_FAILURE,
     payload: {
@@ -306,7 +315,7 @@ export function loadDownloadListFail (error) {
   }
 }
 
-export function downloadFile (id) {
+export function downloadFile(id) {
   return {
     type: DOWNLOAD_FILE,
     payload: {
@@ -315,7 +324,7 @@ export function downloadFile (id) {
   }
 }
 
-export function fileDownloaded (id) {
+export function fileDownloaded(id) {
   return {
     type: DOWNLOAD_FILE_SUCCESS,
     payload: {
@@ -324,9 +333,63 @@ export function fileDownloaded (id) {
   }
 }
 
-export function downloadFileFail (error) {
+export function downloadFileFail(error) {
   return {
     type: DOWNLOAD_FILE_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function getCaptchaforResetPassword (
+  params: IGetgetCaptchaParams
+): IRudexActionStruct<IGetgetCaptchaParams> {
+  return {
+    type: GET_CAPTCHA_FOR_RESET_PASSWORD,
+    payload: params
+  }
+}
+
+export function getCaptchaforResetPasswordSuccess(result) {
+  return {
+    type: GET_CAPTCHA_FOR_RESET_PASSWORD_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function getCaptchaforResetPasswordError(error) {
+  return {
+    type: GET_CAPTCHA_FOR_RESET_PASSWORD_ERROE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function resetPasswordUnlogged (
+  params: IResetPasswordParams
+): IRudexActionStruct<IResetPasswordParams> {
+  return {
+    type: RESET_PASSWORD_UNLOGGED,
+    payload: params
+  }
+}
+
+export function resetPasswordUnloggedSuccess (result) {
+  return {
+    type: RESET_PASSWORD_UNLOGGED_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function resetPasswordUnloggedFail (error) {
+  return {
+    type: RESET_PASSWORD_UNLOGGED_ERROR,
     payload: {
       error
     }

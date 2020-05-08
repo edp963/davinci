@@ -76,6 +76,11 @@ export class Login extends React.PureComponent<ILoginProps & RouteComponentProps
     }
   }
 
+  private findPassword = () => {
+    const { history } = this.props
+    history.replace('/findPassword')
+  }
+
   private changeUsername = (e) => {
     this.setState({
       username: e.target.value.trim()
@@ -126,6 +131,7 @@ export class Login extends React.PureComponent<ILoginProps & RouteComponentProps
           onChangeUsername={this.changeUsername}
           onChangePassword={this.changePassword}
           onLogin={this.doLogin}
+          onFindPassword={this.findPassword}
         />
         <button
           disabled={loginLoading}
