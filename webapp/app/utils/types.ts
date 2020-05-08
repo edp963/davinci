@@ -54,7 +54,7 @@ export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<
   }[Keys]
 
 
-export interface IRudexActionStruct<T>  {
+export interface IReduxActionStruct<T>  {
   type?: string,
   payload: T
 }
