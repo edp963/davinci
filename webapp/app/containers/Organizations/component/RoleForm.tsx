@@ -17,10 +17,11 @@
  * limitations under the License.
  * >>
  */
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { connect } from 'react-redux'
 import { Form, Row, Col, Input, Radio, Steps, Transfer } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const Step = Steps.Step
@@ -29,7 +30,6 @@ const Step = Steps.Step
 const utilStyles = require('assets/less/util.less')
 
 interface IRoleFormProps {
-  form: any
   type: string
   groupSource?: any[]
   groupTarget?: any[]
@@ -45,7 +45,7 @@ interface IRoleFormProps {
   ) => any
 }
 
-export class RoleForm extends React.PureComponent<IRoleFormProps, {}> {
+export class RoleForm extends React.PureComponent<IRoleFormProps & FormComponentProps, {}> {
   public render () {
     const {
       form,
@@ -62,13 +62,13 @@ export class RoleForm extends React.PureComponent<IRoleFormProps, {}> {
       <Form>
         <Row>
           <Col span={24}>
-            <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('id', {
-                hidden: type === 'add'
-              })(
-                <Input />
-              )}
-            </FormItem>
+            {type !== 'add' && (
+              <FormItem className={utilStyles.hide}>
+                {getFieldDecorator('id', {})(
+                  <Input />
+                )}
+              </FormItem>
+            )}
           </Col>
           <Col span={24}>
             <FormItem label="名称" {...commonFormItemStyle}>
@@ -98,7 +98,7 @@ export class RoleForm extends React.PureComponent<IRoleFormProps, {}> {
   }
 }
 
-export default Form.create()(RoleForm)
+export default Form.create<IRoleFormProps & FormComponentProps>()(RoleForm)
 
 
 

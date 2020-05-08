@@ -25,7 +25,7 @@ const TextArea = Input.TextArea
 const Option = Select.Option
 import Avatar from 'components/Avatar'
 const styles = require('../Organization.less')
-import { ITeam } from './TeamList'
+import { ITeam } from './RoleList'
 
 
 

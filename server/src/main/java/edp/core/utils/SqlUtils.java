@@ -506,6 +506,7 @@ public class SqlUtils {
             case SQLSERVER:
                 schemaPattern = "dbo";
                 break;
+            case CLICKHOUSE:
             case PRESTO:
                 if (!StringUtils.isEmpty(schema)) {
                     schemaPattern = schema;

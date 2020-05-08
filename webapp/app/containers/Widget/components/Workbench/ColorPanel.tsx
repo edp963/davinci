@@ -96,7 +96,6 @@ export class ColorPanel extends React.PureComponent<IColorPanelProps, IColorPane
         </ul>
         <div className={styles.picker}>
           <SketchPicker
-            className="sketchpickerinpanel"
             color={color}
             presetColors={defaultThemeColors}
             onChangeComplete={this.colorChange}

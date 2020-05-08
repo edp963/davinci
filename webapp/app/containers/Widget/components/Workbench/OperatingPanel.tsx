@@ -14,7 +14,6 @@ import { IFieldSortConfig, FieldSortTypes, SortConfigModal } from '../Config/Sor
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
-import VariableConfigForm from '../VariableConfigForm'
 import ControlConfig from './ControlConfig'
 import ComputedConfigForm from '../ComputedConfigForm'
 import ChartIndicator from './ChartIndicator'
@@ -182,10 +181,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private actOnSettingForm = null
   private filterSettingForm = null
 
-  private variableConfigForm = null
   private computedConfigForm = null
   private refHandlers = {
-    variableConfigForm: (ref) => this.variableConfigForm = ref,
     computedConfigForm: (ref) => this.computedConfigForm = ref
   }
 

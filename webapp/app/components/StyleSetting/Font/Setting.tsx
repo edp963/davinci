@@ -94,7 +94,7 @@ const FontSetting: React.FC<IFontSettingProps> = (props, ref) => {
     {
       value: color,
       size: containerSize,
-      onChange: (value) => {
+      onChange: (value: string) => {
         setColor(value)
         triggerChange({ fontColor: value })
       }
