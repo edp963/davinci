@@ -149,24 +149,6 @@ const ResetPassword: React.FC<IOperateStates & FormComponentProps> = React.memo(
       <Form className={styles.form} onSubmit={handleSubmit}>
         <div className={styles.top}>
           <FormItem
-            label="旧密码"
-            {...formItemLayout}
-            validateStatus={oldPassError ? 'error' : 'success'}
-            help={oldPassError || ''}
-          >
-            {getFieldDecorator('oldPassword', {
-              rules: [
-                {
-                  required: true,
-                  message: '旧密码不能为空'
-                }
-              ]
-            })(
-              <Input type="password" size="large" placeholder="请输入旧密码" />
-            )}
-          </FormItem>
-
-          <FormItem
             label="新密码"
             {...formItemLayout}
             validateStatus={newPassError ? 'error' : 'success'}
