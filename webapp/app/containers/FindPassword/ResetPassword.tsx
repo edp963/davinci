@@ -132,9 +132,6 @@ const ResetPassword: React.FC<IOperateStates & FormComponentProps> = React.memo(
       return Object.keys(fieldsError).some((field) => fieldsError[field])
     }
 
-    const oldPassError =
-      isFieldTouched('oldPassword') && getFieldError('oldPassword')
-
     const newPassError = isFieldTouched('password') && getFieldError('password')
 
     const confirmPasswordError =
