@@ -19,6 +19,8 @@
 
 package edp.davinci.controller;
 
+import edp.core.annotation.AuthIgnore;
+import edp.davinci.core.common.Constants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,7 +49,8 @@ public class HomeController {
         return "share";
     }
 
-    @RequestMapping("version")
+    @RequestMapping(Constants.BASE_API_PATH + "/version")
+    @AuthIgnore
     @ResponseBody
     public String version() {
         return version;
