@@ -17,8 +17,9 @@
  * limitations under the License.
  * >>
  */
-import * as React from 'react'
+import React from 'react'
 import { Form, Row, Col, Input, Radio, Steps, Transfer } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
 
 interface IRoleFormProps {
   form: any
@@ -28,7 +29,7 @@ interface IRoleFormProps {
   organizationMembers?: any[]
 }
 
-export class RelRoleMember extends React.PureComponent<IRoleFormProps, {}> {
+export class RelRoleMember extends React.PureComponent<IRoleFormProps & FormComponentProps, {}> {
 
   private getTransferRowKey = (g) => g.user.id
   private transferRender = (item) => item.user.username
@@ -67,7 +68,7 @@ export class RelRoleMember extends React.PureComponent<IRoleFormProps, {}> {
   }
 }
 
-export default Form.create()(RelRoleMember)
+export default Form.create<IRoleFormProps & FormComponentProps>()(RelRoleMember)
 
 
 

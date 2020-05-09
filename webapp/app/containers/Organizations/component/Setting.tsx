@@ -4,7 +4,7 @@ import { Button, Input, Form, Row, Col, Radio, Modal } from 'antd'
 const FormItem = Form.Item
 const RadioButton = Radio.Button
 import UploadAvatar from 'components/UploadAvatar'
-import { IOrganization } from '../Organization'
+import { IOrganization } from '../types'
 const utilStyles = require('assets/less/util.less')
 
 interface ISettingProps {

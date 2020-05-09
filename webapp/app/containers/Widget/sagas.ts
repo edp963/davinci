@@ -23,6 +23,7 @@ import { ActionTypes } from './constants'
 import omit from 'lodash/omit'
 
 import { WidgetActions, WidgetActionType } from './actions'
+import { IWidgetRaw, IWidgetFormed } from './types'
 
 import request from 'utils/request'
 import api from 'utils/api'
@@ -32,11 +33,17 @@ export function* getWidgets(action: WidgetActionType) {
   if (action.type !== ActionTypes.LOAD_WIDGETS) {
     return
   }
-
   const { projectId } = action.payload
   try {
     const result = yield call(request, `${api.widget}?projectId=${projectId}`)
-    yield put(WidgetActions.widgetsLoaded(result.payload))
+    const formedWidgets: IWidgetFormed[] = result.payload.map((widget: IWidgetRaw) => {
+      const parsedConfig = JSON.parse(widget.config)
+      return {
+        ...widget,
+        config: parsedConfig
+      }
+    })
+    yield put(WidgetActions.widgetsLoaded(formedWidgets))
   } catch (err) {
     yield put(WidgetActions.widgetsLoadedFail())
     errorHandler(err)
@@ -55,8 +62,12 @@ export function* addWidget(action: WidgetActionType) {
       url: api.widget,
       data: widget
     })
-
-    yield put(WidgetActions.widgetAdded(result.payload))
+    const addedWidget: IWidgetRaw = result.payload
+    const formdWidget: IWidgetFormed = {
+      ...addedWidget,
+      config: JSON.parse(addedWidget.config)
+    }
+    yield put(WidgetActions.widgetAdded(formdWidget))
     resolve()
   } catch (err) {
     yield put(WidgetActions.addWidgetFail())
@@ -126,12 +137,17 @@ export function* copyWidget(action: WidgetActionType) {
 
   const { widget, resolve } = action.payload
   try {
-    const asyncData = yield call(request, {
+    const result = yield call(request, {
       method: 'post',
       url: api.widget,
       data: omit(widget, 'id')
     })
-    yield put(WidgetActions.widgetCopied(widget.id, asyncData.payload))
+    const copiedWidget: IWidgetRaw = result.payload
+    const formdWidget: IWidgetFormed = {
+      ...copiedWidget,
+      config: JSON.parse(copiedWidget.config)
+    }
+    yield put(WidgetActions.widgetCopied(widget.id, formdWidget))
     resolve()
   } catch (err) {
     yield put(WidgetActions.copyWidgetFail())

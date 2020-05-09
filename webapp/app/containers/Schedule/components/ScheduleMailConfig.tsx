@@ -25,14 +25,6 @@ import React, {
   useImperativeHandle,
   forwardRef
 } from 'react'
-import ReactQuill, { Quill } from 'react-quill'
-import ImageResize from 'quill-image-resize-module'
-const BackgroundStyle = Quill.import('attributors/style/background')
-const ColorStyle = Quill.import('attributors/style/color')
-const SizeStyle = Quill.import('attributors/style/size')
-const FontStyle = Quill.import('attributors/style/font')
-const AlignStyle = Quill.import('attributors/style/align')
-const DirectionStyle = Quill.import('attributors/style/direction')
 import { Form, Row, Col, Input, Select, Icon, InputNumber, Spin } from 'antd'
 const FormItem = Form.Item
 const { Option } = Select
@@ -47,35 +39,7 @@ import {
   DefaultEmailContent
 } from './constants'
 
-import 'react-quill/dist/quill.core.css'
-import 'react-quill/dist/quill.snow.css'
-
-Quill.register('modules/imageResize', ImageResize)
-Quill.register(BackgroundStyle, true)
-Quill.register(ColorStyle, true)
-Quill.register(SizeStyle, true)
-Quill.register(FontStyle, true)
-Quill.register(AlignStyle, true)
-Quill.register(DirectionStyle, true)
-
-const modules = {
-  toolbar: [
-    [{ font: [] }],
-    [{ header: [1, 2, 3, 4, 5, 6, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    ['blockquote'],
-    [{ color: [] }, { background: [] }],
-
-    [{ list: 'ordered' }, { list: 'bullet' }],
-    [{ align: [] }],
-    [{ indent: '-1' }, { indent: '+1' }],
-    ['image', 'link'],
-    ['clean']
-  ],
-  imageResize: {
-    displaySize: true
-  }
-}
+import { RichText } from 'components/RichText'
 
 interface IScheduleMailConfigProps
   extends FormComponentProps<IScheduleMailConfig> {
@@ -223,11 +187,7 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
             ],
             initialValue: config.content
           })(
-            <ReactQuill
-              style={{ height: 350, lineHeight: 1, marginBottom: 70 }}
-              modules={modules}
-              theme="snow"
-            />
+            <RichText />
           )
         )}
       </FormItem>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import FormType from 'antd/lib/form/Form'
 import { createStructuredSelector } from 'reselect'
 import RoleForm from './RoleForm'
 import RelRoleMember from './RelRoleMember'
@@ -60,8 +60,6 @@ export interface ITeam {
 }
 
 export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
-  private RoleForm: WrappedFormUtils
-  private RelRoleMember: WrappedFormUtils
   constructor (props) {
     super(props)
     this.state = {
@@ -80,6 +78,14 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
         dataSource: []
       }
     }
+  }
+
+  private RoleForm: FormType
+  private RelRoleMember: FormType
+
+  private refHandles = {
+    RoleForm: (ref) => this.RoleForm = ref,
+    RelRoleMember: (ref) => this.RelRoleMember = ref
   }
 
   public componentWillMount () {
@@ -132,7 +138,7 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
       if (flag !== 'add') {
         setTimeout(() => {
           const {description, id, name } = this.props.currentOrganizationRole.find((role) => role.id === roleId)
-          this.RoleForm.setFieldsValue({description, id, name})
+          this.RoleForm.props.form.setFieldsValue({description, id, name})
         }, 0)
       }
     })
@@ -175,11 +181,11 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
   }
 
   private afterTeamFormClose = () => {
-    this.RoleForm.resetFields()
+    this.RoleForm.props.form.resetFields()
   }
 
   private afterRelFormClose = () => {
-    this.RelRoleMember.resetFields()
+    this.RelRoleMember.props.form.resetFields()
   }
 
   private handleDelete = (roleId) => () => {
@@ -217,7 +223,7 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
   private createOrRole = () =>  {
     const {formType} = this.state
     const {onAddRole, onEditRole, onLoadOrganizationRole} = this.props
-    this.RoleForm.validateFieldsAndScroll((err, values) => {
+    this.RoleForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const {name, description, id} = values
         const orgId = this.props.currentOrganization.id
@@ -346,7 +352,7 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
             organizationMembers={organizationMembers}
             groupTarget={groupTransfer.targets}
             onGroupChange={this.onGroupTransferChange}
-            ref={(f) => { this.RoleForm = f }}
+            wrappedComponentRef={this.refHandles.RoleForm}
           />
         </Modal>
 
@@ -361,7 +367,7 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
             organizationMembers={organizationMembers}
             groupTarget={groupTransfer.targets}
             onGroupChange={this.onGroupTransferChange}
-            ref={(f) => { this.RelRoleMember = f }}
+            wrappedComponentRef={this.refHandles.RelRoleMember}
           />
         </Modal>
       </div>

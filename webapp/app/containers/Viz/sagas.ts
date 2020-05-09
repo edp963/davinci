@@ -48,6 +48,7 @@ import { errorHandler } from 'utils/util'
 import { getDashboardNodes } from './util'
 import { ISlideRaw, ISlideFormed, Slide } from './types'
 import { getDefaultSlideParams } from 'containers/Display/components/util'
+import { IDashboard } from '../Dashboard/types'
 
 export function* getPortals(action: VizActionType) {
   if (action.type !== ActionTypes.LOAD_PORTALS) {
@@ -242,7 +243,7 @@ export function* copyDisplay(action: VizActionType) {
   }
 
   const { display, resolve } = action.payload
-  const { id, name, description, publish, roleIds} = display
+  const { id, name, description, publish, roleIds } = display
   try {
     const asyncData = yield call(request, `${api.display}/copy/${id}`, {
       method: 'post',
@@ -358,11 +359,17 @@ export function* editDashboard(action: VizActionType) {
 
 export function* editCurrentDashboard(action) {
   const { dashboard, resolve } = action.payload
+  const { config, ...rest } = dashboard as IDashboard
   try {
     yield call(request, {
       method: 'put',
       url: `${api.portal}/${dashboard.dashboardPortalId}/dashboards`,
-      data: [dashboard]
+      data: [
+        {
+          ...rest,
+          config: JSON.stringify(config)
+        }
+      ]
     })
     yield put(VizActions.currentDashboardEdited(dashboard))
     resolve()

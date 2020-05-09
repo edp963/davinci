@@ -202,7 +202,7 @@ export function* getSelectOptions (action: ViewActionType) {
       const { columns, filters, variables, cache, expired } = params
       return call(request, {
         method: 'post',
-        url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
+        url: `${api.view}/${viewId}/getdistinctvalue`,
         data: {
           columns,
           filters,
@@ -261,7 +261,7 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
   const { viewDataFromVizItemLoaded, loadViewDataFromVizItemFail } = ViewActions
   const {
     filters,
-    tempFilters,
+    tempFilters,  // @TODO combine widget static filters with local filters
     linkageFilters,
     globalFilters,
     variables,
@@ -275,8 +275,8 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
   const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   let searchFilters = filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters)
-  if (drillStatus && drillStatus.filter) {
-    searchFilters = searchFilters.concat( drillStatus.filter.sqls)
+  if (drillStatus && drillStatus.filters) {
+    searchFilters = searchFilters.concat(drillStatus.filters)  // 改成 drillStatus.filters
   }
 
   try {
@@ -293,8 +293,10 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
       },
       cancelToken: cancelTokenSource.token
     })
-    const { resultList } = asyncData.payload
-    asyncData.payload.resultList = (resultList && resultList.slice(0, 600)) || []
+    asyncData.payload = asyncData.payload || {}
+    const { payload } = asyncData
+    payload.resultList = payload.resultList || []
+    payload.resultList = payload.resultList.slice(0, 600)
     yield put(viewDataFromVizItemLoaded(renderType, itemId, requestParams, asyncData.payload, vizType, action.statistic))
   } catch (err) {
     yield put(loadViewDataFromVizItemFail(itemId, vizType, getErrorMessage(err)))
