@@ -20,7 +20,6 @@
 
 import React, { useCallback, useRef } from 'react'
 import { useDrag, useDrop } from 'react-dnd';
-import { Menu, Dropdown } from 'antd'
 import classnames from 'classnames'
 
 import { ISlideFormed } from '../types'
@@ -38,27 +37,36 @@ interface ISlideThumbnailProps {
   selectedIds: number[]
   onMultiSelect: (slideId: number) => void
   onMoveSlide: (slideId: number, newPos: number) => void
-  onChangeDisplayAvatar: (avatar: string) => void
+  onMoveSlides: (id: number, toIndex: number) => void
 }
 
 const ThumbnailRatio = 3 / 4
 
 const SlideThumbnail: React.FC<ISlideThumbnailProps> = (props) => {
-  const { slide, serial, current, selected, selectedIds, className, onSelect, onDelete, onMultiSelect, onMoveSlide, onChangeDisplayAvatar } = props
+  const { slide, serial, current, selected, className, onSelect, onMultiSelect, onMoveSlide, onMoveSlides } = props
   const { id: slideId, config } = slide
   const { width, height, avatar, backgroundColor } = config.slideParams
 
   const ref = useRef<HTMLDivElement>(null);
   // 使用 useDrag
-  const [{ isDragging }, drag] = useDrag({
+  const [{ isDragging, didDrop }, drag] = useDrag({
     item: { type: 'Item', id: slideId, serial },
     end(item, monitor){
-      let { newPos } = monitor.getDropResult();
+      let res = monitor.getDropResult();
       let id = item['id'];
-      console.log(id, newPos)
-      onMoveSlide(id, newPos)
+      if(!!res) {
+        let { newPos } = res;
+        if (didDrop) {
+          onMoveSlide(id, newPos)
+        }
+      } else {
+        onMoveSlide(id, -1)
+      }
     },
-    collect: (monitor) => ({ isDragging: monitor.isDragging() })
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+      didDrop: monitor.didDrop()
+    })
   })
 
   // 使用 useDrop
@@ -68,13 +76,13 @@ const SlideThumbnail: React.FC<ISlideThumbnailProps> = (props) => {
       if (!ref.current) {
         return
       }
-      return { newPos: item['serial']}
+      return { newPos: item['serial'] }
     },
     hover(item, monitor) {
+      const { id: draggedId } = monitor.getItem()
       if (!ref.current) {
         return
       }
-      // console.log('item:', item)
       const dragIndex = item['serial']
       const hoverIndex = serial
       if (dragIndex === hoverIndex) {
@@ -91,33 +99,13 @@ const SlideThumbnail: React.FC<ISlideThumbnailProps> = (props) => {
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
         return
       }
-      // console.log('dragIndex:', dragIndex, 'hoverIndex:', hoverIndex)
       item['serial'] = hoverIndex
+      onMoveSlides(draggedId, hoverIndex - 1)
     },
     collect: (monitor) => ({ isOver: monitor.isOver() }),
   })
 
   drag(drop(ref))
-
-  const handleClickRightMenu = useCallback(
-    ({ item, key, keyPath, domEvent }) => {
-      // console.log(item, key, keyPath, domEvent)
-      if(key === 'delete'){
-        onDelete([slideId])
-      } else if (key === 'deleteAll'){
-        onDelete([...selectedIds])
-      } else {
-        if(avatar) {
-          console.log('change avatar:', avatar)
-          onChangeDisplayAvatar(avatar)
-          alert(`该display封面已设置为${avatar}`)
-        } else {
-          alert('请先为该大屏页设置封面')
-        }
-      }
-    },
-    [onDelete, slideId, selectedIds]
-  )
 
   const selectSlide = useCallback(
     (e: React.MouseEvent) => {
@@ -127,7 +115,6 @@ const SlideThumbnail: React.FC<ISlideThumbnailProps> = (props) => {
       e.stopPropagation()
 
       if(metaKey || altKey) {
-        // console.log('metaKey || altKey')
         onMultiSelect(slideId)
       } else {
         onSelect(slideId)
@@ -147,7 +134,7 @@ const SlideThumbnail: React.FC<ISlideThumbnailProps> = (props) => {
   }
 
   const divStyle: React.CSSProperties = {
-    borderTop: isOver ?  '2px solid #1c98e0' : 'none',
+    // borderLeft: isOver ?  '2px solid #1c98e0' : 'none',
     opacity: isDragging ? 0.1 : 1,
   }
 
@@ -170,29 +157,14 @@ const SlideThumbnail: React.FC<ISlideThumbnailProps> = (props) => {
 
   return (
     <div ref={ref} style={divStyle}>
-      <Dropdown overlay={
-          selectedIds.length <= 1 ?
-          <Menu onClick={handleClickRightMenu}>
-            <Menu.Item key="setAsCover">设置为封面</Menu.Item>
-            <Menu.Item key="delete">删除</Menu.Item>
-          </Menu>
-          :
-          <Menu onClick={handleClickRightMenu}>
-            <Menu.Item key="deleteAll">删除全部</Menu.Item>
-          </Menu>
-        }
-          trigger={['contextMenu']}
-          disabled={!selected}
-      >
-        <li onClick={selectSlide} className={cls}>
-          <div className={styles.serial}>{serial}</div>
-          <div className={styles.content}>
-            <div className={thumbnailCls}>
-              <div className={styles.cover} style={slideStyle} />
-            </div>
+      <li onClick={selectSlide} className={cls}>
+        <div className={styles.serial}>{serial}</div>
+        <div className={styles.content}>
+          <div className={thumbnailCls}>
+            <div className={styles.cover} style={slideStyle} />
           </div>
-        </li>
-      </Dropdown>
+        </div>
+      </li>
     </div>
   )
 }

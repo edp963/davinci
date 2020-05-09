@@ -106,32 +106,15 @@ const VizDisplayEditor: React.FC<RouteComponentWithParams> = (props) => {
     [selectedSlideIds, displayId]
   )
 
-  // const moveSlide = useCallback(
-  //   (slideId: number, newPos:number ) => {
-  //       let moveItem = null;
-  //       let tmpSlides = currentSlides.filter((slide) => {
-  //           if(slide.id !== slideId){
-  //             return true
-  //           } else {
-  //             moveItem = JSON.parse(JSON.stringify(slide))
-  //             return false
-  //           }}
-  //         );
-  //       if(moveItem.index === newPos-1){
-  //         console.log('no move')
-  //       }
-  //       // console.log('slideId:', slideId, 'newPos:', newPos)
-  //       tmpSlides.splice(newPos-1,0,moveItem)
-  //       const newSlides = tmpSlides.map((slide, index) => {
-  //         slide.index = index;
-  //         return slide;
-  //       })
-  //       console.log(tmpSlides, newSlides)
-  //       dispatch(VizActions.editSlides(newSlides))
-  //   },
-  //   []
-  // )
+  // hovering
+  const moveSlides = useCallback(
+    (slides: ISlideFormed[]) => {
+      dispatch(
+        VizActions.moveSlides(displayId, slides)
+      )
+    }, [])
 
+  // didDrag
   const moveSlide = useCallback(
     (newSlides: ISlideFormed[]) => {
         dispatch(VizActions.editSlides(newSlides))
@@ -176,6 +159,7 @@ const VizDisplayEditor: React.FC<RouteComponentWithParams> = (props) => {
             slides={currentSlides}
             // slides={slides}//test-nx
             onMoveSlide={moveSlide}//test-nx
+            onMoveSlides={moveSlides}//test-nx
             onSelect={goToSlide}
             onMultiSelect={multiSelect}//test-nx
             onDelete={deleteSlides}

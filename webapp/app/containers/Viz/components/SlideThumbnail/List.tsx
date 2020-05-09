@@ -18,7 +18,8 @@
  * >>
  */
 
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
+import { Menu, Dropdown, message } from 'antd'
 import { DndProvider } from 'react-dnd'
 import HTML5Backend from 'react-dnd-html5-backend'
 import classnames from 'classnames'
@@ -36,12 +37,12 @@ interface ISlideThumbnailListProps {
   currentSlideId: number
   // @TODO multi selection for slides
   selectedSlideIds: number[]
-  onMultiSelect: (slideId: number) => void,//test-nx
-  // onMoveSlide: (slideId: number, newPos: number) => void,//test-nx
-  onMoveSlide: (newSlides: ISlideFormed[]) => void,//test-nx
+  onMultiSelect: (slideId: number) => void // test-nx
+  onMoveSlide: (newSlides: ISlideFormed[]) => void // test-nx
+  onMoveSlides: (newSlides: ISlideFormed[]) => void // test-nx
   onSelect: (slideId: number) => void
   onDelete: (slideIds: number[]) => void
-  onChangeDisplayAvatar: (avatar: string) => void
+  onChangeDisplayAvatar: (avatar: string) => void // test-nx
 }
 
 const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
@@ -52,7 +53,8 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
     selectedSlideIds,
     onSelect,
     onMultiSelect,//test-nx
-    onMoveSlide,//test-nx
+    onMoveSlide,//test-nx didDrag
+    onMoveSlides,//test-nx hovering
     onChangeDisplayAvatar,//test-nx
     onDelete
   } = props
@@ -67,7 +69,7 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
       }
       window.removeEventListener('keydown', deleteSlides, false)
       Modal.confirm({
-        title: selectedSlideIds.length > 1 ? '确认删除选中所有大屏页？' : '确认删除此大屏页？',
+        title: selectedSlideIds.length > 1 ? '确认删除所有选中大屏页？' : '确认删除此大屏页？',
         onOk: () => {
           onDelete([...selectedSlideIds])
         }
@@ -100,65 +102,98 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
     [onMultiSelect]
   )
 
-  // const moveSlide = useCallback(
-  //   (slideId: number, newPos: number) => {
-  //     onMoveSlide(slideId, newPos)
-  //   },
-  //   [onMoveSlide]
-  // )
+  // nx-test
+  const moveSlides = useCallback(
+    (id: number, toIndex: number) => {
+      const item = slides.find(s => s.id === id);
+      const index = slides.indexOf(item);
+      slides.splice(index, 1);
+      slides.splice(toIndex, 0, item);
+      onMoveSlides([...slides]);
+    },[onMoveSlides, slides]
+  )
+  // nx-test
 
   const moveSlide = useCallback(
     (slideId: number, newPos: number) => {
-      let moveItem = null;
-      let tmpSlides = slides.filter((slide) => {
-          if(slide.id !== slideId){
-            return true
-          } else {
-            moveItem = JSON.parse(JSON.stringify(slide))
-            return false
-          }}
-        );
-      if(moveItem.index === newPos-1){
-        console.log('nothing move')
+      slides.sort((a,b) => { return a.index - b.index; })
+      let oldPos = slides.findIndex(s => s.id === slideId) + 1
+      if(newPos === oldPos || newPos < 0){
+        onMoveSlides(JSON.parse(JSON.stringify(slides)))
+        return
       }
-      // console.log('slideId:', slideId, 'newPos:', newPos)
-      tmpSlides.splice(newPos-1,0,moveItem)
-      const newSlides = tmpSlides.map((slide, index) => {
-        slide.index = index;
-        return slide;
+      let tmpSlides = newPos > oldPos ? slides.slice(oldPos - 1, newPos) : slides.slice(newPos - 1, oldPos)
+      let newSlides = JSON.parse(JSON.stringify(tmpSlides))
+      let newIdx = slides[newPos - 1].index
+      // console.log(slideId, newIdx, newPos, oldPos)
+      newSlides = newSlides.map((item, idx) => {
+        if(item.id !== slideId) {
+          item.index = newPos > oldPos ? tmpSlides[idx - 1].index : tmpSlides[idx + 1].index
+        } else {
+          item.index = newIdx
+        }
+        return item
       })
+      // console.log('newSlides,originSlides:', newSlides, originSlides)
       onMoveSlide(newSlides)
     },
-    [onMoveSlide]
+    [onMoveSlide, slides]
   )
 
-  const changeDisplayAvatar = useCallback(
-    (avatar: string) => {
-      onChangeDisplayAvatar(avatar)
+  const handleClickRightMenu = useCallback(
+    ({ item, key, keyPath, domEvent }) => {
+      // console.log(item, key, keyPath, domEvent)
+      if(key === 'setAsCover'){
+        let slide = slides.find((s) => {return s.id === currentSlideId })
+        const { avatar } = slide.config.slideParams
+        if(avatar) {
+          // console.log('change avatar:', avatar)
+          onChangeDisplayAvatar(avatar)
+        } else {
+          message.error('请先为该大屏页设置封面')
+        }
+      } else {
+        onDelete([...selectedSlideIds])
+      }
     },
-    [onChangeDisplayAvatar]
+    [onDelete, onChangeDisplayAvatar, currentSlideId, selectedSlideIds]
   )
   //test-nx
 
   return (
     <DndProvider backend={ HTML5Backend }>
+      <Dropdown overlay={
+        selectedSlideIds.length <= 1 ?
+          <Menu onClick={handleClickRightMenu}>
+            <Menu.Item key="setAsCover">设置为封面</Menu.Item>
+            <Menu.Item key="delete">删除</Menu.Item>
+          </Menu>
+          :
+          <Menu onClick={handleClickRightMenu}>
+            <Menu.Item key="deleteAll">删除全部</Menu.Item>
+          </Menu>
+      }
+                trigger={['contextMenu']}
+                disabled={(selectedSlideIds.length === 0)}
+      >
         <ul className={cls}>
-          {slides.map((slide, idx) => (
-            <Item
-              key={slide.id}
-              slide={slide}
-              serial={idx + 1}
-              current={currentSlideId === slide.id}
-              selected={selectedSlideIds.includes(slide.id)}
-              onSelect={selectSlide}
-              selectedIds={selectedSlideIds}
-              onMultiSelect={multiSelectSlides}
-              onDelete={onDelete}
-              onMoveSlide={moveSlide}
-              onChangeDisplayAvatar={changeDisplayAvatar}
-            />
-          ))}
+              { slides.map((slide, idx) => (
+                <Item
+                  key={slide.id}
+                  slide={slide}
+                  serial={idx + 1}
+                  current={currentSlideId === slide.id}
+                  selected={selectedSlideIds.includes(slide.id)}
+                  onSelect={selectSlide}
+                  selectedIds={selectedSlideIds}
+                  onMultiSelect={multiSelectSlides}
+                  onDelete={onDelete}
+                  onMoveSlide={moveSlide}
+                  onMoveSlides={moveSlides}
+                />
+              ))}
         </ul>
+      </Dropdown>
     </DndProvider>
   )
 }

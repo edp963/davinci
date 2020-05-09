@@ -256,9 +256,16 @@ const vizReducer = (
             draft.currentSlide = s
           }
         })
+        draft.displaySlides[displayId].sort((a,b) => { return a.index - b.index; })
+        break
+      case ActionTypes.MOVE_SLIDES:
+        slides = action.payload.slides
+        displayId = action.payload.displayId
+        draft.displaySlides[displayId] = slides
+        // console.log(111111)
         break
       case ActionTypes.DELETE_SLIDES:
-        console.log(111111)
+        // console.log(111111)
         break
       case ActionTypes.DELETE_SLIDES_SUCCESS:
         displayId = action.payload.displayId
