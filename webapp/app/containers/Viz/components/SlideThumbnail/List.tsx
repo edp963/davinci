@@ -18,8 +18,7 @@
  * >>
  */
 
-import React, { useCallback, useEffect, useState } from 'react'
-import { Menu, Dropdown, message } from 'antd'
+import React, { useCallback, useEffect } from 'react'
 import { DndProvider } from 'react-dnd'
 import HTML5Backend from 'react-dnd-html5-backend'
 import classnames from 'classnames'
@@ -37,12 +36,12 @@ interface ISlideThumbnailListProps {
   currentSlideId: number
   // @TODO multi selection for slides
   selectedSlideIds: number[]
-  onMultiSelect: (slideId: number) => void // test-nx
-  onMoveSlide: (newSlides: ISlideFormed[]) => void // test-nx
-  onMoveSlides: (newSlides: ISlideFormed[]) => void // test-nx
+  onMultiSelect: (slideId: number) => void
+  onMoveSlide: (newSlides: ISlideFormed[]) => void
+  onMoveSlides: (newSlides: ISlideFormed[]) => void
   onSelect: (slideId: number) => void
   onDelete: (slideIds: number[]) => void
-  onChangeDisplayAvatar: (avatar: string) => void // test-nx
+  onChangeDisplayAvatar: (avatar: string) => void
 }
 
 const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
@@ -52,10 +51,10 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
     currentSlideId,
     selectedSlideIds,
     onSelect,
-    onMultiSelect,//test-nx
-    onMoveSlide,//test-nx didDrag
-    onMoveSlides,//test-nx hovering
-    onChangeDisplayAvatar,//test-nx
+    onMultiSelect,
+    onMoveSlide,// didDrag
+    onMoveSlides,// hovering
+    onChangeDisplayAvatar,
     onDelete
   } = props
 
@@ -94,7 +93,6 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
     [className]: !!className
   })
 
-  //test-nx
   const multiSelectSlides = useCallback(
     (slideId: number) => {
       onMultiSelect(slideId)
@@ -102,7 +100,6 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
     [onMultiSelect]
   )
 
-  // nx-test
   const moveSlides = useCallback(
     (id: number, toIndex: number) => {
       const item = slides.find(s => s.id === id);
@@ -112,7 +109,6 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
       onMoveSlides([...slides]);
     },[onMoveSlides, slides]
   )
-  // nx-test
 
   const moveSlide = useCallback(
     (slideId: number, newPos: number) => {
@@ -140,60 +136,26 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
     [onMoveSlide, slides]
   )
 
-  const handleClickRightMenu = useCallback(
-    ({ item, key, keyPath, domEvent }) => {
-      // console.log(item, key, keyPath, domEvent)
-      if(key === 'setAsCover'){
-        let slide = slides.find((s) => {return s.id === currentSlideId })
-        const { avatar } = slide.config.slideParams
-        if(avatar) {
-          // console.log('change avatar:', avatar)
-          onChangeDisplayAvatar(avatar)
-        } else {
-          message.error('请先为该大屏页设置封面')
-        }
-      } else {
-        onDelete([...selectedSlideIds])
-      }
-    },
-    [onDelete, onChangeDisplayAvatar, currentSlideId, selectedSlideIds]
-  )
-  //test-nx
-
   return (
     <DndProvider backend={ HTML5Backend }>
-      <Dropdown overlay={
-        selectedSlideIds.length <= 1 ?
-          <Menu onClick={handleClickRightMenu}>
-            <Menu.Item key="setAsCover">设置为封面</Menu.Item>
-            <Menu.Item key="delete">删除</Menu.Item>
-          </Menu>
-          :
-          <Menu onClick={handleClickRightMenu}>
-            <Menu.Item key="deleteAll">删除全部</Menu.Item>
-          </Menu>
-      }
-                trigger={['contextMenu']}
-                disabled={(selectedSlideIds.length === 0)}
-      >
-        <ul className={cls}>
-              { slides.map((slide, idx) => (
-                <Item
-                  key={slide.id}
-                  slide={slide}
-                  serial={idx + 1}
-                  current={currentSlideId === slide.id}
-                  selected={selectedSlideIds.includes(slide.id)}
-                  onSelect={selectSlide}
-                  selectedIds={selectedSlideIds}
-                  onMultiSelect={multiSelectSlides}
-                  onDelete={onDelete}
-                  onMoveSlide={moveSlide}
-                  onMoveSlides={moveSlides}
-                />
-              ))}
-        </ul>
-      </Dropdown>
+      <ul className={cls}>
+        { slides.map((slide, idx) => (
+          <Item
+            key={slide.id}
+            slide={slide}
+            serial={idx + 1}
+            current={currentSlideId === slide.id}
+            selected={selectedSlideIds.includes(slide.id)}
+            onSelect={selectSlide}
+            selectedIds={selectedSlideIds}
+            onMultiSelect={multiSelectSlides}
+            onDelete={onDelete}
+            onMoveSlide={moveSlide}
+            onMoveSlides={moveSlides}
+            onChangeDisplayAvatar={onChangeDisplayAvatar}
+          />
+        ))}
+      </ul>
     </DndProvider>
   )
 }

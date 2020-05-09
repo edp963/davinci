@@ -22,7 +22,6 @@ import React, { useCallback, useRef } from 'react'
 import { useDrag, useDrop } from 'react-dnd';
 import classnames from 'classnames'
 
-
 import { Menu, Dropdown, message } from 'antd'
 import { ISlideFormed } from '../types'
 
@@ -187,7 +186,7 @@ const SlideThumbnail: React.FC<ISlideThumbnailProps> = (props) => {
         }
         trigger={['contextMenu']}
       >
-        <li className={cls} onClick={selectSlide}>
+        <li className={cls} onClick={selectSlide} >
           <div className={styles.serial}>{serial}</div>
             <div ref={ref} style={divStyle} className={styles.content}>
             <div className={thumbnailCls}>
