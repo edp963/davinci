@@ -52,8 +52,7 @@ const VizDisplayEditor: React.FC<RouteComponentWithParams> = (props) => {
   const currentSlides = useSelector(makeSelectCurrentSlides())
   const { history } = props
 
-  const [selectedSlideIds, setSelectedSlideIds] = useState([])//nx-test
-  // const [slides, setSlides] = useState(currentSlides)//nx-test
+  const [selectedSlideIds, setSelectedSlideIds] = useState([])
 
   const clearSelectedSlide = useCallback(() => {
     setSelectedSlideIds([])
