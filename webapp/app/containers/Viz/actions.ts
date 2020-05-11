@@ -462,16 +462,6 @@ export const VizActions = {
     }
   },
 
-  moveSlides(displayId: number, slides: ISlideFormed[]){
-    return {
-      type: ActionTypes.MOVE_SLIDES,
-      payload: {
-        displayId,
-        slides
-      }
-    }
-  },
-
   deleteSlides(displayId: number, slideIds: number[]) {
     return {
       type: ActionTypes.DELETE_SLIDES,
