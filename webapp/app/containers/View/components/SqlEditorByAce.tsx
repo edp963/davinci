@@ -217,7 +217,7 @@ function genTableColumnKeywords (table: string[], tableName: string) {
 function genAliasTableColumnKeywords (editor, aliasTableName: string, hints: ISqlEditorProps['hints']) {
   const content = editor.getSession().getValue()
   const tableName = Object.keys(hints).find((tableName) => {
-    const reg = new RegExp(`.+${tableName}(\\s+(as)|(AS))?(?=\\s+${aliasTableName}\\s*)`, 'igm')
+    const reg = new RegExp(`.+${tableName}(\\s+(as|AS)?(?=\\s+${aliasTableName}\\s*)`, 'igm')
     return reg.test(content)
   })
   if (!tableName) { return [] }
