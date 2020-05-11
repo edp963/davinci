@@ -93,7 +93,7 @@ const makeSelectLinkages = () =>
     makeSelectDashboard(),
     makeSelectItemsInfo(),
     (dashboard, itemsInfo) => {
-      if (!dashboard && !itemsInfo) {
+      if (!dashboard || !itemsInfo) {
         return []
       }
 

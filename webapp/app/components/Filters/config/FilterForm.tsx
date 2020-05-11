@@ -88,7 +88,6 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
               <FormItem label="默认值">
                 {getFieldDecorator('dynamicDefaultValue', {})(
                   <Select
-                    size="small"
                     placeholder="默认值"
                     allowClear
                   >
@@ -145,7 +144,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
         <Col key="dateFormat" span={8}>
           <FormItem label="日期格式">
             {getFieldDecorator('dateFormat', {})(
-              <Select size="small">
+              <Select>
                 {
                   datePickerFormatOptions.map((format) => {
                     const title = DatePickerFormatsLocale[format]
@@ -209,7 +208,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
             </FormItem>
             <FormItem label="类型">
               {getFieldDecorator('type', {})(
-                <Select size="small">
+                <Select>
                   {
                     FilterTypeList.map((filterType) => (
                       <Option key={filterType} value={filterType}>{FilterTypesLocale[filterType]}</Option>
@@ -229,7 +228,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
               <Col span={8}>
                 <FormItem label="对应关系">
                   {getFieldDecorator('operator', {})(
-                    <Select size="small">
+                    <Select>
                       {
                         operatorOptions.map((o) => (
                           <Option key={o} value={o}>{o}</Option>
@@ -244,7 +243,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
           <Col span={8}>
             <FormItem label="宽度">
               {getFieldDecorator('width', {})(
-                <Select size="small">
+                <Select>
                   <Option value={0}>自动适应</Option>
                   <Option value={24}>100%</Option>
                   <Option value={12}>50%</Option>
@@ -263,7 +262,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
                 <Col key="cache" span={6}>
                   <FormItem label="缓存">
                     {getFieldDecorator('cache', {})(
-                      <RadioGroup size="small">
+                      <RadioGroup>
                         <RadioButton value={true}>开启</RadioButton>
                         <RadioButton value={false}>关闭</RadioButton>
                       </RadioGroup>
@@ -273,7 +272,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
                 <Col key="expired" span={8}>
                   <FormItem label="有效期（秒）">
                     {getFieldDecorator('expired', {})(
-                      <InputNumber size="small" />
+                      <InputNumber />
                     )}
                   </FormItem>
                 </Col>
@@ -301,7 +300,6 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
                   <Col span={2}>
                     <FormItem label=" " colon={false}>
                       <Button
-                        size="small"
                         type="primary"
                         icon="plus"
                         shape="circle"
