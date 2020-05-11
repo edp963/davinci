@@ -60,7 +60,6 @@ import edp.davinci.service.WidgetService;
 import edp.davinci.service.share.ShareFactor;
 import edp.davinci.service.share.ShareResult;
 import edp.davinci.service.share.ShareType;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -72,7 +71,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.script.ScriptEngine;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
@@ -83,7 +81,6 @@ import java.util.concurrent.Executors;
 
 import static edp.core.consts.Consts.EMPTY;
 import static edp.core.consts.Consts.NEW_LINE_CHAR;
-import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
 
 
@@ -335,7 +332,6 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      * @param shareEntity
      * @return
      */
-    @Override
     public ShareResult shareWidget(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         Widget widget = getWidget(id);
@@ -454,7 +450,6 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         ExecutorService executorService = Executors.newFixedThreadPool(Math.min(widgets.size(), 8));
         CountDownLatch countDownLatch = new CountDownLatch(widgets.size());
         int i = 1;
-        ScriptEngine engine = getExecuptParamScriptEngine();
         boolean maintainer = projectService.isMaintainer(projectDetail, user);
         Iterator<Widget> iterator = widgets.iterator();
         while (iterator.hasNext()) {
@@ -471,7 +466,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                     if (null != executeParamMap && executeParamMap.containsKey(widget.getId())) {
                         executeParam = executeParamMap.get(widget.getId());
                     } else {
-                        executeParam = getViewExecuteParam((engine), null, widget.getConfig(), null);
+                        executeParam = getViewExecuteParam(null, widget.getConfig(), null);
                     }
 
                     PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer,

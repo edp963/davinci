@@ -177,7 +177,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             if (context.isHasExecuteParam() && null != context.getExecuteParam()) {
                 executeParam = context.getExecuteParam();
             } else {
-                executeParam = ScriptUtiils.getViewExecuteParam(ScriptUtiils.getExecuptParamScriptEngine(),
+                executeParam = ScriptUtiils.getViewExecuteParam(
                         context.getDashboard() != null ? context.getDashboard().getConfig() : null,
                         context.getWidget().getConfig(),
                         context.getMemDashboardWidget() != null ? context.getMemDashboardWidget().getId() : null);
@@ -192,7 +192,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             boolean isTable;
             List<ExcelHeader> excelHeaders = null;
             if (isTable = ExcelUtils.isTable(context.getWidget().getConfig())) {
-                excelHeaders = ScriptUtiils.formatHeader(ScriptUtiils.getCellValueScriptEngine(), context.getWidget().getConfig(),
+                excelHeaders = ScriptUtiils.formatHeader(context.getWidget().getConfig(),
                         sqlContext.getViewExecuteParam().getParams());
             }
             SheetContext sheetContext = SheetContext.SheetContextBuilder.newBuilder()
