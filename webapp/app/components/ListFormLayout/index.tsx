@@ -19,6 +19,5 @@
  */
 
 export { default as ListFormLayout } from './ListFormLayout'
-import List from './List'
-import ListItem from './ListItem'
-export { List, ListItem }
+export { default as List } from './List'
+export { default as ListItem } from './ListItem'
