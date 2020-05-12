@@ -108,9 +108,9 @@ function SqlEditor (props: ISqlEditorProps) {
     refEditor.current.editor.resize()
   }, 300), [])
 
-  const change = useCallback(debounce((sql: string) => {
+  const change = useCallback((sql: string) => {
     onSqlChange(sql)
-  }, 300), [])
+  }, [])
 
   const selectionChange = useCallback(debounce((selection: any) => {
     const rawSelectedQueryText = refEditor.current.editor.session.doc.getTextRange(selection.getRange());
@@ -237,7 +237,7 @@ function genTableColumnKeywords (table: string[], tableName: string) {
 function genAliasTableColumnKeywords (editor, aliasTableName: string, hints: ISqlEditorProps['hints']) {
   const content = editor.getSession().getValue()
   const tableName = Object.keys(hints).find((tableName) => {
-    const reg = new RegExp(`.+${tableName}\\s*(as|AS)?(?=\\s+${aliasTableName}\\s*)`, 'igm')
+    const reg = new RegExp(`.+${tableName}\\s*(as|AS)?(?=\\s+${aliasTableName}\\s*)`, 'im')
     return reg.test(content)
   })
   if (!tableName) { return [] }

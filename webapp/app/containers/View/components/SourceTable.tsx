@@ -88,7 +88,7 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
       const databasesInfo = mapDatabases[sourceId]
       if (!databasesInfo) { return null }
 
-      const filterReg = filterKeyword ? new RegExp(`(${filterKeyword})`, 'gi') : null
+      const filterReg = filterKeyword ? new RegExp(`(${filterKeyword})`, 'i') : null
 
       const treeNodes = databasesInfo.reduce((databaseNodes, dbName) => {
         const tablesInfo = mapTables[`${sourceId}_${dbName}`]
