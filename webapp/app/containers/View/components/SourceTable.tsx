@@ -116,7 +116,7 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
           const columnsInfo = mapColumns[[sourceId, dbName, tableName].join('_')]
 
           const columnNodes = !columnsInfo ? null : columnsInfo.columns.reduce((nodes, col) => {
-            if (filterReg && !filterReg.test(col.name)) { return nodes }
+            // if (filterReg && !filterReg.test(col.name)) { return nodes }
 
             const primaryKeysRemain = [...columnsInfo.primaryKeys]
             const icons = this.getColumnIcons(col, columnsInfo.primaryKeys)

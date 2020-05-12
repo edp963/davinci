@@ -203,6 +203,12 @@ export const ViewActions = {
       }
     }
   },
+  executeSqlCancel () {
+    return {
+      type: ActionTypes.EXECUTE_SQL_CANCEL,
+      payload: {}
+    }
+  },
 
   updateEditingView (view: IView) {
     return {

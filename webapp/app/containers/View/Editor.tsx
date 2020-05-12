@@ -208,11 +208,11 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
 
   private static ExecuteSql = (props: IViewEditorProps) => {
     const { onExecuteSql, editingView, editingViewInfo, sqlLimit } = props
-    const { sourceId, sql } = editingView
+    const { sourceId, sql, sqlFragment } = editingView
     const { variable } = editingViewInfo
     const updatedParams: IExecuteSqlParams = {
       sourceId,
-      sql,
+      sql: sqlFragment ?? sql,
       limit: sqlLimit,
       variables: variable
     }
@@ -288,6 +288,10 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
 
   private sqlChange = (sql: string) => {
     this.viewChange('sql', sql)
+  }
+
+  private sqlSelect = (sql: string) => {
+    this.viewChange('sqlFragment', sql)
   }
 
   private modelChange = (partialModel: IViewModel) => {
@@ -369,6 +373,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     const containerVisible = !currentStep
     const modelAuthVisible = !!currentStep
     const nextDisabled = (editingView.sql !== lastSuccessExecutedSql)
+    const { sqlFragment } = editingView
 
     return (
       <>
@@ -394,13 +399,14 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
               onDatabaseSelect={onLoadDatabaseTables}
               onTableSelect={onLoadTableColumns}
             />
-            <SqlEditor key="SqlEditor" value={editingView.sql} hints={sqlHints} onSqlChange={this.sqlChange} />
+            <SqlEditor key="SqlEditor" value={editingView.sql} hints={sqlHints} onSqlChange={this.sqlChange} onSelect={this.sqlSelect} onCmdEnter={this.executeSql}/>
             <SqlPreview key="SqlPreview" size="small" loading={loading.execute} response={sqlDataSource} />
             <EditorBottom
               key="EditorBottom"
               sqlLimit={sqlLimit}
               loading={loading.execute}
               nextDisabled={nextDisabled}
+              sqlFragment={sqlFragment}
               onSetSqlLimit={onSetSqlLimit}
               onExecuteSql={this.executeSql}
               onStepChange={this.stepChange}

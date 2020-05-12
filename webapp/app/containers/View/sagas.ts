@@ -145,11 +145,17 @@ export function* copyView (action: ViewActionType) {
 
 export function* executeSql (action: ViewActionType) {
   if (action.type !== ActionTypes.EXECUTE_SQL) { return }
+  const { sqlExecuted, executeSqlFail, executeSqlCancel } = ViewActions
+  if (request.cancelTokenSource) {
+    request.cancelTokenSource.cancel('cancel execute')
+    yield put(executeSqlCancel())
+    return request.cancelTokenSource = null
+  }
+  request.cancelTokenSource = request.cancelToken.source()
   const { params } = action.payload
   const { variables, ...rest } = params
   const omitKeys: Array<keyof IViewVariable> = ['key', 'alias', 'fromService']
   const variableParam = variables.map((v) => omit(v, omitKeys))
-  const { sqlExecuted, executeSqlFail } = ViewActions
   try {
     const asyncData: IDavinciResponse<IExecuteSqlResponse> = yield call(request, {
       method: 'post',
@@ -157,15 +163,17 @@ export function* executeSql (action: ViewActionType) {
       data: {
         ...rest,
         variables: variableParam
-      }
+      },
+      cancelToken: request.cancelTokenSource.token
     })
     yield put(sqlExecuted(asyncData))
+    request.cancelTokenSource = null
   } catch (err) {
     const { response } = err as AxiosError
     const { data } = response as AxiosResponse<IDavinciResponse<any>>
     yield put(executeSqlFail(data.header))
+    request.cancelTokenSource = null
   }
-
 }
 
 /** View sagas for external usages */

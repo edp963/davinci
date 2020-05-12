@@ -192,6 +192,15 @@ const viewReducer = (
           message: action.payload.err.msg
         }
         break
+      case ActionTypes.EXECUTE_SQL_CANCEL:
+        draft.sqlDataSource = {
+          ...draft.sqlDataSource,
+          columns: [],
+          totalCount: 0,
+          resultList: []
+        }
+        draft.loading.execute = false
+        break;
       case ActionTypes.UPDATE_EDITING_VIEW:
         draft.editingView = action.payload.view
         break
