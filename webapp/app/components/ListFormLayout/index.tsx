@@ -18,8 +18,7 @@
  * >>
  */
 
-import ListFormLayout from './ListFormLayout'
+export { default as ListFormLayout } from './ListFormLayout'
 import List from './List'
 import ListItem from './ListItem'
-
-export { ListFormLayout, List, ListItem }
+export { List, ListItem }

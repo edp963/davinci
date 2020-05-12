@@ -42,7 +42,7 @@ interface IReferenceProps {
 interface IReferenceStates {
   prevReferences: IReference[]
   editingReferences: IReference[]
-  selected: IReference | null
+  selected: IReference
 }
 
 class Reference extends PureComponent<IReferenceProps, IReferenceStates> {
@@ -135,7 +135,7 @@ class Reference extends PureComponent<IReferenceProps, IReferenceStates> {
   private deleteReference = (key: string) => {
     const { editingReferences, selected } = this.state
 
-    let reselected: IReference | null = null
+    let reselected: IReference = null
     if (editingReferences.length > 1) {
       if (key === selected.key) {
         const delIndex = editingReferences.findIndex((ref) => ref.key === key)
@@ -216,23 +216,17 @@ class Reference extends PureComponent<IReferenceProps, IReferenceStates> {
       )
     })
 
-    const modalFooter = [
-      <Button key="cancel" size="large" onClick={onCancel}>
-        取 消
-      </Button>,
-      <Button key="submit" size="large" type="primary" onClick={this.save}>
-        保 存
-      </Button>
-    ]
-
     return (
       <Modal
         wrapClassName="ant-modal-large ant-modal-center"
         title="参考线配置"
         visible={visible}
         maskClosable={false}
-        footer={modalFooter}
+        onOk={this.save}
+        okText="保存"
+        okButtonProps={{size: 'large'}}
         onCancel={onCancel}
+        cancelButtonProps={{size: 'large'}}
         afterClose={this.reset}
       >
         <ListFormLayout
