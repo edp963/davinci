@@ -647,20 +647,20 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 	/**
 	 * 释放失效数据源
-	 * 
+	 *
 	 * @param source
 	 */
 	private void releaseSource(Source source) {
 
 		if (redisUtils.isRedisEnable()) {
 			Map<String,Object> map = new HashMap<>();
-			
+
 			map.put("url", source.getJdbcUrl());
 			map.put("username", source.getUsername());
 			map.put("password", source.getPassword());
 			map.put("version", source.getDbVersion());
 			map.put("ext", source.isExt());
-			
+
 			publishReconnect(JSON.toJSONString(map));
 		} else {
 			SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
@@ -713,26 +713,26 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		String sql = null;
 
-		if (sourceDataUpload.getMode() == UploadModeEnum.REPLACE.getMode()) {
-			ST st = stg.getInstanceOf("createTable");
-			st.add("tableName", sourceDataUpload.getTableName());
-			st.add("fields", fileds);
-			st.add("primaryKeys", StringUtils.isEmpty(sourceDataUpload.getPrimaryKeys()) ? null
-					: sourceDataUpload.getPrimaryKeys().split(","));
-			st.add("indexKeys", sourceDataUpload.getIndexList());
-			sql = st.render();
-			String dropSql = "DROP TABLE IF EXISTS `" + sourceDataUpload.getTableName() + "`";
-			sqlUtils.jdbcTemplate().execute(dropSql);
-			log.info("drop table sql : {}", dropSql);
-		} else {
-			boolean tableIsExist = sqlUtils.tableIsExist(sourceDataUpload.getTableName());
-			if (sourceDataUpload.getMode() == UploadModeEnum.NEW.getMode()) {
-				if (!tableIsExist) {
-					ST st = stg.getInstanceOf("createTable");
-					st.add("tableName", sourceDataUpload.getTableName());
-					st.add("fields", fileds);
-					st.add("primaryKeys", sourceDataUpload.getPrimaryKeys());
-					st.add("indexKeys", sourceDataUpload.getIndexList());
+        if (sourceDataUpload.getMode() == UploadModeEnum.COVER.getMode()) {
+            ST st = stg.getInstanceOf("createTable");
+            st.add("tableName", sourceDataUpload.getTableName());
+            st.add("fields", fileds);
+            st.add("primaryKeys", StringUtils.isEmpty(sourceDataUpload.getPrimaryKeys()) ? null
+                    : sourceDataUpload.getPrimaryKeys().split(","));
+            st.add("indexKeys", sourceDataUpload.getIndexList());
+            sql = st.render();
+            String dropSql = "DROP TABLE IF EXISTS `" + sourceDataUpload.getTableName() + "`";
+            sqlUtils.jdbcTemplate().execute(dropSql);
+            log.info("drop table sql : {}", dropSql);
+        } else {
+            boolean tableIsExist = sqlUtils.tableIsExist(sourceDataUpload.getTableName());
+            if (sourceDataUpload.getMode() == UploadModeEnum.NEW.getMode()) {
+                if (!tableIsExist) {
+                    ST st = stg.getInstanceOf("createTable");
+                    st.add("tableName", sourceDataUpload.getTableName());
+                    st.add("fields", fileds);
+                    st.add("primaryKeys", sourceDataUpload.getPrimaryKeys());
+                    st.add("indexKeys", sourceDataUpload.getIndexList());
 
 					sql = st.render();
 				} else {
