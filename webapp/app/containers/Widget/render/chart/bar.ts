@@ -37,7 +37,8 @@ import {
   getGridPositions,
   makeGrouped,
   getGroupedXaxis,
-  getCartesianChartMetrics
+  getCartesianChartMetrics,
+  getCartesianChartReferenceOptions
 } from './util'
 import { getStackName, EmptyStack } from 'containers/Widget/components/Config/Stack'
 const defaultTheme = require('assets/json/echartsThemes/default.project.json')
@@ -46,9 +47,10 @@ const defaultThemeColors = defaultTheme.theme.color
 import { barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
 import { inGroupColorSort } from '../../components/Config/Sort/util'
 import { FieldSortTypes } from '../../components/Config/Sort'
+import ChartTypes from '../../config/chart/ChartTypes'
 
 export default function (chartProps: IChartProps, drillOptions) {
-  const { data, cols, chartStyles: prevChartStyles, color, tip } = chartProps
+  const { data, cols, chartStyles: prevChartStyles, color, tip, references } = chartProps
   const metrics =  getCartesianChartMetrics(chartProps.metrics)
   const chartStyles = barChartStylesMigrationRecorder(prevChartStyles)
 
@@ -104,6 +106,7 @@ export default function (chartProps: IChartProps, drillOptions) {
       })
     }
   }
+  const referenceOptions = getCartesianChartReferenceOptions(references, ChartTypes.Bar, metrics, data, barChart)
 
   const xAxisColumnName = cols.length ? cols[0].name : ''
 
@@ -158,7 +161,7 @@ export default function (chartProps: IChartProps, drillOptions) {
         inGroupColorSort(groupEntries, customColorSort[0])
       }
 
-      groupEntries.forEach(([k, v]: [string, any[]]) => {
+      groupEntries.forEach(([k, v]: [string, any[]], gIndex) => {
         const serieObj = {
           id: `${m.name}${DEFAULT_SPLITER}${DEFAULT_SPLITER}${k}`,
           name: `${k}${metrics.length > 1 ? ` ${m.displayName}` : ''}`,
@@ -213,7 +216,10 @@ export default function (chartProps: IChartProps, drillOptions) {
               color: color.items[0].config.values[k]
             }
           },
-          ...labelOption
+          ...labelOption,
+          ...(gIndex === groupEntries.length - 1 &&
+              i === metrics.length - 1 &&
+              referenceOptions)
         }
         series.push(serieObj)
         seriesData.push(grouped[k])
@@ -299,7 +305,8 @@ export default function (chartProps: IChartProps, drillOptions) {
         // color: color.value[m.name] || defaultThemeColors[i]
         // }
         // },
-        ...labelOption
+        ...labelOption,
+        ...(i === metrics.length - 1 && referenceOptions)
       }
       series.push(serieObj)
       seriesData.push([...data])

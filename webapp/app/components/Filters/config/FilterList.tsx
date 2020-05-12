@@ -11,7 +11,7 @@ import {
   getControlRenderTree,
   getAllChildren
 } from '../util'
-import FilterListItem from './FilterListItem'
+import { ListItem } from 'components/ListFormLayout'
 
 const styles = require('../filter.less')
 
@@ -22,9 +22,8 @@ interface IFilterListProps {
   list: IGlobalControl[] | ILocalControl[]
   selectedFilter: IControlBase
   onSelectFilter: (key: string) => void
-  onAddFilter: () => void
   onDeleteFilter: (keys: string[], selectKey: string) => void
-  onNameChange: (key: string) => (name: string) => void
+  onNameChange: (key: string, name: string) => void
   onParentChange: (key: string, parentKey: string, type: string, dropNextKey?: string) => void
 }
 
@@ -73,18 +72,11 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
     })
   }
 
-  private onAddFilterClick = (e: React.MouseEvent<HTMLElement>) => {
-    e.stopPropagation()
-    const { onAddFilter } = this.props
-    onAddFilter()
-  }
-
-  private deleteFilter = (key: string) => (e: React.MouseEvent<HTMLElement>) => {
-    e.stopPropagation()
+  private deleteFilter = (key: string) => {
     const { selectedFilter } = this.props
     const { renderTree, flatTree } = this.state
     const delKeys = [key].concat(getAllChildren(key, flatTree))
-    let selectedKey
+    let selectedKey: string
 
     if (selectedFilter.key === key) {
       if (selectedFilter.parent) {
@@ -93,12 +85,18 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
           selectedKey = parentTree.key
         } else {
           const delIndex = parentTree.children.findIndex((c) => c.key === key)
-          selectedKey = delIndex ? parentTree.children[delIndex - 1] :  parentTree.children[delIndex + 1]
+          selectedKey =
+            delIndex === parentTree.children.length - 1
+              ? parentTree.children[delIndex - 1].key
+              :  parentTree.children[delIndex + 1].key
         }
       } else {
         if (renderTree.length !== 1) {
           const delIndex = renderTree.findIndex((n) => n.key === key)
-          selectedKey = delIndex ? renderTree[delIndex - 1].key :  renderTree[delIndex + 1].key
+          selectedKey =
+            delIndex === renderTree.length - 1
+              ? renderTree[delIndex - 1].key
+              :  renderTree[delIndex + 1].key
         }
       }
     } else {
@@ -154,10 +152,11 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
     renderTree.map((node) => {
       const { key, name, children } = node
       const title = (
-        <FilterListItem
-          title={name}
-          onNameChange={this.props.onNameChange(key)}
-          onDelete={this.deleteFilter(key)}
+        <ListItem
+          id={key}
+          name={name}
+          onChange={this.props.onNameChange}
+          onDelete={this.deleteFilter}
         />
       )
       if (children) {
@@ -179,26 +178,18 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
   public render () {
     const { renderTree, selectedKeys } = this.state
     return (
-      <div className={styles.filterList}>
-        <div className={styles.title}>
-          <h2>控制器列表</h2>
-          <Icon type="plus" onClick={this.onAddFilterClick} />
-        </div>
-        <div className={styles.treeContainer}>
-          <Tree
-            className={styles.tree}
-            selectedKeys={selectedKeys}
-            onSelect={this.selectFilter}
-            onDragEnter={this.dragEnter}
-            onDrop={this.drop}
-            defaultExpandAll
-            draggable
-            blockNode
-          >
-            {this.renderTreeNodes(renderTree)}
-          </Tree>
-        </div>
-      </div>
+      <Tree
+        className={styles.tree}
+        selectedKeys={selectedKeys}
+        onSelect={this.selectFilter}
+        onDragEnter={this.dragEnter}
+        onDrop={this.drop}
+        defaultExpandAll
+        draggable
+        blockNode
+      >
+        {this.renderTreeNodes(renderTree)}
+      </Tree>
     )
   }
 }

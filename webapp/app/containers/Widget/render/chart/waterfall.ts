@@ -21,7 +21,6 @@
 import { IChartProps } from '../../components/Chart'
 import {
   decodeMetricName,
-  getChartTooltipLabel,
   getAggregatorLocale
 } from '../../components/util'
 import {

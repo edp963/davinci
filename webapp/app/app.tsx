@@ -76,6 +76,8 @@ import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/visualMap'
 import 'echarts/lib/component/geo'
 import 'echarts/lib/component/brush'
+import 'echarts/lib/component/markLine'
+import 'echarts/lib/component/markArea'
 import 'assets/js/china.js'
 
 import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'

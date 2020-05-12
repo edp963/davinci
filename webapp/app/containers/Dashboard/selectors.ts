@@ -115,7 +115,7 @@ const makeSelectCurrentLinkages = () =>
     makeSelectCurrentDashboard(),
     makeSelectCurrentItemsInfo(),
     (currentDashboard, currentItemsInfo) => {
-      if (!currentDashboard && !currentItemsInfo) {
+      if (!currentDashboard || !currentItemsInfo) {
         return []
       }
 
