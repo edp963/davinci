@@ -20,7 +20,6 @@
 
 import React, { useRef, useEffect, useCallback } from 'react'
 import AceEditor, { IAceOptions } from 'react-ace'
-
 import languageTools from 'ace-builds/src-min-noconflict/ext-language_tools'
 import 'ace-builds/src-min-noconflict/ext-searchbox'
 import 'ace-builds/src-min-noconflict/theme-textmate'
@@ -64,8 +63,7 @@ const EDITOR_OPTIONS: IAceOptions = {
   enableLiveAutocompletion: true,
   autoScrollEditorIntoView: true,
   wrap: true,
-  useWorker: false,
-
+  useWorker: false
 }
 export interface ISqlEditorProps {
   hints: { [name: string]: string[] }
@@ -219,7 +217,7 @@ function genTableColumnKeywords (table: string[], tableName: string) {
 function genAliasTableColumnKeywords (editor, aliasTableName: string, hints: ISqlEditorProps['hints']) {
   const content = editor.getSession().getValue()
   const tableName = Object.keys(hints).find((tableName) => {
-    const reg = new RegExp(`select.*from\\s+${tableName}(\\s+(as)|(AS))?(?=\\s+${aliasTableName}\\s+)`, 'igm')
+    const reg = new RegExp(`.+${tableName}(\\s+(as|AS)?(?=\\s+${aliasTableName}\\s*)`, 'igm')
     return reg.test(content)
   })
   if (!tableName) { return [] }
