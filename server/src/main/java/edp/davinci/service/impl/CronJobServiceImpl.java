@@ -76,6 +76,9 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	@Autowired
 	private EmailScheduleServiceImpl emailScheduleService;
 
+	@Autowired
+	private WeChatWorkScheduleServiceImpl weChatWorkScheduleService;
+
 	private static final CheckEntityEnum entity = CheckEntityEnum.CRONJOB;
 
 	@Override
@@ -349,12 +352,23 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 				String jobType = cronJob.getJobType().trim();
 
 				if (!StringUtils.isEmpty(jobType)) {
-					try {
-						emailScheduleService.execute(cronJob.getId());
-					} catch (Exception e) {
-						log.error(e.getMessage(), e);
-						scheduleLogger.error(e.getMessage());
+					if (jobType.equals("email")) {
+						try {
+							emailScheduleService.execute(cronJob.getId());
+						} catch (Exception e) {
+							log.error(e.getMessage(), e);
+							scheduleLogger.error(e.getMessage());
+						}
+					} else if(jobType.equals("weChatWork")) {
+						try {
+							// 企业微信推送
+							weChatWorkScheduleService.execute(cronJob.getId());
+						} catch (Exception e) {
+							log.error(e.getMessage(), e);
+							scheduleLogger.error(e.getMessage());
+						}
 					}
+
 				} else {
 					log.warn("Unknown job type [{}], job ID: (:{})", jobType, cronJob.getId());
 					scheduleLogger.warn("Unknown job type [{}], job ID: (:{})", jobType, cronJob.getId());

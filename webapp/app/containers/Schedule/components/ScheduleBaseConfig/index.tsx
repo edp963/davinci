@@ -37,7 +37,8 @@ import { FormComponentProps } from 'antd/lib/form'
 import {
   SchedulePeriodUnit,
   ISchedule,
-  ICronExpressionPartition
+  ICronExpressionPartition,
+  JobType
 } from '../types'
 import { FormItemStyle, LongFormItemStyle } from '../constants'
 
@@ -119,6 +120,7 @@ interface IScheduleBaseConfigProps
     resolve: () => any,
     reject: (error: string) => any
   ) => any
+  onChangeJobType: (data: any) => any
 }
 
 const computePeriodUnit = (cronExpression: string) => {
@@ -146,7 +148,7 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
   props,
   ref
 ) => {
-  const { form, schedule, loading, onCheckUniqueName } = props
+  const { form, schedule, loading, onCheckUniqueName, onChangeJobType } = props
 
   const checkNameUnique = useCallback(
     (_, name = '', callback) => {
@@ -165,6 +167,10 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
     },
     [onCheckUniqueName, schedule]
   )
+
+  const changeJobType = useCallback((value: JobType) => {
+    onChangeJobType(value)
+  }, [onChangeJobType])
 
   const { cronExpression } = schedule
   const [currentPeriodUnit, setCurrentPeriodUnit] = useState<
@@ -227,8 +233,9 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
             {getFieldDecorator<ScheduleBaseFormProps>('jobType', {
               initialValue: schedule.jobType
             })(
-              <Select>
+              <Select onChange={changeJobType}>
                 <Option value="email">Email</Option>
+                <Option value="weChatWork">企业微信</Option>
               </Select>
             )}
           </FormItem>
