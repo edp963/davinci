@@ -19,10 +19,11 @@
  */
 
 import React, { useCallback, useRef } from 'react'
-import { useDrag, useDrop } from 'react-dnd';
+import { useDrag, useDrop } from 'react-dnd'
 import classnames from 'classnames'
 
 import { Menu, Dropdown, message } from 'antd'
+import { MenuProps } from 'antd/lib/menu'
 import { ISlideFormed } from '../types'
 
 import styles from './SlideThumbnail.less'
@@ -30,117 +31,97 @@ import styles from './SlideThumbnail.less'
 interface ISlideThumbnailProps {
   className?: string
   slide: ISlideFormed
-  serial: number
+  index: number
   current: boolean
   selected: boolean
-  onSelect: (slideId: number) => void
-  onDelete: (slideIds: number[]) => void
-  selectedIds: number[]
-  onMultiSelect: (slideId: number) => void
+  onSelect: (slideId: number, append: boolean) => void
+  onDelete: (targetSlideId: number) => void
   onChangeDisplayAvatar: (avatar: string) => void
-  onMoveSlide: (slideId: number, newPos: number) => void
-  onMoveSlides: (id: number, toIndex: number) => void
+  onMove: (slideId: number, newIdx: number, done?: boolean) => void
 }
 
 const ThumbnailRatio = 3 / 4
+export const SlideDndItemType = 'DisplaySlideSort'
+
+type SlideDragObject = {
+  type: string
+  slideId: number
+  originalIdx: number
+}
+
+type SlideDragCollectedProps = {
+  isDragging: boolean
+}
 
 const SlideThumbnail: React.FC<ISlideThumbnailProps> = (props) => {
-  const { slide, serial, current, selected, selectedIds, className, onDelete, onSelect, onMultiSelect, onChangeDisplayAvatar, onMoveSlide, onMoveSlides } = props
+  const {
+    slide,
+    index,
+    current,
+    selected,
+    className,
+    onDelete,
+    onSelect,
+    onChangeDisplayAvatar,
+    onMove
+  } = props
   const { id: slideId, config } = slide
   const { width, height, avatar, backgroundColor } = config.slideParams
 
-  const ref = useRef<HTMLDivElement>(null);
-  // 使用 useDrag
-  const [{ isDragging, didDrop }, drag] = useDrag({
-    item: { type: 'Item', id: slideId, serial },
-    end(item, monitor){
-      let res = monitor.getDropResult();
-      let id = item['id'];
-      if(!!res) {
-        let { newPos } = res;
-        if (didDrop) {
-          onMoveSlide(id, newPos)
-        }
-      } else {
-        onMoveSlide(id, -1)
-      }
+  const ref = useRef<HTMLDivElement>(null)
+  const originalIdx = index
+  const [{ isDragging }, drag] = useDrag<
+    SlideDragObject,
+    {},
+    SlideDragCollectedProps
+  >({
+    item: { type: SlideDndItemType, slideId, originalIdx },
+    end(_, monitor) {
+      const { slideId: droppedId, originalIdx } = monitor.getItem()
+      const didDrop = monitor.didDrop()
+      onMove(droppedId, didDrop ? index : originalIdx, didDrop)
     },
     collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-      didDrop: monitor.didDrop()
+      isDragging: monitor.isDragging()
     })
   })
 
-  // 使用 useDrop
-  const [, drop] = useDrop({
-    accept: 'Item',
-    drop(item, monitor) {
-      if (!ref.current) {
-        return
+  const [, drop] = useDrop<SlideDragObject, {}, SlideDragCollectedProps>({
+    accept: SlideDndItemType,
+    canDrop: () => false,
+    hover: ({ slideId: draggedId }) => {
+      if (draggedId !== slideId) {
+        onMove(draggedId, index)
       }
-      return { newPos: item['serial'] }
-    },
-    hover(item, monitor) {
-      const { id: draggedId } = monitor.getItem()
-      if (!ref.current) {
-        return
-      }
-      const dragIndex = item['serial']
-      const hoverIndex = serial
-      if (dragIndex === hoverIndex) {
-        return
-      }
-      const hoverBoundingRect = ref.current.getBoundingClientRect()
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
-      const clientOffset = monitor.getClientOffset()
-      const hoverClientY = clientOffset.y - hoverBoundingRect.top
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return
-      }
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return
-      }
-      item['serial'] = hoverIndex
-      onMoveSlides(draggedId, hoverIndex - 1)
-    },
+    }
   })
 
   drag(drop(ref))
 
-  const handleClickRightMenu = useCallback(
-    ({ item, key, keyPath, domEvent }) => {
-      // console.log(item, key, keyPath, domEvent, slideId)
-      if (key === 'setAsCover') {
-        const { avatar } = slide.config.slideParams
-        if (avatar) {
-          onChangeDisplayAvatar(avatar)
-        } else {
-          message.error('请先为该大屏页设置封面')
-        }
-      } else if(key === 'delete'){
-        onDelete([slideId])
+  const handleClickRightMenu: MenuProps['onClick'] = useCallback(
+    ({ key, domEvent }) => {
+      domEvent.stopPropagation()
+      if (key === 'delete') {
+        onDelete(slideId)
+        return
+      }
+
+      if (avatar) {
+        onChangeDisplayAvatar(avatar)
       } else {
-        onDelete([...selectedIds])
+        message.error('请先为该大屏页设置封面')
       }
     },
-    [onDelete, onChangeDisplayAvatar, slideId, selectedIds]
+    [onDelete, onChangeDisplayAvatar, slideId, avatar]
   )
 
   const selectSlide = useCallback(
     (e: React.MouseEvent) => {
-      // @TODO multi selection with keyboard press
-      const { shiftKey, metaKey, altKey, button, buttons } = e
-      // console.log(e.target)
+      const { shiftKey, metaKey, altKey } = e
       e.stopPropagation()
-
-      if(metaKey || altKey) {
-        onMultiSelect(slideId)
-      } else {
-        onSelect(slideId)
-      }
+      onSelect(slideId, shiftKey || metaKey || altKey)
     },
-    [onSelect, onMultiSelect, slideId]
+    [onSelect, slideId]
   )
 
   const cls = classnames({
@@ -150,14 +131,16 @@ const SlideThumbnail: React.FC<ISlideThumbnailProps> = (props) => {
 
   const slideStyle: React.CSSProperties = {
     background: avatar && `url(${avatar}) center/cover`,
-    backgroundColor: `rgba(${backgroundColor.join()})`,
+    backgroundColor: `rgba(${backgroundColor.join()})`
   }
 
   const divStyle: React.CSSProperties = { opacity: isDragging ? 0.1 : 1 }
 
   if (height / width <= ThumbnailRatio) {
     // landscape
-    slideStyle.top = `${((1 - (1 / ThumbnailRatio) * (height / width)) / 2) * 100}%`
+    slideStyle.top = `${
+      ((1 - (1 / ThumbnailRatio) * (height / width)) / 2) * 100
+    }%`
     slideStyle.bottom = slideStyle.top
     slideStyle.width = '100%'
   } else {
@@ -173,28 +156,24 @@ const SlideThumbnail: React.FC<ISlideThumbnailProps> = (props) => {
   })
 
   return (
-      <Dropdown overlay={
-        selectedIds.length > 1 && selectedIds.indexOf(slideId) > -1 ?
-          <Menu onClick={handleClickRightMenu}>
-            <Menu.Item key="deleteAll">删除全部</Menu.Item>
-          </Menu>
-          :
-          <Menu onClick={handleClickRightMenu}>
-            <Menu.Item key="setAsCover">设置为封面</Menu.Item>
-            <Menu.Item key="delete">删除</Menu.Item>
-          </Menu>
-        }
-        trigger={['contextMenu']}
-      >
-        <li className={cls} onClick={selectSlide} >
-          <div className={styles.serial}>{serial}</div>
-            <div ref={ref} style={divStyle} className={styles.content}>
-            <div className={thumbnailCls}>
-              <div className={styles.cover} style={slideStyle} />
-            </div>
+    <Dropdown
+      overlay={
+        <Menu onClick={handleClickRightMenu}>
+          <Menu.Item key="setAsCover">设置为封面</Menu.Item>
+          <Menu.Item key="delete">删除</Menu.Item>
+        </Menu>
+      }
+      trigger={['contextMenu']}
+    >
+      <li className={cls} onClick={selectSlide}>
+        <div className={styles.serial}>{index + 1}</div>
+        <div ref={ref} style={divStyle} className={styles.content}>
+          <div className={thumbnailCls}>
+            <div className={styles.cover} style={slideStyle} />
           </div>
-        </li>
-      </Dropdown>
+        </div>
+      </li>
+    </Dropdown>
   )
 }
 
