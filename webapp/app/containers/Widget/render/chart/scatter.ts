@@ -30,9 +30,11 @@ import {
   getLabelOption,
   getLegendOption,
   getGridPositions,
-  getSymbolSize
+  getSymbolSize,
+  getCartesianChartReferenceOptions
 } from './util'
 import { PIVOT_DEFAULT_SCATTER_SIZE } from 'app/globalConstants'
+import ChartTypes from '../../config/chart/ChartTypes'
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
@@ -42,7 +44,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     chartStyles,
     color,
     tip,
-    size
+    size,
+    references
   } = chartProps
 
   const {
@@ -68,6 +71,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   const labelOption = {
     label: getLabelOption('scatter', labelStyleConfig, metrics)
   }
+  const referenceOptions = getCartesianChartReferenceOptions(references, ChartTypes.Scatter, metrics, data)
 
   let sizeRate = 0
   let sizeItemName = ''
@@ -104,7 +108,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       ? color.items[0].name
       : cols[0].name
 
-    Object.entries(grouped).forEach(([key, value], gIndex) => {
+    const groupedEntries = Object.entries(grouped)
+    groupedEntries.forEach(([key, value], gIndex) => {
       series.push({
         name: key.replace(String.fromCharCode(0), ' '),
         type: 'scatter',
@@ -138,7 +143,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
             opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
           }
         },
-        ...labelOption
+        ...labelOption,
+        ...(gIndex === groupedEntries.length - 1 && referenceOptions)
       })
       seriesData.push(value)
     })
@@ -174,7 +180,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
           opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
         }
       },
-      ...labelOption
+      ...labelOption,
+      ...referenceOptions
     })
     seriesData.push(data)
   }

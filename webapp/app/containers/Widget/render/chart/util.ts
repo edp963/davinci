@@ -18,6 +18,7 @@
  * >>
  */
 
+import mean from 'lodash/mean'
 import { IAxisConfig } from '../../components/Workbench/ConfigSections/AxisSection'
 import { ILabelConfig } from '../../components/Workbench/ConfigSections/LabelSection'
 import { ILegendConfig } from '../../components/Workbench/ConfigSections/LegendSection'
@@ -33,6 +34,16 @@ import {
 } from '../../components/util'
 import { FieldSortTypes } from '../../components/Config/Sort'
 import { getFieldAlias } from '../../components/Config/Field'
+import {
+  IReference,
+  IReferenceLineData,
+  IReferenceBandData
+} from '../../components/Workbench/Reference/types'
+import {
+  ReferenceType,
+  ReferenceValueType
+} from '../../components/Workbench/Reference/constants'
+import ChartTypes from '../../config/chart/ChartTypes'
 
 interface ISplitLineConfig {
   showLine: boolean
@@ -284,7 +295,10 @@ export function getLabelOption(
           value,
           metrics[metricIdx].format
         )
-        const labelName = name || getFieldAlias(metrics[metricIdx].field, {}) || decodeMetricName(metrics[metricIdx].name)
+        const labelName =
+          name ||
+          getFieldAlias(metrics[metricIdx].field, {}) ||
+          decodeMetricName(metrics[metricIdx].name)
         const { labelParts } = labelConfig
         if (!labelParts) {
           return `${labelName}\n${formattedValue}`
@@ -596,4 +610,176 @@ export function getCartesianChartMetrics(metrics: IWidgetMetric[]) {
       displayName: `${prefix}${decodedMetricName}${suffix}`
     }
   })
+}
+
+export function getCartesianChartReferenceOptions(
+  references: IReference[],
+  chartType: ChartTypes,
+  metrics: IWidgetMetric[],
+  sourcedata: any[],
+  barChart?: boolean
+) {
+  if (references) {
+    const markLines = []
+    const markAreas = []
+
+    references.forEach((ref) => {
+      const { name, type, data } = ref
+
+      if (type === ReferenceType.Line) {
+        const {
+          metric,
+          type: valueType,
+          value,
+          label,
+          line
+        } = data as IReferenceLineData
+
+        const axis = getReferenceDataMetricAxis(chartType, {
+          barChart,
+          metrics,
+          metric
+        })
+
+        if (axis) {
+          const metricData = sourcedata.map((d) => {
+            const metricObject = metrics.find((m) => m.name === metric)
+            return (
+              metricObject &&
+              d[`${metricObject.agg}(${decodeMetricName(metric)})`]
+            )
+          })
+          markLines.push({
+            ...getReferenceDataOptions(metricData, valueType, value, axis),
+            name,
+            label: {
+              show: label.visible,
+              position: label.position,
+              color: label.font.color,
+              fontSize: label.font.size,
+              fontFamily: label.font.family
+            },
+            lineStyle: {
+              color: line.color,
+              width: line.width,
+              type: line.type
+            }
+          })
+        }
+      } else {
+        const areaData = (data as [IReferenceBandData, IReferenceBandData]).map(
+          (d, index) => {
+            const { metric, type: valueType, value, label, band } = d
+
+            const axis = getReferenceDataMetricAxis(chartType, {
+              barChart,
+              metrics,
+              metric
+            })
+
+            if (axis) {
+              const metricData = sourcedata.map((d) => {
+                const metricObject = metrics.find((m) => m.name === metric)
+                return (
+                  metricObject &&
+                  d[`${metricObject.agg}(${decodeMetricName(metric)})`]
+                )
+              })
+              const dataOptions = getReferenceDataOptions(
+                metricData,
+                valueType,
+                value,
+                axis
+              )
+              return !index
+                ? dataOptions
+                : {
+                    ...dataOptions,
+                    name,
+                    label: {
+                      show: label.visible,
+                      position: label.position,
+                      color: label.font.color,
+                      fontSize: label.font.size,
+                      fontFamily: label.font.family
+                    },
+                    emphasis: {
+                      label: {
+                        position: label.position
+                      }
+                    },
+                    itemStyle: {
+                      color: band.color,
+                      borderColor: band.border.color,
+                      borderWidth: band.border.width,
+                      borderType: band.border.type
+                    }
+                  }
+            } else {
+              return void 0
+            }
+          }
+        )
+        if (areaData.every((d) => !!d)) {
+          markAreas.push(areaData)
+        }
+      }
+    })
+
+    return {
+      ...(markLines.length && { markLine: { data: markLines } }),
+      ...(markAreas.length && { markArea: { data: markAreas } })
+    }
+  }
+}
+
+function getReferenceDataOptions(
+  metricData: number[],
+  valueType: ReferenceValueType,
+  value: any,
+  axis: string
+) {
+  const option: any = {}
+  if (valueType === ReferenceValueType.Constant) {
+    option[axis] = value
+  } else {
+    option[axis] = calcAggregateReferenceData(valueType, metricData)
+  }
+  return option
+}
+
+function getReferenceDataMetricAxis(
+  chartType: ChartTypes,
+  options?: {
+    barChart?: boolean
+    metrics?: IWidgetMetric[]
+    metric?: string
+  }
+) {
+  switch (chartType) {
+    case ChartTypes.Bar:
+      return options.barChart ? 'xAxis' : 'yAxis'
+    case ChartTypes.Scatter:
+      const axisIndexMapping = ['xAxis', 'yAxis']
+      const metricIndex = options.metrics.findIndex(
+        (m) => m.name === options.metric
+      )
+      return axisIndexMapping[metricIndex]
+    default:
+      return 'yAxis'
+  }
+}
+
+function calcAggregateReferenceData(
+  valueType: ReferenceValueType,
+  metricData: number[]
+) {
+  switch (valueType) {
+    case ReferenceValueType.Max:
+      return Math.max(...metricData)
+    case ReferenceValueType.Min:
+      return Math.min(...metricData)
+    case ReferenceValueType.Average:
+      return mean(metricData)
+  }
 }

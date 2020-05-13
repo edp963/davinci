@@ -246,19 +246,16 @@ const vizReducer = (
       case ActionTypes.EDIT_SLIDES_SUCCESS:
         slides = action.payload.slides
         displayId = action.payload.displayId
-        slides.forEach((s) => {
-          draft.displaySlides[displayId].splice(
-            draft.displaySlides[displayId].findIndex(({ id }) => s.id === id),
-            1,
-            s
+        const editedSlideIds = slides.map(({ id }) => id)
+        draft.displaySlides[displayId] = draft.displaySlides[displayId]
+          .filter(({ id }) => !editedSlideIds.includes(id))
+          .concat(slides)
+          .sort((s1, s2) => s1.index - s2.index)
+        if (editedSlideIds.includes(draft.currentSlide.id)) {
+          draft.currentSlide = slides.find(
+            ({ id }) => id === draft.currentSlide.id
           )
-          if (draft.currentSlide.id === s.id) {
-            draft.currentSlide = s
-          }
-        })
-        break
-      case ActionTypes.DELETE_SLIDES:
-        console.log(111111)
+        }
         break
       case ActionTypes.DELETE_SLIDES_SUCCESS:
         displayId = action.payload.displayId

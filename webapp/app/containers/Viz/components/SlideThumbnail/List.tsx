@@ -18,13 +18,15 @@
  * >>
  */
 
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
+import { DndProvider, useDrop } from 'react-dnd'
+import HTML5Backend from 'react-dnd-html5-backend'
 import classnames from 'classnames'
 
 import { ISlideFormed } from '../types'
 
 import { Modal } from 'antd'
-import Item from './Item'
+import Item, { SlideDndItemType } from './Item'
 
 import styles from './SlideThumbnail.less'
 
@@ -32,10 +34,11 @@ interface ISlideThumbnailListProps {
   slides: ISlideFormed[]
   className?: string
   currentSlideId: number
-  // @TODO multi selection for slides
   selectedSlideIds: number[]
-  onSelect: (slideId: number) => void
-  onDelete: (slideIds: number[]) => void
+  onChange: (newSlides: ISlideFormed[]) => void
+  onSelect: (slideId: number, append: boolean) => void
+  onDelete: (targetSlideId?: number) => void
+  onChangeDisplayAvatar: (avatar: string) => void
 }
 
 const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
@@ -45,8 +48,20 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
     currentSlideId,
     selectedSlideIds,
     onSelect,
+    onChange,
+    onChangeDisplayAvatar,
     onDelete
   } = props
+
+  const [localSlides, setLocalSlides] = useState(slides)
+  const [movingRange, setMovingRange] = useState<[number, number]>([
+    slides.length - 1,
+    0
+  ])
+  useEffect(() => {
+    setLocalSlides(slides)
+    setMovingRange([slides.length - 1, 0])
+  }, [slides])
 
   useEffect(() => {
     const deleteSlides = (e: KeyboardEvent) => {
@@ -58,44 +73,77 @@ const SlideThumbnailList: React.FC<ISlideThumbnailListProps> = (props) => {
       }
       window.removeEventListener('keydown', deleteSlides, false)
       Modal.confirm({
-        title: '确认删除此大屏页？',
+        title:
+          selectedSlideIds.length > 1
+            ? '确认删除所有选中的大屏页？'
+            : '确认删除此大屏页？',
         onOk: () => {
-          onDelete([...selectedSlideIds])
+          onDelete()
         }
       })
     }
+
     window.addEventListener('keydown', deleteSlides, false)
     return () => {
       window.removeEventListener('keydown', deleteSlides, false)
     }
   }, [selectedSlideIds, onDelete])
 
-  const selectSlide = useCallback(
-    (slideId: number) => {
-      onSelect(slideId)
-    },
-    [onSelect]
-  )
-
   const cls = classnames({
     [styles.thumbnails]: true,
     [className]: !!className
   })
 
+  const moveSlide = useCallback(
+    (slideId: number, targetIdx: number, done: boolean) => {
+      const prevIdx = localSlides.findIndex(({ id }) => id === slideId)
+      const updatedSlides = [...localSlides]
+      updatedSlides.splice(prevIdx, 1)
+      updatedSlides.splice(targetIdx, 0, localSlides[prevIdx])
+      setLocalSlides(updatedSlides)
+      setMovingRange([
+        Math.min(movingRange[0], prevIdx, targetIdx),
+        Math.max(movingRange[1], prevIdx, targetIdx)
+      ])
+      if (done) {
+        const partialSlides = updatedSlides
+          .slice(movingRange[0], movingRange[1] + 1)
+          .map((slide, partialIdx) => ({
+            ...slide,
+            index: slides[partialIdx + movingRange[0]].index
+          }))
+        onChange(partialSlides)
+      }
+    },
+    [movingRange, slides, localSlides, onChange]
+  )
+
+  const [, drop] = useDrop({ accept: SlideDndItemType })
   return (
-    <ul className={cls}>
-      {slides.map((slide, idx) => (
+    <ul ref={drop} className={cls}>
+      {localSlides.map((slide, idx) => (
         <Item
           key={slide.id}
           slide={slide}
-          serial={idx + 1}
+          index={idx}
           current={currentSlideId === slide.id}
           selected={selectedSlideIds.includes(slide.id)}
-          onSelect={selectSlide}
+          onSelect={onSelect}
+          onDelete={onDelete}
+          onMove={moveSlide}
+          onChangeDisplayAvatar={onChangeDisplayAvatar}
         />
       ))}
     </ul>
   )
 }
 
-export default SlideThumbnailList
+const withDnd: React.FC<ISlideThumbnailListProps> = (props) => {
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <SlideThumbnailList {...props} />
+    </DndProvider>
+  )
+}
+
+export default withDnd

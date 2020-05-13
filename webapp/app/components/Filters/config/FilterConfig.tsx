@@ -36,6 +36,8 @@ import {
 } from '../util'
 import { FilterTypes, IS_RANGE_TYPE} from '../constants'
 
+import { ListFormLayout, List } from 'components/ListFormLayout'
+import SplitPane from 'components/SplitPane'
 import FilterList from './FilterList'
 import FilterFormWithRedux, { FilterForm } from './FilterForm'
 import OptionSettingFormWithModal, { OptionSettingForm } from './OptionSettingForm'
@@ -46,10 +48,10 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { IDashboard } from 'containers/Dashboard/types'
 import ControlActions from 'containers/ControlPanel/actions'
 import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
+import styles from '../filter.less'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 
-const styles = require('../filter.less')
 
 export interface IRelatedItemSource extends IGlobalControlRelatedItem {
   id: number
@@ -308,7 +310,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     })
   }
 
-  private changeName = (key) => (name) => {
+  private changeName = (key: string, name: string) => {
     this.setState({
       controls: this.state.controls.map((c) => {
         return c.key === key
@@ -634,7 +636,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
 
     return (
       <Modal
-        wrapClassName="ant-modal-large ant-modal-center"
+        wrapClassName="ant-modal-xlarge"
         title="全局控制器配置"
         maskClosable={false}
         visible={visible}
@@ -642,52 +644,65 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
         onCancel={onCancel}
         afterClose={this.resetForm}
       >
-        <div className={styles.filterConfig}>
-          <div className={styles.left}>
+        <ListFormLayout
+          type="horizontal"
+          initialSize={256}
+          minSize={256}
+          maxSize={480}
+          className={styles.filterConfig}
+          spliter
+        >
+          <List
+            title="控制器列表"
+            className={styles.treeContainer}
+            onAddItem={this.addFilter}
+          >
             <FilterList
               list={controls}
               selectedFilter={selected}
               onSelectFilter={this.selectFilter}
-              onAddFilter={this.addFilter}
               onDeleteFilter={this.deleteFilter}
               onNameChange={this.changeName}
               onParentChange={this.changeParent}
             />
-          </div>
-          <div className={styles.center}>
-            {
-              selected && (
-                <>
-                  <RelatedInfoSelectors
-                    itemSelectorSource={itemSelectorSource}
-                    viewSelectorSource={viewSelectorSource}
-                    interactionType={selected.interactionType}
-                    controlType={selected.type}
-                    onItemCheck={this.itemCheck}
-                    onModelOrVariableSelect={this.modelOrVariableSelect}
-                    onOptionsFromColumnCheck={this.optionsFromColumnChecked}
-                    onOptionsFromColumnSelect={this.optionsFromColumnSelect}
-                    onToggleCheckAll={this.toggleCheckAll}
-                    onInteractionTypeChange={this.interactionTypeChange}
-                  />
-                  <FilterFormWithRedux
-                    interactionType={selected.interactionType}
-                    onControlTypeChange={this.controlTypeChange}
-                    onOpenOptionModal={this.openOptionModal}
-                    wrappedComponentRef={this.filterForm}
-                  />
-                </>
-              )
-            }
-          </div>
-          <OptionSettingFormWithModal
-            visible={optionModalVisible}
-            options={optionValues}
-            onSave={this.saveOptions}
-            onCancel={this.closeOptionModal}
-            wrappedComponentRef={this.optionSettingForm}
-          />
-        </div>
+          </List>
+          {selected && (
+            <SplitPane
+              type="horizontal"
+              initialSize={256}
+              minSize={256}
+              maxSize={480}
+              className={styles.configForm}
+              spliter
+            >
+              <RelatedInfoSelectors
+                itemSelectorSource={itemSelectorSource}
+                viewSelectorSource={viewSelectorSource}
+                interactionType={selected.interactionType}
+                controlType={selected.type}
+                onItemCheck={this.itemCheck}
+                onModelOrVariableSelect={this.modelOrVariableSelect}
+                onOptionsFromColumnCheck={this.optionsFromColumnChecked}
+                onOptionsFromColumnSelect={this.optionsFromColumnSelect}
+                onToggleCheckAll={this.toggleCheckAll}
+                onInteractionTypeChange={this.interactionTypeChange}
+              />
+              <FilterFormWithRedux
+                interactionType={selected.interactionType}
+                onControlTypeChange={this.controlTypeChange}
+                onOpenOptionModal={this.openOptionModal}
+                wrappedComponentRef={this.filterForm}
+              />
+            </SplitPane>
+          )}
+        </ListFormLayout>
+        <OptionSettingFormWithModal
+          visible={optionModalVisible}
+          options={optionValues}
+          onSave={this.saveOptions}
+          onCancel={this.closeOptionModal}
+          wrappedComponentRef={this.optionSettingForm}
+        />
       </Modal>
     )
   }

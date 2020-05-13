@@ -20,15 +20,14 @@
 
 import React, { useRef, useEffect, useCallback } from 'react'
 import AceEditor, { IAceOptions } from 'react-ace'
-
 import languageTools from 'ace-builds/src-min-noconflict/ext-language_tools'
 import 'ace-builds/src-min-noconflict/ext-searchbox'
-import 'ace-builds/src-min-noconflict/theme-textmate'
+import 'ace-builds/src-min-noconflict/theme-sqlserver'
 import 'ace-builds/src-min-noconflict/mode-sql'
 import ReactAce, { IAceEditorProps } from 'react-ace/lib/ace'
-
-import Styles from '../View.less'
 import { debounce } from 'lodash'
+import { DEFAULT_FONT_SIZE } from 'app/globalConstants'
+import Styles from '../View.less'
 
 type TMode =
   | 'sql'
@@ -49,13 +48,14 @@ type TTheme =
   | 'tomorrow'
   | 'twilight'
   | 'xcode'
+  | 'sqlserver'
 
 enum EHintMeta {
   table = 'table',
   variable = 'variable',
   column = 'column'
 }
-const THEME_DEFAULT = 'textmate'
+const THEME_DEFAULT = 'sqlserver'
 const MODE_DEFAULT = 'sql'
 const EDITOR_OPTIONS: IAceOptions = {
   behavioursEnabled: true,
@@ -64,8 +64,7 @@ const EDITOR_OPTIONS: IAceOptions = {
   enableLiveAutocompletion: true,
   autoScrollEditorIntoView: true,
   wrap: true,
-  useWorker: false,
-
+  useWorker: false
 }
 export interface ISqlEditorProps {
   hints: { [name: string]: string[] }
@@ -124,8 +123,7 @@ function SqlEditor (props: ISqlEditorProps) {
         name="aceEditor"
         width="100%"
         height="100%"
-        fontSize={14}
-        placeholder={`Placeholder ${mode}`}
+        fontSize={DEFAULT_FONT_SIZE}
         mode={mode}
         theme={theme}
         value={value}
@@ -219,7 +217,7 @@ function genTableColumnKeywords (table: string[], tableName: string) {
 function genAliasTableColumnKeywords (editor, aliasTableName: string, hints: ISqlEditorProps['hints']) {
   const content = editor.getSession().getValue()
   const tableName = Object.keys(hints).find((tableName) => {
-    const reg = new RegExp(`select.*from\\s+${tableName}(\\s+(as)|(AS))?(?=\\s+${aliasTableName}\\s+)`, 'igm')
+    const reg = new RegExp(`.+${tableName}(\\s+(as|AS)?(?=\\s+${aliasTableName}\\s*)`, 'igm')
     return reg.test(content)
   })
   if (!tableName) { return [] }

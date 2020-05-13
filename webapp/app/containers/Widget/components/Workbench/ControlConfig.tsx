@@ -21,7 +21,6 @@
 import React, { createRef } from 'react'
 import { fromJS } from 'immutable'
 import { connect } from 'react-redux'
-import moment from 'moment'
 import {
   IGlobalControlRelatedItem,
   InteractionType,
@@ -37,6 +36,7 @@ import {
 import { FilterTypes, IS_RANGE_TYPE} from 'app/components/Filters/constants'
 import { localControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
+import { ListFormLayout, List } from 'app/components/ListFormLayout'
 import FilterList from 'app/components/Filters/config/FilterList'
 import FilterFormWithRedux, { FilterForm } from 'app/components/Filters/config/FilterForm'
 import OptionSettingFormWithModal, { OptionSettingForm } from 'app/components/Filters/config/OptionSettingForm'
@@ -45,11 +45,11 @@ import { RadioChangeEvent } from 'antd/lib/radio'
 import ControlActions from 'containers/ControlPanel/actions'
 import { IViewVariable, IFormedView, IViewModelProps } from 'app/containers/View/types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
+import styles from 'app/components/Filters/filter.less'
 
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const Option = Select.Option
-const styles = require('app/components/Filters/filter.less')
 
 export interface IRelatedItemSource extends IGlobalControlRelatedItem {
   id: number
@@ -248,7 +248,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
     })
   }
 
-  private changeName = (key) => (name) => {
+  private changeName = (key: string, name: string) => {
     this.setState({
       controls: this.state.controls.map((c) => {
         return c.key === key
@@ -517,7 +517,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
 
     return (
       <Modal
-        wrapClassName="ant-modal-large ant-modal-center"
+        wrapClassName="ant-modal-xlarge"
         title="本地控制器配置"
         maskClosable={false}
         visible={visible}
@@ -525,19 +525,29 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
         onCancel={onCancel}
         afterClose={this.resetForm}
       >
-        <div className={styles.filterConfig}>
-          <div className={styles.left}>
+        <ListFormLayout
+          type="horizontal"
+          initialSize={256}
+          minSize={256}
+          maxSize={480}
+          className={styles.filterConfig}
+          spliter
+        >
+          <List
+            title="控制器列表"
+            className={styles.treeContainer}
+            onAddItem={this.addFilter}
+          >
             <FilterList
               list={controls}
               selectedFilter={selected}
               onSelectFilter={this.selectFilter}
-              onAddFilter={this.addFilter}
               onDeleteFilter={this.deleteFilter}
               onNameChange={this.changeName}
               onParentChange={this.changeParent}
             />
-          </div>
-          <div className={styles.center}>
+          </List>
+          <div className={styles.configForm}>
             {
               selected && (
                 <div className={styles.filterFormContainer}>
@@ -546,7 +556,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
                       <h2>基础配置</h2>
                     </div>
                     <Row gutter={8} className={styles.formBody}>
-                      <Col span={8}>
+                      <Col span={4}>
                         <FormItem label="类型">
                           <RadioGroup
                             value={interactionType}
@@ -557,26 +567,21 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
                           </RadioGroup>
                         </FormItem>
                       </Col>
-                      {
-                        variableSelect && (
-                          <Col span={8}>
-                            <FormItem label=" " colon={false}>
-                              <Checkbox
-                                checked={optionsFromColumn}
-                                onChange={this.optionsFromColumnChecked}
-                              >
-                                从字段取值
-                              </Checkbox>
-                            </FormItem>
-                          </Col>
-                        )
-                      }
-                    </Row>
-                    <Row gutter={8} className={styles.formBody}>
+                      {variableSelect && (
+                        <Col span={4}>
+                          <FormItem label=" " colon={false}>
+                            <Checkbox
+                              checked={optionsFromColumn}
+                              onChange={this.optionsFromColumnChecked}
+                            >
+                              从字段取值
+                            </Checkbox>
+                          </FormItem>
+                        </Col>
+                      )}
                       <Col span={8}>
                         <FormItem label={`关联${interactionTypeContent}`}>
                           <Select
-                            size="small"
                             placeholder="请选择"
                             className={styles.selector}
                             value={fieldsValue}
@@ -606,29 +611,26 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
                           </Select>
                         </FormItem>
                       </Col>
-                      {
-                        optionsFromColumn && (
-                          <Col span={8}>
-                            <FormItem label="取值字段">
-                            <Select
-                              size="small"
-                              placeholder="请选择"
-                              className={styles.selector}
-                              value={column}
-                              onChange={this.optionsFromColumnSelect}
-                              dropdownMatchSelectWidth={false}
-                              {...isMultiple && {mode: 'multiple'}}
-                            >
-                              {
-                                model.map((m: IViewModelProps) => (
-                                  <Option key={m.name} value={m.name}>{m.name}</Option>
-                                ))
-                              }
-                            </Select>
-                            </FormItem>
-                          </Col>
-                        )
-                      }
+                      {optionsFromColumn && (
+                        <Col span={8}>
+                          <FormItem label="取值字段">
+                          <Select
+                            placeholder="请选择"
+                            className={styles.selector}
+                            value={column}
+                            onChange={this.optionsFromColumnSelect}
+                            dropdownMatchSelectWidth={false}
+                            {...isMultiple && {mode: 'multiple'}}
+                          >
+                            {
+                              model.map((m: IViewModelProps) => (
+                                <Option key={m.name} value={m.name}>{m.name}</Option>
+                              ))
+                            }
+                          </Select>
+                          </FormItem>
+                        </Col>
+                      )}
                     </Row>
                   </div>
                   <FilterFormWithRedux
@@ -641,14 +643,14 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
               )
             }
           </div>
-          <OptionSettingFormWithModal
-            visible={optionModalVisible}
-            options={optionValues}
-            onSave={this.saveOptions}
-            onCancel={this.closeOptionModal}
-            wrappedComponentRef={this.optionSettingForm}
-          />
-        </div>
+        </ListFormLayout>
+        <OptionSettingFormWithModal
+          visible={optionModalVisible}
+          options={optionValues}
+          onSave={this.saveOptions}
+          onCancel={this.closeOptionModal}
+          wrappedComponentRef={this.optionSettingForm}
+        />
       </Modal>
     )
   }

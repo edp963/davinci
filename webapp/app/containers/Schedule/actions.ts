@@ -20,7 +20,7 @@
 
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
-import { IUserInfo, ISchedule, JobStatus } from './components/types'
+import { IUserInfo, ISchedule, JobStatus, JobType } from './components/types'
 
 export const ScheduleActions = {
   loadSchedules(projectId: number) {
@@ -149,6 +149,14 @@ export const ScheduleActions = {
       type: ActionTypes.CHANGE_SCHEDULE_STATUS_SUCCESS,
       payload: {
         schedule
+      }
+    }
+  },
+  changeScheduleJobType(jobType: JobType) {
+    return {
+      type: ActionTypes.CHANGE_SCHEDULE_JOB_TYPE,
+      payload: {
+        jobType
       }
     }
   },

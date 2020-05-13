@@ -1,20 +1,9 @@
 @import "~assets/less/variable";
 
 .filterConfig {
-  height: 480px;
-  margin: -24px;
-  display: flex;
-  flex-direction: row;
+  flex: 1;
 
-  .left {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    background-color: @light-bg;
-    border-right: 1px solid @border-color-split;
-  }
-
-  .center {
+  .configForm {
     flex: 1;
     display: flex;
     flex-direction: row;
@@ -54,175 +43,40 @@
   }
 }
 
-.filterList {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-
-  .title {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    border-bottom: 1px solid darken(@border-color-split, 2%);
-    padding: 0 8px;
-
-    h2 {
-      flex: 1;
-      padding-left: 8px;
-      font-size: 14px;
-      line-height: 3em;
-      color: @light-text-color;
-    }
-
-    i {
-      margin-left: 8px;
-      font-size: 1.14em;
-      color: @disabled-text-color;
-
-      &:hover {
-        color: @text-color;
-        cursor: pointer;
-      }
-    }
-  }
-
-  .list {
-    flex: 1;
-    overflow-y: auto;
-
-    li {
-      .ellipsis;
-
-      line-height: 24px;
-      padding: 0 8px;
-      box-sizing: border-box;
-      border-bottom: 1px solid @border-color-split;
-      cursor: pointer;
-
-      label {
-        padding-left: 8px;
-        cursor: pointer;
-      }
-
-      &:hover {
-        background-color: lighten(@primary-color, 30%);
-      }
-
-      &.selected {
-        background-color: lighten(@primary-color, 30%);
-      }
-    }
-  }
-
-  .treeContainer {
-    flex: 1;
-    width: 200px;
-    padding: 4px 0;
-    overflow: auto;
-  }
-
-  .tree {
-    // :global(li) {
-    //   padding: 2px 0;
-    // }
-    :global(li span.ant-tree-switcher),
-    :global(li span.ant-tree-iconEle) {
-      height: 28px;
-      line-height: 28px;
-    }
-    :global(li .ant-tree-node-content-wrapper) {
-      height: 28px;
-      line-height: 24px;
-    }
-    :global(.ant-tree-child-tree > li:first-child) {
-      padding-top: 2px;
-    }
-    // :global(li .ant-tree-node-content-wrapper:hover),
-    // :global(li .ant-tree-node-content-wrapper.ant-tree-node-selected) {
-    //   background-color: transparent;
-    // }
-    // :global(li .ant-tree-node-content-wrapper.ant-tree-node-selected) {
-    //   color: @primary-color;
-    //   font-weight: bold;
-    // }
-  }
+.treeContainer {
+  padding: 4px 0;
 }
 
-.treeNodeContent {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
-  h4 {
-    flex: 1;
-    font-weight: normal;
-    .ellipsis;
+.tree {
+  // :global(li) {
+  //   padding: 2px 0;
+  // }
+  :global(li span.ant-tree-switcher),
+  :global(li span.ant-tree-iconEle) {
+    height: 28px;
+    line-height: 28px;
   }
-
-  input {
-    flex: 1;
-    display: none;
+  :global(li .ant-tree-node-content-wrapper) {
+    height: 28px;
+    line-height: 24px;
   }
-
-  i {
-    flex-shrink: 0;
-    margin-left: 8px;
-    font-size: 1.14em;
-    color: @disabled-text-color;
-
-    &:hover {
-      color: @text-color;
-    }
-
-    &.action,
-    &.confirm {
-      display: none;
-    }
-
-    &.action:last-child,
-    &.confirm {
-      margin-right: 3px;
-    }
+  :global(.ant-tree-child-tree > li:first-child) {
+    padding-top: 2px;
   }
-
-  &:hover {
-    i.action {
-      display: block;
-    }
-  }
-
-  &.editing {
-    h4 {
-      display: none;
-    }
-
-    input {
-      display: block;
-    }
-
-    i {
-      &.confirm {
-        display: block;
-      }
-    }
-
-    &:hover {
-      i.action {
-        display: none;
-      }
-    }
-  }
+  // :global(li .ant-tree-node-content-wrapper:hover),
+  // :global(li .ant-tree-node-content-wrapper.ant-tree-node-selected) {
+  //   background-color: transparent;
+  // }
+  // :global(li .ant-tree-node-content-wrapper.ant-tree-node-selected) {
+  //   color: @primary-color;
+  //   font-weight: bold;
+  // }
 }
 
 .itemSelector {
-  flex-shrink: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 200px;
-  max-width: 280px;
-  border-right: 1px solid @border-color-split;
 
   .itemList {
     flex: 2;
@@ -308,25 +162,7 @@
   .formBody {
     padding: 0 16px;
   }
-
-  :global(.ant-form-item) {
-    margin-bottom: 4px;
-  }
-  :global(.ant-form-item-label) {
-    line-height: 1em;
-  }
-  :global(.ant-form-item-label label) {
-    color: @disabled-text-color;
-    font-size: 12px;
-    font-weight: bold;
-  }
-  :global(.ant-form-item-required:before) {
-    margin-right: 2px;
-    vertical-align: middle;
-  }
-  :global(.ant-form-item-control) {
-    line-height: 32px;
-  }
+  .antFormItemLabelSmall;
 }
 
 .baseForm {
