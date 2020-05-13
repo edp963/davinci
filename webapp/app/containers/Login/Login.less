@@ -13,7 +13,7 @@
 
   .form {
     width: 100%;
-    margin-bottom: 32px;
+    margin-bottom: 16px;
   }
 
   button {
@@ -43,9 +43,9 @@
   flex-direction: row;
   align-items: center;
 
-  &:last-child {
-    border-bottom: 0;
-  }
+  // &:nth-child(2) {
+  //   border-bottom: 0;
+  // }
 
   i {
     color: @white;
@@ -83,6 +83,20 @@
 }
 
 .tips {
+  .baseTips()
+}
+.findPassword {
+  display: flex;
+  justify-content: flex-end;
+  .baseTips()
+}
+
+.joinOrganizationLoadingContent {
+  padding: 20px 0;
+  color: @white;
+}
+
+.baseTips(){
   margin-top: 16px;
   span {
     color: @light-bg;
@@ -90,9 +104,4 @@
   a {
     font-weight: 600;
   }
-}
-
-.joinOrganizationLoadingContent {
-  padding: 20px 0;
-  color: @white;
 }

@@ -52,3 +52,9 @@ export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<
   {
     [K in Keys]-?: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>>
   }[Keys]
+
+
+export interface IReduxActionStruct<T>  {
+  type?: string,
+  payload: T
+}
