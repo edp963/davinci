@@ -32,6 +32,8 @@ public class CronJobConfig {
     private String type;
     private String content;
 
+    private String webHookUrl;
+
     private Integer imageWidth;
     private List<CronJobContent> contentList;
 }
