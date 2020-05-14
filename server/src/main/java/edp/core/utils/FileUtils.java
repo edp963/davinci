@@ -20,6 +20,8 @@
 package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
+import com.sun.image.codec.jpeg.JPEGCodec;
+import com.sun.image.codec.jpeg.JPEGImageEncoder;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.service.excel.MsgWrapper;
@@ -27,7 +29,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -243,6 +248,48 @@ public class FileUtils {
         }finally {
             closeCloseable(out);
         }
+    }
+
+    /**
+     * 图片压缩，图片比例按原比例输出
+     * tips: 压缩后的图片会替换原有的图片
+     * @param filepath
+     */
+    public static File compressImage(String filepath) {
+        try {
+            File file = new File(filepath);
+            BufferedImage tag = null;
+
+            // 开始读取文件并进行压缩
+            BufferedImage src = ImageIO.read(file);
+//            width = width >= 600 ? width : src.getWidth();
+//            height = height >= 600 ? height : src.getHeight();
+            int width = src.getWidth();
+            int height = src.getHeight();
+            long imageLength = file.length();
+
+            // 如果首次压缩图片还大于2M，则继续压缩
+            while (imageLength > (2 * 1024 * 1024)) {
+                // 压缩模式设置
+                tag = new BufferedImage( width,  height, BufferedImage.TYPE_INT_RGB);
+                tag.getGraphics().drawImage(src.getScaledInstance(width, height, Image.SCALE_SMOOTH), 0, 0, null);
+
+                // 缩小
+                ImageIO.write(tag, "jpg", file);
+                imageLength = file.length();
+            }
+
+            FileOutputStream output = new FileOutputStream(filepath);
+            //将图片按JPEG压缩
+            JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(output);
+            encoder.encode(tag);
+            output.close();
+
+            return new File(filepath);
+        } catch (Exception ef) {
+            ef.printStackTrace();
+        }
+        return null;
     }
 
     public String getFilePath(FileTypeEnum type, MsgWrapper msgWrapper) {
