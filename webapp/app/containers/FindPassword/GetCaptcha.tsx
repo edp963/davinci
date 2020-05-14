@@ -18,8 +18,15 @@
  * >>
  */
 
-import React, { useMemo, useCallback, useState, ReactElement } from 'react'
+import React, {
+  useMemo,
+  useCallback,
+  useState,
+  ReactElement,
+  ReactEventHandler
+} from 'react'
 import { Form, Input, Radio, Button } from 'antd'
+import { throttle } from 'lodash'
 import { FormComponentProps } from 'antd/lib/form/Form'
 import {
   GetPassWordType,
@@ -28,15 +35,23 @@ import {
   IOperateStates,
   FindPwStep
 } from './types'
-import {
-  getCaptchaforResetPassword
-} from 'containers/App/actions'
+import { getCaptchaforResetPassword } from 'containers/App/actions'
 import { useDispatch } from 'react-redux'
 
 const styles = require('./index.less')
 
 const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
-  ({ form, ticket, token, type, setTicket, setToken, setType, setStep, step }) => {
+  ({
+    form,
+    ticket,
+    token,
+    type,
+    setTicket,
+    setToken,
+    setType,
+    setStep,
+    step
+  }) => {
     const dispatch = useDispatch()
     const formItemLayout = useMemo(
       () => ({
@@ -57,13 +72,13 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
       (event) => {
         const typeValue: GetPassWordType = event.target.value
         setType(typeValue)
-        form.setFieldsValue({ticket: ''})
+        form.setFieldsValue({ ticket: '' })
       },
       [type, setType]
     )
 
     const handleSubmit = useCallback(
-      (e) => {
+      throttle((e: React.SyntheticEvent<MouseEvent>) => {
         e.preventDefault()
         form.validateFieldsAndScroll((err, values) => {
           if (!err) {
@@ -81,7 +96,7 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
             onGetCaptchaforResetPassword(params)
           }
         })
-      },
+      }, 3000),
       ['nf']
     )
 
@@ -91,9 +106,16 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
       }
     }, [step, setStep, token])
 
+    console.log(token)
+
     const Buttons: ReactElement = useMemo(() => {
       return token && token.length ? (
-        <Button type="primary" size="large" onClick={goNext} className={styles.next}>
+        <Button
+          type="primary"
+          size="large"
+          onClick={goNext}
+          className={styles.next}
+        >
           下一步
         </Button>
       ) : (
@@ -101,6 +123,7 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
           type="primary"
           size="large"
           htmlType="submit"
+          disabled={!!token}
           className={styles.submit}
         >
           确定
