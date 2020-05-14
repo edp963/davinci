@@ -200,7 +200,7 @@ const viewReducer = (
           resultList: []
         }
         draft.loading.execute = false
-        break;
+        break
       case ActionTypes.UPDATE_EDITING_VIEW:
         draft.editingView = action.payload.view
         break

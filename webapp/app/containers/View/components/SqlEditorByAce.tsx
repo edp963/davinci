@@ -113,8 +113,8 @@ function SqlEditor (props: ISqlEditorProps) {
   }, [])
 
   const selectionChange = useCallback(debounce((selection: any) => {
-    const rawSelectedQueryText = refEditor.current.editor.session.doc.getTextRange(selection.getRange());
-    const selectedQueryText = rawSelectedQueryText.length > 1 ? rawSelectedQueryText : null;
+    const rawSelectedQueryText = refEditor.current.editor.session.doc.getTextRange(selection.getRange())
+    const selectedQueryText = rawSelectedQueryText.length > 1 ? rawSelectedQueryText : null
     onSelect?.(selectedQueryText)
   }, 300), [])
 

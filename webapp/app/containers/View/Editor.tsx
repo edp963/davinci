@@ -321,7 +321,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
    */
   private viewRoleChange = (viewRoles: IViewRole[]) => {
     const { editingViewInfo, onUpdateEditingViewInfo } = this.props
-    let updatedRoles:IViewRole[] = []
+    let updatedRoles: IViewRole[] = []
     if (viewRoles.length === 1) {
       const [viewRole] = viewRoles
       const { roles } = editingViewInfo

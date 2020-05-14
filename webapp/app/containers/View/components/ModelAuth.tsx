@@ -57,17 +57,17 @@ enum EAllCheckedCheckboxStatus {
   indeterminate,
   allChecked
 }
-type TAllCheckedCheckboxStatus = { [variableName: string]: EAllCheckedCheckboxStatus }
+interface IAllCheckedCheckboxStatus { [variableName: string]: EAllCheckedCheckboxStatus }
 interface IModelAuthStates {
   modalVisible: boolean
   selectedRoleId: number
   selectedColumnAuth: string[]
-  allCheckedCheckboxStatus: TAllCheckedCheckboxStatus
+  allCheckedCheckboxStatus: IAllCheckedCheckboxStatus
 }
 
 export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthStates> {
 
-  authDatasourceMap = new Map<number, IViewRoleConverted>()
+  private authDatasourceMap = new Map<number, IViewRoleConverted>()
 
   public state: Readonly<IModelAuthStates> = {
     modalVisible: false,
@@ -76,7 +76,7 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
     allCheckedCheckboxStatus: {}
   }
 
-  public componentDidUpdate() {
+  public componentDidUpdate () {
     this.checkDataToChangeAllCheckedCheckboxStatus()
   }
 
@@ -116,38 +116,30 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
   }
 
   private allCheckedCheckboxStatusChange = (roleId: number, rowAuthConverted: IViewRoleRowAuthConverted) => {
-    const { authDatasourceMap } = this
-    const { name, values, variable, enable: checked } = rowAuthConverted
+    const { name, enable: checked } = rowAuthConverted
     this.setState((prevState, props) => {
       const { allCheckedCheckboxStatus } = prevState
       let status = allCheckedCheckboxStatus[name]
-      const localItem = authDatasourceMap.get(roleId)
+      const localItem = this.authDatasourceMap.get(roleId)
       localItem.rowAuthConverted[name] = rowAuthConverted
-      authDatasourceMap.set(roleId, localItem)
+      this.authDatasourceMap.set(roleId, localItem)
       if (checked) {
-        const isAllChecked = [...authDatasourceMap.values()].every(viewRoleConverted => viewRoleConverted.rowAuthConverted[name]?.enable)
-        if (isAllChecked) {
-          status = EAllCheckedCheckboxStatus.allChecked
-        } else {
-          status = EAllCheckedCheckboxStatus.indeterminate
-        }
+        const isAllChecked = [...this.authDatasourceMap.values()].every((viewRoleConverted) => viewRoleConverted.rowAuthConverted[name]?.enable)
+        status = isAllChecked ? EAllCheckedCheckboxStatus.allChecked : EAllCheckedCheckboxStatus.indeterminate
       } else {
-        const isEmpty = [...authDatasourceMap.values()].every(viewRoleConverted => !viewRoleConverted.rowAuthConverted[name]?.enable)
-        if (isEmpty) {
-          status = EAllCheckedCheckboxStatus.empty
-        } else {
-          status = EAllCheckedCheckboxStatus.indeterminate
-        }
+        const isEmpty = [...this.authDatasourceMap.values()].every((viewRoleConverted) => !viewRoleConverted.rowAuthConverted[name]?.enable)
+        status = isEmpty ? EAllCheckedCheckboxStatus.empty : EAllCheckedCheckboxStatus.indeterminate
       }
-      if (status !== allCheckedCheckboxStatus[name]) return { allCheckedCheckboxStatus: { ...allCheckedCheckboxStatus, [name]: status } }
+      if (status !== allCheckedCheckboxStatus[name]) {
+        return { allCheckedCheckboxStatus: { ...allCheckedCheckboxStatus, [name]: status } }
+      }
     })
   }
 
   private checkDataToChangeAllCheckedCheckboxStatus = () => {
-    const { authDatasourceMap } = this
-    authDatasourceMap.forEach((viewRoleConverted, roleId) => {
+    this.authDatasourceMap.forEach((viewRoleConverted, roleId) => {
       const { rowAuthConverted } = viewRoleConverted
-      Object.values(rowAuthConverted).forEach(viewRoleRowAuthConverted => {
+      Object.values(rowAuthConverted).forEach((viewRoleRowAuthConverted) => {
         this.allCheckedCheckboxStatusChange(roleId, viewRoleRowAuthConverted)
       })
     })
@@ -172,8 +164,7 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
 
   private viewRoleChangeAll = (checkedVariableName: string, checked: boolean) => {
     const { onViewRoleChange } = this.props
-    const { authDatasourceMap } = this
-    const viewRoles = [...authDatasourceMap].map(([roleId, viewRoleConverted]) => {
+    const viewRoles = [...this.authDatasourceMap].map(([roleId, viewRoleConverted]) => {
       const { columnAuth, rowAuthConverted } = viewRoleConverted
       const rowAuth = Object.entries(rowAuthConverted).map(([variableName, viewRoleAuthConverted]) => {
         const { name, values, enable } = viewRoleAuthConverted
@@ -215,19 +206,21 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
     onViewRoleChange([{ ...viewRole }])
   }
 
-  private getAuthTableColumns = memoizeOne((model: IViewModel, variables: IViewVariable[], allCheckedCheckboxStatus: TAllCheckedCheckboxStatus) => {
+  private getAuthTableColumns = memoizeOne((model: IViewModel, variables: IViewVariable[], allCheckedCheckboxStatus: IAllCheckedCheckboxStatus) => {
     const columnsChildren = variables
       .filter((v) => (v.type === ViewVariableTypes.Authorization && !v.fromService))
       .map<ColumnProps<IViewRoleConverted>>((variable) => ({
-        title: <>
-          <Checkbox
-            checked={allCheckedCheckboxStatus?.[variable.name] === EAllCheckedCheckboxStatus.allChecked}
-            indeterminate={allCheckedCheckboxStatus?.[variable.name] === EAllCheckedCheckboxStatus.indeterminate}
-            className={Styles.cellVarCheckbox}
-            onChange={this.rowAuthCheckedChangeAll(variable.name)}
-          />
-          {`${variable.alias || variable.name}`}
-        </>,
+        title: (
+          <>
+            <Checkbox
+              checked={allCheckedCheckboxStatus?.[variable.name] === EAllCheckedCheckboxStatus.allChecked}
+              indeterminate={allCheckedCheckboxStatus?.[variable.name] === EAllCheckedCheckboxStatus.indeterminate}
+              className={Styles.cellVarCheckbox}
+              onChange={this.rowAuthCheckedChangeAll(variable.name)}
+            />
+            {`${variable.alias || variable.name}`}
+          </>
+        ),
         dataIndex: 'rowAuthConverted' + variable.key,
         width: 250,
         render: (_, record: IViewRoleConverted) => {

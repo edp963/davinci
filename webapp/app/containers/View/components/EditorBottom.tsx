@@ -71,7 +71,7 @@ export const EditorBottom = (props: IEditorBottomProps) => {
       <Button onClick={stepChange(onStepChange, -1)}>取消</Button>
       <Button
         type="primary"
-        icon={ !loading ? "caret-right" : "pause-circle" }
+        icon={!loading ? 'caret-right' : 'pause-circle'}
         onClick={onExecuteSql}
       >
         {STATUS_BTN_TEXT + SELECT_CONTENT_BTN_TEXT}
