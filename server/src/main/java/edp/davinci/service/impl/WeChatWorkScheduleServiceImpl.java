@@ -4,6 +4,7 @@ import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.common.quartz.ScheduleService;
 import edp.core.utils.CollectionUtils;
+import edp.core.utils.FileUtils;
 import edp.core.utils.MD5Util;
 import edp.davinci.core.enums.CronJobMediaType;
 import edp.davinci.dao.CronJobMapper;
@@ -74,20 +75,30 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
 
         String url = cronJobConfig.getWebHookUrl();
 
-        images.forEach((img) -> {
-            if (null == img) {
+        for (ImageContent imageContent : images) {
+            if (null == imageContent) {
                 log.error("CronJob({}) image is null !", cronJob.getId());
                 return;
             }
-            if (img.getImageFile().length() > (2 * 1024 * 1024)) {
-                log.warn("image size more than 2M, the size is {} !", img.getImageFile().length());
-                scheduleLogger.info("image size more than 2M, the size is {} !", img.getImageFile().length());
-                // TODO: 2020-05-12 Pictures need to be compressed
-                return;
+            File imageContentFile = imageContent.getImageFile();
+            // 将大于2M的图片进行压缩
+            if (imageContentFile.length() > (2 * 1024 * 1024)) {
+                log.warn("image size must be less than 2M, the size is {} !", imageContentFile.length());
+                scheduleLogger.info("image size must be less than 2M, the size is {} !", imageContentFile.length());
+
+                scheduleLogger.info("image start to compressed!", imageContentFile.getPath());
+                File file = FileUtils.compressedImage(imageContent.getImageFile().getPath());
+
+                log.info("image compressed successfully!, the size is {}.", file.length());
+                scheduleLogger.info("image compressed successfully! the size is: {}.", file.length());
+                imageContent.setImageFile(file);
+
+                log.info("the original image has been replaced with a new image(path: {})!", imageContentFile.getPath());
+                scheduleLogger.info("the original image has been replaced with a new image(path: {})!", imageContentFile.getPath());
             }
             scheduleLogger.info("CronJob({}) is ready to request WeChatWork API", cronJob.getId());
 
-            Map mbMap = getMD5AndBase64(img.getImageFile());
+            Map mbMap = getMD5AndBase64(imageContent.getImageFile());
 
             Map weChatWorkMap = new HashMap();
             weChatWorkMap.put("msgtype", "image");
@@ -100,7 +111,7 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
             restTemplate.postForEntity(url, weChatWorkMap, null).toString();
 
             scheduleLogger.info("CronJob({}) is success to request WeChatWork API", cronJob.getId());
-        });
+        }
 
         scheduleLogger.info("CronJob({}) is finish! --------------", jobId);
     }
