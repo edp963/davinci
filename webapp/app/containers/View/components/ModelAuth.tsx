@@ -77,7 +77,7 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
   }
 
   public componentDidUpdate() {
-    this.checkDataToChangEAllCheckedCheckboxStatus()
+    this.checkDataToChangeAllCheckedCheckboxStatus()
   }
 
   private modelTypeOptions = Object.entries(ViewModelTypesLocale).map(([value, label]) => ({
@@ -143,7 +143,7 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
     })
   }
 
-  private checkDataToChangEAllCheckedCheckboxStatus = () => {
+  private checkDataToChangeAllCheckedCheckboxStatus = () => {
     const { authDatasourceMap } = this
     authDatasourceMap.forEach((viewRoleConverted, roleId) => {
       const { rowAuthConverted } = viewRoleConverted
