@@ -30,7 +30,6 @@ interface ILoginFormProps {
   onChangeUsername: (e: any) => any
   onChangePassword: (e: any) => any
   onLogin: () => any
-  onFindPassword: () => void
 }
 
 export class LoginForm extends React.PureComponent<ILoginFormProps, {}> {
@@ -42,15 +41,6 @@ export class LoginForm extends React.PureComponent<ILoginFormProps, {}> {
 
   public componentWillUnmount () {
     this.unbindDocumentKeypress()
-  }
-
-  private findPassword = () => {
-    // const { history } = this.props
-    // history.replace('/findPassword')
-    const { onFindPassword } = this.props
-    if (onFindPassword) {
-      onFindPassword()
-    }
   }
 
   private bindDocumentKeypress = () => {
@@ -99,10 +89,6 @@ export class LoginForm extends React.PureComponent<ILoginFormProps, {}> {
             onChange={onChangePassword}
           />
         </div>
-        <p className={styles.findPassword}>
-          <span>忘记密码？</span>
-          <a href="javascript:;" onClick={this.findPassword}>找回密码</a>
-        </p>
       </div>
     )
   }

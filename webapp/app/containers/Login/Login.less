@@ -43,9 +43,9 @@
   flex-direction: row;
   align-items: center;
 
-  // &:nth-child(2) {
-  //   border-bottom: 0;
-  // }
+  &:last-child {
+    border-bottom: 0;
+  }
 
   i {
     color: @white;
@@ -83,25 +83,28 @@
 }
 
 .tips {
-  .baseTips()
-}
-.findPassword {
-  display: flex;
-  justify-content: flex-end;
-  .baseTips()
+  width: 75%;
+  margin-top: 16px;
+  text-align: center;
+
+  span {
+    color: @light-bg;
+  }
+
+  a {
+    font-weight: bold;
+
+    &.register {
+      float: left;
+    }
+
+    &.forgetPassword {
+      float: right;
+    }
+  }
 }
 
 .joinOrganizationLoadingContent {
   padding: 20px 0;
   color: @white;
-}
-
-.baseTips(){
-  margin-top: 16px;
-  span {
-    color: @light-bg;
-  }
-  a {
-    font-weight: 600;
-  }
 }
