@@ -78,7 +78,7 @@ export class Login extends React.PureComponent<ILoginProps & RouteComponentProps
 
   private findPassword = () => {
     const { history } = this.props
-    history.replace('/findPassword')
+    history.push('/findPassword')
   }
 
   private changeUsername = (e) => {
@@ -131,7 +131,6 @@ export class Login extends React.PureComponent<ILoginProps & RouteComponentProps
           onChangeUsername={this.changeUsername}
           onChangePassword={this.changePassword}
           onLogin={this.doLogin}
-          onFindPassword={this.findPassword}
         />
         <button
           disabled={loginLoading}
@@ -145,8 +144,20 @@ export class Login extends React.PureComponent<ILoginProps & RouteComponentProps
           登 录
         </button>
         <p className={styles.tips}>
-          <span>还没有账号？ </span>
-          <a href="javascript:;" onClick={this.toSignUp}>注册davinci账号</a>
+          <a
+            href="javascript:;"
+            className={styles.register}
+            onClick={this.toSignUp}
+          >
+            注册新账户
+          </a>
+          <a
+            href="javascript:;"
+            className={styles.forgetPassword}
+            onClick={this.findPassword}
+          >
+            忘记密码？
+          </a>
         </p>
         <ExternalLogin />
       </div>
