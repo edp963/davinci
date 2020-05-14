@@ -30,10 +30,10 @@ import {
 } from './types'
 import { uuid } from 'app/utils/util'
 import {
-  FilterTypes,
-  FilterTypesOperatorSetting,
+  ControlTypes,
+  ControlTypesOperatorSetting,
   IS_RANGE_TYPE,
-  FilterTypesDynamicDefaultValueSetting,
+  ControlTypesDynamicDefaultValueSetting,
   ControlPanelTypes,
   DatePickerFormats,
   DatePickerDefaultValues,
@@ -48,9 +48,9 @@ export function getDefaultGlobalControl (): IGlobalControl {
   const control: IGlobalControl = {
     key: uuid(8, 16),
     name: '新建控制器',
-    type: FilterTypes.Select,
+    type: ControlTypes.Select,
     interactionType: 'column',
-    operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],
+    operator: ControlTypesOperatorSetting[ControlTypes.InputText][0],
     cache: false,
     expired: DEFAULT_CACHE_EXPIRED,
     width: 0,
@@ -67,9 +67,9 @@ export function getDefaultLocalControl (view: IFormedView): ILocalControl {
   const control: ILocalControl = {
     key: uuid(8, 16),
     name: '新建控制器',
-    type: FilterTypes.Select,
+    type: ControlTypes.Select,
     interactionType: 'column',
-    operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],
+    operator: ControlTypesOperatorSetting[ControlTypes.InputText][0],
     cache: false,
     expired: DEFAULT_CACHE_EXPIRED,
     width: 0,
@@ -78,8 +78,8 @@ export function getDefaultLocalControl (view: IFormedView): ILocalControl {
   return control
 }
 
-export function getVariableValue (filter: IControlBase, fields: IControlRelatedField | IControlRelatedField[], value) {
-  const { type, dateFormat, multiple } = filter
+export function getVariableValue (control: IControlBase, fields: IControlRelatedField | IControlRelatedField[], value) {
+  const { type, dateFormat, multiple } = control
   let name
   let valueType
   let variable = []
@@ -96,10 +96,10 @@ export function getVariableValue (filter: IControlBase, fields: IControlRelatedF
   }
 
   switch (type) {
-    case FilterTypes.InputText:
+    case ControlTypes.InputText:
       variable.push({ name, value: getValidVariableValue(value, valueType) })
       break
-    case FilterTypes.Select:
+    case ControlTypes.Select:
       if (multiple) {
         if (value.length && value.length > 0) {
           variable.push({ name, value: value.map((val) => getValidVariableValue(val, valueType)).join(',') })
@@ -108,7 +108,7 @@ export function getVariableValue (filter: IControlBase, fields: IControlRelatedF
         variable.push({ name, value: getValidVariableValue(value, valueType) })
       }
       break
-    case FilterTypes.NumberRange:
+    case ControlTypes.NumberRange:
       variable = value.reduce((arr, val, index) => {
         if (val !== '' && !isNaN(val)) {
           const { name, type: valueType } = fields[index]
@@ -117,19 +117,19 @@ export function getVariableValue (filter: IControlBase, fields: IControlRelatedF
         return arr
       }, [])
       break
-    // case FilterTypes.TreeSelect:
+    // case ControlTypes.TreeSelect:
     //   if (value.length && value.length > 0) {
     //     variable.push({ name, value: value.map((val) => getValidVariableValue(val, valueType)).join(',') })
     //   }
     //   break
-    case FilterTypes.Date:
+    case ControlTypes.Date:
       if (multiple) {
         variable.push({ name, value: value.split(',').map((v) => `'${v}'`).join(',') })
       } else {
         variable.push({ name, value: `'${moment(value).format(dateFormat)}'` })
       }
       break
-    case FilterTypes.DateRange:
+    case ControlTypes.DateRange:
       if (value.length) {
         variable = value
           .map((v, index) => {
@@ -168,10 +168,10 @@ export function getModelValue (control: IControlBase, field: IControlRelatedFiel
     operator
   }
   switch (type) {
-    case FilterTypes.InputText:
+    case ControlTypes.InputText:
       filters.push(commanFilterJson)
       break
-    case FilterTypes.Select:
+    case ControlTypes.Select:
       if (multiple) {
         if (Array.isArray(value) && value.length > 0) {
           const filterJson = {
@@ -184,7 +184,7 @@ export function getModelValue (control: IControlBase, field: IControlRelatedFiel
           filters.push(commanFilterJson)
       }
       break
-    case FilterTypes.NumberRange:
+    case ControlTypes.NumberRange:
       if (value[0] !== '' && !isNaN(value[0])) {
         const filterJson = {
           ...commanFilterJson,
@@ -202,12 +202,12 @@ export function getModelValue (control: IControlBase, field: IControlRelatedFiel
         filters.push(filterJson)
       }
       break
-    // case FilterTypes.TreeSelect:
+    // case ControlTypes.TreeSelect:
     //   if (value.length && value.length > 0) {
     //     filters.push(`${name} ${operator} (${value.map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
     //   }
     //   break
-    case FilterTypes.Date:
+    case ControlTypes.Date:
       if (multiple) {
         const filterJson = {
           ...commanFilterJson,
@@ -222,7 +222,7 @@ export function getModelValue (control: IControlBase, field: IControlRelatedFiel
         filters.push(filterJson)
       }
       break
-    case FilterTypes.DateRange:
+    case ControlTypes.DateRange:
       if (value.length) {
         const filterJson1 = {
           ...commanFilterJson,
@@ -273,9 +273,9 @@ export function getValidVariableValue (value, valueType: ViewVariableValueTypes)
 export function deserializeDefaultValue (control: IControlBase) {
   const { type, dynamicDefaultValue, defaultValue, multiple } = control
   switch (type) {
-    case FilterTypes.DateRange:
+    case ControlTypes.DateRange:
       return Array.isArray(defaultValue) ? defaultValue.map((val) => moment(val)) : defaultValue
-    case FilterTypes.Date:
+    case ControlTypes.Date:
       if (dynamicDefaultValue) {
         switch (dynamicDefaultValue) {
           case DatePickerDefaultValues.Today:
@@ -323,28 +323,28 @@ export function serializeDefaultValue (
   value
 ) {
   const { type, dateFormat, multiple } = control
-  if (type === FilterTypes.Date && !multiple) {
+  if (type === ControlTypes.Date && !multiple) {
     return value && value.format(dateFormat)
   } else {
     return value
   }
 }
 
-export function getOperatorOptions (type: FilterTypes, multiple: boolean): OperatorTypes[] {
-  const operatorTypes = FilterTypesOperatorSetting[type]
+export function getOperatorOptions (type: ControlTypes, multiple: boolean): OperatorTypes[] {
+  const operatorTypes = ControlTypesOperatorSetting[type]
   switch (type) {
-    case FilterTypes.Select:
-    case FilterTypes.Date:
+    case ControlTypes.Select:
+    case ControlTypes.Date:
       return multiple ? operatorTypes['multiple'] : operatorTypes['normal']
     default:
       return operatorTypes as OperatorTypes[]
   }
 }
 
-export function getDatePickerFormatOptions (type: FilterTypes, multiple: boolean): DatePickerFormats[] {
+export function getDatePickerFormatOptions (type: ControlTypes, multiple: boolean): DatePickerFormats[] {
   switch (type) {
-    case FilterTypes.Date:
-    case FilterTypes.DateRange:
+    case ControlTypes.Date:
+    case ControlTypes.DateRange:
       return multiple
         ? DatePickerFormatsSelectSetting['multiple']
         : DatePickerFormatsSelectSetting['normal']
@@ -353,12 +353,12 @@ export function getDatePickerFormatOptions (type: FilterTypes, multiple: boolean
   }
 }
 
-export function getDynamicDefaultValueOptions (type: FilterTypes, multiple: boolean): DatePickerDefaultValues[] {
+export function getDynamicDefaultValueOptions (type: ControlTypes, multiple: boolean): DatePickerDefaultValues[] {
   switch (type) {
-    case FilterTypes.Date:
+    case ControlTypes.Date:
       return multiple
-        ? FilterTypesDynamicDefaultValueSetting[type]['multiple']
-        : FilterTypesDynamicDefaultValueSetting[type]['normal']
+        ? ControlTypesDynamicDefaultValueSetting[type]['multiple']
+        : ControlTypesDynamicDefaultValueSetting[type]['normal']
     default:
       return []
   }
@@ -430,7 +430,7 @@ export function getParents<T extends IControlBase> (
 
 export function getRelatedFieldsInfo (
   view: IFormedView,
-  type: FilterTypes,
+  type: ControlTypes,
   interactionType: InteractionType,
   fields: IControlRelatedField | IControlRelatedField[]
 ): {
@@ -440,7 +440,7 @@ export function getRelatedFieldsInfo (
 } {
   const model = Object.entries(view.model)
     .filter(([k, v]: [string, IViewModelProps]) => {
-      return type === FilterTypes.NumberRange
+      return type === ControlTypes.NumberRange
         ? v.modelType === ViewModelTypes.Value
         : v.modelType === ViewModelTypes.Category
     })
@@ -468,7 +468,7 @@ export function getRelatedFieldsInfo (
         }
         if (IS_RANGE_TYPE[type]) {
           fields = [fieldBase]
-        } else if (type === FilterTypes.Select) {
+        } else if (type === ControlTypes.Select) {
           fields = {
             ...fieldBase,
             optionsFromColumn: false,

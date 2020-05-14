@@ -30,7 +30,7 @@ interface INumberRangeProps {
   value?: string[]
   size?: 'default' | 'large' | 'small'
   onChange?: (value: string[]) => void
-  onSearch: (value: string[]) => void
+  onSearch?: (value: string[]) => void
 }
 
 interface INumberRangeStates {
@@ -81,7 +81,10 @@ export class NumberRange extends PureComponent<INumberRangeProps, INumberRangeSt
   }
 
   private inputSearch = () => {
-    this.props.onSearch(this.state.value)
+    const { onSearch } = this.props
+    if (onSearch) {
+      onSearch(this.state.value)
+    }
   }
 
   public render () {

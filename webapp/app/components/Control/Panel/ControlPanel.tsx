@@ -29,25 +29,25 @@ import {
   IGlobalRenderTreeItem,
   ILocalRenderTreeItem,
   GlobalControlQueryMode
-} from './types'
+} from '../types'
 import {
   getVariableValue,
   getModelValue,
   getAllChildren,
   getParents,
   getPanelRenderState
-} from './util'
+} from '../util'
 import {
   SHOULD_LOAD_OPTIONS,
   CHANGE_IMMEDIATELY,
   ControlPanelTypes,
   ControlPanelLayoutTypes
-} from './constants'
+} from '../constants'
 import DashboardControlPanelLayout from './Layouts/Dashboard'
 import DashboardItemControlPanelLayout from './Layouts/DashboardItem'
 import FullScreenControlPanelLayout from './Layouts/FullScreen'
 
-interface IFilterPanelProps {
+interface IControlPanelProps {
   controls: IGlobalControl[] | ILocalControl[]
   items: string
   type: ControlPanelTypes
@@ -62,7 +62,7 @@ interface IFilterPanelProps {
   onSearch: (formValues?: object) => void
 }
 
-interface IFilterPanelStates {
+interface IControlPanelStates {
   renderTree: IRenderTreeItem[]
   flatTree: {
     [key: string]: IRenderTreeItem
@@ -72,8 +72,8 @@ interface IFilterPanelStates {
   prevItems: string
 }
 
-class FilterPanel extends PureComponent<IFilterPanelProps, IFilterPanelStates> {
-  public state: IFilterPanelStates = {
+class ControlPanel extends PureComponent<IControlPanelProps, IControlPanelStates> {
+  public state: IControlPanelStates = {
     renderTree: [],
     flatTree: {},
     defaultValues: {},
@@ -82,11 +82,11 @@ class FilterPanel extends PureComponent<IFilterPanelProps, IFilterPanelStates> {
   }
 
   public static getDerivedStateFromProps: GetDerivedStateFromProps<
-    IFilterPanelProps,
-    IFilterPanelStates
+    IControlPanelProps,
+    IControlPanelStates
   > = (props, state) => {
     const { type, controls, items } = props
-    let nextState: Partial<IFilterPanelStates> = {
+    let nextState: Partial<IControlPanelStates> = {
       prevControls: controls,
       prevItems: items
     }
@@ -109,7 +109,7 @@ class FilterPanel extends PureComponent<IFilterPanelProps, IFilterPanelStates> {
     )
   }
 
-  public componentDidUpdate(prevProps: IFilterPanelProps) {
+  public componentDidUpdate(prevProps: IControlPanelProps) {
     const { controls, reload, onSearch } = this.props
     const { defaultValues } = this.state
 
@@ -123,8 +123,8 @@ class FilterPanel extends PureComponent<IFilterPanelProps, IFilterPanelStates> {
   }
 
   private initFormValuesAndSelectOptions(
-    props: IFilterPanelProps,
-    state: IFilterPanelStates,
+    props: IControlPanelProps,
+    state: IControlPanelStates,
     initiated: boolean
   ) {
     const { formValues, onChange } = props
@@ -340,4 +340,4 @@ class FilterPanel extends PureComponent<IFilterPanelProps, IFilterPanelStates> {
   }
 }
 
-export default FilterPanel
+export default ControlPanel

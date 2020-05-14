@@ -41,10 +41,10 @@ import DashboardItem from 'containers/Dashboard/components/DashboardItem'
 import FullScreenPanel from './FullScreenPanel'
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import { ChartTypes } from 'containers/Widget/config/chart/ChartTypes'
-import { IFilters, IDistinctValueReqeustParams } from 'components/Filters/types'
+import { IFilters, IDistinctValueReqeustParams } from 'app/components/Control/types'
 import GlobalControlPanel from 'app/containers/ControlPanel/Global'
 import DownloadList from 'components/DownloadList'
-import { getValidColumnValue } from 'components/Filters/util'
+import { getValidColumnValue } from 'app/components/Control/util'
 import HeadlessBrowserIdentifier from 'share/components/HeadlessBrowserIdentifier'
 import { Row, Col } from 'antd'
 
@@ -105,7 +105,7 @@ import { IWidgetFormed } from 'app/containers/Widget/types'
 import {
   ControlPanelLayoutTypes,
   ControlPanelTypes
-} from 'app/components/Filters/constants'
+} from 'app/components/Control/constants'
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 

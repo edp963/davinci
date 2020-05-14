@@ -21,7 +21,7 @@
 import React, { Component, GetDerivedStateFromProps } from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import ControlPanelComponent from 'app/components/Filters/FilterPanel'
+import ControlPanelComponent from 'app/components/Control/Panel/ControlPanel'
 import ControlActions from './actions'
 const { setGlobalControlPanelFormValues } = ControlActions
 import {
@@ -29,11 +29,11 @@ import {
   makeSelectGlobalControlPanelSelectOptions
 } from './selectors'
 import { getFormValuesRelatedItems } from '../Dashboard/util'
-import { OnGetControlOptions } from 'app/components/Filters/types'
+import { OnGetControlOptions } from 'app/components/Control/types'
 import {
   ControlPanelTypes,
   ControlPanelLayoutTypes
-} from 'app/components/Filters/constants'
+} from 'app/components/Control/constants'
 import { IDashboard, IDashboardItem } from '../Dashboard/types'
 
 interface IGlobalControlPanelBaseProps {

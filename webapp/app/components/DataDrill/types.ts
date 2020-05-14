@@ -22,7 +22,7 @@ import { IViewModel } from 'containers/View/types'
 
 import { Merge } from 'utils/types'
 
-import { IFilters } from 'components/Filters/types'
+import { IFilters } from 'app/components/Control/types'
 
 import { IQueryVariableMap } from 'containers/Dashboard/types'
 

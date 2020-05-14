@@ -29,16 +29,16 @@ const Option = Select.Option
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 
+import Date from '../Control/Date'
 import {
-  FilterTypeList,
-  FilterTypesLocale,
-  FilterTypes,
+  ControlTypeList,
+  ControlTypesLocale,
+  ControlTypes,
   DatePickerFormats,
   DatePickerFormatsLocale,
   DatePickerDefaultValuesLocales,
   DatePickerDefaultValues
 } from '../constants'
-import { renderDate } from '..'
 import { InteractionType } from '../types'
 import {
   getOperatorOptions,
@@ -48,10 +48,10 @@ import {
 import ControlActions from 'containers/ControlPanel/actions'
 import { makeSelectConfigFormValues } from 'containers/ControlPanel/selectors'
 
-const utilStyles = require('assets/less/util.less')
-const styles = require('../filter.less')
+import utilStyles from 'assets/less/util.less'
+import styles from '../Control.less'
 
-interface IFilterFormBaseProps {
+interface IControlFormBaseProps {
   form: any
   interactionType: InteractionType
   onControlTypeChange: (value) => void
@@ -61,9 +61,9 @@ interface IFilterFormBaseProps {
 type MappedStates = ReturnType<typeof mapStateToProps>
 type MappedDispatches = ReturnType<typeof mapDispatchToProps>
 
-type IFilterFormProps = IFilterFormBaseProps & MappedStates & MappedDispatches
+type IControlFormProps = IControlFormBaseProps & MappedStates & MappedDispatches
 
-export class FilterForm extends React.Component<IFilterFormProps, {}> {
+export class ControlForm extends React.Component<IControlFormProps, {}> {
 
   private renderDefaultValueComponent = () => {
     const { form, configFormValues } = this.props
@@ -81,7 +81,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
     }
 
     switch (type) {
-      case FilterTypes.Date:
+      case ControlTypes.Date:
         container = (
           <>
             <Col span={8}>
@@ -106,7 +106,10 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
                   <Col span={8}>
                     <FormItem label=" " colon={false}>
                       {getFieldDecorator('defaultValue', {})(
-                        renderDate(configFormValues, null, 'small', null)
+                        <Date
+                          control={configFormValues}
+                          size="default"
+                        />
                       )}
                     </FormItem>
                   </Col>
@@ -130,14 +133,14 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
     let datePickerFormatOptions
     let customOptions
     let options
-    const filterTypeRelatedInput = []
+    const controlTypeRelatedInput = []
 
     if (configFormValues) {
       const { type: t, multiple, customOptions: co, options: o } = configFormValues
       type = t
       operatorOptions = getOperatorOptions(type, multiple)
       datePickerFormatOptions = getDatePickerFormatOptions(type, multiple)
-      customOptions = co && type === FilterTypes.Select
+      customOptions = co && type === ControlTypes.Select
       options = o
 
       const dateFormatFormComponent = (
@@ -172,15 +175,15 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
       )
 
       switch (type) {
-        case FilterTypes.Date:
-          filterTypeRelatedInput.push(dateFormatFormComponent)
-          filterTypeRelatedInput.push(multipleFormComponent)
+        case ControlTypes.Date:
+          controlTypeRelatedInput.push(dateFormatFormComponent)
+          controlTypeRelatedInput.push(multipleFormComponent)
           break
-        case FilterTypes.DateRange:
-          filterTypeRelatedInput.push(dateFormatFormComponent)
+        case ControlTypes.DateRange:
+          controlTypeRelatedInput.push(dateFormatFormComponent)
           break
-        case FilterTypes.Select:
-          filterTypeRelatedInput.push(multipleFormComponent)
+        case ControlTypes.Select:
+          controlTypeRelatedInput.push(multipleFormComponent)
         default:
           break
       }
@@ -197,7 +200,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
     }]
 
     return (
-      <Form className={styles.filterForm}>
+      <Form className={styles.controlForm}>
         <div className={styles.title}>
           <h2>控制器配置</h2>
         </div>
@@ -210,15 +213,15 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
               {getFieldDecorator('type', {})(
                 <Select>
                   {
-                    FilterTypeList.map((filterType) => (
-                      <Option key={filterType} value={filterType}>{FilterTypesLocale[filterType]}</Option>
+                    ControlTypeList.map((controlType) => (
+                      <Option key={controlType} value={controlType}>{ControlTypesLocale[controlType]}</Option>
                     ))
                   }
                 </Select>
               )}
             </FormItem>
           </Col>
-          {filterTypeRelatedInput}
+          {controlTypeRelatedInput}
         </Row>
         <Row gutter={8} className={styles.formBody}>
           {
@@ -257,7 +260,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
             </FormItem>
           </Col>
           {
-            type === FilterTypes.Select && (
+            type === ControlTypes.Select && (
               <>
                 <Col key="cache" span={6}>
                   <FormItem label="缓存">
@@ -284,7 +287,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
           {this.renderDefaultValueComponent()}
         </Row>
         {
-          type === FilterTypes.Select && (
+          type === ControlTypes.Select && (
             <Row gutter={8} className={styles.formBody}>
               <Col span={7}>
                 <FormItem label="选项">
@@ -333,7 +336,7 @@ export class FilterForm extends React.Component<IFilterFormProps, {}> {
 }
 
 const formOptions = {
-  onValuesChange: (props: IFilterFormProps, changedValues) => {
+  onValuesChange: (props: IControlFormProps, changedValues) => {
     const { configFormValues, onControlTypeChange, onSetConfigFormValues } = props
     const { operator, dateFormat } = configFormValues
 
@@ -350,8 +353,8 @@ const formOptions = {
         }
 
         switch (type) {
-          case FilterTypes.Date:
-          case FilterTypes.DateRange:
+          case ControlTypes.Date:
+          case ControlTypes.DateRange:
             if (!datePickerFormatOptions.includes(dateFormat)) {
               changedValues.dateFormat = DatePickerFormats.Date
             }
@@ -374,7 +377,7 @@ const formOptions = {
       ...changedValues
     })
   },
-  mapPropsToFields (props: IFilterFormProps) {
+  mapPropsToFields (props: IControlFormProps) {
     return props.configFormValues
       ? Object.entries(props.configFormValues)
           .reduce((result, [key, value]) => {
@@ -395,4 +398,4 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Form.create<FormComponentProps & IFilterFormProps>(formOptions)(FilterForm))
+export default connect(mapStateToProps, mapDispatchToProps)(Form.create<FormComponentProps & IControlFormProps>(formOptions)(ControlForm))
