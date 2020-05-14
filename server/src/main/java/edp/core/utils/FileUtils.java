@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -276,6 +277,14 @@ public class FileUtils {
 
                 // 缩小
                 ImageIO.write(tag, "jpg", file);
+
+                // 计算图片压缩率
+                float rate = CalcCompressedRate(imageLength, file.length());
+                // 如果压缩率小于10%，则不再进行压缩
+                if (rate < 10) {
+                    break;
+                }
+
                 imageLength = file.length();
             }
 
@@ -290,6 +299,18 @@ public class FileUtils {
             ef.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * 计算图片压缩率
+     * @param originLength
+     * @param compressedLength
+     * @return
+     */
+    public static float CalcCompressedRate(long originLength, long compressedLength) {
+        DecimalFormat df = new DecimalFormat("0.000");
+        String rate = df.format((float)originLength / compressedLength);
+        return (1 - Float.valueOf(rate)) * 100;
     }
 
     public String getFilePath(FileTypeEnum type, MsgWrapper msgWrapper) {
