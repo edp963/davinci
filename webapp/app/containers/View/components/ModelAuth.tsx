@@ -48,25 +48,39 @@ interface IModelAuthProps {
   roles: any[] // @FIXME role typing
   viewRoles: IViewRole[]
   onModelChange: (partialModel: IViewModel) => void
-  onViewRoleChange: (viewRole: IViewRole) => void
+  onViewRoleChange: (viewRole: IViewRole[]) => void
   onStepChange: (stepChange: number) => void
 }
 
+enum EAllCheckedCheckboxStatus {
+  empty = 1,
+  indeterminate,
+  allChecked
+}
+type TAllCheckedCheckboxStatus = { [variableName: string]: EAllCheckedCheckboxStatus }
 interface IModelAuthStates {
   modalVisible: boolean
   selectedRoleId: number
   selectedColumnAuth: string[]
+  allCheckedCheckboxStatus: TAllCheckedCheckboxStatus
 }
 
 export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthStates> {
 
+  authDatasourceMap = new Map<number, IViewRoleConverted>()
+
   public state: Readonly<IModelAuthStates> = {
     modalVisible: false,
     selectedRoleId: 0,
-    selectedColumnAuth: []
+    selectedColumnAuth: [],
+    allCheckedCheckboxStatus: {}
   }
 
-  private modelTypeOptions = Object.entries(ViewModelTypesLocale).map(([value, label]) => ({
+  public componentDidUpdate() {
+    this.checkDataToChangEAllCheckedCheckboxStatus()
+  }
+
+  private modelTypeOptions = Object.entries(ViewModelTypesLocale).map(([value, label]) => ({
     label,
     value
   }))
@@ -101,6 +115,44 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
     })
   }
 
+  private allCheckedCheckboxStatusChange = (roleId: number, rowAuthConverted: IViewRoleRowAuthConverted) => {
+    const { authDatasourceMap } = this
+    const { name, values, variable, enable: checked } = rowAuthConverted
+    this.setState((prevState, props) => {
+      const { allCheckedCheckboxStatus } = prevState
+      let status = allCheckedCheckboxStatus[name]
+      const localItem = authDatasourceMap.get(roleId)
+      localItem.rowAuthConverted[name] = rowAuthConverted
+      authDatasourceMap.set(roleId, localItem)
+      if (checked) {
+        const isAllChecked = [...authDatasourceMap.values()].every(viewRoleConverted => viewRoleConverted.rowAuthConverted[name]?.enable)
+        if (isAllChecked) {
+          status = EAllCheckedCheckboxStatus.allChecked
+        } else {
+          status = EAllCheckedCheckboxStatus.indeterminate
+        }
+      } else {
+        const isEmpty = [...authDatasourceMap.values()].every(viewRoleConverted => !viewRoleConverted.rowAuthConverted[name]?.enable)
+        if (isEmpty) {
+          status = EAllCheckedCheckboxStatus.empty
+        } else {
+          status = EAllCheckedCheckboxStatus.indeterminate
+        }
+      }
+      if (status !== allCheckedCheckboxStatus[name]) return { allCheckedCheckboxStatus: { ...allCheckedCheckboxStatus, [name]: status } }
+    })
+  }
+
+  private checkDataToChangEAllCheckedCheckboxStatus = () => {
+    const { authDatasourceMap } = this
+    authDatasourceMap.forEach((viewRoleConverted, roleId) => {
+      const { rowAuthConverted } = viewRoleConverted
+      Object.values(rowAuthConverted).forEach(viewRoleRowAuthConverted => {
+        this.allCheckedCheckboxStatusChange(roleId, viewRoleRowAuthConverted)
+      })
+    })
+  }
+
   private rowAuthCheckedChange = (roleId: number, rowAuthConverted: IViewRoleRowAuthConverted) => (e: CheckboxChangeEvent) => {
     const checked = e.target.checked
     const { name, values } = rowAuthConverted
@@ -110,6 +162,26 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
       enable: checked
     }
     this.viewRoleChange(roleId, updatedRoleAuth)
+    this.allCheckedCheckboxStatusChange(roleId, { ...rowAuthConverted, enable: checked })
+  }
+
+  private rowAuthCheckedChangeAll = (variableName: string) => (e: CheckboxChangeEvent) => {
+    const checked = e.target.checked
+    this.viewRoleChangeAll(variableName, checked)
+  }
+
+  private viewRoleChangeAll = (checkedVariableName: string, checked: boolean) => {
+    const { onViewRoleChange } = this.props
+    const { authDatasourceMap } = this
+    const viewRoles = [...authDatasourceMap].map(([roleId, viewRoleConverted]) => {
+      const { columnAuth, rowAuthConverted } = viewRoleConverted
+      const rowAuth = Object.entries(rowAuthConverted).map(([variableName, viewRoleAuthConverted]) => {
+        const { name, values, enable } = viewRoleAuthConverted
+        return { name, values, enable: checkedVariableName === name ? checked : enable }
+      })
+      return { roleId, columnAuth, rowAuth }
+    })
+    onViewRoleChange(viewRoles)
   }
 
   private rowAuthValuesChange = (roleId: number, rowAuthConverted: IViewRoleRowAuthConverted) => (values: Array<string | number | boolean>) => {
@@ -140,15 +212,23 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
         viewRole.rowAuth[variableIdx].enable = updatedRoleAuth.enable
       }
     }
-    onViewRoleChange({ ...viewRole })
+    onViewRoleChange([{ ...viewRole }])
   }
 
-  private getAuthTableColumns = memoizeOne((model: IViewModel, variables: IViewVariable[]) => {
+  private getAuthTableColumns = memoizeOne((model: IViewModel, variables: IViewVariable[], allCheckedCheckboxStatus: TAllCheckedCheckboxStatus) => {
     const columnsChildren = variables
       .filter((v) => (v.type === ViewVariableTypes.Authorization && !v.fromService))
       .map<ColumnProps<IViewRoleConverted>>((variable) => ({
-        title: `${variable.alias || variable.name}`,
-        dataIndex: 'rowAuthConverted',
+        title: <>
+          <Checkbox
+            checked={allCheckedCheckboxStatus?.[variable.name] === EAllCheckedCheckboxStatus.allChecked}
+            indeterminate={allCheckedCheckboxStatus?.[variable.name] === EAllCheckedCheckboxStatus.indeterminate}
+            className={Styles.cellVarCheckbox}
+            onChange={this.rowAuthCheckedChangeAll(variable.name)}
+          />
+          {`${variable.alias || variable.name}`}
+        </>,
+        dataIndex: 'rowAuthConverted' + variable.key,
         width: 250,
         render: (_, record: IViewRoleConverted) => {
           const { name: variableName, valueType } = variable
@@ -225,7 +305,7 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
 
   private getAuthDatasource = (roles: any[], varibles: IViewVariable[], viewRoles: IViewRole[]) => {
     if (!Array.isArray(roles)) { return [] }
-
+    const authDatasourceMap = new Map<number, IViewRoleConverted>()
     const authDatasource = roles.map<IViewRoleConverted>((role) => {
       const { id: roleId, name: roleName, description: roleDesc } = role
       const viewRole = viewRoles.find((v) => v.roleId === roleId)
@@ -252,14 +332,17 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
         }
         return obj
       }, {})
-      return {
+      const authDatasourceItem = {
         roleId,
         roleName,
         roleDesc,
         columnAuth,
         rowAuthConverted
       }
+      authDatasourceMap.set(roleId, authDatasourceItem)
+      return authDatasourceItem
     })
+    this.authDatasourceMap = authDatasourceMap
     return authDatasource
   }
 
@@ -297,7 +380,7 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
         columnAuth
       }
     }
-    onViewRoleChange(viewRole)
+    onViewRoleChange([viewRole])
     this.closeModelAuth()
   }
 
@@ -307,9 +390,9 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
 
   public render () {
     const { visible, model, variable, viewRoles, sqlColumns, roles, onModelChange } = this.props
-    const { modalVisible, selectedColumnAuth, selectedRoleId } = this.state
+    const { modalVisible, selectedColumnAuth, selectedRoleId, allCheckedCheckboxStatus } = this.state
     const modelDatasource = Object.entries(model).map(([name, value]) => ({ name, ...value }))
-    const authColumns = this.getAuthTableColumns(model, variable)
+    const authColumns = this.getAuthTableColumns(model, variable, allCheckedCheckboxStatus)
     const authScroll = this.getAuthTableScroll(authColumns)
     const authDatasource = this.getAuthDatasource(roles, variable, viewRoles)
     const styleCls = classnames({

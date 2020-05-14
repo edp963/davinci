@@ -313,11 +313,23 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     onUpdateEditingViewInfo(updatedViewInfo)
   }
 
-  private viewRoleChange = (viewRole: IViewRole) => {
+  /**
+   * 数组长度1为单选，大于1为全选
+   * @param {IViewRole[]} viewRoles
+   * @private
+   * @memberof ViewEditor
+   */
+  private viewRoleChange = (viewRoles: IViewRole[]) => {
     const { editingViewInfo, onUpdateEditingViewInfo } = this.props
-    const { roles } = editingViewInfo
-    const updatedRoles = roles.filter((role) => role.roleId !== viewRole.roleId)
-    updatedRoles.push(viewRole)
+    let updatedRoles:IViewRole[] = []
+    if (viewRoles.length === 1) {
+      const [viewRole] = viewRoles
+      const { roles } = editingViewInfo
+      updatedRoles = roles.filter((role) => role.roleId !== viewRole.roleId)
+      updatedRoles.push(viewRole)
+    } else {
+      updatedRoles = viewRoles
+    }
     const updatedViewInfo = {
       ...editingViewInfo,
       roles: updatedRoles
