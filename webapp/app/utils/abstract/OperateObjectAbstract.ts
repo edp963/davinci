@@ -47,6 +47,10 @@ export abstract class OperateObjectAbstract {
     return target
   }
 
+  public static getPropsByPropery<T, U extends keyof T> (target: T, property: U): IValue<T, U> {
+    return target[property]
+  }
+
 }
 
 
