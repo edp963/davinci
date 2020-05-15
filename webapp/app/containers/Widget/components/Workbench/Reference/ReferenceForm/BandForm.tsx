@@ -31,7 +31,7 @@ import {
   fontFamilyOptions,
   fontSizeOptions,
   lineStyleOptions
-} from '.'
+} from './Options'
 import { IDataParamSource } from '../../Dropbox'
 import { decodeMetricName } from '../../../util'
 import utilStyles from 'assets/less/util.less'
