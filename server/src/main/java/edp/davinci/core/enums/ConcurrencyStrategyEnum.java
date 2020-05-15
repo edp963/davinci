@@ -20,6 +20,7 @@ package edp.davinci.core.enums;
 
 import lombok.Getter;
 
+@Getter
 public enum ConcurrencyStrategyEnum {
     DIRTY_READ(0),
     FAIL_FAST(1);
