@@ -195,4 +195,6 @@ export interface IViewState {
   bizs: IDacBiz[]
 
   cancelTokenSources: CancelTokenSource[]
+
+  isLastExecuteWholeSql: boolean
 }

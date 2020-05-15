@@ -29,6 +29,7 @@ import {
 import { IDataRequestBody } from '../Dashboard/types'
 import { RenderType } from 'containers/Widget/components/Widget'
 import { IDistinctValueReqeustParams, IControlOption } from 'app/components/Control/types'
+import { EExecuteType } from './Editor'
 const CancelToken = axios.CancelToken
 
 export const ViewActions = {
@@ -179,11 +180,21 @@ export const ViewActions = {
     }
   },
 
-  executeSql (params: IExecuteSqlParams) {
+  setIsLastExecuteWholeSql (isLastExecuteWholeSql: boolean) {
+    return {
+      type: ActionTypes.IS_LAST_EXECUTE_WHOLE_SQL,
+      payload: {
+        isLastExecuteWholeSql
+      }
+    }
+  },
+
+  executeSql (params: IExecuteSqlParams, exeType: EExecuteType) {
     return {
       type: ActionTypes.EXECUTE_SQL,
       payload: {
-        params
+        params,
+        exeType
       }
     }
   },
@@ -201,6 +212,12 @@ export const ViewActions = {
       payload: {
         err
       }
+    }
+  },
+  executeSqlCancel () {
+    return {
+      type: ActionTypes.EXECUTE_SQL_CANCEL,
+      payload: {}
     }
   },
 

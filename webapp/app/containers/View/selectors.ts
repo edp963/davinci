@@ -86,6 +86,11 @@ const makeSelectBizs = () => createSelector(
   (viewState: IViewState) => viewState.bizs
 )
 
+const makeSelectIsLastExecuteWholeSql = () => createSelector(
+  selectView,
+  (viewState: IViewState) => viewState.isLastExecuteWholeSql
+)
+
 export {
   selectView,
   makeSelectViews,
@@ -101,5 +106,7 @@ export {
 
   makeSelectChannels,
   makeSelectTenants,
-  makeSelectBizs
+  makeSelectBizs,
+
+  makeSelectIsLastExecuteWholeSql
 }
