@@ -145,7 +145,6 @@ public class ScreenshotUtil {
             }
 
             driver.manage().window().setSize(new Dimension(width, height));
-            driver.manage().window().setSize(new Dimension(500, 300));
             Thread.sleep(2000);
             return ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
 
