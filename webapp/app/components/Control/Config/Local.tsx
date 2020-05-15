@@ -26,26 +26,26 @@ import {
   InteractionType,
   IControlRelatedField,
   ILocalControl
-} from 'app/components/Filters/types'
+} from '../types'
 import {
   getDefaultLocalControl,
   deserializeDefaultValue,
   serializeDefaultValue,
   getRelatedFieldsInfo
-} from 'app/components/Filters/util'
-import { FilterTypes, IS_RANGE_TYPE} from 'app/components/Filters/constants'
+} from '../util'
+import { ControlTypes, IS_RANGE_TYPE} from '../constants'
 import { localControlMigrationRecorder } from 'app/utils/migrationRecorders'
 
 import { ListFormLayout, List } from 'app/components/ListFormLayout'
-import FilterList from 'app/components/Filters/config/FilterList'
-import FilterFormWithRedux, { FilterForm } from 'app/components/Filters/config/FilterForm'
-import OptionSettingFormWithModal, { OptionSettingForm } from 'app/components/Filters/config/OptionSettingForm'
+import ControlList from '../Config/ControlList'
+import ControlFormWithRedux, { ControlForm } from '../Config/ControlForm'
+import OptionSettingFormWithModal, { OptionSettingForm } from '../Config/OptionSettingForm'
 import { Form, Row, Col, Button, Modal, Radio, Select, Checkbox } from 'antd'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import ControlActions from 'containers/ControlPanel/actions'
 import { IViewVariable, IFormedView, IViewModelProps } from 'app/containers/View/types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
-import styles from 'app/components/Filters/filter.less'
+import styles from '../Control.less'
 
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
@@ -67,7 +67,7 @@ interface ILocalControlConfigProps {
   view: IFormedView
   visible: boolean
   onCancel: () => void
-  onSave: (filterItems: any[]) => void
+  onSave: (controlItems: any[]) => void
   onSetConfigFormValues: (values) => void
 }
 
@@ -92,7 +92,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
     }
   }
 
-  private filterForm = createRef<FilterForm>()
+  private controlForm = createRef<ControlForm>()
   private optionSettingForm = createRef<OptionSettingForm>()
 
   public componentWillReceiveProps (nextProps: ILocalControlConfigProps) {
@@ -141,7 +141,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
     }
   }
 
-  private selectFilter = (key: string) => {
+  private selectControl = (key: string) => {
     this.getCachedFormValues((err, controls) => {
       if (err) { return }
       const selected = controls.find((c) => c.key === key)
@@ -154,32 +154,32 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
     })
   }
 
-  private addFilter = () => {
+  private addControl = () => {
     const { view } = this.props
     const { controls, selected } = this.state
-    const newFilter: ILocalControl = getDefaultLocalControl(view)
+    const control: ILocalControl = getDefaultLocalControl(view)
 
     if (selected) {
       this.getCachedFormValues((err, cachedControls) => {
         if (err) { return }
         this.setState({
-          controls: [...cachedControls, newFilter],
-          selected: newFilter,
-          relatedFields: this.getRelatedFields(newFilter)
+          controls: [...cachedControls, control],
+          selected: control,
+          relatedFields: this.getRelatedFields(control)
         })
-        this.setFormData(newFilter)
+        this.setFormData(control)
       })
     } else {
       this.setState({
-        controls: [...controls, newFilter],
-        selected: newFilter,
-        relatedFields: this.getRelatedFields(newFilter)
+        controls: [...controls, control],
+        selected: control,
+        relatedFields: this.getRelatedFields(control)
       })
-      this.setFormData(newFilter)
+      this.setFormData(control)
     }
   }
 
-  private deleteFilter = (keys: string[], reselectedKey: string) => {
+  private deleteControl = (keys: string[], reselectedKey: string) => {
     const { controls } = this.state
 
     const reselected = reselectedKey
@@ -262,7 +262,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
     resolve?: (err, cachedControls?) => void
   ) => {
     const { controls, selected, relatedFields } = this.state
-    this.filterForm.current.props.form.validateFieldsAndScroll((err, values) => {
+    this.controlForm.current.props.form.validateFieldsAndScroll((err, values) => {
       if (err) {
         if (resolve) {
           resolve(err)
@@ -333,7 +333,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
       } else {
         detail = variables.find((m) => m.name === value)
         fields = {
-          ...selected.type === FilterTypes.Select && relatedFields.fields,
+          ...selected.type === ControlTypes.Select && relatedFields.fields,
           name: detail.name,
           type: detail.valueType
         }
@@ -408,7 +408,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
 
   private getValidaFields = (
     interactionType: InteractionType,
-    type: FilterTypes,
+    type: ControlTypes,
     fields: IControlRelatedField | IControlRelatedField[]
   ): IControlRelatedField | IControlRelatedField[] => {
     if (fields) {
@@ -450,7 +450,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
               : { text: tnvArr[0], value: tnvArr[1] }
           })
       : []
-      this.filterForm.current.props.form.setFieldsValue({options})
+      this.controlForm.current.props.form.setFieldsValue({options})
       this.closeOptionModal()
     })
   }
@@ -480,7 +480,7 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
       const { model: o, variables: v, fields } = relatedFields
       interactionType = it
       interactionTypeContent = interactionType === 'column' ? '字段' : '变量'
-      variableSelect = it === 'variable' && t === FilterTypes.Select
+      variableSelect = it === 'variable' && t === ControlTypes.Select
       model = o
       variables = v
       if (Array.isArray(fields)) {
@@ -530,119 +530,117 @@ export class LocalControlConfig extends React.Component<ILocalControlConfigProps
           initialSize={256}
           minSize={256}
           maxSize={480}
-          className={styles.filterConfig}
+          className={styles.controlConfig}
           spliter
         >
           <List
             title="控制器列表"
             className={styles.treeContainer}
-            onAddItem={this.addFilter}
+            onAddItem={this.addControl}
           >
-            <FilterList
+            <ControlList
               list={controls}
-              selectedFilter={selected}
-              onSelectFilter={this.selectFilter}
-              onDeleteFilter={this.deleteFilter}
+              selected={selected}
+              onSelect={this.selectControl}
+              onDelete={this.deleteControl}
               onNameChange={this.changeName}
               onParentChange={this.changeParent}
             />
           </List>
-          <div className={styles.configForm}>
-            {
-              selected && (
-                <div className={styles.filterFormContainer}>
-                  <div className={styles.baseForm}>
-                    <div className={styles.title}>
-                      <h2>基础配置</h2>
-                    </div>
-                    <Row gutter={8} className={styles.formBody}>
+          {
+            selected && (
+              <div className={styles.localConfigForm}>
+                <div className={styles.baseForm}>
+                  <div className={styles.title}>
+                    <h2>基础配置</h2>
+                  </div>
+                  <Row gutter={8} className={styles.formBody}>
+                    <Col span={4}>
+                      <FormItem label="类型">
+                        <RadioGroup
+                          value={interactionType}
+                          onChange={this.interactionTypeChange}
+                        >
+                          <Radio value="column">字段</Radio>
+                          <Radio value="variable">变量</Radio>
+                        </RadioGroup>
+                      </FormItem>
+                    </Col>
+                    {variableSelect && (
                       <Col span={4}>
-                        <FormItem label="类型">
-                          <RadioGroup
-                            value={interactionType}
-                            onChange={this.interactionTypeChange}
+                        <FormItem label=" " colon={false}>
+                          <Checkbox
+                            checked={optionsFromColumn}
+                            onChange={this.optionsFromColumnChecked}
                           >
-                            <Radio value="column">字段</Radio>
-                            <Radio value="variable">变量</Radio>
-                          </RadioGroup>
+                            从字段取值
+                          </Checkbox>
                         </FormItem>
                       </Col>
-                      {variableSelect && (
-                        <Col span={4}>
-                          <FormItem label=" " colon={false}>
-                            <Checkbox
-                              checked={optionsFromColumn}
-                              onChange={this.optionsFromColumnChecked}
-                            >
-                              从字段取值
-                            </Checkbox>
-                          </FormItem>
-                        </Col>
-                      )}
-                      <Col span={8}>
-                        <FormItem label={`关联${interactionTypeContent}`}>
-                          <Select
-                            placeholder="请选择"
-                            className={styles.selector}
-                            value={fieldsValue}
-                            onChange={this.modelOrVariableSelect}
-                            dropdownMatchSelectWidth={false}
-                            {...isMultiple && {mode: 'multiple'}}
-                          >
-                            {
-                              interactionType === 'column'
-                                ? model.map((m: IViewModelProps) => (
-                                  <Option key={m.name} value={m.name}>{m.name}</Option>
-                                ))
-                                : variables.map((v) => (
-                                  <Option
-                                    key={v.name}
-                                    value={v.name}
-                                    disabled={
-                                      isMultiple
-                                      && fieldsValue.length === 2
-                                      && !fieldsValue.includes(v.name)
-                                    }
-                                  >
-                                    {v.name}
-                                  </Option>
-                                ))
-                            }
-                          </Select>
-                        </FormItem>
-                      </Col>
-                      {optionsFromColumn && (
-                        <Col span={8}>
-                          <FormItem label="取值字段">
-                          <Select
-                            placeholder="请选择"
-                            className={styles.selector}
-                            value={column}
-                            onChange={this.optionsFromColumnSelect}
-                            dropdownMatchSelectWidth={false}
-                            {...isMultiple && {mode: 'multiple'}}
-                          >
-                            {
-                              model.map((m: IViewModelProps) => (
+                    )}
+                    <Col span={8}>
+                      <FormItem label={`关联${interactionTypeContent}`}>
+                        <Select
+                          placeholder="请选择"
+                          className={styles.selector}
+                          value={fieldsValue}
+                          onChange={this.modelOrVariableSelect}
+                          dropdownMatchSelectWidth={false}
+                          {...isMultiple && {mode: 'multiple'}}
+                        >
+                          {
+                            interactionType === 'column'
+                              ? model.map((m: IViewModelProps) => (
                                 <Option key={m.name} value={m.name}>{m.name}</Option>
                               ))
-                            }
-                          </Select>
-                          </FormItem>
-                        </Col>
-                      )}
-                    </Row>
-                  </div>
-                  <FilterFormWithRedux
-                    interactionType={selected.interactionType}
-                    onControlTypeChange={this.controlTypeChange}
-                    onOpenOptionModal={this.openOptionModal}
-                    wrappedComponentRef={this.filterForm}
-                  />
+                              : variables.map((v) => (
+                                <Option
+                                  key={v.name}
+                                  value={v.name}
+                                  disabled={
+                                    isMultiple
+                                    && fieldsValue.length === 2
+                                    && !fieldsValue.includes(v.name)
+                                  }
+                                >
+                                  {v.name}
+                                </Option>
+                              ))
+                          }
+                        </Select>
+                      </FormItem>
+                    </Col>
+                    {optionsFromColumn && (
+                      <Col span={8}>
+                        <FormItem label="取值字段">
+                        <Select
+                          placeholder="请选择"
+                          className={styles.selector}
+                          value={column}
+                          onChange={this.optionsFromColumnSelect}
+                          dropdownMatchSelectWidth={false}
+                          {...isMultiple && {mode: 'multiple'}}
+                        >
+                          {
+                            model.map((m: IViewModelProps) => (
+                              <Option key={m.name} value={m.name}>{m.name}</Option>
+                            ))
+                          }
+                        </Select>
+                        </FormItem>
+                      </Col>
+                    )}
+                  </Row>
                 </div>
-              )
-            }
-          </div>
+                <ControlFormWithRedux
+                  interactionType={selected.interactionType}
+                  onControlTypeChange={this.controlTypeChange}
+                  onOpenOptionModal={this.openOptionModal}
+                  wrappedComponentRef={this.controlForm}
+                />
+              </div>
+            )
+          }
         </ListFormLayout>
         <OptionSettingFormWithModal
           visible={optionModalVisible}

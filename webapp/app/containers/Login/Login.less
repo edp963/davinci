@@ -13,7 +13,7 @@
 
   .form {
     width: 100%;
-    margin-bottom: 32px;
+    margin-bottom: 16px;
   }
 
   button {
@@ -83,12 +83,24 @@
 }
 
 .tips {
+  width: 75%;
   margin-top: 16px;
+  text-align: center;
+
   span {
     color: @light-bg;
   }
+
   a {
-    font-weight: 600;
+    font-weight: bold;
+
+    &.register {
+      float: left;
+    }
+
+    &.forgetPassword {
+      float: right;
+    }
   }
 }
 

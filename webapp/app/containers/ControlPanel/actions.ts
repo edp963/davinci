@@ -20,7 +20,7 @@
 
 import { returnType } from 'utils/redux'
 import { ActionTypes } from './constants'
-import { IControlBase } from 'app/components/Filters/types'
+import { IControlBase } from 'app/components/Control/types'
 
 export const ControlActions = {
   setGlobalControlPanelFormValues(values: object) {

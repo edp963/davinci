@@ -7,3 +7,5 @@ export interface IDownloadRecord {
   userId?: number
   uuid?: string
 }
+
+

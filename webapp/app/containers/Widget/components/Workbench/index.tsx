@@ -31,7 +31,7 @@ import ChartTypes from '../../config/chart/ChartTypes'
 import { FieldSortTypes, fieldGroupedSort } from '../Config/Sort'
 import { message } from 'antd'
 import 'assets/less/resizer.less'
-import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
 import { IReference } from './Reference/types'
 import { IWorkbenchSettings, WorkbenchQueryMode } from './types'
 import { widgetDimensionMigrationRecorder, barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
@@ -255,7 +255,6 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
   }
 
   private deleteComputed = (computeField) => {
-    console.log({computeField})
     const { from } = computeField
     const { match, onEditWidget } = this.props
     const { id, name, description, selectedViewId, controls, references, cache, autoLoadData, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state

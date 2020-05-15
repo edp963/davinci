@@ -31,8 +31,8 @@ import {
 } from 'app/containers/Dashboard/types'
 import { IWidgetFormed } from 'app/containers/Widget/types'
 import { IFormedView } from 'app/containers/View/types'
-import { OnGetControlOptions } from 'app/components/Filters/types'
-import { ControlPanelTypes } from 'app/components/Filters/constants'
+import { OnGetControlOptions } from 'app/components/Control/types'
+import { ControlPanelTypes } from 'app/components/Control/constants'
 import { IShareDashboardItemInfo } from './types'
 
 interface IWrapperBaseProps {

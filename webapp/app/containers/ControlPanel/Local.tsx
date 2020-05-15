@@ -20,7 +20,7 @@
 
 import React, { PureComponent } from 'react'
 import { connect } from 'react-redux'
-import ControlPanelComponent from 'app/components/Filters/FilterPanel'
+import ControlPanelComponent from 'app/components/Control/Panel/ControlPanel'
 import ControlActions from './actions'
 const { setLocalControlPanelFormValues } = ControlActions
 import {
@@ -30,11 +30,11 @@ import {
 import {
   GlobalControlQueryMode,
   OnGetControlOptions
-} from 'app/components/Filters/types'
+} from 'app/components/Control/types'
 import {
   ControlPanelTypes,
   ControlPanelLayoutTypes
-} from 'app/components/Filters/constants'
+} from 'app/components/Control/constants'
 import { IWidgetFormed } from 'app/containers/Widget/types'
 
 interface ILocalControlPanelBaseProps {

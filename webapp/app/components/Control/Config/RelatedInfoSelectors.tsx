@@ -24,21 +24,21 @@ import { Form, Row, Col, Checkbox, Select, Radio, Empty } from 'antd'
 import { InteractionType, IControlRelatedField } from '../types'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
-import { IRelatedItemSource, IRelatedViewSource } from './FilterConfig'
+import { IRelatedItemSource, IRelatedViewSource } from './Global'
 import { IViewModelProps } from 'app/containers/View/types'
-import { FilterTypes } from '../constants'
+import { ControlTypes } from '../constants'
 
 const FormItem = Form.Item
 const Option = Select.Option
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
-const styles = require('../filter.less')
+import styles from '../Control.less'
 
 interface IRelatedInfoSelectorsProps {
   itemSelectorSource: IRelatedItemSource[]
   viewSelectorSource: IRelatedViewSource[]
   interactionType: InteractionType
-  controlType: FilterTypes
+  controlType: ControlTypes
   onItemCheck: (id: number) => () => void
   onModelOrVariableSelect: (id: number) => (value: string | string[]) => void
   onOptionsFromColumnCheck: (id: number) => (e: CheckboxChangeEvent) => void
@@ -76,7 +76,7 @@ export class RelatedInfoSelectors extends PureComponent<IRelatedInfoSelectorsPro
     const checkAll = itemSelectorSource.every((i) => i.checked)
 
     const interactionTypeContent = interactionType === 'column' ? '字段' : '变量'
-    const variableSelect = interactionType === 'variable' && controlType === FilterTypes.Select
+    const variableSelect = interactionType === 'variable' && controlType === ControlTypes.Select
 
     const widgetCheckboxes = itemSelectorSource.map((item) => (
       <li key={item.id}>

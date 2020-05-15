@@ -1,6 +1,6 @@
 import React, { FC, memo, useMemo, useCallback } from 'react'
 import classnames from 'classnames'
-import ControlComponent from '../FilterControl'
+import ControlComponent from '../../Control'
 import { Row, Col, Button } from 'antd'
 import {
   IRenderTreeItem,
@@ -8,11 +8,10 @@ import {
   GlobalControlQueryMode,
   IGlobalRenderTreeItem,
   IGlobalControl
-} from '../types'
+} from '../../types'
 import styles from './Layouts.less'
-import { DEFAULT_DASHBOARD_CONTROL_GRID_WIDTH } from '../constants'
 
-interface IDashboardControlPanelLayoutProps {
+interface IFullScreenControlPanelLayoutProps {
   queryMode: GlobalControlQueryMode
   renderTree: IRenderTreeItem[]
   formValues: object
@@ -22,7 +21,7 @@ interface IDashboardControlPanelLayoutProps {
   onReset: () => void
 }
 
-const DashboardControlPanelLayout: FC<IDashboardControlPanelLayoutProps> = ({
+const FullScreenControlPanelLayout: FC<IFullScreenControlPanelLayoutProps> = ({
   queryMode,
   renderTree,
   formValues,
@@ -61,14 +60,8 @@ const DashboardControlPanelLayout: FC<IDashboardControlPanelLayoutProps> = ({
             }, [])
           : null
         const controlValue = formValues && formValues[`${control.key}`]
-        const controlGridProps = width
-          ? {
-              lg: width,
-              md: width < 8 ? 12 : 24
-            }
-          : DEFAULT_DASHBOARD_CONTROL_GRID_WIDTH
         components = components.concat(
-          <Col key={key} {...controlGridProps}>
+          <Col key={key} span={12}>
             <ControlComponent
               queryMode={queryMode}
               control={control}
@@ -100,7 +93,7 @@ const DashboardControlPanelLayout: FC<IDashboardControlPanelLayoutProps> = ({
   const panelClassNames = useMemo(
     () =>
       classnames({
-        [styles.dashboardControlPanel]: true,
+        [styles.fullscreenControlPanel]: true,
         [styles.empty]: !renderTree.length
       }),
     [renderTree]
@@ -129,4 +122,4 @@ const DashboardControlPanelLayout: FC<IDashboardControlPanelLayoutProps> = ({
   )
 }
 
-export default memo(DashboardControlPanelLayout)
+export default memo(FullScreenControlPanelLayout)

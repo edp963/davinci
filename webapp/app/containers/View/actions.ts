@@ -28,7 +28,7 @@ import {
 } from './types'
 import { IDataRequestBody } from '../Dashboard/types'
 import { RenderType } from 'containers/Widget/components/Widget'
-import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
+import { IDistinctValueReqeustParams, IControlOption } from 'app/components/Control/types'
 const CancelToken = axios.CancelToken
 
 export const ViewActions = {
@@ -308,7 +308,11 @@ export const ViewActions = {
   /** */
 
   /** Actions for external usages */
-  loadSelectOptions (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }, itemId?: number) {
+  loadSelectOptions (
+    controlKey: string,
+    requestParams: { [viewId: string]: IDistinctValueReqeustParams },
+    itemId?: number
+  ) {
     return {
       type: ActionTypes.LOAD_SELECT_OPTIONS,
       payload: {
@@ -319,7 +323,11 @@ export const ViewActions = {
       }
     }
   },
-  selectOptionsLoaded (controlKey: string, values: any[], itemId?: number) {
+  selectOptionsLoaded (
+    controlKey: string,
+    values: IControlOption[],
+    itemId?: number
+  ) {
     return {
       type: ActionTypes.LOAD_SELECT_OPTIONS_SUCCESS,
       payload: {

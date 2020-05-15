@@ -1,4 +1,24 @@
-import { FilterTypes, DatePickerFormats } from './constants'
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+import { ControlTypes, DatePickerFormats } from './constants'
 import { OperatorTypes } from 'utils/operatorTypes'
 import { IQueryConditions } from 'containers/Dashboard/types'
 import { SqlTypes } from 'app/globalConstants'
@@ -18,7 +38,7 @@ export interface IControlRelatedField {
   column?: string
 }
 
-export interface IControlSelectOption {
+export interface IControlOption {
   text: string
   value: string
   variable?: string
@@ -27,7 +47,7 @@ export interface IControlSelectOption {
 export interface IControlBase {
   key: string
   name: string
-  type: FilterTypes
+  type: ControlTypes
   interactionType: InteractionType
   operator: OperatorTypes
   dateFormat?: DatePickerFormats
@@ -35,7 +55,7 @@ export interface IControlBase {
   cache: boolean
   expired: number
   customOptions?: boolean
-  options?: IControlSelectOption[]
+  options?: IControlOption[]
   width: number
   dynamicDefaultValue?: any
   defaultValue?: any
@@ -100,12 +120,8 @@ export type OnGetControlOptions = (
   itemId?: number
 ) => void
 
-export type ControlOptions = Array<{
-  [key: string]: Array<number | string>
-}>
-
 export interface IMapControlOptions {
-  [controlKey: string]: ControlOptions
+  [controlKey: string]: IControlOption[]
 }
 
 export interface IFilters {

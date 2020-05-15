@@ -29,7 +29,7 @@ import api from 'utils/api'
 import { errorHandler, getErrorMessage } from 'utils/util'
 
 import { IViewBase, IView, IExecuteSqlResponse, IExecuteSqlParams, IViewVariable } from './types'
-import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
 
 export function* getViews (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS) { return }
@@ -213,15 +213,19 @@ export function* getSelectOptions (action: ViewActionType) {
         cancelToken: cancelTokenSource.token
       })
     })
-    const results = yield all(requests)
-    const values = results.reduce((payloads, r, index) => {
+    const results: Array<IDavinciResponse<object[]>> = yield all(requests)
+    const indistinctOptions = results.reduce((payloads, r, index) => {
       const { columns } = requestParamsMap[index][1]
       if (columns.length === 1) {
         return payloads.concat(r.payload.map((obj) => obj[columns[0]]))
       }
       return payloads
     }, [])
-    yield put(selectOptionsLoaded(controlKey, Array.from(new Set(values)), itemId))
+    const distinctOptions = Array.from(new Set(indistinctOptions)).map((value) => ({
+      text: value,
+      value
+    }))
+    yield put(selectOptionsLoaded(controlKey, distinctOptions, itemId))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
     // errorHandler(err)

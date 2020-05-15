@@ -20,7 +20,7 @@
 
 import React from 'react'
 
-import { Row, Col, Button, InputNumber, Tooltip } from 'antd'
+import { Row, Col, Button, InputNumber, Tooltip, Popover, Tag } from 'antd'
 
 import Styles from '../View.less'
 
@@ -40,6 +40,18 @@ const stepChange = (onStepChange: IEditorBottomProps['onStepChange'], step: numb
 export const EditorBottom = (props: IEditorBottomProps) => {
   const { sqlLimit, loading, nextDisabled, onSetSqlLimit, onExecuteSql, onStepChange } = props
 
+  const shortcutsContent = (
+    <Row>
+      <Col span={8}>执行 / 中止：</Col>
+      <Col span={16}>
+        <Tag color="orange">Ctrl + Enter</Tag>(Windows)
+      </Col>
+      <Col offset={8} span={16}>
+        <Tag color="orange">Cmd + Enter</Tag>(Mac OS)
+      </Col>
+    </Row>
+  )
+
   return (
     <Row className={Styles.bottom} type="flex" align="middle" justify="start">
     <Col span={12} className={Styles.previewInput}>
@@ -48,6 +60,13 @@ export const EditorBottom = (props: IEditorBottomProps) => {
       <span>条数据</span>
     </Col>
     <Col span={12} className={Styles.toolBtns}>
+      <Popover
+        title="快捷键"
+        content={shortcutsContent}
+        overlayClassName={Styles.shortcuts}
+      >
+        <i className="iconfont icon-shortcuts_icon" />
+      </Popover>
       <Button onClick={stepChange(onStepChange, -1)}>取消</Button>
       <Button
         type="primary"

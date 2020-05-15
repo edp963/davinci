@@ -20,7 +20,7 @@
 
 import OperatorTypes from 'utils/operatorTypes'
 
-export enum FilterTypes {
+export enum ControlTypes {
   Select = 'select',
   Date = 'date',
   DateRange = 'dateRange',
@@ -29,22 +29,22 @@ export enum FilterTypes {
   // TreeSelect = 'treeSelect'
 }
 
-export const FilterTypeList = [
-  FilterTypes.Select,
-  FilterTypes.Date,
-  FilterTypes.DateRange,
-  FilterTypes.InputText,
-  FilterTypes.NumberRange
-  // FilterTypes.TreeSelect
+export const ControlTypeList = [
+  ControlTypes.Select,
+  ControlTypes.Date,
+  ControlTypes.DateRange,
+  ControlTypes.InputText,
+  ControlTypes.NumberRange
+  // ControlTypes.TreeSelect
 ]
 
-export const FilterTypesLocale = {
-  [FilterTypes.Select]: '下拉菜单',
-  [FilterTypes.Date]: '日期选择',
-  [FilterTypes.DateRange]: '日期范围选择',
-  [FilterTypes.InputText]: '文本输入框',
-  [FilterTypes.NumberRange]: '数字范围输入框'
-  // [FilterTypes.TreeSelect]: '下拉树'
+export const ControlTypesLocale = {
+  [ControlTypes.Select]: '下拉菜单',
+  [ControlTypes.Date]: '日期选择',
+  [ControlTypes.DateRange]: '日期范围选择',
+  [ControlTypes.InputText]: '文本输入框',
+  [ControlTypes.NumberRange]: '数字范围输入框'
+  // [ControlTypes.TreeSelect]: '下拉树'
 }
 
 export enum DatePickerFormats {
@@ -118,49 +118,49 @@ export const DatePickerDefaultValuesLocales = {
 }
 
 export const SHOULD_LOAD_OPTIONS = {
-  [FilterTypes.Select]: true,
-  [FilterTypes.Date]: false,
-  [FilterTypes.DateRange]: false,
-  [FilterTypes.InputText]: false,
-  [FilterTypes.NumberRange]: false
-  // [FilterTypes.TreeSelect]: true
+  [ControlTypes.Select]: true,
+  [ControlTypes.Date]: false,
+  [ControlTypes.DateRange]: false,
+  [ControlTypes.InputText]: false,
+  [ControlTypes.NumberRange]: false
+  // [ControlTypes.TreeSelect]: true
 }
 
 export const IS_RANGE_TYPE = {
-  [FilterTypes.Select]: false,
-  [FilterTypes.Date]: false,
-  [FilterTypes.DateRange]: true,
-  [FilterTypes.InputText]: false,
-  [FilterTypes.NumberRange]: true
-  // [FilterTypes.TreeSelect]: false
+  [ControlTypes.Select]: false,
+  [ControlTypes.Date]: false,
+  [ControlTypes.DateRange]: true,
+  [ControlTypes.InputText]: false,
+  [ControlTypes.NumberRange]: true
+  // [ControlTypes.TreeSelect]: false
 }
 
 export const CHANGE_IMMEDIATELY = {
-  [FilterTypes.Select]: true,
-  [FilterTypes.Date]: true,
-  [FilterTypes.DateRange]: true,
-  [FilterTypes.InputText]: false,
-  [FilterTypes.NumberRange]: false
-  // [FilterTypes.TreeSelect]: true
+  [ControlTypes.Select]: true,
+  [ControlTypes.Date]: true,
+  [ControlTypes.DateRange]: true,
+  [ControlTypes.InputText]: false,
+  [ControlTypes.NumberRange]: false
+  // [ControlTypes.TreeSelect]: true
 }
 
-export const FilterTypesOperatorSetting = {
-  [FilterTypes.Select]: {
+export const ControlTypesOperatorSetting = {
+  [ControlTypes.Select]: {
     normal: [OperatorTypes.Equal, OperatorTypes.NotEqual],
     multiple: [OperatorTypes.In, OperatorTypes.NotIn]
   },
-  [FilterTypes.Date]: {
+  [ControlTypes.Date]: {
     normal: [OperatorTypes.Equal, OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
     multiple: [OperatorTypes.In, OperatorTypes.NotIn]
   },
-  [FilterTypes.DateRange]: [],
-  [FilterTypes.InputText]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
-  [FilterTypes.NumberRange]: []
-  // [FilterTypes.TreeSelect]: [OperatorTypes.In, OperatorTypes.NotIn]
+  [ControlTypes.DateRange]: [],
+  [ControlTypes.InputText]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
+  [ControlTypes.NumberRange]: []
+  // [ControlTypes.TreeSelect]: [OperatorTypes.In, OperatorTypes.NotIn]
 }
 
-export const FilterTypesDynamicDefaultValueSetting = {
-  [FilterTypes.Date]: {
+export const ControlTypesDynamicDefaultValueSetting = {
+  [ControlTypes.Date]: {
     normal: [
       DatePickerDefaultValues.Today,
       DatePickerDefaultValues.Yesterday,
@@ -182,9 +182,9 @@ export const FilterTypesDynamicDefaultValueSetting = {
   }
 }
 
-export const CascadeFilterTypes = [
-  FilterTypes.Select
-  // FilterTypes.TreeSelect
+export const CascadeControlTypes = [
+  ControlTypes.Select
+  // ControlTypes.TreeSelect
 ]
 
 export enum ControlPanelTypes {
