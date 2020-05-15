@@ -18,201 +18,161 @@
  * >>
  */
 
-import React from 'react'
-import classnames from 'classnames'
+import React, { useCallback, useState } from 'react'
+
+import {
+  Modal,
+  Form,
+  Input,
+  Radio,
+  Popover,
+  Upload,
+  Icon,
+  Button,
+  message
+} from 'antd'
+const FormItem = Form.Item
+const RadioGroup = Radio.Group
+import { FormItemProps, FormComponentProps } from 'antd/lib/form'
+import { UploadProps } from 'antd/lib/upload'
+
 import { ICSVMetaInfo } from '../types'
 
-import { Modal, Form, Row, Col, Input, Radio, Upload, Icon, Popover, Button, Steps } from 'antd'
-const RadioGroup = Radio.Group
-const Step = Steps.Step
-const FormItem = Form.Item
-import { FormComponentProps } from 'antd/lib/form/Form'
-import { UploadProps } from 'antd/lib/upload/Upload'
+const formItemLayout: Partial<FormItemProps> = {
+  labelCol: { span: 6 },
+  wrapperCol: { span: 16 }
+}
 
-const styles = require('../Source.less')
-
-interface IUploadCsvFormProps {
+interface IUploadCsvModalProps extends FormComponentProps<ICSVMetaInfo> {
   visible: boolean
-  step: number
-  uploadProps: UploadProps
-  csvMeta: ICSVMetaInfo
-  onStepChange: (step: number, values?: ICSVMetaInfo) => void
-  onUpload: () => void
-  onClose: () => void
-  onAfterClose: () => void
+  sourceId: number
+  uploading: boolean
+  onValidate: (
+    values: Pick<ICSVMetaInfo, 'sourceId' | 'tableName' | 'mode'>,
+    callback: (errMsg?: string) => void
+  ) => void
+  onOk: (value: ICSVMetaInfo) => void
+  onCancel: () => void
 }
 
-export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps & FormComponentProps> {
+const UploadCsvModal: React.FC<IUploadCsvModalProps> = (props) => {
+  const { visible, sourceId, uploading, form, onValidate, onOk, onCancel } = props
+  const { getFieldDecorator } = form
 
-  private commonFormItemStyle = {
-    labelCol: { span: 6 },
-    wrapperCol: { span: 16 }
-  }
+  const [files, setFiles] = useState([])
 
-  public componentDidUpdate (prevProps: IUploadCsvFormProps & FormComponentProps) {
-    const { form, csvMeta, visible } = this.props
-    if (csvMeta !== prevProps.csvMeta || visible !== prevProps.visible) {
-      form.setFieldsValue(csvMeta)
+  const preventUpload: UploadProps['beforeUpload'] = useCallback((file) => {
+    setFiles([file])
+    return false
+  }, [])
+
+  const save = useCallback(() => {
+    if (!files.length) {
+      message.error('请上传 csv 文件！')
+      return
     }
-  }
+    form.validateFields((err, values) => {
+      if (err) {
+        return
+      }
+      values.file = files[0]
+      values.sourceId = sourceId
+      onOk(values)
+    })
+  }, [sourceId, files, onOk])
 
-  private changeStep = (step: number) => () => {
-    if (step) {
-      this.props.form.validateFieldsAndScroll((err, values) => {
-        if (!err) {
-          this.props.onStepChange(step, values)
-        }
-      })
-    } else {
-      this.props.onStepChange(step)
-    }
-  }
+  const validateTableName = useCallback(
+    (_, tableName: string, callback) => {
+      onValidate(
+        {
+          sourceId,
+          tableName,
+          mode: form.getFieldValue('mode')
+        },
+        callback
+      )
+    },
+    [sourceId, onValidate]
+  )
 
-  private reset = () => {
-    const { form, onAfterClose } = this.props
+  const resetFields = useCallback(() => {
     form.resetFields()
-    onAfterClose()
-  }
+    setFiles([])
+  }, [])
 
-  public render () {
-    const {
-      visible,
-      step,
-      form,
-      uploadProps,
-      onUpload,
-      onClose
-    } = this.props
-    const { getFieldDecorator } = form
-
-    const baseInfoStyle = classnames({
-      [styles.hide]: !!step
-    })
-
-    const authInfoStyle = classnames({
-      [styles.hide]: !step
-    })
-
-    const submitDisabled = uploadProps.fileList.length <= 0 || uploadProps.fileList[0].status !== 'success'
-
-    const modalButtons = step
-      ? [(
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        disabled={submitDisabled}
-        onClick={onUpload}
-      >
-          保 存
-      </Button>)
-      ]
-      : [(
-      <Button
-        key="forward"
-        size="large"
-        type="primary"
-        onClick={this.changeStep(1)}
-      >
-          下一步
-      </Button>)
-      ]
-
-    return (
-      <Modal
-        title="上传CSV"
-        maskClosable={false}
-        visible={visible}
-        wrapClassName="ant-modal-small"
-        footer={modalButtons}
-        onCancel={onClose}
-        afterClose={this.reset}
-      >
-        <Form>
-          <Row className={styles.formStepArea}>
-            <Col span={24}>
-              <Steps current={step}>
-                <Step title="导入方式" />
-                <Step title="上传CSV" />
-                <Step title="完成" />
-              </Steps>
-            </Col>
-          </Row>
-          <Row gutter={8} className={baseInfoStyle}>
-            <Col span={24}>
-              <FormItem label="表名" {...this.commonFormItemStyle}>
-                {getFieldDecorator<ICSVMetaInfo>('tableName', {
-                  rules: [{
-                    required: true,
-                    message: '表格名不能为空'
-                  }]
-                })(
-                  <Input />
-                )}
-              </FormItem>
-              <FormItem label="Source ID" className={styles.hide}>
-                {getFieldDecorator<ICSVMetaInfo>('sourceId')(
-                  <Input />
-                )}
-              </FormItem>
-            </Col>
-            <Col span={24}>
-              <FormItem label="主键" {...this.commonFormItemStyle}>
-                {getFieldDecorator<ICSVMetaInfo>('primaryKeys', {
-                })(
-                  <Input />
-                )}
-              </FormItem>
-            </Col>
-            <Col span={24}>
-              <FormItem label="索引键" {...this.commonFormItemStyle}>
-                {getFieldDecorator<ICSVMetaInfo>('indexKeys', {
-                })(
-                  <Input />
-                )}
-              </FormItem>
-            </Col>
-            <Col span={24}>
-              <FormItem label="导入方式" {...this.commonFormItemStyle}>
-                {getFieldDecorator<ICSVMetaInfo>('replaceMode', {
-                  initialValue: 0
-                })(
-                  <RadioGroup>
-                    <Radio value={0}>新增</Radio>
-                    <Radio value={1}>替换</Radio>
-                    <Radio value={2}>追加</Radio>
-                  </RadioGroup>
-                )}
-                <Popover
-                  placement="right"
-                  content={
-                    <p>首次上传文件到新表请选择"新增"</p>
-                  }
-                >
-                  <Icon type="question-circle-o" />
-                </Popover>
-              </FormItem>
-            </Col>
-          </Row>
-          <Row className={authInfoStyle}>
-            <Col span={24}>
-              <FormItem
-                {...this.commonFormItemStyle}
-                label="上传"
-              >
-                <Upload {...uploadProps} >
-                  <Button>
-                    <Icon type="upload" />Click to Upload CSV
-                  </Button>
-                </Upload>
-              </FormItem>
-            </Col>
-          </Row>
-        </Form>
-      </Modal>
-    )
-  }
+  return (
+    <Modal
+      title="上传 CSV 文件"
+      visible={visible}
+      maskClosable={false}
+      afterClose={resetFields}
+      confirmLoading={uploading}
+      onOk={save}
+      onCancel={onCancel}
+    >
+      <Form>
+        <FormItem label="表名" {...formItemLayout}>
+          {getFieldDecorator<ICSVMetaInfo>('tableName', {
+            rules: [
+              {
+                required: true,
+                message: '表名不能为空'
+              },
+              {
+                validator: validateTableName
+              }
+            ],
+            validateFirst: true,
+            validateTrigger: ''
+          })(<Input />)}
+        </FormItem>
+        <FormItem label="主键" {...formItemLayout}>
+          {getFieldDecorator<ICSVMetaInfo>('primaryKeys', {})(<Input />)}
+        </FormItem>
+        <FormItem label="索引键" {...formItemLayout}>
+          {getFieldDecorator<ICSVMetaInfo>('indexKeys', {})(<Input />)}
+        </FormItem>
+        <FormItem label="导入方式" {...formItemLayout}>
+          {getFieldDecorator<ICSVMetaInfo>('mode', {
+            initialValue: 0
+          })(
+            <RadioGroup>
+              <Radio value={0}>新增</Radio>
+              <Radio value={1}>替换</Radio>
+              <Radio value={2}>追加</Radio>
+              <Radio value={3}>覆盖</Radio>
+            </RadioGroup>
+          )}
+          <Popover
+            placement="right"
+            content={
+              <>
+                <p>新增：首次上传文件到新表</p>
+                <p>替换：保持原有表结构不变，清空原有表数据后上传</p>
+                <p>追加：保持原有表结构不变，保持原有表数据并追加</p>
+                <p>覆盖：重建表结构并替换数据</p>
+              </>
+            }
+          >
+            <Icon type="question-circle-o" />
+          </Popover>
+        </FormItem>
+        <FormItem label="上传" {...formItemLayout}>
+          <Upload
+            accept=".csv"
+            multiple={false}
+            fileList={files}
+            beforeUpload={preventUpload}
+          >
+            <Button>
+              <Icon type="upload" />
+              Click to Upload CSV
+            </Button>
+          </Upload>
+        </FormItem>
+      </Form>
+    </Modal>
+  )
 }
 
-export default Form.create<IUploadCsvFormProps & FormComponentProps>()(UploadCsvForm)
-
+export default Form.create<IUploadCsvModalProps>()(UploadCsvModal)
