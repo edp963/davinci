@@ -18,8 +18,15 @@
  * >>
  */
 
-import React, { useMemo, useCallback, useState, ReactElement } from 'react'
+import React, {
+  useMemo,
+  useCallback,
+  useState,
+  ReactElement,
+  ReactEventHandler
+} from 'react'
 import { Form, Input, Radio, Button } from 'antd'
+import { throttle } from 'lodash'
 import { FormComponentProps } from 'antd/lib/form/Form'
 import {
   GetPassWordType,
@@ -28,15 +35,24 @@ import {
   IOperateStates,
   FindPwStep
 } from './types'
-import {
-  getCaptchaforResetPassword
-} from 'containers/App/actions'
+import { getCaptchaforResetPassword } from 'containers/App/actions'
 import { useDispatch } from 'react-redux'
 
 const styles = require('./index.less')
 
 const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
-  ({ form, ticket, token, type, setTicket, setToken, setType, setStep, step }) => {
+  ({
+    form,
+    ticket,
+    token,
+    type,
+    setTicket,
+    setToken,
+    setType,
+    setStep,
+    step
+  }) => {
+    const [submitStatus, setSubmitStatus] = useState<boolean>(false)
     const dispatch = useDispatch()
     const formItemLayout = useMemo(
       () => ({
@@ -57,17 +73,18 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
       (event) => {
         const typeValue: GetPassWordType = event.target.value
         setType(typeValue)
-        form.setFieldsValue({ticket: ''})
+        form.setFieldsValue({ ticket: '' })
       },
       [type, setType]
     )
 
     const handleSubmit = useCallback(
-      (e) => {
+      throttle((e: React.SyntheticEvent<MouseEvent>) => {
         e.preventDefault()
         form.validateFieldsAndScroll((err, values) => {
           if (!err) {
             const { type, ticket } = values
+            setSubmitStatus(true)
             const params: IGetgetCaptchaParams = {
               type,
               ticket,
@@ -75,13 +92,14 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
                 if (payload && payload.length) {
                   setToken(payload)
                   setTicket(ticket)
+                  setSubmitStatus(false)
                 }
               }
             }
             onGetCaptchaforResetPassword(params)
           }
         })
-      },
+      }, 1000),
       ['nf']
     )
 
@@ -93,7 +111,12 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
 
     const Buttons: ReactElement = useMemo(() => {
       return token && token.length ? (
-        <Button type="primary" size="large" onClick={goNext} className={styles.next}>
+        <Button
+          type="primary"
+          size="large"
+          onClick={goNext}
+          className={styles.next}
+        >
           下一步
         </Button>
       ) : (
@@ -101,12 +124,14 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
           type="primary"
           size="large"
           htmlType="submit"
+          disabled={submitStatus}
+          loading={submitStatus}
           className={styles.submit}
         >
           确定
         </Button>
       )
-    }, [token])
+    }, [token, submitStatus])
 
     const Tips: ReactElement = useMemo(
       () =>
