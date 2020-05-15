@@ -26,13 +26,9 @@ import React, {
 import { produce } from 'immer'
 import LineForm from './LineForm'
 import BandForm from './BandForm'
-import { Form, Row, Col, Radio, Select, message } from 'antd'
+import { Form, Row, Col, Radio, message } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
-import {
-  ReferenceType,
-  ReferenceValueTypeLabels,
-  ReferenceLabelPositionLabels
-} from '../constants'
+import { ReferenceType } from '../constants'
 import { IReference, IReferenceLineData, IReferenceBandData } from '../types'
 import { IDataParamSource } from '../../Dropbox'
 import { RadioChangeEvent } from 'antd/lib/radio'
@@ -40,16 +36,9 @@ import {
   getDefaultReferenceLineData,
   getDefaultReferenceBandData
 } from '../util'
-import {
-  PIVOT_CHART_FONT_FAMILIES,
-  PIVOT_CHART_FONT_SIZES,
-  PIVOT_CHART_LINE_STYLES,
-  CHART_LABEL_POSITIONS
-} from 'app/globalConstants'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
-const Option = Select.Option
 import styles from '../Reference.less'
 
 interface IReferenceFormProps {
@@ -215,48 +204,6 @@ class ReferenceForm extends PureComponent<
     )
   }
 }
-
-export const referenceValueTypeSelectOptions = Object.entries(
-  ReferenceValueTypeLabels
-).map(([value, label]) => (
-  <Option key={value} value={value}>
-    {label}
-  </Option>
-))
-
-export const lineLabelPositionOptions = Object.entries(
-  ReferenceLabelPositionLabels
-).map(([value, label]) => (
-  <Option key={value} value={value}>
-    {label}
-  </Option>
-))
-export const bandLabelPositionOptions = CHART_LABEL_POSITIONS.map(
-  ({ name, value }) => (
-    <Option key={value} value={value}>
-      {name}
-    </Option>
-  )
-)
-export const fontFamilyOptions = PIVOT_CHART_FONT_FAMILIES.map(
-  ({ name, value }) => (
-    <Option key={value} value={value}>
-      {name}
-    </Option>
-  )
-)
-export const fontSizeOptions = PIVOT_CHART_FONT_SIZES.map((size) => (
-  <Option key={`${size}`} value={`${size}`}>
-    {size}
-  </Option>
-))
-export const lineStyleOptions = PIVOT_CHART_LINE_STYLES.map(
-  ({ name, value }) => (
-    <Option key={value} value={value}>
-      {name}
-    </Option>
-  )
-)
 
 export default Form.create<IReferenceFormProps & FormComponentProps>()(
   ReferenceForm
