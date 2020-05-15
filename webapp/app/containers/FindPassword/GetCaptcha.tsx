@@ -52,6 +52,7 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
     setStep,
     step
   }) => {
+    const [submitStatus, setSubmitStatus] = useState<boolean>(false)
     const dispatch = useDispatch()
     const formItemLayout = useMemo(
       () => ({
@@ -83,6 +84,7 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
         form.validateFieldsAndScroll((err, values) => {
           if (!err) {
             const { type, ticket } = values
+            setSubmitStatus(true)
             const params: IGetgetCaptchaParams = {
               type,
               ticket,
@@ -90,13 +92,14 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
                 if (payload && payload.length) {
                   setToken(payload)
                   setTicket(ticket)
+                  setSubmitStatus(false)
                 }
               }
             }
             onGetCaptchaforResetPassword(params)
           }
         })
-      }, 3000),
+      }, 1000),
       ['nf']
     )
 
@@ -105,8 +108,6 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
         setStep(FindPwStep.RESET)
       }
     }, [step, setStep, token])
-
-    console.log(token)
 
     const Buttons: ReactElement = useMemo(() => {
       return token && token.length ? (
@@ -123,13 +124,14 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
           type="primary"
           size="large"
           htmlType="submit"
-          disabled={!!token}
+          disabled={submitStatus}
+          loading={submitStatus}
           className={styles.submit}
         >
           确定
         </Button>
       )
-    }, [token])
+    }, [token, submitStatus])
 
     const Tips: ReactElement = useMemo(
       () =>
