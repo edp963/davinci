@@ -79,7 +79,7 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
     )
 
     const handleSubmit = useCallback(
-      (e: MouseEvent) => {
+      (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
         form.validateFieldsAndScroll((err, values) => {
           if (!err) {
@@ -123,7 +123,6 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
         <Button
           type="primary"
           size="large"
-          // htmlType="submit"
           onClick={handleSubmit}
           disabled={submitStatus}
           loading={submitStatus}
