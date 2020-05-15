@@ -197,7 +197,7 @@
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
-			<version>1.2.58</version>
+			<version>1.2.66</version>
 		</dependency>
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>

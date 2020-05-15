@@ -189,8 +189,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   public componentDidMount() {
     // urlparse
     const qs = this.querystring(
-      location.href.substr(location.href.indexOf('?') + 1)
+      window.location.search.substr(1)
     )
+
     // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
     this.setState({
       type: qs.type,
