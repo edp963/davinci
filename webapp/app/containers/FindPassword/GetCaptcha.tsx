@@ -79,7 +79,7 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
     )
 
     const handleSubmit = useCallback(
-      throttle((e: React.SyntheticEvent<MouseEvent>) => {
+      (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
         form.validateFieldsAndScroll((err, values) => {
           if (!err) {
@@ -99,7 +99,7 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
             onGetCaptchaforResetPassword(params)
           }
         })
-      }, 1000),
+      },
       ['nf']
     )
 
@@ -123,7 +123,7 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
         <Button
           type="primary"
           size="large"
-          htmlType="submit"
+          onClick={handleSubmit}
           disabled={submitStatus}
           loading={submitStatus}
           className={styles.submit}
@@ -193,7 +193,7 @@ const GetCaptcha: React.FC<IOperateStates & FormComponentProps> = React.memo(
     )
 
     return (
-      <Form className={styles.form} onSubmit={handleSubmit}>
+      <Form className={styles.form}>
         <div className={styles.top}>
           <Form.Item label="" {...formItemLayout}>
             {form.getFieldDecorator('type', {
