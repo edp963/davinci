@@ -316,6 +316,11 @@ public class JdbcDataSource {
             druidDataSource.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
             druidDataSource.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
 
+            String driverName=druidDataSource.getDriverClassName();
+            if(driverName.indexOf("sqlserver")!=-1) {
+                druidDataSource.setValidationQuery("select 1");
+            }
+
             if (!CollectionUtils.isEmpty(jdbcSourceInfo.getProperties())) {
                 Properties properties = new Properties();
                 jdbcSourceInfo.getProperties().forEach(dict -> properties.setProperty(dict.getKey(), dict.getValue()));

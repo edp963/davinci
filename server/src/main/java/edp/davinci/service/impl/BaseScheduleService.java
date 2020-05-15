@@ -265,8 +265,7 @@ public class BaseScheduleService {
         }
 
         sb.append(serverUtils.getLocalHost())
-                .append("/share.html#/share/")
-                .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase(PORTAL) ? "dashboard" : contentType)
+                .append("/share.html")
                 .append("?shareInfo=")
                 .append(shareToken);
 
@@ -278,6 +277,7 @@ public class BaseScheduleService {
             sb.append("&").append(page);
         }
 
+        sb.append("#/share/").append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase(PORTAL) ? "dashboard" : contentType);
 
         return sb.toString();
     }
