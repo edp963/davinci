@@ -49,7 +49,7 @@ export function DownloadList (props: IDownloadListProps) {
         [styles.downloaded]: status === DownloadStatus.Downloaded
       })
       return (
-        <li key={uuid || id} className={styles.item}>
+        <li key={`${uuid || ''}${id}`} className={styles.item}>
           <p
             className={titleClass}
             onClick={download(props, record)}
