@@ -28,7 +28,8 @@ export interface IEditorBottomProps {
   sqlLimit: number
   loading: boolean
   nextDisabled: boolean
-  sqlFragment?: string
+  isLastExecuteWholeSql: boolean
+  sqlFragment: string
   onSetSqlLimit: (limit: number) => void
   onExecuteSql: () => void
   onStepChange: (stepChange: number) => void
@@ -39,9 +40,11 @@ const stepChange = (onStepChange: IEditorBottomProps['onStepChange'], step: numb
 }
 
 export const EditorBottom = (props: IEditorBottomProps) => {
-  const { sqlLimit, loading, nextDisabled, sqlFragment, onSetSqlLimit, onExecuteSql, onStepChange } = props
+  const { sqlLimit, loading, nextDisabled, isLastExecuteWholeSql, sqlFragment, onSetSqlLimit, onExecuteSql, onStepChange } = props
   const STATUS_BTN_TEXT = !loading ? '执行' : '中止'
   const SELECT_CONTENT_BTN_TEXT = sqlFragment ? '选中内容' : ''
+  const NEXT_DISABLED_AS_EXECUTE_FRAGMENT_TEXT = !isLastExecuteWholeSql ? '执行完整sql后可用' : ''
+  const NEXT_DISABLED_AS_SQL_CHANGED_TEXT = nextDisabled ? '执行后下一步可用' : NEXT_DISABLED_AS_EXECUTE_FRAGMENT_TEXT
   const shortcutsContent = (
     <Row>
       <Col span={8}>执行 / 中止：</Col>
@@ -76,8 +79,8 @@ export const EditorBottom = (props: IEditorBottomProps) => {
       >
         {STATUS_BTN_TEXT + SELECT_CONTENT_BTN_TEXT}
       </Button>
-      <Tooltip title={nextDisabled ? '执行后下一步可用' : ''}>
-        <Button onClick={stepChange(onStepChange, 1)} disabled={nextDisabled}>
+      <Tooltip title={NEXT_DISABLED_AS_SQL_CHANGED_TEXT}>
+        <Button onClick={stepChange(onStepChange, 1)} disabled={nextDisabled || !isLastExecuteWholeSql}>
           下一步
         </Button>
       </Tooltip>

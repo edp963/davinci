@@ -39,7 +39,6 @@ type IViewTemp = Omit<IViewBase, 'sourceName'>
 
 export interface IView extends IViewTemp {
   sql: string
-  sqlFragment: string
   model: string
   variable: string
   config: string
@@ -196,4 +195,6 @@ export interface IViewState {
   bizs: IDacBiz[]
 
   cancelTokenSources: CancelTokenSource[]
+
+  isLastExecuteWholeSql: boolean
 }

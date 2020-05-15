@@ -87,7 +87,8 @@ const initialState: IViewState = {
   channels: [],
   tenants: [],
   bizs: [],
-  cancelTokenSources: []
+  cancelTokenSources: [],
+  isLastExecuteWholeSql: true
 }
 
 const viewReducer = (
@@ -160,6 +161,9 @@ const viewReducer = (
         draft.schema.mapColumns[
           `${tableColumns.sourceId}_${databaseName}_${tableColumns.tableName}`
         ] = tableColumns
+        break
+      case ActionTypes.IS_LAST_EXECUTE_WHOLE_SQL:
+        draft.isLastExecuteWholeSql = action.payload.isLastExecuteWholeSql
         break
       case ActionTypes.EXECUTE_SQL:
         draft.loading.execute = true

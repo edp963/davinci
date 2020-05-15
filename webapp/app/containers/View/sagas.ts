@@ -23,13 +23,14 @@ import { ActionTypes } from './constants'
 import { ViewActions, ViewActionType } from './actions'
 import omit from 'lodash/omit'
 
-import { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
+import axios, { AxiosRequestConfig, AxiosResponse, AxiosError, CancelTokenSource } from 'axios'
 import request, { IDavinciResponse } from 'utils/request'
 import api from 'utils/api'
 import { errorHandler, getErrorMessage } from 'utils/util'
 
 import { IViewBase, IView, IExecuteSqlResponse, IExecuteSqlParams, IViewVariable } from './types'
 import { IDistinctValueReqeustParams } from 'app/components/Control/types'
+import { EExecuteType } from './Editor'
 
 export function* getViews (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS) { return }
@@ -143,16 +144,17 @@ export function* copyView (action: ViewActionType) {
   }
 }
 
+let cancelTokenSource = null as CancelTokenSource
 export function* executeSql (action: ViewActionType) {
   if (action.type !== ActionTypes.EXECUTE_SQL) { return }
-  const { sqlExecuted, executeSqlFail, executeSqlCancel } = ViewActions
-  if (request.cancelTokenSource) {
-    request.cancelTokenSource.cancel('cancel execute')
+  const { sqlExecuted, executeSqlFail, executeSqlCancel, setIsLastExecuteWholeSql } = ViewActions
+  if (cancelTokenSource) {
+    cancelTokenSource.cancel('cancel execute')
     yield put(executeSqlCancel())
-    return request.cancelTokenSource = null
+    return cancelTokenSource = null
   }
-  request.cancelTokenSource = request.cancelToken.source()
-  const { params } = action.payload
+  cancelTokenSource = axios.CancelToken.source()
+  const { params, exeType } = action.payload
   const { variables, ...rest } = params
   const omitKeys: Array<keyof IViewVariable> = ['key', 'alias', 'fromService']
   const variableParam = variables.map((v) => omit(v, omitKeys))
@@ -164,15 +166,17 @@ export function* executeSql (action: ViewActionType) {
         ...rest,
         variables: variableParam
       },
-      cancelToken: request.cancelTokenSource.token
+      cancelToken: cancelTokenSource.token
     })
     yield put(sqlExecuted(asyncData))
-    request.cancelTokenSource = null
+    const isLastExecuteWholeSql = exeType === EExecuteType.whole ? true : false
+    yield put(setIsLastExecuteWholeSql(isLastExecuteWholeSql))
+    cancelTokenSource = null
   } catch (err) {
     const { response } = err as AxiosError
     const { data } = response as AxiosResponse<IDavinciResponse<any>>
     yield put(executeSqlFail(data.header))
-    request.cancelTokenSource = null
+    cancelTokenSource = null
   }
 }
 

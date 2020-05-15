@@ -18,7 +18,7 @@
  * >>
  */
 
-import axios, { AxiosRequestConfig, AxiosResponse, AxiosPromise, CancelTokenSource } from 'axios'
+import axios, { AxiosRequestConfig, AxiosResponse, AxiosPromise } from 'axios'
 
 axios.defaults.validateStatus = function (status) {
   return status < 400
@@ -35,8 +35,7 @@ function refreshToken (response: AxiosResponse) {
   }
   return response
 }
-request.cancelTokenSource = null as CancelTokenSource
-request.cancelToken = axios.CancelToken
+
 export function request (url: string, options?: AxiosRequestConfig): AxiosPromise<IDavinciResponse<object>>
 export function request (config: AxiosRequestConfig): AxiosPromise<IDavinciResponse<object>>
 export default function request (url: string | AxiosRequestConfig, options?: AxiosRequestConfig): AxiosPromise<IDavinciResponse<object>> {
