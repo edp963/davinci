@@ -20,7 +20,7 @@
 
 import React, { PureComponent } from 'react'
 import { connect } from 'react-redux'
-import ControlPanelComponent from 'app/components/Control/Panel/ControlPanel'
+import ControlPanelComponent from 'app/components/Control/Panel'
 import ControlActions from './actions'
 const { setLocalControlPanelFormValues } = ControlActions
 import {

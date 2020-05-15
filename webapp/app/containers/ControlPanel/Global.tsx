@@ -21,7 +21,7 @@
 import React, { Component, GetDerivedStateFromProps } from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import ControlPanelComponent from 'app/components/Control/Panel/ControlPanel'
+import ControlPanelComponent from 'app/components/Control/Panel'
 import ControlActions from './actions'
 const { setGlobalControlPanelFormValues } = ControlActions
 import {

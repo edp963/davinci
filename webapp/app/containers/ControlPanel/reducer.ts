@@ -62,6 +62,17 @@ const controlReducer = (
         }, {})
         break
 
+      case ShareDashboardActionTypes.SET_INDIVIDUAL_DASHBOARD:
+        draft.globalControlPanelFormValues = {}
+        draft.globalControlPanelSelectOptions = {}
+        draft.localControlPanelFormValues = {
+          1: {}
+        }
+        draft.localControlPanelSelectOptions = {
+          1: {}
+        }
+        break
+
       case DashboardActionTypes.ADD_DASHBOARD_ITEMS_SUCCESS:
         action.payload.items.forEach((item) => {
           draft.localControlPanelFormValues[item.id] = {}
