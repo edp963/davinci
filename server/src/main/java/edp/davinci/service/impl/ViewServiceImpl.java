@@ -105,8 +105,17 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     private static final String SQL_VARABLE_KEY = "name";
 
     private static final CheckEntityEnum entity = CheckEntityEnum.VIEW;
-    
-    private static final  ExecutorService ROLEPARAM_THREADPOOL = Executors.newFixedThreadPool(8);
+
+    private static final ExecutorService ROLEPARAM_THREADPOOL = Executors.newFixedThreadPool(8);
+
+    private static final String CONCURRENCY_LOCK_FORMAT = "CON_LOCK@VIEW_%s@%s";
+    private static final String CONCURRENCY_COUNT_FORMAT = "CON_COUNT@VIEW_%s@%s";
+    private static final String CONCURRENCY_DATA_FORMAT = "CON_DATA@VIEW_%s@%s";
+    private static final String DATA_CACHE_FORMAT = "DATA@VIEW_%s@%s";
+    private static final String DISTINCT_DATA_CACHE_FORMAT = "DATA_DISTINCT@VIEW_%s@%s";
+
+
+    private static final int CONCURRENCY_EXPIRE = 60 * 60;
 
     @Override
     public boolean isExist(String name, Long id, Long projectId) {
@@ -167,6 +176,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         List<RelRoleView> relRoleViews = relRoleViewMapper.getByView(view.getId());
         view.setRoles(relRoleViews);
+
         return view;
     }
 
@@ -446,7 +456,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
 
             if (!CollectionUtils.isEmpty(executeSqlList)) {
-                executeSqlList.forEach(sql -> sqlUtils.execute(sql));
+                executeSqlList.forEach(sqlUtils::execute);
             }
 
             if (!CollectionUtils.isEmpty(querySqlList)) {
@@ -565,10 +575,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      * @throws ServerException
      */
     @Override
-    public PaginateWithQueryColumns getResultDataList(boolean isMaintainer,
-                                                      ViewWithSource viewWithSource,
-                                                      ViewExecuteParam executeParam,
-                                                      User user) throws ServerException, SQLException {
+    public PaginateWithQueryColumns getResultDataList(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException {
 
         PaginateWithQueryColumns paginate = null;
 
@@ -580,18 +587,19 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             throw new NotFoundException("source is not found");
         }
 
+        if (StringUtils.isEmpty(viewWithSource.getSql())) {
+            return null;
+        }
+
         String cacheKey = null;
         try {
-
-            if (StringUtils.isEmpty(viewWithSource.getSql())) {
-                return paginate;
-            }
-
+            //解析变量
             List<SqlVariable> variables = viewWithSource.getVariables();
+            //解析sql
             SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter, user, isMaintainer);
+            //列权限（只记录被限制访问的字段）
             Set<String> excludeColumns = new HashSet<>();
             packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(), excludeColumns, user);
-
             String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
             Source source = viewWithSource.getSource();
@@ -604,39 +612,63 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             }
 
             List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
-            if (!CollectionUtils.isEmpty(querySqlList)) {
-                buildQuerySql(querySqlList, source, executeParam);
-                executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl(), source.getDbVersion());
+            if (CollectionUtils.isEmpty(querySqlList)) {
+                return null;
+            }
 
-                if (null != executeParam.getCache() && executeParam.getCache() && executeParam.getExpired() > 0L) {
+            buildQuerySql(querySqlList, source, executeParam);
+            executeParam.addExcludeColumn(excludeColumns, source.getJdbcUrl(), source.getDbVersion());
 
-                    StringBuilder saltBuilder = new StringBuilder();
-                    saltBuilder.append(executeParam.getPageNo());
-                    saltBuilder.append(MINUS);
-                    saltBuilder.append(executeParam.getLimit());
-                    saltBuilder.append(MINUS);
-                    saltBuilder.append(executeParam.getPageSize());
-                    excludeColumns.forEach(saltBuilder::append);
-                    cacheKey = MD5Util.getMD5(saltBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true,
-                            32);
-                    if (!executeParam.getFlush()) {
+            StringBuilder res = new StringBuilder();
+            res.append(executeParam.getPageNo());
+            res.append(MINUS);
+            res.append(executeParam.getLimit());
+            res.append(MINUS);
+            res.append(executeParam.getPageSize());
+            excludeColumns.forEach(res::append);
 
-                        try {
-                            Object object = redisUtils.get(cacheKey);
-                            if (null != object && executeParam.getCache()) {
-                                paginate = (PaginateWithQueryColumns) object;
-                                return paginate;
-                            }
-                        } catch (Exception e) {
-                            log.warn("get data by cache: {}", e.getMessage());
+            cacheKey = MD5Util.getMD5(res.toString() + querySqlList.get(querySqlList.size() - 1), true, 32);
+
+            if (null != executeParam.getCache() && executeParam.getCache() && executeParam.getExpired() > 0L) {
+                if (!executeParam.getFlush()) {
+                    try {
+                        Object object = redisUtils.get(cacheKey);
+                        if (null != object && executeParam.getCache()) {
+                            paginate = (PaginateWithQueryColumns) object;
+                            return paginate;
                         }
+                    } catch (Exception e) {
+                        log.warn("get data by cache: {}", e.getMessage());
                     }
                 }
+            }
 
+            if (redisUtils.isRedisEnable() && executeParam.isConcurrencyOptimization()) {
+                ConcurrencyStrategyEnum strategyEnum = ConcurrencyStrategyEnum.strategyOf(executeParam.getConcurrencyOptimizationStrategy());
+                if (strategyEnum != null) {
+                    ConcurrencyQueryFactor queryFactor = ConcurrencyQueryFactor.builder()
+                            .withIsDistinct(false)
+                            .withSqlList(querySqlList)
+                            .withPageNo(executeParam.getPageNo())
+                            .withPageSize(executeParam.getPageSize())
+                            .withTotalCount(executeParam.getTotalCount())
+                            .withLimit(executeParam.getLimit())
+                            .withExcludeColumns(excludeColumns).build();
+
+                    Object data = getDataByConcurrency(cacheKey, viewWithSource.getId(), strategyEnum, queryFactor, sqlUtils);
+                    if (data != null) {
+                        paginate = (PaginateWithQueryColumns) data;
+                    }
+                }
+            } else {
                 for (String sql : querySqlList) {
-                    paginate = sqlUtils.syncQuery4Paginate(SqlParseUtils.rebuildSqlWithFragment(sql),
-                            executeParam.getPageNo(), executeParam.getPageSize(), executeParam.getTotalCount(),
-                            executeParam.getLimit(), excludeColumns);
+                    paginate = sqlUtils.syncQuery4Paginate(
+                            SqlParseUtils.rebuildSqlWithFragment(sql),
+                            executeParam.getPageNo(),
+                            executeParam.getPageSize(),
+                            executeParam.getTotalCount(),
+                            executeParam.getLimit(),
+                            excludeColumns);
                 }
             }
 
@@ -645,9 +677,12 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             throw new ServerException(e.getMessage());
         }
 
-        if (null != executeParam.getCache() && executeParam.getCache() && executeParam.getExpired() > 0L
+        if (null != executeParam.getCache()
+                && executeParam.getCache()
+                && executeParam.getExpired() > 0L
                 && null != paginate && !CollectionUtils.isEmpty(paginate.getResultList())) {
-            redisUtils.set(cacheKey, paginate, executeParam.getExpired(), TimeUnit.SECONDS);
+            String key = String.format(DATA_CACHE_FORMAT, viewWithSource.getId(), cacheKey);
+            redisUtils.set(key, paginate, executeParam.getExpired(), TimeUnit.SECONDS);
         }
 
         return paginate;
@@ -692,43 +727,54 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
             if (!CollectionUtils.isEmpty(querySqlList)) {
                 String cacheKey = null;
-                if (null != param) {
-                    STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
-                    ST st = stg.getInstanceOf("queryDistinctSql");
-                    st.add("columns", param.getColumns());
-                    st.add("filters", convertFilters(param.getFilters(), source));
-                    st.add("sql", querySqlList.get(querySqlList.size() - 1));
-                    st.add("keywordPrefix", SqlUtils.getKeywordPrefix(source.getJdbcUrl(), source.getDbVersion()));
-                    st.add("keywordSuffix", SqlUtils.getKeywordSuffix(source.getJdbcUrl(), source.getDbVersion()));
+                STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
+                ST st = stg.getInstanceOf("queryDistinctSql");
+                st.add("columns", param.getColumns());
+                st.add("filters", convertFilters(param.getFilters(), source));
+                st.add("sql", querySqlList.get(querySqlList.size() - 1));
+                st.add("keywordPrefix", SqlUtils.getKeywordPrefix(source.getJdbcUrl(), source.getDbVersion()));
+                st.add("keywordSuffix", SqlUtils.getKeywordSuffix(source.getJdbcUrl(), source.getDbVersion()));
 
-                    String sql = st.render();
-                    querySqlList.set(querySqlList.size() - 1, sql);
+                String sql = st.render();
+                querySqlList.set(querySqlList.size() - 1, sql);
+                cacheKey = MD5Util.getMD5("DISTINCT" + sql, true, 32);
 
-                    if (null != param.getCache() && param.getCache() && param.getExpired().longValue() > 0L) {
-                        cacheKey = MD5Util.getMD5("DISTINCI" + sql, true, 32);
-
-                        try {
-                            Object object = redisUtils.get(cacheKey);
-                            if (null != object) {
-                                return (List) object;
-                            }
-                        } catch (Exception e) {
-                            log.warn("get distinct value by cache: {}", e.getMessage());
+                if (null != param.getCache() && param.getCache() && param.getExpired() > 0L) {
+                    try {
+                        Object object = redisUtils.get(cacheKey);
+                        if (null != object) {
+                            return (List) object;
                         }
+                    } catch (Exception e) {
+                        log.warn("get distinct value by cache: {}", e.getMessage());
                     }
                 }
-                List<Map<String, Object>> list = null;
-                for (String sql : querySqlList) {
-                    list = sqlUtils.query4List(SqlParseUtils.rebuildSqlWithFragment(sql), -1);
+                List<Map<String, Object>> distinctDataList = null;
+
+                if (redisUtils.isRedisEnable() && param.isConcurrencyOptimization()) {
+                    ConcurrencyStrategyEnum strategyEnum = ConcurrencyStrategyEnum.strategyOf(param.getConcurrencyOptimizationStrategy());
+                    if (strategyEnum != null) {
+                        ConcurrencyQueryFactor queryFactor = ConcurrencyQueryFactor.builder()
+                                .withIsDistinct(true)
+                                .withSqlList(querySqlList).build();
+
+                        Object data = getDataByConcurrency(cacheKey, viewWithSource.getId(), strategyEnum, queryFactor, sqlUtils);
+                        if (data != null) {
+                            distinctDataList = (List) data;
+                        }
+                    }
+                } else {
+                    for (String querySql : querySqlList) {
+                        distinctDataList = sqlUtils.query4List(SqlParseUtils.rebuildSqlWithFragment(querySql), -1);
+                    }
                 }
 
-                if (null != param.getCache() && param.getCache() && param.getExpired().longValue() > 0L) {
-                    redisUtils.set(cacheKey, list, param.getExpired(), TimeUnit.SECONDS);
+                if (null != param.getCache() && param.getCache() && param.getExpired() > 0L) {
+                    String key = String.format(DISTINCT_DATA_CACHE_FORMAT, viewWithSource.getId(), cacheKey);
+                    redisUtils.set(key, distinctDataList, param.getExpired(), TimeUnit.SECONDS);
                 }
 
-                if (null != list) {
-                    return list;
-                }
+                return distinctDataList;
             }
 
         } catch (Exception e) {
@@ -739,102 +785,103 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         return null;
     }
 
-    public void packageParams(boolean isProjectMaintainer, Long viewId, SqlEntity sqlEntity, List<SqlVariable> variables, List<Param> paramList, Set<String> excludeColumns, User user) {
+    private Object getDataByConcurrency(String cacheKey, Long viewId, ConcurrencyStrategyEnum strategyEnum, ConcurrencyQueryFactor queryFactor, SqlUtils sqlUtils) throws Exception {
 
-        List<SqlVariable> queryVariables = getQueryVariables(variables);
-        List<SqlVariable> authVariables = null;
-        if (!isProjectMaintainer) {
-            List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewId);
-            authVariables = getAuthVariables(roleViewList, variables);
-            if (null != excludeColumns) {
-                Set<String> eclmns = getExcludeColumnsViaOneView(roleViewList);
-                if (!CollectionUtils.isEmpty(eclmns)) {
-                    excludeColumns.addAll(eclmns);
-                }
-            }
+        if (strategyEnum == null) {
+            return null;
         }
 
-        //查询参数
-        if (!CollectionUtils.isEmpty(queryVariables) && !CollectionUtils.isEmpty(sqlEntity.getQuaryParams())) {
-            if (!CollectionUtils.isEmpty(paramList)) {
-                Map<String, List<SqlVariable>> map = queryVariables.stream().collect(Collectors.groupingBy(SqlVariable::getName));
-                paramList.forEach(p -> {
-                    if (map.containsKey(p.getName())) {
-                        List<SqlVariable> list = map.get(p.getName());
-                        if (!CollectionUtils.isEmpty(list)) {
-                            SqlVariable v = list.get(list.size() - 1);
-                            if (null == sqlEntity.getQuaryParams()) {
-                                sqlEntity.setQuaryParams(new HashMap<>());
-                            }
-                            sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue(), v.isUdf()));
-                        }
-                    }
-                });
-            }
+        PaginateWithQueryColumns paginate = null;
+        List<Map<String, Object>> distinctDataList = null;
 
-            sqlEntity.getQuaryParams().forEach((k, v) -> {
-                if (v instanceof List && ((List) v).size() > 0) {
-                    v = ((List) v).stream().collect(Collectors.joining(COMMA)).toString();
-                }
-                sqlEntity.getQuaryParams().put(k, v);
-            });
-        }
+        String lockKey = String.format(CONCURRENCY_LOCK_FORMAT, viewId, cacheKey, strategyEnum.getStrategy());
+        String countKey = String.format(CONCURRENCY_COUNT_FORMAT, viewId, cacheKey, strategyEnum.getStrategy());
+        String dataKey = String.format(CONCURRENCY_DATA_FORMAT, viewId, cacheKey, strategyEnum.getStrategy());
 
-        //如果当前用户是project的维护者，直接不走行权限
-        if (isProjectMaintainer) {
-            sqlEntity.setAuthParams(null);
-            return;
-        }
+        BaseLock lock = LockFactory.getLock(lockKey, CONCURRENCY_EXPIRE, LockType.REDIS);
 
-        //权限参数
-        if (!CollectionUtils.isEmpty(authVariables)) {
-            ExecutorService executorService = Executors.newFixedThreadPool(authVariables.size() > 8 ? 8 : authVariables.size());
-            Map<String, Set<String>> map = new Hashtable<>();
-            List<Future> futures = new ArrayList<>(authVariables.size());
+        redisUtils.incr(countKey, CONCURRENCY_EXPIRE);
+
+        if (strategyEnum == ConcurrencyStrategyEnum.DIRTY_READ) {
             try {
-                authVariables.forEach(sqlVariable -> {
-                    futures.add(executorService.submit(() -> {
-                        if (null != sqlVariable) {
-                            Set<String> vSet = null;
-                            if (map.containsKey(sqlVariable.getName().trim())) {
-                                vSet = map.get(sqlVariable.getName().trim());
-                            } else {
-                                vSet = new HashSet<>();
-                            }
-
-                            List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
-                            if (null == values) {
-                                vSet.add(NO_AUTH_PERMISSION);
-                            } else if (!values.isEmpty()) {
-                                vSet.addAll(values);
-                            }
-                            map.put(sqlVariable.getName().trim(), vSet);
-                        }
-                    }));
-                });
-                try {
-                    for (Future future : futures) {
-                        future.get();
-                    }
-                } catch (ExecutionException e) {
-                    executorService.shutdownNow();
-                    throw new ServerException(e.getMessage());
+                Object o = redisUtils.get(dataKey);
+                if (null != o) {
+                    return o;
                 }
-            } catch (InterruptedException e) {
-                log.error(e.getMessage(), e);
             } finally {
-                executorService.shutdown();
-            }
-
-            if (!CollectionUtils.isEmpty(map)) {
-                if (null == sqlEntity.getAuthParams()) {
-                    sqlEntity.setAuthParams(new HashMap<>());
+                redisUtils.decr(countKey, -1);
+                Object decr = redisUtils.get(countKey);
+                if (decr == null || (Integer) decr <= 0L) {
+                    redisUtils.delete(countKey);
                 }
-                map.forEach((k, v) -> sqlEntity.getAuthParams().put(k, new ArrayList<String>(v)));
             }
         } else {
-            sqlEntity.setAuthParams(null);
+            Object decr = redisUtils.get(countKey);
+            if (decr != null && (Integer) decr > 1L) {
+                redisUtils.decr(countKey, -1);
+                throw new ServerException("Current get data request is in progress");
+            }
         }
+
+        if (lock.getLock()) {
+            long millisStart = System.currentTimeMillis();
+            if (queryFactor.isDistinct()) {
+                for (String sql : queryFactor.getSqlList()) {
+                    distinctDataList = sqlUtils.query4List(SqlParseUtils.rebuildSqlWithFragment(sql), -1);
+                }
+                long millisEnd = System.currentTimeMillis();
+                long expire = (millisEnd - millisStart) / 1_000;
+                redisUtils.set(dataKey, distinctDataList, Math.max(10L, expire), TimeUnit.SECONDS);
+            } else {
+                for (String sql : queryFactor.getSqlList()) {
+                    paginate = sqlUtils.syncQuery4Paginate(
+                            SqlParseUtils.rebuildSqlWithFragment(sql),
+                            queryFactor.getPageNo(),
+                            queryFactor.getPageSize(),
+                            queryFactor.getTotalCount(),
+                            queryFactor.getLimit(),
+                            queryFactor.getExcludeColumns());
+                }
+                long millisEnd = System.currentTimeMillis();
+                long expire = (millisEnd - millisStart) / 1_000;
+                redisUtils.set(dataKey, paginate, Math.max(10L, expire), TimeUnit.SECONDS);
+            }
+
+            lock.release();
+        }
+
+        boolean waite = true;
+        do {
+            waite = redisUtils.get(lockKey) != null;
+            if (waite) {
+                if (strategyEnum == ConcurrencyStrategyEnum.FAIL_FAST) {
+                    redisUtils.decr(countKey, -1);
+                    throw new ServerException("Current get data request is in progress");
+                } else {
+                    Thread.sleep(100);
+                }
+            } else {
+                Object cacheData = redisUtils.get(dataKey);
+                if (null != cacheData) {
+                    if (queryFactor.isDistinct()) {
+                        distinctDataList = (List) cacheData;
+                    } else {
+                        paginate = (PaginateWithQueryColumns) cacheData;
+                    }
+                }
+                redisUtils.decr(countKey, -1);
+            }
+        } while (waite);
+
+        Object decr = redisUtils.get(countKey);
+        if (decr == null || (Integer) decr <= 0L) {
+            redisUtils.delete(countKey);
+            if (strategyEnum == ConcurrencyStrategyEnum.FAIL_FAST) {
+                redisUtils.delete(dataKey);
+            }
+        }
+
+        return queryFactor.isDistinct() ? distinctDataList : paginate;
     }
 
 
@@ -920,64 +967,165 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
 
+    public void packageParams(boolean isProjectMaintainer, Long viewId, SqlEntity sqlEntity, List<SqlVariable> variables, List<Param> paramList, Set<String> excludeColumns, User user) {
+
+        List<SqlVariable> queryVariables = getQueryVariables(variables);
+        List<SqlVariable> authVariables = null;
+
+        if (!isProjectMaintainer) {
+            List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewId);
+            authVariables = getAuthVariables(roleViewList, variables);
+            if (null != excludeColumns) {
+                Set<String> eclmns = getExcludeColumnsViaOneView(roleViewList);
+                if (!CollectionUtils.isEmpty(eclmns)) {
+                    excludeColumns.addAll(eclmns);
+                }
+            }
+        }
+
+        //查询参数
+        if (!CollectionUtils.isEmpty(queryVariables) && !CollectionUtils.isEmpty(sqlEntity.getQuaryParams())) {
+            if (!CollectionUtils.isEmpty(paramList)) {
+                Map<String, List<SqlVariable>> map = queryVariables.stream().collect(Collectors.groupingBy(SqlVariable::getName));
+                paramList.forEach(p -> {
+                    if (map.containsKey(p.getName())) {
+                        List<SqlVariable> list = map.get(p.getName());
+                        if (!CollectionUtils.isEmpty(list)) {
+                            SqlVariable v = list.get(list.size() - 1);
+                            if (null == sqlEntity.getQuaryParams()) {
+                                sqlEntity.setQuaryParams(new HashMap<>());
+                            }
+                            sqlEntity.getQuaryParams().put(p.getName().trim(), SqlVariableValueTypeEnum.getValue(v.getValueType(), p.getValue(), v.isUdf()));
+                        }
+                    }
+                });
+            }
+
+            sqlEntity.getQuaryParams().forEach((k, v) -> {
+                if (v instanceof List && ((List) v).size() > 0) {
+                    v = ((List) v).stream().collect(Collectors.joining(COMMA)).toString();
+                }
+                sqlEntity.getQuaryParams().put(k, v);
+            });
+        }
+
+        //如果当前用户是project的维护者，直接不走行权限
+        if (isProjectMaintainer) {
+            sqlEntity.setAuthParams(null);
+            return;
+        }
+
+        //权限参数
+        if (!CollectionUtils.isEmpty(authVariables)) {
+            ExecutorService executorService = Executors.newFixedThreadPool(Math.min(authVariables.size(), 8));
+            Map<String, Set<String>> map = new Hashtable<>();
+            List<Future> futures = new ArrayList<>(authVariables.size());
+            try {
+                authVariables.forEach(sqlVariable -> {
+                    futures.add(executorService.submit(() -> {
+                        if (null != sqlVariable) {
+                            Set<String> vSet = null;
+                            if (map.containsKey(sqlVariable.getName().trim())) {
+                                vSet = map.get(sqlVariable.getName().trim());
+                            } else {
+                                vSet = new HashSet<>();
+                            }
+
+                            List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, user.getEmail());
+                            if (null == values) {
+                                vSet.add(NO_AUTH_PERMISSION);
+                            } else if (!values.isEmpty()) {
+                                vSet.addAll(values);
+                            }
+                            map.put(sqlVariable.getName().trim(), vSet);
+                        }
+                    }));
+                });
+                try {
+                    for (Future future : futures) {
+                        future.get();
+                    }
+                } catch (ExecutionException e) {
+                    executorService.shutdownNow();
+                    throw new ServerException(e.getMessage());
+                }
+            } catch (InterruptedException e) {
+                log.error(e.getMessage(), e);
+            } finally {
+                executorService.shutdown();
+            }
+
+            if (!CollectionUtils.isEmpty(map)) {
+                if (null == sqlEntity.getAuthParams()) {
+                    sqlEntity.setAuthParams(new HashMap<>());
+                }
+                map.forEach((k, v) -> sqlEntity.getAuthParams().put(k, new ArrayList<String>(v)));
+            }
+        } else {
+            sqlEntity.setAuthParams(null);
+        }
+    }
+
+
+
     private void checkAndInsertRoleParam(String sqlVarible, List<RelRoleViewDto> roles, User user, View view) {
         List<SqlVariable> variables = JSONObject.parseArray(sqlVarible, SqlVariable.class);
         if (CollectionUtils.isEmpty(roles)) {
             relRoleViewMapper.deleteByViewId(view.getId());
             return;
         }
-        
-        ROLEPARAM_THREADPOOL.execute(()->{
-			Set<String> vars = null, columns = null;
 
-			if (!CollectionUtils.isEmpty(variables)) {
-				vars = variables.stream().map(SqlVariable::getName).collect(Collectors.toSet());
-			}
-			if (!StringUtils.isEmpty(view.getModel())) {
-				columns = JSONObject.parseObject(view.getModel(), HashMap.class).keySet();
-			}
+        ROLEPARAM_THREADPOOL.execute(() -> {
+            Set<String> vars = null, columns = null;
 
-			Set<String> finalColumns = columns;
-			Set<String> finalVars = vars;
+            if (!CollectionUtils.isEmpty(variables)) {
+                vars = variables.stream().map(SqlVariable::getName).collect(Collectors.toSet());
+            }
+            if (!StringUtils.isEmpty(view.getModel())) {
+                columns = JSONObject.parseObject(view.getModel(), HashMap.class).keySet();
+            }
 
-			List<RelRoleView> relRoleViews = new ArrayList<>();
-			roles.forEach(r -> {
-				if (r.getRoleId().longValue() <= 0L) {
-					return;
-				}
+            Set<String> finalColumns = columns;
+            Set<String> finalVars = vars;
 
-				String rowAuth = null, columnAuth = null;
-				if (!StringUtils.isEmpty(r.getRowAuth())) {
-					JSONArray rowAuthArray = JSONObject.parseArray(r.getRowAuth());
-					if (!CollectionUtils.isEmpty(rowAuthArray)) {
-						JSONArray newRowAuthArray = new JSONArray();
-						for (int i = 0; i < rowAuthArray.size(); i++) {
-							JSONObject rowAuthObj = rowAuthArray.getJSONObject(i);
-							String name = rowAuthObj.getString(SQL_VARABLE_KEY);
-							if (finalVars.contains(name)) {
-								newRowAuthArray.add(rowAuthObj);
-							}
-						}
-						rowAuth = newRowAuthArray.toJSONString();
-						newRowAuthArray.clear();
-					}
-				}
+            List<RelRoleView> relRoleViews = new ArrayList<>();
+            roles.forEach(r -> {
+                if (r.getRoleId().longValue() <= 0L) {
+                    return;
+                }
 
-				if (null != finalColumns && !StringUtils.isEmpty(r.getColumnAuth())) {
-					List<String> clms = JSONObject.parseArray(r.getColumnAuth(), String.class);
-					List<String> collect = clms.stream().filter(c -> finalColumns.contains(c))
-							.collect(Collectors.toList());
-					columnAuth = JSONObject.toJSONString(collect);
-				}
+                String rowAuth = null, columnAuth = null;
+                if (!StringUtils.isEmpty(r.getRowAuth())) {
+                    JSONArray rowAuthArray = JSONObject.parseArray(r.getRowAuth());
+                    if (!CollectionUtils.isEmpty(rowAuthArray)) {
+                        JSONArray newRowAuthArray = new JSONArray();
+                        for (int i = 0; i < rowAuthArray.size(); i++) {
+                            JSONObject rowAuthObj = rowAuthArray.getJSONObject(i);
+                            String name = rowAuthObj.getString(SQL_VARABLE_KEY);
+                            if (finalVars.contains(name)) {
+                                newRowAuthArray.add(rowAuthObj);
+                            }
+                        }
+                        rowAuth = newRowAuthArray.toJSONString();
+                        newRowAuthArray.clear();
+                    }
+                }
 
-				RelRoleView relRoleView = new RelRoleView(view.getId(), r.getRoleId(), rowAuth, columnAuth)
-						.createdBy(user.getId());
-				relRoleViews.add(relRoleView);
-			});
+                if (null != finalColumns && !StringUtils.isEmpty(r.getColumnAuth())) {
+                    List<String> clms = JSONObject.parseArray(r.getColumnAuth(), String.class);
+                    List<String> collect = clms.stream().filter(finalColumns::contains)
+                            .collect(Collectors.toList());
+                    columnAuth = JSONObject.toJSONString(collect);
+                }
 
-			if (!CollectionUtils.isEmpty(relRoleViews)) {
-				relRoleViewMapper.insertBatch(relRoleViews);
-			}
+                RelRoleView relRoleView = new RelRoleView(view.getId(), r.getRoleId(), rowAuth, columnAuth)
+                        .createdBy(user.getId());
+                relRoleViews.add(relRoleView);
+            });
+
+            if (!CollectionUtils.isEmpty(relRoleViews)) {
+                relRoleViewMapper.insertBatch(relRoleViews);
+            }
         });
     }
 }

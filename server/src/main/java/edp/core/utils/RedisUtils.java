@@ -86,6 +86,41 @@ public class RedisUtils {
 		redisTemplate.convertAndSend(channel, message);
 	}
 
+	public Long incrementDelta(String key, int delta) {
+		if (!isRedisEnable) {
+			throw new RuntimeException("Redis is disabled");
+		}
+		ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+		return valueOperations.increment(key, delta);
+	}
+
+	public synchronized Long incr(String key, int timeout) {
+		if (!isRedisEnable) {
+			return -1L;
+		}
+
+		if (setIfAbsent(key, 1, timeout) && timeout > 0) {
+			return 1L;
+		} else {
+			ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+			return valueOperations.increment(key, 1);
+		}
+	}
+
+	public synchronized Long decr(String key, int timeout) {
+		if (!isRedisEnable) {
+			return -1L;
+		}
+
+		if (setIfAbsent(key, -1, timeout) && timeout > 0) {
+			return -1L;
+		} else {
+			ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+			return valueOperations.increment(key, -1);
+		}
+	}
+
+
 	@SuppressWarnings("unchecked")
 	public boolean setIfAbsent(String key, Object value, int timeout) {
 
