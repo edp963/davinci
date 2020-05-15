@@ -21,11 +21,11 @@
 import { getInitialPaginationAndNativeQuery } from 'app/containers/Dashboard/util'
 import { IShareDashboardItemInfo } from './types'
 import { DashboardItemStatus } from './constants'
-import { IGlobalControl } from 'app/components/Filters/types'
+import { IGlobalControl } from 'app/components/Control/types'
 import {
-  FilterTypes,
+  ControlTypes,
   DatePickerDefaultValues
-} from 'app/components/Filters/constants'
+} from 'app/components/Control/constants'
 import { IWidgetFormed } from 'app/containers/Widget/types'
 
 export function initDefaultValuesFromShareParams(
@@ -37,7 +37,7 @@ export function initDefaultValuesFromShareParams(
     if (shareParams) {
       const defaultValue = shareParams[name]
       if (defaultValue && defaultValue.length) {
-        if (type === FilterTypes.Date) {
+        if (type === ControlTypes.Date) {
           control.dynamicDefaultValue = DatePickerDefaultValues.Custom
         }
         control.defaultValue =

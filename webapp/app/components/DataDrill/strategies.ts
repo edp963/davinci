@@ -32,9 +32,9 @@ import WidgetAbstract, {
   ISourceDataFilter
 } from './types'
 
-import { IFilters } from '../Filters/types'
+import { IFilters } from '../Control/types'
 
-import { getValidColumnValue } from 'components/Filters/util'
+import { getValidColumnValue } from 'app/components/Control/util'
 
 import OperatingWidget, {
   operationWidgetProps,

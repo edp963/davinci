@@ -1,8 +1,8 @@
 import { QueryVariable } from 'containers/Dashboard/types'
 import { DEFAULT_SPLITER, SQL_NUMBER_TYPES } from 'app/globalConstants'
 import OperatorType from 'utils/operatorTypes'
-import { IFilters } from 'app/components/Filters/types'
-import {getValidColumnValue} from 'app/components/Filters/util'
+import { IFilters } from 'app/components/Control/types'
+import {getValidColumnValue} from 'app/components/Control/util'
 export type LinkageType = 'column' | 'variable'
 
 export interface ILinkage {

@@ -7,7 +7,7 @@ import { DEFAULT_DATETIME_FORMAT } from 'app/globalConstants'
 import { decodeMetricName } from '../util'
 import { uuid } from 'utils/util'
 import { Transfer, Radio, Button, DatePicker } from 'antd'
-import { IFilters } from 'app/components/Filters/types'
+import { IFilters } from 'app/components/Control/types'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 const RangePicker = DatePicker.RangePicker

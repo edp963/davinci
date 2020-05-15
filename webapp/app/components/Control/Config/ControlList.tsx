@@ -13,21 +13,21 @@ import {
 } from '../util'
 import { ListItem } from 'components/ListFormLayout'
 
-const styles = require('../filter.less')
+import styles from '../Control.less'
 
 import { Icon, Tree } from 'antd'
 const { TreeNode } = Tree
 
-interface IFilterListProps {
+interface IControlListProps {
   list: IGlobalControl[] | ILocalControl[]
-  selectedFilter: IControlBase
-  onSelectFilter: (key: string) => void
-  onDeleteFilter: (keys: string[], selectKey: string) => void
+  selected: IControlBase
+  onSelect: (key: string) => void
+  onDelete: (keys: string[], selectKey: string) => void
   onNameChange: (key: string, name: string) => void
   onParentChange: (key: string, parentKey: string, type: string, dropNextKey?: string) => void
 }
 
-interface IFilterListStates {
+interface IControlListStates {
   renderTree: IRenderTreeItem[]
   flatTree: {
     [key: string]: IRenderTreeItem
@@ -35,7 +35,7 @@ interface IFilterListStates {
   selectedKeys: string[]
 }
 
-class FilterList extends Component<IFilterListProps, IFilterListStates> {
+class ControlList extends Component<IControlListProps, IControlListStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -46,18 +46,18 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
   }
 
   public componentWillMount () {
-    const { list, selectedFilter } = this.props
+    const { list, selected } = this.props
     this.getRenderTree(list)
-    this.getSelectedKeys(selectedFilter)
+    this.getSelectedKeys(selected)
   }
 
-  public componentWillReceiveProps (nextProps: IFilterListProps) {
-    const { list, selectedFilter } = nextProps
+  public componentWillReceiveProps (nextProps: IControlListProps) {
+    const { list, selected } = nextProps
     if (list !== this.props.list) {
       this.getRenderTree(list)
     }
-    if (selectedFilter !== this.props.selectedFilter) {
-      this.getSelectedKeys(selectedFilter)
+    if (selected !== this.props.selected) {
+      this.getSelectedKeys(selected)
     }
   }
 
@@ -66,21 +66,21 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
     this.setState(getControlRenderTree<IControlBase, typeof replica>(replica))
   }
 
-  private getSelectedKeys = (selectedFilter: IControlBase) => {
+  private getSelectedKeys = (selected: IControlBase) => {
     this.setState({
-      selectedKeys: selectedFilter ? [selectedFilter.key] : []
+      selectedKeys: selected ? [selected.key] : []
     })
   }
 
-  private deleteFilter = (key: string) => {
-    const { selectedFilter } = this.props
+  private delete = (key: string) => {
+    const { selected } = this.props
     const { renderTree, flatTree } = this.state
     const delKeys = [key].concat(getAllChildren(key, flatTree))
     let selectedKey: string
 
-    if (selectedFilter.key === key) {
-      if (selectedFilter.parent) {
-        const parentTree = flatTree[selectedFilter.parent]
+    if (selected.key === key) {
+      if (selected.parent) {
+        const parentTree = flatTree[selected.parent]
         if (parentTree.children.length === 1) {
           selectedKey = parentTree.key
         } else {
@@ -100,15 +100,15 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
         }
       }
     } else {
-      selectedKey = selectedFilter.key
+      selectedKey = selected.key
     }
 
-    this.props.onDeleteFilter(delKeys, selectedKey)
+    this.props.onDelete(delKeys, selectedKey)
   }
 
-  private selectFilter = (selectedKeys: string[]) => {
+  private select = (selectedKeys: string[]) => {
     if (selectedKeys.length) {
-      this.props.onSelectFilter(selectedKeys[0])
+      this.props.onSelect(selectedKeys[0])
     }
   }
 
@@ -156,7 +156,7 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
           id={key}
           name={name}
           onChange={this.props.onNameChange}
-          onDelete={this.deleteFilter}
+          onDelete={this.delete}
         />
       )
       if (children) {
@@ -181,7 +181,7 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
       <Tree
         className={styles.tree}
         selectedKeys={selectedKeys}
-        onSelect={this.selectFilter}
+        onSelect={this.select}
         onDragEnter={this.dragEnter}
         onDrop={this.drop}
         defaultExpandAll
@@ -194,4 +194,4 @@ class FilterList extends Component<IFilterListProps, IFilterListStates> {
   }
 }
 
-export default FilterList
+export default ControlList

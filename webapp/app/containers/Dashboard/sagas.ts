@@ -60,14 +60,14 @@ import {
   IGlobalControlConditionsByItem,
   IGlobalControlConditions,
   ILocalControlConditions
-} from 'app/components/Filters/types'
+} from 'app/components/Control/types'
 import { IWidgetRaw, IWidgetFormed } from '../Widget/types'
 import { DownloadTypes } from '../App/constants'
 import {
   globalControlMigrationRecorder,
   localControlMigrationRecorder
 } from 'app/utils/migrationRecorders'
-import { ControlPanelTypes } from 'app/components/Filters/constants'
+import { ControlPanelTypes } from 'app/components/Control/constants'
 import { RenderType, IWidgetConfig } from '../Widget/components/Widget'
 import { CancelTokenSource } from 'axios'
 import request from 'utils/request'

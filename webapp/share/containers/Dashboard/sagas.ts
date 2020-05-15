@@ -39,7 +39,7 @@ import {
   makeSelectGlobalControlPanelFormValues,
   makeSelectLocalControlPanelFormValues
 } from 'app/containers/ControlPanel/selectors'
-import { ControlPanelTypes } from 'app/components/Filters/constants'
+import { ControlPanelTypes } from 'app/components/Control/constants'
 import {
   globalControlMigrationRecorder,
   localControlMigrationRecorder
@@ -68,7 +68,7 @@ import {
   IGlobalControlConditions,
   IGlobalControlConditionsByItem,
   ILocalControlConditions
-} from 'components/Filters/types'
+} from 'app/components/Control/types'
 import {
   IWidgetConfig,
   RenderType
