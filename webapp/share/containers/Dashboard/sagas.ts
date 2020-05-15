@@ -408,12 +408,13 @@ export function* initiateDownloadTask(action: DashboardActionType) {
   const currentDashboard: IDashboard = yield select(
     makeSelectDashboard()
   )
+  const currentDashboardFilters = currentDashboard?.config.filters || []
   const globalControlFormValues = yield select(
     makeSelectGlobalControlPanelFormValues()
   )
   const globalControlConditionsByItem: IGlobalControlConditionsByItem = getCurrentControlValues(
     ControlPanelTypes.Global,
-    currentDashboard.config.filters,
+    currentDashboardFilters,
     globalControlFormValues
   )
   const itemInfo: IShareDashboardItemInfo = yield select((state) =>
