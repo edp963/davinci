@@ -483,7 +483,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         this.dashboardItemForm.props.form.setFieldsValue({
           id: dashboardItem.id,
           polling: dashboardItem.polling ? 'true' : 'false',
-          frequency: dashboardItem.frequency
+          frequency: dashboardItem.frequency,
+          alias: dashboardItem.alias
         })
       }, 0)
     })
@@ -614,7 +615,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       const modifiedDashboardItem = {
         ...dashboardItem,
         ...newItem,
-        widgetId: selectedWidgets[0]
+        widgetId: selectedWidgets[0],
+        alias: formdata['alias']
       }
 
       this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
@@ -925,7 +927,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       const gridEditable = hasVizEditPermission(currentProject.permission)
 
       currentItems.forEach((dashboardItem) => {
-        const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
+        const { id, x, y, width, height, widgetId, polling, frequency, alias } = dashboardItem
         const {
           datasource,
           loading,
@@ -949,6 +951,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           <div key={id} className={styles.authSizeTag}>
             <DashboardItem
               itemId={id}
+              alias={alias}
               widgets={widgets}
               widget={widget}
               isTrigger={isTrigger}

@@ -57,6 +57,7 @@ export interface IDashboardItem {
   polling: boolean
   frequency: number
   config: string
+  alias?: string
 }
 
 export interface IDashboardItemInfo {
