@@ -685,13 +685,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         hasDataConfig={hasDataConfig}
       />
     )
-
+    const widgetName = widget.alias || widget.name
 
     return (
       <div className={gridItemClass} ref={(f) => this.container = f}>
         <div className={styles.header}>
           <div className={styles.title}>
-            <h4>{widget.name}</h4>
+            <h4>{widgetName}</h4>
             {descIcon}
             {errorIcon}
             {controlToggle}

@@ -483,7 +483,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         this.dashboardItemForm.props.form.setFieldsValue({
           id: dashboardItem.id,
           polling: dashboardItem.polling ? 'true' : 'false',
-          frequency: dashboardItem.frequency
+          frequency: dashboardItem.frequency,
+          alias: dashboardItem.alias
         })
       }, 0)
     })
@@ -614,7 +615,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       const modifiedDashboardItem = {
         ...dashboardItem,
         ...newItem,
-        widgetId: selectedWidgets[0]
+        widgetId: selectedWidgets[0],
+        alias: formdata['alias']
       }
 
       this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
@@ -925,7 +927,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       const gridEditable = hasVizEditPermission(currentProject.permission)
 
       currentItems.forEach((dashboardItem) => {
-        const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
+        const { id, x, y, width, height, widgetId, polling, frequency, alias } = dashboardItem
         const {
           datasource,
           loading,
@@ -940,6 +942,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           errorMessage
         } = currentItemsInfo[id]
         const widget = widgets.find((w) => w.id === widgetId)
+        widget['alias'] = alias
         const interacting = interactingStatus[id] || false
         const view = formedViews[widget.viewId]
         const isTrigger = currentLinkages && currentLinkages.length ? currentLinkages.map((linkage) => linkage.trigger[0]
@@ -950,7 +953,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
             <DashboardItem
               itemId={id}
               widgets={widgets}
-              widget={widget}
+              widget={{...widget}}
               isTrigger={isTrigger}
               datasource={datasource}
               loading={loading}
