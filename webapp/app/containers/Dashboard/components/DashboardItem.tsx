@@ -66,7 +66,6 @@ interface IDashboardItemProps {
   shareToken: string
   shareLoading?: boolean
   downloadCsvLoading: boolean
-  drillHistory?: IDrillDetail[]
   rendered?: boolean
   renderType: RenderType
   selectedItems: number[]
@@ -286,7 +285,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private paginationChange = (pageNo: number, pageSize: number, orders) => {
-    const { itemId, queryConditions, drillHistory, onLoadData } = this.props
+    const { itemId, queryConditions, onLoadData } = this.props
+    const { drillHistory } = queryConditions
     const pagination = {
       ...queryConditions.pagination,
       pageNo,
@@ -332,8 +332,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private drillDataHistory = (history, item: number, itemId) => {
-    const { onSelectDrillHistory, drillHistory } = this.props
+    const { onSelectDrillHistory, queryConditions } = this.props
     const { widgetProps, cacheWidgetProps } = this.state
+    const { drillHistory } = queryConditions
     if (onSelectDrillHistory) {
       if (item === -1 && !history) {
         this.setState({widgetProps: cacheWidgetProps})
@@ -351,12 +352,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private isHasDrillHistory (): boolean {
-    const { drillHistory } = this.props
+    const { queryConditions } = this.props
+    const { drillHistory } = queryConditions
     return !!(drillHistory && (drillHistory.length !== 0))
   }
 
   private getLastDrillHistory () {
-    const { drillHistory } = this.props
+    const { queryConditions } = this.props
+    const { drillHistory } = queryConditions
     return [...drillHistory].pop()
   }
 
@@ -464,7 +467,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       loading,
       interacting,
       shareToken,
-      drillHistory,
       shareLoading,
       downloadCsvLoading,
       renderType,
@@ -481,6 +483,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       container,
       errorMessage
     } = this.props
+    const {drillHistory} = queryConditions
     const data = datasource.resultList
 
     const {
