@@ -127,7 +127,8 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
       'iconfont': true,
       [styles.sort]: true,
       'icon-sortascending': sort && sort.sortType === FieldSortTypes.Asc,
-      'icon-sortdescending': sort && sort.sortType === FieldSortTypes.Desc
+      'icon-sortdescending': sort && sort.sortType === FieldSortTypes.Desc,
+      'icon-zidingyipaixu': sort && sort.sortType === FieldSortTypes.Custom
     })
 
     const desc = field ? field.desc : ''
