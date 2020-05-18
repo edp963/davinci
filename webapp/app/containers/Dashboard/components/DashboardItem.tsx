@@ -54,6 +54,7 @@ import utilStyles from 'app/assets/less/util.less'
 
 interface IDashboardItemProps {
   itemId: number
+  alias?: string
   widget: IWidgetFormed
   widgets: IWidgetFormed[]
   view?: Partial<IFormedView>
@@ -461,6 +462,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   public render () {
     const {
+      alias,
       itemId,
       widget,
       datasource,
@@ -685,7 +687,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         hasDataConfig={hasDataConfig}
       />
     )
-    const widgetName = widget.alias || widget.name
+    const widgetName = alias || widget.name
 
     return (
       <div className={gridItemClass} ref={(f) => this.container = f}>

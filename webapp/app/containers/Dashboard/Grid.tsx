@@ -942,7 +942,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           errorMessage
         } = currentItemsInfo[id]
         const widget = widgets.find((w) => w.id === widgetId)
-        widget['alias'] = alias
         const interacting = interactingStatus[id] || false
         const view = formedViews[widget.viewId]
         const isTrigger = currentLinkages && currentLinkages.length ? currentLinkages.map((linkage) => linkage.trigger[0]
@@ -952,8 +951,9 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           <div key={id} className={styles.authSizeTag}>
             <DashboardItem
               itemId={id}
+              alias={alias}
               widgets={widgets}
-              widget={{...widget}}
+              widget={widget}
               isTrigger={isTrigger}
               datasource={datasource}
               loading={loading}
