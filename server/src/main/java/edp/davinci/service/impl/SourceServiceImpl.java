@@ -407,10 +407,6 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
         checkWritePermission(entity, source.getProjectId(), user, "upload csv file in");
 
-        if (uploadMeta.getMode() == UploadModeEnum.COVER.getMode()) {
-            return;
-        }
-
         try {
             boolean tableIsExist = sqlUtils.init(source).tableIsExist(uploadMeta.getTableName());
             if (uploadMeta.getMode() == UploadModeEnum.NEW.getMode()) {
@@ -792,7 +788,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
                 }
             }
 
-            ExecutorService executorService = Executors.newFixedThreadPool(totalPage > 8 ? 8 : totalPage);
+            ExecutorService executorService = Executors.newFixedThreadPool(Math.min(totalPage, 8));
 
             STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
             ST st = stg.getInstanceOf("insertData");
@@ -810,7 +806,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
                 int localPageSize = pageSize;
                 futures.add(executorService.submit(() -> {
                     int starNum = (localPageNum - 1) * localPageSize;
-                    int endNum = localPageNum * localPageSize > totalSize ? (totalSize) : localPageNum * localPageSize;
+                    int endNum = Math.min(localPageNum * localPageSize, totalSize);
                     log.info("executeInsert thread-{} : start:{}, end:{}", localPageNum, starNum, endNum);
                     sqlUtils.executeBatch(sql, headers, values.subList(starNum, endNum));
                 }));
