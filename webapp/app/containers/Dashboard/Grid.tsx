@@ -941,7 +941,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         } = currentItemsInfo[id]
         const widget = widgets.find((w) => w.id === widgetId)
         const interacting = interactingStatus[id] || false
-        const drillHistory = queryConditions.drillHistory
         const view = formedViews[widget.viewId]
         const isTrigger = currentLinkages && currentLinkages.length ? currentLinkages.map((linkage) => linkage.trigger[0]
         ).some((tr) => tr === String(id)) : false
@@ -967,7 +966,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
               renderType={renderType}
               queryConditions={queryConditions}
               errorMessage={errorMessage}
-              drillHistory={drillHistory}
               onSelectDrillHistory={this.selectDrillHistory}
               onLoadData={onLoadDashboardItemData}
               onShowEdit={this.showEditDashboardItemForm}
