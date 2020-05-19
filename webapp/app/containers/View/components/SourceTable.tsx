@@ -14,6 +14,7 @@ import { SQL_DATE_TYPES, SQL_NUMBER_TYPES, SQL_STRING_TYPES } from 'app/globalCo
 
 import utilStyles from 'assets/less/util.less'
 import Styles from 'containers/View/View.less'
+import { shallowEqual } from 'react-redux'
 
 interface ISourceTableProps {
   view: IView
@@ -231,6 +232,21 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
       autoExpandTable: true,
       expandedNodeKeys: Array.from(expandedNodeKeys)
     })
+  }
+  // FIXED: sql 的改动会改变view，此组件依赖view，会进行多余的render，此处进行优化
+  public shouldComponentUpdate(nextProps: ISourceTableProps, nextState: ISourceTableStates) {
+    const {sources, schema, view: {name, description, sourceId}} = this.props
+    if (
+      !shallowEqual(nextState, this.state) ||
+      nextProps.sources !== sources ||
+      nextProps.schema !== schema ||
+      nextProps.view.name !== name ||
+      nextProps.view.description !== description ||
+      nextProps.view.sourceId !== sourceId
+    ) {
+      return true
+    }
+    return false
   }
 
   public render () {
