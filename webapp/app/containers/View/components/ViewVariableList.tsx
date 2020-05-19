@@ -14,7 +14,7 @@ export interface IViewVariableListProps {
   onEdit?: (variable: IViewVariable) => void
 }
 
-export class ViewVariableList extends React.Component<IViewVariableListProps> {
+export class ViewVariableList extends React.PureComponent<IViewVariableListProps> {
 
   private editItem = (variable: IViewVariable) => () => {
     this.props.onEdit({ ...variable })
