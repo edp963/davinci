@@ -21,30 +21,18 @@
 import React, { useMemo } from 'react'
 import { Menu, Icon } from 'antd'
 import { getPivot } from 'containers/Widget/components/util'
-import { DrillType, WidgetDimension } from './types'
+import { DrillType, WidgetDimension, IDataDrillProps } from './types'
 import { getListsByViewModelTypes } from 'containers/View/util'
 import { ViewModelTypes } from 'containers/View/constants'
-
 const styles = require('./datadrill.less')
-export interface IDataDrillProps {
-  widgetConfig: any
-  drillHistory?: any
-  widgetMode?: string
-  key?: string | number
-  drillpathSetting?: any
-  currentData?: object[]
-  onDataDrillPath?: () => any
-  onDataDrillDown?: (name: string, dimensions?: WidgetDimension) => any
-  onDataDrillUp?: (name: string) => any
-}
 
-const Datadrill: React.FC<IDataDrillProps> = (props: IDataDrillProps) => {
+
+const DataDrill: React.FC<IDataDrillProps> = (props: IDataDrillProps) => {
   const {
     onDataDrillUp,
     onDataDrillDown,
     onDataDrillPath,
     currentData,
-    widgetMode,
     drillHistory,
     widgetConfig,
     drillpathSetting
@@ -59,6 +47,10 @@ const Datadrill: React.FC<IDataDrillProps> = (props: IDataDrillProps) => {
       widgetConfig && widgetConfig.model,
       'modelType'
     )(ViewModelTypes.Category)
+  }, [widgetConfig])
+
+  const widgetMode = useMemo(() => {
+    return widgetConfig && widgetConfig.mode
   }, [widgetConfig])
 
   const currentCategories = useMemo(() => {
@@ -262,4 +254,4 @@ const Datadrill: React.FC<IDataDrillProps> = (props: IDataDrillProps) => {
   }
 }
 
-export default Datadrill
+export default DataDrill

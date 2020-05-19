@@ -51,6 +51,7 @@ import { ControlPanelLayoutTypes, ControlPanelTypes } from 'app/components/Contr
 import { OnGetControlOptions } from 'app/components/Control/types'
 import styles from '../Dashboard.less'
 import utilStyles from 'app/assets/less/util.less'
+import EnhancerPanel from 'components/DataDrill/EnhancerPanel'
 
 interface IDashboardItemProps {
   itemId: number
@@ -493,7 +494,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       queryVariables,
       widgetProps,
       isDrilling,
-      model
+      model,
+      sourceDataGroup,
+      sourceDataOfBrushed
     } = this.state
 
     let downloadButton
@@ -549,9 +552,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           <Menu.Item className={styles.menuItem}>
             <InfoButton className={styles.menuText} onClick={onShowEdit(itemId)}>基本信息</InfoButton>
           </Menu.Item>
-          {/* <Menu.Item className={styles.menuItem}>
-            <InfoButton className={styles.menuText} onClick={onShowDrillEdit(itemId)}>钻取设置</InfoButton>
-          </Menu.Item> */}
           <Menu.Item className={styles.menuItem}>
             <Popconfirm
               title="确定删除？"
@@ -622,44 +622,19 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
                                                                 ? (<Tooltip title="可钻取"><i className="iconfont icon-xiazuan"/></Tooltip>)
                                                                 : void 0
                                                               : (<Tooltip title="可联动"><i className="iconfont icon-liandong1"/></Tooltip>)
-    const triggerClass = classnames({
-      [styles.trigger]: true,
-      [utilStyles.hide]: this.props.isTrigger === false
-    })
 
-    let isSelectedData = false
-    if (this.state.whichDataDrillBrushed) {
-      (this.state.whichDataDrillBrushed as object[]).forEach((brushed, index) => {
-        if (brushed[index] && (brushed[index] as any[]).length > 0) {
-          isSelectedData = true
-        }
-      })
-    }
 
-    const dataDrillPanelClass = classnames({
-      [styles.dataDrillPanel]: true,
-     // [utilStyles.hide]: !isSelectedData
-    })
-    let positionStyle = {}
-    if (this.state.dataDrillPanelPosition) {
-      positionStyle = this.state.dataDrillPanelPosition
-    }
-    let mode = void 0
-    if (widget && widget.config) {
-      mode = widget.config.mode
-    }
-    const dataDrillPanel =
-    (
-      <div className={dataDrillPanelClass}>
-        <DataDrill
-          widgetConfig={widget.config}
-          onDataDrillDown={this.drillDown}
-          onDataDrillUp={this.drillUp}
-          drillHistory={drillHistory}
-          widgetMode={mode}
-          currentData={data}
-        />
-      </div>
+    const dataDrillPanel = (
+      <EnhancerPanel
+        currentData={data}
+        widgetConfig={widget.config}
+        onDataDrillDown={this.drillDown}
+        onDataDrillUp={this.drillUp}
+        drillHistory={drillHistory}
+        isSelectedfilter={sourceDataOfBrushed}
+        isSelectedGroup={sourceDataGroup}
+        isDrillableChart={isDrillableChart}
+      />
     )
     const dataDrillHistoryClass = classnames({
       [styles.dataDrillHistory]: true,
@@ -713,10 +688,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             {dropdownMenu}
           </div>
         </div>
-
-        {/* <div className={triggerClass}>
-          <i className="iconfont icon-icon_linkage"/>
-        </div> */}
 
         <div className={styles.trigger}>
           {drillInteractIcon}
