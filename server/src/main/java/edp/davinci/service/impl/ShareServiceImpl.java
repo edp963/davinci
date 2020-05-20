@@ -284,7 +284,9 @@ public class ShareServiceImpl implements ShareService {
 
         Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDashboard(dashboardId);
         if (!CollectionUtils.isEmpty(shareWidgets)) {
-            for (ShareWidget shareWidget : shareWidgets) {
+            Iterator<ShareWidget> iterator = shareWidgets.iterator();
+            while (iterator.hasNext()) {
+                ShareWidget shareWidget = iterator.next();
                 String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
                 shareWidget.setDataToken(dateToken);
             }
