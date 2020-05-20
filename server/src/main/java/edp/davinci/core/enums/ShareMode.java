@@ -18,8 +18,11 @@
 
 package edp.davinci.core.enums;
 
+import com.alibaba.fastjson.annotation.JSONType;
 import lombok.Getter;
 
+
+@JSONType(serializeEnumAsJavaBean = true)
 public enum ShareMode {
 
     COMPATIBLE(0),  // 兼容模式

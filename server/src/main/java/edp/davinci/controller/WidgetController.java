@@ -24,14 +24,12 @@ import edp.core.annotation.CurrentUser;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
-import edp.davinci.dto.shareDto.ShareEntity;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
 import edp.davinci.model.User;
 import edp.davinci.model.Widget;
 import edp.davinci.service.WidgetService;
-import edp.davinci.service.share.ShareResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -220,15 +218,15 @@ public class WidgetController extends BaseController {
      * 分享widget
      *
      * @param id
-     * @param shareFactor
+     * @param username
      * @param user
      * @param request
      * @return
      */
     @ApiOperation(value = "share widget")
-    @PostMapping("/{id}/share")
+    @GetMapping("/{id}/share")
     public ResponseEntity shareWidget(@PathVariable Long id,
-                                      @RequestBody ShareEntity shareEntity,
+                                      @RequestParam(required = false) String username,
                                       @ApiIgnore @CurrentUser User user,
                                       HttpServletRequest request) {
         if (invalidId(id)) {
@@ -236,15 +234,8 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            shareEntity.valid();
-        } catch (IllegalArgumentException e) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        ShareResult shareResult = widgetService.shareWidget(id, user, shareEntity);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareResult));
+        String shareToken = widgetService.shareWidget(id, user, username);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
     }
 
     @ApiOperation(value = "show sql")

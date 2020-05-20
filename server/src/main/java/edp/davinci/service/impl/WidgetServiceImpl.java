@@ -25,10 +25,7 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.PaginateWithQueryColumns;
 import edp.core.model.QueryColumn;
-import edp.core.utils.BaseLock;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.ServerUtils;
+import edp.core.utils.*;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.LogNameEnum;
@@ -43,12 +40,12 @@ import edp.davinci.dao.ViewMapper;
 import edp.davinci.dao.WidgetMapper;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
-import edp.davinci.dto.shareDto.ShareEntity;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
+import edp.davinci.model.Source;
 import edp.davinci.model.SqlVariable;
 import edp.davinci.model.User;
 import edp.davinci.model.Widget;
@@ -56,9 +53,8 @@ import edp.davinci.service.ProjectService;
 import edp.davinci.service.ShareService;
 import edp.davinci.service.ViewService;
 import edp.davinci.service.WidgetService;
-import edp.davinci.service.share.ShareFactor;
-import edp.davinci.service.share.ShareResult;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.curator.retry.RetryUntilElapsed;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
@@ -69,6 +65,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.script.ScriptEngine;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
@@ -79,6 +76,7 @@ import java.util.concurrent.Executors;
 
 import static edp.core.consts.Consts.EMPTY;
 import static edp.core.consts.Consts.NEW_LINE_CHAR;
+import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
 
 
@@ -119,9 +117,6 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
     @Value("${sql_template_delimiter:$}")
     private String sqlTempDelimiter;
-
-    @Autowired
-    private String TOKEN_SECRET;
 
     private static final CheckEntityEnum entity = CheckEntityEnum.WIDGET;
 
@@ -327,22 +322,15 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      *
      * @param id
      * @param user
-     * @param shareEntity
+     * @param username
      * @return
      */
-    public ShareResult shareWidget(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    @Override
+    public String shareWidget(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         Widget widget = getWidget(id);
         checkSharePermission(entity, widget.getProjectId(), user);
-        shareService.formatShareParam(widget.getProjectId(), shareEntity);
-        ShareFactor shareFactor = ShareFactor.Builder
-                .shareFactor()
-                .withShareEntity(shareEntity)
-                .withEntityId(id)
-                .withSharerId(user.getId())
-                .build();
-
-        return shareFactor.toShareResult(TOKEN_SECRET);
+        return shareService.generateShareToken(id, username, user.getId());
     }
 
 
@@ -447,6 +435,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         ExecutorService executorService = Executors.newFixedThreadPool(Math.min(widgets.size(), 8));
         CountDownLatch countDownLatch = new CountDownLatch(widgets.size());
         int i = 1;
+        ScriptEngine engine = getExecuptParamScriptEngine();
         boolean maintainer = projectService.isMaintainer(projectDetail, user);
         Iterator<Widget> iterator = widgets.iterator();
         while (iterator.hasNext()) {
@@ -463,7 +452,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                     if (null != executeParamMap && executeParamMap.containsKey(widget.getId())) {
                         executeParam = executeParamMap.get(widget.getId());
                     } else {
-                        executeParam = getViewExecuteParam(null, widget.getConfig(), null);
+                        executeParam = getViewExecuteParam((engine), null, widget.getConfig(), null);
                     }
 
                     PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer,

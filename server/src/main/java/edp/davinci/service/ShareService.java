@@ -25,7 +25,10 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.Paginate;
 import edp.davinci.core.common.ResultMap;
-import edp.davinci.dto.shareDto.*;
+import edp.davinci.dto.shareDto.ShareDashboard;
+import edp.davinci.dto.shareDto.ShareDisplay;
+import edp.davinci.dto.shareDto.ShareInfo;
+import edp.davinci.dto.shareDto.ShareWidget;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.viewDto.DistinctParam;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
@@ -50,11 +53,7 @@ public interface ShareService {
 
     String generationShareDataCsv(ViewExecuteParam executeParam, User user, String token) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
 
-    @Deprecated
     ResultMap getDistinctValue(String token, Long viewId, DistinctParam param, User user, HttpServletRequest request);
 
-    void formatShareParam(Long projectId, ShareEntity entity);
-
-    @Deprecated
     ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption;
 }
