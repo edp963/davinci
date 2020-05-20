@@ -76,7 +76,6 @@ import java.util.concurrent.Executors;
 
 import static edp.core.consts.Consts.EMPTY;
 import static edp.core.consts.Consts.NEW_LINE_CHAR;
-import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
 
 
@@ -435,7 +434,6 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         ExecutorService executorService = Executors.newFixedThreadPool(Math.min(widgets.size(), 8));
         CountDownLatch countDownLatch = new CountDownLatch(widgets.size());
         int i = 1;
-        ScriptEngine engine = getExecuptParamScriptEngine();
         boolean maintainer = projectService.isMaintainer(projectDetail, user);
         Iterator<Widget> iterator = widgets.iterator();
         while (iterator.hasNext()) {
@@ -452,7 +450,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                     if (null != executeParamMap && executeParamMap.containsKey(widget.getId())) {
                         executeParam = executeParamMap.get(widget.getId());
                     } else {
-                        executeParam = getViewExecuteParam((engine), null, widget.getConfig(), null);
+                        executeParam = getViewExecuteParam(null, widget.getConfig(), null);
                     }
 
                     PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer,
