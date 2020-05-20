@@ -19,17 +19,16 @@
 
 package edp.davinci.service.impl;
 
+import edp.core.exception.ForbiddenExecption;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
-import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.DownloadTaskStatus;
 import edp.davinci.core.enums.DownloadType;
 import edp.davinci.dao.ShareDownloadRecordMapper;
-import edp.davinci.dto.projectDto.ProjectDetail;
-import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
 import edp.davinci.model.ShareDownloadRecord;
+import edp.davinci.model.User;
 import edp.davinci.service.ShareDownloadService;
 import edp.davinci.service.ShareService;
 import edp.davinci.service.excel.ExecutorUtil;
@@ -90,30 +89,16 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
 
     @Override
     public List<ShareDownloadRecord> queryDownloadRecordPage(String uuid) {
-        ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
-        ProjectDetail projectDetail = shareFactor.getProjectDetail();
-        if (projectDetail == null) {
-            return null;
-        }
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareFactor.getUser());
-        if (!projectPermission.getDownloadPermission()) {
-            return null;
-        }
+//        ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         return shareDownloadRecordMapper.getShareDownloadRecordsByUuid(uuid);
     }
 
     @Override
-    public ShareDownloadRecord downloadById(String id, String uuid) throws UnAuthorizedExecption {
-        ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
-        ProjectDetail projectDetail = shareFactor.getProjectDetail();
-        if (projectDetail == null) {
-            throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
-        }
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareFactor.getUser());
-        if (!projectPermission.getDownloadPermission()) {
-            throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
-        }
+    public ShareDownloadRecord downloadById(String id, String uuid) {
+        //share download 只校验token是否正确，不校验权限，走分享人权限
+        //        ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         ShareDownloadRecord record = shareDownloadRecordMapper.getShareDownloadRecordBy(Long.valueOf(id), uuid);
+
         if (record != null) {
             record.setLastDownloadTime(new Date());
             record.setStatus(DownloadTaskStatus.DOWNLOADED.getStatus());

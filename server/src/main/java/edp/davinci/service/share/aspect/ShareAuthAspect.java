@@ -144,7 +144,7 @@ public class ShareAuthAspect {
                 verifyToken(operation, shareFactor, user, args);
 
                 //校验数据权限
-                verifyDataPermission(operation, flagShareType, shareFactor, user);
+                verifyDataPermission(operation, shareFactor, user);
             }
             //thread local share factor
             SHARE_FACTOR_THREAD_LOCAL.set(shareFactor);
@@ -202,12 +202,11 @@ public class ShareAuthAspect {
      * 校验数据权限
      *
      * @param shareOperation
-     * @param flagShareType
      * @param shareFactor
      * @param viewer
      */
     @Transactional
-    protected void verifyDataPermission(ShareOperation shareOperation, ShareType flagShareType, ShareFactor shareFactor, User viewer)
+    protected void verifyDataPermission(ShareOperation shareOperation, ShareFactor shareFactor, User viewer)
             throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
         User sharer = userMapper.getById(shareFactor.getSharerId());
         if (sharer == null) {
@@ -216,7 +215,26 @@ public class ShareAuthAspect {
         User user = shareFactor.getPermission() == ShareDataPermission.SHARER ? sharer : viewer;
         shareFactor.setUser(user);
         if (shareOperation == ShareOperation.READ || shareOperation == ShareOperation.PERMISSION) {
-            parseEntityAndProject(shareFactor, user);
+            switch (shareFactor.getType()) {
+                case WIDGET:
+                    Widget widget = widgetService.getWidget(shareFactor.getEntityId(), user);
+                    shareFactor.setProjectDetail(projectService.getProjectDetail(widget.getProjectId(), user, false));
+                    shareFactor.setShareEntity(widget);
+                    break;
+                case DASHBOARD:
+                    Dashboard dashboard = dashboardService.getDashboard(shareFactor.getEntityId(), user);
+                    DashboardPortal portal = dashboardPortalMapper.getById(dashboard.getDashboardPortalId());
+                    shareFactor.setProjectDetail(projectService.getProjectDetail(portal.getProjectId(), user, false));
+                    shareFactor.setShareEntity(dashboard);
+                    break;
+                case DISPLAY:
+                    Display display = displayService.getDisplay(shareFactor.getSharerId(), user);
+                    shareFactor.setProjectDetail(projectService.getProjectDetail(display.getProjectId(), user, false));
+                    shareFactor.setShareEntity(display);
+                    break;
+                default:
+                    break;
+            }
         } else if (shareOperation == ShareOperation.LOAD_DATA) {
             if (shareFactor.getType() != ShareType.WIDGET) {
                 throw new ForbiddenExecption(ErrorMsg.ERR_LOAD_DATA_TOKEN);
@@ -229,33 +247,7 @@ public class ShareAuthAspect {
             shareFactor.setShareEntity(widget);
         } else {
             // 下载权限数据权限在业务中判断
-            if (flagShareType != ShareType.DATA) {
-                parseEntityAndProject(shareFactor, user);
-            }
             return;
-        }
-    }
-
-    private void parseEntityAndProject(ShareFactor shareFactor, User user) {
-        switch (shareFactor.getType()) {
-            case WIDGET:
-                Widget widget = widgetService.getWidget(shareFactor.getEntityId(), user);
-                shareFactor.setProjectDetail(projectService.getProjectDetail(widget.getProjectId(), user, false));
-                shareFactor.setShareEntity(widget);
-                break;
-            case DASHBOARD:
-                Dashboard dashboard = dashboardService.getDashboard(shareFactor.getEntityId(), user);
-                DashboardPortal portal = dashboardPortalMapper.getById(dashboard.getDashboardPortalId());
-                shareFactor.setProjectDetail(projectService.getProjectDetail(portal.getProjectId(), user, false));
-                shareFactor.setShareEntity(dashboard);
-                break;
-            case DISPLAY:
-                Display display = displayService.getDisplay(shareFactor.getSharerId(), user);
-                shareFactor.setProjectDetail(projectService.getProjectDetail(display.getProjectId(), user, false));
-                shareFactor.setShareEntity(display);
-                break;
-            default:
-                break;
         }
     }
 

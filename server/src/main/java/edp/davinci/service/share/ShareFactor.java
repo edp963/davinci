@@ -172,9 +172,11 @@ public class ShareFactor {
     }
 
     public ShareResult freshShareDataToken(ShareWidget shareWidget, String secret) {
-        if (this.getMode() == ShareMode.NORMAL) {
+        //TODO 上线后开启
+        /*if (this.getMode() == ShareMode.NORMAL) {
             this.setMode(ShareMode.PASSWORD);
-        }
+        }*/
+        this.expire();
         this.setEntityId(shareWidget.getId());
         this.setType(ShareType.WIDGET);
         ShareResult shareResult = this.toShareResult(secret);
