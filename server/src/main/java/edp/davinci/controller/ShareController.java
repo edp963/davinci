@@ -23,12 +23,15 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.AuthShare;
 import edp.core.annotation.CurrentUser;
+import edp.core.enums.HttpCodeEnum;
 import edp.core.model.Paginate;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.shareDto.ShareDashboard;
 import edp.davinci.dto.shareDto.ShareDisplay;
+import edp.davinci.dto.shareDto.ShareWidget;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.userDto.UserLoginResult;
 import edp.davinci.dto.viewDto.DistinctParam;
@@ -37,7 +40,6 @@ import edp.davinci.model.User;
 import edp.davinci.service.ShareService;
 import edp.davinci.service.share.ShareOperation;
 import edp.davinci.service.share.ShareType;
-import edp.davinci.service.share.ShareWidget;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -53,7 +55,6 @@ import springfox.documentation.annotations.ApiIgnore;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 
 
@@ -113,7 +114,12 @@ public class ShareController extends BaseController {
                                             @RequestParam(required = false) String password,
                                             @ApiIgnore @CurrentUser User user,
                                             HttpServletRequest request) {
-        ShareDashboard shareDashboard = shareService.getShareDashboard(user);
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message(ErrorMsg.ERR_INVALID_TOKEN);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareDashboard shareDashboard = shareService.getShareDashboard(token, user);
 
         if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareDashboard));
@@ -137,7 +143,12 @@ public class ShareController extends BaseController {
                                           @RequestParam(required = false) String password,
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
-        ShareDisplay shareDisplay = shareService.getShareDisplay(user);
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message(ErrorMsg.ERR_INVALID_TOKEN);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareDisplay shareDisplay = shareService.getShareDisplay(token, user);
 
         if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareDisplay));
@@ -161,7 +172,12 @@ public class ShareController extends BaseController {
                                          @RequestParam(required = false) String password,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
-        ShareWidget shareWidget = shareService.getShareWidget(user);
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message(ErrorMsg.ERR_INVALID_TOKEN);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareWidget shareWidget = shareService.getShareWidget(token, user);
 
         if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareWidget));
@@ -188,7 +204,12 @@ public class ShareController extends BaseController {
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) throws SQLException {
 
-        Paginate<Map<String, Object>> shareData = shareService.getShareData(executeParam, user);
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message(ErrorMsg.ERR_INVALID_TOKEN);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        Paginate<Map<String, Object>> shareData = shareService.getShareData(token, executeParam, user);
         if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareData));
         } else {
@@ -219,12 +240,30 @@ public class ShareController extends BaseController {
                                            @ApiIgnore @CurrentUser User user,
                                            HttpServletRequest request) {
 
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message(ErrorMsg.ERR_INVALID_TOKEN);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
 
-        List<Map<String, Object>> resultList = shareService.getDistinctValue(viewId, param, user);
-        if (null == user) {
-            return ResponseEntity.ok(new ResultMap().success().payloads(resultList));
-        } else {
-            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(resultList));
+        if (invalidId(viewId)) {
+            ResultMap resultMap = new ResultMap().fail().message("Invalid view id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap().fail().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        try {
+            //TODO
+//            shareService.getDistinctValue(token, viewId, param, user, request);
+            ResultMap resultMap = null;
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
 }

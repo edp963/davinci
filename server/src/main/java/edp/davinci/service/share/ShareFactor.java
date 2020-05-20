@@ -29,7 +29,9 @@ import edp.davinci.model.User;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
 
-import java.util.*;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -68,8 +70,6 @@ public class ShareFactor {
     };
 
     private static final int PASSWORD_LEN = 8;
-
-    private static final int DEFAULT_TOKEN_EXPIRE_DAYS = 7;
 
     private static final SerializerFeature[] serializerFeatures = {
             SerializerFeature.QuoteFieldNames,
@@ -141,11 +141,9 @@ public class ShareFactor {
 
     private Long expire = null;
 
-    /**
-     * permission == ShareDataPermission.SHARER ? sharer : viewer;
-     */
-    private User user;
+    private User shareUser;
     private Object shareEntity;
+
 
     public static ShareFactor parseShareFactor(String token, String secret) throws IllegalArgumentException {
         ShareFactor factor = null;
@@ -174,20 +172,6 @@ public class ShareFactor {
         format();
         String jsonString = JSONObject.toJSONString(this, serializeFilter, serializerFeatures);
         return new ShareResult(StringZipUtil.compress(AESUtils.encrypt(jsonString, secret)), this.password);
-    }
-
-    public ShareResult freshShareDataToken(ShareWidget shareWidget, String secret) {
-        //TODO 上线后开启
-        /*if (this.getMode() == ShareMode.NORMAL) {
-            this.setMode(ShareMode.PASSWORD);
-        }*/
-        this.expire();
-        this.setEntityId(shareWidget.getId());
-        this.setType(ShareType.WIDGET);
-        ShareResult shareResult = this.toShareResult(secret);
-        shareWidget.setDataToken(shareResult.getToken());
-        shareWidget.setDataPwd(shareResult.getPassword());
-        return shareResult;
     }
 
     private void format() {
@@ -293,19 +277,5 @@ public class ShareFactor {
             shareFactor.format();
             return shareFactor;
         }
-    }
-
-    public ShareFactor expire() {
-        Calendar calendar = new Calendar.Builder().setInstant(new Date()).build();
-        calendar.add(Calendar.DAY_OF_MONTH, DEFAULT_TOKEN_EXPIRE_DAYS);
-        this.setExpire(calendar.getTimeInMillis());
-        return this;
-    }
-
-    public ShareFactor expire(int dayOfMonth) {
-        Calendar calendar = new Calendar.Builder().setInstant(new Date()).build();
-        calendar.add(Calendar.DAY_OF_MONTH, dayOfMonth);
-        this.setExpire(calendar.getTimeInMillis());
-        return this;
     }
 }

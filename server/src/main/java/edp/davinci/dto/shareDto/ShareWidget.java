@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2020 EDP
+ *  Copyright (C) 2016 - 2019 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,9 +14,10 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
+ *
  */
 
-package edp.davinci.service.share;
+package edp.davinci.dto.shareDto;
 
 import lombok.Data;
 
@@ -28,7 +29,6 @@ public class ShareWidget {
     private Long type;
     private String config;
     private String dataToken;
-    private String dataPwd;
     private String model;
     private Long viewId;
     private String variable;

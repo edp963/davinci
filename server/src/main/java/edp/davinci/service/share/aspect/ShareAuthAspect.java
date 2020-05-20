@@ -25,6 +25,7 @@ import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.CollectionUtils;
+import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dao.RelRoleUserMapper;
@@ -47,7 +48,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -62,6 +62,9 @@ public class ShareAuthAspect {
 
     @Autowired
     private ShareService shareService;
+
+    @Autowired
+    private TokenUtils tokenUtils;
 
     @Autowired
     private UserMapper userMapper;
@@ -89,7 +92,6 @@ public class ShareAuthAspect {
 
     @Around(value = "shareAuth()")
 
-    @Transactional
     public ResponseEntity doAround(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         AuthShare authShare = signature.getMethod().getAnnotation(AuthShare.class);
@@ -124,11 +126,13 @@ public class ShareAuthAspect {
                 shareFactor.setType(shareType == ShareType.DATA ? ShareType.WIDGET : shareType);
             }
 
+            Set<RelRoleUser> relRoleUsers = relRoleUserMapper.selectByUserAndRoles(user.getId(), shareFactor.getRoles());
+
             //校验 token 权限
-            verifyToken(operation, shareFactor, user, password);
+            verifyToken(shareFactor, user, password, relRoleUsers);
 
             //校验数据权限
-            verifyDataPermission(operation, shareFactor, user);
+            verifyDataPermission(operation, shareFactor, user, relRoleUsers);
 
             //thread local share factor
             SHARE_FACTOR_THREAD_LOCAL.set(shareFactor);
@@ -140,24 +144,51 @@ public class ShareAuthAspect {
         }
     }
 
+
+    /**
+     * 兼容老版本token
+     *
+     * @param token
+     * @param shareFactor
+     * @param user
+     */
+    private void adaptShareInfo(String token, ShareFactor shareFactor, User user) {
+        ShareInfo shareInfo = shareService.getShareInfo(token, user);
+        shareService.verifyShareUser(user, shareInfo);
+        //新老版本字段定义不同
+        shareFactor.setSharerId(shareInfo.getShareUser().getId());
+        shareFactor.setEntityId(shareInfo.getShareId());
+        shareFactor.setPermission(ShareDataPermission.SHARER);
+        shareFactor.setMode(ShareMode.NORMAL);
+
+        //授权模式
+        if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
+            shareFactor.setMode(ShareMode.AUTH);
+            Long viewerId = userMapper.getIdByName(shareInfo.getSharedUserName());
+            shareFactor.setViewers(new HashSet<Long>(1) {{
+                add(viewerId);
+            }});
+        }
+    }
+
     /**
      * 校验Token 是否合法
      *
-     * @param operation
      * @param shareFactor
      * @param user
      * @param password
+     * @param relRoleUsers
      * @throws ForbiddenExecption
      */
-    private void verifyToken(ShareOperation operation, ShareFactor shareFactor, User user, String password)
+    private void verifyToken(ShareFactor shareFactor, User user, String password, Set<RelRoleUser> relRoleUsers)
             throws ForbiddenExecption, UnAuthorizedExecption {
         switch (shareFactor.getMode()) {
             case PASSWORD:
                 if (StringUtils.isEmpty(password)) {
-                    throw new UnAuthorizedExecption(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_LOAD_DATA_TOKEN : ErrorMsg.ERR_EMPTY_SHARE_PASSWORD);
+                    throw new UnAuthorizedExecption(ErrorMsg.ERR_EMPTY_SHARE_PASSWORD);
                 }
                 if (!password.equals(shareFactor.getPassword())) {
-                    throw new ForbiddenExecption(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_LOAD_DATA_TOKEN : ErrorMsg.ERR_INVALID_SHARE_PASSWORD);
+                    throw new ForbiddenExecption(ErrorMsg.ERR_INVALID_SHARE_PASSWORD);
                 }
                 break;
             case AUTH:
@@ -169,7 +200,6 @@ public class ShareAuthAspect {
                         throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
                     }
                 } else {
-                    Set<RelRoleUser> relRoleUsers = relRoleUserMapper.selectByUserAndRoles(user.getId(), shareFactor.getRoles());
                     if (!shareFactor.getViewers().contains(user.getId()) && CollectionUtils.isEmpty(relRoleUsers)) {
                         throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
                     }
@@ -187,16 +217,16 @@ public class ShareAuthAspect {
      * @param shareOperation
      * @param shareFactor
      * @param viewer
+     * @param relRoleUsers
      */
-    @Transactional
-    protected void verifyDataPermission(ShareOperation shareOperation, ShareFactor shareFactor, User viewer)
+    private void verifyDataPermission(ShareOperation shareOperation, ShareFactor shareFactor, User viewer, Set<RelRoleUser> relRoleUsers)
             throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
         User sharer = userMapper.getById(shareFactor.getSharerId());
         if (sharer == null) {
             throw new ForbiddenExecption(ErrorMsg.ERR_INVALID_SHARER);
         }
+        shareFactor.setShareUser(sharer);
         User user = shareFactor.getPermission() == ShareDataPermission.SHARER ? sharer : viewer;
-        shareFactor.setUser(user);
         if (shareOperation == ShareOperation.READ) {
             switch (shareFactor.getType()) {
                 case WIDGET:
@@ -229,32 +259,4 @@ public class ShareAuthAspect {
             return;
         }
     }
-
-    /**
-     * 兼容老版本token
-     *
-     * @param token
-     * @param shareFactor
-     * @param user
-     */
-    @Transactional
-    protected void adaptShareInfo(String token, ShareFactor shareFactor, User user) {
-        ShareInfo shareInfo = shareService.getShareInfo(token, user);
-        shareService.verifyShareUser(user, shareInfo);
-        //新老版本字段定义不同
-        shareFactor.setSharerId(shareInfo.getShareUser().getId());
-        shareFactor.setEntityId(shareInfo.getShareId());
-        shareFactor.setPermission(ShareDataPermission.SHARER);
-        shareFactor.setMode(ShareMode.NORMAL);
-
-        //授权模式
-        if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-            shareFactor.setMode(ShareMode.AUTH);
-            Long viewerId = userMapper.getIdByName(shareInfo.getSharedUserName());
-            shareFactor.setViewers(new HashSet<Long>(1) {{
-                add(viewerId);
-            }});
-        }
-    }
-
 }
