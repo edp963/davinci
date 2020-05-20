@@ -25,14 +25,12 @@ import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.dashboardDto.*;
-import edp.davinci.dto.shareDto.ShareEntity;
 import edp.davinci.model.Dashboard;
 import edp.davinci.model.DashboardPortal;
 import edp.davinci.model.MemDashboardWidget;
 import edp.davinci.model.User;
 import edp.davinci.service.DashboardPortalService;
 import edp.davinci.service.DashboardService;
-import edp.davinci.service.share.ShareResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -471,15 +469,15 @@ public class DashboardController extends BaseController {
      * 分享dashboard
      *
      * @param dashboardId
-     * @param shareEntity
+     * @param username
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "share dashboard", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PostMapping(value = "/dashboards/{dashboardId}/share", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "share dashboard")
+    @GetMapping("/dashboards/{dashboardId}/share")
     public ResponseEntity shareDashboard(@PathVariable Long dashboardId,
-                                         @RequestBody ShareEntity shareEntity,
+                                         @RequestParam(required = false) String username,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
 
@@ -488,15 +486,8 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            shareEntity.valid();
-        } catch (IllegalArgumentException e) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        ShareResult shareResult = dashboardService.shareDashboard(dashboardId, user, shareEntity);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareResult));
+        String shareToken = dashboardService.shareDashboard(dashboardId, username, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
     }
 
 }

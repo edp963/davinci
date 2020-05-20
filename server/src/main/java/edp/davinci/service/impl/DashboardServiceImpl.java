@@ -37,13 +37,9 @@ import edp.davinci.dao.WidgetMapper;
 import edp.davinci.dto.dashboardDto.*;
 import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.roleDto.VizVisibility;
-import edp.davinci.dto.shareDto.ShareEntity;
 import edp.davinci.model.*;
 import edp.davinci.service.DashboardService;
 import edp.davinci.service.ShareService;
-import edp.davinci.service.share.ShareFactor;
-import edp.davinci.service.share.ShareResult;
-import edp.davinci.service.share.ShareType;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,9 +73,6 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
     @Autowired
     private ShareService shareService;
-
-    @Autowired
-    private String TOKEN_SECRET;
 
     private static final CheckEntityEnum entity = CheckEntityEnum.DASHBOARD;
 
@@ -656,12 +649,12 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      * 分享dashboard
      *
      * @param dashboardId
+     * @param username
      * @param user
-     * @param shareEntity
      * @return
      */
     @Override
-    public ShareResult shareDashboard(Long dashboardId, User user, ShareEntity shareEntity)
+    public String shareDashboard(Long dashboardId, String username, User user)
             throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(dashboardId, true);
@@ -678,16 +671,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
             alertUnAuthorized(entity, user, "share");
         }
 
-        shareService.formatShareParam(projectId, shareEntity);
-        ShareFactor shareFactor = ShareFactor.Builder
-                .shareFactor()
-                .withType(ShareType.DASHBOARD)
-                .withShareEntity(shareEntity)
-                .withEntityId(dashboardId)
-                .withSharerId(user.getId())
-                .build();
-
-        return shareFactor.toShareResult(TOKEN_SECRET);
+        return shareService.generateShareToken(dashboardId, username, user.getId());
     }
 
     @Override

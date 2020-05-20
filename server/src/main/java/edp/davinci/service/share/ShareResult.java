@@ -25,7 +25,7 @@ public class ShareResult {
     String token;
 
     /**
-     * only for share mode is <code>{@link ShareMode}</code> is password
+     * only for share mode is <code>{@link edp.davinci.core.enums.ShareMode}</code> is password
      */
     String password;
 
