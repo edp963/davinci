@@ -1,43 +1,56 @@
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
 import React from 'react'
 import FormType from 'antd/lib/form/Form'
-import { Row, Col, Tooltip, Button, Input, Popconfirm, Modal, Table } from 'antd'
+import {
+  Row,
+  Col,
+  Tooltip,
+  Button,
+  Input,
+  Popconfirm,
+  Modal,
+  Table,
+  Tag
+} from 'antd'
 const styles = require('../Organization.less')
 const utilStyles = require('assets/less/util.less')
 import MemberForm from './AddForm'
 import Avatar from 'components/Avatar'
-import * as Organization from '../Organization'
 import ChangeRoleForm from './ChangeRoleForm'
 import ComponentPermission from 'containers/Account/components/checkMemberPermission'
-import { IOrganization, IOrganizationMember } from '../types'
+import {
+  IOrganization,
+  IOrganizationMember,
+  IMembersState,
+  IMembersProps,
+  IMembers
+} from '../types'
+import { getAntTagColor } from '../utils'
 
-interface IMembersState {
-  category?: string
-  formKey?: number
-  formVisible: boolean
-  modalLoading: boolean
-  currentMember: IOrganizationMember
-  changeRoleFormCategory: string
-  changeRoleFormVisible: boolean
-  changeRoleModalLoading: boolean
-  organizationMembers: any[]
-}
-
-interface IMembersProps {
-  loginUser: any
-  organizationId: number
-  loadOrganizationsMembers: (id: number) => any
-  deleteOrganizationMember: (id: number, resolve: () => any) => any
-  organizationMembers: any[]
-  changeOrganizationMemberRole: (id: number, role: number, resolve: () => any) => any
-  currentOrganization: IOrganization
-  inviteMemberList: any
-  onInviteMember: (ordId: number, memId: number) => any
-  handleSearchMember: (keywords: string) => any
-  toThatUserProfile: (url: string) => any
-}
-
-export class MemberList extends React.PureComponent<IMembersProps, IMembersState> {
-  constructor (props) {
+export class MemberList extends React.PureComponent<
+  IMembersProps,
+  IMembersState
+> {
+  constructor(props) {
     super(props)
     this.state = {
       formKey: 0,
@@ -48,7 +61,8 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       modalLoading: false,
       changeRoleFormVisible: false,
       changeRoleModalLoading: false,
-      organizationMembers: []
+      organizationMembers: [],
+      cacheOrganizationMembers: []
     }
   }
 
@@ -56,8 +70,8 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
   private ChangeRoleForm: FormType
 
   private refHandles = {
-    MemberForm: (ref) => this.MemberForm = ref,
-    ChangeRoleForm: (ref) => this.ChangeRoleForm = ref
+    MemberForm: (ref) => (this.MemberForm = ref),
+    ChangeRoleForm: (ref) => (this.ChangeRoleForm = ref)
   }
 
   private showMemberForm = (type: string) => (e) => {
@@ -68,17 +82,40 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     })
   }
 
-  private showChangeRoleForm = (type: string, member: IOrganizationMember) => (e) => {
+  private showChangeRoleForm = (type: string, member: IOrganizationMember) => (
+    e
+  ) => {
     e.stopPropagation()
-    this.setState({
-      currentMember: member,
-      changeRoleFormVisible: true,
-      changeRoleFormCategory: type
-    }, () => {
-      setTimeout(() => {
-        const {user: {role}, id} = member
-        this.ChangeRoleForm.props.form.setFieldsValue({id, role})
-      }, 0)
+    this.setState(
+      {
+        currentMember: member,
+        changeRoleFormVisible: true,
+        changeRoleFormCategory: type
+      },
+      () => {
+        setTimeout(() => {
+          const {
+            user: { role },
+            id
+          } = member
+          this.ChangeRoleForm.props.form.setFieldsValue({ id, role })
+        }, 0)
+      }
+    )
+  }
+
+  private getRoleListByMemberId = (record: IMembers) => () => {
+    const { organizationMembers } = this.state
+    const { onGetRoleListByMemberId, organizationId } = this.props
+    const { user, id } = record
+    onGetRoleListByMemberId(organizationId, user.id, (res) => {
+      const currentOrgMembers = organizationMembers.map((member) =>
+        member.id === id ? { ...member, roles: res } : member
+      )
+      this.setState({
+        organizationMembers: currentOrgMembers,
+        cacheOrganizationMembers: currentOrgMembers
+      })
     })
   }
 
@@ -122,40 +159,45 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     const { currentOrganization } = this.props
     this.MemberForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-         const { projectId } = values
-         const orgId = currentOrganization.id
-         this.props.onInviteMember(orgId, projectId)
-         this.hideMemberForm()
+        const { projectId } = values
+        const orgId = currentOrganization.id
+        this.props.onInviteMember(orgId, projectId)
+        this.hideMemberForm()
       }
     })
   }
 
   private search = (event) => {
     const value = event.target.value
-    const {organizationMembers} = this.props
-    const result = (organizationMembers as IOrganizationMember[]).filter((member, index) => {
-      return member && member.user && member.user.username.indexOf(value.trim()) > -1
-    })
+    const { cacheOrganizationMembers } = this.state
+    const result = (cacheOrganizationMembers as IOrganizationMember[]).filter(
+      (member, index) => {
+        return member?.user?.username?.indexOf(value.trim()) > -1
+      }
+    )
     this.setState({
-      organizationMembers: value && value.length ? result : this.props.organizationMembers
+      organizationMembers:
+        value && value.length ? result : this.state.cacheOrganizationMembers
     })
   }
 
-  public componentDidMount () {
-    const {organizationMembers} = this.props
+  public componentDidMount() {
+    const { organizationMembers } = this.props
     if (organizationMembers) {
       this.setState({
-        organizationMembers
+        organizationMembers,
+        cacheOrganizationMembers: organizationMembers
       })
     }
   }
 
-  public componentWillReceiveProps (nextProps) {
-    const {organizationMembers} = this.props
+  public componentWillReceiveProps(nextProps) {
+    const { organizationMembers } = this.props
     const nextOrgMembers = nextProps.organizationMembers
     if (nextOrgMembers && nextOrgMembers !== organizationMembers) {
       this.setState({
-        organizationMembers: nextOrgMembers
+        organizationMembers: nextOrgMembers,
+        cacheOrganizationMembers: nextOrgMembers
       })
     }
   }
@@ -185,15 +227,108 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
   }
 
   private toUserProfile = (obj) => () => {
-    const {id} = obj
+    const { id } = obj
     if (id) {
       this.props.toThatUserProfile(`account/profile/${id}`)
     }
   }
-  public render () {
-    const {
-      loginUser
-    } = this.props
+
+  private getRoleTags(text) {
+    return text.map((t) => (
+      <Tag key={`ind${t.name}ex`} color={`${getAntTagColor(t.name)}`}>
+        {t.name}
+      </Tag>
+    ))
+  }
+
+  private getColumns() {
+    const { loginUser } = this.props
+    const { currentOrganization } = this.props
+    let columns = [
+      {
+        title: '姓名',
+        dataIndex: 'user',
+        key: 'user',
+        render: (text) => (
+          <div className={styles.avatarWrapper}>
+            <Avatar path={text.avatar} size="small" enlarge={true} />
+            <span
+              className={styles.avatarName}
+              onClick={this.toUserProfile(text)}
+            >
+              {text.username}
+            </span>
+          </div>
+        )
+      },
+      {
+        title: '权限',
+        dataIndex: 'user',
+        key: 'userKey',
+        render: (text) => <span>{text.role === 1 ? '拥有者' : '成员'}</span>
+      },
+      {
+        title: '角色列表',
+        dataIndex: 'roles',
+        key: `rolelist`,
+        width: 200,
+        render: (text, record) => {
+          if (Array.isArray(text)) {
+            if (text.length) {
+              return <span>{this.getRoleTags(text)}</span>
+            } else {
+              return <span>暂无角色</span>
+            }
+          }
+          return (
+            <span>
+              <a
+                href="javascript:;"
+                onClick={this.getRoleListByMemberId(record)}
+              >
+                获取角色列表
+              </a>
+            </span>
+          )
+        }
+      }
+    ]
+
+    if (currentOrganization && currentOrganization.role === 1) {
+      columns = [...columns].concat([{
+        title: '设置',
+        dataIndex: 'user',
+        key: 'settings',
+        width: 200,
+        render: (text, record) => {
+          if (record.user.id === loginUser.id) {
+            return ''
+          }
+          return (
+            <span>
+              <Popconfirm
+                title="确定删除？"
+                placement="bottom"
+                onConfirm={this.removeMemberForm(text, record)}
+              >
+                <a href="javascript:;">从组织里移除</a>
+              </Popconfirm>
+              <span className="ant-divider" />
+              <a
+                href="javascript:;"
+                onClick={this.showChangeRoleForm('orgMember', record)}
+              >
+                改变角色
+              </a>
+            </span>
+          )
+        }
+      }])
+    }
+
+    return columns
+  }
+  public render() {
     const {
       formVisible,
       category,
@@ -209,7 +344,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     if (currentOrganization) {
       CreateButton = ComponentPermission(currentOrganization, '')(Button)
     }
-    const addButton =  (
+    const addButton = (
       <Tooltip placement="bottom" title="邀请">
         <CreateButton
           type="primary"
@@ -218,73 +353,12 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         />
       </Tooltip>
     )
-    let columns = []
-    if (currentOrganization && currentOrganization.role === 1) {
-      columns = [{
-        title: '姓名',
-        dataIndex: 'user',
-        key: 'user',
-        render: (text) => (
-          <div className={styles.avatarWrapper}>
-            <Avatar path={text.avatar} size="small" enlarge={true}/>
-            <span className={styles.avatarName} onClick={this.toUserProfile(text)}>{text.username}</span>
-          </div>
-        )
-      }, {
-        title: '权限',
-        dataIndex: 'user',
-        key: 'userKey',
-        render: (text) => <span>{text.role === 1 ? '拥有者' : '成员'}</span>
-      }, {
-          title: '设置',
-          dataIndex: 'user',
-          key: 'settings',
-          width: 200,
-          render: (text, record) => {
-            if (record.user.id === loginUser.id) {
-              return ''
-            }
-            return (
-              <span>
-                <Popconfirm
-                  title="确定删除？"
-                  placement="bottom"
-                  onConfirm={this.removeMemberForm(text, record)}
-                >
-                  <a href="javascript:;">从组织里移除</a>
-                </Popconfirm>
-                <span className="ant-divider" />
-                <a href="javascript:;" onClick={this.showChangeRoleForm('orgMember', record)}>改变角色</a>
-              </span>
-            )
-          }
-        }]
-    } else {
-      columns = [{
-        title: '姓名',
-        dataIndex: 'user',
-        key: 'user',
-        render: (text) => (
-          <div className={styles.avatarWrapper}>
-            <Avatar path={text.avatar} size="small" enlarge={true}/>
-            <span className={styles.avatarName} onClick={this.toUserProfile(text)}>{text.username}</span>
-          </div>
-        )
-      }, {
-        title: '权限',
-        dataIndex: 'user',
-        key: 'userKey',
-        render: (text) => <span>{text.role === 1 ? '拥有者' : '成员'}</span>
-      }]
-    }
+    const columns = this.getColumns()
     return (
       <div className={styles.listWrapper}>
         <Row>
           <Col span={16}>
-            <Input.Search
-              placeholder="搜索成员"
-              onChange={this.search}
-            />
+            <Input.Search placeholder="搜索成员" onChange={this.search} />
           </Col>
           <Col span={1} offset={7}>
             {addButton}
@@ -339,4 +413,3 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
 }
 
 export default MemberList
-

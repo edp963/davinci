@@ -20,6 +20,7 @@
 
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
+import { getRoleListByMemberId } from './sagas'
 
 export const OrganizationActions = {
   loadOrganizationProjects (param) {
@@ -533,6 +534,33 @@ export const OrganizationActions = {
         id,
         resolve,
         permission
+      }
+    }
+  },
+
+  getRoleListByMemberId (orgId: number, memberId: number, resolve: (res: any) => void) {
+    return {
+      type: ActionTypes.GET_ROLELISTS_BY_MEMBERID,
+      payload: {
+        orgId,
+        memberId,
+        resolve
+      }
+    }
+  },
+  getRoleListByMemberIdSuccess (result) {
+    return {
+      type: ActionTypes.GET_ROLELISTS_BY_MEMBERID_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  getRoleListByMemberIdFail (error) {
+    return {
+      type: ActionTypes.GET_ROLELISTS_BY_MEMBERID_ERROR,
+      payload: {
+        error
       }
     }
   }

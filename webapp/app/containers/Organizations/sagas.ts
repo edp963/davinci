@@ -172,6 +172,23 @@ export function* addRole (action: OrganizationActionType) {
   }
 }
 
+export function* getRoleListByMemberId (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.GET_ROLELISTS_BY_MEMBERID) { return }
+  const { memberId, orgId, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.organizations}/${orgId}/member/${memberId}/roles`
+    })
+    const result = asyncData.payload
+    yield put(OrganizationActions.getRoleListByMemberIdSuccess(result))
+    resolve(result)
+  } catch (err) {
+    yield put(OrganizationActions.getRoleListByMemberIdFail(err))
+    errorHandler(err)
+  }
+}
+
 export function* deleteRole (action: OrganizationActionType) {
   if (action.type !== ActionTypes.DELETE_ROLE) { return }
 
@@ -391,6 +408,7 @@ export default function* rootOrganizationSaga () {
     takeLatest(ActionTypes.DELETE_ORGANIZATION_MEMBER, deleteOrganizationMember),
     takeLatest(ActionTypes.CHANGE_MEMBER_ROLE_ORGANIZATION, changeOrganizationMemberRole),
     takeLatest(ActionTypes.GET_VIZ_VISBILITY, getVizVisbility),
-    takeLatest(ActionTypes.POST_VIZ_VISBILITY, postVizVisbility)
+    takeLatest(ActionTypes.POST_VIZ_VISBILITY, postVizVisbility),
+    takeLatest(ActionTypes.GET_ROLELISTS_BY_MEMBERID, getRoleListByMemberId)
   ])
 }

@@ -56,6 +56,7 @@ interface IOrganizationProps {
   onEditOrganization: (organization: IOrganization) => any
   onDeleteOrganization: (id: number, resolve: () => any) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onGetRoleListByMemberId: (orgId: number, memberId: number, resolve: (res: any) => void) => void
 }
 
 export class Organization extends React.PureComponent <IOrganizationProps & RouteComponentWithParams, {}> {
@@ -155,6 +156,7 @@ export class Organization extends React.PureComponent <IOrganizationProps & Rout
                 handleSearchMember={this.props.onSearchMember}
                 deleteOrganizationMember={this.props.onDeleteOrganizationMember}
                 changeOrganizationMemberRole={this.props.onChangeOrganizationMemberRole}
+                onGetRoleListByMemberId={this.props.onGetRoleListByMemberId}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="usergroup-add" />角色<span className={styles.badge}>{roleNum}</span></span>} key="roles">
@@ -203,7 +205,8 @@ export function mapDispatchToProps (dispatch) {
     onSearchMember: (keyword) => dispatch(OrganizationActions.searchMember(keyword)),
     onInviteMember: (orgId, memId) => dispatch(OrganizationActions.inviteMember(orgId, memId)),
     onDeleteOrganizationMember: (id, resolve) => dispatch(OrganizationActions.deleteOrganizationMember(id, resolve)),
-    onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(OrganizationActions.changeOrganizationMemberRole(id, role, resolve))
+    onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(OrganizationActions.changeOrganizationMemberRole(id, role, resolve)),
+    onGetRoleListByMemberId: (orgId, memberId, resolve) => dispatch(OrganizationActions.getRoleListByMemberId(orgId, memberId, resolve))
   }
 }
 
