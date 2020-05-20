@@ -147,6 +147,7 @@ export default function (chartProps: IChartProps, drillOptions) {
     const stackOption = turnOnStack
       ? { stack: getStackName(m.name, stackConfig) }
       : null
+
     if (color.items.length) {
       const sumArr = []
       Object.entries(percentGrouped).forEach(([k, v]: [string, any[]]) => {
@@ -326,6 +327,7 @@ export default function (chartProps: IChartProps, drillOptions) {
       if (acc[stackName]) {
         return acc
       }
+
       acc[stackName] = {
         name: stackName,
         type: 'bar',
@@ -342,7 +344,15 @@ export default function (chartProps: IChartProps, drillOptions) {
             formatter: (params) => {
               let val = series
                 .filter((s) => s.stack === stackName)
-                .reduce((acc, s) => acc + s.data[params.dataIndex], 0)
+                .reduce((acc, s) => {
+                  const dataIndex = params.dataIndex
+                  if (typeof s.data[dataIndex] === 'number') {
+                    return acc + s.data[params.dataIndex]
+                  } else {
+                    const { value } = s.data[dataIndex]
+                    return acc + value
+                  }
+                }, 0)
               let format = metrics[serieIdx].format
               if (percentage) {
                 format = {

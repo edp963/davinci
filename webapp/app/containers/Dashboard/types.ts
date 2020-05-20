@@ -29,6 +29,7 @@ import { SharePanelType, ISharePanel } from 'app/components/SharePanel/type'
 import { IWidgetFormed } from '../Widget/types'
 import { IView, IViewQueryResponse } from '../View/types'
 import { CancelTokenSource } from 'axios'
+import { IDrillDetail } from 'components/DataDrill/types'
 
 export interface IDashboard extends IDashboardBase {
   config: IDashboardConfig
@@ -56,6 +57,7 @@ export interface IDashboardItem {
   polling: boolean
   frequency: number
   config: string
+  alias?: string
 }
 
 export interface IDashboardItemInfo {
@@ -90,14 +92,7 @@ export interface IQueryConditions {
   nativeQuery: boolean
   orders?: Array<{ column: string; direction: string }>
   drillStatus?: any
-  drillHistory?: Array<{
-    filter?: any
-    type?: string
-    col?: string[]
-    row?: string[]
-    groups?: string[]
-    name: string
-  }>
+  drillHistory?: IDrillDetail[]
   drillpathSetting?: any
   drillpathInstance?: any
   drillSetting?: any

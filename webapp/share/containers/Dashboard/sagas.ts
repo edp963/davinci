@@ -74,7 +74,7 @@ import {
   RenderType
 } from 'app/containers/Widget/components/Widget'
 
-import request from 'utils/request'
+import request, { IDavinciResponse } from 'utils/request'
 import { errorHandler, getErrorMessage } from 'utils/util'
 import api from 'utils/api'
 import { message } from 'antd'
@@ -347,17 +347,19 @@ export function* getSelectOptions(action: DashboardActionType) {
         })
       }
     )
-    const results = yield all(requests)
-    const values = results.reduce((payloads, r, index) => {
+    const results: Array<IDavinciResponse<object[]>> = yield all(requests)
+    const indistinctOptions = results.reduce((payloads, r, index) => {
       const { columns } = requestParamsMap[index][1]
       if (columns.length === 1) {
         return payloads.concat(r.payload.map((obj) => obj[columns[0]]))
       }
       return payloads
     }, [])
-    yield put(
-      selectOptionsLoaded(controlKey, Array.from(new Set(values)), itemId)
-    )
+    const distinctOptions = Array.from(new Set(indistinctOptions)).map((value) => ({
+      text: value,
+      value
+    }))
+    yield put(selectOptionsLoaded(controlKey, distinctOptions, itemId))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
     // errorHandler(err)
@@ -406,12 +408,13 @@ export function* initiateDownloadTask(action: DashboardActionType) {
   const currentDashboard: IDashboard = yield select(
     makeSelectDashboard()
   )
+  const currentDashboardFilters = currentDashboard?.config.filters || []
   const globalControlFormValues = yield select(
     makeSelectGlobalControlPanelFormValues()
   )
   const globalControlConditionsByItem: IGlobalControlConditionsByItem = getCurrentControlValues(
     ControlPanelTypes.Global,
-    currentDashboard.config.filters,
+    currentDashboardFilters,
     globalControlFormValues
   )
   const itemInfo: IShareDashboardItemInfo = yield select((state) =>

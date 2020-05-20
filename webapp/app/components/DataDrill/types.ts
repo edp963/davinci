@@ -35,7 +35,8 @@ import {
   DimetionType,
   RenderType,
   WidgetMode,
-  IPaginationParams
+  IPaginationParams,
+  IWidgetConfig
 } from 'containers/Widget/components/Widget'
 
 import { IDataParamProperty } from 'containers/Widget/components/Workbench/OperatingPanel'
@@ -119,4 +120,21 @@ export type IDrillStrategies = Merge<
 export interface ISourceDataFilter {
   key: string
   value: string
+}
+
+
+export interface IDataDrillProps {
+  widgetConfig: IWidgetConfig
+  drillHistory?: IDrillDetail[]
+  key?: string | number
+  currentData?: object[]
+  onDataDrillPath?: () => any
+  onDataDrillDown?: (name: string, dimensions?: WidgetDimension) => any
+  onDataDrillUp?: (name: string) => any
+}
+
+export interface IEnhancerPanel {
+  isDrillableChart: boolean
+  isSelectedfilter: boolean | object []
+  isSelectedGroup: boolean | string[]
 }

@@ -94,6 +94,7 @@ const shareReducer = (state = initialState, action: DashboardActionType) =>
         break
 
       case ActionTypes.SET_INDIVIDUAL_DASHBOARD:
+        draft.title = action.payload.widget.name
         draft.items = [
           {
             id: 1,

@@ -192,6 +192,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       onPollingSelect,
       currentDashboard
     } = this.props
+
     const {
       filteredWidgets,
       pageSize,
@@ -269,6 +270,10 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       [utilStyles.hide]: !polling
     })
 
+    const isShowName = classnames({
+      [utilStyles.hide]: !!(type === 'add')
+    })
+
     return (
       <Form>
         <Row className={utilStyles.formStepArea}>
@@ -292,6 +297,16 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
                 {getFieldDecorator('id')(
                   <Input />
                 )}
+              </FormItem>
+              <FormItem
+                label="widget别名"
+                labelCol={{span: 10}}
+                wrapperCol={{span: 14}}
+                className={isShowName}
+              >
+                {getFieldDecorator('alias', {})(
+                    <Input/>
+                  )}
               </FormItem>
               <FormItem
                 label="数据刷新模式"

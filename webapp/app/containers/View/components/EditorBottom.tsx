@@ -87,4 +87,4 @@ export const EditorBottom = (props: IEditorBottomProps) => {
   )
 }
 
-export default EditorBottom
+export default React.memo(EditorBottom)
