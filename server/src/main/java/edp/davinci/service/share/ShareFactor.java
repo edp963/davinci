@@ -21,11 +21,9 @@ package edp.davinci.service.share;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.alibaba.fastjson.serializer.ValueFilter;
-import edp.core.model.RecordInfo;
 import edp.core.utils.AESUtils;
 import edp.core.utils.StringZipUtil;
 import edp.davinci.dto.shareDto.ShareEntity;
-import edp.davinci.model.User;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
 
@@ -41,7 +39,7 @@ public class ShareFactor {
     private static class ShareFactorSerializeFilter implements ValueFilter {
         @Override
         public Object process(Object object, String name, Object value) {
-            if (value == null || value instanceof User || value instanceof RecordInfo) {
+            if (value == null) {
                 return null;
             }
             if (value instanceof String && ((String) value).trim().length() == 0) {
@@ -141,9 +139,6 @@ public class ShareFactor {
 
     private Long expire = null;
 
-    private User shareUser;
-    private Object shareEntity;
-
 
     public static ShareFactor parseShareFactor(String token, String secret) throws IllegalArgumentException {
         ShareFactor factor = null;
@@ -197,7 +192,8 @@ public class ShareFactor {
                 this.setViewers(null);
                 this.setRoles(null);
                 break;
-            default:
+            case AUTH:
+                this.setPassword(null);
                 break;
         }
     }

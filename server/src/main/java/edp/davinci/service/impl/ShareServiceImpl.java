@@ -26,19 +26,23 @@ import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.Paginate;
+import edp.core.model.PaginateWithQueryColumns;
+import edp.core.model.QueryColumn;
 import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.model.TokenEntity;
+import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.dao.*;
 import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
 import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.shareDto.*;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.viewDto.DistinctParam;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
+import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.model.*;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.ShareService;
@@ -51,7 +55,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static edp.core.consts.Consts.EMPTY;
@@ -121,7 +127,7 @@ public class ShareServiceImpl implements ShareService {
         String[] tokenCrypts = tokenPassword.split(Constants.SPLIT_CHAR_STRING);
 
         if (tokenInfos.length < 2) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
+            throw new ServerException("Invalid share token");
         }
 
         User loginUser = userService.userLogin(userLogin);
@@ -131,26 +137,26 @@ public class ShareServiceImpl implements ShareService {
 
         Long shareUserId = Long.parseLong(tokenInfos[1]);
         if (shareUserId.longValue() < 1L) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
+            throw new ServerException("Invalid share token");
         }
 
         User shareUser = userMapper.getById(shareUserId);
         if (null == shareUser) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
+            throw new ServerException("Invalid share token");
         }
 
         if (tokenInfos.length == 3) {
             if (tokenCrypts.length < 2) {
-                throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
+                throw new ServerException("Invalid share token");
             }
             try {
                 String sharedUserName = tokenInfos[2];
                 Long sharedUserId = Long.parseLong(tokenCrypts[1]);
                 if (!(loginUser.getUsername().equals(sharedUserName) && loginUser.getId().equals(sharedUserId)) && !loginUser.getId().equals(shareUserId)) {
-                    throw new ForbiddenExecption(ErrorMsg.ERR_MSG_AUTHENTICATION);
+                    throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
                 }
             } catch (NumberFormatException e) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_MSG_AUTHENTICATION);
+                throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
             }
         }
 
@@ -294,6 +300,18 @@ public class ShareServiceImpl implements ShareService {
         return shareDashboard;
     }
 
+    private void verifyShareUser(User user, ShareInfo shareInfo) {
+        if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
+            throw new ServerException("Invalid share token");
+        }
+
+        if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
+            User tokenUser = userMapper.selectByUsername(shareInfo.getSharedUserName());
+            if (tokenUser == null || !tokenUser.getId().equals(user.getId())) {
+                throw new ForbiddenExecption("ERROR Permission denied");
+            }
+        }
+    }
 
     /**
      * 获取分享数据
@@ -318,6 +336,58 @@ public class ShareServiceImpl implements ShareService {
         return paginate;
     }
 
+
+    /**
+     * 分享数据生成csv文件并下载
+     *
+     * @param executeParam
+     * @param user
+     * @param token
+     * @return
+     */
+    @Override
+    public String generationShareDataCsv(ViewExecuteParam executeParam, User user, String token) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
+        String filePath = null;
+        ShareInfo shareInfo = getShareInfo(token, user);
+        verifyShareUser(user, shareInfo);
+
+        ViewWithSource viewWithSource = viewMapper.getViewWithProjectAndSourceByWidgetId(shareInfo.getShareId());
+        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), shareInfo.getShareUser(), false);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareInfo.getShareUser());
+
+        if (!projectPermission.getDownloadPermission()) {
+            throw new ForbiddenExecption("ERROR Permission denied");
+        }
+
+        executeParam.setLimit(-1);
+        executeParam.setPageSize(-1);
+        executeParam.setPageNo(-1);
+
+        PaginateWithQueryColumns paginate = null;
+        try {
+            boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
+            paginate = viewService.getResultDataList(maintainer, viewWithSource, executeParam, shareInfo.getShareUser());
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new ServerException(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+        List<QueryColumn> columns = paginate.getColumns();
+
+        if (!CollectionUtils.isEmpty(columns)) {
+            String csvPath = fileUtils.fileBasePath + File.separator + "csv";
+            File file = new File(csvPath);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+            String csvName = viewWithSource.getName() + "_" + sdf.format(new Date());
+            String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, paginate.getResultList());
+            filePath = fileFullPath.replace(fileUtils.fileBasePath, EMPTY);
+        }
+
+        return serverUtils.getHost() + filePath;
+    }
+
     /**
      * 获取分享distinct value
      *
@@ -329,31 +399,40 @@ public class ShareServiceImpl implements ShareService {
      * @return
      */
     @Override
-    public List<Map<String, Object>> getDistinctValue(String token, Long viewId, DistinctParam param, User user, HttpServletRequest request) {
+    public ResultMap getDistinctValue(String token, Long viewId, DistinctParam param, User user, HttpServletRequest request) {
         List<Map<String, Object>> list = null;
-        ShareInfo shareInfo = getShareInfo(token, user);
-        verifyShareUser(user, shareInfo);
-
-        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
-        if (null == viewWithProjectAndSource) {
-            log.info("view (:{}) not found", viewId);
-            throw new NotFoundException("view is not found");
-        }
-
-        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareInfo.getShareUser(), false);
-
-        if (!projectService.allowGetData(projectDetail, shareInfo.getShareUser())) {
-            throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
-        }
-
         try {
-            boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
-            list = viewService.getDistinctValueData(maintainer, viewWithProjectAndSource, param, shareInfo.getShareUser());
+
+            ShareInfo shareInfo = getShareInfo(token, user);
+            verifyShareUser(user, shareInfo);
+
+            ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
+            if (null == viewWithProjectAndSource) {
+                log.info("view (:{}) not found", viewId);
+                return resultFail(user, request, null).message("view not found");
+            }
+
+            ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareInfo.getShareUser(), false);
+
+            if (!projectService.allowGetData(projectDetail, shareInfo.getShareUser())) {
+                return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
+            }
+
+            try {
+                boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
+                list = viewService.getDistinctValueData(maintainer, viewWithProjectAndSource, param, shareInfo.getShareUser());
+            } catch (ServerException e) {
+                return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
+            }
+        } catch (NotFoundException e) {
+            return resultFail(user, request, null).message(e.getMessage());
         } catch (ServerException e) {
-            throw new UnAuthorizedExecption(e.getMessage());
+            return resultFail(user, request, null).message(e.getMessage());
+        } catch (UnAuthorizedExecption e) {
+            return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
 
-        return list;
+        return resultSuccess(user, request).payloads(list);
     }
 
 
@@ -365,8 +444,12 @@ public class ShareServiceImpl implements ShareService {
         Set<Long> viewers = new HashSet<>();
         Set<Long> roleIds = new HashSet<>();
 
-        if (!CollectionUtils.isEmpty(entity.getViewers())) {
-            List<User> users = userMapper.getByIds(new ArrayList<>(entity.getViewers()));
+        if (!CollectionUtils.isEmpty(entity.getViewerIds())) {
+            List<User> users = userMapper.getByIds(new ArrayList<>(entity.getViewerIds()));
+            users.stream().map(User::getId).forEach(viewers::add);
+        }
+        if (!CollectionUtils.isEmpty(entity.getViewerEmails())) {
+            List<User> users = userMapper.selectByEmails(entity.getViewerEmails());
             users.stream().map(User::getId).forEach(viewers::add);
         }
 
@@ -376,106 +459,12 @@ public class ShareServiceImpl implements ShareService {
             roles.stream().map(Role::getId).forEach(roleIds::add);
         }
 
-        entity.setViewers(viewers);
+        entity.setViewerIds(viewers);
         entity.setRoles(roleIds);
     }
 
     /**
-     * 获取分享实体id
-     * 已废弃，仅供版本兼容
-     *
-     * @param token
-     * @param user
-     * @return
-     * @throws ServerException
-     * @throws UnAuthorizedExecption
-     */
-    @Deprecated
-    public ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption {
-
-        if (StringUtils.isEmpty(token)) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
-        }
-
-        //AES解密
-        String decrypt = AESUtils.decrypt(token, null);
-        //获取分享信息
-        String tokenUserName = tokenUtils.getUsername(decrypt);
-        String tokenPassword = tokenUtils.getPassword(decrypt);
-
-        String[] tokenInfos = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
-        String[] tokenCrypts = tokenPassword.split(Constants.SPLIT_CHAR_STRING);
-
-        if (tokenInfos.length < 2) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
-        }
-
-        Long shareUserId = Long.parseLong(tokenInfos[1]);
-        if (shareUserId.longValue() < 1L) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
-        }
-
-        User shareUser = userMapper.getById(shareUserId);
-        if (null == shareUser) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
-        }
-
-        String sharedUserName = null;
-        if (tokenInfos.length == 3) {
-            if (tokenCrypts.length < 2) {
-                throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
-            }
-            String username = tokenInfos[2];
-            Long sharedUserId = Long.parseLong(tokenCrypts[1]);
-            User sharedUser = userMapper.selectByUsername(username);
-            if (null == sharedUser || !sharedUser.getId().equals(sharedUserId)) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_MSG_AUTHENTICATION);
-            }
-
-            if (null == user || (!user.getId().equals(sharedUserId) && !user.getId().equals(shareUserId))) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_MSG_AUTHENTICATION);
-            }
-
-            sharedUserName = username;
-        }
-
-        Long shareId1 = Long.parseLong(tokenInfos[0]);
-        Long shareId2 = Long.parseLong(tokenCrypts[0]);
-
-        if (shareId1.longValue() < 1L || shareId2.longValue() < 1L || !shareId1.equals(shareId2)) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
-        }
-
-        return new ShareInfo(shareId1, shareUser, sharedUserName);
-    }
-
-
-    /**
-     * 验证分享信息
-     * 已废弃，仅供版本兼容
-     *
-     * @param user
-     * @param shareInfo
-     * @throws ServerException
-     * @throws ForbiddenExecption
-     */
-    @Deprecated
-    public void verifyShareUser(User user, ShareInfo shareInfo) throws ServerException, ForbiddenExecption {
-        if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-            throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
-        }
-
-        if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-            User tokenUser = userMapper.selectByUsername(shareInfo.getSharedUserName());
-            if (tokenUser == null || !tokenUser.getId().equals(user.getId())) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
-            }
-        }
-    }
-
-    /**
      * 生成分享token
-     * 已废弃，仅供版本兼容
      *
      * @param shareEntityId
      * @param username
@@ -505,6 +494,100 @@ public class ShareServiceImpl implements ShareService {
 
         //生成token 并 aes加密
         return AESUtils.encrypt(tokenUtils.generateContinuousToken(shareToken), null);
+    }
+
+    /**
+     * 获取分享实体id
+     *
+     * @param token
+     * @param user
+     * @return
+     * @throws ServerException
+     * @throws UnAuthorizedExecption
+     */
+    @Deprecated
+    public ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption {
+
+        if (StringUtils.isEmpty(token)) {
+            throw new ServerException("Invalid share token");
+        }
+
+        //AES解密
+        String decrypt = AESUtils.decrypt(token, null);
+        //获取分享信息
+        String tokenUserName = tokenUtils.getUsername(decrypt);
+        String tokenPassword = tokenUtils.getPassword(decrypt);
+
+        String[] tokenInfos = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
+        String[] tokenCrypts = tokenPassword.split(Constants.SPLIT_CHAR_STRING);
+
+        if (tokenInfos.length < 2) {
+            throw new ServerException("Invalid share token");
+        }
+
+        Long shareUserId = Long.parseLong(tokenInfos[1]);
+        if (shareUserId.longValue() < 1L) {
+            throw new ServerException("Invalid share token");
+        }
+
+        User shareUser = userMapper.getById(shareUserId);
+        if (null == shareUser) {
+            throw new ServerException("Invalid share token");
+        }
+
+        String sharedUserName = null;
+        if (tokenInfos.length == 3) {
+            if (tokenCrypts.length < 2) {
+                throw new ServerException("Invalid share token");
+            }
+            String username = tokenInfos[2];
+            Long sharedUserId = Long.parseLong(tokenCrypts[1]);
+            User sharedUser = userMapper.selectByUsername(username);
+            if (null == sharedUser || !sharedUser.getId().equals(sharedUserId)) {
+                throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
+            }
+
+            if (null == user || (!user.getId().equals(sharedUserId) && !user.getId().equals(shareUserId))) {
+                throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
+            }
+
+            sharedUserName = username;
+        }
+
+        Long shareId1 = Long.parseLong(tokenInfos[0]);
+        Long shareId2 = Long.parseLong(tokenCrypts[0]);
+
+        if (shareId1.longValue() < 1L || shareId2.longValue() < 1L || !shareId1.equals(shareId2)) {
+            throw new ServerException("Invalid share token");
+        }
+
+        return new ShareInfo(shareId1, shareUser, sharedUserName);
+    }
+
+
+    private ResultMap resultSuccess(User user, HttpServletRequest request) {
+        if (null == user) {
+            return new ResultMap().success();
+        } else {
+            return new ResultMap(tokenUtils).successAndRefreshToken(request);
+        }
+    }
+
+
+    private ResultMap resultFail(User user, HttpServletRequest request, HttpCodeEnum httpCodeEnum) {
+        if (null == user) {
+            if (null != httpCodeEnum) {
+                return new ResultMap().fail(httpCodeEnum.getCode());
+            } else {
+                return new ResultMap().fail();
+            }
+        } else {
+            if (null != httpCodeEnum) {
+                return new ResultMap(tokenUtils).failAndRefreshToken(request, httpCodeEnum);
+            } else {
+                return new ResultMap(tokenUtils).failAndRefreshToken(request);
+            }
+        }
     }
 }
 

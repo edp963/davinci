@@ -19,6 +19,7 @@
 package edp.davinci.dto.shareDto;
 
 import edp.core.utils.CollectionUtils;
+import edp.davinci.core.common.Constants;
 import edp.davinci.service.share.ShareDataPermission;
 import edp.davinci.service.share.ShareMode;
 import lombok.Data;
@@ -53,7 +54,14 @@ public class ShareEntity {
      * <p>
      * for mode == 3
      */
-    private Set<Long> viewers;
+    private Set<Long> viewerIds;
+
+    /**
+     * viewer email
+     * <p>
+     * for mode == 3
+     */
+    private Set<String> viewerEmails;
 
     /**
      * role id
@@ -75,13 +83,20 @@ public class ShareEntity {
                 }
                 break;
             case AUTH:
-                if (CollectionUtils.isEmpty(this.viewers) && CollectionUtils.isEmpty(this.roles)) {
+                if (CollectionUtils.isEmpty(this.viewerEmails) && CollectionUtils.isEmpty(this.roles) && CollectionUtils.isEmpty(viewerEmails)) {
                     throw new IllegalArgumentException("Invalid shared user in AUTH share mode");
                 }
-                if (!CollectionUtils.isEmpty(viewers)) {
-                    viewers.forEach(id -> {
+                if (!CollectionUtils.isEmpty(viewerIds)) {
+                    viewerIds.forEach(id -> {
                         if (id < 1L) {
                             throw new IllegalArgumentException("Invalid viewer: " + id);
+                        }
+                    });
+                }
+                if (!CollectionUtils.isEmpty(viewerEmails)) {
+                    viewerEmails.forEach(email -> {
+                        if (!Constants.PATTERN_EMAIL_FORMAT.matcher(email).find()) {
+                            throw new IllegalArgumentException("Invalid email: " + email);
                         }
                     });
                 }

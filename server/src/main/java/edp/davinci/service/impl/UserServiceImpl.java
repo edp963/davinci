@@ -30,7 +30,6 @@ import edp.core.exception.ServerException;
 import edp.core.model.MailContent;
 import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.LockType;
@@ -545,10 +544,10 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         String username = tokenUtils.getUsername(Constants.TOKEN_PREFIX + Constants.SPACE + token);
         User user = getByUsername(username);
         if (null == user) {
-            return new ResultMap().fail(HttpCodeEnum.FORBIDDEN.getCode()).message(ErrorMsg.ERR_MSG_PERMISSION);
+            return new ResultMap().fail(HttpCodeEnum.FORBIDDEN.getCode()).message("ERROR Permission denied");
         }
         if (!tokenUtils.validateToken(token, user)) {
-            return new ResultMap().fail(HttpCodeEnum.FORBIDDEN.getCode()).message(ErrorMsg.ERR_MSG_PERMISSION);
+            return new ResultMap().fail(HttpCodeEnum.FORBIDDEN.getCode()).message("ERROR Permission denied");
         }
         UserProfile userProfile = new UserProfile();
         BeanUtils.copyProperties(user, userProfile);

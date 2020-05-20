@@ -29,7 +29,6 @@ import edp.core.utils.BaseLock;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.ServerUtils;
-import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.LogNameEnum;
@@ -187,7 +186,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getWidgetPermission() < UserPermissionEnum.READ.getPermission()) {
-            throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
+            throw new UnAuthorizedExecption();
         }
 
         return widget;

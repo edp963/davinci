@@ -24,21 +24,7 @@ public enum ShareType {
     WIDGET(0),
     DASHBOARD(1),
     DISPLAY(2),
-
-
-    /**
-     * 数据
-     */
-    DATA(3),
-    /**
-     * 记录
-     */
-    RECORD(4),
-
-    /**
-     * 文件
-     */
-    FILE(5);
+    ;
 
     @Getter
     private int type;

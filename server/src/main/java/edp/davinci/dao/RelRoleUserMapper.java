@@ -26,7 +26,6 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
-import java.util.Set;
 
 public interface RelRoleUserMapper {
     int insert(RelRoleUser relRoleUser);
@@ -55,9 +54,6 @@ public interface RelRoleUserMapper {
 
 
     List<RelRoleUser> getByIds(List<Long> ids);
-
-
-    Set<RelRoleUser> selectByUserAndRoles(@Param("userId") Long userId, @Param("roleIds") Set<Long> roleIds);
 
 
     @Select({
