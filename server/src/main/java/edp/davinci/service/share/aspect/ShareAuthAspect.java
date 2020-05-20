@@ -27,8 +27,6 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.CollectionUtils;
 import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.common.ResultMap;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.dao.DashboardPortalMapper;
 import edp.davinci.dao.RelRoleUserMapper;
 import edp.davinci.dao.UserMapper;
 import edp.davinci.dto.projectDto.ProjectDetail;
@@ -78,9 +76,6 @@ public class ShareAuthAspect {
     private DashboardServiceImpl dashboardService;
 
     @Autowired
-    private DashboardPortalMapper dashboardPortalMapper;
-
-    @Autowired
     private DisplayServiceImpl displayService;
 
     @Autowired
@@ -98,11 +93,13 @@ public class ShareAuthAspect {
     public ResponseEntity doAround(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         AuthShare authShare = signature.getMethod().getAnnotation(AuthShare.class);
-        ShareType flagShareType = authShare.type();
+        ShareType shareType = authShare.type();
         ShareOperation operation = authShare.operation();
 
         Object[] args = joinPoint.getArgs();
         String token = (String) args[0];
+        String password = (String) args[1];
+
         if (StringUtils.isEmpty(token)) {
             ResultMap resultMap = new ResultMap().fail().message(ErrorMsg.ERR_INVALID_TOKEN);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -119,33 +116,20 @@ public class ShareAuthAspect {
 
         try {
             //兼容 老版本，token 信息转换为新版本信息
-            adaptShareInfo(token, shareFactor, user);
+            if (shareFactor.getMode() == ShareMode.COMPATIBLE) {
+                adaptShareInfo(token, shareFactor, user);
+            }
             // 下载接口数据参数语义不唯一，在业务中判断
             if (operation != ShareOperation.DOWNLOAD) {
-                if (operation == ShareOperation.PERMISSION) {
-                    //获取兼容模式下的分享类型
-                    String type = (String) args[2];
-                    if (CheckEntityEnum.WIDGET.getSource().equals(type.toLowerCase())) {
-                        shareFactor.setType(ShareType.WIDGET);
-                    } else if (CheckEntityEnum.DASHBOARD.getSource().equals(type.toLowerCase())) {
-                        shareFactor.setType(ShareType.DASHBOARD);
-                    } else if (CheckEntityEnum.DISPLAY.getSource().equals(type.toLowerCase())) {
-                        shareFactor.setType(ShareType.DISPLAY);
-                    } else {
-                        throw new ServerException("Unknown share type");
-                    }
-                } else {
-                    shareFactor.setType(flagShareType == ShareType.DATA ? ShareType.WIDGET : flagShareType);
-                }
+                shareFactor.setType(shareType == ShareType.DATA ? ShareType.WIDGET : shareType);
             }
 
-            if (flagShareType != ShareType.LOGIN) {
-                //校验 token 权限
-                verifyToken(operation, shareFactor, user, args);
+            //校验 token 权限
+            verifyToken(operation, shareFactor, user, password);
 
-                //校验数据权限
-                verifyDataPermission(operation, shareFactor, user);
-            }
+            //校验数据权限
+            verifyDataPermission(operation, shareFactor, user);
+
             //thread local share factor
             SHARE_FACTOR_THREAD_LOCAL.set(shareFactor);
             // 处理业务并返回
@@ -162,14 +146,13 @@ public class ShareAuthAspect {
      * @param operation
      * @param shareFactor
      * @param user
-     * @param args
+     * @param password
      * @throws ForbiddenExecption
      */
-    private void verifyToken(ShareOperation operation, ShareFactor shareFactor, User user, Object[] args)
+    private void verifyToken(ShareOperation operation, ShareFactor shareFactor, User user, String password)
             throws ForbiddenExecption, UnAuthorizedExecption {
         switch (shareFactor.getMode()) {
             case PASSWORD:
-                String password = (String) args[1];
                 if (StringUtils.isEmpty(password)) {
                     throw new UnAuthorizedExecption(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_LOAD_DATA_TOKEN : ErrorMsg.ERR_EMPTY_SHARE_PASSWORD);
                 }
@@ -214,22 +197,18 @@ public class ShareAuthAspect {
         }
         User user = shareFactor.getPermission() == ShareDataPermission.SHARER ? sharer : viewer;
         shareFactor.setUser(user);
-        if (shareOperation == ShareOperation.READ || shareOperation == ShareOperation.PERMISSION) {
+        if (shareOperation == ShareOperation.READ) {
             switch (shareFactor.getType()) {
                 case WIDGET:
                     Widget widget = widgetService.getWidget(shareFactor.getEntityId(), user);
-                    shareFactor.setProjectDetail(projectService.getProjectDetail(widget.getProjectId(), user, false));
                     shareFactor.setShareEntity(widget);
                     break;
                 case DASHBOARD:
                     Dashboard dashboard = dashboardService.getDashboard(shareFactor.getEntityId(), user);
-                    DashboardPortal portal = dashboardPortalMapper.getById(dashboard.getDashboardPortalId());
-                    shareFactor.setProjectDetail(projectService.getProjectDetail(portal.getProjectId(), user, false));
                     shareFactor.setShareEntity(dashboard);
                     break;
                 case DISPLAY:
                     Display display = displayService.getDisplay(shareFactor.getSharerId(), user);
-                    shareFactor.setProjectDetail(projectService.getProjectDetail(display.getProjectId(), user, false));
                     shareFactor.setShareEntity(display);
                     break;
                 default:
@@ -259,10 +238,7 @@ public class ShareAuthAspect {
      * @param user
      */
     @Transactional
-    public void adaptShareInfo(String token, ShareFactor shareFactor, User user) {
-        if (shareFactor.getMode() != ShareMode.COMPATIBLE) {
-            return;
-        }
+    protected void adaptShareInfo(String token, ShareFactor shareFactor, User user) {
         ShareInfo shareInfo = shareService.getShareInfo(token, user);
         shareService.verifyShareUser(user, shareInfo);
         //新老版本字段定义不同

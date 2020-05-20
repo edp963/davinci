@@ -24,7 +24,6 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.DateUtils;
 import edp.core.utils.TokenUtils;
-import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.enums.DownloadType;
 import edp.davinci.dao.DashboardMapper;
 import edp.davinci.dao.MemDashboardWidgetMapper;
@@ -46,7 +45,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -80,7 +78,7 @@ public class DownloadCommonService {
             return widgetList;
         }
         for (Long dashboardId : dashboardIds) {
-            if (dashboardId == null || dashboardId <= 0) {
+            if (dashboardId == null || dashboardId.longValue() <= 0) {
                 continue;
             }
             Dashboard dashboard = dashboardMapper.getById(dashboardId);
@@ -91,11 +89,11 @@ public class DownloadCommonService {
             if (CollectionUtils.isEmpty(mdw)) {
                 continue;
             }
-            Set<Long> widgetIds = mdw.stream().filter(Objects::nonNull).map(MemDashboardWidget::getWidgetId).collect(Collectors.toSet());
+            Set<Long> widgetIds = mdw.stream().filter(y -> y != null).map(y -> y.getWidgetId()).collect(Collectors.toSet());
             List<Widget> widgets = widgetMapper.getByIds(widgetIds);
             if (!CollectionUtils.isEmpty(widgets)) {
-                Map<Long, MemDashboardWidget> map = mdw.stream().collect(Collectors.toMap(MemDashboardWidget::getWidgetId, o -> o, (oldV, newV) -> oldV));
-                widgets.forEach(t -> {
+                Map<Long, MemDashboardWidget> map = mdw.stream().collect(Collectors.toMap(o -> o.getWidgetId(), o -> o, (oldV, newV)->oldV));
+                widgets.stream().forEach(t -> {
                     ViewExecuteParam executeParam = null;
                     if (!CollectionUtils.isEmpty(params) && map.containsKey(t.getId())) {
                         MemDashboardWidget memDashboardWidget = map.get(t.getId());
@@ -113,14 +111,14 @@ public class DownloadCommonService {
 
     protected List<WidgetContext> getWidgetContextListByFolderDashBoardId(Long id) {
         List<WidgetContext> widgetList = Lists.newArrayList();
-        if (id == null || id < 0L) {
+        if (id == null || id.longValue() < 0L) {
             return widgetList;
         }
         List<Dashboard> dashboardList = dashboardMapper.getSubDashboardById(id);
         if (CollectionUtils.isEmpty(dashboardList)) {
             return widgetList;
         }
-        List<Long> dashboardIds = dashboardList.stream().filter(Objects::nonNull).map(Dashboard::getId).collect(Collectors.toList());
+        List<Long> dashboardIds = dashboardList.stream().filter(x -> x != null).map(x -> x.getId()).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(dashboardIds)) {
             return widgetList;
         }
@@ -157,7 +155,8 @@ public class DownloadCommonService {
                             executeParam = params.stream()
                                     .filter(p -> null != p.getParam() && p.getId().equals(widget.getId())).findFirst()
                                     .get().getParam();
-                        } catch (Exception e) {
+                        }
+                        catch (Exception e) {
                             // ignore
                         }
                     }
@@ -180,15 +179,15 @@ public class DownloadCommonService {
                 throw new IllegalArgumentException("unsupported DownloadType=" + downloadType.name());
         }
         if (CollectionUtils.isEmpty(widgetList)) {
-            throw new IllegalArgumentException("there is no widget to download");
+            throw new IllegalArgumentException("has no widget to download");
         }
         for (WidgetContext context : widgetList) {
             ProjectDetail projectDetail = projectService.getProjectDetail(context.getWidget().getProjectId(), user, false);
             ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
             //校验权限
             if (!projectPermission.getDownloadPermission()) {
-                log.info("user {} have not permission to download the widget {}", user.getUsername(), id);
-                throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
+                log.info("user {} have not permisson to download the widget {}", user.getUsername(), id);
+                throw new UnAuthorizedExecption("you have not permission to download the widget");
             }
             context.setIsMaintainer(projectService.isMaintainer(projectDetail, user));
         }

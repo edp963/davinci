@@ -19,6 +19,8 @@
 
 package edp.davinci.controller;
 
+import com.alibaba.druid.util.StringUtils;
+import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.AuthShare;
 import edp.core.annotation.CurrentUser;
 import edp.core.model.Paginate;
@@ -66,29 +68,6 @@ public class ShareController extends BaseController {
     @Autowired
     private ShareService shareService;
 
-    @ApiOperation(value = "share preflight")
-    @AuthShare(type = ShareType.LOGIN)
-    @GetMapping(value = "/preflight/{token}")
-    public ResponseEntity preFlight(@PathVariable String token) {
-        Map<String, Object> result = shareService.checkShareToken();
-        return ResponseEntity.ok(new ResultMap().success().payload(result));
-    }
-
-    @ApiOperation(value = "get share permission")
-    @AuthShare(type = ShareType.PERMISSION, operation = ShareOperation.PERMISSION)
-    @GetMapping(value = "/permissions/{token}")
-    public ResponseEntity preFlight(@PathVariable(name = "token") String token,
-                                    @RequestParam(required = false) String password,
-                                    @RequestParam String type,
-                                    @ApiIgnore User user,
-                                    HttpServletRequest request) {
-        Map<String, Object> result = shareService.getSharePermissions();
-        if (null == user || user.getId() == null) {
-            return ResponseEntity.ok(new ResultMap().success().payload(result));
-        } else {
-            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(result));
-        }
-    }
 
     /**
      * share页登录
@@ -99,18 +78,23 @@ public class ShareController extends BaseController {
      * @return
      */
     @ApiOperation(value = "share login")
-    @AuthShare(type = ShareType.LOGIN)
+    @AuthIgnore
     @PostMapping("/login/{token}")
     public ResponseEntity shareLogin(@PathVariable String token,
                                      @Valid @RequestBody UserLogin userLogin,
                                      @ApiIgnore BindingResult bindingResult) {
+
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message("Invalid token");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
 
         if (bindingResult.hasErrors()) {
             ResultMap resultMap = new ResultMap().fail().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        User user = shareService.shareLogin(userLogin);
+        User user = shareService.shareLogin(token, userLogin);
         return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(user)).payload(new UserLoginResult(user)));
     }
 
@@ -131,7 +115,7 @@ public class ShareController extends BaseController {
                                             HttpServletRequest request) {
         ShareDashboard shareDashboard = shareService.getShareDashboard(user);
 
-        if (null == user || user.getId() == null) {
+        if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareDashboard));
         } else {
             return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareDashboard));
@@ -155,7 +139,7 @@ public class ShareController extends BaseController {
                                           HttpServletRequest request) {
         ShareDisplay shareDisplay = shareService.getShareDisplay(user);
 
-        if (null == user || user.getId() == null) {
+        if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareDisplay));
         } else {
             return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareDisplay));
@@ -179,7 +163,7 @@ public class ShareController extends BaseController {
                                          HttpServletRequest request) {
         ShareWidget shareWidget = shareService.getShareWidget(user);
 
-        if (null == user || user.getId() == null) {
+        if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareWidget));
         } else {
             return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareWidget));
@@ -205,7 +189,7 @@ public class ShareController extends BaseController {
                                        HttpServletRequest request) throws SQLException {
 
         Paginate<Map<String, Object>> shareData = shareService.getShareData(executeParam, user);
-        if (null == user || user.getId() == null) {
+        if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareData));
         } else {
             return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareData));
@@ -237,7 +221,7 @@ public class ShareController extends BaseController {
 
 
         List<Map<String, Object>> resultList = shareService.getDistinctValue(viewId, param, user);
-        if (null == user || user.getId() == null) {
+        if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payloads(resultList));
         } else {
             return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(resultList));

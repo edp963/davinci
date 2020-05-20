@@ -33,18 +33,22 @@ public interface ShareDownloadService {
      *
      * @param downloadType
      * @param uuid
+     * @param token
+     * @param user
      * @param downloadViewExecuteParams
      * @return
      */
-    boolean submit(DownloadType downloadType, String uuid, List<DownloadViewExecuteParam> downloadViewExecuteParams);
+    boolean submit(DownloadType downloadType, String uuid, String token, User user, List<DownloadViewExecuteParam> downloadViewExecuteParams);
 
     /**
      * 获取分享下载列表
      *
      * @param uuid
+     * @param token
+     * @param user
      * @return
      */
-    List<ShareDownloadRecord> queryDownloadRecordPage(String uuid);
+    List<ShareDownloadRecord> queryDownloadRecordPage(String uuid, String token, User user);
 
 
     /**
@@ -52,7 +56,9 @@ public interface ShareDownloadService {
      *
      * @param id
      * @param uuid
+     * @param token
+     * @param user
      * @return
      */
-    ShareDownloadRecord downloadById(String id, String uuid);
+    ShareDownloadRecord downloadById(String id, String uuid, String token, User user);
 }

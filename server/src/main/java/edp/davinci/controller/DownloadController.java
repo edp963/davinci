@@ -19,12 +19,14 @@
 
 package edp.davinci.controller;
 
+import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.AuthShare;
 import edp.core.annotation.CurrentUser;
 import edp.core.utils.FileUtils;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.DownloadType;
 import edp.davinci.core.enums.FileTypeEnum;
@@ -131,10 +133,16 @@ public class DownloadController extends BaseController {
                                                   @RequestParam(required = false) String password,
                                                   @PathVariable(name = "uuid") String uuid,
                                                   @PathVariable(name = "type") String type,
-                                                  @Valid @RequestBody(required = false) DownloadViewExecuteParam[] params) {
+                                                  @Valid @RequestBody(required = false) DownloadViewExecuteParam[] params,
+                                                  @ApiIgnore @CurrentUser User user,
+                                                  HttpServletRequest request) {
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message(ErrorMsg.ERR_INVALID_TOKEN);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
 
         List<DownloadViewExecuteParam> downloadViewExecuteParams = Arrays.asList(params);
-        boolean rst = shareDownloadService.submit(DownloadType.getDownloadType(type), uuid, downloadViewExecuteParams);
+        boolean rst = shareDownloadService.submit(DownloadType.getDownloadType(type), uuid, token, user, downloadViewExecuteParams);
 
         return ResponseEntity.ok(rst ? new ResultMap().success() : new ResultMap().fail());
     }
@@ -146,9 +154,15 @@ public class DownloadController extends BaseController {
                                                      @RequestParam(required = false) String password,
                                                      @PathVariable(name = "uuid") String uuid,
                                                      @PathVariable(name = "id") String id,
+                                                     @ApiIgnore @CurrentUser User user,
                                                      HttpServletRequest request,
                                                      HttpServletResponse response) {
-        ShareDownloadRecord record = shareDownloadService.downloadById(id, uuid);
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message(ErrorMsg.ERR_INVALID_TOKEN);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareDownloadRecord record = shareDownloadService.downloadById(id, uuid, token, user);
         FileInputStream is = null;
         try {
             encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
@@ -170,9 +184,14 @@ public class DownloadController extends BaseController {
                                                      @PathVariable(name = "uuid") String uuid,
                                                      @ApiIgnore @CurrentUser User user,
                                                      HttpServletRequest request) {
-        List<ShareDownloadRecord> records = shareDownloadService.queryDownloadRecordPage(uuid);
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message(ErrorMsg.ERR_INVALID_TOKEN);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
 
-        if (null == user || user.getId() == null) {
+        List<ShareDownloadRecord> records = shareDownloadService.queryDownloadRecordPage(uuid, token, user);
+
+        if (null == user) {
             return ResponseEntity.ok(new ResultMap(tokenUtils).payloads(records));
         } else {
             return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(records));
