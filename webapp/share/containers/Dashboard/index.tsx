@@ -60,6 +60,7 @@ const {
   loadSelectOptions,
   resizeDashboardItem,
   resizeAllDashboardItem,
+  renderChartError,
   drillDashboardItem,
   deleteDrillHistory,
   selectDashboardItemChart,
@@ -449,6 +450,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       onLoadResultset,
       onLoadBatchDataWithControlValues,
       onResizeDashboardItem,
+      onRenderChartError,
       onSetFullScreenPanelItemId
     } = this.props
 
@@ -522,6 +524,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               container="share"
               onLoadData={onLoadResultset}
               onResizeDashboardItem={onResizeDashboardItem}
+              onRenderChartError={onRenderChartError}
               onDownloadCsv={this.initiateWidgetDownloadTask}
               onTurnOffInteract={this.turnOffInteract}
               onCheckTableInteract={this.checkInteract}
@@ -680,6 +683,7 @@ export function mapDispatchToProps(dispatch) {
     onResizeDashboardItem: (itemId: number) =>
       dispatch(resizeDashboardItem(itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
+    onRenderChartError: (itemId: number, error: Error) => dispatch(renderChartError(itemId, error)),
     onDrillDashboardItem: (itemId: number, drillHistory) =>
       dispatch(drillDashboardItem(itemId, drillHistory)),
     onDeleteDrillHistory: (itemId: number, index: number) =>

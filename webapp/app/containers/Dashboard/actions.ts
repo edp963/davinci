@@ -432,6 +432,16 @@ export const DashboardActions = {
     }
   },
 
+  renderChartError (itemId: number, error: Error) {
+    return {
+      type: ActionTypes.RENDER_CHART_ERROR,
+      payload: {
+        itemId,
+        error
+      }
+    }
+  },
+
   drillDashboardItem (itemId, drillHistory) {
     return {
       type: ActionTypes.DRILL_DASHBOARDITEM,

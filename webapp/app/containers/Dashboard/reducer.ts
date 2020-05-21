@@ -370,6 +370,10 @@ const dashboardReducer = (
         })
         break
 
+      case ActionTypes.RENDER_CHART_ERROR:
+        draft.currentItemsInfo[action.payload.itemId].errorMessage = action.payload.error.toString()
+        break
+
       case ActionTypes.SET_FULL_SCREEN_PANEL_ITEM_ID:
         draft.fullScreenPanelItemId = action.payload.itemId
         if (action.payload.itemId) {

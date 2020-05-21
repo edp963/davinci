@@ -23,7 +23,7 @@ export class Chart extends React.PureComponent<IChartProps> {
   }
 
   private renderChart = (props: IChartProps) => {
-    const { selectedChart, renderType, getDataDrillDetail, isDrilling, onSelectChartsItems, onDoInteract, onCheckTableInteract } = props
+    const { selectedChart, renderType, getDataDrillDetail, isDrilling, onSelectChartsItems, onDoInteract, onCheckTableInteract, onError } = props
 
     if (renderType === 'loading') {
       return
@@ -40,36 +40,41 @@ export class Chart extends React.PureComponent<IChartProps> {
       }
     }
 
-    this.instance.setOption(
-      chartOptionGenerator(
-        chartlibs.find((cl) => cl.id === selectedChart).name,
-        props,
-        {
-          instance: this.instance,
-          isDrilling,
-          getDataDrillDetail,
-          selectedItems: this.props.selectedItems
-        }
+    try {
+      this.instance.setOption(
+        chartOptionGenerator(
+          chartlibs.find((cl) => cl.id === selectedChart).name,
+          props,
+          {
+            instance: this.instance,
+            isDrilling,
+            getDataDrillDetail,
+            selectedItems: this.props.selectedItems
+          }
+        )
       )
-    )
 
+      // if (onDoInteract) {
+      //   this.instance.off('click')
+      //   this.instance.on('click', (params) => {
+      //     const isInteractiveChart = onCheckTableInteract()
+      //     if (isInteractiveChart) {
+      //       const triggerData = getTriggeringRecord(params, seriesData)
+      //       onDoInteract(triggerData)
+      //     }
+      //   })
+      // }
 
-    // if (onDoInteract) {
-    //   this.instance.off('click')
-    //   this.instance.on('click', (params) => {
-    //     const isInteractiveChart = onCheckTableInteract()
-    //     if (isInteractiveChart) {
-    //       const triggerData = getTriggeringRecord(params, seriesData)
-    //       onDoInteract(triggerData)
-    //     }
-    //   })
-    // }
-
-    this.instance.off('click')
-    this.instance.on('click', (params) => {
-      this.collectSelectedItems(params)
-    })
-    this.instance.resize()
+      this.instance.off('click')
+      this.instance.on('click', (params) => {
+        this.collectSelectedItems(params)
+      })
+      this.instance.resize()
+    } catch (error) {
+      if (onError) {
+        onError(error)
+      }
+    }
   }
 
   public collectSelectedItems = (params) => {

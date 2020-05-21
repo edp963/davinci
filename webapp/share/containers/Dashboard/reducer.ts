@@ -240,6 +240,10 @@ const shareReducer = (state = initialState, action: DashboardActionType) =>
         })
         break
 
+      case ActionTypes.RENDER_CHART_ERROR:
+        draft.itemsInfo[action.payload.itemId].errorMessage = action.payload.error.toString()
+        break
+
       case ActionTypes.LOAD_DOWNLOAD_LIST:
         draft.downloadListLoading = true
         break
