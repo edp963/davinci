@@ -23,7 +23,6 @@ import {
   makeSelectCurrentOrganizations,
   makeSelectCurrentOrganizationProjects,
   makeSelectCurrentOrganizationProjectsDetail,
-  makeSelectCurrentOrganizationRole,
   makeSelectCurrentOrganizationMembers,
   makeSelectInviteMemberList
 } from './selectors'
@@ -31,32 +30,9 @@ import { createStructuredSelector } from 'reselect'
 import { ProjectActions } from 'containers/Projects/actions'
 import { makeSelectStarUserList, makeSelectCollectProjects } from '../Projects/selectors'
 import { RouteComponentWithParams } from 'utils/types'
-import { IOrganization, IOrganizationMember } from './types'
-import { IStarUser, IProject } from '../Projects/types'
+import { IOrganization, IOrganizationProps } from './types'
 
-interface IOrganizationProps {
-  loginUser: any
-  organizations: any
-  starUserList: IStarUser[]
-  inviteMemberList: any
-  currentOrganization: IOrganization
-  collectProjects: IProject[]
-  onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
-  onLoadOrganizationMembers: (id: number) => any
-  onLoadOrganizationDetail: (id: number) => any
-  onDeleteOrganizationMember: (id: number, resolve: () => any) => any
-  onChangeOrganizationMemberRole: (id: number, role: number, resolve: () => any) => any
-  currentOrganizationProjects: IProject[]
-  currentOrganizationProjectsDetail: {total?: number, list: IProject[]}
-  currentOrganizationMembers: IOrganizationMember[]
-  onInviteMember: (ordId: number, memId: number) => any
-  onSearchMember: (keywords: string) => any
-  onClickCollectProjects: (formType: string, project: object, resolve: (id: number) => any) => any
-  onLoadCollectProjects: () => any
-  onEditOrganization: (organization: IOrganization) => any
-  onDeleteOrganization: (id: number, resolve: () => any) => any
-  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
-}
+
 
 export class Organization extends React.PureComponent <IOrganizationProps & RouteComponentWithParams, {}> {
   constructor (props) {
@@ -155,6 +131,8 @@ export class Organization extends React.PureComponent <IOrganizationProps & Rout
                 handleSearchMember={this.props.onSearchMember}
                 deleteOrganizationMember={this.props.onDeleteOrganizationMember}
                 changeOrganizationMemberRole={this.props.onChangeOrganizationMemberRole}
+                onGetRoleListByMemberId={this.props.onGetRoleListByMemberId}
+                onGetRoleListByMemberList={this.props.onGetRoleListByMemberList}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="usergroup-add" />角色<span className={styles.badge}>{roleNum}</span></span>} key="roles">
@@ -203,8 +181,12 @@ export function mapDispatchToProps (dispatch) {
     onSearchMember: (keyword) => dispatch(OrganizationActions.searchMember(keyword)),
     onInviteMember: (orgId, memId) => dispatch(OrganizationActions.inviteMember(orgId, memId)),
     onDeleteOrganizationMember: (id, resolve) => dispatch(OrganizationActions.deleteOrganizationMember(id, resolve)),
-    onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(OrganizationActions.changeOrganizationMemberRole(id, role, resolve))
+    onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(OrganizationActions.changeOrganizationMemberRole(id, role, resolve)),
+    onGetRoleListByMemberId: (orgId, memberId, resolve) => dispatch(OrganizationActions.getRoleListByMemberId(orgId, memberId, resolve)),
+    onGetRoleListByMemberList: (orgId, memberList, resolve) => dispatch(OrganizationActions.getRoleListByMemberList(orgId, memberList, resolve))
   }
+
+  
 }
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)

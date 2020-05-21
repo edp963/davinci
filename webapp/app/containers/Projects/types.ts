@@ -18,7 +18,6 @@
  * >>
  */
 import {IOrganization} from '../Organizations/types'
-import { ReactElement } from 'react'
 
 export interface IProjectPermission {
   downloadPermission: boolean
