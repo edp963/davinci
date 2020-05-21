@@ -49,5 +49,6 @@ export default {
   portal: `${host}/dashboardPortals`,
   star: `${host}/star`,
   download: `${host}/download`,
-  buriedPoints: `${host}/statistic`
+  buriedPoints: `${host}/statistic`,
+  version: `${host}/version`
 }

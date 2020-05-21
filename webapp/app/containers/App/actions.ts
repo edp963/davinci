@@ -23,6 +23,9 @@ import {
   GET_EXTERNAL_AUTH_PROVIDERS_SUCESS,
   TRY_EXTERNAL_AUTH,
   EXTERNAL_AUTH_LOGOUT,
+  GET_VERSION,
+  GET_VERSION_SUCCESS,
+  GET_VERSION_FAIL,
   LOGIN,
   LOGGED,
   LOGIN_ERROR,
@@ -61,7 +64,7 @@ import {
 
 import { IGetgetCaptchaParams, IResetPasswordParams } from '../FindPassword/types'
 
-import { IRudexActionStruct } from 'utils/types'
+import { IReduxActionStruct } from 'utils/types'
 
 export function getExternalAuthProviders() {
   return {
@@ -100,6 +103,31 @@ export function login(username, password, resolve) {
       password,
       resolve
     }
+  }
+}
+
+export function getVersion(resolve?) {
+  return {
+    type: GET_VERSION,
+    payload: {
+      resolve
+    }
+  }
+}
+
+export function getVersionSuccess (version) {
+  return {
+    type: GET_VERSION_SUCCESS,
+    payload: {
+      version
+    }
+  }
+}
+
+export function getVersionFail(err) {
+  return {
+    type: GET_VERSION_FAIL,
+    payload: {err}
   }
 }
 
@@ -344,7 +372,7 @@ export function downloadFileFail(error) {
 
 export function getCaptchaforResetPassword (
   params: IGetgetCaptchaParams
-): IRudexActionStruct<IGetgetCaptchaParams> {
+): IReduxActionStruct<IGetgetCaptchaParams> {
   return {
     type: GET_CAPTCHA_FOR_RESET_PASSWORD,
     payload: params
@@ -371,7 +399,7 @@ export function getCaptchaforResetPasswordError(error) {
 
 export function resetPasswordUnlogged (
   params: IResetPasswordParams
-): IRudexActionStruct<IResetPasswordParams> {
+): IReduxActionStruct<IResetPasswordParams> {
   return {
     type: RESET_PASSWORD_UNLOGGED,
     payload: params
