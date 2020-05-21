@@ -27,7 +27,11 @@
       border-bottom: @border-width-base @border-style-base @border-color-base;
       user-select: none; // to avoid editor selection lost while clicking the toolbar item
 
-      i + i {
+      .anticon {
+        font-size: 16px;
+      }
+
+      .anticon + .anticon {
         margin-left: 8px;
       }
 
@@ -50,13 +54,26 @@
         margin-right: 8px;
         user-select: none;
       }
-    }
 
-    &-toolbar-icon {
-      color: @text-color;
+      &-icon {
+        color: @text-color;
 
-      &-active {
-        color: @primary-color;
+        &-active {
+          color: @primary-color;
+        }
+      }
+
+      &-color {
+        height: 16px;
+        width: 16px;
+        cursor: pointer;
+        overflow: hidden;
+        border-bottom-width: 2px;
+        border-bottom-style: solid;
+
+        > i.anticon {
+          font-size: 17px;
+        }
       }
     }
   }
