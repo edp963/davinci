@@ -56,20 +56,35 @@ const organizationReducer = (
         }
         break
 
-      // case ActionTypes.CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS:
-      //   return state
-      //   currentOrganizationMembers.splice(currentOrganizationMembers.findIndex((d) => d.id === payload.result.id), 1, payload.result)
-      //   return state.set('currentTeamMembers', currentOrganizationMembers.slice())
-
       case ActionTypes.LOAD_ORGANIZATIONS_PROJECTS_SUCCESS:
         draft.currentOrganizationProjects = action.payload.projects.list
         draft.currentOrganizationProjectsDetail = action.payload.projects
         break
 
       case ActionTypes.LOAD_ORGANIZATIONS_MEMBERS_SUCCESS:
-        draft.currentOrganizationMembers = action.payload.members
+        draft.currentOrganizationMembers = action.payload.members.map((member) => {
+          return {
+            ...member,
+            roles: 'loading'
+          }
+        })
         break
-
+      case ActionTypes.GET_ROLELISTS_BY_MEMBERID_ERROR:
+        const mId = action.payload.memberId
+        if (draft.currentOrganizationMembers) {
+          draft.currentOrganizationMembers = draft.currentOrganizationMembers.map(
+            (member) => member.user.id === mId ? {...member, roles: undefined} : member
+          )
+        }
+        break
+      case ActionTypes.GET_ROLELISTS_BY_MEMBERID_SUCCESS:
+        const { result, memberId} = action.payload
+        if (draft.currentOrganizationMembers) {
+          draft.currentOrganizationMembers = draft.currentOrganizationMembers.map(
+            (member) => member.user.id === memberId ? {...member, roles: result} : member
+          )
+        }
+        break
       case ActionTypes.LOAD_ORGANIZATIONS_ROLE_SUCCESS:
         draft.currentOrganizationRole = action.payload.role
         break

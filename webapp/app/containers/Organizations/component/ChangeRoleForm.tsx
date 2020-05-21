@@ -19,7 +19,7 @@ export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps & FormC
   private tips = (type: string) => {
     switch (type) {
       case 'orgMember':
-        return '选择一个新角色'
+        return '选择一个新成员类型'
       case 'teamMember':
         return ''
     }
@@ -89,7 +89,7 @@ export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps & FormC
       <div className={styles.formWrapper}>
         <div className={styles.header}>
           <div className={styles.title}>
-            改变 {member.user.username} 在 <span className={styles.orgName}>{orgOrTeamName}</span> 的角色
+            改变 {member.user.username} 在 <span className={styles.orgName}>{orgOrTeamName}</span> 的成员类型
           </div>
           <div className={styles.desc}>
             <b>{this.tips(category)}</b>
