@@ -38,11 +38,11 @@ export const Background: FC = () => {
           ''
         ) : clientVersion !== version ? (
           <span className={styles.versionerror}>
-            客户端版本与服务端不匹配，请替换相应的版本
+            客户端与服务端版本不一致，请更新
           </span>
         ) : (
           <>
-            <b>版本号： </b>
+            <b>版本： </b>
             <span>{version}</span>
           </>
         )}
@@ -69,26 +69,3 @@ export const Background: FC = () => {
 }
 
 export default Background
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
