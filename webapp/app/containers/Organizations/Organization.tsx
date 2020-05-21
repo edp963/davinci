@@ -132,7 +132,6 @@ export class Organization extends React.PureComponent <IOrganizationProps & Rout
                 deleteOrganizationMember={this.props.onDeleteOrganizationMember}
                 changeOrganizationMemberRole={this.props.onChangeOrganizationMemberRole}
                 onGetRoleListByMemberId={this.props.onGetRoleListByMemberId}
-                onGetRoleListByMemberList={this.props.onGetRoleListByMemberList}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="usergroup-add" />角色<span className={styles.badge}>{roleNum}</span></span>} key="roles">
@@ -182,8 +181,7 @@ export function mapDispatchToProps (dispatch) {
     onInviteMember: (orgId, memId) => dispatch(OrganizationActions.inviteMember(orgId, memId)),
     onDeleteOrganizationMember: (id, resolve) => dispatch(OrganizationActions.deleteOrganizationMember(id, resolve)),
     onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(OrganizationActions.changeOrganizationMemberRole(id, role, resolve)),
-    onGetRoleListByMemberId: (orgId, memberId, resolve) => dispatch(OrganizationActions.getRoleListByMemberId(orgId, memberId, resolve)),
-    onGetRoleListByMemberList: (orgId, memberList, resolve) => dispatch(OrganizationActions.getRoleListByMemberList(orgId, memberList, resolve))
+    onGetRoleListByMemberId: (orgId, memberId, resolve) => dispatch(OrganizationActions.getRoleListByMemberId(orgId, memberId, resolve))
   }
 
   

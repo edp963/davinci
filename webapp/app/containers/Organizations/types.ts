@@ -92,7 +92,6 @@ export interface IMembersState {
   organizationMembers: IMembers[]
 }
 
-type onGetRoleListByMemberList = (orgId: number, memberList: number[], resolve?: (res: any) => void) => void
 type onGetRoleListByMemberId = (orgId: number, memberId: number, resolve?: (res: any) => void) => void
 export interface IMembersProps {
   loginUser: any
@@ -111,7 +110,6 @@ export interface IMembersProps {
   handleSearchMember: (keywords: string) => any
   toThatUserProfile: (url: string) => any
   onGetRoleListByMemberId: onGetRoleListByMemberId
-  onGetRoleListByMemberList: onGetRoleListByMemberList
 }
 
 
@@ -202,5 +200,4 @@ export interface IOrganizationProps {
   onDeleteOrganization: (id: number, resolve: () => any) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
   onGetRoleListByMemberId: onGetRoleListByMemberId
-  onGetRoleListByMemberList: onGetRoleListByMemberList
 }
