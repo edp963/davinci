@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class CronJobMessageHandler implements RedisMessageHandler {
 	public void handle(Object message, String flag) {
 
 		// the flag is deprecated
-		log.info("CronJobHandler received stop message (:{}), and Flag is (:{})", message, flag);
+		log.info("CronJobHandler received stop message:{}", message);
 
 		if (!(message instanceof String)) {
 			return;
@@ -59,7 +59,7 @@ public class CronJobMessageHandler implements RedisMessageHandler {
 
 		CronJob cronJob = JSONUtils.toObject((String) message, CronJob.class);
 		quartzHandler.removeJob(cronJob);
-		scheduleLogger.info("CronJob (:{}) is stoped", cronJob.getId());
+		scheduleLogger.info("CronJob({}) is stoped", cronJob.getId());
 		cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
 		cronJob.setUpdateTime(new Date());
 		cronJobExtendMapper.update(cronJob);

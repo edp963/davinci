@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 package edp.davinci.server.component.excel;
 
+import lombok.Builder;
 import lombok.Data;
 import org.slf4j.Logger;
 
@@ -35,6 +36,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 @Data
+@Builder
 public class WorkBookContext implements Serializable {
 
     private MsgWrapper wrapper;
@@ -49,63 +51,8 @@ public class WorkBookContext implements Serializable {
 
     private Logger customLogger;
 
-    private WorkBookContext() {
-    }
-
-    public static final class WorkBookContextBuilder {
-        private MsgWrapper wrapper;
-        private List<WidgetContext> widgets;
-        private User user;
-        private int resultLimit;
-        private String taskKey;
-        private Logger customLogger;
-
-        private WorkBookContextBuilder() {
-        }
-
-        public static WorkBookContextBuilder newBuildder() {
-            return new WorkBookContextBuilder();
-        }
-
-        public WorkBookContextBuilder withWrapper(MsgWrapper wrapper) {
-            this.wrapper = wrapper;
-            return this;
-        }
-
-        public WorkBookContextBuilder withWidgets(List<WidgetContext> widgets) {
-            this.widgets = widgets;
-            return this;
-        }
-
-        public WorkBookContextBuilder withUser(User user) {
-            this.user = user;
-            return this;
-        }
-
-        public WorkBookContextBuilder withResultLimit(int resultLimit) {
-            this.resultLimit = resultLimit;
-            return this;
-        }
-
-        public WorkBookContextBuilder withTaskKey(String taskKey) {
-            this.taskKey = taskKey;
-            return this;
-        }
-
-        public WorkBookContextBuilder withCustomLogger(Logger customLogger) {
-            this.customLogger = customLogger;
-            return this;
-        }
-
-        public WorkBookContext build() {
-            WorkBookContext workBookContext = new WorkBookContext();
-            workBookContext.setWrapper(wrapper);
-            workBookContext.setWidgets(widgets);
-            workBookContext.setUser(user);
-            workBookContext.setResultLimit(resultLimit);
-            workBookContext.setTaskKey(taskKey);
-            workBookContext.setCustomLogger(customLogger);
-            return workBookContext;
-        }
-    }
+    /**
+     * 0.4 member variables
+     */
+    private String queryModel;
 }

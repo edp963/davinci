@@ -23,75 +23,26 @@ import java.io.File;
 import java.util.regex.Pattern;
 
 public class Constants {
-	
-	/**
-     * 特殊符号定义
-     */
-    public static final String COMMA = ",";
-
-    public static final String SLASH = "/";
-
-    public static final String BACK_SLASH = "\\";
-
-    public static final String DOUBLE_SLASH = "//";
-
-    public static final String SPACE = " ";
-
-    public static final String EMPTY = "";
-
-    public static final String SEMICOLON = ";";
-
-    public static final String QUESTION_MARK = "?";
-
-    public static final String AMPERSAND  = "&";
-
-    public static final String AT_SIGN = "@";
-
-    public static final String POUND_SIGN = "#";
-
-    public static final String PERCENT_SIGN = "%";
-
-    public static final String NEW_LINE = "\n";
-
-    public static final String COLON = ":";
-
-    public static final String MINUS = "-";
-
-    public static final String UNDERLINE = "_";
-
-    public static final String DELIMITER_START_CHAR = "<";
-
-    public static final String DELIMITER_END_CHAR = ">";
-
-    public static final String PARENTHESES_START = "(";
-
-    public static final String PARENTHESES_CLOSE = ")";
-
-    public static final String SQUARE_BRACKET_START = "[";
-
-    public static final String SQUARE_BRACKET_CLOSE = "]";
-
-    public static final String ASSIGNMENT = "=";
-
-    public static final String DOLLAR_SIGN = "$";
-
-    public static final String MYSQL_KEY_SIGN = "`";
-
-    public static final String SINGLE_QUOTES = "'";
-
-    public static final String DOUBLE_QUOTES = "\"";
-
-    public static final String DOT = ".";
 
 	public static final String DATABASE_DEFAULT_VERSION = "Default";
 
-	public static final String EXT_LIB_PATH_FORMATER = "lib" + File.separator  + "ext" + File.separator + "%s" + File.separator + "%s" + File.separator;
-	
+	public static final String EXT_LIB_PATH_FORMATER = "lib" + File.separator + "ext" + File.separator + "%s"
+			+ File.separator + "%s" + File.separator;
+
 	public static final String JDBC_URL_PREFIX_FORMATER = "jdbc:%s:";
 
 	public static final String JDBC_COUNT_SQL_FORMATER = "SELECT COUNT(*) FROM (%s) CT";
-	
+
+	public static final String JDBC_SELECT_SQL_FORMATER = "SELECT * FROM TABLE WHERE %s";
+
 	public static final String ORACLE_JDBC_URL_PREFIX = "jdbc:oracle:thin:";
-	
+
 	public static final Pattern JDBC_URL_PATTERN = Pattern.compile("jdbc:\\w+");
+
+	public static final String NO_AUTH_PERMISSION = "@DAVINCI_DATA_ACCESS_DENIED@";
+
+	public static final String SQL_TEMPLATE = "templates/sql/sqlTemplate.stg";
+
+	public static final String REG_SENSITIVE_SQL = "drop\\s|alter\\s|grant\\s|insert\\s|replace\\s|delete\\s|truncate\\s|update\\s|remove\\s";
+    public static final Pattern PATTERN_SENSITIVE_SQL = Pattern.compile(REG_SENSITIVE_SQL);
 }

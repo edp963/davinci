@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import static edp.davinci.server.commons.Constants.*;
+import static edp.davinci.commons.Constants.EMPTY;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
@@ -41,13 +42,13 @@ import java.util.Map;
 public class TokenUtils {
 
     /**
-     * 自定义 token 私钥
+     * 自定义token私钥
      */
     @Value("${jwtToken.secret:Pa@ss@Word}")
     private String SECRET;
 
     /**
-     * 默认 token 超时时间
+     * 默认token超时时间
      */
     @Value("${jwtToken.timeout:1800000}")
     private Long TIMEOUT;
@@ -58,9 +59,8 @@ public class TokenUtils {
     @Value("${jwtToken.algorithm:HS512}")
     private String ALGORITHM;
 
-
     /**
-     * 根据 TokenEntity 实体生成Token
+     * 根据TokenEntity实体生成Token
      *
      * @param tokenDetail
      * @return
@@ -87,7 +87,7 @@ public class TokenUtils {
 
 
     /**
-     * 根据 TokenEntity 实体和自定义超时时长生成Token
+     * 根据TokenEntity实体和自定义超时时长生成Token
      *
      * @param tokenDetail
      * @param timeOutMillis （毫秒）
@@ -124,7 +124,7 @@ public class TokenUtils {
     }
 
     /**
-     * 根据 TokenEntity 实体生成永久 Token
+     * 根据TokenEntity实体生成永久Token
      *
      * @param tokenDetail
      * @return
@@ -155,7 +155,7 @@ public class TokenUtils {
     }
 
     /**
-     * 根据 clams生成token
+     * 根据clams生成token
      *
      * @param claims
      * @return
@@ -185,7 +185,7 @@ public class TokenUtils {
     }
 
     /**
-     * 解析 token 用户名
+     * 解析token用户名
      *
      * @param token
      * @return
@@ -202,7 +202,7 @@ public class TokenUtils {
     }
 
     /**
-     * 解析 token 密码
+     * 解析token密码
      *
      * @param token
      * @return
@@ -246,7 +246,7 @@ public class TokenUtils {
     }
 
     /**
-     * 根据 TokenEntity 验证token
+     * 根据TokenEntity验证token
      *
      * @param token
      * @param tokenDetail
@@ -259,7 +259,7 @@ public class TokenUtils {
     }
 
     /**
-     * 根据 用户名、密码 验证 token
+     * 根据用户名、密码验证token
      *
      * @param token
      * @param username
@@ -273,7 +273,7 @@ public class TokenUtils {
     }
 
     /**
-     * 解析 token 创建时间
+     * 解析token创建时间
      *
      * @param token
      * @return
@@ -290,7 +290,7 @@ public class TokenUtils {
     }
 
     /**
-     * 获取 token 超时时间
+     * 获取token超时时间
      *
      * @param token
      * @return
@@ -307,7 +307,7 @@ public class TokenUtils {
     }
 
     /**
-     * token 是否超时
+     * token是否超时
      *
      * @param token
      * @return

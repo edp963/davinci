@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package edp.davinci.server.util;
 
 import edp.davinci.commons.util.DateUtils;
 import edp.davinci.core.dao.entity.CronJob;
-import edp.davinci.server.commons.Constants;
+import static edp.davinci.commons.Constants.*;
 import edp.davinci.server.component.quartz.QuartzJobExecutor;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.exception.ServerException;
@@ -47,7 +47,7 @@ public class QuartzHandler {
     private static final String JOB_NAME_PREFIX = "CRONJOB_";
 
     public static String getJobDataKey(TriggerKey triggerKey) {
-        return triggerKey.getGroup() + Constants.DOT + triggerKey.getName();
+        return triggerKey.getGroup() + DOT + triggerKey.getName();
     }
 
     public void addJob(CronJob cronJob) throws ServerException, SchedulerException {

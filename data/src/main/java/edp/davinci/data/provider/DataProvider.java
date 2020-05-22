@@ -36,12 +36,12 @@ public abstract class DataProvider {
 	
 	public abstract List<String> getDatabases(Source source, User user);
 	
-	public abstract List<TableType> getTables(Source source, User user, String database);
+	public abstract List<TableType> getTables(Source source, String database, User user);
 	
-	public abstract List<DataColumn> getColumns(Source source, User user, String database, String table);
+	public abstract List<DataColumn> getColumns(Source source, String database, String table, User user);
 
-	public abstract void execute(Source source, User user, String statement);
+	public abstract void execute(Source source, String sql, User user);
 
-	public abstract DataResult getData(Source source, User user, String statement, PagingParam paging);
+	public abstract DataResult getData(Source source, String sql, PagingParam paging, User user);
 
 }

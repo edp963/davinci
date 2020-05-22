@@ -19,7 +19,7 @@
 
 package edp.davinci.data.pojo;
 
-import static edp.davinci.data.commons.Constants.EMPTY;
+import static edp.davinci.commons.Constants.EMPTY;
 
 import edp.davinci.commons.util.StringUtils;
 import lombok.Data;
@@ -37,7 +37,7 @@ public class CustomDatabase {
     private String aliasSuffix;
 
 
-    public void setKeyword_prefix(String keywordPrefix) {
+    public void setKeywordPrefix(String keywordPrefix) {
         this.keywordPrefix = removeEscapes(keywordPrefix);
     }
 

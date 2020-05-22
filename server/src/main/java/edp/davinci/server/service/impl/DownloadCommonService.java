@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import edp.davinci.server.dao.WidgetExtendMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.enums.DownloadType;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.core.dao.entity.User;
@@ -44,7 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static edp.davinci.server.commons.Constants.UNDERLINE;
+import static edp.davinci.commons.Constants.*;
 
 import java.util.List;
 import java.util.Map;
@@ -95,12 +95,13 @@ public class DownloadCommonService {
             if (!CollectionUtils.isEmpty(widgets)) {
                 Map<Long, MemDashboardWidget> map = mdw.stream().collect(Collectors.toMap(o -> o.getWidgetId(), o -> o));
                 widgets.stream().forEach(t -> {
-                    ViewExecuteParam executeParam = null;
+                    WidgetQueryParam executeParam = null;
                     if (!CollectionUtils.isEmpty(params) && map.containsKey(t.getId())) {
                         MemDashboardWidget memDashboardWidget = map.get(t.getId());
                         try {
                             executeParam = params.stream().filter(p -> null != p.getParam() && p.getId().equals(memDashboardWidget.getId())).findFirst().get().getParam();
                         } catch (Exception e) {
+                        
                         }
                     }
                     widgetList.add(new WidgetContext(t, dashboard, map.get(t.getId()), executeParam));
@@ -110,7 +111,7 @@ public class DownloadCommonService {
         return widgetList;
     }
 
-    protected List<WidgetContext> getWidgetContextListByFolderDashBoardId(Long id) {
+    protected List<WidgetContext> getWidgetContextListByDashBoardFolderId(Long id) {
         List<WidgetContext> widgetList = Lists.newArrayList();
         if (id == null || id.longValue() < 0L) {
             return widgetList;
@@ -151,7 +152,7 @@ public class DownloadCommonService {
             case Widget:
                 Widget widget = widgetMapper.selectByPrimaryKey(id);
                 if (widget != null) {
-                    ViewExecuteParam executeParam = null;
+                    WidgetQueryParam executeParam = null;
                     if (!CollectionUtils.isEmpty(params)) {
                         try {
                             executeParam = params.stream()
@@ -172,7 +173,7 @@ public class DownloadCommonService {
                 }
                 break;
             case DashBoardFolder:
-                List<WidgetContext> folders = getWidgetContextListByFolderDashBoardId(id);
+                List<WidgetContext> folders = getWidgetContextListByDashBoardFolderId(id);
                 if (!CollectionUtils.isEmpty(folders)) {
                     widgetList.addAll(folders);
                 }

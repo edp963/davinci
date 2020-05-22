@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@
 
 package edp.davinci.server.service.impl;
 
-import static edp.davinci.server.commons.Constants.AT_SYMBOL;
-import static edp.davinci.server.commons.Constants.EMPTY;
+import static edp.davinci.commons.Constants.*;
 import static edp.davinci.server.util.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.server.util.ScriptUtiils.getViewExecuteParam;
 
@@ -76,7 +75,7 @@ import edp.davinci.server.dto.cronjob.MsgMailExcel;
 import edp.davinci.server.dto.dashboard.DashboardTree;
 import edp.davinci.server.dto.dashboard.DashboardWithPortal;
 import edp.davinci.server.dto.project.ProjectDetail;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetWithRelationDashboardId;
 import edp.davinci.server.dto.widget.WidgetWithVizId;
 import edp.davinci.server.enums.ActionEnum;
@@ -189,9 +188,8 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         }
         if (!CollectionUtils.isEmpty(images)) {
             images.forEach(image -> {
-                String contentId = CronJobMediaType.IMAGE.getType() +
-                        Constants.UNDERLINE +
-                        UUID.randomUUID().toString().replaceAll(Constants.MINUS, EMPTY);
+                String contentId = CronJobMediaType.IMAGE.getType() + UNDERLINE
+                        + UUID.randomUUID().toString().replaceAll(MINUS, EMPTY);
                 attachmentList.add(new MailAttachment(contentId, image.getImageFile(), image.getUrl(), true));
             });
         }
@@ -252,8 +250,8 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         for (CronJobContent cronJobContent : jobContentList) {
             int order = 0;
             if (cronJobContent.getContentType().equalsIgnoreCase(DISPLAY)) {
-                if (vizOrderMap.containsKey(DISPLAY + AT_SYMBOL + cronJobContent.getId())) {
-                    order = vizOrderMap.get(DISPLAY + AT_SYMBOL + cronJobContent.getId());
+                if (vizOrderMap.containsKey(DISPLAY + AT_SIGN + cronJobContent.getId())) {
+                    order = vizOrderMap.get(DISPLAY + AT_SIGN + cronJobContent.getId());
                 }
 
                 if (!CollectionUtils.isEmpty(displayPageMap)) {
@@ -275,8 +273,8 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     }
                 }
             } else {
-                if (vizOrderMap.containsKey(DASHBOARD + AT_SYMBOL + cronJobContent.getId())) {
-                    order = vizOrderMap.get(DASHBOARD + AT_SYMBOL + cronJobContent.getId());
+                if (vizOrderMap.containsKey(DASHBOARD + AT_SIGN + cronJobContent.getId())) {
+                    order = vizOrderMap.get(DASHBOARD + AT_SIGN + cronJobContent.getId());
                 }
                 String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId(), -1);
                 imageContents.add(new ImageContent(order, cronJobContent.getId(), cronJobContent.getContentType(), url));
@@ -320,8 +318,8 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         for (CronJobContent cronJobContent : jobContentList) {
             int order = 0;
             if (cronJobContent.getContentType().equalsIgnoreCase(DISPLAY)) {
-                if (vizOrderMap.containsKey(DISPLAY + AT_SYMBOL + cronJobContent.getId())) {
-                    order = vizOrderMap.get(DISPLAY + AT_SYMBOL + cronJobContent.getId());
+                if (vizOrderMap.containsKey(DISPLAY + AT_SIGN + cronJobContent.getId())) {
+                    order = vizOrderMap.get(DISPLAY + AT_SIGN + cronJobContent.getId());
                 }
                 Display display = displayExtendMapper.selectByPrimaryKey(cronJobContent.getId());
                 List<WidgetWithVizId> widgetsWithSlideIdList = widgetMapper.queryByDisplayId(cronJobContent.getId());
@@ -347,16 +345,16 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                         }
                         List<WidgetContext> widgetContexts = new ArrayList<>();
                         widgets.forEach(widget -> {
-                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, null, widget.getConfig(), null);
+                            WidgetQueryParam viewExecuteParam = getViewExecuteParam(engine, null, widget.getConfig(), null);
                             widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
                         });
 
-                        WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
-                                .withWidgets(widgetContexts)
-                                .withUser(user)
-                                .withResultLimit(resultLimit)
-                                .withTaskKey("Schedule_" + jobId)
-                                .withCustomLogger(scheduleLogger)
+                        WorkBookContext workBookContext = WorkBookContext.builder()
+                                .widgets(widgetContexts)
+                                .user(user)
+                                .resultLimit(resultLimit)
+                                .taskKey("Schedule_" + jobId)
+                                .customLogger(scheduleLogger)
                                 .build();
 
                         int page = slidePageMap.get(slideId);
@@ -366,11 +364,11 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     }
                 }
             } else {
-                if (vizOrderMap.containsKey(DASHBOARD + AT_SYMBOL + cronJobContent.getId())) {
-                    order = vizOrderMap.get(DASHBOARD + AT_SYMBOL + cronJobContent.getId());
+                if (vizOrderMap.containsKey(DASHBOARD + AT_SIGN + cronJobContent.getId())) {
+                    order = vizOrderMap.get(DASHBOARD + AT_SIGN + cronJobContent.getId());
                 }
                 DashboardWithPortal dashboard = dashboardExtendMapper.getDashboardWithPortalAndProject(cronJobContent.getId());
-                excelEntityOrderMap.put(dashboard.getName(), vizOrderMap.get(DASHBOARD + AT_SYMBOL + cronJobContent.getId()));
+                excelEntityOrderMap.put(dashboard.getName(), vizOrderMap.get(DASHBOARD + AT_SIGN + cronJobContent.getId()));
 
                 ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
                 boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
@@ -381,16 +379,16 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     set.forEach(w -> {
                         Widget widget = new Widget();
                         BeanUtils.copyProperties(w, widget);
-                        ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, dashboard.getConfig(), widget.getConfig(), w.getRelationId());
+                        WidgetQueryParam viewExecuteParam = getViewExecuteParam(engine, dashboard.getConfig(), widget.getConfig(), w.getRelationId());
                         widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
                     });
 
-                    WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
-                            .withWidgets(widgetContexts)
-                            .withUser(user)
-                            .withResultLimit(resultLimit)
-                            .withTaskKey("Schedule_" + jobId)
-                            .withCustomLogger(scheduleLogger)
+                    WorkBookContext workBookContext = WorkBookContext.builder()
+                            .widgets(widgetContexts)
+                            .user(user)
+                            .resultLimit(resultLimit)
+                            .taskKey("Schedule_" + jobId)
+                            .customLogger(scheduleLogger)
                             .build();
 
                     workBookContextMap.put(dashboard.getName(), workBookContext);
@@ -458,11 +456,11 @@ public class EmailScheduleServiceImpl implements ScheduleService {
             CronJobContent cronJobContent = cronJobConfig.getContentList().get(i);
             if (cronJobContent.getContentType().equalsIgnoreCase(DISPLAY)) {
                 checkedDisplayIds.add(cronJobContent.getId());
-                orderWeightMap.put(DISPLAY + AT_SYMBOL + cronJobContent.getId(), orderWeight);
+                orderWeightMap.put(DISPLAY + AT_SIGN + cronJobContent.getId(), orderWeight);
                 jobContentList.add(cronJobContent);
-                orderMap.put(DISPLAY + AT_SYMBOL + cronJobContent.getId(), orderWeight);
+                orderMap.put(DISPLAY + AT_SIGN + cronJobContent.getId(), orderWeight);
             } else {
-                orderWeightMap.put(PORTAL + AT_SYMBOL + cronJobContent.getId(), orderWeight);
+                orderWeightMap.put(PORTAL + AT_SIGN + cronJobContent.getId(), orderWeight);
                 if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
                     checkedPortalIds.add(cronJobContent.getId());
                 } else {
@@ -507,8 +505,8 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                 if (!CollectionUtils.isEmpty(list)) {
                     for (int i = 0; i < list.size(); i++) {
                         DashboardTree node = list.get(i);
-                        if (!orderMap.containsKey(DASHBOARD + AT_SYMBOL + node.getId())) {
-                            orderMap.put(DASHBOARD + AT_SYMBOL + node.getId(), i + orderWeightMap.get(PORTAL + AT_SYMBOL + pId));
+                        if (!orderMap.containsKey(DASHBOARD + AT_SIGN + node.getId())) {
+                            orderMap.put(DASHBOARD + AT_SIGN + node.getId(), i + orderWeightMap.get(PORTAL + AT_SIGN + pId));
                         }
                     }
                 }

@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 package edp.davinci.server.util;
 
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.excel.MsgWrapper;
 import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.enums.FileTypeEnum;
@@ -30,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 
-import static edp.davinci.server.commons.Constants.*;
+import static edp.davinci.commons.Constants.*;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -55,12 +56,12 @@ public class FileUtils {
      * @return
      */
     public boolean isImage(MultipartFile file) {
-        Matcher matcher = PATTERN_IMG_FROMAT.matcher(file.getOriginalFilename());
+        Matcher matcher = Constants.PATTERN_IMG_FROMAT.matcher(file.getOriginalFilename());
         return matcher.find();
     }
 
     public boolean isImage(File file) {
-        Matcher matcher = PATTERN_IMG_FROMAT.matcher(file.getName());
+        Matcher matcher = Constants.PATTERN_IMG_FROMAT.matcher(file.getName());
         return matcher.find();
     }
 
@@ -237,11 +238,11 @@ public class FileUtils {
             sb.append(File.separator);
         }
         if (msgWrapper.getAction() == ActionEnum.DOWNLOAD) {
-            sb.append(DIR_DOWNLOAD);
+            sb.append(Constants.DIR_DOWNLOAD);
         } else if (msgWrapper.getAction() == ActionEnum.SHAREDOWNLOAD) {
-            sb.append(DIR_SHARE_DOWNLOAD);
+            sb.append(Constants.DIR_SHARE_DOWNLOAD);
         } else if (msgWrapper.getAction() == ActionEnum.MAIL) {
-            sb.append(DIR_EMAIL);
+            sb.append(Constants.DIR_EMAIL);
         }
         sb.append(new SimpleDateFormat("yyyyMMdd").format(new Date())).append(File.separator);
         sb.append(type.getType()).append(File.separator);

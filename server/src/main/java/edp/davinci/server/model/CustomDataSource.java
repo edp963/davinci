@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 package edp.davinci.server.model;
 
-import static edp.davinci.server.commons.Constants.EMPTY;
+import static edp.davinci.commons.Constants.*;
 
 import edp.davinci.commons.util.StringUtils;
 import lombok.Data;

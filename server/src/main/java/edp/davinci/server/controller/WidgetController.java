@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ package edp.davinci.server.controller;
 
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;
 import edp.davinci.core.dao.entity.User;
@@ -191,7 +191,7 @@ public class WidgetController extends BaseController {
     @PostMapping("/{id}/{type}")
     public ResponseEntity downloadWidget(@PathVariable("id") Long id,
                                          @PathVariable("type") String type,
-                                         @Valid @RequestBody ViewExecuteParam executeParam,
+                                         @Valid @RequestBody WidgetQueryParam executeParam,
                                          @ApiIgnore BindingResult bindingResult,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {

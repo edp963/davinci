@@ -210,12 +210,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.antlr</groupId>
-			<artifactId>ST4</artifactId>
-			<version>4.0.8</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>
 			<version>3.9</version>
@@ -268,12 +262,6 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-csv</artifactId>
 			<version>1.4</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.github.jsqlparser</groupId>
-			<artifactId>jsqlparser</artifactId>
-			<version>1.2</version>
 		</dependency>
 
 		<dependency>

@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,6 +48,8 @@ import edp.davinci.server.inteceptor.AuthenticationInterceptor;
 import edp.davinci.server.inteceptor.CurrentPlatformMethodArgumentResolver;
 import edp.davinci.server.inteceptor.CurrentUserMethodArgumentResolver;
 import edp.davinci.server.inteceptor.PlatformAuthInterceptor;
+
+import static edp.davinci.commons.Constants.*;
 
 @Configuration
 public class WebMvcConfig extends WebMvcConfigurationSupport {
@@ -146,7 +148,7 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
         mapper.getSerializerProvider().setNullValueSerializer(new JsonSerializer<Object>() {
         	@Override
 			public void serialize(Object value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        		gen.writeString(Constants.EMPTY);
+        		gen.writeString(EMPTY);
 			}
 		});
         

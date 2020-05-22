@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 package edp.davinci.server.service;
 
 import edp.davinci.server.dto.project.ProjectDetail;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;
 import edp.davinci.server.exception.NotFoundException;
@@ -47,7 +47,7 @@ public interface WidgetService extends CheckEntityService {
 
     Widget getWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    String generationFile(Long id, ViewExecuteParam executeParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption;
+    String generationFile(Long id, WidgetQueryParam executeParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption;
 
-    File writeExcel(Set<Widget> widgets, ProjectDetail projectDetail, Map<Long, ViewExecuteParam> executeParamMap, String filePath, User user, boolean containType) throws Exception;
+    File writeExcel(Set<Widget> widgets, ProjectDetail projectDetail, Map<Long, WidgetQueryParam> executeParamMap, String filePath, User user, boolean containType) throws Exception;
 }

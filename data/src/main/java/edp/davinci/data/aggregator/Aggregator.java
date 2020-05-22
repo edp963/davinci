@@ -24,12 +24,10 @@ import java.util.List;
 import edp.davinci.data.pojo.ColumnModel;
 
 public abstract class Aggregator {
-	
-	public abstract void beforeLoad(String table, List<ColumnModel> header, List<List<Object>> data);
-	
-	public abstract boolean loadData(String table, List<ColumnModel> header, List<List<Object>> data);
-	
-	public abstract void afterLoad(String table, List<ColumnModel> header, List<List<Object>> data);
 
 	public abstract String getAggregatorType();
+	
+	public abstract boolean loadData(String table, List<ColumnModel> header, List<List<Object>> data, long ttl);
+
+	public abstract void cleanData();
 }

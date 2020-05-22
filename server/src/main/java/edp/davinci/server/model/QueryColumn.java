@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,8 +19,11 @@
 
 package edp.davinci.server.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.commons.Constants;
+import static edp.davinci.commons.Constants.*;
 import edp.davinci.server.exception.ServerException;
 import lombok.Data;
 
@@ -29,7 +32,8 @@ public class QueryColumn {
     private String name;
     private String type;
 
-    public QueryColumn(String name, String type) {
+    @JsonCreator
+    public QueryColumn(@JsonProperty("name") String name, @JsonProperty("type") String type) {
         if (StringUtils.isEmpty(name)) {
             throw new ServerException("Empty column name");
         }
@@ -43,6 +47,6 @@ public class QueryColumn {
     }
 
     public void setType(String type) {
-        this.type = type == null ? Constants.EMPTY : type;
+        this.type = type == null ? EMPTY : type;
     }
 }

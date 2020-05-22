@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,26 +17,29 @@
  *
  */
 
-package edp.davinci.server.dto.view;
+package edp.davinci.data.pojo;
+
+import java.util.List;
+import java.util.Map;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-
 @Data
-public class Param {
+public class SqlEntity {
+    
+    private String sql;
 
-    @NotBlank(message = "Invald parameter name")
-    private String name;
+    private Map<String, Object> queryParams;
 
-    @NotBlank(message = "Invalid parameter value")
-    private String value;
+    private Map<String, List<String>> authParams;
 
-    public Param() {
+    public SqlEntity() {
+
     }
 
-    public Param(String name, String value) {
-        this.name = name;
-        this.value = value;
+    public SqlEntity(String sql, Map<String, Object> queryParams, Map<String, List<String>> authParams) {
+        this.sql = sql;
+        this.queryParams = queryParams;
+        this.authParams = authParams;
     }
 }

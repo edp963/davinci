@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,16 +19,11 @@
 
 package edp.davinci.data.util;
 
-import static edp.davinci.data.commons.Constants.AT_SIGN;
-import static edp.davinci.data.commons.Constants.COLON;
+import static edp.davinci.commons.Constants.*;
 import static edp.davinci.data.commons.Constants.DATABASE_DEFAULT_VERSION;
-import static edp.davinci.data.commons.Constants.DOUBLE_SLASH;
-import static edp.davinci.data.commons.Constants.EMPTY;
 import static edp.davinci.data.commons.Constants.EXT_LIB_PATH_FORMATER;
 import static edp.davinci.data.commons.Constants.JDBC_URL_PATTERN;
 import static edp.davinci.data.commons.Constants.JDBC_URL_PREFIX_FORMATER;
-import static edp.davinci.data.commons.Constants.NEW_LINE;
-import static edp.davinci.data.commons.Constants.SPACE;
 
 import java.io.File;
 import java.sql.DriverManager;
@@ -176,7 +171,7 @@ public class JdbcSourceUtils {
     /**
      * 释放失效数据源
      *
-     * @param jdbcSourceInfo
+     * @param config
      * @return
      */
     public void releaseDataSource(SourceConfig config) {
@@ -314,48 +309,23 @@ public class JdbcSourceUtils {
     }
     
     
-    @SuppressWarnings("unchecked")
 	public static SourceConfig getSourceConfig(Source source) {
-    	
-    	String config = source.getConfig();
-    	String name = source.getName();
-    	Long projectId = source.getProjectId();
 
-    	if (StringUtils.isEmpty(config)) {
+        String config = source.getConfig();
+        if (StringUtils.isEmpty(config)) {
             return null;
         }
-    	
-    	Map<String, Object> configMap = JSONUtils.toObject(config, Map.class);
-    	
-    	String url = (String) configMap.get("url");
-    	String database = isSupportedDatabase(url);
-    	String username = (String) configMap.get("username");
-    	String password = (String) configMap.get("password");
-		String version = (String) configMap.get("versoin");
 
-		boolean isExt = false;
-        if (StringUtils.isEmpty(version)) {
-        	isExt = false;
-        }else {
-        	isExt = (boolean) configMap.get("ext");
-        }
+        SourceConfig sourceConfig = JSONUtils.toObject(config, SourceConfig.class);
         
-        List<SourceProperty> properties = null;
-    	if (configMap.containsKey("properties")) {
-    		properties = JSONUtils.toObjectArray(JSONUtils.toString(configMap.get("properties")), SourceProperty.class);
-    	}
-    	
-    	return SourceConfig
-                .builder()
-                .url(url)
-                .username(username)
-                .password(password)
-                .database(database)
-                .version(version)
-                .properties(properties)
-                .ext(isExt)
-                .name(getSourceUName(projectId, name))
-                .build();
+        // get database from url
+        sourceConfig.setDatabase(getDatabase(sourceConfig.getUrl()));
+        
+        if (StringUtils.isEmpty(sourceConfig.getName())) {
+            sourceConfig.setName(getSourceUName(source.getProjectId(), source.getName()));
+        }
+
+        return sourceConfig;
     }
     
     public static void closeResult(ResultSet rs) {

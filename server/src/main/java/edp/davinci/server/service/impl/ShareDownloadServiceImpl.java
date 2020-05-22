@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,12 +65,12 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
             shareDownloadRecordMapper.insertSelective(record);
 
             MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.SHAREDOWNLOAD, uuid);
-            WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
-                    .withWrapper(wrapper)
-                    .withWidgets(widgetList)
-                    .withUser(shareInfo.getShareUser())
-                    .withResultLimit(resultLimit)
-                    .withTaskKey("ShareDownload_" + uuid)
+            WorkBookContext workBookContext = WorkBookContext.builder()
+                    .wrapper(wrapper)
+                    .widgets(widgetList)
+                    .user(shareInfo.getShareUser())
+                    .resultLimit(resultLimit)
+                    .taskKey("ShareDownload_" + uuid)
                     .build();
             ExecutorUtil.submitWorkbookTask(workBookContext, null);
             log.info("Share download task submit:{}", wrapper);

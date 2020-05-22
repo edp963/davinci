@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -91,7 +92,9 @@ public class JSONUtils {
 	public static String toString(Object obj, boolean prettyFormat) {
 		ObjectMapper mapper = new ObjectMapper();
 		config(mapper);
-		mapper.enable(SerializationFeature.INDENT_OUTPUT);
+		if (prettyFormat) {
+			mapper.enable(SerializationFeature.INDENT_OUTPUT);
+		}
 
 		try {
 			return mapper.writeValueAsString(obj);
@@ -101,6 +104,24 @@ public class JSONUtils {
 		
 		return null;
 	}
+
+	public static <T> T toObject(String jsonString, TypeReference<T> t) {
+
+    	if (null == t || StringUtils.isEmpty(jsonString)) {
+            return null;
+        }
+    	
+    	ObjectMapper mapper = new ObjectMapper();
+    	config(mapper);
+
+        try {
+			return mapper.readValue(jsonString, t);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        
+        return null;
+    }
 	
     public static <T> T toObject(String jsonString, Class<T> c) {
 

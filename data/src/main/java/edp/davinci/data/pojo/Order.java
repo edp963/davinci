@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,19 +17,23 @@
  *
  */
 
-package edp.davinci.server.util;
+package edp.davinci.data.pojo;
 
-public class PageUtils {
-    public static final int defaultPageNum = 1;
-    public static final int defaultPageSize = 10;
+import lombok.Data;
 
-    public static boolean checkPageInfo(int pageNum, int pageSize) {
-        if (pageNum < defaultPageNum) {
-            return false;
-        }
-        if (pageSize < defaultPageSize) {
-            return false;
-        }
-        return true;
+@Data
+public class Order {
+
+    private String column;
+
+    private String direction = "ASC";
+
+    public Order(String column, String direction) {
+        this.column = column;
+        this.direction = direction;
+    }
+
+    public Order() {
+
     }
 }

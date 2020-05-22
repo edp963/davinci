@@ -33,6 +33,7 @@ import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -67,12 +68,17 @@ public class JdbcDataProvider extends DataProvider {
 	@Value("${source.enable-query-log:false}")
 	private boolean logEnable;
 
-	@Resource(name = "defaultJdbcDataSource")
+	@Autowired
 	JdbcDataSource jdbcDataSource;
 
 	public static final String type = "jdbc";
 	
 	private static final String[] TABLE_TYPES = new String[]{"TABLE", "VIEW"};
+
+	public DataSource getDataSource(Source source) {
+		SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
+		return jdbcDataSource.getDataSource(config);
+	}
 
 	@Override
 	public boolean test(Source source, User user) {
@@ -92,7 +98,7 @@ public class JdbcDataProvider extends DataProvider {
 	}
 
 	@Override
-	public void execute(Source source, User user, String sql) {
+	public void execute(Source source, String sql, User user) {
 		try {
 			SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
 			DataSource dataSource = jdbcDataSource.getDataSource(config);
@@ -111,7 +117,7 @@ public class JdbcDataProvider extends DataProvider {
 	}
 
 	@Override
-	public DataResult getData(Source source, User user, String sql, PagingParam paging) {
+	public DataResult getData(Source source, String sql, PagingParam paging, User user) {
 		
 		DataResult dataResult = null;
 		
@@ -122,7 +128,7 @@ public class JdbcDataProvider extends DataProvider {
 			Stopwatch stopwatch = Stopwatch.createStarted();
 			JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource);
 
-			int maxRows = paging.getMaxRows();
+			int maxRows = paging.getLimit();
 			if (maxRows > resultLimit || maxRows <= 0) {
 				maxRows = resultLimit;
 			}
@@ -245,7 +251,7 @@ public class JdbcDataProvider extends DataProvider {
 	
 	private JdbcTemplate getJdbcTemplate(DataSource dataSource) {
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-		jdbcTemplate.setFetchSize(500);
+		jdbcTemplate.setFetchSize(10);
 		return jdbcTemplate;
 	}
 	
@@ -275,7 +281,7 @@ public class JdbcDataProvider extends DataProvider {
 	}
 
 	@Override
-	public List<TableType> getTables(Source source, User user, String database) {
+	public List<TableType> getTables(Source source, String database, User user) {
 		SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
 		DataSource dataSource = jdbcDataSource.getDataSource(config);
 		ResultSet res = null;
@@ -327,7 +333,7 @@ public class JdbcDataProvider extends DataProvider {
 	}
 
 	@Override
-	public List<DataColumn> getColumns(Source source, User user, String database, String table) {
+	public List<DataColumn> getColumns(Source source, String database, String table, User user) {
 		SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
 		DataSource dataSource = jdbcDataSource.getDataSource(config);
 		ResultSet res = null;

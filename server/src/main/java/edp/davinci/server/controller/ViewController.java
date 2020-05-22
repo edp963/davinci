@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,32 +19,48 @@
 
 package edp.davinci.server.controller;
 
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dto.view.*;
+import edp.davinci.server.dto.view.ViewBaseInfo;
+import edp.davinci.server.dto.view.ViewCreate;
+import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.ViewUpdate;
+import edp.davinci.server.dto.view.ViewWithSourceBaseInfo;
+import edp.davinci.server.dto.view.WidgetDistinctParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.model.DacChannel;
 import edp.davinci.server.model.Paging;
 import edp.davinci.server.model.PagingWithQueryColumns;
-import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.ViewService;
 import edp.davinci.server.util.DacChannelUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.CacheControl;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
 
 @Api(value = "/views", tags = "views", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "view not found"))
@@ -202,7 +218,7 @@ public class ViewController extends BaseController {
      */
     @ApiOperation(value = "executesql")
     @PostMapping(value = "/executesql", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity executeSql(@Valid @RequestBody ViewExecuteSql executeSql,
+    public ResponseEntity execute(@Valid @RequestBody ViewExecuteParam executeParam,
                                      @ApiIgnore BindingResult bindingResult,
                                      @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
@@ -212,7 +228,7 @@ public class ViewController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        PagingWithQueryColumns paginateWithQueryColumns = viewService.executeSql(executeSql, user);
+        PagingWithQueryColumns paginateWithQueryColumns = viewService.execute(executeParam, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(paginateWithQueryColumns));
     }
 
@@ -229,7 +245,7 @@ public class ViewController extends BaseController {
     @ApiOperation(value = "get data")
     @PostMapping(value = "/{id}/getdata", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getData(@PathVariable Long id,
-                                  @RequestBody(required = false) ViewExecuteParam executeParam,
+                                  @RequestBody(required = true) WidgetQueryParam executeParam,
                                   @ApiIgnore @CurrentUser User user,
                                   HttpServletRequest request) throws SQLException {
         if (invalidId(id)) {
@@ -245,7 +261,7 @@ public class ViewController extends BaseController {
     @ApiOperation(value = "get distinct value")
     @PostMapping(value = "/{id}/getdistinctvalue", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getDistinctValue(@PathVariable Long id,
-                                           @Valid @RequestBody DistinctParam param,
+                                           @Valid @RequestBody WidgetDistinctParam param,
                                            @ApiIgnore BindingResult bindingResult,
                                            @ApiIgnore @CurrentUser User user,
                                            HttpServletRequest request) {
@@ -267,7 +283,7 @@ public class ViewController extends BaseController {
     @ApiOperation(value = "get dac channels")
     @GetMapping("/dac/channels")
     public ResponseEntity getDacChannels(@ApiIgnore @CurrentUser User user, HttpServletRequest request) {
-        Map<String, DacChannel> dacMap = DacChannelUtils.dacMap;
+        Map<String, DacChannel> dacMap = DacChannelUtils.getDacMap();
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(dacMap.keySet()));
     }
 

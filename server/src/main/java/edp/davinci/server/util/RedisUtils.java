@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@
 
 package edp.davinci.server.util;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +26,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -40,8 +37,6 @@ public class RedisUtils {
 
 	@Value("${spring.redis.isEnable:false}")
 	private boolean isRedisEnable;
-
-	private final String script = "if redis.call('setnx', KEYS[1], ARGV[1]) == 1 then return redis.call('expire', KEYS[1], ARGV[2]) else return 0 end";
 
 	public boolean isRedisEnable() {
 		return isRedisEnable;
@@ -86,19 +81,13 @@ public class RedisUtils {
 		redisTemplate.convertAndSend(channel, message);
 	}
 
-	@SuppressWarnings("unchecked")
 	public boolean setIfAbsent(String key, Object value, int timeout) {
 
 		if (!isRedisEnable) {
 			throw new RuntimeException("Redis is disabled");
 		}
 
-		List<String> keys = new ArrayList<>();
-		keys.add(key);
-
-		Object[] values = new Object[] { value, timeout };
-
-		return 1L == (Long) redisTemplate.execute(RedisScript.of(script, Long.class), keys, values);
+		return redisTemplate.opsForValue().setIfAbsent(key, value, timeout, TimeUnit.SECONDS);
 	}
 
 	public boolean setIfAbsent(String key, Object value) {
@@ -107,8 +96,7 @@ public class RedisUtils {
 			throw new RuntimeException("Redis is disabled");
 		}
 
-		ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
-		return valueOperations.setIfAbsent(key, value);
+		return redisTemplate.opsForValue().setIfAbsent(key, value);
 	}
 
 }

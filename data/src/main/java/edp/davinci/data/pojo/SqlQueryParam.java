@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,36 +17,29 @@
  *
  */
 
-package edp.davinci.server.model;
+package edp.davinci.data.pojo;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.data.util.SqlUtils;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Builder
 @Data
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class JdbcSourceInfo {
-
-	private String database;
-	
-	private String name;
-
-	private String url;
-
-    private String username;
-
-    private String password;
-
-    private String version;
-
-    private List<Dict> properties;
-
-    private boolean ext;
-
+@Builder
+public class SqlQueryParam {
+    private boolean nativeQuery;
+    private List<String> groups;
+    private List<Aggregator> aggregators;
+    private List<Order> orders;
+    private List<Filter> filters;
+    private List<Param> params;
+    private List<String> columns;
+    private int limit;
+    private int pageNo;
+    private int pageSize;
+    private String type; // query or distinct
+    private boolean isMaintainer; // user is maintainer or not
 }

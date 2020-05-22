@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 package edp.davinci.server.dto.source;
 
-import edp.davinci.server.commons.Constants;
+import edp.davinci.data.commons.Constants;
 import edp.davinci.server.enums.DatabaseTypeEnum;
 import lombok.Getter;
 
@@ -33,7 +33,7 @@ public class DatabaseType {
 
     public DatabaseType(String name, List<String> versions) {
         this.name = name;
-        this.prefix = name.equalsIgnoreCase(DatabaseTypeEnum.ORACLE.getFeature()) ? Constants.ORACLE_JDBC_PREFIX : String.format(Constants.JDBC_PREFIX_FORMATER, name);
+        this.prefix = name.equalsIgnoreCase(DatabaseTypeEnum.ORACLE.getFeature()) ? Constants.ORACLE_JDBC_URL_PREFIX : String.format(Constants.ORACLE_JDBC_URL_PREFIX, name);
         this.versions = versions;
     }
 }

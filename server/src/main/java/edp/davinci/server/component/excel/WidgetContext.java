@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ package edp.davinci.server.component.excel;
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.MemDashboardWidget;
 import edp.davinci.core.dao.entity.Widget;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -45,11 +45,11 @@ public class WidgetContext implements Serializable {
 
     private Boolean isMaintainer;
 
-    private ViewExecuteParam executeParam;
+    private WidgetQueryParam executeParam;
 
     private boolean hasExecuteParam = false;
 
-    public WidgetContext(Widget widget, Dashboard dashboard, MemDashboardWidget memDashboardWidget, ViewExecuteParam executeParam) {
+    public WidgetContext(Widget widget, Dashboard dashboard, MemDashboardWidget memDashboardWidget, WidgetQueryParam executeParam) {
         this.widget = widget;
         this.dashboard = dashboard;
         this.memDashboardWidget = memDashboardWidget;
@@ -59,7 +59,7 @@ public class WidgetContext implements Serializable {
         }
     }
 
-    public WidgetContext(Widget widget, boolean isMaintainer, ViewExecuteParam executeParam) {
+    public WidgetContext(Widget widget, boolean isMaintainer, WidgetQueryParam executeParam) {
         this.widget = widget;
         this.isMaintainer = isMaintainer;
         this.executeParam = executeParam;

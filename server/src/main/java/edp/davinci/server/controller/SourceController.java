@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.source.DbBaseInfo;
 import edp.davinci.server.dto.source.SourceCatalogInfo;
-import edp.davinci.server.dto.source.SourceConfig;
 import edp.davinci.server.dto.source.SourceCreate;
 import edp.davinci.server.dto.source.SourceDBInfo;
 import edp.davinci.server.dto.source.SourceDataUpload;
@@ -58,6 +57,7 @@ import edp.davinci.server.model.DBTables;
 import edp.davinci.server.model.TableInfo;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.data.pojo.DatabaseType;
+import edp.davinci.data.pojo.SourceConfig;
 import edp.davinci.server.service.SourceService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

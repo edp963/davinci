@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,25 +17,23 @@
  *
  */
 
-package edp.davinci.server.dto.view;
+package edp.davinci.data.pojo;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-
 @Data
-public class Order {
-    @NotBlank(message = "Invalid order column")
-    private String column;
+public class Param {
 
-    private String direction = "ASC";
+    private String name;
 
-    public Order(String column, String direction) {
-        this.column = column;
-        this.direction = direction;
+    private String value;
+
+    public Param() {
+
     }
 
-    public Order() {
-
+    public Param(String name, String value) {
+        this.name = name;
+        this.value = value;
     }
 }

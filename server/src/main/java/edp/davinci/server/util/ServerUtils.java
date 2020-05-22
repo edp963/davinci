@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,11 +20,12 @@
 package edp.davinci.server.util;
 
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.server.commons.Constants;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static edp.davinci.server.commons.Constants.*;
+import static edp.davinci.commons.Constants.*;
 
 import java.io.File;
 
@@ -57,16 +58,16 @@ public class ServerUtils {
         String accAddress = StringUtils.isEmpty(accessAddress) ? address : accessAddress;
         String accPort = StringUtils.isEmpty(accessPort) ? port : accessPort;
 
-        if (pro.equals(HTTP_PROTOCOL) && "80".equals(accPort)) {
+        if (pro.equals(Constants.HTTP_PROTOCOL) && "80".equals(accPort)) {
             accPort = null;
         }
 
-        if (pro.equals(HTTPS_PROTOCOL) && "443".equals(accPort)) {
+        if (pro.equals(Constants.HTTPS_PROTOCOL) && "443".equals(accPort)) {
             accPort = null;
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append(pro).append(PROTOCOL_SEPARATOR).append(accAddress);
+        sb.append(pro).append(Constants.PROTOCOL_SEPARATOR).append(accAddress);
         if (!StringUtils.isEmpty(accPort)) {
             sb.append(":" + accPort);
         }
@@ -81,7 +82,7 @@ public class ServerUtils {
     }
 
     public String getLocalHost() {
-        return protocol + PROTOCOL_SEPARATOR + "localhost:" + port;
+        return protocol + Constants.PROTOCOL_SEPARATOR + "localhost:" + port;
     }
 
     public String getBasePath() {

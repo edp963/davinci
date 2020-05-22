@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import edp.davinci.server.dto.share.ShareDisplay;
 import edp.davinci.server.dto.share.ShareInfo;
 import edp.davinci.server.dto.share.ShareWidget;
 import edp.davinci.server.dto.user.UserLogin;
-import edp.davinci.server.dto.view.DistinctParam;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.WidgetDistinctParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.exception.ForbiddenExecption;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
@@ -49,11 +49,11 @@ public interface ShareService {
 
     ShareDashboard getShareDashboard(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
 
-    Paging<Map<String, Object>> getShareData(String token, ViewExecuteParam executeParam, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException;
+    Paging<Map<String, Object>> getShareData(String token, WidgetQueryParam executeParam, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException;
 
-    String generationShareDataCsv(ViewExecuteParam executeParam, User user, String token) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    String generationShareDataCsv(WidgetQueryParam executeParam, User user, String token) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
 
-    ResultMap getDistinctValue(String token, Long viewId, DistinctParam param, User user, HttpServletRequest request);
+    ResultMap getDistinctValue(String token, Long viewId, WidgetDistinctParam param, User user, HttpServletRequest request);
 
     ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption;
 }

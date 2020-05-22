@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,14 +19,16 @@
 
 package edp.davinci.server.service.impl;
 
+import javax.annotation.Resource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import edp.davinci.commons.util.JSONUtils;
-import edp.davinci.server.component.jdbc.JdbcDataSource;
-import edp.davinci.server.model.JdbcSourceInfo;
+import edp.davinci.data.pojo.SourceConfig;
+import edp.davinci.data.source.JdbcDataSource;
+import edp.davinci.data.util.JdbcSourceUtils;
 import edp.davinci.server.service.RedisMessageHandler;
-import edp.davinci.server.util.SourceUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -34,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SourceMessageHandler implements RedisMessageHandler {
 
     @Autowired
-    private JdbcDataSource jdbcDataSource;
+	JdbcDataSource jdbcDataSource;
 
 	@Override
     public void handle(Object message, String flag) {
@@ -43,9 +45,9 @@ public class SourceMessageHandler implements RedisMessageHandler {
             return;
         }
         
-        JdbcSourceInfo sourceInfo = JSONUtils.toObject((String)message, JdbcSourceInfo.class);
-        SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
-        sourceUtils.releaseDataSource(sourceInfo);
+        SourceConfig config = JSONUtils.toObject((String)message, SourceConfig.class);
+        JdbcSourceUtils utils = new JdbcSourceUtils(jdbcDataSource);
+        utils.releaseDataSource(config);
         log.info("SourceMessageHandler release source whit message:{}", message);
     }
 }

@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package edp.davinci.server.service.impl;
 import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.core.dao.entity.RelUserOrganization;
 import edp.davinci.core.enums.UserOrgRoleEnum;
+import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.OrganizationExtendMapper;
 import edp.davinci.server.dao.RelUserOrganizationExtendMapper;
 import edp.davinci.server.dao.UserExtendMapper;
@@ -46,8 +47,7 @@ import javax.naming.directory.DirContext;
 import java.util.Date;
 import java.util.List;
 
-import static edp.davinci.server.commons.Constants.LDAP_USER_PASSWORD;
-import static edp.davinci.server.commons.Constants.EMPTY;
+import static edp.davinci.commons.Constants.*;
 import static org.springframework.ldap.query.LdapQueryBuilder.query;
 
 
@@ -130,7 +130,7 @@ public class LdapServiceImpl implements LdapService {
         user.setEmail(ldapPerson.getEmail());
         user.setEmail(ldapPerson.getName());
         user.setActive(true);
-        user.setPassword(LDAP_USER_PASSWORD);
+        user.setPassword(Constants.LDAP_USER_PASSWORD);
 
         if (userExtendMapper.insert(user) <= 0) {
             log.error("Ldap regist fail, email:{}", user.getEmail());

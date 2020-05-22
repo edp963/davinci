@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.core.dao.entity.RelUserOrganization;
 import edp.davinci.core.enums.UserOrgRoleEnum;
+import static edp.davinci.commons.Constants.*;
+
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.dao.OrganizationExtendMapper;
@@ -367,7 +369,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 			return resultMap.fail(302).message("The current user is activated and doesn't need to be reactivated");
 		}
 
-		BaseLock lock = LockFactory.getLock("ACTIVATE" + Constants.AT_SYMBOL + username.toUpperCase(), 5, LockType.REDIS);
+		BaseLock lock = LockFactory.getLock("LOCK:ACTIVATE" + AT_SIGN + username.toUpperCase(), 5, LockType.REDIS);
 		if (lock != null && !lock.getLock()) {
 			return resultMap.fail().message("The current user is activating");
 		}

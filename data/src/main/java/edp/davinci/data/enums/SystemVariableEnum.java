@@ -17,7 +17,7 @@
  *
  */
 
-package edp.davinci.server.enums;
+package edp.davinci.data.enums;
 
 import lombok.Getter;
 

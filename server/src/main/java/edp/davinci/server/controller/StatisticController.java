@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
  */
 package edp.davinci.server.controller;
 
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.commons.ValidList;
 import edp.davinci.server.dto.statistic.DavinciStatisticDuration;
@@ -28,6 +30,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import springfox.documentation.annotations.ApiIgnore;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -54,9 +58,9 @@ public class StatisticController {
     @ApiOperation(value = "collect duration info ")
     @PostMapping(value = "/duration", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity collectDurationInfo(@Valid @RequestBody ValidList<DavinciStatisticDuration> durationInfos,
-                                              HttpServletRequest request){
+            @ApiIgnore @CurrentUser User user, HttpServletRequest request) {
 
-    	statisticService.insert(durationInfos, DavinciStatisticDuration.class);
+        statisticService.insert(durationInfos, DavinciStatisticDuration.class, user);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
@@ -64,19 +68,20 @@ public class StatisticController {
     @ApiOperation(value = "collect terminal info ")
     @PostMapping(value = "/terminal", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity collectTerminalInfo(@Valid @RequestBody ValidList<DavinciStatisticTerminal> terminalInfoInfos,
-                                              HttpServletRequest request){
+            @ApiIgnore @CurrentUser User user, HttpServletRequest request) {
 
-        statisticService.insert(terminalInfoInfos, DavinciStatisticTerminal.class);
+        statisticService.insert(terminalInfoInfos, DavinciStatisticTerminal.class, user);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
     @ApiOperation(value = "collect visitor operation info ")
     @PostMapping(value = "/visitoroperation", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity collectVisitorOperationInfo(@Valid @RequestBody ValidList<DavinciStatisticVisitorOperation> visitorOperationInfos,
-                                              HttpServletRequest request){
+    public ResponseEntity collectVisitorOperationInfo(
+            @Valid @RequestBody ValidList<DavinciStatisticVisitorOperation> visitorOperationInfos,
+            @ApiIgnore @CurrentUser User user, HttpServletRequest request) {
 
-        statisticService.insert(visitorOperationInfos, DavinciStatisticVisitorOperation.class);
+        statisticService.insert(visitorOperationInfos, DavinciStatisticVisitorOperation.class, user);
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }

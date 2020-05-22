@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import edp.davinci.server.dto.share.ShareDisplay;
 import edp.davinci.server.dto.share.ShareWidget;
 import edp.davinci.server.dto.user.UserLogin;
 import edp.davinci.server.dto.user.UserLoginResult;
-import edp.davinci.server.dto.view.DistinctParam;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.WidgetDistinctParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.enums.HttpCodeEnum;
 import edp.davinci.server.model.Paging;
 import edp.davinci.server.model.TokenEntity;
@@ -193,7 +193,7 @@ public class ShareController extends BaseController {
     @AuthShare
     @PostMapping(value = "/data/{token}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getShareData(@PathVariable String token,
-                                       @RequestBody(required = false) ViewExecuteParam executeParam,
+                                       @RequestBody(required = false) WidgetQueryParam executeParam,
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) throws SQLException {
 
@@ -227,7 +227,7 @@ public class ShareController extends BaseController {
     @PostMapping(value = "/data/{token}/distinctvalue/{viewId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getDistinctValue(@PathVariable("token") String token,
                                            @PathVariable("viewId") Long viewId,
-                                           @Valid @RequestBody DistinctParam param,
+                                           @Valid @RequestBody WidgetDistinctParam param,
                                            @ApiIgnore BindingResult bindingResult,
                                            @ApiIgnore @CurrentUser User user,
                                            HttpServletRequest request) {
@@ -271,7 +271,7 @@ public class ShareController extends BaseController {
     @AuthShare
     @PostMapping(value = "/csv/{token}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity generationShareDataCsv(@PathVariable String token,
-                                                 @RequestBody(required = false) ViewExecuteParam executeParam,
+                                                 @RequestBody(required = false) WidgetQueryParam executeParam,
                                                  @ApiIgnore @CurrentUser User user,
                                                  HttpServletRequest request) {
 

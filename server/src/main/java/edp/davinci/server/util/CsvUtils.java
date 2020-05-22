@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.IOUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.enums.SqlColumnEnum;
+import edp.davinci.server.enums.SqlColumnMappingEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.DataUploadEntity;
 import edp.davinci.server.model.QueryColumn;
@@ -34,7 +34,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.web.multipart.MultipartFile;
 
-import static edp.davinci.server.commons.Constants.EMPTY;
+import static edp.davinci.commons.Constants.EMPTY;
 
 import java.io.*;
 import java.util.*;
@@ -69,19 +69,18 @@ public class CsvUtils {
         	Set<String> csvHeaders = csvParser.getHeaderMap().keySet();
             List<CSVRecord> records = csvParser.getRecords();
             List<Map<String, Object>> values = null;
-            Set<QueryColumn> headers = null;
+            List<QueryColumn> headers = new ArrayList<>();
 
             if (!CollectionUtils.isEmpty(records)) {
-                headers = new HashSet<>();
                 for (String key : csvHeaders) {
-                    headers.add(new QueryColumn(key.replace("\uFEFF", EMPTY), SqlUtils.formatSqlType(records.get(0).get(key))));
+                    headers.add(new QueryColumn(key.replace("\uFEFF", EMPTY), DataUtils.formatSqlType(records.get(0).get(key))));
                 }
                 if (records.size() > 1) {
                     values = new ArrayList<>();
                     for (int i = 1; i < records.size(); i++) {
                         Map<String, Object> item = new HashMap<>();
                         for (String key : csvHeaders) {
-                            item.put(key.replace("\uFEFF", EMPTY), SqlColumnEnum.formatValue(records.get(0).get(key), records.get(i).get(key)));
+                            item.put(key.replace("\uFEFF", EMPTY), SqlColumnMappingEnum.formatValue(records.get(0).get(key), records.get(i).get(key)));
                         }
                         values.add(item);
                     }

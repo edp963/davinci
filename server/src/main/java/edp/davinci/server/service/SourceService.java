@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import edp.davinci.server.model.DBTables;
 import edp.davinci.server.model.TableInfo;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.data.pojo.DatabaseType;
+import edp.davinci.data.pojo.SourceConfig;
 
 import org.springframework.web.multipart.MultipartFile;
 

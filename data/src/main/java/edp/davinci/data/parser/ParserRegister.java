@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,28 +17,21 @@
  *
  */
 
-package edp.davinci.server.dto.view;
+package edp.davinci.data.parser;
 
-import lombok.Data;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.context.annotation.Configuration;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-
-import edp.davinci.server.model.SqlVariable;
-
-import java.util.List;
-
-@Data
-public class ViewExecuteSql {
-    @Min(value = 1L, message = "Invalid source id")
-    private Long sourceId;
-
-    @NotBlank(message = "Sql cannot be empty")
-    private String sql;
-
-    private List<SqlVariable> variables;
-
-    private int limit = 0;
-    private int pageNo = -1;
-    private int pageSize = -1;
+@Configuration
+public class ParserRegister implements BeanPostProcessor {
+	
+	@Override
+	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+		if (bean instanceof StatementParser) {
+			StatementParser parser = (StatementParser) bean;
+			ParserFactory.registryParser(parser.getParserType(), parser);
+		}
+		return bean;
+	}
 }
