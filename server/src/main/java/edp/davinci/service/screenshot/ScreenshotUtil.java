@@ -28,8 +28,13 @@ import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.logging.LogEntries;
+import org.openqa.selenium.logging.LogEntry;
+import org.openqa.selenium.logging.LogType;
 import org.openqa.selenium.phantomjs.PhantomJSDriver;
 import org.openqa.selenium.phantomjs.PhantomJSDriverService;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -39,6 +44,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -61,6 +68,9 @@ public class ScreenshotUtil {
 
     @Value("${screenshot.phantomjs_path:}")
     private String PHANTOMJS_PATH;
+
+    @Value("${screenshot.remote_webdriver_url:}")
+    private String REMOTE_WEBDRIVER_URL;
 
     @Value("${screenshot.timeout_second:600}")
     private int timeOutSecond;
@@ -109,11 +119,11 @@ public class ScreenshotUtil {
 
     private File doScreenshot(long jobId, String url, Integer imageWidth) throws Exception {
         WebDriver driver = generateWebDriver(jobId, imageWidth);
+
         driver.get(url);
-        scheduleLogger.info("Cronjob({}) do screenshot for url({}) start", jobId, url);
+        scheduleLogger.info("Cronjob({}) do screenshot for url[timeout={}]({}) start", jobId, timeOutSecond,url);
         try {
             WebDriverWait wait = new WebDriverWait(driver, timeOutSecond);
-
             ExpectedCondition<WebElement> ConditionOfSign = ExpectedConditions.presenceOfElementLocated(By.id("headlessBrowserRenderSign"));
             ExpectedCondition<WebElement> ConditionOfWidth = ExpectedConditions.presenceOfElementLocated(By.id("width"));
             ExpectedCondition<WebElement> ConditionOfHeight = ExpectedConditions.presenceOfElementLocated(By.id("height"));
@@ -139,8 +149,18 @@ public class ScreenshotUtil {
             return ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
 
         } catch (TimeoutException te) {
+            String text= driver.findElements(By.tagName("html")).get(0).getAttribute("innerText");
+            scheduleLogger.info("TEXT: \n{}",text);
+            LogEntries logEntries= driver.manage().logs().get(LogType.BROWSER);
+            for (LogEntry entry : logEntries) {
+                scheduleLogger.info(entry.getLevel() + " " + entry.getMessage());
+            }
         	scheduleLogger.error(te.getMessage(), te);
         } catch (InterruptedException e) {
+            LogEntries logEntries= driver.manage().logs().get(LogType.BROWSER);
+            for (LogEntry entry : logEntries) {
+                scheduleLogger.info(entry.getLevel() + " " + entry.getMessage());
+            }
         	scheduleLogger.error(e.getMessage(), e);
         } finally {
         	scheduleLogger.info("Cronjob({}) do screenshot for url({}) finish", jobId, url);
@@ -156,7 +176,7 @@ public class ScreenshotUtil {
         switch (browserEnum) {
             case CHROME:
                 driver = generateChromeDriver();
-                scheduleLogger.info("Cronjob({}) generating chrome driver({})...", jobId, CHROME_DRIVER_PATH);
+                scheduleLogger.info("Cronjob({}) generating chrome driver({})...", jobId, driver.getClass().toString());
                 break;
             case PHANTOMJS:
                 driver = generatePhantomJsDriver();
@@ -175,6 +195,15 @@ public class ScreenshotUtil {
 
 
     private WebDriver generateChromeDriver() throws ExecutionException {
+        if(!StringUtils.isEmpty(REMOTE_WEBDRIVER_URL)){
+            scheduleLogger.info("user RemoteWebDriver ({})",REMOTE_WEBDRIVER_URL);
+            try {
+                WebDriver driver = new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_URL), DesiredCapabilities.chrome());
+                return driver;
+            }catch (MalformedURLException ex){
+                scheduleLogger.error(ex.getMessage(),ex);
+            }
+        }
         File file = new File(CHROME_DRIVER_PATH);
         if (!file.canExecute()) {
             if (!file.setExecutable(true)) {

@@ -18,7 +18,6 @@
  * >>
  */
 import {IOrganization} from '../Organizations/types'
-import { ReactElement } from 'react'
 
 export interface IProjectPermission {
   downloadPermission: boolean
@@ -188,7 +187,7 @@ export interface ItemProps {
   favoritePro?: IFavoritePro
 }
 
-export type IShowProForm = (formType: string, project: IProject, e: React.MouseEvent<HTMLElement>) => void
+export type IShowProForm = (formType: string, project: Partial<IProject>, e: React.MouseEvent<HTMLElement>) => void
 export interface IContentProps {
   userId: number
   pType: string

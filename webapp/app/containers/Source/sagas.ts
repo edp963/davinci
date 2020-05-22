@@ -27,13 +27,25 @@ import request from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 import { message } from 'antd'
-import { ISourceBase, ISourceRaw, ISource, ISourceDatabases, IDatabaseTables, ITableColumns } from './types'
+import {
+  ISourceBase,
+  ISourceRaw,
+  ISource,
+  ISourceDatabases,
+  IDatabaseTables,
+  ITableColumns
+} from './types'
 
-export function* getSources (action: SourceActionType) {
-  if (action.type !== ActionTypes.LOAD_SOURCES) { return }
+export function* getSources(action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_SOURCES) {
+    return
+  }
   const { payload } = action
   try {
-    const asyncData = yield call(request, `${api.source}?projectId=${payload.projectId}`)
+    const asyncData = yield call(
+      request,
+      `${api.source}?projectId=${payload.projectId}`
+    )
     const sources = asyncData.payload as ISourceBase[]
     yield put(SourceActions.sourcesLoaded(sources))
   } catch (err) {
@@ -42,8 +54,10 @@ export function* getSources (action: SourceActionType) {
   }
 }
 
-export function* addSource (action: SourceActionType) {
-  if (action.type !== ActionTypes.ADD_SOURCE) { return }
+export function* addSource(action: SourceActionType) {
+  if (action.type !== ActionTypes.ADD_SOURCE) {
+    return
+  }
   const { payload } = action
   try {
     const asyncData = yield call(request, {
@@ -59,23 +73,32 @@ export function* addSource (action: SourceActionType) {
   }
 }
 
-export function* getSourceDetail (action: SourceActionType) {
-  if (action.type !== ActionTypes.LOAD_SOURCE_DETAIL) { return }
+export function* getSourceDetail(action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_SOURCE_DETAIL) {
+    return
+  }
   const { sourceId, resolve } = action.payload
   try {
     const asyncData = yield call(request, `${api.source}/${sourceId}`)
     const sourceRaw = asyncData.payload as ISourceRaw
-    const source: ISource = { ...sourceRaw, config: JSON.parse(sourceRaw.config) }
+    const source: ISource = {
+      ...sourceRaw,
+      config: JSON.parse(sourceRaw.config)
+    }
     yield put(SourceActions.sourceDetailLoaded(source))
-    if (resolve) { resolve(source) }
+    if (resolve) {
+      resolve(source)
+    }
   } catch (err) {
     yield put(SourceActions.loadSourceDetailFail())
     errorHandler(err)
   }
 }
 
-export function* deleteSource (action: SourceActionType) {
-  if (action.type !== ActionTypes.DELETE_SOURCE) { return }
+export function* deleteSource(action: SourceActionType) {
+  if (action.type !== ActionTypes.DELETE_SOURCE) {
+    return
+  }
   const { payload } = action
   try {
     const result = yield call(request, {
@@ -90,8 +113,10 @@ export function* deleteSource (action: SourceActionType) {
   }
 }
 
-export function* editSource (action: SourceActionType) {
-  if (action.type !== ActionTypes.EDIT_SOURCE) { return }
+export function* editSource(action: SourceActionType) {
+  if (action.type !== ActionTypes.EDIT_SOURCE) {
+    return
+  }
   const { source, resolve } = action.payload
   try {
     yield call(request, {
@@ -108,8 +133,10 @@ export function* editSource (action: SourceActionType) {
   }
 }
 
-export function* testSourceConnection (action: SourceActionType) {
-  if (action.type !== ActionTypes.TEST_SOURCE_CONNECTION) { return }
+export function* testSourceConnection(action: SourceActionType) {
+  if (action.type !== ActionTypes.TEST_SOURCE_CONNECTION) {
+    return
+  }
   const { payload } = action
   try {
     const res = yield call(request, {
@@ -125,8 +152,10 @@ export function* testSourceConnection (action: SourceActionType) {
   }
 }
 
-export function* resetSourceConnection (action: SourceActionType) {
-  if (action.type !== ActionTypes.RESET_SOURCE_CONNECTION) { return }
+export function* resetSourceConnection(action: SourceActionType) {
+  if (action.type !== ActionTypes.RESET_SOURCE_CONNECTION) {
+    return
+  }
   const { properties, resolve } = action.payload
   const { sourceId, username, password } = properties
   try {
@@ -147,29 +176,55 @@ export function* resetSourceConnection (action: SourceActionType) {
   }
 }
 
-export function* getCsvMetaId (action: SourceActionType) {
-  if (action.type !== ActionTypes.GET_CSV_META_ID) { return }
-  const { resolve } = action.payload
-  const { sourceId, replaceMode, tableName } = action.payload.csvMeta
+export function* validateCsvTableName(action: SourceActionType) {
+  if (action.type !== ActionTypes.VALIDATE_CSV_TABLE_NAME) {
+    return
+  }
+  const { callback } = action.payload
+  const { sourceId, mode, tableName } = action.payload.csvMeta
   try {
     yield call(request, {
       url: `${api.source}/${sourceId}/csvmeta`,
       method: 'post',
       data: {
-        mode: replaceMode,
+        mode,
         tableName
       }
     })
-    yield put(SourceActions.csvMetaIdGeted())
-    resolve()
+    callback()
   } catch (err) {
-    yield put(SourceActions.getCsvMetaIdFail(err))
-    errorHandler(err)
+    callback(err.response.data.header.msg)
   }
 }
 
-export function* getSourceDatabases (action: SourceActionType) {
-  if (action.type !== ActionTypes.LOAD_SOURCE_DATABASES) { return }
+export function* uploadCsvFile(action: SourceActionType) {
+  if (action.type !== ActionTypes.UPLOAD_CSV_FILE) {
+    return
+  }
+
+  const { csvMeta, resolve, reject } = action.payload
+  try {
+    const formData = new FormData()
+    Object.entries(csvMeta).forEach(([fieldName, fieldValue]) => {
+      if (fieldValue || fieldValue === 0) {
+        formData.append(fieldName, fieldValue)
+      }
+    })
+    yield call(request, `${api.source}/${csvMeta.sourceId}/uploadcsv`, {
+      method: 'POST',
+      data: formData
+    })
+    resolve()
+  } catch (err) {
+    errorHandler(err)
+    reject()
+  }
+}
+
+export function* getSourceDatabases(action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_SOURCE_DATABASES) {
+    return
+  }
   const { sourceId } = action.payload
   try {
     const asyncData = yield call(request, `${api.source}/${sourceId}/databases`)
@@ -181,11 +236,16 @@ export function* getSourceDatabases (action: SourceActionType) {
   }
 }
 
-export function* getDatabaseTables (action: SourceActionType) {
-  if (action.type !== ActionTypes.LOAD_SOURCE_DATABASE_TABLES) { return }
+export function* getDatabaseTables(action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_SOURCE_DATABASE_TABLES) {
+    return
+  }
   const { databaseName, sourceId } = action.payload
   try {
-    const asyncData = yield call(request, `${api.source}/${sourceId}/tables?dbName=${databaseName}`)
+    const asyncData = yield call(
+      request,
+      `${api.source}/${sourceId}/tables?dbName=${databaseName}`
+    )
     const databaseTables: IDatabaseTables = asyncData.payload
     yield put(SourceActions.databaseTablesLoaded(databaseTables))
   } catch (err) {
@@ -194,12 +254,20 @@ export function* getDatabaseTables (action: SourceActionType) {
   }
 }
 
-export function* getTableColumns (action: SourceActionType) {
-  if (action.type !== ActionTypes.LOAD_SOURCE_TABLE_COLUMNS) { return }
+export function* getTableColumns(action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_SOURCE_TABLE_COLUMNS) {
+    return
+  }
   const { sourceId, databaseName, tableName, resolve } = action.payload
   try {
-    const asyncData = yield call(request, `${api.source}/${sourceId}/table/columns?dbName=${databaseName}&tableName=${tableName}`)
-    const tableColumns: ITableColumns = { ...asyncData.payload, dbName: databaseName }
+    const asyncData = yield call(
+      request,
+      `${api.source}/${sourceId}/table/columns?dbName=${databaseName}&tableName=${tableName}`
+    )
+    const tableColumns: ITableColumns = {
+      ...asyncData.payload,
+      dbName: databaseName
+    }
     yield put(SourceActions.tableColumnsLoaded(databaseName, tableColumns))
     if (resolve) {
       resolve(tableColumns)
@@ -210,8 +278,10 @@ export function* getTableColumns (action: SourceActionType) {
   }
 }
 
-export function* getDatasourcesInfo (action: SourceActionType) {
-  if (action.type !== ActionTypes.LOAD_DATASOURCES_INFO) { return }
+export function* getDatasourcesInfo(action: SourceActionType) {
+  if (action.type !== ActionTypes.LOAD_DATASOURCES_INFO) {
+    return
+  }
   try {
     const asyncData = yield call(request, `${api.source}/jdbc/datasources`)
     yield put(SourceActions.datasourcesInfoLoaded(asyncData.payload))
@@ -221,16 +291,19 @@ export function* getDatasourcesInfo (action: SourceActionType) {
   }
 }
 
-export default function* rootSourceSaga (): IterableIterator<any> {
+export default function* rootSourceSaga() {
   yield all([
     takeLatest(ActionTypes.LOAD_SOURCES, getSources),
     takeEvery(ActionTypes.LOAD_SOURCE_DETAIL, getSourceDetail),
     takeEvery(ActionTypes.ADD_SOURCE, addSource),
     takeEvery(ActionTypes.DELETE_SOURCE, deleteSource),
     takeEvery(ActionTypes.EDIT_SOURCE, editSource),
+
     takeEvery(ActionTypes.TEST_SOURCE_CONNECTION, testSourceConnection),
     takeEvery(ActionTypes.RESET_SOURCE_CONNECTION, resetSourceConnection),
-    takeEvery(ActionTypes.GET_CSV_META_ID, getCsvMetaId),
+
+    takeLatest(ActionTypes.VALIDATE_CSV_TABLE_NAME, validateCsvTableName),
+    takeEvery(ActionTypes.UPLOAD_CSV_FILE, uploadCsvFile),
     takeEvery(ActionTypes.LOAD_SOURCE_DATABASES, getSourceDatabases),
     takeEvery(ActionTypes.LOAD_SOURCE_DATABASE_TABLES, getDatabaseTables),
     takeEvery(ActionTypes.LOAD_SOURCE_TABLE_COLUMNS, getTableColumns),

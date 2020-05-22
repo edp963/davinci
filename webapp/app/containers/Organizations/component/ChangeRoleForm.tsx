@@ -1,5 +1,7 @@
 import React from 'react'
 import { Form, Input, Radio, Button } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
+import { IOrganizationMember } from '../types'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const styles = require('../Organization.less')
@@ -7,17 +9,17 @@ const utilStyles = require('assets/less/util.less')
 
 
 interface IChangeRoleProps {
-  form: any
   category: string
+  member: IOrganizationMember
   organizationOrTeam: { name?: string }
   submitLoading: boolean
   changeHandler: () => any
 }
-export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps, {}> {
+export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps & FormComponentProps, {}> {
   private tips = (type: string) => {
     switch (type) {
       case 'orgMember':
-        return '选择一个新角色'
+        return '选择一个新成员类型'
       case 'teamMember':
         return ''
     }
@@ -69,15 +71,15 @@ export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps, {}> {
   }
 
   public render () {
-    const { category, organizationOrTeam, memberName, modalLoading } = this.props
+    const { category, organizationOrTeam, member, submitLoading } = this.props
     const orgOrTeamName = organizationOrTeam ? organizationOrTeam.name : ''
     const { getFieldDecorator } = this.props.form
     const modalButtons = [(
       <Button
         key="submit"
         type="primary"
-        loading={modalLoading}
-        disabled={modalLoading}
+        loading={submitLoading}
+        disabled={submitLoading}
         onClick={this.props.changeHandler}
       >
         保 存
@@ -87,7 +89,7 @@ export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps, {}> {
       <div className={styles.formWrapper}>
         <div className={styles.header}>
           <div className={styles.title}>
-            改变{memberName}在<span className={styles.orgName}>{orgOrTeamName}</span>的角色
+            改变 {member.user.username} 在 <span className={styles.orgName}>{orgOrTeamName}</span> 的成员类型
           </div>
           <div className={styles.desc}>
             <b>{this.tips(category)}</b>
@@ -118,4 +120,4 @@ export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps, {}> {
   }
 }
 
-export default Form.create()(ChangeRoleForm)
+export default Form.create<IChangeRoleProps & FormComponentProps>()(ChangeRoleForm)

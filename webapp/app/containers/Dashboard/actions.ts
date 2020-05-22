@@ -31,7 +31,7 @@ import {
 import { IWidgetFormed } from '../Widget/types'
 import { IView, IViewQueryResponse } from '../View/types'
 import { RenderType } from '../Widget/components/Widget'
-import { ControlPanelTypes } from 'app/components/Filters/constants'
+import { ControlPanelTypes } from 'app/components/Control/constants'
 import { DownloadTypes } from '../App/constants'
 const CancelToken = axios.CancelToken
 

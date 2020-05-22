@@ -45,17 +45,7 @@ public class MD5Util {
                 // 计算MD5函数
                 md.update(src.getBytes(StandardCharsets.UTF_8));
                 byte b[] = md.digest();
-                int i;
-                StringBuffer buffer = new StringBuffer("");
-                for (int offset = 0; offset < b.length; offset++) {
-                    i = b[offset];
-                    if (i < 0)
-                        i += 256;
-                    if (i < 16)
-                        buffer.append("0");
-                    buffer.append(Integer.toHexString(i));
-                }
-                md5 = buffer.toString();
+                md5 = byteToString(b);
                 if (bit == 16) {
                     String md16 = md5.substring(8, 24);
                     md5 = md16;
@@ -72,5 +62,19 @@ public class MD5Util {
             md5 = md5.toUpperCase();
         }
         return md5;
+    }
+
+    public static String byteToString(byte[] bytes) {
+        int i;
+        StringBuffer buffer = new StringBuffer("");
+        for (int offset = 0; offset < bytes.length; offset++) {
+            i = bytes[offset];
+            if (i < 0)
+                i += 256;
+            if (i < 16)
+                buffer.append("0");
+            buffer.append(Integer.toHexString(i));
+        }
+        return buffer.toString();
     }
 }

@@ -46,7 +46,6 @@ import 'assets/fonts/iconfont.css'
 import 'assets/override/antd.css'
 import 'assets/override/react-grid.css'
 import 'assets/override/datepicker.css'
-import 'assets/override/react-color.css'
 import 'assets/less/style.less'
 
 import * as echarts from 'echarts/lib/echarts'
@@ -77,12 +76,16 @@ import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/visualMap'
 import 'echarts/lib/component/geo'
 import 'echarts/lib/component/brush'
+import 'echarts/lib/component/markLine'
+import 'echarts/lib/component/markArea'
 import 'assets/js/china.js'
 
 import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
 echarts.registerTheme('default', DEFAULT_ECHARTS_THEME)
 
 import configureStore from './configureStore'
+import 'utils/localStorage'
+
 
 const initialState = {}
 const store = configureStore(initialState, history)

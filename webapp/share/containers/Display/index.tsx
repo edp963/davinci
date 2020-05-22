@@ -45,7 +45,7 @@ const ShareDisplayIndex: React.FC = () => {
   const location = useLocation()
 
   // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
-  const shareToken = new URLSearchParams(location.search).get('shareInfo')
+  const shareToken = new URLSearchParams(window.location.search).get('shareInfo')
   const [showLogin, setShowLogin] = useState(false)
 
   useEffect(() => {

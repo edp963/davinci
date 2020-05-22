@@ -94,6 +94,8 @@ export interface IViewModelProps {
   modelType: ViewModelTypes
 }
 
+export type IKeyOfViewModelProps = keyof Omit<IViewModelProps, 'name'>
+
 export interface IViewModel {
   [name: string]: Omit<IViewModelProps, 'name'>
 }
@@ -193,4 +195,6 @@ export interface IViewState {
   bizs: IDacBiz[]
 
   cancelTokenSources: CancelTokenSource[]
+
+  isLastExecuteWholeSql: boolean
 }

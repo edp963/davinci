@@ -75,7 +75,7 @@ const SplitPane = React.lazy(() => import('react-split-pane'))
 import {IProjectRoles} from '../Organizations/component/ProjectRole'
 import { OrganizationActions } from '../Organizations/actions'
 const { loadProjectRoles } = OrganizationActions
-import { IGlobalControl, GlobalControlQueryMode } from 'app/components/Filters/types'
+import { IGlobalControl, GlobalControlQueryMode } from 'app/components/Control/types'
 import { RouteComponentWithParams } from 'utils/types'
 
 import { Grid } from './Loadable'

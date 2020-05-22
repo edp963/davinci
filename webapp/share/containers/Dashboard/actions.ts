@@ -29,7 +29,7 @@ import {
 import { IWidgetFormed } from 'app/containers/Widget/types'
 import { IFormedView, IViewQueryResponse } from 'app/containers/View/types'
 import { RenderType } from 'app/containers/Widget/components/Widget'
-import { ControlPanelTypes } from 'app/components/Filters/constants'
+import { ControlPanelTypes } from 'app/components/Control/constants'
 import { DownloadTypes } from 'app/containers/App/constants'
 
 export const DashboardActions = {
