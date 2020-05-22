@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class DataProviderFactory {
 	
-	private static Map<String, DataProvider> dataProviders = new HashMap<>();
+	private static final Map<String, DataProvider> dataProviders = new HashMap<>();
 	
 	public static DataProvider getProvider(String type) {
 		return dataProviders.get(type);

@@ -19,6 +19,9 @@
 
 package edp.davinci.data.pojo;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 @Data
@@ -28,10 +31,12 @@ public class ColumnModel {
 	private String visualType;
 	private String modelType;
 
-	public ColumnModel(String name, String sqlType, String visualType, String modelType) {
+	@JsonCreator
+	public ColumnModel(@JsonProperty("name") String name, @JsonProperty("sqlType") String sqlType,
+			@JsonProperty("visualType") String visualType, @JsonProperty("modelType") String modelType) {
 		this.name = name;
 		this.sqlType = sqlType;
 		this.visualType = visualType;
 		this.modelType = modelType;
-	} 
+	}
 }

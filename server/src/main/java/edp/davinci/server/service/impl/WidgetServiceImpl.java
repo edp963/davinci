@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import edp.davinci.server.dao.ViewExtendMapper;
 import edp.davinci.server.dao.WidgetExtendMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.view.ViewWithProjectAndSource;
 import edp.davinci.server.dto.view.ViewWithSource;
 import edp.davinci.server.dto.widget.WidgetCreate;
@@ -71,7 +71,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static edp.davinci.server.commons.Constants.EMPTY;
+import static edp.davinci.commons.Constants.EMPTY;
 import static edp.davinci.server.util.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.server.util.ScriptUtiils.getViewExecuteParam;
 
@@ -337,7 +337,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
 
     @Override
-    public String generationFile(Long id, ViewExecuteParam executeParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption {
+    public String generationFile(Long id, WidgetQueryParam executeParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption {
         
         Widget widget = getWidget(id);
 
@@ -366,8 +366,8 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             if (type.equals(FileTypeEnum.CSV.getType())) {
                 ViewWithSource viewWithSource = viewExtendMapper.getViewWithSource(widget.getViewId());
                 boolean maintainer = projectService.isMaintainer(projectDetail, user);
-                PagingWithQueryColumns paginate = viewService.getPagingData(maintainer, viewWithSource, executeParam, user);
-                List<QueryColumn> columns = paginate.getColumns();
+                PagingWithQueryColumns paging = viewService.getDataWithQueryColumns(maintainer, viewWithSource, executeParam, user);
+                List<QueryColumn> columns = paging.getColumns();
                 if (!CollectionUtils.isEmpty(columns)) {
                     File file = new File(rootPath);
                     if (!file.exists()) {
@@ -379,7 +379,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                             UUID.randomUUID().toString().replace("-", EMPTY) +
                             FileTypeEnum.CSV.getFormat();
 
-                    filePath = CsvUtils.formatCsvWithFirstAsHeader(rootPath, csvName, columns, paginate.getResultList());
+                    filePath = CsvUtils.formatCsvWithFirstAsHeader(rootPath, csvName, columns, paging.getResultList());
                 }
             } else if (type.equals(FileTypeEnum.XLSX.getType())) {
 
@@ -390,7 +390,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
                 HashSet<Widget> widgets = new HashSet<>();
                 widgets.add(widget);
-                Map<Long, ViewExecuteParam> executeParamMap = new HashMap<>();
+                Map<Long, WidgetQueryParam> executeParamMap = new HashMap<>();
                 executeParamMap.put(widget.getId(), executeParam);
 
                 filePath = rootPath + excelName;
@@ -420,7 +420,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      * @throws Exception
      */
     public File writeExcel(Set<Widget> widgets,
-                           ProjectDetail projectDetail, Map<Long, ViewExecuteParam> executeParamMap,
+                           ProjectDetail projectDetail, Map<Long, WidgetQueryParam> executeParamMap,
                            String filePath, User user, boolean containType) throws Exception {
         
         if (StringUtils.isEmpty(filePath)) {
@@ -447,18 +447,18 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 					ViewWithProjectAndSource viewWithProjectAndSource = viewExtendMapper
 							.getViewWithProjectAndSourceById(widget.getViewId());
 
-					ViewExecuteParam executeParam = null;
+					WidgetQueryParam executeParam = null;
 					if (null != executeParamMap && executeParamMap.containsKey(widget.getId())) {
 						executeParam = executeParamMap.get(widget.getId());
 					} else {
 						executeParam = getViewExecuteParam((engine), null, widget.getConfig(), null);
 					}
 
-					PagingWithQueryColumns paginate = viewService.getPagingData(maintainer,
+					PagingWithQueryColumns paging = viewService.getDataWithQueryColumns(maintainer,
 							viewWithProjectAndSource, executeParam, user);
 
 					sheet = wb.createSheet(sheetName);
-					ExcelUtils.writeSheet(sheet, paginate.getColumns(), paginate.getResultList(), wb, containType,
+					ExcelUtils.writeSheet(sheet, paging.getColumns(), paging.getResultList(), wb, containType,
 							widget.getConfig(), executeParam.getParams());
 				} catch (Exception e) {
 					log.error(e.getMessage(), e);

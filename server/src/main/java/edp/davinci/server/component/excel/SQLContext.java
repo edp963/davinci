@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@
 
 package edp.davinci.server.component.excel;
 
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.model.QueryColumn;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.List;
  * @Date 19/5/29 15:28
  * To change this template use File | Settings | File Templates.
  */
+@Data
 public class SQLContext implements Serializable {
 
     private List<String> executeSql;
@@ -40,48 +42,8 @@ public class SQLContext implements Serializable {
 
     private List<QueryColumn> queryColumns;
 
-    private ViewExecuteParam viewExecuteParam;
+    private WidgetQueryParam viewExecuteParam;
 
     private List<String> excludeColumns;
-
-
-    public List<String> getExecuteSql() {
-        return executeSql;
-    }
-
-    public void setExecuteSql(List<String> executeSql) {
-        this.executeSql = executeSql;
-    }
-
-    public List<String> getQuerySql() {
-        return querySql;
-    }
-
-    public void setQuerySql(List<String> querySql) {
-        this.querySql = querySql;
-    }
-
-    public List<QueryColumn> getQueryColumns() {
-        return queryColumns;
-    }
-
-    public void setQueryColumns(List<QueryColumn> queryColumns) {
-        this.queryColumns = queryColumns;
-    }
-
-    public ViewExecuteParam getViewExecuteParam() {
-        return viewExecuteParam;
-    }
-
-    public void setViewExecuteParam(ViewExecuteParam viewExecuteParam) {
-        this.viewExecuteParam = viewExecuteParam;
-    }
-
-    public List<String> getExcludeColumns() {
-        return excludeColumns;
-    }
-
-    public void setExcludeColumns(List<String> excludeColumns) {
-        this.excludeColumns = excludeColumns;
-    }
 }
+

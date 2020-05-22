@@ -25,11 +25,11 @@ import lombok.Data;
 public class PagingParam {
 	private int pageNo = 0;
 	private int pageSize = 0;
-	private int maxRows = 0;
+	private int limit = 0;
 	
-	public PagingParam(int pageNo, int pageSize, int maxRows) {
+	public PagingParam(int pageNo, int pageSize, int limit) {
 		this.pageNo = pageNo;
 		this.pageSize = pageSize;
-		this.maxRows = maxRows;
+		this.limit = limit;
 	}
 }

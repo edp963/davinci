@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,12 +26,11 @@ import java.util.List;
 @Data
 public class SqlVariable {
     private String name;
-    private String type;           //变量类型 query/auth
-    private String valueType;      //变量值类型 string/number/boolean/date
-    private boolean udf;
-    private List<Object> defaultValues;   //默认值
-
-    private SqlVariableChannel channel;
+    private String type;    //变量类型 query/auth
+    private String valueType;   //变量值类型 string/number/boolean/date/sql
+    private boolean udf;    //是否使用表达式
+    private List<Object> defaultValues; //默认值
+    private SqlVariableChannel channel; //data-auth-center(dac) parameter
 }
 
 

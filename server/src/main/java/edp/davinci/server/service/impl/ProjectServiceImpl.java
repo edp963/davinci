@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import edp.davinci.server.service.DisplayService;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.BaseLock;
 import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.server.util.PageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,8 +168,8 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      */
     @Override
     public PageInfo<ProjectWithCreateBy> searchProjects(String keywords, User user, int pageNum, int pageSize) throws ServerException, UnAuthorizedExecption, NotFoundException {
-        if (!PageUtils.checkPageInfo(pageNum, pageSize)) {
-            throw new ServerException("Invalid page info");
+        if (!checkPagingParam(pageNum, pageSize)) {
+            throw new ServerException("Invalid paging param");
         }
 
         List<OrganizationInfo> orgs = organizationExtendMapper.getOrganizationByUser(user.getId());
@@ -182,6 +181,16 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         List<ProjectWithCreateBy> projects = projectExtendMapper.getProjectsByKewordsWithUser(keywords, user.getId(), orgs);
         PageInfo<ProjectWithCreateBy> pageInfo = new PageInfo<>(projects);
         return pageInfo;
+    }
+
+    private boolean checkPagingParam(int pageNum, int pageSize) {
+        if (pageNum < 1) {
+            return false;
+        }
+        if (pageSize < 10) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -700,8 +709,8 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 
     @Override
     public PageInfo<ProjectWithCreateBy> getProjectsByOrg(Long orgId, User user, String keyword, int pageNum, int pageSize) {
-        if (!PageUtils.checkPageInfo(pageNum, pageSize)) {
-            throw new ServerException("Invalid page info");
+        if (!checkPagingParam(pageNum, pageSize)) {
+            throw new ServerException("Invalid paging param");
         }
         PageHelper.startPage(pageNum, pageSize);
         List<ProjectWithCreateBy> projects = projectExtendMapper.getProjectsByOrgWithUser(orgId, user.getId(), keyword);

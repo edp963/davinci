@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@
  *
  */
 
-package edp.davinci.core.utils;
+package edp.davinci.server.util;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.core.exception.NotFoundException;
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.model.DacChannel;
+import edp.davinci.server.controller.ResultMap;
+import edp.davinci.server.exception.NotFoundException;
+import edp.davinci.server.model.DacChannel;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -46,10 +48,13 @@ import static java.util.stream.Collectors.groupingBy;
 @Slf4j
 @Component
 @ConfigurationProperties(prefix = "data-auth-center", ignoreInvalidFields = true)
-public class DacChannelUtil {
+public class DacChannelUtils {
 
-    public static final Map<String, DacChannel> dacMap = new HashMap<>();
+    @Getter
+    private static final Map<String, DacChannel> dacMap = new HashMap<>();
 
+    @Setter
+    @Getter
     private List<DacChannel> channels = new ArrayList<>();
 
     private static final String AUTH_CODE_KEY = "authCode";
@@ -71,14 +76,6 @@ public class DacChannelUtil {
                 map.forEach((k, v) -> dacMap.put(k.trim(), v.get(v.size() - 1)));
             }
         }
-    }
-
-    public List<DacChannel> getChannels() {
-        return channels;
-    }
-
-    public void setChannels(List<DacChannel> channels) {
-        this.channels = channels;
     }
 
     public List getTenants(String dacName) throws NotFoundException {

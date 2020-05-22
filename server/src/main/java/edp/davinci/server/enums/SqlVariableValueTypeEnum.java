@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@
 
 package edp.davinci.server.enums;
 
-import static edp.davinci.server.commons.Constants.*;
+import edp.davinci.server.commons.Constants;
+import static edp.davinci.commons.Constants.*;
 
-import edp.davinci.server.util.SqlUtils;
+import edp.davinci.server.util.DataUtils;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -63,13 +64,11 @@ public enum SqlVariableValueTypeEnum {
                 case STRING:
                 case DATE:
                     return values.stream().map(String::valueOf)
-                            .map(s -> s.equals(NO_AUTH_PERMISSION) || (s.startsWith(APOSTROPHE) && s.endsWith(APOSTROPHE)) ?
+                            .map(s -> s.equals(Constants.NO_AUTH_PERMISSION) || (s.startsWith(SINGLE_QUOTES) && s.endsWith(SINGLE_QUOTES)) ?
                                     s :
-                                    String.join(EMPTY, APOSTROPHE, s, APOSTROPHE))
+                                    String.join(EMPTY, SINGLE_QUOTES, s, SINGLE_QUOTES))
                             .collect(Collectors.toList());
                 case SQL:
-                    values.stream().map(String::valueOf).forEach(SqlUtils::checkSensitiveSql);
-                    return values.stream().map(String::valueOf).collect(Collectors.toList());
                 case NUMBER:
                     return values.stream().map(String::valueOf).collect(Collectors.toList());
                 case BOOLEAN:
@@ -84,7 +83,6 @@ public enum SqlVariableValueTypeEnum {
         if (!StringUtils.isEmpty(value)) {
             SqlVariableValueTypeEnum valueTypeEnum = SqlVariableValueTypeEnum.valueTypeOf(valueType.toLowerCase());
 
-
             if (udf && valueTypeEnum != SQL) {
                 return value;
             }
@@ -93,7 +91,7 @@ public enum SqlVariableValueTypeEnum {
                 switch (valueTypeEnum) {
                     case STRING:
                     case DATE:
-                        return String.join(EMPTY, value.startsWith(APOSTROPHE) ? EMPTY : APOSTROPHE, value, value.endsWith(APOSTROPHE) ? EMPTY : APOSTROPHE);
+                        return String.join(EMPTY, value.startsWith(SINGLE_QUOTES) ? EMPTY : SINGLE_QUOTES, value, value.endsWith(SINGLE_QUOTES) ? EMPTY : SINGLE_QUOTES);
                     case NUMBER:
                     case SQL:
                         return value;
@@ -102,6 +100,7 @@ public enum SqlVariableValueTypeEnum {
                 }
             }
         }
+        
         return value;
     }
 

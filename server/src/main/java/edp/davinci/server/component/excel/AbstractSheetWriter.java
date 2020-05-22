@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package edp.davinci.server.component.excel;
 
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.enums.NumericUnitEnum;
-import edp.davinci.server.enums.SqlTypeEnum;
+import edp.davinci.server.enums.SqlColumnTypeEnum;
 import edp.davinci.server.model.ExcelHeader;
 import edp.davinci.server.model.FieldCurrency;
 import edp.davinci.server.model.FieldNumeric;
@@ -31,7 +31,7 @@ import edp.davinci.server.util.ExcelUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 
-import static edp.davinci.server.commons.Constants.EMPTY;
+import static edp.davinci.commons.Constants.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,11 +48,11 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractSheetWriter {
 
-    private CellStyle header;
+    private CellStyle headerStyle;
 
-    private CellStyle myDefault;
+    private CellStyle defaultStyle;
 
-    private CellStyle general;
+    private CellStyle generalStyle;
 
     private DataFormat format;
 
@@ -69,19 +69,19 @@ public abstract class AbstractSheetWriter {
     protected void init(SheetContext context) throws Exception {
         format = context.getWorkbook().createDataFormat();
         //默认格式
-        myDefault = context.getWorkbook().createCellStyle();
+        defaultStyle = context.getWorkbook().createCellStyle();
         //常规格式
-        general = context.getWorkbook().createCellStyle();
-        general.setDataFormat(format.getFormat("General"));
+        generalStyle = context.getWorkbook().createCellStyle();
+        generalStyle.setDataFormat(format.getFormat("General"));
         //表头格式 粗体居中
-        header = context.getWorkbook().createCellStyle();
+        headerStyle = context.getWorkbook().createCellStyle();
         Font font = context.getWorkbook().createFont();
         font.setFontName("黑体");
         font.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        header.setFont(font);
-        header.setDataFormat(format.getFormat("@"));
-        header.setAlignment(CellStyle.ALIGN_CENTER);
-        header.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
+        headerStyle.setFont(font);
+        headerStyle.setDataFormat(format.getFormat("@"));
+        headerStyle.setAlignment(CellStyle.ALIGN_CENTER);
+        headerStyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
     }
 
     protected void writeHeader(SheetContext context) throws Exception {
@@ -147,7 +147,7 @@ public abstract class AbstractSheetWriter {
                     }
                 }
                 Cell cell = context.getSheet().getRow(excelHeader.getRow()).getCell(excelHeader.getCol());
-                cell.setCellStyle(header);
+                cell.setCellStyle(headerStyle);
                 cell.setCellValue(StringUtils.isEmpty(excelHeader.getAlias()) ? excelHeader.getKey() : excelHeader.getAlias());
             }
         } else {
@@ -156,7 +156,7 @@ public abstract class AbstractSheetWriter {
                 QueryColumn queryColumn = context.getQueryColumns().get(i);
                 columnWidthMap.put(queryColumn.getName(), Math.max(queryColumn.getName().getBytes().length, queryColumn.getType().getBytes().length));
                 Cell cell = row.createCell(i);
-                cell.setCellStyle(header);
+                cell.setCellStyle(headerStyle);
                 cell.setCellValue(queryColumn.getName());
             }
         }
@@ -166,7 +166,7 @@ public abstract class AbstractSheetWriter {
             for (int i = 0; i < context.getQueryColumns().size(); i++) {
                 String type = context.getQueryColumns().get(i).getType();
                 if (context.getIsTable()) {
-                    type = SqlTypeEnum.VARCHAR.getName();
+                    type = SqlColumnTypeEnum.VARCHAR.getName();
                 }
                 row.createCell(i).setCellValue(type);
             }
@@ -177,7 +177,7 @@ public abstract class AbstractSheetWriter {
         Row row = context.getSheet().createRow(nextRowNum++);
         for (int j = 0; j < context.getQueryColumns().size(); j++) {
             QueryColumn queryColumn = context.getQueryColumns().get(j);
-            myDefault.setDataFormat(format.getFormat("@"));
+            defaultStyle.setDataFormat(format.getFormat("@"));
             Object value = dataMap.get(queryColumn.getName());
             Cell cell = row.createCell(j);
             if (null != value) {
@@ -194,7 +194,7 @@ public abstract class AbstractSheetWriter {
                     if (null != headerFormatMap && headerFormatMap.containsKey(queryColumn.getName())) {
                         cell.setCellStyle(headerFormatMap.get(queryColumn.getName()));
                     } else {
-                        cell.setCellStyle(general);
+                        cell.setCellStyle(generalStyle);
                     }
                 } else {
                     cell.setCellValue(String.valueOf(value));
@@ -207,7 +207,7 @@ public abstract class AbstractSheetWriter {
                 }
             } else {
                 cell.setCellValue(EMPTY);
-                cell.setCellStyle(myDefault);
+                cell.setCellStyle(defaultStyle);
             }
         }
     }

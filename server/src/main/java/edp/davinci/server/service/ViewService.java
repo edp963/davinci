@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,21 +19,29 @@
 
 package edp.davinci.server.service;
 
+import java.util.List;
+import java.util.Map;
+
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.component.excel.SQLContext;
-import edp.davinci.server.dto.view.*;
+import edp.davinci.server.dto.view.WidgetDistinctParam;
+import edp.davinci.server.dto.view.ViewBaseInfo;
+import edp.davinci.server.dto.view.ViewCreate;
+import edp.davinci.server.dto.view.WidgetQueryParam;
+import edp.davinci.server.dto.view.ViewUpdate;
+import edp.davinci.server.dto.view.ViewWithSource;
+import edp.davinci.server.dto.view.ViewWithSourceBaseInfo;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.Paging;
 import edp.davinci.server.model.PagingWithQueryColumns;
-import edp.davinci.core.dao.entity.User;
-
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
+import edp.davinci.server.dto.view.ViewExecuteParam;
 
 public interface ViewService extends CheckEntityService {
-
+    
+    ViewWithSourceBaseInfo getView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    
     List<ViewBaseInfo> getViews(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     ViewWithSourceBaseInfo createView(ViewCreate viewCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
@@ -42,17 +50,13 @@ public interface ViewService extends CheckEntityService {
 
     boolean deleteView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    PagingWithQueryColumns executeSql(ViewExecuteSql executeSql, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    PagingWithQueryColumns execute(ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    Paging<Map<String, Object>> getData(Long id, ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException, SQLException;
+    Paging<Map<String, Object>> getData(Long id, WidgetQueryParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    PagingWithQueryColumns getPagingData(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException;
+    PagingWithQueryColumns getDataWithQueryColumns(Long id, WidgetQueryParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    List<Map<String, Object>> getDistinctValue(Long id, DistinctParam param, User user) throws NotFoundException, ServerException, UnAuthorizedExecption;
+    PagingWithQueryColumns getDataWithQueryColumns(boolean isMaintainer, ViewWithSource viewWithSource, WidgetQueryParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    List getDistinctValueData(boolean isMaintainer, ViewWithSource viewWithSource, DistinctParam param, User user) throws ServerException;
-
-    ViewWithSourceBaseInfo getView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
-
-    SQLContext getSQLContext(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user);
+    List<Map<String, Object>> getDistinctValue(Long id, WidgetDistinctParam param, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

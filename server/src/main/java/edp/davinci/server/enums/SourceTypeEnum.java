@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,11 +19,14 @@
 
 package edp.davinci.server.enums;
 
+import lombok.Getter;
+
 public enum SourceTypeEnum {
 
     JDBC("jdbc"),
     CSV("csv");
 
+    @Getter
     private String type;
 
     SourceTypeEnum(String type) {

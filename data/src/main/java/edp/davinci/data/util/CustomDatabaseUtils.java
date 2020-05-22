@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ package edp.davinci.data.util;
 
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.data.commons.Constants;
 import edp.davinci.data.pojo.CustomDatabase;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import org.yaml.snakeyaml.Yaml;
 
-import static edp.davinci.data.commons.Constants.*;
+import static edp.davinci.commons.Constants.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -114,12 +115,12 @@ public class CustomDatabaseUtils {
                 versoins = new ArrayList<>();
             }
             if (StringUtils.isEmpty(database.getVersion())) {
-                versoins.add(0, DATABASE_DEFAULT_VERSION);
+                versoins.add(0, Constants.DATABASE_DEFAULT_VERSION);
             } else {
                 versoins.add(database.getVersion());
             }
 
-            if (versoins.size() == 1 && versoins.get(0).equals(DATABASE_DEFAULT_VERSION)) {
+            if (versoins.size() == 1 && versoins.get(0).equals(Constants.DATABASE_DEFAULT_VERSION)) {
                 versoins.remove(0);
             }
 

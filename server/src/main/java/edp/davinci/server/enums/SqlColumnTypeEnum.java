@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package edp.davinci.server.enums;
 
 import edp.davinci.server.exception.ServerException;
 
-public enum SqlTypeEnum {
+public enum SqlColumnTypeEnum {
 
     TINYINT("TINYINT", "TINYINT(2)"),
     SMALLINT("SMALLINT", "SMALLINT(3)"),
@@ -53,7 +53,7 @@ public enum SqlTypeEnum {
     private String name;
     private String type;
 
-    SqlTypeEnum(String name, String type) {
+    SqlColumnTypeEnum(String name, String type) {
         this.name = name;
         this.type = type;
     }
@@ -64,11 +64,11 @@ public enum SqlTypeEnum {
 
     public static String getType(String name) throws ServerException {
         name = name.toUpperCase();
-        for (SqlTypeEnum sqlTypeEnum : values()) {
+        for (SqlColumnTypeEnum sqlTypeEnum : values()) {
             if (sqlTypeEnum.name.equals(name)) {
                 return sqlTypeEnum.type;
             }
         }
-        throw new ServerException("Unknown Type: " + name);
+        throw new ServerException("Unknown Type:" + name);
     }
 }

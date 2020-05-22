@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,27 +17,22 @@
  *
  */
 
-package edp.davinci.server.dto.view;
+package edp.davinci.data.pojo;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.util.List;
-
-@EqualsAndHashCode(callSuper = true)
 @Data
-@NotNull(message = "request parameter cannot be null")
-public class DistinctParam  extends ConcurrencyStrategy{
-    @NotEmpty(message = "distinct column cannot be EMPTY")
-    private List<String> columns;
+public class Order {
 
-    private List<String> filters;
+    private String column;
 
-    private List<Param> params;
+    private String direction = "ASC";
 
-    private Boolean cache;
+    public Order(String column, String direction) {
+        this.column = column;
+        this.direction = direction;
+    }
 
-    private Long expired;
+    public Order() {
+    }
 }

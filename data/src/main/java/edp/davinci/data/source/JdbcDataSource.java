@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Component("defaultJdbcDataSource")
+@Component()
 public class JdbcDataSource {
 	
     @Value("${source.max-active:10}")
@@ -115,8 +115,8 @@ public class JdbcDataSource {
         }
     }
     
-    public boolean isExist(SourceConfig jdbcSourceInfo) {
-        return dataSourceMap.containsKey(getDataSourceKey(jdbcSourceInfo));
+    public boolean isExist(SourceConfig config) {
+        return dataSourceMap.containsKey(getDataSourceKey(config));
     }
     
     public void releaseDatasource(SourceConfig config) {
@@ -154,7 +154,7 @@ public class JdbcDataSource {
 
         DruidDataSource druidDataSource = dataSourceMap.get(key);
         if (druidDataSource != null && !druidDataSource.isClosed()) {
-                return druidDataSource;
+            return druidDataSource;
         }
         
         Lock lock = getDataSourceLock(key);
@@ -166,6 +166,11 @@ public class JdbcDataSource {
         }
         catch (InterruptedException e) {
             throw new SourceException("Unable to get driver instance for jdbcUrl: " + url);
+        }
+
+        druidDataSource = dataSourceMap.get(key);
+        if (druidDataSource != null && !druidDataSource.isClosed()) {
+            return druidDataSource;
         }
         
         druidDataSource = new DruidDataSource();

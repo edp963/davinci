@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DownloadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -58,6 +59,9 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
 
     @Autowired
     private UserExtendMapper userMapper;
+
+    @Value("${source.query-model:0.3}")
+    private String queryModel;
 
     @Override
     public List<DownloadRecord> queryDownloadRecordPage(Long userId) {
@@ -94,7 +98,9 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
 
     @Override
     public Boolean submit(DownloadType type, Long id, User user, List<DownloadViewExecuteParam> params) {
+        
         try {
+        
             List<WidgetContext> widgetList = getWidgetContexts(type, id, user, params);
             DownloadRecord record = new DownloadRecord();
             record.setName(getDownloadFileName(type, id));
@@ -104,12 +110,13 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
             downloadRecordExtendMapper.insertSelective(record);
             MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.DOWNLOAD, record.getId());
 
-            WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
-                    .withWrapper(wrapper)
-                    .withWidgets(widgetList)
-                    .withUser(user)
-                    .withResultLimit(resultLimit)
-                    .withTaskKey("DownloadTask_" + id)
+            WorkBookContext workBookContext = WorkBookContext.builder()
+                    .wrapper(wrapper)
+                    .widgets(widgetList)
+                    .user(user)
+                    .resultLimit(resultLimit)
+                    .taskKey("DownloadTask_" + id)
+                    .queryModel("0.4")
                     .build();
 
             ExecutorUtil.submitWorkbookTask(workBookContext, null);

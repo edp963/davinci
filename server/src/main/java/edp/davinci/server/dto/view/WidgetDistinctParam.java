@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,25 +20,17 @@
 package edp.davinci.server.dto.view;
 
 import lombok.Data;
+import lombok.ToString;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-
-import edp.davinci.server.model.SqlVariable;
-
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
-public class ViewExecuteSql {
-    @Min(value = 1L, message = "Invalid Source Id")
-    private Long sourceId;
-
-    @NotBlank(message = "sql cannot be EMPTY")
-    private String sql;
-
-    private List<SqlVariable> variables;
-
-    private int limit = 0;
-    private int pageNo = -1;
-    private int pageSize = -1;
+@ToString(callSuper = true)
+@NotNull(message = "Distinct parameter cannot be null")
+public class WidgetDistinctParam extends WidgetQueryParam {
+    @NotEmpty(message = "Distinct column cannot be empty")
+    private List<String> columns;
+    private final String type = "distinct";
 }

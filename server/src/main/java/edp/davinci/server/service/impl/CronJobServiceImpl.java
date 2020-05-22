@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 
 import edp.davinci.core.dao.entity.CronJob;
-import edp.davinci.server.commons.Constants;
+import static edp.davinci.commons.Constants.*;
 import edp.davinci.server.component.excel.ExecutorUtil;
 import edp.davinci.server.component.quartz.QuartzJobExecutor;
 import edp.davinci.server.dao.CronJobExtendMapper;
@@ -345,7 +345,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	public void startAllJobs() {
 		List<CronJob> jobList = cronJobExtendMapper.getStartedJobs();
 		jobList.forEach((cronJob) -> {
-			String key = entity.getSource().toUpperCase() + Constants.UNDERLINE + cronJob.getId() + Constants.UNDERLINE
+			String key = entity.getSource().toUpperCase() + UNDERLINE + cronJob.getId() + UNDERLINE
 					+ cronJob.getProjectId();
 			if (LockFactory.getLock(key, 300, LockType.REDIS).getLock()) {
 				try {

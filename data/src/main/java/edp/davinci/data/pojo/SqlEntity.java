@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,25 +17,29 @@
  *
  */
 
-package edp.davinci.server.dto.view;
+package edp.davinci.data.pojo;
+
+import java.util.List;
+import java.util.Map;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-
 @Data
-public class Aggregator {
+public class SqlEntity {
+    
+    private String sql;
 
-    @NotBlank(message = "Invalid aggregator column")
-    private String column;
+    private Map<String, Object> queryParams;
 
-    private String func;
+    private Map<String, List<String>> authParams;
 
-    public Aggregator() {
+    public SqlEntity() {
+
     }
 
-    public Aggregator(String column, String func) {
-        this.column = column;
-        this.func = func;
+    public SqlEntity(String sql, Map<String, Object> queryParams, Map<String, List<String>> authParams) {
+        this.sql = sql;
+        this.queryParams = queryParams;
+        this.authParams = authParams;
     }
 }

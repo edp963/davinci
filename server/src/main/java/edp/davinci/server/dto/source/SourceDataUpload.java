@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ public class SourceDataUpload {
     @Min(value = (short) 0, message = "Invalid mode")
     @Max(value = (short) 3, message = "Invalid mode")
     private Short mode = UploadModeEnum.NEW.getMode();
-
 
     public List<Map<String, String>> getIndexList() {
         List<Map<String, String>> indexs = null;

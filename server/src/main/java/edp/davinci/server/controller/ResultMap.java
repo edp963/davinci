@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 package edp.davinci.server.controller;
 
+import edp.davinci.server.commons.Constants;
 import edp.davinci.server.enums.HttpCodeEnum;
 import edp.davinci.server.util.TokenUtils;
 
@@ -26,7 +27,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static edp.davinci.server.commons.Constants.*;
+import static edp.davinci.commons.Constants.*;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,7 +71,7 @@ public class ResultMap extends HashMap<String, Object> {
     }
 
     public ResultMap successAndRefreshToken(HttpServletRequest request) {
-        String token = request.getHeader(TOKEN_HEADER_STRING);
+        String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
         this.code = HttpCodeEnum.OK.getCode();
         this.header = new HashMap<>();
         this.header.put("code", this.code);
@@ -119,7 +120,7 @@ public class ResultMap extends HashMap<String, Object> {
         this.header.put("code", code);
         this.header.put("msg", HttpCodeEnum.FAIL.getMessage());
 
-        String token = request.getHeader(TOKEN_HEADER_STRING);
+        String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
 
         if (!StringUtils.isEmpty(token)) {
             this.header.put("token", this.tokenUtils.refreshToken(token));
@@ -135,7 +136,7 @@ public class ResultMap extends HashMap<String, Object> {
         this.header.put("code", code);
         this.header.put("msg", httpCodeEnum.getMessage());
 
-        String token = request.getHeader(TOKEN_HEADER_STRING);
+        String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
         if (!StringUtils.isEmpty(token)) {
             this.header.put("token", this.tokenUtils.refreshToken(token));
         }

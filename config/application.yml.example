@@ -49,22 +49,21 @@ source:
   query-timeout: 600000
   validationQueryTimeout: 30000
 
-  enable-query-log: false
+  enable-query-log: true
   result-limit: 1000000
 
   types: jdbc,cvs
-  query-model: provider
+  query-model: 0.4
 
 aggregator:
   name: h2
-  url: jdbc:h2:file:~/h2/data/davinci;DB_CLOSE_DELAY=-1;COMPRESS=true;TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0
+  url: jdbc:h2:file:~/h2/data/davinci;DB_CLOSE_DELAY=-1;COMPRESS=true;TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=true;DATABASE_TO_UPPER=false
   username:  
   password: 
-  keyword_prefix: '`' 
-  keyword_suffix: '`'
+  keyword_prefix: '"' 
+  keyword_suffix: '"'
 
   result-limit: 300000
-  types: jdbc
 
 spring:
   mvc:

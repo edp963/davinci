@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,16 +19,15 @@
 
 package edp.davinci.server.model;
 
-import lombok.Data;
-
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
+import lombok.Data;
 
 @Data
 public class DataUploadEntity {
 
-    private Set<QueryColumn> headers;
+    private List<QueryColumn> headers;
 
     private List<Map<String, Object>> values;
 }

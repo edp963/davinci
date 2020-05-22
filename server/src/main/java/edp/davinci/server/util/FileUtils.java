@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,17 +17,22 @@
  *
  */
 
-package edp.core.utils;
+package edp.davinci.server.util;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.core.enums.ActionEnum;
-import edp.davinci.core.enums.FileTypeEnum;
-import edp.davinci.service.excel.MsgWrapper;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.component.excel.MsgWrapper;
+import edp.davinci.server.enums.ActionEnum;
+import edp.davinci.server.enums.FileTypeEnum;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+
+import static edp.davinci.commons.Constants.*;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -35,8 +40,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import static edp.core.consts.Consts.*;
 
 
 @Component
@@ -53,12 +56,12 @@ public class FileUtils {
      * @return
      */
     public boolean isImage(MultipartFile file) {
-        Matcher matcher = PATTERN_IMG_FROMAT.matcher(file.getOriginalFilename());
+        Matcher matcher = Constants.PATTERN_IMG_FROMAT.matcher(file.getOriginalFilename());
         return matcher.find();
     }
 
     public boolean isImage(File file) {
-        Matcher matcher = PATTERN_IMG_FROMAT.matcher(file.getName());
+        Matcher matcher = Constants.PATTERN_IMG_FROMAT.matcher(file.getName());
         return matcher.find();
     }
 
@@ -123,36 +126,34 @@ public class FileUtils {
      * @param response
      */
     public void download(String filePath, HttpServletResponse response) {
-        if (!StringUtils.isEmpty(filePath)) {
-            File file = null;
-            if (!filePath.startsWith(fileBasePath)) {
-                file = new File(fileBasePath + filePath);
-            } else {
-                file = new File(filePath);
-            }
-            if (file.exists()) {
-                byte[] buffer = null;
-                InputStream is = null;
-                OutputStream os = null;
-                try {
-                    is = new BufferedInputStream(new FileInputStream(filePath));
-                    buffer = new byte[is.available()];
-                    is.read(buffer);
-                    response.reset();
-                    response.addHeader("Content-Disposition", "attachment;filename=" + new String(file.getName().getBytes(), "UTF-8"));
-                    response.addHeader("Content-Length", EMPTY + file.length());
-                    os = new BufferedOutputStream(response.getOutputStream());
-                    response.setContentType("application/octet-stream;charset=UTF-8");
-                    os.write(buffer);
-                    os.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    closeCloseable(os);
-                    closeCloseable(is);
-                    remove(filePath);
-                }
-            }
+        if (StringUtils.isEmpty(filePath)) {
+            return;
+        }
+        
+		File file = null;
+		if (!filePath.startsWith(fileBasePath)) {
+			file = new File(fileBasePath + filePath);
+		} else {
+			file = new File(filePath);
+		}
+		if (file.exists()) {
+			byte[] buffer = null;
+			try (InputStream is = new BufferedInputStream(new FileInputStream(filePath));
+					OutputStream os = new BufferedOutputStream(response.getOutputStream());) {
+				buffer = new byte[is.available()];
+				is.read(buffer);
+				response.reset();
+				response.addHeader("Content-Disposition",
+						"attachment;filename=" + new String(file.getName().getBytes(), "UTF-8"));
+				response.addHeader("Content-Length", EMPTY + file.length());
+				response.setContentType("application/octet-stream;charset=UTF-8");
+				os.write(buffer);
+				os.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				remove(filePath);
+			}
         }
     }
 
@@ -182,15 +183,14 @@ public class FileUtils {
      */
     public static void deleteDir(File dir) {
 
-        if (dir.isFile() || dir.list().length == 0) {
-            dir.delete();
-        }
-        else {
-            for (File f : dir.listFiles()) {
-                deleteDir(f);
-            }
-            dir.delete();
-        }
+		if (dir.isFile() || dir.list().length == 0) {
+			dir.delete();
+		} else {
+			for (File f : dir.listFiles()) {
+				deleteDir(f);
+			}
+			dir.delete();
+		}
     }
 
     /**
@@ -213,36 +213,23 @@ public class FileUtils {
      * @param targetFile
      */
     public static void zipFile(List<File> files, File targetFile) {
-
-        byte[] bytes = new byte[1024];
-        ZipOutputStream out = null;
-        FileInputStream in = null;
-        try {
-            out = new ZipOutputStream(new FileOutputStream(targetFile));
-            for (File file : files) {
-                try {
-                    in = new FileInputStream(file);
-                    out.putNextEntry(new ZipEntry(file.getName()));
-                    int length;
-                    while ((length = in.read(bytes)) > 0) {
-                        out.write(bytes, 0, length);
-                    }
-                    out.closeEntry();
-                    closeCloseable(in);
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-                finally {
-                    closeCloseable(in);
-                }
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }finally {
-            closeCloseable(out);
-        }
+		byte[] bytes = new byte[1024];
+		try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(targetFile));) {
+			for (File file : files) {
+				try (FileInputStream in = new FileInputStream(file);) {
+					out.putNextEntry(new ZipEntry(file.getName()));
+					int length;
+					while ((length = in.read(bytes)) > 0) {
+						out.write(bytes, 0, length);
+					}
+					out.closeEntry();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
 
     public String getFilePath(FileTypeEnum type, MsgWrapper msgWrapper) {
@@ -251,11 +238,11 @@ public class FileUtils {
             sb.append(File.separator);
         }
         if (msgWrapper.getAction() == ActionEnum.DOWNLOAD) {
-            sb.append(DIR_DOWNLOAD);
+            sb.append(Constants.DIR_DOWNLOAD);
         } else if (msgWrapper.getAction() == ActionEnum.SHAREDOWNLOAD) {
-            sb.append(DIR_SHARE_DOWNLOAD);
+            sb.append(Constants.DIR_SHARE_DOWNLOAD);
         } else if (msgWrapper.getAction() == ActionEnum.MAIL) {
-            sb.append(DIR_EMAIL);
+            sb.append(Constants.DIR_EMAIL);
         }
         sb.append(new SimpleDateFormat("yyyyMMdd").format(new Date())).append(File.separator);
         sb.append(type.getType()).append(File.separator);
@@ -269,7 +256,7 @@ public class FileUtils {
             sb.append(msgWrapper.getXUUID());
         }
         sb.append(UNDERLINE).append(System.currentTimeMillis()).append(type.getFormat());
-        return sb.toString().replaceAll(File.separator + "{2,}", File.separator);
+        return new File(sb.toString()).getAbsolutePath();
     }
 
     public static boolean delete(String filePath) {
@@ -278,16 +265,5 @@ public class FileUtils {
             return file.delete();
         }
         return false;
-    }
-    
-    public static void closeCloseable(Closeable c) {
-        if(c != null) {
-            try {
-                c.close();
-            }
-            catch (IOException e) {
-                // ignore
-            }
-        }
     }
 }

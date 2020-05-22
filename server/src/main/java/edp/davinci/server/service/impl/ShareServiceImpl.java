@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.share.*;
 import edp.davinci.server.dto.user.UserLogin;
-import edp.davinci.server.dto.view.DistinctParam;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.WidgetDistinctParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.view.ViewWithProjectAndSource;
 import edp.davinci.server.dto.view.ViewWithSource;
 import edp.davinci.server.enums.HttpCodeEnum;
@@ -55,7 +55,7 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static edp.davinci.server.commons.Constants.EMPTY;
+import static edp.davinci.commons.Constants.*;
 
 import java.io.File;
 import java.sql.SQLException;
@@ -126,7 +126,7 @@ public class ShareServiceImpl implements ShareService {
 
         User loginUser = userService.userLogin(userLogin);
         if (null == loginUser) {
-            throw new NotFoundException("user is not found");
+            throw new NotFoundException("User is not found");
         }
 
         Long shareUserId = Long.parseLong(tokenInfos[1]);
@@ -156,7 +156,7 @@ public class ShareServiceImpl implements ShareService {
 
         //是否激活
         if (!loginUser.getActive()) {
-            throw new ServerException("this user is not active");
+            throw new ServerException("This user is not active");
         }
 
         return loginUser;
@@ -179,7 +179,7 @@ public class ShareServiceImpl implements ShareService {
         ShareWidget shareWidget = widgetMapper.getShareWidgetById(shareInfo.getShareId());
 
         if (null == shareWidget) {
-            throw new NotFoundException("widget not found");
+            throw new NotFoundException("Widget not found");
         }
 
         String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
@@ -203,7 +203,7 @@ public class ShareServiceImpl implements ShareService {
         Long displayId = shareInfo.getShareId();
         Display display = displayMapper.getById(displayId);
         if (null == display) {
-            throw new ServerException("display is not found");
+            throw new ServerException("Display is not found");
         }
 
         ShareDisplay shareDisplay = new ShareDisplay();
@@ -274,7 +274,7 @@ public class ShareServiceImpl implements ShareService {
         Dashboard dashboard = dashboardMapper.getById(dashboardId);
 
         if (null == dashboard) {
-            throw new NotFoundException("dashboard is not found");
+            throw new NotFoundException("Dashboard is not found");
         }
 
         ShareDashboard shareDashboard = new ShareDashboard();
@@ -304,7 +304,7 @@ public class ShareServiceImpl implements ShareService {
         if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
             User tokenUser = userMapper.selectByUsername(shareInfo.getSharedUserName());
             if (tokenUser == null || !tokenUser.getId().equals(user.getId())) {
-                throw new ForbiddenExecption("ERROR Permission denied");
+                throw new ForbiddenExecption("Error permission denied");
             }
         }
     }
@@ -318,7 +318,7 @@ public class ShareServiceImpl implements ShareService {
      * @return
      */
     @Override
-    public Paging<Map<String, Object>> getShareData(String token, ViewExecuteParam executeParam, User user)
+    public Paging<Map<String, Object>> getShareData(String token, WidgetQueryParam executeParam, User user)
             throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException {
         ShareInfo shareInfo = getShareInfo(token, user);
         verifyShareUser(user, shareInfo);
@@ -328,8 +328,8 @@ public class ShareServiceImpl implements ShareService {
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareInfo.getShareUser(), false);
         boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
 
-        Paging paginate = viewService.getPagingData(maintainer, viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
-        return paginate;
+        Paging paging = viewService.getDataWithQueryColumns(maintainer, viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
+        return paging;
     }
 
 
@@ -342,7 +342,7 @@ public class ShareServiceImpl implements ShareService {
      * @return
      */
     @Override
-    public String generationShareDataCsv(ViewExecuteParam executeParam, User user, String token) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
+    public String generationShareDataCsv(WidgetQueryParam executeParam, User user, String token) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
         String filePath = null;
         ShareInfo shareInfo = getShareInfo(token, user);
         verifyShareUser(user, shareInfo);
@@ -352,22 +352,22 @@ public class ShareServiceImpl implements ShareService {
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareInfo.getShareUser());
 
         if (!projectPermission.getDownloadPermission()) {
-            throw new ForbiddenExecption("ERROR Permission denied");
+            throw new ForbiddenExecption("Error permission denied");
         }
 
         executeParam.setLimit(-1);
         executeParam.setPageSize(-1);
         executeParam.setPageNo(-1);
 
-        PagingWithQueryColumns paginate = null;
+        PagingWithQueryColumns paging = null;
         try {
             boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
-            paginate = viewService.getPagingData(maintainer, viewWithSource, executeParam, shareInfo.getShareUser());
-        } catch (SQLException e) {
-            e.printStackTrace();
+            paging = viewService.getDataWithQueryColumns(maintainer, viewWithSource, executeParam, shareInfo.getShareUser());
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new ServerException(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
-        List<QueryColumn> columns = paginate.getColumns();
+        List<QueryColumn> columns = paging.getColumns();
 
         if (!CollectionUtils.isEmpty(columns)) {
             String csvPath = fileUtils.fileBasePath + File.separator + "csv";
@@ -377,7 +377,7 @@ public class ShareServiceImpl implements ShareService {
             }
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
             String csvName = viewWithSource.getName() + "_" + sdf.format(new Date());
-            String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, paginate.getResultList());
+            String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, paging.getResultList());
             filePath = fileFullPath.replace(fileUtils.fileBasePath, EMPTY);
         }
 
@@ -395,7 +395,7 @@ public class ShareServiceImpl implements ShareService {
      * @return
      */
     @Override
-    public ResultMap getDistinctValue(String token, Long viewId, DistinctParam param, User user, HttpServletRequest request) {
+    public ResultMap getDistinctValue(String token, Long viewId, WidgetDistinctParam param, User user, HttpServletRequest request) {
         List<Map<String, Object>> list = null;
         try {
 
@@ -404,19 +404,12 @@ public class ShareServiceImpl implements ShareService {
 
             ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
             if (null == viewWithProjectAndSource) {
-                log.info("view (:{}) not found", viewId);
-                return resultFail(user, request, null).message("view not found");
-            }
-
-            ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareInfo.getShareUser(), false);
-
-            if (!projectService.allowGetData(projectDetail, shareInfo.getShareUser())) {
-                return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
+                log.info("View({}) not found", viewId);
+                return resultFail(user, request, null).message("View not found");
             }
 
             try {
-                boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
-                list = viewService.getDistinctValueData(maintainer, viewWithProjectAndSource, param, shareInfo.getShareUser());
+                list = viewService.getDistinctValue(viewId, param, shareInfo.getShareUser());
             } catch (ServerException e) {
                 return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
             }
@@ -557,4 +550,3 @@ public class ShareServiceImpl implements ShareService {
         }
     }
 }
-

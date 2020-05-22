@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 
-import edp.davinci.server.dto.view.Param;
+import edp.davinci.data.pojo.Param;
 import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.server.enums.NumericUnitEnum;
-import edp.davinci.server.enums.SqlColumnEnum;
-import edp.davinci.server.enums.SqlTypeEnum;
+import edp.davinci.server.enums.SqlColumnMappingEnum;
+import edp.davinci.server.enums.SqlColumnTypeEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.DataUploadEntity;
 import edp.davinci.server.model.ExcelHeader;
@@ -55,7 +55,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static edp.davinci.server.commons.Constants.*;
+import static edp.davinci.commons.Constants.*;
 import static edp.davinci.server.util.ScriptUtiils.formatHeader;
 import static edp.davinci.server.util.ScriptUtiils.getCellValueScriptEngine;
 
@@ -78,7 +78,7 @@ public class ExcelUtils {
             throw new ServerException("Invalid excel file");
         }
 
-        DataUploadEntity dataUploadEntity = null;
+        DataUploadEntity dataUploadEntity = new DataUploadEntity();
 
         Workbook workbook = null;
 
@@ -92,20 +92,21 @@ public class ExcelUtils {
             if (sheet.getLastRowNum() < 1) {
                 throw new ServerException("EMPTY excel");
             }
+            
             //列
             Row headerRow = sheet.getRow(0);
             Row typeRow = sheet.getRow(1);
 
             List<Map<String, Object>> values = null;
-            Set<QueryColumn> headers = new HashSet<>();
+            List<QueryColumn> headers = new ArrayList<>();
             for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                 try {
                     headers.add(new QueryColumn(headerRow.getCell(i).getStringCellValue(),
-                            SqlUtils.formatSqlType(typeRow.getCell(i).getStringCellValue())));
+                            DataUtils.formatSqlType(typeRow.getCell(i).getStringCellValue())));
                 } catch (Exception e) {
                     e.printStackTrace();
                     if (e instanceof NullPointerException) {
-                        throw new ServerException("Unknown Type");
+                        throw new ServerException("Unknown type");
                     }
                     throw new ServerException(e.getMessage());
                 }
@@ -117,12 +118,11 @@ public class ExcelUtils {
                 Map<String, Object> item = new HashMap<>();
                 for (int j = 0; j < headerRow.getLastCellNum(); j++) {
                     item.put(headerRow.getCell(j).getStringCellValue(),
-                            SqlColumnEnum.formatValue(typeRow.getCell(j).getStringCellValue(), row.getCell(j).getStringCellValue()));
+                            SqlColumnMappingEnum.formatValue(typeRow.getCell(j).getStringCellValue(), row.getCell(j).getStringCellValue()));
                 }
                 values.add(item);
             }
 
-            dataUploadEntity = new DataUploadEntity();
             dataUploadEntity.setHeaders(headers);
             dataUploadEntity.setValues(values);
 
@@ -317,7 +317,7 @@ public class ExcelUtils {
             for (int i = 0; i < columns.size(); i++) {
                 String type = columns.get(i).getType();
                 if (isTable) {
-                    type = SqlTypeEnum.VARCHAR.getName();
+                    type = SqlColumnTypeEnum.VARCHAR.getName();
                 }
                 row.createCell(i).setCellValue(type);
             }
@@ -421,12 +421,12 @@ public class ExcelUtils {
                 fmtSB.append(fieldCurrency.getPrefix());
             }
 
-            fmtSB.append(OCTOTHORPE);
+            fmtSB.append(POUND_SIGN);
 
             if (fieldNumeric.isUseThousandSeparator() &&
                     fieldNumeric.getUnit() != NumericUnitEnum.TenThousand &&
                     fieldNumeric.getUnit() != NumericUnitEnum.OneHundredMillion) {
-                fmtSB.append(COMMA).append(makeNTimesString(2, OCTOTHORPE)).append("0");
+                fmtSB.append(COMMA).append(makeNTimesString(2, POUND_SIGN)).append("0");
             }
 
             if (fieldNumeric.getUnit() != NumericUnitEnum.TenThousand &&

@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ package edp.davinci.server.service.impl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import edp.davinci.server.commons.Constants;
+import static edp.davinci.commons.Constants.*;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.server.enums.LockType;
@@ -44,8 +44,7 @@ public abstract class BaseEntityService {
 
 	protected BaseLock getLock(CheckEntityEnum entity, String name, Long domainId) {
 
-		return LockFactory.getLock(
-				entity.getSource().toUpperCase() + Constants.AT_SYMBOL + name + Constants.AT_SYMBOL + domainId, 5,
+		return LockFactory.getLock(entity.getSource().toUpperCase() + AT_SIGN + name + AT_SIGN + domainId, 5,
 				LockType.REDIS);
 	}
 

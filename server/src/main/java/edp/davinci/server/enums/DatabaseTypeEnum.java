@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 package edp.davinci.server.enums;
 
-import edp.davinci.server.commons.Constants;
+import edp.davinci.data.commons.Constants;
 import edp.davinci.server.exception.SourceException;
 
 public enum DatabaseTypeEnum {
@@ -30,7 +30,7 @@ public enum DatabaseTypeEnum {
 
     SQLSERVER("sqlserver", "sqlserver", "com.microsoft.sqlserver.jdbc.SQLServerDriver", "\"", "\"", "\"", "\""),
 
-    H2("h2", "h2", "org.h2.Driver", "`", "`", "\"", "\""),
+    H2("h2", "h2", "org.h2.Driver", "\"", "\"", "\"", "\""),
 
     PHOENIX("phoenix", "hbase phoenix", "org.apache.phoenix.jdbc.PhoenixDriver", "", "", "\"", "\""),
 
@@ -54,7 +54,6 @@ public enum DatabaseTypeEnum {
 
     IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver", "", "", "'", "'");
 
-
     private String feature;
     private String desc;
     private String driver;
@@ -76,7 +75,7 @@ public enum DatabaseTypeEnum {
     public static DatabaseTypeEnum urlOf(String jdbcUrl) throws SourceException {
         String url = jdbcUrl.toLowerCase().trim();
         for (DatabaseTypeEnum dataTypeEnum : values()) {
-            if (url.startsWith(String.format(Constants.JDBC_PREFIX_FORMATER, dataTypeEnum.feature))) {
+            if (url.startsWith(String.format(Constants.JDBC_URL_PREFIX_FORMATER, dataTypeEnum.feature))) {
                 return dataTypeEnum;
             }
         }

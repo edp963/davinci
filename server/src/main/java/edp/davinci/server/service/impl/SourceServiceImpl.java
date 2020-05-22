@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,15 +22,11 @@ package edp.davinci.server.service.impl;
 import static edp.davinci.server.commons.Constants.DAVINCI_TOPIC_CHANNEL;
 import static edp.davinci.server.commons.Constants.JDBC_DATASOURCE_DEFAULT_VERSION;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+
+import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,18 +40,24 @@ import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
-import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Source;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.View;
+import edp.davinci.data.pojo.DatabaseType;
+import edp.davinci.data.pojo.SourceConfig;
+import edp.davinci.data.provider.DataProviderFactory;
+import edp.davinci.data.runner.LoadSupportDatabaseRunner;
+import edp.davinci.data.source.JdbcDataSource;
+import edp.davinci.data.util.JdbcSourceUtils;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.component.jdbc.JdbcDataSource;
 import edp.davinci.server.dao.SourceExtendMapper;
 import edp.davinci.server.dao.ViewExtendMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.source.DbBaseInfo;
-import edp.davinci.server.dto.source.SourceConfig;
 import edp.davinci.server.dto.source.SourceCreate;
 import edp.davinci.server.dto.source.SourceDataUpload;
 import edp.davinci.server.dto.source.SourceInfo;
@@ -73,25 +75,17 @@ import edp.davinci.server.exception.SourceException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.DBTables;
 import edp.davinci.server.model.DataUploadEntity;
-import edp.davinci.server.model.JdbcSourceInfo;
 import edp.davinci.server.model.QueryColumn;
 import edp.davinci.server.model.RedisMessageEntity;
 import edp.davinci.server.model.TableInfo;
-import edp.davinci.core.dao.entity.User;
-import edp.davinci.core.dao.entity.View;
-import edp.davinci.data.pojo.DatabaseType;
-import edp.davinci.data.provider.DataProviderFactory;
-import edp.davinci.data.runner.LoadSupportDatabaseRunner;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.SourceService;
 import edp.davinci.server.util.BaseLock;
-import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.CsvUtils;
 import edp.davinci.server.util.ExcelUtils;
 import edp.davinci.server.util.FileUtils;
 import edp.davinci.server.util.RedisUtils;
-import edp.davinci.server.util.SourceUtils;
-import edp.davinci.server.util.SqlUtils;
+import edp.davinci.server.util.DataUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -104,21 +98,18 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	private SourceExtendMapper sourceExtendMapper;
 
 	@Autowired
-	private SqlUtils sqlUtils;
-
-	@Autowired
 	private ViewExtendMapper viewMapper;
 
 	@Autowired
 	private ProjectService projectService;
 
 	@Autowired
-	private JdbcDataSource jdbcDataSource;
+	JdbcDataSource jdbcDataSource;
 
 	@Autowired
 	private RedisUtils redisUtils;
 	
-    @Value("${source.query-model:default}")
+    @Value("${source.query-model:0.3}")
     private String queryModel;
 	
 	private static final CheckEntityEnum entity = CheckEntityEnum.SOURCE;
@@ -200,7 +191,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	@Transactional
 	public Source createSource(SourceCreate sourceCreate, User user)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
-		
+
 		Long projectId = sourceCreate.getProjectId();
 		checkWritePermission(entity, projectId, user, "create");
 
@@ -220,14 +211,8 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 			SourceConfig config = sourceCreate.getConfig();
 			
-			if (queryModel.equals("provider")) {
-				if (!testConnectionByProvider(config, user)) {
-					throw new ServerException("Test source connection fail");
-				}
-			} else {
-				if (!testConnection(config)) {
-					throw new ServerException("Test source connection fail");
-				}
+			if (!testConnection(config, user)) {
+				throw new ServerException("Test source connection fail");
 			}
 			
 			Source source = new Source();
@@ -243,7 +228,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			releaseLock(lock);
 		}
 	}
-	
+
 	@Transactional
 	private void insertSource(Source source) {
 		if (sourceExtendMapper.insert(source) != 1) {
@@ -264,26 +249,13 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		return source;
 	}
 	
-	private boolean testConnectionByProvider(SourceConfig config, User user) {
+	private boolean testConnection(SourceConfig config, User user) {
 		Source source = new Source();
 		source.setConfig(JSONUtils.toString(config));
-		//TODO 等前端添加了type参数以后删除
 		if (StringUtils.isNull(config.getType())) {
 			config.setType("jdbc");
 		}
 		return DataProviderFactory.getProvider(config.getType()).test(source, user);
-	}
-
-	private boolean testConnection(SourceConfig config) {
-		return sqlUtils.init(
-                        config.getUrl(),
-                        config.getUsername(),
-                        config.getPassword(),
-                        config.getVersion(),
-                        config.getProperties(),
-                        config.isExt(),
-                        null
-                ).testConnection();
 	}
 
 	/**
@@ -320,16 +292,15 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 			String sourceCopyConfig = sourceCopy.getConfig();
 			
-			// 释放失效数据源
-			String copyKey = SourceUtils.getSourceUID(
+			String oldKey = JdbcSourceUtils.getSourceUID(
 					source.getName(),
-					SourceUtils.getUrl(sourceCopyConfig), 
-					SourceUtils.getUsername(sourceCopyConfig),
-					SourceUtils.getPassword(sourceCopyConfig), 
-					SourceUtils.getVersion(sourceCopyConfig), 
-					SourceUtils.isExt(sourceCopyConfig));
+					JdbcSourceUtils.getUrl(sourceCopyConfig), 
+					JdbcSourceUtils.getUsername(sourceCopyConfig),
+					JdbcSourceUtils.getPassword(sourceCopyConfig), 
+					JdbcSourceUtils.getVersion(sourceCopyConfig), 
+					JdbcSourceUtils.isExt(sourceCopyConfig));
 			
-			String newKey = SourceUtils.getSourceUID(
+			String newKey = JdbcSourceUtils.getSourceUID(
 					sourceInfo.getName(),
 					config.getUrl(), 
 					config.getUsername(), 
@@ -337,10 +308,10 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 					config.getVersion(), 
 					config.isExt());
 			
-			if (!newKey.equals(copyKey)) {
+			// 释放失效数据源
+			if (!newKey.equals(oldKey)) {
 				releaseSource(sourceCopy);
-				// 测试连接
-				if (!testConnection(config)) {
+				if (!testConnection(config, user)) {
 					throw new ServerException("Test source connection fail");
 				}
 			}
@@ -406,32 +377,23 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	@Override
 	public boolean testSource(SourceConfig config, User user) throws ServerException {
 
-		boolean testConnection = false;
+		boolean b = false;
 		
 		try {
 
-			if (!config.isExt()) {
-				config.setVersion(null);
-			}
-
-			if (StringUtils.isEmpty(config.getVersion())
+			if (!config.isExt() || StringUtils.isEmpty(config.getVersion())
 					|| JDBC_DATASOURCE_DEFAULT_VERSION.equals(config.getVersion())) {
 				config.setVersion(null);
-				config.setExt(false);
 			}
 
-			if (queryModel.equals("provider")) {
-				testConnection = testConnectionByProvider(config, user);
-			}else {
-				testConnection = testConnection(config);
-			}
+			b = testConnection(config, user);
 
 		} catch (SourceException e) {
 			log.error(e.getMessage(), e);
 			throw new ServerException(e.getMessage());
 		}
 
-		if (!testConnection) {
+		if (!b) {
 			throw new ServerException("Test source connection fail");
 		}
 
@@ -439,7 +401,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	}
 
 	/**
-	 * 生成csv对应的表结构
+	 * 校验csv对应的表结构
 	 *
 	 * @param sourceId
 	 * @param uploadMeta
@@ -459,7 +421,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		}
 
 		try {
-			boolean tableIsExist = sqlUtils.init(source).tableIsExist(uploadMeta.getTableName());
+			boolean tableIsExist = DataUtils.tableIsExist(source, uploadMeta.getTableName());
 			if (uploadMeta.getMode() == UploadModeEnum.NEW.getMode()) {
 				if (tableIsExist) {
 					throw new ServerException("Table " + uploadMeta.getTableName() + " is already exist");
@@ -499,7 +461,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			throw new ServerException("Unsupported file format");
 		}
 
-		// 校验文件是否csv文件
+		// 校验文件是否是csv文件
 		if (type.equals(FileTypeEnum.CSV.getType()) && !FileUtils.isCsv(file)) {
 			throw new ServerException("Please upload csv file");
 		}
@@ -509,7 +471,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		}
 
 		String config = source.getConfig();
-		String url = SourceUtils.getUrl(config);
+		String url = JdbcSourceUtils.getUrl(config);
 		DatabaseTypeEnum dataTypeEnum = DatabaseTypeEnum.urlOf(url);
 		if (dataTypeEnum != DatabaseTypeEnum.MYSQL) {
 			log.error("Unsupported data source, url:{}", url);
@@ -526,12 +488,13 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 				dataUploadEntity = ExcelUtils.parseExcelWithFirstAsHeader(file);
 			}
 
-			if (null != dataUploadEntity && !CollectionUtils.isEmpty(dataUploadEntity.getHeaders())) {
+			if (!CollectionUtils.isEmpty(dataUploadEntity.getHeaders())) {
 				// 建表
-				createTable(dataUploadEntity.getHeaders(), sourceDataUpload, source);
+				createTable(dataUploadEntity.getHeaders(), sourceDataUpload, source, user);
 				// 传输数据
-				insertData(dataUploadEntity.getHeaders(), dataUploadEntity.getValues(), sourceDataUpload, source);
+				insertData(dataUploadEntity.getHeaders(), dataUploadEntity.getValues(), sourceDataUpload, source, user);
 			}
+		
 		} catch (Exception e) {
 			throw new ServerException(e.getMessage());
 		}
@@ -539,19 +502,19 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		return true;
 	}
 	
-	private <T> T handleHiddenPermission(T obj, ProjectDetail projectDetail, User user, Long sourceId,
-			String operation) {
+	private <T> T handleHiddenPermission(T obj, ProjectDetail projectDetail, Long sourceId, String operation,
+			User user) {
 		ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 		if (projectPermission.getSourcePermission() != UserPermissionEnum.HIDDEN.getPermission()) {
 			return obj;
 		}
-		
+
 		log.info("User({}) have not permission to get {} from source({}", user.getId(), operation, sourceId);
 		return null;
 	}
 	
 	/**
-	 * 获取Source 的 db
+	 * 获取source的database
 	 *
 	 * @param id
 	 * @param user
@@ -570,25 +533,21 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		try {
 
-			if (queryModel.equals("provider")) {
-				dbList = sqlUtils.getDatabaseByProvider(source, user);
-			} else {
-				dbList = sqlUtils.init(source).getDatabases();
-			}
+			dbList = DataUtils.getDatabase(source, user);
 
 		} catch (SourceException e) {
 			throw new ServerException(e.getMessage());
 		}
 
 		if (null != dbList) {
-			dbList = handleHiddenPermission(dbList, projectDetail, user, source.getId(), "databases");
+			dbList = handleHiddenPermission(dbList, projectDetail, source.getId(), "databases", user);
 		}
 
 		return dbList;
 	}
 
 	/**
-	 * 获取Source的data tables
+	 * 获取source的tables
 	 *
 	 * @param id
 	 * @param user
@@ -605,19 +564,15 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		List<QueryColumn> tableList = null;
 		try {
-		
-			if (queryModel.equals("provider")) {
-				tableList = sqlUtils.getTableListByProvider(source, user, dbName);
-			}else {
-				tableList = sqlUtils.init(source).getTableList(dbName);
-			}
-		
+
+			tableList = DataUtils.getTableList(source, dbName, user);
+
 		} catch (SourceException e) {
 			throw new ServerException(e.getMessage());
 		}
 
 		if (null != tableList) {
-			handleHiddenPermission(tableList, projectDetail, user, source.getId(), "tables");
+			handleHiddenPermission(tableList, projectDetail, source.getId(), "tables", user);
 		}
 
 		if (null != tableList) {
@@ -628,7 +583,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	}
 
 	/**
-	 * 获取Source的data tables
+	 * 获取source的table
 	 *
 	 * @param id
 	 * @param user
@@ -643,19 +598,15 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		TableInfo tableInfo = null;
 		try {
-			
-			if (queryModel.equals("provider")) {
-				tableInfo = sqlUtils.getTableInfoByProvider(source, user, dbName, tableName);
-			}else {
-				tableInfo = sqlUtils.init(source).getTableInfo(dbName, tableName);
-			}
-			
+
+			tableInfo = DataUtils.getTableInfo(source, dbName, tableName, user);
+
 		} catch (SourceException e) {
 			throw new ServerException(e.getMessage());
 		}
 
 		if (null != tableInfo) {
-			handleHiddenPermission(tableInfo, projectDetail, user, source.getId(), "table columns");
+			handleHiddenPermission(tableInfo, projectDetail, source.getId(), "table columns", user);
 		}
 
 		return tableInfo;
@@ -675,15 +626,15 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		checkWritePermission(entity, source.getProjectId(), user, "reconnect");
 
 		String config = source.getConfig();
-		if (!(dbBaseInfo.getDbUser().equals(SourceUtils.getUsername(config))
-				&& dbBaseInfo.getDbPassword().equals(SourceUtils.getPassword(config)))) {
+		if (!(dbBaseInfo.getDbUser().equals(JdbcSourceUtils.getUsername(config))
+				&& dbBaseInfo.getDbPassword().equals(JdbcSourceUtils.getPassword(config)))) {
 			log.error("Reconnect source({}) error, username or password is wrong", id);
 			throw new ServerException("username or password is wrong");
 		}
 
 		releaseSource(source);
 
-		return sqlUtils.init(source).testConnection();
+		return DataProviderFactory.getProvider(source.getType()).test(source, user);
 	}
 
 	/**
@@ -693,26 +644,32 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	 */
 	private void releaseSource(Source source) {
 		
+		if (!SourceTypeEnum.JDBC.getType().equalsIgnoreCase(source.getType())
+				&& !SourceTypeEnum.CSV.getType().equalsIgnoreCase(source.getType())) {
+			return;
+		}
+
+		String url = JdbcSourceUtils.getUrl(source.getConfig());
 		String config = source.getConfig();
-		
-		SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
-		String url = SourceUtils.getUrl(config);
-		JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo
-				 .builder()
-				.url(url)
-				.username(SourceUtils.getUsername(config))
-				.password(SourceUtils.getPassword(config))
-				.database(SourceUtils.getDatabase(url))
-				.version(SourceUtils.getVersion(config))
-				.properties(SourceUtils.getProperties(config))
-				.ext(SourceUtils.isExt(config))
-				.name(SourceUtils.getSourceUName(source.getProjectId(), source.getName()))
-				.build();
+
+		JdbcSourceUtils utils = new JdbcSourceUtils(jdbcDataSource);
+		SourceConfig sourceConfig = SourceConfig
+										.builder()
+										.type(source.getType())
+										.url(url)
+										.username(JdbcSourceUtils.getUsername(config))
+										.password(JdbcSourceUtils.getPassword(config))
+										.database(JdbcSourceUtils.getDatabase(url))
+										.version(JdbcSourceUtils.getVersion(config))
+										.properties(JdbcSourceUtils.getProperties(config))
+										.ext(JdbcSourceUtils.isExt(config))
+										.name(JdbcSourceUtils.getSourceUName(source.getProjectId(), source.getName()))
+										.build();
 
 		if (redisUtils.isRedisEnable()) {
-			publishReconnect(JSONUtils.toString(jdbcSourceInfo));
+			publishReconnect(JSONUtils.toString(sourceConfig));
 		} else {
-			sourceUtils.releaseDataSource(jdbcSourceInfo);
+			utils.releaseDataSource(sourceConfig);
 		}
 	}
 
@@ -730,28 +687,26 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	}
 
 	/**
-	 * 建表
+	 * csv数据源建表
 	 *
 	 * @param fileds
 	 * @param sourceDataUpload
 	 * @param source
 	 * @throws ServerException
 	 */
-	private void createTable(Set<QueryColumn> fileds, SourceDataUpload sourceDataUpload, Source source)
+	private void createTable(List<QueryColumn> fileds, SourceDataUpload sourceDataUpload, Source source, User user)
 			throws ServerException {
 
 		if (CollectionUtils.isEmpty(fileds)) {
 			throw new ServerException("There is have not any fileds");
 		}
 
-		SqlUtils sqlUtils = this.sqlUtils.init(source);
-
 		STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
 
 		String sql = null;
 
 		if (sourceDataUpload.getMode() == UploadModeEnum.REPLACE.getMode()) {
-			ST st = stg.getInstanceOf("createTable");
+			ST st = stg.getInstanceOf("create");
 			st.add("tableName", sourceDataUpload.getTableName());
 			st.add("fields", fileds);
 			st.add("primaryKeys", StringUtils.isEmpty(sourceDataUpload.getPrimaryKeys()) ? null
@@ -759,19 +714,18 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			st.add("indexKeys", sourceDataUpload.getIndexList());
 			sql = st.render();
 			String dropSql = "drop table if exists `" + sourceDataUpload.getTableName() + "`";
-			sqlUtils.jdbcTemplate().execute(dropSql);
-			log.info("Drop table sql:{}", SqlUtils.formatSql(dropSql));
-		
+			// drop table first
+			DataProviderFactory.getProvider(source.getType()).execute(source, dropSql, user);
+			log.info("Source({}) drop table sql:{}", source.getId(), edp.davinci.data.util.SqlUtils.formatSql(dropSql));
 		} else {
-			boolean tableIsExist = sqlUtils.tableIsExist(sourceDataUpload.getTableName());
+			boolean tableIsExist = DataUtils.tableIsExist(source, sourceDataUpload.getTableName());
 			if (sourceDataUpload.getMode() == UploadModeEnum.NEW.getMode()) {
 				if (!tableIsExist) {
-					ST st = stg.getInstanceOf("createTable");
+					ST st = stg.getInstanceOf("create");
 					st.add("tableName", sourceDataUpload.getTableName());
 					st.add("fields", fileds);
 					st.add("primaryKeys", sourceDataUpload.getPrimaryKeys());
 					st.add("indexKeys", sourceDataUpload.getIndexList());
-
 					sql = st.render();
 				} else {
 					throw new ServerException("Table " + sourceDataUpload.getTableName() + " is already exist");
@@ -783,114 +737,31 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			}
 		}
 
-		log.info("Create table sql:{}", SqlUtils.formatSql(sql));
-		try {
-			if (!StringUtils.isEmpty(sql)) {
-				sqlUtils.jdbcTemplate().execute(sql);
-			}
-		} catch (Exception e) {
-			throw new ServerException(e.getMessage());
-		}
+		log.info("Source({}) create table sql:{}", source.getId(), edp.davinci.data.util.SqlUtils.formatSql(sql));
+		DataProviderFactory.getProvider(source.getType()).execute(source, sql, user);
 	}
 
 	/**
-	 * 插入数据
+	 * csv数据源插入数据
 	 *
 	 * @param headers
 	 * @param values
 	 * @param sourceDataUpload
 	 * @param source
 	 */
-	private void insertData(Set<QueryColumn> headers, List<Map<String, Object>> values,
-			SourceDataUpload sourceDataUpload, Source source) throws ServerException {
+	private void insertData(List<QueryColumn> headers, List<Map<String, Object>> values,
+			SourceDataUpload sourceDataUpload, Source source, User user) throws ServerException {
 
 		if (CollectionUtils.isEmpty(values)) {
 			return;
 		}
 
-		SqlUtils sqlUtils = this.sqlUtils.init(source);
+		STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
+		ST st = stg.getInstanceOf("insert");
+		st.add("tableName", sourceDataUpload.getTableName());
+		st.add("columns", headers);
+		String sql = st.render();
 
-		try {
-			if (sourceDataUpload.getMode() == UploadModeEnum.REPLACE.getMode()) {
-				// 清空表
-				sqlUtils.jdbcTemplate().execute("Truncate table `" + sourceDataUpload.getTableName() + "`");
-				// 插入数据
-				executeInsert(sourceDataUpload.getTableName(), headers, values, sqlUtils);
-			} else {
-				boolean tableIsExist = sqlUtils.tableIsExist(sourceDataUpload.getTableName());
-				if (tableIsExist) {
-					executeInsert(sourceDataUpload.getTableName(), headers, values, sqlUtils);
-				} else {
-					throw new ServerException("Table " + sourceDataUpload.getTableName() + " is not exist");
-				}
-			}
-		} catch (ServerException e) {
-			throw new ServerException(e.getMessage());
-		}
-
+		DataUtils.batchUpdate(source, sql, headers, values);
 	}
-
-	/**
-	 * 多线程执行插入数据
-	 *
-	 * @param tableName
-	 * @param headers
-	 * @param values
-	 * @param sqlUtils
-	 * @throws ServerException
-	 */
-	private void executeInsert(String tableName, Set<QueryColumn> headers, List<Map<String, Object>> values,
-			SqlUtils sqlUtils) throws ServerException {
-
-		if (!CollectionUtils.isEmpty(values)) {
-			int len = 1000;
-			int totalSize = values.size();
-			int pageSize = len;
-			int totalPage = totalSize / pageSize;
-			if (totalSize % pageSize != 0) {
-				totalPage += 1;
-				if (totalSize < pageSize) {
-					pageSize = values.size();
-				}
-			}
-
-			ExecutorService executorService = Executors.newFixedThreadPool(totalPage > 8 ? 8 : totalPage);
-
-			STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
-			ST st = stg.getInstanceOf("insertData");
-			st.add("tableName", tableName);
-			st.add("columns", headers);
-			String sql = st.render();
-			String md5 = MD5Utils.getMD5(sql, true, 16);
-			log.info("Execute insert start md5:{} sql:{}", md5, SqlUtils.formatSql(sql));
-			
-			List<Future> futures = new ArrayList<>();
-			// 分页批量插入
-			long startTime = System.currentTimeMillis();
-			for (int pageNum = 1; pageNum < totalPage + 1; pageNum++) {
-				int localPageNum = pageNum;
-				int localPageSize = pageSize;
-				Future future = executorService.submit(() -> {
-					int starNum = (localPageNum - 1) * localPageSize;
-					int endNum = localPageNum * localPageSize > totalSize ? (totalSize) : localPageNum * localPageSize;
-					log.info("Execute insert thread-{} : start:{}, end:{}, md5:{}", localPageNum, starNum, endNum, md5);
-					sqlUtils.executeBatch(sql, headers, values.subList(starNum, endNum));
-				});
-				futures.add(future);
-			}
-
-			try {
-				for (Future future : futures) {
-					future.get();
-				}
-				long endTime = System.currentTimeMillis();
-				log.info("Execute insert end md5:{}, cost:{} ms", md5, endTime - startTime);
-			} catch (InterruptedException | ExecutionException e) {
-				throw new ServerException(e.getMessage());
-			} finally {
-				executorService.shutdown();
-			}
-		}
-	}
-
 }

@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,11 +19,41 @@
 
 package edp.davinci.server.service.impl;
 
+import static edp.davinci.commons.Constants.*;
+import static edp.davinci.server.util.ScriptUtiils.getExecuptParamScriptEngine;
+import static edp.davinci.server.util.ScriptUtiils.getViewExecuteParam;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import javax.script.ScriptEngine;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
-import com.alibaba.fastjson.JSONObject;
-
 import edp.davinci.core.dao.entity.CronJob;
+import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.Display;
+import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.excel.ExecutorUtil;
 import edp.davinci.server.component.excel.MsgWrapper;
@@ -32,7 +62,12 @@ import edp.davinci.server.component.excel.WorkBookContext;
 import edp.davinci.server.component.quartz.ScheduleService;
 import edp.davinci.server.component.screenshot.ImageContent;
 import edp.davinci.server.component.screenshot.ScreenshotUtil;
-import edp.davinci.server.dao.*;
+import edp.davinci.server.dao.CronJobExtendMapper;
+import edp.davinci.server.dao.DashboardExtendMapper;
+import edp.davinci.server.dao.DisplayExtendMapper;
+import edp.davinci.server.dao.DisplaySlideExtendMapper;
+import edp.davinci.server.dao.UserExtendMapper;
+import edp.davinci.server.dao.WidgetExtendMapper;
 import edp.davinci.server.dto.cronjob.CronJobConfig;
 import edp.davinci.server.dto.cronjob.CronJobContent;
 import edp.davinci.server.dto.cronjob.ExcelContent;
@@ -40,62 +75,49 @@ import edp.davinci.server.dto.cronjob.MsgMailExcel;
 import edp.davinci.server.dto.dashboard.DashboardTree;
 import edp.davinci.server.dto.dashboard.DashboardWithPortal;
 import edp.davinci.server.dto.project.ProjectDetail;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetWithRelationDashboardId;
-import edp.davinci.server.enums.*;
+import edp.davinci.server.dto.widget.WidgetWithVizId;
+import edp.davinci.server.enums.ActionEnum;
+import edp.davinci.server.enums.CronJobMediaType;
+import edp.davinci.server.enums.FileTypeEnum;
+import edp.davinci.server.enums.LogNameEnum;
+import edp.davinci.server.enums.MailContentTypeEnum;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.model.*;
+import edp.davinci.server.model.MailAttachment;
+import edp.davinci.server.model.MailContent;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ShareService;
-import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.MailUtils;
 import edp.davinci.server.util.ServerUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
-import javax.script.ScriptEngine;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import static edp.davinci.server.commons.Constants.AT_SYMBOL;
-import static edp.davinci.server.commons.Constants.EMPTY;
-import static edp.davinci.server.util.ScriptUtiils.getExecuptParamScriptEngine;
-import static edp.davinci.server.util.ScriptUtiils.getViewExecuteParam;
-
-@Slf4j
 @Service("emailScheduleService")
 public class EmailScheduleServiceImpl implements ScheduleService {
 
     private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
     @Autowired
-    private CronJobExtendMapper cronJobMapper;
+    private CronJobExtendMapper cronJobExtendMapper;
 
     @Autowired
     private MailUtils mailUtils;
 
     @Autowired
-    private DisplaySlideMapper displaySlideMapper;
+    private DisplaySlideExtendMapper displaySlideExtendMapper;
 
     @Autowired
-    private WidgetMapper widgetMapper;
+    private WidgetExtendMapper widgetMapper;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userExtendMapper;
 
     @Autowired
-    private DashboardMapper dashboardMapper;
+    private DashboardExtendMapper dashboardExtendMapper;
 
     @Autowired
-    private DisplayMapper displayMapper;
+    private DisplayExtendMapper displayExtendMapper;
 
     @Autowired
     private ProjectService projectService;
@@ -109,7 +131,6 @@ public class EmailScheduleServiceImpl implements ScheduleService {
     @Autowired
     private ScreenshotUtil screenshotUtil;
 
-
     @Value("${source.result-limit:1000000}")
     private int resultLimit;
 
@@ -119,43 +140,43 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
     private static final String DASHBOARD = "dashboard";
 
-
     @Override
     public void execute(long jobId) throws Exception {
-        CronJob cronJob = cronJobMapper.selectByPrimaryKey(jobId);
+        CronJob cronJob = cronJobExtendMapper.selectByPrimaryKey(jobId);
         if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
-            scheduleLogger.info("CronJob (:{}) config ie empty!", jobId);
+        	scheduleLogger.error("CronJob({}) config is empty", jobId);
             return;
         }
+        cronJobExtendMapper.updateExecLog(jobId, "");
         CronJobConfig cronJobConfig = null;
         try {
             cronJobConfig = JSONUtils.toObject(cronJob.getConfig(), CronJobConfig.class);
         } catch (Exception e) {
-            log.error("Cronjob (:{}), parse config ({}) error: {}", jobId, cronJob.getConfig(), e.getMessage());
+        	scheduleLogger.error("Cronjob({}) parse config({}) error:{}", jobId, cronJob.getConfig(), e.getMessage());
             return;
         }
 
-        if (null == cronJobConfig || StringUtils.isEmpty(cronJobConfig.getType())) {
-            log.warn("cron job config is not expected format: {}", cronJob.getConfig());
-            scheduleLogger.warn("cron job config is not expected format: {}", cronJob.getConfig());
+        if (StringUtils.isEmpty(cronJobConfig.getType())) {
+            scheduleLogger.error("Cronjob({}) config type is empty", jobId);
             return;
         }
+        
+        scheduleLogger.info("CronJob({}) is start! --------------", jobId);
 
         List<ExcelContent> excels = null;
         List<ImageContent> images = null;
 
-        User creater = userMapper.getById(cronJob.getCreateBy());
+        User creater = userExtendMapper.selectByPrimaryKey(cronJob.getCreateBy());
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
             images = generateImages(jobId, cronJobConfig, creater.getId());
-        } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
-            try {
-                excels = generateExcels(jobId, cronJobConfig, creater);
-            } catch (Exception e) {
-                e.printStackTrace();
-                scheduleLogger.error(e.getMessage());
-            }
-        } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
+        }
+        
+        if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
+			excels = generateExcels(jobId, cronJobConfig, creater);
+        }
+
+        if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
             images = generateImages(jobId, cronJobConfig, creater.getId());
             excels = generateExcels(jobId, cronJobConfig, creater);
         }
@@ -167,21 +188,19 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         }
         if (!CollectionUtils.isEmpty(images)) {
             images.forEach(image -> {
-                String contentId = CronJobMediaType.IMAGE.getType() +
-                        Constants.UNDERLINE +
-                        UUID.randomUUID().toString().replaceAll(Constants.MINUS, EMPTY);
+                String contentId = CronJobMediaType.IMAGE.getType() + UNDERLINE
+                        + UUID.randomUUID().toString().replaceAll(MINUS, EMPTY);
                 attachmentList.add(new MailAttachment(contentId, image.getImageFile(), image.getUrl(), true));
             });
         }
 
         if (CollectionUtils.isEmpty(attachmentList)) {
-            log.warn("CronJob (:{}) Email content is empty", jobId);
-            scheduleLogger.warn("CronJob (:{}) Email content is empty", jobId);
+        	scheduleLogger.warn("CronJob({}) email content is empty", jobId);
             return;
         }
 
 
-        scheduleLogger.info("CronJob (:{}) is ready to send email", cronJob.getId());
+        scheduleLogger.info("CronJob({}) is ready to send email", cronJob.getId());
 
         MailContent mailContent = null;
         try {
@@ -196,11 +215,10 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     .withAttachments(attachmentList)
                     .build();
         } catch (ServerException e) {
-            log.error("EmailScheduleServiceImpl.execute, build MailContent error: {}", e.getMessage());
-            scheduleLogger.error("EmailScheduleServiceImpl.execute, build MailContent error: {}", e.getMessage());
+        	scheduleLogger.error("CronJob({}) build email content error:{}", jobId, e.getMessage());
         }
         mailUtils.sendMail(mailContent, null);
-        scheduleLogger.info("CronJob (:{}) is finish! --------------", jobId);
+        scheduleLogger.info("CronJob({}) is finish! --------------", jobId);
     }
 
 
@@ -214,106 +232,28 @@ public class EmailScheduleServiceImpl implements ScheduleService {
      * @throws Exception
      */
     public List<ImageContent> generateImages(long jobId, CronJobConfig cronJobConfig, Long userId) throws Exception {
-        scheduleLogger.info("CronJob (:{}) fetching images contents", jobId);
+
+    	scheduleLogger.info("CronJob({}) fetching images contents", jobId);
 
         List<ImageContent> imageContents = new ArrayList<>();
-        List<CronJobContent> jobContentList = new ArrayList<>();
 
-        Set<Long> dashboardIds = new HashSet<>();
-        Set<Long> checkedPortalIds = new HashSet<>();
-        Set<Long> refPortalIds = new HashSet<>();
-
-        Set<Long> checkedDisplayIds = new HashSet<>();
-
-        Map<String, Integer> orderWeightMap = new HashMap<>();
-        Map<String, Integer> orderMap = new HashMap<>();
-
-        for (int i = 0; i < cronJobConfig.getContentList().size(); i++) {
-            int orderWeight = i * 1000;
-            CronJobContent cronJobContent = cronJobConfig.getContentList().get(i);
-            if (cronJobContent.getContentType().equalsIgnoreCase(DISPLAY)) {
-                checkedDisplayIds.add(cronJobContent.getId());
-                orderWeightMap.put(DISPLAY + AT_SYMBOL + cronJobContent.getId(), orderWeight);
-                jobContentList.add(cronJobContent);
-                orderMap.put(DISPLAY + AT_SYMBOL + cronJobContent.getId(), orderWeight);
-            } else {
-                orderWeightMap.put(PORTAL + AT_SYMBOL + cronJobContent.getId(), orderWeight);
-                if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
-                    checkedPortalIds.add(cronJobContent.getId());
-                } else {
-                    List<Long> items = cronJobContent.getItems();
-                    dashboardIds.addAll(items);
-                }
-            }
-        }
-
-        // dashboard
-        Set<Dashboard> dashboards = new HashSet<>();
-        if (!CollectionUtils.isEmpty(dashboardIds)) {
-            Set<Dashboard> checkDashboards = dashboardMapper.queryDashboardsByIds(dashboardIds);
-            if (!CollectionUtils.isEmpty(checkDashboards)) {
-                dashboards.addAll(checkDashboards);
-            }
-        }
-
-        if (!CollectionUtils.isEmpty(checkedPortalIds)) {
-            Set<Dashboard> checkoutPortalDashboards = dashboardMapper.queryByPortals(checkedPortalIds);
-            if (!CollectionUtils.isEmpty(checkoutPortalDashboards)) {
-                dashboards.addAll(checkoutPortalDashboards);
-            }
-        }
-
-        if (!CollectionUtils.isEmpty(dashboards)) {
-            for (Dashboard dashboard : dashboards) {
-                if (dashboard != null && dashboard.getType() == 1) {
-                    jobContentList.add(new CronJobContent(DASHBOARD, dashboard.getId()));
-                    refPortalIds.add(dashboard.getDashboardPortalId());
-                }
-            }
-        }
-
-        if (!CollectionUtils.isEmpty(refPortalIds)) {
-            Set<Dashboard> refPortalAllDashboards = dashboardMapper.queryByPortals(refPortalIds);
-            Map<Long, List<Dashboard>> portalDashboardsMap = refPortalAllDashboards.stream().collect(Collectors.groupingBy(Dashboard::getDashboardPortalId));
-            portalDashboardsMap.forEach((pId, ds) -> {
-                DashboardTree tree = new DashboardTree(pId, 0);
-                buildDashboardTree(tree, ds);
-                List<DashboardTree> list = tree.traversalLeaf();
-                if (!CollectionUtils.isEmpty(list)) {
-                    for (int i = 0; i < list.size(); i++) {
-                        DashboardTree node = list.get(i);
-                        if (!orderMap.containsKey(DASHBOARD + AT_SYMBOL + node.getId())) {
-                            orderMap.put(DASHBOARD + AT_SYMBOL + node.getId(), i + orderWeightMap.get(PORTAL + AT_SYMBOL + pId));
-                        }
-                    }
-                }
-            });
-        }
-
-        //display
+        Map<String, Integer> vizOrderMap = new HashMap<>();
         Map<Long, Map<Long, Integer>> displayPageMap = new HashMap<>();
-        List<DisplaySlide> displaySlides = displaySlideMapper.queryByDisplayIds(checkedDisplayIds);
-        if (!CollectionUtils.isEmpty(displaySlides)) {
-            Map<Long, List<DisplaySlide>> displaySlidesMap = displaySlides.stream().collect(Collectors.groupingBy(DisplaySlide::getDisplayId));
-            displaySlidesMap.forEach((displayId, slides) -> {
-                Map<Long, Integer> slidePageMap = new HashMap<>();
-                slides.sort(Comparator.comparing(DisplaySlide::getIndex));
-                for (int i = 0; i < slides.size(); i++) {
-                    slidePageMap.put(slides.get(i).getId(), i + 1);
-                }
-                displayPageMap.put(displayId, slidePageMap);
-            });
-        }
+
+        List<CronJobContent> jobContentList = getCronJobContents(cronJobConfig, vizOrderMap, displayPageMap);
 
         if (CollectionUtils.isEmpty(jobContentList)) {
-            scheduleLogger.warn("CronJob (:{}):  share entity is empty", jobId);
+        	scheduleLogger.warn("CronJob({}) share entity is empty", jobId);
             return null;
         }
 
         for (CronJobContent cronJobContent : jobContentList) {
             int order = 0;
             if (cronJobContent.getContentType().equalsIgnoreCase(DISPLAY)) {
-                order = orderMap.get(DISPLAY + AT_SYMBOL + cronJobContent.getId());
+                if (vizOrderMap.containsKey(DISPLAY + AT_SIGN + cronJobContent.getId())) {
+                    order = vizOrderMap.get(DISPLAY + AT_SIGN + cronJobContent.getId());
+                }
+
                 if (!CollectionUtils.isEmpty(displayPageMap)) {
                     Map<Long, Integer> slidePageMap = displayPageMap.get(cronJobContent.getId());
                     if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
@@ -333,8 +273,10 @@ public class EmailScheduleServiceImpl implements ScheduleService {
                     }
                 }
             } else {
+                if (vizOrderMap.containsKey(DASHBOARD + AT_SIGN + cronJobContent.getId())) {
+                    order = vizOrderMap.get(DASHBOARD + AT_SIGN + cronJobContent.getId());
+                }
                 String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId(), -1);
-                order = orderMap.get(DASHBOARD + AT_SYMBOL + cronJobContent.getId());
                 imageContents.add(new ImageContent(order, cronJobContent.getId(), cronJobContent.getContentType(), url));
             }
         }
@@ -342,8 +284,249 @@ public class EmailScheduleServiceImpl implements ScheduleService {
         if (!CollectionUtils.isEmpty(imageContents)) {
             screenshotUtil.screenshot(jobId, imageContents, cronJobConfig.getImageWidth());
         }
-        scheduleLogger.info("CronJob (:{}) fetched images contents, count: {}", jobId, imageContents.size());
+        scheduleLogger.info("CronJob({}) fetched images contents, count:{}", jobId, imageContents.size());
         return imageContents;
+    }
+
+    /**
+     * 根据job配置生成excel
+     *
+     * @param jobId
+     * @param cronJobConfig
+     * @return
+     * @throws Exception
+     */
+    private List<ExcelContent> generateExcels(Long jobId, CronJobConfig cronJobConfig, User user) throws Exception {
+
+    	scheduleLogger.info("CronJob({}) fetching excel contents", jobId);
+
+        ScriptEngine engine = getExecuptParamScriptEngine();
+
+        Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
+
+        Map<String, Integer> vizOrderMap = new HashMap<>();
+        Map<Long, Map<Long, Integer>> displayPageMap = new HashMap<>();
+        Map<String, Integer> excelEntityOrderMap = new HashMap<>();
+
+        List<CronJobContent> jobContentList = getCronJobContents(cronJobConfig, vizOrderMap, displayPageMap);
+
+        if (CollectionUtils.isEmpty(jobContentList)) {
+        	scheduleLogger.warn("CronJob({}) excel entity is empty", jobId);
+            return null;
+        }
+
+        for (CronJobContent cronJobContent : jobContentList) {
+            int order = 0;
+            if (cronJobContent.getContentType().equalsIgnoreCase(DISPLAY)) {
+                if (vizOrderMap.containsKey(DISPLAY + AT_SIGN + cronJobContent.getId())) {
+                    order = vizOrderMap.get(DISPLAY + AT_SIGN + cronJobContent.getId());
+                }
+                Display display = displayExtendMapper.selectByPrimaryKey(cronJobContent.getId());
+                List<WidgetWithVizId> widgetsWithSlideIdList = widgetMapper.queryByDisplayId(cronJobContent.getId());
+                if (display != null && !CollectionUtils.isEmpty(widgetsWithSlideIdList)) {
+                    ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
+                    boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
+                    Map<Long, Integer> slidePageMap = displayPageMap.get(cronJobContent.getId());
+
+                    Map<Long, List<WidgetWithVizId>> slideWidgetsMap = widgetsWithSlideIdList.stream().collect(Collectors.groupingBy(WidgetWithVizId::getVizId));
+                    int slidePageSize = slideWidgetsMap.size();
+                    List<Long> slideIds = new ArrayList<>();
+                    if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
+                        //all of slides in display
+                        slideIds.addAll(slideWidgetsMap.keySet());
+                    } else {
+                        //checked slides in display
+                        slideIds = cronJobContent.getItems();
+                    }
+                    for (Long slideId : slideIds) {
+                        List<WidgetWithVizId> widgets = slideWidgetsMap.get(slideId);
+                        if (CollectionUtils.isEmpty(widgets)) {
+                            continue;
+                        }
+                        List<WidgetContext> widgetContexts = new ArrayList<>();
+                        widgets.forEach(widget -> {
+                            WidgetQueryParam viewExecuteParam = getViewExecuteParam(engine, null, widget.getConfig(), null);
+                            widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
+                        });
+
+                        WorkBookContext workBookContext = WorkBookContext.builder()
+                                .widgets(widgetContexts)
+                                .user(user)
+                                .resultLimit(resultLimit)
+                                .taskKey("Schedule_" + jobId)
+                                .customLogger(scheduleLogger)
+                                .build();
+
+                        int page = slidePageMap.get(slideId);
+                        String workBookName = slidePageSize == 1 ? display.getName() : display.getName() + "(" + page + ")";
+                        workBookContextMap.put(workBookName, workBookContext);
+                        excelEntityOrderMap.put(workBookName, order + page);
+                    }
+                }
+            } else {
+                if (vizOrderMap.containsKey(DASHBOARD + AT_SIGN + cronJobContent.getId())) {
+                    order = vizOrderMap.get(DASHBOARD + AT_SIGN + cronJobContent.getId());
+                }
+                DashboardWithPortal dashboard = dashboardExtendMapper.getDashboardWithPortalAndProject(cronJobContent.getId());
+                excelEntityOrderMap.put(dashboard.getName(), vizOrderMap.get(DASHBOARD + AT_SIGN + cronJobContent.getId()));
+
+                ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
+                boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
+
+                Set<WidgetWithRelationDashboardId> set = widgetMapper.getByDashboard(cronJobContent.getId());
+                if (!CollectionUtils.isEmpty(set)) {
+                    List<WidgetContext> widgetContexts = new ArrayList<>();
+                    set.forEach(w -> {
+                        Widget widget = new Widget();
+                        BeanUtils.copyProperties(w, widget);
+                        WidgetQueryParam viewExecuteParam = getViewExecuteParam(engine, dashboard.getConfig(), widget.getConfig(), w.getRelationId());
+                        widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
+                    });
+
+                    WorkBookContext workBookContext = WorkBookContext.builder()
+                            .widgets(widgetContexts)
+                            .user(user)
+                            .resultLimit(resultLimit)
+                            .taskKey("Schedule_" + jobId)
+                            .customLogger(scheduleLogger)
+                            .build();
+
+                    workBookContextMap.put(dashboard.getName(), workBookContext);
+                    excelEntityOrderMap.put(dashboard.getName(), order);
+                }
+            }
+        }
+
+
+        if (CollectionUtils.isEmpty(workBookContextMap)) {
+        	scheduleLogger.warn("CronJob({}) workbook context is empty", jobId);
+            return null;
+        }
+
+        List<ExcelContent> excelContents = new CopyOnWriteArrayList<>();
+        Map<String, Future<String>> excelPathFutureMap = new LinkedHashMap<>();
+		int contextSize = workBookContextMap.size();
+		final AtomicInteger index = new AtomicInteger(1);
+		workBookContextMap.forEach((name, context) -> {
+			scheduleLogger.info("CronJob({}) submit workbook task:{}, thread:{}, total:{}", jobId, name, index,
+					contextSize);
+			try {
+				String uuid = UUID.randomUUID().toString().replace("-", EMPTY);
+				context.setWrapper(new MsgWrapper(new MsgMailExcel(jobId), ActionEnum.MAIL, uuid));
+				excelPathFutureMap.put(name, ExecutorUtil.submitWorkbookTask(context, scheduleLogger));
+			} catch (Exception e) {
+				scheduleLogger.error("Cronjob({}) submit workbook task error, thread:{}", jobId, index.get());
+				scheduleLogger.error(e.getMessage(), e);
+			} finally {
+				index.incrementAndGet();
+			}
+		});
+
+        excelPathFutureMap.forEach((name, future) -> {
+            String excelPath = null;
+            try {
+                excelPath = future.get(1, TimeUnit.HOURS);
+                scheduleLogger.info("CronJob({}) workbook task:{} finish", jobId, name);
+            } catch (Exception e) {
+            	scheduleLogger.info("CronJob({}) workbook task:{} error", jobId, name);
+            	scheduleLogger.error(e.getMessage(), e);
+            }
+            if (!StringUtils.isEmpty(excelPath)) {
+                excelContents.add(new ExcelContent(excelEntityOrderMap.get(name), name, excelPath));
+            }
+        });
+
+        excelContents.sort(Comparator.comparing(ExcelContent::getOrder));
+        scheduleLogger.info("CronJob({}) fetched excel contents, count:{}", jobId, excelContents.size());
+
+        return excelContents.isEmpty() ? null : excelContents;
+    }
+
+    private List<CronJobContent> getCronJobContents(CronJobConfig cronJobConfig, Map<String, Integer> orderMap,
+                                                    Map<Long, Map<Long, Integer>> displayPageMap) {
+        List<CronJobContent> jobContentList = new ArrayList<>();
+        Map<String, Integer> orderWeightMap = new HashMap<>();
+        Set<Long> dashboardIds = new HashSet<>();
+        Set<Long> checkedPortalIds = new HashSet<>();
+        Set<Long> refPortalIds = new HashSet<>();
+        Set<Long> checkedDisplayIds = new HashSet<>();
+
+        for (int i = 0; i < cronJobConfig.getContentList().size(); i++) {
+            int orderWeight = i * 1000;
+            CronJobContent cronJobContent = cronJobConfig.getContentList().get(i);
+            if (cronJobContent.getContentType().equalsIgnoreCase(DISPLAY)) {
+                checkedDisplayIds.add(cronJobContent.getId());
+                orderWeightMap.put(DISPLAY + AT_SIGN + cronJobContent.getId(), orderWeight);
+                jobContentList.add(cronJobContent);
+                orderMap.put(DISPLAY + AT_SIGN + cronJobContent.getId(), orderWeight);
+            } else {
+                orderWeightMap.put(PORTAL + AT_SIGN + cronJobContent.getId(), orderWeight);
+                if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
+                    checkedPortalIds.add(cronJobContent.getId());
+                } else {
+                    List<Long> items = cronJobContent.getItems();
+                    dashboardIds.addAll(items);
+                }
+            }
+        }
+
+        // dashboard
+        Set<Dashboard> dashboards = new HashSet<>();
+        if (!CollectionUtils.isEmpty(dashboardIds)) {
+            Set<Dashboard> checkDashboards = dashboardExtendMapper.queryDashboardsByIds(dashboardIds);
+            if (!CollectionUtils.isEmpty(checkDashboards)) {
+                dashboards.addAll(checkDashboards);
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(checkedPortalIds)) {
+            Set<Dashboard> checkoutPortalDashboards = dashboardExtendMapper.queryByPortals(checkedPortalIds);
+            if (!CollectionUtils.isEmpty(checkoutPortalDashboards)) {
+                dashboards.addAll(checkoutPortalDashboards);
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(dashboards)) {
+            for (Dashboard dashboard : dashboards) {
+                if (dashboard != null && dashboard.getType() == 1) {
+                    jobContentList.add(new CronJobContent(DASHBOARD, dashboard.getId()));
+                    refPortalIds.add(dashboard.getDashboardPortalId());
+                }
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(refPortalIds)) {
+            Set<Dashboard> refPortalAllDashboards = dashboardExtendMapper.queryByPortals(refPortalIds);
+            Map<Long, List<Dashboard>> portalDashboardsMap = refPortalAllDashboards.stream().collect(Collectors.groupingBy(Dashboard::getDashboardPortalId));
+            portalDashboardsMap.forEach((pId, ds) -> {
+                DashboardTree tree = new DashboardTree(pId, 0);
+                buildDashboardTree(tree, ds);
+                List<DashboardTree> list = tree.traversalLeaf();
+                if (!CollectionUtils.isEmpty(list)) {
+                    for (int i = 0; i < list.size(); i++) {
+                        DashboardTree node = list.get(i);
+                        if (!orderMap.containsKey(DASHBOARD + AT_SIGN + node.getId())) {
+                            orderMap.put(DASHBOARD + AT_SIGN + node.getId(), i + orderWeightMap.get(PORTAL + AT_SIGN + pId));
+                        }
+                    }
+                }
+            });
+        }
+
+        //display
+        List<DisplaySlide> displaySlides = displaySlideExtendMapper.queryByDisplayIds(checkedDisplayIds);
+        if (!CollectionUtils.isEmpty(displaySlides)) {
+            Map<Long, List<DisplaySlide>> displaySlidesMap = displaySlides.stream().collect(Collectors.groupingBy(DisplaySlide::getDisplayId));
+            displaySlidesMap.forEach((displayId, slides) -> {
+                Map<Long, Integer> slidePageMap = new HashMap<>();
+                slides.sort(Comparator.comparing(DisplaySlide::getIndex));
+                for (int i = 0; i < slides.size(); i++) {
+                    slidePageMap.put(slides.get(i).getId(), i + 1);
+                }
+                displayPageMap.put(displayId, slidePageMap);
+            });
+        }
+        return jobContentList;
     }
 
     private void buildDashboardTree(DashboardTree root, List<Dashboard> dashboards) {
@@ -425,145 +608,4 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
         return sb.toString();
     }
-
-
-    /**
-     * 根据job配置生成excel ，多个excel压缩至zip包
-     *
-     * @param cronJobId
-     * @param cronJobConfig
-     * @return
-     * @throws Exception
-     */
-    private List<ExcelContent> generateExcels(Long cronJobId, CronJobConfig cronJobConfig, User user) throws Exception {
-        scheduleLogger.info("CronJob (:{}) fetching excel contents", cronJobId);
-
-        ScriptEngine engine = getExecuptParamScriptEngine();
-
-        Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
-
-        Set<Long> portalIds = new HashSet<>();
-        Set<Long> dashboardIds = new HashSet<>();
-
-        for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
-            if (CheckEntityEnum.DASHBOARD.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())
-                    || PORTAL.equalsIgnoreCase(cronJobContent.getContentType().trim())) {
-                //兼容原始结构：contentId 为 dashboardId
-                if (CollectionUtils.isEmpty(cronJobContent.getItems())) {
-                    portalIds.add(cronJobContent.getId());
-                } else {
-                    dashboardIds.addAll(cronJobContent.getItems());
-                }
-            } else if (CheckEntityEnum.DISPLAY.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())) {
-                Display display = displayMapper.getById(cronJobContent.getId());
-                if (display != null) {
-
-                    ProjectDetail projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
-                    boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
-
-                    Set<Widget> widgets = widgetMapper.getByDisplayId(display.getId());
-                    log.info("-----------display slide widget size {}", widgets.size());
-                    if (!CollectionUtils.isEmpty(widgets)) {
-                        List<WidgetContext> widgetContexts = new ArrayList<>();
-                        widgets.forEach(widget -> {
-                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, null, widget.getConfig(), null);
-                            widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
-                        });
-
-                        WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
-                                .withWidgets(widgetContexts)
-                                .withUser(user)
-                                .withResultLimit(resultLimit)
-                                .withTaskKey("Schedule_" + cronJobId)
-                                .withCustomLogger(scheduleLogger)
-                                .build();
-
-                        workBookContextMap.put(display.getName(), workBookContext);
-                    }
-                }
-            }
-        }
-
-        if (!CollectionUtils.isEmpty(portalIds)) {
-            Set<Dashboard> dashboards = dashboardMapper.queryByPortals(portalIds);
-            if (!CollectionUtils.isEmpty(dashboards)) {
-                dashboardIds.addAll(dashboards.stream().filter(d -> d.getType() == (short) 1).map(Dashboard::getId).collect(Collectors.toList()));
-            }
-        }
-
-        List<Long> mailContentDashboardIds = null;
-        if (!CollectionUtils.isEmpty(dashboardIds)) {
-            mailContentDashboardIds = new ArrayList<>();
-            Set<Dashboard> dashboards = dashboardMapper.queryDashboardsByIds(dashboardIds);
-            for (Dashboard dashboard : dashboards) {
-                if (dashboard != null && dashboard.getType() == (short) 1) {
-                    mailContentDashboardIds.add(dashboard.getId());
-                }
-            }
-        }
-
-        if (CollectionUtils.isEmpty(mailContentDashboardIds)) {
-            scheduleLogger.warn("CronJob (:{}): dashboards is empty", cronJobId);
-        } else {
-            scheduleLogger.info("CronJob (:{}): dashboards size: {}", cronJobId, mailContentDashboardIds.size());
-            for (Long dId : mailContentDashboardIds) {
-                DashboardWithPortal dashboard = dashboardMapper.getDashboardWithPortalAndProject(dId);
-                if (dashboard != null) {
-                    ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
-                    boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
-
-                    Set<WidgetWithRelationDashboardId> set = widgetMapper.getByDashboard(dashboard.getId());
-                    if (!CollectionUtils.isEmpty(set)) {
-                        List<WidgetContext> widgetContexts = new ArrayList<>();
-                        set.forEach(w -> {
-                            Widget widget = new Widget();
-                            BeanUtils.copyProperties(w, widget);
-                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, dashboard.getConfig(), widget.getConfig(), w.getRelationId());
-                            widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
-                        });
-
-                        WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
-                                .withWidgets(widgetContexts)
-                                .withUser(user)
-                                .withResultLimit(resultLimit)
-                                .withTaskKey("Schedule_" + cronJobId)
-                                .withCustomLogger(scheduleLogger)
-                                .build();
-
-                        workBookContextMap.put(dashboard.getName(), workBookContext);
-                    }
-                }
-            }
-        }
-
-        if (CollectionUtils.isEmpty(workBookContextMap)) {
-            scheduleLogger.warn("CronJob (:{}):  WorkbookContext is empty", cronJobId);
-            return null;
-        }
-
-        List<ExcelContent> excelContents = new CopyOnWriteArrayList<>();
-        Map<String, Future<String>> excelPathFutureMap = new LinkedHashMap<>();
-        workBookContextMap.forEach((name, context) -> {
-            scheduleLogger.info("CronJob (:{}): submit Workbook task: {}", cronJobId, name);
-            String uuid = UUID.randomUUID().toString().replace("-", EMPTY);
-            context.setWrapper(new MsgWrapper(new MsgMailExcel(cronJobId), ActionEnum.MAIL, uuid));
-            excelPathFutureMap.put(name, ExecutorUtil.submitWorkbookTask(context, scheduleLogger));
-        });
-
-        excelPathFutureMap.forEach((name, future) -> {
-            String excelPath = null;
-            try {
-                excelPath = future.get(1, TimeUnit.HOURS);
-            } catch (Exception e) {
-                log.warn(e.getMessage());
-            }
-            if (!StringUtils.isEmpty(excelPath)) {
-                excelContents.add(new ExcelContent(name, excelPath));
-            }
-        });
-        scheduleLogger.info("CronJob (:{}) fetched excel contents, count {}", cronJobId, excelContents.size());
-
-        return excelContents.isEmpty() ? null : excelContents;
-    }
-
 }
