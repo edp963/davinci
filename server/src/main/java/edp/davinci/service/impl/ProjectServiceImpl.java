@@ -242,7 +242,11 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     
 	private void checkOwner(Organization organization, Long userId, Long id, String operation) {
 		RelUserOrganization rel = relUserOrganizationMapper.getRel(userId, id);
-		if (!organization.getUserId().equals(userId)
+        if (rel != null && organization.getAllowCreateProject()) {
+            return;
+        }
+        
+        if (!organization.getUserId().equals(userId)
 				&& (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
 			throw new UnAuthorizedExecption("you have not permission to " + operation + " this project");
 		}
