@@ -168,7 +168,7 @@ const Header: React.FC = () => {
   )
 
   const addWidgetGraph = (
-    selectedWidgets: IWidgetRaw[],
+    selectedWidgets: IWidgetFormed[],
     pollingSetting: PollingSetting
   ) => {
     const { polling, frequency } = pollingSetting
@@ -190,16 +190,12 @@ const Header: React.FC = () => {
         }
       })
     )
-    const widgets = selectedWidgets.map<IWidgetFormed>((w) => ({
-      ...w,
-      config: JSON.parse(w.config)
-    }))
     dispatch(
       DisplayActions.addSlideLayers(
         currentDisplayId,
         slideId,
         newLayers,
-        widgets
+        selectedWidgets
       )
     )
     setWidgetSelectModalVisible(false)

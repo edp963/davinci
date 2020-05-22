@@ -28,21 +28,18 @@ export const tupleNum = <T extends number[]>(...args: T) => args
 
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K >>
 
-type loading = boolean | {delay?: number}
-
-
 const IconStatus = tuple('checked', 'unChecked', 'disabled')
 const ISizeType = tuple('small', 'middle', 'large')
 
 type iconFontClassName = string
 
-interface BaseEnhanceState {
+interface IBaseEnhanceState {
   iStatus: typeof IconStatus[number]
   form: React.ReactNode | iconFontClassName
 }
 
-export interface BaseEnhanceIconProps {
-  state?: BaseEnhanceState
+export interface IBaseEnhanceIconProps {
+  state?: IBaseEnhanceState
   style?: React.CSSProperties
   size?: typeof ISizeType[number]
   onClick?: React.MouseEventHandler<HTMLElement>

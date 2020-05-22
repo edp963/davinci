@@ -110,6 +110,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
                 context.getCustomLogger().error("Task({}) sheet worker(name:{}, sheetNo: {}, sheetName:{}) error, md5={}, error={}",
                         context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), md5, e.getMessage());
             }
+            e.printStackTrace();
             rst = false;
         }
 

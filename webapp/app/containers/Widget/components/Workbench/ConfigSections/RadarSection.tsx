@@ -123,7 +123,7 @@ function RadarSection (props: IRadarSectionProps) {
               <Col span={4}>
                 <ColorPicker
                   value={color}
-                  onChange={change(onChange, ['name', 'color'])}
+                  onChange={change(onChange, ['name', 'color']) as (e: string) => void}
                 />
               </Col>
             </Row>

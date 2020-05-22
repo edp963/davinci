@@ -3,11 +3,11 @@ import classnames from 'classnames'
 import moment, { Moment } from 'moment'
 import { IDataParamConfig, IDataParamSource } from './Dropbox'
 import ConditionalFilterForm, { ConditionalFilterPanel } from './ConditionalFilterForm'
-import { DEFAULT_DATETIME_FORMAT } from 'app/globalConstants'
+import { DEFAULT_DATETIME_FORMAT, DEFAULT_DATE_FORMAT } from 'app/globalConstants'
 import { decodeMetricName } from '../util'
 import { uuid } from 'utils/util'
 import { Transfer, Radio, Button, DatePicker } from 'antd'
-import { IFilters } from 'app/components/Filters/types'
+import { IFilters } from 'app/components/Control/types'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 const RangePicker = DatePicker.RangePicker
@@ -236,8 +236,8 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
 // widget 编辑器filter 位置
   private getDateSql = () => {
     const { name, selectedDate, datepickerValue } = this.state
-    const today = moment().startOf('day').format(DEFAULT_DATETIME_FORMAT)
-    const yesterday = moment().startOf('day').subtract(1, 'days').format(DEFAULT_DATETIME_FORMAT)
+    const today = moment().startOf('day').format(DEFAULT_DATE_FORMAT)
+    const yesterday = moment().startOf('day').subtract(1, 'days').format(DEFAULT_DATE_FORMAT)
     const tml = {
       name,
       operator: '>=',
@@ -263,31 +263,31 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     } else if (selectedDate === 'yesterdayFromNow') {
       tml.value = `'${yesterday}'`
     } else if (selectedDate === '7') {
-      tml.value = `'${moment().subtract(7, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      tml.value = `'${moment().subtract(7, 'days').format(DEFAULT_DATE_FORMAT)}'`
     } else if (selectedDate === '30') {
-      tml.value = `'${moment().subtract(30, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      tml.value = `'${moment().subtract(30, 'days').format(DEFAULT_DATE_FORMAT)}'`
     } else if (selectedDate === '90') {
-      tml.value = `'${moment().subtract(90, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      tml.value = `'${moment().subtract(90, 'days').format(DEFAULT_DATE_FORMAT)}'`
     } else if (selectedDate === '365') {
-      tml.value = `'${moment().subtract(365, 'days').format(DEFAULT_DATETIME_FORMAT)}'`
+      tml.value = `'${moment().subtract(365, 'days').format(DEFAULT_DATE_FORMAT)}'`
     } else if (selectedDate === 'week') {
-      tml.value = `'${moment().startOf('week').format(DEFAULT_DATETIME_FORMAT)}'`
+      tml.value = `'${moment().startOf('week').format(DEFAULT_DATE_FORMAT)}'`
     } else if (selectedDate === 'month') {
-      tml.value = `'${moment().startOf('month').format(DEFAULT_DATETIME_FORMAT)}'`
+      tml.value = `'${moment().startOf('month').format(DEFAULT_DATE_FORMAT)}'`
     } else if (selectedDate === 'quarter') {
-      tml.value = `'${moment().startOf('quarter').format(DEFAULT_DATETIME_FORMAT)}'`
+      tml.value = `'${moment().startOf('quarter').format(DEFAULT_DATE_FORMAT)}'`
     } else if (selectedDate === 'year') {
-      tml.value = `'${moment().startOf('year').format(DEFAULT_DATETIME_FORMAT)}'`
+      tml.value = `'${moment().startOf('year').format(DEFAULT_DATE_FORMAT)}'`
     } else {
       const resultJson = [
         {
           ...tml,
-          value: `'${datepickerValue[0].format(DEFAULT_DATETIME_FORMAT)}'`
+          value: `'${datepickerValue[0].format(DEFAULT_DATE_FORMAT)}'`
         },
         {
           ...tml,
           operator: '<=',
-          value: `'${datepickerValue[1].format(DEFAULT_DATETIME_FORMAT)}'`
+          value: `'${datepickerValue[1].format(DEFAULT_DATE_FORMAT)}'`
         }
       ]
       return resultJson
@@ -336,7 +336,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
         sqlModel: this.getDateSql(),
         filterSource: {
           selectedDate,
-          datepickerValue: datepickerValue.map((m) => m.format(DEFAULT_DATETIME_FORMAT))
+          datepickerValue: datepickerValue.map((m) => m.format(DEFAULT_DATE_FORMAT))
         }
       })
     }
@@ -423,7 +423,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
           {selectedDate === 'other' && (
             <RangePicker
               value={datepickerValue}
-              format={DEFAULT_DATETIME_FORMAT}
+              format={DEFAULT_DATE_FORMAT}
               onChange={this.datepickerChange}
               showTime
             />

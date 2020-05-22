@@ -29,21 +29,22 @@ import {
 import {
   getLegendOption,
   getGridPositions,
-  getDimetionAxisOption
+  getDimetionAxisOption,
+  getCartesianChartReferenceOptions
 } from './util'
 import { getFormattedValue } from '../../components/Config/Format'
 import { getFieldAlias } from '../../components/Config/Field'
+import ChartTypes from '../../config/chart/ChartTypes'
 
 export default function (chartProps: IChartProps, drillOptions) {
   const {
-    width,
-    height,
     data,
     cols,
     metrics,
-    chartStyles
+    chartStyles,
     // color,
-    // tip
+    // tip,
+    references
   } = chartProps
 
   const {
@@ -112,9 +113,9 @@ export default function (chartProps: IChartProps, drillOptions) {
 
   const xAxisData = showLabel ? data.map((d) => d[cols[0].name]) : []
   const seriesData = secondaryMetrics
-    ? getAixsMetrics('metrics', metrics, data, stack, labelOption, selectedItems, {key: 'yAxisLeft', type: yAxisLeft})
-      .concat(getAixsMetrics('secondaryMetrics', secondaryMetrics, data, stack, labelOption, selectedItems, {key: 'yAxisRight', type: yAxisRight}))
-    : getAixsMetrics('metrics', metrics, data, stack, labelOption, selectedItems, {key: 'yAxisLeft', type: yAxisLeft})
+    ? getAixsMetrics('metrics', metrics, data, stack, labelOption, references, selectedItems, {key: 'yAxisLeft', type: yAxisLeft})
+      .concat(getAixsMetrics('secondaryMetrics', secondaryMetrics, data, stack, labelOption, references, selectedItems, {key: 'yAxisRight', type: yAxisRight}))
+    : getAixsMetrics('metrics', metrics, data, stack, labelOption, references, selectedItems, {key: 'yAxisLeft', type: yAxisLeft})
 
   const seriesObj = {
     series: seriesData.map((series) => {
@@ -214,10 +215,11 @@ export default function (chartProps: IChartProps, drillOptions) {
   return option
 }
 
-export function getAixsMetrics (type, axisMetrics, data, stack, labelOption, selectedItems, axisPosition?: {key: string, type: string}) {
+export function getAixsMetrics (type, axisMetrics, data, stack, labelOption, references, selectedItems, axisPosition?: {key: string, type: string}) {
   const seriesNames = []
   const seriesAxis = []
-  axisMetrics.forEach((m) => {
+  const referenceOptions = getCartesianChartReferenceOptions(references, ChartTypes.DoubleYAxis, axisMetrics, data)
+  axisMetrics.forEach((m, amIndex) => {
     const decodedMetricName = decodeMetricName(m.name)
     const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
     seriesNames.push(decodedMetricName)
@@ -237,6 +239,7 @@ export function getAixsMetrics (type, axisMetrics, data, stack, labelOption, sel
       yAxisIndex: type === 'metrics' ? 1 : 0,
       data: itemData,
       ...labelOption,
+      ...(amIndex === axisMetrics.length - 1 && referenceOptions),
       itemStyle: {
         normal: {
           opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1

@@ -394,7 +394,7 @@ export class ComputedConfigForm extends React.Component<IComputedConfigFormProps
       </Menu>
     )
     return (
-      <div className={styles.variableConfigForm}>
+      <div className={styles.computedConfigForm}>
         <div className={styles.body}>
           <div className={styles.fields}>
             <div className={styles.fieldName}>

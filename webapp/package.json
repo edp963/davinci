@@ -70,7 +70,7 @@
     "compression": "1.7.4",
     "connected-react-router": "6.5.2",
     "cross-env": "5.2.0",
-    "echarts": "^4.2.0",
+    "echarts": "^4.7.0",
     "echarts-wordcloud": "^1.1.3",
     "escape-html": "^1.0.3",
     "express": "4.16.4",

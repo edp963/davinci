@@ -17,36 +17,12 @@
  * limitations under the License.
  * >>
  */
-import { IViewModel } from 'containers/View/types'
-import { ViewModelTypes } from 'containers/View/constants'
-export type ModelTypeName = ViewModelTypes.Category | ViewModelTypes.Value
-export type getModelsByTypeName = (typeName: ModelTypeName) => Array<string>
 
-export enum DrillType {
-  UP='up',
-  DOWN='down'
+import { IValue } from 'utils/types'
+
+export function getLastItemValueOfArray<T, U extends keyof T>(
+  array: T[],
+  property: U
+): IValue<T, U> {
+  return array[array.length - 1][property]
 }
-
-export function hasProperty<T extends Object, U extends keyof T>(obj:T, key:U) {
-  return obj[key] ? obj[key] : false
-}
-
-export function getModelWithModelType (model: IViewModel){
-  return Object.keys(model).reduce((iteratee, target) => {
-     iteratee[target] = hasProperty(model[target], 'modelType')
-     return iteratee
-  }, {})
-}
-
-export const filterModelByModelType = function (model: IViewModel): getModelsByTypeName{
-  const modelWithModelType = getModelWithModelType(model)
-  return function (typeName: ModelTypeName):Array<string> {
-    return Object.keys(modelWithModelType).reduce((iteratee, target) => {
-      return iteratee.concat(modelWithModelType[target] === typeName ? target : [])
-    },[])
-  }
-}
-
-
-
-

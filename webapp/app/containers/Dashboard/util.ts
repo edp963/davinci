@@ -23,7 +23,7 @@ import {
   deserializeDefaultValue,
   getModelValue,
   getVariableValue
-} from 'app/components/Filters/util'
+} from 'app/components/Control/util'
 import { widgetDimensionMigrationRecorder } from 'app/utils/migrationRecorders'
 import { FieldSortTypes } from '../Widget/components/Config/Sort'
 import { decodeMetricName } from '../Widget/components/util'
@@ -41,8 +41,8 @@ import {
   ILocalControl,
   IGlobalControlConditionsByItem,
   ILocalControlConditions
-} from 'app/components/Filters/types'
-import { ControlPanelTypes } from 'app/components/Filters/constants'
+} from 'app/components/Control/types'
+import { ControlPanelTypes } from 'app/components/Control/constants'
 import { IViewQueryResponse } from '../View/types'
 import { IPaginationParams } from '../Widget/components/Widget'
 
@@ -354,8 +354,8 @@ export function getRequestBody(
     .concat(tempFilters)
     .concat(linkageFilters)
     .concat(globalFilters)
-  if (drillStatus && drillStatus.filter) {
-    combinedFilters = combinedFilters.concat(drillStatus.filter.sqls)
+  if (drillStatus && drillStatus.filters) {
+    combinedFilters = combinedFilters.concat(drillStatus.filters)
   }
 
   return {

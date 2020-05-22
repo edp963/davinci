@@ -18,7 +18,7 @@ import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, make
 import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
 
 import { RouteComponentWithParams } from 'utils/types'
-import { IViewBase, IFormedViews, IFormedView } from 'containers/View/types'
+import { IViewBase, IFormedViews } from 'containers/View/types'
 import OperatingPanel from './OperatingPanel'
 import Widget, { IWidgetProps } from '../Widget'
 import { IDataRequestBody } from 'app/containers/Dashboard/types'
@@ -31,9 +31,9 @@ import ChartTypes from '../../config/chart/ChartTypes'
 import { FieldSortTypes, fieldGroupedSort } from '../Config/Sort'
 import { message } from 'antd'
 import 'assets/less/resizer.less'
-import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
+import { IReference } from './Reference/types'
 import { IWorkbenchSettings, WorkbenchQueryMode } from './types'
-
 import { widgetDimensionMigrationRecorder, barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
 
 const styles = require('./Workbench.less')
@@ -80,6 +80,7 @@ interface IWorkbenchStates {
   description: string
   selectedViewId: number
   controls: any[]
+  references: IReference[]
   computed: any[]
   autoLoadData: boolean
   cache: boolean
@@ -109,6 +110,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
       description: '',
       selectedViewId: null,
       controls: [],
+      references: [],
       computed: [],
       originalComputed: [],
       cache: false,
@@ -164,7 +166,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
   public componentWillReceiveProps (nextProps: IWorkbenchProps) {
     const { currentWidget } = nextProps
     if (currentWidget && (currentWidget !== this.props.currentWidget)) {
-      const { controls, cache, expired, computed, autoLoadData, cols, rows, ...rest } = JSON.parse(currentWidget.config)
+      const { controls, references, cache, expired, computed, autoLoadData, cols, rows, ...rest } = JSON.parse(currentWidget.config)
       const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
       const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
       if (rest.mode === 'chart' && rest.selectedChart === ChartTypes.Bar) {
@@ -175,6 +177,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
         name: currentWidget.name,
         description: currentWidget.description,
         controls,
+        references: references || [],
         cache,
         autoLoadData: autoLoadData === undefined ? true : autoLoadData,
         expired,
@@ -224,6 +227,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
     const nextState = {
       selectedViewId: viewId,
       controls: [],
+      references: [],
       cache: false,
       expired: DEFAULT_CACHE_EXPIRED
     }
@@ -237,16 +241,23 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
   }
 
   private setControls = (controls: any[]) => {
+    this.setState({ controls })
+  }
+
+  private setReferences = (references: IReference[]) => {
     this.setState({
-      controls
+      references,
+      widgetProps: {
+        ...this.state.widgetProps,
+        references
+      }
     })
   }
 
   private deleteComputed = (computeField) => {
-    console.log({computeField})
     const { from } = computeField
     const { match, onEditWidget } = this.props
-    const { id, name, description, selectedViewId, controls, cache, autoLoadData, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
+    const { id, name, description, selectedViewId, controls, references, cache, autoLoadData, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
     if (from === 'originalComputed') {
       this.setState({
         originalComputed: originalComputed.filter((oc) => oc.id !== computeField.id)
@@ -261,6 +272,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
           config: JSON.stringify({
             ...widgetProps,
             controls,
+            references,
             computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
             cache,
             autoLoadData,
@@ -287,6 +299,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
           config: JSON.stringify({
             ...widgetProps,
             controls,
+            references,
             computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
             cache,
             autoLoadData,
@@ -361,14 +374,15 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
     this.setState({
       widgetProps: {
         ...widgetProps,
-        data
+        data,
+        references: this.state.references
       }
     })
   }
 
   private saveWidget = () => {
     const { match, onAddWidget, onEditWidget } = this.props
-    const { id, name, description, selectedViewId, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed, autoLoadData } = this.state
+    const { id, name, description, selectedViewId, controls, references, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed, autoLoadData } = this.state
     if (!name.trim()) {
       message.error('Widget名称不能为空')
       return
@@ -386,6 +400,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
       config: JSON.stringify({
         ...widgetProps,
         controls,
+        references,
         computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
         cache,
         expired,
@@ -506,6 +521,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
       description,
       selectedViewId,
       controls,
+      references,
       cache,
       autoLoadData,
       expired,
@@ -563,6 +579,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
                 distinctColumnValues={distinctColumnValues}
                 columnValueLoading={columnValueLoading}
                 controls={controls}
+                references={references}
                 cache={cache}
                 autoLoadData={autoLoadData}
                 expired={expired}
@@ -572,6 +589,7 @@ export class Workbench extends React.Component<IWorkbenchProps & RouteComponentW
                 onViewSelect={this.viewSelect}
                 onChangeAutoLoadData={this.changeAutoLoadData}
                 onSetControls={this.setControls}
+                onSetReferences={this.setReferences}
                 onCacheChange={this.cacheChange}
                 onExpiredChange={this.expiredChange}
                 onSetWidgetProps={this.setWidgetProps}

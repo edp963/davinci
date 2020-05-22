@@ -22,7 +22,6 @@ import { IChartProps } from '../../components/Chart'
 import { EChartOption } from 'echarts'
 import {
   decodeMetricName,
-  getChartTooltipLabel,
   getTextWidth,
   getSizeRate
 } from '../../components/util'

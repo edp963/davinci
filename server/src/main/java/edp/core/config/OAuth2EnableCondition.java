@@ -18,7 +18,6 @@
 
 package edp.core.config;
 
-import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.env.Environment;
@@ -31,11 +30,6 @@ public class OAuth2EnableCondition implements Condition {
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
         Environment environment = context.getEnvironment();
         String isEnable = environment.getProperty("spring.security.oauth2.enable");
-        boolean enable = isEnable != null && "true".equals(isEnable.trim().toLowerCase());
-        OAuth2ClientProperties property = environment.getProperty("spring.security.oauth2.client", OAuth2ClientProperties.class);
-        return enable &&
-                property != null &&
-                property.getRegistration() != null
-                && property.getProvider() != null;
+        return isEnable != null && "true".equals(isEnable.trim().toLowerCase());
     }
 }

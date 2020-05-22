@@ -35,7 +35,7 @@ import { TABLE_PAGE_SIZES } from 'app/globalConstants'
 import { getFieldAlias } from 'containers/Widget/components/Config/Field'
 import { decodeMetricName } from 'containers/Widget/components/util'
 import Styles from './Table.less'
-import { hasProperty } from 'components/DataDrill/util'
+import { hasProperty } from 'utils/util'
 import {
   findChildConfig,
   traverseConfig,
@@ -52,13 +52,16 @@ import { resizeTableColumns } from './components/HeadCell'
 interface IMapTableHeaderConfig {
   [key: string]: ITableHeaderConfig
 }
-interface TSelectItemCellProps {
+interface ISelectItemCellProps {
   index: number
   value: string
   key: string
 }
-type ISelectItemsCell = { [propName: string]: Array<TSelectItemCellProps> }
-type ISelectItems = {
+interface ISelectItemsCell {
+  [propName: string]: ISelectItemCellProps[]
+}
+
+interface ISelectItems {
   group: string[]
   cell: ISelectItemsCell
 }
@@ -372,7 +375,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     )
   }
 
-  private asyncEmitDrillDetail() {
+  private asyncEmitDrillDetail () {
     const { getDataDrillDetail } = this.props
     setTimeout(() => {
       if (this.props.getDataDrillDetail) {
@@ -413,32 +416,31 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return tableStyle
   }
 
-  private filterSameNeighbourSibings = (arr, targetIndex) => {
-    let s = targetIndex,
-      e = targetIndex
+  private filterSameNeighbourSibings = (arr, targetIndex ) => {
+    let s = targetIndex
+    let e = targetIndex
     let flag = -1
-    let orgIndex = targetIndex
+    const orgIndex = targetIndex
 
     do {
-      let target = arr[targetIndex]
-      if (flag === -1 && targetIndex > 0 && arr[targetIndex - 1] === target) {
-        s = targetIndex -= 1
-      } else if (flag === 1 && arr[targetIndex + 1] === target) {
-        e = targetIndex += 1
-      } else if (flag === -1) {
-        flag = 1
-        targetIndex = orgIndex
-      } else {
-        break
-      }
+        const target = arr[targetIndex]
+        if (flag === -1 && targetIndex > 0 && arr[targetIndex - 1] === target) {
+            s = targetIndex -= 1
+        } else if (flag === 1 && arr[targetIndex + 1] === target) {
+            e = (targetIndex += 1)
+        } else if (flag === -1) {
+          flag = 1
+          targetIndex = orgIndex
+        } else {
+            break
+        }
+
     } while (targetIndex > -1 && targetIndex < arr.length)
     return { s, e }
   }
 
-  private coustomFilter(array, column, index) {
-    const nativeIndex = array.reduce((a, b, c) => {
-      return b.index === index ? c : a
-    }, 0)
+  private coustomFilter (array, column, index) {
+    const nativeIndex = array.reduce((a , b, c) => b.index === index ? c : a, 0)
     const columns = array.map((a) => a[column])
     const { s: start, e: end } = this.filterSameNeighbourSibings(
       columns,
@@ -468,7 +470,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       }))
       cell[dataIndex] = this.coustomFilter(setKeyArray, groupName, index)
     } else {
-      let sourceCol = cell[dataIndex]
+      const sourceCol = cell[dataIndex]
       const currentValue = {
         ...target,
         index,

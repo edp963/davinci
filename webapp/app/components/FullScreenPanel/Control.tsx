@@ -24,8 +24,8 @@ import GlobalControlPanel from 'containers/ControlPanel/Global'
 import LocalControlPanel from 'containers/ControlPanel/Local'
 import { IDashboardItem, IDashboard } from '../../containers/Dashboard/types'
 import { IWidgetFormed } from 'app/containers/Widget/types'
-import { ControlPanelLayoutTypes, ControlPanelTypes } from 'app/components/Filters/constants'
-import { OnGetControlOptions } from 'app/components/Filters/types'
+import { ControlPanelLayoutTypes, ControlPanelTypes } from 'app/components/Control/constants'
+import { OnGetControlOptions } from 'app/components/Control/types'
 import styles from './FullScreenPanel.less'
 
 interface IControlProps {

@@ -13,6 +13,8 @@ import {
   DEFAULT_FONT_STYLE} from 'app/globalConstants'
 import { ITableCellStyle } from './types'
 
+export const DEFAULT_TABLE_FIXED_WIDTH = 100
+
 export const fontWeightOptions = PIVOT_CHART_FONT_WEIGHTS.map((w) => (
   <Option value={w} key={w}>{w}</Option>
 ))
@@ -36,5 +38,7 @@ export const DefaultTableCellStyle: ITableCellStyle = {
   fontColor: PIVOT_DEFAULT_FONT_COLOR,
   fontStyle: DEFAULT_FONT_STYLE,
   backgroundColor: 'transparent',
-  justifyContent: 'flex-start'
+  justifyContent: 'flex-start',
+  inflexible: false,
+  width: DEFAULT_TABLE_FIXED_WIDTH
 }

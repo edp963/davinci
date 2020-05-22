@@ -49,11 +49,11 @@ import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
-import { IDistinctValueReqeustParams, IFilters } from 'components/Filters/types'
-import { ControlPanelLayoutTypes, ControlPanelTypes } from 'app/components/Filters/constants'
-import {getValidColumnValue} from 'app/components/Filters/util'
+import { IDistinctValueReqeustParams, IFilters } from 'app/components/Control/types'
+import { ControlPanelLayoutTypes, ControlPanelTypes } from 'app/components/Control/constants'
+import {getValidColumnValue} from 'app/components/Control/util'
 import GlobalControlPanel from '../ControlPanel/Global'
-import GlobalControlConfig from 'components/Filters/config/FilterConfig'
+import GlobalControlConfig from 'app/components/Control/Config/Global'
 import SharePanel from './SharePanel'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 import { hasVizEditPermission } from '../Account/components/checkUtilPermission'
@@ -120,7 +120,7 @@ import { statistic, IVizData } from 'utils/statistic/statistic.dv'
 const utilStyles = require('assets/less/util.less')
 const styles = require('./Dashboard.less')
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
-
+import { IDrillDetail } from 'components/DataDrill/types'
 type MappedStates = ReturnType<typeof mapStateToProps>
 type MappedDispatches = ReturnType<typeof mapDispatchToProps>
 
@@ -140,7 +140,6 @@ interface IGridStates {
   interactingStatus: { [itemId: number]: boolean }
   globalFilterConfigVisible: boolean
   nextMenuTitle: string
-  drillPathSettingVisible: boolean
 }
 
 interface IDashboardItemForm extends AntdFormType {
@@ -157,7 +156,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
 
       dashboardItemFormType: '',
       dashboardItemFormVisible: false,
-      drillPathSettingVisible: false,
       dashboardItemFormStep: 0,
       modalLoading: false,
       selectedWidgets: [],
@@ -485,7 +483,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         this.dashboardItemForm.props.form.setFieldsValue({
           id: dashboardItem.id,
           polling: dashboardItem.polling ? 'true' : 'false',
-          frequency: dashboardItem.frequency
+          frequency: dashboardItem.frequency,
+          alias: dashboardItem.alias
         })
       }, 0)
     })
@@ -493,16 +492,11 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
   private showDrillDashboardItemForm = (itemId) => () => {
     const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
     this.setState({
-      drillPathSettingVisible: true,
       selectedWidgets: [dashboardItem.widgetId],
       currentItemId: itemId
     })
   }
-  private hideDrillPathSettingModal = () => {
-    this.setState({
-      drillPathSettingVisible: false
-    })
-  }
+
   private hideDashboardItemForm = () => {
     this.setState({
       modalLoading: false,
@@ -621,7 +615,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       const modifiedDashboardItem = {
         ...dashboardItem,
         ...newItem,
-        widgetId: selectedWidgets[0]
+        widgetId: selectedWidgets[0],
+        alias: formdata['alias']
       }
 
       this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
@@ -824,251 +819,17 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     this.props.history.push(`/project/${projectId}/widget/${widgetId}`)
   }
 
-  private onDrillPathData = (e) => {
-    const {
-      widgets,
-      currentItemsInfo,
-      onDrillDashboardItem
-    } = this.props
-    const { widgetProps, out, enter, value, itemId, widget, sourceDataFilter, currentDrillStatus } = e
-    const drillHistory = currentItemsInfo[itemId].queryConditions.drillHistory
-    onDrillDashboardItem(itemId, currentDrillStatus)
-  }
+  private dataDrill = (drillDetail) => {
+    const { onDrillDashboardItem, onLoadDashboardItemData } = this.props
+    const { itemId, widgetId, cols, rows, type, groups, filters, currentGroup } = drillDetail
+    const currentDrillStatus: IDrillDetail = { cols, rows, type, groups, filters, currentGroup }
 
-  private dataDrill = (e) => {
-    const {
-      widgets,
-      currentItemsInfo,
-      onLoadDashboardItemData,
-      onDrillDashboardItem
-    } = this.props
-    const { itemId, groups, widgetId, sourceDataFilter, mode, col, row} = e
-    const sourceDataGroup = Array.isArray(e.sourceDataGroup) ? [...(e.sourceDataGroup as Array<string>)] : []
-    const widget = widgets.find((w) => w.id === widgetId)
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired, model, dimetionAxis, selectedChart } = widget.config
-    const drillHistory = currentItemsInfo[itemId].queryConditions.drillHistory
-    let sql = void 0
-    let name = void 0
-    let filterSource = void 0
-    let widgetConfigGroups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
-    let aggregators =  metrics.map((m) => ({
-      column: decodeMetricName(m.name),
-      func: m.agg
-    }))
-
-    if (color) {
-      widgetConfigGroups = widgetConfigGroups.concat(color.items.map((c) => c.name))
-    }
-    if (label) {
-      widgetConfigGroups = widgetConfigGroups.concat(label.items
-        .filter((l) => l.type === 'category')
-        .map((l) => l.name))
-      aggregators = aggregators.concat(label.items
-        .filter((l) => l.type === 'value')
-        .map((l) => ({
-          column: decodeMetricName(l.name),
-          func: l.agg
-        })))
-    }
-    let currentDrillStatus = void 0
-    let widgetConfigRows = []
-    let widgetConfigCols = []
-    const coustomTableSqls = []
-   // let sqls = widgetConfig.filters.map((i) => i.config.sqlModel)
-    let sqls = []
-    filters.forEach((item) => {
-      sqls = sqls.concat(item.config.sqlModel)
-    })
-    if ((!drillHistory) || drillHistory.length === 0) {
-      let currentCol = void 0
-      if (widget.config) {
-        widgetConfigRows = rows && rows.length ? rows : []
-        widgetConfigCols = cols && cols.length ? cols : []
-        const mode = widget.config.mode
-        if (mode && mode === 'pivot') {
-          if (cols && cols.length !== 0) {
-            name = cols[cols.length - 1]['name']
-          } else {
-            name = rows[rows.length - 1]['name']
-          }
-        } else if (dimetionAxis === 'col') {
-          name = cols[cols.length - 1]['name']
-        } else if (dimetionAxis === 'row') {
-          name = rows[rows.length - 1]['name']
-        } else if (mode === 'chart'  && selectedChart === ChartTypes.Table) {
-          // todo coustomTable
-          const coustomTable = sourceDataFilter.reduce((a, b) => {
-            a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
-            return a
-          }, {})
-          for (const attr in coustomTable) {
-            if (coustomTable[attr] !== undefined && attr) {
-              const sqlType = model[attr] && model[attr]['sqlType'] ? model[attr]['sqlType'] : 'VARCHAR'
-              const filterJson: IFilters = {
-                name: attr,
-                operator: 'in',
-                type: 'filter',
-                value: coustomTable[attr].map((val) => getValidColumnValue(val, sqlType)),
-                sqlType
-              }
-              coustomTableSqls.push(filterJson)
-             // coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
-            }
-          }
-         // const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : ''
-          const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
-          const newWidgetPropCols = widgetConfigCols.reduce((array, col) => {
-            array.push(col)
-            if (col.name === drillKey) {
-              array.push({name: groups})
-            }
-            return array
-          }, [])
-          currentCol = groups && groups.length ? newWidgetPropCols : void 0
-        }
-      }
-      filterSource = sourceDataFilter.map((source) => {
-        if (source && source[name]) {
-          return source[name]
-        }
-      })
-
-      if (name && name.length) {
-        // todo filter
-        currentCol = col && col.length ? widgetConfigCols.concat([{name: col}]) : void 0
-        const sqlType = model[name] && model[name]['sqlType'] ? model[name]['sqlType'] : 'VARCHAR'
-        sql = {
-          name,
-          operator: 'in',
-          type: 'filter',
-          value: filterSource.map((val) => getValidColumnValue(val, sqlType)),
-          sqlType
-        }
-        // sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
-        sqls.push(sql)
-      }
-      if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
-        sqls = sqls.concat(coustomTableSqls)
-      }
-      const isDrillUp = widgetConfigGroups.some((cg) => cg === groups)
-      let currentDrillGroups = void 0
-      if (isDrillUp) {
-        currentDrillGroups = widgetConfigGroups.filter((cg) => cg !== groups)
-      } else {
-        if (mode === 'pivot') {
-          currentDrillGroups = widgetConfigGroups.concat([groups])
-        } else if (mode === 'chart' && selectedChart === ChartTypes.Table) {
-          currentDrillGroups = widgetConfigGroups.concat([groups])
-        } else {
-          currentDrillGroups = [groups]
-        }
-      }
-      currentDrillStatus = {
-        filter: {
-          filterSource,
-          name,
-          sql,
-          sqls,
-          visualType: 'string'
-        },
-        type: isDrillUp ? 'up' : 'down',
-        col: currentCol,
-        row: row && row.length ? widgetConfigRows.concat([{name: row}]) : void 0,
-        groups: currentDrillGroups,
-        name: groups
-      }
-    } else {
-      const lastDrillHistory = drillHistory[drillHistory.length - 1]
-      let currentCol = void 0
-      let currentRow = void 0
-     // todo
-      if (mode === 'chart' && selectedChart === ChartTypes.Table) {
-        const coustomTable = sourceDataFilter.reduce((a, b) => {
-          a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
-          return a
-        }, {})
-        for (const attr in coustomTable) {
-          if (coustomTable[attr] !== undefined && attr) {
-            // todo filter
-            const sqlType = model[attr] && model[attr]['sqlType'] ? model[attr]['sqlType'] : 'VARCHAR'
-            const filterJson: IFilters = {
-              name: attr,
-              operator: 'in',
-              type: 'filter',
-              value: coustomTable[attr].map((val) => getValidColumnValue(val, sqlType)),
-              sqlType
-            }
-            coustomTableSqls.push(filterJson)
-           // coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
-          }
-        }
-        if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
-          sqls = sqls.concat(coustomTableSqls)
-        }
-        if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
-          const drillKey = sourceDataFilter&&sourceDataFilter.length ? sourceDataFilter[sourceDataFilter.length - 1]['key'] : sourceDataGroup && sourceDataGroup.length ? sourceDataGroup.pop() : ''
-          const cols = lastDrillHistory.col
-          const newWidgetPropCols = cols.reduce((array, col) => {
-            array.push(col)
-            if (col.name === drillKey) {
-              array.push({name: groups})
-            }
-            return array
-          }, [])
-          currentCol = groups && groups.length ? newWidgetPropCols : lastDrillHistory.col
-        }
-        sqls = sqls.concat(lastDrillHistory.filter.sqls)
-      
-      } else {
-        name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
-        filterSource = sourceDataFilter.map((source) => source[name])
-       // sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
-        const sqlType = model[name] && model[name]['sqlType'] ? model[name]['sqlType'] : 'VARCHAR'
-        sql = {
-          name,
-          operator: 'in',
-          type: 'filter',
-          value: filterSource.map((val) => getValidColumnValue(val, sqlType)),
-          sqlType
-        }
-
-        sqls = lastDrillHistory.filter.sqls.concat(sql)
-        currentCol = col && col.length ? (lastDrillHistory.col || []).concat({name: col}) : lastDrillHistory.col
-        currentRow = row && row.length ? (lastDrillHistory.row || []).concat({name: row}) : lastDrillHistory.row
-      }
-      const isDrillUp = lastDrillHistory.groups.some((cg) => cg === groups)
-      let currentDrillGroups = void 0
-      if (isDrillUp) {
-        currentDrillGroups = lastDrillHistory.groups.filter((cg) => cg !== groups)
-      } else {
-        if (mode === 'pivot') {
-          currentDrillGroups = lastDrillHistory.groups.concat([groups])
-        } else if (mode === 'chart' && selectedChart === ChartTypes.Table) {
-          currentDrillGroups = lastDrillHistory.groups.concat([groups])
-        } else {
-          currentDrillGroups = [groups]
-        }
-      }
-      currentDrillStatus = {
-        filter: {
-          filterSource,
-          name,
-          sql,
-          sqls,
-          visualType: 'string'
-        },
-        col: currentCol,
-        row: currentRow,
-        type: isDrillUp ? 'up' : 'down',
-        groups: currentDrillGroups,
-        name: groups
-      }
-    }
     onDrillDashboardItem(itemId, currentDrillStatus)
     onLoadDashboardItemData('rerender', itemId, {
         drillStatus: currentDrillStatus
-      })
+    })
   }
+
   private selectDrillHistory = (history, item, itemId) => {
     const { onLoadDashboardItemData, onDeleteDrillHistory } = this.props
     setTimeout(() => {
@@ -1081,43 +842,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       }
     }, 50)
     onDeleteDrillHistory(itemId, item)
-  }
-
-  private saveDrillPathSetting = (flag) => {
-    // const { onDrillPathSetting } = this.props
-    // onDrillPathSetting(currentItemId as number, flag)
-
-    const {currentItems, match, onLoadDashboardDetail} = this.props
-    const { params } = match
-    const portalId = +params.portalId
-    const { currentItemId } = this.state
-    const dashboardItem = currentItems.find((item) => item.id === Number(currentItemId))
-    const config = dashboardItem.config
-    let configObj = null
-    try {
-       configObj = config && config.length > 0 ? JSON.parse(config) : {}
-    } catch (err) {
-      throw new Error(err)
-    }
-
-    if (!configObj) {
-      configObj = {
-        drillpathSetting: flag
-      }
-    }
-    configObj['drillpathSetting'] = flag
-
-    const modifiedDashboardItem = {
-      ...dashboardItem,
-      config: JSON.stringify(configObj)
-    }
-
-    this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
-      if (params.dashboardId && Number(params.dashboardId) !== -1) {
-        onLoadDashboardDetail(+params.projectId, +params.portalId, +params.dashboardId)
-      }
-      this.hideDrillPathSettingModal()
-    })
   }
 
   private selectChartsItems = (itemId, renderType, selectedItems) => {
@@ -1157,8 +881,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       dashboardItemFormStep,
       linkageConfigVisible,
       interactingStatus,
-      globalFilterConfigVisible,
-      drillPathSettingVisible
+      globalFilterConfigVisible
     } = this.state
     let dashboardType: number
     if (currentDashboard) {
@@ -1166,11 +889,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     }
     let navDropdown = (<span />)
     let grids = void 0
-    //   const drillPanels = []
-    let drillpathSetting = void 0
-    if (currentItemsInfo && currentItemId && currentItemsInfo[Number(currentItemId)]) {
-      drillpathSetting = currentItemsInfo[Number(currentItemId)].queryConditions.drillpathSetting
-    }
+
     if (dashboards) {
       const navDropdownItems = dashboards.map((d) => (
         <Menu.Item key={d.id}>
@@ -1208,7 +927,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       const gridEditable = hasVizEditPermission(currentProject.permission)
 
       currentItems.forEach((dashboardItem) => {
-        const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
+        const { id, x, y, width, height, widgetId, polling, frequency, alias } = dashboardItem
         const {
           datasource,
           loading,
@@ -1224,9 +943,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         } = currentItemsInfo[id]
         const widget = widgets.find((w) => w.id === widgetId)
         const interacting = interactingStatus[id] || false
-        const drillHistory = queryConditions.drillHistory
-        const drillpathSetting = queryConditions.drillpathSetting
-        const drillpathInstance = queryConditions.drillpathInstance
         const view = formedViews[widget.viewId]
         const isTrigger = currentLinkages && currentLinkages.length ? currentLinkages.map((linkage) => linkage.trigger[0]
         ).some((tr) => tr === String(id)) : false
@@ -1235,6 +951,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           <div key={id} className={styles.authSizeTag}>
             <DashboardItem
               itemId={id}
+              alias={alias}
               widgets={widgets}
               widget={widget}
               isTrigger={isTrigger}
@@ -1252,9 +969,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
               renderType={renderType}
               queryConditions={queryConditions}
               errorMessage={errorMessage}
-              drillHistory={drillHistory}
-              drillpathSetting={drillpathSetting}
-              drillpathInstance={drillpathInstance}
               onSelectDrillHistory={this.selectDrillHistory}
               onLoadData={onLoadDashboardItemData}
               onShowEdit={this.showEditDashboardItemForm}
@@ -1269,7 +983,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
               onShowFullScreen={onSetFullScreenPanelItemId}
               onEditWidget={this.toWorkbench}
               onDrillData={this.dataDrill}
-              onDrillPathData={this.onDrillPathData}
               onSelectChartsItems={this.selectChartsItems}
               onGetControlOptions={this.getControlSelectOptions}
               onControlSearch={onLoadBatchDataWithControlValues}
@@ -1418,25 +1131,6 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
             onPollingSelect={this.pollingSelect}
             wrappedComponentRef={this.refHandles.dashboardItemForm}
           />
-        </Modal>
-        <Modal
-          key={`dfd${uuid(8, 16)}`}
-          title="钻取设置"
-          wrapClassName="ant-modal-large"
-          visible={drillPathSettingVisible}
-          footer={null}
-          onCancel={this.hideDrillPathSettingModal}
-        >
-          {/* 临时下架功能，勿删 */}
-          {/* <DrillPathSetting
-             itemId={currentItemId}
-             drillpathSetting={drillpathSetting}
-             selectedWidget={this.state.selectedWidgets}
-             widgets={widgets || []}
-             views={views || []}
-             saveDrillPathSetting={this.saveDrillPathSetting}
-             cancel={this.hideDrillPathSettingModal}
-          /> */}
         </Modal>
         <DashboardLinkageConfig
           currentDashboard={currentDashboard}

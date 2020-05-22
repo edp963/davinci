@@ -172,6 +172,25 @@ export function* addRole (action: OrganizationActionType) {
   }
 }
 
+export function* getRoleListByMemberId (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.GET_ROLELISTS_BY_MEMBERID) { return }
+  const { memberId, orgId, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.organizations}/${orgId}/member/${memberId}/roles`
+    })
+    const result = asyncData.payload
+    yield put(OrganizationActions.getRoleListByMemberIdSuccess(result, memberId))
+    if (resolve) {
+      resolve(result)
+    }
+  } catch (err) {
+    yield put(OrganizationActions.getRoleListByMemberIdFail(err, memberId))
+    errorHandler(err)
+  }
+}
+
 export function* deleteRole (action: OrganizationActionType) {
   if (action.type !== ActionTypes.DELETE_ROLE) { return }
 
@@ -384,13 +403,13 @@ export default function* rootOrganizationSaga () {
     takeEvery(ActionTypes.EDIT_ROLE, editRole),
     takeEvery(ActionTypes.REL_ROLE_MEMBER, relRoleMember),
     takeEvery(ActionTypes.GET_REL_ROLE_MEMBER, getRelRoleMember),
-    // takeEvery(ActionTypes.LOAD_PROJECT_ROLES, getProjectRoles),
     takeLatest(ActionTypes.LOAD_PROJECT_ADMINS, getProjectAdmins),
     takeLatest(ActionTypes.INVITE_MEMBER, inviteMember),
     takeLatest(ActionTypes.SEARCH_MEMBER, searchMember),
     takeLatest(ActionTypes.DELETE_ORGANIZATION_MEMBER, deleteOrganizationMember),
     takeLatest(ActionTypes.CHANGE_MEMBER_ROLE_ORGANIZATION, changeOrganizationMemberRole),
     takeLatest(ActionTypes.GET_VIZ_VISBILITY, getVizVisbility),
-    takeLatest(ActionTypes.POST_VIZ_VISBILITY, postVizVisbility)
+    takeLatest(ActionTypes.POST_VIZ_VISBILITY, postVizVisbility),
+    takeEvery(ActionTypes.GET_ROLELISTS_BY_MEMBERID, getRoleListByMemberId)
   ])
 }
