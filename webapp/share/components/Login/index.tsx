@@ -1,19 +1,19 @@
-import * as React from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
-import LoginForm from '../../../app/containers/Login/LoginForm'
-const styles = require('../../../app/containers/Login/Login.less')
+import LoginForm from 'containers/Login/LoginForm'
+import styles from 'containers/Background/Background.less'
+import loginStyles from 'containers/Login/Login.less'
 
-import { login } from '../../containers/App/actions'
+import { login } from 'share/containers/App/actions'
 
-const Icon = require('antd/lib/icon')
-const Message = require('antd/lib/message')
+import { Icon } from 'antd'
 
 interface ILoginProps {
   loginLoading?: boolean
-  shareInfo: any,
+  shareToken: any,
   legitimateUser: () => void
-  onLogin?: (username: string, password: string, shareInfo: any, resolve: (res) => void) => void
+  onLogin?: (username: string, password: string, shareToken: any, resolve: (res) => void) => void
 }
 
 interface ILoginStates {
@@ -43,11 +43,11 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   }
 
   private doLogin = () => {
-    const { onLogin, shareInfo, legitimateUser } = this.props
+    const { onLogin, shareToken, legitimateUser } = this.props
     const { username, password } = this.state
 
     if (username && password) {
-      onLogin(username, password, shareInfo, () => {
+      onLogin(username, password, shareToken, () => {
         legitimateUser()
       })
     }
@@ -57,10 +57,10 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     const { loginLoading } = this.props
     const { username, password } = this.state
     return (
-      <div className={`${styles.login} ${styles.share}`}>
+      <div className={`${styles.container} ${styles.share}`}>
         <Helmet title="Login" />
-        <img className={styles.logo} src={require('../../../app/assets/images/logo_light.svg')} />
-        <div className={styles.window}>
+        <img className={styles.logo} src={require('assets/images/logo_light.svg')} />
+        <div className={`${styles.window} ${loginStyles.window}`}>
           <LoginForm
             username={username}
             password={password}
@@ -87,7 +87,7 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLogin: (username: string, password: string, shareInfo: any, resolve: () => void) => dispatch(login(username, password, shareInfo, resolve))
+    onLogin: (username: string, password: string, shareToken: any, resolve: () => void) => dispatch(login(username, password, shareToken, resolve))
   }
 }
 

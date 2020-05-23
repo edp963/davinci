@@ -1,27 +1,16 @@
-import * as React from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
-import { Link } from 'react-router'
-const Icon = require('antd/lib/icon')
-const Col = require('antd/lib/col')
-const Message = require('antd/lib/message')
-const Row = require('antd/lib/row')
-const Input = require('antd/lib/input')
-const Form = require('antd/lib/Form')
+import { Link } from 'react-router-dom'
+import { Icon, Col, message, Row, Input, Form, Button, Breadcrumb } from 'antd'
 const FormItem = Form.Item
 const styles = require('./profile.less')
-const Button = require('antd/lib/button')
-import Box from '../../components/Box'
-import UploadAvatar from '../../components/UploadAvatar'
-import {createStructuredSelector} from 'reselect'
-import {makeSelectLoginUser} from '../App/selectors'
-import {compose} from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import {updateProfile, checkNameUniqueAction, uploadAvatarSuccess} from '../App/actions'
-import injectSaga from '../../utils/injectSaga'
-// import reducer from '../App/reducer'
-// import saga from '../App/sagas'
-const utilStyles = require('../../assets/less/util.less')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import Box from 'components/Box'
+import UploadAvatar from 'components/UploadAvatar'
+import { createStructuredSelector } from 'reselect'
+import { makeSelectLoginUser } from '../App/selectors'
+import { compose } from 'redux'
+import { updateProfile, checkNameUniqueAction, uploadAvatarSuccess } from '../App/actions'
+const utilStyles = require('assets/less/util.less')
 
 interface IProfileProps {
   form: any
@@ -49,18 +38,23 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
   }
   private submit = () => {
     const { onUpdateProfile, loginUser: {id} } = this.props
-    this.props.form.validateFieldsAndScroll((err, values) => {
-      if(!err) {
-        const {name, description, department} = values
-        onUpdateProfile(id, name, description, department, (data) => {
-          Message.success(data.header && data.header.msg)
-        })
-      }
+    const values = this.props.form.getFieldsValue()
+    const {name, description, department} = values
+    onUpdateProfile(id, name, description, department, (data) => {
+      message.success(data.header && data.header.msg)
     })
   }
   public componentDidMount () {
     const { name, description, department } = this.props.loginUser
     this.props.form.setFieldsValue({name, description, department })
+  }
+  public uploadAvatarSuccessCallback = (path) => {
+    const { onUploadAvatarSuccess, loginUser } = this.props
+    const newLoginUser = {...loginUser,  ...{avatar: path}}
+    if (onUploadAvatarSuccess) {
+      onUploadAvatarSuccess(path)
+    }
+    localStorage.setItem('loginUser', JSON.stringify(newLoginUser))
   }
   public render () {
     const {getFieldDecorator} = this.props.form
@@ -85,7 +79,7 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
         <Box.Body>
           <div className={styles.container}>
             <div className={styles.uploadWrapper}>
-              <UploadAvatar type="profile" xhrParams={{id, callback: this.props.onUploadAvatarSuccess}} path={avatar}/>
+              <UploadAvatar type="profile" xhrParams={{id, callback: this.uploadAvatarSuccessCallback}} path={avatar}/>
             </div>
             <hr/>
             <div className={styles.form}>
@@ -164,11 +158,7 @@ const mapStateToProps = createStructuredSelector({
 })
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
-// const withReducerApp = injectReducer({key: 'global', reducer})
-// const withSagaAccount = injectSaga({key: 'account', saga})
 
 export default compose(
-  // withReducerApp,
-  // withSagaAccount,
   withConnect
 )(Form.create()(Profile))

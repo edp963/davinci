@@ -4,7 +4,7 @@ import { IMetricAxisConfig } from './Pivot'
 import { IWidgetMetric, DimetionType, IChartStyles } from '../Widget'
 import { IChartLine, IChartUnit } from './Chart'
 import { metricAxisLabelFormatter, getXaxisLabel, decodeMetricName } from '../util'
-import { PIVOT_DEFAULT_AXIS_LINE_COLOR, PIVOT_XAXIS_ROTATE_LIMIT } from '../../../../globalConstants'
+import { PIVOT_DEFAULT_AXIS_LINE_COLOR, PIVOT_XAXIS_ROTATE_LIMIT } from 'app/globalConstants'
 
 const styles = require('./Pivot.less')
 
@@ -123,7 +123,7 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
 
             grid.push({
               top: dimetionAxis === 'col' ? xSum : ySum,
-              left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),   // 隐藏yaxisline
+              left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),   // 隐藏yaxisline
               width
             })
 

@@ -1,10 +1,10 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { IDrawingData, IMetricAxisConfig, ILegend } from './Pivot'
 import { IWidgetMetric, DimetionType, RenderType, IChartStyles } from '../Widget'
 import Cell from './Cell'
 import Chart, { IChartUnit, IChartLine, IChartBlock } from './Chart'
-import { PIVOT_CANVAS_SIZE_LIMIT, PIVOT_CANVAS_POLAR_SIZE_LIMIT } from '../../../../globalConstants'
+import { PIVOT_CANVAS_SIZE_LIMIT, PIVOT_CANVAS_POLAR_SIZE_LIMIT } from 'app/globalConstants'
 import {
   getPivotContentTextWidth,
   getPivotCellWidth,
@@ -12,7 +12,7 @@ import {
   getChartPieces,
   decodeMetricName
 } from '../util'
-import { uuid } from '../../../../utils/util'
+import { uuid } from 'utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 
 const styles = require('./Pivot.less')
@@ -23,9 +23,12 @@ export interface ITableBodyProps {
   rowKeys: string[][]
   colKeys: string[][]
   rowWidths: number[]
+  selectedChart: number
+  selectedItems?: number[]
   rowTree: object
   colTree: object
   tree: object
+  interacting?: boolean
   metrics: IWidgetMetric[]
   metricAxisConfig: IMetricAxisConfig
   chartStyles: IChartStyles
@@ -40,9 +43,25 @@ export interface ITableBodyProps {
   legend: ILegend
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
+  getDataDrillDetail?: (position: string) => void
+  isDrilling?: boolean
+  ifSelectedTdToDrill: (obj: any) => any
+  whichDataDrillBrushed?: boolean | object []
+  // onHideDrillPanel?: (swtich: boolean) => void
+  onSelectChartsItems?: (selectedItems: number[]) => void
 }
 
-export class TableBody extends React.Component<ITableBodyProps, {}> {
+interface ITableBodyState {
+  selectedPivotTds: any[]
+}
+
+export class TableBody extends React.Component<ITableBodyProps, ITableBodyState> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      selectedPivotTds: []
+    }
+  }
   private gridCutting = (width, height, chartGrid) => {
     // console.log(chartGrid)
     const chunks = this.horizontalCutting(height, chartGrid)
@@ -199,7 +218,11 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       renderType,
       legend,
       onCheckTableInteract,
-      onDoInteract
+      onDoInteract,
+      getDataDrillDetail,
+      isDrilling,
+      ifSelectedTdToDrill
+      // onHideDrillPanel
     } = this.props
     const { elementSize, unitMetricWidth, unitMetricHeight, tableBodyCollapsed } = drawingData
     let tableBody = null
@@ -476,6 +499,13 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           legend={legend}
           onCheckTableInteract={onCheckTableInteract}
           onDoInteract={onDoInteract}
+          getDataDrillDetail={getDataDrillDetail}
+          isDrilling={isDrilling}
+          selectedChart={this.props.selectedChart}
+          whichDataDrillBrushed={this.props.whichDataDrillBrushed}
+          // onHideDrillPanel={onHideDrillPanel}
+          selectedItems={this.props.selectedItems}
+          onSelectChartsItems={this.props.onSelectChartsItems}
         />
       )
     } else {
@@ -498,12 +528,15 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
                 colKey={flatColKey}
                 rowKey={flatRowKey}
                 width={cellWidth}
+                interacting={this.props.interacting}
                 height={getPivotCellHeight(height)}
                 metrics={metrics}
                 data={records}
                 chartStyles={chartStyles}
                 color={color}
                 legend={legend}
+                ifSelectedTdToDrill={ifSelectedTdToDrill}
+                isDrilling={isDrilling}
               />
             )
           })
@@ -517,7 +550,6 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       } else if (colKeys.length) {
         const line = []
         tableWidth = 0
-
         colKeys.forEach((ck) => {
           const flatColKey = ck.join(String.fromCharCode(0))
           const { width, height, records } = colTree[flatColKey]
@@ -528,18 +560,22 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
               key={flatColKey}
               colKey={flatColKey}
               width={cellWidth}
+              interacting={this.props.interacting}
               height={getPivotCellHeight(height)}
               metrics={metrics}
               data={records}
               chartStyles={chartStyles}
               color={color}
               legend={legend}
+              ifSelectedTdToDrill={ifSelectedTdToDrill}
+              isDrilling={isDrilling}
             />
           )
         })
 
         cells.push(
-          <tr key={uuid(8, 16)}>
+          // <tr key={uuid(8, 16)}>
+          <tr key="colKeyLength">
             {line}
           </tr>
         )
@@ -560,9 +596,12 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
               height={getPivotCellHeight(height)}
               metrics={metrics}
               data={records}
+              interacting={this.props.interacting}
               chartStyles={chartStyles}
               color={color}
               legend={legend}
+              ifSelectedTdToDrill={ifSelectedTdToDrill}
+              isDrilling={isDrilling}
             />
           )
 
@@ -575,8 +614,8 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           }
         })
       } else {
-        if (metrics.length) {
-          const records = tree[0]
+        const records = tree[0]
+        if (records && metrics.length) {
           let width = 0
           metrics.forEach((m) => {
             const text = records[`${m.agg}(${m.name})`]
@@ -584,16 +623,19 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           })
           const height = getPivotCellHeight()
           cells.push(
-            <tr key={uuid(8, 16)}>
+            <tr key="metricLength">
               <Cell
-                key={uuid(8, 16)}
+                key="metricsLength"
                 width={width}
                 height={height}
                 metrics={metrics}
                 data={records}
+                interacting={this.props.interacting}
                 chartStyles={chartStyles}
                 color={color}
                 legend={legend}
+                ifSelectedTdToDrill={ifSelectedTdToDrill}
+                isDrilling={isDrilling}
               />
             </tr>
           )
@@ -613,7 +655,6 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       [styles.bodyCollapsed]: tableBodyCollapsed,
       [styles.raw]: !dimetionAxis
     })
-
     return (
       <div className={containerClass}>
         {tableBody}

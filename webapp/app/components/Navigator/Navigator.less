@@ -1,4 +1,4 @@
-@import "../../assets/less/variable";
+@import "~assets/less/variable";
 
 .header {
   height: 64px;
@@ -58,23 +58,21 @@
 }
 
 .tools {
-  margin-right: 10px;
+  margin-right: 16px;
   display: flex;
   flex-direction: row;
 
   li {
-    padding: 0 10px;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
     i {
-      font-size: 20px;
+      font-size: 24px;
       cursor: pointer;
     }
   }
-
-  @media (max-width: 768px) {
-    .emailHide {
-      display: none;
-    }
-  }
-
 }

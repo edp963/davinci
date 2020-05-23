@@ -3,14 +3,10 @@ import * as classnames from 'classnames'
 import * as echarts from 'echarts/lib/echarts'
 
 import LinkageForm, { ILinkageForm } from './LinkageForm'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Table = require('antd/lib/table')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Modal = require('antd/lib/modal')
+import AntdFormType from 'antd/lib/form/Form'
+import { Table, Row, Col, Button, Modal } from 'antd'
 
-import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from '../../globalConstants'
+import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from 'app/globalConstants'
 import { uuid } from 'utils/util'
 const utilStyles = require('assets/less/util.less')
 const styles = require('./Linkage.less')
@@ -35,10 +31,14 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
       formVisible: false,
       localLinkages: []
     }
+    this.refHandlers = {
+      linkageForm: (ref) => this.linkageForm = ref
+    }
   }
 
   private chart: echarts.ECharts = null
-  private linkageForm: WrappedFormUtils = null
+  private refHandlers: { linkageForm: (ref: AntdFormType) => void }
+  private linkageForm: AntdFormType = null
 
   public componentDidMount () {
     const { linkages, onGetWidgetInfo } = this.props
@@ -155,15 +155,16 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
   }
 
   private resetForm = () => {
-    this.linkageForm.resetFields()
+    this.linkageForm.props.form.resetFields()
   }
 
   private addToTable = () => {
-    this.linkageForm.validateFieldsAndScroll((err, values) => {
+    this.linkageForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const { localLinkages } = this.state
         this.setState({
-          localLinkages: [ ...localLinkages, { ...values, key: uuid(8, 16) } ]
+          localLinkages: [ ...localLinkages, { ...values, key: uuid(8, 16) } ],
+          formVisible: false
         }, () => {
           const { onGetWidgetInfo } = this.props
           this.renderChart(this.state.localLinkages, onGetWidgetInfo)
@@ -221,7 +222,7 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
                 render: (val) => {
                   const { cascaderSource } = this.props
                   const triggerData = cascaderSource.find((ts) => ts.value === val[0])
-                  const triggerColumnData = triggerData.children.params.find((c) => c.value === val[1])
+                  const triggerColumnData = triggerData.children.triggerColumns.find((c) => c.value === val[1])
                   return `${triggerData.label} - ${triggerColumnData.label}`
                 }
               }, {
@@ -233,7 +234,7 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
                   const { cascaderSource } = this.props
                   const linkagerData = cascaderSource.find((fs) => fs.value === val[0])
                   const linkagerColumnData = val[1].split(DEFAULT_SPLITER)
-                  const linkagerColumnText = `${linkagerColumnData[0]}[${linkagerColumnData[2] === 'parameter' ? '参数' : '变量'}]`
+                  const linkagerColumnText = `${linkagerColumnData[0]}[${linkagerColumnData[2] === 'column' ? '字段' : '变量'}]`
                   return `${linkagerData.label} - ${linkagerColumnText}`
                 }
               }, {
@@ -275,7 +276,7 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
         >
           <LinkageForm
             cascaderSource={cascaderSource}
-            ref={(f) => { this.linkageForm = f }}
+            wrappedComponentRef={this.refHandlers.linkageForm}
           />
         </Modal>
       </Row>

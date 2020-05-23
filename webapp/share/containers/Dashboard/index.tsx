@@ -18,158 +18,139 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import * as classnames from 'classnames'
 
+// import html2canvas from 'html2canvas'
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
+import controlReducer from 'app/containers/ControlPanel/reducer'
 import saga from './sagas'
 
-import Container from '../../../app/components/Container'
-import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
-import DashboardItem from '../../../app/containers/Dashboard/components/DashboardItem'
-import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
-import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
-
-import { IFilterChangeParam } from '../../../app/components/Filters'
-import DashboardFilterPanel from 'containers/Dashboard/components/DashboardFilterPanel'
-
-import { RenderType, IWidgetProps } from '../../../app/containers/Widget/components/Widget'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-
+import Container from 'components/Container'
 import {
+  getMappingLinkage,
+  processLinkage,
+  removeLinkage
+} from 'components/Linkages'
+import DashboardItem from 'containers/Dashboard/components/DashboardItem'
+import FullScreenPanel from './FullScreenPanel'
+import { Responsive, WidthProvider } from 'react-grid-layout'
+import { ChartTypes } from 'containers/Widget/config/chart/ChartTypes'
+import { IFilters, IDistinctValueReqeustParams } from 'app/components/Control/types'
+import GlobalControlPanel from 'app/containers/ControlPanel/Global'
+import DownloadList from 'components/DownloadList'
+import { getValidColumnValue } from 'app/components/Control/util'
+import HeadlessBrowserIdentifier from 'share/components/HeadlessBrowserIdentifier'
+import { Row, Col } from 'antd'
+
+import DashboardActions from './actions'
+import ControlActions from 'app/containers/ControlPanel/actions'
+const {
   getDashboard,
   getWidget,
   getResultset,
+  getBatchDataWithControlValues,
   setIndividualDashboard,
   loadWidgetCsv,
-  loadCascadeSourceFromDashboard,
-  resizeAllDashboardItem
-} from './actions'
+  loadSelectOptions,
+  resizeDashboardItem,
+  resizeAllDashboardItem,
+  drillDashboardItem,
+  deleteDrillHistory,
+  selectDashboardItemChart,
+  loadDownloadList,
+  downloadFile,
+  initiateDownloadTask,
+  sendShareParams,
+  setFullScreenPanelItemId
+} = DashboardActions
+const { setSelectOptions } = ControlActions
 import {
   makeSelectDashboard,
   makeSelectTitle,
-  makeSelectConfig,
-  makeSelectDashboardCascadeSources,
   makeSelectWidgets,
+  makeSelectFormedViews,
   makeSelectItems,
   makeSelectItemsInfo,
-  makeSelectLinkages
+  makeSelectLinkages,
+  makeSelectDownloadList,
+  makeSelectShareParams
 } from './selectors'
-import { decodeMetricName } from '../../../app/containers/Widget/components/util'
+import { decodeMetricName } from 'app/containers/Widget/components/util'
 import {
-  DEFAULT_SPLITER,
-  ECHARTS_RENDERER,
   GRID_COLS,
   GRID_ROW_HEIGHT,
   GRID_ITEM_MARGIN,
-  SQL_NUMBER_TYPES,
-  GRID_BREAKPOINTS
-} from '../../../app/globalConstants'
+  GRID_BREAKPOINTS,
+  DOWNLOAD_LIST_POLLING_FREQUENCY
+} from 'app/globalConstants'
 
-const styles = require('../../../app/containers/Dashboard/Dashboard.less')
-const utilStyles = require('../../../app/assets/less/util.less')
+import styles from 'app/containers/Dashboard/Dashboard.less'
 
-import Login from '../../components/Login/index'
+import Login from 'share/components/Login'
+import {
+  IQueryConditions,
+  IDataRequestParams,
+  QueryVariable
+} from 'app/containers/Dashboard/types'
+import { RenderType } from 'containers/Widget/components/Widget'
+import { getShareClientId } from 'share/util'
+import { DashboardItemStatus } from './constants'
+import { IWidgetFormed } from 'app/containers/Widget/types'
+import {
+  ControlPanelLayoutTypes,
+  ControlPanelTypes
+} from 'app/components/Control/constants'
+import { IDrillDetail } from 'components/DataDrill/types'
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
-interface IDashboardProps {
-  dashboard: any
-  title: string
-  config: string
-  currentItems: any[],
-  currentItemsInfo: {
-    [key: string]: {
-      datasource: any[]
-      loading: boolean
-      queryParams: {
-        filters: string
-        linkageFilters: string
-        globalFilters: string
-        params: Array<{name: string, value: string}>
-        linkageParams: Array<{name: string, value: string}>
-        globalParams: Array<{name: string, value: string}>
-      }
-      downloadCsvLoading: boolean
-      renderType: RenderType
-    }
-  },
-  widgets: any[],
-  dashboardCascadeSources: any,
-  linkages: any[]
-  onLoadDashboard: (shareInfo: any, error: (err) => void) => void,
-  onLoadWidget: (aesStr: string, success?: (widget) => void, error?: (err) => void) => void,
-  onLoadResultset: (
-    renderType: RenderType,
-    dashboardItemId: number,
-    dataToken: string,
-    params: {
-      groups: string[]
-      aggregators: Array<{column: string, func: string}>
-      filters: string[]
-      linkageFilters: string[]
-      globalFilters: string[]
-      params: Array<{name: string, value: string}>
-      linkageParams: Array<{name: string, value: string}>
-      globalParams: Array<{name: string, value: string}>
-      orders: Array<{column: string, direction: string}>
-      cache: boolean
-      expired: number
-    }
-  ) => void,
-  onSetIndividualDashboard: (id, shareInfo) => void,
-  onLoadWidgetCsv: (itemId: number, widgetProps: IWidgetProps, dataToken: string) => void,
-  onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => void
-  onResizeAllDashboardItem: () => void
-}
+type MappedStates = ReturnType<typeof mapStateToProps>
+type MappedDispatches = ReturnType<typeof mapDispatchToProps>
+
+type IDashboardProps = MappedStates & MappedDispatches
 
 interface IDashboardStates {
-  mounted: boolean,
-  type: string,
-  shareInfo: string,
-  modalLoading: boolean,
+  type: string
+  shareToken: string
+  modalLoading: boolean
   interactingStatus: { [itemId: number]: boolean }
-  allowFullScreen: boolean,
-  currentDataInFullScreen: any,
-  showLogin: boolean,
-  phantomRenderSign: boolean
+  showLogin: boolean
+  headlessBrowserRenderSign: boolean
 }
 
 export class Share extends React.Component<IDashboardProps, IDashboardStates> {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.state = {
-      mounted: false,
       type: '',
-      shareInfo: '',
+      shareToken: '',
 
       modalLoading: false,
       interactingStatus: {},
-      allowFullScreen: false,
-      currentDataInFullScreen: {},
       showLogin: false,
 
-      phantomRenderSign: false
+      headlessBrowserRenderSign: false
     }
   }
 
   private interactCallbacks: object = {}
   private interactingLinkagers: object = {}
   private interactGlobalFilters: object = {}
-  private resizeSign: number
+  private resizeSign: number = 0
+  private shareClientId: string = getShareClientId()
+  private downloadListPollingTimer: number
 
   /**
    * object
    * {
    *  type: this.state.type,
-   *  shareInfo: this.state.shareInfo
+   *  shareToken: this.state.shareToken
    * }
    * @param qs
    */
@@ -180,6 +161,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       onSetIndividualDashboard
     } = this.props
 
+    // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
     if (qs.type === 'dashboard') {
       onLoadDashboard(qs.shareInfo, (err) => {
         if (err.response.status === 403) {
@@ -189,148 +171,106 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         }
       })
     } else {
-      onLoadWidget(qs.shareInfo, (w) => {
-        onSetIndividualDashboard(w.id, qs.shareInfo)
-      }, (err) => {
-        if (err.response.status === 403) {
-          this.setState({
-            showLogin: true
-          })
+      onLoadWidget(
+        qs.shareInfo,
+        (widget) => {
+          onSetIndividualDashboard(widget, qs.shareInfo)
+        },
+        (err) => {
+          if (err.response.status === 403) {
+            this.setState({
+              showLogin: true
+            })
+          }
         }
-      })
+      )
     }
   }
-  public componentWillMount () {
-    const qs = this.getQs(location.href.substr(location.href.indexOf('?') + 1))
+
+  public componentDidMount() {
+    // urlparse
+    const qs = this.querystring(
+      window.location.search.substr(1)
+    )
+
+    // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
     this.setState({
       type: qs.type,
-      shareInfo: qs.shareInfo
+      shareToken: qs.shareInfo
     })
     this.loadShareContent(qs)
-  }
-
-  public componentDidMount () {
+    this.initPolling(qs.shareInfo)
+    delete qs.type
+    delete qs.shareInfo
+    this.props.onSendShareParams(qs)
     window.addEventListener('resize', this.onWindowResize, false)
-    this.setState({ mounted: true })
   }
 
-  public componentWillReceiveProps (nextProps: IDashboardProps) {
+  public componentWillReceiveProps(nextProps: IDashboardProps) {
     const { currentItems, currentItemsInfo } = nextProps
     if (currentItemsInfo) {
-      if (Object.values(currentItemsInfo).filter((info) => !!info.datasource.length).length === currentItems.length) {
-        this.setState({
-          phantomRenderSign: true
-        })
+      const initialedItems = Object.values(currentItemsInfo).filter((info) =>
+        [DashboardItemStatus.Fulfilled, DashboardItemStatus.Error].includes(
+          info.status
+        )
+      )
+      if (initialedItems.length === currentItems.length) {
+        // FIXME
+        setTimeout(() => {
+          this.setState({
+            headlessBrowserRenderSign: true
+          })
+        }, 5000)
       }
     }
   }
 
-  public componentWillUnmount () {
+  public componentWillUnmount() {
     window.removeEventListener('resize', this.onWindowResize, false)
+    if (this.downloadListPollingTimer) {
+      clearInterval(this.downloadListPollingTimer)
+    }
   }
 
-  private getQs = (qs) => {
-    const qsArr = qs.split('&')
-    return qsArr.reduce((acc, str) => {
-      const arr = str.split('=')
-      acc[arr[0]] = arr[1]
-      return acc
+  private querystring = (str) => {
+    return str.split('&').reduce((o, kv) => {
+      const [key, value] = kv.split('=')
+      if (!value) {
+        return o
+      }
+      this.deep_set(
+        o,
+        key.split(/[\[\]]/g).filter((x) => x),
+        value
+      )
+      return o
     }, {})
   }
 
-  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
-    const {
-      currentItemsInfo,
-      widgets,
-      onLoadResultset
-    } = this.props
-
-    const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
-
-    const cachedQueryParams = currentItemsInfo[itemId].queryParams
-
-    let linkageFilters
-    let globalFilters
-    let params
-    let linkageParams
-    let globalParams
-
-    if (queryParams) {
-      linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
-      globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
-      params = queryParams.params ? queryParams.params : cachedQueryParams.params
-      linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
-      globalParams = queryParams.globalParams || cachedQueryParams.globalParams
-    } else {
-      linkageFilters = cachedQueryParams.linkageFilters
-      globalFilters = cachedQueryParams.globalFilters
-      params = cachedQueryParams.params
-      linkageParams = cachedQueryParams.linkageParams
-      globalParams = cachedQueryParams.globalParams
-    }
-
-    let groups = cols.concat(rows).filter((g) => g !== '指标名称')
-    let aggregators =  metrics.map((m) => ({
-      column: decodeMetricName(m.name),
-      func: m.agg
-    }))
-
-    if (color) {
-      groups = groups.concat(color.items.map((c) => c.name))
-    }
-    if (label) {
-      groups = groups.concat(label.items
-        .filter((l) => l.type === 'category')
-        .map((l) => l.name))
-      aggregators = aggregators.concat(label.items
-        .filter((l) => l.type === 'value')
-        .map((l) => ({
-          column: decodeMetricName(l.name),
-          func: l.agg
-        })))
-    }
-    if (size) {
-      aggregators = aggregators.concat(size.items
-        .map((s) => ({
-          column: decodeMetricName(s.name),
-          func: s.agg
-        })))
-    }
-    if (xAxis) {
-      aggregators = aggregators.concat(xAxis.items
-        .map((l) => ({
-          column: decodeMetricName(l.name),
-          func: l.agg
-        })))
-    }
-    if (tip) {
-      aggregators = aggregators.concat(tip.items
-        .map((t) => ({
-          column: decodeMetricName(t.name),
-          func: t.agg
-        })))
-    }
-
-    onLoadResultset(
-      renderType,
-      itemId,
-      widget.dataToken,
-      {
-        groups,
-        aggregators,
-        filters: filters.map((i) => i.config.sql),
-        linkageFilters,
-        globalFilters,
-        params,
-        linkageParams,
-        globalParams,
-        orders,
-        cache,
-        expired
+  private deep_set(o, path, value) {
+    let i = 0
+    for (; i < path.length - 1; i++) {
+      if (o[path[i]] === undefined) {
+        o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
       }
-    )
+      o = o[decodeURIComponent(path[i])]
+    }
+    o[decodeURIComponent(path[i])] = decodeURIComponent(value)
+  }
+
+  private initPolling = (token) => {
+    this.props.onLoadDownloadList(this.shareClientId, token)
+    this.downloadListPollingTimer = window.setInterval(() => {
+      this.props.onLoadDownloadList(this.shareClientId, token)
+    }, DOWNLOAD_LIST_POLLING_FREQUENCY)
+  }
+
+  private initiateWidgetDownloadTask = (itemId: number) => {
+    this.props.onInitiateDownloadTask(this.shareClientId, itemId)
+  }
+
+  private onBreakpointChange = () => {
+    this.onWindowResize()
   }
 
   private onWindowResize = () => {
@@ -340,58 +280,24 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     this.resizeSign = window.setTimeout(() => {
       this.props.onResizeAllDashboardItem()
       clearTimeout(this.resizeSign)
-      this.resizeSign = void 0
+      this.resizeSign = 0
     }, 500)
   }
 
-  private downloadCsv = (itemId: number, widgetProps: IWidgetProps, shareInfo: string) => {
-    const {
-      currentItemsInfo,
-      onLoadWidgetCsv
-    } = this.props
-
-  //  const { filters, params } = currentItemsInfo[itemId].queryParams
-
-    onLoadWidgetCsv(itemId, widgetProps, shareInfo)
-  }
-
-  private visibleFullScreen = (currentChartData) => {
-    const {allowFullScreen} = this.state
-    if (currentChartData) {
-      this.setState({
-        currentDataInFullScreen: currentChartData
-      })
-    }
-    this.setState({
-      allowFullScreen: !allowFullScreen
-    })
-  }
-
-  private currentWidgetInFullScreen = (id) => {
-    const {currentItems, currentItemsInfo, widgets} = this.props
-    const item = currentItems.find((ci) => ci.id === id)
-    const widget = widgets.find((w) => w.id === item.widgetId)
-    const data = currentItemsInfo[id]
-    const loading = currentItemsInfo['loading']
-    this.setState({
-      currentDataInFullScreen: {
-            itemId: id,
-            widgetId: widget.id,
-            widget,
-            data,
-            loading,
-            onGetChartData: this.getChartData
-        }
-    })
-  }
-
   private handleLegitimateUser = () => {
-    const {type, shareInfo} = this.state
-    this.setState({
-      showLogin: false
-    }, () => {
-      this.loadShareContent({type, shareInfo})
-    })
+    const { type, shareToken } = this.state
+    this.setState(
+      {
+        showLogin: false
+      },
+      () => {
+        // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
+        this.loadShareContent({
+          type,
+          shareInfo: shareToken
+        })
+      }
+    )
   }
 
   private checkInteract = (itemId: number) => {
@@ -406,20 +312,28 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   private doInteract = (itemId: number, triggerData) => {
-    const {
-      currentItems,
-      linkages
-    } = this.props
+    const { currentItems, onLoadResultset, linkages } = this.props
 
     const mappingLinkage = getMappingLinkage(itemId, linkages)
-    this.interactingLinkagers = processLinkage(itemId, triggerData, mappingLinkage, this.interactingLinkagers)
+    this.interactingLinkagers = processLinkage(
+      itemId,
+      triggerData,
+      mappingLinkage,
+      this.interactingLinkagers
+    )
 
     Object.keys(mappingLinkage).forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === +linkagerItemId)
-      const { filters, params } = this.interactingLinkagers[linkagerItemId]
-      this.getChartData('rerender', +linkagerItemId, item.widgetId, {
-        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
-        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+      const { filters, variables } = this.interactingLinkagers[linkagerItemId]
+      onLoadResultset('rerender', +linkagerItemId, {
+        linkageFilters: Object.values(filters).reduce<string[]>(
+          (arr, f: string[]) => arr.concat(...f),
+          []
+        ),
+        linkageVariables: Object.values(variables).reduce<QueryVariable>(
+          (arr, p: QueryVariable) => arr.concat(...p),
+          []
+        )
       })
     })
     this.setState({
@@ -431,103 +345,194 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   private turnOffInteract = (itemId) => {
-    const {
-      linkages,
-      currentItems
-    } = this.props
+    const { linkages, currentItems, onLoadResultset } = this.props
 
-    const refreshItemIds = removeLinkage(itemId, linkages, this.interactingLinkagers)
+    const refreshItemIds = removeLinkage(
+      itemId,
+      linkages,
+      this.interactingLinkagers
+    )
     refreshItemIds.forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === linkagerItemId)
-      const { filters, params } = this.interactingLinkagers[linkagerItemId]
-      this.getChartData('rerender', linkagerItemId, item.widgetId, {
-        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
-        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+      const { filters, variables } = this.interactingLinkagers[linkagerItemId]
+      onLoadResultset('rerender', linkagerItemId, {
+        linkageFilters: Object.values(filters).reduce<string[]>(
+          (arr, f: string[]) => arr.concat(...f),
+          []
+        ),
+        linkageVariables: Object.values(variables).reduce<QueryVariable>(
+          (arr, p: QueryVariable) => arr.concat(...p),
+          []
+        )
       })
     })
-    this.setState({
-      interactingStatus: {
-        ...this.state.interactingStatus,
-        [itemId]: false
+    this.setState(
+      {
+        interactingStatus: {
+          ...this.state.interactingStatus,
+          [itemId]: false
+        }
+      },
+      () => {
+        const item = currentItems.find((ci) => ci.id === itemId)
+        onLoadResultset('clear', itemId)
       }
+    )
+  }
+
+  private getControlSelectOptions = (
+    controlKey: string,
+    useOptions: boolean,
+    paramsOrOptions,
+    itemId?: number
+  ) => {
+    if (useOptions) {
+      this.props.onSetSelectOptions(controlKey, paramsOrOptions, itemId)
+    } else {
+      this.props.onLoadSelectOptions(
+        controlKey,
+        this.state.shareToken,
+        paramsOrOptions,
+        itemId
+      )
+    }
+  }
+
+  private dataDrill = (drillDetail) => {
+    const { onDrillDashboardItem, onLoadResultset } = this.props
+    const { itemId, cols, rows, type, groups, filters, currentGroup } = drillDetail
+    const currentDrillStatus: IDrillDetail = { cols, rows, type, groups, filters, currentGroup }
+
+    onDrillDashboardItem(itemId, currentDrillStatus)
+    onLoadResultset('rerender', itemId, {
+        drillStatus: currentDrillStatus
     })
   }
 
-  private getOptions = (controlId, viewId, column, parents) => {
-    this.props.onLoadCascadeSourceFromDashboard(controlId, viewId, this.state.shareInfo, column, parents)
+  private selectDrillHistory = (history, item, itemId) => {
+    const { onLoadResultset, onDeleteDrillHistory } = this.props
+    setTimeout(() => {
+      if (history) {
+        onLoadResultset('rerender', itemId, {
+          drillStatus: history
+        })
+      } else {
+        onLoadResultset('rerender', itemId)
+      }
+    }, 50)
+    onDeleteDrillHistory(itemId, item)
   }
 
-  private globalFilterChange = (queryParams: IFilterChangeParam) => {
-    const { currentItems } = this.props
-    Object.entries(queryParams).forEach(([itemId, queryParam]) => {
-      const item = currentItems.find((ci) => ci.id === +itemId)
-      const { params: globalParams, filters: globalFilters } = queryParam
-      this.getChartData('rerender', +itemId, item.widgetId, { globalParams, globalFilters })
-    })
+  private selectChartsItems = (itemId, renderType, selectedItems) => {
+    const { onSelectDashboardItemChart } = this.props
+    onSelectDashboardItemChart(itemId, renderType, selectedItems)
   }
 
-  public render () {
+  private loadDownloadList = () => {
+    this.props.onLoadDownloadList(this.shareClientId, this.state.shareToken)
+  }
+
+  private downloadFile = (id) => {
+    this.props.onDownloadFile(id, this.shareClientId, this.state.shareToken)
+  }
+
+  public render() {
     const {
       dashboard,
       title,
       currentItems,
       currentItemsInfo,
       widgets,
-      dashboardCascadeSources
+      formedViews,
+      linkages,
+      downloadList,
+      onLoadResultset,
+      onLoadBatchDataWithControlValues,
+      onResizeDashboardItem,
+      onSetFullScreenPanelItemId
     } = this.props
 
     const {
-      mounted,
-      shareInfo,
+      shareToken,
       showLogin,
       interactingStatus,
-      allowFullScreen,
-      phantomRenderSign
+      headlessBrowserRenderSign
     } = this.state
 
     let grids = null
-    let fullScreenComponent = null
     let loginPanel = null
 
     if (currentItems) {
-      const itemblocks = []
-      const layouts = {lg: []}
+      const itemblocks: React.ReactNode[] = []
+      const layouts = { lg: [] }
 
       currentItems.forEach((dashboardItem) => {
-        const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
+        const {
+          id,
+          x,
+          y,
+          width,
+          height,
+          widgetId,
+          polling,
+          frequency
+        } = dashboardItem
         const {
           datasource,
           loading,
           downloadCsvLoading,
-          renderType
+          renderType,
+          queryConditions,
+          selectedItems,
+          errorMessage
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
+        const view = formedViews[widget.viewId]
         const interacting = interactingStatus[id] || false
+        const drillHistory = queryConditions.drillHistory
+        const isTrigger =
+          linkages && linkages.length
+            ? linkages
+                .map((linkage) => linkage.trigger[0])
+                .some((tr) => tr === String(id))
+            : false
 
-        itemblocks.push((
+        itemblocks.push(
           <div key={id}>
             <DashboardItem
               itemId={id}
               widget={widget}
-              data={datasource}
+              widgets={widgets}
+              view={view}
+              isTrigger={isTrigger}
+              datasource={datasource}
               loading={loading}
               polling={polling}
+              onDrillData={this.dataDrill}
+              onSelectDrillHistory={this.selectDrillHistory}
               interacting={interacting}
               frequency={frequency}
-              shareInfo={widget.dataToken}
+              shareToken={widget.dataToken}
               downloadCsvLoading={downloadCsvLoading}
-              onGetChartData={this.getChartData}
-              onDownloadCsv={this.downloadCsv}
+              renderType={renderType}
+              queryConditions={queryConditions}
+              errorMessage={errorMessage}
+              selectedItems={selectedItems || []}
+              container="share"
+              onLoadData={onLoadResultset}
+              onResizeDashboardItem={onResizeDashboardItem}
+              onDownloadCsv={this.initiateWidgetDownloadTask}
               onTurnOffInteract={this.turnOffInteract}
               onCheckTableInteract={this.checkInteract}
               onDoTableInteract={this.doInteract}
-              onShowFullScreen={this.visibleFullScreen}
-              renderType={renderType}
-              container="share"
+              onShowFullScreen={onSetFullScreenPanelItemId}
+              onSelectChartsItems={this.selectChartsItems}
+              onGetControlOptions={this.getControlSelectOptions}
+              onControlSearch={onLoadBatchDataWithControlValues}
             />
           </div>
-        ))
+        )
 
         layouts.lg.push({
           x,
@@ -536,37 +541,25 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           h: height,
           i: `${id}`
         })
-        console.log(layouts)
       })
 
       grids = (
         <ResponsiveReactGridLayout
           className="layout"
-          style={{marginTop: '-16px'}}
+          style={{ marginTop: '-16px' }}
           rowHeight={GRID_ROW_HEIGHT}
           margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
           breakpoints={GRID_BREAKPOINTS}
           cols={GRID_COLS}
           layouts={layouts}
+          onBreakpointChange={this.onBreakpointChange}
           measureBeforeMount={false}
-          useCSSTransforms={mounted}
+          useCSSTransforms={false}
           isDraggable={false}
           isResizable={false}
         >
           {itemblocks}
         </ResponsiveReactGridLayout>
-      )
-
-      fullScreenComponent = (
-        <FullScreenPanel
-          widgets={widgets}
-          currentDashboard={{ widgets: currentItems }}
-          currentDatasources={currentItemsInfo}
-          visible={allowFullScreen}
-          isVisible={this.visibleFullScreen}
-          currentDataInFullScreen={this.state.currentDataInFullScreen}
-          onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
-        />
       )
     } else {
       grids = (
@@ -574,13 +567,18 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           <h3>数据加载中……</h3>
         </div>
       )
-
-      fullScreenComponent = ''
     }
 
-    loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
+    loginPanel = showLogin ? (
+      <Login
+        shareToken={shareToken}
+        legitimateUser={this.handleLegitimateUser}
+      />
+    ) : (
+      ''
+    )
 
-    const phantomDOM = phantomRenderSign && (<div id="phantomRenderSign" />)
+    const headlessBrowserRenderParentNode = document.getElementById('app')
 
     return (
       <Container>
@@ -589,21 +587,40 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           <Row>
             <Col span={24}>
               <h2 className={styles.shareTitle}>{title}</h2>
+              <div className={styles.shareDownloadListToggle}>
+                <DownloadList
+                  downloadList={downloadList}
+                  onLoadDownloadList={this.loadDownloadList}
+                  onDownloadFile={this.downloadFile}
+                />
+              </div>
             </Col>
           </Row>
-          <DashboardFilterPanel
+          <GlobalControlPanel
             currentDashboard={dashboard}
             currentItems={currentItems}
-            onGetOptions={this.getOptions}
-            filterOptions={dashboardCascadeSources}
-            onChange={this.globalFilterChange}
+            layoutType={ControlPanelLayoutTypes.Dashboard}
+            onGetOptions={this.getControlSelectOptions}
+            onSearch={onLoadBatchDataWithControlValues}
           />
         </Container.Title>
         {grids}
         <div className={styles.gridBottom} />
-        {fullScreenComponent}
         {loginPanel}
-        {phantomDOM}
+        <FullScreenPanel
+          currentDashboard={dashboard}
+          widgets={widgets}
+          formedViews={formedViews}
+          currentItems={currentItems}
+          currentItemsInfo={currentItemsInfo}
+          onLoadData={onLoadResultset}
+          onGetOptions={this.getControlSelectOptions}
+          onSearch={onLoadBatchDataWithControlValues}
+        />
+        <HeadlessBrowserIdentifier
+          renderSign={headlessBrowserRenderSign}
+          parentNode={headlessBrowserRenderParentNode}
+        />
       </Container>
     )
   }
@@ -612,32 +629,81 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 const mapStateToProps = createStructuredSelector({
   dashboard: makeSelectDashboard(),
   title: makeSelectTitle(),
-  config: makeSelectConfig(),
   widgets: makeSelectWidgets(),
+  formedViews: makeSelectFormedViews(),
   currentItems: makeSelectItems(),
   currentItemsInfo: makeSelectItemsInfo(),
-  dashboardCascadeSources: makeSelectDashboardCascadeSources(),
-  linkages: makeSelectLinkages()
+  linkages: makeSelectLinkages(),
+  downloadList: makeSelectDownloadList(),
+  shareParams: makeSelectShareParams()
 })
 
-export function mapDispatchToProps (dispatch) {
+export function mapDispatchToProps(dispatch) {
   return {
-    onLoadDashboard: (token, reject) => dispatch(getDashboard(token, reject)),
-    onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
-    onLoadResultset: (renderType, itemid, dataToken, params) => dispatch(getResultset(renderType, itemid, dataToken, params)),
-    onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
-    onLoadWidgetCsv: (itemId, widgetProps, dataToken) => dispatch(loadWidgetCsv(itemId, widgetProps, dataToken)),
-    onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, viewId, dataToken, column, parents)),
-    onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem())
+    onLoadDashboard: (token: string, reject: (err) => void) =>
+      dispatch(getDashboard(token, reject)),
+    onLoadWidget: (
+      token: string,
+      resolve: (widget: IWidgetFormed) => void,
+      reject: (err) => void
+    ) => dispatch(getWidget(token, resolve, reject)),
+    onLoadResultset: (
+      renderType: RenderType,
+      itemId: number,
+      queryConditions?: Partial<IQueryConditions>
+    ) => dispatch(getResultset(renderType, itemId, queryConditions)),
+    onLoadBatchDataWithControlValues: (
+      type: ControlPanelTypes,
+      relatedItems: number[],
+      formValues?: object,
+      itemId?: number
+    ) =>
+      dispatch(
+        getBatchDataWithControlValues(type, relatedItems, formValues, itemId)
+      ),
+    onSetIndividualDashboard: (widget: IWidgetFormed, token: string) =>
+      dispatch(setIndividualDashboard(widget, token)),
+    onLoadWidgetCsv: (
+      itemId: number,
+      requestParams: IDataRequestParams,
+      dataToken: string
+    ) => dispatch(loadWidgetCsv(itemId, requestParams, dataToken)),
+    onLoadSelectOptions: (
+      controlKey: string,
+      dataToken: string,
+      reqeustParams: { [viewId: string]: IDistinctValueReqeustParams },
+      itemId: number
+    ) =>
+      dispatch(loadSelectOptions(controlKey, dataToken, reqeustParams, itemId)),
+    onSetSelectOptions: (controlKey: string, options: any[], itemId?: number) =>
+      dispatch(setSelectOptions(controlKey, options, itemId)),
+    onResizeDashboardItem: (itemId: number) =>
+      dispatch(resizeDashboardItem(itemId)),
+    onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
+    onDrillDashboardItem: (itemId: number, drillHistory) =>
+      dispatch(drillDashboardItem(itemId, drillHistory)),
+    onDeleteDrillHistory: (itemId: number, index: number) =>
+      dispatch(deleteDrillHistory(itemId, index)),
+    onSelectDashboardItemChart: (
+      itemId: number,
+      renderType: RenderType,
+      selectedItems: number[]
+    ) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems)),
+    onInitiateDownloadTask: (shareClientId: string, itemId?: number) =>
+      dispatch(initiateDownloadTask(shareClientId, itemId)),
+    onLoadDownloadList: (shareClinetId: string, token: string) =>
+      dispatch(loadDownloadList(shareClinetId, token)),
+    onDownloadFile: (id: number, shareClientId: string, token: string) =>
+      dispatch(downloadFile(id, shareClientId, token)),
+    onSendShareParams: (params: object) => dispatch(sendShareParams(params)),
+    onSetFullScreenPanelItemId: (itemId: number) =>
+      dispatch(setFullScreenPanelItemId(itemId))
   }
 }
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'shareDashboard', reducer })
 const withSaga = injectSaga({ key: 'shareDashboard', saga })
+const withControlReducer = injectReducer({ key: 'control', reducer: controlReducer })
 
-export default compose(
-  withReducer,
-  withSaga,
-  withConnect
-)(Share)
+export default compose(withReducer, withControlReducer, withSaga, withConnect)(Share)

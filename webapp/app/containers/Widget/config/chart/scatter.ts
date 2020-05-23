@@ -1,22 +1,38 @@
+import ChartTypes from './ChartTypes'
 import {
   PIVOT_DEFAULT_AXIS_LINE_COLOR,
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
-const bar: IChartInfo = {
-  id: 4,
+const scatter: IChartInfo = {
+  id: ChartTypes.Scatter,
   name: 'scatter',
   title: '散点图',
   icon: 'icon-scatter-chart',
   coordinate: 'cartesian',
-  requireDimetions: [0, 9999],
-  requireMetrics: 2,
+  rules: [{ dimension: [0, 9999], metric: 2 }],
   dimetionAxis: 'col',
   data: {
+    cols: {
+      title: '列',
+      type: 'category'
+    },
+    rows: {
+      title: '行',
+      type: 'category'
+    },
+    metrics: {
+      title: '指标',
+      type: 'value'
+    },
+    filters: {
+      title: '筛选',
+      type: 'all'
+    },
     size: {
       title: '尺寸',
       type: 'value'
@@ -53,7 +69,12 @@ const bar: IChartInfo = {
       showTitleAndUnit: true,
       titleFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       titleFontSize: '12',
-      titleColor: PIVOT_DEFAULT_FONT_COLOR
+      titleColor: PIVOT_DEFAULT_FONT_COLOR,
+      nameLocation: 'middle',
+      nameRotate: 90,
+      nameGap: 40,
+      min: null,
+      max: null
     },
     yAxis: {
       showLine: true,
@@ -67,7 +88,12 @@ const bar: IChartInfo = {
       showTitleAndUnit: true,
       titleFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       titleFontSize: '12',
-      titleColor: PIVOT_DEFAULT_FONT_COLOR
+      titleColor: PIVOT_DEFAULT_FONT_COLOR,
+      nameLocation: 'middle',
+      nameRotate: 90,
+      nameGap: 40,
+      min: null,
+      max: null
     },
     splitLine: {
       showHorizontalLine: true,
@@ -90,4 +116,4 @@ const bar: IChartInfo = {
   }
 }
 
-export default bar
+export default scatter

@@ -1,20 +1,17 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Checkbox = require('antd/lib/checkbox')
-const Select = require('antd/lib/select')
+import { Row, Col, Checkbox, Select} from 'antd'
 const Option = Select.Option
-import ColorPicker from '../../../../../components/ColorPicker'
-import { PIVOT_CHART_LINE_STYLES } from '../../../../../globalConstants'
+import ColorPicker from 'components/ColorPicker'
+import { PIVOT_CHART_LINE_STYLES } from 'app/globalConstants'
 const styles = require('../Workbench.less')
 
 export interface ISplitLineConfig {
   showHorizontalLine: boolean
-  horizontalLineStyle: string
+  horizontalLineStyle: 'solid' | 'dashed' | 'dotted'
   horizontalLineSize: string
   horizontalLineColor: string
   showVerticalLine: boolean
-  verticalLineStyle: string
+  verticalLineStyle: 'solid' | 'dashed' | 'dotted'
   verticalLineSize: string
   verticalLineColor: string
 }
@@ -88,8 +85,8 @@ export class SplitLineSection extends React.PureComponent<ISplitLineSectionProps
                 onChange={this.selectChange('horizontalLineSize')}
               >
                 {Array.from(Array(10), (o, i) => (
-                    <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
-                  ))}
+                  <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                ))}
               </Select>
             </Col>
             <Col span={4}>
@@ -128,8 +125,8 @@ export class SplitLineSection extends React.PureComponent<ISplitLineSectionProps
                 onChange={this.selectChange('verticalLineSize')}
               >
                 {Array.from(Array(10), (o, i) => (
-                    <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
-                  ))}
+                  <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                ))}
               </Select>
             </Col>
             <Col span={4}>

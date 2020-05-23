@@ -1,27 +1,20 @@
-import * as React from 'react'
-const Icon = require('antd/lib/icon')
-const Message = require('antd/lib/message')
-import { Link } from 'react-router'
-import Box from '../../components/Box'
+import React, { createRef, RefObject } from 'react'
+import { compose } from 'redux'
+import { connect } from 'react-redux'
+import { Link } from 'react-router-dom'
+import { Icon, message, Breadcrumb } from 'antd'
+import FormType, { FormComponentProps } from 'antd/lib/form/Form'
+import Box from 'components/Box'
 const styles = require('../Profile/profile.less')
-const utilStyles = require('../../assets/less/util.less')
-const Breadcrumb = require('antd/lib/breadcrumb')
+const utilStyles = require('assets/less/util.less')
 import ResetPasswordForm from './ResetPasswordForm'
 
-import {changeUserPassword} from '../App/actions'
-import injectReducer from '../../utils/injectReducer'
-import {connect} from 'react-redux'
-import injectSaga from '../../utils/injectSaga'
-// import saga from '../App/sagas'
-// import reducer from '../App/reducer'
-import {compose} from 'redux'
-import {makeSelectLoginUser} from '../App/selectors'
-import {createStructuredSelector} from 'reselect'
-import {WrappedFormUtils} from 'antd/lib/form/Form'
+import { changeUserPassword } from '../App/actions'
+import { makeSelectLoginUser } from '../App/selectors'
+import { createStructuredSelector } from 'reselect'
 
 
 interface IResetPasswordProps {
-  form: any
   type: string
   loginUser: any,
   onChangeUserPassword: (user: IUser, resolve: () => any, reject: (msg: string) => any) => any
@@ -34,21 +27,27 @@ interface IUser {
 }
 
 
-export class ResetPassword extends React.PureComponent<IResetPasswordProps> {
-  private resetPasswordForm: WrappedFormUtils
+export class ResetPassword extends React.PureComponent<IResetPasswordProps & FormComponentProps> {
+
+  private resetPasswordForm: FormType
+
+  private refHandler = {
+    resetPasswordForm: (ref) => this.resetPasswordForm = ref
+  }
+
   public componentWillMount () {
     const {id} = this.props.loginUser
     this.forceUpdate(() => {
-      this.resetPasswordForm.setFieldsValue({id})
+      this.resetPasswordForm.props.form.setFieldsValue({id})
     })
   }
   private submit = () => {
-    this.resetPasswordForm.validateFieldsAndScroll((err, values) => {
+    this.resetPasswordForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.props.onChangeUserPassword(values, () => {
-          Message.success('success')
+          message.success('success')
         }, (msg) => {
-          Message.error(msg)
+          message.error(msg)
         })
       }
     })
@@ -70,7 +69,7 @@ export class ResetPassword extends React.PureComponent<IResetPasswordProps> {
         <Box.Body>
           <div className={styles.container}>
               <ResetPasswordForm
-                ref={(f) => {this.resetPasswordForm = f }}
+                wrappedComponentRef={this.refHandler.resetPasswordForm}
                 submit={this.submit}
               />
           </div>
@@ -90,13 +89,9 @@ function mapDispatchToProps (dispatch) {
   }
 }
 
-const withConnect = connect<{}, {}, IResetPasswordProps>(mapStateToProps, mapDispatchToProps)
-// const withReducer = injectReducer({ key: 'global', reducer })
-// const withSaga = injectSaga({ key: 'global', saga })
+const withConnect = connect<{}, {}, IResetPasswordProps & FormComponentProps>(mapStateToProps, mapDispatchToProps)
 
 export default compose(
-  // withReducer,
-  // withSaga,
   withConnect
 )(ResetPassword)
 

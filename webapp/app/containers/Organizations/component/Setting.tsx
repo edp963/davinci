@@ -1,28 +1,25 @@
-import * as React from 'react'
+import React from 'react'
 const styles = require('../Organization.less')
-const Button = require('antd/lib/Button')
-const Input = require('antd/lib/input')
-const Form = require('antd/lib/form')
+import { Button, Input, Form, Row, Col, Radio, Modal } from 'antd'
 const FormItem = Form.Item
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Radio = require('antd/lib/radio')
 const RadioButton = Radio.Button
-import UploadAvatar from '../../../components/UploadAvatar'
-import {IOrganization} from '../Organization'
-const utilStyles = require('../../../assets/less/util.less')
+import UploadAvatar from 'components/UploadAvatar'
+import { IOrganization } from '../types'
+const utilStyles = require('assets/less/util.less')
 
 interface ISettingProps {
   form: any
   currentOrganization: IOrganization
   editOrganization: (oranization: IOrganization) => () => any
-  deleteOrganization: (id: number) => () => any
+  deleteOrganization: (id: number) => any
 }
 
 export class Setting extends React.PureComponent <ISettingProps> {
+
   public componentWillMount () {
     this.initData()
   }
+
   private initData = () => {
     const { currentOrganization } = this.props
     const {
@@ -46,8 +43,21 @@ export class Setting extends React.PureComponent <ISettingProps> {
       })
     })
   }
+
+  private confirmDelete = () => {
+    const { form, deleteOrganization } = this.props
+    const { id, name } = form.getFieldsValue()
+    Modal.confirm({
+      title: `确定删除组织 “${name}”？`,
+      onOk: () => {
+        deleteOrganization(id)
+      }
+    })
+  }
+
   public render () {
     const { getFieldDecorator } = this.props.form
+
     const commonFormItemStyle = {
       labelCol: { span: 2 },
       wrapperCol: { span: 18 }
@@ -89,7 +99,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
                        // validator: this.checkNameUnique
                       }]
                     })(
-                      <Input size="large" placeholder="Name"/>
+                      <Input placeholder="Name"/>
                     )}
                   </FormItem>
                 </Col>
@@ -169,7 +179,6 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 </Col>
                 <Col>
                   <Button
-                    size="large"
                     onClick={this.props.editOrganization(this.props.form.getFieldsValue())}
                     disabled={isDisabled}
                   >
@@ -184,7 +193,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 <div className={styles.titleDesc}>
                   <p className={styles.desc}>删除后无法恢复，请确定此次操作</p>
                   <p className={styles.button}>
-                    <Button size="large" type="danger" onClick={this.props.deleteOrganization(this.props.form.getFieldsValue().id)}>删除{name}</Button>
+                    <Button type="danger" onClick={this.confirmDelete}>删除{name}</Button>
                   </p>
                 </div>
               </Row>

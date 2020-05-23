@@ -1,48 +1,44 @@
-import * as React from 'react'
+import React, { Suspense } from 'react'
 import { compose } from 'redux'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 
-import injectReducer from '../../../../utils/injectReducer'
-import injectSaga from '../../../../utils/injectSaga'
-import reducer from '../../reducer'
-import bizlogicReducer from '../../../Bizlogic/reducer'
-import saga from '../../sagas'
-import bizlogicSaga from '../../../Bizlogic/sagas'
-import { hideNavigator } from '../../../App/actions'
-import { loadBizlogics, loadData, loadDistinctValue } from '../../../Bizlogic/actions'
-import { addWidget, editWidget, loadWidgetDetail, clearCurrentWidget } from '../../actions'
-import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, makeSelectDistinctColumnValues, makeSelectColumnValueLoading } from '../../selectors'
-import { makeSelectBizlogics } from '../../../Bizlogic/selectors'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
+import reducer from 'containers/Widget/reducer'
+import viewReducer from 'containers/View/reducer'
+import saga from 'containers/Widget/sagas'
+import viewSaga from 'containers/View/sagas'
+import controlReducer from 'containers/ControlPanel/reducer'
+import { hideNavigator } from 'containers/App/actions'
+import { ViewActions } from 'containers/View/actions'
+const { loadViews, loadViewsDetail, loadViewData, loadViewDistinctValue } = ViewActions
+import { WidgetActions } from 'containers/Widget/actions'
+import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, makeSelectDistinctColumnValues, makeSelectColumnValueLoading } from 'containers/Widget/selectors'
+import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
 
+import { RouteComponentWithParams } from 'utils/types'
+import { IViewBase, IFormedViews } from 'containers/View/types'
 import OperatingPanel from './OperatingPanel'
 import Widget, { IWidgetProps } from '../Widget'
-import EditorHeader from '../../../../components/EditorHeader'
-import { DEFAULT_SPLITER } from '../../../../globalConstants'
-import { getStyleConfig, getTable } from 'containers/Widget/components/util'
-const message = require('antd/lib/message')
+import { IDataRequestBody } from 'app/containers/Dashboard/types'
+import EditorHeader from 'components/EditorHeader'
+import WorkbenchSettingForm from './WorkbenchSettingForm'
+import DashboardItemMask, { IDashboardItemMaskProps } from 'containers/Dashboard/components/DashboardItemMask'
+import { DEFAULT_SPLITER, DEFAULT_CACHE_EXPIRED } from 'app/globalConstants'
+import { getStyleConfig } from 'containers/Widget/components/util'
+import ChartTypes from '../../config/chart/ChartTypes'
+import { FieldSortTypes, fieldGroupedSort } from '../Config/Sort'
+import { message } from 'antd'
+import 'assets/less/resizer.less'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
+import { IReference } from './Reference/types'
+import { IWorkbenchSettings, WorkbenchQueryMode } from './types'
+import { widgetDimensionMigrationRecorder, barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
+
 const styles = require('./Workbench.less')
 
-export interface IView {
-  id?: number
-  name: string
-  description: string
-  projectId: number
-  source: { id: number, name: string }
-  sourceId: number
-  sql: string
-  model: string
-  config: string
-}
-
-export interface IModel {
-  [key: string]: {
-    visualType: string
-    modelType: string
-  }
-}
-
-interface IWidget {
+export interface IWidget {
   id?: number
   name: string
   description: string
@@ -54,62 +50,96 @@ interface IWidget {
 }
 
 interface IWorkbenchProps {
-  views: IView[]
+  views: IViewBase[]
+  formedViews: IFormedViews
   currentWidget: IWidget
   loading: boolean
   dataLoading: boolean
   distinctColumnValues: any[]
   columnValueLoading: boolean
-  router: any
-  params: { pid: string, wid: string }
   onHideNavigator: () => void
-  onLoadBizlogics: (projectId: number, resolve?: any) => void
+  onLoadViews: (projectId: number, resolve?: any) => void
+  onLoadViewDetail: (viewId: number, resolve: () => void) => void
   onLoadWidgetDetail: (id: number) => void
-  onLoadData: (viewId: number, params: object, resolve: (data: any[]) => void) => void
+  onLoadViewData: (
+    viewId: number,
+    requestParams: IDataRequestBody,
+    resolve: (data) => void,
+    reject: (error) => void
+  ) => void
   onAddWidget: (widget: IWidget, resolve: () => void) => void
   onEditWidget: (widget: IWidget, resolve: () => void) => void
-  onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
+  onLoadViewDistinctValue: (viewId: number, params: Partial<IDistinctValueReqeustParams>) => void
   onClearCurrentWidget: () => void
+  onExecuteComputed: (sql: string) => void
 }
 
 interface IWorkbenchStates {
   id: number
   name: string
   description: string
-  selectedView: IView
-  queryParams: any[]
+  selectedViewId: number
+  controls: any[]
+  references: IReference[]
+  computed: any[]
+  autoLoadData: boolean
   cache: boolean
   expired: number
-  currentWidgetConfig: IWidgetProps
+  splitSize: number
+  originalWidgetProps: IWidgetProps
+  originalComputed: any[]
   widgetProps: IWidgetProps
+  settingFormVisible: boolean
+  settings: IWorkbenchSettings
 }
 
-export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates> {
+const SplitPane = React.lazy(() => import('react-split-pane'))
+
+export class Workbench extends React.Component<IWorkbenchProps & RouteComponentWithParams, IWorkbenchStates> {
+
+  private operatingPanel: OperatingPanel = null
+  private defaultSplitSize = 440
+  private maxSplitSize = this.defaultSplitSize * 1.5
+
   constructor (props) {
     super(props)
+    const splitSize = +localStorage.getItem('workbenchSplitSize') || this.defaultSplitSize
     this.state = {
       id: 0,
       name: '',
       description: '',
-      selectedView: null,
-      queryParams: [],
+      selectedViewId: null,
+      controls: [],
+      references: [],
+      computed: [],
+      originalComputed: [],
       cache: false,
-      expired: 300,
-      currentWidgetConfig: null,
+      autoLoadData: true,
+      expired: DEFAULT_CACHE_EXPIRED,
+      splitSize,
+      originalWidgetProps: null,
       widgetProps: {
         data: [],
+        pagination: {
+          pageNo: 0,
+          pageSize: 0,
+          totalCount: 0,
+          withPaging: false
+        },
         cols: [],
         rows: [],
         metrics: [],
+        secondaryMetrics: [],
         filters: [],
         chartStyles: getStyleConfig({}),
-        selectedChart: getTable().id,
+        selectedChart: ChartTypes.Table,
         orders: [],
-        queryParams: [],
-        cache: false,
-        expired: 300,
-        mode: 'pivot'
-      }
+        mode: 'pivot',
+        model: {},
+        onPaginationChange: this.paginationChange
+      },
+      settingFormVisible: false,
+      settings: this.initSettings()
     }
   }
 
@@ -119,10 +149,12 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   public componentWillMount () {
-    const { params, onLoadBizlogics, onLoadWidgetDetail } = this.props
-    onLoadBizlogics(Number(params.pid), () => {
-      if (params.wid !== 'add' && !Number.isNaN(Number(params.wid))) {
-        onLoadWidgetDetail(Number(params.wid))
+    const { match, onLoadViews, onLoadWidgetDetail } = this.props
+    const projectId = +match.params.projectId
+    const widgetId = match.params.widgetId
+    onLoadViews(projectId, () => {
+      if (widgetId !== 'add' && !Number.isNaN(Number(widgetId))) {
+        onLoadWidgetDetail(+widgetId)
       }
     })
   }
@@ -131,25 +163,51 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     this.props.onHideNavigator()
   }
 
-  public componentWillReceiveProps (nextProps) {
-    const { views, currentWidget } = nextProps
-    if (currentWidget && currentWidget !== this.props.currentWidget) {
-      const { queryParams, cache, expired, ...rest } = JSON.parse(currentWidget.config)
+  public componentWillReceiveProps (nextProps: IWorkbenchProps) {
+    const { currentWidget } = nextProps
+    if (currentWidget && (currentWidget !== this.props.currentWidget)) {
+      const { controls, references, cache, expired, computed, autoLoadData, cols, rows, ...rest } = JSON.parse(currentWidget.config)
+      const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
+      const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
+      if (rest.mode === 'chart' && rest.selectedChart === ChartTypes.Bar) {
+        rest.chartStyles = barChartStylesMigrationRecorder(rest.chartStyles)
+      }
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
         description: currentWidget.description,
-        selectedView: views.find((v) => v.id === currentWidget.viewId),
-        queryParams,
+        controls,
+        references: references || [],
         cache,
+        autoLoadData: autoLoadData === undefined ? true : autoLoadData,
         expired,
-        currentWidgetConfig: {...rest}
+        selectedViewId: currentWidget.viewId,
+        originalWidgetProps: { cols: updatedCols, rows: updatedRows, ...rest },
+        widgetProps: { cols: updatedCols, rows: updatedRows, ...rest },
+        originalComputed: computed
       })
     }
   }
 
   public componentWillUnmount () {
     this.props.onClearCurrentWidget()
+  }
+
+  private initSettings = (): IWorkbenchSettings => {
+    let workbenchSettings = {
+      queryMode: WorkbenchQueryMode.Immediately,
+      multiDrag: false
+    }
+    try {
+      const loginUser = JSON.parse(localStorage.getItem('loginUser'))
+      const currentUserWorkbenchSetting = JSON.parse(localStorage.getItem(`${loginUser.id}_workbench_settings`))
+      if (currentUserWorkbenchSetting) {
+        workbenchSettings = currentUserWorkbenchSetting
+      }
+    } catch (err) {
+      throw new Error(err)
+    }
+    return workbenchSettings
   }
 
   private changeName = (e) => {
@@ -164,19 +222,134 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     })
   }
 
-  private viewSelect = (selectedView: IView) => {
-    this.setState({
-      selectedView,
-      queryParams: [],
+  private viewSelect = (viewId: number) => {
+    const { formedViews } = this.props
+    const nextState = {
+      selectedViewId: viewId,
+      controls: [],
+      references: [],
       cache: false,
-      expired: 300
+      expired: DEFAULT_CACHE_EXPIRED
+    }
+    if (formedViews[viewId]) {
+      this.setState(nextState)
+    } else {
+      this.props.onLoadViewDetail(viewId, () => {
+        this.setState(nextState)
+      })
+    }
+  }
+
+  private setControls = (controls: any[]) => {
+    this.setState({ controls })
+  }
+
+  private setReferences = (references: IReference[]) => {
+    this.setState({
+      references,
+      widgetProps: {
+        ...this.state.widgetProps,
+        references
+      }
     })
   }
 
-  private setQueryParams = (queryParams: any[]) => {
-    this.setState({
-      queryParams
-    })
+  private deleteComputed = (computeField) => {
+    const { from } = computeField
+    const { match, onEditWidget } = this.props
+    const { id, name, description, selectedViewId, controls, references, cache, autoLoadData, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
+    if (from === 'originalComputed') {
+      this.setState({
+        originalComputed: originalComputed.filter((oc) => oc.id !== computeField.id)
+      }, () => {
+        const {originalComputed, computed} = this.state
+        const widget = {
+          name,
+          description,
+          type: 1,
+          viewId: selectedViewId,
+          projectId: Number(match.params.projectId),
+          config: JSON.stringify({
+            ...widgetProps,
+            controls,
+            references,
+            computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
+            cache,
+            autoLoadData,
+            expired,
+            data: []
+          }),
+          publish: true
+        }
+        if (id) {
+          onEditWidget({...widget, id}, () => void 0)
+        }
+      })
+    } else if (from === 'computed') {
+      this.setState({
+        computed: computed.filter((cm) => cm.id !== computeField.id)
+      }, () => {
+        const {originalComputed, computed} = this.state
+        const widget = {
+          name,
+          description,
+          type: 1,
+          viewId: selectedViewId,
+          projectId: Number(match.params.projectId),
+          config: JSON.stringify({
+            ...widgetProps,
+            controls,
+            references,
+            computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
+            cache,
+            autoLoadData,
+            expired,
+            data: []
+          }),
+          publish: true
+        }
+        if (id) {
+          onEditWidget({...widget, id}, () => void 0)
+        }
+      })
+    }
+  }
+
+  private setComputed = (computeField) => {
+    const {computed, originalComputed} = this.state
+    const {from, sqlExpression} = computeField
+    // todo  首先做sql合法校验； sqlExpression
+    let isEdit = void 0
+    let newComputed = null
+    if (from === 'originalComputed') {
+      isEdit = originalComputed ? originalComputed.some((cm) => cm.id === computeField.id) : false
+      newComputed =  isEdit ? originalComputed.map((cm) => {
+        if (cm.id === computeField.id) {
+          return computeField
+        } else {
+          return cm
+        }
+      }) : originalComputed.concat(computeField)
+      this.setState({
+        originalComputed: newComputed
+      })
+    } else if (from === 'computed') {
+      isEdit = computed.some((cm) => cm.id === computeField.id)
+      newComputed =  isEdit ? computed.map((cm) => {
+        if (cm.id === computeField.id) {
+          return computeField
+        } else {
+          return cm
+        }
+      }) : computed.concat(computeField)
+      this.setState({
+        computed: newComputed
+      })
+    } else {
+      this.setState({
+        computed: computed.concat(computeField)
+      })
+    }
   }
 
   private cacheChange = (e) => {
@@ -192,33 +365,46 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private setWidgetProps = (widgetProps: IWidgetProps) => {
-    const data = widgetProps.data || this.state.widgetProps.data
+    const { cols, rows } = widgetProps
+    const data = [...(widgetProps.data || this.state.widgetProps.data)]
+    const customOrders = cols.concat(rows)
+      .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
+      .map(({ name, sort }) => ({ name, list: sort[FieldSortTypes.Custom].sortList }))
+    fieldGroupedSort(data, customOrders)
     this.setState({
       widgetProps: {
         ...widgetProps,
-        data
+        data,
+        references: this.state.references
       }
     })
   }
 
   private saveWidget = () => {
-    const { params, onAddWidget, onEditWidget } = this.props
-    const { id, name, description, selectedView, queryParams, cache, expired, widgetProps } = this.state
+    const { match, onAddWidget, onEditWidget } = this.props
+    const { id, name, description, selectedViewId, controls, references, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed, autoLoadData } = this.state
     if (!name.trim()) {
-      message.error('Widget名称不能为空')
+      message.error('Widget名称不能为空')
+      return
+    }
+    if (!selectedViewId) {
+      message.error('请选择一个View')
       return
     }
     const widget = {
       name,
       description,
       type: 1,
-      viewId: selectedView.id,
-      projectId: Number(params.pid),
+      viewId: selectedViewId,
+      projectId: Number(match.params.projectId),
       config: JSON.stringify({
         ...widgetProps,
-        queryParams,
+        controls,
+        references,
+        computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
         cache,
         expired,
+        autoLoadData,
         data: []
       }),
       publish: true
@@ -226,48 +412,138 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     if (id) {
       onEditWidget({...widget, id}, () => {
         message.success('修改成功')
-        const editSign = localStorage.getItem('editWidgetFromDashboard')
-        if (editSign) {
-          localStorage.removeItem('editWidgetFromDashboard')
-          const [pid, portalId, portalName, dashboardId, itemId] = editSign.split(DEFAULT_SPLITER)
-          this.props.router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
+        const editSignDashboard = sessionStorage.getItem('editWidgetFromDashboard')
+        const editSignDisplay = sessionStorage.getItem('editWidgetFromDisplay')
+        if (editSignDashboard) {
+          sessionStorage.removeItem('editWidgetFromDashboard')
+          const [projectId, portalId, dashboardId, itemId] = editSignDashboard.split(DEFAULT_SPLITER)
+          this.props.history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${dashboardId}`)
+        } else if (editSignDisplay) {
+          sessionStorage.removeItem('editWidgetFromDisplay')
+          const [projectId, displayId] = editSignDisplay.split(DEFAULT_SPLITER)
+          this.props.history.replace(`/project/${projectId}/display/${displayId}`)
         } else {
-          this.props.router.replace(`/project/${params.pid}/widgets`)
+          this.props.history.replace(`/project/${match.params.projectId}/widgets`)
         }
       })
     } else {
       onAddWidget(widget, () => {
         message.success('添加成功')
-        this.props.router.replace(`/project/${params.pid}/widgets`)
+        this.props.history.replace(`/project/${match.params.projectId}/widgets`)
       })
     }
   }
 
   private cancel = () => {
-    localStorage.removeItem('editWidgetFromDashboard')
-    this.props.router.goBack()
+    sessionStorage.removeItem('editWidgetFromDashboard')
+    sessionStorage.removeItem('editWidgetFromDisplay')
+    this.props.history.goBack()
+  }
+
+  private paginationChange = (pageNo: number, pageSize: number, orders) => {
+    this.operatingPanel.flipPage(pageNo, pageSize, orders)
+  }
+
+  private chartStylesChange = (propPath: string[], value: string) => {
+    const { widgetProps } = this.state
+    const { chartStyles } = widgetProps
+    const updatedChartStyles = { ...chartStyles }
+    propPath.reduce((subObj, propName, idx) => {
+      if (idx === propPath.length - 1) {
+        subObj[propName] = value
+      }
+      return subObj[propName]
+    }, updatedChartStyles)
+    this.setWidgetProps({
+      ...widgetProps,
+      chartStyles: updatedChartStyles
+    })
+  }
+
+  private saveSplitSize (newSize: number) {
+    localStorage.setItem('workbenchSplitSize', newSize.toString())
+  }
+
+  private resizeChart = () => {
+    this.setState({
+      widgetProps: {
+        ...this.state.widgetProps,
+        renderType: 'resize'
+      }
+    })
+  }
+
+
+  private changeAutoLoadData = (e) => {
+    this.setState({
+      autoLoadData: e.target.value
+    })
+  }
+
+  private openSettingForm = () => {
+    this.setState({
+      settingFormVisible: true
+    })
+  }
+
+  private saveSettingForm = (values: IWorkbenchSettings) => {
+    try {
+      const loginUser = JSON.parse(localStorage.getItem('loginUser'))
+      localStorage.setItem(`${loginUser.id}_workbench_settings`, JSON.stringify(values))
+      this.setState({
+        settings: values
+      })
+    } catch (err) {
+      throw new Error(err)
+    }
+    this.closeSettingForm()
+  }
+
+  private closeSettingForm = () => {
+    this.setState({
+      settingFormVisible: false
+    })
   }
 
   public render () {
     const {
       views,
+      formedViews,
       loading,
       dataLoading,
       distinctColumnValues,
       columnValueLoading,
-      onLoadDistinctValue,
-      onLoadData
+      onLoadViewData,
+      onLoadViewDistinctValue
     } = this.props
     const {
       name,
       description,
-      selectedView,
-      queryParams,
+      selectedViewId,
+      controls,
+      references,
       cache,
+      autoLoadData,
       expired,
-      currentWidgetConfig,
-      widgetProps
+      computed,
+      splitSize,
+      originalWidgetProps,
+      originalComputed,
+      widgetProps,
+      settingFormVisible,
+      settings
     } = this.state
+    const selectedView = formedViews[selectedViewId]
+    const { queryMode, multiDrag } = settings
+
+    const { selectedChart, cols, rows, metrics, data } = widgetProps
+    const hasDataConfig = !!(cols.length || rows.length || metrics.length)
+    const maskProps: IDashboardItemMaskProps = {
+      loading: dataLoading,
+      chartType: selectedChart,
+      empty: !data.length,
+      hasDataConfig
+    }
 
     return (
       <div className={styles.workbench}>
@@ -281,34 +557,67 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           onDescriptionChange={this.changeDesc}
           onSave={this.saveWidget}
           onCancel={this.cancel}
+          onSetting={this.openSettingForm}
           loading={loading}
         />
         <div className={styles.body}>
-          <OperatingPanel
-            views={views}
-            currentWidgetConfig={currentWidgetConfig}
-            selectedView={selectedView}
-            distinctColumnValues={distinctColumnValues}
-            columnValueLoading={columnValueLoading}
-            queryParams={queryParams}
-            cache={cache}
-            expired={expired}
-            onViewSelect={this.viewSelect}
-            onSetQueryParams={this.setQueryParams}
-            onCacheChange={this.cacheChange}
-            onExpiredChange={this.expiredChange}
-            onLoadData={onLoadData}
-            onSetWidgetProps={this.setWidgetProps}
-            onLoadDistinctValue={onLoadDistinctValue}
-          />
-          <div className={styles.viewPanel}>
-            <div className={styles.pivotBlock}>
-              <Widget
-                {...widgetProps}
-                loading={dataLoading}
+          <Suspense fallback={null}>
+            <SplitPane
+              split="vertical"
+              defaultSize={splitSize}
+              minSize={this.defaultSplitSize}
+              maxSize={this.maxSplitSize}
+              onChange={this.saveSplitSize}
+              onDragFinished={this.resizeChart}
+            >
+              <OperatingPanel
+                ref={(f) => this.operatingPanel = f}
+                views={views}
+                originalWidgetProps={originalWidgetProps}
+                originalComputed={originalComputed}
+                selectedView={selectedView}
+                distinctColumnValues={distinctColumnValues}
+                columnValueLoading={columnValueLoading}
+                controls={controls}
+                references={references}
+                cache={cache}
+                autoLoadData={autoLoadData}
+                expired={expired}
+                queryMode={queryMode}
+                multiDrag={multiDrag}
+                computed={computed}
+                onViewSelect={this.viewSelect}
+                onChangeAutoLoadData={this.changeAutoLoadData}
+                onSetControls={this.setControls}
+                onSetReferences={this.setReferences}
+                onCacheChange={this.cacheChange}
+                onExpiredChange={this.expiredChange}
+                onSetWidgetProps={this.setWidgetProps}
+                onSetComputed={this.setComputed}
+                onDeleteComputed={this.deleteComputed}
+                onLoadData={onLoadViewData}
+                onLoadDistinctValue={onLoadViewDistinctValue}
               />
-            </div>
-          </div>
+              <div className={styles.viewPanel}>
+                <div className={styles.widgetBlock}>
+                  <Widget
+                    {...widgetProps}
+                    loading={<DashboardItemMask.Loading {...maskProps}/>}
+                    empty={<DashboardItemMask.Empty {...maskProps}/>}
+                    editing={true}
+                    onPaginationChange={this.paginationChange}
+                    onChartStylesChange={this.chartStylesChange}
+                  />
+                </div>
+              </div>
+            </SplitPane>
+          </Suspense>
+          <WorkbenchSettingForm
+            visible={settingFormVisible}
+            settings={settings}
+            onSave={this.saveSettingForm}
+            onClose={this.closeSettingForm}
+          />
         </div>
       </div>
     )
@@ -316,7 +625,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 }
 
 const mapStateToProps = createStructuredSelector({
-  views: makeSelectBizlogics(),
+  views: makeSelectViews(),
+  formedViews: makeSelectFormedViews(),
   currentWidget: makeSelectCurrentWidget(),
   loading: makeSelectLoading(),
   dataLoading: makeSelectDataLoading(),
@@ -327,13 +637,15 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
-    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
-    onLoadWidgetDetail: (id) => dispatch(loadWidgetDetail(id)),
-    onLoadData: (viewId, params, resolve) => dispatch(loadData(viewId, params, resolve)),
-    onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),
-    onEditWidget: (widget, resolve) => dispatch(editWidget(widget, resolve)),
-    onLoadDistinctValue: (viewId, column, parents) => dispatch(loadDistinctValue(viewId, column, parents)),
-    onClearCurrentWidget: () => dispatch(clearCurrentWidget())
+    onLoadViews: (projectId, resolve) => dispatch(loadViews(projectId, resolve)),
+    onLoadViewDetail: (viewId, resolve) => dispatch(loadViewsDetail([viewId], resolve)),
+    onLoadWidgetDetail: (id) => dispatch(WidgetActions.loadWidgetDetail(id)),
+    onLoadViewData: (viewId, requestParams, resolve, reject) => dispatch(loadViewData(viewId, requestParams, resolve, reject)),
+    onAddWidget: (widget, resolve) => dispatch(WidgetActions.addWidget(widget, resolve)),
+    onEditWidget: (widget, resolve) => dispatch(WidgetActions.editWidget(widget, resolve)),
+    onLoadViewDistinctValue: (viewId, params) => dispatch(loadViewDistinctValue(viewId, params)),
+    onClearCurrentWidget: () => dispatch(WidgetActions.clearCurrentWidget()),
+    onExecuteComputed: (sql) => dispatch(WidgetActions.executeComputed(sql))
   }
 }
 
@@ -342,13 +654,16 @@ const withConnect = connect<{}, {}>(mapStateToProps, mapDispatchToProps)
 const withReducerWidget = injectReducer({ key: 'widget', reducer })
 const withSagaWidget = injectSaga({ key: 'widget', saga })
 
-const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: bizlogicReducer })
-const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
+const withReducerView = injectReducer({ key: 'view', reducer: viewReducer })
+const withSagaView = injectSaga({ key: 'view', saga: viewSaga })
+
+const withControlReducer = injectReducer({ key: 'control', reducer: controlReducer })
 
 export default compose(
   withReducerWidget,
-  withReducerBizlogic,
-  withSagaBizlogic,
+  withReducerView,
+  withControlReducer,
+  withSagaView,
   withSagaWidget,
   withConnect
 )(Workbench)

@@ -19,63 +19,76 @@
  */
 
 import { ActionTypes } from './constants'
+import { returnType } from 'utils/redux'
+import { IDisplayFormed } from 'app/containers/Viz/types'
 
-export function loadDisplay (token, resolve, reject) {
-  return {
-    type: ActionTypes.LOAD_SHARE_DISPLAY,
-    payload: {
-      token,
-      resolve,
-      reject
+export const ShareDisplayActions = {
+  loadDisplay(token: string, resolve, reject) {
+    return {
+      type: ActionTypes.LOAD_SHARE_DISPLAY,
+      payload: {
+        token,
+        resolve,
+        reject
+      }
     }
-  }
-}
-export function displayLoaded (display, slide, widgets) {
-  return {
-    type: ActionTypes.LOAD_SHARE_DISPLAY_SUCCESS,
-    payload: {
-      display,
-      slide,
-      widgets
+  },
+  displayLoaded(display: IDisplayFormed, slides, widgets) {
+    return {
+      type: ActionTypes.LOAD_SHARE_DISPLAY_SUCCESS,
+      payload: {
+        display,
+        slides,
+        widgets
+      }
     }
-  }
-}
-export function loadDisplayFail (error) {
-  return {
-    type: ActionTypes.LOAD_SHARE_DISPLAY_FAILURE,
-    payload: {
-      error
+  },
+  loadDisplayFail(error) {
+    return {
+      type: ActionTypes.LOAD_SHARE_DISPLAY_FAILURE,
+      payload: {
+        error
+      }
+    }
+  },
+
+  loadLayerData(renderType, slideNumber, layerId, dataToken, requestParams) {
+    return {
+      type: ActionTypes.LOAD_LAYER_DATA,
+      payload: {
+        renderType,
+        slideNumber,
+        layerId,
+        dataToken,
+        requestParams
+      }
+    }
+  },
+  layerDataLoaded(renderType, slideNumber, layerId, data, requestParams) {
+    return {
+      type: ActionTypes.LOAD_LAYER_DATA_SUCCESS,
+      payload: {
+        renderType,
+        slideNumber,
+        layerId,
+        data,
+        requestParams
+      }
+    }
+  },
+  loadLayerDataFail(slideNumber, layerId, error) {
+    return {
+      type: ActionTypes.LOAD_LAYER_DATA_FAILURE,
+      payload: {
+        slideNumber,
+        layerId,
+        error
+      }
     }
   }
 }
 
-export function loadLayerData (renderType, layerId, dataToken, params) {
-  return {
-    type: ActionTypes.LOAD_LAYER_DATA,
-    payload: {
-      renderType,
-      layerId,
-      dataToken,
-      params
-    }
-  }
-}
-export function layerDataLoaded (renderType, layerId, data) {
-  return {
-    type: ActionTypes.LOAD_LAYER_DATA_SUCCESS,
-    payload: {
-      renderType,
-      layerId,
-      data
-    }
-  }
-}
-export function loadLayerDataFail (error) {
-  return {
-    type: ActionTypes.LOAD_LAYER_DATA_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
+const mockAction = returnType(ShareDisplayActions)
+export type ShareDisplayActionType = typeof mockAction
 
+export default ShareDisplayActions

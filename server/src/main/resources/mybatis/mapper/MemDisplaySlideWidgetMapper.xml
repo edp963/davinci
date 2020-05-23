@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-  <<
-  Davinci
-  ==
-  Copyright (C) 2016 - 2018 EDP
-  ==
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-        http://www.apache.org/licenses/LICENSE-2.0
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-  >>
+  ~ <<
+  ~  Davinci
+  ~  ==
+  ~  Copyright (C) 2016 - 2019 EDP
+  ~  ==
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  ~  >>
+  ~
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
@@ -26,15 +27,17 @@
         </selectKey>
         insert into mem_display_slide_widget
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            display_slide_id,
-            widget_id,
+            `display_slide_id`,
+            `widget_id`,
             `name`,
             `type`,
-            params,
+            `params`,
             <if test="subType != null">
-                sub_type,
+                `sub_type`,
             </if>
-            `index`
+            `index`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{displaySlideId,jdbcType=BIGINT},
@@ -45,35 +48,38 @@
             <if test="subType != null">
                 #{subType,jdbcType=SMALLINT},
             </if>
-            #{index,jdbcType=INTEGER}
+            #{index,jdbcType=INTEGER},
+            #{createBy,jdbcType=BIGINT},
+            #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert into mem_display_slide_widget
-        (id,display_slide_id, widget_id, `name`, `type`, params,sub_type, `index`)
+        (`id`,`display_slide_id`, `widget_id`, `name`, `type`, `params`,`sub_type`, `index`,`create_by`,`create_time`)
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (
-                <choose>
-                    <when test="record.id != null and record.id > 0">
-                        #{record.id,jdbcType=BIGINT},
-                    </when>
-                    <otherwise>
-                        null,
-                    </otherwise>
-                </choose>
-                #{record.displaySlideId,jdbcType=BIGINT},
-                #{record.widgetId,jdbcType=BIGINT},
-                #{record.name,jdbcType=VARCHAR},
-                #{record.type,jdbcType=SMALLINT},
-                #{record.params,jdbcType=LONGVARCHAR},
-                #{record.subType,jdbcType=SMALLINT},
-                #{record.index,jdbcType=INTEGER}
+            <choose>
+                <when test="record.id != null and record.id > 0">
+                    #{record.id,jdbcType=BIGINT},
+                </when>
+                <otherwise>
+                    null,
+                </otherwise>
+            </choose>
+            #{record.displaySlideId,jdbcType=BIGINT},
+            #{record.widgetId,jdbcType=BIGINT},
+            #{record.name,jdbcType=VARCHAR},
+            #{record.type,jdbcType=SMALLINT},
+            #{record.params,jdbcType=LONGVARCHAR},
+            #{record.subType,jdbcType=SMALLINT},
+            #{record.index,jdbcType=INTEGER},
+            #{record.createBy,jdbcType=BIGINT},
+            #{record.createTime,jdbcType=TIMESTAMP}
             )
         </foreach>
     </insert>
-
 
     <update id="updateBatch" parameterType="java.util.List">
         <foreach collection="list" item="record" index="index" open="" close="" separator=";">
@@ -85,16 +91,24 @@
                 `type` = #{record.type,jdbcType=SMALLINT},
                 `sub_type` = #{record.subType,jdbcType=SMALLINT},
                 `index` = #{record.index,jdbcType=INTEGER},
-                `params` = #{record.params,jdbcType=LONGVARCHAR}
+                `params` = #{record.params,jdbcType=LONGVARCHAR},
+                `update_by` = #{record.updateBy,jdbcType=BIGINT},
+                `update_time` = #{record.updateTime,jdbcType=TIMESTAMP}
             </set>
-            where id = #{record.id,jdbcType=BIGINT}
+            where `id` = #{record.id,jdbcType=BIGINT}
         </foreach>
     </update>
 
     <delete id="deleteBatchById" parameterType="java.util.List">
-        delete from mem_display_slide_widget where id in
-        <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        delete from mem_display_slide_widget where
+        <if test="list != null and list.size > 0">
+            `id` in
+            <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="list == null or list.size == 0">
+            1=0
+        </if>
     </delete>
 </mapper>

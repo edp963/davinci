@@ -3,7 +3,7 @@
 #  <<
 #  Davinci
 #  ==
-#  Copyright (C) 2016 - 2018 EDP
+#  Copyright (C) 2016 - 2019 EDP
 #  ==
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ if [ -z "$Lib_dir" ]; then
   exit
 fi
 
-Server=`ps -ef | grep java | grep davinci-server_3.01-0.3.0-SNAPSHOT | grep -v grep | awk '{print $2}'`
+Server=`ps -ef | grep java | grep edp.DavinciServerApplication | grep -v grep | awk '{print $2}'`
 if [[ $Server -gt 0 ]]; then
   echo "[Davinci Server] is already started"
   exit
@@ -40,7 +40,7 @@ fi
 
 cd $DAVINCI3_HOME
 TODAY=`date "+%Y-%m-%d"`
-LOG_PATH=$DAVINCI3_HOME/logs/davinci.$TODAY.log
+LOG_PATH=$DAVINCI3_HOME/logs/sys/davinci.$TODAY.log
 nohup java -Dfile.encoding=UTF-8 -cp $JAVA_HOME/lib/*:lib/* edp.DavinciServerApplication > $LOG_PATH  2>&1 &
 
 echo "=========================================="

@@ -18,7 +18,7 @@
  * >>
  */
 
-const defaultEchartsTheme = require('./assets/json/echartsThemes/default.project.json')
+const defaultEchartsTheme = require('assets/json/echartsThemes/default.project.json')
 export const DEFAULT_ECHARTS_THEME = defaultEchartsTheme.theme
 export const DEFAULT_PRIMARY_COLOR = '#1B98E0'
 export const DEFAULT_SECONDARY_COLOR = '#223151'
@@ -35,6 +35,7 @@ export const DASHBOARD_ITEM_FILTER_HEIGHT = 40
 
 export const DEFAULT_TABLE_PAGE = 1
 export const DEFAULT_TABLE_PAGE_SIZE = 20
+export const TABLE_PAGE_SIZES = [10, 20, 30, 40, 50, 100]
 
 export const PIVOT_CELL_PADDING = 4
 export const PIVOT_CELL_BORDER = 1
@@ -76,7 +77,12 @@ export const PIVOT_CHART_LINE_STYLES = [
   { name: '虚线', value: 'dashed'},
   { name: '点', value: 'dotted'}
 ]
-export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64]
+export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 96, 128]
+export const PIVOT_CHART_FONT_WEIGHTS = ['normal', 'bold', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900']
+export const PIVOT_CHART_FONT_STYLE = [
+  { name: '普通', value: 'normal' },
+  { name: '斜体', value: 'oblique' }
+]
 export const CHART_LABEL_POSITIONS = [
   { name: '上', value: 'top' },
   { name: '左', value: 'left' },
@@ -115,6 +121,12 @@ export const CHART_ALIGNMENT_MODES = [
   { name: '居右', value: 'right'}
 ]
 
+export const AXIS_NAME_LOCATIONS = [
+  { name: '开始', value: 'start' },
+  { name: '结束', value: 'end' },
+  { name: '中间', value: 'center' }
+]
+
 export const CHART_LEGEND_POSITIONS = [
   { name: '右', value: 'right' },
   { name: '上', value: 'top' },
@@ -122,27 +134,73 @@ export const CHART_LEGEND_POSITIONS = [
   { name: '左', value: 'left' }
 ]
 
+export const CHART_VISUALMAP_POSITIONS = [
+  { name: '左下', value: 'leftBottom' },
+  { name: '左上', value: 'leftTop' },
+  { name: '右上', value: 'rightTop' },
+  { name: '右下', value: 'rightBottom' }
+]
+
+export const CHART_LAYER_TYPES = [
+  { name: '地图', value: 'map' },
+  { name: '气泡图', value: 'scatter' },
+  { name: '热力图', value: 'heatmap' },
+  { name: '飞行图', value: 'lines' }
+]
+
+export const CHART_LINES_SYMBOL_TYPE = [
+  {name: '圆形', value: 'circle'},
+  {name: '矩形', value: 'rect'},
+  {name: '圆角矩形', value: 'roundRect'},
+  {name: '三角形', value: 'triangle'},
+  {name: '菱形', value: 'diamond'},
+  {name: '大头针形', value: 'pin'},
+  {name: '箭头形', value: 'arrow'}
+]
+
+export const CHART_VISUALMAP_DIRECYTIONS = [
+  { name: '竖直', value: 'vertical' },
+  { name: '水平', value: 'horizontal' }
+]
+
+export const PIVOT_CHART_YAXIS_OPTIONS = [
+  { name: '折线图', value: 'line' },
+  { name: '柱状图', value: 'bar' }
+]
+
+
+
 export const SQL_STRING_TYPES = [
-  'CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT',
-  'JSON', 'LINESTRING', 'MULTILINESTRING',
-  'TINYBLOB', 'MEDIUMBLOB', 'BLOB', 'LONGBLOB',
-  'BINARY', 'VARBINARY', 'ENUM', 'SET'
+  'CHAR', 'NCHAR', 'VARCHAR', 'NVARCHAR', 'LONGVARCHAR', 'LONGNVARCHAR', 'VARCHAR2', 'NVARCHAR2',
+  'STRING', 'TINYTEXT', 'TEXT', 'NTEXT', 'MEDIUMTEXT', 'LONGTEXT',
+  'JSON', 'XML', 'LINESTRING', 'MULTILINESTRING',
+  'TINYBLOB', 'MEDIUMBLOB', 'BLOB', 'LONGBLOB', 'CBLOB',
+  'BINARY', 'VARBINARY', 'LONGVARBINARY', 'ENUM', 'SET', 'NULL', 'ROWID',
+  'FIXEDSTRING', 'IPV4', 'IPV6', 'UUID'
 ]
 export const SQL_NUMBER_TYPES = [
-  'TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'INTEGER', 'BIGINT',
+  'BIT', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'INTEGER', 'BIGINT',
   'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL', 'DECIMAL',
-  'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMERIC'
+  'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMBER', 'NUMERIC',
+  'UINT8', 'UINT16', 'UINT32', 'UINT64', 'INT8', 'INT16', 'INT32', 'INT64',
+  'FLOAT32', 'FLOAT64', 'DECIMAL32', 'DECIMAL64', 'DECIMAL128'
 ]
 export const SQL_DATE_TYPES = ['DATE', 'DATETIME', 'TIMESTAMP', 'TIME', 'YEAR']
+
+export const SQL_TYPES = SQL_STRING_TYPES.concat(SQL_NUMBER_TYPES).concat(SQL_DATE_TYPES)
+
+export type SqlTypes = typeof SQL_TYPES[number]
 
 export const DEFAULT_SPLITER = '@davinci@'
 export const KEY_COLUMN = 'davinciUniqueId'
 
-export const ECHARTS_RENDERER = 'echarts'
-
 export const DEFAULT_FONT_WEIGHT = 'normal'
-export const DEFAULT_FONT_SIZE = '12px'
-export const DEFAULT_FONT_FAMILY = '"Helvetica Neue For Number", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif'
+export const DEFAULT_FONT_STYLE = 'normal'
+export const DEFAULT_FONT_SIZE = '14px'
+export const DEFAULT_FONT_FAMILY = '"Chinese Quote", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
 
 export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD'
 export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
+
+export const DOWNLOAD_LIST_POLLING_FREQUENCY = 30000
+export const DEFAULT_CACHE_EXPIRED = 300

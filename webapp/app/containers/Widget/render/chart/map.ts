@@ -18,200 +18,530 @@
  * >>
  */
 
-/*
- * map chart options generator
- */
+import { IChartProps } from '../../components/Chart'
+import { EChartOption } from 'echarts'
+import {
+  decodeMetricName,
+  getTextWidth,
+  getSizeRate
+} from '../../components/util'
+import {
+  getLegendOption,
+  getLabelOption,
+  getSymbolSize
+} from './util'
+import {
+  safeAddition
+} from 'utils/util'
 
-// import geoData from '../../../assets/json/geo.json'
-import { safeAddition } from '../../../../utils/util'
-import { DEFAULT_ECHARTS_THEME } from '../../../../globalConstants'
+import {
+  DEFAULT_ECHARTS_THEME
+} from 'app/globalConstants'
+import geoData from 'assets/js/geo.js'
+import { getFormattedValue } from '../../components/Config/Format'
 
-let geoData
+const provinceSuffix = ['省', '自治区', '市']
+const citySuffix = ['自治州', '市', '区', '县', '旗', '盟', '镇']
 
-export default function (dataSource, flatInfo, chartParams, interactIndex) {
-  return import('../../../../assets/json/geo.json').then((d) => {
-    geoData = d
+export default function (chartProps: IChartProps) {
+  const {
+    chartStyles,
+    data,
+    cols,
+    metrics,
+    model
+  } = chartProps
 
-    const {
-      area,
-      group,
-      value,
-      layerType,
-      // visualMapStyle,TODO
-      roam,
-      toolbox
-    } = chartParams
+  const {
+    label,
+    spec
+  } = chartStyles
 
-    let metricOptions
-    let scatterOptions
-    // let heatmapOptions
-    let visualMapOptions
-    let tooltipOptions
-    let toolboxOptions
+  const {
+    labelColor,
+    labelFontFamily,
+    labelFontSize,
+    labelPosition,
+    showLabel
+  } = label
 
-    // 对原数据进行加工
-    let dataTree
+  const {
+    layerType,
+    roam,
+    linesSpeed,
+    symbolType
+  } = spec
 
-    if (area) {
-      dataTree = dataSource.reduce((tree, ds) => {
-        const areaVal = ds[area]
-        const areaGeo = geoData[areaVal]
+  const tooltip: EChartOption.Tooltip = {
+    trigger: 'item',
+    formatter: (params: EChartOption.Tooltip.Format) => {
+      const { name, data, color } = params
+      const tooltipLabels = []
+      if (color) {
+        tooltipLabels.push(`<span class="widget-tooltip-circle" style="background: ${color}"></span>`)
+      }
+      tooltipLabels.push(name)
+      if (data) {
+        tooltipLabels.push(': ')
+        tooltipLabels.push(getFormattedValue(data.value[2], metrics[0].format))
+      }
+      return tooltipLabels.join('')
+    }
+  }
 
-        if (areaGeo) {
-          if (!tree[areaVal]) {
-            tree[areaVal] = {
-              lon: areaGeo.lon,
-              lat: areaGeo.lat,
-              value: 0,
+  const labelOption = {
+    label: {
+      normal: {
+        formatter: '{b}',
+        position: labelPosition,
+        show: showLabel,
+        color: labelColor,
+        fontFamily: labelFontFamily,
+        fontSize: labelFontSize
+      }
+    }
+  }
+
+  const labelOptionLines = {
+    label: getLabelOption('lines', label, metrics, true)
+  }
+
+  let metricOptions
+  let visualMapOptions
+
+  const dataTree = {}
+  let min = 0
+  let max = 0
+
+  const agg = metrics[0].agg
+  const metricName = decodeMetricName(metrics[0].name)
+
+  data.forEach((record) => {
+    let areaVal
+    const group = []
+
+    const value = record[`${agg}(${metricName})`]
+    min = Math.min(min, value)
+    max = Math.max(max, value)
+
+    cols.forEach((col) => {
+      const { visualType } = model[col.name]
+      if (visualType === 'geoProvince') {
+        areaVal = record[col.name]
+        const area = getProvinceArea(areaVal)
+        const provinceName = getProvinceName(areaVal)
+        if (area) {
+          if (!dataTree[provinceName]) {
+            dataTree[provinceName] = {
+              lon: area.lon,
+              lat: area.lat,
+              value,
               children: {}
             }
           }
-
-          tree[areaVal].value = safeAddition(tree[areaVal].value, Number(ds[value]))
-
-          if (group) {
-            if (!tree[areaVal].children[ds[group]]) {
-              tree[areaVal].children[ds[group]] = 0
+        }
+      } else if (visualType === 'geoCity') {
+        areaVal = record[col.name]
+        const area = getCityArea(areaVal)
+        if (area) {
+          if (layerType === 'map') {
+            const provinceParent = getProvinceParent(area)
+            const parentName = getProvinceName(provinceParent.name)
+            if (!dataTree[parentName]) {
+              dataTree[parentName] = {
+                lon: area.lon,
+                lat: area.lat,
+                value: 0,
+                children: {}
+              }
             }
-            tree[areaVal].children[ds[group]] = safeAddition(tree[areaVal].children[ds[group]], Number(ds[value]))
-          }
-        }
-
-        return tree
-      }, {})
-    } else {
-      dataTree = {}
-    }
-
-    // series 数据项
-    const metricArr = []
-
-    scatterOptions = {
-      symbolSize: 12,
-      label: {
-        normal: {
-          show: false
-        },
-        emphasis: {
-          show: false
-        }
-      },
-      itemStyle: {
-        normal: {
-          opacity: interactIndex === undefined ? 1 : 0.25
-        }
-        // emphasis: {
-        //   borderColor: DEFAULT_PRIMARY_COLOR,
-        //   borderWidth: 1
-        // }
-      }
-    }
-
-    let serieObj = {
-      name: area,
-      type: layerType || 'scatter',
-      coordinateSystem: 'geo',
-      data: Object.keys(dataTree).map((key, index) => {
-        const { lon, lat, value } = dataTree[key]
-        if (index === interactIndex) {
-          return {
-            name: key,
-            value: [lon, lat, value],
-            itemStyle: {
-              normal: {
-                opacity: 1
+            dataTree[parentName].value += value
+          } else {
+            if (!dataTree[areaVal]) {
+              dataTree[areaVal] = {
+                lon: area.lon,
+                lat: area.lat,
+                value,
+                children: {}
               }
             }
           }
-        } else {
+        }
+      }
+
+      // todo: 除去显示城市／省的
+      // const group = ['name', 'sex']
+      // if (group.length) {
+      //   group.forEach((g) => {
+      //     if (!dataTree[areaVal].children[record[g]]) {
+      //       dataTree[areaVal].children[record[g]] = 0
+      //     }
+      //     dataTree[areaVal].children[record[g]] = safeAddition(dataTree[areaVal].children[record[g]], Number(value))
+      //   })
+      // }
+    })
+  })
+
+  // series 数据项
+  const metricArr = []
+
+  const sizeRate = getSizeRate(min, max)
+
+  const optionsType = layerType === 'scatter' ? {} : {
+    blurSize: 40
+  }
+
+  let serieObj
+  switch (layerType) {
+    case 'map':
+      serieObj = {
+        name: '地图',
+        type: 'map',
+        mapType: 'china',
+        roam,
+        data: Object.keys(dataTree).map((key, index) => {
+          const { lon, lat, value } = dataTree[key]
           return {
             name: key,
             value: [lon, lat, value]
           }
-        }
-      })
-    }
-    if (layerType === 'scatter') {
+        }),
+        ...labelOption
+      }
+      break
+    case 'scatter':
       serieObj = {
-        ...serieObj,
-        ...scatterOptions
+        name: '气泡图',
+        type: 'scatter',
+        coordinateSystem: 'geo',
+        data: Object.keys(dataTree).map((key, index) => {
+          const { lon, lat, value } = dataTree[key]
+          return {
+            name: key,
+            value: [lon, lat, value],
+            symbolSize: getSymbolSize(sizeRate, value) / 2
+          }
+        }),
+        ...labelOption,
+        ...optionsType
+      }
+      break
+    case 'heatmap':
+      serieObj = {
+        name: '热力图',
+        type: 'heatmap',
+        coordinateSystem: 'geo',
+        data: Object.keys(dataTree).map((key, index) => {
+          const { lon, lat, value } = dataTree[key]
+          return {
+            name: key,
+            value: [lon, lat, value],
+            symbolSize: getSymbolSize(sizeRate, value) / 2
+          }
+        }),
+        ...labelOption,
+        ...optionsType
+      }
+      break
+  }
+
+  metricArr.push(serieObj)
+  metricOptions = {
+    series: metricArr
+  }
+
+  if (chartStyles.visualMap) {
+    const {
+      showVisualMap,
+      visualMapPosition,
+      fontFamily,
+      fontSize,
+      visualMapDirection,
+      visualMapWidth,
+      visualMapHeight,
+      startColor,
+      endColor
+    } = chartStyles.visualMap
+
+    visualMapOptions = {
+      visualMap: {
+        show: layerType === 'lines' ? false : showVisualMap,
+        min,
+        max,
+        calculable: true,
+        inRange: {
+          color: [startColor, endColor]
+        },
+        ...getPosition(visualMapPosition),
+        itemWidth: visualMapWidth,
+        itemHeight: visualMapHeight,
+        textStyle: {
+          fontFamily,
+          fontSize
+        },
+        orient: visualMapDirection
       }
     }
-
-    metricArr.push(serieObj)
-    metricOptions = {
-      series: metricArr
-    }
-
-    // visualMap
-    visualMapOptions = value && {
+  } else {
+    visualMapOptions = {
       visualMap: {
-        min: 0,
-        max: Math.max(...dataSource.map((d) => d[value] || 0)),
+        show: false,
+        min,
+        max,
         calculable: true,
         inRange: {
           color: DEFAULT_ECHARTS_THEME.visualMapColor
         },
         left: 10,
-        bottom: 20
+        bottom: 20,
+        itemWidth: 20,
+        itemHeight: 50,
+        textStyle: {
+          fontFamily: 'PingFang SC',
+          fontSize: 12
+        },
+        orient: 'vertical'
       }
     }
+  }
 
-    // tooltip
-    tooltipOptions = {
-      tooltip: {
-        trigger: 'item',
-        formatter: (params) => {
-          const treeNode = dataTree[params.name]
+  const getGeoCity = cols.filter((c) => model[c.name].visualType === 'geoCity')
+  const getGeoProvince = cols.filter((c) => model[c.name].visualType === 'geoProvince')
+  const linesSeries = []
+  const legendData = []
+  let effectScatterType
+  let linesType
+  data.forEach((d, index) => {
+    let linesSeriesData = []
+    let scatterData = []
+    const value = d[`${agg}(${metricName})`]
 
-          let content = `${params.name}：${treeNode.value}`
+    if (getGeoCity.length > 1 && d[getGeoCity[0].name] && d[getGeoCity[1].name]) {
+      const fromCityInfo = getCityArea(d[getGeoCity[0].name])
+      const toCityInfo = getCityArea(d[getGeoCity[1].name])
 
-          if (group && group.length) {
-            const groupContent = Object.keys(treeNode.children).map((k) => `${k}：${treeNode.children[k]}<br/>`).join('')
-            content += `<br/>${groupContent}`
-          }
-
-          return content
-        }
+      if (fromCityInfo && toCityInfo) {
+        legendData.push(d[getGeoCity[0].name])
+        linesSeriesData = [{
+          fromName: d[getGeoCity[0].name],
+          toName: d[getGeoCity[1].name],
+          coords: [[fromCityInfo.lon, fromCityInfo.lat], [toCityInfo.lon, toCityInfo.lat]]
+        }]
+        scatterData = [{
+          name: d[getGeoCity[1].name],
+          value: [toCityInfo.lon, toCityInfo.lat, value]
+        }]
       }
+    } else if (getGeoProvince.length > 1 && d[getGeoProvince[0].name] && d[getGeoProvince[1].name]) {
+      const fromProvinceInfo = getProvinceArea(d[getGeoProvince[0].name])
+      const toProvinceInfo = getProvinceArea(d[getGeoProvince[1].name])
+
+      if (fromProvinceInfo && toProvinceInfo) {
+        legendData.push(d[getGeoProvince[0].name])
+        linesSeriesData = [{
+          fromName: d[getGeoProvince[0].name],
+          toName: d[getGeoProvince[1].name],
+          coords: [[fromProvinceInfo.lon, fromProvinceInfo.lat], [toProvinceInfo.lon, toProvinceInfo.lat]]
+        }]
+        scatterData = [{
+          name: d[getGeoProvince[1].name],
+          value: [toProvinceInfo.lon, toProvinceInfo.lat, value]
+        }]
+      }
+    } else {
+      return
     }
 
-    // toolbox
-    toolboxOptions = toolbox && toolbox.length
-      ? {
-        toolbox: {
-          feature: {
-            dataView: {readOnly: false},
-            restore: {},
-            saveAsImage: {}
-          }
-        }
-      } : null
-
-    return {
-      geo: {
-        map: 'china',
-        label: {
-          emphasis: {
-            show: false
-          }
-        },
-        itemStyle: {
-          normal: {
-            areaColor: '#0000003F',
-            borderColor: '#FFFFFF',
-            borderWidth: 1
-          },
-          emphasis: {
-            areaColor: `#00000059`
-          }
-        },
-        roam: !!(roam && roam.length)
+    effectScatterType = {
+      name: '',
+      type: 'effectScatter',
+      coordinateSystem: 'geo',
+      zlevel: index,
+      rippleEffect: {
+          brushType: 'stroke'
       },
-      ...metricOptions,
-      ...visualMapOptions,
-      ...tooltipOptions,
-      ...toolboxOptions
+      ...labelOptionLines,
+      symbolSize: (val) => {
+          return 12
+      },
+      data: scatterData
+    }
+
+    linesType = {
+      name: '',
+      type: 'lines',
+      zlevel: index,
+      symbol: ['none', 'arrow'],
+      symbolSize: 10,
+      effect: {
+          show: true,
+          // period: 600,
+          trailLength: 0,
+          symbol: symbolType,
+          symbolSize: 15,
+          constantSpeed: linesSpeed
+      },
+      lineStyle: {
+          normal: {
+              width: 2,
+              opacity: 0.6,
+              curveness: 0.2
+          }
+      },
+      data: linesSeriesData
+    }
+    linesSeries.push(linesType, effectScatterType)
+  })
+
+  let legendOption
+  if (chartStyles.legend) {
+    const {
+      color,
+      fontFamily,
+      fontSize,
+      legendPosition,
+      selectAll,
+      showLegend
+    } = chartStyles.legend
+    legendOption = {
+      legend: getLegendOption(chartStyles.legend, legendData)
+    }
+  } else {
+    legendOption = null
+  }
+
+  let mapOptions
+  switch (layerType) {
+    case 'map':
+      mapOptions = {
+        ...metricOptions,
+        ...visualMapOptions,
+        tooltip
+      }
+      break
+    case 'lines':
+      mapOptions = {
+        ...legendOption,
+        geo: {
+          map: 'china',
+          roam
+        },
+        series: linesSeries,
+        ...visualMapOptions
+      }
+      break
+    case 'scatter':
+      mapOptions = {
+        geo: {
+          map: 'china',
+          itemStyle: {
+            normal: {
+              areaColor: '#cccccc',
+              borderColor: '#ffffff',
+              borderWidth: 1
+            },
+            emphasis: {
+              areaColor: '#bbbbbb'
+            }
+          },
+          roam
+        },
+        ...metricOptions,
+        ...visualMapOptions,
+        tooltip
+      }
+      break
+    case 'heatmap':
+      mapOptions = {
+        geo: {
+          map: 'china',
+          itemStyle: {
+            normal: {
+              areaColor: '#cccccc',
+              borderColor: '#ffffff',
+              borderWidth: 1
+            },
+            emphasis: {
+              areaColor: '#bbbbbb'
+            }
+          },
+          label: {
+            emphasis: {
+                show: true
+            }
+          },
+          roam
+        },
+        ...metricOptions,
+        ...visualMapOptions
+        // ...tooltipOptions
+      }
+      break
+  }
+
+  return mapOptions
+}
+
+function getProvinceParent (area) {
+  if (!area.parent) {
+    return area
+  }
+  const parent = geoData.find((g) => g.id === area.parent)
+  return !parent.parent ? parent : getProvinceParent(parent)
+}
+
+function getProvinceName (name) {
+  provinceSuffix.forEach((ps) => {
+    if (name.includes(ps)) {
+      name = name.replace(ps, '')
     }
   })
+  return name
+}
+
+function getCityArea (name) {
+  const hasSuffix = citySuffix.some((p) => name.includes(p))
+  const area = hasSuffix
+    ? geoData.find((d) => d.name === name)
+    : geoData.find((d) => d.name.includes(name))
+  return area
+}
+
+function getProvinceArea (name) {
+  const hasSuffix = provinceSuffix.some((p) => name.includes(p))
+  const area = hasSuffix
+    ? geoData.find((d) => d.name === name && !d.parent)
+    : geoData.find((d) => d.name.includes(name) && !d.parent)
+  return area
+}
+
+function getPosition (position) {
+  let positionValue
+  switch (position) {
+    case 'leftBottom':
+      positionValue = {
+        left: 'left',
+        top: 'bottom'
+      }
+      break
+    case 'leftTop':
+      positionValue = {
+        left: 'left',
+        top: 'top'
+      }
+      break
+    case 'rightTop':
+      positionValue = {
+        left: 'right',
+        top: 'top'
+      }
+      break
+    case 'rightBottom':
+      positionValue = {
+        left: 'right',
+        top: 'bottom'
+      }
+      break
+  }
+  return positionValue
 }

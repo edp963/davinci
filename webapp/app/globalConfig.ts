@@ -24,14 +24,14 @@ export const envName = {
 }
 
 export const env = envName.production
-
+export const clientVersion = '0.3-beta.9'
 export default {
   dev: {
     host: '/api/v3',
     shareHost: '/share.html'
   },
   production: {
-  //  host: '/api/v1',
+    //  host: '/api/v1',
     host: '/api/v3',
     shareHost: '/share.html'
   }

@@ -18,65 +18,104 @@
  * >>
  */
 
+import produce, { setAutoFreeze } from 'immer'
+
+// @FIXME temporary not Object.freeze from immer produce to avoid current bugs
+setAutoFreeze(false)
+
 import {
   LOGIN,
   LOGGED,
   LOGIN_ERROR,
   LOGOUT,
-  SET_LOGIN_USER,
   SHOW_NAVIGATOR,
   HIDE_NAVIGATOR,
   ACTIVE_SUCCESS,
-  UPLOAD_AVATAR_SUCCESS
+  UPLOAD_AVATAR_SUCCESS,
+  LOAD_DOWNLOAD_LIST,
+  LOAD_DOWNLOAD_LIST_SUCCESS,
+  LOAD_DOWNLOAD_LIST_FAILURE,
+  DOWNLOAD_FILE_SUCCESS,
+  UPDATE_PROFILE_SUCCESS,
+  GET_EXTERNAL_AUTH_PROVIDERS_SUCESS,
+  DownloadStatus,
+  GET_VERSION_SUCCESS
 } from './constants'
-import { fromJS } from 'immutable'
 
 
-const initialState = fromJS({
-  logged: false,
+const initialState = {
+  externalAuthProviders: null,
+  logged: null,
   loginUser: null,
   loginLoading: false,
-  navigator: true
-})
-
-function appReducer (state = initialState, action) {
-  const { type, payload } = action
-  const loginUser = state.get('loginUser')
-  switch (type) {
-    case LOGIN:
-      return state
-        .set('loginLoading', true)
-    case LOGGED:
-      return state
-        .set('loginLoading', false)
-        .set('logged', true)
-        .set('loginUser', payload.user)
-    case LOGIN_ERROR:
-      return state
-        .set('loginLoading', false)
-    case ACTIVE_SUCCESS:
-      return state
-        .set('logged', true)
-        .set('loginUser', payload.user)
-    case LOGOUT:
-      return state
-        .set('logged', false)
-        .set('loginUser', null)
-    case SET_LOGIN_USER:
-      return state
-        .set('loginUser', payload.user)
-    case UPLOAD_AVATAR_SUCCESS:
-      const newLoginUser = {...loginUser, ...{avatar: payload.path}}
-      localStorage.setItem('loginUser', JSON.stringify(newLoginUser))
-      return state
-        .set('loginUser', newLoginUser)
-    case SHOW_NAVIGATOR:
-      return state.set('navigator', true)
-    case HIDE_NAVIGATOR:
-      return state.set('navigator', false)
-    default:
-      return state
-  }
+  navigator: true,
+  downloadListLoading: false,
+  downloadList: null,
+  downloadListInfo: null,
+  version: null
 }
+
+const appReducer = (state = initialState, action) =>
+  produce(state, (draft) => {
+    switch (action.type) {
+      case GET_EXTERNAL_AUTH_PROVIDERS_SUCESS:
+        draft.externalAuthProviders = action.payload.externalAuthProviders
+        break
+      case LOGIN:
+        draft.loginLoading = true
+        break
+      case LOGGED:
+        draft.loginLoading = false
+        draft.logged = true
+        draft.loginUser = action.payload.user
+        break
+      case LOGIN_ERROR:
+        draft.loginLoading = false
+        break
+      case ACTIVE_SUCCESS:
+        draft.logged = true
+        draft.loginUser = action.payload.user
+        break
+      case GET_VERSION_SUCCESS:
+        draft.version = action.payload.version
+        break
+      case LOGOUT:
+        draft.logged = false
+        draft.loginUser = null
+        break
+      case UPLOAD_AVATAR_SUCCESS:
+        draft.loginUser.avatar = action.payload.path
+        break
+      case UPDATE_PROFILE_SUCCESS:
+        const { id, name, department, description } = action.payload.user
+        draft.loginUser = { ...draft.loginUser, id, name, department, description }
+        break
+      case SHOW_NAVIGATOR:
+        draft.navigator = true
+        break
+      case HIDE_NAVIGATOR:
+        draft.navigator = false
+        break
+      case LOAD_DOWNLOAD_LIST:
+        draft.downloadListLoading = true
+        break
+      case LOAD_DOWNLOAD_LIST_SUCCESS:
+        draft.downloadListLoading = false
+        draft.downloadList = action.payload.list
+        draft.downloadListInfo = action.payload.list.reduce((info, item) => {
+          info[item.id] = {
+            loading: false
+          }
+          return info
+        }, {})
+        break
+      case LOAD_DOWNLOAD_LIST_FAILURE:
+        draft.downloadListLoading = false
+        break
+      case DOWNLOAD_FILE_SUCCESS:
+        draft.downloadList.find(({ id }) => action.payload.id === id).status = DownloadStatus.Downloaded
+        break
+    }
+  })
 
 export default appReducer

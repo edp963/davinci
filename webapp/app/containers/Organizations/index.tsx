@@ -1,38 +1,27 @@
-import * as React from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
-const Icon = require('antd/lib/icon')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tag = require('antd/lib/tag')
-const Modal = require('antd/lib/modal')
-import { Link } from 'react-router'
-import Box from '../../components/Box'
-import {InjectedRouter} from 'react-router/lib/Router'
-import reducer from './reducer'
-import {compose} from 'redux'
-import {makeSelectLoginUser} from '../App/selectors'
-import saga from './sagas'
-import {addOrganization, loadOrganizations} from './actions'
-import injectReducer from '../../utils/injectReducer'
-import {createStructuredSelector} from 'reselect'
-import injectSaga from '../../utils/injectSaga'
-import {makeSelectOrganizations} from './selectors'
-import {WrappedFormUtils} from 'antd/lib/form/Form'
+import { Icon, Row, Col, Modal, Breadcrumb } from 'antd'
+import FormType from 'antd/lib/form/Form'
+import { Link } from 'react-router-dom'
+import Box from 'components/Box'
+import { compose } from 'redux'
+import { makeSelectLoginUser } from '../App/selectors'
+import { OrganizationActions } from './actions'
+const { addOrganization, loadOrganizations } = OrganizationActions
+import { createStructuredSelector } from 'reselect'
+import { makeSelectOrganizations } from './selectors'
 const styles = require('./Organization.less')
 import OrganizationForm from './component/OrganizationForm'
-const utilStyles = require('../../assets/less/util.less')
-const Breadcrumb = require('antd/lib/breadcrumb')
-import Avatar from '../../components/Avatar'
-// import sagaApp from '../App/sagas'
-// import reducerApp from '../App/reducer'
-import {checkNameUniqueAction} from '../App/actions'
+const utilStyles = require('assets/less/util.less')
+import Avatar from 'components/Avatar'
+import { checkNameUniqueAction } from '../App/actions'
+import { RouteComponentWithParams } from 'utils/types'
 
 interface IOrganizationsState {
   formVisible: boolean
   modalLoading: boolean
 }
 interface IOrganizationsProps {
-  router: InjectedRouter
   organizations: IOrganization[]
   onLoadOrganizations: () => any
   onAddOrganization: (organization: any, resolve: () => any) => any
@@ -45,7 +34,7 @@ interface IOrganization {
   avatar?: any
   role?: number
 }
-export class Organizations extends React.PureComponent<IOrganizationsProps, IOrganizationsState> {
+export class Organizations extends React.PureComponent<IOrganizationsProps & RouteComponentWithParams, IOrganizationsState> {
   constructor (props) {
     super(props)
     this.state = {
@@ -55,7 +44,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
   }
   private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckUniqueName } = this.props
-    const { getFieldsValue } = this.OrganizationForm
+    const { getFieldsValue } = this.OrganizationForm.props.form
     const id = getFieldsValue()['id']
     const data = {
       name: value,
@@ -69,9 +58,12 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
       })
   }
   private toOrganization = (organization) => () => {
-    this.props.router.push(`/account/organization/${organization.id}`)
+    this.props.history.push(`/account/organization/${organization.id}`)
   }
-  private OrganizationForm: WrappedFormUtils
+  private OrganizationForm: FormType
+  private refHandles = {
+    OrganizationForm: (ref) => this.OrganizationForm = ref
+  }
   private showOrganizationForm = () => (e) => {
     e.stopPropagation()
     this.setState({
@@ -83,7 +75,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
     onLoadOrganizations()
   }
   private onModalOk = () => {
-    this.OrganizationForm.validateFieldsAndScroll((err, values) => {
+    this.OrganizationForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
         this.props.onAddOrganization({
@@ -97,15 +89,16 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
     this.setState({
       formVisible: false,
       modalLoading: false
-    }, () => {
-      this.OrganizationForm.resetFields()
     })
+  }
+
+  private afterOrganizationFormClose = () => {
+    this.OrganizationForm.props.form.resetFields()
   }
 
   public render () {
     const { formVisible, modalLoading } = this.state
     const { organizations } = this.props
-    console.log({organizations})
     const organizationArr = organizations ? organizations.map((org) => (
         <div className={styles.groupList} key={org.id} onClick={this.toOrganization(org)}>
           <div className={styles.orgHeader}>
@@ -152,12 +145,13 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
           visible={formVisible}
           footer={null}
           onCancel={this.hideOrganizationForm}
+          afterClose={this.afterOrganizationFormClose}
         >
           <OrganizationForm
-            ref={(f) => { this.OrganizationForm = f }}
             modalLoading={modalLoading}
             onModalOk={this.onModalOk}
             onCheckUniqueName={this.checkNameUnique}
+            wrappedComponentRef={this.refHandles.OrganizationForm}
           />
         </Modal>
       </Box>
@@ -181,17 +175,7 @@ export function mapDispatchToProps (dispatch) {
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-// const withReducer = injectReducer({ key: 'organization', reducer })
-// const withSaga = injectSaga({ key: 'organization', saga })
-
-// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
-
 export default compose(
-  // withReducer,
-  // withAppReducer,
-  // withAppSaga,
-  // withSaga,
   withConnect
 )(Organizations)
 

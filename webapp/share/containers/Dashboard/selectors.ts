@@ -19,66 +19,123 @@
  */
 
 import { createSelector } from 'reselect'
+import { IShareDashboardState } from './types'
 
-const selectShare = (state) => state.get('shareDashboard')
+const selectShare = (state: { shareDashboard: IShareDashboardState }) =>
+  state.shareDashboard
+const selectItemId = (_, itemId: number) => itemId
 
-const makeSelectDashboard = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('dashboard')
-)
+const makeSelectDashboard = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.dashboard
+  )
 
-const makeSelectTitle = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('title')
-)
-const makeSelectConfig = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('config')
-)
-const makeSelectWidgets = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('widgets')
-)
-const makeSelectItems = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('items')
-)
-const makeSelectItemsInfo = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('itemsInfo')
-)
-const makeSelectDashboardCascadeSources = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('dashboardCascadeSources')
-)
+const makeSelectTitle = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.title
+  )
 
-const makeSelectLinkages = () => createSelector(
-  selectShare,
-  (shareState) => {
-    const config = shareState.get('config')
-    if (!config) { return [] }
+const makeSelectWidgets = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.widgets
+  )
 
-    const emptyConfig = {}
-    const { linkages } = JSON.parse(config || emptyConfig)
-    if (!linkages) { return [] }
+const makeSelectFormedViews = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.formedViews
+  )
 
-    const itemsInfo = shareState.get('itemsInfo')
-    const validLinkages = linkages.filter((l) => {
-      const { linkager, trigger } = l
-      return itemsInfo[linkager[0]] && itemsInfo[trigger[0]]
-    })
-    return validLinkages
-  }
-)
+const makeSelectItems = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.items
+  )
+
+const makeSelectItemsInfo = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.itemsInfo
+  )
+
+const makeSelectItem = () =>
+  createSelector(
+    makeSelectItems(),
+    selectItemId,
+    (currentItems, itemId) => currentItems.find((item) => item.id === itemId)
+  )
+
+const makeSelectItemInfo = () =>
+  createSelector(
+    makeSelectItemsInfo(),
+    selectItemId,
+    (currentItemsInfo, itemId) => currentItemsInfo[itemId]
+  )
+
+const makeSelectItemRelatedWidget = () =>
+  createSelector(
+    makeSelectWidgets(),
+    makeSelectItem(),
+    (widgets, item) => widgets.find((w) => w.id === item.widgetId)
+  )
+
+const makeSelectShareParams = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.shareParams
+  )
+
+const makeSelectLinkages = () =>
+  createSelector(
+    makeSelectDashboard(),
+    makeSelectItemsInfo(),
+    (dashboard, itemsInfo) => {
+      if (!dashboard || !itemsInfo) {
+        return []
+      }
+
+      const validLinkages = dashboard.config.linkages.filter((l) => {
+        const { linkager, trigger } = l
+        return itemsInfo[linkager[0]] && itemsInfo[trigger[0]]
+      })
+      return validLinkages
+    }
+  )
+
+const makeSelectDownloadList = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.downloadList
+  )
+
+const makeSelectDownloadListLoading = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.downloadListLoading
+  )
+
+const makeSelectFullScreenPanelItemId = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.fullScreenPanelItemId
+  )
 
 export {
   selectShare,
   makeSelectDashboard,
   makeSelectTitle,
-  makeSelectConfig,
-  makeSelectDashboardCascadeSources,
   makeSelectWidgets,
+  makeSelectFormedViews,
   makeSelectItems,
   makeSelectItemsInfo,
-  makeSelectLinkages
+  makeSelectLinkages,
+  makeSelectDownloadList,
+  makeSelectDownloadListLoading,
+  makeSelectShareParams,
+  makeSelectItemInfo,
+  makeSelectItemRelatedWidget,
+  makeSelectFullScreenPanelItemId
 }

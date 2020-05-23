@@ -18,179 +18,313 @@
  * >>
  */
 
+import { ActionTypes } from './constants'
+import { returnType } from 'utils/redux'
 import {
-  LOAD_SOURCES,
-  LOAD_SOURCES_SUCCESS,
-  LOAD_SOURCES_FAILURE,
-  ADD_SOURCE,
-  ADD_SOURCE_SUCCESS,
-  ADD_SOURCE_FAILURE,
-  DELETE_SOURCE,
-  DELETE_SOURCE_SUCCESS,
-  DELETE_SOURCE_FAILURE,
-  LOAD_SOURCE_DETAIL,
-  LOAD_SOURCE_DETAIL_SUCCESS,
-  LOAD_SOURCE_DETAIL_FAILURE,
-  EDIT_SOURCE,
-  EDIT_SOURCE_SUCCESS,
-  EDIT_SOURCE_FAILURE,
-  TEST_SOURCE_CONNECTION,
-  TEST_SOURCE_CONNECTION_SUCCESS,
-  TEST_SOURCE_CONNECTION_FAILURE,
-  GET_CSV_META_ID
-} from './constants'
+  ISourceBase,
+  ISource,
+  SourceResetConnectionProperties,
+  ITableColumns,
+  ISourceDatabases,
+  ICSVMetaInfo,
+  IDatabaseTables,
+  IDatasourceInfo
+} from './types'
 
-export function loadSources (projectId) {
-  return {
-    type: LOAD_SOURCES,
-    payload: {
-      projectId
+export const SourceActions = {
+  loadSources(projectId: number) {
+    return {
+      type: ActionTypes.LOAD_SOURCES,
+      payload: {
+        projectId
+      }
+    }
+  },
+  sourcesLoaded(sources: ISourceBase[]) {
+    return {
+      type: ActionTypes.LOAD_SOURCES_SUCCESS,
+      payload: {
+        sources
+      }
+    }
+  },
+  loadSourcesFail() {
+    return {
+      type: ActionTypes.LOAD_SOURCES_FAILURE,
+      payload: {}
+    }
+  },
+
+  loadSourceDetail(sourceId: number, resolve?: (source: ISource) => void) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DETAIL,
+      payload: {
+        sourceId,
+        resolve
+      }
+    }
+  },
+  sourceDetailLoaded(source: ISource) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DETAIL_SUCCESS,
+      payload: {
+        source
+      }
+    }
+  },
+  loadSourceDetailFail() {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DETAIL_FAIL,
+      payload: {}
+    }
+  },
+
+  addSource(source: ISource, resolve: () => void) {
+    return {
+      type: ActionTypes.ADD_SOURCE,
+      payload: {
+        source,
+        resolve
+      }
+    }
+  },
+  sourceAdded(result: ISourceBase) {
+    return {
+      type: ActionTypes.ADD_SOURCE_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  addSourceFail() {
+    return {
+      type: ActionTypes.ADD_SOURCE_FAILURE,
+      payload: {}
+    }
+  },
+  deleteSource(id: number) {
+    return {
+      type: ActionTypes.DELETE_SOURCE,
+      payload: {
+        id
+      }
+    }
+  },
+  sourceDeleted(id: number) {
+    return {
+      type: ActionTypes.DELETE_SOURCE_SUCCESS,
+      payload: {
+        id
+      }
+    }
+  },
+  deleteSourceFail() {
+    return {
+      type: ActionTypes.DELETE_SOURCE_FAILURE,
+      payload: {}
+    }
+  },
+  editSource(source: ISource, resolve: () => void) {
+    return {
+      type: ActionTypes.EDIT_SOURCE,
+      payload: {
+        source,
+        resolve
+      }
+    }
+  },
+  sourceEdited(result: ISourceBase) {
+    return {
+      type: ActionTypes.EDIT_SOURCE_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  editSourceFail() {
+    return {
+      type: ActionTypes.EDIT_SOURCE_FAILURE,
+      payload: {}
+    }
+  },
+  testSourceConnection(testSource) {
+    return {
+      type: ActionTypes.TEST_SOURCE_CONNECTION,
+      payload: {
+        testSource
+      }
+    }
+  },
+  sourceConnected() {
+    return {
+      type: ActionTypes.TEST_SOURCE_CONNECTION_SUCCESS,
+      payload: {}
+    }
+  },
+  testSourceConnectionFail() {
+    return {
+      type: ActionTypes.TEST_SOURCE_CONNECTION_FAILURE,
+      payload: {}
+    }
+  },
+
+  resetSourceConnection(
+    properties: SourceResetConnectionProperties,
+    resolve: () => void
+  ) {
+    return {
+      type: ActionTypes.RESET_SOURCE_CONNECTION,
+      payload: {
+        properties,
+        resolve
+      }
+    }
+  },
+  sourceReset() {
+    return {
+      type: ActionTypes.RESET_SOURCE_CONNECTION_SUCCESS,
+      payload: {}
+    }
+  },
+  resetSourceConnectionFail() {
+    return {
+      type: ActionTypes.RESET_SOURCE_CONNECTION_FAILURE,
+      payload: {}
+    }
+  },
+
+  validateCsvTableName(
+    csvMeta: Pick<ICSVMetaInfo, 'sourceId' | 'tableName' | 'mode'>,
+    callback: (errMsg?: string) => void
+  ) {
+    return {
+      type: ActionTypes.VALIDATE_CSV_TABLE_NAME,
+      payload: {
+        csvMeta,
+        callback
+      }
+    }
+  },
+
+  uploadCsvFile(csvMeta: ICSVMetaInfo, resolve: () => void, reject: () => void) {
+    return {
+      type: ActionTypes.UPLOAD_CSV_FILE,
+      payload: {
+        csvMeta,
+        resolve,
+        reject
+      }
+    }
+  },
+
+  loadSourceDatabases(sourceId: number) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DATABASES,
+      payload: {
+        sourceId
+      }
+    }
+  },
+  sourceDatabasesLoaded(sourceDatabases: ISourceDatabases) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DATABASES_SUCCESS,
+      payload: {
+        sourceDatabases
+      }
+    }
+  },
+  loadSourceDatabasesFail(err) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DATABASES_FAILURE,
+      payload: {
+        err
+      }
+    }
+  },
+
+  loadDatabaseTables(sourceId: number, databaseName: string, resolve?) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DATABASE_TABLES,
+      payload: {
+        sourceId,
+        databaseName,
+        resolve
+      }
+    }
+  },
+  databaseTablesLoaded(databaseTables: IDatabaseTables) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DATABASE_TABLES_SUCCESS,
+      payload: {
+        databaseTables
+      }
+    }
+  },
+  loadDatabaseTablesFail(err) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_DATABASE_TABLES_FAILURE,
+      payload: {
+        err
+      }
+    }
+  },
+  loadTableColumns(
+    sourceId: number,
+    databaseName: string,
+    tableName: string,
+    resolve?
+  ) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_TABLE_COLUMNS,
+      payload: {
+        sourceId,
+        databaseName,
+        tableName,
+        resolve
+      }
+    }
+  },
+  tableColumnsLoaded(databaseName: string, tableColumns: ITableColumns) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_TABLE_COLUMNS_SUCCESS,
+      payload: {
+        databaseName,
+        tableColumns
+      }
+    }
+  },
+  loadTableColumnsFail(err) {
+    return {
+      type: ActionTypes.LOAD_SOURCE_TABLE_COLUMNS_FAILURE,
+      payload: {
+        err
+      }
+    }
+  },
+  loadDatasourcesInfo() {
+    return {
+      type: ActionTypes.LOAD_DATASOURCES_INFO
+    }
+  },
+  datasourcesInfoLoaded(info: IDatasourceInfo[]) {
+    return {
+      type: ActionTypes.LOAD_DATASOURCES_INFO_SUCCESS,
+      payload: {
+        info
+      }
+    }
+  },
+  loadDatasourcesInfoFail(err) {
+    return {
+      type: ActionTypes.LOAD_DATASOURCES_INFO_FAILURE,
+      payload: {
+        err
+      }
     }
   }
 }
 
-export function sourcesLoaded (sources) {
-  return {
-    type: LOAD_SOURCES_SUCCESS,
-    payload: {
-      sources
-    }
-  }
-}
+const mockAction = returnType(SourceActions)
+export type SourceActionType = typeof mockAction
 
-export function loadSourceFail () {
-  return {
-    type: LOAD_SOURCES_FAILURE
-  }
-}
-
-export function addSource (source, resolve) {
-  return {
-    type: ADD_SOURCE,
-    payload: {
-      source,
-      resolve
-    }
-  }
-}
-
-export function sourceAdded (result) {
-  return {
-    type: ADD_SOURCE_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function addSourceFail () {
-  return {
-    type: ADD_SOURCE_FAILURE
-  }
-}
-
-export function deleteSource (id) {
-  return {
-    type: DELETE_SOURCE,
-    payload: {
-      id
-    }
-  }
-}
-
-export function sourceDeleted (id) {
-  return {
-    type: DELETE_SOURCE_SUCCESS,
-    payload: {
-      id
-    }
-  }
-}
-
-export function deleteSourceFail () {
-  return {
-    type: DELETE_SOURCE_FAILURE
-  }
-}
-
-export function loadSourceDetail (id) {
-  return {
-    type: LOAD_SOURCE_DETAIL,
-    payload: {
-      id
-    }
-  }
-}
-
-export function sourceDetailLoaded (source) {
-  return {
-    type: LOAD_SOURCE_DETAIL_SUCCESS,
-    payload: {
-      source
-    }
-  }
-}
-
-export function loadSourceDetailFail () {
-  return {
-    type: LOAD_SOURCE_DETAIL_FAILURE
-  }
-}
-
-export function editSource (source, resolve) {
-  return {
-    type: EDIT_SOURCE,
-    payload: {
-      source,
-      resolve
-    }
-  }
-}
-
-export function sourceEdited (result) {
-  return {
-    type: EDIT_SOURCE_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function editSourceFail () {
-  return {
-    type: EDIT_SOURCE_FAILURE
-  }
-}
-
-export function testSourceConnection (url) {
-  return {
-    type: TEST_SOURCE_CONNECTION,
-    payload: {
-      url
-    }
-  }
-}
-
-export function sourceConnected () {
-  return {
-    type: TEST_SOURCE_CONNECTION_SUCCESS
-  }
-}
-
-export function testSourceConnectionFail () {
-  return {
-    type: TEST_SOURCE_CONNECTION_FAILURE
-  }
-}
-
-// tableName, sourceId, primaryKeys, indexKeys, replaceMode
-export function getCsvMetaId (csvMeta, resolve, reject) {
-  return {
-    type: GET_CSV_META_ID,
-    payload: {
-      csvMeta,
-      resolve,
-      reject
-    }
-  }
-}
+export default SourceActions

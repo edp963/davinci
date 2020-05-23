@@ -1,34 +1,37 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.controller;
 
 import com.alibaba.druid.util.StringUtils;
+import com.github.pagehelper.PageInfo;
 import edp.core.annotation.CurrentUser;
-import edp.core.enums.HttpCodeEnum;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
-import edp.davinci.dto.organizationDto.OrganizationCreate;
-import edp.davinci.dto.organizationDto.OrganizationPut;
-import edp.davinci.dto.organizationDto.OrganzationRole;
+import edp.davinci.dto.organizationDto.*;
+import edp.davinci.dto.projectDto.ProjectWithCreateBy;
+import edp.davinci.dto.roleDto.RoleBaseInfo;
 import edp.davinci.model.User;
 import edp.davinci.service.OrganizationService;
+import edp.davinci.service.ProjectService;
+import edp.davinci.service.RoleService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -44,6 +47,8 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
+import java.util.Map;
 
 @Api(value = "/organization", tags = "organization", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "organization not found"))
@@ -54,6 +59,12 @@ public class OrganizationController extends BaseController {
 
     @Autowired
     private OrganizationService organizationService;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private ProjectService projectService;
 
     /**
      * 新建组织
@@ -73,14 +84,8 @@ public class OrganizationController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = organizationService.createOrganization(organizationCreate, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        OrganizationBaseInfo organization = organizationService.createOrganization(organizationCreate, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(organization));
     }
 
 
@@ -110,14 +115,8 @@ public class OrganizationController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = organizationService.updateOrganization(organizationPut, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        organizationService.updateOrganization(organizationPut, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
     /**
@@ -141,18 +140,12 @@ public class OrganizationController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("avatar file can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("avatar file can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = organizationService.uploadAvatar(id, file, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        Map<String, String> map = organizationService.uploadAvatar(id, file, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(map));
     }
 
 
@@ -174,14 +167,8 @@ public class OrganizationController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = organizationService.deleteOrganization(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        organizationService.deleteOrganization(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -202,14 +189,8 @@ public class OrganizationController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = organizationService.getOrganization(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        OrganizationInfo organization = organizationService.getOrganization(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(organization));
     }
 
 
@@ -223,14 +204,8 @@ public class OrganizationController extends BaseController {
     @ApiOperation(value = "get organizations")
     @GetMapping
     public ResponseEntity getOrganizations(@ApiIgnore @CurrentUser User user, HttpServletRequest request) {
-        try {
-            ResultMap resultMap = organizationService.getOrganizations(user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        List<OrganizationInfo> organizations = organizationService.getOrganizations(user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(organizations));
     }
 
 
@@ -254,14 +229,9 @@ public class OrganizationController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = organizationService.getOrgProjects(id, user, keyword, pageNum, pageSize, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+
+        PageInfo<ProjectWithCreateBy> projects = projectService.getProjectsByOrg(id, user, keyword, pageNum, pageSize);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(projects));
     }
 
 
@@ -279,41 +249,31 @@ public class OrganizationController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = organizationService.getOrgMembers(id, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+
+        List<OrganizationMember> orgMembers = organizationService.getOrgMembers(id);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(orgMembers));
     }
 
     /**
-     * 获取组织团队列表
+     * 获取组织下权限列表
      *
      * @param id
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "get organization teams")
-    @GetMapping("/{id}/teams")
-    public ResponseEntity getOrgTeams(@PathVariable Long id,
+    @ApiOperation(value = "get organization roles")
+    @GetMapping("/{id}/roles")
+    public ResponseEntity getOrgRoles(@PathVariable Long id,
                                       @ApiIgnore @CurrentUser User user,
                                       HttpServletRequest request) {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = organizationService.getOrgTeamsByOrgId(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+
+        List<RoleBaseInfo> roles = roleService.getRolesByOrgId(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(roles));
     }
 
     /**
@@ -341,14 +301,8 @@ public class OrganizationController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = organizationService.inviteMember(orgId, memId, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        organizationService.inviteMember(orgId, memId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -364,7 +318,7 @@ public class OrganizationController extends BaseController {
 //    public ResponseEntity confirmInvite(@PathVariable("token") String token,
 //                                        HttpServletRequest request) {
 //        if (StringUtils.isEmpty(token)) {
-//            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be empty");
+//            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be EMPTY");
 //            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
 //        }
 //        try {
@@ -391,17 +345,11 @@ public class OrganizationController extends BaseController {
                                         @ApiIgnore @CurrentUser User user,
                                         HttpServletRequest request) {
         if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = organizationService.confirmInvite(token, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        OrganizationInfo organizationInfo = organizationService.confirmInvite(token, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(organizationInfo));
     }
 
     /**
@@ -419,14 +367,8 @@ public class OrganizationController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid relation id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = organizationService.deleteOrgMember(relationId, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        organizationService.deleteOrgMember(relationId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -457,14 +399,8 @@ public class OrganizationController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = organizationService.updateMemberRole(relationId, user, organzationRole.getRole(), request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        organizationService.updateMemberRole(relationId, user, organzationRole.getRole());
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 }

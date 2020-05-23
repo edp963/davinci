@@ -18,71 +18,30 @@
  * >>
  */
 
-import { takeLatest, takeEvery, throttle } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
-import {
-  LOAD_ORGANIZATIONS,
-  ADD_ORGANIZATION,
-  EDIT_ORGANIZATION,
-  DELETE_ORGANIZATION,
-  LOAD_ORGANIZATION_DETAIL,
-  LOAD_ORGANIZATIONS_TEAMS,
-  LOAD_ORGANIZATIONS_PROJECTS,
-  LOAD_ORGANIZATIONS_MEMBERS,
-  ADD_TEAM,
-  SEARCH_MEMBER,
-  INVITE_MEMBER,
-  DELETE_ORGANIZATION_MEMBER,
-  CHANGE_MEMBER_ROLE_ORGANIZATION
-} from './constants'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
+import { ActionTypes } from './constants'
 
-import {
-  organizationsLoaded,
-  loadOrganizationsFail,
-  organizationAdded,
-  addOrganizationFail,
-  organizationEdited,
-  editOrganizationFail,
-  organizationDeleted,
-  deleteOrganizationFail,
-  organizationDetailLoaded,
-  organizationsMembersLoaded,
-  organizationsProjectsLoaded,
-  organizationsTeamsLoaded,
-  loadOrganizationsProjectsFail,
-  loadOrganizationsMembersFail,
-  loadOrganizationsTeamsFail,
-  addTeamFail,
-  teamAdded,
-  inviteMemberSuccess,
-  inviteMemberFail,
-  memberSearched,
-  searchMemberFail,
-  organizationMemberDeleted,
-  deleteOrganizationMemberFail,
-  organizationMemberRoleChanged,
-  changeOrganizationMemberRoleFail
-} from './actions'
+import { OrganizationActions, OrganizationActionType } from './actions'
 
-const message = require('antd/lib/message')
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { writeAdapter, readListAdapter } from '../../utils/asyncAdapter'
-import {userPasswordChanged} from '../App/actions'
-import { errorHandler } from '../../utils/util'
+import { message } from 'antd'
+import request from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
 
 export function* getOrganizations () {
   try {
     const asyncData = yield call(request, api.organizations)
-    const organizations = readListAdapter(asyncData)
-    yield put(organizationsLoaded(organizations))
+    const organizations = asyncData.payload
+    yield put(OrganizationActions.organizationsLoaded(organizations))
   } catch (err) {
-    yield put(loadOrganizationsFail())
+    yield put(OrganizationActions.loadOrganizationsFail())
     errorHandler(err)
   }
 }
 
-export function* addOrganization (action) {
+export function* addOrganization (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.ADD_ORGANIZATION) { return }
+
   const { organization, resolve } = action.payload
   try {
     const asyncData = yield call(request, {
@@ -90,16 +49,18 @@ export function* addOrganization (action) {
       url: api.organizations,
       data: organization
     })
-    const result = readListAdapter(asyncData)
-    yield put(organizationAdded(result))
+    const result = asyncData.payload
+    yield put(OrganizationActions.organizationAdded(result))
     resolve()
   } catch (err) {
-    yield put(addOrganizationFail())
+    yield put(OrganizationActions.addOrganizationFail())
     errorHandler(err)
   }
 }
 
-export function* editOrganization (action) {
+export function* editOrganization (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.EDIT_ORGANIZATION) { return }
+
   const { organization } = action.payload
   try {
     yield call(request, {
@@ -107,41 +68,47 @@ export function* editOrganization (action) {
       url: `${api.organizations}/${organization.id}`,
       data: organization
     })
-    yield put(organizationEdited(organization))
+    yield put(OrganizationActions.organizationEdited(organization))
     message.success('success')
   } catch (err) {
-    yield put(editOrganizationFail())
+    yield put(OrganizationActions.editOrganizationFail())
     errorHandler(err)
   }
 }
 
-export function* deleteOrganization (action) {
+export function* deleteOrganization (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.DELETE_ORGANIZATION) { return }
+
   const { id, resolve } = action.payload
   try {
     yield call(request, {
       method: 'delete',
       url: `${api.organizations}/${id}`
     })
-    yield put(organizationDeleted(id))
+    yield put(OrganizationActions.organizationDeleted(id))
     resolve()
   } catch (err) {
-    yield put(deleteOrganizationFail())
+    yield put(OrganizationActions.deleteOrganizationFail())
     errorHandler(err)
   }
 }
 
-export function* getOrganizationDetail ({ payload }) {
+export function* getOrganizationDetail (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.LOAD_ORGANIZATION_DETAIL) { return }
+
   try {
-    const asyncData = yield call(request, `${api.organizations}/${payload.id}`)
-    const organization = readListAdapter(asyncData)
-    yield put(organizationDetailLoaded(organization))
+    const asyncData = yield call(request, `${api.organizations}/${action.payload.id}`)
+    const organization = asyncData.payload
+    yield put(OrganizationActions.organizationDetailLoaded(organization))
   } catch (err) {
     errorHandler(err)
   }
 }
 
-export function* getOrganizationsProjects ({payload}) {
-  const {param: {id, keyword, pageNum, pageSize}} = payload
+export function* getOrganizationsProjects (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.LOAD_ORGANIZATIONS_PROJECTS) { return }
+
+  const { param: { id, keyword, pageNum, pageSize } } = action.payload
   const requestUrl = keyword
     ? `${api.organizations}/${id}/projects?keyword=${keyword}&pageNum=1&pageSize=${pageSize || 10}`
     : `${api.organizations}/${id}/projects/?pageNum=${pageNum || 1}&pageSize=${pageSize || 10}`
@@ -150,76 +117,176 @@ export function* getOrganizationsProjects ({payload}) {
       method: 'get',
       url: requestUrl
     })
-    const organizations = readListAdapter(asyncData)
-    yield put(organizationsProjectsLoaded(organizations))
+    const organizations = asyncData.payload
+    yield put(OrganizationActions.organizationsProjectsLoaded(organizations))
   } catch (err) {
-    yield put(loadOrganizationsProjectsFail())
+    yield put(OrganizationActions.loadOrganizationsProjectsFail())
     errorHandler(err)
   }
 }
 
-export function* getOrganizationsMembers ({payload}) {
-  const {id} = payload
+export function* getOrganizationsMembers (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.LOAD_ORGANIZATIONS_MEMBERS) { return }
+
+  const { id } = action.payload
   try {
     const asyncData = yield call(request, `${api.organizations}/${id}/members`)
-    const organizations = readListAdapter(asyncData)
-    yield put(organizationsMembersLoaded(organizations))
+    yield put(OrganizationActions.organizationsMembersLoaded(asyncData.payload))
   } catch (err) {
-    yield put(loadOrganizationsMembersFail())
+    yield put(OrganizationActions.loadOrganizationsMembersFail())
     errorHandler(err)
   }
 }
 
-export function* getOrganizationsTeams ({payload}) {
-  const {id} = payload
+export function* getOrganizationsRole (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.LOAD_ORGANIZATIONS_ROLE) { return }
+
+  const { id } = action.payload
   try {
-    const asyncData = yield call(request, `${api.organizations}/${id}/teams`)
-    const organizations = readListAdapter(asyncData)
-    yield put(organizationsTeamsLoaded(organizations))
+    const asyncData = yield call(request, `${api.organizations}/${id}/roles`)
+    const organizations = asyncData.payload
+    yield put(OrganizationActions.organizationsRoleLoaded(organizations))
   } catch (err) {
-    yield put(loadOrganizationsTeamsFail())
+    yield put(OrganizationActions.loadOrganizationsRoleFail())
     errorHandler(err)
   }
 }
 
-export function* addTeam (action) {
-  const { team, resolve } = action.payload
+export function* addRole (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.ADD_ROLE) { return }
+
+  const { name, description, id, resolve } = action.payload
   try {
+    const role = { name, description, orgId: id }
     const asyncData = yield call(request, {
       method: 'post',
-      url: api.teams,
-      data: team
-      // data: writeAdapter(project)
+      url: api.roles,
+      data: role
     })
-    const result = readListAdapter(asyncData)
-    yield put(teamAdded(result))
+    const result = asyncData.payload
+    yield put(OrganizationActions.roleAdded(result))
     resolve()
   } catch (err) {
-    yield put(addTeamFail())
+    yield put(OrganizationActions.addRoleFail())
     errorHandler(err)
   }
 }
 
-export function* searchMember ({payload}) {
-  const {keyword} = payload
+export function* getRoleListByMemberId (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.GET_ROLELISTS_BY_MEMBERID) { return }
+  const { memberId, orgId, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.organizations}/${orgId}/member/${memberId}/roles`
+    })
+    const result = asyncData.payload
+    yield put(OrganizationActions.getRoleListByMemberIdSuccess(result, memberId))
+    if (resolve) {
+      resolve(result)
+    }
+  } catch (err) {
+    yield put(OrganizationActions.getRoleListByMemberIdFail(err, memberId))
+    errorHandler(err)
+  }
+}
+
+export function* deleteRole (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.DELETE_ROLE) { return }
+
+  const { id, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'delete',
+      url: `${api.roles}/${id}`
+    })
+    const result = asyncData.payload
+    yield put(OrganizationActions.roleDeleted(result))
+    resolve()
+  } catch (err) {
+    yield put(OrganizationActions.deleteRoleFail())
+    errorHandler(err)
+  }
+}
+
+export function* editRole (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.EDIT_ROLE) { return }
+
+  const { name, description, id, resolve } = action.payload
+  try {
+    const role = {name, description}
+    const asyncData = yield call(request, {
+      method: 'put',
+      url: `${api.roles}/${id}`,
+      data: role
+    })
+    const result = asyncData.payload
+    yield put(OrganizationActions.roleEdited(result))
+    resolve()
+  } catch (err) {
+    yield put(OrganizationActions.editRoleFail())
+    errorHandler(err)
+  }
+}
+
+export function* relRoleMember (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.REL_ROLE_MEMBER) { return }
+
+  const { id, memberIds, resolve } = action.payload
+  try {
+    yield call(request, {
+      method: 'post',
+      url: `${api.roles}/${id}/members`,
+      data: memberIds
+    })
+    yield put(OrganizationActions.relRoleMemberSuccess())
+    resolve()
+  } catch (err) {
+    yield put(OrganizationActions.relRoleMemberFail())
+    errorHandler(err)
+  }
+}
+
+export function* getRelRoleMember (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.GET_REL_ROLE_MEMBER) { return }
+
+  const { id, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.roles}/${id}/members`
+    })
+    const result = asyncData.payload
+    yield put(OrganizationActions.getRelRoleMemberSuccess())
+    resolve(result)
+  } catch (err) {
+    yield put(OrganizationActions.getRelRoleMemberFail())
+    errorHandler(err)
+  }
+}
+
+export function* searchMember (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.SEARCH_MEMBER) { return }
+
+  const { keyword } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'get',
       url: `${api.user}?keyword=${keyword}`
     })
-    const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
-    const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
 
-    const result = readListAdapter(asyncData)
-    yield put(memberSearched(result))
+    const result = asyncData.payload
+    yield put(OrganizationActions.memberSearched(result))
   } catch (err) {
-    yield put(searchMemberFail())
+    yield put(OrganizationActions.searchMemberFail())
     errorHandler(err)
   }
 }
 
-export function* inviteMember ({payload}) {
-  const {orgId, memId} = payload
+export function* inviteMember (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.INVITE_MEMBER) { return }
+
+  const { orgId, memId } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
@@ -229,60 +296,120 @@ export function* inviteMember ({payload}) {
         memId
       }
     })
-    const result = readListAdapter(asyncData)
-    yield put(inviteMemberSuccess(result))
+    const result = asyncData.payload
+    yield put(OrganizationActions.inviteMemberSuccess(result))
   } catch (err) {
-    yield put(inviteMemberFail())
+    yield put(OrganizationActions.inviteMemberFail())
     errorHandler(err)
   }
 }
 
-export function* deleteOrganizationMember ({payload}) {
-  const {relationId, resolve} = payload
+export function* deleteOrganizationMember (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.DELETE_ORGANIZATION_MEMBER) { return }
+
+  const { relationId, resolve } = action.payload
   try {
-    const asyncData = yield call(request, {
+    yield call(request, {
       url: `${api.organizations}/member/${relationId}`,
       method: 'delete'
     })
-    yield put(organizationMemberDeleted(relationId))
+    yield put(OrganizationActions.organizationMemberDeleted(relationId))
     resolve()
   } catch (err) {
-    yield put(deleteOrganizationMemberFail())
+    yield put(OrganizationActions.deleteOrganizationMemberFail())
     errorHandler(err)
   }
 }
 
-export function* changeOrganizationMemberRole ({payload}) {
-  const {relationId, newRole, resolve} = payload
+export function* changeOrganizationMemberRole (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.CHANGE_MEMBER_ROLE_ORGANIZATION) { return }
+
+  const { relationId, newRole, resolve } = action.payload
   try {
     const asyncData = yield call(request, {
       url: `${api.organizations}/member/${relationId}`,
       method: 'put',
       data: {role: newRole}
     })
-    const member = readListAdapter(asyncData)
-    yield put(organizationMemberRoleChanged(relationId, member))
+    const member = asyncData.payload
+    yield put(OrganizationActions.organizationMemberRoleChanged(relationId, member))
     yield resolve()
   } catch (err) {
-    yield put(changeOrganizationMemberRoleFail())
+    yield put(OrganizationActions.changeOrganizationMemberRoleFail())
     errorHandler(err)
   }
 }
 
-export default function* rootOrganizationSaga (): IterableIterator<any> {
-  yield [
-    takeLatest(LOAD_ORGANIZATIONS, getOrganizations),
-    takeEvery(ADD_ORGANIZATION, addOrganization),
-    takeEvery(EDIT_ORGANIZATION, editOrganization),
-    takeEvery(DELETE_ORGANIZATION, deleteOrganization),
-    takeLatest(LOAD_ORGANIZATION_DETAIL, getOrganizationDetail as any),
-    takeLatest(LOAD_ORGANIZATIONS_MEMBERS, getOrganizationsMembers as any),
-    takeLatest(LOAD_ORGANIZATIONS_PROJECTS, getOrganizationsProjects as any),
-    takeLatest(LOAD_ORGANIZATIONS_TEAMS, getOrganizationsTeams as any),
-    takeEvery(ADD_TEAM, addTeam),
-    takeLatest(INVITE_MEMBER, inviteMember as any),
-    throttle(600, SEARCH_MEMBER, searchMember as any),
-    takeLatest(DELETE_ORGANIZATION_MEMBER, deleteOrganizationMember as any),
-    takeLatest(CHANGE_MEMBER_ROLE_ORGANIZATION, changeOrganizationMemberRole as any)
-  ]
+export function* getProjectAdmins (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.LOAD_PROJECT_ADMINS) { return }
+
+  const { projectId } = action.payload
+  try {
+    const asyncData = yield call(request, `${api.projects}/${projectId}/admins`)
+    const results = asyncData.payload
+    yield put(OrganizationActions.projectAdminLoaded(results))
+  } catch (err) {
+    yield put(OrganizationActions.loadProjectAdminFail())
+    errorHandler(err)
+  }
+}
+
+export function* getVizVisbility (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.GET_VIZ_VISBILITY) { return }
+
+  const { roleId, projectId, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.roles}/${roleId}/project/${projectId}/viz/visibility`
+    })
+    const results = asyncData.payload
+    resolve(results)
+  } catch (err) {
+    errorHandler(err)
+  }
+}
+
+export function* postVizVisbility (action: OrganizationActionType) {
+  if (action.type !== ActionTypes.POST_VIZ_VISBILITY) { return }
+
+  const { id, permission, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      url: `${api.roles}/${id}/viz/visibility`,
+      method: 'post',
+      data: permission
+    })
+    const result = asyncData.payload
+    yield resolve(result)
+  } catch (err) {
+    errorHandler(err)
+  }
+}
+
+
+export default function* rootOrganizationSaga () {
+  yield all([
+    takeLatest(ActionTypes.LOAD_ORGANIZATIONS, getOrganizations),
+    takeEvery(ActionTypes.ADD_ORGANIZATION, addOrganization),
+    takeEvery(ActionTypes.EDIT_ORGANIZATION, editOrganization),
+    takeEvery(ActionTypes.DELETE_ORGANIZATION, deleteOrganization),
+    takeLatest(ActionTypes.LOAD_ORGANIZATION_DETAIL, getOrganizationDetail),
+    takeLatest(ActionTypes.LOAD_ORGANIZATIONS_MEMBERS, getOrganizationsMembers),
+    takeLatest(ActionTypes.LOAD_ORGANIZATIONS_PROJECTS, getOrganizationsProjects),
+    takeLatest(ActionTypes.LOAD_ORGANIZATIONS_ROLE, getOrganizationsRole),
+    takeEvery(ActionTypes.ADD_ROLE, addRole),
+    takeEvery(ActionTypes.DELETE_ROLE, deleteRole),
+    takeEvery(ActionTypes.EDIT_ROLE, editRole),
+    takeEvery(ActionTypes.REL_ROLE_MEMBER, relRoleMember),
+    takeEvery(ActionTypes.GET_REL_ROLE_MEMBER, getRelRoleMember),
+    takeLatest(ActionTypes.LOAD_PROJECT_ADMINS, getProjectAdmins),
+    takeLatest(ActionTypes.INVITE_MEMBER, inviteMember),
+    takeLatest(ActionTypes.SEARCH_MEMBER, searchMember),
+    takeLatest(ActionTypes.DELETE_ORGANIZATION_MEMBER, deleteOrganizationMember),
+    takeLatest(ActionTypes.CHANGE_MEMBER_ROLE_ORGANIZATION, changeOrganizationMemberRole),
+    takeLatest(ActionTypes.GET_VIZ_VISBILITY, getVizVisbility),
+    takeLatest(ActionTypes.POST_VIZ_VISBILITY, postVizVisbility),
+    takeEvery(ActionTypes.GET_ROLELISTS_BY_MEMBERID, getRoleListByMemberId)
+  ])
 }

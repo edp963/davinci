@@ -1,7 +1,7 @@
 #  <<
 #  Davinci
 #  ==
-#  Copyright (C) 2016 - 2018 EDP
+#  Copyright (C) 2016 - 2019 EDP
 #  ==
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ server:
   protocol: http
   address: 127.0.0.1
   port: 8080
+
+  servlet:
+    context-path: /
 
   # Userd for mail and download services, can be empty, careful configuration
   # By default, 'server.address' and 'server.port' is used as the string value.
@@ -42,7 +45,12 @@ source:
   max-wait: 6000
   max-active: 10
   break-after-acquire-failure: true
-  connection-error-retry-attempts: 3
+  connection-error-retry-attempts: 0
+  query-timeout: 600000
+  validationQueryTimeout: 30000
+
+  enable-query-log: false
+  result-limit: 1000000
 
 
 spring:
@@ -53,8 +61,8 @@ spring:
   ## davinci datasouce config
   datasource:
     url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
-    username:
-    password:
+    username: root
+    password: root
     driver-class-name: com.mysql.jdbc.Driver
     initial-size: 2
     min-idle: 1
@@ -91,6 +99,7 @@ spring:
     host:
     port:
     username:
+    fromAddress:
     password:
     nickname:
 
@@ -105,4 +114,67 @@ spring:
           ssl:
             enable: false
 
-phantomjs_home: $your_phantomjs_path$/phantomjs
+  ldap:
+    urls:
+    username:
+    password:
+    base:
+    domainName:    # domainName 指 企业邮箱后缀，如企业邮箱为：xxx@example.com, 这里值为 '@example.com'
+
+  security:
+    oauth2:
+      enable: false
+#      client:
+#        registration:
+#          cas:
+#            provider: cas
+#            client-id: "xxxxx"
+#            client-name: "Sign in with XXX"
+#            client-secret: "xxxxx"
+#            authorization-grant-type: authorization_code
+#            client-authentication-method: post
+#            redirect-uri-template: "{baseUrl}/login/oauth2/code/{registrationId}"
+#            scope: userinfo
+#        provider:
+#          cas:
+#            authorization-uri: https://cas.xxxxx.cn/cas/oauth2.0/authorize
+#            token-uri: https://cas.xxxxx.cn/cas/oauth2.0/accessToken
+#            user-info-uri: https://cas.xxxxx.cn/cas/oauth2.0/profile
+#            user-name-attribute: id
+#            userMapping:
+#              email: "attributes.Email"
+#              name: "attributes.CnName1"
+#              avatar: "attributes.Avatar"
+
+screenshot:
+  default_browser: PHANTOMJS                    # PHANTOMJS or CHROME
+  timeout_second: 600
+  phantomjs_path: $your_phantomjs_path$
+  chromedriver_path: $your_chromedriver_path$
+  remote_webdriver_url:$your_remote_webdriver_url$
+
+data-auth-center:
+  channels:
+    - name:
+      base-url:
+      auth-code:
+
+statistic:
+  enable: false
+
+  # You can use external elasticsearch storage [127.0.0.1:9300]
+  elastic_urls:
+  elastic_user:
+  elastic_index_prefix:
+
+  # You can also use external mysql storage
+  mysql_url:
+  mysql_username:
+  mysql_password:
+
+  # You can also use external kafka
+  kafka.bootstrap.servers:
+  kafka.topic:
+  java.security.krb5.conf:
+  java.security.keytab:
+  java.security.principal:

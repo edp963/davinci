@@ -1,9 +1,7 @@
-import * as React from 'react'
+import React, { createRef } from 'react'
 
-const Input = require('antd/lib/input')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-import config, { env } from '../../globalConfig'
+import { Input, Row, Col} from 'antd'
+import config, { env } from 'app/globalConfig'
 // FIXME
 const apiHost = `${location.origin}${config[env].host}`
 const shareHost = `${location.origin}${config[env].shareHost}`
@@ -12,34 +10,36 @@ const styles = require('./SharePanel.less')
 
 interface IShareFormProps {
   type: string
-  shareInfo: string
+  shareToken: string
 }
 
 export class ShareForm extends React.PureComponent<IShareFormProps, {}> {
-  private shareLinkInput = null
 
-  private handleInputSelect = (inputRefName) => () => {
-    this[inputRefName].refs.input.select()
+  private shareLinkInput = createRef<Input>()
+
+  private handleInputSelect = () => {
+    this.shareLinkInput.current.input.select()
     document.execCommand('copy')
   }
 
   public render () {
     const {
       type,
-      shareInfo
+      shareToken
     } = this.props
 
     let linkValue = ''
 
+    // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
     switch (type) {
       case 'dashboard':
-        linkValue = `${shareHost}#share/dashboard?shareInfo=${encodeURI(shareInfo)}&type=dashboard`
+        linkValue = `${shareHost}?shareInfo=${encodeURI(shareToken)}&type=dashboard#share/dashboard`
         break
       case 'widget':
-        linkValue = `${shareHost}#share/dashboard?shareInfo=${encodeURI(shareInfo)}&type=widget`
+        linkValue = `${shareHost}?shareInfo=${encodeURI(shareToken)}&type=widget#share/dashboard`
         break
       case 'display':
-        linkValue = `${shareHost}#share/display?shareInfo=${encodeURI(shareInfo)}`
+        linkValue = `${shareHost}?shareInfo=${encodeURI(shareToken)}#share/display`
         break
       default:
         break
@@ -48,22 +48,19 @@ export class ShareForm extends React.PureComponent<IShareFormProps, {}> {
     return (
       <div>
         <Row className={styles.shareRow}>
-          <Col span={5}>
-            <span className={styles.shareText}>链接：</span>
-          </Col>
-          <Col span={19}>
+          <Col span={24}>
             <Input
               className={styles.shareInput}
               value={linkValue}
               addonAfter={
                 <span
                   style={{cursor: 'pointer'}}
-                  onClick={this.handleInputSelect('shareLinkInput')}
+                  onClick={this.handleInputSelect}
                 >
                   复制
                 </span>
               }
-              ref={(f) => this.shareLinkInput = f}
+              ref={this.shareLinkInput}
               readOnly
             />
           </Col>

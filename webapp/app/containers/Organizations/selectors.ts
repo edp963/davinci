@@ -19,48 +19,65 @@
  */
 
 import { createSelector } from 'reselect'
+import { IOrganizationState } from './types'
 
-const selectOrganization = (state) => state.get('organization')
+const selectOrganization = (state) => state.organization
 
 const makeSelectOrganizations = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('organizations')
+  (organizationState: IOrganizationState) => organizationState.organizations
 )
 
 const makeSelectInviteMemberList = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('inviteMemberLists')
+  (organizationState: IOrganizationState) => organizationState.inviteMemberLists
 )
 
 const makeSelectCurrentOrganizations = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('currentOrganization')
+  (organizationState: IOrganizationState) => organizationState.currentOrganization
 )
 
 const makeSelectCurrentOrganizationProjects = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('currentOrganizationProjects')
+  (organizationState: IOrganizationState) => organizationState.currentOrganizationProjects
 )
 
 const makeSelectCurrentOrganizationProjectsDetail = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('currentOrganizationProjectsDetail')
+  (organizationState: IOrganizationState) => organizationState.currentOrganizationProjectsDetail
 )
 
-const makeSelectCurrentOrganizationTeams = () => createSelector(
+const makeSelectCurrentOrganizationRole = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('currentOrganizationTeams')
+  (organizationState: IOrganizationState) => organizationState.currentOrganizationRole
 )
 
 const makeSelectCurrentOrganizationMembers = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('currentOrganizationMembers')
+  (organizationState: IOrganizationState) => organizationState.currentOrganizationMembers
 )
 
-const makeSelectTeamModalLoading = () => createSelector(
+const makeSelectRoleModalLoading = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('teamModalLoading')
+  (organizationState: IOrganizationState) => organizationState.roleModalLoading
 )
+
+const makeSelectCurrentOrganizationProject = () => createSelector(
+  selectOrganization,
+  (organizationState: IOrganizationState) => organizationState.projectDetail
+)
+
+const makeSelectCurrentOrganizationProjectAdmins = () => createSelector(
+  selectOrganization,
+  (organizationState: IOrganizationState) => organizationState.projectAdmins
+)
+
+const makeSelectCurrentOrganizationProjectRoles = () => createSelector(
+  selectOrganization,
+  (organizationState: IOrganizationState) => organizationState.projectRoles
+)
+
 
 export {
   selectOrganization,
@@ -68,8 +85,11 @@ export {
   makeSelectCurrentOrganizations,
   makeSelectCurrentOrganizationProjects,
   makeSelectCurrentOrganizationProjectsDetail,
-  makeSelectCurrentOrganizationTeams,
+  makeSelectCurrentOrganizationRole,
   makeSelectCurrentOrganizationMembers,
   makeSelectInviteMemberList,
-  makeSelectTeamModalLoading
+  makeSelectRoleModalLoading,
+  makeSelectCurrentOrganizationProject,
+  makeSelectCurrentOrganizationProjectAdmins,
+  makeSelectCurrentOrganizationProjectRoles
 }

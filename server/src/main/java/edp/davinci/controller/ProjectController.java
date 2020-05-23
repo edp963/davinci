@@ -1,33 +1,37 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.controller;
 
+import com.github.pagehelper.PageInfo;
 import edp.core.annotation.CurrentUser;
-import edp.core.enums.HttpCodeEnum;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.organizationDto.OrganizationTransfer;
-import edp.davinci.dto.projectDto.ProjectCreat;
-import edp.davinci.dto.projectDto.ProjectUpdate;
+import edp.davinci.dto.projectDto.*;
+import edp.davinci.dto.roleDto.RoleBaseInfo;
+import edp.davinci.dto.roleDto.RoleProject;
+import edp.davinci.dto.roleDto.RoleWithProjectPermission;
 import edp.davinci.model.User;
 import edp.davinci.service.ProjectService;
+import edp.davinci.service.RoleService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -42,6 +46,8 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.Arrays;
+import java.util.List;
 
 @Api(value = "/project", tags = "project", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "project not found"))
@@ -52,6 +58,9 @@ public class ProjectController extends BaseController {
 
     @Autowired
     private ProjectService projectService;
+
+    @Autowired
+    private RoleService roleService;
 
 
     /**
@@ -64,14 +73,39 @@ public class ProjectController extends BaseController {
     @ApiOperation(value = "get projects")
     @GetMapping
     public ResponseEntity getProjects(@ApiIgnore @CurrentUser User user, HttpServletRequest request) {
-        try {
-            ResultMap resultMap = projectService.getProjects(user, request);
+        List<ProjectInfo> projects = projectService.getProjects(user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(projects));
+    }
+
+
+    @ApiOperation(value = "get roles where proejct is located")
+    @GetMapping("/{id}/roles")
+    public ResponseEntity getRolesOfProject(@ApiIgnore @CurrentUser User user,
+                                            @PathVariable Long id,
+                                            HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
+
+        List<RoleBaseInfo> list = roleService.getRolesByProjectId(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(list));
+    }
+
+
+    @ApiOperation(value = "get roles where proejct is located")
+    @GetMapping("/{id}/roles/{roleId}")
+    public ResponseEntity getRoleOfProject(@ApiIgnore @CurrentUser User user,
+                                           @PathVariable Long id,
+                                           @PathVariable Long roleId,
+                                           HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        RoleWithProjectPermission permission = roleService.getRoleByProject(id, roleId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(permission));
     }
 
 
@@ -93,14 +127,23 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = projectService.getProjectInfo(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(projectService.getProjectInfo(id, user)));
+    }
+
+    /**
+     * 获取项目列表：用户创建和用户所在组可访问的
+     *
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get admins of project")
+    @GetMapping("/{id}/admins")
+    public ResponseEntity getAdmins(@PathVariable Long id,
+                                    @ApiIgnore @CurrentUser User user,
+                                    HttpServletRequest request) {
+        List<RelProjectAdminDto> admins = projectService.getAdmins(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(admins));
     }
 
 
@@ -112,14 +155,8 @@ public class ProjectController extends BaseController {
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
 
-        try {
-            ResultMap resultMap = projectService.searchProjects(keywords, user, pageNum, pageSize, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        PageInfo<ProjectWithCreateBy> pageInfo = projectService.searchProjects(keywords, user, pageNum, pageSize);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(pageInfo));
     }
 
     /**
@@ -142,14 +179,8 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = projectService.createProject(projectCreat, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        ProjectInfo project = projectService.createProject(projectCreat, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(project));
     }
 
     /**
@@ -180,14 +211,8 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = projectService.transferPeoject(id, organizationTransfer.getOrgId(), user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        projectService.transferPeoject(id, organizationTransfer.getOrgId(), user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
     /**
@@ -208,14 +233,8 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = projectService.deleteProject(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        projectService.deleteProject(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -246,14 +265,9 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = projectService.updateProject(id, projectUpdate, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        projectService.updateProject(id, projectUpdate, user);
+
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -275,14 +289,8 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = projectService.favoriteProject(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        projectService.favoriteProject(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -297,14 +305,8 @@ public class ProjectController extends BaseController {
     @GetMapping(value = "/favorites")
     public ResponseEntity getFavoriteProjects(@ApiIgnore @CurrentUser User user,
                                               HttpServletRequest request) {
-        try {
-            ResultMap resultMap = projectService.getFavoriteProjects(user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        List<ProjectInfo> favoriteProjects = projectService.getFavoriteProjects(user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(favoriteProjects));
     }
 
     /**
@@ -314,7 +316,7 @@ public class ProjectController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "get favorite projects")
+    @ApiOperation(value = "remove favorite projects")
     @DeleteMapping(value = "/remove/favorites")
     public ResponseEntity removeFavoriteProjects(@ApiIgnore @CurrentUser User user,
                                                  @RequestBody Long[] projectIds,
@@ -326,13 +328,91 @@ public class ProjectController extends BaseController {
             }
         }
 
-        try {
-            ResultMap resultMap = projectService.removeFavoriteProjects(user, projectIds, request);
+        projectService.removeFavoriteProjects(user, projectIds);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
+    }
+
+    /**
+     * 为project 添加管理员
+     *
+     * @param id
+     * @param adminIds
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "add an admin for a project")
+    @PostMapping(value = "/{id}/admins")
+    public ResponseEntity addProjectAdmin(@PathVariable Long id,
+                                          @RequestBody Long[] adminIds,
+                                          @ApiIgnore @CurrentUser User user,
+                                          HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
+
+        if (adminIds.length == 0) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid admin ids");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        List<RelProjectAdminDto> list = projectService.addAdmins(id, Arrays.asList(adminIds), user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(list));
+    }
+
+    /**
+     * 删除project admin
+     *
+     * @param id
+     * @param relationId
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "remove an admin from a project")
+    @DeleteMapping(value = "/{id}/admin/{relationId}")
+    public ResponseEntity removeProjectAdmin(@PathVariable Long id,
+                                             @PathVariable Long relationId,
+                                             @ApiIgnore @CurrentUser User user,
+                                             HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (invalidId(relationId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid admin id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        projectService.removeAdmin(relationId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
+    }
+
+
+    /**
+     * 批量添加role
+     *
+     * @param id
+     * @param roleIds
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "add project role relations")
+    @PostMapping(value = "/{id}/roles", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity addRoles(@PathVariable Long id,
+                                   @RequestBody Long[] roleIds,
+                                   @ApiIgnore @CurrentUser User user,
+                                   HttpServletRequest request) {
+
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        List<RoleProject> list = projectService.postRoles(id, Arrays.asList(roleIds), user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(list));
     }
 }

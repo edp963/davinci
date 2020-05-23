@@ -18,36 +18,30 @@
  * >>
  */
 
-import 'babel-polyfill'
+import '@babel/polyfill'
+import 'url-search-params-polyfill'
 
-import * as React from 'react'
-import * as ReactDOM from 'react-dom'
+import React from 'react'
+import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
-import { applyRouterMiddleware, Router, hashHistory } from 'react-router'
-import { syncHistoryWithStore } from 'react-router-redux'
-import { useScroll } from 'react-router-scroll'
+import { ConnectedRouter } from 'connected-react-router'
+import history from 'utils/history'
 
-import App from './containers/App/index'
+import App from 'share/containers/App'
 
-import { makeSelectLocationState } from '../app/containers/App/selectors'
-
-import LanguageProvider from '../app/containers/LanguageProvider'
+import { ConfigProvider } from 'antd'
+import zh_CN from 'antd/es/locale/zh_CN'
+import LanguageProvider from 'app/containers/LanguageProvider'
+import { translationMessages } from 'app/i18n'
+import moment from 'moment'
+import 'moment/src/locale/zh-cn'
+moment.locale('zh-cn')
 
 import '!file-loader?name=[name].[ext]!../app/favicon.ico'
-import '!file-loader?name=[name].[ext]!../app/manifest.json'
 import 'file-loader?name=[name].[ext]!../app/.htaccess'
-
-import configureStore from './store'
-
-import { translationMessages } from '../app/i18n'
-
-import createRoutes from './routes'
-
-import 'antd/dist/antd.less'
-import '../libs/react-grid-layout/css/styles.css'
-import '../libs/react-resizable/css/styles.css'
+import 'react-grid-layout/css/styles.css'
+import 'libs/react-resizable/css/styles.css'
 import 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'
-import 'react-quill/dist/quill.snow.css'
 import '../app/assets/fonts/iconfont.css'
 import '../app/assets/override/antd.css'
 import '../app/assets/override/react-grid.css'
@@ -55,12 +49,16 @@ import '../app/assets/override/datepicker.css'
 import '../app/assets/less/style.less'
 
 import * as echarts from 'echarts/lib/echarts'
+import 'zrender/lib/svg/svg'
 import 'echarts/lib/chart/bar'
 import 'echarts/lib/chart/line'
 import 'echarts/lib/chart/scatter'
 import 'echarts/lib/chart/pie'
 import 'echarts/lib/chart/sankey'
 import 'echarts/lib/chart/funnel'
+import 'echarts/lib/chart/map'
+import 'echarts/lib/chart/lines'
+import 'echarts/lib/chart/effectScatter'
 import 'echarts/lib/chart/treemap'
 import 'echarts/lib/chart/heatmap'
 import 'echarts/lib/chart/boxplot'
@@ -77,53 +75,38 @@ import 'echarts/lib/component/toolbox'
 import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/visualMap'
 import 'echarts/lib/component/geo'
-import '../app/containers/Widget/charts/mapFile/china'
+import 'echarts/lib/component/brush'
+import 'echarts/lib/component/markLine'
+import 'echarts/lib/component/markArea'
+import '../app/assets/js/china.js'
 
-import { DEFAULT_ECHARTS_THEME } from '../app/globalConstants'
+import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
 echarts.registerTheme('default', DEFAULT_ECHARTS_THEME)
 
+import configureStore from 'app/configureStore'
+
 const initialState = {}
-const store = configureStore(initialState, hashHistory)
-
-const history = syncHistoryWithStore(hashHistory, store, {
-  selectLocationState: makeSelectLocationState()
-})
-
-const rootRoute = {
-  path: '/',
-  component: App,
-  childRoutes: createRoutes(store),
-  indexRoute: {
-    onEnter: (_, replace) => {
-      replace('/share')
-    }
-  }
-}
+const store = configureStore(initialState, history)
+const MOUNT_NODE = document.getElementById('app')
 
 const render = (messages) => {
   ReactDOM.render(
     <Provider store={store}>
       <LanguageProvider messages={messages}>
-        <Router
-          history={history}
-          routes={rootRoute}
-          render={
-            // Scroll to top when going to a new page, imitating default browser
-            // behaviour
-            applyRouterMiddleware(useScroll())
-          }
-        />
+        <ConfigProvider locale={zh_CN}>
+          <ConnectedRouter history={history}>
+            <App />
+          </ConnectedRouter>
+        </ConfigProvider>
       </LanguageProvider>
     </Provider>,
-    document.getElementById('app')
+    MOUNT_NODE
   )
 }
 
-// Hot reloadable translation json files
 if (module.hot) {
-  // modules.hot.accept does not accept dynamic dependencies,
-  // have to be constants at compile-time
-  module.hot.accept('../app/i18n', () => {
+  module.hot.accept(['../app/i18n', 'share/containers/App'], () => {
+    ReactDOM.unmountComponentAtNode(MOUNT_NODE)
     render(translationMessages)
   })
 }
@@ -134,15 +117,11 @@ interface IWindow extends Window {
 }
 declare const window: IWindow
 
-// Chunked polyfill for browsers without Intl support
 if (!window.Intl) {
-  (new Promise((resolve) => {
+  new Promise((resolve) => {
     resolve(import('intl'))
-  }))
-    .then(() => Promise.all([
-      import('intl/locale-data/jsonp/en.js'),
-      import('intl/locale-data/jsonp/de.js')
-    ]))
+  })
+    .then(() => Promise.all([import('intl/locale-data/jsonp/en.js')]))
     .then(() => render(translationMessages))
     .catch((err) => {
       throw err
@@ -160,8 +139,3 @@ if (process.env.NODE_ENV === 'production') {
     window.__REACT_DEVTOOLS_GLOBAL_HOOK__.inject = () => void 0
   }
 }
-
-// if (process.env.NODE_ENV !== 'production') {
-//   const { whyDidYouUpdate } = require('why-did-you-update')
-//   whyDidYouUpdate(React)
-// }

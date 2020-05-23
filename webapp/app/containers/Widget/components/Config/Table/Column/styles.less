@@ -1,0 +1,143 @@
+@import '~assets/less/variable';
+
+.columnStyleConfig {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid @border-color-base;
+  padding: 8px;
+  max-height: 500px;
+
+  .title {
+    display: flex;
+    flex-direction: row;
+    border-width: 1px 0;
+    border-style: solid;
+    border-color: @border-color-base;
+    margin-top: -1px;
+    padding: 8px;
+  }
+
+  h2 {
+    flex: 1;
+    font-size: 12px;
+    padding-right: 8px;
+  }
+
+  i {
+    font-size: 12px;
+  }
+
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 16px;
+  }
+
+  .left {
+    width: 300px;
+    border: 1px solid @border-color-base;
+    display: flex;
+    flex-direction: column;
+
+    .list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+
+      ul {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      li {
+        .ellipsis;
+
+        line-height: 24px;
+        padding: 0 8px;
+        box-sizing: border-box;
+        border-bottom: 1px solid @border-color-base;
+        cursor: pointer;
+
+        label {
+          padding-left: 8px;
+          cursor: pointer;
+        }
+
+        &:hover {
+          background-color: lighten(@primary-color, 30%);
+        }
+
+        &.selected {
+          background-color: lighten(@primary-color, 30%);
+        }
+      }
+    }
+  }
+
+  .right {
+    border: 1px solid @border-color-base;
+    border-left: none;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .config {
+      padding: 16px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .table {
+      padding: 8px;
+      overflow: auto;
+    }
+
+    .colorPickerWrapper {
+      width: 36px;
+      height: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    :global {
+      .ant-form-item {
+        margin-bottom: 4px;
+      }
+      .ant-form-item-label {
+        line-height: 1em;
+
+        label {
+          color: @disabled-text-color;
+          font-size: 12px;
+          font-weight: bold;
+        }
+      }
+      .ant-form-item-required:before {
+        margin-right: 2px;
+        vertical-align: middle;
+      }
+      .ant-form-item-control {
+        line-height: 32px;
+      }
+    }
+  }
+}
+
+.btns {
+  button + button {
+    margin-left: 8px;
+  }
+}
+
+.colColor {
+  display: flex;
+  flex-direction: row;
+  line-height: 28px;
+
+  label {
+    padding-left: 8px;
+  }
+}

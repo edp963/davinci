@@ -1,12 +1,10 @@
 import {SIGNUP, SEND_MAIL_AGAIN} from './constants'
 import { signupSuccess, signupError, sendMailAgainSuccess, sendMailAgainFail } from './actions'
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { readListAdapter } from '../../utils/asyncAdapter'
-import { errorHandler } from '../../utils/util'
+import request from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
 
-import {call, put} from 'redux-saga/effects'
-import {takeLatest} from 'redux-saga'
+import { call, put, all, takeLatest } from 'redux-saga/effects'
 
 export function* signup (action): IterableIterator<any> {
   const {username, email, password, resolve} = action.payload
@@ -20,7 +18,7 @@ export function* signup (action): IterableIterator<any> {
         password
       }
     })
-    const resPayload = readListAdapter(asyncData)
+    const resPayload = asyncData.payload
     yield put(signupSuccess())
     resolve(resPayload)
   } catch (err) {
@@ -50,8 +48,8 @@ export function* sendMailAgain (action): IterableIterator<any> {
 
 
 export default function* rootGroupSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(SIGNUP, signup as any),
     takeLatest(SEND_MAIL_AGAIN, sendMailAgain as any)
-  ]
+  ])
 }

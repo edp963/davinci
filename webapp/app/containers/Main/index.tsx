@@ -18,120 +18,177 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
+import { Route, Switch, Redirect } from 'react-router-dom'
+import AuthorizedRoute from './AuthorizedRoute'
+import { RouteComponentWithParams } from 'utils/types'
 import { createStructuredSelector } from 'reselect'
 
-import Navigator from '../../components/Navigator'
+import Navigator from 'components/Navigator'
 
-import { logged, logout, setLoginUser, getLoginUser } from '../App/actions'
+import { logged, logout, getLoginUser, loadDownloadList, externalAuthlogout } from '../App/actions'
 import { makeSelectLogged, makeSelectNavigator } from '../App/selectors'
-import { promiseDispatcher } from '../../utils/reduxPromisation'
-import checkLogin from '../../utils/checkLogin'
-import { setToken } from '../../utils/request'
+import { DOWNLOAD_LIST_POLLING_FREQUENCY } from 'app/globalConstants'
+
+import { Project, ProjectList } from 'containers/Projects/Loadable'
+
+import { Sidebar } from './Loadable'
+import Viz from 'containers/Viz/Loadable'
+import { Widget, Workbench } from 'containers/Widget/Loadable'
+import { View, ViewEditor } from 'containers/View/Loadable'
+import { Source } from 'containers/Source/Loadable'
+import { Schedule, ScheduleEditor } from 'containers/Schedule/Loadable'
+
+import { Dashboard } from 'containers/Dashboard/Loadable'
+
+import { Account } from 'containers/Account/Loadable'
+import { Profile, UserProfile } from 'containers/Profile/Loadable'
+import { ResetPassword } from 'containers/ResetPassword/Loadable'
+import {
+  OrganizationList,
+  Organization
+} from 'containers/Organizations/Loadable'
+import { NoAuthorization } from 'containers/NoAuthorization/Loadable'
 
 const styles = require('./Main.less')
 
 interface IMainProps {
-  params: {pid?: number}
-  children: React.ReactNode
-  router: any
   logged: boolean
   navigator: boolean
-  onLogged: () => any
-  onLogout: () => any
-  onSetLoginUser: (user: object) => any
+  onLogged: (user) => void
+  onLogout: () => void
+  onExternalAuthLogout: () => void
   onGetLoginUser: (resolve: () => void) => any
+  onLoadDownloadList: () => void
 }
 
-export class Main extends React.Component<IMainProps, {}> {
-  public componentWillMount () {
-    this.checkTokenLink()
+export class Main extends React.Component<
+  IMainProps & RouteComponentWithParams,
+  {}
+> {
+  private downloadListPollingTimer: number
+
+  constructor(props: IMainProps & RouteComponentWithParams) {
+    super(props)
+    this.initPolling()
   }
 
-  private checkTokenLink = () => {
-    const {
-      router,
-      onGetLoginUser
-    } = this.props
-
-    const qs = this.getQs()
-    const token = qs['token']
-    const dashboard = qs['dashboard']
-
-    if (token) {
-      setToken(token)
-      localStorage.setItem('TOKEN', token)
-      localStorage.setItem('TOKEN_EXPIRE', `${new Date().getTime() + 3600000}`)
-      onGetLoginUser(() => {
-        if (dashboard) {
-          //router.replace(`/report/dashboard/${dashboard}`)
-          router.replace(`/project/${this.props.params.pid}/dashboard/${dashboard}`)
-        } else {
-          //router.replace('/report')
-          router.replace('/projects')
-        }
-      })
-    } else {
-      this.checkNormalLogin()
+  public componentWillUnmount() {
+    if (this.downloadListPollingTimer) {
+      clearInterval(this.downloadListPollingTimer)
     }
   }
 
-  private getQs = () => {
-    const search = location.search
-    const qs = search ? search.substr(1) : ''
-    if (qs) {
-      return qs
-        .split('&')
-        .reduce((rdc, val) => {
-          const pair = val.split('=')
-          rdc[pair[0]] = pair[1]
-          return rdc
-        }, {})
-    } else {
-      return false
-    }
-  }
-
-  private checkNormalLogin = () => {
-    if (checkLogin()) {
-      const token = localStorage.getItem('TOKEN')
-      const loginUser = localStorage.getItem('loginUser')
-      setToken(token)
-      this.props.onLogged()
-      this.props.onSetLoginUser(JSON.parse(loginUser))
-    } else {
-      this.props.router.replace('/login')
-    }
+  private initPolling = () => {
+    this.props.onLoadDownloadList()
+    this.downloadListPollingTimer = window.setInterval(() => {
+      this.props.onLoadDownloadList()
+    }, DOWNLOAD_LIST_POLLING_FREQUENCY)
   }
 
   private logout = () => {
-    const {
-      router,
-      onLogout
-    } = this.props
+    const { history, onLogout , onExternalAuthLogout } = this.props
     onLogout()
-    localStorage.removeItem('TOKEN')
-    localStorage.removeItem('TOKEN_EXPIRE')
-    router.replace('/login')
+    onExternalAuthLogout()
+    history.replace('/login')
   }
 
-  public render () {
-    const { logged, navigator, children } = this.props
+  private renderAccount = () => (
+    <Account>
+      <Switch>
+        <Redirect from="/account" exact to="/account/profile" />
+        <Route path="/account/profile" component={Profile} />
+        <Route path="/account/profile/:userId" component={UserProfile} />
+        <Route path="/account/resetPassword" component={ResetPassword} />
+        <Route path="/account/organizations" component={OrganizationList} />
+        <Route
+          path="/account/organization/:organizationId"
+          component={Organization}
+        />
+      </Switch>
+    </Account>
+  )
 
-    return logged
-      ? (
-        <div className={styles.container}>
-          <Navigator
-            show={navigator}
-            onLogout={this.logout}
-          />
-          {children}
-        </div>
-      )
-      : (
-        <div />
-      )
+  public render() {
+    const { logged, navigator } = this.props
+
+    return logged ? (
+      <div className={styles.container}>
+        <Navigator show={navigator} onLogout={this.logout} />
+        <Switch>
+          <Route path="/project(s?)">
+            <Switch>
+              <Route path="/projects" exact component={ProjectList} />
+              <Route path="/project/:projectId">
+                <Project>
+                  <Switch>
+                    <Route
+                      path="/project/:projectId/portal/:portalId"
+                      component={Dashboard}
+                    />
+                    <Route
+                      path="/project/:projectId/display/:displayId"
+                      component={Viz}
+                    />
+                    <Route
+                      exact
+                      path="/project/:projectId/widget/:widgetId?"
+                      component={Workbench}
+                    />
+                    <Route
+                      exact
+                      path="/project/:projectId/view/:viewId?"
+                      component={ViewEditor}
+                    />
+                    <Route
+                      exact
+                      path="/project/:projectId/schedule/:scheduleId?"
+                      component={ScheduleEditor}
+                    />
+                    <Sidebar>
+                      <Switch>
+                        <AuthorizedRoute
+                          permission="vizPermission"
+                          path="/project/:projectId/vizs"
+                          component={Viz}
+                        />
+                        <AuthorizedRoute
+                          permission="widgetPermission"
+                          path="/project/:projectId/widgets"
+                          component={Widget}
+                        />
+                        <AuthorizedRoute
+                          exact
+                          permission="viewPermission"
+                          path="/project/:projectId/views"
+                          component={View}
+                        />
+                        <AuthorizedRoute
+                          permission="sourcePermission"
+                          path="/project/:projectId/sources"
+                          component={Source}
+                        />
+                        <AuthorizedRoute
+                          permission="schedulePermission"
+                          path="/project/:projectId/schedules"
+                          component={Schedule}
+                        />
+                      </Switch>
+                    </Sidebar>
+                  </Switch>
+                </Project>
+              </Route>
+            </Switch>
+          </Route>
+          <Route path="/account" render={this.renderAccount} />
+          <Route path="/noAuthorization" component={NoAuthorization} />
+          <Redirect to="/projects" />
+        </Switch>
+      </div>
+    ) : (
+      <div />
+    )
   }
 }
 
@@ -140,13 +197,17 @@ const mapStateToProps = createStructuredSelector({
   navigator: makeSelectNavigator()
 })
 
-export function mapDispatchToProps (dispatch) {
+export function mapDispatchToProps(dispatch) {
   return {
-    onLogged: () => promiseDispatcher(dispatch, logged),
-    onLogout: () => promiseDispatcher(dispatch, logout),
-    onSetLoginUser: (user) => promiseDispatcher(dispatch, setLoginUser, user),
-    onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve))
+    onLogged: (user) => dispatch(logged(user)),
+    onLogout: () => dispatch(logout()),
+    onExternalAuthLogout: () => dispatch(externalAuthlogout()),
+    onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve)),
+    onLoadDownloadList: () => dispatch(loadDownloadList())
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Main)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Main)

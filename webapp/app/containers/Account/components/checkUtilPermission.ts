@@ -18,6 +18,8 @@
  * >>
  */
 
+import { IProjectPermission } from 'app/containers/Projects/types'
+
 export function initializePermission (currentProject, permissionItem) {
   let isShow
   if (currentProject && currentProject.permission) {
@@ -29,8 +31,22 @@ export function initializePermission (currentProject, permissionItem) {
   return isShow
 }
 
+export function hasOnlyVizPermission (permission: IProjectPermission) {
+  const {
+    vizPermission,
+    widgetPermission,
+    viewPermission,
+    sourcePermission,
+    schedulePermission
+  } = permission
+  return !widgetPermission
+    && !viewPermission
+    && !sourcePermission
+    && !schedulePermission
+    && vizPermission
+}
 
-
-
-
-
+export function hasVizEditPermission (permission: IProjectPermission) {
+  const { vizPermission } = permission
+  return vizPermission > 1
+}

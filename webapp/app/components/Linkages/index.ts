@@ -1,5 +1,9 @@
-import { DEFAULT_SPLITER, SQL_NUMBER_TYPES } from '../../globalConstants'
+import { QueryVariable } from 'containers/Dashboard/types'
+import { DEFAULT_SPLITER, SQL_NUMBER_TYPES } from 'app/globalConstants'
 import OperatorType from 'utils/operatorTypes'
+import { IFilters } from 'app/components/Control/types'
+import {getValidColumnValue} from 'app/components/Control/util'
+export type LinkageType = 'column' | 'variable'
 
 export interface ILinkage {
   key: string
@@ -12,10 +16,10 @@ export interface IMappingLinkage {
   [linkagerId: number]: Array<{
     triggerKey: string
     triggerSqlType: string
-    triggerType: 'parameter' | 'variable'
+    triggerType: LinkageType
     linkagerKey: string
     linkagerSqlType: string
-    linkagerType: 'parameter' | 'variable'
+    linkagerType: LinkageType
     relation: OperatorType
   }>
 }
@@ -41,10 +45,10 @@ export function getMappingLinkage (itemId: number, linkages: ILinkage[]) {
         mappingLinkage[linkagerItemId].push({
           triggerKey,
           triggerSqlType,
-          triggerType: triggerType as 'parameter' | 'variable',
+          triggerType: triggerType as LinkageType,
           linkagerKey,
           linkagerSqlType,
-          linkagerType: linkagerType as 'parameter' | 'variable',
+          linkagerType: linkagerType as LinkageType,
           relation
         })
       }
@@ -54,41 +58,50 @@ export function getMappingLinkage (itemId: number, linkages: ILinkage[]) {
 }
 
 export function processLinkage (itemId: number, triggerData, mappingLinkage: IMappingLinkage, interactingLinkage) {
-
   Object.keys(mappingLinkage).forEach((linkagerItemId) => {
     const linkage = mappingLinkage[+linkagerItemId]
 
-    const linkageFilters: string[] = []
-    const linkageParams: Array<{ name: string, value: string }> = []
-
+    const linkageFilters: IFilters[] = []
+    const linkageVariables: QueryVariable = []
     linkage.forEach((l) => {
       const { triggerKey, triggerSqlType, triggerType, linkagerKey, linkagerSqlType, linkagerType, relation } = l
+      const actuallyData = Array.isArray(triggerData) ? triggerData[0][triggerKey] : triggerData[triggerKey]
+      const interactValue = SQL_NUMBER_TYPES.includes(triggerSqlType)
+        ? actuallyData
+        : `'${actuallyData}'`
 
-      const interactValue = SQL_NUMBER_TYPES.indexOf(triggerSqlType) >= 0 ?
-        triggerData[0][triggerKey] : `'${triggerData[0][triggerKey]}'`
+      if (linkagerType === 'column') {
+        const validLinkagerKey = SQL_NUMBER_TYPES.includes(linkagerSqlType)
+          ? linkagerKey.replace(/\w+\((\w+)\)/, '$1')
+          : linkagerKey
 
-      if (linkagerType === 'parameter') {
-        linkageFilters.push(`${linkagerKey} ${relation} ${interactValue}`)
+        const filterJson: IFilters = {
+          name : validLinkagerKey,
+          type: 'filter',
+          value: interactValue,
+          sqlType: linkagerSqlType,
+          operator: relation
+        }
+        linkageFilters.push(filterJson)
+       // linkageFilters.push(`${validLinkagerKey} ${relation} ${interactValue}`)   // 联动filter生成在此处
       } else if (linkagerType === 'variable') {
-        linkageParams.push({ name: linkagerKey, value: interactValue })
+        linkageVariables.push({ name: linkagerKey, value: interactValue })
       }
     })
 
+    const existedQueryConditions = interactingLinkage[linkagerItemId]
 
-    const existedQueryParams = interactingLinkage[linkagerItemId]
-
-    if (existedQueryParams) {
-      const { filters, params } = existedQueryParams
-      existedQueryParams.filters = linkageFilters.length > 0 ? { ...filters, [itemId]: linkageFilters } : filters
-      existedQueryParams.params = linkageParams.length > 0 ? { ...params, [itemId]: linkageParams } : params
+    if (existedQueryConditions) {
+      const { filters, variables } = existedQueryConditions
+      existedQueryConditions.filters = linkageFilters.length > 0 ? { ...filters, [itemId]: linkageFilters } : filters
+      existedQueryConditions.variables = linkageVariables.length > 0 ? { ...variables, [itemId]: linkageVariables } : variables
     } else {
       interactingLinkage[linkagerItemId] = {
         filters: linkageFilters.length > 0 ? { [itemId]: linkageFilters } : {},
-        params: linkageParams.length > 0 ? { [itemId]: linkageFilters } : {}
+        variables: linkageVariables.length > 0 ? { [itemId]: linkageVariables } : {}
       }
     }
   })
-
   return interactingLinkage
 }
 
@@ -104,7 +117,7 @@ export function removeLinkage (itemId: number, linkages: ILinkage[], interacting
 
     if (itemId === triggerItemId) {
       if (interactingLinkage[linkagerItemId]) {
-        ['filters', 'params'].forEach((key) => {
+        ['filters', 'variables'].forEach((key) => {
           if (interactingLinkage[linkagerItemId][key][itemId]) {
             delete interactingLinkage[linkagerItemId][key][itemId]
             if (refreshItemIds.indexOf(linkagerItemId) < 0) {

@@ -1,0 +1,261 @@
+@import "~assets/less/variable";
+
+.viewEditor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  .header {
+    height: 64px;
+    line-height: 64px;
+    background-color: @light-bg;
+    border-bottom: 1px solid @border-color-base;
+  }
+
+  .steps {
+    width: 33.33%;
+    margin: auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .containerVertical {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .containerHorizontal {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .sider {
+    border-right: 1px solid @border-color-base;
+    display: flex;
+    flex-direction: column;
+
+    & > div {
+      flex: 1;
+      display: flex;
+    }
+
+    :global(.react-resizable-handle) {
+      position: absolute;
+      width: 16px;
+      height: 100%;
+      padding: 0;
+      bottom: 0;
+      right: -8px;
+      cursor: col-resize;
+      background: none;
+    }
+  }
+
+  .right {
+    border-bottom: 1px solid @border-color-base;
+    margin-bottom: -1px;
+    box-sizing: content-box;
+    user-select: none;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+
+    :global(.react-resizable-handle) {
+      position: absolute;
+      height: 16px;
+      width: 100%;
+      padding: 0;
+      bottom: 0;
+      cursor: row-resize;
+      background: none;
+    }
+  }
+
+  .sqlEditor {
+    flex: 1;
+    padding: 16px;
+    border-right: 1px solid @border-color-base;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  .preview {
+    padding: 0 16px;
+    overflow: hidden;
+  }
+
+  .authTab {
+    position: relative;
+    margin-left: 16px;
+    .containerHorizontal
+  }
+
+  .authTable {
+    position: absolute;
+    overflow-y: auto;
+    top: 52px;
+    left: 0;
+    right: 0;
+    bottom: 8px;
+    padding-right: 16px;
+    background: #f7f7f7;
+  }
+
+  .bottom {
+    border: 1px solid @border-color-base;
+    border-left: none;
+    padding: 16px;
+
+    .previewInput span {
+      display: inline-block;
+      padding: 0 8px;
+    }
+
+    :global(.ant-input) {
+      width: 72px;
+    }
+
+    .toolBtns {
+      text-align: right;
+
+      button {
+        margin-left: 16px;
+      }
+    }
+  }
+}
+
+.sourceTable {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  :global(.ant-row) {
+    padding: 16px 16px 0 16px;
+  }
+
+  div[class*='col-'] {
+    margin-bottom: 16px;
+  }
+
+  .tree {
+    flex: 1;
+    padding: 0 16px;
+    margin-bottom: 16px;
+    position: relative;
+
+    > ul {
+      overflow: auto;
+      user-select: none;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 16px;
+      right: 16px;
+    }
+  }
+}
+
+.viewVariable {
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+
+  .viewVariableHeader {
+    display: flex;
+    flex-direction: row;
+    padding: 0 16px;
+    line-height: 1;
+
+    h4 {
+      flex: 1;
+    }
+  }
+
+  :global {
+    .ant-spin-nested-loading {
+      flex: 1;
+    }
+
+    .ant-list-item-action {
+      margin-left: 8px;
+      display: none;
+
+      li {
+        padding: 0 4px;
+      }
+    }
+
+    .ant-list-item:hover .ant-list-item-action {
+      display: block;
+    }
+
+    .ant-list-item-action {
+      margin-left: 0;
+      margin-right: 12px;
+    }
+
+    .ant-tag {
+      width: 55px;
+      text-align: center;
+      margin-left: 16px;
+    }
+  }
+
+  .variableItem {
+    flex: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding-right: 16px;
+  }
+}
+
+.sqlPreview {
+  background: #f7f7f7;
+  padding-top: 1px;
+
+  :global {
+    .ant-table-tbody > tr > td {
+      word-break: break-all;
+    }
+  }
+}
+
+.modelAuth {
+  .cellIcon {
+    margin-left: 8px;
+  }
+  .tableControl {
+    width: 160px;
+  }
+  .cellVarValue {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+  .cellVarCheckbox {
+    margin-right: 8px;
+    margin-bottom: 4px;
+  }
+  .cellVarInput {
+    flex: 1;
+  }
+}
+
+.errorMessage {
+  max-width: 640px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.shortcuts {
+  width: 300px;
+}

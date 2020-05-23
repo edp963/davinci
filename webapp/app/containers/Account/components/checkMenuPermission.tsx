@@ -1,6 +1,6 @@
-import * as React from 'react'
-import {IOrganization} from '../../Organizations/Organization'
-import {IProject} from '../../Projects'
+import React from 'react'
+import { IOrganization } from 'containers/Organizations/types'
+import { IProject } from 'containers/Projects/types'
 
 interface IModulePermissionProps {
   size?: string
@@ -9,9 +9,9 @@ interface IModulePermissionProps {
   onClick?: any
   className?: string
   permission?: IOrganization
-  route?: any[]
+  indexRoute?: string
   active?: any
-  params?: any
+  projectId?: string
 }
 
 export default (project?: IProject, item?: any) => (WrapperComponent) => {
@@ -57,8 +57,3 @@ export default (project?: IProject, item?: any) => (WrapperComponent) => {
   }
   return MenuPermission
 }
-
-
-
-
-

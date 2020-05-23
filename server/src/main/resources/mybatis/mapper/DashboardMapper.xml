@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-  <<
-  Davinci
-  ==
-  Copyright (C) 2016 - 2018 EDP
-  ==
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-        http://www.apache.org/licenses/LICENSE-2.0
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-  >>
+  ~ <<
+  ~  Davinci
+  ~  ==
+  ~  Copyright (C) 2016 - 2019 EDP
+  ~  ==
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  ~  >>
+  ~
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
@@ -27,11 +28,14 @@
         insert into dashboard
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `name`,
-            dashboard_portal_id,
+            `dashboard_portal_id`,
             `type`,
             `index`,
-            parent_id,
-            `config`
+            `parent_id`,
+            `config`,
+            `full_parent_id`,
+            `create_by`,
+            `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{name,jdbcType=VARCHAR},
@@ -39,26 +43,84 @@
             #{type,jdbcType=SMALLINT},
             #{index,jdbcType=INTEGER},
             #{parentId,jdbcType=BIGINT},
-            #{config,jdbcType=LONGVARCHAR}
+            #{config,jdbcType=LONGVARCHAR},
+            #{fullParentId,jdbcType=VARCHAR},
+            #{createBy,jdbcType=BIGINT},
+            #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
 
 
     <update id="updateBatch" parameterType="java.util.List">
-
         <foreach collection="list" item="item" index="index" open="" close="" separator=";">
             update dashboard
             <set>
                 `name` = #{item.name,jdbcType=VARCHAR},
-                dashboard_portal_id = #{item.dashboardPortalId,jdbcType=BIGINT},
+                `dashboard_portal_id` = #{item.dashboardPortalId,jdbcType=BIGINT},
                 `type` = #{item.type,jdbcType=SMALLINT},
                 `index` = #{item.index,jdbcType=INTEGER},
-                parent_id = #{item.parentId,jdbcType=BIGINT},
-                config = #{item.config,jdbcType=LONGVARCHAR}
+                `parent_id` = #{item.parentId,jdbcType=BIGINT},
+                `full_parent_id` = #{item.fullParentId,jdbcType=BIGINT},
+                `config` = #{item.config,jdbcType=LONGVARCHAR},
+                `update_by` = #{item.updateBy,jdbcType=BIGINT},
+                `update_time` = #{item.updateTime,jdbcType=TIMESTAMP}
             </set>
             <where>
                 id=#{item.id,jdbcType=BIGINT}
             </where>
         </foreach>
     </update>
+
+
+    <select id="queryByParentIds" resultType="edp.davinci.model.Dashboard" parameterType="java.util.Set">
+        select `id`, `full_parent_Id` from dashboard
+        <if test="parentIds != null and parentIds.size > 0">
+            where `id` in
+            <foreach collection="parentIds" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="parentIds == null or parentIds.size == 0">
+            where 1=0
+        </if>
+    </select>
+
+    <select id="getIdSetByIds" resultType="java.lang.Long" parameterType="java.util.Set">
+        select `id` from dashboard
+        <if test="set != null and set.size > 0">
+            where `id` in
+            <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="set == null or set.size == 0">
+            where 1=0
+        </if>
+    </select>
+
+
+    <select id="queryDashboardsByIds" parameterType="java.util.Set" resultType="edp.davinci.model.Dashboard">
+        select * from dashboard where
+        <if test="set != null and set.size > 0">
+            <foreach collection="set" index="index" item="item" open="(" close=")" separator="OR">
+                FIND_IN_SET(#{item},full_parent_Id) OR id = #{item}
+            </foreach>
+        </if>
+        <if test="set == null or set.size == 0">
+             1=0
+        </if>
+    </select>
+
+    <select id="queryByPortals" resultType="edp.davinci.model.Dashboard">
+        select * from dashboard where
+        <if test="set != null and set.size > 0">
+            `dashboard_portal_id` in
+            <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="set == null or set.size == 0">
+            1=0
+        </if>
+    </select>
 </mapper>

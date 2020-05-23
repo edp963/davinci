@@ -1,4 +1,4 @@
-@import "../../../node_modules/antd/lib/style/themes/default";
+@import "~antd/lib/style/themes/default";
 
 @blue                               : #1B98E0;
 @white                              : #fff;
@@ -6,7 +6,6 @@
 @light-green                        : #8BC34A;
 @logo-deep                          : #223151;
 @rich-text                          : #444444;
-@description-text                   : #6c757d;
 @codemirror-placeholder             : #b9b9b9;
 
 @body-bg                            : #EAEDF1;
@@ -36,9 +35,55 @@
 }
 
 .hideScrollbar {
-  overflow: -moz-scrollbars-none;
-  -ms-overflow-style: none;
-  &::-webkit-scrollbar { 
-    display: none; 
+  overflow: -moz-scrollbars-none !important;
+  -ms-overflow-style: none !important;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.antFormItemLabelSmall {
+  :global {
+    .ant-form-item {
+      margin-bottom: 4px;
+    }
+    .ant-form-item-label {
+      line-height: 1em;
+  
+      label {
+        color: @disabled-text-color;
+        font-size: 12px;
+        font-weight: bold;
+      }
+    }
+    .ant-form-item-required:before {
+      margin-right: 2px;
+      vertical-align: middle;
+    }
+  }
+}
+
+.antFormItemStyleWithoutForm {
+  :global {
+    .ant-select,
+    .ant-input-number {
+      width: 100%;
+    }
+    .ant-input-group {
+      line-height: inherit;
+
+      &.ant-input-group-compact {
+        & > * {
+          vertical-align: baseline
+        }
+      }
+    }
+  }
+  &.small {
+    :global {
+      .ant-form-item-control {
+        line-height: 32px;
+      }
+    }
   }
 }

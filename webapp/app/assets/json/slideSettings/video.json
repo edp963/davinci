@@ -1,0 +1,78 @@
+{
+  "name": "video",
+  "title": "视频",
+  "params": [{
+    "name": "size",
+    "title": "尺寸",
+    "items": [{
+      "name": "width",
+      "title": "宽度（像素）",
+      "component": "inputnumber",
+      "default": 320
+    }, {
+      "name": "height",
+      "title": "高度（像素）",
+      "component": "inputnumber",
+      "default": 240
+    }]
+  }, {
+    "name": "position",
+    "title": "视频位置",
+    "items": [{
+      "name": "positionX",
+      "title": "x轴位置（像素）",
+      "component": "inputnumber",
+      "labelCol": 15,
+      "wrapperCol": 8
+    }, {
+      "name": "positionY",
+      "title": "y轴位置（像素）",
+      "component": "inputnumber",
+      "labelCol": 15,
+      "wrapperCol": 8
+    }]
+  }, {
+    "name": "address",
+    "title": "视频地址",
+    "items": [{
+      "name": "src",
+      "title": "",
+      "component": "input",
+      "labelCol": 0,
+      "wrapperCol": 24
+    }]
+  }, {
+    "name": "control",
+    "title": "播放设置",
+    "items": [{
+      "name": "controlSetting",
+      "title": "播放设置",
+      "component": "checkboxGroup",
+      "values": [{
+        "label": "自动播放",
+        "value": "autoPlay"
+      }, {
+        "label": "循环播放",
+        "value": "loop"
+      }, {
+        "label": "显示播放控制",
+        "value": "controls"
+      }],
+      "default": ["autoPlay", "loop"],
+      "labelCol": 10,
+      "wrapperCol": 14
+    }]
+  }, {
+    "name": "clip",
+    "title": "片段截取",
+    "items": [{
+      "name": "start",
+      "title": "开始播放（秒）",
+      "component": "inputnumber"
+    }, {
+      "name": "end",
+      "title": "结束播放（秒）",
+      "component": "inputnumber"
+    }]
+  }]
+}

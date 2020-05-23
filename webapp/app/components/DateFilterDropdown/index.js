@@ -21,14 +21,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import Input from 'antd/lib/input'
-// import Select from 'antd/lib/select'
-import DatePicker from 'antd/lib/date-picker'
-import { uuid } from '../../utils/util'
+import { Input, DatePicker } from 'antd'
+import { uuid } from 'utils/util'
 const InputGroup = Input.Group
 const RangePicker = DatePicker.RangePicker
 
-import utilStyles from '../../assets/less/util.less'
+import utilStyles from 'assets/less/util.less'
 
 export function DateFilterDropdown (props) {
   const key = `dfd${uuid(8, 16)}`

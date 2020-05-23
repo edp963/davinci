@@ -2,14 +2,14 @@
   "compilerOptions": {
     "noEmit": true,
     "target": "es6",
-    "module": "commonjs",
+    "module": "esnext",
     "noImplicitAny": false,
     "sourceMap": true,
     "preserveConstEnums": true,
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "jsx": "preserve",
-    "lib": ["dom","es5","es6","es7","es2017"],
+    "lib": ["dom","es5","es6","es7","es2017","es2019"],
     "allowSyntheticDefaultImports": true,
     "typeRoots": ["node_modules/@types"],
     "baseUrl": ".",
@@ -17,21 +17,21 @@
       "*": [
         "*"
       ],
+      "app/*": ["app/*"],
       "utils/*": ["app/utils/*"],
       "assets/*": ["app/assets/*"],
       "components/*": [ "app/components/*" ],
       "containers/*": ["app/containers/*"],
       "libs/*": ["libs/*"]
-    }
+    },
+    // https://github.com/Microsoft/TypeScript/wiki/Breaking-Changes#keyof-now-includes-string-number-and-symbol-keys
+    "keyofStringsOnly": true
+    // "strict": true,
+    // "strictFunctionTypes": false
     // "noUnusedLocals": true,
     // "noUnusedParameters": true
   },
   "exclude": [
     "node_modules"
-  ],
-  "awesomeTypescriptLoaderOptions": {
-    "useBabel": true,
-    "forkChecker": true,
-    "useCache": false
-  }
+  ]
 }

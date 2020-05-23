@@ -1,733 +1,375 @@
 /*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Schedule
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
  */
 
-import * as React from 'react'
-import { connect } from 'react-redux'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import Helmet from 'react-helmet'
-import { Link } from 'react-router'
-import Container from '../../components/Container'
-import moment from 'moment'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
-import { createStructuredSelector } from 'reselect'
-
+import { connect } from 'react-redux'
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import { Link } from 'react-router-dom'
+import { RouteComponentWithParams } from 'utils/types'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
+import { createStructuredSelector } from 'reselect'
+import { makeSelectCurrentProject } from 'containers/Projects/selectors'
+import { makeSelectLoading, makeSelectSchedules } from './selectors'
+import { ScheduleActions } from './actions'
 import reducer from './reducer'
 import saga from './sagas'
-import widgetReducer from '../Widget/reducer'
-import widgetSaga from '../Widget/sagas'
-// import dashboardReducer from '../Dashboard/reducer'
-// import dashboardSaga from '../Dashboard/sagas'
-import {makeSelectCurrentProject} from '../Projects/selectors'
-import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets, makeSelectTableLoading, makeSelectFormLoading, makeSelectVizs} from './selectors'
-import { promiseDispatcher } from '../../utils/reduxPromisation'
-import ScheduleForm from './ScheduleForm'
-import ConfigForm from './ConfigForm'
 
-import {loadDashboardDetail, loadDashboards} from '../Dashboard/actions'
-import { loadSchedules, addSchedule, deleteSchedule, changeSchedulesStatus, updateSchedule, loadVizs } from './actions'
-import {loadWidgets} from '../Widget/actions'
-import Box from '../../components/Box'
+import ModulePermission from 'containers/Account/components/checkModulePermission'
+import { initializePermission } from 'containers/Account/components/checkUtilPermission'
 
-const Modal =  require ('antd/lib/modal')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
-import {ButtonProps} from 'antd/lib/button/button'
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const utilStyles = require('../../assets/less/util.less')
-import { PaginationProps } from 'antd/lib/pagination'
-import ModulePermission from '../Account/components/checkModulePermission'
-import {IProject} from '../Projects'
+import { useTablePagination } from 'utils/hooks'
 
-interface ICurrentDashboard {
-  config: string
-  create_by: number
-  desc: string
-  id: number
-  linkage_detail: string
-  name: string
-  pic: string
-  publish: boolean
-  widgets: any[]
-}
+import {
+  Row,
+  Col,
+  Breadcrumb,
+  Table,
+  Icon,
+  Button,
+  Tooltip,
+  Popconfirm,
+  message,
+  Modal
+} from 'antd'
+import { ButtonProps } from 'antd/lib/button'
+import { ColumnProps } from 'antd/lib/table'
+import Container from 'components/Container'
+import Box from 'components/Box'
 
-interface IScheduleProps {
-  widgets: boolean | any[]
-  params: any
-  schedule: boolean | any[]
-  dashboards: boolean | any[]
-  tableLoading: boolean
-  formLoading: boolean
+import { ISchedule, JobStatus, IScheduleLoading } from './types'
+import { IProject } from 'containers/Projects/types'
+
+import utilStyles from 'assets/less/util.less'
+import Styles from './Schedule.less'
+
+interface IScheduleListStateProps {
+  loading: IScheduleLoading
+  schedules: ISchedule[]
   currentProject: IProject
-  vizs: any
-  onAddSchedule: (param: object, resolve: any) => any
-  onLoadWidgets: (pid: number) => any
-  onLoadVizs: (pid: number) => any
-  onLoadSchedules: (pid: number) => any
-  onLoadDashboards: () => any
+}
+
+interface IScheduleListDispatchProps {
+  onLoadSchedules: (projectId: number) => any
   onDeleteSchedule: (id: number) => any
-  onUpdateSchedule: (param: object, resolve: any) => any
-  currentDashboard: null | ICurrentDashboard
-  onLoadDashboardDetail: (key: number) => any
-  onChangeCurrentJobStatus: (id: number, status: string) => any
+  onChangeScheduleJobStatus: (id: number, status: JobStatus) => any
+  onExecuteScheduleImmediately: (id: number, resolve: () => void) => any
 }
 
-interface IScheduleStates {
-  emailConfig: {to?: any, cc?: any, subject?: any, bcc?: any}
-  formType: string,
-  tableSource: any[],
-  configType: string,
-  dashboardTree: any[],
-  formVisible: boolean,
-  configVisible: boolean,
-  dashboardTreeValue: any[],
-  rangeTime: string,
-  screenWidth: number
+type ScheduleListProps = IScheduleListStateProps &
+  IScheduleListDispatchProps &
+  RouteComponentWithParams
+
+const JobStatusNextOperations: { [key in JobStatus]: string } = {
+  new: '启动',
+  failed: '重启',
+  started: '暂停',
+  stopped: '启动'
 }
 
-export class Schedule extends React.Component<IScheduleProps, IScheduleStates> { // eslint-disable-line react/prefer-stateless-function
-  constructor (props) {
-    super(props)
-    this.state = {
-      emailConfig: {},
-      formType: 'add',
-      tableSource: [],
-      configType: 'add',
-      dashboardTree: [],
-      formVisible: false,
-      configVisible: false,
-      dashboardTreeValue: [],
-      rangeTime: 'Minute',
-      screenWidth: 0
-    }
-  }
+const JobStatusIcons: { [key in JobStatus]: string } = {
+  new: 'caret-right',
+  failed: 'reload',
+  started: 'pause',
+  stopped: 'caret-right'
+}
 
-  private scheduleForm: WrappedFormUtils = null
-  private configForm: WrappedFormUtils = null
+const ScheduleList: React.FC<ScheduleListProps> = (props) => {
+  const {
+    match,
+    history,
+    loading,
+    schedules,
+    currentProject,
+    onLoadSchedules,
+    onDeleteSchedule,
+    onChangeScheduleJobStatus,
+    onExecuteScheduleImmediately
+  } = props
+  const [execLogModalVisible, setExecLogModalVisible] = useState(false)
+  const [execLog, setExecLogContent] = useState('')
+  const tablePagination = useTablePagination(0)
 
-  public componentWillMount () {
-    const {pid} = this.props.params
-    this.props.onLoadWidgets(pid)
-    this.props.onLoadVizs(pid)
-    this.props.onLoadDashboards().then(() => {
-      const {dashboards} = this.props
-      const initDashboardTree = (dashboards as any[]).map((dashboard) => ({
-        ...dashboard,
-        ...{
-          label: dashboard.name,
-          key: dashboard.id,
-          value: `${dashboard.id}(d)`,
-          type: 'dashboard'
-        }
-      }))
-      this.setState({
-        dashboardTree: initDashboardTree,
-        screenWidth: document.documentElement.clientWidth
-      })
-    })
-    this.props.onLoadSchedules(pid)
-  }
+  const openExecLogModal = useCallback((logContent) => () => {
+    setExecLogModalVisible(true)
+    setExecLogContent(logContent)
+  }, [])
+  const closeExecLogModal = useCallback(() => {
+    setExecLogModalVisible(false)
+  }, [])
 
-  public componentWillReceiveProps (props) {
-    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
-
-    if (props.schedule) {
-      this.setState({
-        tableSource: props.schedule.map((g) => {
-          g.key = g.id
-          return g
-        })
-      })
-    }
-  }
-
-  private showAdd = () => {
-    this.setState({
-      formVisible: true,
-      formType: 'add'
-    })
-  }
-
-  private showDetail = (scheduleId) => () => {
-    this.setState({
-      formVisible: true,
-      formType: 'edit'
-    }, () => {
-      const { id, name, description, config } = (this.props.schedule as any[]).find((s) => s.id === scheduleId)
-      const config2json = JSON.parse(config)
-      const { time_range, range, contentList, month, hour, week, time } = config2json
-      const formatterContentList = this.json2arr(contentList)
-      this.setState({
-        emailConfig: config2json,
-        dashboardTreeValue: formatterContentList
-      })
-      let momentRange = []
-      if (range) {
-        momentRange = range.map((ra) => moment(ra))
-      }
-      this.setState({
-        rangeTime: time_range
-      }, () => this.scheduleForm.setFieldsValue({ id, name, description, range: momentRange, time_range, month, hour, week, time: moment(time) })
-      )
-    })
-  }
-
-  private onScheduleOk = () => {
-    const { pid } = this.props.params
-    const { onAddSchedule, onUpdateSchedule } = this.props
-    this.scheduleForm.validateFieldsAndScroll((err, values) => {
-      const { emailConfig } = this.state
-      if (!err) {
-        const startDate = values.range && values.range[0] ? values.range[0] : ''
-        const endDate = values.range && values.range[1] ? values.range[1] : ''
-        if (values && values.config) {
-          emailConfig['time_range'] = values.time_range
-          emailConfig['minute'] = values.minute
-          emailConfig['month'] = values.month
-          emailConfig['hour'] = values.hour
-          emailConfig['week'] = values.week
-          emailConfig['time'] = values.time
-          emailConfig['range'] = values.range
-        //  emailConfig['contentList'] = this.arr2json(JSON.parse(values.config)['contentList'])
-        }
-        const valueTime = moment(values.time).format('HH:mm')
-        const formatterValueTime = valueTime.split(':')
-        const HH = formatterValueTime[0]
-        const mm = formatterValueTime[1]
-        let cronPatten = ''
-        if (values) {
-          let minute = '0'
-          let hour = '*'
-          if (values.time) {
-            minute = mm.replace(/\b(0)/gi, '')
-            hour = HH.replace(/\b(0)/gi, '')
-          }
-          if (values.hour) {
-            minute = values.hour
-            hour = '*'
-          }
-          if (values.week === undefined && values.month === undefined) {
-            values.month = '*'
-            values.week = '?'
-          }
-          if (values.month && '*?'.indexOf(values.month) < 0 && values.week === undefined) {
-            values.week = '?'
-          }
-          if (values.week && '*?'.indexOf(values.week) < 0 && values.month === undefined) {
-            values.month = '?'
-          }
-          if (values.minute) {
-            minute = `*/${values.minute}`
-          }
-          cronPatten = `0 ${minute} ${hour} ${values.month} * ${values.week}`   // '0 * * * * ?'
-        }
-        this.setState({
-          emailConfig
-        }, () => {
-          for (const i in emailConfig) {
-            if (!emailConfig[i]) {
-              delete emailConfig[i]
-            }
-          }
-          values.config = JSON.stringify(emailConfig)
-          const params = {
-            ...values,
-            ...{
-              projectId: pid,
-              startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-              endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
-              cronExpression: cronPatten
-            }
-          }
-          if (this.state.formType === 'add') {
-            onAddSchedule(params, () => {
-              this.hideForm()
-            })
-          } else {
-            onUpdateSchedule(params, () => {
-              this.hideForm()
-            })
-          }
-        })
-      }
-    })
-  }
-
-  private arr2json = (arr) => {
-    const { vizs } = this.props
-    const result = arr.map((a) => {
-      if (a === 'display') {
-        const children =  vizs.find((viz) => viz.contentType === 'display')['children']
-        return children.map((child) => ({
-          contentType: child.contentType,
-          id: child.id
-        }))
-      }
-      if (a === 'portal') {
-        const children =  vizs.find((viz, index) => viz.contentType === 'portal')['children']
-        return this.getIdByArray(children)
-      }
-      if (a.indexOf('(p)') > -1) {
-        const id = parseInt(a.replace('(p)', ''), 10)
-        const children = vizs.find((viz, index) => viz.contentType === 'portal')['children']
-        const arr = this.getCurrentListById(children, id)
-        return this.getIdByArray(arr)
-      } else {
-        return {
-          id: parseInt(a.replace('(d)', ''), 10),
-          contentType: 'display'
-        }
-      }
-    })
-    return result
-  }
-  private getCurrentListById = (array, id) => {
-    const ret = []
-    function loop (array) {
-      for (let i = 0; i < array.length; i++) {
-        const arr = array[i]
-        if (arr && arr.children) {
-          loop(arr.children)
-        }
-        if (arr && arr.id === id) {
-          ret.push(arr)
-        }
-      }
-    }
-    loop(array)
-    return ret
-  }
-  private getIdByArray = (array) => {
-    const ret = []
-    function loop (a) {
-      a.forEach((arr) => {
-        if (arr && arr.children) {
-          loop(arr.children)
-        }
-        if (arr && arr.type === 1) {
-          ret.push({
-            contentType: arr.contentType,
-            id: arr.id
-          })
-        }
-      })
-    }
-    loop(array)
-    return ret
-  }
-  private json2arr = (json) => json.map((js) => `${js.id}(${js.contentType.substr(0, 1)})`)
-
-  private onConfigModalOk = () => {
-    this.configForm.validateFieldsAndScroll((err, values) => {
-      const { dashboardTreeValue } = this.state
-      if (!err) {
-        const emailConfigData = {
-          ...values,
-          ...{contentList: bootstrap(this.arr2json(dashboardTreeValue))}
-        }
-        this.setState({
-          emailConfig: emailConfigData
-        }, () => this.hideConfigForm())
-      }
-    })
-    function bootstrap (arr) {
-      const result = []
-      if (arr && arr.length) {
-        arr.map((a, index) => {
-          if (Array.isArray(a)) {
-            a.forEach((o) => result.push(o))
-          } else {
-            result.push(a)
-          }
-        })
-      }
-      return result
-    }
-  }
-  private hideForm = () => {
-    this.setState({
-      formVisible: false,
-      emailConfig: {}
-    }, () => this.scheduleForm.resetFields())
-  }
-
-  private hideConfigForm = () => {
-    this.setState({
-      configVisible: false,
-      dashboardTreeValue: []
-    }, () => this.configForm.resetFields())
-  }
-
-  private showConfig = () => {
-    const { emailConfig } = this.state
-    const jsonStringify = JSON.stringify(emailConfig)
-    this.setState({
-      configVisible: true,
-      configType: 'add'
-    }, () => {
-      if (jsonStringify && jsonStringify.length > 2) {
-        const { to, cc, subject, bcc } = emailConfig
-        this.configForm.setFieldsValue({to, cc, subject, bcc})
-      }
-    })
-  }
-
-  private onTreeSelect = (f) => f
-
-  private onTreeChange = (value) => {
-   // let triggerData = extra.triggerNode.props
-    console.log(value)
-    this.setState({
-      dashboardTreeValue: value
-    })
-  }
-
-  private onLoadTreeData = (treeNode) => {
-    const eventKey = treeNode.props.eventKey
-    return new Promise((resolve) => {
-      this.props.onLoadDashboardDetail(eventKey).then(() => {
-        const { currentDashboard, widgets } = this.props
-        const { dashboardTree } = this.state
-        const widgetFilter = (dashboardName) => currentDashboard.widgets.map((widget) => ({
-          ...widget,
-          ...{
-            label: `${dashboardName} / ${(widgets as any[]).find((wi) => wi.id === widget.widget_id)['name']}`,
-            key: widget.id,
-            value: `${widget.id}(w)`,
-            type: 'widget',
-            isLeaf: true
-          }
-        }))
-        const dashboardTreeChildren = dashboardTree.map((tree) => {
-          if (`${tree.key}` === eventKey) {
-            return {
-              ...tree,
-              ...{
-                children: widgetFilter(tree.name)
-              }
-            }
-          } else {
-            return tree
-          }
-        })
-        this.setState({
-          dashboardTree: dashboardTreeChildren
-        })
-      })
-      resolve()
-    })
-  }
-
-  private onChangeRange = (value) => {
-    const rangeArr = ['month', 'hour', 'week', 'time']
-    this.setState({
-      rangeTime: value
-    })
-    rangeArr.map((range) => {
-      if (range === 'time') {
-        return range
-      } else {
-        this.scheduleForm.setFieldsValue({
-          [range]: undefined
-        })
-      }
-    })
-  }
-
-  private formatStatusIcon = (status) => {
-    switch (status) {
-      case 'new':
-        return 'caret-right'
-      case 'failed':
-        return 'reload'
-      case 'started':
-        return 'pause'
-      case 'stopped':
-        return 'caret-right'
-      default:
-        return 'caret-right'
-    }
-  }
-
-  private formatStatusText = (status) => {
-    const emunObj = {
-      new: '启动',
-      failed: '重启',
-      started: '暂停',
-      stopped: '启动'
-    }
-    return emunObj[status]
-  }
-
-  private changeStatus = (record) => () => {
-    const { id, jobStatus } = record
-    const { onChangeCurrentJobStatus } = this.props
-    onChangeCurrentJobStatus(id, jobStatus)
-  }
-
-  public render () {
-    const {
-      formType,
-      configType,
-      tableSource,
-      formVisible,
-      configVisible,
-      dashboardTree,
-      dashboardTreeValue
-      // screenWidth
-    } = this.state
-    const {
-      onDeleteSchedule,
-      currentProject,
-      tableLoading,
-      formLoading,
-      vizs
-    } = this.props
-
-    const pagination: PaginationProps = {
-     // simple: screenWidth < 768 || screenWidth === 768,
-      defaultPageSize: 20,
-      showSizeChanger: true,
-      total: tableSource.length
-    }
-    const ProviderButton = ModulePermission<ButtonProps>(currentProject, 'schedule', true)(Button)
-    const columns = [
+  const columns: Array<ColumnProps<ISchedule>> = useMemo(() => {
+    return [
       {
         title: '名称',
         dataIndex: 'name',
-        key: 'name'
+        render: (name, record) => {
+          if (!record.execLog) {
+            return name
+          }
+          return (
+            <p className={Styles.info}>
+              {name}
+              <Tooltip title="点击查看错误日志">
+                <Icon
+                  type="info-circle"
+                  onClick={openExecLogModal(record.execLog)}
+                />
+              </Tooltip>
+            </p>
+          )
+        }
       },
       {
         title: '描述',
-        dataIndex: 'description',
-        key: 'desc'
+        dataIndex: 'description'
       },
       {
         title: '类型',
         dataIndex: 'jobType',
-        key: 'job_type'
+        width: 60,
+        align: 'center'
       },
       {
-        title: '开始时间',
+        title: '有效开始时间',
         dataIndex: 'startDate',
-        key: 'start_date'
+        width: 180,
+        align: 'center'
       },
       {
-        title: '结束时间',
+        title: '有效结束时间',
         dataIndex: 'endDate',
-        key: 'end_date'
+        width: 180,
+        align: 'center'
       },
       {
         title: '状态',
         dataIndex: 'jobStatus',
-        key: 'job_status'
-      },
-      {
-        title: '操作',
-        key: 'action',
-        width: 135,
-        className: `${utilStyles.textAlignCenter}`,
-        render: (text, record) => (
-          <span className="ant-table-action-column">
-            <Tooltip title={`${this.formatStatusText(record.jobStatus)}`}>
-              <Button icon={this.formatStatusIcon(record.jobStatus)} shape="circle" type="ghost" onClick={this.changeStatus(record)} />
-            </Tooltip>
-            <Tooltip title="修改">
-              <Button icon="edit" shape="circle" type="ghost" onClick={this.showDetail(record.id)} />
-            </Tooltip>
-            <Popconfirm
-              title="确定删除？"
-              placement="bottom"
-              onConfirm={onDeleteSchedule(record.id)}
-            >
-              <Tooltip title="删除">
-                <Button icon="delete" shape="circle" type="ghost" />
-              </Tooltip>
-            </Popconfirm>
-          </span>
-      )
-      }]
+        width: 80,
+        align: 'center'
+      }
+    ]
+  }, [])
 
-    const scheduleButtons = ([
-      (
-        <Button
-          key="back"
-          size="large"
-          onClick={this.hideForm}
-        >
-          取 消
-        </Button>
+  useEffect(() => {
+    onLoadSchedules(+match.params.projectId)
+  }, [])
+
+  const addSchedule = useCallback(
+    () => {
+      const { projectId } = match.params
+      history.push(`/project/${projectId}/schedule`)
+    },
+    [currentProject]
+  )
+
+  const { schedulePermission, AdminButton, EditButton } = useMemo(
+    () => ({
+      schedulePermission: initializePermission(
+        currentProject,
+        'schedulePermission'
       ),
-      (
-        <Button
-          key="submit"
-          size="large"
-          type="primary"
-          loading={formLoading}
-          disabled={formLoading}
-          onClick={this.onScheduleOk}
-        >
-          保 存
-        </Button>
-      )
-    ])
+      AdminButton: ModulePermission<ButtonProps>(
+        currentProject,
+        'schedule',
+        true
+      )(Button),
+      EditButton: ModulePermission<ButtonProps>(
+        currentProject,
+        'schedule',
+        false
+      )(Button)
+    }),
+    [currentProject]
+  )
 
-    const configModalButtons = ([
-      (
-        <Button
-          key="back"
-          size="large"
-          onClick={this.hideConfigForm}
-        >
-          取 消
-        </Button>
-      ),
-      (
-        <Button
-          key="submit"
-          size="large"
-          type="primary"
-          onClick={this.onConfigModalOk}
-        >
-          保 存
-        </Button>
-      )
-    ])
-    const currentProjectId = currentProject && currentProject.id ? currentProject.id : void 0
-    return (
-      <Container>
-        <Helmet title="Schedule" />
-        <Container.Title>
-          <Row>
-            <Col span={24}>
-              <Breadcrumb className={utilStyles.breadcrumb}>
-                <Breadcrumb.Item>
-                  <Link to="">Schedule</Link>
-                </Breadcrumb.Item>
-              </Breadcrumb>
-            </Col>
-          </Row>
-        </Container.Title>
-        <Container.Body>
-          <Box>
-            <Box.Header>
-              <Box.Title>
-                <Icon type="bars" />Schedule List
-              </Box.Title>
-              <Box.Tools>
-                <Tooltip placement="bottom" title="新增">
-                  <ProviderButton type="primary" icon="plus" onClick={this.showAdd} />
-                </Tooltip>
-              </Box.Tools>
-            </Box.Header>
-            <Box.Body>
-              <Row>
-                <Col span={24}>
-                  <Table
-                    dataSource={tableSource}
-                    columns={columns}
-                    pagination={pagination}
-                    loading={tableLoading}
-                    bordered
-                  />
-                </Col>
-              </Row>
-              <Modal
-                title={`${formType === 'add' ? '新增' : '修改'}schedule`}
-                maskClosable={false}
-                visible={formVisible}
-                footer={scheduleButtons}
-                onCancel={this.hideForm}
-              >
-                <ScheduleForm
-                  type={formType}
-                  projectId={currentProjectId}
-                  rangeTime={this.state.rangeTime}
-                  changeRange={this.onChangeRange}
-                  configValue={JSON.stringify(this.state.emailConfig)}
-                  onShowConfig={this.showConfig}
-                  ref={(f) => { this.scheduleForm = f }}
-                />
-              </Modal>
+  const changeJobStatus = useCallback(
+    (schedule: ISchedule) => () => {
+      const { id, jobStatus } = schedule
+      onChangeScheduleJobStatus(id, jobStatus)
+    },
+    [onChangeScheduleJobStatus]
+  )
 
-              <Modal
-                title={`${configType === 'add' ? '新增' : '修改'}config`}
-                wrapClassName="ant-modal-large"
-                maskClosable={false}
-                visible={configVisible}
-                footer={configModalButtons}
-                onCancel={this.hideConfigForm}
+  const executeScheduleImmediately = useCallback(
+    (id: number) => () => {
+      onExecuteScheduleImmediately(id, () => {
+        message.success('任务已开始执行')
+      })
+    },
+    [onExecuteScheduleImmediately]
+  )
+
+  const editSchedule = useCallback(
+    (scheduleId: number) => () => {
+      const { projectId } = match.params
+      history.push(`/project/${projectId}/schedule/${scheduleId}`)
+    },
+    []
+  )
+
+  const deleteSchedule = useCallback(
+    (scheduleId: number) => () => {
+      onDeleteSchedule(scheduleId)
+    },
+    [onDeleteSchedule]
+  )
+
+  const tableColumns = [...columns]
+  if (schedulePermission) {
+    tableColumns.push({
+      title: '操作',
+      key: 'action',
+      align: 'center',
+      width: 185,
+      render: (_, record) => (
+        <span className="ant-table-action-column">
+          <Tooltip title={JobStatusNextOperations[record.jobStatus]}>
+            <Button
+              icon={JobStatusIcons[record.jobStatus]}
+              shape="circle"
+              type="ghost"
+              onClick={changeJobStatus(record)}
+            />
+          </Tooltip>
+          <Popconfirm
+            title="确定立即执行？"
+            placement="bottom"
+            onConfirm={executeScheduleImmediately(record.id)}
+          >
+            <Tooltip title="立即执行">
+              <Button
+                shape="circle"
+                type="ghost"
               >
-                <ConfigForm
-                  type={configType}
-                  vizs={vizs}
-                  dashboardTree={dashboardTree}
-                  treeSelect={this.onTreeSelect}
-                  treeChange={this.onTreeChange}
-                  loadTreeData={this.onLoadTreeData}
-                  dashboardTreeValue={dashboardTreeValue}
-                  ref={(f) => { this.configForm = f }}
-                />
-              </Modal>
-            </Box.Body>
-          </Box>
-        </Container.Body>
-      </Container>
-    )
+                <i className="iconfont icon-lijitoudi" />
+              </Button>
+            </Tooltip>
+          </Popconfirm>
+          <Tooltip title="修改" trigger="hover">
+            <EditButton
+              icon="edit"
+              shape="circle"
+              type="ghost"
+              onClick={editSchedule(record.id)}
+            />
+          </Tooltip>
+          <Popconfirm
+            title="确定删除？"
+            placement="bottom"
+            onConfirm={deleteSchedule(record.id)}
+          >
+            <Tooltip title="删除">
+              <AdminButton icon="delete" shape="circle" type="ghost" />
+            </Tooltip>
+          </Popconfirm>
+        </span>
+      )
+    })
   }
+
+  return (
+    <Container>
+      <Helmet title="Schedule" />
+      <Container.Title>
+        <Row>
+          <Col span={24}>
+            <Breadcrumb className={utilStyles.breadcrumb}>
+              <Breadcrumb.Item>
+                <Link to="">Schedule</Link>
+              </Breadcrumb.Item>
+            </Breadcrumb>
+          </Col>
+        </Row>
+      </Container.Title>
+      <Container.Body>
+        <Box>
+          <Box.Header>
+            <Box.Title>
+              <Icon type="bars" />
+              Schedule List
+            </Box.Title>
+            <Box.Tools>
+              <Tooltip placement="bottom" title="新增">
+                <AdminButton type="primary" icon="plus" onClick={addSchedule} />
+              </Tooltip>
+            </Box.Tools>
+          </Box.Header>
+          <Box.Body>
+            <Row>
+              <Col span={24}>
+                <Table
+                  rowKey="id"
+                  bordered
+                  dataSource={schedules}
+                  columns={tableColumns}
+                  pagination={tablePagination}
+                  loading={loading.table}
+                />
+              </Col>
+            </Row>
+          </Box.Body>
+        </Box>
+      </Container.Body>
+      <Modal
+        title="错误日志"
+        wrapClassName="ant-modal-large"
+        visible={execLogModalVisible}
+        onCancel={closeExecLogModal}
+        footer={false}
+      >
+        {execLog}
+      </Modal>
+    </Container>
+  )
 }
 
 const mapStateToProps = createStructuredSelector({
-  widgets: makeSelectWidgets(),
-  schedule: makeSelectSchedule(),
-  dashboards: makeSelectDashboards(),
-  currentDashboard: makeSelectCurrentDashboard(),
+  schedules: makeSelectSchedules(),
   currentProject: makeSelectCurrentProject(),
-  tableLoading: makeSelectTableLoading(),
-  formLoading: makeSelectFormLoading(),
-  vizs: makeSelectVizs()
+  loading: makeSelectLoading()
 })
 
-function mapDispatchToProps (dispatch) {
+function mapDispatchToProps(dispatch) {
   return {
-    onLoadVizs: (pid) => dispatch(loadVizs(pid)),
-    onLoadWidgets: (pid) => dispatch(loadWidgets(pid)),
-    onLoadSchedules: (pid) => dispatch(loadSchedules(pid)),
-    onLoadDashboards: () => promiseDispatcher(dispatch, loadDashboards),
-    onAddSchedule: (schedule, resolve) => dispatch(addSchedule(schedule, resolve)),
-    onUpdateSchedule: (schedule, resolve) => dispatch(updateSchedule(schedule, resolve)),
-    onLoadDashboardDetail: (id) => promiseDispatcher(dispatch, loadDashboardDetail, id),
-    onDeleteSchedule: (id) => () => dispatch(deleteSchedule(id)),
-    onChangeCurrentJobStatus: (id, currentStatus) => dispatch(changeSchedulesStatus(id, currentStatus))
+    onLoadSchedules: (projectId) =>
+      dispatch(ScheduleActions.loadSchedules(projectId)),
+    onDeleteSchedule: (id) => dispatch(ScheduleActions.deleteSchedule(id)),
+    onChangeScheduleJobStatus: (id, currentStatus) =>
+      dispatch(ScheduleActions.changeSchedulesStatus(id, currentStatus)),
+    onExecuteScheduleImmediately: (id, resolve) =>
+      dispatch(ScheduleActions.executeScheduleImmediately(id, resolve))
   }
 }
 
-const withConnect = connect<{}, {}, IScheduleProps>(mapStateToProps, mapDispatchToProps)
+const withConnect = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)
 
-const withReducerSchedule = injectReducer({ key: 'schedule', reducer })
-const withSagaSchedule = injectSaga({ key: 'schedule', saga })
-
-const withReducerWidget = injectReducer({ key: 'widget', reducer: widgetReducer })
-const withSagaWidget = injectSaga({ key: 'widget', saga: widgetSaga })
-
-// const withReducerDashboard = injectReducer({ key: 'dashboard', reducer: dashboardReducer })
-// const withSagaDashboard = injectSaga({ key: 'dashboard', saga: dashboardSaga })
+const withReducer = injectReducer({ key: 'schedule', reducer })
+const withSaga = injectSaga({ key: 'schedule', saga })
 
 export default compose(
-  withReducerSchedule,
-  withReducerWidget,
-  // withReducerDashboard,
-  withSagaSchedule,
-  withSagaWidget,
-  // withSagaDashboard,
+  withReducer,
+  withSaga,
   withConnect
-)(Schedule)
+)(ScheduleList)

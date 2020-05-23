@@ -18,83 +18,95 @@
  * >>
  */
 
-import * as React from 'react'
+import React, { Suspense } from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Link, InjectedRouter, routerShape } from 'react-router'
+import { Route } from 'react-router-dom'
 
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
-import reducerProject from '../Projects/reducer'
-import sagaProject from '../Projects/sagas'
-import portalSaga from '../Portal/sagas'
-import portalReducer from '../Portal/reducer'
+import projectReducer from '../Projects/reducer'
+import projectSaga from '../Projects/sagas'
+import vizReducer from '../Viz/reducer'
+import vizSaga from '../Viz/sagas'
+import viewReducer from '../View/reducer'
+import viewSaga from '../View/sagas'
 
-import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
 import DashboardAction from './components/DashboardAction'
-import AntdFormType from 'antd/lib/form/Form'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Icon = require('antd/lib/icon')
-import {IconProps} from 'antd/lib/icon/index'
-const Tooltip = require('antd/lib/tooltip')
-const Popover = require('antd/lib/popover')
-const Modal = require('antd/lib/modal')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const Popconfirm = require('antd/lib/popconfirm')
-const Input = require('antd/lib/input')
-const Menu = require('antd/lib/menu')
 
-const Tree = require('antd/lib/tree').default
+import { Button, Icon, Tooltip, Popover, Modal, Input, Tree } from 'antd'
 const TreeNode = Tree.TreeNode
+
+import { IconProps } from 'antd/lib/icon/index'
+import AntdFormType from 'antd/lib/form/Form'
 
 const Search = Input.Search
 
+import { VizActions } from 'containers/Viz/actions'
+import DashboardActions from './actions'
+import { makeSelectCurrentDashboards, makeSelectCurrentPortal, makeSelectVizLoading } from 'containers/Viz/selectors'
+import { makeSelectCurrentDashboard } from './selectors'
 import {
-  loadDashboards,
-  addDashboard,
-  editDashboard,
-  deleteDashboard,
-  loadDashboardDetail
-} from './actions'
-import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
-import { hideNavigator, checkNameUniqueAction } from '../App/actions'
+  hideNavigator,
+  checkNameUniqueAction,
+  loadDownloadList,
+  downloadFile
+} from '../App/actions'
+import { makeSelectDownloadList, makeSelectDownloadListLoading } from '../App/selectors'
+import { IDownloadRecord } from '../App/types'
+import { DownloadTypes } from '../App/constants'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
-import { loadPortals } from '../Portal/actions'
-import { makeSelectPortals } from '../Portal/selectors'
-import { loadProjectDetail } from '../Projects/actions'
-
-const utilStyles = require('../../assets/less/util.less')
+import { ProjectActions } from '../Projects/actions'
+const { loadProjectDetail, excludeRoles } = ProjectActions
+import {IExludeRoles} from '../Viz/components/PortalList'
 const styles = require('./Dashboard.less')
-const widgetStyles = require('../Widget/Widget.less')
-import {makeSelectCurrentProject} from '../Projects/selectors'
+import {makeSelectCurrentProject, makeSelectProjectRoles} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
-import { IProject } from '../Projects'
-import EditorHeader from '../../components/EditorHeader'
+import { IProject } from '../Projects/types'
+import EditorHeader from 'components/EditorHeader'
+import 'assets/less/resizer.less'
+const SplitPane = React.lazy(() => import('react-split-pane'))
+import {IProjectRoles} from '../Organizations/component/ProjectRole'
+import { OrganizationActions } from '../Organizations/actions'
+const { loadProjectRoles } = OrganizationActions
+import { IGlobalControl, GlobalControlQueryMode } from 'app/components/Control/types'
+import { RouteComponentWithParams } from 'utils/types'
+
+import { Grid } from './Loadable'
 
 interface IDashboardProps {
-  modalLoading: boolean
+  modalLoading: {
+    portal: boolean
+    display: boolean
+    editing: boolean
+    dashboards: boolean
+    slides: boolean
+  }
   dashboards: IDashboard[]
-  router: InjectedRouter
-  params: any
+  currentDashboard: IDashboard,
   currentProject: IProject
-  portals: any[]
+  currentPortal: any
+  projectRoles: IProjectRoles[]
+  downloadList: IDownloadRecord[]
   onLoadDashboards: (portalId: number, resolve: any) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
-  onDeleteDashboard: (id: number, resolve: any) => void
+  onDeleteDashboard: (id: number, portalId: number, resolve: any) => void
   onHideNavigator: () => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   onLoadPortals: (projectId) => void
   onLoadProjectDetail: (id) => any
-  // onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
+  onExcludeRoles: (type: string, id: number, resolve?: any) => any
+  onLoadProjectRoles: (id: number) => any
+  onInitiateDownloadTask: (id: number, type: DownloadTypes, downloadParams?: any[]) => void
+  onLoadDownloadList: () => void
+  onDownloadFile: (id) => void
 }
 
 export interface IDashboard {
@@ -106,10 +118,6 @@ export interface IDashboard {
   index?: number
   type?: number
   children?: any[]
-}
-
-export interface ICurrentDashboard extends IDashboard {
-  widgets: any[]
 }
 
 interface IDashboardStates {
@@ -124,11 +132,18 @@ interface IDashboardStates {
   isExpand: boolean
   searchVisible: boolean
   isGrid: boolean
+  checkedKeys: any[]
+  splitSize: number
+  portalTreeWidth: number
+  exludeRoles: IExludeRoles[]
 }
 
-export class Dashboard extends React.Component<IDashboardProps, IDashboardStates> {
+export class Dashboard extends React.Component<IDashboardProps & RouteComponentWithParams, IDashboardStates> {
+  private defaultSplitSize = 190
+  private maxSplitSize = this.defaultSplitSize * 1.5
   constructor (props) {
     super(props)
+    const splitSize = +localStorage.getItem('dashboardSplitSize') || this.defaultSplitSize
     this.state = {
       formType: '',
       formVisible: false,
@@ -140,7 +155,11 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       dataList: [],
       isExpand: true,
       searchVisible: false,
-      isGrid: true
+      isGrid: true,
+      checkedKeys: [],
+      splitSize,
+      portalTreeWidth: 0,
+      exludeRoles: []
     }
   }
 
@@ -150,11 +169,12 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   }
 
   public componentWillMount () {
-    // this.props.onHideNavigator()
-    const { params, router, dashboards } = this.props
-    const { pid, portalId, portalName, dashboardId } = params
+    const { match, history, dashboards, onLoadDashboards, onLoadPortals, onLoadProjectDetail, onLoadProjectRoles } = this.props
+    const { projectId, portalId } = match.params
+    const dashboardId = this.getDashboardIdFromLocation()
 
-    this.props.onLoadDashboards(params.portalId, (result) => {
+    onLoadProjectRoles(Number(projectId))
+    onLoadDashboards(+portalId, (result) => {
       let defaultDashboardId = 0
       const dashboardData = listToTree(result, 0)
       const treeData = {
@@ -166,39 +186,20 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
       if (defaultDashboardId >= 0) {
         if (!dashboardId) {
-          router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
+          history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${defaultDashboardId}`)
         }
       }
 
       this.setState({
         dashboardData,
-        isGrid: defaultDashboardId >= 0
+        isGrid: defaultDashboardId >= 0,
+        portalTreeWidth: Number(localStorage.getItem('dashboardSplitSize'))
       })
       this.expandAll(result)
     })
 
-    // .then(({result, defaultDashboardId}) => {
-    //   if (result.length !== 0 && defaultDashboardId !== -1) {
-    //     const { dashboardId } = params
-    //     const currentdashboardId = dashboardId ? Number(dashboardId) : defaultDashboardId
-    //     const selectedDashboard = (result as any).find((r) => r.id === currentdashboardId)
-    //     console.log(selectedDashboard)
-    //     this.props.onLoadDashboardDetail(selectedDashboard, params.pid, params.portalId, currentdashboardId)
-    //   } else {
-    //     this.setState({
-    //       isGrid: false
-    //     })
-    //   }
-    // })
-    this.props.onLoadPortals(pid)
-    this.props.onLoadProjectDetail(pid)
-  }
-
-  private initalDashboardData (dashboards) {
-    this.setState({
-      dashboardData: listToTree(dashboards, 0)
-    })
-    this.expandAll(dashboards)
+    onLoadPortals(projectId)
+    onLoadProjectDetail(projectId)
   }
 
   public componentWillReceiveProps (nextProps) {
@@ -211,95 +212,114 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     this.props.onHideNavigator()
   }
 
+  private initalDashboardData = (dashboards) => {
+    this.setState({
+      dashboardData: listToTree(dashboards, 0)
+    })
+    this.expandAll(dashboards)
+  }
+
+  private getDashboardIdFromLocation = () => {
+    const urlPieces = location.href.split('/')
+    const lastModuleName = urlPieces[urlPieces.length - 2]
+    const lastModuleId = urlPieces[urlPieces.length - 1]
+    return lastModuleName === 'dashboard' ? Number(lastModuleId) : 0
+  }
+
   private changeDashboard = (dashboardId) => (e) => {
-    const { params, router } = this.props
-    const { pid, portalId, portalName } = params
+    const { match, history } = this.props
+    const { projectId, portalId } = match.params
+    const currentDashboardId = this.getDashboardIdFromLocation()
+    if (currentDashboardId === dashboardId) {
+      return
+    }
+
     this.setState({
       isGrid: true
     }, () => {
-      router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
+      history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${dashboardId}`)
     })
   }
 
   private hideDashboardForm = () => {
     this.setState({
-      formVisible: false
+      formVisible: false,
+      checkedKeys: []
     }, () => {
       this.dashboardForm.props.form.resetFields()
     })
   }
 
   private onModalOk = () => {
-    this.dashboardForm.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        const { dashboards, params, router, onEditDashboard, onAddDashboard } = this.props
-        const { formType } = this.state
-        const { id, name, folder, selectType, index } = values
+    const { formType, checkedKeys } = this.state
 
-        const dashArr = folder === '0'
-          ? dashboards.filter((d) => d.parentId === 0)
-          : dashboards.filter((d) => d.parentId === Number(folder))
+    if (formType === 'delete') {
+      const id = this.dashboardForm.props.form.getFieldValue('id')
+      this.confirmDeleteDashboard(id)
+    } else {
+      this.dashboardForm.props.form.validateFieldsAndScroll((err, values) => {
+        if (!err) {
+          const { dashboards, match, history, onEditDashboard, onAddDashboard } = this.props
+          const { id, name, folder, selectType, index, config } = values
 
-        const indexTemp = dashArr.length === 0 ? 0 : dashArr[dashArr.length - 1].index + 1
-        const obj = {
-          config: '',
-          dashboardPortalId: Number(params.portalId),
-          name,
-          type: selectType ? 1 : 0
+          const dashArr = folder === '0'
+            ? dashboards.filter((d) => d.parentId === 0)
+            : dashboards.filter((d) => d.parentId === Number(folder))
+
+          const indexTemp = dashArr.length === 0 ? 0 : dashArr[dashArr.length - 1].index + 1
+          const obj = {
+            config,
+            dashboardPortalId: +match.params.portalId,
+            name,
+           // type: selectType ? 1 : 0   // todo selectType 更改位置
+            type: Number(selectType)
+          }
+
+          const addObj = {
+            ...obj,
+            parentId: Number(folder),
+            index: indexTemp,
+            roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id)
+          }
+
+          const editObj = [{
+            ...obj,
+            parentId: Number(folder),
+            id,
+            index,
+            roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id)
+          }]
+
+          const currentArr = dashboards.filter((d) => d.parentId === Number(folder))
+          const moveObj = [{
+            ...obj,
+            parentId: Number(folder),
+            id,
+            index: currentArr.length ? currentArr[currentArr.length - 1].index + 1 : 0
+          }]
+
+          switch (formType) {
+            case 'add':
+            // case 'copy':
+              onAddDashboard(addObj, (dashboardId) => {
+                this.hideDashboardForm()
+                this.setState({ isGrid: true })
+                const { projectId, portalId } = match.params
+                addObj.type === 0
+                  ? history.replace(`/project/${projectId}/portal/${portalId}`)
+                  : history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${dashboardId}`)
+              })
+              break
+            case 'edit':
+              onEditDashboard('edit', editObj, () => { this.hideDashboardForm() })
+              break
+            case 'move':
+              onEditDashboard('move', moveObj, () => { this.hideDashboardForm() })
+              break
+          }
         }
-
-        const addObj = {
-          ...obj,
-          parentId: Number(folder),
-          index: indexTemp
-        }
-
-        const editObj = [{
-          ...obj,
-          parentId: Number(folder),
-          id,
-          index
-        }]
-
-        const currentArr = dashboards.filter((d) => d.parentId === Number(folder))
-        const moveObj = [{
-          ...obj,
-          parentId: Number(folder),
-          id,
-          index: currentArr.length ? currentArr[currentArr.length - 1].index + 1  : 0
-        }]
-
-        switch (formType) {
-          case 'add':
-          case 'copy':
-            onAddDashboard(addObj, (dashboardId) => {
-              this.hideDashboardForm()
-              const { pid, portalId, portalName } = params
-              if (addObj.type === 0) {
-                this.setState({
-                  isGrid: false
-                })
-                router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}`)
-              } else {
-                this.setState({
-                  isGrid: true
-                })
-                router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
-              }
-            })
-            break
-          case 'edit':
-            onEditDashboard('edit', editObj, () => { this.hideDashboardForm() })
-            break
-          case 'move':
-            onEditDashboard('move', moveObj, () => { this.hideDashboardForm() })
-            break
-          case 'delete':
-            this.confirmDeleteDashboard(id)
-            break
-        }
-      }
-    })
+      })
+    }
   }
 
   private onExpand = (expandedKeys) => {
@@ -424,6 +444,15 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     this.setState({
       formVisible: true,
       formType: 'add'
+    }, () => {
+      this.setState({
+        exludeRoles: this.props.projectRoles.map((role) => {
+          return {
+            ...role,
+            permission: true
+          }
+        })
+      })
     })
   }
 
@@ -451,37 +480,59 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     })
   }
 
-  private onShowDashboardForm (itemId, formType) {
-    const { dashboards } = this.props
+  private onShowDashboardForm (item, formType) {
+    const { dashboards, match, onLoadDashboards } = this.props
     this.setState({
       formVisible: true,
-      itemId
+      itemId: item.id
     }, () => {
-      const {
-        config,
-        id,
-        name,
-        parentId,
-        type,
-        index
-      } = (dashboards as any[]).find((g) => g.id === itemId)
-      this.dashboardForm.props.form.setFieldsValue({
-        id,
-        folder: parentId ? `${(dashboards as any[]).find((g) => g.id === parentId).id}` : '0',
-        config,
-        name: formType === 'copy' ? `${name}_copy` : name,
-        selectType: type === 1,
-        index
+      onLoadDashboards(+match.params.portalId, (result) => {
+        setTimeout(() => {
+          const {
+            config,
+            id,
+            name,
+            parentId,
+            type,
+            index
+          } = (result as any[]).find((g) => g.id === item.id)
+          this.dashboardForm.props.form.setFieldsValue({
+            id,
+            folder: parentId ? `${(dashboards as any[]).find((g) => g.id === parentId).id}` : '0',
+            config,
+            name: formType === 'copy' ? `${name}_copy` : name,
+          //  selectType: type === 1,
+            selectType: type,
+            index
+          })
+        }, 0)
       })
+
+      const { onExcludeRoles, projectRoles } = this.props
+
+      if (onExcludeRoles && item && item.id) {
+        onExcludeRoles('dashboard', item.id, (result: number[]) => {
+          this.setState({
+            exludeRoles:  projectRoles.map((role) => {
+              return result.some((re) => re === role.id) ? {...role, permission: false} : {...role, permission: true}
+            })
+          })
+        })
+      }
     })
   }
 
-  private onOperateMore = (itemId, type) => {
-    this.setState({
-      formType: type
-    }, () => {
-      this.onShowDashboardForm(itemId, this.state.formType)
-    })
+
+  private onOperateMore = (item, type) => {
+    if (type === 'download') {
+      this.props.onInitiateDownloadTask(item.id, item.type === 0 ? DownloadTypes.Folder : DownloadTypes.Dashboard, [])
+    } else {
+      this.setState({
+        formType: type
+      }, () => {
+        this.onShowDashboardForm(item, this.state.formType)
+      })
+    }
   }
 
   private searchDashboard = (e) => {
@@ -490,11 +541,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     this.setState({
       searchValue: value ? dashboards.filter((d) => d.name.includes(value)) : []
     })
-  }
-
-  private backPortal = () => {
-    const { router, params } = this.props
-    router.replace(`/project/${params.pid}/vizs`)
   }
 
   private pickSearchDashboard = (dashboardId) => (e) => {
@@ -514,13 +560,14 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   }
 
   private confirmDeleteDashboard = (id) => {
-    const { params, router, onDeleteDashboard, dashboards } = this.props
+    const { match, history, onDeleteDashboard, dashboards } = this.props
     const { dashboardData } = this.state
+    const dashboardId = this.getDashboardIdFromLocation()
 
-    onDeleteDashboard(id, () => {
-      const { pid, portalId, portalName } = params
+    onDeleteDashboard(id, +match.params.portalId, () => {
+      const { projectId, portalId } = match.params
 
-      const paramsDashboard = dashboards.find((d) => d.id === Number(params.dashboardId))
+      const paramsDashboard = dashboards.find((d) => d.id === dashboardId)
       const noCurrentDashboards = dashboardData.filter((d) => d.id !== id)
       if (noCurrentDashboards.length !== 0 && paramsDashboard) {
         const remainDashboards = noCurrentDashboards.filter((r) => r.parentId !== id)
@@ -529,12 +576,12 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           type: 2,
           children: remainDashboards
         }
-        if (Number(params.dashboardId) === id || paramsDashboard.parentId === id) {
+        if (dashboardId === id || paramsDashboard.parentId === id) {
           const defaultDashboardId = findFirstLeaf(treeData)
-          router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
+          history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${defaultDashboardId}`)
         }
       } else {
-        router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/-1`)
+        history.replace(`/project/${projectId}/portal/${portalId}/dashboard/-1`)
         this.setState({
           isGrid: false
         })
@@ -570,7 +617,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     } else {
       let currentKey = []
       if (expandedKeys.length === 0) {
-        expandedKeys.push(obj.node.props.title)
+        expandedKeys.push(obj.node.props.eventKey)
         currentKey = expandedKeys
       } else {
         currentKey = expandedKeys.filter((e) => e !== obj.node.props.title)
@@ -582,19 +629,42 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   }
 
   private cancel = () => {
-    const { router, params } = this.props
-    router.replace(`/project/${params.pid}/vizs`)
+    const { history, match } = this.props
+    history.replace(`/project/${match.params.projectId}/vizs`)
+  }
+
+  private initCheckNodes = (checkedKeys) => {
+    this.setState({
+      checkedKeys
+    })
+  }
+
+  private saveSplitSize = (newSize: number) => {
+    localStorage.setItem('dashboardSplitSize', newSize.toString())
+    this.setState({
+      portalTreeWidth: newSize
+    })
+  }
+
+  private changePermission = (scope: IExludeRoles, event) => {
+    scope.permission = event.target.checked
+    this.setState({
+      exludeRoles: this.state.exludeRoles.map((role) => role && role.id === scope.id ? scope : role)
+    })
   }
 
   public render () {
     const {
-      params,
+      match,
+      currentDashboard,
       dashboards,
       modalLoading,
-      children,
       currentProject,
+      currentPortal,
+      downloadList,
       onCheckUniqueName,
-      portals
+      onLoadDownloadList,
+      onDownloadFile
     } = this.props
 
     const {
@@ -603,12 +673,16 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       searchValue,
       dashboardData,
       isGrid,
-      searchVisible
+      searchVisible,
+      checkedKeys,
+      splitSize,
+      portalTreeWidth
     } = this.state
-
     const items = searchValue.map((s) => {
       return <li key={s.id} onClick={this.pickSearchDashboard(s.id)}>{s.name}</li>
     })
+
+    const dashboardId = this.getDashboardIdFromLocation().toString()
 
     let modalTitle = ''
     switch (formType) {
@@ -642,7 +716,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         key="submit"
         size="large"
         type="primary"
-        loading={modalLoading}
+        loading={modalLoading.editing}
         onClick={this.onModalOk}
       >
         {formType === 'delete' ? '确 定' : '保 存'}
@@ -655,6 +729,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           currentProject={currentProject}
           depth={depth}
           item={item}
+          splitWidth={portalTreeWidth || 190}
           onInitOperateMore={this.onOperateMore}
           initChangeDashboard={this.changeDashboard}
         />
@@ -672,101 +747,113 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
     const AdminIcon = ModulePermission<IconProps>(currentProject, 'viz', true)(Icon)
 
-    let portalDec = ''
-    if (portals) {
-      portalDec = portals.find((p) => p.name === params.portalName).description
-    }
+    const portalName = currentPortal && currentPortal.name
+    const portalDesc = currentPortal && currentPortal.description
+
     return (
       <div className={styles.portal}>
         <EditorHeader
           className={styles.portalHeader}
           currentType="dashboard"
-          name={params.portalName}
-          description={portalDec}
+          name={portalName}
+          description={portalDesc}
+          downloadList={downloadList}
           onCancel={this.cancel}
+          onLoadDownloadList={onLoadDownloadList}
+          onDownloadFile={onDownloadFile}
         />
-        <Helmet title={params.portalName} />
+        <Helmet title={portalName} />
         <div className={styles.portalBody}>
-          <div className={styles.portalTree}>
-            <div className={styles.portalRow}>
-              <span className={styles.portalAction}>
-                <Popover
-                  placement="bottom"
-                  content={
-                    <div className={styles.portalTreeSearch}>
-                      <Search
-                        placeholder="Search"
-                        onChange={this.searchDashboard}
+          <Suspense fallback={null}>
+            <SplitPane
+              split="vertical"
+              defaultSize={splitSize}
+              minSize={this.defaultSplitSize}
+              maxSize={this.maxSplitSize}
+              onChange={this.saveSplitSize}
+            >
+              <div className={styles.portalTree} style={{ width: portalTreeWidth || 190 }}>
+                <div className={styles.portalRow}>
+                  <span className={styles.portalAction}>
+                    <Popover
+                      placement="bottom"
+                      content={
+                        <div className={styles.portalTreeSearch}>
+                          <Search
+                            placeholder="Search"
+                            onChange={this.searchDashboard}
+                          />
+                          <ul>
+                            {items}
+                          </ul>
+                        </div>}
+                      trigger="click"
+                      visible={searchVisible}
+                      onVisibleChange={this.searchVisibleChange}
+                    >
+                      <Tooltip placement="top" title="搜索">
+                        <Icon
+                          type="search"
+                          className={styles.search}
+                        />
+                      </Tooltip>
+                    </Popover>
+                    <Tooltip placement="top" title="新增">
+                      <AdminIcon
+                        type="plus"
+                        className={styles.plus}
+                        onClick={this.onAddItem}
                       />
-                      <ul>
-                        {items}
-                      </ul>
-                    </div>}
-                  trigger="click"
-                  visible={searchVisible}
-                  onVisibleChange={this.searchVisibleChange}
-                >
-                  <Tooltip placement="top" title="搜索">
-                    <Icon
-                      type="search"
-                      className={styles.search}
-                    />
-                  </Tooltip>
-                </Popover>
-                <Tooltip placement="top" title="新增">
-                  <AdminIcon
-                    type="plus"
-                    className={styles.plus}
-                    onClick={this.onAddItem}
-                  />
-                </Tooltip>
-                <Popover
-                  placement="bottom"
-                  content={
-                    <ul className={styles.menu}>
-                      <li onClick={this.onCollapseAll}>收起全部</li>
-                      <li onClick={this.onExpandAll}>展开全部</li>
-                    </ul>}
-                  trigger="click"
-                >
-                  <Tooltip placement="top" title="更多">
-                    <Icon
-                      type="ellipsis"
-                      className={styles.more}
-                    />
-                  </Tooltip>
-                </Popover>
-              </span>
-            </div>
-            { dashboardData.length
-              ? <div className={styles.portalTreeNode}>
-                <Tree
-                  onExpand={this.onExpand}
-                  expandedKeys={this.state.expandedKeys}
-                  autoExpandParent={this.state.autoExpandParent}
-                  selectedKeys={[this.props.params.dashboardId]}
-                  draggable={initializePermission(currentProject, 'vizPermission')}
-                  onDrop={this.onDrop}
-                  onSelect={this.handleTree}
-                >
-                {loop(dashboardData)}
-                </Tree>
-              </div>
-              : isGrid ? <h3 className={styles.loadingTreeMsg}>Loading tree......</h3> : ''
-            }
-          </div>
-          <div className={styles.gridClass}>
-            {
-              isGrid
-              ? children
-              : (
-                <div className={styles.noDashboard}>
-                  <img src={require('../../assets/images/noDashboard.png')} onClick={this.onAddItem}/>
-                  <p>请创建文件夹或 Dashboard</p>
+                    </Tooltip>
+                    <Popover
+                      placement="bottom"
+                      content={
+                        <ul className={styles.menu}>
+                          <li onClick={this.onCollapseAll}>收起全部</li>
+                          <li onClick={this.onExpandAll}>展开全部</li>
+                        </ul>}
+                      trigger="click"
+                    >
+                      <Tooltip placement="top" title="更多">
+                        <Icon
+                          type="ellipsis"
+                          className={styles.more}
+                        />
+                      </Tooltip>
+                    </Popover>
+                  </span>
                 </div>
-              )
-            }
-          </div>
+                { dashboardData.length
+                  ? <div className={styles.portalTreeNode}>
+                    <Tree
+                      onExpand={this.onExpand}
+                      expandedKeys={this.state.expandedKeys}
+                      autoExpandParent={this.state.autoExpandParent}
+                      selectedKeys={[dashboardId]}
+                      draggable={initializePermission(currentProject, 'vizPermission')}
+                      onDrop={this.onDrop}
+                      onSelect={this.handleTree}
+                    >
+                    {loop(dashboardData)}
+                    </Tree>
+                  </div>
+                  : isGrid ? <h3 className={styles.loadingTreeMsg}>Loading tree......</h3> : ''
+                }
+              </div>
+              <div className={styles.gridClass}>
+                {
+                  isGrid
+                  ? <Route path="/project/:projectId/portal/:portalId/dashboard/:dashboardId" component={Grid} />
+                  : (
+                    <div className={styles.noDashboard}>
+                      <img src={require('assets/images/noDashboard.png')} onClick={this.onAddItem}/>
+                      <p>请创建文件夹或 Dashboard</p>
+                    </div>
+                  )
+                }
+              </div>
+            </SplitPane>
+          </Suspense>
         </div>
         <Modal
           title={modalTitle}
@@ -779,8 +866,10 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             type={formType}
             itemId={this.state.itemId}
             dashboards={dashboards}
-            portalId={params.portalId}
+            portalId={Number(match.params.portalId)}
+            exludeRoles={this.state.exludeRoles}
             onCheckUniqueName={onCheckUniqueName}
+            onChangePermission={this.changePermission}
             wrappedComponentRef={this.refHandlers.dashboardForm}
           />
         </Modal>
@@ -790,23 +879,30 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 }
 
 const mapStateToProps = createStructuredSelector({
-  dashboards: makeSelectDashboards(),
-  modalLoading: makeSelectModalLoading(),
+  dashboards: makeSelectCurrentDashboards(),
+  currentDashboard: makeSelectCurrentDashboard(),
+  modalLoading: makeSelectVizLoading(),
   currentProject: makeSelectCurrentProject(),
-  portals: makeSelectPortals()
+  currentPortal: makeSelectCurrentPortal(),
+  projectRoles: makeSelectProjectRoles(),
+  downloadList: makeSelectDownloadList()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
-    // onLoadDashboardDetail: (selectedDashboard, projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(selectedDashboard, projectId, portalId, dashboardId)),
-    onLoadDashboards: (portalId, resolve) => dispatch(loadDashboards(portalId, resolve)),
-    onAddDashboard: (dashboard, resolve) => dispatch(addDashboard(dashboard, resolve)),
-    onEditDashboard: (formType, dashboard, resolve) => dispatch(editDashboard(formType, dashboard, resolve)),
-    onDeleteDashboard: (id, resolve) => dispatch(deleteDashboard(id, resolve)),
+    onLoadDashboards: (portalId, resolve) => dispatch(VizActions.loadPortalDashboards(portalId, resolve, false)),
+    onAddDashboard: (dashboard, resolve) => dispatch(VizActions.addDashboard(dashboard, resolve)),
+    onEditDashboard: (formType, dashboard, resolve) => dispatch(VizActions.editDashboard(formType, dashboard, resolve)),
+    onDeleteDashboard: (id, portalId, resolve) => dispatch(VizActions.deleteDashboard(id, portalId, resolve)),
     onHideNavigator: () => dispatch(hideNavigator()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
-    onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
-    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id))
+    onLoadPortals: (projectId) => dispatch(VizActions.loadPortals(projectId)),
+    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
+    onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
+    onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
+    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(DashboardActions.initiateDownloadTask(id, type, downloadParams)),
+    onLoadDownloadList: () => dispatch(loadDownloadList()),
+    onDownloadFile: (id) => dispatch(downloadFile(id))
   }
 }
 
@@ -815,18 +911,23 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'dashboard', reducer })
 const withSaga = injectSaga({ key: 'dashboard', saga })
 
-const withReducerProject = injectReducer({ key: 'project', reducer: reducerProject })
-const withSagaProject = injectSaga({ key: 'project', saga: sagaProject })
+const withProjectReducer = injectReducer({ key: 'project', reducer: projectReducer })
+const withProjectSaga = injectSaga({ key: 'project', saga: projectSaga })
 
-const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
-const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
+const withVizReducer = injectReducer({ key: 'viz', reducer: vizReducer })
+const withVizSaga = injectSaga({ key: 'viz', saga: vizSaga })
+
+const withViewReducer = injectReducer({ key: 'view', reducer: viewReducer })
+const withViewSaga = injectSaga({ key: 'view', saga: viewSaga })
 
 export default compose(
   withReducer,
-  withReducerProject,
-  withPortalReducer,
+  withProjectReducer,
+  withVizReducer,
+  withViewReducer,
   withSaga,
-  withSagaProject,
-  withPortalSaga,
+  withProjectSaga,
+  withVizSaga,
+  withViewSaga,
   withConnect
 )(Dashboard)

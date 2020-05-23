@@ -20,16 +20,16 @@
 
 import { createSelector } from 'reselect'
 
-const selectProfile = (state) => state.get('profile')
+const selectProfile = (state) => state.profile
 
 const makeSelectUserProfile = () => createSelector(
   selectProfile,
-  (state) => state.get('userProfile')
+  (state) => state.userProfile
 )
 
 const makeSelectLoading = () => createSelector(
   selectProfile,
-  (state) => state.get('loading')
+  (state) => state.loading
 )
 
 

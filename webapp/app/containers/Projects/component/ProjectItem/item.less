@@ -1,0 +1,97 @@
+@import "~assets/less/variable";
+.unit {
+  height: 134px;
+  background-color: #fff;
+  margin-right: 16px;
+  margin-bottom: 16px;
+  border-radius: 2px;
+  box-shadow: @block-box-shadow;
+  cursor: pointer;
+  transform: translate3d(0, 0, 0);
+  transition: transform 200ms linear,
+  box-shadow 200ms linear,
+  background-size 500ms linear;
+  &:hover {
+    box-shadow: @block-active-box-shadow;
+  }
+  .thumbnail {
+    height: 100px;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    background-size: 100%;
+    background-position: center center;
+    transform: translate3d(0, 0, 0);
+    transition: transform 200ms linear,
+    box-shadow 200ms linear,
+    background-size 500ms linear;
+    position: relative;
+    &:hover {
+      background-size: 110%;
+      transform: translate3d(0, -5px, 0);
+      .createIcon {
+        color: @blue;
+      }
+      .createText {
+        color: @blue;
+      }
+    }
+
+    header {
+      background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0) 100%);
+      border-radius: 2px 2px 0 0;
+    }
+
+    .tags {
+      text-align: right;
+      padding-top: 8px;
+      .create {
+        background-color: #108EE9;
+      }
+      .fork {
+        background-color: #F24724;
+      }
+      .favorite {
+        background-color: #F24724;
+      }
+      .join {
+        background-color: #FA8C15;
+      }
+
+    }
+
+    .title {
+      margin-top: -18px;
+      padding: 2px 58px 0 12px;
+      color: @white;
+      font-size: 1.15em;
+      font-weight: normal;
+
+      .ellipsis;
+    }
+
+    .descs {
+      padding: 8px 12px 24px;
+      color: @white;
+      font-size: .85em;
+
+      .ellipsis;
+    }
+  }
+  .itemToolbar {
+    height: 34px;
+    background-color: @white;
+    display: flex;
+    padding: 0 6px 0 8px;
+    justify-content: space-between;
+    align-items: center;
+    .stars {
+      align-self: center;
+    }
+    .others {
+      align-self: center;
+    }
+    i {
+      margin-left: 8px;
+    }
+  }
+}

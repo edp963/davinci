@@ -24,23 +24,21 @@ import Helmet from 'react-helmet'
 import { createStructuredSelector } from 'reselect'
 
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-const Icon = require('antd/lib/icon')
-const Message = require('antd/lib/message')
+import { Icon, message } from 'antd'
 import RegisterForm from './RegisterForm'
 import SendEmailTips from './SendEmailTips'
 const styles = require('../Login/Login.less')
 import { checkNameAction } from '../App/actions'
 import { signup, sendMailAgain } from './actions'
 import { makeSelectSignupLoading } from './selectors'
-import {InjectedRouter} from 'react-router/lib/Router'
+import { RouteComponentProps } from 'react-router-dom'
 
 interface IRegisterProps {
-  router: InjectedRouter
   signupLoading: boolean
   onSendEmailOnceMore: (email: string, resolve?: (res: any) => any) => any
   onSignup: (username: string, email: string, password: string, resolve?: (res: any) => any) => any
@@ -56,7 +54,7 @@ interface IRegisterStates {
 }
 
 
-export class Register extends React.PureComponent<IRegisterProps, IRegisterStates> {
+export class Register extends React.PureComponent<IRegisterProps & RouteComponentProps, IRegisterStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -98,15 +96,15 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
     const emailRep = /^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$/
     if (username && password && email && password2) {
       if (!emailRep.test(email)) {
-        Message.error('无效的邮箱地址')
+        message.error('无效的邮箱地址')
         return
       }
       if (password.length < 6 || password.length > 20) {
-        Message.error('密码长度为6-20位')
+        message.error('密码长度为6-20位')
         return
       }
       if (password !== password2) {
-        Message.error('两次输入的密码不一致')
+        message.error('两次输入的密码不一致')
         return
       }
       onSignup(username, email, password, () => {
@@ -124,15 +122,15 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
   }
 
   private toLogin = () => {
-    const { router } = this.props
-    router.replace('/login')
+    const { history } = this.props
+    history.replace('/login')
   }
 
   private sendEmailOnceMore = () => {
     const { onSendEmailOnceMore } = this.props
     const { email } = this.state
     onSendEmailOnceMore(email,  (res) => {
-      Message.success(res)
+      message.success(res)
     })
   }
 

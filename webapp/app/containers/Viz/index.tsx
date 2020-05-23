@@ -1,221 +1,42 @@
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
 
-import * as React from 'react'
-import Helmet from 'react-helmet'
-import { Link, RouteComponentProps } from 'react-router'
+import React from 'react'
+import { Switch, Route } from 'react-router-dom'
+import { useInjectReducer } from 'utils/injectReducer'
+import { useInjectSaga } from 'utils/injectSaga'
 
-import { compose } from 'redux'
-import { connect } from 'react-redux'
-import { createStructuredSelector } from 'reselect'
-import injectReducer from 'utils/injectReducer'
-import injectSaga from 'utils/injectSaga'
-import displayReducer from '../Display/reducer'
-import displaySaga from '../Display/sagas'
-import portalSaga from '../Portal/sagas'
-import portalReducer from '../Portal/reducer'
+import reducer from './reducer'
+import saga from './sagas'
 
-import { loadDisplays, addDisplay, editDisplay, deleteDisplay } from '../Display/actions'
-import { loadPortals, addPortal, editPortal, deletePortal } from '../Portal/actions'
-import { makeSelectDisplays } from '../Display/selectors'
-import { makeSelectPortals } from '../Portal/selectors'
-import { checkNameUniqueAction } from '../App/actions'
+import { VizList, PortalIndex, VizDisplay } from './Loadable'
 
-const Icon = require('antd/lib/icon')
-const Collapse = require('antd/lib/collapse')
-import * as classnames from 'classnames'
-import Box from '../../components/Box'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const Panel = Collapse.Panel
-const styles = require('./Viz.less')
-const utilStyles = require('../../assets/less/util.less')
-import Container from '../../components/Container'
-import PortalList from '../Portal/components/PortalList'
-import DisplayList, { IDisplay } from '../Display/components/DisplayList'
-import { Portal } from '../Portal'
-import {makeSelectCurrentProject} from '../Projects/selectors'
-import ModulePermission from '../Account/components/checkModulePermission'
-import {IProject} from '../Projects'
+export default () => {
+  useInjectReducer({ key: 'viz', reducer })
+  useInjectSaga({ key: 'viz', saga })
 
-interface IParams {
-  pid: number
+  return (
+    <Switch>
+      <Route path="/project/:projectId/vizs" component={VizList} />
+      <Route path="/project/:projectId/portal/:portalId" component={PortalIndex} />
+      <Route path="/project/:projectId/display/:displayId" component={VizDisplay} />
+    </Switch>
+  )
 }
-
-interface IVizProps extends RouteComponentProps<{}, IParams> {
-  displays: any[]
-  portals: any[]
-  currentProject: IProject
-  onLoadDisplays: (projectId) => void
-  onAddDisplay: (display: IDisplay, resolve: () => void) => void
-  onEditDisplay: (display: IDisplay, resolve: () => void) => void
-  onDeleteDisplay: (displayId: number) => void
-  onLoadPortals: (projectId) => void
-  onAddPortal: (portal, resolve) => void
-  onEditPortal: (portal, resolve) => void
-  onDeletePortal: (portalId: number) => void
-  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
-}
-
-interface IVizStates {
-  collapse: {dashboard: boolean, display: boolean}
-}
-
-export class Viz extends React.Component<IVizProps, IVizStates> {
-
-  constructor (props: IVizProps) {
-    super(props)
-    this.state = {
-      collapse: {
-        dashboard: true,
-        display: true
-      }
-    }
-  }
-
-  public componentWillMount () {
-    const { params, onLoadDisplays, onLoadPortals } = this.props
-    const projectId = params.pid
-    onLoadDisplays(projectId)
-    onLoadPortals(projectId)
-  }
-
-  private goToDashboard = (portal?: any) => () => {
-    const { params } = this.props
-    const { id, name } = portal
-    this.props.router.push(`/project/${params.pid}/portal/${id}/portalName/${name}`)
-  }
-
-  private goToDisplay = (display?: any) => () => {
-    const { params } = this.props
-    this.props.router.push(`/project/${params.pid}/display/${display ? display.id : -1}`)
-  }
-
-  private onCopy = (display) => {
-    console.log('onCopy: ', display)
-  }
-
-  private onCollapseChange = (key: string) => () => {
-    const { collapse } = this.state
-    this.setState({
-      collapse: {
-        ...collapse,
-        [key]: !collapse[key]
-      }
-    })
-  }
-
-  public render () {
-    const {
-      displays, params, onAddDisplay, onEditDisplay, onDeleteDisplay,
-      portals, onAddPortal, onEditPortal, onDeletePortal, currentProject, onCheckUniqueName
-    } = this.props
-    const projectId = params.pid
-    const isHideDashboardStyle = classnames({
-      [styles.listPadding]: true,
-      [utilStyles.hide]: !this.state.collapse.dashboard
-    })
-    const isHideDisplayStyle = classnames({
-      [styles.listPadding]: true,
-      [utilStyles.hide]: !this.state.collapse.display
-    })
-    return (
-      <Container>
-        <Helmet title="Viz" />
-        <Container.Title>
-          <Row>
-            <Col span={24}>
-              <Breadcrumb className={utilStyles.breadcrumb}>
-                <Breadcrumb.Item>
-                  <Link to="">Viz</Link>
-                </Breadcrumb.Item>
-              </Breadcrumb>
-            </Col>
-          </Row>
-        </Container.Title>
-        <Container.Body>
-          <Box>
-            <Box.Header>
-              <Box.Title>
-                <Row onClick={this.onCollapseChange('dashboard')}>
-                  <Col span={20}>
-                    <Icon type={`${this.state.collapse.dashboard ? 'down' : 'right'}`} />Dashboard
-                  </Col>
-                </Row>
-              </Box.Title>
-            </Box.Header>
-            <div className={isHideDashboardStyle}>
-              <PortalList
-                currentProject={currentProject}
-                projectId={projectId}
-                portals={portals}
-                onPortalClick={this.goToDashboard}
-                onAdd={onAddPortal}
-                onEdit={onEditPortal}
-                onDelete={onDeletePortal}
-                onCheckUniqueName={onCheckUniqueName}
-              />
-            </div>
-          </Box>
-          <div className={styles.spliter16}/>
-          <Box>
-            <Box.Header>
-              <Box.Title>
-                <Row onClick={this.onCollapseChange('display')}>
-                  <Col span={20}>
-                    <Icon type={`${this.state.collapse.display ? 'down' : 'right'}`} />Display
-                  </Col>
-                </Row>
-              </Box.Title>
-            </Box.Header>
-            <div className={isHideDisplayStyle}>
-              <DisplayList
-                currentProject={currentProject}
-                projectId={projectId}
-                displays={displays}
-                onDisplayClick={this.goToDisplay}
-                onAdd={onAddDisplay}
-                onEdit={onEditDisplay}
-                onCopy={this.onCopy}
-                onDelete={onDeleteDisplay}
-              />
-            </div>
-          </Box>
-        </Container.Body>
-      </Container>
-    )
-  }
-}
-
-const mapStateToProps = createStructuredSelector({
-  displays: makeSelectDisplays(),
-  portals: makeSelectPortals(),
-  currentProject: makeSelectCurrentProject()
-})
-
-export function mapDispatchToProps (dispatch) {
-  return {
-    onLoadDisplays: (projectId) => dispatch(loadDisplays(projectId)),
-    onAddDisplay: (display: IDisplay, resolve) => dispatch(addDisplay(display, resolve)),
-    onEditDisplay: (display: IDisplay, resolve) => dispatch(editDisplay(display, resolve)),
-    onDeleteDisplay: (id) => dispatch(deleteDisplay(id)),
-    onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
-    onAddPortal: (portal, resolve) => dispatch(addPortal(portal, resolve)),
-    onEditPortal: (portal, resolve) => dispatch(editPortal(portal, resolve)),
-    onDeletePortal: (id) => dispatch(deletePortal(id)),
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
-  }
-}
-
-const withConnect = connect(mapStateToProps, mapDispatchToProps)
-const withDisplayReducer = injectReducer({ key: 'display', reducer: displayReducer })
-const withDisplaySaga = injectSaga({ key: 'display', saga: displaySaga })
-const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
-const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
-
-export default compose(
-  withDisplayReducer,
-  withDisplaySaga,
-  withPortalReducer,
-  withPortalSaga,
-  withConnect
-)(Viz)

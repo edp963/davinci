@@ -1,160 +1,208 @@
-import { takeEvery } from 'redux-saga'
-import { call, put, all } from 'redux-saga/effects'
+import { call, put, all, takeEvery, takeLatest } from 'redux-saga/effects'
 
-import {ADD_SCHEDULES, DELETE_SCHEDULES, LOAD_SCHEDULES, CHANGE_SCHEDULE_STATUS, UPDATE_SCHEDULES, LOAD_VIZS} from './constants'
-import {
-  schedulesLoaded,
-  loadSchedulesFail,
-  scheduleAdded,
-  addScheduleFail,
-  scheduleDeleted,
-  deleteScheduleFail,
-  currentScheduleStatusChanged,
-  changeSchedulesStatusFail,
-  scheduleUpdated,
-  updateScheduleFail,
-  vizsLoaded,
-  loadVizsFail
-} from './actions'
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
-import { errorHandler } from '../../utils/util'
-import { PortalList } from '../Portal/components/PortalList'
-const message = require('antd/lib/message')
+import { ActionTypes } from './constants'
+import { ScheduleActions, ScheduleActionType, loadVizsFail, vizsLoaded } from './actions'
+import request from 'utils/request'
+import api from 'utils/api'
+import { errorHandler } from 'utils/util'
+import { message } from 'antd'
+import { IScheduleRaw, ISchedule } from './components/types'
 
-export function* getSchedules ({payload}) {
+export function* getSchedules (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.LOAD_SCHEDULES) { return }
+
   try {
-    const asyncData = yield call(request, `${api.schedule}?projectId=${payload.pid}`)
-    const schedules = readListAdapter(asyncData)
-    yield put(schedulesLoaded(schedules))
+    const asyncData = yield call(request, `${api.schedule}?projectId=${action.payload.projectId}`)
+    const rawSchedules: IScheduleRaw[] = asyncData.payload
+    const schedules = rawSchedules.map<ISchedule>((schedule) => ({ ...schedule, config: JSON.parse(schedule.config) }))
+    yield put(ScheduleActions.schedulesLoaded(schedules))
   } catch (err) {
-    yield put(loadSchedulesFail())
+    yield put(ScheduleActions.loadSchedulesFail())
     errorHandler(err)
   }
 }
 
-export function* addSchedules ({ payload }) {
+export function* getScheduleDetail (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.LOAD_SCHEDULE_DETAIL) { return }
+
+  try {
+    const asyncData = yield call(request, `${api.schedule}/${action.payload.scheduleId}`)
+    const schedule = asyncData.payload
+    schedule.config = JSON.parse(schedule.config)
+    yield put(ScheduleActions.scheduleDetailLoaded(schedule))
+  } catch (err) {
+    yield put(ScheduleActions.loadScheduleDetailFail())
+    errorHandler(err)
+  }
+}
+
+export function* addSchedule (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.ADD_SCHEDULE) { return }
+
+  const { schedule, resolve } = action.payload
+  const rawSchedule: IScheduleRaw = { ...schedule, config: JSON.stringify(schedule.config) }
   try {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.schedule,
-    //  data: writeAdapter(payload.schedule)
-      data: payload.schedule
+      data: rawSchedule
     })
-    const result = readObjectAdapter(asyncData)
-    yield put(scheduleAdded(result))
-    payload.resolve()
+    const result = asyncData.payload
+    result.config = JSON.parse(result.config)
+    yield put(ScheduleActions.scheduleAdded(result))
+    resolve()
   } catch (err) {
-    yield put(addScheduleFail())
+    yield put(ScheduleActions.addScheduleFail())
     errorHandler(err)
   }
 }
 
-export function* deleteSchedule ({ payload }) {
+export function* deleteSchedule (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.DELETE_SCHEDULE) { return }
+
+  const { id } = action.payload
   try {
     yield call(request, {
       method: 'delete',
-      url: `${api.schedule}/${payload.id}`
+      url: `${api.schedule}/${id}`
     })
-    yield put(scheduleDeleted(payload.id))
+    yield put(ScheduleActions.scheduleDeleted(id))
   } catch (err) {
-    yield put(deleteScheduleFail())
+    yield put(ScheduleActions.deleteScheduleFail())
     errorHandler(err)
   }
 }
 
-export function* changeScheduleStatus ({ payload }) {
+export function* changeScheduleStatus (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.CHANGE_SCHEDULE_STATUS) { return }
+
+  const { currentStatus, id } = action.payload
   try {
-    let status = ''
-    switch (payload.currentStatus) {
+    let nextStatus = ''
+    switch (currentStatus) {
       case 'new':
-        status = 'start'
-        break
+      case 'stopped':
       case 'failed':
-        status = 'start'
+        nextStatus = 'start'
         break
       case 'started':
-        status = 'stop'
-        break
-      case 'stopped':
-        status = 'start'
-        break
-      default:
+        nextStatus = 'stop'
         break
     }
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.schedule}/${status}/${payload.id}`
+      url: `${api.schedule}/${nextStatus}/${id}`
     })
-    const result = readObjectAdapter(asyncData)
-    yield put(currentScheduleStatusChanged(payload.id, result))
+    const result = asyncData.payload
+    result.config = JSON.parse(result.config)
+    yield put(ScheduleActions.scheduleStatusChanged(result))
   } catch (err) {
-    yield put(changeSchedulesStatusFail())
+    yield put(ScheduleActions.changeSchedulesStatusFail())
     errorHandler(err)
   }
 }
 
-export function* updateSchedule ({ payload }) {
+export function* executeScheduleImmediately (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.EXECUTE_SCHEDULE_IMMEDIATELY) { return }
+
+  const { id, resolve } = action.payload
+  try {
+    yield call(request, {
+      method: 'post',
+      url: `${api.schedule}/execute/${id}`
+    })
+    resolve()
+  } catch (err) {
+    errorHandler(err)
+  }
+}
+
+export function* editSchedule (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.EDIT_SCHEDULE) { return }
+
+  const { schedule, resolve } = action.payload
+  try {
+    yield call(request, {
+      method: 'put',
+      url: `${api.schedule}/${schedule.id}`,
+      data: schedule
+    })
+    yield put(ScheduleActions.scheduleEdited(schedule))
+    resolve()
+  } catch (err) {
+    yield put(ScheduleActions.editScheduleFail())
+    errorHandler(err)
+  }
+}
+
+export function* getSuggestMails (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.LOAD_SUGGEST_MAILS) { return }
+
+  const { keyword } = action.payload
+  if (!keyword) {
+    yield put(ScheduleActions.suggestMailsLoaded([]))
+    return
+  }
   try {
     const asyncData = yield call(request, {
-      method: 'put',
-      url: `${api.schedule}/${payload.schedule.id}`,
-   //   data: writeAdapter(payload.schedule)
-      data: payload.schedule
+      method: 'get',
+      url: `${api.user}?keyword=${keyword}&includeSelf=true`
     })
-    const result = readObjectAdapter(asyncData)
-    yield put(scheduleUpdated(result))
-    payload.resolve()
+    const mails = asyncData.payload
+    yield put(ScheduleActions.suggestMailsLoaded(mails))
   } catch (err) {
-    yield put(updateScheduleFail())
+    yield put(ScheduleActions.loadSuggestMailsFail())
     errorHandler(err)
   }
 }
 
-export function* getVizsData ({ payload }) {
-  const { pid } = payload
+// @FIXME need remove
+export function* getVizsData (action) {
+  const { projectId } = action.payload
   try {
-    const displayData = yield call(request, `${api.display}?projectId=${pid}`)
-    const portalsData = yield call(request, `${api.portal}?projectId=${pid}`)
-    const portalsList = readListAdapter(portalsData)
-    const displayList = readListAdapter(displayData).map((display) => ({...display, ...{
+    const portalsData = yield call(request, `${api.portal}?projectId=${projectId}`)
+    const portalsList = portalsData.payload
+
+    const displayData = yield call(request, `${api.display}?projectId=${projectId}`)
+    const displayList = displayData.payload.map((display) => ({
+      ...display,
+      vizType: 'display',
       contentType: 'display',
-      label: `${display.name}`,
+      title: `${display.name}`,
       key: display.name,
       value: `${display.id}(d)`,
       isLeaf: true
-    }}))
+    }))
+
     const list = yield all(portalsList.map((portals, index) => {
       return call(request, `${api.portal}/${portals.id}/dashboards`)
     }))
     const portals = portalsList.map((portal, index) => {
-      portal.children =  buildTree(readListAdapter(list[index]))
+      portal.children =  buildTree(list[index].payload)
       return {
         ...portal,
-        ...{
-          contentType: 'portal',
-          label: `${portal.name}`,
-          key: portal.name,
-          value: `${portal.id}(p)`,
-          isLeaf: true
-        }
+        vizType: 'portal',
+        contentType: 'portal',
+        title: `${portal.name}`,
+        key: portal.name,
+        value: `${portal.id}(p)`,
+        isLeaf: !portal.children.length
       }
     })
     const result = [{
       contentType: 'display',
-      label: `Display`,
-      key: 'display',
+      title: `Display`,
+      key: 'DISPLAYS',
       value: 'display',
-      isLeaf: true,
+      isTitle: true,
       children: displayList
     },
     {
       contentType: 'portal',
-      label: `Dashboard`,
-      key: 'portal',
+      title: `Dashboard`,
+      key: 'DASHBOARDS',
       value: 'portal',
-      isLeaf: true,
+      isTitle: true,
       children: portals
     }]
     yield put(vizsLoaded(result))
@@ -184,6 +232,7 @@ export function* getVizsData ({ payload }) {
           tree[attr] = {
             ...tree[attr],
             ...{
+                vizType: 'dashboard',
                 contentType: 'portal',
                 label: `${tree[attr].name}`,
                 key: tree[attr].name,
@@ -199,6 +248,7 @@ export function* getVizsData ({ payload }) {
           tree[attr] = {
             ...tree[attr],
             ...{
+                vizType: 'dashboard',
                 contentType: 'portal',
                 label: `${tree[attr].name}`,
                 key: tree[attr].name,
@@ -215,13 +265,16 @@ export function* getVizsData ({ payload }) {
   }
 }
 
-export default function* rootScheduleSaga (): IterableIterator<any> {
-  yield [
-    takeEvery(LOAD_SCHEDULES, getSchedules as any),
-    takeEvery(ADD_SCHEDULES, addSchedules as any),
-    takeEvery(DELETE_SCHEDULES, deleteSchedule as any),
-    takeEvery(CHANGE_SCHEDULE_STATUS, changeScheduleStatus as any),
-    takeEvery(UPDATE_SCHEDULES, updateSchedule as any),
-    takeEvery(LOAD_VIZS, getVizsData as any)
-  ]
+export default function* rootScheduleSaga () {
+  yield all([
+    takeEvery(ActionTypes.LOAD_SCHEDULES, getSchedules),
+    takeEvery(ActionTypes.LOAD_SCHEDULE_DETAIL, getScheduleDetail),
+    takeEvery(ActionTypes.ADD_SCHEDULE, addSchedule),
+    takeEvery(ActionTypes.DELETE_SCHEDULE, deleteSchedule),
+    takeEvery(ActionTypes.CHANGE_SCHEDULE_STATUS, changeScheduleStatus),
+    takeEvery(ActionTypes.EXECUTE_SCHEDULE_IMMEDIATELY, executeScheduleImmediately),
+    takeEvery(ActionTypes.EDIT_SCHEDULE, editSchedule),
+    takeLatest(ActionTypes.LOAD_SUGGEST_MAILS, getSuggestMails),
+    takeEvery(ActionTypes.LOAD_VIZS, getVizsData)
+  ])
 }

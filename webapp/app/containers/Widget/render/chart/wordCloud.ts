@@ -18,82 +18,70 @@
  * >>
  */
 
-/*
- * WordCloud chart options generator
- */
+import { IChartProps } from '../../components/Chart'
+import { EChartOption } from 'echarts'
+import { decodeMetricName } from '../../components/util'
+import { getFormattedValue } from '../../components/Config/Format'
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
+const defaultThemeColors = defaultTheme.theme.color
 
-export default function (dataSource, flatInfo, chartParams) {
+export default function (chartProps: IChartProps) {
   const {
-    title,
-    gridSize,
-    sizeRangeX,
-    sizeRangeY
-  } = chartParams
+    width,
+    height,
+    data,
+    cols,
+    metrics,
+    chartStyles
+  } = chartProps
 
-  let metricOptions
-  let gridSizeOption
-  let sizeRangeOption
-  let gridOptions
+  const {
+    spec
+  } = chartStyles
 
-  // series 数据项
-  const metricArr = []
+  const {
 
-  gridSizeOption = gridSize && {
-    gridSize
-  }
+  } = spec
 
-  sizeRangeOption = (sizeRangeX || sizeRangeY) && {
-    sizeRange: [sizeRangeX || 0, sizeRangeY || 0]
-  }
+  const title = cols[0].name
+  const agg = metrics[0].agg
+  const metricName = decodeMetricName(metrics[0].name)
 
-  const grouped = dataSource.reduce((acc, val) => {
-    const objName = val[title]
-    if (acc[objName]) {
-      acc[objName].value += 1
-    } else {
-      acc[objName] = {
-        name: objName,
-        value: 1
+  const tooltip: EChartOption.Tooltip = {
+    formatter (params: EChartOption.Tooltip.Format) {
+      const { name, value, color } = params
+      const tooltipLabels = []
+      if (color) {
+        tooltipLabels.push(`<span class="widget-tooltip-circle" style="background: ${color}"></span>`)
       }
-    }
-    return acc
-  }, {})
-
-  const serieObj = {
-    type: 'wordCloud',
-    textStyle: {
-      normal: {
-        color: '#509af2'
-      },
-      emphasis: {
-        shadowBlur: 10,
-        shadowColor: '#509af2'
+      tooltipLabels.push(name)
+      if (data) {
+        tooltipLabels.push(': ')
+        tooltipLabels.push(getFormattedValue(value as number, metrics[0].format))
       }
-    },
-    data: Object.keys(grouped).map((k) => grouped[k]),
-    rotationStep: 45,
-    rotationRange: [-90, 90],
-    ...gridSizeOption,
-    ...sizeRangeOption
-  }
-
-  metricArr.push(serieObj)
-  metricOptions = {
-    series: metricArr
-  }
-
-  // grid
-  gridOptions = {
-    grid: {
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0
+      return tooltipLabels.join('')
     }
   }
 
   return {
-    ...metricOptions,
-    ...gridOptions
+    tooltip,
+    series: [{
+      type: 'wordCloud',
+      sizeRange: [12, 72],
+      textStyle: {
+        normal: {
+          color () {
+            return defaultThemeColors[Math.floor(Math.random() * defaultThemeColors.length)]
+          }
+        }
+      },
+      rotationStep: 90,
+      data: data
+        .filter((d) => !!d[title])
+        .map((d) => ({
+          name: d[title],
+          value: d[`${agg}(${metricName})`]
+        }))
+    }]
   }
 }

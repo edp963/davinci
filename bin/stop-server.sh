@@ -3,7 +3,7 @@
 #  <<
 #  Davinci
 #  ==
-#  Copyright (C) 2016 - 2018 EDP
+#  Copyright (C) 2016 - 2019 EDP
 #  ==
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #  >>
 
 
-Server=`ps -ef | grep java | grep davinci-server_3.01-0.3.0-SNAPSHOT | grep -v grep | awk '{print $2}'`
+Server=`ps -ef | grep java | grep edp.DavinciServerApplication | grep -v grep | awk '{print $2}'`
 if [[ $Server -gt 0 ]]; then
   kill -9 $Server
 else

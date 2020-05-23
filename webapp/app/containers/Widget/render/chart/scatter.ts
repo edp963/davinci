@@ -30,11 +30,13 @@ import {
   getLabelOption,
   getLegendOption,
   getGridPositions,
-  getSymbolSize
+  getSymbolSize,
+  getCartesianChartReferenceOptions
 } from './util'
-import { PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
+import { PIVOT_DEFAULT_SCATTER_SIZE } from 'app/globalConstants'
+import ChartTypes from '../../config/chart/ChartTypes'
 
-export default function (chartProps: IChartProps) {
+export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
     data,
     cols,
@@ -42,7 +44,8 @@ export default function (chartProps: IChartProps) {
     chartStyles,
     color,
     tip,
-    size
+    size,
+    references
   } = chartProps
 
   const {
@@ -64,14 +67,11 @@ export default function (chartProps: IChartProps) {
     horizontalLineSize,
     horizontalLineStyle
   } = splitLine
-
+  const { selectedItems } = drillOptions
   const labelOption = {
-    label: getLabelOption('scatter', labelStyleConfig, true, {
-      formatter (param) {
-        return param.data.value[2]
-      }
-    })
+    label: getLabelOption('scatter', labelStyleConfig, metrics)
   }
+  const referenceOptions = getCartesianChartReferenceOptions(references, ChartTypes.Scatter, metrics, data)
 
   let sizeRate = 0
   let sizeItemName = ''
@@ -86,7 +86,7 @@ export default function (chartProps: IChartProps) {
   const seriesData = []
 
   if (cols.length || color.items.length) {
-    const groupColumns = color.items.map((c) => c.name).concat(cols)
+    const groupColumns = color.items.map((c) => c.name).concat(cols.map((c) => c.name))
       .reduce((distinctColumns, col) => {
         if (!distinctColumns.includes(col)) {
           distinctColumns.push(col)
@@ -106,17 +106,24 @@ export default function (chartProps: IChartProps) {
 
     const labelItemName = color.items.length
       ? color.items[0].name
-      : cols[0]
+      : cols[0].name
 
-    Object.entries(grouped).forEach(([key, value]) => {
+    const groupedEntries = Object.entries(grouped)
+    groupedEntries.forEach(([key, value], gIndex) => {
       series.push({
         name: key.replace(String.fromCharCode(0), ' '),
         type: 'scatter',
-        data: value.map((v) => {
+        data: value.map((v, index) => {
           const [x, y] = metrics
           const currentSize = size.items.length ? v[sizeItemName] : PIVOT_DEFAULT_SCATTER_SIZE
           const sizeValue = getSizeValue(size.value['all'])
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === gIndex) ? {itemStyle: {
+            normal: {
+              opacity: 1
+            }
+          }} : {}
           return {
+            ...itemStyleObj,
             value: [
               v[`${x.agg}(${decodeMetricName(x.name)})`],
               v[`${y.agg}(${decodeMetricName(y.name)})`],
@@ -132,10 +139,12 @@ export default function (chartProps: IChartProps) {
           normal: {
             color: color.items.length
               ? color.items[0].config.values[key.split(String.fromCharCode(0))[0]]
-              : color.value['all']
+              : color.value['all'],
+            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
           }
         },
-        ...labelOption
+        ...labelOption,
+        ...(gIndex === groupedEntries.length - 1 && referenceOptions)
       })
       seriesData.push(value)
     })
@@ -143,11 +152,17 @@ export default function (chartProps: IChartProps) {
     series.push({
       name: 'single',
       type: 'scatter',
-      data: data.map((d) => {
+      data: data.map((d, index) => {
         const [x, y] = metrics
         const currentSize = size.items.length ? d[sizeItemName] : PIVOT_DEFAULT_SCATTER_SIZE
         const sizeValue = getSizeValue(size.value['all'])
+        const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
+          normal: {
+            opacity: 1
+          }
+        }} : {}
         return {
+          ...itemStyleObj,
           value: [
             d[`${x.agg}(${decodeMetricName(x.name)})`],
             d[`${y.agg}(${decodeMetricName(y.name)})`],
@@ -161,22 +176,17 @@ export default function (chartProps: IChartProps) {
       }),
       itemStyle: {
         normal: {
-          color: color.value['all']
+          color: color.value['all'],
+          opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
         }
       },
-      ...labelOption
+      ...labelOption,
+      ...referenceOptions
     })
     seriesData.push(data)
   }
 
   const seriesNames = series.map((s) => s.name)
-
-  let legendOption
-  if (cols.length || color.items.length) {
-    legendOption = {
-      legend: getLegendOption(legend, seriesNames)
-    }
-  }
 
   // dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
   //   dataZoom: [{
@@ -197,7 +207,57 @@ export default function (chartProps: IChartProps) {
   //     }
   //   }]
   // }
-
+  const {isDrilling, getDataDrillDetail, instance } = drillOptions
+  const brushedOptions = isDrilling === true ? {
+    brush: {
+      toolbox: ['rect', 'polygon', 'keep', 'clear'],
+      throttleType: 'debounce',
+      throttleDelay: 300,
+      brushStyle: {
+        borderWidth: 1,
+        color: 'rgba(255,255,255,0.2)',
+        borderColor: 'rgba(120,140,180,0.6)'
+      }
+    }
+  } : null
+  if (isDrilling) {
+    //  instance.off('brushselected')
+     // instance.on('brushselected', brushselected)
+      setTimeout(() => {
+          instance.dispatchAction({
+          type: 'takeGlobalCursor',
+          key: 'brush',
+          brushOption: {
+            brushType: 'rect',
+            brushMode: 'multiple'
+          }
+        })
+      }, 0)
+    }
+  function brushselected (params) {
+    console.log({params})
+  //  console.log({seriesData})
+    const brushComponent = params.batch[0]
+    const brushed = []
+    const sourceData = seriesData[0]
+    let range: any[] = []
+    if (brushComponent && brushComponent.areas && brushComponent.areas.length) {
+      brushComponent.areas.forEach((area) => {
+        range = range.concat(area.range)
+      })
+    }
+    if (brushComponent && brushComponent.selected && brushComponent.selected.length) {
+      for (let i = 0; i < brushComponent.selected.length; i++) {
+        const rawIndices = brushComponent.selected[i].dataIndex
+        const seriesIndex = brushComponent.selected[i].seriesIndex
+        brushed.push({[i]: rawIndices})
+      }
+    }
+   // console.log({sourceData})
+    if (getDataDrillDetail) {
+      getDataDrillDetail(JSON.stringify({range, brushed, sourceData}))
+    }
+  }
   const xAxisSplitLineConfig = {
     showLine: showVerticalLine,
     lineColor: verticalLineColor,
@@ -219,7 +279,8 @@ export default function (chartProps: IChartProps) {
     tooltip: {
       formatter: getChartTooltipLabel('scatter', seriesData, { cols, metrics, color, tip })
     },
-    ...legendOption,
-    grid: getGridPositions(legend, seriesNames)
+    legend: getLegendOption(legend, seriesNames),
+    grid: getGridPositions(legend, seriesNames, '', false, yAxis)
+    // ...brushedOptions
   }
 }

@@ -1,7 +1,7 @@
 :: <<
 :: Davinci
 :: ==
-:: Copyright (C) 2016 - 2018 EDP
+:: Copyright (C) 2016 - 2019 EDP
 :: ==
 :: Licensed under the Apache License, Version 2.0 (the "License");
 :: you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ for %%x in ("%DAVINCI3_HOME%") do set DAVINCI3_HOME=%%~sx
 
 if "%1" == "start" (
     echo start Davinci Server
-    start "Davinci Server" java -Dfile.encoding=UTF-8 -cp .;%JAVA_HOME%\lib\*;%DAVINCI3_HOME%\lib\*;davinci-server_3.01-0.3.0-SNAPSHOT.jar edp.DavinciServerApplication --spring.config.additional-location=file:%DAVINCI3_HOME%\config\application.yml
+    start "Davinci Server" java -Dfile.encoding=UTF-8 -cp .;%JAVA_HOME%\lib\*;%DAVINCI3_HOME%\lib\*; edp.DavinciServerApplication --spring.config.additional-location=file:%DAVINCI3_HOME%\config\application.yml
 ) else if "%1" == "stop" (
     echo stop Davinci Server
     taskkill /fi "WINDOWTITLE eq Davinci Server"

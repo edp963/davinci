@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.controller;
@@ -25,10 +26,7 @@ import edp.core.enums.HttpCodeEnum;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
-import edp.davinci.dto.userDto.ChangePassword;
-import edp.davinci.dto.userDto.SendMail;
-import edp.davinci.dto.userDto.UserPut;
-import edp.davinci.dto.userDto.UserRegist;
+import edp.davinci.dto.userDto.*;
 import edp.davinci.model.User;
 import edp.davinci.service.UserService;
 import io.swagger.annotations.Api;
@@ -47,6 +45,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
 
 
 @Api(value = "/users", tags = "users", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -75,14 +74,8 @@ public class UserController extends BaseController {
             ResultMap resultMap = new ResultMap().fail().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = userService.regist(userRegist);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        User user = userService.regist(userRegist);
+        return ResponseEntity.ok(new ResultMap().success().payload(tokenUtils.generateToken(user)));
     }
 
 
@@ -100,7 +93,7 @@ public class UserController extends BaseController {
                                    HttpServletRequest request) {
 
         if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -129,7 +122,7 @@ public class UserController extends BaseController {
 //                              HttpServletRequest request) {
 //
 //        if (StringUtils.isEmpty(token)) {
-//            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be empty");
+//            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be EMPTY");
 //            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
 //        }
 //
@@ -163,14 +156,8 @@ public class UserController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = userService.sendMail(sendMail.getEmail(), user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        userService.sendMail(sendMail.getEmail(), user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
     /**
@@ -198,14 +185,8 @@ public class UserController extends BaseController {
         }
 
         BeanUtils.copyProperties(userPut, user);
-        try {
-            ResultMap resultMap = userService.updateUser(user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        userService.updateUser(user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
     /**
@@ -276,7 +257,7 @@ public class UserController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("avatar file can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("avatar file can not be EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -301,21 +282,16 @@ public class UserController extends BaseController {
     @ApiOperation(value = "get users by keyword")
     @GetMapping
     public ResponseEntity getUsers(@RequestParam("keyword") String keyword,
+                                   @RequestParam(name = "includeSelf", required = false, defaultValue = "false") Boolean includeSelf,
                                    @RequestParam(value = "orgId", required = false) Long orgId,
                                    @ApiIgnore @CurrentUser User user,
                                    HttpServletRequest request) {
         if (StringUtils.isEmpty(keyword)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("keyword can not empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("keyword can not EMPTY");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = userService.getUsersByKeyword(keyword, user, orgId, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        List<UserBaseInfo> users = userService.getUsersByKeyword(keyword, user, orgId, includeSelf);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(users));
     }
 
     /**

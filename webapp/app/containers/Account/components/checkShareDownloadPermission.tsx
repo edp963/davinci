@@ -1,8 +1,5 @@
-import * as React from 'react'
-import {
-  CREATE_ORGANIZATION_PROJECT
-} from '../../App/constants'
-import {IProject} from '../../Projects'
+import React from 'react'
+import { IProject } from 'containers/Projects/types'
 
 export default function<T> (project?: IProject, type?: string) {
   return (WrapperComponent) => {
@@ -13,7 +10,7 @@ export default function<T> (project?: IProject, type?: string) {
           const projectPermission = project.permission
           for (const attr in projectPermission) {
             if (`${type}Permission` === attr) {
-              permission = projectPermission [attr]
+              permission = projectPermission[attr]
               break
             }
           }

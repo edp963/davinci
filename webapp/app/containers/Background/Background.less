@@ -1,4 +1,4 @@
-@import "../../assets/less/variable";
+@import "~assets/less/variable";
 
 .container {
   background: @secondary-color;
@@ -47,5 +47,17 @@
       padding-top: 32px;
       margin-bottom: 0;
     }
+  }
+}
+
+.version {
+  position: absolute;
+  bottom: 32px;
+  right: 32px;
+  color: @white;
+  font-weight: bold;
+
+  .versionerror {
+    color: orangered;
   }
 }

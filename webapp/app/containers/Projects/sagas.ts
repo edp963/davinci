@@ -18,58 +18,26 @@
  * >>
  */
 
-import {takeLatest, takeEvery, throttle} from 'redux-saga'
-import { call, all, put } from 'redux-saga/effects'
-import {
-  LOAD_PROJECTS,
-  ADD_PROJECT,
-  EDIT_PROJECT,
-  DELETE_PROJECT,
-  LOAD_PROJECT_DETAIL,
-  TRANSFER_PROJECT,
-  SEARCH_PROJECT,
-  GET_PROJECT_STAR_USER,
-  PROJECT_UNSTAR,
-  LOAD_COLLECT_PROJECTS,
-  CLICK_COLLECT_PROJECT
-} from './constants'
+import api from 'utils/api'
+import request from 'utils/request'
+import { errorHandler } from 'utils/util'
+import { ActionTypes } from './constants'
+import { ProjectActions, ProjectActionType } from './actions'
+import { ActionTypes as OrganizationActionTypes } from '../Organizations/constants'
+import { call, all, put, takeLatest, takeEvery, throttle } from 'redux-saga/effects'
+import { OrganizationActions, OrganizationActionType } from 'containers/Organizations/actions'
 
-import {
-  projectsLoaded,
-  loadProjectsFail,
-  projectAdded,
-  addProjectFail,
-  projectEdited,
-  editProjectFail,
-  projectDeleted,
-  deleteProjectFail,
-  projectDetailLoaded,
-  transferProjectFail,
-  projectTransfered,
-  projectSearched,
-  searchProjectFail,
-  unStarProjectSuccess,
-  unStarProjectFail,
-  getProjectStarUserSuccess,
-  getProjectStarUserFail,
-  collectProjectLoaded,
-  collectProjectFail,
-  collectProjectClicked,
-  clickCollectProjectFail
-} from './actions'
 
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { errorHandler } from '../../utils/util'
-import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
-import configureStore from '../../store'
-import { resolve } from 'url'
 
-export function* getProjects (action) {
-  const { payload } = action
+
+
+export function* getProjects (action: ProjectActionType) {
+  if (action.type !== ActionTypes.LOAD_PROJECTS) { return }
+
+  const { projectsLoaded, loadProjectsFail } = ProjectActions
   try {
     const asyncData = yield call(request, api.projects)
-    const projects = readListAdapter(asyncData)
+    const projects = asyncData.payload
     yield put(projectsLoaded(projects))
   } catch (err) {
     yield put(loadProjectsFail())
@@ -77,15 +45,18 @@ export function* getProjects (action) {
   }
 }
 
-export function* addProject (action) {
+export function* addProject (action: ProjectActionType) {
+  if (action.type !== ActionTypes.ADD_PROJECT) { return }
+
   const { project, resolve } = action.payload
+  const { projectAdded, addProjectFail } = ProjectActions
   try {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.projects,
       data: project
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(projectAdded(result))
     resolve()
   } catch (err) {
@@ -94,15 +65,17 @@ export function* addProject (action) {
   }
 }
 
-export function* editProject (action) {
+export function* editProject (action: ProjectActionType) {
+  if (action.type !== ActionTypes.EDIT_PROJECT) { return }
+
   const { project, resolve } = action.payload
-  const {id} = project
+  const { id } = project
+  const { projectEdited, editProjectFail } = ProjectActions
   try {
     yield call(request, {
       method: 'put',
       url: `${api.projects}/${id}`,
       data: project
-     // data: writeAdapter(project)
     })
     yield put(projectEdited(project))
     resolve()
@@ -112,8 +85,11 @@ export function* editProject (action) {
   }
 }
 
-export function* deleteProject (action) {
+export function* deleteProject (action: ProjectActionType) {
+  if (action.type !== ActionTypes.DELETE_PROJECT) { return }
+
   const { id, resolve } = action.payload
+  const { projectDeleted, deleteProjectFail } = ProjectActions
   try {
     yield call(request, {
       method: 'delete',
@@ -128,25 +104,93 @@ export function* deleteProject (action) {
     errorHandler(err)
   }
 }
-export function* getProjectDetail ({ payload }) {
+
+
+export function* addProjectAdmin (action: ProjectActionType) {
+  if (action.type !== ActionTypes.ADD_PROJECT_ADMIN) { return }
+
+  const { id, adminIds, resolve } = action.payload
+  const { addProjectFail } = ProjectActions
   try {
-    const asyncData = yield  call(request, `${api.projects}/${payload.id}`)
-    const project = readListAdapter(asyncData)
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.projects}/${id}/admins`,
+      data: adminIds
+    })
+    const result = asyncData.payload
+  //  yield put(projectAdded(result))
+    resolve(result)
+  } catch (err) {
+    yield put(addProjectFail())
+    errorHandler(err)
+  }
+}
+
+export function* deleteProjectAdmin (action: ProjectActionType) {
+  if (action.type !== ActionTypes.DELETE_PROJECT_ADMIN) { return }
+
+  const { id, relationId, resolve } = action.payload
+  const { deleteProjectAdminFail } = ProjectActions
+  try {
+    const asyncData = yield call(request, {
+      method: 'delete',
+      url:  `${api.projects}/${id}/admin/${relationId}`
+    })
+    const result = asyncData.payload
+  //  yield put(projectAdded(result))
+    resolve(result)
+  } catch (err) {
+    yield put(deleteProjectAdminFail())
+    errorHandler(err)
+  }
+}
+
+
+export function* addProjectRole (action: ProjectActionType) {
+  if (action.type !== ActionTypes.ADD_PROJECT_ROLE) { return }
+
+  const { projectId, roleIds, resolve } = action.payload
+  const { addProjectRoleFail } = ProjectActions
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.projects}/${projectId}/roles`,
+      data: roleIds
+    })
+    const result = asyncData.payload
+    resolve(result)
+  } catch (err) {
+    yield put(addProjectRoleFail())
+    errorHandler(err)
+  }
+}
+
+export function* getProjectDetail (action: ProjectActionType) {
+  if (action.type !== ActionTypes.LOAD_PROJECT_DETAIL) { return }
+
+  const { id: projectId } = action.payload
+  const { projectDetailLoaded } = ProjectActions
+  try {
+    const asyncData = yield  call(request, `${api.projects}/${projectId}`)
+    const project = asyncData.payload
     yield put(projectDetailLoaded(project))
   } catch (err) {
     errorHandler(err)
   }
 }
 
-export function* transferProject ({payload}) {
-  const {id, orgId} = payload
+export function* transferProject (action: ProjectActionType) {
+  if (action.type !== ActionTypes.TRANSFER_PROJECT) { return }
+
+  const { id, orgId } = action.payload
+  const { projectTransfered, transferProjectFail } = ProjectActions
   try {
     const asyncData = yield call(request, {
       method: 'put',
       url: `${api.projects}/${id}/transfer`,
       data: {orgId}
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(projectTransfered(result))
   } catch (err) {
     yield put(transferProjectFail())
@@ -154,14 +198,17 @@ export function* transferProject ({payload}) {
   }
 }
 
-export function* searchProject ({payload}) {
-  const {param: {keywords, pageNum, pageSize}} = payload
+export function* searchProject (action: ProjectActionType) {
+  if (action.type !== ActionTypes.SEARCH_PROJECT) { return }
+
+  const { param: { keywords, pageNum, pageSize } } = action.payload
+  const { projectSearched, searchProjectFail } = ProjectActions
   try {
     const asyncData = yield call(request, {
       method: 'get',
       url: `${api.projects}/search/?pageNum=${pageNum || 1}&pageSize=${pageSize || 10}&keywords=${keywords || ''}`
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(projectSearched(result))
   } catch (err) {
     yield put(searchProjectFail())
@@ -169,15 +216,18 @@ export function* searchProject ({payload}) {
   }
 }
 
-export function* unStarProject ({payload}) {
-  const {id, resolve} = payload
+export function* unStarProject (action: ProjectActionType) {
+  if (action.type !== ActionTypes.PROJECT_UNSTAR) { return }
+
+  const { id, resolve } = action.payload
+  const { unStarProjectSuccess, unStarProjectFail } = ProjectActions
   try {
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.star}/project/${id}`,
       data: {id}
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(unStarProjectSuccess(result))
     yield resolve()
   } catch (err) {
@@ -186,14 +236,17 @@ export function* unStarProject ({payload}) {
   }
 }
 
-export function* getProjectStarUser ({payload}) {
-  const {id} = payload
+export function* getProjectStarUser (action: ProjectActionType) {
+  if (action.type !== ActionTypes.GET_PROJECT_STAR_USER) { return }
+
+  const { id } = action.payload
+  const { getProjectStarUserSuccess, getProjectStarUserFail } = ProjectActions
   try {
     const asyncData = yield call(request, {
       method: 'get',
       url: `${api.star}/project/${id}`
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(getProjectStarUserSuccess(result))
   } catch (err) {
     yield put(getProjectStarUserFail())
@@ -201,13 +254,15 @@ export function* getProjectStarUser ({payload}) {
   }
 }
 
-export function* getCollectProjects (action) {
+export function* getCollectProjects () {
+  const { collectProjectLoaded, collectProjectFail } = ProjectActions
+
   try {
     const asyncData = yield call(request, {
       method: 'get',
       url: `${api.projects}/favorites`
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(collectProjectLoaded(result))
   } catch (err) {
     yield put(collectProjectFail())
@@ -215,23 +270,26 @@ export function* getCollectProjects (action) {
   }
 }
 
-export function* editCollectProject ({payload}) {
-  const {formType, project, resolve} = payload
+export function* editCollectProject (action: ProjectActionType) {
+  if (action.type !== ActionTypes.CLICK_COLLECT_PROJECT) { return }
+
+  const { isFavorite, proId, resolve } = action.payload
+  const { collectProjectClicked, clickCollectProjectFail } = ProjectActions
   try {
-    if (formType === 'collect') {
+    if (!isFavorite) {
       yield call(request, {
         method: 'post',
-        url: `${api.projects}/favorite/${project.id}`,
-        data: {id: project.id}
+        url: `${api.projects}/favorite/${proId}`,
+        data: {id: proId}
       })
     } else {
       yield call(request, {
         method: 'delete',
         url: `${api.projects}/remove/favorites`,
-        data: [project.id]
+        data: [proId]
       })
     }
-    yield put(collectProjectClicked(payload))
+    yield put(collectProjectClicked(action.payload))
     yield resolve()
   } catch (err) {
     yield put(clickCollectProjectFail())
@@ -239,18 +297,125 @@ export function* editCollectProject ({payload}) {
   }
 }
 
+export function* loadRelRoleProject (action: ProjectActionType) {
+  if (action.type !== ActionTypes.LOAD_RELATION_ROLE_PROJECT) { return }
+
+  const { id, roleId } = action.payload
+  const { relRoleProjectLoaded, loadRelRoleProjectFail } = ProjectActions
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.projects}/${id}/roles/${roleId}`
+    })
+    const result = asyncData.payload
+    yield put(relRoleProjectLoaded(result))
+  } catch (err) {
+    yield put(loadRelRoleProjectFail())
+    errorHandler(err)
+  }
+}
+
+export function* updateRelRoleProject (action: ProjectActionType) {
+  if (action.type !== ActionTypes.UPDATE_RELATION_ROLE_PROJECT) { return }
+
+  const { roleId, projectId, projectRole } = action.payload
+  const { relRoleProjectUpdated, updateRelRoleProjectFail } = ProjectActions
+  try {
+    yield call(request, {
+      method: 'put',
+      url: `${api.roles}/${roleId}/project/${projectId}`,
+      data: projectRole
+    })
+    yield put(relRoleProjectUpdated(projectRole))
+  } catch (err) {
+    yield put(updateRelRoleProjectFail())
+    errorHandler(err)
+  }
+}
+
+export function* deleteRelRoleProject (action: ProjectActionType) {
+  if (action.type !== ActionTypes.DELETE_RELATION_ROLE_PROJECT) { return }
+
+  const { roleId, projectId, resolve } = action.payload
+  const { relRoleProjectDeleted, deleteRelRoleProjectFail } = ProjectActions
+  try {
+    const asyncData = yield call(request, {
+      method: 'delete',
+      url: `${api.roles}/${roleId}/project/${projectId}`
+    })
+    const result = asyncData.payload
+    yield put(relRoleProjectDeleted(result))
+    resolve()
+  } catch (err) {
+    yield put(deleteRelRoleProjectFail())
+    errorHandler(err)
+  }
+}
+
+export function* getProjectRoles (action: OrganizationActionType) {
+  if (action.type !== OrganizationActionTypes.LOAD_PROJECT_ROLES) { return }
+
+  const { projectId } = action.payload
+  const { projectRolesLoaded, loadProjectRolesFail } = OrganizationActions
+  try {
+    const asyncData = yield call(request, `${api.projects}/${projectId}/roles`)
+    const results = asyncData.payload
+    yield put(projectRolesLoaded(results))
+  } catch (err) {
+    yield put(loadProjectRolesFail())
+    errorHandler(err)
+  }
+}
+
+export function* excludeRole (action: ProjectActionType) {
+  if (action.type !== ActionTypes.EXCLUDE_ROLES) { return }
+
+  const { id, type, resolve } = action.payload
+  const { rolesExcluded, excludeRolesFail } = ProjectActions
+  let host: string
+  switch (type) {
+    case 'dashboard':
+      host = `${api.portal}/dashboard`
+      break
+    case 'portal':
+      host = `${api.portal}`
+      break
+    case 'display':
+      host = `${api.display}`
+      break
+    default:
+      break
+  }
+  try {
+    const asyncData = yield call(request, `${host}/${id}/exclude/roles`)
+    const results = asyncData.payload
+    yield put(rolesExcluded(results))
+    resolve(results)
+  } catch (err) {
+    yield put(excludeRolesFail(err))
+  }
+}
+
 export default function* rootProjectSaga (): IterableIterator<any> {
-  yield [
-    takeLatest(LOAD_PROJECTS, getProjects as any),
-    takeEvery(ADD_PROJECT, addProject as any),
-    takeEvery(EDIT_PROJECT, editProject as any),
-    takeEvery(DELETE_PROJECT, deleteProject as any),
-    takeLatest(LOAD_PROJECT_DETAIL, getProjectDetail as any),
-    takeEvery(TRANSFER_PROJECT, transferProject as any),
-    takeEvery(PROJECT_UNSTAR, unStarProject as any),
-    takeEvery(GET_PROJECT_STAR_USER, getProjectStarUser as any),
-    throttle(1000, SEARCH_PROJECT, searchProject as any),
-    takeLatest(LOAD_COLLECT_PROJECTS, getCollectProjects as any),
-    takeEvery(CLICK_COLLECT_PROJECT, editCollectProject as any)
-  ]
+  yield all([
+    takeLatest(ActionTypes.LOAD_PROJECTS, getProjects),
+    takeLatest(ActionTypes.ADD_PROJECT_ROLE, addProjectRole),
+    takeEvery(ActionTypes.ADD_PROJECT, addProject),
+    takeEvery(ActionTypes.EDIT_PROJECT, editProject),
+    takeEvery(ActionTypes.DELETE_PROJECT, deleteProject),
+    takeLatest(ActionTypes.LOAD_PROJECT_DETAIL, getProjectDetail),
+    takeEvery(ActionTypes.TRANSFER_PROJECT, transferProject),
+    takeEvery(ActionTypes.PROJECT_UNSTAR, unStarProject),
+    takeEvery(ActionTypes.GET_PROJECT_STAR_USER, getProjectStarUser),
+    throttle(1000, ActionTypes.SEARCH_PROJECT, searchProject),
+    takeLatest(ActionTypes.LOAD_COLLECT_PROJECTS, getCollectProjects),
+    takeEvery(ActionTypes.CLICK_COLLECT_PROJECT, editCollectProject),
+    takeEvery(ActionTypes.ADD_PROJECT_ADMIN, addProjectAdmin),
+    takeEvery(ActionTypes.DELETE_PROJECT_ADMIN, deleteProjectAdmin),
+    takeEvery(ActionTypes.LOAD_RELATION_ROLE_PROJECT, loadRelRoleProject),
+    takeEvery(ActionTypes.UPDATE_RELATION_ROLE_PROJECT, updateRelRoleProject),
+    takeEvery(ActionTypes.DELETE_RELATION_ROLE_PROJECT, deleteRelRoleProject),
+    takeEvery(OrganizationActionTypes.LOAD_PROJECT_ROLES, getProjectRoles),
+    takeEvery(ActionTypes.EXCLUDE_ROLES, excludeRole)
+  ])
 }

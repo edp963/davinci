@@ -1,20 +1,15 @@
-import * as React from 'react'
+import React from 'react'
 
-import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Cascader = require('antd/lib/cascader')
-const Select = require('antd/lib/select')
+import { Form, Row, Col, Cascader, Select } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
 const FormItem = Form.Item
 const Option = Select.Option
 
-import { DEFAULT_SPLITER } from '../../globalConstants'
+import { DEFAULT_SPLITER } from 'app/globalConstants'
 import { LinkageOperatorTypes } from 'utils/operatorTypes'
 const styles = require('./Linkage.less')
 
 interface ILinkageFormProps {
-  form: WrappedFormUtils
   cascaderSource: any[]
 }
 
@@ -24,7 +19,7 @@ export interface ILinkageForm {
   relation: string
 }
 
-export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
+export class LinkageForm extends React.PureComponent<ILinkageFormProps & FormComponentProps, {}> {
   private displayRenderHandles = {
     trigger: (labels) => labels.join(' - '),
     linkager: (labels) => labels.join(' - ')
@@ -38,16 +33,17 @@ export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
     if (value && linkagerValue && value.length && linkagerValue.length) {
       const triggerValueArr = value[1].split(DEFAULT_SPLITER)
       const linkagerValueArr = linkagerValue[1].split(DEFAULT_SPLITER)
-      const triggerColumnType = triggerValueArr[1]
-      const linkagerColumnType = linkagerValueArr[1]
+      const triggerSqlType = triggerValueArr[1]
+      const linkagerSqlType = linkagerValueArr[1]
+      const linkagerColumnType = linkagerValueArr[2]
 
       if (value[0] === linkagerValue[0]) {
         callback('不能联动自身')
       }
 
-      if (triggerColumnType !== 'variable' && linkagerColumnType !== 'variable') {
-        if (triggerColumnType !== linkagerColumnType) {
-          callback('参数类型不一致')
+      if (linkagerColumnType !== 'variable') {
+        if (triggerSqlType !== linkagerSqlType) {
+          callback('字段类型不一致')
         } else {
           callback()
         }
@@ -80,8 +76,14 @@ export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
       wrapperCol: { span: 12 }
     }
 
-    const triggerOptions = cascaderSource.map(({ label, value, children: { params } }) => ({ label, value, children: params }))
-    const linkagerOptions = cascaderSource.map(({ label, value, children: { params, variables } }) => ({ label, value, children: [].concat(params, variables) }))
+    const triggerOptions = cascaderSource
+      .map(({ label, value, children: { triggerColumns } }) =>
+        ({ label, value, children: triggerColumns })
+      )
+    const linkagerOptions = cascaderSource
+      .map(({ label, value, children: { linkagerColumns, variables } }) =>
+        ({ label, value, children: [].concat(linkagerColumns, variables) })
+      )
 
     return (
       <Form className={styles.linkageForm}>
@@ -151,4 +153,4 @@ export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
   }
 }
 
-export default Form.create()(LinkageForm)
+export default Form.create<ILinkageFormProps & FormComponentProps>()(LinkageForm)

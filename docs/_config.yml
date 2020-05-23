@@ -1,8 +1,20 @@
-title: Davinci
-description: 可视洞察平台
-google_analytics:
-show_downloads: true
-theme: jekyll-theme-architect
+title: Davinci 用户手册
+zh_masthead_title: 用户手册
+baseurl: "/davinci"
+logo: "assets/images/logo.svg"
 
-gems:
-  - jekyll-mentions
+# theme: minimal-mistakes-jekyll
+remote_theme: "mmistakes/minimal-mistakes@4.16.5"
+markdown: kramdown
+minimal_mistakes_skin: "default"
+plugins:
+  - jekyll-feed
+  - jekyll-include-cache
+
+collections:
+  docs:
+    permalink: /:collection/:path
+    output: true
+
+DAVINCI_VERSION: 0.3
+DAVINCI_VERSION_SHORT: 0.3

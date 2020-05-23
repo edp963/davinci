@@ -1,7 +1,7 @@
 ##  <<
 ##  Davinci
 ##  ==
-##  Copyright (C) 2016 - 2018 EDP
+##  Copyright (C) 2016 - 2019 EDP
 ##  ==
 ##  Licensed under the Apache License, Version 2.0 (the "License");
 ##  you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@
 ##     vertica:         com.vertica.jdbc.Driver
 ##     hana:            com.sap.db.jdbc.Driver
 ##     impala:          com.cloudera.impala.jdbc41.Driver
-## this means that if your datasource is in the above list, you don't need to use this method,
+## this means that if your datasource is in the above list, you don't need to use this way,
 ## unless you know what you are doing.
 
 ## How to use:
@@ -47,6 +47,7 @@
 # mysql:
 #   name: mysql
 #   desc: mysql
+#   version:
 #   driver: com.mysql.jdbc.Driver
 #   keyword_prefix: \`
 #   keyword_suffix: \`
@@ -56,6 +57,7 @@
 # oracle:
 #   name: oracle
 #   desc: oracle
+#   version: 
 #   driver: oracle.jdbc.driver.OracleDriver
 #   keyword_prefix: \"
 #   keyword_suffix: \"

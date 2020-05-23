@@ -1,61 +1,70 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.ForbiddenExecption;
+import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.model.Paginate;
+import edp.core.model.PaginateWithQueryColumns;
 import edp.core.model.QueryColumn;
-import edp.core.utils.AESUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.TokenUtils;
-import edp.davinci.common.service.CommonService;
+import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.model.TokenEntity;
 import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.dao.*;
 import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
+import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.shareDto.*;
 import edp.davinci.dto.userDto.UserLogin;
-import edp.davinci.dto.userDto.UserLoginResult;
 import edp.davinci.dto.viewDto.DistinctParam;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
+import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.model.*;
+import edp.davinci.service.ProjectService;
 import edp.davinci.service.ShareService;
+import edp.davinci.service.UserService;
 import edp.davinci.service.ViewService;
 import lombok.extern.slf4j.Slf4j;
-import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static edp.core.consts.Consts.EMPTY;
+
+
 @Service
 @Slf4j
-public class ShareServiceImpl extends CommonService implements ShareService {
+public class ShareServiceImpl implements ShareService {
 
     @Autowired
     private TokenUtils tokenUtils;
@@ -70,7 +79,13 @@ public class ShareServiceImpl extends CommonService implements ShareService {
     private DisplayMapper displayMapper;
 
     @Autowired
+    private DisplaySlideMapper displaySlideMapper;
+
+    @Autowired
     private DashboardMapper dashboardMapper;
+
+    @Autowired
+    private ProjectService projectService;
 
     @Autowired
     private ViewMapper viewMapper;
@@ -87,8 +102,14 @@ public class ShareServiceImpl extends CommonService implements ShareService {
     @Autowired
     private FileUtils fileUtils;
 
+    @Autowired
+    private ServerUtils serverUtils;
+
+    @Autowired
+    private UserService userService;
+
     @Override
-    public ResultMap shareLogin(String token, UserLogin userLogin) {
+    public User shareLogin(String token, UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption {
         //AES解密
         String decrypt = AESUtils.decrypt(token, null);
         //获取分享信息
@@ -102,9 +123,9 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             throw new ServerException("Invalid share token");
         }
 
-        User loginUser = userMapper.selectByUsername(userLogin.getUsername());
+        User loginUser = userService.userLogin(userLogin);
         if (null == loginUser) {
-            return new ResultMap().fail().payload("username or password invalid").message("user not found");
+            throw new NotFoundException("user is not found");
         }
 
         Long shareUserId = Long.parseLong(tokenInfos[1]);
@@ -117,11 +138,6 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             throw new ServerException("Invalid share token");
         }
 
-        //校验密码
-        if (!BCrypt.checkpw(userLogin.getPassword(), loginUser.getPassword())) {
-            return new ResultMap().fail().payload("username or password invalid").message("password is wrong");
-        }
-
         if (tokenInfos.length == 3) {
             if (tokenCrypts.length < 2) {
                 throw new ServerException("Invalid share token");
@@ -130,21 +146,19 @@ public class ShareServiceImpl extends CommonService implements ShareService {
                 String sharedUserName = tokenInfos[2];
                 Long sharedUserId = Long.parseLong(tokenCrypts[1]);
                 if (!(loginUser.getUsername().equals(sharedUserName) && loginUser.getId().equals(sharedUserId)) && !loginUser.getId().equals(shareUserId)) {
-                    return new ResultMap().fail().message("The resource requires authentication, which was not supplied with the request");
+                    throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
                 }
             } catch (NumberFormatException e) {
-                return new ResultMap().fail().message("The resource requires authentication, which was not supplied with the request");
+                throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
             }
         }
 
         //是否激活
         if (!loginUser.getActive()) {
-            return new ResultMap().failWithToken(tokenUtils.generateToken(loginUser)).message("this user is not active");
+            throw new ServerException("this user is not active");
         }
 
-        UserLoginResult userLoginResult = new UserLoginResult();
-        BeanUtils.copyProperties(loginUser, userLoginResult);
-        return new ResultMap().success(tokenUtils.generateToken(loginUser)).payload(userLoginResult);
+        return loginUser;
     }
 
     /**
@@ -152,42 +166,24 @@ public class ShareServiceImpl extends CommonService implements ShareService {
      *
      * @param token
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getShareWidget(String token, User user, HttpServletRequest request) {
+    public ShareWidget getShareWidget(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
 
-        ShareWidget shareWidget = null;
-        try {
-            ShareInfo shareInfo = getShareInfo(token, user);
-            if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-                return resultFail(user, request, null).message("Invalid share token");
-            }
+        ShareInfo shareInfo = getShareInfo(token, user);
+        verifyShareUser(user, shareInfo);
 
-            if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-                if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                    resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
-                }
-            }
 
-            Widget widget = widgetMapper.getById(shareInfo.getShareId());
+        ShareWidget shareWidget = widgetMapper.getShareWidgetById(shareInfo.getShareId());
 
-            if (null == widget) {
-                return resultFail(user, request, null).message("widget not found");
-            }
-
-            String dateToken = generateShareToken(widget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
-            shareWidget = new ShareWidget();
-            BeanUtils.copyProperties(widget, shareWidget);
-            shareWidget.setDataToken(dateToken);
-        } catch (ServerException e) {
-            return resultFail(user, request, null).message(e.getMessage());
-        } catch (UnAuthorizedExecption e) {
-            return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
+        if (null == shareWidget) {
+            throw new NotFoundException("widget not found");
         }
 
-        return resultSuccess(user, request).payload(shareWidget);
+        String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
+        shareWidget.setDataToken(dateToken);
+        return shareWidget;
     }
 
 
@@ -196,91 +192,68 @@ public class ShareServiceImpl extends CommonService implements ShareService {
      *
      * @param token
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getShareDisplay(String token, User user, HttpServletRequest request) {
-        ShareDisplay shareDisplay = null;
-        try {
-            ShareInfo shareInfo = getShareInfo(token, user);
-            if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-                return resultFail(user, request, null).message("Invalid share token");
-            }
+    public ShareDisplay getShareDisplay(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
+        ShareInfo shareInfo = getShareInfo(token, user);
+        verifyShareUser(user, shareInfo);
 
-            Long displayId = shareInfo.getShareId();
-            Display display = displayMapper.getById(displayId);
-
-            if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-                if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                    resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
-                }
-            }
-
-            if (null == display) {
-                return resultFail(user, request, null).message("display not found");
-            }
-
-            shareDisplay = new ShareDisplay();
-
-            BeanUtils.copyProperties(display, shareDisplay);
-
-            List<MemDisplaySlideWidgetWithSlide> memWithSlides = memDisplaySlideWidgetMapper.getMemWithSlideByDisplayId(displayId);
-
-            if (null != memWithSlides && memWithSlides.size() > 0) {
-                Set<DisplaySlide> displaySlideSet = new HashSet<>();
-                Set<MemDisplaySlideWidget> memDisplaySlideWidgetSet = new HashSet<>();
-                for (MemDisplaySlideWidgetWithSlide memWithSlide : memWithSlides) {
-                    displaySlideSet.add(memWithSlide.getDisplaySlide());
-                    MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget();
-                    BeanUtils.copyProperties(memWithSlide, memDisplaySlideWidget);
-                    memDisplaySlideWidgetSet.add(memDisplaySlideWidget);
-                }
-
-                if (null != displaySlideSet && displaySlideSet.size() > 0) {
-                    Set<ShareDisplaySlide> shareDisplaySlideSet = new HashSet<>();
-                    Iterator<DisplaySlide> slideIterator = displaySlideSet.iterator();
-                    while (slideIterator.hasNext()) {
-                        DisplaySlide displaySlide = slideIterator.next();
-                        ShareDisplaySlide shareDisplaySlide = new ShareDisplaySlide();
-                        BeanUtils.copyProperties(displaySlide, shareDisplaySlide);
-
-                        Iterator<MemDisplaySlideWidget> memIterator = memDisplaySlideWidgetSet.iterator();
-                        Set<MemDisplaySlideWidget> relations = new HashSet<>();
-                        while (memIterator.hasNext()) {
-                            MemDisplaySlideWidget memDisplaySlideWidget = memIterator.next();
-                            if (memDisplaySlideWidget.getDisplaySlideId().equals(displaySlide.getId())) {
-                                relations.add(memDisplaySlideWidget);
-                            }
-                        }
-                        shareDisplaySlide.setRelations(relations);
-                        shareDisplaySlideSet.add(shareDisplaySlide);
-                    }
-                    shareDisplay.setSlides(shareDisplaySlideSet);
-                }
-            }
-
-            Set<Widget> widgetSet = widgetMapper.getByDisplayId(displayId);
-            Set<ShareWidget> shareWidgets = new HashSet<>();
-            if (null != widgetSet && widgetSet.size() > 0) {
-                Iterator<Widget> widgetIterator = widgetSet.iterator();
-                while (widgetIterator.hasNext()) {
-                    ShareWidget shareWidget = new ShareWidget();
-                    Widget widget = widgetIterator.next();
-                    String dateToken = generateShareToken(widget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
-                    BeanUtils.copyProperties(widget, shareWidget);
-                    shareWidget.setDataToken(dateToken);
-                    shareWidgets.add(shareWidget);
-                }
-                shareDisplay.setWidgets(shareWidgets);
-            }
-        } catch (ServerException e) {
-            return resultFail(user, request, null).message(e.getMessage());
-        } catch (UnAuthorizedExecption e) {
-            return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
+        Long displayId = shareInfo.getShareId();
+        Display display = displayMapper.getById(displayId);
+        if (null == display) {
+            throw new ServerException("display is not found");
         }
 
-        return resultSuccess(user, request).payload(shareDisplay);
+        ShareDisplay shareDisplay = new ShareDisplay();
+
+        BeanUtils.copyProperties(display, shareDisplay);
+
+        List<MemDisplaySlideWidgetWithSlide> memWithSlides = memDisplaySlideWidgetMapper.getMemWithSlideByDisplayId(displayId);
+        List<DisplaySlide> displaySlides = displaySlideMapper.selectByDisplayId(displayId);
+        Set<MemDisplaySlideWidget> memDisplaySlideWidgetSet = null;
+
+        if (!CollectionUtils.isEmpty(memWithSlides)) {
+            memDisplaySlideWidgetSet = new HashSet<>();
+            for (MemDisplaySlideWidgetWithSlide memWithSlide : memWithSlides) {
+                MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget();
+                BeanUtils.copyProperties(memWithSlide, memDisplaySlideWidget);
+                memDisplaySlideWidgetSet.add(memDisplaySlideWidget);
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(displaySlides)) {
+            Set<ShareDisplaySlide> shareDisplaySlideSet = new HashSet<>();
+            for (DisplaySlide displaySlide : displaySlides) {
+                ShareDisplaySlide shareDisplaySlide = new ShareDisplaySlide();
+                BeanUtils.copyProperties(displaySlide, shareDisplaySlide);
+
+                if (!CollectionUtils.isEmpty(memDisplaySlideWidgetSet)) {
+                    Iterator<MemDisplaySlideWidget> memIterator = memDisplaySlideWidgetSet.iterator();
+                    Set<MemDisplaySlideWidget> relations = new HashSet<>();
+                    while (memIterator.hasNext()) {
+                        MemDisplaySlideWidget memDisplaySlideWidget = memIterator.next();
+                        if (memDisplaySlideWidget.getDisplaySlideId().equals(displaySlide.getId())) {
+                            relations.add(memDisplaySlideWidget);
+                        }
+                    }
+                    shareDisplaySlide.setRelations(relations);
+                }
+                shareDisplaySlideSet.add(shareDisplaySlide);
+            }
+            shareDisplay.setSlides(shareDisplaySlideSet);
+        }
+
+        Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDisplayId(displayId);
+        if (!CollectionUtils.isEmpty(shareWidgets)) {
+            for (ShareWidget shareWidget : shareWidgets) {
+                String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
+                shareWidget.setDataToken(dateToken);
+            }
+            shareDisplay.setWidgets(shareWidgets);
+        }
+
+        return shareDisplay;
     }
 
     /**
@@ -288,58 +261,51 @@ public class ShareServiceImpl extends CommonService implements ShareService {
      *
      * @param token
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getShareDashboard(String token, User user, HttpServletRequest request) {
-        ShareDashboard shareDashboard = null;
-        try {
-            ShareInfo shareInfo = getShareInfo(token, user);
-            if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-                return resultFail(user, request, null).message("Invalid share token");
-            }
+    public ShareDashboard getShareDashboard(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
+        ShareInfo shareInfo = getShareInfo(token, user);
 
-            if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-                if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                    resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
-                }
-            }
+        verifyShareUser(user, shareInfo);
 
-            Long dashboardId = shareInfo.getShareId();
-            Dashboard dashboard = dashboardMapper.getById(dashboardId);
+        Long dashboardId = shareInfo.getShareId();
+        Dashboard dashboard = dashboardMapper.getById(dashboardId);
 
-            if (null == dashboard) {
-                return resultFail(user, request, null).message("dashboard not found");
-            }
-
-            shareDashboard = new ShareDashboard();
-            BeanUtils.copyProperties(dashboard, shareDashboard);
-
-            List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetMapper.getByDashboardId(dashboardId);
-            shareDashboard.setRelations(memDashboardWidgets);
-
-            Set<ShareWidget> shareWidgets = null;
-
-            Set<Widget> widgets = widgetMapper.getByDashboard(dashboardId);
-            if (null != widgets && widgets.size() > 0) {
-                shareWidgets = new HashSet<>();
-                for (Widget widget : widgets) {
-                    ShareWidget shareWidget = new ShareWidget();
-                    BeanUtils.copyProperties(widget, shareWidget);
-                    String dateToken = generateShareToken(widget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
-                    shareWidget.setDataToken(dateToken);
-                    shareWidgets.add(shareWidget);
-                }
-            }
-            shareDashboard.setWidgets(shareWidgets);
-
-        } catch (ServerException e) {
-            return resultFail(user, request, null).message(e.getMessage());
-        } catch (UnAuthorizedExecption e) {
-            return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
+        if (null == dashboard) {
+            throw new NotFoundException("dashboard is not found");
         }
-        return resultSuccess(user, request).payload(shareDashboard);
+
+        ShareDashboard shareDashboard = new ShareDashboard();
+        BeanUtils.copyProperties(dashboard, shareDashboard);
+
+        List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetMapper.getByDashboardId(dashboardId);
+        shareDashboard.setRelations(memDashboardWidgets);
+
+        Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDashboard(dashboardId);
+        if (!CollectionUtils.isEmpty(shareWidgets)) {
+            Iterator<ShareWidget> iterator = shareWidgets.iterator();
+            while (iterator.hasNext()) {
+                ShareWidget shareWidget = iterator.next();
+                String dateToken = generateShareToken(shareWidget.getId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
+                shareWidget.setDataToken(dateToken);
+            }
+        }
+        shareDashboard.setWidgets(shareWidgets);
+        return shareDashboard;
+    }
+
+    private void verifyShareUser(User user, ShareInfo shareInfo) {
+        if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
+            throw new ServerException("Invalid share token");
+        }
+
+        if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
+            User tokenUser = userMapper.selectByUsername(shareInfo.getSharedUserName());
+            if (tokenUser == null || !tokenUser.getId().equals(user.getId())) {
+                throw new ForbiddenExecption("ERROR Permission denied");
+            }
+        }
     }
 
     /**
@@ -348,95 +314,78 @@ public class ShareServiceImpl extends CommonService implements ShareService {
      * @param token
      * @param executeParam
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getShareData(String token, ViewExecuteParam executeParam, User user, HttpServletRequest request) {
-        List<Map<String, Object>> list = null;
-        try {
+    public Paginate<Map<String, Object>> getShareData(String token, ViewExecuteParam executeParam, User user)
+            throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException {
+        ShareInfo shareInfo = getShareInfo(token, user);
+        verifyShareUser(user, shareInfo);
 
-            ShareInfo shareInfo = getShareInfo(token, user);
-            if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-                return resultFail(user, request, null).message("Invalid share token");
-            }
+        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceByWidgetId(shareInfo.getShareId());
 
-            if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-                if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                    resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
-                }
-            }
+        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareInfo.getShareUser(), false);
+        boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
 
-            Long viewId = shareInfo.getShareId();
-            ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
-            list = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
-        } catch (ServerException e) {
-            return resultFail(user, request, null).message(e.getMessage());
-        } catch (UnAuthorizedExecption e) {
-            return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
-        }
-
-        return resultSuccess(user, request).payloads(list);
+        Paginate paginate = viewService.getResultDataList(maintainer, viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
+        return paginate;
     }
 
 
     /**
      * 分享数据生成csv文件并下载
      *
-     * @param token
      * @param executeParam
      * @param user
-     * @param request
+     * @param token
      * @return
      */
     @Override
-    public ResultMap generationShareDataCsv(String token, ViewExecuteParam executeParam, User user, HttpServletRequest request) {
+    public String generationShareDataCsv(ViewExecuteParam executeParam, User user, String token) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
         String filePath = null;
-        try {
+        ShareInfo shareInfo = getShareInfo(token, user);
+        verifyShareUser(user, shareInfo);
 
-            ShareInfo shareInfo = getShareInfo(token, user);
-            if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-                return resultFail(user, request, null).message("Invalid share token");
-            }
+        ViewWithSource viewWithSource = viewMapper.getViewWithProjectAndSourceByWidgetId(shareInfo.getShareId());
+        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), shareInfo.getShareUser(), false);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareInfo.getShareUser());
 
-            if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-                if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                    resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
-                }
-            }
-
-            Long viewId = shareInfo.getShareId();
-            ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
-
-            if (!allowDownload(viewWithProjectAndSource.getProject(), shareInfo.getShareUser())) {
-                resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
-            }
-
-            List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
-
-            List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
-
-            if (null != columns && columns.size() > 0) {
-                String csvPath = fileUtils.fileBasePath + File.separator + "csv";
-                File file = new File(csvPath);
-                if (!file.exists()) {
-                    file.mkdirs();
-                }
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-                String csvName = viewWithProjectAndSource.getName() + "_" + sdf.format(new Date());
-                String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, dataList);
-                filePath = fileFullPath.replace(fileUtils.fileBasePath, "");
-            }
-        } catch (ServerException e) {
-            return resultFail(user, request, null).message(e.getMessage());
-        } catch (UnAuthorizedExecption e) {
-            return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
+        if (!projectPermission.getDownloadPermission()) {
+            throw new ForbiddenExecption("ERROR Permission denied");
         }
-        return resultSuccess(user, request).payload(getHost() + filePath);
+
+        executeParam.setLimit(-1);
+        executeParam.setPageSize(-1);
+        executeParam.setPageNo(-1);
+
+        PaginateWithQueryColumns paginate = null;
+        try {
+            boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
+            paginate = viewService.getResultDataList(maintainer, viewWithSource, executeParam, shareInfo.getShareUser());
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new ServerException(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+        List<QueryColumn> columns = paginate.getColumns();
+
+        if (!CollectionUtils.isEmpty(columns)) {
+            String csvPath = fileUtils.fileBasePath + File.separator + "csv";
+            File file = new File(csvPath);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+            String csvName = viewWithSource.getName() + "_" + sdf.format(new Date());
+            String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, paginate.getResultList());
+            filePath = fileFullPath.replace(fileUtils.fileBasePath, EMPTY);
+        }
+
+        return serverUtils.getHost() + filePath;
     }
 
     /**
      * 获取分享distinct value
+     *
      * @param token
      * @param viewId
      * @param param
@@ -446,19 +395,11 @@ public class ShareServiceImpl extends CommonService implements ShareService {
      */
     @Override
     public ResultMap getDistinctValue(String token, Long viewId, DistinctParam param, User user, HttpServletRequest request) {
-        Map<String, Object> map = null;
+        List<Map<String, Object>> list = null;
         try {
 
             ShareInfo shareInfo = getShareInfo(token, user);
-            if (null == shareInfo || shareInfo.getShareId().longValue() < 1L) {
-                return resultFail(user, request, null).message("Invalid share token");
-            }
-
-            if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-                if (!shareInfo.getSharedUserName().equals(user.getUsername())) {
-                    resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
-                }
-            }
+            verifyShareUser(user, shareInfo);
 
             ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
             if (null == viewWithProjectAndSource) {
@@ -466,28 +407,27 @@ public class ShareServiceImpl extends CommonService implements ShareService {
                 return resultFail(user, request, null).message("view not found");
             }
 
-            Project project = viewWithProjectAndSource.getProject();
-            if (null == project) {
-                log.info("project not found");
-                return resultFail(user, request, null).message("project not found");
-            }
+            ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareInfo.getShareUser(), false);
 
-            if (!viewService.allowGetData(project, shareInfo.getShareUser())) {
+            if (!projectService.allowGetData(projectDetail, shareInfo.getShareUser())) {
                 return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
             }
 
             try {
-                map = viewService.getDistinctValueData(viewWithProjectAndSource, param, shareInfo.getShareUser());
+                boolean maintainer = projectService.isMaintainer(projectDetail, shareInfo.getShareUser());
+                list = viewService.getDistinctValueData(maintainer, viewWithProjectAndSource, param, shareInfo.getShareUser());
             } catch (ServerException e) {
                 return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
             }
+        } catch (NotFoundException e) {
+            return resultFail(user, request, null).message(e.getMessage());
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
             return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
 
-        return resultSuccess(user, request).payload(map);
+        return resultSuccess(user, request).payloads(list);
     }
 
 
@@ -507,7 +447,7 @@ public class ShareServiceImpl extends CommonService implements ShareService {
          */
         TokenEntity shareToken = new TokenEntity();
         String tokenUserName = shareEntityId + Constants.SPLIT_CHAR_STRING + userId;
-        String tokenPassword = shareEntityId + "";
+        String tokenPassword = shareEntityId + EMPTY;
         if (!StringUtils.isEmpty(username)) {
             User shareUser = userMapper.selectByUsername(username);
             if (null == shareUser) {
@@ -532,7 +472,7 @@ public class ShareServiceImpl extends CommonService implements ShareService {
      * @throws ServerException
      * @throws UnAuthorizedExecption
      */
-    private ShareInfo getShareInfo(String token, User user) throws ServerException, UnAuthorizedExecption {
+    public ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption {
 
         if (StringUtils.isEmpty(token)) {
             throw new ServerException("Invalid share token");
@@ -570,11 +510,11 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             Long sharedUserId = Long.parseLong(tokenCrypts[1]);
             User sharedUser = userMapper.selectByUsername(username);
             if (null == sharedUser || !sharedUser.getId().equals(sharedUserId)) {
-                throw new UnAuthorizedExecption("The resource requires authentication, which was not supplied with the request");
+                throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
             }
 
             if (null == user || (!user.getId().equals(sharedUserId) && !user.getId().equals(shareUserId))) {
-                throw new UnAuthorizedExecption("The resource requires authentication, which was not supplied with the request");
+                throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
             }
 
             sharedUserName = username;

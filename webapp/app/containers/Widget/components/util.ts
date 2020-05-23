@@ -19,13 +19,18 @@ import {
   PIVOT_XAXIS_TICK_SIZE,
   PIVOT_CANVAS_AXIS_SIZE_LIMIT,
   PIVOT_DEFAULT_SCATTER_SIZE_TIMES
-} from '../../../globalConstants'
+} from 'app/globalConstants'
 import { DimetionType, IChartStyles, IChartInfo } from './Widget'
 import { IChartLine, IChartUnit } from './Pivot/Chart'
+import { IDataParamSource } from './Workbench/Dropbox'
+import { getFieldAlias } from '../components/Config/Field'
+import { getFormattedValue } from '../components/Config/Format'
 import widgetlibs from '../config'
+import PivotTypes from '../config/pivot/PivotTypes'
+import ChartTypes from '../config/chart/ChartTypes'
 const pivotlibs = widgetlibs['pivot']
 const chartlibs = widgetlibs['chart']
-import { uuid } from '../../../utils/util'
+import { uuid } from 'utils/util'
 
 export function getAggregatorLocale (agg) {
   switch (agg) {
@@ -147,13 +152,15 @@ export function naturalSort (a, b): number {
   return ra.length - rb.length
 }
 
+let utilCanvas = null
+
 export const getTextWidth = (
   text: string,
   fontWeight: string = DEFAULT_FONT_WEIGHT,
   fontSize: string = DEFAULT_FONT_SIZE,
   fontFamily: string = DEFAULT_FONT_FAMILY
 ): number => {
-  const canvas = this.canvas || (this.canvas = document.createElement('canvas'))
+  const canvas = utilCanvas || (utilCanvas = document.createElement('canvas'))
   const context = canvas.getContext('2d')
   context.font = `${fontWeight} ${fontSize} ${fontFamily}`
   const metrics = context.measureText(text)
@@ -233,30 +240,33 @@ export function getChartUnitMetricHeight (tableBodyHeight, rowKeyCount: number, 
   return realContainerHeight / rowKeyCount / metricCount
 }
 
-export function checkChartEnable (dimetionsCount: number, metricsCount: number, charts: IChartInfo | IChartInfo[]): boolean {
+export function checkChartEnable (dimensionCount: number, metricCount: number, charts: IChartInfo | IChartInfo[]): boolean {
   const chartArr = Array.isArray(charts) ? charts : [charts]
-  for (const chart of chartArr) {
-    const { requireDimetions, requireMetrics } = chart
-    if (Array.isArray(requireDimetions)) {
-      if (dimetionsCount < requireDimetions[0] || dimetionsCount > requireDimetions[1]) {
+
+  const enabled = chartArr.every(({ rules }) => {
+    const currentRulesChecked = rules.some(({ dimension, metric }) => {
+      if (Array.isArray(dimension)) {
+        if (dimensionCount < dimension[0] || dimensionCount > dimension[1]) {
+          return false
+        }
+      } else if (dimensionCount !== dimension) {
         return false
       }
-    } else {
-      if (dimetionsCount !== requireDimetions) {
+
+      if (Array.isArray(metric)) {
+        if (metricCount < metric[0] || metricCount > metric[1]) {
+          return false
+        }
+      } else if (metricCount !== metric) {
         return false
       }
-    }
-    if (Array.isArray(requireMetrics)) {
-      if (metricsCount < requireMetrics[0] || metricsCount > requireMetrics[1]) {
-        return false
-      }
-    } else {
-      if (metricsCount !== requireMetrics) {
-        return false
-      }
-    }
-  }
-  return true
+
+      return true
+    })
+    return currentRulesChecked
+  })
+
+  return enabled
 }
 
 export function getAxisInterval (max, splitNumber) {
@@ -296,19 +306,15 @@ export function metricAxisLabelFormatter (value) {
 }
 
 export function getPivot (): IChartInfo {
-  return pivotlibs[0]
-}
-
-export function getBar (): IChartInfo {
-  return pivotlibs[2]
-}
-
-export function getScatter (): IChartInfo {
-  return pivotlibs[3]
+  return pivotlibs.find((p) => p.id === PivotTypes.PivotTable)
 }
 
 export function getTable (): IChartInfo {
-  return chartlibs[0]
+  return chartlibs.find((c) => c.id === ChartTypes.Table)
+}
+
+export function getPivotModeSelectedCharts (items: IDataParamSource[]): IChartInfo[] {
+  return items.length ? items.map((i) => i.chart) : [getPivot()]
 }
 
 export function getStyleConfig (chartStyles: IChartStyles): IChartStyles {
@@ -316,12 +322,6 @@ export function getStyleConfig (chartStyles: IChartStyles): IChartStyles {
     ...chartStyles,
     pivot: chartStyles.pivot || {...getPivot().style['pivot']}  // FIXME 兼容0.3.0-beta 数据库
   }
-}
-
-export function getChartViewMetrics (metrics, requireMetrics) {
-  const auxiliaryMetrics = Math.max((Array.isArray(requireMetrics) ? requireMetrics[0] : requireMetrics) - 1, 0)
-  metrics.slice().splice(1, auxiliaryMetrics)
-  return metrics
 }
 
 export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree, tree, metrics, drawingData, dimetionAxis) {
@@ -537,7 +537,7 @@ export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, la
   }, [])
   metricColumns = metricColumns.reduce((arr, mc) => {
     const decodedName = decodeMetricName(mc.name)
-    if (!arr.find((m) => m.name.includes(decodedName) && m.agg === mc.agg)) {
+    if (!arr.find((m) => decodeMetricName(m.name) === decodedName && m.agg === mc.agg)) {
       arr.push(mc)
     }
     return arr
@@ -569,10 +569,10 @@ export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, la
 
 export function getChartTooltipLabel (type, seriesData, options) {
   const { cols, metrics, color, size, scatterXAxis, tip } = options
-  let dimetionColumns = cols
+  let dimentionColumns: any[] = cols
   let metricColumns = [...metrics]
   if (color) {
-    dimetionColumns = dimetionColumns.concat(color.items.map((i) => i.name))
+    dimentionColumns = dimentionColumns.concat(color.items)
   }
   if (size) {
     metricColumns = metricColumns.concat(size.items)
@@ -584,44 +584,69 @@ export function getChartTooltipLabel (type, seriesData, options) {
     metricColumns = metricColumns.concat(tip.items)
   }
 
-  dimetionColumns = dimetionColumns.reduce((arr, dc) => {
-    if (!arr.includes(dc)) {
-      arr.push(dc)
-    }
-    return arr
-  }, [])
+  dimentionColumns = dimentionColumns.filter((dc, idx) =>
+    dimentionColumns.findIndex((c) => c.name === dc.name) === idx)
+
   metricColumns = metricColumns.reduce((arr, mc) => {
     const decodedName = decodeMetricName(mc.name)
-    if (!arr.find((m) => m.name.includes(decodedName) && m.agg === mc.agg)) {
+    if (!arr.find((m) => decodeMetricName(m.name) === decodedName && m.agg === mc.agg)) {
       arr.push(mc)
     }
     return arr
   }, [])
 
   return function (params) {
-    const { seriesIndex, dataIndex } = params
-    const record = type === 'funnel'
-      ? seriesData[dataIndex]
-      : seriesData[seriesIndex][dataIndex]
-    return dimetionColumns
-      .map((dc) => {
-        const value = record
-          ? Array.isArray(record)
-            ? record[0][dc]
-            : record[dc]
-          : ''
-        return `${dc}: ${value}`
-      })
-      .concat(metricColumns.map((mc) => {
-        const decodedName = decodeMetricName(mc.name)
-        const value = record
-          ? Array.isArray(record)
-            ? record.reduce((sum, r) => sum + r[`${mc.agg}(${decodedName})`], 0)
-            : record[`${mc.agg}(${decodedName})`]
-          : 0
-        return `${decodedName}: ${value}`
-      }))
-      .join('<br/>')
+    const { componentType } = params
+    if (componentType === 'markLine') {
+      const { name, value } = params
+      return `参考线<br/>${name}: ${value}`
+    } else if (componentType === 'markArea') {
+      const { name, data: { coord } } = params
+      const valueIndex = coord[0].findIndex((c) => c !== Infinity && c !== -Infinity)
+      return `参考区间<br/>${name}: ${coord[0][valueIndex]} - ${coord[1][valueIndex]}`
+    } else {
+      const { seriesIndex, dataIndex, color } = params
+      const record = (type === 'funnel' || type === 'map')
+        ? seriesData[dataIndex]
+        : seriesData[seriesIndex][dataIndex]
+      let tooltipLabels = []
+
+      tooltipLabels = tooltipLabels.concat(
+        dimentionColumns.map((dc) => {
+          let value = record
+            ? Array.isArray(record)
+              ? record[0][dc.name]
+              : record[dc.name]
+            : ''
+          value = getFormattedValue(value, dc.format)
+          return `${getFieldAlias(dc.field, {}) || dc.name}: ${value}` // @FIXME dynamic field alias by queryVariable in dashboard
+        })
+      )
+
+      tooltipLabels = tooltipLabels.concat(
+        metricColumns.map((mc) => {
+          const decodedName = decodeMetricName(mc.name)
+          let value = record
+            ? Array.isArray(record)
+              ? record.reduce((sum, r) => sum + r[`${mc.agg}(${decodedName})`], 0)
+              : record[`${mc.agg}(${decodedName})`]
+            : 0
+          value = getFormattedValue(value, mc.format)
+          return `${getFieldAlias(mc.field, {}) || decodedName}: ${value}`
+        })
+      )
+
+      if (color) {
+        const circle = `<span class="widget-tooltip-circle" style="background: ${color}"></span>`
+        if (!dimentionColumns.length) {
+          tooltipLabels.unshift(circle)
+        } else {
+          tooltipLabels[0] = circle + tooltipLabels[0]
+        }
+      }
+
+      return tooltipLabels.join('<br/>')
+    }
   }
 }
 
@@ -662,4 +687,45 @@ export function getSizeValue (value) {
   return value >= PIVOT_DEFAULT_SCATTER_SIZE_TIMES
     ? value - PIVOT_DEFAULT_SCATTER_SIZE_TIMES + 1
     : 1 / Math.pow(2, PIVOT_DEFAULT_SCATTER_SIZE_TIMES - value)
+}
+
+export const iconMapping = {
+  line: 'icon-chart-line',
+  bar: 'icon-chart-bar',
+  scatter: 'icon-scatter-chart',
+  pie: 'icon-chartpie',
+  area: 'icon-area-chart',
+  sankey: 'icon-kongjiansangjitu',
+  funnel: 'icon-iconloudoutu',
+  treemap: 'icon-chart-treemap',
+  wordCloud: 'icon-chartwordcloud',
+  table: 'icon-table',
+  scorecard: 'icon-calendar1',
+  text: 'icon-text',
+  map: 'icon-china',
+  doubleYAxis: 'icon-duplex',
+  boxplot: 'icon-508tongji_xiangxiantu',
+  markBoxplot: 'icon-508tongji_xiangxiantu',
+  graph: 'icon-510tongji_guanxitu',
+  waterfall: 'icon-waterfall',
+  gauge: 'icon-gauge',
+  radar: 'icon-radarchart',
+  parallel: 'icon-parallel',
+  confidenceBand: 'icon-confidence-band'
+}
+
+export function getCorrectInputNumber (num: any): number {
+  switch (typeof num) {
+    case 'string':
+      if (!num.trim()) {
+        return null
+      } else {
+        return Number(num) || null
+      }
+      return
+    case 'number':
+      return num
+    default:
+      return null
+  }
 }

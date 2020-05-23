@@ -1,28 +1,27 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
-import reducer from '../Organizations/reducer'
-import saga from '../Organizations/sagas'
-import reducerTeam from '../Teams/reducer'
-import sagaTeam from '../Teams/sagas'
-import Avatar from '../../components/Avatar'
-import Box from '../../components/Box'
+import { withRouter } from 'react-router-dom'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
+import reducer from 'containers/Organizations/reducer'
+import saga from 'containers/Organizations/sagas'
+import Avatar from 'components/Avatar'
+import Box from 'components/Box'
 import Menus from './components/Menus'
-const Tooltip = require('antd/lib/tooltip')
-import {createStructuredSelector} from 'reselect'
-import {makeSelectLoginUser} from '../App/selectors'
+import { Tooltip } from 'antd'
+import { createStructuredSelector } from 'reselect'
+import { makeSelectLoginUser } from 'containers/App/selectors'
+import { RouteComponentWithParams } from 'utils/types'
 
-interface IAccountProps {
+interface IAccountProps extends RouteComponentWithParams {
   loginUser: any,
-  routes: any
 }
 
 const styles = require('./Account.less')
 export class Account extends React.PureComponent<IAccountProps, {}> {
     public render () {
-      const { loginUser, routes } = this.props
+      const { loginUser, location } = this.props
       return (
         <div className={styles.wrapper}>
           <div className={styles.container}>
@@ -42,7 +41,7 @@ export class Account extends React.PureComponent<IAccountProps, {}> {
                   </div>
                   <div className={styles.menu}>
                     <Menus
-                      active={routes[3]['name']}
+                      active={location.pathname.substr(location.pathname.lastIndexOf('/') + 1)}
                     />
                   </div>
                 </Box>
@@ -69,15 +68,11 @@ const withConnect = connect(mapStateToProps, null)
 const withReducer = injectReducer({ key: 'organization', reducer })
 const withSaga = injectSaga({ key: 'organization', saga })
 
-const withTeamReducer = injectReducer({ key: 'team', reducer: reducerTeam})
-const withTeamSaga = injectSaga({ key: 'team', saga: sagaTeam})
-
 export default compose(
   withReducer,
-  withTeamReducer,
-  withTeamSaga,
   withSaga,
-  withConnect
+  withConnect,
+  withRouter
 )(Account)
 
 

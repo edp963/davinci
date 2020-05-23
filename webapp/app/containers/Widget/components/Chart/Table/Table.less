@@ -1,0 +1,80 @@
+.table {
+
+  &.noBorder {
+    :global {
+      .ant-table-thead > tr > th {
+        border: none;
+      }
+
+      .ant-table-tbody > tr > td {
+        border: none;
+      }
+    }
+  }
+
+  :global {
+    .ant-table,
+    .ant-pagination,
+    .ant-select {
+      font-style: 12px;
+    }
+
+    .ant-table-fixed-header .ant-table-scroll .ant-table-header {
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+      background: transparent !important;
+      overflow-x: hidden !important;
+      overflow-y: scroll !important;
+    }
+
+    .ant-table-thead > tr {
+      background: transparent !important;
+    }
+
+    .ant-table-body {
+      background: transparent !important;
+      margin: 0 !important;
+    }
+
+    .ant-table-tbody > tr > td {
+      word-break: break-all;
+    }
+
+    .react-resizable-handle {
+      position: absolute;
+      width: 4px;
+      height: 100%;
+      padding: 0;
+      bottom: 0;
+      right: 0;
+      cursor: col-resize;
+      background: none;
+    }
+
+    .ant-table-placeholder {
+      display: none;
+    }
+  }
+
+  .selectedRow {
+    background-color: #d2eafb;
+   // background-color: transparent;
+
+  }
+  .unSelectedRow {
+    background-color: transparent;
+  }
+
+  .headerIcon {
+    font-size: 14px;
+    line-height: 14px;
+    margin: 0 8px;
+    vertical-align: middle;
+    cursor: pointer;
+  }
+}
+
+.select {
+  background-color: #1890ff!important;
+  color: #fff!important;
+}

@@ -25,6 +25,11 @@
   box-shadow: @popover-box-shadow;
 }
 
+.unSelected {
+  color: @codemirror-placeholder
+}
+// @rich-text
+
 .highlight {
   color: @primary-color;
 }
@@ -47,7 +52,17 @@
 
 .breadcrumb {
   a {
-    font-size: 16px;
+    font-size: 1.25em;
     line-height: 32px;
+  }
+}
+
+:global {
+  .widget-tooltip-circle {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 5px;
+    border-radius: 50%;
   }
 }

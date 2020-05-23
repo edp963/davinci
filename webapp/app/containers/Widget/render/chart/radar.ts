@@ -18,140 +18,159 @@
  * >>
  */
 
-export default function (dataSource, flatInfo, chartParams, interactIndex) {
+import { IChartProps } from '../../components/Chart'
+import { EChartOption } from 'echarts'
+import {
+  decodeMetricName,
+  getSizeValue,
+  getSizeRate
+} from '../../components/util'
+import { getFieldAlias } from '../../components/Config/Field'
+import { getFormattedValue } from '../../components/Config/Format'
+import {
+  getMetricAxisOption,
+  getLabelOption,
+  getLegendOption,
+  getSymbolSize
+} from './util'
+
+export default function (chartProps: IChartProps) {
   const {
-    dimension,
+    width,
+    height,
+    data,
+    cols,
     metrics,
-    hasLegend,
-    legendSelected,
-    legendPosition,
-    toolbox,
-    top,
-    bottom,
-    left,
-    right
-  } = chartParams
+    chartStyles,
+    color,
+    tip
+  } = chartProps
 
-  let metricOptions
-  let legendOptions
-  let toolboxOptions
-  let gridOptions
-  let data
-  let radarOptions
+  const { label, legend, radar, toolbox } = chartStyles
 
-  if (dimension && dimension.length) {
-    if (metrics && metrics.length) {
-      const metricData = metrics.map((me) => dataSource.map((data) => data[me]))
-      data = metrics.map((me, index) => ({
-        name: me,
-        value: metricData[index]
-      }))
+  const { legendPosition, fontSize } = legend
 
-      radarOptions = {
-        radar: {
-          name: {
-            textStyle: {
-              color: '#fff',
-              backgroundColor: '#999',
-              borderRadius: 3,
-              padding: [3, 5]
-            }
-          },
-          indicator: dataSource.map((data) => data[dimension]).map((name, index) => {
-            const max = Math.max.apply(null, metrics.map((me) => dataSource.map((data) => data[me])).map((list) => list[index]).map((arr) => parseFloat(arr)))
-            return {
-              name,
-              max: max + Math.floor(max * 0.1)
-            }
-          })
+  const labelOption = {
+    label: getLabelOption('radar', label, metrics)
+  }
+
+  let dimensions = []
+  if (cols.length) {
+    dimensions = dimensions.concat(cols)
+  }
+
+  const metricsNames = metrics.map((m) => decodeMetricName(m.name))
+
+  let seriesData
+  let indicator
+  let indicatorMax = -Infinity
+  let legendData
+
+  if (!dimensions.length) {
+    if (color.items.length) {
+      dimensions = dimensions.concat(color.items.map((c) => c.name))
+    }
+    const metricsData = !data.length
+      ? []
+      : metrics.map((m) => data[0][`${m.agg}(${decodeMetricName(m.name)})`])
+    seriesData = !data.length ? [] : [{ value: metricsData }]
+    indicatorMax = Math.max(...metricsData)
+    indicatorMax = indicatorMax + Math.round(indicatorMax * 0.1)
+    indicator = metrics.map((m) => ({
+      name: decodeMetricName(m.name),
+      max: indicatorMax
+    }))
+  } else {
+    legendData = metricsNames
+    const dimension = dimensions[0]
+    const indicatorData = {}
+    const dimensionData = metricsNames.reduce(
+      (acc, name) => ({
+        ...acc,
+        [name]: {}
+      }),
+      {}
+    )
+    data.forEach((row) => {
+      if (!indicatorData[row[dimension.name]]) {
+        indicatorData[row[dimension.name]] = -Infinity
+      }
+
+      metrics.forEach((m) => {
+        const name = decodeMetricName(m.name)
+        const cellVal = row[`${m.agg}(${name})`]
+        indicatorMax = Math.max(indicatorMax, cellVal)
+        if (!dimensionData[name][row[dimension.name]]) {
+          dimensionData[name][row[dimension.name]] = 0
         }
-      }
-    }
+        dimensionData[name][row[dimension.name]] += cellVal
+      })
+    })
+    indicator = Object.keys(indicatorData).map((name: string) => ({
+      name,
+      max: indicatorMax + Math.round(indicatorMax * 0.1)
+    }))
+    seriesData =
+      data.length > 0
+        ? Object.entries(dimensionData).map(([name, value]) => ({
+            name,
+            value: Object.values(value)
+          }))
+        : []
   }
-  metricOptions = {
-    series: [{
-     // name: metricName && metricName.length ? metricName : '',
-      type: 'radar',
-      data
-    }]
-  }
-  // legend
-  let adjustedBottom = 0
-  let adjustedRight = 0
 
-  if (hasLegend && hasLegend.length) {
-    let orient
-    let positions
+  const tooltip: EChartOption.Tooltip = {
+    formatter(params: EChartOption.Tooltip.Format) {
+      const { dataIndex, data, color } = params
 
-    switch (legendPosition) {
-      case 'right':
-        orient = { orient: 'vertical' }
-        positions = { right: 8, top: 40, bottom: 16 }
-        adjustedRight = 108
-        break
-      case 'bottom':
-        orient = { orient: 'horizontal' }
-        positions = { bottom: 16, left: 8, right: 8 }
-        adjustedBottom = 72
-        break
-      default:
-        orient = { orient: 'horizontal' }
-        positions = { top: 3, left: 8, right: 120 }
-        break
-    }
-
-    const selected = legendSelected === 'unselectAll'
-      ? {
-        selected: metrics.reduce((obj, m) => ({ ...obj, [m]: false }), {})
-      } : null
-
-    legendOptions = {
-      legend: {
-        data: metrics,
-        type: 'scroll',
-        ...orient,
-        ...positions,
-        ...selected
+      let tooltipLabels = []
+      if (dimensions.length) {
+        const metric = metrics[dataIndex]
+        tooltipLabels.push(
+          getFieldAlias(metric.field, {}) || decodeMetricName(metric.name)
+        )
+        tooltipLabels = tooltipLabels.concat(
+          indicator.map(
+            ({ name }, idx) =>
+              `${name}: ${getFormattedValue(data.value[idx], metric.format)}`
+          )
+        )
+        if (color) {
+          tooltipLabels[0] =
+            `<span class="widget-tooltip-circle" style="background: ${color}"></span>` +
+            tooltipLabels[0]
+        }
+      } else {
+        tooltipLabels = tooltipLabels.concat(
+          indicator.map(
+            ({ name }, idx) =>
+              `${name}: ${getFormattedValue(
+                data.value[idx],
+                metrics[idx].format
+              )}`
+          )
+        )
       }
-    }
-  }
-  // toolbox
-  toolboxOptions = toolbox && toolbox.length
-    ? {
-      toolbox: {
-        feature: {
-          dataZoom: {
-            yAxisIndex: 'none'
-          },
-          restore: {},
-          saveAsImage: {
-            pixelRatio: 2
-          }
-        },
-        right: 8
-      }
-    } : null
-  // grid
-  gridOptions = {
-    grid: {
-      top,
-      left,
-      right: Math.max(right, adjustedRight),
-      bottom: Math.max(bottom, adjustedBottom)
+
+      return tooltipLabels.join('<br/>')
     }
   }
 
   return {
-    tooltip: {
-      trigger: 'item',
-      axisPointer: {
-        type: 'shadow'
-      }
+    tooltip,
+    legend: legendData && getLegendOption(legend, legendData),
+    radar: {
+      // type: 'log',
+      indicator,
+      ...radar
     },
-    ...metricOptions,
-    ...radarOptions,
-    ...legendOptions,
-    ...gridOptions,
-    ...toolboxOptions
+    series: [
+      {
+        name: '',
+        type: 'radar',
+        data: seriesData,
+        ...labelOption
+      }
+    ]
   }
 }

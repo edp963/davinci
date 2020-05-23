@@ -1,22 +1,38 @@
+import ChartTypes from './ChartTypes'
 import {
   PIVOT_DEFAULT_AXIS_LINE_COLOR,
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS
-} from '../../../../globalConstants'
+} from 'app/globalConstants'
 
-import { IChartInfo } from '../../../../containers/Widget/components/Widget'
+import { IChartInfo } from 'containers/Widget/components/Widget'
 
 const line: IChartInfo = {
-  id: 2,
+  id: ChartTypes.Line,
   name: 'line',
   title: '折线图',
   icon: 'icon-chart-line',
   coordinate: 'cartesian',
-  requireDimetions: 1,
-  requireMetrics: [1, 9999],
+  rules: [{ dimension: 1, metric: [1, 9999] }],
   dimetionAxis: 'col',
   data: {
+    cols: {
+      title: '列',
+      type: 'category'
+    },
+    rows: {
+      title: '行',
+      type: 'category'
+    },
+    metrics: {
+      title: '指标',
+      type: 'value'
+    },
+    filters: {
+      title: '筛选',
+      type: 'all'
+    },
     color: {
       title: '颜色',
       type: 'category'
@@ -46,7 +62,10 @@ const line: IChartInfo = {
       showLabel: true,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_FONT_COLOR
+      labelColor: PIVOT_DEFAULT_FONT_COLOR,
+      showInterval: false,
+      xAxisInterval: 0,
+      xAxisRotate: 0
     },
     yAxis: {
       showLine: true,
@@ -60,7 +79,12 @@ const line: IChartInfo = {
       showTitleAndUnit: true,
       titleFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       titleFontSize: '12',
-      titleColor: PIVOT_DEFAULT_FONT_COLOR
+      titleColor: PIVOT_DEFAULT_FONT_COLOR,
+      nameLocation: 'middle',
+      nameRotate: 90,
+      nameGap: 40,
+      min: null,
+      max: null
     },
     splitLine: {
       showHorizontalLine: true,

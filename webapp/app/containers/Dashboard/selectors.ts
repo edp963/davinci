@@ -19,80 +19,128 @@
  */
 
 import { createSelector } from 'reselect'
+import { IDashboardState } from './types'
+import { IWidgetState } from '../Widget/types'
+import { IViewState } from '../View/types'
 
-const selectDashboard = (state) => state.get('dashboard')
+const selectDashboard = (state: { dashboard: IDashboardState }) =>
+  state.dashboard
+const selectWidget = (state: { widget: IWidgetState }) => state.widget
+const selectFormedViews = (state: { view: IViewState }) =>
+  state.view.formedViews
 
-const makeSelectDashboards = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('dashboards')
-)
+const selectItemId = (_, itemId: number) => itemId
 
-const makeSelectCurrentDashboard = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboard')
-)
-const makeSelectCurrentDashboardLoading = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboardLoading')
-)
-const makeSelectCurrentDashboardShareInfo = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboardShareInfo')
-)
-const makeSelectCurrentDashboardSecretInfo = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboardSecretInfo')
-)
-const makeSelectCurrentDashboardShareInfoLoading = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboardShareInfoLoading')
-)
-const makeSelectCurrentDashboardCascadeSources = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentDashboardCascadeSources')
-)
-const makeSelectCurrentItems = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentItems')
-)
-const makeSelectCurrentItemsInfo = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentItemsInfo')
-)
-const makeSelectModalLoading = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('modalLoading')
-)
+const selectForm = (state) => state.form
 
-const makeSelectCurrentLinkages = () => createSelector(
-  selectDashboard,
-  (dashboardState) => {
-    const currentDashboard = dashboardState.get('currentDashboard')
-    const currentItemsInfo = dashboardState.get('currentItemsInfo')
-    if (!currentDashboard && !currentItemsInfo) { return [] }
+const makeSelectCurrentDashboard = () =>
+  createSelector(
+    selectDashboard,
+    (dashboardState) => dashboardState.currentDashboard
+  )
 
-    const emptyConfig = '{}'
-    const { linkages } = JSON.parse(currentDashboard.config || emptyConfig)
-    if (!linkages) { return [] }
-    const validLinkages = linkages.filter((l) => {
-      const { linkager, trigger } = l
-      return currentItemsInfo[linkager[0]] && currentItemsInfo[trigger[0]]
-    })
-    return validLinkages
-  }
-)
+const makeSelectCurrentDashboardLoading = () =>
+  createSelector(
+    selectDashboard,
+    (dashboardState) => dashboardState.currentDashboardLoading
+  )
+const makeSelectCurrentDashboardShareToken = () =>
+  createSelector(
+    selectDashboard,
+    (dashboardState) => dashboardState.currentDashboardShareToken
+  )
+const makeSelectCurrentDashboardAuthorizedShareToken = () =>
+  createSelector(
+    selectDashboard,
+    (dashboardState) => dashboardState.currentDashboardAuthorizedShareToken
+  )
+const makeSelectCurrentDashboardShareLoading = () =>
+  createSelector(
+    selectDashboard,
+    (dashboardState) => dashboardState.currentDashboardShareLoading
+  )
+const makeSelectSharePanel = () =>
+  createSelector(
+    selectDashboard,
+    (dashboardState) => dashboardState.sharePanel
+  )
+
+const makeSelectCurrentItems = () =>
+  createSelector(
+    selectDashboard,
+    (dashboardState) => dashboardState.currentItems
+  )
+
+const makeSelectCurrentItemsInfo = () =>
+  createSelector(
+    selectDashboard,
+    (dashboardState) => dashboardState.currentItemsInfo
+  )
+
+const makeSelectWidgets = () =>
+  createSelector(
+    selectWidget,
+    (widgetState) => widgetState.widgets
+  )
+
+const makeSelectItem = () =>
+  createSelector(
+    makeSelectCurrentItems(),
+    selectItemId,
+    (currentItems, itemId) => currentItems.find((item) => item.id === itemId)
+  )
+
+const makeSelectItemInfo = () =>
+  createSelector(
+    makeSelectCurrentItemsInfo(),
+    selectItemId,
+    (currentItemsInfo, itemId) => currentItemsInfo[itemId]
+  )
+
+const makeSelectItemRelatedWidget = () =>
+  createSelector(
+    makeSelectWidgets(),
+    makeSelectItem(),
+    (widgets, item) => widgets.find((w) => w.id === item.widgetId)
+  )
+
+const makeSelectFullScreenPanelItemId = () =>
+  createSelector(
+    selectDashboard,
+    (dashboardState) => dashboardState.fullScreenPanelItemId
+  )
+
+const makeSelectCurrentLinkages = () =>
+  createSelector(
+    makeSelectCurrentDashboard(),
+    makeSelectCurrentItemsInfo(),
+    (currentDashboard, currentItemsInfo) => {
+      if (!currentDashboard || !currentItemsInfo) {
+        return []
+      }
+
+      const validLinkages = currentDashboard.config.linkages.filter((l) => {
+        const { linkager, trigger } = l
+        return currentItemsInfo[linkager[0]] && currentItemsInfo[trigger[0]]
+      })
+      return validLinkages
+    }
+  )
 
 export {
   selectDashboard,
-  makeSelectDashboards,
+  selectForm,
   makeSelectCurrentDashboard,
   makeSelectCurrentDashboardLoading,
   makeSelectCurrentItems,
   makeSelectCurrentItemsInfo,
-  makeSelectCurrentDashboardShareInfo,
-  makeSelectCurrentDashboardSecretInfo,
-  makeSelectCurrentDashboardShareInfoLoading,
-  makeSelectCurrentDashboardCascadeSources,
-  makeSelectModalLoading,
-  makeSelectCurrentLinkages
+  makeSelectWidgets,
+  makeSelectCurrentDashboardShareToken,
+  makeSelectCurrentDashboardAuthorizedShareToken,
+  makeSelectCurrentDashboardShareLoading,
+  makeSelectSharePanel,
+  makeSelectCurrentLinkages,
+  makeSelectItemInfo,
+  makeSelectItemRelatedWidget,
+  makeSelectFullScreenPanelItemId
 }

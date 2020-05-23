@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.core.model;
@@ -21,10 +22,13 @@ package edp.core.model;
 import com.alibaba.druid.util.StringUtils;
 import lombok.Data;
 
+import static edp.core.consts.Consts.EMPTY;
+
 @Data
 public class CustomDataSource {
     private String name;
     private String desc;
+    private String version;
     private String driver;
     private String keyword_prefix;
     private String keyword_suffix;
@@ -66,11 +70,11 @@ public class CustomDataSource {
 
     private String getStringValue(String value) {
         if (StringUtils.isEmpty(value)) {
-            return "";
+            return EMPTY;
         }
 
         if (value.indexOf("\\") > -1) {
-            return value.replace("\\", "");
+            return value.replace("\\", EMPTY);
         }
         return value;
     }

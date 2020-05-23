@@ -19,50 +19,75 @@
  */
 
 import { createSelector } from 'reselect'
+import { RouterState } from 'connected-react-router'
 
-const selectGlobal = (state) => state.get('global')
+const selectGlobal = (state) => state.global
 
-const makeSelectLogged = () => createSelector(
-  selectGlobal,
-  (globalState) => globalState.get('logged')
-)
+const selectRouter = (state: { router: RouterState }) => state.router
 
-const makeSelectLoginUser = () => createSelector(
-  selectGlobal,
-  (globalState) => globalState.get('loginUser')
-)
+const makeSelectExternalAuthProviders = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.externalAuthProviders
+  )
 
-const makeSelectLoginLoading = () => createSelector(
-  selectGlobal,
-  (globalState) => globalState.get('loginLoading')
-)
+const makeSelectLogged = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.logged
+  )
 
-const makeSelectNavigator = () => createSelector(
-  selectGlobal,
-  (globalState) => globalState.get('navigator')
-)
+const makeSelectLoginUser = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.loginUser
+  )
 
-const makeSelectLocationState = () => {
-  let prevRoutingState
-  let prevRoutingStateJS
+const makeSelectLoginLoading = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.loginLoading
+  )
 
-  return (state) => {
-    const routingState = state.get('route') // or state.route
+const makeSelectNavigator = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.navigator
+  )
 
-    if (!routingState.equals(prevRoutingState)) {
-      prevRoutingState = routingState
-      prevRoutingStateJS = routingState.toJS()
-    }
+const makeSelectDownloadList = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.downloadList
+  )
 
-    return prevRoutingStateJS
-  }
-}
+const makeSelectDownloadListLoading = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.downloadListLoading
+  )
+
+const makeSelectLocation = () =>
+  createSelector(
+    selectRouter,
+    (routerState) => routerState.location
+  )
+
+const makeSelectVersion = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.version
+  )
 
 export {
   selectGlobal,
+  makeSelectVersion,
+  makeSelectExternalAuthProviders,
   makeSelectLogged,
   makeSelectLoginUser,
   makeSelectLoginLoading,
   makeSelectNavigator,
-  makeSelectLocationState
+  makeSelectLocation,
+  makeSelectDownloadList,
+  makeSelectDownloadListLoading
 }

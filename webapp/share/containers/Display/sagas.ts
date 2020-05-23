@@ -18,18 +18,20 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import omit from 'lodash/omit'
+import { call, fork, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
-const message = require('antd/lib/message')
+import { message } from 'antd'
 import request from 'utils/request'
 import api from 'utils/api'
 import { ActionTypes } from './constants'
-import { displayLoaded, loadDisplayFail, layerDataLoaded, loadLayerDataFail } from './actions'
-import { readListAdapter } from 'utils/asyncAdapter'
+import ShareDisplayActions, { ShareDisplayActionType } from './actions'
 
-export function* getDisplay (action) {
+export function* getDisplay (action: ShareDisplayActionType) {
+  if (action.type !== ActionTypes.LOAD_SHARE_DISPLAY) { return }
+
   const { token, resolve, reject } = action.payload
+  const { loadDisplayFail, displayLoaded } = ShareDisplayActions
   try {
     const asyncData = yield call(request, `${api.share}/display/${token}`)
     const { header, payload } = asyncData
@@ -38,10 +40,22 @@ export function* getDisplay (action) {
       yield put(loadDisplayFail(header.msg))
       return
     }
-    const display = payload
-    const { slides, widgets } = display
-    yield put(displayLoaded(display, slides[0], widgets))
-    resolve(display, slides[0], widgets)
+    const { slides, widgets, ...display } = payload
+    display.config = JSON.parse(display.config || '{}')
+    slides.sort((s1, s2) => s1.index - s2.index).forEach((slide) => {
+      slide.config = JSON.parse(slide.config)
+      slide.relations.forEach((layer) => {
+        layer.params = JSON.parse(layer.params)
+      })
+    })
+    if (Array.isArray(widgets)) {
+      widgets.forEach((widget) => {
+        widget.config = JSON.parse(widget.config)
+        widget.model = JSON.parse(widget.model)
+      })
+    }
+    yield put(displayLoaded(display, slides, widgets || [])) // @FIXME should return empty array in response
+    resolve(display, slides, widgets)
   } catch (err) {
     message.destroy()
     yield put(loadDisplayFail(err))
@@ -50,30 +64,48 @@ export function* getDisplay (action) {
   }
 }
 
-export function* getData (action) {
-  const { payload } = action
-  const { renderType, layerId, dataToken, params: parameters } = payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+export function* getData (action: ShareDisplayActionType) {
+  if (action.type !== ActionTypes.LOAD_LAYER_DATA) { return }
+
+  const { renderType, slideNumber, layerId, dataToken, requestParams } = action.payload
+  const {
+    filters,
+    tempFilters,  // @TODO combine widget static filters with local filters
+    linkageFilters,
+    globalFilters,
+    variables,
+    linkageVariables,
+    globalVariables,
+    pagination,
+    ...rest
+  } = requestParams
+  const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
+  const { layerDataLoaded, loadLayerDataFail } = ShareDisplayActions
 
   try {
-    const asyncData = yield call(request, {
+    const response = yield call(request, {
       method: 'post',
       url: `${api.share}/data/${dataToken}`,
       data: {
-        ...rest,
-        filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        ...omit(rest, 'customOrders'),
+        filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
+        params: variables.concat(linkageVariables).concat(globalVariables),
+        pageSize,
+        pageNo
       }
     })
-    yield put(layerDataLoaded(renderType, layerId, readListAdapter(asyncData)))
+    let responsePayload = response.payload || { resultList: [] }
+    const { resultList } = responsePayload
+    responsePayload.resultList = (resultList && resultList.slice(0, 600)) || []
+    yield put(layerDataLoaded(renderType, slideNumber, layerId, responsePayload, requestParams))
   } catch (err) {
-    yield put(loadLayerDataFail(err))
+    yield put(loadLayerDataFail(slideNumber, layerId, err))
   }
 }
 
 export default function* rootDisplaySaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(ActionTypes.LOAD_SHARE_DISPLAY, getDisplay),
     takeEvery(ActionTypes.LOAD_LAYER_DATA, getData)
-  ]
+  ])
 }

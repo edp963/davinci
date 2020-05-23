@@ -18,35 +18,17 @@
  * >>
  */
 
-import * as slide from 'assets/json/slideSettings/slide.json'
-import * as chart from 'assets/json/slideSettings/chart.json'
-import * as rectangle from 'assets/json/slideSettings/rectangle.json'
-import * as label from 'assets/json/slideSettings/label.json'
+import slide from 'assets/json/slideSettings/slide.json'
 
-export enum SecondaryGraphTypes {
-  Rectangle = 20,
-  Label = 21
-}
+import { ISlideParams } from 'containers/Viz/types'
+import { ILayerParams } from './types'
 
-export enum GraphTypes {
-  Slide,
-  Chart,
-  Secondary
-}
+export { computeEditorBaselines } from './Container/Slide/util'
+export { setLayersAlignment } from './Setting/Alignment/util'
 
-export enum OrderDirection {
-  Asc,
-  Desc
-}
+import { GraphTypes, SecondaryGraphTypes, slideSettings } from './constants'
 
-export const slideSettings = {
-  [GraphTypes.Slide]: slide,
-  [GraphTypes.Chart]: chart,
-  [SecondaryGraphTypes.Rectangle]: rectangle,
-  [SecondaryGraphTypes.Label]: label
-}
-
-export function getDefaultSlideParams () {
+export function getDefaultSlideParams() {
   const params = (slide as any).params
   const defaultSlideParams = {}
   params.forEach((param) => {
@@ -54,5 +36,50 @@ export function getDefaultSlideParams () {
       defaultSlideParams[item.name] = item.default || null
     })
   })
-  return defaultSlideParams
+  return defaultSlideParams as ISlideParams
 }
+
+export function getDefaultLayerSetting(
+  graphType: GraphTypes,
+  secondaryGraphType?: SecondaryGraphTypes
+) {
+  const defaultSetting = {}
+  const type = secondaryGraphType || graphType
+  const setting = slideSettings[type]
+  if (!setting) {
+    return defaultSetting as ILayerParams
+  }
+  setting.params.forEach((param) => {
+    param.items.forEach((item) => {
+      defaultSetting[item.name] = item.default || null
+    })
+  })
+  return defaultSetting as ILayerParams
+}
+
+export const captureVideosWithImages = () => {
+  const canvas = this.canvas || document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  const videos = document.querySelectorAll('video')
+  Array.prototype.forEach.call(videos, (v) => {
+    if (!v.src) {
+      return
+    }
+
+    try {
+      const { videoWidth, videoHeight } = v
+      canvas.width = videoWidth
+      canvas.height = videoHeight
+      ctx.fillRect(0, 0, videoWidth, videoHeight)
+      ctx.drawImage(v, 0, 0, videoWidth, videoHeight)
+      v.style.backgroundImage = `url(${canvas.toDataURL()})`
+      v.style.backgroundSize = 'cover'
+      console.log('v.style: ', v.style)
+      ctx.clearRect(0, 0, videoWidth, videoHeight)
+    } catch (e) {
+      console.log('e: ', e)
+      return
+    }
+  })
+}
+

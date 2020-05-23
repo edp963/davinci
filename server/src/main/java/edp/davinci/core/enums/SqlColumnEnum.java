@@ -1,19 +1,20 @@
 /*
  * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2018 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *       http://www.apache.org/licenses/LICENSE-2.0
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * >>
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2019 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
  */
 
 package edp.davinci.core.enums;
@@ -26,6 +27,8 @@ import javax.sql.rowset.serial.SerialBlob;
 import javax.sql.rowset.serial.SerialClob;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+
+import static edp.core.consts.Consts.EMPTY;
 
 public enum SqlColumnEnum {
 
@@ -68,7 +71,12 @@ public enum SqlColumnEnum {
         type = type.toUpperCase();
         for (SqlColumnEnum sqlTypeEnum : values()) {
             if (sqlTypeEnum.type.equals(type)) {
-                Object object = s2dbValue(type, value);
+                Object object = null;
+                try {
+                    object = s2dbValue(type, value);
+                } catch (Exception e) {
+                    throw new ServerException(e.toString() + ":[" + type + ":" + value + "]");
+                }
                 return object;
             }
         }
@@ -89,11 +97,11 @@ public enum SqlColumnEnum {
         return null;
     }
 
-    private static Object s2dbValue(String type, String value) {
-        Object result = value.trim();
+    private static Object s2dbValue(String type, String value) throws Exception {
         if (StringUtils.isEmpty(value)) {
             return null;
         }
+        Object result = value.trim();
         switch (type.toUpperCase()) {
             case "TINYINT":
             case "SMALLINT":
@@ -111,9 +119,11 @@ public enum SqlColumnEnum {
 
             case "DECIMAL":
             case "NUMERIC":
-                if ("".equals(value.trim())) {
+                if (EMPTY.equals(value.trim())) {
                     result = new BigDecimal("0.0").stripTrailingZeros();
-                } else result = new BigDecimal(value.trim()).stripTrailingZeros();
+                } else {
+                    result = new BigDecimal(value.trim()).stripTrailingZeros();
+                }
                 break;
 
             case "FLOAT":

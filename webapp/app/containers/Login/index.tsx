@@ -22,31 +22,27 @@ import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
+import { RouteComponentProps } from 'react-router-dom'
 
 import LoginForm from './LoginForm'
-const Icon = require('antd/lib/icon')
+import { Icon } from 'antd'
 
 import { compose } from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
-// import reducer from '../App/reducer'
-// import saga from '../App/sagas'
 
-import { login, logged, setLoginUser } from '../App/actions'
+import { login, logged, getVersion } from '../App/actions'
 import { makeSelectLoginLoading } from '../App/selectors'
-import { promiseDispatcher } from '../../utils/reduxPromisation'
-import checkLogin from '../../utils/checkLogin'
-import { setToken } from '../../utils/request'
-
+import checkLogin from 'utils/checkLogin'
+import { setToken } from 'utils/request'
+import { statistic } from 'utils/statistic/statistic.dv'
+import ExternalLogin from '../ExternalLogin'
 
 const styles = require('./Login.less')
 
 interface ILoginProps {
-  router: any
   loginLoading: boolean
+  onLogged: (user) => void
+  onGetVersion: (resolve?: (version: string) => void) => void
   onLogin: (username: string, password: string, resolve: () => any) => any
-  onLogged: () => any
-  onSetLoginUser: (user: object) => any
 }
 
 interface ILoginStates {
@@ -54,8 +50,11 @@ interface ILoginStates {
   password: string
 }
 
-export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
-  constructor (props) {
+export class Login extends React.PureComponent<
+  ILoginProps & RouteComponentProps,
+  ILoginStates
+> {
+  constructor(props) {
     super(props)
     this.state = {
       username: '',
@@ -63,7 +62,8 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     }
   }
 
-  public componentWillMount () {
+  public componentWillMount() {
+    this.props.onGetVersion()
     this.checkNormalLogin()
   }
 
@@ -71,12 +71,15 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     if (checkLogin()) {
       const token = localStorage.getItem('TOKEN')
       const loginUser = localStorage.getItem('loginUser')
-
       setToken(token)
-      this.props.onLogged()
-      this.props.onSetLoginUser(JSON.parse(loginUser))
-      this.props.router.replace('/')
+      this.props.onLogged(JSON.parse(loginUser))
+      this.props.history.replace('/')
     }
+  }
+
+  private findPassword = () => {
+    const { history } = this.props
+    history.push('/findPassword')
   }
 
   private changeUsername = (e) => {
@@ -92,20 +95,35 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   }
 
   private toSignUp = () => {
-    const { router } = this.props
-    router.replace('/register')
+    const { history } = this.props
+    history.replace('/register')
   }
 
   private doLogin = () => {
-    const { onLogin, router } = this.props
+    const { onLogin, history } = this.props
     const { username, password } = this.state
 
     if (username && password) {
-      onLogin(username, password, () => { router.replace('/')})
+      onLogin(username, password, () => {
+        history.replace('/')
+        statistic.whenSendTerminal()
+        statistic.setOperations(
+          {
+            create_time: statistic.getCurrentDateTime()
+          },
+          (data) => {
+            const loginRecord = {
+              ...data,
+              action: 'login'
+            }
+            statistic.sendOperation(loginRecord)
+          }
+        )
+      })
     }
   }
 
-  public render () {
+  public render() {
     const { loginLoading } = this.props
     const { username, password } = this.state
     return (
@@ -118,21 +136,26 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
           onChangePassword={this.changePassword}
           onLogin={this.doLogin}
         />
-        <button
-          disabled={loginLoading}
-          onClick={this.doLogin}
-        >
-          {
-            loginLoading
-              ? <Icon type="loading" />
-              : ''
-          }
-          登 录
+        <button disabled={loginLoading} onClick={this.doLogin}>
+          {loginLoading ? <Icon type="loading" /> : ''}登 录
         </button>
         <p className={styles.tips}>
-          <span>还没有账号？ </span>
-          <a href="javascript:;" onClick={this.toSignUp}>注册davinci账号</a>
+          <a
+            href="javascript:;"
+            className={styles.register}
+            onClick={this.toSignUp}
+          >
+            注册新账户
+          </a>
+          <a
+            href="javascript:;"
+            className={styles.forgetPassword}
+            onClick={this.findPassword}
+          >
+            忘记密码？
+          </a>
         </p>
+        <ExternalLogin />
       </div>
     )
   }
@@ -142,24 +165,18 @@ const mapStateToProps = createStructuredSelector({
   loginLoading: makeSelectLoginLoading()
 })
 
-export function mapDispatchToProps (dispatch) {
+export function mapDispatchToProps(dispatch) {
   return {
-    onLogin: (username, password, resolve) => dispatch(login(username, password, resolve)),
-    onLogged: () => promiseDispatcher(dispatch, logged),
-    onSetLoginUser: (user) => promiseDispatcher(dispatch, setLoginUser, user)
+    onLogin: (username, password, resolve) =>
+      dispatch(login(username, password, resolve)),
+    onLogged: (user) => dispatch(logged(user)),
+    onGetVersion: (resolve) => dispatch(getVersion(resolve))
   }
 }
 
-const withConnect = connect<{}, {}, ILoginProps>(mapStateToProps, mapDispatchToProps)
-// const withReducer = injectReducer({ key: 'global', reducer })
-// const withSaga = injectSaga({ key: 'global', saga })
+const withConnect = connect<{}, {}, ILoginProps>(
+  mapStateToProps,
+  mapDispatchToProps
+)
 
-export default compose(
-//  withReducer,
-//  withSaga,
- withConnect
-)(Login)
-
-
-
-
+export default compose(withConnect)(Login)

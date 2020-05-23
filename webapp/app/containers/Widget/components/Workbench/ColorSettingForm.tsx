@@ -4,14 +4,12 @@ import { SketchPicker } from 'react-color'
 import { decodeMetricName } from '../util'
 import { IDataParamSource, IDataParamConfig } from './Dropbox'
 import { WidgetMode } from '../Widget'
-const radios = require('antd/lib/radio')
-const Radio = radios.default
-const RadioGroup = radios.Group
-const Button = require('antd/lib/button')
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+import { Radio, Button } from 'antd'
+const RadioGroup = Radio.Group
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 const styles = require('./Workbench.less')
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface IColorProp {
   key: string
@@ -160,7 +158,6 @@ export class ColorSettingForm extends React.PureComponent<IColorSettingFormProps
           </div>
           <div className={styles.picker}>
             <SketchPicker
-              className="sketchpickerinpanel"
               color={selected.color}
               presetColors={defaultThemeColors}
               onChangeComplete={this.colorChange}

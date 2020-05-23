@@ -2,12 +2,11 @@ import * as React from 'react'
 
 import { IDataParamSource } from './Dropbox'
 import { getAggregatorLocale, decodeMetricName } from '../util'
-import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
-const Tabs = require('antd/lib/tabs')
+import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from 'app/globalConstants'
+import { Tabs, Slider } from 'antd'
 const TabPane = Tabs.TabPane
-const Slider = require('antd/lib/slider')
 const styles = require('./Workbench.less')
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('assets/less/util.less')
 
 interface ISizePanelProps {
   list: IDataParamSource[]

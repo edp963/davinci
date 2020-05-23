@@ -1,0 +1,50 @@
+@import "~assets/less/variable";
+
+.downloadList {
+  min-width: 200px;
+  max-height: 360px;
+  overflow-y: auto;
+
+  .item {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    border-bottom: 1px solid @border-color-base;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    i {
+      margin-right: 8px;
+    }
+
+    p {
+      flex: 1;
+      font-size: 1.08em;
+      color: @disabled-text-color;
+      .ellipsis;
+
+      &.success {
+        color: @text-color;
+        font-weight: bold;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      &.downloaded {
+        text-decoration: underline;
+        cursor: pointer;
+      }
+    }
+
+    :global(.ant-tag) {
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+  }
+}
+
+.badge {
+  pointer-events: none
+}

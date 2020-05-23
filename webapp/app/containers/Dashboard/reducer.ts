@@ -18,361 +18,375 @@
  * >>
  */
 
-import { fromJS } from 'immutable'
+import produce from 'immer'
 
-import {
-  LOAD_DASHBOARDS_SUCCESS,
-  LOAD_DASHBOARDS_FAILURE,
-  ADD_DASHBOARD,
-  ADD_DASHBOARD_SUCCESS,
-  ADD_DASHBOARD_FAILURE,
-  EDIT_DASHBOARD_SUCCESS,
-  EDIT_CURRENT_DASHBOARD,
-  EDIT_CURRENT_DASHBOARD_SUCCESS,
-  EDIT_CURRENT_DASHBOARD_FAILURE,
-  DELETE_DASHBOARD_SUCCESS,
-  LOAD_DASHBOARD_DETAIL,
-  LOAD_DASHBOARD_DETAIL_SUCCESS,
-  LOAD_DASHBOARD_DETAIL_FAILURE,
-  ADD_DASHBOARD_ITEM_SUCCESS,
-  ADD_DASHBOARD_ITEM_FAILURE,
-  EDIT_DASHBOARD_ITEM_SUCCESS,
-  EDIT_DASHBOARD_ITEM_FAILURE,
-  EDIT_DASHBOARD_ITEMS_SUCCESS,
-  EDIT_DASHBOARD_ITEMS_FAILURE,
-  DELETE_DASHBOARD_ITEM_SUCCESS,
-  DELETE_DASHBOARD_ITEM_FAILURE,
-  CLEAR_CURRENT_DASHBOARD,
-  LOAD_DASHBOARD_SHARE_LINK,
-  LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
-  LOAD_DASHBOARD_SECRET_LINK_SUCCESS,
-  LOAD_DASHBOARD_SHARE_LINK_FAILURE,
-  LOAD_WIDGET_SHARE_LINK,
-  LOAD_WIDGET_SHARE_LINK_SUCCESS,
-  LOAD_WIDGET_SECRET_LINK_SUCCESS,
-  LOAD_WIDGET_SHARE_LINK_FAILURE,
-  LOAD_WIDGET_CSV,
-  LOAD_WIDGET_CSV_SUCCESS,
-  LOAD_WIDGET_CSV_FAILURE,
-  RENDER_DASHBOARDITEM,
-  RESIZE_DASHBOARDITEM,
-  RESIZE_ALL_DASHBOARDITEM
-} from './constants'
+import { ActionTypes } from './constants'
+import { DashboardActionType } from './actions'
+import { getInitialItemInfo, getGlobalControlInitialValues } from './util'
+import { DownloadTypes } from '../App/constants'
+import { LOCATION_CHANGE, LocationChangeAction } from 'connected-react-router'
+import { ActionTypes as VizActionTypes } from 'containers/Viz/constants'
+import { VizActionType } from '../Viz/actions'
+import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
+import { IDashboardState, IDashboardSharePanelState } from './types'
 
-import {
-  LOAD_DATA_FROM_ITEM,
-  LOAD_DATA_FROM_ITEM_SUCCESS,
-  LOAD_DATA_FROM_ITEM_FAILURE,
-  LOAD_CASCADESOURCE_SUCCESS
-} from '../Bizlogic/constants'
+const defaultSharePanelState: IDashboardSharePanelState = {
+  id: 0,
+  type: 'dashboard',
+  title: '',
+  visible: false
+}
 
-const initialState = fromJS({
-  dashboards: null,
+const initialState: IDashboardState = {
   currentDashboard: null,
   currentDashboardLoading: false,
-  currentDashboardShareInfo: '',
-  currentDashboardSecretInfo: '',
-  currentDashboardShareInfoLoading: false,
-  currentDashboardCascadeSources: null,
+  currentDashboardShareToken: '',
+  currentDashboardAuthorizedShareToken: '',
+  currentDashboardShareLoading: false,
+  sharePanel: defaultSharePanelState,
   currentItems: null,
   currentItemsInfo: null,
-  modalLoading: false
-})
+  fullScreenPanelItemId: null,
+  cancelTokenSources: []
+}
 
-function dashboardReducer (state = initialState, action) {
-  const { type, payload } = action
-  const dashboards = state.get('dashboards')
-  const dashboardCascadeSources = state.get('currentDashboardCascadeSources')
-  let items = state.get('currentItems')
-  const itemsInfo = state.get('currentItemsInfo')
+const dashboardReducer = (
+  state = initialState,
+  action: VizActionType | DashboardActionType | LocationChangeAction
+): IDashboardState =>
+  produce(state, (draft) => {
+    let drillHistory
+    let targetItemInfo
 
-  switch (type) {
-    case LOAD_DASHBOARDS_SUCCESS:
-      return state.set('dashboards', payload.dashboards)
-    case LOAD_DASHBOARDS_FAILURE:
-      return state
+    switch (action.type) {
+      case VizActionTypes.EDIT_CURRENT_DASHBOARD:
+        draft.currentDashboardLoading = true
+        break
 
-    case ADD_DASHBOARD:
-      return state.set('modalLoading', true)
-    case ADD_DASHBOARD_SUCCESS:
-      if (dashboards) {
-        dashboards.push(payload.result)
-        return state
-          .set('dashboards', dashboards.slice())
-          .set('modalLoading', false)
-      } else {
-        return state
-          .set('dashboards', [payload.result])
-          .set('modalLoading', false)
-      }
-    case ADD_DASHBOARD_FAILURE:
-      return state.set('modalLoading', false)
+      case VizActionTypes.EDIT_CURRENT_DASHBOARD_SUCCESS:
+        draft.currentDashboard = action.payload.result
+        draft.currentDashboardLoading = false
+        break
 
-    case EDIT_DASHBOARD_SUCCESS:
-      const { result, formType } = payload
-      if (formType === 'edit') {
-        result.forEach((r) => {
-          dashboards.splice(dashboards.findIndex((d) => d.id === r.id), 1, r)
-        })
-      } else if (formType === 'move') {
-        result.forEach((r) => {
-          dashboards.splice(dashboards.findIndex((d) => d.id === r.id), 1)
-        })
-        Array.prototype.push.apply(dashboards, result)
-      }
-      return state.set('dashboards', dashboards.slice())
-    case EDIT_CURRENT_DASHBOARD:
-      return state.set('currentDashboardLoading', true)
-    case EDIT_CURRENT_DASHBOARD_SUCCESS:
-      return state
-        .set('currentDashboard', payload.result)
-        .set('currentDashboardCascadeSources', {})
-        .set('currentDashboardLoading', false)
-    case EDIT_CURRENT_DASHBOARD_FAILURE:
-      return state.set('currentDashboardLoading', false)
+      case VizActionTypes.EDIT_CURRENT_DASHBOARD_FAILURE:
+        draft.currentDashboardLoading = false
+        break
 
-    case DELETE_DASHBOARD_SUCCESS:
-      return state.set('dashboards', dashboards.filter((i) => i.id !== payload.id))
+      case ActionTypes.LOAD_DASHBOARD_DETAIL:
+        draft.currentDashboardLoading = true
+        break
 
-    case LOAD_DASHBOARD_DETAIL:
-      return state
-        .set('currentDashboardLoading', true)
-        .set('currentDashboardShareInfo', '')
-        .set('currentDashboardSecretInfo', '')
+      case ActionTypes.LOAD_DASHBOARD_DETAIL_SUCCESS:
+        const { dashboard, widgets, items } = action.payload
+        const globalControlsInitialValue = getGlobalControlInitialValues(
+          dashboard.config.filters
+        )
+        draft.currentDashboardLoading = false
+        draft.currentDashboard = dashboard
+        draft.currentDashboardShareToken = ''
+        draft.currentDashboardAuthorizedShareToken = ''
+        draft.currentItems = items
+        draft.currentItemsInfo = items.reduce((info, item) => {
+          const relatedWidget = widgets.find((w) => w.id === item.widgetId)
+          const initialItemInfo = getInitialItemInfo(relatedWidget)
+          const drillpathSetting =
+            item.config && item.config.length ? JSON.parse(item.config) : void 0
 
-    case LOAD_DASHBOARD_DETAIL_SUCCESS:
-      return state
-        .set('currentDashboardLoading', false)
-        .set('currentDashboard', payload.dashboardDetail)
-        .set('currentDashboardCascadeSources', {})
-        .set('currentItems', payload.dashboardDetail.widgets)
-        .set('currentItemsInfo', payload.dashboardDetail.widgets.reduce((obj, w) => {
-          obj[w.id] = {
-            datasource: [],
-            loading: false,
-            queryParams: {
-              linkageFilters: [],
-              globalFilters: [],
-              params: [],
-              linkageParams: [],
-              globalParams: [],
-              pagination: {}
-            },
-            shareInfo: '',
-            shareInfoLoading: false,
-            secretInfo: '',
-            downloadCsvLoading: false,
-            interactId: '',
-            rendered: false,
-            renderType: 'rerender'
-          }
-          return obj
-        }, {}))
-    case LOAD_DASHBOARD_DETAIL_FAILURE:
-      return state.set('currentDashboardLoading', false)
-
-    case ADD_DASHBOARD_ITEM_SUCCESS:
-      if (!items) {
-        items = []
-      }
-
-      const infoTemp = new Object()
-      payload.result.forEach((pr) => {
-        infoTemp[pr.id] = {
-          datasource: [],
-          loading: false,
-          queryParams: {
-            linkageFilters: [],
-            globalFilters: [],
-            params: [],
-            linkageParams: [],
-            globalParams: [],
-            pagination: {}
-          },
-          shareInfo: '',
-          shareInfoLoading: false,
-          secretInfo: '',
-          downloadCsvLoading: false,
-          interactId: '',
-          rendered: false,
-          renderType: 'rerender'
-        }
-      })
-      return state
-        .set('currentItems', items.concat(payload.result))
-        .set('currentItemsInfo', {
-          ...itemsInfo,
-          ...infoTemp
-        })
-    case ADD_DASHBOARD_ITEM_FAILURE:
-      return state
-
-    case EDIT_DASHBOARD_ITEM_SUCCESS:
-      items.splice(items.indexOf(items.find((i) => i.id === payload.result.id)), 1, payload.result)
-      return state.set('currentItems', items.slice())
-    case EDIT_DASHBOARD_ITEM_FAILURE:
-      return state
-
-    case EDIT_DASHBOARD_ITEMS_SUCCESS:
-      return state.set('currentItems', payload.items)
-    case EDIT_DASHBOARD_ITEMS_FAILURE:
-      return state
-
-    case DELETE_DASHBOARD_ITEM_SUCCESS:
-      delete itemsInfo[payload.id]
-      return state.set('currentItems', items.filter((i) => i.id !== payload.id))
-    case DELETE_DASHBOARD_ITEM_FAILURE:
-      return state
-
-    case CLEAR_CURRENT_DASHBOARD:
-      return state
-        .set('currentDashboard', null)
-        .set('currentItems', null)
-        .set('currentItemsInfo', null)
-
-    case LOAD_DATA_FROM_ITEM:
-      return payload.vizType !== 'dashboard' ? state : state
-        .set('currentItemsInfo', {
-          ...itemsInfo,
-          [payload.itemId]: {
-            ...itemsInfo[payload.itemId],
-            loading: true,
-            queryParams: {
-              linkageFilters: payload.params.linkageFilters,
-              globalFilters: payload.params.globalFilters,
-              params: payload.params.params,
-              linkageParams: payload.params.linkageParams,
-              globalParams: payload.params.globalParams
+          if (globalControlsInitialValue[item.id]) {
+            const {
+              globalFilters,
+              globalVariables
+            } = globalControlsInitialValue[item.id]
+            initialItemInfo.queryConditions = {
+              ...initialItemInfo.queryConditions,
+              globalFilters,
+              globalVariables,
+              ...drillpathSetting
             }
           }
-        })
 
-    case LOAD_DATA_FROM_ITEM_SUCCESS:
-      return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
-        ...itemsInfo,
-        [payload.itemId]: {
-          ...itemsInfo[payload.itemId],
-          loading: false,
-          datasource: payload.data,
-          renderType: payload.renderType
-        }
-      })
-    case LOAD_DATA_FROM_ITEM_FAILURE:
-      return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
-        ...itemsInfo,
-        [payload.itemId]: {
-          ...itemsInfo[payload.itemId],
-          loading: false
-        }
-      })
-
-    case LOAD_DASHBOARD_SHARE_LINK:
-      return state.set('currentDashboardShareInfoLoading', true)
-    case LOAD_DASHBOARD_SHARE_LINK_SUCCESS:
-      return state
-        .set('currentDashboardShareInfo', payload.shareInfo)
-        .set('currentDashboardShareInfoLoading', false)
-    case LOAD_DASHBOARD_SECRET_LINK_SUCCESS:
-      return state
-        .set('currentDashboardSecretInfo', payload.secretInfo)
-        .set('currentDashboardShareInfoLoading', false)
-    case LOAD_DASHBOARD_SHARE_LINK_FAILURE:
-      return state.set('currentDashboardShareInfoLoading', false)
-
-    case LOAD_WIDGET_SHARE_LINK:
-      return state.set('currentItemsInfo', {
-        ...itemsInfo,
-        [payload.itemId]: {
-          ...itemsInfo[payload.itemId],
-          shareInfoLoading: true
-        }
-      })
-    case LOAD_WIDGET_SHARE_LINK_SUCCESS:
-      return state
-        .set('currentItemsInfo', {
-          ...itemsInfo,
-          [payload.itemId]: {
-            ...itemsInfo[payload.itemId],
-            shareInfo: payload.shareInfo,
-            shareInfoLoading: false
-          }
-        })
-    case LOAD_WIDGET_SECRET_LINK_SUCCESS:
-      return state
-        .set('currentItemsInfo', {
-          ...itemsInfo,
-          [payload.itemId]: {
-            ...itemsInfo[payload.itemId],
-            secretInfo: payload.shareInfo,
-            shareInfoLoading: false
-          }
-        })
-    case LOAD_WIDGET_SHARE_LINK_FAILURE:
-      return state.set('currentItemsInfo', {
-        ...itemsInfo,
-        [payload.itemId]: {
-          ...itemsInfo[payload.itemId],
-          shareInfoLoading: false
-        }
-      })
-
-    case LOAD_WIDGET_CSV:
-      return state.set('currentItemsInfo', {
-        ...itemsInfo,
-        [payload.itemId]: {
-          ...itemsInfo[payload.itemId],
-          downloadCsvLoading: true
-        }
-      })
-    case LOAD_WIDGET_CSV_SUCCESS:
-    case LOAD_WIDGET_CSV_FAILURE:
-      return state.set('currentItemsInfo', {
-        ...itemsInfo,
-        [payload.itemId]: {
-          ...itemsInfo[payload.itemId],
-          downloadCsvLoading: false
-        }
-      })
-    case LOAD_CASCADESOURCE_SUCCESS:
-      return state.set('currentDashboardCascadeSources', {
-        ...dashboardCascadeSources,
-        [payload.controlId]: {
-          ...dashboardCascadeSources[payload.controlId],
-          [payload.column]: payload.values
-        }
-      })
-    case RENDER_DASHBOARDITEM:
-      return state.set('currentItemsInfo', {
-        ...itemsInfo,
-        [payload.itemId]: {
-          ...itemsInfo[payload.itemId],
-          rendered: true
-        }
-      })
-    case RESIZE_DASHBOARDITEM:
-      return state.set('currentItemsInfo', {
-        ...itemsInfo,
-        [payload.itemId]: {
-          ...itemsInfo[payload.itemId],
-          renderType: 'resize',
-          datasource: [...itemsInfo[payload.itemId].datasource]
-        }
-      })
-    case RESIZE_ALL_DASHBOARDITEM:
-      return state.set(
-        'currentItemsInfo',
-        Object.entries(itemsInfo).reduce((info, [key, prop]: [string, any]) => {
-          info[key] = {
-            ...prop,
-            renderType: 'resize',
-            datasource: [...prop.datasource]
-          }
+          info[item.id] = initialItemInfo
           return info
         }, {})
-      )
-    default:
-      return state
-  }
-}
+        break
+
+      case ActionTypes.LOAD_DASHBOARD_DETAIL_FAILURE:
+        draft.currentDashboardLoading = false
+        break
+
+      case ActionTypes.ADD_DASHBOARD_ITEMS_SUCCESS:
+        draft.currentItems = (draft.currentItems || []).concat(
+          action.payload.items
+        )
+        action.payload.items.forEach((item) => {
+          const relatedWidget = action.payload.widgets.find((w) => w.id === item.widgetId)
+          draft.currentItemsInfo[item.id] = getInitialItemInfo(relatedWidget)
+        })
+        break
+
+      case ActionTypes.ADD_DASHBOARD_ITEMS_FAILURE:
+        break
+
+      case ActionTypes.EDIT_DASHBOARD_ITEM_SUCCESS:
+        draft.currentItems.splice(
+          draft.currentItems.findIndex(
+            ({ id }) => id === action.payload.result.id
+          ),
+          1,
+          action.payload.result
+        )
+        break
+
+      case ActionTypes.EDIT_DASHBOARD_ITEM_FAILURE:
+        break
+
+      case ActionTypes.EDIT_DASHBOARD_ITEMS_SUCCESS:
+        draft.currentItems = action.payload.items
+        break
+
+      case ActionTypes.EDIT_DASHBOARD_ITEMS_FAILURE:
+        break
+
+      case ActionTypes.DELETE_DASHBOARD_ITEM_SUCCESS:
+        delete draft.currentItemsInfo[action.payload.id]
+        draft.currentItems = draft.currentItems.filter(
+          ({ id }) => id !== action.payload.id
+        )
+        break
+
+      case ActionTypes.DELETE_DASHBOARD_ITEM_FAILURE:
+        break
+
+      case ActionTypes.CLEAR_CURRENT_DASHBOARD:
+        draft.currentDashboard = null
+        draft.currentItems = null
+        draft.currentItemsInfo = null
+        break
+
+      case ActionTypes.LOAD_DASHBOARD_ITEM_DATA:
+        draft.currentItemsInfo[action.payload.itemId].loading = true
+        draft.currentItemsInfo[action.payload.itemId].errorMessage = ''
+        draft.cancelTokenSources.push(action.payload.cancelTokenSource)
+        break
+
+      case ActionTypes.LOAD_DASHBOARD_ITEM_DATA_SUCCESS:
+        // @TODO combine widget static filters with local filters
+        const {
+          tempFilters,
+          linkageFilters,
+          globalFilters,
+          variables,
+          linkageVariables,
+          globalVariables,
+          pagination,
+          nativeQuery,
+          customOrders
+        } = action.payload.requestParams
+
+        fieldGroupedSort(action.payload.result.resultList, customOrders)
+
+        draft.currentItemsInfo[action.payload.itemId] = {
+          ...draft.currentItemsInfo[action.payload.itemId],
+          loading: false,
+          datasource: action.payload.result,
+          renderType: action.payload.renderType,
+          queryConditions: {
+            ...draft.currentItemsInfo[action.payload.itemId].queryConditions,
+            tempFilters,
+            linkageFilters,
+            globalFilters,
+            variables,
+            linkageVariables,
+            globalVariables,
+            pagination,
+            nativeQuery
+          },
+          selectedItems: []
+        }
+        break
+
+      case ActionTypes.LOAD_DASHBOARD_ITEM_DATA_FAILURE:
+        // LOAD_DASHBOARD_ITEM_DATA_FAILURE maybe executed after CLEAR_CURRENT_DASHBOARD when location changes
+        if (draft.currentItemsInfo) {
+          draft.currentItemsInfo[action.payload.itemId].loading = false
+          draft.currentItemsInfo[action.payload.itemId].errorMessage =
+            action.payload.errorMessage
+          }
+        break
+
+      case ActionTypes.LOAD_BATCH_DATA_WITH_CONTROL_VALUES:
+        action.payload.relatedItems.forEach((itemId) => {
+          draft.currentItemsInfo[itemId].loading = true
+          draft.currentItemsInfo[itemId].errorMessage = ''
+        })
+        draft.cancelTokenSources.push(action.payload.cancelTokenSource)
+        break
+
+      case ActionTypes.SELECT_DASHBOARD_ITEM_CHART:
+        const selectedItem = draft.currentItemsInfo[action.payload.itemId]
+        draft.currentItemsInfo[action.payload.itemId] = {
+          ...selectedItem,
+          renderType: action.payload.renderType,
+          selectedItems: action.payload.selectedItems
+        }
+        break
+
+      case ActionTypes.DRILL_DASHBOARDITEM:
+        drillHistory =
+          draft.currentItemsInfo[action.payload.itemId].queryConditions
+            .drillHistory
+        if (!drillHistory) {
+          draft.currentItemsInfo[
+            action.payload.itemId
+          ].queryConditions.drillHistory = []
+        }
+        draft.currentItemsInfo[
+          action.payload.itemId
+        ].queryConditions.drillHistory.push(action.payload.drillHistory)
+        break
+
+      case ActionTypes.DRILL_PATH_SETTING:
+        const drillSetting =
+          draft.currentItemsInfo[action.payload.itemId].queryConditions
+            .drillSetting
+        if (!drillSetting) {
+          draft.currentItemsInfo[
+            action.payload.itemId
+          ].queryConditions.drillSetting = [action.payload.history]
+        } else {
+          drillSetting.push(action.payload.history)
+        }
+        break
+
+      case ActionTypes.DELETE_DRILL_HISTORY:
+        drillHistory =
+          draft.currentItemsInfo[action.payload.itemId].queryConditions
+            .drillHistory
+        if (Array.isArray(drillHistory)) {
+          drillHistory.splice(action.payload.index + 1)
+        }
+        break
+
+      case ActionTypes.LOAD_DASHBOARD_SHARE_LINK:
+        draft.currentDashboardShareLoading = true
+        if (action.payload.authUser) {
+          draft.currentDashboardAuthorizedShareToken = ''
+        }
+        break
+
+      case ActionTypes.LOAD_DASHBOARD_SHARE_LINK_SUCCESS:
+        draft.currentDashboardShareToken = action.payload.shareToken
+        draft.currentDashboardShareLoading = false
+        break
+
+      case ActionTypes.LOAD_DASHBOARD_AUTHORIZED_SHARE_LINK_SUCCESS:
+        draft.currentDashboardAuthorizedShareToken =
+          action.payload.authorizedShareToken
+        draft.currentDashboardShareLoading = false
+        break
+
+      case ActionTypes.LOAD_DASHBOARD_SHARE_LINK_FAILURE:
+        draft.currentDashboardShareLoading = false
+        break
+
+      case ActionTypes.LOAD_WIDGET_SHARE_LINK:
+        draft.currentItemsInfo[action.payload.itemId].shareLoading = true
+        if (action.payload.authUser) {
+          draft.currentItemsInfo[action.payload.itemId].authorizedShareToken =
+            ''
+        }
+        break
+
+      case ActionTypes.LOAD_WIDGET_SHARE_LINK_SUCCESS:
+        targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
+        targetItemInfo.shareToken = action.payload.shareToken
+        targetItemInfo.shareLoading = false
+        break
+
+      case ActionTypes.LOAD_WIDGET_AUTHORIZED_SHARE_LINK_SUCCESS:
+        targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
+        targetItemInfo.authorizedShareToken = action.payload.shareToken
+        targetItemInfo.shareLoading = false
+        break
+
+      case ActionTypes.LOAD_WIDGET_SHARE_LINK_FAILURE:
+        targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
+        targetItemInfo.shareLoading = false
+        break
+
+      case ActionTypes.OPEN_SHARE_PANEL:
+        draft.sharePanel = {
+          id: action.payload.id,
+          type: action.payload.type,
+          title: action.payload.title,
+          itemId: action.payload.itemId,
+          visible: true
+        }
+        break
+      case ActionTypes.CLOSE_SHARE_PANEL:
+        draft.sharePanel = defaultSharePanelState
+        break
+
+      case ActionTypes.LOAD_WIDGET_CSV:
+        targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
+        targetItemInfo.downloadCsvLoading = true
+        break
+
+      case ActionTypes.LOAD_WIDGET_CSV_SUCCESS:
+      case ActionTypes.LOAD_WIDGET_CSV_FAILURE:
+        targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
+        targetItemInfo.downloadCsvLoading = false
+        break
+
+      case ActionTypes.INITIATE_DOWNLOAD_TASK:
+        if (action.payload.type === DownloadTypes.Widget) {
+          targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
+          targetItemInfo.downloadCsvLoading = true
+        }
+        break
+
+      case ActionTypes.INITIATE_DOWNLOAD_TASK_SUCCESS:
+      case ActionTypes.INITIATE_DOWNLOAD_TASK_FAILURE:
+        if (action.payload.type === DownloadTypes.Widget) {
+          targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
+          targetItemInfo.downloadCsvLoading = false
+        }
+        break
+
+      case ActionTypes.RENDER_DASHBOARDITEM:
+        draft.currentItemsInfo[action.payload.itemId].rendered = true
+        break
+
+      case ActionTypes.RESIZE_DASHBOARDITEM:
+        targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
+        targetItemInfo.renderType = 'resize'
+        targetItemInfo.datasource = { ...targetItemInfo.datasource }
+        break
+
+      case ActionTypes.RESIZE_ALL_DASHBOARDITEM:
+        Object.values(draft.currentItemsInfo).forEach((itemInfo: any) => {
+          itemInfo.renderType = 'resize'
+          itemInfo.datasource = { ...itemInfo.datasource }
+        })
+        break
+
+      case ActionTypes.SET_FULL_SCREEN_PANEL_ITEM_ID:
+        draft.fullScreenPanelItemId = action.payload.itemId
+        if (action.payload.itemId) {
+          draft.currentItemsInfo[action.payload.itemId].renderType = 'clear'
+          draft.currentItemsInfo[action.payload.itemId].rendered = true
+        }
+        break
+
+      case LOCATION_CHANGE:
+        if (state.cancelTokenSources.length) {
+          state.cancelTokenSources.forEach((source) => {
+            source.cancel()
+          })
+          draft.cancelTokenSources = []
+        }
+        break
+    }
+  })
 
 export default dashboardReducer
