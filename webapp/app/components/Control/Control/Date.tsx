@@ -25,7 +25,6 @@ import { DatePicker } from 'antd'
 const { WeekPicker, MonthPicker } = DatePicker
 const MultiDatePicker = React.lazy(() => import('components/MultiDatePicker'))
 import { DatePickerFormats } from '../constants'
-import styles from '../Panel/Layouts/Layouts.less'
 
 interface IDateProps {
   control: IControlBase
@@ -37,15 +36,6 @@ interface IDateProps {
 const Date: FC<IDateProps> = ({ control, value, size, onChange }, ref) => {
   const { Week, Month, Year, Datetime, DatetimeMinute } = DatePickerFormats
   const { multiple, dateFormat } = control
-
-  const datetimePickerChange = useCallback(
-    (val) => {
-      if (!val || (Array.isArray(val) && !val.length)) {
-        onChange(val)
-      }
-    },
-    [onChange]
-  )
 
   const controlled = !!onChange
   if (multiple) {
@@ -66,7 +56,6 @@ const Date: FC<IDateProps> = ({ control, value, size, onChange }, ref) => {
         return (
           <WeekPicker
             ref={ref}
-            className={styles.controlComponent}
             placeholder="请选择"
             size={size}
             {...(controlled && { value, onChange })}
@@ -77,7 +66,6 @@ const Date: FC<IDateProps> = ({ control, value, size, onChange }, ref) => {
         return (
           <MonthPicker
             ref={ref}
-            className={styles.controlComponent}
             placeholder="请选择"
             format={dateFormat}
             size={size}
@@ -89,15 +77,12 @@ const Date: FC<IDateProps> = ({ control, value, size, onChange }, ref) => {
         return (
           <DatePicker
             ref={ref}
-            className={styles.controlComponent}
             placeholder="请选择"
             showTime={isDatetimePicker}
             format={dateFormat}
             size={size}
             {...(controlled && { value })}
-            {...(controlled && {
-              onChange: isDatetimePicker ? datetimePickerChange : onChange
-            })}
+            {...(controlled && { onChange })}
             {...(controlled && { onOk: onChange })}
           />
         )

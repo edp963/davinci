@@ -23,7 +23,6 @@ import { IControlBase } from '../types'
 import { DatePicker } from 'antd'
 const { RangePicker } = DatePicker
 import { DatePickerFormats } from '../constants'
-import styles from '../Panel/Layouts/Layouts.less'
 
 interface IDateRangeProps {
   control: IControlBase
@@ -38,24 +37,14 @@ const DateRange: FC<IDateRangeProps> = ({ control, value, size, onChange }) => {
   const { Datetime, DatetimeMinute } = DatePickerFormats
   const isDatetimePicker = [Datetime, DatetimeMinute].includes(dateFormat)
 
-  const datetimePickerChange = useCallback(
-    (val) => {
-      if (!val || (Array.isArray(val) && !val.length)) {
-        onChange(val)
-      }
-    },
-    [onChange]
-  )
-
   return (
     <RangePicker
-      className={styles.controlComponent}
       placeholder={placeholder}
       value={value}
       size={size}
       showTime={isDatetimePicker}
       format={dateFormat}
-      onChange={isDatetimePicker ? datetimePickerChange : onChange}
+      onChange={onChange}
       onOk={onChange}
     />
   )
