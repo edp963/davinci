@@ -187,6 +187,9 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
 
             SQLContext sqlContext = ((ViewService) SpringContextHolder.getBean(ViewService.class)).getSQLContext(context.getIsMaintainer(), viewWithProjectAndSource, executeParam, this.context.getUser());
 
+            if (sqlContext == null) {
+                continue;
+            }
             SqlUtils sqlUtils = ((SqlUtils) SpringContextHolder.getBean(SqlUtils.class)).init(viewWithProjectAndSource.getSource());
 
             boolean isTable;
