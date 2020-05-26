@@ -55,7 +55,7 @@ public class ScriptUtiils {
     }
 
 
-    public static ViewExecuteParam getViewExecuteParam(String dashboardConfig, String widgetConfig,
+    public static synchronized ViewExecuteParam getViewExecuteParam(String dashboardConfig, String widgetConfig,
                                                        Long releationId) {
 
         Value js = ScriptEnum.INSTANCE.executeParamFormatJs;
@@ -64,7 +64,7 @@ public class ScriptUtiils {
         return viewExecuteParam;
     }
 
-    public static List<ExcelHeader> formatHeader(String json, List<Param> params) {
+    public static synchronized List<ExcelHeader> formatHeader(String json, List<Param> params) {
 
         Value js = ScriptEnum.INSTANCE.tableFormatJs;
         Value result = js.execute(json, params);
