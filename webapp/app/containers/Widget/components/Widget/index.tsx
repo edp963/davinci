@@ -164,6 +164,7 @@ export interface IWidgetProps extends IWidgetConfigBase {
   selectedItems?: number[]
   onSelectChartsItems?: (selectedItems: number[]) => void
   // onHideDrillPanel?: (swtich: boolean) => void
+  onError?: (error: Error) => void
 }
 
 export interface IWidgetConfig extends IWidgetConfigBase {

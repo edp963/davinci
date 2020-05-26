@@ -119,7 +119,9 @@ const dashboardReducer = (
           action.payload.items
         )
         action.payload.items.forEach((item) => {
-          const relatedWidget = action.payload.widgets.find((w) => w.id === item.widgetId)
+          const relatedWidget = action.payload.widgets.find(
+            (w) => w.id === item.widgetId
+          )
           draft.currentItemsInfo[item.id] = getInitialItemInfo(relatedWidget)
         })
         break
@@ -211,7 +213,7 @@ const dashboardReducer = (
           draft.currentItemsInfo[action.payload.itemId].loading = false
           draft.currentItemsInfo[action.payload.itemId].errorMessage =
             action.payload.errorMessage
-          }
+        }
         break
 
       case ActionTypes.LOAD_BATCH_DATA_WITH_CONTROL_VALUES:
@@ -368,6 +370,12 @@ const dashboardReducer = (
           itemInfo.renderType = 'resize'
           itemInfo.datasource = { ...itemInfo.datasource }
         })
+        break
+
+      case ActionTypes.RENDER_CHART_ERROR:
+        draft.currentItemsInfo[
+          action.payload.itemId
+        ].errorMessage = action.payload.error.toString()
         break
 
       case ActionTypes.SET_FULL_SCREEN_PANEL_ITEM_ID:
