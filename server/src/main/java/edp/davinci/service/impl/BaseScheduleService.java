@@ -266,7 +266,7 @@ public class BaseScheduleService {
 
         sb.append(serverUtils.getLocalHost())
                 .append("/share.html")
-                .append("?shareInfo=")
+                .append("?shareToken=")
                 .append(shareToken);
 
         if (!StringUtils.isEmpty(type)) {
