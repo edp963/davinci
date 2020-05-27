@@ -78,6 +78,7 @@ const {
   renderDashboardItem,
   resizeDashboardItem,
   resizeAllDashboardItem,
+  renderChartError,
   openSharePanel,
   drillDashboardItem,
   deleteDrillHistory,
@@ -393,9 +394,9 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         const waitingItems = currentItems.filter((item) => !currentItemsInfo[item.id].rendered)
 
         if (waitingItems.length) {
+          const { offsetHeight, scrollTop } = this.containerBody
           waitingItems.forEach((item) => {
             const itemTop = this.calcItemTop(item.y)
-            const { offsetHeight, scrollTop } = this.containerBody
 
             if (itemTop - scrollTop < offsetHeight) {
               onRenderDashboardItem(item.id)
@@ -865,6 +866,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       onLoadDashboardItemData,
       onLoadBatchDataWithControlValues,
       onResizeDashboardItem,
+      onRenderChartError,
       onSetFullScreenPanelItemId,
       onMonitoredSyncDataAction,
       onMonitoredSearchDataAction
@@ -975,6 +977,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
               onShowDrillEdit={this.showDrillDashboardItemForm}
               onDeleteDashboardItem={this.deleteItem}
               onResizeDashboardItem={onResizeDashboardItem}
+              onRenderChartError={onRenderChartError}
               onOpenSharePanel={onOpenSharePanel}
               onDownloadCsv={this.initiateWidgetDownloadTask}
               onTurnOffInteract={this.turnOffInteract}
@@ -1250,6 +1253,8 @@ export function mapDispatchToProps (dispatch) {
     onRenderDashboardItem: (itemId: number) => dispatch(renderDashboardItem(itemId)),
     onResizeDashboardItem: (itemId: number) => dispatch(resizeDashboardItem(itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
+    onRenderChartError: (itemId: number, error: Error) =>
+      dispatch(renderChartError(itemId, error)),
     onOpenSharePanel: (
       id: number,
       type: SharePanelType,

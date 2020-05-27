@@ -41,7 +41,10 @@ import DashboardItem from 'containers/Dashboard/components/DashboardItem'
 import FullScreenPanel from './FullScreenPanel'
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import { ChartTypes } from 'containers/Widget/config/chart/ChartTypes'
-import { IFilters, IDistinctValueReqeustParams } from 'app/components/Control/types'
+import {
+  IFilters,
+  IDistinctValueReqeustParams
+} from 'app/components/Control/types'
 import GlobalControlPanel from 'app/containers/ControlPanel/Global'
 import DownloadList from 'components/DownloadList'
 import { getValidColumnValue } from 'app/components/Control/util'
@@ -60,6 +63,7 @@ const {
   loadSelectOptions,
   resizeDashboardItem,
   resizeAllDashboardItem,
+  renderChartError,
   drillDashboardItem,
   deleteDrillHistory,
   selectDashboardItemChart,
@@ -189,9 +193,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
   public componentDidMount() {
     // urlparse
-    const qs = this.querystring(
-      window.location.search.substr(1)
-    )
+    const qs = this.querystring(window.location.search.substr(1))
 
     // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
     this.setState({
@@ -400,12 +402,27 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
   private dataDrill = (drillDetail) => {
     const { onDrillDashboardItem, onLoadResultset } = this.props
-    const { itemId, cols, rows, type, groups, filters, currentGroup } = drillDetail
-    const currentDrillStatus: IDrillDetail = { cols, rows, type, groups, filters, currentGroup }
+    const {
+      itemId,
+      cols,
+      rows,
+      type,
+      groups,
+      filters,
+      currentGroup
+    } = drillDetail
+    const currentDrillStatus: IDrillDetail = {
+      cols,
+      rows,
+      type,
+      groups,
+      filters,
+      currentGroup
+    }
 
     onDrillDashboardItem(itemId, currentDrillStatus)
     onLoadResultset('rerender', itemId, {
-        drillStatus: currentDrillStatus
+      drillStatus: currentDrillStatus
     })
   }
 
@@ -449,6 +466,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       onLoadResultset,
       onLoadBatchDataWithControlValues,
       onResizeDashboardItem,
+      onRenderChartError,
       onSetFullScreenPanelItemId
     } = this.props
 
@@ -522,6 +540,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               container="share"
               onLoadData={onLoadResultset}
               onResizeDashboardItem={onResizeDashboardItem}
+              onRenderChartError={onRenderChartError}
               onDownloadCsv={this.initiateWidgetDownloadTask}
               onTurnOffInteract={this.turnOffInteract}
               onCheckTableInteract={this.checkInteract}
@@ -680,6 +699,8 @@ export function mapDispatchToProps(dispatch) {
     onResizeDashboardItem: (itemId: number) =>
       dispatch(resizeDashboardItem(itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
+    onRenderChartError: (itemId: number, error: Error) =>
+      dispatch(renderChartError(itemId, error)),
     onDrillDashboardItem: (itemId: number, drillHistory) =>
       dispatch(drillDashboardItem(itemId, drillHistory)),
     onDeleteDrillHistory: (itemId: number, index: number) =>
@@ -704,6 +725,14 @@ export function mapDispatchToProps(dispatch) {
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'shareDashboard', reducer })
 const withSaga = injectSaga({ key: 'shareDashboard', saga })
-const withControlReducer = injectReducer({ key: 'control', reducer: controlReducer })
+const withControlReducer = injectReducer({
+  key: 'control',
+  reducer: controlReducer
+})
 
-export default compose(withReducer, withControlReducer, withSaga, withConnect)(Share)
+export default compose(
+  withReducer,
+  withControlReducer,
+  withSaga,
+  withConnect
+)(Share)

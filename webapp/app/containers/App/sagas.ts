@@ -33,6 +33,7 @@ import {
   GET_LOGIN_USER,
   CHECK_NAME,
   ACTIVE,
+  GET_VERSION,
   UPDATE_PROFILE,
   CHANGE_USER_PASSWORD,
   JOIN_ORGANIZATION,
@@ -40,10 +41,13 @@ import {
   DOWNLOAD_FILE,
   GET_EXTERNAL_AUTH_PROVIDERS,
   TRY_EXTERNAL_AUTH,
-  EXTERNAL_AUTH_LOGOUT
+  EXTERNAL_AUTH_LOGOUT,
+  GET_CAPTCHA_FOR_RESET_PASSWORD,
+  RESET_PASSWORD_UNLOGGED
 } from './constants'
 import {
   logged,
+  getVersion,
   loginError,
   getLoginUserError,
   activeSuccess,
@@ -58,11 +62,20 @@ import {
   loadDownloadListFail,
   fileDownloaded,
   downloadFileFail,
-  gotExternalAuthProviders
+  gotExternalAuthProviders,
+  getCaptchaforResetPasswordSuccess,
+  getCaptchaforResetPasswordError,
+  resetPasswordUnloggedSuccess,
+  resetPasswordUnloggedFail,
+  getVersionSuccess,
+  getVersionFail
 } from './actions'
 import request, { removeToken, getToken } from 'utils/request'
 import { errorHandler } from 'utils/util'
 import api from 'utils/api'
+
+import { IReduxActionStruct } from 'utils/types'
+import { IResetPasswordParams, IGetgetCaptchaParams } from '../FindPassword/types'
 
 export function* getExternalAuthProviders(): IterableIterator<any> {
   try {
@@ -74,6 +87,23 @@ export function* getExternalAuthProviders(): IterableIterator<any> {
     yield put(gotExternalAuthProviders(providers))
     return providers
   } catch (err) {
+    errorHandler(err)
+  }
+}
+
+export function* getDavinciVersion(action): IterableIterator<any> {
+  const {resolve} = action.payload
+  try {
+    const version = yield call(request, {
+      method: 'get',
+      url: api.version
+    })
+    yield put(getVersionSuccess(version))
+    if (resolve) {
+      resolve(version)
+    }
+  } catch (err) {
+    yield put(getVersionFail(err))
     errorHandler(err)
   }
 }
@@ -247,6 +277,53 @@ export function* updateProfile(action): IterableIterator<any> {
   }
 }
 
+export function* getCaptchaForResetPassword(
+  action: IReduxActionStruct<IGetgetCaptchaParams>
+): IterableIterator<any> {
+  const { type, ticket, resolve } = action.payload
+
+  try {
+    const httpResponse = yield call(request, {
+      method: 'post',
+      url: `${api.user}/forget/password/${type}`,
+      data: {
+        ticket
+      }
+    })
+
+    const { payload } = httpResponse
+    yield put(getCaptchaforResetPasswordSuccess(payload))
+    resolve(payload)
+  } catch (err) {
+    yield put(getCaptchaforResetPasswordError(err))
+    errorHandler(err)
+  }
+}
+
+export function* resetPasswordUnlogged(
+  action: IReduxActionStruct<IResetPasswordParams>
+): IterableIterator<any> {
+  const { ticket, type, token, resolve, checkCode, password } = action.payload
+
+  try {
+    const httpResponse = yield call(request, {
+      method: 'post',
+      url: `${api.user}/reset/password/${type}/${token}`,
+      data: {
+        ticket,
+        checkCode,
+        password
+      }
+    })
+    const { header } = httpResponse
+    yield put(resetPasswordUnloggedSuccess(header))
+    resolve(header)
+  } catch (err) {
+    yield put(resetPasswordUnloggedFail(err))
+    errorHandler(err)
+  }
+}
+
 export function* changeUserPassword({ payload }) {
   const { user } = payload
   try {
@@ -335,8 +412,14 @@ export default function* rootGroupSaga(): IterableIterator<any> {
     takeEvery(LOGOUT, logout),
     takeEvery(UPDATE_PROFILE, updateProfile as any),
     takeEvery(CHANGE_USER_PASSWORD, changeUserPassword as any),
+    takeEvery(
+      GET_CAPTCHA_FOR_RESET_PASSWORD,
+      getCaptchaForResetPassword as any
+    ),
+    takeEvery(RESET_PASSWORD_UNLOGGED, resetPasswordUnlogged as any),
     takeEvery(JOIN_ORGANIZATION, joinOrganization as any),
     takeLatest(LOAD_DOWNLOAD_LIST, getDownloadList),
-    takeLatest(DOWNLOAD_FILE, downloadFile)
+    takeLatest(DOWNLOAD_FILE, downloadFile),
+    takeLatest(GET_VERSION, getDavinciVersion)
   ])
 }

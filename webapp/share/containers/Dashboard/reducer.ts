@@ -130,7 +130,8 @@ const shareReducer = (state = initialState, action: DashboardActionType) =>
         break
 
       case ActionTypes.LOAD_SHARE_RESULTSET:
-        draft.itemsInfo[action.payload.itemId].status = DashboardItemStatus.Pending
+        draft.itemsInfo[action.payload.itemId].status =
+          DashboardItemStatus.Pending
         draft.itemsInfo[action.payload.itemId].loading = true
         draft.itemsInfo[action.payload.itemId].errorMessage = ''
         break
@@ -238,6 +239,12 @@ const shareReducer = (state = initialState, action: DashboardActionType) =>
           itemInfo.renderType = 'resize'
           itemInfo.datasource = { ...itemInfo.datasource }
         })
+        break
+
+      case ActionTypes.RENDER_CHART_ERROR:
+        draft.itemsInfo[
+          action.payload.itemId
+        ].errorMessage = action.payload.error.toString()
         break
 
       case ActionTypes.LOAD_DOWNLOAD_LIST:

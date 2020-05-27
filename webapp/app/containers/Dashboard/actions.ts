@@ -36,7 +36,7 @@ import { DownloadTypes } from '../App/constants'
 const CancelToken = axios.CancelToken
 
 export const DashboardActions = {
-  addDashboardItems (portalId, items, resolve) {
+  addDashboardItems(portalId, items, resolve) {
     return {
       type: ActionTypes.ADD_DASHBOARD_ITEMS,
       payload: {
@@ -47,7 +47,7 @@ export const DashboardActions = {
     }
   },
 
-  deleteDashboardItem (id, resolve) {
+  deleteDashboardItem(id, resolve) {
     return {
       type: ActionTypes.DELETE_DASHBOARD_ITEM,
       payload: {
@@ -57,13 +57,13 @@ export const DashboardActions = {
     }
   },
 
-  clearCurrentDashboard () {
+  clearCurrentDashboard() {
     return {
       type: ActionTypes.CLEAR_CURRENT_DASHBOARD
     }
   },
 
-  loadDashboardItemData (
+  loadDashboardItemData(
     renderType: RenderType,
     itemId: number,
     queryConditions?: Partial<IQueryConditions>
@@ -79,7 +79,7 @@ export const DashboardActions = {
     }
   },
 
-  dashboardItemDataLoaded (
+  dashboardItemDataLoaded(
     renderType: RenderType,
     itemId: number,
     requestParams: IDataRequestParams,
@@ -98,7 +98,7 @@ export const DashboardActions = {
     }
   },
 
-  loadDashboardItemDataFail (itemId: number, errorMessage: string) {
+  loadDashboardItemDataFail(itemId: number, errorMessage: string) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_ITEM_DATA_FAILURE,
       payload: {
@@ -108,7 +108,7 @@ export const DashboardActions = {
     }
   },
 
-  loadBatchDataWithControlValues (
+  loadBatchDataWithControlValues(
     type: ControlPanelTypes,
     relatedItems: number[],
     formValues?: object,
@@ -126,11 +126,7 @@ export const DashboardActions = {
     }
   },
 
-  initiateDownloadTask (
-    type: DownloadTypes,
-    id?: number,
-    itemId?: number
-  ) {
+  initiateDownloadTask(type: DownloadTypes, id?: number, itemId?: number) {
     return {
       type: ActionTypes.INITIATE_DOWNLOAD_TASK,
       payload: {
@@ -141,7 +137,7 @@ export const DashboardActions = {
     }
   },
 
-  DownloadTaskInitiated (
+  DownloadTaskInitiated(
     type: DownloadTypes,
     statistic: IDataDownloadStatistic[],
     itemId?: number
@@ -156,11 +152,7 @@ export const DashboardActions = {
     }
   },
 
-  initiateDownloadTaskFail (
-    error,
-    type: DownloadTypes,
-    itemId?: number
-  ) {
+  initiateDownloadTaskFail(error, type: DownloadTypes, itemId?: number) {
     return {
       type: ActionTypes.INITIATE_DOWNLOAD_TASK_FAILURE,
       payload: {
@@ -171,7 +163,7 @@ export const DashboardActions = {
     }
   },
 
-  loadDashboardDetail (projectId, portalId, dashboardId) {
+  loadDashboardDetail(projectId, portalId, dashboardId) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_DETAIL,
       payload: {
@@ -182,7 +174,7 @@ export const DashboardActions = {
     }
   },
 
-  dashboardDetailLoaded (
+  dashboardDetailLoaded(
     dashboard: IDashboard,
     items: IDashboardItem[],
     widgets: IWidgetFormed[],
@@ -199,13 +191,13 @@ export const DashboardActions = {
     }
   },
 
-  loadDashboardDetailFail () {
+  loadDashboardDetailFail() {
     return {
       type: ActionTypes.LOAD_DASHBOARD_DETAIL_FAILURE
     }
   },
 
-  dashboardItemsAdded (items: IDashboardItem[], widgets: IWidgetFormed[]) {
+  dashboardItemsAdded(items: IDashboardItem[], widgets: IWidgetFormed[]) {
     return {
       type: ActionTypes.ADD_DASHBOARD_ITEMS_SUCCESS,
       payload: {
@@ -215,13 +207,13 @@ export const DashboardActions = {
     }
   },
 
-  addDashboardItemsFail () {
+  addDashboardItemsFail() {
     return {
       type: ActionTypes.ADD_DASHBOARD_ITEMS_FAILURE
     }
   },
 
-  editDashboardItem (portalId, item, resolve) {
+  editDashboardItem(portalId, item, resolve) {
     return {
       type: ActionTypes.EDIT_DASHBOARD_ITEM,
       payload: {
@@ -232,7 +224,7 @@ export const DashboardActions = {
     }
   },
 
-  dashboardItemEdited (result) {
+  dashboardItemEdited(result) {
     return {
       type: ActionTypes.EDIT_DASHBOARD_ITEM_SUCCESS,
       payload: {
@@ -241,13 +233,13 @@ export const DashboardActions = {
     }
   },
 
-  editDashboardItemFail () {
+  editDashboardItemFail() {
     return {
       type: ActionTypes.EDIT_DASHBOARD_ITEM_FAILURE
     }
   },
 
-  editDashboardItems (portalId, items) {
+  editDashboardItems(portalId, items) {
     return {
       type: ActionTypes.EDIT_DASHBOARD_ITEMS,
       payload: {
@@ -257,7 +249,7 @@ export const DashboardActions = {
     }
   },
 
-  dashboardItemsEdited (items) {
+  dashboardItemsEdited(items) {
     return {
       type: ActionTypes.EDIT_DASHBOARD_ITEMS_SUCCESS,
       payload: {
@@ -266,13 +258,13 @@ export const DashboardActions = {
     }
   },
 
-  editDashboardItemsFail () {
+  editDashboardItemsFail() {
     return {
       type: ActionTypes.EDIT_DASHBOARD_ITEMS_FAILURE
     }
   },
 
-  dashboardItemDeleted (id) {
+  dashboardItemDeleted(id) {
     return {
       type: ActionTypes.DELETE_DASHBOARD_ITEM_SUCCESS,
       payload: {
@@ -281,13 +273,13 @@ export const DashboardActions = {
     }
   },
 
-  deleteDashboardItemFail () {
+  deleteDashboardItemFail() {
     return {
       type: ActionTypes.DELETE_DASHBOARD_ITEM_FAILURE
     }
   },
 
-  loadDashboardShareLink (id, authUser?) {
+  loadDashboardShareLink(id, authUser?) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_SHARE_LINK,
       payload: {
@@ -297,7 +289,7 @@ export const DashboardActions = {
     }
   },
 
-  dashboardShareLinkLoaded (shareToken) {
+  dashboardShareLinkLoaded(shareToken) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
       payload: {
@@ -306,7 +298,7 @@ export const DashboardActions = {
     }
   },
 
-  dashboardAuthorizedShareLinkLoaded (authorizedShareToken) {
+  dashboardAuthorizedShareLinkLoaded(authorizedShareToken) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_AUTHORIZED_SHARE_LINK_SUCCESS,
       payload: {
@@ -315,13 +307,13 @@ export const DashboardActions = {
     }
   },
 
-  loadDashboardShareLinkFail () {
+  loadDashboardShareLinkFail() {
     return {
       type: ActionTypes.LOAD_DASHBOARD_SHARE_LINK_FAILURE
     }
   },
 
-  loadWidgetShareLink (id, itemId, authUser?) {
+  loadWidgetShareLink(id, itemId, authUser?) {
     return {
       type: ActionTypes.LOAD_WIDGET_SHARE_LINK,
       payload: {
@@ -332,7 +324,7 @@ export const DashboardActions = {
     }
   },
 
-  widgetShareLinkLoaded (shareToken, itemId) {
+  widgetShareLinkLoaded(shareToken, itemId) {
     return {
       type: ActionTypes.LOAD_WIDGET_SHARE_LINK_SUCCESS,
       payload: {
@@ -342,7 +334,7 @@ export const DashboardActions = {
     }
   },
 
-  widgetAuthorizedShareLinkLoaded (shareToken, itemId) {
+  widgetAuthorizedShareLinkLoaded(shareToken, itemId) {
     return {
       type: ActionTypes.LOAD_WIDGET_AUTHORIZED_SHARE_LINK_SUCCESS,
       payload: {
@@ -352,7 +344,7 @@ export const DashboardActions = {
     }
   },
 
-  loadWidgetShareLinkFail (itemId) {
+  loadWidgetShareLinkFail(itemId) {
     return {
       type: ActionTypes.LOAD_WIDGET_SHARE_LINK_FAILURE,
       payload: {
@@ -361,7 +353,7 @@ export const DashboardActions = {
     }
   },
 
-  openSharePanel (id, type, title, itemId?) {
+  openSharePanel(id, type, title, itemId?) {
     return {
       type: ActionTypes.OPEN_SHARE_PANEL,
       payload: {
@@ -373,13 +365,13 @@ export const DashboardActions = {
     }
   },
 
-  closeSharePanel () {
+  closeSharePanel() {
     return {
       type: ActionTypes.CLOSE_SHARE_PANEL
     }
   },
 
-  loadWidgetCsv (itemId, widgetId, requestParams) {
+  loadWidgetCsv(itemId, widgetId, requestParams) {
     return {
       type: ActionTypes.LOAD_WIDGET_CSV,
       payload: {
@@ -390,7 +382,7 @@ export const DashboardActions = {
     }
   },
 
-  widgetCsvLoaded (itemId) {
+  widgetCsvLoaded(itemId) {
     return {
       type: ActionTypes.LOAD_WIDGET_CSV_SUCCESS,
       payload: {
@@ -399,7 +391,7 @@ export const DashboardActions = {
     }
   },
 
-  loadWidgetCsvFail (itemId) {
+  loadWidgetCsvFail(itemId) {
     return {
       type: ActionTypes.LOAD_WIDGET_CSV_FAILURE,
       payload: {
@@ -408,7 +400,7 @@ export const DashboardActions = {
     }
   },
 
-  renderDashboardItem (itemId) {
+  renderDashboardItem(itemId) {
     return {
       type: ActionTypes.RENDER_DASHBOARDITEM,
       payload: {
@@ -417,7 +409,7 @@ export const DashboardActions = {
     }
   },
 
-  resizeDashboardItem (itemId) {
+  resizeDashboardItem(itemId) {
     return {
       type: ActionTypes.RESIZE_DASHBOARDITEM,
       payload: {
@@ -426,13 +418,23 @@ export const DashboardActions = {
     }
   },
 
-  resizeAllDashboardItem () {
+  resizeAllDashboardItem() {
     return {
       type: ActionTypes.RESIZE_ALL_DASHBOARDITEM
     }
   },
 
-  drillDashboardItem (itemId, drillHistory) {
+  renderChartError(itemId: number, error: Error) {
+    return {
+      type: ActionTypes.RENDER_CHART_ERROR,
+      payload: {
+        itemId,
+        error
+      }
+    }
+  },
+
+  drillDashboardItem(itemId, drillHistory) {
     return {
       type: ActionTypes.DRILL_DASHBOARDITEM,
       payload: {
@@ -442,7 +444,7 @@ export const DashboardActions = {
     }
   },
 
-  deleteDrillHistory (itemId, index) {
+  deleteDrillHistory(itemId, index) {
     return {
       type: ActionTypes.DELETE_DRILL_HISTORY,
       payload: {
@@ -452,7 +454,7 @@ export const DashboardActions = {
     }
   },
 
-  drillPathsetting (itemId, history) {
+  drillPathsetting(itemId, history) {
     return {
       type: ActionTypes.DRILL_PATH_SETTING,
       payload: {
@@ -462,7 +464,7 @@ export const DashboardActions = {
     }
   },
 
-  selectDashboardItemChart (itemId, renderType, selectedItems) {
+  selectDashboardItemChart(itemId, renderType, selectedItems) {
     return {
       type: ActionTypes.SELECT_DASHBOARD_ITEM_CHART,
       payload: {
@@ -473,25 +475,25 @@ export const DashboardActions = {
     }
   },
 
-  monitoredSyncDataAction () {
+  monitoredSyncDataAction() {
     return {
       type: ActionTypes.MONITORED_SYNC_DATA_ACTION
     }
   },
 
-  monitoredSearchDataAction () {
+  monitoredSearchDataAction() {
     return {
       type: ActionTypes.MONITORED_SEARCH_DATA_ACTION
     }
   },
 
-  monitoredLinkageDataAction () {
+  monitoredLinkageDataAction() {
     return {
       type: ActionTypes.MONITORED_LINKAGE_DATA_ACTION
     }
   },
 
-  setFullScreenPanelItemId (itemId) {
+  setFullScreenPanelItemId(itemId) {
     return {
       type: ActionTypes.SET_FULL_SCREEN_PANEL_ITEM_ID,
       payload: {
