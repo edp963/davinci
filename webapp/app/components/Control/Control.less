@@ -1,24 +1,15 @@
 @import "~assets/less/variable";
 
-.filterConfig {
+.controlConfig {
   flex: 1;
 
   .configForm {
     flex: 1;
     display: flex;
     flex-direction: row;
+    .formTitle;
 
     .title {
-      flex-shrink: 0;
-      padding: 0 8px;
-      position: relative;
-
-      h2 {
-        color: @light-text-color;
-        font-size: 14px;
-        line-height: 3em;
-      }
-
       .rightSide {
         position: absolute;
         top: 10px
@@ -39,6 +30,20 @@
       &.subTitle {
         border-top: 1px solid @border-color-split;
       }
+    }
+  }
+}
+
+.formTitle {
+  .title {
+    flex-shrink: 0;
+    padding: 0 8px;
+    position: relative;
+
+    h2 {
+      color: @light-text-color;
+      font-size: 14px;
+      line-height: 3em;
     }
   }
 }
@@ -153,17 +158,16 @@
   }
 }
 
-.filterFormContainer {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
 .controlFormAntdOverride {
   .formBody {
     padding: 0 16px;
   }
   .antFormItemLabelSmall;
+}
+
+.localConfigForm {
+  flex: 1;
+  .formTitle;
 }
 
 .baseForm {
@@ -175,7 +179,7 @@
   }
 }
 
-.filterForm {
+.controlForm {
   flex: 1;
   overflow-y: auto;
   .controlFormAntdOverride;
@@ -184,30 +188,6 @@
     flex: 1;
     padding: 0 16px 16px;
     overflow-y: auto;
-  }
-}
-
-.filterValuePreview {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-
-  .previewContent {
-    display: flex;
-    flex-direction: column;
-    align-content: center;
-  }
-
-  ul {
-    overflow-y: auto;
-    flex: 1;
-
-    li {
-      line-height: 24px;
-      padding: 0 8px;
-
-      .ellipsis;
-    }
   }
 }
 

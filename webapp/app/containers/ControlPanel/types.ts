@@ -1,4 +1,4 @@
-import { IMapControlOptions, IControlBase } from 'app/components/Filters/types'
+import { IMapControlOptions, IControlBase } from 'app/components/Control/types'
 
 export interface IControlState {
   globalControlPanelFormValues: object

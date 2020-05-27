@@ -22,7 +22,7 @@ import { IDashboardBase, IDashboardRaw } from 'app/containers/Viz/types'
 import {
   GlobalControlQueryMode,
   IGlobalControl
-} from 'app/components/Filters/types'
+} from 'app/components/Control/types'
 import { RenderType, IPaginationParams } from '../Widget/components/Widget'
 import { IFieldSortDescriptor } from '../Widget/components/Config/Sort'
 import { SharePanelType, ISharePanel } from 'app/components/SharePanel/type'

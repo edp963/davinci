@@ -87,7 +87,8 @@ const initialState: IViewState = {
   channels: [],
   tenants: [],
   bizs: [],
-  cancelTokenSources: []
+  cancelTokenSources: [],
+  isLastExecuteWholeSql: true
 }
 
 const viewReducer = (
@@ -161,6 +162,9 @@ const viewReducer = (
           `${tableColumns.sourceId}_${databaseName}_${tableColumns.tableName}`
         ] = tableColumns
         break
+      case ActionTypes.IS_LAST_EXECUTE_WHOLE_SQL:
+        draft.isLastExecuteWholeSql = action.payload.isLastExecuteWholeSql
+        break
       case ActionTypes.EXECUTE_SQL:
         draft.loading.execute = true
         draft.sqlValidation = { code: null, message: null }
@@ -191,6 +195,15 @@ const viewReducer = (
           code: action.payload.err.code,
           message: action.payload.err.msg
         }
+        break
+      case ActionTypes.EXECUTE_SQL_CANCEL:
+        draft.sqlDataSource = {
+          ...draft.sqlDataSource,
+          columns: [],
+          totalCount: 0,
+          resultList: []
+        }
+        draft.loading.execute = false
         break
       case ActionTypes.UPDATE_EDITING_VIEW:
         draft.editingView = action.payload.view

@@ -1,5 +1,5 @@
 import React, { FC, memo, useCallback } from 'react'
-import ControlComponent from '../FilterControl'
+import ControlComponent from '../../Control'
 import { Row, Col, Button } from 'antd'
 import {
   IRenderTreeItem,
@@ -7,9 +7,9 @@ import {
   GlobalControlQueryMode,
   ILocalControl,
   ILocalRenderTreeItem
-} from '../types'
+} from '../../types'
+import { DEFAULT_DASHBOARD_ITEM_CONTROL_GRID_WIDTH } from '../../constants'
 import styles from './Layouts.less'
-import { DEFAULT_DASHBOARD_ITEM_CONTROL_GRID_WIDTH } from '../constants'
 
 interface IDashboardItemControlPanelLayoutProps {
   queryMode: GlobalControlQueryMode

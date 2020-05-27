@@ -34,12 +34,12 @@ import {
   serializeDefaultValue,
   getRelatedFieldsInfo
 } from '../util'
-import { FilterTypes, IS_RANGE_TYPE} from '../constants'
+import { ControlTypes, IS_RANGE_TYPE} from '../constants'
 
 import { ListFormLayout, List } from 'components/ListFormLayout'
 import SplitPane from 'components/SplitPane'
-import FilterList from './FilterList'
-import FilterFormWithRedux, { FilterForm } from './FilterForm'
+import ControlList from './ControlList'
+import ControlFormWithRedux, { ControlForm } from './ControlForm'
 import OptionSettingFormWithModal, { OptionSettingForm } from './OptionSettingForm'
 import RelatedInfoSelectors from './RelatedInfoSelectors'
 import { Button, Modal, Radio } from 'antd'
@@ -48,7 +48,7 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { IDashboard } from 'containers/Dashboard/types'
 import ControlActions from 'containers/ControlPanel/actions'
 import { IViewVariable, IFormedViews, IFormedView, IViewModelProps } from 'app/containers/View/types'
-import styles from '../filter.less'
+import styles from '../Control.less'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 
@@ -74,7 +74,7 @@ interface IGlobalControlConfigProps {
   visible: boolean
   loading: boolean
   onCancel: () => void
-  onSave: (filterItems: any[], queryMode: GlobalControlQueryMode) => void
+  onSave: (controlItems: any[], queryMode: GlobalControlQueryMode) => void
   onGetOptions: OnGetControlOptions
   onSetConfigFormValues: (values) => void
 }
@@ -104,7 +104,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     }
   }
 
-  private filterForm = createRef<FilterForm>()
+  private controlForm = createRef<ControlForm>()
   private optionSettingForm = createRef<OptionSettingForm>()
 
   public componentWillReceiveProps (nextProps: IGlobalControlConfigProps) {
@@ -200,7 +200,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     }
   }
 
-  private selectFilter = (key: string) => {
+  private selectControl = (key: string) => {
     const { currentItems, widgets, views } = this.props
 
     this.getCachedFormValues((err, controls) => {
@@ -215,32 +215,32 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     })
   }
 
-  private addFilter = () => {
+  private addControl = () => {
     const { currentItems, widgets, views } = this.props
     const { controls, selected } = this.state
-    const newFilter: IGlobalControl = getDefaultGlobalControl()
+    const control: IGlobalControl = getDefaultGlobalControl()
 
     if (selected) {
       this.getCachedFormValues((err, cachedControls) => {
         if (err) { return }
         this.setState({
-          controls: [...cachedControls, newFilter],
-          selected: newFilter
+          controls: [...cachedControls, control],
+          selected: control
         })
-        this.setRelatedInfo(newFilter, currentItems, widgets, views)
-        this.setFormData(newFilter)
+        this.setRelatedInfo(control, currentItems, widgets, views)
+        this.setFormData(control)
       })
     } else {
       this.setState({
-        controls: [...controls, newFilter],
-        selected: newFilter
+        controls: [...controls, control],
+        selected: control
       })
-      this.setRelatedInfo(newFilter, currentItems, widgets, views)
-      this.setFormData(newFilter)
+      this.setRelatedInfo(control, currentItems, widgets, views)
+      this.setFormData(control)
     }
   }
 
-  private deleteFilter = (keys: string[], reselectedKey: string) => {
+  private deleteControl = (keys: string[], reselectedKey: string) => {
     const { currentItems, widgets, views } = this.props
     const { controls } = this.state
 
@@ -324,7 +324,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
     resolve?: (err, cachedControls?) => void
   ) => {
     const { controls, selected, itemSelectorSource, viewSelectorSource } = this.state
-    this.filterForm.current.props.form.validateFieldsAndScroll((err, values) => {
+    this.controlForm.current.props.form.validateFieldsAndScroll((err, values) => {
       if (err) {
         if (resolve) {
           resolve(err)
@@ -425,7 +425,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
             } else {
               detail = v.variables.find((m) => m.name === value)
               fields = {
-                ...selected.type === FilterTypes.Select && v.fields,
+                ...selected.type === ControlTypes.Select && v.fields,
                 name: detail.name,
                 type: detail.valueType
               }
@@ -538,7 +538,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
 
   private getValidaFields = (
     interactionType: InteractionType,
-    type: FilterTypes,
+    type: ControlTypes,
     fields: IControlRelatedField | IControlRelatedField[]
   ): IControlRelatedField | IControlRelatedField[] => {
     if (fields) {
@@ -580,7 +580,7 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
                 : { text: tnvArr[0], value: tnvArr[1] }
             })
         : []
-      this.filterForm.current.props.form.setFieldsValue({options})
+      this.controlForm.current.props.form.setFieldsValue({options})
       this.closeOptionModal()
     })
   }
@@ -649,19 +649,19 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
           initialSize={256}
           minSize={256}
           maxSize={480}
-          className={styles.filterConfig}
+          className={styles.controlConfig}
           spliter
         >
           <List
             title="控制器列表"
             className={styles.treeContainer}
-            onAddItem={this.addFilter}
+            onAddItem={this.addControl}
           >
-            <FilterList
+            <ControlList
               list={controls}
-              selectedFilter={selected}
-              onSelectFilter={this.selectFilter}
-              onDeleteFilter={this.deleteFilter}
+              selected={selected}
+              onSelect={this.selectControl}
+              onDelete={this.deleteControl}
               onNameChange={this.changeName}
               onParentChange={this.changeParent}
             />
@@ -687,11 +687,11 @@ export class GlobalControlConfig extends React.Component<IGlobalControlConfigPro
                 onToggleCheckAll={this.toggleCheckAll}
                 onInteractionTypeChange={this.interactionTypeChange}
               />
-              <FilterFormWithRedux
+              <ControlFormWithRedux
                 interactionType={selected.interactionType}
                 onControlTypeChange={this.controlTypeChange}
                 onOpenOptionModal={this.openOptionModal}
-                wrappedComponentRef={this.filterForm}
+                wrappedComponentRef={this.controlForm}
               />
             </SplitPane>
           )}

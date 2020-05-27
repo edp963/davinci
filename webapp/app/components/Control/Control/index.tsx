@@ -20,36 +20,34 @@
 
 import React, { Component, PureComponent, Suspense, ReactNode } from 'react'
 import classnames from 'classnames'
-import {
-  renderInputText,
-  renderNumberRange,
-  renderSelect,
-  renderDate,
-  renderDateRange
-} from '.'
-import { IControlBase, ControlOptions, GlobalControlQueryMode } from './types'
-import { FilterTypes } from './constants'
+import InputText from './InputText'
+import NumberRange from 'components/NumberRange'
+import Select from './Select'
+import Date from './Date'
+import DateRange from './DateRange'
+import { IControlBase, GlobalControlQueryMode, IControlOption } from '../types'
+import { ControlTypes } from '../constants'
 import { Form } from 'antd'
 const FormItem = Form.Item
-import styles from './Layouts/Layouts.less'
+import styles from '../Panel/Layouts/Layouts.less'
 
 interface IParentInfo {
   control: IControlBase
   value: any
 }
 
-interface IFilterControlProps {
+interface IControlProps {
   queryMode: GlobalControlQueryMode
   control: IControlBase
   value: any
   size?: 'default' | 'large' | 'small'
-  currentOptions: ControlOptions
+  currentOptions: IControlOption[]
   parentsInfo?: IParentInfo[]
   onChange: (control: IControlBase, value) => void
   onSearch: (changedValues?: object) => void
 }
 
-export class FilterControl extends PureComponent<IFilterControlProps, {}> {
+export class Control extends PureComponent<IControlProps, {}> {
   public static defaultProps = {
     size: 'default'
   }
@@ -60,23 +58,58 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
     let component
 
     switch (control.type) {
-      case FilterTypes.InputText:
-        component = renderInputText(value, size, this.inputChange, this.search)
+      case ControlTypes.InputText:
+        component = (
+          <InputText
+            value={value}
+            size={size}
+            onChange={this.inputChange}
+            onSearch={this.search}
+          />
+        )
         break
-      case FilterTypes.NumberRange:
-        component = renderNumberRange(value, size, this.change, this.search)
+      case ControlTypes.NumberRange:
+        component = (
+          <NumberRange
+            value={value}
+            size={size}
+            onChange={this.change}
+            onSearch={this.search}
+          />
+        )
         break
-      case FilterTypes.Select:
-        component = renderSelect(control, value, size, this.change, options)
+      case ControlTypes.Select:
+        component = (
+          <Select
+            control={control}
+            value={value}
+            size={size}
+            onChange={this.change}
+            options={options}
+          />
+        )
         break
-      // case FilterTypes.TreeSelect:
-      //   component = renderTreeSelect(filter, this.change, options)
+      // case ControlTypes.TreeSelect:
       //   break
-      case FilterTypes.Date:
-        component = renderDate(control, value, size, this.change)
+      case ControlTypes.Date:
+        component = (
+          <Date
+            control={control}
+            value={value}
+            size={size}
+            onChange={this.change}
+          />
+        )
         break
-      case FilterTypes.DateRange:
-        component = renderDateRange(control, value, size, this.change)
+      case ControlTypes.DateRange:
+        component = (
+          <DateRange
+            control={control}
+            value={value}
+            size={size}
+            onChange={this.change}
+          />
+        )
         break
     }
     return this.wrapFormItem(control, component)
@@ -123,4 +156,4 @@ export class FilterControl extends PureComponent<IFilterControlProps, {}> {
   }
 }
 
-export default FilterControl
+export default Control

@@ -25,7 +25,7 @@ import { FormComponentProps } from 'antd/lib/form/Form'
 const FormItem = Form.Item
 const TextArea = Input.TextArea
 
-const styles = require('../filter.less')
+import styles from '../Control.less'
 
 interface IOptionSettingFormProps {
   visible: boolean

@@ -32,8 +32,8 @@ import {
 } from '../../containers/Dashboard/types'
 import { IWidgetFormed } from 'app/containers/Widget/types'
 import { IFormedViews, IFormedView } from 'app/containers/View/types'
-import { OnGetControlOptions } from 'app/components/Filters/types'
-import { ControlPanelTypes } from 'app/components/Filters/constants'
+import { OnGetControlOptions } from 'app/components/Control/types'
+import { ControlPanelTypes } from 'app/components/Control/constants'
 import { IShareDashboardItemInfo } from 'share/containers/Dashboard/types'
 import styles from './FullScreenPanel.less'
 

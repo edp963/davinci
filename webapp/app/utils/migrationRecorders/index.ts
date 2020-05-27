@@ -1,4 +1,4 @@
-import { IGlobalControl, ILocalControl } from 'app/components/Filters/types'
+import { IGlobalControl, ILocalControl } from 'app/components/Control/types'
 import { IWidgetDimension, IChartStyles } from 'app/containers/Widget/components/Widget'
 import globalControl from './globalControl'
 import localControl from './localControl'

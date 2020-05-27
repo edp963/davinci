@@ -18,7 +18,7 @@
  * >>
  */
 
-import React, { useRef, useEffect, useCallback } from 'react'
+import React, { useRef, useEffect, useCallback, useMemo } from 'react'
 import AceEditor, { IAceOptions } from 'react-ace'
 import languageTools from 'ace-builds/src-min-noconflict/ext-language_tools'
 import 'ace-builds/src-min-noconflict/ext-searchbox'
@@ -80,6 +80,8 @@ export interface ISqlEditorProps {
   editorConfig?: IAceEditorProps
   sizeChanged?: number
   onSqlChange: (sql: string) => void
+  onSelect?: (sql: string) => void
+  onCmdEnter?: () => void
 }
 
 /**
@@ -97,16 +99,32 @@ function SqlEditor (props: ISqlEditorProps) {
     theme = THEME_DEFAULT,
     sizeChanged,
     editorConfig,
-    onSqlChange
+    onSqlChange,
+    onSelect,
+    onCmdEnter
   } = props
 
   const resize = useCallback(debounce(() => {
     refEditor.current.editor.resize()
   }, 300), [])
 
-  const change = useCallback(debounce((sql: string) => {
+  const change = useCallback((sql: string) => {
     onSqlChange(sql)
+  }, [])
+
+  const selectionChange = useCallback(debounce((selection: any) => {
+    const rawSelectedQueryText = refEditor.current.editor.session.doc.getTextRange(selection.getRange())
+    const selectedQueryText = rawSelectedQueryText.length > 1 ? rawSelectedQueryText : null
+    onSelect?.(selectedQueryText)
   }, 300), [])
+
+  const commands = useMemo(() => [
+    {
+      name: 'execute',
+      bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
+      exec: onCmdEnter
+    }
+  ], [])
 
   useEffect(() => {
     resize()
@@ -130,7 +148,9 @@ function SqlEditor (props: ISqlEditorProps) {
         showPrintMargin={false}
         highlightActiveLine={true}
         setOptions={EDITOR_OPTIONS}
+        commands={commands}
         onChange={change}
+        onSelectionChange={selectionChange}
         {...editorConfig}
       />
     </div>
@@ -217,7 +237,7 @@ function genTableColumnKeywords (table: string[], tableName: string) {
 function genAliasTableColumnKeywords (editor, aliasTableName: string, hints: ISqlEditorProps['hints']) {
   const content = editor.getSession().getValue()
   const tableName = Object.keys(hints).find((tableName) => {
-    const reg = new RegExp(`.+${tableName}(\\s+(as|AS)?(?=\\s+${aliasTableName}\\s*)`, 'igm')
+    const reg = new RegExp(`.+${tableName}\\s*(as|AS)?(?=\\s+${aliasTableName}\\s*)`, 'im')
     return reg.test(content)
   })
   if (!tableName) { return [] }

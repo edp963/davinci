@@ -14,7 +14,7 @@ import { IFieldSortConfig, FieldSortTypes, SortConfigModal } from '../Config/Sor
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
-import ControlConfig from './ControlConfig'
+import LocalControlConfig from 'app/components/Control/Config/Local'
 import ReferenceConfigModal from './Reference'
 import ComputedConfigForm from '../ComputedConfigForm'
 import ChartIndicator from './ChartIndicator'
@@ -40,7 +40,7 @@ import PivotTypes from '../../config/pivot/PivotTypes'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox, notification, Tooltip, Select } from 'antd'
-import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
 import { IReference } from './Reference/types'
 import { REFERENCE_SUPPORTED_CHART_TYPES } from './Reference/constants'
 import { WorkbenchQueryMode } from './types'
@@ -2095,7 +2095,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ref={(f) => this.filterSettingForm = f}
           />
         </Modal>
-        <ControlConfig
+        <LocalControlConfig
           currentControls={controls}
           view={selectedView}
           visible={controlConfigVisible}

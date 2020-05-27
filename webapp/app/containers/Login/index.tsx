@@ -77,6 +77,11 @@ export class Login extends React.PureComponent<
     }
   }
 
+  private findPassword = () => {
+    const { history } = this.props
+    history.push('/findPassword')
+  }
+
   private changeUsername = (e) => {
     this.setState({
       username: e.target.value.trim()
@@ -135,8 +140,20 @@ export class Login extends React.PureComponent<
           {loginLoading ? <Icon type="loading" /> : ''}登 录
         </button>
         <p className={styles.tips}>
-          <span>还没有账号？ </span>
-          <a href="javascript:;" onClick={this.toSignUp}>注册davinci账号</a>
+          <a
+            href="javascript:;"
+            className={styles.register}
+            onClick={this.toSignUp}
+          >
+            注册新账户
+          </a>
+          <a
+            href="javascript:;"
+            className={styles.forgetPassword}
+            onClick={this.findPassword}
+          >
+            忘记密码？
+          </a>
         </p>
         <ExternalLogin />
       </div>
