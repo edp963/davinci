@@ -199,5 +199,9 @@ public class Consts {
 
     public static final String JDBC_DATASOURCE_DEFAULT_VERSION = "Default";
 
-    public static final String PATH_EXT_FORMATER = "lib" + File.separator  + "ext" + File.separator + "%s" + File.separator + "%s" + File.separator;
+    public static final String PATH_EXT_FORMATER = "lib" + File.separator + "ext" + File.separator + "%s" + File.separator + "%s" + File.separator;
+
+    public static final int INVALID_SHEET_NAEM_LENGTH = 28;
+    private static final String REG_INVALID_SHEET_NAME = "[\\!\\\\\\/\\?\\*\\[\\]\\:]";
+    public static final Pattern INVALID_SHEET_NAME = Pattern.compile(REG_INVALID_SHEET_NAME);
 }

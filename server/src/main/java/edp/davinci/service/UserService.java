@@ -22,8 +22,10 @@ package edp.davinci.service;
 
 import edp.core.exception.ServerException;
 import edp.davinci.core.common.ResultMap;
+import edp.davinci.core.enums.UserDistinctType;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.userDto.UserBaseInfo;
+import edp.davinci.dto.userDto.UserDistinctTicket;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.userDto.UserRegist;
 import edp.davinci.model.User;
@@ -56,4 +58,10 @@ public interface UserService extends CheckEntityService {
     ResultMap activateUserNoLogin(String token, HttpServletRequest request);
 
     ResultMap getUserProfile(Long id, User user, HttpServletRequest request);
+
+    ResultMap getUserProfileFromToken(String token);
+
+    String forgetPassword(UserDistinctType userDistinctType, UserDistinctTicket ticket);
+
+    boolean resetPassword(UserDistinctType userDistinctType, String token, UserDistinctTicket ticket);
 }

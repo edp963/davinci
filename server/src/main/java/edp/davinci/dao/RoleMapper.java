@@ -103,4 +103,11 @@ public interface RoleMapper {
             "WHERE rrp.project_id = #{projectId} and rru.user_id = #{userId}"
     })
     List<Long> getRolesByUserAndProject(@Param("userId") Long userId, @Param("projectId") Long projectId);
+
+    @Select({
+            "SELECT r.* FROM role r",
+            "LEFT JOIN rel_role_user rru on rru.role_id = r.id",
+            "WHERE r.org_id = #{orgId} and rru.user_id = #{memberId}"
+    })
+    List<Role> selectByOrgIdAndMemberId(@Param("orgId") Long orgId, @Param("memberId") Long memberId);
 }

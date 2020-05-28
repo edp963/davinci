@@ -24,14 +24,17 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.Paginate;
 import edp.core.model.PaginateWithQueryColumns;
+import edp.davinci.core.model.SqlEntity;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.viewDto.*;
+import edp.davinci.model.SqlVariable;
 import edp.davinci.model.User;
 import edp.davinci.service.excel.SQLContext;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface ViewService extends CheckEntityService {
 
@@ -56,4 +59,6 @@ public interface ViewService extends CheckEntityService {
     ViewWithSourceBaseInfo getView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     SQLContext getSQLContext(boolean isMaintainer, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user);
+
+    void packageParams(boolean isProjectMaintainer, Long viewId, SqlEntity sqlEntity, List<SqlVariable> variables, List<Param> paramList, Set<String> excludeColumns, User user);
 }

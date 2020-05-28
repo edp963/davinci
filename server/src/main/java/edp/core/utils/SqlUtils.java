@@ -297,7 +297,8 @@ public class SqlUtils {
             if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(label)) {
                 continue;
             }
-            map.put(label, rs.getObject(key));
+			Object value = rs.getObject(key);
+			map.put(label, value instanceof byte[] ? new String((byte[]) value) : value);
         }
         return map;
     }
@@ -735,7 +736,7 @@ public class SqlUtils {
                                 pstmt.setString(i, (String) obj);
                                 break;
                             case "Boolean":
-                                pstmt.setBoolean(i, null == obj ? false : Boolean.parseBoolean(String.valueOf(obj).trim()));
+                                pstmt.setBoolean(i, null != obj && Boolean.parseBoolean(String.valueOf(obj).trim()));
                                 break;
                             case "Bytes":
                                 pstmt.setBytes(i, (byte[]) obj);

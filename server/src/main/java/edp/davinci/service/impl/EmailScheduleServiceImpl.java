@@ -72,7 +72,6 @@ import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.AT_SYMBOL;
 import static edp.core.consts.Consts.EMPTY;
-import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
 import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
 
 @Slf4j
@@ -127,7 +126,7 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
         }
 
         scheduleLogger.info("CronJob({}) is start! --------------", jobId);
-        
+
         List<ExcelContent> excels = null;
         List<ImageContent> images = null;
 
@@ -136,11 +135,11 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
             images = generateImages(jobId, cronJobConfig, creater.getId());
         }
-        
+
         if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
 			excels = generateExcels(jobId, cronJobConfig, creater);
         }
-        
+
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
             images = generateImages(jobId, cronJobConfig, creater.getId());
             excels = generateExcels(jobId, cronJobConfig, creater);
@@ -198,8 +197,6 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
     private List<ExcelContent> generateExcels(Long jobId, CronJobConfig cronJobConfig, User user) throws Exception {
         scheduleLogger.info("CronJob({}) fetching excel contents", jobId);
 
-        ScriptEngine engine = getExecuptParamScriptEngine();
-
         Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
 
         Map<String, Integer> vizOrderMap = new HashMap<>();
@@ -243,7 +240,7 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
                         }
                         List<WidgetContext> widgetContexts = new ArrayList<>();
                         widgets.forEach(widget -> {
-                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, null, widget.getConfig(), null);
+                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(null, widget.getConfig(), null);
                             widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
                         });
 
@@ -277,7 +274,7 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
                     set.forEach(w -> {
                         Widget widget = new Widget();
                         BeanUtils.copyProperties(w, widget);
-                        ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, dashboard.getConfig(), widget.getConfig(), w.getRelationId());
+                        ViewExecuteParam viewExecuteParam = getViewExecuteParam(dashboard.getConfig(), widget.getConfig(), w.getRelationId());
                         widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
                     });
 
