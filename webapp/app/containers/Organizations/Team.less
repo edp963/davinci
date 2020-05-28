@@ -111,8 +111,9 @@
 }
 
 .addFormWrapper {
-  text-align: center;
+  
   .titleWrapper {
+    text-align: center;
     .icon{
       font-size: 32px;
     }
@@ -132,6 +133,7 @@
     }
   }
   .search {
+    text-align: center;
     margin: 16px 16px 0;
     .plusBtn {
       border-bottom-right-radius: 4px !important;
@@ -139,68 +141,15 @@
       border-right-width: 1px !important;
     }
   }
-}
-
-.searchItems {
-  width: 65%;
-  height: auto;
-  position: absolute;
-  z-index: 99;
-  top: 34px;
-  left: 26px;
- // max-height: 21em;
-  max-height: 322px;
-  overflow-y: auto;
-  font-size: 13px;
-  list-style: none;
-  background: #fff;
-  border-radius: 3px;
-  box-shadow: 0 0 5px rgba(27,31,35,0.3);
-  .searchLi {
+  .submit {
     display: flex;
-    min-width: 100%;
-    padding: 5px 10px;
-    margin-top: 0;
-    color: #333;
-    cursor: pointer;
-    justify-content: space-between;
-    align-items: center;
-    &:hover {
-      .mainText {
-        color: #fff;
-      }
-      color: #fff;
-      background-color: @blue;
-      .create {
-        color: #fff;
-        font-weight: 400;
-      }
-    }
-    .main {
-      .avatar {
-        height: 36px;
-        overflow: hidden;
-        line-height: 1;
-        vertical-align: middle;
-        border-radius: 3px;
-      }
-      .mainText {
-        vertical-align: middle;
-        margin-left: 6px;
-        font-size: 16px;
-        font-weight: 600;
-        .ellipsis;
-      }
-    }
-    .create {
-      color: @light-text-color;
-      font-weight: 400;
-      font-size: 15px;
-      margin-right: 8px;
-    }
-    .iconPlus {
-      font-size: 18px;
-      color: #ddd;
+    justify-content: flex-end;
+    padding-right: 8px;
+    margin-top: 32px;
+  }
+  :global {
+    .ant-form-item {
+      margin-bottom: 4px;
     }
   }
 }
@@ -307,4 +256,12 @@
   flex-direction: row;
   justify-content: space-between;
   padding-right: 8px;
+}
+
+.options {
+  .email {
+    margin-left: 4px;
+    font-size: 12px;
+    color: @light-text-color;
+  }
 }
