@@ -83,17 +83,14 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
             File imageContentFile = imageContent.getImageFile();
             // 将大于2M的图片进行压缩
             if (imageContentFile.length() > (2 * 1024 * 1024)) {
-                log.warn("image size must be less than 2M, the size is {} !", imageContentFile.length());
                 scheduleLogger.info("image size must be less than 2M, the size is {} !", imageContentFile.length());
 
                 scheduleLogger.info("image start to compressed!", imageContentFile.getPath());
                 File file = FileUtils.compressedImage(imageContent.getImageFile().getPath());
 
-                log.info("image compressed successfully!, the size is {}.", file.length());
                 scheduleLogger.info("image compressed successfully! the size is: {}.", file.length());
                 imageContent.setImageFile(file);
 
-                log.info("the original image has been replaced with a new image(path: {})!", imageContentFile.getPath());
                 scheduleLogger.info("the original image has been replaced with a new image(path: {})!", imageContentFile.getPath());
             }
             scheduleLogger.info("CronJob({}) is ready to request WeChatWork API", cronJob.getId());
