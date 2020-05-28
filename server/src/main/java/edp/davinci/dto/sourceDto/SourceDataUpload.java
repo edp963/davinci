@@ -22,6 +22,8 @@ package edp.davinci.dto.sourceDto;
 import edp.davinci.core.enums.UploadModeEnum;
 import lombok.Data;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -41,6 +43,8 @@ public class SourceDataUpload {
 
     private String indexKeys;
 
+    @Min(value = (short) 0, message = "Invalid mode")
+    @Max(value = (short) 3, message = "Invalid mode")
     private Short mode = UploadModeEnum.NEW.getMode();
 
 

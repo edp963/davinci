@@ -238,4 +238,18 @@ public class WidgetController extends BaseController {
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
     }
 
+    @ApiOperation(value = "show sql")
+    @GetMapping("/{id}/showSql")
+    public ResponseEntity showSql(@PathVariable Long id,
+                                  @RequestBody(required = false) ViewExecuteParam executeParam,
+                                  @ApiIgnore @CurrentUser User user,
+                                  HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+        String sql = widgetService.showSql(id, executeParam, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(sql));
+    }
+
 }

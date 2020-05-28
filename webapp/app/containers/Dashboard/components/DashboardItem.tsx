@@ -81,6 +81,7 @@ interface IDashboardItemProps {
   onShowDrillEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
   onResizeDashboardItem: (itemId: number) => void
+  onRenderChartError: (itemId: number, error: Error) => void
   onOpenSharePanel?: (id: number, type: SharePanelType, title: string, itemId?: number) => void
   onDownloadCsv: (itemId: number) => void
   onTurnOffInteract: (itemId: number) => void
@@ -461,6 +462,11 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
   }
 
+  private renderChartError = (error: Error) => {
+    const { itemId, onRenderChartError } = this.props
+    onRenderChartError(itemId, error)
+  }
+
   public render () {
     const {
       alias,
@@ -728,7 +734,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               whichDataDrillBrushed={this.state.whichDataDrillBrushed}
               onSelectChartsItems={this.selectChartsItems}
               selectedItems={this.props.selectedItems}
-            //  onHideDrillPanel={this.onHideDrillPanel}
+              // onHideDrillPanel={this.onHideDrillPanel}
+              onError={this.renderChartError}
             />
             {dataDrillHistory}
           </div>

@@ -278,9 +278,9 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public List<RelRoleMember> addMembers(Long id, List<Long> memberIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
-        
+
         try {
-            getRole(id, user, false);
+            getRole(id, user, true);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -686,7 +686,22 @@ public class RoleServiceImpl implements RoleService {
         return result;
     }
 
-    private Role getRole(Long id, User user, Boolean moidfy) throws NotFoundException, UnAuthorizedExecption {
+    @Override
+    public List<Role> getMemberRoles(Long orgId, Long memberId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+        Organization organization = organizationMapper.getById(orgId);
+        if (organization == null) {
+            throw new NotFoundException("organization is not found");
+        }
+
+        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), orgId);
+        if (null == rel) {
+            throw new UnAuthorizedExecption();
+        }
+
+        return roleMapper.selectByOrgIdAndMemberId(orgId, memberId);
+    }
+
+    private Role getRole(Long id, User user, boolean moidfy) throws NotFoundException, UnAuthorizedExecption {
         Role role = roleMapper.getById(id);
         if (null == role) {
             log.warn("role (:{}) is not found", id);
@@ -698,7 +713,7 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedExecption();
         }
 
-        if (true == moidfy && !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
+        if (moidfy && !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
             throw new UnAuthorizedExecption();
         }
 

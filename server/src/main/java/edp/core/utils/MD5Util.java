@@ -25,6 +25,13 @@ import java.util.Base64;
 
 public class MD5Util {
 
+
+    public static final int BIT16 = 16;
+    public static final int BIT32 = 32;
+    public static final int BIT64 = 64;
+    public static final int BIT128 = 128;
+    public static final int BIT256 = 256;
+
     /**
      * MD5加密
      *
