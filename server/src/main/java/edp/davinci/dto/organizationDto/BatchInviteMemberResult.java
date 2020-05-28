@@ -18,14 +18,19 @@
 
 package edp.davinci.dto.organizationDto;
 
+import com.alibaba.fastjson.annotation.JSONField;
+import edp.davinci.dto.userDto.UserBaseInfo;
 import lombok.Data;
 
 import java.util.Set;
 
 @Data
 public class BatchInviteMemberResult {
-    private Set<String> successes;
-    private Set<String> errorEmails;
-    private Set<String> notUsers;
-    private Set<String> exists;
+
+    @JSONField(serialize = false)
+    private int status;
+
+    private Set<UserBaseInfo> successes;
+    private Set<Long> notUsers;
+    private Set<UserBaseInfo> exists;
 }

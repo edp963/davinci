@@ -33,6 +33,7 @@ import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.model.TokenEntity;
 import edp.davinci.dao.*;
 import edp.davinci.dto.organizationDto.*;
+import edp.davinci.dto.userDto.UserBaseInfo;
 import edp.davinci.model.Organization;
 import edp.davinci.model.Project;
 import edp.davinci.model.RelUserOrganization;
@@ -43,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -398,32 +400,42 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         }
 
         BatchInviteMemberResult result = new BatchInviteMemberResult();
-        Set<String> members = inviteMembers.getMembers();
+        Set<Long> members = inviteMembers.getMembers();
 
-        Set<String> errorEmails = members.stream().filter(email -> !Constants.PATTERN_EMAIL_FORMAT.matcher(email).find()).collect(Collectors.toSet());
-        if (!CollectionUtils.isEmpty(errorEmails)) {
-            members.removeAll(errorEmails);
-        }
-
-        Set<String> existEmails = relUserOrganizationMapper.selectOrgMemberEmails(orgId, members);
-        if (!CollectionUtils.isEmpty(existEmails)) {
-            members.removeAll(existEmails);
-        }
-
-        List<User> users = userMapper.selectByEmails(members);
-        Set<String> userEmails = users.stream().map(User::getEmail).collect(Collectors.toSet());
-        Set<String> notUsers = members.stream().filter(email -> !userEmails.contains(email)).collect(Collectors.toSet());
-
-        result.setErrorEmails(errorEmails);
+        List<User> users = userMapper.getByIds(new ArrayList<>(members));
+        Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
+        Set<Long> notUsers = members.stream().filter(id -> !userIds.contains(id)).collect(Collectors.toSet());
         result.setNotUsers(notUsers);
-        result.setExists(existEmails);
-        result.setSuccesses(new HashSet<>(0));
+        if (!CollectionUtils.isEmpty(notUsers)) {
+            members.removeAll(notUsers);
+        }
 
-        if (!CollectionUtils.isEmpty(userEmails)) {
+        if (CollectionUtils.isEmpty(members)) {
+            result.setStatus(HttpStatus.BAD_REQUEST.value());
+            return result;
+        }
+
+        Set<UserBaseInfo> existUsers = relUserOrganizationMapper.selectOrgMembers(orgId, members);
+        result.setExists(existUsers);
+
+        if (!CollectionUtils.isEmpty(existUsers)) {
+            Set<Long> exist = existUsers.stream().map(UserBaseInfo::getId).collect(Collectors.toSet());
+            members.removeAll(exist);
+        }
+
+        if (CollectionUtils.isEmpty(members)) {
+            result.setStatus(HttpStatus.BAD_REQUEST.value());
+            return result;
+        }
+
+        if (!CollectionUtils.isEmpty(members)) {
+
+            Set<User> inviteUsers = users.stream().filter(u -> members.contains(u.getId())).collect(Collectors.toSet());
+
             if (inviteMembers.isNeedConfirm()) {
-                FIXED_THREAD_POOL.execute(() -> users.forEach(member -> sendInviteEmail(organization, member, user)));
+                FIXED_THREAD_POOL.execute(() -> inviteUsers.forEach(member -> sendInviteEmail(organization, member, user)));
             } else {
-                Set<RelUserOrganization> relUserOrgSet = users.stream()
+                Set<RelUserOrganization> relUserOrgSet = inviteUsers.stream()
                         .map(u -> new RelUserOrganization(orgId, u.getId(), UserOrgRoleEnum.MEMBER.getRole()))
                         .collect(Collectors.toSet());
                 int newMembers = relUserOrganizationMapper.insertBatch(relUserOrgSet);
@@ -432,8 +444,10 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
                     organizationMapper.updateMemberNum(organization);
                 }
             }
-            log.info("user ({}) invite members join organization ({}), is need confirm: ({}) member emails: {}", user.getId(), orgId, inviteMembers.isNeedConfirm(), userEmails);
-            result.setSuccesses(userEmails);
+            log.info("user ({}) invite members join organization ({}), is need confirm: ({}) member id: {}", user.getId(), orgId, inviteMembers.isNeedConfirm(), members);
+            Set<UserBaseInfo> success = inviteUsers.stream().map(UserBaseInfo::new).collect(Collectors.toSet());
+            result.setStatus(HttpStatus.OK.value());
+            result.setSuccesses(success);
         }
         return result;
     }

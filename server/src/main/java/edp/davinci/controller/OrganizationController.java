@@ -39,6 +39,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -335,7 +336,11 @@ public class OrganizationController extends BaseController {
 
 
         BatchInviteMemberResult result = organizationService.batchInviteMembers(orgId, inviteMembers, user);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(result));
+        if (result.getStatus() == HttpStatus.OK.value()) {
+            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(result));
+        } else {
+            return ResponseEntity.status(result.getStatus()).body(new ResultMap(tokenUtils).failAndRefreshToken(request).payload(result));
+        }
     }
 
 
