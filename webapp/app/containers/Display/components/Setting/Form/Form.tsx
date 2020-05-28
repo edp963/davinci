@@ -60,11 +60,11 @@ const SettingForm: React.FC<ISettingFormProps> = (props, ref) => {
 let cachedValues = {}
 
 export default Form.create<ISettingFormProps>({
-  onValuesChange: (props, changedValues) => {
+  onValuesChange: (props, changedValues, allValues) => {
     if (Object.keys(changedValues).length > 1) {
       return
     }
-    cachedValues = { ...cachedValues, ...changedValues }
+    cachedValues = { ...cachedValues, ...allValues, ...changedValues }
     const { onChange, layerId } = props
     const debouncedChange = debounce((layerId) => {
       onChange({ ...cachedValues }, layerId)
