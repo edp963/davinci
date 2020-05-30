@@ -51,7 +51,6 @@ import java.util.stream.IntStream;
 
 import static edp.core.consts.Consts.*;
 import static edp.davinci.common.utils.ScriptUtiils.formatHeader;
-import static edp.davinci.common.utils.ScriptUtiils.getCellValueScriptEngine;
 
 public class ExcelUtils {
 
@@ -195,8 +194,7 @@ public class ExcelUtils {
         List<ExcelHeader> excelHeaders = null;
         if (isTable) {
             try {
-                engine = getCellValueScriptEngine();
-                excelHeaders = formatHeader(engine, json, params);
+                excelHeaders = formatHeader(json, params);
             } catch (Exception e) {
                 e.printStackTrace();
             }

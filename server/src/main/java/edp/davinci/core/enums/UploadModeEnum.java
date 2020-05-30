@@ -24,6 +24,7 @@ public enum UploadModeEnum {
     NEW((short) 0),
     REPLACE((short) 1),
     APPEND((short) 2),
+    COVER((short) 3)
 
     ;
 

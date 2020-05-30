@@ -82,6 +82,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 
   .itemList {
     flex: 2;
@@ -180,9 +181,7 @@
 
 .controlForm {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+  overflow-y: auto;
   .controlFormAntdOverride;
 
   .optionList {

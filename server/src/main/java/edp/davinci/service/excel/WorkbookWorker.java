@@ -79,8 +79,8 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
         try {
             List<SheetContext> sheetContextList = buildSheetContextList();
             if (CollectionUtils.isEmpty(sheetContextList)) {
-				throw new IllegalArgumentException(
-						"Task(" + context.getTaskKey() + ") workbook worker sheetContextList is empty");
+                throw new IllegalArgumentException(
+                        "Task(" + context.getTaskKey() + ") workbook worker sheetContextList is empty");
             }
             wb = new SXSSFWorkbook(1000);
             List<Future> futures = Lists.newArrayList();
@@ -123,7 +123,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
 
             if (rst) {
                 filePath = ((FileUtils) SpringContextHolder.getBean(FileUtils.class)).getFilePath(FileTypeEnum.XLSX, this.context.getWrapper());
-                try (FileOutputStream out = new FileOutputStream(filePath);){
+                try (FileOutputStream out = new FileOutputStream(filePath);) {
                     wb.write(out);
                     out.flush();
                     out.close();
@@ -177,7 +177,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             if (context.isHasExecuteParam() && null != context.getExecuteParam()) {
                 executeParam = context.getExecuteParam();
             } else {
-                executeParam = ScriptUtiils.getViewExecuteParam(ScriptUtiils.getExecuptParamScriptEngine(),
+                executeParam = ScriptUtiils.getViewExecuteParam(
                         context.getDashboard() != null ? context.getDashboard().getConfig() : null,
                         context.getWidget().getConfig(),
                         context.getMemDashboardWidget() != null ? context.getMemDashboardWidget().getId() : null);
@@ -187,12 +187,15 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
 
             SQLContext sqlContext = ((ViewService) SpringContextHolder.getBean(ViewService.class)).getSQLContext(context.getIsMaintainer(), viewWithProjectAndSource, executeParam, this.context.getUser());
 
+            if (sqlContext == null) {
+                continue;
+            }
             SqlUtils sqlUtils = ((SqlUtils) SpringContextHolder.getBean(SqlUtils.class)).init(viewWithProjectAndSource.getSource());
 
             boolean isTable;
             List<ExcelHeader> excelHeaders = null;
             if (isTable = ExcelUtils.isTable(context.getWidget().getConfig())) {
-                excelHeaders = ScriptUtiils.formatHeader(ScriptUtiils.getCellValueScriptEngine(), context.getWidget().getConfig(),
+                excelHeaders = ScriptUtiils.formatHeader(context.getWidget().getConfig(),
                         sqlContext.getViewExecuteParam().getParams());
             }
             SheetContext sheetContext = SheetContext.SheetContextBuilder.newBuilder()
@@ -205,7 +208,8 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                     .withExcelHeaders(excelHeaders)
                     .withDashboardId(null != context.getDashboard() ? context.getDashboard().getId() : null)
                     .withWidgetId(context.getWidget().getId())
-                    .withName(context.getWidget().getName())
+                    .withName(context.getMemDashboardWidget() == null || StringUtils.isEmpty(context.getMemDashboardWidget().getAlias())
+                            ? context.getWidget().getName() : context.getMemDashboardWidget().getAlias())
                     .withWrapper(this.context.getWrapper())
                     .withResultLimit(this.context.getResultLimit())
                     .withTaskKey(this.context.getTaskKey())

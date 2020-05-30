@@ -7,19 +7,19 @@ import { EmptyStack } from 'app/containers/Widget/components/Config/Stack/consta
 const barChartStyles: IMigrationRecorder<IChartStyles> = {
   versions: ['beta6'],
   recorder: {
-    beta6 (chartStyle) {
+    beta6(chartStyle) {
       const { bar: barConfig, spec: barSpec } = chartStyle
-      const {
-        bar: defaultBarConfig
-      } = barDefaultConfig.style as IChartStyles
+      const { bar: defaultBarConfig } = barDefaultConfig.style as IChartStyles
       if (!barConfig) {
         const newBarConfig = produce(defaultBarConfig, (draft) => {
           draft.barChart = !!barSpec.barChart
           draft.stack.on = !!barSpec.stack
           draft.stack.percentage = barSpec.percentage
         })
-        chartStyle.bar = newBarConfig
-        return chartStyle
+        return {
+          ...chartStyle,
+          bar: newBarConfig
+        }
       }
       const { stack } = barConfig
       if (!stack) {

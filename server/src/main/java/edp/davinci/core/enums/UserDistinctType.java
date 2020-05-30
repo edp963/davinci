@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,32 +14,30 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
- *
  */
 
-package edp.davinci.dto.userDto;
+package edp.davinci.core.enums;
 
-import com.alibaba.druid.util.StringUtils;
-import edp.davinci.model.User;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
-public class UserBaseInfo {
-    Long id;
+public enum UserDistinctType {
+    EMAIL("email"),
+    USERNAME("username");
 
-    String username;
+    @Getter
+    private String type;
 
-    String avatar;
-
-    String email;
-
-    public UserBaseInfo() {
+    UserDistinctType(String type) {
+        this.type = type;
     }
 
-    public UserBaseInfo(User user) {
-        this.id = user.getId();
-        this.username = StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName();
-        this.avatar = user.getAvatar();
-        this.email = user.getEmail();
+    public static UserDistinctType typeOf(String type) {
+        if (EMAIL.type.equals(type)) {
+            return EMAIL;
+        } else if (USERNAME.type.equals(type)) {
+            return USERNAME;
+        } else {
+            return null;
+        }
     }
 }

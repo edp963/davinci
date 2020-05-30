@@ -56,5 +56,9 @@ public interface DashboardService extends CheckEntityService {
 
     List<Long> getExcludeRoles(Long id);
 
-    boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;;
+    boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+
+    boolean updateMemDashboardWidgetAlias(Long relationId, String alias, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+
+    ;
 }

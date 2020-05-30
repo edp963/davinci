@@ -48,6 +48,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -111,7 +112,7 @@ public class LoginController {
     public ResponseEntity getOauth2Clients(HttpServletRequest request) {
 
         if (clientRegistrationRepository == null) {
-            return ResponseEntity.ok(new ResultMap().payloads(null));
+            return ResponseEntity.ok(new ResultMap().payloads(new ArrayList(0)));
         }
 
         Iterable<ClientRegistration> clientRegistrations = (Iterable<ClientRegistration>) clientRegistrationRepository;

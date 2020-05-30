@@ -19,6 +19,7 @@
  */
 
 import React, { useContext } from 'react'
+import classnames from 'classnames'
 
 import { Icon } from 'antd'
 import ColorPicker from 'components/ColorPicker'
@@ -43,12 +44,20 @@ const Color: React.FC<IColorProps> = (props) => {
   const activeColor = isTextPropertyActive(type) as string
   let colorStyle: React.CSSProperties = {}
   if (activeColor) {
-    colorStyle.color = activeColor
+    colorStyle.borderBottomColor = activeColor
   }
+
+  const cls = classnames({
+    'anticon': true,
+    'richtext-toolbar-color': true,
+    'richtext-toolbar-icon-active': !!activeColor
+  })
 
   return (
     <ColorPicker preset onChange={change} value={activeColor || '#000'}>
-      <Icon type={ColorIcons[type]} style={colorStyle} />
+      <div className={cls} style={colorStyle}>
+        <Icon type={ColorIcons[type]} />
+      </div>
     </ColorPicker>
   )
 }

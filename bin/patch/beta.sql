@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,32 +14,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
- *
  */
 
-package edp.davinci.dto.userDto;
-
-import com.alibaba.druid.util.StringUtils;
-import edp.davinci.model.User;
-import lombok.Data;
-
-@Data
-public class UserBaseInfo {
-    Long id;
-
-    String username;
-
-    String avatar;
-
-    String email;
-
-    public UserBaseInfo() {
-    }
-
-    public UserBaseInfo(User user) {
-        this.id = user.getId();
-        this.username = StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName();
-        this.avatar = user.getAvatar();
-        this.email = user.getEmail();
-    }
-}
+ALTER TABLE `mem_dashboard_widget`
+ADD COLUMN `alias` varchar(30) NULL AFTER `id`;
