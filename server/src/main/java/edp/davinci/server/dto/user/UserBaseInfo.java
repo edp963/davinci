@@ -19,8 +19,8 @@
 
 package edp.davinci.server.dto.user;
 
-import com.alibaba.druid.util.StringUtils;
-import edp.davinci.model.User;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.User;
 import lombok.Data;
 
 @Data
@@ -34,6 +34,7 @@ public class UserBaseInfo {
     String email;
 
     public UserBaseInfo() {
+
     }
 
     public UserBaseInfo(User user) {

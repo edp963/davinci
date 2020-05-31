@@ -19,32 +19,33 @@
 
 package edp.davinci.server.component.excel;
 
+import java.io.FileOutputStream;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 
-import edp.davinci.server.config.SpringContextHolder;
-import edp.davinci.server.dao.ViewExtendMapper;
-import edp.davinci.server.dto.cronjob.MsgMailExcel;
-import edp.davinci.server.dto.view.WidgetQueryParam;
-import edp.davinci.server.dto.view.ViewWithProjectAndSource;
-import edp.davinci.server.enums.ActionEnum;
-import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.model.ExcelHeader;
-import edp.davinci.server.service.ViewService;
-import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.server.util.ExcelUtils;
-import edp.davinci.server.util.FileUtils;
-import edp.davinci.server.util.ScriptUtiils;
-import edp.davinci.server.util.DataUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
-import java.io.FileOutputStream;
-import java.util.List;
-import java.util.concurrent.*;
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.server.config.SpringContextHolder;
+import edp.davinci.server.dto.cronjob.MsgMailExcel;
+import edp.davinci.server.dto.view.WidgetQueryParam;
+import edp.davinci.server.enums.ActionEnum;
+import edp.davinci.server.enums.FileTypeEnum;
+import edp.davinci.server.model.ExcelHeader;
+import edp.davinci.server.util.ExcelUtils;
+import edp.davinci.server.util.FileUtils;
+import edp.davinci.server.util.ScriptUtils;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Created by IntelliJ IDEA.
@@ -171,21 +172,22 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
     private List<SheetContext> buildSheetContext() throws Exception {
         List<SheetContext> sheetContextList = Lists.newArrayList();
         for (WidgetContext widgetContext : workBookContext.getWidgets()) {
-            WidgetQueryParam executeParam = null;
-            if (widgetContext.isHasExecuteParam() && null != widgetContext.getExecuteParam()) {
-                executeParam = widgetContext.getExecuteParam();
+            WidgetQueryParam queryParam = null;
+            if (widgetContext.isHasQueryParam() && null != widgetContext.getQueryParam()) {
+                queryParam = widgetContext.getQueryParam();
             } else {
-                executeParam = ScriptUtiils.getViewExecuteParam(ScriptUtiils.getExecuptParamScriptEngine(),
+                queryParam = ScriptUtils.getWidgetQueryParam(ScriptUtils.getExecuteParamFormatEngine(), 
                         widgetContext.getDashboard() != null ? widgetContext.getDashboard().getConfig() : null,
                         widgetContext.getWidget().getConfig(),
-                        widgetContext.getMemDashboardWidget() != null ? widgetContext.getMemDashboardWidget().getId() : null);
+                        widgetContext.getMemDashboardWidget() != null ? widgetContext.getMemDashboardWidget().getId()
+                                : null);
             }
 
             boolean isTable;
             List<ExcelHeader> excelHeaders = null;
             if (isTable = ExcelUtils.isTable(widgetContext.getWidget().getConfig())) {
-                excelHeaders = ScriptUtiils.formatHeader(ScriptUtiils.getCellValueScriptEngine(),
-                        widgetContext.getWidget().getConfig(), executeParam.getParams());
+                excelHeaders = ScriptUtils.formatHeader(ScriptUtils.getTableFormatEngine(), widgetContext.getWidget().getConfig(),
+                        queryParam.getParams());
             }
             
             SheetContext sheetContext = SheetContext.builder()
@@ -200,7 +202,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                     .customLogger(workBookContext.getCustomLogger())
                     .queryModel(workBookContext.getQueryModel())
                     .viewId(widgetContext.getWidget().getViewId())
-                    .executeParam(executeParam)
+                    .executeParam(queryParam)
                     .user(workBookContext.getUser())
                     .build();
             

@@ -17,18 +17,19 @@
  *
  */
 
-package edp.davinci.controller;
+package edp.davinci.server.controller;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.core.annotation.AuthIgnore;
-import edp.core.annotation.CurrentUser;
-import edp.core.enums.HttpCodeEnum;
-import edp.davinci.common.controller.BaseController;
-import edp.davinci.core.common.Constants;
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.dto.userDto.*;
-import edp.davinci.model.User;
-import edp.davinci.service.UserService;
+import edp.davinci.server.annotation.AuthIgnore;
+import edp.davinci.server.annotation.CurrentUser;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.dto.user.*;
+import edp.davinci.server.enums.HttpCodeEnum;
+import edp.davinci.server.enums.UserDistinctType;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.model.TokenEntity;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -75,7 +76,8 @@ public class UserController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         User user = userService.regist(userRegist);
-        return ResponseEntity.ok(new ResultMap().success().payload(tokenUtils.generateToken(user)));
+		TokenEntity tokenDetail = new TokenEntity(user.getUsername(), user.getPassword());
+        return ResponseEntity.ok(new ResultMap().success().payload(tokenUtils.generateToken(tokenDetail)));
     }
 
 
@@ -106,35 +108,6 @@ public class UserController extends BaseController {
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
-
-//    /**
-//     * 用户激活
-//     *
-//     * @param token
-//     * @param user
-//     * @param request
-//     * @return
-//     */
-//    @ApiOperation(value = "active user")
-//    @PostMapping(value = "/user/active/{token:.*}")
-//    public ResponseEntity activate(@PathVariable String token,
-//                              @ApiIgnore @CurrentUser User user,
-//                              HttpServletRequest request) {
-//
-//        if (StringUtils.isEmpty(token)) {
-//            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be EMPTY");
-//            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-//        }
-//
-//        try {
-//            ResultMap resultMap = userService.activateUser(user, token, request);
-//            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error(e.getMessage());
-//            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-//        }
-//    }
 
     /**
      * 重发邮件
@@ -224,7 +197,6 @@ public class UserController extends BaseController {
             ResultMap resultMap = userService.changeUserPassword(user, changePassword.getOldPassword(), changePassword.getPassword(), request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
-            e.printStackTrace();
             log.error(e.getMessage());
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
@@ -265,7 +237,6 @@ public class UserController extends BaseController {
             ResultMap resultMap = userService.uploadAvatar(user, file, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
-            e.printStackTrace();
             log.error(e.getMessage());
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
@@ -314,9 +285,45 @@ public class UserController extends BaseController {
             ResultMap resultMap = userService.getUserProfile(id, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
-            e.printStackTrace();
             log.error(e.getMessage());
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+    /**
+     * 校验登录用户
+     *
+     * @param token
+     * @return
+     */
+    @ApiOperation(value = "get user profile from token")
+    @AuthIgnore
+    @GetMapping("/check/{token:.*}")
+    public ResponseEntity getUserFromToken(@PathVariable String token) {
+
+        ResultMap resultMap = userService.getUserProfileFromToken(token);
+        return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+    }
+
+    @ApiOperation(value = "forget password", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @AuthIgnore
+    @PostMapping(value = "/forget/password/{type}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ResultMap> forgetPassword(@PathVariable String type, @RequestBody UserDistinctTicket ticket) {
+
+        String token = userService.forgetPassword(UserDistinctType.typeOf(type), ticket);
+        return ResponseEntity.ok(new ResultMap().success().payload(token));
+    }
+
+    @ApiOperation(value = "reset password", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @AuthIgnore
+    @PostMapping(value = "/reset/password/{type}/{token}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ResultMap> resetPassword(@PathVariable(name = "type") String type,
+            @PathVariable(name = "token") String token, @RequestBody UserDistinctTicket ticket) {
+        boolean res = userService.resetPassword(UserDistinctType.typeOf(type), token, ticket);
+        if (res) {
+            return ResponseEntity.ok(new ResultMap().success());
+        } else {
+            throw new ServerException("Reset password fail");
         }
     }
 }

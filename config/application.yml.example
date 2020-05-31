@@ -1,7 +1,7 @@
 #  <<
 #  Davinci
 #  ==
-#  Copyright (C) 2016 - 2019 EDP
+#  Copyright (C) 2016 - 2020 EDP
 #  ==
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -69,11 +69,6 @@ spring:
   mvc:
     async:
       request-timeout: 30s
-  rest:
-    proxy-host:
-    proxy-port:
-    proxy-ignore:
-
 
   ## davinci datasouce config
   datasource:
@@ -169,7 +164,7 @@ screenshot:
   timeout_second: 600
   phantomjs_path: $your_phantomjs_path$
   chromedriver_path: $your_chromedriver_path$
-  remote_webdriver_url:$your_remote_webdriver_url$
+  remote_webdriver_url: $your_remote_webdriver_url$
 
 data-auth-center:
   channels:

@@ -25,9 +25,11 @@ import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.annotation.AuthIgnore;
 import edp.davinci.server.annotation.AuthShare;
 import edp.davinci.server.commons.Constants;
+import edp.davinci.server.commons.ErrorMsg;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.enums.HttpCodeEnum;
-import edp.davinci.server.model.User;
+import edp.davinci.server.model.TokenEntity;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.UserService;
 import edp.davinci.server.util.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -82,25 +84,26 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 
         if (StringUtils.isEmpty(token) || !token.startsWith(Constants.TOKEN_PREFIX)) {
             if (!request.getServletPath().endsWith("/download/page")) {
-                log.info("{} : Unknown token", request.getServletPath());
+                log.info("Unknown token: {}", request.getServletPath());
             }
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("The resource requires authentication, which was not supplied with the request");
+            response.getWriter().print(ErrorMsg.ERR_AUTHENTICATION);
             return false;
         }
         String username = tokenUtils.getUsername(token);
         User user = userService.getByUsername(username);
         if (null == user) {
-            log.info("{} : token user not found", request.getServletPath());
+            log.error("Token user not found {}", request.getServletPath());
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("ERROR Permission denied");
+            response.getWriter().print(ErrorMsg.ERR_PERMISSION);
             return false;
-
         }
-        if (!tokenUtils.validateToken(token, user)) {
-            log.info("{} : token validation fails", request.getServletPath());
+
+        TokenEntity tokenDetail = new TokenEntity(user.getUsername(), user.getPassword());
+        if (!tokenUtils.validateToken(token, tokenDetail)) {
+            log.error("token validation fails: {}", request.getServletPath());
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("Invalid token ");
+            response.getWriter().print("Invalid token");
             return false;
         }
 
@@ -109,7 +112,8 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
                 request.setAttribute(Constants.CURRENT_USER, user);
                 return true;
             }
-            log.info("current user is not activated, username: {}", user.getUsername());
+
+            log.error("Current user({}) is not activated", user.getUsername());
             response.setStatus(HttpCodeEnum.FAIL.getCode());
             ResultMap resultMap = new ResultMap(tokenUtils);
             response.getWriter().print(JSONUtils.toString(resultMap.failAndRefreshToken(request).message("Account not active yet. Please check your email to activate your account")));

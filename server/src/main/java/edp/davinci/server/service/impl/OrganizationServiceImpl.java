@@ -28,6 +28,7 @@ import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.organization.*;
+import edp.davinci.server.dto.user.UserBaseInfo;
 import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.enums.MailContentTypeEnum;
@@ -49,20 +50,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service("organizationService")
 public class OrganizationServiceImpl extends BaseEntityService implements OrganizationService {
 
-	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
+    private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
-    private RelUserOrganizationExtendMapper relUserOrganizationMapper;
+    private RelUserOrganizationExtendMapper relUserOrganizationExtendMapper;
 
     @Autowired
     public OrganizationExtendMapper organizationExtendMapper;
@@ -87,8 +92,10 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
     @Autowired
     private ServerUtils serverUtils;
-    
+
     private static final CheckEntityEnum entity = CheckEntityEnum.ORGANIZATION;
+
+    private static final ExecutorService FIXED_THREAD_POOL = Executors.newFixedThreadPool(8);
 
     @Override
     public boolean isExist(String name, Long id, Long scopeId) {
@@ -110,25 +117,25 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     @Transactional
     public OrganizationBaseInfo createOrganization(OrganizationCreate organizationCreate, User user) throws ServerException {
 
-    	String name = organizationCreate.getName();
-    	if (isExist(name, null, null)) {
-			alertNameTaken(entity, name);
-		}
-    	
-		BaseLock lock = getLock(entity, name, null);
-		if (lock != null && !lock.getLock()) {
-			alertNameTaken(entity, name);
-		}
-		
-		Long userId = user.getId();
-    	
-    	try {
-    		//新增组织
+        String name = organizationCreate.getName();
+        if (isExist(name, null, null)) {
+            alertNameTaken(entity, name);
+        }
+
+        BaseLock lock = getLock(entity, name, null);
+        if (lock != null && !lock.getLock()) {
+            alertNameTaken(entity, name);
+        }
+
+        Long userId = user.getId();
+
+        try {
+            // 新增组织
             Organization organization = new Organization();
             organization.setName(organizationCreate.getName());
             organization.setDescription(organizationCreate.getDescription());
             organization.setMemberNum(1);
-            organization.setMemberPermission((short)1);
+            organization.setMemberPermission((short) 1);
             organization.setAllowCreateProject(true);
             organization.setUserId(userId);
             organization.setCreateBy(userId);
@@ -136,15 +143,15 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             RelUserOrganization relUserOrganization = new RelUserOrganization();
             insertOrganization(organization, relUserOrganization, user);
             optLogger.info("Organization({}) create by user({})", organization.getId(), userId);
-            
+
             OrganizationBaseInfo organizationBaseInfo = new OrganizationBaseInfo();
             BeanUtils.copyProperties(organization, organizationBaseInfo);
             organizationBaseInfo.setRole(relUserOrganization.getRole());
             return organizationBaseInfo;
 
-    	}finally {
-			releaseLock(lock);
-		}
+        } finally {
+            releaseLock(lock);
+        }
     }
     
     @Transactional
@@ -160,7 +167,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         relUserOrganization.setRole(UserOrgRoleEnum.OWNER.getRole());
         relUserOrganization.setCreateBy(user.getId());
         relUserOrganization.setCreateTime(new Date());
-        relUserOrganizationMapper.insert(relUserOrganization);
+        relUserOrganizationExtendMapper.insert(relUserOrganization);
     }
 
     /**
@@ -175,35 +182,35 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     @Transactional
     public boolean updateOrganization(OrganizationPut organizationPut, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-    	Long id = organizationPut.getId();
-    	Organization organization = getOrganization(id);
+        Long id = organizationPut.getId();
+        Organization organization = getOrganization(id);
 
-        //验证修改权限，只有organization的创建者和owner可以修改
-    	checkOwner(organization, user.getId(), id, "update");
+        // 验证修改权限，只有organization的创建者和owner可以修改
+        checkOwner(organization, user.getId(), id, "update");
 
-    	String name = organizationPut.getName();
-    	if (isExist(name, id, null)) {
-			alertNameTaken(entity, name);
-		}
-    	
-		BaseLock lock = getLock(entity, name, null);
-		if (lock != null && !lock.getLock()) {
-			alertNameTaken(entity, name);
-		}
-		
-		try {
-			String origin = organization.toString();
-	        BeanUtils.copyProperties(organizationPut, organization);
-	        organization.setUpdateBy(user.getId());
-	        organization.setUpdateTime(new Date());
+        String name = organizationPut.getName();
+        if (isExist(name, id, null)) {
+            alertNameTaken(entity, name);
+        }
 
-	        updateOrganization(organization);
-	        optLogger.info("Organization({}) is update by user({}), origin:{}", organization.getId(), user.getId(), origin);
+        BaseLock lock = getLock(entity, name, null);
+        if (lock != null && !lock.getLock()) {
+            alertNameTaken(entity, name);
+        }
 
-	        return true;
-		}finally {
-			lock.release();
-		}
+        try {
+            String origin = organization.toString();
+            BeanUtils.copyProperties(organizationPut, organization);
+            organization.setUpdateBy(user.getId());
+            organization.setUpdateTime(new Date());
+
+            updateOrganization(organization);
+            optLogger.info("Organization({}) is update by user({}), origin:{}", organization.getId(), user.getId(), origin);
+
+            return true;
+        } finally {
+            lock.release();
+        }
     }
     
     @Transactional
@@ -216,19 +223,19 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     private Organization getOrganization(Long id) {
         Organization organization = organizationExtendMapper.selectByPrimaryKey(id);
         if (null == organization) {
-        	log.error("Organization({}) is not found", id);
+            log.error("Organization({}) is not found", id);
             throw new NotFoundException("Organization is not found");
         }
         return organization;
     }
     
 	private void checkOwner(Organization organization, Long userId, Long id, String operation) {
-		RelUserOrganization rel = relUserOrganizationMapper.getRel(userId, id);
-		if (!organization.getUserId().equals(userId)
-				&& (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
-			throw new UnAuthorizedExecption("You have not permission to " + operation + " this organization");
-		}
-	}
+        RelUserOrganization rel = relUserOrganizationExtendMapper.getRel(userId, id);
+        if (!organization.getUserId().equals(userId)
+                && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
+            throw new UnAuthorizedExecption("You have not permission to " + operation + " this organization");
+        }
+    }
 
     /**
      * 上传组织头图
@@ -240,19 +247,20 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
      */
     @Override
     @Transactional
-    public Map<String, String> uploadAvatar(Long id, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Map<String, String> uploadAvatar(Long id, MultipartFile file, User user)
+            throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-    	Organization organization = getOrganization(id);
+        Organization organization = getOrganization(id);
 
-        //只有组织的创建者和owner有权限
+        // 只有组织的创建者和owner有权限
         checkOwner(organization, user.getId(), id, "upload avatar to");
 
-        //校验文件是否图片
+        // 校验文件是否图片
         if (!fileUtils.isImage(file)) {
             throw new ServerException("File format error");
         }
 
-        //上传文件
+        // 上传文件
         String fileName = user.getUsername() + "_" + UUID.randomUUID();
         String avatar = null;
         try {
@@ -265,12 +273,12 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             throw new ServerException("Organization avatar upload error");
         }
 
-        //删除原头像
+        // 删除原头像
         if (!StringUtils.isEmpty(organization.getAvatar())) {
             fileUtils.remove(organization.getAvatar());
         }
 
-        //修改头像
+        // 修改头像
         organization.setAvatar(avatar);
         organization.setUpdateTime(new Date());
         organization.setUpdateBy(user.getId());
@@ -278,7 +286,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         if (organizationExtendMapper.update(organization) <= 0) {
             throw new ServerException("Organization avatar update fail");
         }
-        
+
         Map<String, String> map = new HashMap<>();
         map.put("avatar", avatar);
         return map;
@@ -296,19 +304,21 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     @Transactional
     public boolean deleteOrganization(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-    	Organization organization =getOrganization(id);
+        Organization organization = getOrganization(id);
 
-        //只有组织的创建者和owner有权限删除
+        // 只有组织的创建者和owner有权限删除
         checkOwner(organization, user.getId(), id, "delete");
 
-        //校验组织下是否有项目
+        // 校验组织下是否有项目
         List<Project> projectList = projectExtendMapper.getByOrgId(id);
         if (!CollectionUtils.isEmpty(projectList)) {
-            log.error("There is at least one project under the organization({}), it is can not be deleted", organization.getId());
-            throw new ServerException("There is at least one project under this organization, it is can not be deleted");
+            log.error("There is at least one project under the organization({}), it is can not be deleted",
+                    organization.getId());
+            throw new ServerException(
+                    "There is at least one project under this organization, it is can not be deleted");
         }
 
-        relUserOrganizationMapper.deleteByOrgId(id);
+        relUserOrganizationExtendMapper.deleteByOrgId(id);
         roleMapper.deleteByOrg(id);
         organizationExtendMapper.deleteByPrimaryKey(id);
 
@@ -328,7 +338,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
     	Organization organization = getOrganization(id);
 
-    	RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), id);
+    	RelUserOrganization rel = relUserOrganizationExtendMapper.getRel(user.getId(), id);
         if (null == rel) {
             throw new UnAuthorizedExecption("Insufficient permissions");
         }
@@ -365,7 +375,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
      */
     @Override
     public List<OrganizationMember> getOrgMembers(Long id) {
-        return relUserOrganizationMapper.getOrgMembers(id);
+        return relUserOrganizationExtendMapper.getOrgMembers(id);
     }
 
 
@@ -390,13 +400,13 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         }
 
         // 验证用户权限，只有organization的owner可以邀请
-        RelUserOrganization relOwner = relUserOrganizationMapper.getRel(user.getId(), orgId);
+        RelUserOrganization relOwner = relUserOrganizationExtendMapper.getRel(user.getId(), orgId);
         if (null == relOwner || relOwner.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
-            throw new UnAuthorizedExecption("You can not invite anyone to join this orgainzation, cause you are not the owner of this orginzation");
+            throw new UnAuthorizedExecption("You can not invite anyone to join this organization, cause you are not the owner of this organization");
         }
 
         //验证被邀请用户是否已经加入
-        RelUserOrganization rel = relUserOrganizationMapper.getRel(memId, orgId);
+        RelUserOrganization rel = relUserOrganizationExtendMapper.getRel(memId, orgId);
         if (null != rel) {
             throw new ServerException("The invitee is already a member of  this organization");
         }
@@ -406,36 +416,77 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             throw new ServerException("The email address of the invitee is empty");
         }
 
-        /**
-         * 邀请组织成员token生成实体
-         * 规则：
-         * username: 邀请人id:-:被邀请人id:-:组织id
-         * password: 被邀请人密码
-         */
-        TokenEntity orgInviteDetail = new TokenEntity();
-        orgInviteDetail.setUsername(user.getId() + Constants.SPLIT_CHAR_STRING + memId + Constants.SPLIT_CHAR_STRING + organization.getId());
-        orgInviteDetail.setPassword(member.getPassword());
+        sendInviteEmail(organization, member, user);
+    }
 
-        Map<String, Object> content = new HashMap<>();
-        content.put("username", member.getUsername());
-        content.put("inviter", user.getUsername());
-        content.put("orgName", organization.getName());
-        content.put("host", serverUtils.getHost());
-        //aes加密token
-        content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(orgInviteDetail), null));
-        try {
-            MailContent mailContent = MailContent.MailContentBuilder.builder()
-                    .withSubject(String.format(Constants.INVITE_ORG_MEMBER_MAIL_SUBJECT, user.getUsername(), organization.getName()))
-                    .withTo(member.getEmail())
-                    .withMainContent(MailContentTypeEnum.TEMPLATE)
-                    .withTemplate(Constants.INVITE_ORG_MEMBER_MAIL_TEMPLATE)
-                    .withTemplateContent(content)
-                    .build();
+    @Override
+    public BatchInviteMemberResult batchInviteMembers(Long orgId, InviteMembers inviteMembers, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        //验证组织
+        Organization organization = getOrganization(orgId);
 
-            mailUtils.sendMail(mailContent, null);
-        } catch (ServerException e) {
-			log.error(e.getMessage(), e);
+        // 验证用户权限，只有organization的owner可以邀请
+        RelUserOrganization relOwner = relUserOrganizationExtendMapper.getRel(user.getId(), orgId);
+        if (null == relOwner || relOwner.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
+            throw new UnAuthorizedExecption("You cannot invite anyone to join this organization, cause you are not the owner of this organization");
         }
+
+        BatchInviteMemberResult result = new BatchInviteMemberResult();
+        Set<Long> members = inviteMembers.getMembers();
+
+        List<User> users = userExtendMapper.getByIds(new ArrayList<>(members));
+        Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
+        Set<Long> notUsers = members.stream().filter(id -> !userIds.contains(id)).collect(Collectors.toSet());
+        result.setNotUsers(notUsers);
+        if (!CollectionUtils.isEmpty(notUsers)) {
+            members.removeAll(notUsers);
+        }
+
+        if (CollectionUtils.isEmpty(members)) {
+            result.setStatus(HttpStatus.BAD_REQUEST.value());
+            return result;
+        }
+
+        Set<UserBaseInfo> existUsers = relUserOrganizationExtendMapper.selectOrgMembers(orgId, members);
+        result.setExists(existUsers);
+
+        if (!CollectionUtils.isEmpty(existUsers)) {
+            Set<Long> exist = existUsers.stream().map(UserBaseInfo::getId).collect(Collectors.toSet());
+            members.removeAll(exist);
+        }
+
+        if (CollectionUtils.isEmpty(members)) {
+            result.setStatus(HttpStatus.BAD_REQUEST.value());
+            return result;
+        }
+
+        if (!CollectionUtils.isEmpty(members)) {
+
+            Set<User> inviteUsers = users.stream().filter(u -> members.contains(u.getId())).collect(Collectors.toSet());
+
+            if (inviteMembers.isNeedConfirm()) {
+                FIXED_THREAD_POOL.execute(() -> inviteUsers.forEach(member -> sendInviteEmail(organization, member, user)));
+            } else {
+                Set<RelUserOrganization> relUserOrgSet = inviteUsers.stream()
+                        .map(u -> {
+                            RelUserOrganization rel = new RelUserOrganization();
+                            rel.setOrgId(orgId);
+                            rel.setUserId(u.getId());
+                            rel.setRole(UserOrgRoleEnum.MEMBER.getRole());
+                            return rel;
+                        })
+                        .collect(Collectors.toSet());
+                int newMembers = relUserOrganizationExtendMapper.insertBatch(relUserOrgSet);
+                if (newMembers > 0) {
+                    organization.setMemberNum(organization.getMemberNum() + newMembers);
+                    organizationExtendMapper.updateMemberNum(organization);
+                }
+            }
+            log.info("User({}) invite members join organization({}), is need confirm:({}) members:{}", user.getId(), orgId, inviteMembers.isNeedConfirm(), members);
+            Set<UserBaseInfo> success = inviteUsers.stream().map(UserBaseInfo::new).collect(Collectors.toSet());
+            result.setStatus(HttpStatus.OK.value());
+            result.setSuccesses(success);
+        }
+        return result;
     }
 
 
@@ -449,135 +500,135 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     @Override
     @Transactional
     public OrganizationInfo confirmInvite(String token, User user) throws ServerException {
-		// aes解密
-		token = AESUtils.decrypt(token, null);
+        // aes解密
+        token = AESUtils.decrypt(token, null);
 
-		// 验证token(特殊验证，不走util)
-		String tokenUserName = tokenUtils.getUsername(token);
-		String tokenPassword = tokenUtils.getPassword(token);
-		if (StringUtils.isEmpty(tokenUserName) || StringUtils.isEmpty(tokenPassword)) {
-			log.error("ConfirmInvite error: token detail id empty");
-			throw new ServerException("Username or password cannot be empty");
-		}
+        // 验证token(特殊验证，不走util)
+        String tokenUserName = tokenUtils.getUsername(token);
+        String tokenPassword = tokenUtils.getPassword(token);
+        if (StringUtils.isEmpty(tokenUserName) || StringUtils.isEmpty(tokenPassword)) {
+            log.error("ConfirmInvite error: token detail id empty");
+            throw new ServerException("Username or password cannot be empty");
+        }
 
-		String[] ids = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
-		if (ids.length != 3) {
-			log.error("ConfirmInvite error: invalid token username");
-			throw new ServerException("Invalid Token");
-		}
+        String[] ids = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
+        if (ids.length != 3) {
+            log.error("ConfirmInvite error: invalid token username");
+            throw new ServerException("Invalid Token");
+        }
 
-		Long inviterId = Long.parseLong(ids[0]);
-		Long memeberId = Long.parseLong(ids[1]);
-		Long orgId = Long.parseLong(ids[2]);
-		if (!user.getId().equals(memeberId)) {
-			log.error("ConfirmInvite error: invalid token member, username is wrong");
-			throw new ServerException("Username is wrong");
-		}
+        Long inviterId = Long.parseLong(ids[0]);
+        Long memeberId = Long.parseLong(ids[1]);
+        Long orgId = Long.parseLong(ids[2]);
+        if (!user.getId().equals(memeberId)) {
+            log.error("ConfirmInvite error: invalid token member, username is wrong");
+            throw new ServerException("Username is wrong");
+        }
 
-		if (!user.getPassword().equals(tokenPassword)) {
-			log.error("ConfirmInvite error: invalid token password");
-			throw new ServerException("Password is wrong");
-		}
+        if (!user.getPassword().equals(tokenPassword)) {
+            log.error("ConfirmInvite error: invalid token password");
+            throw new ServerException("Password is wrong");
+        }
 
-		User inviter = userExtendMapper.selectByPrimaryKey(inviterId);
-		if (null == inviter) {
-			log.error("ConfirmInvite error: invalid token inviter");
-			throw new ServerException("Invalid Token");
-		}
+        User inviter = userExtendMapper.selectByPrimaryKey(inviterId);
+        if (null == inviter) {
+            log.error("ConfirmInvite error: invalid token inviter");
+            throw new ServerException("Invalid Token");
+        }
 
-		Organization organization = getOrganization(orgId);
-		OrganizationInfo organizationInfo = new OrganizationInfo();
-		BeanUtils.copyProperties(organization, organizationInfo);
+        Organization organization = getOrganization(orgId);
+        OrganizationInfo organizationInfo = new OrganizationInfo();
+        BeanUtils.copyProperties(organization, organizationInfo);
 
-		RelUserOrganization tokenRel = relUserOrganizationMapper.getRel(inviterId, orgId);
-		if (null != tokenRel && tokenRel.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
-			log.info("ConfirmInvite error: invalid token inviter permission");
-			throw new ServerException("Invalid Token");
-		}
+        RelUserOrganization tokenRel = relUserOrganizationExtendMapper.getRel(inviterId, orgId);
+        if (null != tokenRel && tokenRel.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
+            log.info("ConfirmInvite error: invalid token inviter permission");
+            throw new ServerException("Invalid Token");
+        }
 
-		isJoined(memeberId, orgId);
-		// 验证通过，建立关联
-		 RelUserOrganization rel = new RelUserOrganization();
-		 rel.setOrgId(orgId);
-         rel.setUserId(memeberId);
-         rel.setRole(UserOrgRoleEnum.MEMBER.getRole());
-         rel.setCreateBy(user.getId());
-         rel.setCreateTime(new Date());
-		if (relUserOrganizationMapper.insert(rel) <= 0) {
-			throw new ServerException("Unknown fail");
-		}
+        isJoined(memeberId, orgId);
+        // 验证通过，建立关联
+        RelUserOrganization rel = new RelUserOrganization();
+        rel.setOrgId(orgId);
+        rel.setUserId(memeberId);
+        rel.setRole(UserOrgRoleEnum.MEMBER.getRole());
+        rel.setCreateBy(user.getId());
+        rel.setCreateTime(new Date());
+        if (relUserOrganizationExtendMapper.insert(rel) <= 0) {
+            throw new ServerException("Unknown fail");
+        }
 
-		// 修改成员人数
-		// TODO num is wrong in concurrent cases
-		organization.setMemberNum(organization.getMemberNum() + 1);
-		organizationExtendMapper.updateMemberNum(organization);
-		organizationInfo.setRole(rel.getRole());
-		return organizationInfo;
+        // 修改成员人数
+        // TODO num is wrong in concurrent cases
+        organization.setMemberNum(organization.getMemberNum() + 1);
+        organizationExtendMapper.updateMemberNum(organization);
+        organizationInfo.setRole(rel.getRole());
+        return organizationInfo;
     }
     
     private void isJoined(Long memeberId, Long orgId) {
-		RelUserOrganization rel = relUserOrganizationMapper.getRel(memeberId, orgId);
-		if (rel != null) {
-			throw new ServerException("You have joined the organization and don't need to repeat.");
-		}
+        RelUserOrganization rel = relUserOrganizationExtendMapper.getRel(memeberId, orgId);
+        if (rel != null) {
+            throw new ServerException("You have joined the organization and don't need to repeat.");
+        }
     }
 
 	@Override
 	@Transactional
 	public void confirmInviteNoLogin(String token) throws NotFoundException, ServerException {
-		// aes解密
-		token = AESUtils.decrypt(token, null);
+        // aes解密
+        token = AESUtils.decrypt(token, null);
 
-		// 验证token(特殊验证，不走util)
-		String tokenUserName = tokenUtils.getUsername(token);
-		String tokenPassword = tokenUtils.getPassword(token);
+        // 验证token(特殊验证，不走util)
+        String tokenUserName = tokenUtils.getUsername(token);
+        String tokenPassword = tokenUtils.getPassword(token);
 
-		if (StringUtils.isEmpty(tokenUserName) || StringUtils.isEmpty(tokenPassword)) {
-			log.error("ConfirmInvite error: token detail id empty");
-			throw new ServerException("Invalid Token");
-		}
+        if (StringUtils.isEmpty(tokenUserName) || StringUtils.isEmpty(tokenPassword)) {
+            log.error("ConfirmInvite error: token detail id empty");
+            throw new ServerException("Invalid Token");
+        }
 
-		String[] ids = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
-		if (ids.length != 3) {
-			log.error("ConfirmInvite error: invalid token username");
-			throw new ServerException("Invalid Token");
-		}
+        String[] ids = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
+        if (ids.length != 3) {
+            log.error("ConfirmInvite error: invalid token username");
+            throw new ServerException("Invalid Token");
+        }
 
-		Long inviterId = Long.parseLong(ids[0]);
-		Long memeberId = Long.parseLong(ids[1]);
-		Long orgId = Long.parseLong(ids[2]);
-		User inviter = userExtendMapper.selectByPrimaryKey(inviterId);
-		if (null == inviter) {
-			log.error("ConfirmInvite error: invalid token inviter");
-			throw new ServerException("Invalid Token");
-		}
+        Long inviterId = Long.parseLong(ids[0]);
+        Long memeberId = Long.parseLong(ids[1]);
+        Long orgId = Long.parseLong(ids[2]);
+        User inviter = userExtendMapper.selectByPrimaryKey(inviterId);
+        if (null == inviter) {
+            log.error("ConfirmInvite error: invalid token inviter");
+            throw new ServerException("Invalid Token");
+        }
 
-		Organization organization = getOrganization(orgId);
+        Organization organization = getOrganization(orgId);
 
-		RelUserOrganization tokenRel = relUserOrganizationMapper.getRel(inviterId, orgId);
-		if (null != tokenRel && tokenRel.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
-			log.error("ConfirmInvite error: invalid token inviter permission");
-			throw new ServerException("Invalid Token");
-		}
+        RelUserOrganization tokenRel = relUserOrganizationExtendMapper.getRel(inviterId, orgId);
+        if (null != tokenRel && tokenRel.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
+            log.error("ConfirmInvite error: invalid token inviter permission");
+            throw new ServerException("Invalid Token");
+        }
 
-		User member = userExtendMapper.selectByPrimaryKey(memeberId);
-		if (null == member) {
-			throw new NotFoundException("User is not found");
-		}
+        User member = userExtendMapper.selectByPrimaryKey(memeberId);
+        if (null == member) {
+            throw new NotFoundException("User is not found");
+        }
 
-		isJoined(memeberId, orgId);
-		// 验证通过，建立关联
-		 RelUserOrganization rel = new RelUserOrganization();
-		 rel.setOrgId(orgId);
+        isJoined(memeberId, orgId);
+        // 验证通过，建立关联
+        RelUserOrganization rel = new RelUserOrganization();
+        rel.setOrgId(orgId);
         rel.setUserId(memeberId);
         rel.setRole(UserOrgRoleEnum.MEMBER.getRole());
         rel.setCreateBy(memeberId);
         rel.setCreateTime(new Date());
-		relUserOrganizationMapper.insert(rel);
-		// 修改成员人数
-		// TODO num is wrong in concurrent cases
-		organization.setMemberNum(organization.getMemberNum() + 1);
-		organizationExtendMapper.updateMemberNum(organization);
+        relUserOrganizationExtendMapper.insert(rel);
+        // 修改成员人数
+        // TODO num is wrong in concurrent cases
+        organization.setMemberNum(organization.getMemberNum() + 1);
+        organizationExtendMapper.updateMemberNum(organization);
 	}
 
     /**
@@ -591,13 +642,13 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     @Transactional
     public boolean deleteOrgMember(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-    	RelUserOrganization rel = relUserOrganizationMapper.getById(relationId);
+        RelUserOrganization rel = relUserOrganizationExtendMapper.getById(relationId);
         if (null == rel) {
             throw new ServerException("This member is no longer the member of the organization");
         }
 
         Long orgId = rel.getOrgId();
-        //验证权限，只有owner可以删除
+        // 验证权限，只有owner可以删除
         checkOwner(user.getId(), orgId, "delete");
 
         Organization organization = getOrganization(orgId);
@@ -609,20 +660,20 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             throw new ServerException("You can not delete yourself in this organization");
         }
 
-        if (relUserOrganizationMapper.deleteById(relationId) <= 0) {
+        if (relUserOrganizationExtendMapper.deleteById(relationId) <= 0) {
             throw new ServerException("Unknown fail");
         }
-        
-		// 更新组织成员数量
+
+        // 更新组织成员数量
         // TODO num is wrong in concurrent cases
-		int memberNum = organization.getMemberNum();
-		organization.setMemberNum(memberNum > 0 ? memberNum - 1 : memberNum);
-		organizationExtendMapper.updateMemberNum(organization);
-		return true;
+        int memberNum = organization.getMemberNum();
+        organization.setMemberNum(memberNum > 0 ? memberNum - 1 : memberNum);
+        organizationExtendMapper.updateMemberNum(organization);
+        return true;
     }
     
     private void checkOwner(Long userId, Long orgId, String operation) {
-        RelUserOrganization ownerRel = relUserOrganizationMapper.getRel(userId, orgId);
+        RelUserOrganization ownerRel = relUserOrganizationExtendMapper.getRel(userId, orgId);
         if (null != ownerRel && ownerRel.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
             throw new UnAuthorizedExecption("You can not " +operation+ " any member of this organization, cause you are not the owner of this ordination");
         }
@@ -640,8 +691,8 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     @Transactional
     public boolean updateMemberRole(Long relationId, User user, short role) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        RelUserOrganization rel = relUserOrganizationMapper.getById(relationId);
-        
+        RelUserOrganization rel = relUserOrganizationExtendMapper.getById(relationId);
+
         if (null == rel) {
             throw new ServerException("This member are no longer member of the organization");
         }
@@ -649,7 +700,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         Long orgId = rel.getOrgId();
         getOrganization(orgId);
 
-        //验证权限，只有owner可以更改
+        // 验证权限，只有owner可以更改
         checkOwner(user.getId(), orgId, "update");
 
         UserOrgRoleEnum userOrgRoleEnum = UserOrgRoleEnum.roleOf(role);
@@ -657,12 +708,12 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             throw new ServerException("Invalid role");
         }
 
-        //不可以更改自己的权限
+        // 不可以更改自己的权限
         if (user.getId().equals(rel.getUserId())) {
             throw new ServerException("You cannot change your own role");
         }
 
-        //不需要更改
+        // 不需要更改
         if ((int) rel.getRole() == role) {
             throw new ServerException("This member does not need to change role");
         }
@@ -672,11 +723,53 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         rel.setRole(userOrgRoleEnum.getRole());
         rel.setUpdateBy(user.getId());
         rel.setUpdateTime(new Date());
-        if (relUserOrganizationMapper.updateMemberRole(rel) <= 0) {
+        if (relUserOrganizationExtendMapper.updateMemberRole(rel) <= 0) {
             throw new ServerException("Unknown fail");
         }
 
-        optLogger.info("RelUserOrganization({}) is update by user({}), origin:{}", rel.toString(), user.getId(), origin);
+        optLogger.info("RelUserOrganization({}) is update by user({}), origin:{}", rel.toString(), user.getId(),
+                origin);
         return true;
+    }
+
+    /**
+     * 发送邀请邮件
+     *
+     * @param organization
+     * @param member
+     * @param user
+     */
+    private void sendInviteEmail(Organization organization, User member, User user) {
+        
+        /**
+         * 邀请组织成员token生成实体
+         * 规则：
+         * username: 邀请人id:-:被邀请人id:-:组织id
+         * password: 被邀请人密码
+         */
+        TokenEntity tokenEntity = new TokenEntity();
+        tokenEntity.setUsername(user.getId() + Constants.SPLIT_CHAR_STRING + member.getId() + Constants.SPLIT_CHAR_STRING + organization.getId());
+        tokenEntity.setPassword(member.getPassword());
+
+        Map<String, Object> content = new HashMap<>();
+        content.put("username", member.getUsername());
+        content.put("inviter", user.getUsername());
+        content.put("orgName", organization.getName());
+        content.put("host", serverUtils.getHost());
+        //aes加密token
+        content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(tokenEntity), null));
+        try {
+            MailContent mailContent = MailContent.MailContentBuilder.builder()
+                    .withSubject(String.format(Constants.INVITE_ORG_MEMBER_MAIL_SUBJECT, user.getUsername(), organization.getName()))
+                    .withTo(member.getEmail())
+                    .withMainContent(MailContentTypeEnum.TEMPLATE)
+                    .withTemplate(Constants.INVITE_ORG_MEMBER_MAIL_TEMPLATE)
+                    .withTemplateContent(content)
+                    .build();
+
+            mailUtils.sendMail(mailContent, null);
+        } catch (ServerException e) {
+            log.error(e.getMessage(), e);
+        }
     }
 }

@@ -19,17 +19,15 @@
 
 package edp.davinci.server.service.impl;
 
-import static edp.davinci.commons.Constants.*;
+import static edp.davinci.commons.Constants.AT_SIGN;
+import static edp.davinci.commons.Constants.COMMA;
 import static edp.davinci.server.commons.Constants.NO_AUTH_PERMISSION;
-import static edp.davinci.server.enums.SqlVariableTypeEnum.AUTHVAR;
-import static edp.davinci.server.enums.SqlVariableTypeEnum.QUERYVAR;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,9 +48,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.stringtemplate.v4.ST;
-import org.stringtemplate.v4.STGroup;
-import org.stringtemplate.v4.STGroupFile;
 
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
@@ -68,12 +63,9 @@ import edp.davinci.data.parser.ParserFactory;
 import edp.davinci.data.parser.StatementParser;
 import edp.davinci.data.pojo.ColumnModel;
 import edp.davinci.data.pojo.PagingParam;
+import edp.davinci.data.pojo.Param;
+import edp.davinci.data.pojo.SqlQueryParam;
 import edp.davinci.data.provider.DataProviderFactory;
-import edp.davinci.data.util.JdbcSourceUtils;
-import static edp.davinci.commons.Constants.*;
-
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.component.excel.SQLContext;
 import edp.davinci.server.dao.RelRoleViewExtendMapper;
 import edp.davinci.server.dao.SourceExtendMapper;
 import edp.davinci.server.dao.ViewExtendMapper;
@@ -82,18 +74,18 @@ import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.source.SourceBaseInfo;
 import edp.davinci.server.dto.view.AuthParamValue;
-import edp.davinci.server.dto.view.WidgetDistinctParam;
-import edp.davinci.data.pojo.Param;
-import edp.davinci.data.pojo.SqlQueryParam;
 import edp.davinci.server.dto.view.RelRoleViewDTO;
 import edp.davinci.server.dto.view.ViewBaseInfo;
 import edp.davinci.server.dto.view.ViewCreate;
 import edp.davinci.server.dto.view.ViewExecuteParam;
-import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.view.ViewUpdate;
 import edp.davinci.server.dto.view.ViewWithSource;
 import edp.davinci.server.dto.view.ViewWithSourceBaseInfo;
+import edp.davinci.server.dto.view.WidgetDistinctParam;
+import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.enums.CheckEntityEnum;
+import edp.davinci.server.enums.ConcurrencyStrategyEnum;
+import edp.davinci.server.enums.LockType;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.enums.SqlVariableTypeEnum;
 import edp.davinci.server.enums.SqlVariableValueTypeEnum;
@@ -103,15 +95,14 @@ import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.Paging;
 import edp.davinci.server.model.PagingWithQueryColumns;
-import edp.davinci.server.model.SqlEntity;
-import edp.davinci.server.model.SqlFilter;
 import edp.davinci.server.model.SqlVariable;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ViewService;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.RedisUtils;
 import edp.davinci.server.util.AuthVarUtils;
+import edp.davinci.server.util.BaseLock;
 import edp.davinci.server.util.DataUtils;
+import edp.davinci.server.util.LockFactory;
+import edp.davinci.server.util.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -133,9 +124,6 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     private RelRoleViewExtendMapper relRoleViewExtendMapper;
 
     @Autowired
-    private DataUtils sqlUtils;
-
-    @Autowired
     private RedisUtils redisUtils;
 
     @Autowired
@@ -155,6 +143,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
     @Value("${source.query-model:0.3}")
     private String queryModel;
+
+    private static final int CONCURRENCY_EXPIRE = 60 * 60;
 
     @Override
     public boolean isExist(String name, Long id, Long projectId) {
@@ -518,16 +508,16 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      * 返回view源数据集
      *
      * @param id
-     * @param executeParam
+     * @param queryParam
      * @param user
      * @return
      */
     @Override
-    public Paging<Map<String, Object>> getData(Long id, WidgetQueryParam executeParam, User user)
+    public Paging<Map<String, Object>> getData(Long id, WidgetQueryParam queryParam, User user)
             throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        if (CollectionUtils.isEmpty(executeParam.getGroups())
-                && CollectionUtils.isEmpty(executeParam.getAggregators())) {
+        if (CollectionUtils.isEmpty(queryParam.getGroups())
+                && CollectionUtils.isEmpty(queryParam.getAggregators())) {
             return null;
         }
 
@@ -545,7 +535,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             return null;
         }
 
-        return getPagingData(projectService.isMaintainer(projectDetail, user), viewWithSource, executeParam, user);
+        return getPagingData(projectService.isMaintainer(projectDetail, user), viewWithSource, queryParam, user);
     }
 
     private ViewWithSource getViewWithSource(Long id) {
@@ -562,9 +552,15 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         PagingWithQueryColumns pagingWithQueryColumns = null;
 
-        String cacheKey = null;
         boolean withCache = param.getCache() && param.getExpired() > 0L;
+        
+        ConcurrencyStrategyEnum strategy = ConcurrencyStrategyEnum.strategyOf(param.getConcurrencyOptimizationStrategy());
+        boolean withConcurrency = param.isConcurrencyOptimization() && strategy != null;
+        
+        Map<String, Object> configMap = JSONUtils.toObject(viewWithSource.getConfig(), Map.class);
+        boolean withAggregator = !CollectionUtils.isEmpty(configMap) && "local".equals(configMap.get("aggregator"));
 
+        String cacheKey = null;
         try {
 
             Source source = viewWithSource.getSource();
@@ -573,7 +569,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             List<RelRoleView> roleViewList = relRoleViewExtendMapper.getByUserAndView(user.getId(),
                     viewWithSource.getId());
             String statement = viewWithSource.getSql();
-
+            
             StatementParser parser = ParserFactory.getParser(source.getType());
             SqlQueryParam sqlQueryParam = SqlQueryParam.builder()
                                             .limit(param.getLimit())
@@ -620,13 +616,6 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 });
             }
 
-            if (!CollectionUtils.isEmpty(queryStatements)) {
-                for (String s : queryStatements) {
-                    PagingParam paging = new PagingParam(0, 0, sqlQueryParam.getLimit());
-                    pagingWithQueryColumns = DataUtils.syncQuery4Paging(source, s, paging, new HashSet<String>(), user);
-                }
-            }
-
             // get exclude columns
             Set<String> excludeColumns = new HashSet<>();
             Set<String> columns = getExcludeColumns(roleViewList);
@@ -634,15 +623,52 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 excludeColumns.addAll(columns);
             }
 
-            // use local aggregator
-            Map<String, Object> configMap = JSONUtils.toObject(viewWithSource.getConfig(), Map.class);
-            if (!CollectionUtils.isEmpty(configMap) && "local".equals(configMap.get("aggregator"))) {
-                pagingWithQueryColumns = getPagingDataByLocalAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource, user);
-            } else {
-                PagingParam paging = new PagingParam(param.getPageNo(), param.getPageSize(),
-                        param.getLimit());
-                for (String s : queryStatements) {
-                    pagingWithQueryColumns = DataUtils.syncQuery4Paging(source, s, paging, excludeColumns, user);
+            BaseLock lock = null;
+            if (withConcurrency) {
+                String concurrencyKey = getConcurrencyKey(source, queryStatements.get(queryStatements.size() - 1), param);
+                
+                // try to get data from concurrency cache first
+                pagingWithQueryColumns = getPagingDataByCache(concurrencyKey);
+                if (pagingWithQueryColumns != null) {
+                    return pagingWithQueryColumns;
+                }
+
+                lock = getConcurrencyStrategyLock(concurrencyKey, strategy);
+                if (lock != null) {// query data
+
+                    try {
+                        
+                        Stopwatch watch = Stopwatch.createStarted();
+                        
+                        if (withAggregator) {
+                            pagingWithQueryColumns = doQueryByAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource, user);
+                        } else {
+                            pagingWithQueryColumns = doQuery(param, queryStatements, excludeColumns, source, user);
+                        }
+
+                        redisUtils.set(concurrencyKey, pagingWithQueryColumns, Math.max(10_000, watch.elapsed(TimeUnit.MILLISECONDS)), TimeUnit.MILLISECONDS);
+                    
+                    }finally {
+                        lock.release();
+                    }
+
+                }else{// data is querying so pending
+                    while(LockFactory.ifLockExist(concurrencyKey, LockType.REDIS)) {
+                        Thread.sleep(1_000);
+                        pagingWithQueryColumns = getPagingDataByCache(concurrencyKey);
+                        if (pagingWithQueryColumns != null) {
+                            return pagingWithQueryColumns;
+                        }
+                    }
+
+                    return getPagingDataByCache(concurrencyKey);
+                }
+            
+            }else{
+                if (withAggregator) {
+                    pagingWithQueryColumns = doQueryByAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource, user);
+                } else {
+                    pagingWithQueryColumns = doQuery(param, queryStatements, excludeColumns, source, user);
                 }
             }
 
@@ -651,11 +677,27 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             throw new ServerException(e.getMessage());
         }
 
-        if (!StringUtils.isEmpty(cacheKey) && pagingWithQueryColumns != null
-                && !CollectionUtils.isEmpty(pagingWithQueryColumns.getResultList())) {
+        if (withCache) {
             redisUtils.set(cacheKey, pagingWithQueryColumns, param.getExpired(), TimeUnit.SECONDS);
         }
 
+        return pagingWithQueryColumns;
+    }
+
+    private PagingWithQueryColumns doQueryByAggregator(String sWithQueryVar, SqlQueryParam sqlQueryParam,
+            Map<String, List<String>> authParams, Set<String> excludeColumns, ViewWithSource viewWithSource,
+            User user) {
+        return getPagingDataByLocalAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource,
+                user);
+    }
+
+    private PagingWithQueryColumns doQuery(WidgetQueryParam param, List<String> queryStatements,
+            Set<String> excludeColumns, Source source, User user) {
+        PagingWithQueryColumns pagingWithQueryColumns = null;
+        PagingParam paging = new PagingParam(param.getPageNo(), param.getPageSize(), param.getLimit());
+        for (String s : queryStatements) {
+            pagingWithQueryColumns = DataUtils.syncQuery4Paging(source, s, paging, excludeColumns, user);
+        }
         return pagingWithQueryColumns;
     }
 
@@ -730,6 +772,12 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 + executeParam.getPageSize() + AT_SIGN + executeParam.getLimit();
     }
 
+    private String getConcurrencyKey(Source source, String sql, WidgetQueryParam executeParam) {
+        String md5 = MD5Utils.getMD5(sql, true, 16);
+        return "CONCURRENCY:" + source.getId() + AT_SIGN + md5 + AT_SIGN + executeParam.getPageNo() + AT_SIGN
+                + executeParam.getPageSize() + AT_SIGN + executeParam.getLimit();
+    }
+
     private PagingWithQueryColumns getPagingDataByCache(String key) {
         try {
             return (PagingWithQueryColumns) redisUtils.get(key);
@@ -737,6 +785,26 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             log.error(e.getMessage(), e);
         }
 
+        return null;
+    }
+
+    private BaseLock getConcurrencyStrategyLock(String cacheKey, ConcurrencyStrategyEnum strategy) {
+        
+        BaseLock lock = LockFactory.getLock(cacheKey, CONCURRENCY_EXPIRE, LockType.REDIS);
+
+        if (ConcurrencyStrategyEnum.FAIL_FAST == strategy) {
+            if (lock != null && lock.getLock()) {
+                return lock;
+            }
+            throw new ServerException("The data is querying, please try again later");
+        }
+
+        if (ConcurrencyStrategyEnum.DIRTY_READ == strategy) {
+            if (lock != null && lock.getLock()) {
+                return lock;
+            }
+        }
+        
         return null;
     }
 
@@ -786,7 +854,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 + MD5Utils.getMD5(source.getId() + AT_SIGN + queryStatements.get(queryStatements.size() - 1), true, 16);
 
         JdbcAggregator aggregator = (JdbcAggregator) AggregatorFactory.getAggregator("jdbc");
-        aggregator.loadData(table, header, data, watch.elapsed(TimeUnit.MILLISECONDS));
+        aggregator.loadData(table, header, data, Math.max(10_000, watch.elapsed(TimeUnit.MILLISECONDS)));
 
         String sql = "select * from " + table;
         Set<String> expSet = edp.davinci.data.util.SqlParseUtils.getAuthExpression(sql, sqlTempDelimiter);
@@ -947,6 +1015,13 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     public PagingWithQueryColumns getDataWithQueryColumns(Long id, WidgetQueryParam executeParam, User user)
             throws NotFoundException, UnAuthorizedExecption, ServerException {
         return (PagingWithQueryColumns) getData(id, executeParam, user);
+    }
+
+    @Override
+    public String showSql(Long id, WidgetQueryParam queryParam, User user)
+            throws NotFoundException, UnAuthorizedExecption, ServerException {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

@@ -20,15 +20,16 @@
 package edp.davinci.server.controller;
 
 
+import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.DashboardPortal;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.dashboard.*;
-import edp.davinci.server.model.Dashboard;
-import edp.davinci.server.model.DashboardPortal;
-import edp.davinci.server.model.MemDashboardWidget;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.DashboardService;
+import edp.davinci.server.util.ExcelUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -46,7 +47,6 @@ import java.util.List;
 
 @Api(value = "/dashboardPortals", tags = "dashboardPortals", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "dashboardPortal not found"))
-@Slf4j
 @RestController
 @RequestMapping(value = Constants.BASE_API_PATH + "/dashboardPortals", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class DashboardController extends BaseController {
@@ -373,12 +373,14 @@ public class DashboardController extends BaseController {
         }
 
         if (null == memDashboardWidgetCreates || memDashboardWidgetCreates.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("dashboard widgets info cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Dashboard widgets info cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
         for (MemDashboardWidgetCreate memDashboardWidgetCreate : memDashboardWidgetCreates) {
-            Constants.checkSheetName("Alias", memDashboardWidgetCreate.getAlias());
+            
+            ExcelUtils.checkSheetName("Alias", memDashboardWidgetCreate.getAlias());
+            
             if (invalidId(dashboardId) || !dashboardId.equals(memDashboardWidgetCreate.getDashboardId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -416,12 +418,13 @@ public class DashboardController extends BaseController {
         }
 
         for (MemDashboardWidget memDashboardWidget : memDashboardWidgets) {
+
+            ExcelUtils.checkSheetName("Alias", memDashboardWidget.getAlias());
+
             if (invalidId(memDashboardWidget.getId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
             }
-
-            Constants.checkSheetName("Alias", memDashboardWidget.getAlias());
 
             if (invalidId(memDashboardWidget.getDashboardId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");

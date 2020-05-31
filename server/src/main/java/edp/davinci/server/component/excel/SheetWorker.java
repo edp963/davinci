@@ -19,29 +19,21 @@
 
 package edp.davinci.server.component.excel;
 
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.Maps;
 
 import edp.davinci.server.config.SpringContextHolder;
 import edp.davinci.server.dto.cronjob.MsgMailExcel;
 import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.model.PagingWithQueryColumns;
-import edp.davinci.server.model.QueryColumn;
 import edp.davinci.server.service.ViewService;
-import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.server.util.AuthVarUtils;
-import edp.davinci.server.util.DataUtils;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.jdbc.core.JdbcTemplate;
-
-import static edp.davinci.server.enums.DatabaseTypeEnum.MYSQL;
-
-import java.sql.ResultSetMetaData;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by IntelliJ IDEA.

@@ -4,16 +4,17 @@ import { createStructuredSelector } from 'reselect'
 import RoleForm from './RoleForm'
 import RelRoleMember from './RelRoleMember'
 import { connect } from 'react-redux'
-import {FormComponentProps} from 'antd/lib/form'
+
 import { Row, Col, Tooltip, Button, Input, Table, Modal, Popconfirm, Divider, message} from 'antd'
 import { ColumnProps } from 'antd/lib/table'
 const styles = require('../Organization.less')
+import * as Organization from '../Organization'
 import {checkNameUniqueAction} from 'containers/App/actions'
 import { OrganizationActions } from '../actions'
 const { addRole, loadOrganizationRole, deleteRole, relRoleMember, editRole, getRelRoleMember } = OrganizationActions
 import ComponentPermission from 'containers/Account/components/checkMemberPermission'
 import { makeSelectRoleModalLoading, makeSelectCurrentOrganizationRole } from '../selectors'
-import { IOrganization, IOrganizationRole } from '../types'
+import { IOrganization } from '../types'
 
 interface IRoleState {
   formType: string
@@ -38,7 +39,7 @@ interface IRoleProps {
   onGetRelRoleMember: (id: number, resolve: (result: any) => any) => any
   onLoadOrganizationRole?: (orgId: number) => any
   currentOrganization: IOrganization
-  currentOrganizationRole: IOrganizationRole[]
+  currentOrganizationRole: any
   organizationMembers: any[]
   organizations: any
   roleModalLoading?: boolean
@@ -85,6 +86,11 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
   private refHandles = {
     RoleForm: (ref) => this.RoleForm = ref,
     RelRoleMember: (ref) => this.RelRoleMember = ref
+  }
+
+  public componentWillMount () {
+    const {onLoadOrganizationRole, currentOrganization: {id}} = this.props
+    onLoadOrganizationRole(id)
   }
 
   private showRelRoleForm = (flag, roleId?: number) => (e) => {
@@ -183,12 +189,12 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
   }
 
   private handleDelete = (roleId) => () => {
-    const {onDeleteRole} = this.props
-    this.loadOrganizationRole()
+    const {onDeleteRole, onLoadOrganizationRole, currentOrganization: {id}} = this.props
+    onLoadOrganizationRole(id)
     if (roleId) {
       onDeleteRole(roleId, () => {
         message.success('删除成功')
-        this.loadOrganizationRole()
+        onLoadOrganizationRole(id)
       })
     }
   }
@@ -216,19 +222,19 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
 
   private createOrRole = () =>  {
     const {formType} = this.state
-    const {onAddRole, onEditRole} = this.props
+    const {onAddRole, onEditRole, onLoadOrganizationRole} = this.props
     this.RoleForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const {name, description, id} = values
         const orgId = this.props.currentOrganization.id
         if (formType === 'add') {
           onAddRole(name, description, orgId,  () => {
-            this.loadOrganizationRole()
+            onLoadOrganizationRole(orgId)
             this.hideTeamForm()
           })
         } else {
           onEditRole(name, description, id,  () => {
-            this.loadOrganizationRole()
+            onLoadOrganizationRole(orgId)
             this.hideTeamForm()
           })
         }
@@ -369,8 +375,6 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
   }
 }
 
-type MappedStates = ReturnType<typeof mapStateToProps>
-type MappedDispatches = ReturnType<typeof mapDispatchToProps>
 
 const mapStateToProps = createStructuredSelector({
   roleModalLoading: makeSelectRoleModalLoading(),
@@ -389,6 +393,6 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect<MappedStates, MappedDispatches, IRoleProps & FormComponentProps>(mapStateToProps, mapDispatchToProps)(RoleList)
+export default connect<{}, {}, IRoleProps>(mapStateToProps, mapDispatchToProps)(RoleList)
 
 

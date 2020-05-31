@@ -19,12 +19,13 @@
 
 package edp.davinci.server.controller;
 
-import edp.core.annotation.AuthIgnore;
-import edp.davinci.core.common.Constants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import edp.davinci.server.annotation.AuthIgnore;
+import edp.davinci.server.commons.Constants;
 import springfox.documentation.annotations.ApiIgnore;
 
 @ApiIgnore

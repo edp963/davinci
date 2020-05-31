@@ -29,8 +29,6 @@ import scheduleReducer from 'containers/Schedule/reducer'
 import scheduleSaga from 'containers/Schedule/sagas'
 import { loadVizs } from 'containers/Schedule/actions'
 import { makeSelectLoginUser } from 'containers/App/selectors'
-import Star from 'components/StarPanel/Star'
-const StarUserModal = Star.StarUser
 const styles = require('../Organization.less')
 import {
   makeSelectStarUserList,
@@ -53,8 +51,7 @@ export class ProjectList extends React.PureComponent<
       pageNum: 1,
       pageSize: 10,
       organizationProjects: null,
-      currentProject: null,
-      starModalVisble: false
+      currentProject: null
     }
   }
 
@@ -63,10 +60,6 @@ export class ProjectList extends React.PureComponent<
   private refHandlers = {
     ProjectForm: (ref) => (this.ProjectForm = ref),
     ProjectEditForm: (ref) => (this.ProjectEditForm = ref)
-  }
-
-  private onCloseStarModal = () => {
-    this.setState({starModalVisble: false})
   }
 
   private showProjectForm = (type: string) => (e) => {
@@ -322,7 +315,6 @@ export class ProjectList extends React.PureComponent<
   private getStarProjectUserList = (id) => () => {
     const { onGetProjectStarUser } = this.props
     onGetProjectStarUser(id)
-    this.setState({starModalVisble: true})
   }
 
   public render() {
@@ -333,8 +325,7 @@ export class ProjectList extends React.PureComponent<
       organizationProjects,
       editFormVisible,
       currentProject,
-      adminFormVisible,
-      starModalVisble
+      adminFormVisible
     } = this.state
     const {
       onLoadOrganizationProjects,
@@ -347,6 +338,7 @@ export class ProjectList extends React.PureComponent<
       vizs,
       organizations
     } = this.props
+    const { id: userId } = loginUser
 
     let CreateButton = void 0
     if (currentOrganization) {
@@ -385,6 +377,7 @@ export class ProjectList extends React.PureComponent<
           <ProjectItem
             unStar={this.starProject}
             userList={this.getStarProjectUserList}
+            starUser={starUserList}
             collectProjects={collectProjects}
             currentOrganization={currentOrganization}
             key={index}
@@ -455,11 +448,6 @@ export class ProjectList extends React.PureComponent<
             wrappedComponentRef={this.refHandlers.ProjectEditForm}
           />
         </Modal>
-        <StarUserModal
-          visible={starModalVisble}
-          starUser={starUserList}
-          closeUserListModal={this.onCloseStarModal}
-        />
       </div>
     )
   }
@@ -513,11 +501,7 @@ export function mapDispatchToProps(dispatch) {
   }
 }
 
-
-type MappedStates = ReturnType<typeof mapStateToProps>
-type MappedDispatches = ReturnType<typeof mapDispatchToProps>
-
-const withConnect = connect<MappedStates, MappedDispatches, IProjectsProps>(
+const withConnect = connect<{}, {}, IProjectsProps>(
   mapStateToProps,
   mapDispatchToProps
 )

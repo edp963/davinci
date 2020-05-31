@@ -13,6 +13,7 @@ interface IProjectItemProps {
   toProject: (id: number) => any
   loginUser: any
   deleteProject?: (id: number) => any
+  starUser: IStarUser[]
   collectProjects: IProject[]
   currentOrganization: IOrganization
   unStar?: (id: number) => any
@@ -25,6 +26,15 @@ interface IProjectItemProps {
 interface IPropsState {
   currentCollectProjectIds: any[],
   isDisableCollect: boolean
+}
+
+interface IProjectOptions {
+  id: number
+  name: string
+  description: string
+  createBy: number
+  pic: string
+  isLike: boolean
 }
 
 export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsState> {
@@ -77,7 +87,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
   }
 
   public render () {
-    const { pro, loginUser, currentOrganization, collectProjects} = this.props
+    const { pro, loginUser, currentOrganization, starUser, collectProjects} = this.props
     const { currentCollectProjectIds } = this.state
 
     let currentCollectIds = []
@@ -86,6 +96,8 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
     } else if (collectProjects) {
       currentCollectIds = collectProjects.map((cp) => cp.id)
     }
+
+    const currentLoginUser = JSON.parse(localStorage.getItem('loginUser'))
 
     const tags = (<div className={styles.tag}>{pro.createBy.id === loginUser.id ? <Tag key="small">我创建的</Tag> : ''}</div>)
     let CreateButton = void 0
@@ -97,7 +109,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
     let StarPanel = void 0
     if (pro) {
       const { isStar, starNum, id} = pro
-      StarPanel = <Star isStar={isStar} starNum={starNum} proId={id} unStar={this.props.unStar} userList={this.props.userList}/>
+      StarPanel = <Star isStar={isStar} starNum={starNum} proId={id} starUser={starUser} unStar={this.props.unStar} userList={this.props.userList}/>
     }
 
     return (

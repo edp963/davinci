@@ -112,7 +112,7 @@ public class Constants {
 
     public static final String JDBC_DATASOURCE_DEFAULT_VERSION = "Default";
 
-    public static final String PATH_EXT_FORMATER = "lib" + File.separator  + "ext" + File.separator + "%s" + File.separator + "%s" + File.separator;
+    public static final String PATH_EXT_FORMATER = "lib" + File.separator + "ext" + File.separator + "%s" + File.separator + "%s" + File.separator;
 
     /**
      * api基本路径
@@ -132,9 +132,19 @@ public class Constants {
     public static final String EMAIL_DEFAULT_TEMPLATE = "mail/emaiDefaultTemplate";
 
     /**
+     * 用户重置密码邮件模板
+     */
+    public static final String USER_REST_PASSWORD_EMAIL_TEMPLATE = "mail/userRestPasswordEmailTemplate";
+
+    /**
      * 用户激活/重发激活邮件主题
      */
     public static final String USER_ACTIVATE_EMAIL_SUBJECT = "[Davinci] 用户激活";
+
+    /**
+     * 用户重置密码邮件主题
+     */
+    public static final String USER_REST_PASSWORD_EMAIL_SUBJECT = "[Davinci] 重置密码";
 
     /**
      * 用户默认Organization描述
@@ -228,4 +238,9 @@ public class Constants {
 
     public static final String DAVINCI_TOPIC_CHANNEL = "DAVINCI_TOPIC_CHANNEL";
 
+    public static final int INVALID_SHEET_NAEM_LENGTH = 28;
+    
+    private static final String REG_INVALID_SHEET_NAME = "[\\!\\\\\\/\\?\\*\\[\\]\\:]";
+    
+    public static final Pattern PATTERN_INVALID_SHEET_NAME = Pattern.compile(REG_INVALID_SHEET_NAME);
 }

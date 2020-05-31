@@ -51,7 +51,6 @@ import ChartTypes from '../../config/chart/ChartTypes'
 
 export default function (chartProps: IChartProps, drillOptions) {
   const { data, cols, chartStyles: prevChartStyles, color, tip, references } = chartProps
-  const { isDrilling, getDataDrillDetail, instance, selectedItems, callback } = drillOptions
   const metrics =  getCartesianChartMetrics(chartProps.metrics)
   const chartStyles = barChartStylesMigrationRecorder(prevChartStyles)
 
@@ -83,6 +82,7 @@ export default function (chartProps: IChartProps, drillOptions) {
     horizontalLineStyle
   } = splitLine
 
+  const { selectedItems } = drillOptions
   const labelOption = {
     label: {
       ...getLabelOption('bar', label, metrics, false, {
@@ -170,6 +170,22 @@ export default function (chartProps: IChartProps, drillOptions) {
           ...stackOption,
           sampling: 'average',
           data: v.map((g, index) => {
+            // if (index === interactIndex) {
+            //   return {
+            //     value: g[m],
+            //     itemStyle: {
+            //       normal: {
+            //         opacity: 1
+            //       }
+            //     }
+            //   }
+            // } else {
+            // if (percentage) {
+            //   return g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100
+            // } else {
+            //   return g[`${m.agg}(${decodedMetricName})`]
+            // }
+            // }
             if (
               selectedItems &&
               selectedItems.length &&
@@ -217,6 +233,27 @@ export default function (chartProps: IChartProps, drillOptions) {
         ...stackOption,
         sampling: 'average',
         data: data.map((d, index) => {
+          // if (index === interactIndex) {
+          //   return {
+          //     value: d[m],
+          //     lineStyle: {
+          //       normal: {
+          //         opacity: 1
+          //       }
+          //     },
+          //     itemStyle: {
+          //       normal: {
+          //         opacity: 1
+          //       }
+          //     }
+          //   }
+          // } else {
+          // if (percentage) {
+          //   return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
+          // } else {
+          //   return d[`${m.agg}(${decodedMetricName})`]
+          // }
+          // }
           if (
             selectedItems &&
             selectedItems.length &&
@@ -337,6 +374,7 @@ export default function (chartProps: IChartProps, drillOptions) {
     }, {})
     series.push(...Object.values(sumSeries))
   }
+  const { isDrilling, getDataDrillDetail, instance } = drillOptions
   const brushedOptions =
     isDrilling === true
       ? {
@@ -352,7 +390,6 @@ export default function (chartProps: IChartProps, drillOptions) {
           }
         }
       : null
-
   // if (isDrilling) {
   //   //  instance.off('brushselected')
   //     instance.on('brushselected', brushselected)
@@ -367,9 +404,6 @@ export default function (chartProps: IChartProps, drillOptions) {
   //       })
   //     }, 0)
   //   }
-  if (callback) {
-    callback.call(null, seriesData)
-  }
   function brushselected (params) {
     const brushComponent = params.batch[0]
     const brushed = []
@@ -395,6 +429,26 @@ export default function (chartProps: IChartProps, drillOptions) {
       getDataDrillDetail(JSON.stringify({ range, brushed, sourceData }))
     }
   }
+
+  // dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
+  //   dataZoom: [{
+  //     type: 'inside',
+  //     start: Math.round((1 - dataZoomThreshold / dataSource.length) * 100),
+  //     end: 100
+  //   }, {
+  //     start: Math.round((1 - dataZoomThreshold / dataSource.length) * 100),
+  //     end: 100,
+  //     handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+  //     handleSize: '80%',
+  //     handleStyle: {
+  //       color: '#fff',
+  //       shadowBlur: 3,
+  //       shadowColor: 'rgba(0, 0, 0, 0.6)',
+  //       shadowOffsetX: 2,
+  //       shadowOffsetY: 2
+  //     }
+  //   }]
+  // }
 
   const xAxisSplitLineConfig = {
     showLine: showVerticalLine,

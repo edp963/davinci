@@ -19,15 +19,102 @@
 
 package edp.davinci.commons.util;
 
+import static edp.davinci.commons.Constants.EMPTY;
+
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.text.StrBuilder;
 
-import static edp.davinci.commons.Constants.EMPTY; 
-
 public class StringUtils {
+
+    private static final int BYTES_LENGTH = 256;
+	
+	private StringUtils() {
+
+    }
+    
+    public static String compress(String src) {
+
+        String res = null;
+
+        Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
+        deflater.setInput(src.getBytes());
+        deflater.finish();
+
+        final byte[] bytes = new byte[BYTES_LENGTH];
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(BYTES_LENGTH);) {
+            
+            while (!deflater.finished()) {
+                int length = deflater.deflate(bytes);
+                outputStream.write(bytes, 0, length);
+            }
+            
+            res = Base64.getUrlEncoder().withoutPadding().encodeToString(outputStream.toByteArray());
+        
+        } catch (Exception e) {
+            e.printStackTrace();
+            return src;
+        } finally {
+            deflater.end();
+        }
+
+        return res;
+    }
+
+    public static String uncompress(String src) {
+        
+        String res = null;
+        
+        byte[] decode = Base64.getUrlDecoder().decode(src);
+        Inflater inflater = new Inflater();
+        inflater.setInput(decode);
+        
+        final byte[] bytes = new byte[BYTES_LENGTH];
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(BYTES_LENGTH);) {
+            
+            while (!inflater.finished()) {
+                int length = inflater.inflate(bytes);
+                outputStream.write(bytes, 0, length);
+            }
+            
+            res = outputStream.toString();
+        
+        } catch (Exception e) {
+            e.printStackTrace();
+            return res;
+        } finally {
+            inflater.end();
+        }
+
+        return res;
+    }
+	
+    public static boolean isNotBlank(String str) {
+    	return !isBlank(str);
+    }
+	
+    public static boolean isBlank(String str) {
+        int strLen;
+        if (str == null || (strLen = str.length()) == 0) {
+            return true;
+        }
+        for (int i = 0; i < strLen; i++) {
+            if ((Character.isWhitespace(str.charAt(i)) == false)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public static boolean isNotEmpty(CharSequence value) {
+    	return !isEmpty(value);
+    }
 	
 	public static boolean isEmpty(CharSequence value) {
 		return value == null || value.length() == 0;

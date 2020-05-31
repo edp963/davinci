@@ -19,13 +19,26 @@
 
 package edp.davinci.server.util;
 
-import edp.davinci.commons.util.StringUtils;
+import static edp.davinci.commons.Constants.EMPTY;
+import static edp.davinci.server.commons.Constants.EXCEL_FORMAT_TYPE_KEY;
+
+import java.io.InputStreamReader;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import edp.davinci.server.commons.Constants;
+import edp.davinci.commons.util.StringUtils;
 import edp.davinci.data.pojo.Aggregator;
 import edp.davinci.data.pojo.Order;
 import edp.davinci.data.pojo.Param;
+import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.enums.FieldFormatTypeEnum;
 import edp.davinci.server.enums.NumericUnitEnum;
@@ -37,23 +50,10 @@ import edp.davinci.server.model.FieldNumeric;
 import edp.davinci.server.model.FieldPercentage;
 import edp.davinci.server.model.FieldScientificNotation;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import org.springframework.stereotype.Component;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
+public class ScriptUtils {
 
-import static edp.davinci.server.commons.Constants.EXCEL_FORMAT_TYPE_KEY;
-import static edp.davinci.commons.Constants.*;
-
-public class ScriptUtiils {
-
-    private static ClassLoader classLoader = ScriptUtiils.class.getClassLoader();
+    private static ClassLoader classLoader = ScriptUtils.class.getClassLoader();
 
     private enum ScriptEngineEnum {
         INSTANCE;
@@ -85,15 +85,15 @@ public class ScriptUtiils {
         return engine;
     }
 
-    public static synchronized ScriptEngine getCellValueScriptEngine()  {
+    public static synchronized ScriptEngine getTableFormatEngine()  {
         return ScriptEngineEnum.INSTANCE.getTableFormatEngine();
     }
 
-    public static ScriptEngine getExecuptParamScriptEngine() {
+    public static ScriptEngine getExecuteParamFormatEngine() {
         return ScriptEngineEnum.INSTANCE.getExecuteParamFormatEngine();
     }
 
-    public static WidgetQueryParam getViewExecuteParam(ScriptEngine engine, String dashboardConfig, String widgetConfig,
+    public static WidgetQueryParam getWidgetQueryParam(ScriptEngine engine, String dashboardConfig, String widgetConfig,
             Long releationId) {
 
         try {
@@ -195,10 +195,7 @@ public class ScriptUtiils {
             }
 
         }
-        catch (ScriptException e) {
-            e.printStackTrace();
-        }
-        catch (NoSuchMethodException e) {
+        catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -325,10 +322,7 @@ public class ScriptUtiils {
             });
             return excelHeaders;
         }
-        catch (ScriptException e) {
-            e.printStackTrace();
-        }
-        catch (NoSuchMethodException e) {
+        catch (Exception e) {
             e.printStackTrace();
         }
         return null;

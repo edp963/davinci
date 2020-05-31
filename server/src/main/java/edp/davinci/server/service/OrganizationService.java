@@ -23,7 +23,8 @@ import edp.davinci.server.dto.organization.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.dto.organization.BatchInviteMemberResult;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,7 +55,7 @@ public interface OrganizationService extends CheckEntityService {
 
     boolean deleteOrgMember(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    boolean updateMemberRole(Long relationId, User user, int role) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean updateMemberRole(Long relationId, User user, short role) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     void confirmInviteNoLogin(String token) throws NotFoundException, ServerException;
 }

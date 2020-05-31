@@ -22,11 +22,14 @@ package edp.davinci.server.service;
 
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.dto.user.UserBaseInfo;
+import edp.davinci.server.dto.user.UserDistinctTicket;
 import edp.davinci.server.dto.user.UserLogin;
 import edp.davinci.server.dto.user.UserRegist;
+import edp.davinci.server.enums.UserDistinctType;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +46,8 @@ public interface UserService extends CheckEntityService {
     boolean updateUser(User user) throws ServerException;
 
     User regist(UserRegist userRegist) throws ServerException;
+    
+    User externalRegist(OAuth2AuthenticationToken oauthAuthToken) throws ServerException;
 
     boolean sendMail(String email, User user) throws ServerException;
 
@@ -53,4 +58,10 @@ public interface UserService extends CheckEntityService {
     ResultMap activateUserNoLogin(String token, HttpServletRequest request);
 
     ResultMap getUserProfile(Long id, User user, HttpServletRequest request);
+    
+    ResultMap getUserProfileFromToken(String token);
+
+    String forgetPassword(UserDistinctType userDistinctType, UserDistinctTicket ticket);
+
+    boolean resetPassword(UserDistinctType userDistinctType, String token, UserDistinctTicket ticket);
 }

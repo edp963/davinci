@@ -23,7 +23,6 @@ import {
   makeSelectCurrentOrganizations,
   makeSelectCurrentOrganizationProjects,
   makeSelectCurrentOrganizationProjectsDetail,
-  makeSelectCurrentOrganizationRole,
   makeSelectCurrentOrganizationMembers,
   makeSelectInviteMemberList
 } from './selectors'
@@ -193,6 +192,8 @@ export function mapDispatchToProps (dispatch) {
     onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(OrganizationActions.changeOrganizationMemberRole(id, role, resolve)),
     onGetRoleListByMemberId: (orgId, memberId, resolve) => dispatch(OrganizationActions.getRoleListByMemberId(orgId, memberId, resolve))
   }
+
+  
 }
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)

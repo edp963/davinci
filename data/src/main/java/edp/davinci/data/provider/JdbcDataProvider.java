@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.slf4j.Logger;
@@ -167,8 +166,8 @@ public class JdbcDataProvider extends DataProvider {
 
 			if (logEnable) {
 				String md5 = MD5Utils.getMD5(sql, true, 16);
-				sqlLogger.info("User({}) execute sql takes {} ms, sql:{}, md5:{}", user.getId(),
-						stopwatch.elapsed(TimeUnit.MILLISECONDS), SqlUtils.formatSql(sql), md5);
+				sqlLogger.info("User({}) execute sql takes {} ms, sql:{}, count:{}, md5:{}", user.getId(),
+						stopwatch.elapsed(TimeUnit.MILLISECONDS), SqlUtils.formatSql(sql), dataResult.getCount(), md5);
 			}
 
 		} catch (Exception e) {
@@ -320,6 +319,7 @@ public class JdbcDataProvider extends DataProvider {
 		case SQLSERVER:
 			schemaPattern = "dbo";
 			break;
+		case CLICKHOUSE:
 		case PRESTO:
 			if (!StringUtils.isEmpty(schema)) {
 				schemaPattern = schema;

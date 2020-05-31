@@ -23,6 +23,7 @@ import produce from 'immer'
 import { LOCATION_CHANGE, LocationChangeAction } from 'connected-react-router'
 import { matchDisplaySlidePath } from 'utils/router'
 
+
 import { ActionTypes } from './constants'
 import { ActionTypes as VizActionTypes } from 'containers/Viz/constants'
 import { ActionTypes as ViewActionTypes } from '../View/constants'
@@ -64,7 +65,6 @@ export const initialState: IDisplayState = {
   lastLayers: [],
 
   editorBaselines: [],
-  operateItemParams: [],
 
   loading: {
     shareToken: false,
@@ -125,7 +125,7 @@ const displayReducer = (
                     datasource: { resultList: [] },
                     loading: false,
                     queryConditions: {
-                      tempFilters: [], // @TODO combine widget static filters with local filters
+                      tempFilters: [],  // @TODO combine widget static filters with local filters
                       linkageFilters: [],
                       globalFilters: [],
                       variables: [],
@@ -293,45 +293,7 @@ const displayReducer = (
           ].resizing = !action.payload.finish
         })
         break
-      case ActionTypes.DRAG_LAYER_ADJUSTED_INDEPENDENCE: {
-        const {
-          slideSize: { width: slideWidth, height: slideHeight },
-          layerIds,
-          deltaPosition
-        } = action.payload
-        const isEmpty = draft.operateItemParams.length === 0
-        layerIds.forEach((layerId) => {
-          if (isEmpty) {
-            draft.operateItemParams.push({
-              ...draft.slideLayers[draft.currentSlideId][layerId]
-            })
-          }
-          const item = draft.operateItemParams.find(
-            (item) => item.id === layerId
-          )
-          if (item) {
-            item.params.positionX += deltaPosition.deltaX
-            item.params.positionY += deltaPosition.deltaY
-            if (item.params.positionX < 0) {
-              item.params.positionX = 0
-            } else if (item.params.positionX + item.params.width > slideWidth) {
-              item.params.positionX = slideWidth - item.params.width
-            }
-            if (item.params.positionY < 0) {
-              item.params.positionY = 0
-            } else if (
-              item.params.positionY + item.params.height >
-              slideHeight
-            ) {
-              item.params.positionY = slideHeight - item.params.height
-            }
-            draft.slideLayersOperationInfo[draft.currentSlideId][
-              layerId
-            ].dragging = true
-          }
-        })
-        break
-      }
+
       case ActionTypes.DRAG_LAYER_ADJUSTED:
         const {
           width: slideWidth,
@@ -399,12 +361,6 @@ const displayReducer = (
 
       case ActionTypes.CLEAR_EDITOR_BASELINES:
         draft.editorBaselines = []
-        draft.operateItemParams = []
-        Object.values(
-          draft.slideLayersOperationInfo[draft.currentSlideId]
-        ).forEach((item) => {
-          item.dragging = false
-        })
         break
 
       case ActionTypes.SHOW_EDITOR_BASELINES:
@@ -428,8 +384,7 @@ const displayReducer = (
         break
 
       case ActionTypes.LOAD_DISPLAY_AUTHORIZED_SHARE_LINK_SUCCESS:
-        draft.currentDisplayAuthorizedShareToken =
-          action.payload.authorizedShareToken
+        draft.currentDisplayAuthorizedShareToken = action.payload.authorizedShareToken
         draft.loading.shareToken = false
         break
 
@@ -454,9 +409,7 @@ const displayReducer = (
         return initialState
 
       case LOCATION_CHANGE:
-        const matchSlide = matchDisplaySlidePath(
-          action.payload.location.pathname
-        )
+        const matchSlide = matchDisplaySlidePath(action.payload.location.pathname)
         if (matchSlide) {
           draft.currentSlideId = +matchSlide.params.slideId || null
         } else {

@@ -30,6 +30,7 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public interface UserExtendMapper extends UserMapper {
@@ -144,4 +145,19 @@ public interface UserExtendMapper extends UserMapper {
     @Select({"select count(id) from `user` where `username` = #{username}"})
     boolean existUsername(@Param("username") String username);
 
+	@Select({
+    	"<script>",
+    	"	select * from `user` where" +
+        "		<if test='emails != null and emails.size > 0'>" +
+        "    		`email` in" +
+        "    		<foreach collection='emails' index='index' item='item' open='(' close=')' separator=','>" +
+        "        		#{item}" +
+        "    		</foreach>" +
+        "		</if>" +
+        "		<if test='emails == null or emails.size == 0'>" +
+        "    		1=0" +
+        "		</if>",
+    	"</script>"
+    })
+	List<User> selectByEmails(@Param("emails") Set<String> emails);
 }

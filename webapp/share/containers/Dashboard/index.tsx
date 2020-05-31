@@ -85,7 +85,6 @@ import {
   makeSelectDownloadList,
   makeSelectShareParams
 } from './selectors'
-import { makeSelectLoginLoading } from '../App/selectors'
 import { decodeMetricName } from 'app/containers/Widget/components/util'
 import {
   GRID_COLS,
@@ -250,25 +249,13 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
   private deep_set(o, path, value) {
     let i = 0
-    const val = decodeURIComponent(value)
     for (; i < path.length - 1; i++) {
-        if (o[path[i]] === undefined) {
-            o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
-        }
-        o = o[decodeURIComponent(path[i])]
+      if (o[path[i]] === undefined) {
+        o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
+      }
+      o = o[decodeURIComponent(path[i])]
     }
-    if (o[decodeURIComponent(path[i])] && o[decodeURIComponent(path[i])].length) {
-        const isInclude =
-            Array.isArray(o[decodeURIComponent(path[i])]) &&
-            o[decodeURIComponent(path[i])].includes(val)
-
-        const isEqual = o[decodeURIComponent(path[i])] === val
-        if (!(isInclude || isEqual)) {
-            o[decodeURIComponent(path[i])] = [val].concat(o[decodeURIComponent(path[i])])
-        }
-    } else {
-        o[decodeURIComponent(path[i])] = val
-    }
+    o[decodeURIComponent(path[i])] = decodeURIComponent(value)
   }
 
   private initPolling = (token) => {
@@ -473,7 +460,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       formedViews,
       linkages,
       downloadList,
-      loginLoading,
       onLoadResultset,
       onLoadBatchDataWithControlValues,
       onResizeDashboardItem,
@@ -601,7 +587,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     loginPanel = showLogin ? (
       <Login
-        loading={loginLoading}
         shareToken={shareToken}
         legitimateUser={this.handleLegitimateUser}
       />
@@ -666,8 +651,7 @@ const mapStateToProps = createStructuredSelector({
   currentItemsInfo: makeSelectItemsInfo(),
   linkages: makeSelectLinkages(),
   downloadList: makeSelectDownloadList(),
-  shareParams: makeSelectShareParams(),
-  loginLoading: makeSelectLoginLoading()
+  shareParams: makeSelectShareParams()
 })
 
 export function mapDispatchToProps(dispatch) {

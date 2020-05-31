@@ -6,18 +6,11 @@ import { ECharts } from 'echarts'
 import chartOptionGenerator from '../../render/chart'
 const styles = require('./Chart.less')
 
-interface IChartStates {
-  seriesItems: string[]
-}
-export class Chart extends React.PureComponent<IChartProps, IChartStates> {
-  private asyncEmitTimer: NodeJS.Timer | null = null
+export class Chart extends React.PureComponent<IChartProps> {
   private container: HTMLDivElement = null
   private instance: ECharts
   constructor(props) {
     super(props)
-    this.state = {
-      seriesItems: []
-    }
   }
   public componentDidMount() {
     this.renderChart(this.props)
@@ -52,11 +45,6 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
     }
 
     try {
-      this.instance.off('click')
-      this.instance.on('click', (params) => {
-        this.collectSelectedItems(params)
-      })
-
       this.instance.setOption(
         chartOptionGenerator(
           chartlibs.find((cl) => cl.id === selectedChart).name,
@@ -65,16 +53,26 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
             instance: this.instance,
             isDrilling,
             getDataDrillDetail,
-            selectedItems: this.props.selectedItems,
-            callback: (seriesData) => {
-              this.instance.off('click')
-              this.instance.on('click', (params) => {
-                this.collectSelectedItems(params, seriesData)
-              })
-            }
+            selectedItems: this.props.selectedItems
           }
         )
       )
+
+      // if (onDoInteract) {
+      //   this.instance.off('click')
+      //   this.instance.on('click', (params) => {
+      //     const isInteractiveChart = onCheckTableInteract()
+      //     if (isInteractiveChart) {
+      //       const triggerData = getTriggeringRecord(params, seriesData)
+      //       onDoInteract(triggerData)
+      //     }
+      //   })
+      // }
+
+      this.instance.off('click')
+      this.instance.on('click', (params) => {
+        this.collectSelectedItems(params)
+      })
       this.instance.resize()
     } catch (error) {
       if (onError) {
@@ -83,32 +81,19 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
     }
   }
 
-  public componentWillUnmount() {
-    if (this.instance) {
-      this.instance.off('click')
-    }
-    if (this.asyncEmitTimer) {
-      clearTimeout(this.asyncEmitTimer)
-    }
-  }
-
-  private collectSelectedItems = (params, seriesData?) => {
+  public collectSelectedItems = (params) => {
     const {
       data,
+      onSelectChartsItems,
       selectedChart,
       onDoInteract,
-      getDataDrillDetail,
-      onSelectChartsItems,
       onCheckTableInteract
     } = this.props
-
-    const { seriesItems } = this.state
-
     let selectedItems = []
-    let series = []
     if (this.props.selectedItems && this.props.selectedItems.length) {
       selectedItems = [...this.props.selectedItems]
     }
+    const { getDataDrillDetail } = this.props
     let dataIndex = params.dataIndex
     if (selectedChart === 4) {
       dataIndex = params.seriesIndex
@@ -129,21 +114,7 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
       }
     }
 
-    if (seriesData) {
-      const { seriesIndex, dataIndex } = params
-      const char = `${seriesIndex}&${dataIndex}`
-      if (seriesItems && Array.isArray(seriesItems)) {
-        series = seriesItems.includes(char)
-          ? seriesItems.filter((item) => item !== char)
-          : seriesItems.concat(char)
-        this.setState({ seriesItems: series })
-      }
-    }
-    const resultData = selectedItems.map((item, index) => {
-      if (seriesData) {
-        const seriesIndex = series[index] ? series[index].split('&')[0] : null
-        return seriesData[seriesIndex] ? seriesData[seriesIndex][item] : []
-      }
+    const resultData = selectedItems.map((item) => {
       return data[item]
     })
     const brushed = [{ 0: Object.values(resultData) }]
@@ -153,7 +124,7 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
       const triggerData = sourceData
       onDoInteract(triggerData)
     }
-    this.asyncEmitTimer = setTimeout(() => {
+    setTimeout(() => {
       if (getDataDrillDetail) {
         getDataDrillDetail(JSON.stringify({ range: null, brushed, sourceData }))
       }

@@ -35,7 +35,6 @@ public class AESUtils {
 
     }
 
-
     private static String garbleSalt(String src) {
         if (StringUtils.isEmpty(src)) {
             return AES_KEY;
@@ -72,7 +71,7 @@ public class AESUtils {
             String originalString = new String(original);
             return originalString;
         } catch (Exception e) {
-            //ignore
+            e.printStackTrace();
         }
         return src;
     }

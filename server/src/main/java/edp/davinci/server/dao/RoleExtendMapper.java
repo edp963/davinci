@@ -138,4 +138,11 @@ public interface RoleExtendMapper extends RoleMapper {
             "where rrp.project_id = #{projectId} and rru.user_id = #{userId}"
     })
     List<Long> getRolesByUserAndProject(@Param("userId") Long userId, @Param("projectId") Long projectId);
+
+    @Select({ 
+            "select r.* from role r", 
+            "left join rel_role_user rru on rru.role_id = r.id",
+            "where r.org_id = #{orgId} and rru.user_id = #{memberId}"
+    })
+    List<Role> selectByOrgIdAndMemberId(@Param("orgId") Long orgId, @Param("memberId") Long memberId);
 }

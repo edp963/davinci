@@ -19,11 +19,8 @@
 
 package edp.davinci.data.pojo;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.data.util.SqlUtils;
 import lombok.Builder;
 import lombok.Data;
 

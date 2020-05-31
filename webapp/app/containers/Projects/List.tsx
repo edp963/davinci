@@ -25,7 +25,8 @@ import React, {
   ReactElement,
   useCallback,
   useRef,
-  useImperativeHandle
+  useImperativeHandle,
+  useLayoutEffect
 } from 'react'
 import * as classnames from 'classnames'
 import { connect } from 'react-redux'
@@ -56,7 +57,6 @@ import { makeSelectOrganizations } from '../Organizations/selectors'
 import { checkNameUniqueAction } from '../App/actions'
 import ComponentPermission from '../Account/components/checkMemberPermission'
 import Star from 'components/StarPanel/Star'
-const StarUserModal = Star.StarUser
 import HistoryStack from '../Organizations/component/historyStack'
 const historyStack = new HistoryStack()
 import { RouteComponentWithParams } from 'utils/types'
@@ -91,9 +91,7 @@ const Toolbar: React.FC<IToolbarProps> = React.memo(
     const checkoutType = useCallback(
       (type) => {
         return () => {
-          if (setPType) {
-            setPType(type)
-          }
+          setPType && setPType(type)
         }
       },
       [pType]
@@ -197,22 +195,6 @@ const Projects: React.FC<
 
     const [searchKeywords, setKeywords] = useState('')
 
-    const [starModalVisble, setStarModalVisble] = useState(false)
-
-    const onCloseStarModal = useCallback(() => {
-      setStarModalVisble(false)
-    }, [starModalVisble])
-
-    const getStarProjectUserList = useCallback(
-      (id) => () => {
-        if (onGetProjectStarUser) {
-          onGetProjectStarUser(id)
-        }
-        setStarModalVisble(true)
-      },
-      [setStarModalVisble, onGetProjectStarUser]
-    )
-
     let proForm: FormComponentProps<IProjectFormFieldProps> = null
 
     useEffect(() => {
@@ -265,16 +247,11 @@ const Projects: React.FC<
 
     const favoritePro = useCallback(
       (proId: number, isFavorite: boolean) => {
-        if (onClickCollectProjects) {
+        onClickCollectProjects &&
           onClickCollectProjects(isFavorite, proId, () => {
-            if (onLoadCollectProjects) {
-              onLoadCollectProjects()
-            }
-            if (onLoadProjects) {
-              onLoadProjects()
-            }
+            onLoadCollectProjects && onLoadCollectProjects()
+            onLoadProjects && onLoadProjects()
           })
-        }
       },
       [formVisible]
     )
@@ -450,6 +427,14 @@ const Projects: React.FC<
                   color: '#FA8C15'
                 })
               }
+
+              // if (favorite) {
+              //   tagType.push({
+              //     text: '收藏',
+              //     color: '#F24724'
+              //   })
+              // }
+
               return tagType
             })(isMimePro, isFavorites)
 
@@ -460,6 +445,23 @@ const Projects: React.FC<
                 }
               })
             }
+
+            const getStarProjectUserList = (id) => () => {
+              if (onGetProjectStarUser) {
+                onGetProjectStarUser(id)
+              }
+            }
+
+            const StarCom = (
+              <Star
+                proId={id}
+                starNum={starNum}
+                isStar={isStar}
+                starUser={starUserList}
+                unStar={starProject}
+                userList={getStarProjectUserList}
+              />
+            )
 
             const toProject = () => {
               history.push(`/project/${id}`)
@@ -554,7 +556,6 @@ const Projects: React.FC<
                 <Popconfirm
                   title="确定删除？"
                   placement="bottom"
-                  onCancel={stopPPG}
                   onConfirm={deleteProject}
                 >
                   <Tooltip title="删除">
@@ -587,10 +588,9 @@ const Projects: React.FC<
               >
                 <ProjectItem
                   title={name}
-                  tags={getTagType}
                   onClick={toProject}
                   description={description}
-                  key={`projectItem${uuid}`}
+                  tags={getTagType}
                   backgroundImg={`url(${require(`assets/images/bg${pic}.png`)})`}
                 >
                   <div className={styles.others}>
@@ -599,15 +599,7 @@ const Projects: React.FC<
                     {!isHistoryType ? Transfer : ''}
                     {!isHistoryType ? Delete : ''}
                   </div>
-                  <div className={styles.stars}>
-                    <Star
-                      proId={id}
-                      starNum={starNum}
-                      isStar={isStar}
-                      unStar={starProject}
-                      userList={getStarProjectUserList}
-                    />
-                  </div>
+                  <div className={styles.stars}>{StarCom}</div>
                 </ProjectItem>
               </Col>
             )
@@ -619,6 +611,7 @@ const Projects: React.FC<
       getProjectsBySearch,
       projectType,
       projects,
+      starUserList,
       onLoadProjects,
       onStarProject,
       onGetProjectStarUser,
@@ -670,11 +663,6 @@ const Projects: React.FC<
             }}
           />
         </Modal>
-        <StarUserModal
-          visible={starModalVisble}
-          starUser={starUserList}
-          closeUserListModal={onCloseStarModal}
-        />
       </div>
     )
   }

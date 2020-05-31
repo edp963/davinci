@@ -198,4 +198,6 @@ public interface RoleService {
     VizPermission getVizPermission(Long roleId, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
     boolean postVizvisibility(Long roleId, VizVisibility vizVisibility, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+
+    List<Role> getMemberRoles(Long orgId, Long memberId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 }
