@@ -119,7 +119,7 @@ public class LoginController {
     public ResponseEntity getOauth2Clients(HttpServletRequest request) {
 
         if (clientRegistrationRepository == null) {
-            return ResponseEntity.ok(new ResultMap().payloads(null));
+            return ResponseEntity.ok(new ResultMap().payloads(new ArrayList(0)));
         }
 
         Iterable<ClientRegistration> clientRegistrations = (Iterable<ClientRegistration>) clientRegistrationRepository;

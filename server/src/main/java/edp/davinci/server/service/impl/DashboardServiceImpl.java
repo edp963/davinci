@@ -792,4 +792,45 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
         return true;
     }
+
+    @Override
+    public boolean updateMemDashboardWidgetAlias(Long relationId, String alias, User user)
+            throws NotFoundException, UnAuthorizedExecption, ServerException {
+        MemDashboardWidget dashboardWidget = memDashboardWidgetExtendMapper.selectByPrimaryKey(relationId);
+
+        if (null == dashboardWidget) {
+            optLogger.warn("MemDashboardWidget({}) is not found", relationId);
+            return true;
+        }
+
+        DashboardWithPortal dashboardWithPortal = dashboardExtendMapper
+                .getDashboardWithPortalAndProject(dashboardWidget.getDashboardId());
+
+        if (null == dashboardWithPortal) {
+            throw new ServerException("Invalid dashboard id");
+        }
+
+        Long projectId = dashboardWithPortal.getProject().getId();
+        Long portalId = dashboardWithPortal.getDashboardPortalId();
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+        if (isDisablePortal(portalId, projectId, user, projectPermission)) {
+            alertUnAuthorized(entity, user, "update widget with");
+        }
+
+        // 校验权限
+        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                || isDisableDashboard(dashboardWidget.getDashboardId(), portalId, user, projectPermission)) {
+            alertUnAuthorized(entity, user, "update widget with");
+        }
+
+        dashboardWidget.setAlias(alias == null ? null : alias.trim());
+        dashboardWidget.setUpdateBy(user.getId());
+        dashboardWidget.setUpdateTime(new Date());
+        if (memDashboardWidgetExtendMapper.update(dashboardWidget) <= 0) {
+            throw new ServerException("Update dashboardWidget fail");
+        }
+
+        optLogger.info("MemDashboardWidget({}) is update by user({})", relationId, user.getId());
+        return true;
+    }
 }

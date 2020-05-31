@@ -22,10 +22,6 @@ import React from 'react'
 import { Icon } from 'antd'
 
 export interface IDownloadCsvProps {
-  id?: number
-  type?: string
-  itemId?: number
-  shareToken: string
   shareLoading?: boolean
   downloadCsvLoading: boolean
   onDownloadCsv: () => void

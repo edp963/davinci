@@ -24,11 +24,12 @@ import { returnType } from 'utils/redux'
 import { IDavinciResponse } from 'utils/request'
 import {
   IViewBase, IView, IExecuteSqlParams, IExecuteSqlResponse, IViewInfo,
-  IDacChannel, IDacTenant, IDacBiz
+  IDacChannel, IDacTenant, IDacBiz, IViewQueryResponse
 } from './types'
-import { IDataRequestParams } from 'containers/Dashboard/types'
+import { IDataRequestBody } from '../Dashboard/types'
 import { RenderType } from 'containers/Widget/components/Widget'
-import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
+import { IDistinctValueReqeustParams, IControlOption } from 'app/components/Control/types'
+import { EExecuteType } from './Editor'
 const CancelToken = axios.CancelToken
 
 export const ViewActions = {
@@ -179,11 +180,21 @@ export const ViewActions = {
     }
   },
 
-  executeSql (params: IExecuteSqlParams) {
+  setIsLastExecuteWholeSql (isLastExecuteWholeSql: boolean) {
+    return {
+      type: ActionTypes.IS_LAST_EXECUTE_WHOLE_SQL,
+      payload: {
+        isLastExecuteWholeSql
+      }
+    }
+  },
+
+  executeSql (params: IExecuteSqlParams, exeType: EExecuteType) {
     return {
       type: ActionTypes.EXECUTE_SQL,
       payload: {
-        params
+        params,
+        exeType
       }
     }
   },
@@ -201,6 +212,12 @@ export const ViewActions = {
       payload: {
         err
       }
+    }
+  },
+  executeSqlCancel () {
+    return {
+      type: ActionTypes.EXECUTE_SQL_CANCEL,
+      payload: {}
     }
   },
 
@@ -308,7 +325,11 @@ export const ViewActions = {
   /** */
 
   /** Actions for external usages */
-  loadSelectOptions (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }, itemId?: number) {
+  loadSelectOptions (
+    controlKey: string,
+    requestParams: { [viewId: string]: IDistinctValueReqeustParams },
+    itemId?: number
+  ) {
     return {
       type: ActionTypes.LOAD_SELECT_OPTIONS,
       payload: {
@@ -319,7 +340,11 @@ export const ViewActions = {
       }
     }
   },
-  selectOptionsLoaded (controlKey: string, values: any[], itemId?: number) {
+  selectOptionsLoaded (
+    controlKey: string,
+    values: IControlOption[],
+    itemId?: number
+  ) {
     return {
       type: ActionTypes.LOAD_SELECT_OPTIONS_SUCCESS,
       payload: {
@@ -340,7 +365,7 @@ export const ViewActions = {
 
   loadViewData (
     id: number,
-    requestParams: IDataRequestParams,
+    requestParams: IDataRequestBody,
     resolve: (data: any[]) => void,
     reject: (error) => void
   ) {
@@ -399,7 +424,7 @@ export const ViewActions = {
     renderType: RenderType,
     itemId: number | [number, number],
     viewId: number,
-    requestParams: IDataRequestParams,
+    requestParams: any,
     vizType: 'dashboard' | 'display',
     statistic
   ) {
@@ -419,8 +444,8 @@ export const ViewActions = {
   viewDataFromVizItemLoaded (
     renderType: RenderType,
     itemId: number | [number, number],
-    requestParams: IDataRequestParams,
-    result: any[],
+    requestParams: any,
+    result: IViewQueryResponse,
     vizType: 'dashboard' | 'display',
     statistic
   ) {

@@ -19,17 +19,18 @@
 
 package edp.davinci.server.dto.source;
 
-import lombok.Data;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-
-import edp.davinci.server.enums.UploadModeEnum;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
+import edp.davinci.server.enums.UploadModeEnum;
+import lombok.Data;
 
 
 @Data
@@ -43,6 +44,8 @@ public class SourceDataUpload {
 
     private String indexKeys;
 
+    @Min(value = (short) 0, message = "Invalid mode")
+    @Max(value = (short) 3, message = "Invalid mode")
     private Short mode = UploadModeEnum.NEW.getMode();
 
     public List<Map<String, String>> getIndexList() {

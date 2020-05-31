@@ -32,6 +32,10 @@ public class MemDashboardWidgetSqlProvider {
             sql.VALUES("id", "#{id,jdbcType=BIGINT}");
         }
         
+        if (record.getAlias() != null) {
+            sql.VALUES("`alias`", "#{alias,jdbcType=VARCHAR}");
+        }
+        
         if (record.getDashboardId() != null) {
             sql.VALUES("dashboard_id", "#{dashboardId,jdbcType=BIGINT}");
         }
@@ -94,6 +98,7 @@ public class MemDashboardWidgetSqlProvider {
         } else {
             sql.SELECT("id");
         }
+        sql.SELECT("`alias`");
         sql.SELECT("dashboard_id");
         sql.SELECT("widget_Id");
         sql.SELECT("x");
@@ -126,6 +131,10 @@ public class MemDashboardWidgetSqlProvider {
         
         if (record.getId() != null) {
             sql.SET("id = #{record.id,jdbcType=BIGINT}");
+        }
+        
+        if (record.getAlias() != null) {
+            sql.SET("`alias` = #{record.alias,jdbcType=VARCHAR}");
         }
         
         if (record.getDashboardId() != null) {
@@ -189,6 +198,7 @@ public class MemDashboardWidgetSqlProvider {
         sql.UPDATE("mem_dashboard_widget");
         
         sql.SET("id = #{record.id,jdbcType=BIGINT}");
+        sql.SET("`alias` = #{record.alias,jdbcType=VARCHAR}");
         sql.SET("dashboard_id = #{record.dashboardId,jdbcType=BIGINT}");
         sql.SET("widget_Id = #{record.widgetId,jdbcType=BIGINT}");
         sql.SET("x = #{record.x,jdbcType=INTEGER}");
@@ -211,6 +221,10 @@ public class MemDashboardWidgetSqlProvider {
     public String updateByPrimaryKeySelective(MemDashboardWidget record) {
         SQL sql = new SQL();
         sql.UPDATE("mem_dashboard_widget");
+        
+        if (record.getAlias() != null) {
+            sql.SET("`alias` = #{alias,jdbcType=VARCHAR}");
+        }
         
         if (record.getDashboardId() != null) {
             sql.SET("dashboard_id = #{dashboardId,jdbcType=BIGINT}");

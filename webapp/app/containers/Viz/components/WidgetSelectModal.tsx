@@ -23,7 +23,7 @@ import React, { useCallback, useState, useMemo, useRef, useEffect } from 'react'
 import { Steps, Modal } from 'antd'
 const { Step } = Steps
 
-import { IWidgetRaw } from 'containers/Widget/types'
+import { IWidgetFormed } from 'containers/Widget/types'
 import WidgetSelector from 'containers/Widget/components/WidgetSelector'
 import PollingConfig, { PollingSetting } from './PollingConfig'
 import { NativeButtonProps } from 'antd/lib/button/button'
@@ -33,8 +33,8 @@ interface IWidgetSelectModalProps {
   visible: boolean
   loading: boolean
   multiple: boolean
-  widgets: IWidgetRaw[]
-  onOk: (widgets: IWidgetRaw[], pollingSetting: PollingSetting) => void
+  widgets: IWidgetFormed[]
+  onOk: (widgets: IWidgetFormed[], pollingSetting: PollingSetting) => void
   onCancel: () => void
 }
 

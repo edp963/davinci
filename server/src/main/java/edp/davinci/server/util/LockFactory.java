@@ -31,21 +31,21 @@ import edp.davinci.server.enums.LockType;
 public class LockFactory {
 	
 	@Autowired
-	private RedisUtils redisUtils;
+	private RedisUtils autowiredRedisUtils;
 
-	private static RedisUtils staticRedisUtils;
+	private static RedisUtils redisUtils;
 	
     @PostConstruct
     public void init() {
-    	staticRedisUtils = redisUtils;
+    	redisUtils = autowiredRedisUtils;
     }
 	
 	public static BaseLock getLock(String key, int timeout, LockType type) {
 		key = "LOCK:" + key;
 		switch (type) {
 		case REDIS:
-			if (staticRedisUtils.isRedisEnable()) {
-				return new BaseLock.RedisLock(staticRedisUtils, key, timeout);
+			if (redisUtils.isRedisEnable()) {
+				return new BaseLock.RedisLock(redisUtils, key, timeout);
 			}
 		default:
 			return new BaseLock.CacheLock(key, timeout);
@@ -54,5 +54,17 @@ public class LockFactory {
 	
 	public static BaseLock getLock(String key, int timeout) {
 		return getLock(key, timeout, LockType.LOCAL);
+	}
+
+	public static boolean ifLockExist(String key, LockType type) {
+		key = "LOCK:" + key;
+		switch (type) {
+		case REDIS:
+			if (redisUtils.isRedisEnable()) {
+				return BaseLock.RedisLock.ifLockExist(key);
+			}
+		default:
+			return BaseLock.CacheLock.ifLockExist(key);
+		}
 	}
 }

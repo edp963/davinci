@@ -23,13 +23,14 @@ import { ActionTypes } from './constants'
 import { ViewActions, ViewActionType } from './actions'
 import omit from 'lodash/omit'
 
-import { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
+import axios, { AxiosRequestConfig, AxiosResponse, AxiosError, CancelTokenSource } from 'axios'
 import request, { IDavinciResponse } from 'utils/request'
 import api from 'utils/api'
 import { errorHandler, getErrorMessage } from 'utils/util'
 
 import { IViewBase, IView, IExecuteSqlResponse, IExecuteSqlParams, IViewVariable } from './types'
-import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
+import { EExecuteType } from './Editor'
 
 export function* getViews (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS) { return }
@@ -143,13 +144,20 @@ export function* copyView (action: ViewActionType) {
   }
 }
 
+let cancelTokenSource = null as CancelTokenSource
 export function* executeSql (action: ViewActionType) {
   if (action.type !== ActionTypes.EXECUTE_SQL) { return }
-  const { params } = action.payload
+  const { sqlExecuted, executeSqlFail, executeSqlCancel, setIsLastExecuteWholeSql } = ViewActions
+  if (cancelTokenSource) {
+    cancelTokenSource.cancel('cancel execute')
+    yield put(executeSqlCancel())
+    return cancelTokenSource = null
+  }
+  cancelTokenSource = axios.CancelToken.source()
+  const { params, exeType } = action.payload
   const { variables, ...rest } = params
   const omitKeys: Array<keyof IViewVariable> = ['key', 'alias', 'fromService']
   const variableParam = variables.map((v) => omit(v, omitKeys))
-  const { sqlExecuted, executeSqlFail } = ViewActions
   try {
     const asyncData: IDavinciResponse<IExecuteSqlResponse> = yield call(request, {
       method: 'post',
@@ -157,15 +165,19 @@ export function* executeSql (action: ViewActionType) {
       data: {
         ...rest,
         variables: variableParam
-      }
+      },
+      cancelToken: cancelTokenSource.token
     })
     yield put(sqlExecuted(asyncData))
+    const isLastExecuteWholeSql = exeType === EExecuteType.whole ? true : false
+    yield put(setIsLastExecuteWholeSql(isLastExecuteWholeSql))
+    cancelTokenSource = null
   } catch (err) {
     const { response } = err as AxiosError
     const { data } = response as AxiosResponse<IDavinciResponse<any>>
     yield put(executeSqlFail(data.header))
+    cancelTokenSource = null
   }
-
 }
 
 /** View sagas for external usages */
@@ -202,7 +214,7 @@ export function* getSelectOptions (action: ViewActionType) {
       const { columns, filters, variables, cache, expired } = params
       return call(request, {
         method: 'post',
-        url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
+        url: `${api.view}/${viewId}/getdistinctvalue`,
         data: {
           columns,
           filters,
@@ -213,15 +225,19 @@ export function* getSelectOptions (action: ViewActionType) {
         cancelToken: cancelTokenSource.token
       })
     })
-    const results = yield all(requests)
-    const values = results.reduce((payloads, r, index) => {
+    const results: Array<IDavinciResponse<object[]>> = yield all(requests)
+    const indistinctOptions = results.reduce((payloads, r, index) => {
       const { columns } = requestParamsMap[index][1]
       if (columns.length === 1) {
         return payloads.concat(r.payload.map((obj) => obj[columns[0]]))
       }
       return payloads
     }, [])
-    yield put(selectOptionsLoaded(controlKey, Array.from(new Set(values)), itemId))
+    const distinctOptions = Array.from(new Set(indistinctOptions)).map((value) => ({
+      text: value,
+      value
+    }))
+    yield put(selectOptionsLoaded(controlKey, distinctOptions, itemId))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
     // errorHandler(err)
@@ -261,7 +277,7 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
   const { viewDataFromVizItemLoaded, loadViewDataFromVizItemFail } = ViewActions
   const {
     filters,
-    tempFilters,
+    tempFilters,  // @TODO combine widget static filters with local filters
     linkageFilters,
     globalFilters,
     variables,
@@ -275,8 +291,8 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
   const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   let searchFilters = filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters)
-  if (drillStatus && drillStatus.filter) {
-    searchFilters = searchFilters.concat( drillStatus.filter.sqls)
+  if (drillStatus && drillStatus.filters) {
+    searchFilters = searchFilters.concat(drillStatus.filters)  // 改成 drillStatus.filters
   }
 
   try {
@@ -293,8 +309,10 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
       },
       cancelToken: cancelTokenSource.token
     })
-    const { resultList } = asyncData.payload
-    asyncData.payload.resultList = (resultList && resultList.slice(0, 600)) || []
+    asyncData.payload = asyncData.payload || {}
+    const { payload } = asyncData
+    payload.resultList = payload.resultList || []
+    payload.resultList = payload.resultList.slice(0, 600)
     yield put(viewDataFromVizItemLoaded(renderType, itemId, requestParams, asyncData.payload, vizType, action.statistic))
   } catch (err) {
     yield put(loadViewDataFromVizItemFail(itemId, vizType, getErrorMessage(err)))

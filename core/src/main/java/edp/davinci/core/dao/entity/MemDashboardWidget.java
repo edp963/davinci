@@ -7,6 +7,8 @@ import lombok.Data;
 public class MemDashboardWidget {
     private Long id;
 
+    private String alias;
+
     private Long dashboardId;
 
     private Long widgetId;

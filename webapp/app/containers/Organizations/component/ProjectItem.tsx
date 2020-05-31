@@ -12,7 +12,7 @@ interface IProjectItemProps {
   pro: IProject,
   toProject: (id: number) => any
   loginUser: any
-  deleteProject: (id: number) => any
+  deleteProject?: (id: number) => any
   starUser: IStarUser[]
   collectProjects: IProject[]
   currentOrganization: IOrganization
@@ -99,7 +99,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
 
     const currentLoginUser = JSON.parse(localStorage.getItem('loginUser'))
 
-    const tags = (<div className={styles.tag}>{pro.createBy.id === loginUser.id ? <Tag size="small" key="small">我创建的</Tag> : ''}</div>)
+    const tags = (<div className={styles.tag}>{pro.createBy.id === loginUser.id ? <Tag key="small">我创建的</Tag> : ''}</div>)
     let CreateButton = void 0
     if (currentOrganization) {
       CreateButton = ComponentPermission(currentOrganization, '')(Icon)

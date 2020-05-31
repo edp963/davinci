@@ -41,7 +41,7 @@ export interface ILayerInfo {
     totalCount?: number
   }
   loading: boolean
-  queryConditions?: IQueryConditions
+  queryConditions?: Partial<IQueryConditions>
   interactId?: string
   rendered?: boolean
   renderType?: RenderType

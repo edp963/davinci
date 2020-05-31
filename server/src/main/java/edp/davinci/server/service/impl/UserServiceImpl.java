@@ -38,6 +38,7 @@ import edp.davinci.server.enums.HttpCodeEnum;
 import edp.davinci.server.enums.LockType;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.enums.MailContentTypeEnum;
+import edp.davinci.server.enums.UserDistinctType;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.LdapPerson;
 import edp.davinci.server.model.MailContent;
@@ -54,6 +55,7 @@ import edp.davinci.server.util.ServerUtils;
 import edp.davinci.server.util.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.mindrot.jbcrypt.BCrypt;
+import org.openqa.selenium.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -69,6 +71,7 @@ import com.jayway.jsonpath.JsonPath;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.regex.Matcher;
 
 
 @Slf4j
@@ -106,6 +109,8 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 	private Environment environment;
     
     private static final CheckEntityEnum entity = CheckEntityEnum.USER;
+
+    private static final Long TOKEN_TIMEOUT_MILLIS = 10 * 60 * 1000L;
 
     /**
      * 用户是否存在
@@ -563,5 +568,121 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         }
         
         return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("You have not permission to view the user's information because you don't have any organizations that join together");
+    }
+
+    @Override
+    public ResultMap getUserProfileFromToken(String token) {
+        String username = tokenUtils.getUsername(Constants.TOKEN_PREFIX + SPACE + token);
+        User user = getByUsername(username);
+        if (null == user) {
+            return new ResultMap().fail(HttpCodeEnum.FORBIDDEN.getCode()).message("ERROR Permission denied");
+        }
+        TokenEntity entity = new TokenEntity(user.getUsername(), user.getPassword());
+        if (!tokenUtils.validateToken(token, entity)) {
+            return new ResultMap().fail(HttpCodeEnum.FORBIDDEN.getCode()).message("ERROR Permission denied");
+        }
+        UserProfile userProfile = new UserProfile();
+        BeanUtils.copyProperties(user, userProfile);
+        List<OrganizationInfo> organizationInfos = organizationExtendMapper.getOrganizationByUser(user.getId());
+        userProfile.setOrganizations(organizationInfos);
+        return new ResultMap().success(tokenUtils.generateToken(entity)).payload(userProfile);
+    }
+
+    @Override
+    public String forgetPassword(UserDistinctType userDistinctType, UserDistinctTicket ticket) {
+        User user = null;
+        switch (userDistinctType) {
+            case EMAIL:
+                String email = ticket.getTicket();
+                if (StringUtils.isEmpty(email)) {
+                    throw new ServerException("Email cannot be empty!");
+                }
+                Matcher matcher = Constants.PATTERN_EMAIL_FORMAT.matcher(email);
+                if (!matcher.find()) {
+                    throw new ServerException("Invalid email format!");
+                }
+                user = userExtendMapper.selectByUsername(email);
+                if (user == null) {
+                    throw new ServerException("The current email is not registered in Davinci");
+                }
+                break;
+            case USERNAME:
+                String username = ticket.getTicket();
+                if (StringUtils.isEmpty(username)) {
+                    throw new ServerException("Username cannot be empty!");
+                }
+                user = userExtendMapper.selectByUsername(username);
+                if (user == null) {
+                    throw new ServerException("The current username is not registered in Davinci");
+                }
+                break;
+            default:
+                throw new NotFoundException("Unknown request uri");
+        }
+
+        String checkCode = TokenUtils.randomPassword();
+        user.setPassword(checkCode);
+        String checkToken = tokenUtils.generateToken(new TokenEntity(user.getUsername(), user.getPassword()), TOKEN_TIMEOUT_MILLIS);
+
+        Map<String, Object> content = new HashMap<>(3);
+        content.put("ticket", ticket.getTicket());
+        content.put("checkCode", checkCode);
+
+        MailContent mailContent = MailContent.MailContentBuilder.builder()
+                .withSubject(Constants.USER_REST_PASSWORD_EMAIL_SUBJECT).withTo(user.getEmail())
+                .withMainContent(MailContentTypeEnum.TEMPLATE).withTemplate(Constants.USER_REST_PASSWORD_EMAIL_TEMPLATE)
+                .withTemplateContent(content).build();
+
+        mailUtils.sendMail(mailContent, null);
+        return StringUtils.compress(checkToken);
+    }
+
+    @Override
+    @Transactional
+    public boolean resetPassword(UserDistinctType userDistinctType, String token, UserDistinctTicket ticket) {
+        User user = null;
+        switch (userDistinctType) {
+            case EMAIL:
+                String email = ticket.getTicket();
+                if (StringUtils.isEmpty(email)) {
+                    throw new ServerException("Email cannot be EMPTY!");
+                }
+                Matcher matcher = Constants.PATTERN_EMAIL_FORMAT.matcher(email);
+                if (!matcher.find()) {
+                    throw new ServerException("Invalid email format!");
+                }
+                user = userExtendMapper.selectByUsername(email);
+                if (user == null) {
+                    throw new ServerException("The current email is not registered in Davinci");
+                }
+                break;
+            case USERNAME:
+                String username = ticket.getTicket();
+                if (StringUtils.isEmpty(username)) {
+                    throw new ServerException("Username cannot be empty!");
+                }
+                user = userExtendMapper.selectByUsername(username);
+                if (user == null) {
+                    throw new ServerException("The current username is not registered in Davinci");
+                }
+                break;
+            default:
+                throw new NotFoundException("Unknown request uri");
+        }
+
+        if (StringUtils.isEmpty(ticket.getCheckCode())) {
+            throw new ServerException("Check code cannot be empty");
+        }
+        if (StringUtils.isEmpty(ticket.getPassword())) {
+            throw new ServerException("Password cannot be empty");
+        }
+
+        String uncompress = StringUtils.uncompress(token);
+        user.setPassword(ticket.getCheckCode());
+        if (!tokenUtils.validateToken(uncompress, new TokenEntity(user.getUsername(), user.getPassword()))) {
+            throw new ServerException("Invalid check code, check code is wrong or expired");
+        }
+        user.setPassword(BCrypt.hashpw(ticket.getPassword(), BCrypt.gensalt()));
+        return userExtendMapper.changePassword(user) > 0;
     }
 }

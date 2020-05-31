@@ -30,16 +30,15 @@ export class ShareForm extends React.PureComponent<IShareFormProps, {}> {
 
     let linkValue = ''
 
-    // @FIXME 0.3 maintain `shareInfo` in links for legacy integration
     switch (type) {
       case 'dashboard':
-        linkValue = `${shareHost}#share/dashboard?shareInfo=${encodeURI(shareToken)}&type=dashboard`
+        linkValue = `${shareHost}?shareToken=${encodeURI(shareToken)}&type=dashboard#share/dashboard`
         break
       case 'widget':
-        linkValue = `${shareHost}#share/dashboard?shareInfo=${encodeURI(shareToken)}&type=widget`
+        linkValue = `${shareHost}?shareToken=${encodeURI(shareToken)}&type=widget#share/dashboard`
         break
       case 'display':
-        linkValue = `${shareHost}#share/display?shareInfo=${encodeURI(shareToken)}`
+        linkValue = `${shareHost}?shareToken=${encodeURI(shareToken)}#share/display`
         break
       default:
         break

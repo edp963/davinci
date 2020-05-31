@@ -83,17 +83,29 @@ public abstract class BaseLock implements AutoCloseable {
 		public void close() throws Exception {
 			release();
 		}
+
+		public static boolean ifLockExist(String key) {
+			if (!LOCKS.containsKey(key) || !TTLS.containsKey(key)) {
+				return false;
+			}
+
+			if (TTLS.get(key) < System.currentTimeMillis()) {
+				return false;
+			}
+
+			return true;
+		}
 	}
 
 	public static class RedisLock extends BaseLock {
 
 		private long currentTime;
 
-		RedisUtils redisUtils;
+		static RedisUtils redisUtils;
 
 		public RedisLock(RedisUtils redisUtils, String key, int timeout) {
 			super(key, timeout);
-			this.redisUtils = redisUtils;
+			RedisLock.redisUtils = redisUtils;
 		}
 
 		@Override
@@ -131,6 +143,9 @@ public abstract class BaseLock implements AutoCloseable {
 			release();
 		}
 
+		public static boolean ifLockExist(String key) {
+			return redisUtils.get(key) != null;
+		} 
 	}
 
 	protected final String key;

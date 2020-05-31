@@ -60,9 +60,6 @@ import lombok.Getter;
 @Component
 public class DataUtils {
 
-    // @Getter
-    // private DatabaseTypeEnum databaseTypeEnum;
-
 	public static void execute(Source source, String sql, User user) throws ServerException {
 		DataProviderFactory.getProvider(source.getType()).execute(source, sql, user);
 	}
@@ -105,8 +102,11 @@ public class DataUtils {
 				
 				if (j == 0) {
 					columns.add(new QueryColumn(headerName, header.getType()));
-				}
-				rowMap.put(headerName, row.get(i));
+                }
+                
+                Object value = row.get(i);
+                value = value instanceof byte[] ? new String((byte[]) value) : value;
+				rowMap.put(headerName, value);
 			}
     		
     		resultList.add(rowMap);

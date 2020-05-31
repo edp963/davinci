@@ -1,0 +1,215 @@
+@import '~assets/less/variable';
+
+.fullScreen{
+  position: fixed;
+  height: 100%;
+  overflow: auto;
+  outline: 0;
+  z-index:1000;
+  top:0;
+  left:0;
+  right:0;
+  bottom: 0;
+  background-color: white;
+  .container{
+    height:100%;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    .header {
+      height: 64px;
+      flex: 0 0 64px;
+      background-color: @body-background;
+      box-shadow: @header-box-shadow;
+      z-index: 3;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      .logo {
+        margin-left: 24px;
+        i{
+          font-size: 16px;
+          cursor: pointer;
+        }
+        span{
+          font-size: 24px;
+          font-weight: 500;
+          color: rgba(0,0,0,.74);
+        }
+      }
+      .tools {
+        margin-right: 24px;
+        display: flex;
+        flex-direction: row;
+        li {
+          padding: 0 10px;
+          cursor: pointer;
+          i {
+            font-size: 14px;
+          }
+          span{
+            margin-left: 12px;
+            font-size: 14px;
+            font-weight: 400px;
+          }
+        }
+      }
+    }
+    .body{
+      flex:1;
+      position: relative;
+      min-height: 0;
+      .sideMenu{
+        .mixinPanel(230px);
+        position: absolute;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+        ul{
+          overflow-x: hidden;
+          margin-top: 20px;
+          margin-bottom: 20px;
+          border: none;
+          li {
+            &:global(.ant-menu-item) {
+              font-weight: 500;
+            }
+          }
+
+          &:global(.ant-menu) {
+            background: none;
+          }
+        }
+
+        &:after {
+          .mixinPanelAfter(230px);
+          position: absolute;
+        }   
+      }
+      .controlPanel {
+        .mixinPanel(360px);
+        position: fixed;
+        box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+        right: 0;
+        display: flex;
+        flex-direction: column;
+        .controlHeader {
+          margin-top: 64px;
+          padding: 16px 24px;
+          color: rgba(0,0,0, .65);
+          background: @white;
+          border-bottom: 1px solid #e8e8e8;
+          flex-shrink: 0;
+          .headerTitle {
+            display:flex;
+            justify-content: space-around;
+            margin: 0;
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 22px;
+            .ctrl {
+              flex: 1;
+              text-align: center;
+              cursor: pointer;
+            }
+          }
+        } 
+        .controlBody {
+          flex: 1;
+          overflow-y: auto;
+          padding: 16px 16px;
+          &:global(form .ant-select) {
+            width: 300px !important;
+          }
+        } 
+        .controlFooter {
+          flex-shrink: 0;
+          width: 100%;
+          border-top: 1px solid rgb(232, 232, 232);
+          padding: 10px 16px;
+          text-align: right;
+          border-radius: 0px 0px 4px 4px;
+          .footer {
+            button {
+              margin-left: 12px;
+            }
+          }
+        } 
+        &:after {
+          .mixinPanelAfter(360px);
+          position: fixed;
+          right:0;
+        }
+      }
+      .controlShow {
+        right: 0;
+      }
+      .controlHide {
+        transform: translateX(100%);
+        box-shadow: none;
+      }
+     
+      .chartWrapper{
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        width: 100%;
+        height: 100%;
+        padding: 32px 24px 24px 24px;
+        transition: all .3s;
+      }
+      .marginLeftDefault{
+        padding-left: 0px;
+      }
+      .marginLeftMenu{
+        padding-left: calc(~'240px - 15%');
+      }
+      .hide{
+        left:-230px;
+        box-shadow: none;
+      }
+      .show{
+        left:0px;
+      }
+    }
+  }
+}
+.displayNone{
+  display: none;
+}
+.displayBlock{
+  display: block;
+}
+.showModalPanel{
+  top:0;
+}
+.hideModalPanel{
+  top:-100px;
+}
+
+.mixinPanel(@width) {
+  width: @width;
+  height: 100%;
+  max-height:100%;
+  z-index: 1;
+  top:0;
+  overflow-y: auto;
+  transition: all .3s;
+}
+.mixinPanelAfter(@width) {
+  content: '';
+  width: @width;
+  height: 100%;
+  max-height: 100%;
+  z-index: -1;
+  top: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  filter: blur(2px)
+}
+.unSelectControlTitleStyle {
+  color: rgba(0,0,0,0.25);
+}
+.selectControlTitleStyle {
+  color: rgba(0,0,0,.85);
+}
+
+

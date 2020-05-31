@@ -29,6 +29,7 @@ import edp.davinci.server.dto.dashboard.*;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.DashboardService;
+import edp.davinci.server.util.ExcelUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -377,6 +378,9 @@ public class DashboardController extends BaseController {
         }
 
         for (MemDashboardWidgetCreate memDashboardWidgetCreate : memDashboardWidgetCreates) {
+            
+            ExcelUtils.checkSheetName("Alias", memDashboardWidgetCreate.getAlias());
+            
             if (invalidId(dashboardId) || !dashboardId.equals(memDashboardWidgetCreate.getDashboardId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -414,6 +418,9 @@ public class DashboardController extends BaseController {
         }
 
         for (MemDashboardWidget memDashboardWidget : memDashboardWidgets) {
+
+            ExcelUtils.checkSheetName("Alias", memDashboardWidget.getAlias());
+
             if (invalidId(memDashboardWidget.getId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);

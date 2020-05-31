@@ -50,4 +50,6 @@ public class MemDashboardWidgetCreate {
     private String config;
 
     private List<Long> roleIds;
+
+    private String alias;
 }

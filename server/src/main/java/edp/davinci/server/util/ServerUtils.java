@@ -28,9 +28,12 @@ import org.springframework.stereotype.Component;
 import static edp.davinci.commons.Constants.*;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 @Component
 public class ServerUtils {
+    
     @Value("${server.protocol:http}")
     private String protocol;
 
@@ -82,7 +85,14 @@ public class ServerUtils {
     }
 
     public String getLocalHost() {
-        return protocol + Constants.PROTOCOL_SEPARATOR + "localhost:" + port;
+        String hostName = "localhost";
+        try {
+            InetAddress ia = InetAddress.getLocalHost();
+            hostName = ia.getHostName();
+        } catch (UnknownHostException ex) {
+            hostName = "localhost";
+        }
+        return protocol + Constants.PROTOCOL_SEPARATOR + hostName + ":" + port;
     }
 
     public String getBasePath() {

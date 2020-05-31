@@ -52,11 +52,13 @@ public interface ViewService extends CheckEntityService {
 
     PagingWithQueryColumns execute(ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    Paging<Map<String, Object>> getData(Long id, WidgetQueryParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    Paging<Map<String, Object>> getData(Long id, WidgetQueryParam queryParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    PagingWithQueryColumns getDataWithQueryColumns(Long id, WidgetQueryParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    PagingWithQueryColumns getDataWithQueryColumns(Long id, WidgetQueryParam queryParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     PagingWithQueryColumns getDataWithQueryColumns(boolean isMaintainer, ViewWithSource viewWithSource, WidgetQueryParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     List<Map<String, Object>> getDistinctValue(Long id, WidgetDistinctParam param, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+
+    String showSql(Long id, WidgetQueryParam queryParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

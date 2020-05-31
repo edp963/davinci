@@ -22,6 +22,7 @@ package edp.davinci.server.dao;
 import edp.davinci.core.dao.RelUserOrganizationMapper;
 import edp.davinci.core.dao.entity.RelUserOrganization;
 import edp.davinci.server.dto.organization.OrganizationMember;
+import edp.davinci.server.dto.user.UserBaseInfo;
 
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
@@ -52,6 +53,24 @@ public interface RelUserOrganizationExtendMapper extends RelUserOrganizationMapp
             "where ruo.org_id = #{orgId}"
     })
     List<OrganizationMember> getOrgMembers(@Param("orgId") Long orgId);
+
+    @Select({
+        "<script>",
+        "select distinct u.id, if(u.`name` is null, u.`username`, u.`name`) as username, u.`email`, u.`avatar`" +
+        "       from `user` u left join rel_user_organization ruo on u.id = ruo.user_id" +
+        "       where ruo.org_id = #{orgId}" +
+        "       <if test='ids != null and ids.size > 0'>" +
+        "       and u.id in" +
+        "       <foreach collection='ids' index='index' item='item' open='(' close=')' separator=','>" +
+        "       #{item}" +
+        "       </foreach>" +
+        "       </if>" +
+        "       <if test='ids == null or ids.size == 0'>" +
+        "       and 1=0" +
+        "       </if>",
+        "</script>"
+        })
+    Set<UserBaseInfo> selectOrgMembers(@Param("orgId") Long orgId, @Param("ids") Set<Long> ids);
 
     @Select({"select * from rel_user_organization where id = #{id}"})
     RelUserOrganization getById(@Param("id") Long id);

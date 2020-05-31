@@ -73,29 +73,23 @@ public class RedisUtils {
 	}
 
 	public void convertAndSend(String channel, Object message) {
-
 		if (!isRedisEnable) {
 			throw new RuntimeException("Redis is disabled");
 		}
-		
 		redisTemplate.convertAndSend(channel, message);
 	}
 
 	public boolean setIfAbsent(String key, Object value, int timeout) {
-
 		if (!isRedisEnable) {
 			throw new RuntimeException("Redis is disabled");
 		}
-
 		return redisTemplate.opsForValue().setIfAbsent(key, value, timeout, TimeUnit.SECONDS);
 	}
 
 	public boolean setIfAbsent(String key, Object value) {
-
 		if (!isRedisEnable) {
 			throw new RuntimeException("Redis is disabled");
 		}
-
 		return redisTemplate.opsForValue().setIfAbsent(key, value);
 	}
 

@@ -20,6 +20,7 @@
 package edp.davinci.server.service;
 
 import edp.davinci.server.dto.project.ProjectDetail;
+import edp.davinci.server.dto.view.ViewExecuteParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;
@@ -47,7 +48,7 @@ public interface WidgetService extends CheckEntityService {
 
     Widget getWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    String generationFile(Long id, WidgetQueryParam executeParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption;
+    String generationFile(Long id, WidgetQueryParam queryParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption;
 
-    File writeExcel(Set<Widget> widgets, ProjectDetail projectDetail, Map<Long, WidgetQueryParam> executeParamMap, String filePath, User user, boolean containType) throws Exception;
+    File writeExcel(Set<Widget> widgets, ProjectDetail projectDetail, Map<Long, WidgetQueryParam> queryParamMap, String filePath, User user, boolean containType) throws Exception;
 }

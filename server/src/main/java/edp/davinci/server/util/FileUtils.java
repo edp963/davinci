@@ -19,21 +19,20 @@
 
 package edp.davinci.server.util;
 
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.component.excel.MsgWrapper;
-import edp.davinci.server.enums.ActionEnum;
-import edp.davinci.server.enums.FileTypeEnum;
+import static edp.davinci.commons.Constants.EMPTY;
+import static edp.davinci.commons.Constants.UNDERLINE;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.servlet.http.HttpServletResponse;
-
-import static edp.davinci.commons.Constants.*;
-
-import java.io.*;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -41,10 +40,27 @@ import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.component.excel.MsgWrapper;
+import edp.davinci.server.enums.ActionEnum;
+import edp.davinci.server.enums.FileTypeEnum;
+import edp.davinci.server.enums.LogNameEnum;
+
 
 @Component
 public class FileUtils {
 
+    private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
     @Value("${file.userfiles-path}")
     public String fileBasePath;
@@ -230,6 +246,70 @@ public class FileUtils {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+    }
+
+    /**
+     * 图片压缩，图片比例按原比例输出 
+     * tips: 压缩后的图片会替换原有的图片
+     * @param filepath
+     */
+    public static File compressedImage(String filepath) {
+        try {
+            File file = new File(filepath);
+            BufferedImage img_dest = null;
+
+            // 开始读取文件并进行压缩
+            BufferedImage img_src = ImageIO.read(file);
+            int width = img_src.getWidth();
+            int height = img_src.getHeight();
+            long imageLength = file.length();
+
+            // 如果首次压缩图片还大于2M，则继续压缩
+            while (imageLength > (2 * 1024 * 1024)) {
+                // 压缩模式设置
+                img_dest = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+                img_dest.getGraphics().drawImage(img_src.getScaledInstance(width, height, Image.SCALE_SMOOTH), 0, 0, null);
+
+                // 缩小
+                ImageIO.write(img_dest, "jpg", file);
+
+                // 计算图片压缩率
+                float rate = calcCompressedRate(imageLength, file.length());
+                // 如果压缩率小于10%，则不再进行压缩
+                if (rate < 10) {
+                    scheduleLogger.warn("Forced interruption, compression rate is less than {}%", rate);
+                    break;
+                }
+
+                imageLength = file.length();
+                scheduleLogger.warn("File size after compression {}, Compress again", imageLength);
+            }
+
+            imageLength = file.length();
+            scheduleLogger.warn("Final compressed file size {}", imageLength);
+
+            return new File(filepath);
+        
+        } catch (Exception e) {
+            scheduleLogger.error("Image compression failed", e);
+        }
+        
+        return null;
+    }
+
+    /**
+     * 计算图片压缩率
+     * 
+     * @param originLength
+     * @param compressedLength
+     * @return
+     */
+    public static float calcCompressedRate(long originLength, long compressedLength) {
+        DecimalFormat df = new DecimalFormat("0.000");
+        String rate = df.format((float)compressedLength  / originLength);
+        float result=  Float.valueOf(rate) * 100;
+        scheduleLogger.info("Compression {}/{}={}%",compressedLength,originLength,result);
+        return result;
     }
 
     public String getFilePath(FileTypeEnum type, MsgWrapper msgWrapper) {

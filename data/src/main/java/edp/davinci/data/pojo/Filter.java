@@ -1,13 +1,8 @@
 package edp.davinci.data.pojo;
 
-import static edp.davinci.commons.Constants.*;
-
-import edp.davinci.data.enums.SqlOperatorEnum;
-import lombok.Data;
-import org.apache.commons.lang.StringUtils;
-
 import java.util.List;
-import java.util.regex.Pattern;
+
+import lombok.Data;
 
 @Data
 public class Filter {

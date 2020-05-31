@@ -19,9 +19,11 @@
 
 package edp.davinci.server;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -34,6 +36,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @ComponentScan(value="edp.davinci.*")
 public class DavinciServerApplication {
+
+	@Value("${jwtToken.secret:Pa@ss@Word}")
+    private String tokenSecret;
+
+    @Bean
+    public String TOKEN_SECRET() {
+        return tokenSecret;
+    }
 
 	public static void main(String[] args) {
 		System.out.println("DAVINCI_HOME:" + System.getenv("DAVINCI_HOME"));

@@ -36,7 +36,8 @@ public interface MemDashboardWidgetExtendMapper extends MemDashboardWidgetMapper
 
     @Update({
             "update mem_dashboard_widget",
-            "set dashboard_id = #{dashboardId,jdbcType=BIGINT},",
+            "set alias = #{alias,jdbcType=VARCHAR},",
+            "dashboard_id = #{dashboardId,jdbcType=BIGINT},",
             "widget_Id = #{widgetId,jdbcType=BIGINT},",
             "x = #{x,jdbcType=INTEGER},",
             "y = #{y,jdbcType=INTEGER},",

@@ -25,6 +25,7 @@ import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.annotation.AuthIgnore;
 import edp.davinci.server.annotation.AuthShare;
 import edp.davinci.server.commons.Constants;
+import edp.davinci.server.commons.ErrorMsg;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.enums.HttpCodeEnum;
 import edp.davinci.server.model.TokenEntity;
@@ -86,7 +87,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
                 log.info("Unknown token: {}", request.getServletPath());
             }
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("The resource requires authentication, which was not supplied with the request");
+            response.getWriter().print(ErrorMsg.ERR_AUTHENTICATION);
             return false;
         }
         String username = tokenUtils.getUsername(token);
@@ -94,7 +95,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         if (null == user) {
             log.error("Token user not found {}", request.getServletPath());
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("Error permission denied");
+            response.getWriter().print(ErrorMsg.ERR_PERMISSION);
             return false;
         }
 

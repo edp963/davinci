@@ -32,18 +32,20 @@ public interface MemDashboardWidgetMapper {
     int deleteByPrimaryKey(Long id);
 
     @Insert({
-        "insert into mem_dashboard_widget (id, dashboard_id, ",
-        "widget_Id, x, y, ",
-        "width, height, polling, ",
-        "frequency, config, ",
-        "create_by, create_time, ",
-        "update_by, update_time)",
-        "values (#{id,jdbcType=BIGINT}, #{dashboardId,jdbcType=BIGINT}, ",
-        "#{widgetId,jdbcType=BIGINT}, #{x,jdbcType=INTEGER}, #{y,jdbcType=INTEGER}, ",
-        "#{width,jdbcType=INTEGER}, #{height,jdbcType=INTEGER}, #{polling,jdbcType=BIT}, ",
-        "#{frequency,jdbcType=INTEGER}, #{config,jdbcType=VARCHAR}, ",
-        "#{createBy,jdbcType=BIGINT}, #{createTime,jdbcType=TIMESTAMP}, ",
-        "#{updateBy,jdbcType=BIGINT}, #{updateTime,jdbcType=TIMESTAMP})"
+        "insert into mem_dashboard_widget (id, `alias`, ",
+        "dashboard_id, widget_Id, ",
+        "x, y, width, ",
+        "height, polling, frequency, ",
+        "config, create_by, ",
+        "create_time, update_by, ",
+        "update_time)",
+        "values (#{id,jdbcType=BIGINT}, #{alias,jdbcType=VARCHAR}, ",
+        "#{dashboardId,jdbcType=BIGINT}, #{widgetId,jdbcType=BIGINT}, ",
+        "#{x,jdbcType=INTEGER}, #{y,jdbcType=INTEGER}, #{width,jdbcType=INTEGER}, ",
+        "#{height,jdbcType=INTEGER}, #{polling,jdbcType=BIT}, #{frequency,jdbcType=INTEGER}, ",
+        "#{config,jdbcType=VARCHAR}, #{createBy,jdbcType=BIGINT}, ",
+        "#{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=BIGINT}, ",
+        "#{updateTime,jdbcType=TIMESTAMP})"
     })
     int insert(MemDashboardWidget record);
 
@@ -53,6 +55,7 @@ public interface MemDashboardWidgetMapper {
     @SelectProvider(type=MemDashboardWidgetSqlProvider.class, method="selectByExample")
     @Results({
         @Result(column="id", property="id", jdbcType=JdbcType.BIGINT, id=true),
+        @Result(column="alias", property="alias", jdbcType=JdbcType.VARCHAR),
         @Result(column="dashboard_id", property="dashboardId", jdbcType=JdbcType.BIGINT),
         @Result(column="widget_Id", property="widgetId", jdbcType=JdbcType.BIGINT),
         @Result(column="x", property="x", jdbcType=JdbcType.INTEGER),
@@ -71,13 +74,14 @@ public interface MemDashboardWidgetMapper {
 
     @Select({
         "select",
-        "id, dashboard_id, widget_Id, x, y, width, height, polling, frequency, config, ",
-        "create_by, create_time, update_by, update_time",
+        "id, `alias`, dashboard_id, widget_Id, x, y, width, height, polling, frequency, ",
+        "config, create_by, create_time, update_by, update_time",
         "from mem_dashboard_widget",
         "where id = #{id,jdbcType=BIGINT}"
     })
     @Results({
         @Result(column="id", property="id", jdbcType=JdbcType.BIGINT, id=true),
+        @Result(column="alias", property="alias", jdbcType=JdbcType.VARCHAR),
         @Result(column="dashboard_id", property="dashboardId", jdbcType=JdbcType.BIGINT),
         @Result(column="widget_Id", property="widgetId", jdbcType=JdbcType.BIGINT),
         @Result(column="x", property="x", jdbcType=JdbcType.INTEGER),
@@ -105,7 +109,8 @@ public interface MemDashboardWidgetMapper {
 
     @Update({
         "update mem_dashboard_widget",
-        "set dashboard_id = #{dashboardId,jdbcType=BIGINT},",
+        "set `alias` = #{alias,jdbcType=VARCHAR},",
+          "dashboard_id = #{dashboardId,jdbcType=BIGINT},",
           "widget_Id = #{widgetId,jdbcType=BIGINT},",
           "x = #{x,jdbcType=INTEGER},",
           "y = #{y,jdbcType=INTEGER},",

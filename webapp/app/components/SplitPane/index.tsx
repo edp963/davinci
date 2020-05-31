@@ -25,7 +25,7 @@ import { ResizableProps } from 'libs/react-resizable'
 import ResizeHandle from './ResizeHandle'
 import './SplitPane.less'
 
-interface ISplitPaneProps {
+export interface ISplitPaneProps {
   className?: string
   type: 'horizontal' | 'vertical'
   invert?: boolean

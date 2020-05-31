@@ -255,8 +255,8 @@ class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalProps, IHe
     })
   }
 
-  private saveEditingHeaderName = (e) => {
-    const value = e.target.value
+  private saveEditingHeaderName = () => {
+    const value = this.headerNameInput.current.input.value
     if (!value) {
       message.warning('请输入和并列名称')
       return
@@ -295,12 +295,21 @@ class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalProps, IHe
       }
       const { headerName: currentEditingHeaderName } = currentEditingConfig
       return (
-        <Input
-          ref={this.headerNameInput}
-          className={styles.tableInput}
-          defaultValue={currentEditingHeaderName}
-          onPressEnter={this.saveEditingHeaderName}
-        />
+        <>
+          <Input
+            ref={this.headerNameInput}
+            size="small"
+            className={styles.tableInput}
+            defaultValue={currentEditingHeaderName}
+          />
+          <Button
+            type="primary"
+            size="small"
+            onClick={this.saveEditingHeaderName}
+          >
+            确定
+          </Button>
+        </>
       )
     }
   }, {

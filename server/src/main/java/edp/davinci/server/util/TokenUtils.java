@@ -19,22 +19,30 @@
 
 package edp.davinci.server.util;
 
+import static edp.davinci.commons.Constants.EMPTY;
+import static edp.davinci.server.commons.Constants.TOKEN_CREATE_TIME;
+import static edp.davinci.server.commons.Constants.TOKEN_PREFIX;
+import static edp.davinci.server.commons.Constants.TOKEN_USER_NAME;
+import static edp.davinci.server.commons.Constants.TOKEN_USER_PASSWORD;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.model.TokenEntity;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import static edp.davinci.server.commons.Constants.*;
-import static edp.davinci.commons.Constants.EMPTY;
-
-import java.io.UnsupportedEncodingException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 
 @Slf4j
@@ -44,8 +52,8 @@ public class TokenUtils {
     /**
      * 自定义token私钥
      */
-    @Value("${jwtToken.secret:Pa@ss@Word}")
-    private String SECRET;
+    @Autowired
+    private String TOKEN_SECRET;
 
     /**
      * 默认token超时时间
@@ -59,18 +67,33 @@ public class TokenUtils {
     @Value("${jwtToken.algorithm:HS512}")
     private String ALGORITHM;
 
+    private static final int PASSWORD_LEN = 8;
+
+    private static final char[] PASSWORD_SEEDS = {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
+            'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+    };
+
+
+    public static String randomPassword() {
+        IntStream intStream = new Random().ints(0, PASSWORD_SEEDS.length);
+        return intStream.limit(PASSWORD_LEN).mapToObj(i -> PASSWORD_SEEDS[i]).map(String::valueOf)
+                .collect(Collectors.joining());
+    }
+
     /**
      * 根据TokenEntity实体生成Token
      *
-     * @param tokenDetail
+     * @param tokenEntity
      * @return
      */
-    public String generateToken(TokenEntity tokenDetail) {
+    public String generateToken(TokenEntity tokenEntity) {
         Map<String, Object> claims = new HashMap<String, Object>();
-        claims.put(TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
-        claims.put(TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
+        claims.put(TOKEN_USER_NAME, StringUtils.isEmpty(tokenEntity.getUsername()) ? EMPTY : tokenEntity.getUsername());
+        claims.put(TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenEntity.getPassword()) ? EMPTY : tokenEntity.getPassword());
         claims.put(TOKEN_CREATE_TIME, System.currentTimeMillis());
-        return generate(claims);
+        return toTokenString(claims, TIMEOUT);
     }
 
     /**
@@ -82,45 +105,23 @@ public class TokenUtils {
     public String refreshToken(String token) {
         Claims claims = getClaims(token);
         claims.put(TOKEN_CREATE_TIME, System.currentTimeMillis());
-        return generate(claims);
+        return toTokenString(claims, TIMEOUT);
     }
 
 
     /**
      * 根据TokenEntity实体和自定义超时时长生成Token
      *
-     * @param tokenDetail
+     * @param tokenEntity
      * @param timeOutMillis （毫秒）
      * @return
      */
-    public String generateToken(TokenEntity tokenDetail, Long timeOutMillis) {
+    public String generateToken(TokenEntity tokenEntity, Long timeOutMillis) {
         Map<String, Object> claims = new HashMap<String, Object>();
-        claims.put(TOKEN_USER_NAME, StringUtils.isEmpty(tokenDetail.getUsername()) ? EMPTY : tokenDetail.getUsername());
-        claims.put(TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenDetail.getPassword()) ? EMPTY : tokenDetail.getPassword());
+        claims.put(TOKEN_USER_NAME, StringUtils.isEmpty(tokenEntity.getUsername()) ? EMPTY : tokenEntity.getUsername());
+        claims.put(TOKEN_USER_PASSWORD, StringUtils.isEmpty(tokenEntity.getPassword()) ? EMPTY : tokenEntity.getPassword());
         claims.put(TOKEN_CREATE_TIME, System.currentTimeMillis());
-
-        Long expiration = Long.parseLong(claims.get(TOKEN_CREATE_TIME) + EMPTY) + timeOutMillis;
-
-        try {
-            return Jwts.builder()
-                    .setClaims(claims)
-                    .setSubject(claims.get(TOKEN_USER_NAME).toString())
-                    .setExpiration(new Date(expiration))
-                    .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
-                            SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET.getBytes("UTF-8"))
-                    .compact();
-        } catch (UnsupportedEncodingException e) {
-            log.warn(e.getMessage(), e);
-            return Jwts.builder()
-                    .setClaims(claims)
-                    .setSubject(claims.get(TOKEN_USER_NAME).toString())
-                    .setExpiration(new Date(expiration))
-                    .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
-                            SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET)
-                    .compact();
-        }
+        return toTokenString(claims, timeOutMillis);
     }
 
     /**
@@ -140,7 +141,7 @@ public class TokenUtils {
                     .setSubject(claims.get(TOKEN_USER_NAME).toString())
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET.getBytes("UTF-8"))
+                            SignatureAlgorithm.HS512, TOKEN_SECRET.getBytes("UTF-8"))
                     .compact();
         } catch (UnsupportedEncodingException e) {
             log.warn(e.getMessage(), e);
@@ -149,7 +150,7 @@ public class TokenUtils {
                     .setSubject(claims.get(TOKEN_USER_NAME).toString())
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET)
+                            SignatureAlgorithm.HS512, TOKEN_SECRET)
                     .compact();
         }
     }
@@ -158,10 +159,13 @@ public class TokenUtils {
      * 根据clams生成token
      *
      * @param claims
+     * @param timeOutMillis
+     * 
      * @return
      */
-    private String generate(Map<String, Object> claims) {
-        Long expiration = Long.parseLong(claims.get(TOKEN_CREATE_TIME) + EMPTY) + TIMEOUT;
+    private String toTokenString(Map<String, Object> claims, Long timeOutMillis) {
+        Long expiration = Long.parseLong(claims.get(TOKEN_CREATE_TIME) + EMPTY) + timeOutMillis;
+
         try {
             return Jwts.builder()
                     .setClaims(claims)
@@ -169,7 +173,7 @@ public class TokenUtils {
                     .setExpiration(new Date(expiration))
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET.getBytes("UTF-8"))
+                            SignatureAlgorithm.HS512, TOKEN_SECRET.getBytes("UTF-8"))
                     .compact();
         } catch (UnsupportedEncodingException ex) {
             log.warn(ex.getMessage());
@@ -179,7 +183,7 @@ public class TokenUtils {
                     .setExpiration(new Date(expiration))
                     .signWith(null != SignatureAlgorithm.valueOf(ALGORITHM) ?
                             SignatureAlgorithm.valueOf(ALGORITHM) :
-                            SignatureAlgorithm.HS512, SECRET)
+                            SignatureAlgorithm.HS512, TOKEN_SECRET)
                     .compact();
         }
     }
@@ -228,7 +232,7 @@ public class TokenUtils {
         Claims claims;
         try {
             claims = Jwts.parser()
-                    .setSigningKey(SECRET.getBytes("UTF-8"))
+                    .setSigningKey(TOKEN_SECRET.getBytes("UTF-8"))
                     .parseClaimsJws(token.startsWith(TOKEN_PREFIX) ?
                             token.substring(token.indexOf(TOKEN_PREFIX) + TOKEN_PREFIX.length()).trim() :
                             token.trim())
@@ -236,7 +240,7 @@ public class TokenUtils {
         } catch (Exception e) {
             log.debug(e.getMessage(), e);
             claims = Jwts.parser()
-                    .setSigningKey(SECRET)
+                    .setSigningKey(TOKEN_SECRET)
                     .parseClaimsJws(token.startsWith(TOKEN_PREFIX) ?
                             token.substring(token.indexOf(TOKEN_PREFIX) + TOKEN_PREFIX.length()).trim() :
                             token.trim())
@@ -249,13 +253,13 @@ public class TokenUtils {
      * 根据TokenEntity验证token
      *
      * @param token
-     * @param tokenDetail
+     * @param tokenEntity
      * @return
      */
-    public Boolean validateToken(String token, TokenEntity tokenDetail) {
+    public boolean validateToken(String token, TokenEntity tokenEntity) {
         String username = getUsername(token);
         String password = getPassword(token);
-        return (username.equals(tokenDetail.getUsername()) && password.equals(tokenDetail.getPassword()) && !(isExpired(token)));
+        return (username.equals(tokenEntity.getUsername()) && password.equals(tokenEntity.getPassword()) && !(isExpired(token)));
     }
 
     /**
@@ -266,27 +270,10 @@ public class TokenUtils {
      * @param password
      * @return
      */
-    public Boolean validateToken(String token, String username, String password) {
+    public boolean validateToken(String token, String username, String password) {
         String tokenUsername = getUsername(token);
         String tokenPassword = getPassword(token);
         return (username.equals(tokenUsername) && password.equals(tokenPassword) && !(isExpired(token)));
-    }
-
-    /**
-     * 解析token创建时间
-     *
-     * @param token
-     * @return
-     */
-    private Date getCreatedDate(String token) {
-        Date created;
-        try {
-            final Claims claims = getClaims(token);
-            created = new Date((Long) claims.get(TOKEN_CREATE_TIME));
-        } catch (Exception e) {
-            created = null;
-        }
-        return created;
     }
 
     /**

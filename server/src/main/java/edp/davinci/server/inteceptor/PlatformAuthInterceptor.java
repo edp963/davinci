@@ -28,6 +28,7 @@ import edp.davinci.core.dao.entity.PlatformExample;
 import edp.davinci.server.annotation.AuthIgnore;
 import edp.davinci.server.annotation.AuthShare;
 import edp.davinci.server.commons.Constants;
+import edp.davinci.server.commons.ErrorMsg;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.dao.UserExtendMapper;
 import edp.davinci.server.enums.HttpCodeEnum;
@@ -89,7 +90,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
         if (null == parameterMap) {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
-                    .message("The resource requires authentication, which was not supplied with the request");
+                    .message(ErrorMsg.ERR_AUTHENTICATION);
             response.getWriter().print(JSONUtils.toString(resultMap));
             return false;
         }
@@ -97,7 +98,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
         if (!parameterMap.containsKey(AUTH_CODE) || null == parameterMap.get(AUTH_CODE) || parameterMap.get(AUTH_CODE).length == 0) {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
-                    .message("The resource requires authentication, which was not supplied with the request");
+                    .message(ErrorMsg.ERR_AUTHENTICATION);
             response.getWriter().print(JSONUtils.toString(resultMap));
             return false;
         }
@@ -106,7 +107,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
         if (StringUtils.isEmpty(authCode)) {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
-                    .message("The resource requires authentication, which was not supplied with the request");
+                    .message(ErrorMsg.ERR_AUTHENTICATION);
             response.getWriter().print(JSONUtils.toString(resultMap));
             return false;
         }
@@ -118,7 +119,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
         if (CollectionUtils.isEmpty(list)) {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
-                    .message("The resource requires authentication, which was not supplied with the request");
+                    .message(ErrorMsg.ERR_AUTHENTICATION);
             response.getWriter().print(JSONUtils.toString(resultMap));
             return false;
         }
@@ -136,7 +137,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
                 } else {
                     response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
                     resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
-                            .message("The resource requires authentication, which was not supplied with the request");
+                            .message(ErrorMsg.ERR_AUTHENTICATION);
                     response.getWriter().print(JSONUtils.toString(resultMap));
                     return false;
                 }
@@ -147,15 +148,13 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
                 user = authenticationService.checkUser(platform ,parameterMap);
                 if (null == user) {
                     response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-                    resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode())
-                            .message("Permission denied");
+                    resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode()).message(ErrorMsg.ERR_PERMISSION);
                     response.getWriter().print(JSONUtils.toString(resultMap));
                     return false;
                 }
             } catch (Exception e) {
                 response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-                resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode())
-                        .message("Permission denied");
+                resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode()).message(ErrorMsg.ERR_PERMISSION);
                 response.getWriter().print(JSONUtils.toString(resultMap));
                 return false;
             }

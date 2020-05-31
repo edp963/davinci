@@ -43,7 +43,7 @@ import { ScheduleActions } from './actions'
 import { hideNavigator } from 'containers/App/actions'
 import { VizActions } from 'containers/Viz/actions'
 import reducer from './reducer'
-import saga from './sagas'
+import saga, { editSchedule } from './sagas'
 import vizReducer from 'containers/Viz/reducer'
 import vizSaga from 'containers/Viz/sagas'
 import dashboardSaga from 'containers/Dashboard/sagas'
@@ -69,11 +69,16 @@ import {
   IScheduleMailConfig,
   SchedulePeriodUnit,
   ICronExpressionPartition,
-  IScheduleVizConfigItem
+  IScheduleVizConfigItem,
+  IScheduleWeChatWorkConfig,
+  JobType
 } from './components/types'
+import { serialize } from 'components/RichText/Serializer'
+import { RichTextNode } from 'app/components/RichText'
 
 import Styles from './Schedule.less'
 import StylesHeader from 'components/EditorHeader/EditorHeader.less'
+import ScheduleWeChatWorkConfig from './components/ScheduleWeChatWorkConfig'
 
 const getCronExpressionByPartition = (partition: ICronExpressionPartition) => {
   const { periodUnit, minute, hour, day, weekDay, month } = partition
@@ -128,6 +133,7 @@ interface IScheduleEditorDispatchProps {
     reject: (error: string) => any
   ) => any
   onLoadSuggestMails: (keyword: string) => any
+  onChangeJobType: (jobType: JobType) => any
 }
 
 type ScheduleEditorProps = IScheduleEditorStateProps &
@@ -214,7 +220,8 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
     onAddSchedule,
     onEditSchedule,
     onCheckUniqueName,
-    onLoadSuggestMails
+    onLoadSuggestMails,
+    onChangeJobType
   } = props
   const { jobStatus, config } = editingSchedule
   const { contentList } = config
@@ -226,6 +233,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
 
   let baseConfigForm: FormComponentProps<ScheduleBaseFormProps> = null
   let mailConfigForm: FormComponentProps<IScheduleMailConfig> = null
+  let weChatWorkConfigForm: FormComponentProps<IScheduleWeChatWorkConfig> = null
 
   const saveSchedule = () => {
     if (!localContentList.length) {
@@ -241,28 +249,37 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
         'dateRange'
       ) as ScheduleBaseFormProps['dateRange']
       delete value1.dateRange
-      mailConfigForm.form.validateFieldsAndScroll((err2, value2) => {
-        if (err2) {
-          return
-        }
-        const schedule: ISchedule = {
-          ...value1,
-          cronExpression,
-          startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-          endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
-          config: { ...value2, contentList: localContentList },
-          projectId: +projectId
-        }
-        if (editingSchedule.id) {
-          schedule.id = editingSchedule.id
-          onEditSchedule(schedule, goBack)
-        } else {
-          onAddSchedule(schedule, goBack)
-        }
-      })
+      const schedule: ISchedule = {
+        ...value1,
+        cronExpression,
+        startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
+        endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
+        projectId: +projectId
+      }
+      if (editingSchedule.jobType === 'email') {
+        mailConfigForm.form.validateFieldsAndScroll((err2, value2) => {
+          if (err2) {
+            return
+          }
+          schedule.config = { ...value2, contentList: localContentList }
+          schedule.config.content = serialize(schedule.config.content as RichTextNode[])
+        })
+      } else {
+        weChatWorkConfigForm.form.validateFieldsAndScroll((err3, value3) => {
+          if (err3) {
+            return
+          }
+          schedule.config = { ...value3, contentList: localContentList }
+        })
+      }
+      if (editingSchedule.id) {
+        schedule.id = editingSchedule.id
+        onEditSchedule(schedule, goBack)
+      } else {
+        onAddSchedule(schedule, goBack)
+      }
     })
   }
-
   return (
     <>
       <Helmet title="Schedule" />
@@ -300,19 +317,34 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
                   schedule={editingSchedule}
                   loading={loading.schedule}
                   onCheckUniqueName={onCheckUniqueName}
+                  onChangeJobType={onChangeJobType}
                 />
               </Card>
-              <Card title="邮件设置" size="small" style={{ marginTop: 8 }}>
-                <ScheduleMailConfig
-                  wrappedComponentRef={(inst) => {
-                    mailConfigForm = inst
-                  }}
-                  config={config}
-                  loading={loading.schedule}
-                  mailList={suggestMails}
-                  onLoadMailList={onLoadSuggestMails}
-                />
-              </Card>
+              {
+                editingSchedule.jobType === 'email' ?
+                (
+                  <Card title="邮件设置" size="small" style={{ marginTop: 8 }}>
+                    <ScheduleMailConfig
+                      wrappedComponentRef={(inst) => {
+                        mailConfigForm = inst
+                      }}
+                      config={config}
+                      loading={loading.schedule}
+                      mailList={suggestMails}
+                      onLoadMailList={onLoadSuggestMails}
+                    />
+                  </Card>
+                ) : (
+                  <Card title="企业微信设置" size="small" style={{ marginTop: 8 }}>
+                    <ScheduleWeChatWorkConfig
+                      wrappedComponentRef={(inst) => {
+                        weChatWorkConfigForm = inst
+                      }}
+                      config={config}
+                    />
+                  </Card>
+                )
+              }
             </Col>
             <Col span={12}>
               <Card title="发送内容设置" size="small">
@@ -372,7 +404,8 @@ const mapDispatchToProps = (dispatch) => ({
   onCheckUniqueName: (data, resolve, reject) =>
     dispatch(checkNameUniqueAction('cronjob', data, resolve, reject)),
   onLoadSuggestMails: (keyword) =>
-    dispatch(ScheduleActions.loadSuggestMails(keyword))
+    dispatch(ScheduleActions.loadSuggestMails(keyword)),
+  onChangeJobType: (jobType) => dispatch(ScheduleActions.changeScheduleJobType(jobType))
 })
 
 const withConnect = connect(

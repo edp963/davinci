@@ -28,9 +28,11 @@ import edp.davinci.data.pojo.Filter;
 import edp.davinci.data.pojo.Order;
 import edp.davinci.data.pojo.Param;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
-public class WidgetQueryParam {
+@ToString(callSuper = true)
+public class WidgetQueryParam extends ConcurrencyStrategy {
     private List<String> groups;
     private List<Aggregator> aggregators;
     private List<Order> orders;
@@ -70,132 +72,4 @@ public class WidgetQueryParam {
         this.expired = expired;
         this.nativeQuery = nativeQuery;
     }
-
-    // private List<String> groups;
-    // private List<Aggregator> aggregators;
-    // private List<Order> orders;
-    // private List<SqlFilter> filters;
-    // private List<Param> params;
-    // private Boolean cache = false;
-    // private Long expired = -1L;
-    // private Boolean flush = false;
-    // private int limit = 0;
-    // private int pageNo = -1;
-    // private int pageSize = -1;
-    // private int totalCount = 0;
-    // private final String stInstance = "query";
-
-    // private boolean nativeQuery = false;
-
-    // public WidgetExecuteParam() {
-
-    // }
-
-    // public WidgetExecuteParam(List<String> groups,
-    //                         List<Aggregator> aggregators,
-    //                         List<Order> orders,
-    //                         List<String> filters,
-    //                         List<Param> params,
-    //                         Boolean cache,
-    //                         Long expired,
-    //                         Boolean nativeQuery) {
-    //     this.groups = groups;
-    //     this.aggregators = aggregators;
-    //     this.orders = orders;
-    //     this.filters = filters.stream().map(f -> {
-    //         return JSONUtils.toObject(f, SqlFilter.class);
-    //     }).collect(Collectors.toList());
-    //     this.params = params;
-    //     this.cache = cache;
-    //     this.expired = expired;
-    //     this.nativeQuery = nativeQuery;
-    // }
-
-    // public List<String> getGroups() {
-    //     if (!CollectionUtils.isEmpty(this.groups)) {
-    //         this.groups = groups.stream().filter(g -> !StringUtils.isEmpty(g)).collect(Collectors.toList());
-    //     }
-
-    //     if (CollectionUtils.isEmpty(this.groups)) {
-    //         return null;
-    //     }
-
-    //     return this.groups;
-    // }
-
-    // public List<Order> getOrders(String jdbcUrl, String dbVersion) {
-    //     List<Order> list = null;
-    //     if (!CollectionUtils.isEmpty(orders)) {
-    //         list = new ArrayList<>();
-    //         String prefix = SqlUtils.getKeywordPrefix(jdbcUrl, dbVersion);
-    //         String suffix = SqlUtils.getKeywordSuffix(jdbcUrl, dbVersion);
-
-    //         for (Order order : this.orders) {
-    //             String column = order.getColumn().trim();
-    //             StringBuilder columnBuilder = new StringBuilder();
-    //             if (!column.startsWith(prefix)) {
-    //                 columnBuilder.append(prefix);
-    //             }
-    //             columnBuilder.append(column);
-    //             if (!column.endsWith(suffix)) {
-    //                 columnBuilder.append(suffix);
-    //             }
-    //             order.setColumn(columnBuilder.toString());
-    //             list.add(order);
-    //         }
-    //     }
-    //     return list;
-    // }
-
-    // public void addExcludeColumn(Set<String> excludeColumns, String jdbcUrl, String dbVersion) {
-    //     if (!CollectionUtils.isEmpty(excludeColumns) && !CollectionUtils.isEmpty(aggregators)) {
-    //         excludeColumns.addAll(this.aggregators.stream()
-    //                 .filter(a -> !CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(a.getColumn()))
-    //                 .map(a -> formatColumn(a.getColumn(), a.getFunc(), jdbcUrl, dbVersion, true))
-    //                 .collect(Collectors.toSet())
-    //         );
-    //     }
-    // }
-
-    // public List<String> getAggregators(String jdbcUrl, String dbVersion) {
-    //     if (!CollectionUtils.isEmpty(aggregators)) {
-    //         return this.aggregators.stream().map(a -> formatColumn(a.getColumn(), a.getFunc(), jdbcUrl, dbVersion, false)).collect(Collectors.toList());
-    //     }
-    //     return null;
-    // }
-
-
-    // private String formatColumn(String column, String func, String jdbcUrl, String dbVersion, boolean isLable) {
-    //     if (isLable) {
-    //         return String.join(EMPTY, func.trim(), PARENTHESES_START, column.trim(), PARENTHESES_CLOSE);
-    //     } else {
-    //         StringBuilder sb = new StringBuilder();
-    //         if ("COUNTDISTINCT".equals(func.trim().toUpperCase())) {
-    //             sb.append("COUNT").append(PARENTHESES_START).append("DISTINCT").append(SPACE);
-    //             sb.append(WidgetExecuteParam.getField(column, jdbcUrl, dbVersion));
-    //             sb.append(PARENTHESES_CLOSE);
-    //             sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl, dbVersion)).append("COUNTDISTINCT").append(PARENTHESES_START);
-    //             sb.append(column);
-    //             sb.append(PARENTHESES_CLOSE).append(SqlUtils.getAliasSuffix(jdbcUrl, dbVersion));
-    //         } else {
-    //             sb.append(func.trim()).append(PARENTHESES_START);
-    //             sb.append(WidgetExecuteParam.getField(column, jdbcUrl, dbVersion));
-    //             sb.append(PARENTHESES_CLOSE);
-    //             sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl, dbVersion));
-    //             sb.append(func.trim()).append(PARENTHESES_START);
-    //             sb.append(column);
-    //             sb.append(PARENTHESES_CLOSE).append(SqlUtils.getAliasSuffix(jdbcUrl, dbVersion));
-    //         }
-    //         return sb.toString();
-    //     }
-    // }
-
-    // public static String getField(String field, String jdbcUrl, String dbVersion) {
-    //     String keywordPrefix = SqlUtils.getKeywordPrefix(jdbcUrl, dbVersion);
-    //     String keywordSuffix = SqlUtils.getKeywordSuffix(jdbcUrl, dbVersion);
-    //     if (!StringUtils.isEmpty(keywordPrefix) && !StringUtils.isEmpty(keywordSuffix)) {
-    //         return keywordPrefix + field + keywordSuffix;
-    //     }
-    //     return field;
-    // }
 }

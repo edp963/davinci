@@ -31,7 +31,6 @@ export default {
   user: `${host}/users`,
   changepwd: `${host}/changepwd`,
   source: `${host}/sources`,
-  bizlogic: `${host}/views`,
   view: `${host}/views`,
   // bizdata: `${host}/bizdatas`,
   widget: `${host}/widgets`,
@@ -50,5 +49,6 @@ export default {
   portal: `${host}/dashboardPortals`,
   star: `${host}/star`,
   download: `${host}/download`,
-  buriedPoints: `${host}/statistic`
+  buriedPoints: `${host}/statistic`,
+  version: `${host}/version`
 }

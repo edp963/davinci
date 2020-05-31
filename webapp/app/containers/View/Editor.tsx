@@ -52,7 +52,8 @@ import {
 
   makeSelectChannels,
   makeSelectTenants,
-  makeSelectBizs
+  makeSelectBizs,
+  makeSelectIsLastExecuteWholeSql
 } from './selectors'
 
 import { makeSelectProjectRoles } from 'containers/Projects/selectors'
@@ -60,7 +61,8 @@ import { makeSelectProjectRoles } from 'containers/Projects/selectors'
 import {
   IView, IViewModel, IViewRoleRaw, IViewRole, IViewVariable, IViewInfo,
   IExecuteSqlParams, IExecuteSqlResponse, IViewLoading, ISqlValidation,
-  IDacChannel, IDacTenant, IDacBiz } from './types'
+  IDacChannel, IDacTenant, IDacBiz
+} from './types'
 import { ISource, ISchema } from '../Source/types'
 import { ViewVariableTypes } from './constants'
 
@@ -69,7 +71,7 @@ import EditorSteps from './components/EditorSteps'
 import EditorContainer from './components/EditorContainer'
 import ModelAuth from './components/ModelAuth'
 import SourceTable from './components/SourceTable'
-import SqlEditor from './components/SqlEditor'
+import SqlEditor from './components/SqlEditorByAce'
 import SqlPreview from './components/SqlPreview'
 import EditorBottom from './components/EditorBottom'
 import ViewVariableList from './components/ViewVariableList'
@@ -90,9 +92,14 @@ interface IViewEditorStateProps {
 
   channels: IDacChannel[]
   tenants: IDacTenant[]
-  bizs: IDacBiz[]
-}
+  bizs: IDacBiz[],
 
+  isLastExecuteWholeSql: boolean
+}
+export enum EExecuteType {
+  whole,
+  single
+}
 interface IViewEditorDispatchProps {
   onHideNavigator: () => void
   onLoadViewDetail: (viewId: number) => void
@@ -100,7 +107,7 @@ interface IViewEditorDispatchProps {
   onLoadSourceDatabases: (sourceId: number) => void
   onLoadDatabaseTables: (sourceId: number, databaseName: string) => void
   onLoadTableColumns: (sourceId: number, databaseName: string, tableName: string) => void
-  onExecuteSql: (params: IExecuteSqlParams) => void
+  onExecuteSql: (params: IExecuteSqlParams, exeType: EExecuteType) => void
   onAddView: (view: IView, resolve: () => void) => void
   onEditView: (view: IView, resolve: () => void) => void
   onUpdateEditingView: (view: IView) => void
@@ -113,6 +120,7 @@ interface IViewEditorDispatchProps {
 
   onResetState: () => void
   onLoadProjectRoles: (projectId: number) => void
+  onSetIsLastExecuteWholeSql: (isLastExecuteWholeSql: boolean) => void
 }
 
 type IViewEditorProps = IViewEditorStateProps & IViewEditorDispatchProps & RouteComponentWithParams
@@ -123,6 +131,7 @@ interface IViewEditorStates {
   init: boolean
   currentStep: number
   lastSuccessExecutedSql: string
+  sqlFragment: string
 }
 
 
@@ -133,7 +142,8 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     currentStep: 0,
     sqlValidationCode: null,
     init: true,
-    lastSuccessExecutedSql: null
+    lastSuccessExecutedSql: null,
+    sqlFragment: ''
   }
 
   public constructor (props: IViewEditorProps) {
@@ -153,49 +163,49 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
 
   public static getDerivedStateFromProps:
     React.GetDerivedStateFromProps<IViewEditorProps, IViewEditorStates>
-  = (props, state) => {
-    const { match, editingView, sqlValidation } = props
-    const { viewId } = match.params
-    const { init, sqlValidationCode } = state
-    let lastSuccessExecutedSql = state.lastSuccessExecutedSql
-    if (sqlValidationCode !== sqlValidation.code && sqlValidation.code) {
-      notification.destroy()
-      sqlValidation.code === 200
-        ? notification.success({
-          message: '执行成功',
-          duration: 3
-        })
-        : notification.error({
-          message: '执行失败',
-          description: (
-            <Tooltip
-              placement="bottom"
-              trigger="click"
-              title={sqlValidation.message}
-              overlayClassName={Styles.errorMessage}
-            >
-              <a>点击查看错误信息</a>
-            </Tooltip>
-          ),
-          duration: null
-        })
-      if (sqlValidation.code === 200) {
-        lastSuccessExecutedSql = editingView.sql
-      }
-    }
-    if (editingView && editingView.id === +viewId) {
-      if (init) {
-        props.onLoadSourceDatabases(editingView.sourceId)
-        lastSuccessExecutedSql = editingView.sql
-        return {
-          init: false,
-          sqlValidationCode: sqlValidation.code,
-          lastSuccessExecutedSql
+    = (props, state) => {
+      const { match, editingView, sqlValidation } = props
+      const { viewId } = match.params
+      const { init, sqlValidationCode } = state
+      let { lastSuccessExecutedSql } = state
+      if (sqlValidationCode !== sqlValidation.code && sqlValidation.code) {
+        notification.destroy()
+        sqlValidation.code === 200
+          ? notification.success({
+            message: '执行成功',
+            duration: 3
+          })
+          : notification.error({
+            message: '执行失败',
+            description: (
+              <Tooltip
+                placement="bottom"
+                trigger="click"
+                title={sqlValidation.message}
+                overlayClassName={Styles.errorMessage}
+              >
+                <a>点击查看错误信息</a>
+              </Tooltip>
+            ),
+            duration: null
+          })
+        if (sqlValidation.code === 200) {
+          lastSuccessExecutedSql = editingView.sql
         }
       }
+      if (editingView && editingView.id === +viewId) {
+        if (init) {
+          props.onLoadSourceDatabases(editingView.sourceId)
+          lastSuccessExecutedSql = editingView.sql
+          return {
+            init: false,
+            sqlValidationCode: sqlValidation.code,
+            lastSuccessExecutedSql
+          }
+        }
+      }
+      return { sqlValidationCode: sqlValidation.code, lastSuccessExecutedSql }
     }
-    return { sqlValidationCode: sqlValidation.code, lastSuccessExecutedSql }
-  }
 
   public componentWillUnmount () {
     this.props.onResetState()
@@ -203,20 +213,26 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
   }
 
   private executeSql = () => {
-    ViewEditor.ExecuteSql(this.props)
+    const { sqlFragment } = this.state
+    const { onSetIsLastExecuteWholeSql } = this.props
+    if (sqlFragment != null) {
+      onSetIsLastExecuteWholeSql(false)
+    }
+    ViewEditor.ExecuteSql(this.props, this.state.sqlFragment)
   }
 
-  private static ExecuteSql = (props: IViewEditorProps) => {
+  private static ExecuteSql = (props: IViewEditorProps, sqlFragment?: string) => {
     const { onExecuteSql, editingView, editingViewInfo, sqlLimit } = props
     const { sourceId, sql } = editingView
     const { variable } = editingViewInfo
     const updatedParams: IExecuteSqlParams = {
       sourceId,
-      sql,
+      sql: sqlFragment ?? sql,
       limit: sqlLimit,
       variables: variable
     }
-    onExecuteSql(updatedParams)
+    const exeType = sqlFragment == null ? EExecuteType.whole : EExecuteType.single
+    onExecuteSql(updatedParams, exeType)
   }
 
   private stepChange = (step: number) => {
@@ -290,6 +306,10 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     this.viewChange('sql', sql)
   }
 
+  private sqlSelect = (sqlFragment: string) => {
+    this.setState({ sqlFragment })
+  }
+
   private modelChange = (partialModel: IViewModel) => {
     const { editingViewInfo, onUpdateEditingViewInfo } = this.props
     const { model } = editingViewInfo
@@ -309,11 +329,23 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     onUpdateEditingViewInfo(updatedViewInfo)
   }
 
-  private viewRoleChange = (viewRole: IViewRole) => {
+  /**
+   * 数组长度1为单选，大于1为全选
+   * @param {IViewRole[]} viewRoles
+   * @private
+   * @memberof ViewEditor
+   */
+  private viewRoleChange = (viewRoles: IViewRole[]) => {
     const { editingViewInfo, onUpdateEditingViewInfo } = this.props
-    const { roles } = editingViewInfo
-    const updatedRoles = roles.filter((role) => role.roleId !== viewRole.roleId)
-    updatedRoles.push(viewRole)
+    let updatedRoles: IViewRole[] = []
+    if (viewRoles.length === 1) {
+      const [viewRole] = viewRoles
+      const { roles } = editingViewInfo
+      updatedRoles = roles.filter((role) => role.roleId !== viewRole.roleId)
+      updatedRoles.push(viewRole)
+    } else {
+      updatedRoles = viewRoles
+    }
     const updatedViewInfo = {
       ...editingViewInfo,
       roles: updatedRoles
@@ -361,9 +393,10 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
       sqlDataSource, sqlLimit, loading, projectRoles,
       channels, tenants, bizs,
       editingView, editingViewInfo,
+      isLastExecuteWholeSql,
       onLoadSourceDatabases, onLoadDatabaseTables, onLoadTableColumns, onSetSqlLimit,
       onLoadDacTenants, onLoadDacBizs } = this.props
-    const { currentStep, lastSuccessExecutedSql } = this.state
+    const { currentStep, lastSuccessExecutedSql, sqlFragment } = this.state
     const { model, variable, roles: viewRoles } = editingViewInfo
     const sqlHints = this.getSqlHints(editingView.sourceId, schema, variable)
     const containerVisible = !currentStep
@@ -385,6 +418,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
             onVariableChange={this.variableChange}
           >
             <SourceTable
+              key="SourceTable"
               view={editingView}
               sources={sources}
               schema={schema}
@@ -393,18 +427,22 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
               onDatabaseSelect={onLoadDatabaseTables}
               onTableSelect={onLoadTableColumns}
             />
-            <SqlEditor value={editingView.sql} hints={sqlHints} onSqlChange={this.sqlChange} />
-            <SqlPreview size="small" loading={loading.execute} response={sqlDataSource} />
+            <SqlEditor key="SqlEditor" value={editingView.sql} hints={sqlHints} onSqlChange={this.sqlChange} onSelect={this.sqlSelect} onCmdEnter={this.executeSql} />
+            <SqlPreview key="SqlPreview" size="small" loading={loading.execute} response={sqlDataSource} />
             <EditorBottom
+              key="EditorBottom"
               sqlLimit={sqlLimit}
               loading={loading.execute}
               nextDisabled={nextDisabled}
+              sqlFragment={sqlFragment}
+              isLastExecuteWholeSql={isLastExecuteWholeSql}
               onSetSqlLimit={onSetSqlLimit}
               onExecuteSql={this.executeSql}
               onStepChange={this.stepChange}
             />
-            <ViewVariableList variables={variable} />
+            <ViewVariableList key="ViewVariableList" variables={variable} />
             <VariableModal
+              key="VariableModal"
               channels={channels}
               tenants={tenants}
               bizs={bizs}
@@ -436,7 +474,8 @@ const mapDispatchToProps = (dispatch: Dispatch<ViewActionType | SourceActionType
   onLoadSourceDatabases: (sourceId) => dispatch(SourceActions.loadSourceDatabases(sourceId)),
   onLoadDatabaseTables: (sourceId, databaseName) => dispatch(SourceActions.loadDatabaseTables(sourceId, databaseName)),
   onLoadTableColumns: (sourceId, databaseName, tableName) => dispatch(SourceActions.loadTableColumns(sourceId, databaseName, tableName)),
-  onExecuteSql: (params) => dispatch(ViewActions.executeSql(params)),
+  onExecuteSql: (params, exeType?) => dispatch(ViewActions.executeSql(params, exeType)),
+  onSetIsLastExecuteWholeSql: (isLastExecuteWholeSql: boolean) => dispatch(ViewActions.setIsLastExecuteWholeSql(isLastExecuteWholeSql)),
   onAddView: (view, resolve) => dispatch(ViewActions.addView(view, resolve)),
   onEditView: (view, resolve) => dispatch(ViewActions.editView(view, resolve)),
   onUpdateEditingView: (view) => dispatch(ViewActions.updateEditingView(view)),
@@ -464,7 +503,9 @@ const mapStateToProps = createStructuredSelector({
 
   channels: makeSelectChannels(),
   tenants: makeSelectTenants(),
-  bizs: makeSelectBizs()
+  bizs: makeSelectBizs(),
+
+  isLastExecuteWholeSql: makeSelectIsLastExecuteWholeSql()
 })
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)

@@ -29,8 +29,8 @@ import history from 'utils/history'
 
 import App from 'share/containers/App'
 
-import { LocaleProvider } from 'antd'
-import zh_CN from 'antd/lib/locale-provider/zh_CN'
+import { ConfigProvider } from 'antd'
+import zh_CN from 'antd/es/locale/zh_CN'
 import LanguageProvider from 'app/containers/LanguageProvider'
 import { translationMessages } from 'app/i18n'
 import moment from 'moment'
@@ -42,7 +42,6 @@ import 'file-loader?name=[name].[ext]!../app/.htaccess'
 import 'react-grid-layout/css/styles.css'
 import 'libs/react-resizable/css/styles.css'
 import 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'
-import 'react-quill/dist/quill.snow.css'
 import '../app/assets/fonts/iconfont.css'
 import '../app/assets/override/antd.css'
 import '../app/assets/override/react-grid.css'
@@ -77,6 +76,8 @@ import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/visualMap'
 import 'echarts/lib/component/geo'
 import 'echarts/lib/component/brush'
+import 'echarts/lib/component/markLine'
+import 'echarts/lib/component/markArea'
 import '../app/assets/js/china.js'
 
 import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
@@ -92,11 +93,11 @@ const render = (messages) => {
   ReactDOM.render(
     <Provider store={store}>
       <LanguageProvider messages={messages}>
-        <LocaleProvider locale={zh_CN}>
+        <ConfigProvider locale={zh_CN}>
           <ConnectedRouter history={history}>
             <App />
           </ConnectedRouter>
-        </LocaleProvider>
+        </ConfigProvider>
       </LanguageProvider>
     </Provider>,
     MOUNT_NODE

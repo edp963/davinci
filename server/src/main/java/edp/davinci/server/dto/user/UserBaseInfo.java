@@ -19,6 +19,8 @@
 
 package edp.davinci.server.dto.user;
 
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.User;
 import lombok.Data;
 
 @Data
@@ -30,4 +32,15 @@ public class UserBaseInfo {
     String avatar;
 
     String email;
+
+    public UserBaseInfo() {
+
+    }
+
+    public UserBaseInfo(User user) {
+        this.id = user.getId();
+        this.username = StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName();
+        this.avatar = user.getAvatar();
+        this.email = user.getEmail();
+    }
 }

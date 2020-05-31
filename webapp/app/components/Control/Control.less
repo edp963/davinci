@@ -1,0 +1,208 @@
+@import "~assets/less/variable";
+
+.controlConfig {
+  flex: 1;
+
+  .configForm {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    .formTitle;
+
+    .title {
+      .rightSide {
+        position: absolute;
+        top: 10px
+      }
+
+      .interactionType {
+        .rightSide;
+        right: 8px;
+      }
+
+      .checkAll {
+        .rightSide;
+        right: 0;
+        color: @light-text-color;
+        font-weight: normal;
+      }
+
+      &.subTitle {
+        border-top: 1px solid @border-color-split;
+      }
+    }
+  }
+}
+
+.formTitle {
+  .title {
+    flex-shrink: 0;
+    padding: 0 8px;
+    position: relative;
+
+    h2 {
+      color: @light-text-color;
+      font-size: 14px;
+      line-height: 3em;
+    }
+  }
+}
+
+.treeContainer {
+  padding: 4px 0;
+}
+
+.tree {
+  // :global(li) {
+  //   padding: 2px 0;
+  // }
+  :global(li span.ant-tree-switcher),
+  :global(li span.ant-tree-iconEle) {
+    height: 28px;
+    line-height: 28px;
+  }
+  :global(li .ant-tree-node-content-wrapper) {
+    height: 28px;
+    line-height: 24px;
+  }
+  :global(.ant-tree-child-tree > li:first-child) {
+    padding-top: 2px;
+  }
+  // :global(li .ant-tree-node-content-wrapper:hover),
+  // :global(li .ant-tree-node-content-wrapper.ant-tree-node-selected) {
+  //   background-color: transparent;
+  // }
+  // :global(li .ant-tree-node-content-wrapper.ant-tree-node-selected) {
+  //   color: @primary-color;
+  //   font-weight: bold;
+  // }
+}
+
+.itemSelector {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  .itemList {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+
+    ul {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    li {
+      height: 30px;
+      display: flex;
+      align-items: center;
+    }
+
+    .checkbox {
+      padding: 0 16px;
+      .ellipsis;
+    }
+  }
+
+  .viewSet {
+    flex: 1;
+    overflow-y: auto;
+
+    .related {
+      padding: 0 16px 8px;
+    }
+
+    .empty {
+      margin: 8px 0;
+    }
+
+    h4 {
+      position: relative;
+      color: @light-text-color;
+      .ellipsis;
+
+      &.variableSelect {
+        padding-right: 116px;
+      }
+
+      .checkbox {
+        position: absolute;
+        top: 0;
+        right: 0;
+        color: @light-text-color;
+        font-weight: normal;
+      }
+    }
+
+    .formItem {
+      margin: 2px 0 0 0;
+    }
+
+    .selector {
+      width: 100%;
+    }
+
+    :global(.ant-form-item-label) {
+      line-height: 32px;
+
+      label {
+        color: @light-text-color;
+      }
+    }
+    :global(.ant-form-item-control) {
+      line-height: 32px;
+    }
+  }
+}
+
+.controlFormAntdOverride {
+  .formBody {
+    padding: 0 16px;
+  }
+  .antFormItemLabelSmall;
+}
+
+.localConfigForm {
+  flex: 1;
+  .formTitle;
+}
+
+.baseForm {
+  flex-shrink: 0;
+  .controlFormAntdOverride;
+
+  .selector {
+    width: 100%;
+  }
+}
+
+.controlForm {
+  flex: 1;
+  overflow-y: auto;
+  .controlFormAntdOverride;
+
+  .optionList {
+    flex: 1;
+    padding: 0 16px 16px;
+    overflow-y: auto;
+  }
+}
+
+.optionsModal {
+  .formItem {
+    margin: 0;
+  }
+
+  :global(.ant-modal-header),
+  :global(.ant-modal-body) {
+    padding: 16px;
+  }
+}
+
+.queryMode {
+  margin-top: 4px;
+  float: left;
+}

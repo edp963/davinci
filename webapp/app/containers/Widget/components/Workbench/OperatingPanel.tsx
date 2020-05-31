@@ -3,9 +3,9 @@ import classnames from 'classnames'
 import set from 'lodash/set'
 
 import widgetlibs from '../../config'
-import { IDataRequestParams } from 'app/containers/Dashboard/types'
+import { IDataRequestBody } from 'app/containers/Dashboard/types'
 import { IViewBase, IFormedView } from 'containers/View/types'
-import { ViewModelVisualTypes } from 'containers/View/constants'
+import { ViewModelVisualTypes, ViewModelTypes } from 'containers/View/constants'
 import Dropbox, { DropboxType, DropType, AggregatorType, IDataParamSource, IDataParamConfig, DragType, IDragItem} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, IPaginationParams, WidgetMode, RenderType, DimetionType } from '../Widget'
 import { IFieldConfig, getDefaultFieldConfig, FieldConfigModal } from '../Config/Field'
@@ -14,35 +14,35 @@ import { IFieldSortConfig, FieldSortTypes, SortConfigModal } from '../Config/Sor
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
-import VariableConfigForm from '../VariableConfigForm'
-import ControlConfig from './ControlConfig'
+import LocalControlConfig from 'app/components/Control/Config/Local'
+import ReferenceConfigModal from './Reference'
 import ComputedConfigForm from '../ComputedConfigForm'
 import ChartIndicator from './ChartIndicator'
-import AxisSection, { IAxisConfig } from './ConfigSections/AxisSection'
-import SplitLineSection, { ISplitLineConfig } from './ConfigSections/SplitLineSection'
-import PivotSection, { IPivotConfig } from './ConfigSections/PivotSection'
-import SpecSection, { ISpecConfig } from './ConfigSections/SpecSection'
-import LabelSection, { ILabelConfig } from './ConfigSections/LabelSection'
-import LegendSection, { ILegendConfig } from './ConfigSections/LegendSection'
-import VisualMapSection, { IVisualMapConfig } from './ConfigSections/VisualMapSection'
-import ToolboxSection, { IToolboxConfig } from './ConfigSections/ToolboxSection'
-import DoubleYAxisSection, { IDoubleYAxisConfig } from './ConfigSections/DoubleYAxisSection'
-import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelectSection'
-import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
-import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
+import AxisSection from './ConfigSections/AxisSection'
+import SplitLineSection from './ConfigSections/SplitLineSection'
+import PivotSection from './ConfigSections/PivotSection'
+import SpecSection from './ConfigSections/SpecSection'
+import LabelSection from './ConfigSections/LabelSection'
+import LegendSection from './ConfigSections/LegendSection'
+import VisualMapSection from './ConfigSections/VisualMapSection'
+import ToolboxSection from './ConfigSections/ToolboxSection'
+import DoubleYAxisSection from './ConfigSections/DoubleYAxisSection'
+import AreaSelectSection from './ConfigSections/AreaSelectSection'
+import ScorecardSection from './ConfigSections/ScorecardSection'
+import IframeSection from './ConfigSections/IframeSection'
 import TableSection from './ConfigSections/TableSection'
 import GaugeSection from './ConfigSections/GaugeSection'
-import { ITableConfig } from '../Config/Table'
 import BarSection from './ConfigSections/BarSection'
 import RadarSection from './ConfigSections/RadarSection'
 import { encodeMetricName, decodeMetricName, getPivot, getTable, getPivotModeSelectedCharts, checkChartEnable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from 'app/globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
-import { uuid } from 'utils/util'
 
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { Row, Col, Icon, Menu, Radio, InputNumber, Dropdown, Modal, Popconfirm, Checkbox, notification, Tooltip, Select } from 'antd'
-import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
+import { IReference } from './Reference/types'
+import { REFERENCE_SUPPORTED_CHART_TYPES } from './Reference/constants'
 import { WorkbenchQueryMode } from './types'
 import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { SelectProps } from 'antd/lib/select'
@@ -74,6 +74,7 @@ interface IOperatingPanelProps {
   distinctColumnValues: any[]
   columnValueLoading: boolean
   controls: any[]
+  references: IReference[]
   cache: boolean
   autoLoadData: boolean
   expired: number
@@ -83,6 +84,7 @@ interface IOperatingPanelProps {
   originalComputed: any[]
   onViewSelect: (viewId: number) => void
   onSetControls: (controls: any[]) => void
+  onSetReferences: (references: IReference[]) => void
   onCacheChange: (e: RadioChangeEvent) => void
   onChangeAutoLoadData: (e: RadioChangeEvent) => void
   onExpiredChange: (expired: number) => void
@@ -91,7 +93,7 @@ interface IOperatingPanelProps {
   onSetWidgetProps: (widgetProps: IWidgetProps) => void
   onLoadData: (
     viewId: number,
-    requestParams: IDataRequestParams,
+    requestParams: IDataRequestBody,
     resolve: (data) => void,
     reject: (error) => void
   ) => void
@@ -125,6 +127,7 @@ interface IOperatingPanelStates {
   actOnModalList: IDataParamSource[]
   filterModalVisible: boolean
   controlConfigVisible: boolean
+  referenceConfigVisible: boolean
 
   categoryDragItems: IDragItem[],
   valueDragItems: IDragItem[],
@@ -163,6 +166,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList: null,
       filterModalVisible: false,
       controlConfigVisible: false,
+      referenceConfigVisible: false,
       categoryDragItems: [],
       valueDragItems: [],
       computedConfigModalVisible: false,
@@ -182,10 +186,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private actOnSettingForm = null
   private filterSettingForm = null
 
-  private variableConfigForm = null
   private computedConfigForm = null
   private refHandlers = {
-    variableConfigForm: (ref) => this.variableConfigForm = ref,
     computedConfigForm: (ref) => this.computedConfigForm = ref
   }
 
@@ -232,7 +234,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       const { dataParams } = this.state
       const model = selectedView.model
       const currentWidgetlibs = widgetlibs[mode || 'pivot'] // FIXME 兼容 0.3.0-beta.1 之前版本
-
+      if (mode === 'pivot') {
+        model['指标名称']   = ({sqlType: 'VARCHAR', visualType: ViewModelVisualTypes.String, modelType: ViewModelTypes.Category})
+      }
       cols.forEach((c) => {
         const modelColumn = model[c.name]
         if (modelColumn) {
@@ -1372,9 +1376,26 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     })
   }
 
+  private showReferenceConfig = () => {
+    this.setState({
+      referenceConfigVisible: true
+    })
+  }
+
+  private closeReferenceConfig = () => {
+    this.setState({
+      referenceConfigVisible: false
+    })
+  }
+
   private saveControls = (controls) => {
     this.props.onSetControls(controls)
     this.closeControlConfig()
+  }
+
+  private saveReferences = (references: IReference[]) => {
+    this.props.onSetReferences(references)
+    this.closeReferenceConfig()
   }
 
   private checkAllDragItem = (type: DragType) => (e: CheckboxChangeEvent) => {
@@ -1499,6 +1520,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       distinctColumnValues,
       columnValueLoading,
       controls,
+      references,
       cache,
       autoLoadData,
       expired,
@@ -1508,7 +1530,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       onCacheChange,
       onChangeAutoLoadData,
       onExpiredChange,
-      originalWidgetProps,
       originalComputed
     } = this.props
     const {
@@ -1531,6 +1552,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList,
       filterModalVisible,
       controlConfigVisible,
+      referenceConfigVisible,
       valueDragItems,
       computedConfigModalVisible,
       selectedComputed
@@ -1779,6 +1801,22 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 </span>
               </h4>
             </div>
+            {mode === 'chart' &&
+              REFERENCE_SUPPORTED_CHART_TYPES.includes(
+                chartModeSelectedChart.id
+              ) && (
+                <div className={styles.paneBlock}>
+                  <h4>
+                    <span>参考线</span>
+                    <span
+                      className={styles.addVariable}
+                      onClick={this.showReferenceConfig}
+                    >
+                      <Icon type="edit" /> 点击配置
+                    </span>
+                  </h4>
+                </div>
+              )}
             <div className={styles.paneBlock}>
               <h4>开启缓存</h4>
               <div className={styles.blockBody}>
@@ -2057,12 +2095,19 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ref={(f) => this.filterSettingForm = f}
           />
         </Modal>
-        <ControlConfig
+        <LocalControlConfig
           currentControls={controls}
           view={selectedView}
           visible={controlConfigVisible}
           onSave={this.saveControls}
           onCancel={this.closeControlConfig}
+        />
+        <ReferenceConfigModal
+          references={references}
+          metrics={metrics.items}
+          visible={referenceConfigVisible}
+          onSave={this.saveReferences}
+          onCancel={this.closeReferenceConfig}
         />
         {!currentEditingItem ? null : [(
           <FieldConfigModal

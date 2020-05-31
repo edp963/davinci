@@ -19,11 +19,48 @@
 
 package edp.davinci.server.util;
 
+import static edp.davinci.commons.Constants.BACK_SLASH;
+import static edp.davinci.commons.Constants.COMMA;
+import static edp.davinci.commons.Constants.DOT;
+import static edp.davinci.commons.Constants.DOUBLE_QUOTES;
+import static edp.davinci.commons.Constants.EMPTY;
+import static edp.davinci.commons.Constants.PERCENT_SIGN;
+import static edp.davinci.commons.Constants.POUND_SIGN;
+import static edp.davinci.server.util.ScriptUtils.formatHeader;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.web.multipart.MultipartFile;
+
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
-
 import edp.davinci.data.pojo.Param;
+import edp.davinci.server.commons.Constants;
 import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.server.enums.NumericUnitEnum;
 import edp.davinci.server.enums.SqlColumnMappingEnum;
@@ -39,25 +76,6 @@ import edp.davinci.server.model.FieldPercentage;
 import edp.davinci.server.model.FieldScientificNotation;
 import edp.davinci.server.model.QueryColumn;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static edp.davinci.commons.Constants.*;
-import static edp.davinci.server.util.ScriptUtiils.formatHeader;
-import static edp.davinci.server.util.ScriptUtiils.getCellValueScriptEngine;
 
 public class ExcelUtils {
 
@@ -158,6 +176,8 @@ public class ExcelUtils {
      * @param columns
      * @param dataList
      * @param workbook
+     * @param containType
+     * @param config
      * @param params
      */
     public static void writeSheet(Sheet sheet,
@@ -165,7 +185,7 @@ public class ExcelUtils {
                                   List<Map<String, Object>> dataList,
                                   SXSSFWorkbook workbook,
                                   boolean containType,
-                                  String json,
+                                  String config,
                                   List<Param> params) {
 
 
@@ -190,14 +210,12 @@ public class ExcelUtils {
         headerCellStyle.setAlignment(CellStyle.ALIGN_CENTER);
         headerCellStyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
 
-        boolean isTable = isTable(json);
+        boolean isTable = isTable(config);
 
-        ScriptEngine engine = null;
         List<ExcelHeader> excelHeaders = null;
         if (isTable) {
             try {
-                engine = getCellValueScriptEngine();
-                excelHeaders = formatHeader(engine, json, params);
+                excelHeaders = formatHeader(ScriptUtils.getTableFormatEngine(), config, params);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -588,5 +606,19 @@ public class ExcelUtils {
             }
         }
         return false;
+    }
+
+
+    public static void checkSheetName(String sheetName, String value) {
+        if (!StringUtils.isEmpty(value)) {
+            if (value.length() > Constants.INVALID_SHEET_NAEM_LENGTH) {
+                throw new ServerException(
+                        sheetName + " length cannot exceed " + Constants.INVALID_SHEET_NAEM_LENGTH + " digits");
+            }
+            Matcher matcher = Constants.PATTERN_INVALID_SHEET_NAME.matcher(value);
+            if (matcher.find()) {
+                throw new ServerException(sheetName + " cannot contain the following characters: !,:,\\,\\/,?,*,[,],");
+            }
+        }
     }
 }

@@ -21,8 +21,8 @@
 import React from 'react'
 import classnames from 'classnames'
 import { Icon, Empty, Popover, Tag, Badge } from 'antd'
-import { IDownloadRecord, DownloadStatus } from 'app/containers/App/types'
-import { DOWNLOAD_STATUS_COLORS, DOWNLOAD_STATUS_LOCALE } from 'app/containers/App/constants'
+import { IDownloadRecord } from 'app/containers/App/types'
+import { DOWNLOAD_STATUS_COLORS, DOWNLOAD_STATUS_LOCALE, DownloadStatus } from 'app/containers/App/constants'
 
 const styles = require('./DownloadList.less')
 
@@ -43,14 +43,13 @@ export function DownloadList (props: IDownloadListProps) {
   if (downloadList && downloadList.length) {
     downloadable = downloadList.filter((d) => d.status === DownloadStatus.Success).length
     const downloadListItems = downloadList.map((record) => {
-      const { id, name, status } = record
+      const { id, name, status, uuid } = record
       const titleClass = classnames({
         [styles.success]: status === DownloadStatus.Success,
         [styles.downloaded]: status === DownloadStatus.Downloaded
       })
       return (
-        <li key={id} className={styles.item}>
-          {/* <Icon type="loading" /> */}
+        <li key={`${uuid || ''}${id}`} className={styles.item}>
           <p
             className={titleClass}
             onClick={download(props, record)}

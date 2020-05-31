@@ -49,6 +49,8 @@ enum Types {
   EXECUTE_SQL = 'davinci/View/EXECUTE_SQL',
   EXECUTE_SQL_SUCCESS = 'davinci/View/EXECUTE_SQL_SUCCESS',
   EXECUTE_SQL_FAILURE = 'davinci/View/EXECUTE_SQL_FAILURE',
+  EXECUTE_SQL_CANCEL = 'davinci/View/EXECUTE_SQL_CANCEL',
+  IS_LAST_EXECUTE_WHOLE_SQL = 'davinci/View/IS_LAST_EXECUTE_WHOLE_SQL',
 
   UPDATE_EDITING_VIEW = 'davinci/View/UPDATE_EDITING_VIEW',
   UPDATE_EDITING_VIEW_INFO = 'davinci/View/UPDATE_EDITING_VIEW_INFO',
@@ -122,7 +124,7 @@ export enum ViewModelTypes {
   Value = 'value'
 }
 
-export const ModelTypeSqlTypeSetting = {
+export const DefaultModelTypeSqlTypeSetting = {
   [ViewModelTypes.Value]: SQL_NUMBER_TYPES,
 
   // except SQL_STRING_TYPES field

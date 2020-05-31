@@ -23,7 +23,6 @@ import {
 } from '../../components/Chart'
 import {
   decodeMetricName,
-  getChartTooltipLabel,
   getSizeValue,
   getSizeRate,
   getTextWidth,

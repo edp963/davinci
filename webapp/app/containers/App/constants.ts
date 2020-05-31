@@ -18,8 +18,6 @@
  * >>
  */
 
-import { DownloadStatus } from './types'
-
 export const GET_EXTERNAL_AUTH_PROVIDERS = 'davinci/App/GET_EXTERNAL_AUTH_PROVIDERS'
 export const GET_EXTERNAL_AUTH_PROVIDERS_SUCESS = 'davinci/App/GET_EXTERNAL_AUTH_PROVIDERS_SUCESS'
 export const TRY_EXTERNAL_AUTH = 'davinci/App/TRY_EXTERNAL_AUTH'
@@ -48,6 +46,15 @@ export const UPDATE_PROFILE_ERROR = 'davinci/App/UPDATE_PROFILE_ERROR'
 
 export const UPLOAD_AVATAR_SUCCESS = 'davinci/App/UPLOAD_AVATAR_SUCCESS'
 
+export const GET_CAPTCHA_FOR_RESET_PASSWORD = 'davinci/App/GET_CAPTCHA_FOR_RESET_PASSWORD'
+export const GET_CAPTCHA_FOR_RESET_PASSWORD_SUCCESS = 'davinci/App/GET_CAPTCHA_FOR_RESET_PASSWORD_SUCCESS'
+export const GET_CAPTCHA_FOR_RESET_PASSWORD_ERROE = 'davinci/App/GET_CAPTCHA_FOR_RESET_PASSWORD_ERROE'
+
+export const RESET_PASSWORD_UNLOGGED = 'davinci/App/RESET_PASSWORD_UNLOGGED'
+export const RESET_PASSWORD_UNLOGGED_SUCCESS = 'davinci/App/RESET_PASSWORD_UNLOGGED_SUCCESS'
+export const RESET_PASSWORD_UNLOGGED_ERROR = 'davinci/App/RESET_PASSWORD_UNLOGGED_ERROR'
+
+
 export const CHANGE_USER_PASSWORD = 'davinci/User/CHANGE_USER_PASSWORD'
 export const CHANGE_USER_PASSWORD_SUCCESS = 'davinci/User/CHANGE_USER_PASSWORD_SUCCESS'
 export const CHANGE_USER_PASSWORD_FAILURE = 'davinci/User/CHANGE_USER_PASSWORD_FAILURE'
@@ -58,9 +65,6 @@ export const LOAD_DOWNLOAD_LIST_FAILURE = 'davinci/Download/LOAD_DOWNLOAD_LIST_F
 export const DOWNLOAD_FILE = 'davinci/Download/DOWNLOAD_FILE'
 export const DOWNLOAD_FILE_SUCCESS = 'davinci/Download/DOWNLOAD_FILE_SUCCESS'
 export const DOWNLOAD_FILE_FAILURE = 'davinci/Download/DOWNLOAD_FILE_FAILURE'
-export const INITIATE_DOWNLOAD_TASK = 'davinci/Download/INITIATE_DOWNLOAD_TASK'
-export const INITIATE_DOWNLOAD_TASK_SUCCESS = 'davinci/Download/INITIATE_DOWNLOAD_TASK_SUCCESS'
-export const INITIATE_DOWNLOAD_TASK_FAILURE = 'davinci/Download/INITIATE_DOWNLOAD_TASK_FAILURE'
 
 export const CREATE_ORGANIZATION_PROJECT = 'davinci/permission/CREATE_ORGANIZATION_PROJECT'
 export const DELETE_ORGANIZATION_PROJECT = 'davinci/permission/DELETE_ORGANIZATION_PROJECT'
@@ -80,6 +84,23 @@ export const DELETE_TEAM_PROJECT = 'davinci/permission/DELETE_TEAM_PROJECT'
 export const UPDATE_TEAM_PROJECT_PERMISSION = 'davinci/permission/UPDATE_TEAM_PROJECT_PERMISSION'
 export const UPDATE_TEAM = 'davinci/permission/UPDATE_TEAM'
 export const DELETE_TEAM = 'davinci/permission/DELETE_TEAM'
+
+export const GET_VERSION = 'davinci/GET_VERSION'
+export const GET_VERSION_SUCCESS = 'davinci/GET_VERSION_SUCCESS'
+export const GET_VERSION_FAIL = 'davinci/GET_VERSION_FAIL'
+
+export enum DownloadTypes {
+  Folder = 'folder',
+  Dashboard = 'dashboard',
+  Widget = 'widget'
+}
+
+export enum DownloadStatus {
+  Processing = 1,
+  Success = 2,
+  Failed = 3,
+  Downloaded = 4
+}
 
 export const DOWNLOAD_STATUS_COLORS = {
   [DownloadStatus.Processing]: 'blue',

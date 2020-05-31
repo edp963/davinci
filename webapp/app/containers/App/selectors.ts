@@ -73,8 +73,15 @@ const makeSelectLocation = () =>
     (routerState) => routerState.location
   )
 
+const makeSelectVersion = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.version
+  )
+
 export {
   selectGlobal,
+  makeSelectVersion,
   makeSelectExternalAuthProviders,
   makeSelectLogged,
   makeSelectLoginUser,

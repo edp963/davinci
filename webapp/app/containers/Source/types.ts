@@ -63,7 +63,7 @@ export interface ISourceFormValues extends ISourceBase {
 export type IDatabase = string
 
 export interface ITable {
-  name: string,
+  name: string
   type: 'TABLE' | 'VIEW'
 }
 
@@ -112,9 +112,10 @@ export interface ISchema {
 export interface ICSVMetaInfo {
   sourceId: number
   tableName: string
-  replaceMode: number
+  mode: number
   primaryKeys: string
   indexKeys: string
+  file: File
 }
 
 export interface ISourceState {

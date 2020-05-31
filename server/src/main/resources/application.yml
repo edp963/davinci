@@ -14,6 +14,9 @@
 #   limitations under the License.
 #  >>
 
+davinci:
+  version: 0.4-beta.0
+
 file:
   userfiles-path: ${DAVINCI_HOME}/userfiles/
   web_resources: ${DAVINCI_HOME}/davinci-ui/
@@ -60,10 +63,6 @@ spring:
     suffix: .html
     check-template-location: true
     template-resolver-order: 1
-
-  cache:
-    caffeine:
-      type: caffeine
 
 logging:
   config: file:${DAVINCI_HOME}/config/logback.xml

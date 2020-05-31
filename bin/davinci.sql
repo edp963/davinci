@@ -142,6 +142,7 @@ CREATE TABLE `favorite` (
 DROP TABLE IF EXISTS `mem_dashboard_widget`;
 CREATE TABLE `mem_dashboard_widget` (
 	`id` BIGINT ( 20 ) NOT NULL AUTO_INCREMENT,
+	`alias`	 VARCHAR(30) NULL,
 	`dashboard_id` BIGINT ( 20 ) NOT NULL,
 	`widget_Id` BIGINT ( 20 ) DEFAULT NULL,
 	`x` INT ( 12 ) NOT NULL,

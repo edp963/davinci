@@ -80,6 +80,9 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	@Autowired
 	private EmailScheduleServiceImpl emailScheduleService;
 
+	@Autowired
+	private WeChatWorkScheduleServiceImpl weChatWorkScheduleService;
+
 	private static final CheckEntityEnum entity = CheckEntityEnum.CRONJOB;
 
 	@Override
@@ -379,7 +382,13 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 
 				if (!StringUtils.isEmpty(jobType)) {
 					try {
-						emailScheduleService.execute(cronJob.getId());
+						if (jobType.equals("email")) {
+							emailScheduleService.execute(cronJob.getId());
+
+						} else if (jobType.equals("weChatWork")) {
+							// 企业微信推送
+							weChatWorkScheduleService.execute(cronJob.getId());
+						}
 					} catch (Exception e) {
 						log.error(e.getMessage(), e);
 						scheduleLogger.error(e.getMessage());

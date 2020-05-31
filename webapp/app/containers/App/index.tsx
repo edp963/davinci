@@ -27,6 +27,8 @@ import { RouteComponentWithParams } from 'utils/types'
 
 import { compose } from 'redux'
 import { logged, logout, getLoginUser } from './actions'
+import injectReducer from 'utils/injectReducer'
+import reducer from './reducer'
 import injectSaga from 'utils/injectSaga'
 import saga from './sagas'
 
@@ -35,6 +37,7 @@ import { makeSelectLogged } from './selectors'
 import checkLogin from 'utils/checkLogin'
 import { setToken } from 'utils/request'
 import { statistic } from 'utils/statistic/statistic.dv'
+import FindPassword from 'containers/FindPassword'
 
 import { Background } from 'containers/Background/Loadable'
 import { Main } from 'containers/Main/Loadable'
@@ -147,6 +150,7 @@ export class App extends React.PureComponent<AppProps> {
           <Switch>
             <Route path="/activate" component={Activate} />
             <Route path="/joinOrganization" exact component={Background} />
+            <Route path="/findPassword" component={FindPassword} />
             <Route path="/" exact render={this.renderRoute} />
             <Route path="/" component={logged ? Main : Background} />
           </Switch>
@@ -156,6 +160,7 @@ export class App extends React.PureComponent<AppProps> {
   }
 }
 
+const withReducer = injectReducer({ key: 'global', reducer })
 const withSaga = injectSaga({ key: 'global', saga })
 
 const mapStateToProps = createStructuredSelector({
@@ -174,6 +179,7 @@ const withConnect = connect(
 )
 
 export default compose(
+  withReducer,
   withSaga,
   withConnect
 )(App)

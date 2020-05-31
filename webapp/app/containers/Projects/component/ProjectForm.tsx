@@ -108,87 +108,92 @@ const ProjectsForm: React.FC<IProjectsFormProps & FormComponentProps> = ({
           <Form>
             <Row gutter={8}>
               <Col span={24}>
-                <FormItem className={utilStyles.hide}>
-                  {form.getFieldDecorator<IProjectFormFieldProps>('id', {
-                    hidden: type === 'add',
-                    initialValue: currentPro.id
-                  })(
-                    <Input />
-                  )}
-                </FormItem>
-                <FormItem className={utilStyles.hide}>
-                  {form.getFieldDecorator<IProjectFormFieldProps>('orgId_hc', {
-                    hidden: type !== 'transfer',
-                    initialValue: `${currentPro.orgId}`
-                  })(
-                    <Input />
-                  )}
-                </FormItem>
-                <FormItem label="组织" {...commonFormItemStyle} className={isShowOrganization}>
-                  {form.getFieldDecorator<IProjectFormFieldProps>('orgId', {
-                    hidden: type === 'organizationProject',
-                    initialValue: `${type !== 'transfer' ? currentPro.orgId ? currentPro.orgId : '' : ''}`,
-                    rules: [{
-                      required: true,
-                      message: '组织名称 不能为空'
-                    }]
-                  })(
-                    <Select
-                      placeholder="Please select a organization"
-                    >
-                      {
-                        organizations ? organizations.map((o) => {
-                          const orgId = form.getFieldValue('orgId_hc')
-                          if (type === 'transfer' && o.id === Number(orgId)) {
-                            return []
-                          }
-                          const disabled = o.allowCreateProject === false
-                          return (
-                            <Option key={o.id} value={`${o.id}`} disabled={disabled} className={styles.selectOption}>
-                              <div className={styles.title}>
-                                <span className={styles.owner} style={{color: disabled ? '#ccc' : '#444444'}}>{o.name}</span>
+                {type !== 'add' && (
+                  <FormItem className={utilStyles.hide}>
+                    {form.getFieldDecorator<IProjectFormFieldProps>('id', {
+                      initialValue: currentPro.id
+                    })(
+                      <Input />
+                    )}
+                  </FormItem>
+                )}
+                {type === 'transfer' && (
+                  <FormItem className={utilStyles.hide}>
+                    {form.getFieldDecorator<IProjectFormFieldProps>('orgId_hc', {
+                      initialValue: `${currentPro.orgId}`
+                    })(
+                      <Input />
+                    )}
+                  </FormItem>
+                )}
+                {type !== 'organizationProject' && (
+                  <FormItem label="组织" {...commonFormItemStyle} className={isShowOrganization}>
+                    {form.getFieldDecorator<IProjectFormFieldProps>('orgId', {
+                      initialValue: `${type !== 'transfer' ? currentPro.orgId ? currentPro.orgId : '' : ''}`,
+                      rules: [{
+                        required: true,
+                        message: '组织名称 不能为空'
+                      }]
+                    })(
+                      <Select
+                        placeholder="Please select a organization"
+                      >
+                        {
+                          organizations ? organizations.map((o) => {
+                            const orgId = form.getFieldValue('orgId_hc')
+                            if (type === 'transfer' && o.id === Number(orgId)) {
+                              return []
+                            }
+                            const disabled = o.allowCreateProject === false
+                            return (
+                              <Option key={o.id} value={`${o.id}`} disabled={disabled} className={styles.selectOption}>
+                                <div className={styles.title}>
+                                  <span className={styles.owner} style={{color: disabled ? '#ccc' : '#444444'}}>{o.name}</span>
+                                  {`${o.id}` !== form.getFieldValue('orgId')
+                                    ? o.role === 1 ? <Tag color={`${ disabled ? '#ccc' : '#108ee9'}`}>Owner</Tag> : ''
+                                    : ''}
+                                </div>
                                 {`${o.id}` !== form.getFieldValue('orgId')
-                                  ? o.role === 1 ? <Tag color={`${ disabled ? '#ccc' : '#108ee9'}`}>Owner</Tag> : ''
+                                  ? (<Avatar size="small" path={o.avatar}/>)
                                   : ''}
-                              </div>
-                              {`${o.id}` !== form.getFieldValue('orgId')
-                                ? (<Avatar size="small" path={o.avatar}/>)
-                                : ''}
-                            </Option>
-                          )
-                        }) : []
-                      }
-                    </Select>
-                  )}
-                </FormItem>
-                <FormItem label="名称" {...commonFormItemStyle} className={isShowDesc}>
-                  {form.getFieldDecorator<IProjectFormFieldProps>('name', {
-                    initialValue: currentPro.name,
-                    hidden: type === 'transfer',
-                    rules: [{
-                      required: true,
-                      message: 'Name 不能为空'
-                    }, {
-                      validator: onCheckUniqueName
-                    }],
-                    validateFirst: true
-                  })(
-                    <Input placeholder="Name" />
-                  )}
-                </FormItem>
+                              </Option>
+                            )
+                          }) : []
+                        }
+                      </Select>
+                    )}
+                  </FormItem>
+                )}
+                {type !== 'transfer' && (
+                  <FormItem label="名称" {...commonFormItemStyle} className={isShowDesc}>
+                    {form.getFieldDecorator<IProjectFormFieldProps>('name', {
+                      initialValue: currentPro.name,
+                      rules: [{
+                        required: true,
+                        message: 'Name 不能为空'
+                      }, {
+                        validator: onCheckUniqueName
+                      }],
+                      validateFirst: true
+                    })(
+                      <Input placeholder="Name" />
+                    )}
+                  </FormItem>
+                )}
               </Col>
               <Col span={24}>
-                <FormItem label="描述" {...commonFormItemStyle} className={isShowDesc}>
-                  {form.getFieldDecorator<IProjectFormFieldProps>('description', {
-                    hidden: type === 'transfer',
-                    initialValue: currentPro.description
-                  })(
-                    <TextArea
-                      placeholder="Description"
-                      autosize={{minRows: 2, maxRows: 6}}
-                    />
-                  )}
-                </FormItem>
+                {type !== 'transfer' && (
+                  <FormItem label="描述" {...commonFormItemStyle} className={isShowDesc}>
+                    {form.getFieldDecorator<IProjectFormFieldProps>('description', {
+                      initialValue: currentPro.description
+                    })(
+                      <TextArea
+                        placeholder="Description"
+                        autosize={{minRows: 2, maxRows: 6}}
+                      />
+                    )}
+                  </FormItem>
+                )}
               </Col>
               <Col span={24}>
                 <FormItem label="可见" {...commonFormItemStyle}>
@@ -207,14 +212,15 @@ const ProjectsForm: React.FC<IProjectsFormProps & FormComponentProps> = ({
                 </FormItem>
               </Col>
               <Col span={24}>
-                <FormItem className={utilStyles.hide}>
-                  {form.getFieldDecorator<IProjectFormFieldProps>('pic', {
-                    hidden: type === 'add' || type === 'transfer',
-                    initialValue: currentPro.pic
-                  })(
-                    <Input />
-                  )}
-                </FormItem>
+                {type !== 'add' && type !== 'transfer' && (
+                  <FormItem className={utilStyles.hide}>
+                    {form.getFieldDecorator<IProjectFormFieldProps>('pic', {
+                      initialValue: currentPro.pic
+                    })(
+                      <Input />
+                    )}
+                  </FormItem>
+                )}
               </Col>
             </Row>
           </Form>

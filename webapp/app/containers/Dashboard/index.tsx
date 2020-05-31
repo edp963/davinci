@@ -48,17 +48,18 @@ import AntdFormType from 'antd/lib/form/Form'
 const Search = Input.Search
 
 import { VizActions } from 'containers/Viz/actions'
+import DashboardActions from './actions'
 import { makeSelectCurrentDashboards, makeSelectCurrentPortal, makeSelectVizLoading } from 'containers/Viz/selectors'
 import { makeSelectCurrentDashboard } from './selectors'
 import {
   hideNavigator,
   checkNameUniqueAction,
-  initiateDownloadTask,
   loadDownloadList,
   downloadFile
 } from '../App/actions'
 import { makeSelectDownloadList, makeSelectDownloadListLoading } from '../App/selectors'
-import { DownloadTypes, IDownloadRecord } from '../App/types'
+import { IDownloadRecord } from '../App/types'
+import { DownloadTypes } from '../App/constants'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 import { ProjectActions } from '../Projects/actions'
 const { loadProjectDetail, excludeRoles } = ProjectActions
@@ -74,7 +75,7 @@ const SplitPane = React.lazy(() => import('react-split-pane'))
 import {IProjectRoles} from '../Organizations/component/ProjectRole'
 import { OrganizationActions } from '../Organizations/actions'
 const { loadProjectRoles } = OrganizationActions
-import { IGlobalControl, GlobalControlQueryMode } from 'app/components/Filters/types'
+import { IGlobalControl, GlobalControlQueryMode } from 'app/components/Control/types'
 import { RouteComponentWithParams } from 'utils/types'
 
 import { Grid } from './Loadable'
@@ -117,16 +118,6 @@ export interface IDashboard {
   index?: number
   type?: number
   children?: any[]
-}
-
-export interface IDashboardConfig {
-  filters?: IGlobalControl[]
-  linkagers?: any[]
-  queryMode?: GlobalControlQueryMode
-}
-
-export interface ICurrentDashboard extends IDashboard {
-  widgets: any[]
 }
 
 interface IDashboardStates {
@@ -909,7 +900,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
     onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
-    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(initiateDownloadTask(id, type, downloadParams)),
+    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(DashboardActions.initiateDownloadTask(id, type, downloadParams)),
     onLoadDownloadList: () => dispatch(loadDownloadList()),
     onDownloadFile: (id) => dispatch(downloadFile(id))
   }

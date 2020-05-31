@@ -30,18 +30,20 @@ import { Table as AntTable, Tooltip, Icon } from 'antd'
 import { TableProps, ColumnProps, SorterResult } from 'antd/lib/table'
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
 import PaginationWithoutTotal from 'components/PaginationWithoutTotal'
-import SearchFilterDropdown from 'components/SearchFilterDropdown/index'
-import NumberFilterDropdown from 'components/NumberFilterDropdown/index'
-import DateFilterDropdown from 'components/DateFilterDropdown/index'
-import {ViewModelTypes} from 'containers/View/constants'
+import { ViewModelTypes } from 'containers/View/constants'
 import { TABLE_PAGE_SIZES } from 'app/globalConstants'
 import { getFieldAlias } from 'containers/Widget/components/Config/Field'
 import { decodeMetricName } from 'containers/Widget/components/util'
 import Styles from './Table.less'
-import { hasProperty } from 'components/DataDrill/util'
+import { hasProperty } from 'utils/util'
 import {
-  findChildConfig, traverseConfig,
-  computeCellWidth, getDataColumnWidth, getMergedCellSpan, getTableCellValueRange } from './util'
+  findChildConfig,
+  traverseConfig,
+  computeCellWidth,
+  getDataColumnWidth,
+  getMergedCellSpan,
+  getTableCellValueRange
+} from './util'
 import { MapAntSortOrder } from './constants'
 import { FieldSortTypes } from '../../Config/Sort'
 import { tableComponents } from './components'
@@ -50,24 +52,26 @@ import { resizeTableColumns } from './components/HeadCell'
 interface IMapTableHeaderConfig {
   [key: string]: ITableHeaderConfig
 }
-interface TSelectItemCellProps {
+interface ISelectItemCellProps {
   index: number
   value: string
   key: string
 }
-type ISelectItemsCell = {[propName: string] : Array<TSelectItemCellProps>}
-type ISelectItems =  {
+interface ISelectItemsCell {
+  [propName: string]: ISelectItemCellProps[]
+}
+
+interface ISelectItems {
   group: string[]
   cell: ISelectItemsCell
 }
-
 
 interface ITableStates {
   chartStyles: IChartStyles
   data: object[]
   width: number
   pagination: IPaginationParams
-  currentSorter: { column: string, direction: FieldSortTypes }
+  currentSorter: { column: string; direction: FieldSortTypes }
 
   tableColumns: Array<ColumnProps<any>>
   mapTableHeaderConfig: IMapTableHeaderConfig
@@ -84,7 +88,6 @@ interface ITableStates {
 }
 
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
-
   private static HeaderSorterWidth = 0
 
   public state: Readonly<ITableStates> = {
@@ -113,17 +116,24 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private table = React.createRef<AntTable<any>>()
 
-  private handleResize = (idx: number, containerWidthRatio: number) => (_, { size }: ResizeCallbackData) => {
-    const nextColumns = resizeTableColumns(this.state.tableColumns, idx, size.width, containerWidthRatio)
+  private handleResize = (idx: number, containerWidthRatio: number) => (
+    _,
+    { size }: ResizeCallbackData
+  ) => {
+    const nextColumns = resizeTableColumns(
+      this.state.tableColumns,
+      idx,
+      size.width,
+      containerWidthRatio
+    )
     this.setState({ tableColumns: nextColumns })
   }
 
-  private paginationChange = (current: number, pageSize: number) => {
-    const { currentSorter } = this.state
-    this.refreshTable(current, pageSize, currentSorter)
-  }
-
-  private tableChange = (pagination: PaginationConfig, _, sorter: SorterResult<object>) => {
+  private tableChange = (
+    pagination: PaginationConfig,
+    _,
+    sorter: SorterResult<object>
+  ) => {
     const nextCurrentSorter: ITableStates['currentSorter'] = sorter.field
       ? { column: sorter.field, direction: MapAntSortOrder[sorter.order] }
       : null
@@ -132,7 +142,11 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     this.refreshTable(current, pageSize, nextCurrentSorter)
   }
 
-  private refreshTable = (current: number, pageSize: number, sorter?: ITableStates['currentSorter']) => {
+  private refreshTable = (
+    current: number,
+    pageSize: number,
+    sorter?: ITableStates['currentSorter']
+  ) => {
     const { tablePagination } = this.state
     if (pageSize !== tablePagination.pageSize) {
       current = 1
@@ -145,22 +159,28 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     pageSizeOptions: TABLE_PAGE_SIZES.map((s) => s.toString()),
     showQuickJumper: true,
     showSizeChanger: true,
-    showTotal: (total: number) => `共${total}条`,
-    onChange: this.paginationChange,
-    onShowSizeChange: this.paginationChange
+    showTotal: (total: number) => `共${total}条`
   }
 
-  public componentDidMount () {
+  public componentDidMount() {
     const { headerFixed, withPaging } = this.props.chartStyles.table
     this.adjustTableCell(headerFixed, withPaging)
   }
 
-  public componentDidUpdate () {
+  public componentDidUpdate() {
     const { headerFixed, withPaging } = this.props.chartStyles.table
-    this.adjustTableCell(headerFixed, withPaging, this.state.tablePagination.total)
+    this.adjustTableCell(
+      headerFixed,
+      withPaging,
+      this.state.tablePagination.total
+    )
   }
 
-  private adjustTableCell (headerFixed: boolean, withPaging: boolean, dataTotal?: number) {
+  private adjustTableCell(
+    headerFixed: boolean,
+    withPaging: boolean,
+    dataTotal?: number
+  ) {
     const tableDom = findDOMNode(this.table.current) as Element
     const excludeElems = []
     let paginationMargin = 0
@@ -180,54 +200,76 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const elem = tableDom.querySelector(exp)
       return acc + (elem ? elem.getBoundingClientRect().height : 0)
     }, paginationMargin)
-    const tableBodyHeight = this.props.height - excludeElemsHeight - paginationWithoutTotalHeight
+    const tableBodyHeight =
+      this.props.height - excludeElemsHeight - paginationWithoutTotalHeight
     this.setState({
       tableBodyHeight
     })
   }
 
-  public static getDerivedStateFromProps (nextProps: IChartProps, prevState: ITableStates) {
+  public static getDerivedStateFromProps(
+    nextProps: IChartProps,
+    prevState: ITableStates
+  ) {
     const { chartStyles, data, width } = nextProps
-    if (chartStyles !== prevState.chartStyles
-      || data !== prevState.data
-      || width !== prevState.width
+    if (
+      chartStyles !== prevState.chartStyles ||
+      data !== prevState.data ||
+      width !== prevState.width
     ) {
-      const { tableColumns, mapTableHeaderConfig, containerWidthRatio } = getTableColumns(nextProps)
+      const {
+        tableColumns,
+        mapTableHeaderConfig,
+        containerWidthRatio
+      } = getTableColumns(nextProps)
       const tablePagination = getPaginationOptions(nextProps)
-      return { tableColumns, mapTableHeaderConfig, containerWidthRatio, tablePagination, chartStyles, data, width }
+      return {
+        tableColumns,
+        mapTableHeaderConfig,
+        containerWidthRatio,
+        tablePagination,
+        chartStyles,
+        data,
+        width
+      }
     }
 
     return { chartStyles, data, width }
   }
 
-  private adjustTableColumns (
+  private adjustTableColumns(
     tableColumns: Array<ColumnProps<any>>,
     mapTableHeaderConfig: IMapTableHeaderConfig,
     containerWidthRatio: number
   ) {
-    traverseConfig<ColumnProps<any>>(tableColumns, 'children', (column, idx, siblings) => {
-      const canResize = siblings === tableColumns
-      column.onHeaderCell = (col) => ({
-        width: col.width,
-        onResize: canResize && this.handleResize(idx, containerWidthRatio),
-        config: mapTableHeaderConfig[column.key]
-      })
-    })
+    traverseConfig<ColumnProps<any>>(
+      tableColumns,
+      'children',
+      (column, idx, siblings) => {
+        const canResize = siblings === tableColumns
+        column.onHeaderCell = (col) => ({
+          width: col.width,
+          onResize: canResize && this.handleResize(idx, containerWidthRatio),
+          config: mapTableHeaderConfig[column.key]
+        })
+      }
+    )
     return tableColumns
   }
 
-  private getRowKey = (record: object, idx: number) => {
-    return Object.values(record).join('_' + idx)
-  }
+  private getRowKey = (_, idx: number) => idx.toString()
 
-  private getTableScroll (
+  private getTableScroll(
     columns: Array<ColumnProps<any>>,
     containerWidth: number,
     headerFixed: boolean,
     tableBodyHeght: number
   ) {
-    const scroll: TableProps<any>['scroll'] = {}
-    const columnsTotalWidth = columns.reduce((acc, c) => acc + (c.width as number), 0)
+    const scroll: TableProps<any>['scroll'] = { }
+    const columnsTotalWidth = columns.reduce(
+      (acc, c) => acc + (c.width as number),
+      0
+    )
     if (columnsTotalWidth > containerWidth) {
       scroll.x = Math.max(columnsTotalWidth, containerWidth)
     }
@@ -237,14 +279,14 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return scroll
   }
 
-  private isSameObj (
+  private isSameObj(
     prevObj: object,
     nextObj: object,
     isSourceData?: boolean
   ): boolean {
     let isb = void 0
-    const clonePrevObj = {...prevObj}
-    const cloneNextObj = {...nextObj}
+    const clonePrevObj = { ...prevObj }
+    const cloneNextObj = { ...nextObj }
     if (isSourceData === true) {
       delete clonePrevObj['key']
       delete clonePrevObj['value']
@@ -252,7 +294,10 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       delete cloneNextObj['value']
     }
     for (const attr in clonePrevObj) {
-      if (clonePrevObj[attr] !== undefined && clonePrevObj[attr] === cloneNextObj[attr]) {
+      if (
+        clonePrevObj[attr] !== undefined &&
+        clonePrevObj[attr] === cloneNextObj[attr]
+      ) {
         isb = true
       } else {
         isb = false
@@ -269,7 +314,11 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private rowClick = (record, row, event) => {
-    const { getDataDrillDetail, onCheckTableInteract, onDoInteract } = this.props
+    const {
+      getDataDrillDetail,
+      onCheckTableInteract,
+      onDoInteract
+    } = this.props
     let selectedRow = [...this.state.selectedRow]
     let filterObj = void 0
     if (event.target && event.target.innerHTML) {
@@ -294,62 +343,72 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       if (selectedRow.length === 0) {
         selectedRow.push(recordConcatFilter)
       } else {
-        const isb = selectedRow.some((sr) => this.isSameObj(sr, recordConcatFilter, true))
+        const isb = selectedRow.some((sr) =>
+          this.isSameObj(sr, recordConcatFilter, true)
+        )
         if (isb) {
           for (let index = 0, l = selectedRow.length; index < l; index++) {
-              if (this.isSameObj(selectedRow[index], recordConcatFilter, true)) {
-                selectedRow.splice(index, 1)
-                break
-              }
+            if (this.isSameObj(selectedRow[index], recordConcatFilter, true)) {
+              selectedRow.splice(index, 1)
+              break
+            }
           }
-        } else  {
+        } else {
           selectedRow.push(recordConcatFilter)
         }
       }
     }
 
-    this.setState({
-      selectedRow
-    }, () => {
-      const sourceData = Object.values(this.state.selectedRow)
-      const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
-      if (isInteractiveChart && onDoInteract) {
-        const triggerData = sourceData
-        onDoInteract(triggerData)
+    this.setState(
+      {
+        selectedRow
+      },
+      () => {
+        const sourceData = Object.values(this.state.selectedRow)
+        const isInteractiveChart =
+          onCheckTableInteract && onCheckTableInteract()
+        if (isInteractiveChart && onDoInteract) {
+          const triggerData = sourceData
+          onDoInteract(triggerData)
+        }
       }
-    })
+    )
   }
 
-  private asyncEmitDrillDetail() {
+  private asyncEmitDrillDetail () {
     const { getDataDrillDetail } = this.props
     setTimeout(() => {
       if (this.props.getDataDrillDetail) {
         const sourceData = this.combineFilter()
         const sourceGroup = this.combineGroups()
-        const brushed = [{0: Object.values(sourceData)}]
-        getDataDrillDetail(JSON.stringify({filterObj: sourceData, brushed, sourceData, sourceGroup}))
+        const brushed = [{ 0: Object.values(sourceData) }]
+        getDataDrillDetail(
+          JSON.stringify({
+            filterObj: sourceData,
+            brushed,
+            sourceData,
+            sourceGroup
+          })
+        )
       }
     }, 500)
   }
 
   private combineGroups() {
-    const {group} = this.state.selectItems
+    const { group } = this.state.selectItems
     return group
   }
 
   private combineFilter() {
-    const {cell} = this.state.selectItems
+    const { cell } = this.state.selectItems
     return Object.keys(cell).reduce((iteratee, target) => {
       iteratee = iteratee.concat(cell[target])
       return iteratee
     }, [])
   }
 
-  private getTableStyle (
-    headerFixed: boolean,
-    tableBodyHeght: number
-  ) {
-    const tableStyle: React.CSSProperties = { }
+  private getTableStyle(headerFixed: boolean, tableBodyHeght: number) {
+    const tableStyle: React.CSSProperties = {}
     if (!headerFixed) {
       tableStyle.height = tableBodyHeght
       tableStyle.overflowY = 'auto'
@@ -358,48 +417,52 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private filterSameNeighbourSibings = (arr, targetIndex ) => {
-    let s = targetIndex, e = targetIndex;
-    let flag = -1;
-    let orgIndex = targetIndex;
-  
+    let s = targetIndex
+    let e = targetIndex
+    let flag = -1
+    const orgIndex = targetIndex
+
     do {
-        let target = arr[targetIndex];
-        if (flag=== -1&&targetIndex > 0 && arr[targetIndex - 1] === target) {
-            s = targetIndex -= 1;
-       
-        }else if (flag===1&& arr[targetIndex + 1] === target) {
-            e = (targetIndex += 1);
-        
-        } else if (flag===-1) {
-          flag = 1;
-          targetIndex=orgIndex;
+        const target = arr[targetIndex]
+        if (flag === -1 && targetIndex > 0 && arr[targetIndex - 1] === target) {
+            s = targetIndex -= 1
+        } else if (flag === 1 && arr[targetIndex + 1] === target) {
+            e = (targetIndex += 1)
+        } else if (flag === -1) {
+          flag = 1
+          targetIndex = orgIndex
+        } else {
+            break
         }
-        else {
-            break;
-        }
-  
-    } while (targetIndex > -1 && targetIndex < arr.length);
+
+    } while (targetIndex > -1 && targetIndex < arr.length)
     return { s, e }
   }
 
-  private coustomFilter(array, column, index,) {
-    const nativeIndex = array.reduce((a , b, c) => {return b.index === index ? c : a}, 0)
+  private coustomFilter (array, column, index) {
+    const nativeIndex = array.reduce((a , b, c) => b.index === index ? c : a, 0)
     const columns = array.map((a) => a[column])
-    const {s: start, e: end} = this.filterSameNeighbourSibings(columns, nativeIndex)
-    return array.filter((arr) => (arr['index'] < array[start]['index'] || arr.index > array[end]['index']))
+    const { s: start, e: end } = this.filterSameNeighbourSibings(
+      columns,
+      nativeIndex
+    )
+    return array.filter(
+      (arr) =>
+        arr['index'] < array[start]['index'] || arr.index > array[end]['index']
+    )
   }
 
-  private collectCell = (target, index,dataIndex: string) => (event) => {
-    let {group, cell} = this.state.selectItems
-    const { data} = this.props
+  private collectCell = (target, index, dataIndex: string) => (event) => {
+    let { group, cell } = this.state.selectItems
+    const { data } = this.props
     const groupName = this.matchAttrInBrackets(dataIndex)
     if (this.isValueModelType(groupName)) {
       return
     }
-   
+
     if (group.includes(dataIndex)) {
-      group.forEach((g, i) => g === dataIndex ? group.splice(i, 1) : void 0)
-      const setKeyArray = data.map((obj: {key: number}, index) => ({
+      group.forEach((g, i) => (g === dataIndex ? group.splice(i, 1) : void 0))
+      const setKeyArray = data.map((obj: { key: number }, index) => ({
         ...obj,
         index: obj.key || index,
         key: groupName,
@@ -407,18 +470,22 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       }))
       cell[dataIndex] = this.coustomFilter(setKeyArray, groupName, index)
     } else {
-      let sourceCol = cell[dataIndex]
+      const sourceCol = cell[dataIndex]
       const currentValue = {
         ...target,
         index,
         key: groupName,
         value: target[dataIndex]
       }
-      
+
       if (sourceCol && sourceCol.length) {
         const isb = sourceCol.some((col) => col.index === index)
-        if(isb) {
-          cell[dataIndex] = this.coustomFilter(cell[dataIndex], groupName, index)
+        if (isb) {
+          cell[dataIndex] = this.coustomFilter(
+            cell[dataIndex],
+            groupName,
+            index
+          )
         } else {
           sourceCol.push(currentValue)
         }
@@ -426,42 +493,48 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         cell[dataIndex] = [currentValue]
       }
     }
-    
-    this.setState({
-      selectItems: {...this.state.selectItems}
-    }, () => {
-      this.asyncEmitDrillDetail()
-    })
+
+    this.setState(
+      {
+        selectItems: { ...this.state.selectItems }
+      },
+      () => {
+        this.asyncEmitDrillDetail()
+      }
+    )
   }
-
-
 
   private collectGroups = (target, dataIndex) => (event) => {
     const groupName = this.matchAttrInBrackets(dataIndex)
     if (this.isValueModelType(groupName)) {
       return
     }
-    const {group, cell} = this.state.selectItems
+    const { group, cell } = this.state.selectItems
     if (group.includes(dataIndex)) {
-      group.forEach((a, index) => {if (a === dataIndex) group.splice(index, 1)})
+      group.forEach((a, index) => {
+        if (a === dataIndex) group.splice(index, 1)
+      })
     } else {
       group.push(dataIndex)
     }
     delete cell[dataIndex]
-    this.setState({
-      selectItems: {...this.state.selectItems}
-    },() => {
-      this.asyncEmitDrillDetail()
-    })
+    this.setState(
+      {
+        selectItems: { ...this.state.selectItems }
+      },
+      () => {
+        this.asyncEmitDrillDetail()
+      }
+    )
   }
 
   private onCellClassName = (target, index, dataIndex) => {
     const { group, cell } = this.state.selectItems
     let result = ''
     Object.keys(cell).forEach((key) => {
-      if (dataIndex === key){
-        cell[key].forEach(ck => {
-          if(index === ck.index) {
+      if (dataIndex === key) {
+        cell[key].forEach((ck) => {
+          if (index === ck.index) {
             result = Styles.select
           }
         })
@@ -478,19 +551,17 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return hasProperty(target, modelName) === ViewModelTypes.Value
   }
 
- 
-
   private getModelTypecollectByModel = () => {
-    const {model} = this.props
+    const { model } = this.props
     return Object.keys(model).reduce((iteratee, target) => {
-       iteratee[target] = hasProperty(model[target], 'modelType')
-       return iteratee
+      iteratee[target] = hasProperty(model[target], 'modelType')
+      return iteratee
     }, {})
   }
 
   private onHeadCellClassName = (target, dataIndex) => {
-    const {group} = this.state.selectItems
-    if(group && group.includes(dataIndex)){
+    const { group } = this.state.selectItems
+    if (group && group.includes(dataIndex)) {
       return Styles.select
     }
     return ''
@@ -507,7 +578,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
             onClick: this.collectGroups(target, col.dataIndex)
           }
         },
-        onCell: (target, index) => { // fix index in pagination
+        onCell: (target, index) => {
+          // fix index in pagination
           return {
             ...col.onCell(target, index),
             className: this.onCellClassName(target, index, col.dataIndex),
@@ -516,7 +588,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         }
       }
     } else {
-      return {...col}
+      return { ...col }
     }
   }
 
@@ -537,27 +609,42 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return this.enhancerColumns(column)
   }
 
-  public render () {
-
+  public render() {
     const { data, chartStyles, width } = this.props
     const { headerFixed, bordered, withPaging, size } = chartStyles.table
-    const { tablePagination, tableColumns, tableBodyHeight, mapTableHeaderConfig, containerWidthRatio } = this.state
-    const adjustedTableColumns = this.adjustTableColumns(tableColumns, mapTableHeaderConfig, containerWidthRatio)
+    const {
+      tablePagination,
+      tableColumns,
+      tableBodyHeight,
+      mapTableHeaderConfig,
+      containerWidthRatio
+    } = this.state
+    const adjustedTableColumns = this.adjustTableColumns(
+      tableColumns,
+      mapTableHeaderConfig,
+      containerWidthRatio
+    )
     const getEnhancerColumn = this.getEnhancerColumn(adjustedTableColumns)
     const paginationConfig: PaginationConfig = {
       ...this.basePagination,
       ...tablePagination
     }
-    const scroll = this.getTableScroll(adjustedTableColumns, width, headerFixed, tableBodyHeight)
+    const scroll = this.getTableScroll(
+      adjustedTableColumns,
+      width,
+      headerFixed,
+      tableBodyHeight
+    )
     const style = this.getTableStyle(headerFixed, tableBodyHeight)
 
-    const paginationWithoutTotal = withPaging && tablePagination.total === -1 ? (
-      <PaginationWithoutTotal
-        dataLength={data.length}
-        size="small"
-        {...paginationConfig}
-      />
-    ) : null
+    const paginationWithoutTotal =
+      withPaging && tablePagination.total === -1 ? (
+        <PaginationWithoutTotal
+          dataLength={data.length}
+          size="small"
+          {...paginationConfig}
+        />
+      ) : null
     const tableCls = classnames({
       [Styles.table]: true,
       [Styles.noBorder]: bordered !== undefined && !bordered
@@ -575,7 +662,11 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
           components={tableComponents}
           columns={getEnhancerColumn}
           // columns={adjustedTableColumns}
-          pagination={withPaging && tablePagination.total !== -1 ? paginationConfig : false}
+          pagination={
+            withPaging && tablePagination.total !== -1
+              ? paginationConfig
+              : false
+          }
           scroll={scroll}
           bordered={bordered}
           onRowClick={this.rowClick}
@@ -589,8 +680,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
 export default Table
 
-
-function getTableColumns (props: IChartProps) {
+function getTableColumns(props: IChartProps) {
   const { chartStyles, width } = props
   if (!chartStyles.table) {
     return {
@@ -599,10 +689,17 @@ function getTableColumns (props: IChartProps) {
     }
   }
   const { cols, rows, metrics, data, queryVariables } = props
-  const { headerConfig, columnsConfig, autoMergeCell, leftFixedColumns, rightFixedColumns, withNoAggregators } = chartStyles.table
+  const {
+    headerConfig,
+    columnsConfig,
+    autoMergeCell,
+    leftFixedColumns,
+    rightFixedColumns,
+    withNoAggregators
+  } = chartStyles.table
   const tableColumns: Array<ColumnProps<any>> = []
   const mapTableHeaderConfig: IMapTableHeaderConfig = {}
-  const fixedColumnInfo: {[key: string]: number} = {}
+  const fixedColumnInfo: { [key: string]: number } = {}
   let calculatedTotalWidth = 0
   let fixedTotalWidth = 0
 
@@ -611,17 +708,17 @@ function getTableColumns (props: IChartProps) {
     const headerText = getFieldAlias(field, queryVariables || {}) || name
     const column: ColumnProps<any> = {
       key: name,
-      title: (field && field.desc) ? (
-        <>
-          {headerText}
-          <Tooltip
-            title={field.desc}
-            placement="top"
-          >
-            <Icon className={Styles.headerIcon} type="info-circle" />
-          </Tooltip>
-        </>
-      ) : headerText,
+      title:
+        field && field.desc ? (
+          <>
+            {headerText}
+            <Tooltip title={field.desc} placement="top">
+              <Icon className={Styles.headerIcon} type="info-circle" />
+            </Tooltip>
+          </>
+        ) : (
+          headerText
+        ),
       dataIndex: name
     }
     if (autoMergeCell) {
@@ -635,16 +732,30 @@ function getTableColumns (props: IChartProps) {
     findChildConfig(headerConfig, 'headerName', 'children', name, (config) => {
       headerConfigItem = config
     })
-    const columnConfigItem = columnsConfig.find((cfg) => cfg.columnName === name)
-    const isFixed = columnConfigItem
-      && columnConfigItem.style
-      && columnConfigItem.style.inflexible
+    const columnConfigItem = columnsConfig.find(
+      (cfg) => cfg.columnName === name
+    )
+    const isFixed =
+      columnConfigItem &&
+      columnConfigItem.style &&
+      columnConfigItem.style.inflexible
     if (isFixed) {
       column.width = fixedColumnInfo[column.key] = columnConfigItem.style.width
       fixedTotalWidth += column.width
     } else {
       column.width = getDataColumnWidth(name, columnConfigItem, format, data)
-      column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
+      let headerWidth = computeCellWidth(
+        headerConfigItem && headerConfigItem.style,
+        headerText
+      )
+      if (dimension.field?.desc) {
+        headerWidth += (14 + 16)
+      }
+      if (columnConfigItem?.sort) {
+        headerWidth += 30
+      }
+      column.width = Math.max(+column.width, headerWidth)
+      column.width = Math.max(+column.width, headerWidth)
     }
     calculatedTotalWidth += column.width
     if (columnConfigItem) {
@@ -668,33 +779,48 @@ function getTableColumns (props: IChartProps) {
     const headerText = getFieldAlias(field, queryVariables || {}) || expression
     const column: ColumnProps<any> = {
       key: name,
-      title: (field && field.desc) ? (
-        <>
-          {headerText}
-          <Tooltip
-            title={field.desc}
-            placement="top"
-          >
-            <Icon className={Styles.headerIcon} type="info-circle" />
-          </Tooltip>
-        </>
-      ) : headerText,
+      title:
+        field && field.desc ? (
+          <>
+            {headerText}
+            <Tooltip title={field.desc} placement="top">
+              <Icon className={Styles.headerIcon} type="info-circle" />
+            </Tooltip>
+          </>
+        ) : (
+          headerText
+        ),
       dataIndex: expression
     }
     let headerConfigItem: ITableHeaderConfig = null
     findChildConfig(headerConfig, 'headerName', 'children', name, (config) => {
       headerConfigItem = config
     })
-    const columnConfigItem = columnsConfig.find((cfg) => cfg.columnName === name)
-    const isFixed = columnConfigItem
-      && columnConfigItem.style
-      && columnConfigItem.style.inflexible
+    const columnConfigItem = columnsConfig.find(
+      (cfg) => cfg.columnName === name
+    )
+    const isFixed =
+      columnConfigItem &&
+      columnConfigItem.style &&
+      columnConfigItem.style.inflexible
     if (isFixed) {
       column.width = fixedColumnInfo[column.key] = columnConfigItem.style.width
       fixedTotalWidth += column.width
     } else {
-      column.width = getDataColumnWidth(expression, columnConfigItem, format, data)
-      column.width = Math.max(+column.width, computeCellWidth(headerConfigItem && headerConfigItem.style, headerText))
+      column.width = getDataColumnWidth(
+        expression,
+        columnConfigItem,
+        format,
+        data
+      )
+      let headerWidth = computeCellWidth(
+        headerConfigItem && headerConfigItem.style,
+        headerText
+      )
+      if (metric.field?.desc) {
+        headerWidth += 14 + 16
+      }
+      column.width = Math.max(+column.width, headerWidth)
     }
     calculatedTotalWidth += column.width
     if (columnConfigItem) {
@@ -713,9 +839,10 @@ function getTableColumns (props: IChartProps) {
   // adjust column width
   const flexibleTotalWidth = calculatedTotalWidth - fixedTotalWidth
   const flexibleContainerWidth = width - fixedTotalWidth
-  const containerWidthRatio = flexibleTotalWidth < flexibleContainerWidth
-    ? flexibleContainerWidth / flexibleTotalWidth
-    : 1
+  const containerWidthRatio =
+    flexibleTotalWidth < flexibleContainerWidth
+      ? flexibleContainerWidth / flexibleTotalWidth
+      : 1
   tableColumns.forEach((column) => {
     if (fixedColumnInfo[column.key] === void 0) {
       // Math.floor to avoid creating float column width value and scrollbar showing
@@ -725,46 +852,67 @@ function getTableColumns (props: IChartProps) {
   })
 
   const groupedColumns: Array<ColumnProps<any>> = []
-  traverseConfig<ITableHeaderConfig>(headerConfig, 'children', (currentConfig) => {
-    const { key, isGroup, headerName, style } = currentConfig
-    if (!isGroup) { return }
+  traverseConfig<ITableHeaderConfig>(
+    headerConfig,
+    'children',
+    (currentConfig) => {
+      const { key, isGroup, headerName, style } = currentConfig
+      if (!isGroup) {
+        return
+      }
 
-    const childrenConfig = currentConfig.children.filter(({ isGroup, key, headerName }) =>
-      (!isGroup && tableColumns.findIndex((col) => col.key === headerName) >= 0) ||
-      (isGroup && groupedColumns.findIndex((col) => col.key === key) >= 0)
-    )
-    if (!childrenConfig.length) { return }
+      const childrenConfig = currentConfig.children.filter(
+        ({ isGroup, key, headerName }) =>
+          (!isGroup &&
+            tableColumns.findIndex((col) => col.key === headerName) >= 0) ||
+          (isGroup && groupedColumns.findIndex((col) => col.key === key) >= 0)
+      )
+      if (!childrenConfig.length) {
+        return
+      }
 
-    const groupedColumn: ColumnProps<any> = {
-      key,
-      title: headerName,
-      width: 0,
-      children: []
+      const groupedColumn: ColumnProps<any> = {
+        key,
+        title: headerName,
+        width: 0,
+        children: []
+      }
+
+      mapTableHeaderConfig[key] = currentConfig
+
+      childrenConfig.sort((cfg1, cfg2) => {
+        if (cfg1.isGroup || cfg2.isGroup) {
+          return 0
+        }
+        const cfg1Idx = tableColumns.findIndex(
+          (column) => column.key === cfg1.headerName
+        )
+        const cfg2Idx = tableColumns.findIndex(
+          (column) => column.key === cfg2.headerName
+        )
+        return cfg1Idx - cfg2Idx
+      })
+
+      let insertIdx = Infinity
+      childrenConfig.forEach(({ isGroup, key, headerName }) => {
+        const columnIdx = tableColumns.findIndex((column) =>
+          column.children ? column.key === key : column.key === headerName
+        )
+        insertIdx = Math.min(insertIdx, columnIdx)
+        groupedColumn.children.push(tableColumns[columnIdx])
+        groupedColumn.width =
+          +groupedColumn.width + +tableColumns[columnIdx].width
+        tableColumns.splice(columnIdx, 1)
+      })
+      tableColumns.splice(insertIdx, 0, groupedColumn)
+      groupedColumns.push(groupedColumn)
     }
-
-    mapTableHeaderConfig[key] = currentConfig
-
-    childrenConfig.sort((cfg1, cfg2) => {
-      if (cfg1.isGroup || cfg2.isGroup) { return 0 }
-      const cfg1Idx = tableColumns.findIndex((column) => column.key === cfg1.headerName)
-      const cfg2Idx = tableColumns.findIndex((column) => column.key === cfg2.headerName)
-      return cfg1Idx - cfg2Idx
-    })
-
-    let insertIdx = Infinity
-    childrenConfig.forEach(({ isGroup, key, headerName }) => {
-      const columnIdx = tableColumns.findIndex((column) => column.children ? column.key === key : column.key === headerName)
-      insertIdx = Math.min(insertIdx, columnIdx)
-      groupedColumn.children.push(tableColumns[columnIdx])
-      groupedColumn.width = +groupedColumn.width + (+tableColumns[columnIdx].width)
-      tableColumns.splice(columnIdx, 1)
-    })
-    tableColumns.splice(insertIdx, 0, groupedColumn)
-    groupedColumns.push(groupedColumn)
-  })
+  )
 
   tableColumns.forEach((column) => {
-    const name = (column.children && column.children.length ? column.title : column.dataIndex) as string
+    const name = (column.children && column.children.length
+      ? column.title
+      : column.dataIndex) as string
     if (leftFixedColumns.includes(name)) {
       column.fixed = 'left'
     }
@@ -776,7 +924,7 @@ function getTableColumns (props: IChartProps) {
   return { tableColumns, mapTableHeaderConfig, containerWidthRatio }
 }
 
-function getPaginationOptions (props: IChartProps) {
+function getPaginationOptions(props: IChartProps) {
   const { chartStyles, width, pagination } = props
   // fixme
   let pageNo = void 0
@@ -784,7 +932,7 @@ function getPaginationOptions (props: IChartProps) {
   let totalCount = void 0
   if (pagination) {
     pageNo = pagination.pageNo
-    pageSize =  pagination.pageSize
+    pageSize = pagination.pageSize
     totalCount = pagination.totalCount
   }
   // const { pageNo, pageSize, totalCount } = pagination

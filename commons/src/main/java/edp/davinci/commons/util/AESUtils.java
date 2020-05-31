@@ -35,10 +35,17 @@ public class AESUtils {
 
     }
 
-    public static String encrypt(String src, String key) {
-        if (StringUtils.isEmpty(key)) {
-            key = AES_KEY;
+    private static String garbleSalt(String src) {
+        if (StringUtils.isEmpty(src)) {
+            return AES_KEY;
+        } else {
+            src += AES_KEY;
+            return src.substring(0, 16);
         }
+    }
+
+    public static String encrypt(String src, String key) {
+        key = garbleSalt(key);
         try {
             byte[] raw = key.getBytes();
             SecretKeySpec skeySpec = new SecretKeySpec(raw, KEY_AES);
@@ -53,9 +60,7 @@ public class AESUtils {
     }
 
     public static String decrypt(String src, String key) {
-        if (StringUtils.isEmpty(key)) {
-            key = AES_KEY;
-        }
+        key = garbleSalt(key);
         try {
             byte[] raw = key.getBytes();
             SecretKeySpec skeySpec = new SecretKeySpec(raw, KEY_AES);
