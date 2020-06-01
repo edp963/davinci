@@ -22,6 +22,11 @@ import { createSelector } from 'reselect'
 
 const selectGlobal = (state) => state.global
 
+const makeSelectLoginLoading = () => createSelector(
+  selectGlobal,
+  (globalState) => globalState.loading
+)
+
 const makeSelectLogged = () => createSelector(
   selectGlobal,
   (globalState) => globalState.logged
@@ -34,6 +39,7 @@ const makeSelectLoginUser = () => createSelector(
 
 export {
   selectGlobal,
+  makeSelectLoginLoading,
   makeSelectLogged,
   makeSelectLoginUser
 }

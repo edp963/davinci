@@ -21,7 +21,7 @@
 import { call, put, all, takeLatest } from 'redux-saga/effects'
 
 import { LOGIN } from './constants'
-import { logged } from './actions'
+import { logged, logonFail } from './actions'
 
 import request from 'utils/request'
 import { errorHandler } from 'utils/util'
@@ -41,6 +41,7 @@ export function* login (action) {
     yield put(logged(userInfo.payload))
     resolve()
   } catch (err) {
+    yield put(logonFail(err))
     errorHandler(err)
   }
 }

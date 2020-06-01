@@ -20,11 +20,14 @@
 
 import produce from 'immer'
 import {
+  LOGIN,
   LOGGED,
-  LOGOUT
+  LOGOUT,
+  LOGON_FAILURE
 } from './constants'
 
 const initialState = {
+  loading: false,
   logged: false,
   loginUser: null
 }
@@ -32,9 +35,16 @@ const initialState = {
 const appReducer = (state = initialState, action) =>
   produce(state, (draft) => {
     switch (action.type) {
+      case LOGIN:
+        draft.loading = true
+        break
       case LOGGED:
+        draft.loading = false
         draft.logged = true
         draft.loginUser = action.payload.user
+        break
+      case LOGON_FAILURE:
+        draft.loading = false
         break
       case LOGOUT:
         draft.logged = false
