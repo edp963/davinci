@@ -5510,7 +5510,8 @@ function parseTableHeader(headerConfig, fields, queryVars) {
     return headerCells
 }
 
-function getFieldsHeader(widgetConfigJson, queryVars) {
+function getFieldsHeader(widgetConfigJson, queryVarsJson) {
+    var queryVars = JSON.parse(queryVarsJson || '[]')
     if (!widgetConfigJson) {
         return []
     }

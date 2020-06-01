@@ -10,6 +10,7 @@
 
 package edp.davinci.common.utils;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import edp.davinci.core.common.Constants;
@@ -67,8 +68,9 @@ public class ScriptUtiils {
     public static synchronized List<ExcelHeader> formatHeader(String json, List<Param> params) {
 
         Value js = ScriptEnum.INSTANCE.tableFormatJs;
-        Value result = js.execute(json, params);
+        Value result = js.execute(json,  JSON.toJSONString(params));
         List<ExcelHeader> excelHeaders = JSONArray.parseArray(result.toString(), ExcelHeader.class);
         return excelHeaders;
     }
+
 }
