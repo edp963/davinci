@@ -62,6 +62,7 @@
     "@babel/polyfill": "^7.8.3",
     "ace-builds": "^1.4.9",
     "antd": "^3.26.15",
+    "array-flat-polyfill": "^1.0.1",
     "axios": "^0.19.0",
     "bootstrap-datepicker": "^1.8.0",
     "chalk": "2.4.2",
