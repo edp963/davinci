@@ -146,9 +146,7 @@ export const deserialize = (el: HTMLElement): Node[] => {
     parent = el.childNodes[0]
   }
 
-  const children: any[] = Array.from(parent.childNodes)
-    .map(deserialize)
-    .reduce((acc, child) => acc.concat(child), [])
+  const children: any[] = Array.from(parent.childNodes).map(deserialize).flat()
 
   if (el.nodeName === 'BODY') {
     return jsx('fragment', {}, children)
