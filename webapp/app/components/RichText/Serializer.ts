@@ -95,7 +95,9 @@ const serializeNode = (node: Node) => {
     case ElementTypes.Link:
       return `<a href="${node.url}" target="_blank">${children}</a>`
     case ElementTypes.Image:
-      return `<div>${children}<img src="${node.url}" ${node.width ? `width="${node.width}"` : ''}/></div>`
+      return `<div>${children}<img src="${node.url}" ${
+        node.width ? `width="${node.width}"` : ''
+      }/></div>`
 
     case ElementTypes.Table:
       return `<table><tbody>${children}</tbody></table>`
@@ -144,7 +146,9 @@ export const deserialize = (el: HTMLElement): Node[] => {
     parent = el.childNodes[0]
   }
 
-  const children: any[] = Array.from(parent.childNodes).map(deserialize).flat()
+  const children: any[] = Array.from(parent.childNodes)
+    .map(deserialize)
+    .reduce((acc, child) => acc.concat(child), [])
 
   if (el.nodeName === 'BODY') {
     return jsx('fragment', {}, children)
