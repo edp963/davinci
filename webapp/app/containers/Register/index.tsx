@@ -18,7 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
+import React, { ChangeEvent, FormEvent } from 'react'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
 import { createStructuredSelector } from 'reselect'
@@ -29,14 +29,14 @@ import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import { Icon, message } from 'antd'
+import { message } from 'antd'
 import RegisterForm from './RegisterForm'
 import SendEmailTips from './SendEmailTips'
-const styles = require('../Login/Login.less')
 import { checkNameAction } from '../App/actions'
 import { signup, sendMailAgain } from './actions'
 import { makeSelectSignupLoading } from './selectors'
 import { RouteComponentProps } from 'react-router-dom'
+import styles from 'containers/Login/Login.less'
 
 interface IRegisterProps {
   signupLoading: boolean
@@ -66,31 +66,32 @@ export class Register extends React.PureComponent<IRegisterProps & RouteComponen
     }
   }
 
-  private changeUsername = (e) => {
+  private changeUsername = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       username: e.target.value.trim()
     })
   }
 
-  private onChangeEmail = (e) => {
+  private changeEmail = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       email: e.target.value.trim()
     })
   }
 
-  private changePassword = (e) => {
+  private changePassword = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       password: e.target.value.trim()
     })
   }
 
-  private changePassword2 = (e) => {
+  private changePassword2 = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       password2: e.target.value.trim()
     })
   }
 
-  private signUp = () => {
+  private signUp = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     const { onSignup } = this.props
     const { username, email, password, password2} = this.state
     const emailRep = /^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$/
@@ -145,24 +146,14 @@ export class Register extends React.PureComponent<IRegisterProps & RouteComponen
             email={this.state.email}
             password={this.state.password}
             password2={this.state.password2}
+            loading={signupLoading}
             onChangeUsername={this.changeUsername}
-            onChangeEmail={this.onChangeEmail}
+            onChangeEmail={this.changeEmail}
             onChangePassword={this.changePassword}
             onChangePassword2={this.changePassword2}
             onCheckName={onCheckName}
             onSignup={this.signUp}
           />
-          <button
-            disabled={signupLoading}
-            onClick={this.signUp}
-          >
-            {
-              signupLoading
-                ? <Icon type="loading" />
-                : ''
-            }
-            注册
-          </button>
           <p className={styles.tips}>
             <span>已有davinci账号， </span>
             <a href="javascript:;" onClick={this.toLogin}>点击登录</a>

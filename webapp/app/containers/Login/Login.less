@@ -13,26 +13,7 @@
 
   .form {
     width: 100%;
-    margin-bottom: 16px;
-  }
-
-  button {
-    width: 75%;
-    height: 36px;
-    background-color: transparent;
-    border: 1px solid @white;
-    border-radius: 3px;
-    color: @white;
-    font-size: 1.15em;
-    outline: none;
-
-    &[disabled] {
-      background-color: fade(@white, 20);
-    }
-
-    i {
-      margin-right: 8px;
-    }
+    text-align: center;
   }
 }
 
@@ -43,7 +24,7 @@
   flex-direction: row;
   align-items: center;
 
-  &:last-child {
+  &:last-of-type {
     border-bottom: 0;
   }
 
@@ -79,6 +60,26 @@
       -webkit-text-fill-color: @white;
       transition: background-color 9999s ease-in-out 0s;
     }
+  }
+}
+
+.submit {
+  width: 75%;
+  height: 36px;
+  background-color: transparent;
+  margin-top: 16px;
+  border: 1px solid @white;
+  border-radius: 3px;
+  color: @white;
+  font-size: 1.15em;
+  outline: none;
+
+  &[disabled] {
+    background-color: fade(@white, 20);
+  }
+
+  i {
+    margin-right: 8px;
   }
 }
 
