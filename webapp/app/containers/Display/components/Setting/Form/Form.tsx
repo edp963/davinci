@@ -48,7 +48,9 @@ const SettingForm: React.FC<ISettingFormProps> = (props, ref) => {
 
   return (
     <Form className="display-setting-form" labelAlign="left">
-      <SlideSettingContext.Provider value={{ form, slideId, layerId, size: 'small' }}>
+      <SlideSettingContext.Provider
+        value={{ form, slideId, layerId, size: 'small' }}
+      >
         {setting.params.map((param) => (
           <ItemGroup key={param.name} param={param} />
         ))}

@@ -74,6 +74,7 @@ export interface IDisplayState {
   lastLayers: ILayerFormed[]
 
   editorBaselines: IBaseline[]
+  operateItemParams: ILayerFormed[]
 
   sharePanel: IDisplaySharePanelState
 

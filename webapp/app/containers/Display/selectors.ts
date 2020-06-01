@@ -163,6 +163,11 @@ const makeSelectCurrentOtherLayerList = () =>
     }
   )
 
+const makeSelectCurrentOperateItemParams = () => (state: { display: IDisplayState }) =>
+state.display
+  ? state.display.operateItemParams
+  : []
+
 const makeSelectCurrentDisplayWidgets = () =>
   createSelector(
     selectDisplay,
@@ -221,6 +226,7 @@ export {
   //
   makeSelectCurrentOperatingLayerList,
   makeSelectCurrentOtherLayerList,
+  makeSelectCurrentOperateItemParams,
   //
   makeSelectCurrentDisplayWidgets,
   makeSelectClipboardLayers,

@@ -65,6 +65,7 @@ export const initialState: IDisplayState = {
   lastLayers: [],
 
   editorBaselines: [],
+  operateItemParams: [],
 
   loading: {
     shareToken: false,
@@ -293,7 +294,45 @@ const displayReducer = (
           ].resizing = !action.payload.finish
         })
         break
-
+      case ActionTypes.DRAG_LAYER_ADJUSTED_INDEPENDENCE: {
+        const {
+          slideSize: {
+            width: slideWidth,
+            height: slideHeight
+          },
+          layerIds,
+          deltaPosition
+        } = action.payload
+        const isEmpty = draft.operateItemParams.length === 0
+        layerIds.forEach((layerId) => {
+          if (isEmpty) {
+            draft.operateItemParams.push({...draft.slideLayers[draft.currentSlideId][layerId]})
+          }
+          const item = draft.operateItemParams.find((item) => item.id === layerId)
+          item.params.positionX += deltaPosition.deltaX
+          item.params.positionY += deltaPosition.deltaY
+          if (item.params.positionX < 0) {
+            item.params.positionX = 0
+          } else if (
+            item.params.positionX + item.params.width >
+            slideWidth
+          ) {
+            item.params.positionX = slideWidth - item.params.width
+          }
+          if (item.params.positionY < 0) {
+            item.params.positionY = 0
+          } else if (
+            item.params.positionY + item.params.height >
+            slideHeight
+          ) {
+            item.params.positionY = slideHeight - item.params.height
+          }
+          draft.slideLayersOperationInfo[draft.currentSlideId][
+            layerId
+          ].dragging = true
+        })
+        break
+      }
       case ActionTypes.DRAG_LAYER_ADJUSTED:
         const {
           width: slideWidth,
@@ -361,6 +400,10 @@ const displayReducer = (
 
       case ActionTypes.CLEAR_EDITOR_BASELINES:
         draft.editorBaselines = []
+        draft.operateItemParams = []
+        Object.values(draft.slideLayersOperationInfo[draft.currentSlideId]).forEach((item) => {
+          item.dragging = false
+        })
         break
 
       case ActionTypes.SHOW_EDITOR_BASELINES:
