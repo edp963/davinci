@@ -76,7 +76,7 @@ const AddForm: React.FC<IInviteMemberProps & FormComponentProps> = (
                 showSearch
                 filterOption={false}
                 onSearch={debouncedSearch}
-                notFoundContent={!fetching ? <Spin size="small" /> : null}
+                notFoundContent={fetching ? <Spin size="small" /> : null}
               >
                 {getOptions}
               </Select>
@@ -86,7 +86,8 @@ const AddForm: React.FC<IInviteMemberProps & FormComponentProps> = (
             {getFieldDecorator(
               'needEmail',
               {
-                initialValue: false
+                initialValue: true,
+                valuePropName: 'checked'
               }
             )(<Checkbox>需要被邀请成员邮件确认</Checkbox>)}
           </FormItem>

@@ -146,7 +146,7 @@ export class MemberList extends React.PureComponent<
     const { currentOrganization } = this.props
     this.MemberForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { members, needEmail} = values
+        const { members, needEmail } = values
         const orgId = currentOrganization.id
         this.props.onInviteMember(orgId, members, needEmail, () => {
           this.props.loadOrganizationsMembers(Number(orgId))
@@ -322,12 +322,10 @@ export class MemberList extends React.PureComponent<
         render: (text, record) => {
           return (
             <span>
-              <Popover
-                title="角色列表"
-                content={this.getContent(record)}
-                onMouseEnter={this.getRoleList(record)}
-              >
-                <a href="javascript:;">获取角色列表</a>
+              <Popover title="角色列表" content={this.getContent(record)}>
+                <a href="javascript:;" onMouseEnter={this.getRoleList(record)}>
+                  获取角色列表
+                </a>
               </Popover>
               {record?.user?.id !== loginUser.id ? (
                 currentOrganization?.role === 1 ? (
