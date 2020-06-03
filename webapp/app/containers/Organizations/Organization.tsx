@@ -159,14 +159,14 @@ export class Organization extends React.PureComponent <IOrganizationProps & Rout
 }
 
 const mapStateToProps = createStructuredSelector({
-  starUserList: makeSelectStarUserList(),
   loginUser: makeSelectLoginUser(),
+  starUserList: makeSelectStarUserList(),
   organizations: makeSelectOrganizations(),
+  inviteMemberList: makeSelectInviteMemberList(),
   currentOrganization: makeSelectCurrentOrganizations(),
-  currentOrganizationProjects: makeSelectCurrentOrganizationProjects(),
-  currentOrganizationProjectsDetail: makeSelectCurrentOrganizationProjectsDetail(),
   currentOrganizationMembers: makeSelectCurrentOrganizationMembers(),
-  inviteMemberList: makeSelectInviteMemberList()
+  currentOrganizationProjects: makeSelectCurrentOrganizationProjects(),
+  currentOrganizationProjectsDetail: makeSelectCurrentOrganizationProjectsDetail()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -178,13 +178,11 @@ export function mapDispatchToProps (dispatch) {
     onEditOrganization: (organization) => dispatch(OrganizationActions.editOrganization(organization)),
     onDeleteOrganization: (id, resolve) => dispatch(OrganizationActions.deleteOrganization(id, resolve)),
     onSearchMember: (keyword) => dispatch(OrganizationActions.searchMember(keyword)),
-    onInviteMember: (orgId, memId) => dispatch(OrganizationActions.inviteMember(orgId, memId)),
+    onInviteMember: (orgId, members, needEmail, resolve) => dispatch(OrganizationActions.inviteMember(orgId, members, needEmail, resolve)),
     onDeleteOrganizationMember: (id, resolve) => dispatch(OrganizationActions.deleteOrganizationMember(id, resolve)),
     onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(OrganizationActions.changeOrganizationMemberRole(id, role, resolve)),
     onGetRoleListByMemberId: (orgId, memberId, resolve) => dispatch(OrganizationActions.getRoleListByMemberId(orgId, memberId, resolve))
   }
-
-  
 }
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
