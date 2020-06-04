@@ -40,7 +40,7 @@ public class MemDashboardWidgetCreate {
     @Min(value = 0, message = "Invalid width")
     private Integer width;
 
-    @Min(value = 0, message = "Invalid heidget")
+    @Min(value = 0, message = "Invalid height")
     private Integer height;
 
     private Boolean polling = false;

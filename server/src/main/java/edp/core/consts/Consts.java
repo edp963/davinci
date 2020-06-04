@@ -31,6 +31,8 @@ public class Consts {
 
     public static final String SLASH = "/";
 
+    public static final String BACK_SLASH = "\\";
+
     public static final String DOUBLE_SLASH = "//";
 
     public static final String SPACE = " ";
@@ -152,6 +154,9 @@ public class Consts {
     public static final String REG_SENSITIVE_SQL = "drop\\s|alter\\s|grant\\s|insert\\s|replace\\s|delete\\s|truncate\\s|update\\s|remove\\s";
     public static final Pattern PATTERN_SENSITIVE_SQL = Pattern.compile(REG_SENSITIVE_SQL);
 
+    private static final String REG_WITH_SQL_FRAGMENT = "((?i)WITH[\\s\\S]+(?i)AS?\\s*\\([\\s\\S]+\\))\\s*(?i)SELECT";
+    public static final Pattern WITH_SQL_FRAGMENT = Pattern.compile(REG_WITH_SQL_FRAGMENT);
+
     /**
      * 匹配多行sql注解正则
      */
@@ -167,7 +172,6 @@ public class Consts {
     public static final Pattern PATTERN_DB_COLUMN_TYPE = Pattern.compile("^.*\\s*\\(.*\\)$");
 
     public static final Pattern PATTERN_JDBC_TYPE = Pattern.compile("jdbc:\\w+");
-
 
     public static final String DIR_DOWNLOAD = File.separator + "download" + File.separator;
 
@@ -195,6 +199,5 @@ public class Consts {
 
     public static final String JDBC_DATASOURCE_DEFAULT_VERSION = "Default";
 
-    public static final String PATH_EXT_FORMATER = "ext" + File.separator + "%s" + File.separator + "%s" + File.separator;
-
+    public static final String PATH_EXT_FORMATER = "lib" + File.separator  + "ext" + File.separator + "%s" + File.separator + "%s" + File.separator;
 }

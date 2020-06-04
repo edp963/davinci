@@ -26,10 +26,7 @@ import java.io.File;
 @Data
 public class ImageContent {
     private int order;
-
-
     private Long cId;
-
     private String desc;
     private File imageFile;
     private String url;

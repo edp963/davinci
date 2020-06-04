@@ -1,9 +1,9 @@
-import * as React from 'react'
+import React from 'react'
 
 import { Button, Tooltip, Popover, Col, Popconfirm } from 'antd'
 import { ButtonProps } from 'antd/lib/button/button'
 
-import { IProject } from 'containers/Projects'
+import { IProject } from 'containers/Projects/types'
 import { ICurrentDashboard } from '../'
 
 import ModulePermission from 'containers/Account/components/checkModulePermission'

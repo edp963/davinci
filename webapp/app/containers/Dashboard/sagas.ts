@@ -21,11 +21,6 @@
 import { call, all, put, takeLatest, takeEvery } from 'redux-saga/effects'
 
 import {
-  LOAD_DASHBOARDS,
-  ADD_DASHBOARD,
-  EDIT_DASHBOARD,
-  EDIT_CURRENT_DASHBOARD,
-  DELETE_DASHBOARD,
   LOAD_DASHBOARD_DETAIL,
   ADD_DASHBOARD_ITEMS,
   EDIT_DASHBOARD_ITEM,
@@ -37,16 +32,6 @@ import {
 } from './constants'
 
 import {
-  dashboardsLoaded,
-  loadDashboardsFail,
-  dashboardAdded,
-  addDashboardFail,
-  dashboardEdited,
-  editDashboardFail,
-  currentDashboardEdited,
-  editCurrentDashboardFail,
-  dashboardDeleted,
-  deleteDashboardFail,
   dashboardDetailLoaded,
   loadDashboardDetailFail,
   dashboardItemsAdded,
@@ -70,87 +55,6 @@ import {
 import request from 'utils/request'
 import { errorHandler } from 'utils/util'
 import api from 'utils/api'
-import config, { env } from 'app/globalConfig'
-const shareHost = config[env].shareHost
-
-export function* getDashboards (action) {
-  const { payload } = action
-  try {
-    const dashboards = yield call(request, `${api.portal}/${payload.portalId}/dashboards`)
-    yield put(dashboardsLoaded(dashboards.payload))
-    payload.resolve(dashboards.payload)
-  } catch (err) {
-    yield put(loadDashboardsFail())
-    errorHandler(err)
-  }
-}
-
-export function* addDashboard (action) {
-  const { payload } = action
-  const { dashboard, resolve } = payload
-  try {
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: `${api.portal}/${dashboard.dashboardPortalId}/dashboards`,
-      data: dashboard
-    })
-    yield put(dashboardAdded(asyncData.payload))
-    resolve(asyncData.payload.id)
-  } catch (err) {
-    yield put(addDashboardFail())
-    errorHandler(err)
-  }
-}
-
-export function* editDashboard (action) {
-  const { payload } = action
-  const { formType, dashboard, resolve } = payload
-  try {
-    yield call(request, {
-      method: 'put',
-      url: `${api.portal}/${dashboard[0].dashboardPortalId}/dashboards`,
-      data: dashboard
-    })
-    yield put(dashboardEdited(dashboard, formType))
-    resolve(dashboard)
-  } catch (err) {
-    yield put(editDashboardFail())
-    errorHandler(err)
-  }
-}
-
-export function* editCurrentDashboard (action) {
-  const { dashboard, resolve } = action.payload
-  try {
-    yield call(request, {
-      method: 'put',
-      url: `${api.portal}/${dashboard.dashboardPortalId}/dashboards`,
-      data: [dashboard]
-    })
-    yield put(currentDashboardEdited(dashboard))
-    resolve()
-  } catch (err) {
-    yield put(editCurrentDashboardFail())
-    errorHandler(err)
-  }
-}
-
-export function* deleteDashboard (action) {
-  const { payload } = action
-  try {
-    yield call(request, {
-      method: 'delete',
-      url: `${api.portal}/dashboards/${payload.id}`
-    })
-    yield put(dashboardDeleted(payload.id))
-    if (payload.resolve) {
-      payload.resolve()
-    }
-  } catch (err) {
-    yield put(deleteDashboardFail())
-    errorHandler(err)
-  }
-}
 
 export function* getDashboardDetail (action) {
   const { payload } = action
@@ -301,11 +205,6 @@ export function* getWidgetCsv (action) {
 
 export default function* rootDashboardSaga (): IterableIterator<any> {
   yield all([
-    takeEvery(LOAD_DASHBOARDS, getDashboards),
-    takeLatest(ADD_DASHBOARD, addDashboard),
-    takeEvery(EDIT_DASHBOARD, editDashboard),
-    takeEvery(EDIT_CURRENT_DASHBOARD, editCurrentDashboard),
-    takeEvery(DELETE_DASHBOARD, deleteDashboard),
     takeLatest(LOAD_DASHBOARD_DETAIL, getDashboardDetail),
     takeEvery(ADD_DASHBOARD_ITEMS, addDashboardItems),
     takeEvery(EDIT_DASHBOARD_ITEM, editDashboardItem),

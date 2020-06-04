@@ -1,19 +1,28 @@
-import React, { useCallback } from 'react'
+import React, {
+  useCallback,
+  RefForwardingComponent,
+  PropsWithChildren,
+  useMemo
+} from 'react'
 import classnames from 'classnames'
 import { SketchPicker, ColorResult } from 'react-color'
 import { Popover } from 'antd'
 const styles = require('./ColorPicker.less')
 
 interface IColorPickerProps {
-  value?: string
+  value?: string | [number, number, number, number]
   size?: 'default' | 'small' | 'large'
   disableAlpha?: boolean
+  rawValue?: boolean
   className?: string
-  onChange?: (value: string) => void
+  onChange?: (value: string | [number, number, number, number]) => void
 }
 
-const ColorPicker: React.FC<IColorPickerProps> = (props) => {
-  const { value, size, disableAlpha, className, onChange } = props
+const ColorPicker: RefForwardingComponent<
+  Popover,
+  PropsWithChildren<IColorPickerProps>
+> = (props, ref) => {
+  const { value, size, disableAlpha, rawValue, className, onChange } = props
 
   const cls = classnames({
     [styles.picker]: true,
@@ -22,31 +31,49 @@ const ColorPicker: React.FC<IColorPickerProps> = (props) => {
     [`${styles.picker}-lg`]: size && size === 'large'
   })
 
-  const colorChange = useCallback((e: ColorResult) => {
-    const { r, g, b, a } = e.rgb
-    onChange(`rgba(${r}, ${g}, ${b}, ${a})`)
-  }, [onChange])
+  const colorChange = useCallback(
+    (e: ColorResult) => {
+      const { r, g, b, a } = e.rgb
+      onChange(rawValue ? [r, g, b, a] : `rgba(${r}, ${g}, ${b}, ${a})`)
+    },
+    [onChange, rawValue]
+  )
+
+  const color = useMemo(
+    (): string =>
+      rawValue && value
+        ? `rgba(${(value as [number, number, number, number]).join()})`
+        : (value as string),
+    [value, rawValue]
+  )
 
   return (
     <Popover
+      ref={ref}
       content={
-        <div style={{margin: '-8px -16px'}}>
+        <div style={{ margin: '-8px -16px' }}>
           <SketchPicker
-            color={value}
+            color={color}
             presetColors={[]}
             onChangeComplete={colorChange}
             disableAlpha={disableAlpha}
           />
-        </div>}
+        </div>
+      }
       trigger="click"
       placement="right"
     >
-      <div className={cls}>
-        <span className={styles.colorIndicator} style={{background: value}} />
-      </div>
+      {props.children || (
+        <div className={cls}>
+          <span
+            className={styles.colorIndicator}
+            style={{ background: color }}
+          />
+        </div>
+      )}
     </Popover>
   )
 }
 
 export type ColorPickerProps = IColorPickerProps
-export default ColorPicker
+export default React.forwardRef(ColorPicker)

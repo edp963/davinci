@@ -10,15 +10,10 @@ import * as Organization from '../Organization'
 import ComponentPermission from 'containers/Account/components/checkMemberPermission'
 import { CREATE_ORGANIZATION_PROJECT } from 'containers/App/constants'
 import { checkNameUniqueAction } from 'containers/App/actions'
-import { IStarUser, IProject } from 'containers/Projects'
-import { loadOrganizations } from 'containers/Organizations/actions'
+import { IStarUser, IProject } from 'containers/Projects/types'
 import { createStructuredSelector } from 'reselect'
-import {
-  loadOrganizationProjects,
-  deleteOrganizationMember,
-  changeOrganizationMemberRole,
-  setCurrentProject
-} from '../actions'
+import { IOrganization } from '../types'
+import { OrganizationActions } from '../actions'
 import {
   makeSelectOrganizations,
   makeSelectCurrentOrganizations,
@@ -30,19 +25,7 @@ import {
   makeSelectCurrentOrganizationProject
 } from '../selectors'
 import { makeSelectVizs } from 'containers/Schedule/selectors'
-import {
-  addProject,
-  editProject,
-  deleteProject,
-  getProjectStarUser,
-  loadProjects,
-  unStarProject,
-  clickCollectProjects,
-  loadCollectProjects,
-  addProjectAdmin,
-  transferProject,
-  deleteProjectAdmin
-} from 'containers/Projects/actions'
+import { ProjectActions } from 'containers/Projects/actions'
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
 import scheduleReducer from 'containers/Schedule/reducer'
@@ -61,7 +44,7 @@ interface IProjectsState {
   pageNum: number
   pageSize: number
   currentProject: any
-  organizationProjects: boolean | Organization.IOrganizationProjects[]
+  organizationProjects: IProject[]
 }
 
 interface IProjectsProps {
@@ -69,15 +52,15 @@ interface IProjectsProps {
   organizationId: number
   organizations: any
   projectDetail: any
-  currentOrganization: Organization.IOrganization
+  currentOrganization: IOrganization
   toProject: (id: number) => any
   deleteProject: (id: number) => any
   starUser: IStarUser[]
   collectProjects: IProject[]
   onAddProject: (project: any, resolve: () => any) => any
   onEditProject: (project: any, resolve: () => any) => any
-  organizationProjects: Organization.IOrganizationProjects[]
-  organizationProjectsDetail: {total?: number, list: Organization.IOrganizationProjects[]}
+  organizationProjects: IProject[]
+  organizationProjectsDetail: {total?: number, list: IProject[]}
   unStar?: (id: number) => any
   userList?: (id: number) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
@@ -91,9 +74,9 @@ interface IProjectsProps {
   onStarProject: (id: number, resolve: () => any) => any
   onDeleteProject: (id: number, resolve?: any) => any
   onGetProjectStarUser: (id: number) => any
-  currentOrganizationProjects: Organization.IOrganizationProjects[]
+  currentOrganizationProjects: IProject[]
   organizationMembers: any[]
-  onLoadVizs: (pid: number) => any
+  onLoadVizs: (projectId: number) => any
   onLoadOrganizations: () => any
   vizs: any
 }
@@ -109,7 +92,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       modalLoading: false,
       pageNum: 1,
       pageSize: 10,
-      organizationProjects: false,
+      organizationProjects: null,
       currentProject: null
     }
   }
@@ -483,20 +466,20 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadVizs: (pid) => dispatch(loadVizs(pid)),
-    onSetCurrentProject: (option) => dispatch(setCurrentProject(option)),
-    onTransferProject: (id, orgId, resolve) => dispatch(transferProject(id, orgId, resolve)),
-    onStarProject: (id, resolve) => dispatch(unStarProject(id, resolve)),
-    onLoadOrganizations: () => dispatch(loadOrganizations()),
-    onGetProjectStarUser: (id) => dispatch(getProjectStarUser(id)),
-    onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),
-    onEditProject: (project, resolve) => dispatch(editProject(project, resolve)),
-    onLoadOrganizationProjects: (param) => dispatch(loadOrganizationProjects(param)),
-    onDeleteProject: (id, resolve) => dispatch(deleteProject(id, resolve)),
-    onDeleteOrganizationMember: (id, resolve) => dispatch(deleteOrganizationMember(id, resolve)),
-    onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(changeOrganizationMemberRole(id, role, resolve)),
-    onClickCollectProjects: (formType, project, resolve) => dispatch(clickCollectProjects(formType, project, resolve)),
-    onLoadCollectProjects: () => dispatch(loadCollectProjects()),
+    onLoadVizs: (projectId) => dispatch(loadVizs(projectId)),
+    onSetCurrentProject: (option) => dispatch(OrganizationActions.setCurrentProject(option)),
+    onTransferProject: (id, orgId, resolve) => dispatch(ProjectActions.transferProject(id, orgId, resolve)),
+    onStarProject: (id, resolve) => dispatch(ProjectActions.unStarProject(id, resolve)),
+    onLoadOrganizations: () => dispatch(OrganizationActions.loadOrganizations()),
+    onGetProjectStarUser: (id) => dispatch(ProjectActions.getProjectStarUser(id)),
+    onAddProject: (project, resolve) => dispatch(ProjectActions.addProject(project, resolve)),
+    onEditProject: (project, resolve) => dispatch(ProjectActions.editProject(project, resolve)),
+    onLoadOrganizationProjects: (param) => dispatch(OrganizationActions.loadOrganizationProjects(param)),
+    onDeleteProject: (id, resolve) => dispatch(ProjectActions.deleteProject(id, resolve)),
+    onDeleteOrganizationMember: (id, resolve) => dispatch(OrganizationActions.deleteOrganizationMember(id, resolve)),
+    onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(OrganizationActions.changeOrganizationMemberRole(id, role, resolve)),
+    onClickCollectProjects: (formType, project, resolve) => dispatch(ProjectActions.clickCollectProjects(formType, project, resolve)),
+    onLoadCollectProjects: () => dispatch(ProjectActions.loadCollectProjects()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }

@@ -44,19 +44,15 @@ public interface ProjectMapper {
 
     List<ProjectWithCreateBy> getProjectsByKewordsWithUser(@Param("keywords") String keywords, @Param("userId") Long userId, @Param("orgList") List<OrganizationInfo> list);
 
-
     @Select({"select id from project where org_id = #{orgId} and `name` = #{name}"})
     Long getByNameWithOrgId(@Param("name") String name, @Param("orgId") Long orgId);
 
     int insert(Project project);
 
-
     @Select({"select * from project where id = #{id}"})
     Project getById(@Param("id") Long id);
 
-
     ProjectDetail getProjectDetail(@Param("id") Long id);
-
 
     @Select({"select * from project where id = #{id} and user_id = #{userId}"})
     Project getByProject(Project project);
@@ -67,7 +63,6 @@ public interface ProjectMapper {
     @Update({"update project set `org_id` = #{orgId} where id = #{id}"})
     int changeOrganization(Project project);
 
-
     @Update({"update project set `is_transfer` = #{isTransfer, jdbcType=TINYINT} where id = #{id}"})
     int changeTransferStatus(@Param("isTransfer") Boolean isTransfer, @Param("id") Long id);
 
@@ -77,14 +72,11 @@ public interface ProjectMapper {
     @Select({"select * from project where org_id = #{orgId}"})
     List<Project> getByOrgId(@Param("orgId") Long orgId);
 
-
     @Update({"update project set star_num = star_num + 1 where id = #{id}"})
     int starNumAdd(@Param("id") Long id);
 
-
     @Update({"update project set star_num = IF(star_num > 0,star_num - 1, 0) where id = #{id}"})
     int starNumReduce(@Param("id") Long id);
-
 
     Set<Long> getProjectIdsByAdmin(@Param("userId") Long userId);
 

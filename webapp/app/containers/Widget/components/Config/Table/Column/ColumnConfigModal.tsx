@@ -10,9 +10,10 @@ import { ITableColumnConfig, ITableConditionStyle } from './types'
 import ColorPicker from 'components/ColorPicker'
 import ConditionStyleConfigModal from './ConditionStyleConfigModal'
 
-import { Row, Col, Tooltip, Select, Button, Radio, Checkbox, Table, Modal } from 'antd'
+import { Row, Col, Tooltip, Form, Select, InputNumber, Button, Radio, Checkbox, Table, Modal } from 'antd'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
+const FormItem = Form.Item
 
 import styles from './styles.less'
 import stylesConfig from '../styles.less'
@@ -203,7 +204,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
     }
 
     const { style, visualType, sort, conditionStyles } = localConfig.find((c) => c.columnName === selectedColumnName)
-    const { fontSize, fontFamily, fontWeight, fontColor, fontStyle, backgroundColor, justifyContent } = style
+    const { fontSize, fontFamily, fontWeight, fontColor, fontStyle, backgroundColor, justifyContent, inflexible, width } = style
 
     return (
       <Modal
@@ -238,78 +239,108 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
               <div className={styles.title}><h2>基础样式</h2></div>
               <div className={stylesConfig.rows}>
                 <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
-                  <Col span={4}>背景色</Col>
-                  <Col span={2}>
-                    <ColorPicker
-                      className={stylesConfig.color}
-                      value={backgroundColor}
-                      onChange={this.propChange(['style', 'backgroundColor'])}
-                    />
+                  <Col span={3}>
+                    <FormItem label="背景色">
+                      <div className={styles.colorPickerWrapper}>
+                        <ColorPicker
+                          className={stylesConfig.color}
+                          value={backgroundColor}
+                          onChange={this.propChange(['style', 'backgroundColor'])}
+                        />
+                      </div>
+                    </FormItem>
                   </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
-                  <Col span={4}>对齐</Col>
-                  <Col span={20}>
-                    <RadioGroup size="small" value={justifyContent} onChange={this.propChange(['style', 'justifyContent'])}>
-                      <RadioButton value="flex-start">左对齐</RadioButton>
-                      <RadioButton value="center">居中</RadioButton>
-                      <RadioButton value="flex-end">右对齐</RadioButton>
-                    </RadioGroup>
-                  </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
-                  <Col span={4}>字体</Col>
-                  <Col span={12}>
-                    <Select
-                      size="small"
-                      className={stylesConfig.colControl}
-                      placeholder="字体"
-                      value={fontFamily}
-                      onChange={this.propChange(['style', 'fontFamily'])}
-                    >
-                      {fontFamilyOptions}
-                    </Select>
+                  <Col span={9}>
+                    <FormItem label="对齐">
+                      <RadioGroup size="small" value={justifyContent} onChange={this.propChange(['style', 'justifyContent'])}>
+                        <RadioButton value="flex-start">左对齐</RadioButton>
+                        <RadioButton value="center">居中</RadioButton>
+                        <RadioButton value="flex-end">右对齐</RadioButton>
+                      </RadioGroup>
+                    </FormItem>
                   </Col>
                   <Col span={5}>
-                    <Select
-                      size="small"
-                      className={stylesConfig.colControl}
-                      placeholder="文字大小"
-                      value={fontSize}
-                      onChange={this.propChange(['style', 'fontSize'])}
-                    >
-                      {fontSizeOptions}
-                    </Select>
+                    <FormItem label="列宽">
+                      <Checkbox
+                        checked={inflexible}
+                        onChange={this.propChange(['style', 'inflexible'])}
+                      >
+                        固定列宽
+                      </Checkbox>
+                    </FormItem>
                   </Col>
-                  <Col span={3}>
-                    <ColorPicker
-                      className={stylesConfig.color}
-                      value={fontColor}
-                      onChange={this.propChange(['style', 'fontColor'])}
-                    />
+                  <Col span={5}>
+                    <FormItem label=" " colon={false}>
+                      <InputNumber
+                        size="small"
+                        className={stylesConfig.colControl}
+                        placeholder="设置列宽"
+                        value={width}
+                        disabled={!inflexible}
+                        onChange={this.propChange(['style', 'width'])}
+                      />
+                    </FormItem>
                   </Col>
                 </Row>
                 <Row gutter={8} type="flex" align="middle" className={stylesConfig.rowBlock}>
-                  <Col span={4}>样式</Col>
-                  <Col span={6}>
-                    <Select
-                      size="small"
-                      className={stylesConfig.colControl}
-                      value={fontStyle}
-                      onChange={this.propChange(['style', 'fontStyle'])}
-                    >
-                      {fontStyleOptions}
-                    </Select>
+                  <Col span={4}>
+                    <FormItem label="字体与样式">
+                      <Select
+                        size="small"
+                        className={stylesConfig.colControl}
+                        placeholder="字体"
+                        value={fontFamily}
+                        onChange={this.propChange(['style', 'fontFamily'])}
+                      >
+                        {fontFamilyOptions}
+                      </Select>
+                    </FormItem>
                   </Col>
-                  <Col span={13}>
-                    <Select
-                      size="small"
-                      className={stylesConfig.colControl}
-                      value={fontWeight}
-                      onChange={this.propChange(['style', 'fontWeight'])}
-                    >
-                      {fontWeightOptions}
-                    </Select>
+                  <Col span={4}>
+                    <FormItem label=" " colon={false}>
+                      <Select
+                        size="small"
+                        className={stylesConfig.colControl}
+                        placeholder="文字大小"
+                        value={fontSize}
+                        onChange={this.propChange(['style', 'fontSize'])}
+                      >
+                        {fontSizeOptions}
+                      </Select>
+                    </FormItem>
+                  </Col>
+                  <Col span={4}>
+                    <FormItem label=" " colon={false}>
+                      <Select
+                        size="small"
+                        className={stylesConfig.colControl}
+                        value={fontStyle}
+                        onChange={this.propChange(['style', 'fontStyle'])}
+                      >
+                        {fontStyleOptions}
+                      </Select>
+                    </FormItem>
+                  </Col>
+                  <Col span={5}>
+                    <FormItem label=" " colon={false}>
+                      <Select
+                        size="small"
+                        className={stylesConfig.colControl}
+                        value={fontWeight}
+                        onChange={this.propChange(['style', 'fontWeight'])}
+                      >
+                        {fontWeightOptions}
+                      </Select>
+                    </FormItem>
+                  </Col>
+                  <Col span={3}>
+                    <FormItem label=" " colon={false}>
+                      <ColorPicker
+                        className={stylesConfig.color}
+                        value={fontColor}
+                        onChange={this.propChange(['style', 'fontColor'])}
+                      />
+                    </FormItem>
                   </Col>
                 </Row>
               </div>

@@ -192,12 +192,12 @@ public class TokenUtils {
      * @return
      */
     public String getUsername(String token) {
-        String username;
+        String username = null;
         try {
             final Claims claims = getClaims(token);
             username = claims.get(Consts.TOKEN_USER_NAME).toString();
         } catch (Exception e) {
-            username = null;
+
         }
         return username;
     }
@@ -235,7 +235,7 @@ public class TokenUtils {
                             token.trim())
                     .getBody();
         } catch (Exception e) {
-            log.warn(e.getMessage());
+            log.debug(e.getMessage());
             claims = Jwts.parser()
                     .setSigningKey(SECRET)
                     .parseClaimsJws(token.startsWith(Consts.TOKEN_PREFIX) ?

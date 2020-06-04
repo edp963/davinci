@@ -1,6 +1,6 @@
 {
   "name": "slide",
-  "title": "背景设置",
+  "title": "大屏页",
   "params": [{
     "name": "slideSize",
     "title": "屏幕尺寸",
@@ -17,12 +17,154 @@
     }]
   }, {
     "name": "background",
-    "title": "背景颜色",
+    "title": "背景",
     "items": [{
       "name": "backgroundColor",
       "title": "背景颜色",
       "component": "colorPicker",
-      "default": [255,255,255,50]
+      "default": [255,255,255,50],
+      "labelCol": 10
+    }, {
+      "name": "backgroundImage",
+      "title": "背景图片",
+      "component": "upload",
+      "action": "slide/{slideId}/upload/bgImage",
+      "accept": "image/*",
+      "autoUpdate": true,
+      "labelCol": 12,
+      "wrapperCol": 24
+    }]
+  }, {
+    "name": "transition",
+    "title": "播放设置",
+    "items": [{
+      "name": "autoSlideGlobal",
+      "title": "跟随全局",
+      "component": "checkbox",
+      "valuePropName": "checked",
+      "default": true,
+      "labelCol": 11,
+      "wrapperCol": 8
+    }, {
+      "name": "autoPlay",
+      "title": "自动播放",
+      "component": "checkbox",
+      "valuePropName": "checked",
+      "default": true,
+      "labelCol": 11,
+      "wrapperCol": 8,
+      "relatedItems": [{
+        "name": "autoSlideGlobal",
+        "values": [false]
+      }]
+    }, {
+      "name": "autoSlide",
+      "title": "停留时间（秒）",
+      "component": "inputnumber",
+      "default": "10",
+      "min": 3,
+      "labelCol": 14,
+      "wrapperCol": 10,
+      "relatedItems": [{
+        "name": "autoSlideGlobal",
+        "values": [false]
+      }, {
+        "name": "autoPlay",
+        "values": [true]
+      }]
+    }]
+  }, {
+    "name": "play",
+    "title": "过渡动画",
+    "items": [{
+      "name": "transitionGlobal",
+      "title": "跟随全局",
+      "component": "checkbox",
+      "valuePropName": "checked",
+      "default": true,
+      "labelCol": 11,
+      "wrapperCol": 8
+    }, {
+      "name": "transitionStyleIn",
+      "title": "出现时动画",
+      "component": "select",
+      "values": [{
+        "name": "无",
+        "value": "none"
+      }, {
+        "name": "淡入",
+        "value": "fade-in"
+      }, {
+        "name": "滑动",
+        "value": "slide-in"
+      }, {
+        "name": "凸镜",
+        "value": "convex-in"
+      }, {
+        "name": "凹镜",
+        "value": "concave-in"
+      }, {
+        "name": "缩放",
+        "value": "zoom-in"
+      }],
+      "default": "none",
+      "labelCol": 11,
+      "wrapperCol": 8,
+      "relatedItems": [{
+        "name": "transitionGlobal",
+        "values": [false]
+      }]
+    }, {
+      "name": "transitionStyleOut",
+      "title": "消失时动画",
+      "component": "select",
+      "values": [{
+        "name": "无",
+        "value": "none"
+      }, {
+        "name": "淡出",
+        "value": "fade-out"
+      }, {
+        "name": "滑动",
+        "value": "slide-out"
+      }, {
+        "name": "凸镜",
+        "value": "convex-out"
+      }, {
+        "name": "凹镜",
+        "value": "concave-out"
+      }, {
+        "name": "缩放",
+        "value": "zoom-out"
+      }],
+      "default": "none",
+      "labelCol": 11,
+      "wrapperCol": 8,
+      "relatedItems": [{
+        "name": "transitionGlobal",
+        "values": [false]
+      }]
+    }, {
+      "name": "transitionSpeed",
+      "title": "动画速度",
+      "component": "select",
+      "values": [{
+        "name": "默认",
+        "value": "default"
+      }, {
+        "name": "快",
+        "value": "fast"
+      }, {
+        "name": "慢",
+        "value": "slow"
+      }],
+      "default": "default",
+      "labelCol": 11,
+      "wrapperCol": 8,
+      "relatedItems": [{
+        "name": "transitionGlobal",
+        "values": [false]
+      }]
     }]
   }, {
     "name": "scale",
@@ -44,20 +186,9 @@
         "name": "实际尺寸",
         "value": "noScale"
       }],
-      "default": "scaleWidth"
-    }]
-  }, {
-    "name": "image",
-    "title": "图片",
-    "items": [{
-      "name": "backgroundImage",
-      "title": "背景图片",
-      "component": "upload",
-      "action": "slide/{id}/upload/bgImage",
-      "accept": "image/*",
-      "autoUpdate": true,
-      "labelCol": 6,
-      "wrapperCol": 24
+      "default": "scaleWidth",
+      "labelCol": 10,
+      "wrapperCol": 14
     }]
   }]
 }

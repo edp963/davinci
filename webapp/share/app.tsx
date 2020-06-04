@@ -19,38 +19,28 @@
  */
 
 import '@babel/polyfill'
+import 'url-search-params-polyfill'
 
-import * as React from 'react'
-import * as ReactDOM from 'react-dom'
+import React from 'react'
+import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
-import { applyRouterMiddleware, Router, hashHistory } from 'react-router'
-import { syncHistoryWithStore } from 'react-router-redux'
-import { useScroll } from 'react-router-scroll'
-import { hot } from 'react-hot-loader'
+import { ConnectedRouter } from 'connected-react-router'
+import history from 'utils/history'
 
-import App from './containers/App/index'
-
-import { makeSelectLocationState } from '../app/containers/App/selectors'
-
-import LanguageProvider from '../app/containers/LanguageProvider'
+import App from 'share/containers/App'
 
 import { LocaleProvider } from 'antd'
 import zh_CN from 'antd/lib/locale-provider/zh_CN'
+import LanguageProvider from 'app/containers/LanguageProvider'
+import { translationMessages } from 'app/i18n'
 import moment from 'moment'
 import 'moment/src/locale/zh-cn'
 moment.locale('zh-cn')
 
 import '!file-loader?name=[name].[ext]!../app/favicon.ico'
 import 'file-loader?name=[name].[ext]!../app/.htaccess'
-
-import configureStore from './store'
-
-import { translationMessages } from '../app/i18n'
-
-import createRoutes from './routes'
-
-import '../libs/react-grid-layout/css/styles.css'
-import '../libs/react-resizable/css/styles.css'
+import 'react-grid-layout/css/styles.css'
+import 'libs/react-resizable/css/styles.css'
 import 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'
 import 'react-quill/dist/quill.snow.css'
 import '../app/assets/fonts/iconfont.css'
@@ -92,39 +82,20 @@ import '../app/assets/js/china.js'
 import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
 echarts.registerTheme('default', DEFAULT_ECHARTS_THEME)
 
+import configureStore from 'app/configureStore'
+
 const initialState = {}
-const store = configureStore(initialState, hashHistory)
+const store = configureStore(initialState, history)
 const MOUNT_NODE = document.getElementById('app')
-
-const history = syncHistoryWithStore(hashHistory, store, {
-  selectLocationState: makeSelectLocationState()
-})
-
-const rootRoute = {
-  path: '/',
-  component: hot(module)(App),
-  childRoutes: createRoutes(store),
-  indexRoute: {
-    onEnter: (_, replace) => {
-      replace('/share')
-    }
-  }
-}
 
 const render = (messages) => {
   ReactDOM.render(
     <Provider store={store}>
       <LanguageProvider messages={messages}>
         <LocaleProvider locale={zh_CN}>
-          <Router
-            history={history}
-            routes={rootRoute}
-            render={
-              // Scroll to top when going to a new page, imitating default browser
-              // behaviour
-              applyRouterMiddleware(useScroll())
-            }
-          />
+          <ConnectedRouter history={history}>
+            <App />
+          </ConnectedRouter>
         </LocaleProvider>
       </LanguageProvider>
     </Provider>,
@@ -132,9 +103,8 @@ const render = (messages) => {
   )
 }
 
-// Hot reloadable translation json files
 if (module.hot) {
-  module.hot.accept(['../app/i18n', 'containers/App'], () => {
+  module.hot.accept(['../app/i18n', 'share/containers/App'], () => {
     ReactDOM.unmountComponentAtNode(MOUNT_NODE)
     render(translationMessages)
   })
@@ -146,14 +116,11 @@ interface IWindow extends Window {
 }
 declare const window: IWindow
 
-// Chunked polyfill for browsers without Intl support
 if (!window.Intl) {
-  (new Promise((resolve) => {
+  new Promise((resolve) => {
     resolve(import('intl'))
-  }))
-    .then(() => Promise.all([
-      import('intl/locale-data/jsonp/en.js')
-    ]))
+  })
+    .then(() => Promise.all([import('intl/locale-data/jsonp/en.js')]))
     .then(() => render(translationMessages))
     .catch((err) => {
       throw err
@@ -171,8 +138,3 @@ if (process.env.NODE_ENV === 'production') {
     window.__REACT_DEVTOOLS_GLOBAL_HOOK__.inject = () => void 0
   }
 }
-
-// if (process.env.NODE_ENV !== 'production') {
-//   const { whyDidYouUpdate } = require('why-did-you-update')
-//   whyDidYouUpdate(React)
-// }

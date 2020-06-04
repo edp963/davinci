@@ -19,10 +19,11 @@
  */
 
 import { ActionTypes } from './constants'
-import { returnType } from 'app/utils/redux';
+import { returnType } from 'utils/redux'
+import { IDisplayFormed } from 'app/containers/Viz/types'
 
 export const ShareDisplayActions = {
-  loadDisplay (token: string, resolve, reject) {
+  loadDisplay(token: string, resolve, reject) {
     return {
       type: ActionTypes.LOAD_SHARE_DISPLAY,
       payload: {
@@ -32,17 +33,17 @@ export const ShareDisplayActions = {
       }
     }
   },
-  displayLoaded (display, slide, widgets) {
+  displayLoaded(display: IDisplayFormed, slides, widgets) {
     return {
       type: ActionTypes.LOAD_SHARE_DISPLAY_SUCCESS,
       payload: {
         display,
-        slide,
+        slides,
         widgets
       }
     }
   },
-  loadDisplayFail (error) {
+  loadDisplayFail(error) {
     return {
       type: ActionTypes.LOAD_SHARE_DISPLAY_FAILURE,
       payload: {
@@ -51,32 +52,36 @@ export const ShareDisplayActions = {
     }
   },
 
-  loadLayerData (renderType, layerId, dataToken, requestParams) {
+  loadLayerData(renderType, slideNumber, layerId, dataToken, requestParams) {
     return {
       type: ActionTypes.LOAD_LAYER_DATA,
       payload: {
         renderType,
+        slideNumber,
         layerId,
         dataToken,
         requestParams
       }
     }
   },
-  layerDataLoaded (renderType, layerId, data, requestParams) {
+  layerDataLoaded(renderType, slideNumber, layerId, data, requestParams) {
     return {
       type: ActionTypes.LOAD_LAYER_DATA_SUCCESS,
       payload: {
         renderType,
+        slideNumber,
         layerId,
         data,
         requestParams
       }
     }
   },
-  loadLayerDataFail (error) {
+  loadLayerDataFail(slideNumber, layerId, error) {
     return {
       type: ActionTypes.LOAD_LAYER_DATA_FAILURE,
       payload: {
+        slideNumber,
+        layerId,
         error
       }
     }

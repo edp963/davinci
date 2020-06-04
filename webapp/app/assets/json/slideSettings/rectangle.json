@@ -21,36 +21,37 @@
     "items": [{
       "name": "positionX",
       "title": "x轴位置（像素）",
-      "component": "inputnumber"
+      "component": "inputnumber",
+      "labelCol": 15,
+      "wrapperCol": 8
     }, {
       "name": "positionY",
       "title": "y轴位置（像素）",
-      "component": "inputnumber"
+      "component": "inputnumber",
+      "labelCol": 15,
+      "wrapperCol": 8
     }]
   }, {
     "name": "background",
-    "title": "背景颜色",
+    "title": "背景",
     "items": [{
       "name": "backgroundColor",
-      "title": "颜色",
+      "title": "背景颜色",
       "component": "colorPicker",
-      "default": [255,255,255,0]
-    }]
-  }, {
-    "name": "backgroundImage",
-    "title": "图片",
-    "items": [{
+      "default": [255,255,255,0],
+      "labelCol": 10
+    }, {
       "name": "backgroundImage",
       "title": "背景图片",
       "component": "upload",
-      "action": "slide/widget/{id}/bgImage",
+      "action": "slide/widget/{layerId}/bgImage",
       "accept": "image/*",
       "autoUpdate": true,
-      "labelCol": 6,
+      "labelCol": 12,
       "wrapperCol": 24
     }, {
       "name": "backgroundSize",
-      "title": "大小",
+      "title": "图片大小",
       "component": "select",
       "values": [{
         "name": "自动",
@@ -62,10 +63,12 @@
         "name": "铺满",
         "value": "cover"
       }],
-      "default": "auto"
+      "default": "auto",
+      "labelCol": 10,
+      "wrapperCol": 14
     }, {
       "name": "backgroundRepeat",
-      "title": "重复",
+      "title": "图片重复",
       "component": "select",
       "values": [{
         "name": "x轴y轴重复",
@@ -80,7 +83,9 @@
         "name": "不重复",
         "value": "no-repeat"
       }],
-      "default": "repeat"
+      "default": "repeat",
+      "labelCol": 10,
+      "wrapperCol": 14
     }]
   }, {
     "name": "border",
@@ -89,12 +94,14 @@
       "name": "borderColor",
       "title": "边框颜色",
       "component": "colorPicker",
-      "default": [0,0,0]
+      "default": [0,0,0],
+      "labelCol": 10
     }, {
       "name": "borderWidth",
       "title": "边框粗细",
       "component": "inputnumber",
-      "default": 0
+      "default": 0,
+      "labelCol": 10
     }, {
       "name": "borderStyle",
       "title": "边框样式",
@@ -112,13 +119,15 @@
         "name": "双框",
         "value": "double"
       }],
-      "default": "solid"
+      "default": "solid",
+      "labelCol": 10
     }, {
       "name": "borderRadius",
       "tip": "",
       "title": "圆角半径",
       "component": "inputnumber",
-      "default": 0
+      "default": 0,
+      "labelCol": 10
     }]
   }]
 }

@@ -30,6 +30,7 @@ import edp.davinci.model.RelUserOrganization;
 import edp.davinci.model.User;
 import edp.davinci.service.LdapService;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ldap.core.AttributesMapper;
@@ -58,20 +59,17 @@ public class LdapServiceImpl implements LdapService {
     @Value("${spring.ldap.domainName}")
     private String ldapDomainName;
 
-
     @Value("${spring.ldap.urls:''}")
     private String ldapUrls;
 
     @Autowired
     private UserMapper userMapper;
 
-
     @Autowired
     private OrganizationMapper organizationMapper;
 
     @Autowired
     private RelUserOrganizationMapper relUserOrganizationMapper;
-
 
     public boolean existLdapServer() {
         return !StringUtils.isEmpty(ldapUrls);
@@ -87,39 +85,39 @@ public class LdapServiceImpl implements LdapService {
      */
     @Override
     public LdapPerson findByUsername(String username, String password) {
-        LdapPerson ldapPerson = null;
+		LdapPerson ldapPerson = null;
 
-        if (StringUtils.endsWithIgnoreCase(username, ldapDomainName)) {
-            username = username.replaceAll("(?i)" + ldapDomainName, EMPTY);
-        }
-        String userDn = username + ldapDomainName;
+		if (StringUtils.endsWithIgnoreCase(username, ldapDomainName)) {
+			username = username.replaceAll("(?i)" + ldapDomainName, EMPTY);
+		}
+		String userDn = username + ldapDomainName;
 
-        DirContext ctx = null;
-        try {
-            ctx = ldapTemplate.getContextSource().getContext(userDn, password);
+		DirContext ctx = null;
+		try {
+			ctx = ldapTemplate.getContextSource().getContext(userDn, password);
 
-            List<LdapPerson> search = ldapTemplate.search(
-                    query().where("objectclass").is("person").and("sAMAccountName").is(username),
-                    (AttributesMapper<LdapPerson>) attributes -> {
-                        LdapPerson person = new LdapPerson();
-                        person.setName(attributes.get("cn").get().toString());
-                        person.setSAMAccountName(attributes.get("sAMAccountName").get().toString());
-                        person.setEmail(userDn);
-                        return person;
-                    });
+			List<LdapPerson> search = ldapTemplate.search(
+					query().where("objectclass").is("person").and("sAMAccountName").is(username),
+					(AttributesMapper<LdapPerson>) attributes -> {
+						LdapPerson person = new LdapPerson();
+						person.setName(attributes.get("cn").get().toString());
+						person.setSAMAccountName(attributes.get("sAMAccountName").get().toString());
+						person.setEmail(userDn);
+						return person;
+					});
 
-            if (!CollectionUtils.isEmpty(search)) {
-                ldapPerson = search.get(0);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (null != ctx) {
-                LdapUtils.closeContext(ctx);
-            }
-        }
+			if (!CollectionUtils.isEmpty(search)) {
+				ldapPerson = search.get(0);
+			}
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+		} finally {
+			if (null != ctx) {
+				LdapUtils.closeContext(ctx);
+			}
+		}
 
-        return ldapPerson;
+		return ldapPerson;
     }
 
     @Override
@@ -129,20 +127,18 @@ public class LdapServiceImpl implements LdapService {
         user.setActive(true);
         user.setPassword(LDAP_USER_PASSWORD);
 
-        int insert = userMapper.insert(user);
-        if (insert > 0) {
-            String OrgName = user.getUsername() + "'s Organization";
-
-            Organization organization = new Organization(OrgName, null, user.getId());
-            int i = organizationMapper.insert(organization);
-            if (i > 0) {
-                RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), user.getId(), UserOrgRoleEnum.OWNER.getRole());
-                relUserOrganizationMapper.insert(relUserOrganization);
-            }
-
-        } else {
-            throw new ServerException("unknown fail");
+        if (userMapper.insert(user) <= 0) {
+            log.error("ldap regist fail: email({})", user.getEmail());
+            throw new ServerException("ldap regist fail: unspecified error");
         }
+        
+        String orgName = user.getUsername() + "'s Organization";
+        Organization organization = new Organization(orgName, null, user.getId());
+        if (organizationMapper.insert(organization) > 0) {
+            RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), user.getId(), UserOrgRoleEnum.OWNER.getRole());
+            relUserOrganizationMapper.insert(relUserOrganization);
+        }
+
         return user;
     }
 }

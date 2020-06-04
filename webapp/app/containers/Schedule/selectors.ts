@@ -23,7 +23,7 @@ import { createSelector } from 'reselect'
 /**
  * Direct selector to the schedule state domain
  */
-const selectSchedule = (state) => state.get('schedule')
+const selectSchedule = (state) => state.schedule
 
 /**
  * Other specific selectors

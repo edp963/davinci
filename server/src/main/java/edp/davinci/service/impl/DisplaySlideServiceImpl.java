@@ -19,30 +19,18 @@
 
 package edp.davinci.service.impl;
 
-import com.alibaba.druid.util.StringUtils;
-import com.alibaba.fastjson.JSONObject;
-import edp.core.exception.NotFoundException;
-import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.FileUtils;
-import edp.davinci.common.model.RelModelCopy;
-import edp.davinci.core.common.Constants;
-import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.VizEnum;
-import edp.davinci.dao.MemDisplaySlideWidgetMapper;
-import edp.davinci.dao.RelRoleDisplaySlideWidgetMapper;
-import edp.davinci.dao.ViewMapper;
-import edp.davinci.dao.WidgetMapper;
-import edp.davinci.dto.displayDto.*;
-import edp.davinci.dto.projectDto.ProjectDetail;
-import edp.davinci.dto.projectDto.ProjectPermission;
-import edp.davinci.dto.roleDto.VizVisibility;
-import edp.davinci.model.*;
-import edp.davinci.service.DisplaySlideService;
-import edp.davinci.service.ProjectService;
-import lombok.extern.slf4j.Slf4j;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -51,14 +39,53 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSONObject;
+
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
+import edp.core.utils.CollectionUtils;
+import edp.core.utils.FileUtils;
+import edp.davinci.common.model.RelModelCopy;
+import edp.davinci.core.common.Constants;
+import edp.davinci.core.enums.CheckEntityEnum;
+import edp.davinci.core.enums.LogNameEnum;
+import edp.davinci.core.enums.UserPermissionEnum;
+import edp.davinci.core.enums.VizEnum;
+import edp.davinci.dao.MemDisplaySlideWidgetMapper;
+import edp.davinci.dao.RelRoleDisplaySlideWidgetMapper;
+import edp.davinci.dao.ViewMapper;
+import edp.davinci.dao.WidgetMapper;
+import edp.davinci.dto.displayDto.DisplaySlideCreate;
+import edp.davinci.dto.displayDto.DisplaySlideInfo;
+import edp.davinci.dto.displayDto.DisplayWithSlides;
+import edp.davinci.dto.displayDto.MemDisplaySlideWidgetCreate;
+import edp.davinci.dto.displayDto.MemDisplaySlideWidgetDto;
+import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
+import edp.davinci.dto.displayDto.SlideWithDisplayAndProject;
+import edp.davinci.dto.displayDto.SlideWithMem;
+import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.projectDto.ProjectPermission;
+import edp.davinci.dto.roleDto.VizVisibility;
+import edp.davinci.model.Display;
+import edp.davinci.model.DisplaySlide;
+import edp.davinci.model.MemDisplaySlideWidget;
+import edp.davinci.model.RelRoleDisplaySlideWidget;
+import edp.davinci.model.RelRoleSlide;
+import edp.davinci.model.Role;
+import edp.davinci.model.User;
+import edp.davinci.model.View;
+import edp.davinci.model.Widget;
+import edp.davinci.service.DisplaySlideService;
+import edp.davinci.service.ProjectService;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service("displaySlideService")
 public class DisplaySlideServiceImpl extends VizCommonService implements DisplaySlideService {
-    private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
+
+	private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
     private ProjectService projectService;
@@ -78,6 +105,8 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Autowired
     private RelRoleDisplaySlideWidgetMapper relRoleDisplaySlideWidgetMapper;
 
+    private static final  CheckEntityEnum entity = CheckEntityEnum.DISPLAYSLIDE;
+
     @Override
     public boolean isExist(String name, Long id, Long scopeId) {
         return false;
@@ -94,50 +123,49 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Transactional
     public DisplaySlide createDisplaySlide(DisplaySlideCreate displaySlideCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        Display display = displayMapper.getById(displaySlideCreate.getDisplayId());
-        if (null == display) {
-            throw new NotFoundException("display is not found");
-        }
+    	Long displayId = displaySlideCreate.getDisplayId();
+        Display display = getDisplay(displayId);
 
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
+        Long projectId = display.getProjectId();
+        checkWritePermission(entity, projectId, user, "create");
 
-        List<Long> disableDisplays = getDisableVizs(user.getId(), display.getProjectId(), null, VizEnum.DISPLAY);
-        boolean disable = disableDisplays.contains(display.getId());
-
-        //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
-            log.info("user {} have not permisson to create displaySlide", user.getUsername());
-            throw new UnAuthorizedExecption("Insufficient permissions");
-        }
-
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+		if (isDisableDisplay(displayId, projectId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "create");
+		}
 
         DisplaySlide displaySlide = new DisplaySlide().createdBy(user.getId());
         BeanUtils.copyProperties(displaySlideCreate, displaySlide);
 
-        int insert = displaySlideMapper.insert(displaySlide);
-        if (insert > 0) {
-            optLogger.info("display slide ({}) create by (:{})", displaySlide.toString(), user.getId());
-
-            if (!CollectionUtils.isEmpty(displaySlideCreate.getRoleIds())) {
-                List<Role> roles = roleMapper.getRolesByIds(displaySlideCreate.getRoleIds());
-
-                List<RelRoleSlide> list = roles.stream()
-                        .map(r -> new RelRoleSlide(displaySlide.getId(), r.getId()).createdBy(user.getId()))
-                        .collect(Collectors.toList());
-
-                if (!CollectionUtils.isEmpty(list)) {
-                    relRoleSlideMapper.insertBatch(list);
-
-                    optLogger.info("display slide ({}) limit role ({}) access", displaySlide.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
-                }
-            }
-
-            return displaySlide;
-        } else {
+        if (displaySlideMapper.insert(displaySlide) <= 0) {
             throw new ServerException("create display slide fail");
         }
 
+        optLogger.info("display slide ({}) create by (:{})", displaySlide.toString(), user.getId());
+
+		if (!CollectionUtils.isEmpty(displaySlideCreate.getRoleIds())) {
+			List<Role> roles = roleMapper.getRolesByIds(displaySlideCreate.getRoleIds());
+			List<RelRoleSlide> list = roles.stream()
+					.map(r -> new RelRoleSlide(displaySlide.getId(), r.getId()).createdBy(user.getId()))
+					.collect(Collectors.toList());
+			if (!CollectionUtils.isEmpty(list)) {
+				relRoleSlideMapper.insertBatch(list);
+				optLogger.info("display slide ({}) limit role ({}) access", displaySlide.getId(),
+						roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+			}
+		}
+
+        return displaySlide;
     }
+
+	private Display getDisplay(Long id) {
+		Display display = displayMapper.getById(id);
+		if (null == display) {
+			log.info("display ({}) is not found", id);
+			throw new NotFoundException("display is not found");
+		}
+		return display;
+	}
 
     /**
      * 删除displaySlide
@@ -150,47 +178,27 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Transactional
     public boolean deleteDisplaySlide(Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        DisplaySlide displaySlide = displaySlideMapper.getById(slideId);
-        if (null == displaySlide) {
-            log.info("display slide is not found");
-            return true;
-        }
+		DisplaySlide displaySlide = displaySlideMapper.getById(slideId);
+		if (null == displaySlide) {
+			log.info("display slide is not found");
+			return false;
+		}
 
-        Display display = displayMapper.getById(displaySlide.getDisplayId());
-        if (null == display) {
-            log.info("display is not found");
-            throw new NotFoundException("display is not found");
-        }
+		Display display = getDisplay(displaySlide.getDisplayId());
 
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
+		Long projectId = display.getProjectId();
+		ProjectPermission projectPermission = getProjectPermission(projectId, user);
+		if (isDisableDisplay(display.getId(), projectId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "delete");
+		}
 
-        List<Long> disableDisplays = getDisableVizs(user.getId(), display.getProjectId(), null, VizEnum.DISPLAY);
-        boolean disable = disableDisplays.contains(display.getId());
+		relRoleDisplaySlideWidgetMapper.deleteBySlideId(slideId);
+		memDisplaySlideWidgetMapper.deleteBySlideId(slideId);
+		relRoleSlideMapper.deleteBySlideId(slideId);
+		displaySlideMapper.deleteById(slideId);
 
-        List<Long> disableSlides = getDisableVizs(user.getId(), display.getId(), null, VizEnum.SLIDE);
-
-        //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
-                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
-            log.info("user {} have not permisson to delete display slide", user.getUsername());
-            throw new UnAuthorizedExecption("you have not permisson to delete this display slide");
-        }
-
-        //delete rel_role_display_slide_widget
-        relRoleDisplaySlideWidgetMapper.deleteBySlideId(slideId);
-
-        //delete mem_display_slide_widget
-        memDisplaySlideWidgetMapper.deleteBySlideId(slideId);
-
-        //delete rel_role_slide
-        relRoleSlideMapper.deleteBySlideId(slideId);
-
-        //delete display_slide
-        displaySlideMapper.deleteById(slideId);
-
-        optLogger.info("display slide ({}) is delete by (:{})", displaySlide.toString(), user.getId());
-
-        return true;
+		optLogger.info("display slide ({}) is delete by (:{})", displaySlide.toString(), user.getId());
+		return true;
     }
 
     /**
@@ -205,39 +213,32 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Transactional
     public boolean updateDisplaySildes(Long displayId, DisplaySlide[] displaySlides, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        Display display = displayMapper.getById(displayId);
-        if (null == display) {
-            throw new NotFoundException("display is not found");
-        }
+    	Display display = getDisplay(displayId);
 
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
+    	Long projectId = display.getProjectId();
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+		if (isDisableDisplay(display.getId(), projectId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "delete");
+		}
 
-        List<Long> disableDisplays = getDisableVizs(user.getId(), display.getProjectId(), null, VizEnum.DISPLAY);
-        boolean disable = disableDisplays.contains(displayId);
+		List<Long> disableSlides = getDisableVizs(user.getId(), displayId, null, VizEnum.SLIDE);
+		List<DisplaySlide> displaySlideList = new ArrayList<>();
+		for (DisplaySlide displaySlide : displaySlides) {
 
-        //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() || (!projectPermission.isProjectMaintainer() && disable)) {
-            log.info("user {} have not permisson to update displaySlide", user.getUsername());
-            throw new UnAuthorizedExecption("Insufficient permissions");
-        }
-        List<Long> disableSlides = getDisableVizs(user.getId(), displayId, null, VizEnum.SLIDE);
+			if (!projectPermission.isProjectMaintainer() && disableSlides.contains(displaySlide.getId())) {
+				throw new UnAuthorizedExecption("Insufficient permissions");
+			}
 
-        List<DisplaySlide> displaySlideList = new ArrayList<>();
-        for (DisplaySlide displaySlide : displaySlides) {
+			if (!displaySlide.getDisplayId().equals(displayId)) {
+				throw new ServerException("Invalid display id");
+			}
 
-            if (!projectPermission.isProjectMaintainer() && disableSlides.contains(displaySlide.getId())) {
-                throw new UnAuthorizedExecption("Insufficient permissions");
-            }
+			displaySlide.updatedBy(user.getId());
+			displaySlideList.add(displaySlide);
+		}
 
-            if (!displaySlide.getDisplayId().equals(displayId)) {
-                throw new ServerException("Invalid display id");
-            }
-            displaySlide.updatedBy(user.getId());
-            displaySlideList.add(displaySlide);
-        }
-
-        displaySlideMapper.updateBatch(displaySlideList);
-        return true;
+		displaySlideMapper.updateBatch(displaySlideList);
+		return true;
     }
 
 
@@ -254,85 +255,94 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Transactional
     public List<MemDisplaySlideWidget> addMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetCreate[] slideWidgetCreates, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(slideId);
+        SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(slideId);
+
+        if (!slideWithDisplayAndProject.getDisplayId().equals(displayId)) {
+            throw new ServerException("invalid display slide");
+        }
+
+        Long projectId = slideWithDisplayAndProject.getProject().getId();
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+        checkWritePermission(entity, projectId, user, "add widgets");
+
+		if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(slideId, displayId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "add widgets");
+		}
+
+		Set<Long> ids = new HashSet<>();
+		List<MemDisplaySlideWidget> list = new ArrayList<>();
+		List<MemDisplaySlideWidget> clist = new ArrayList<>();
+		for (MemDisplaySlideWidgetCreate slideWidgetCreate : slideWidgetCreates) {
+			if (slideWidgetCreate.getWidgetId() != null && slideWidgetCreate.getWidgetId() > 0L) {
+				ids.add(slideWidgetCreate.getWidgetId());
+			}
+			MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget().createdBy(user.getId());
+			BeanUtils.copyProperties(slideWidgetCreate, memDisplaySlideWidget);
+			list.add(memDisplaySlideWidget);
+			// 自定义主键，copy一份修改内容作为返回值
+			if (null != slideWidgetCreate.getId() && slideWidgetCreate.getId().longValue() > 0L) {
+				MemDisplaySlideWidget cMemDisplaySlideWidget = new MemDisplaySlideWidget().createdBy(user.getId());
+				BeanUtils.copyProperties(slideWidgetCreate, cMemDisplaySlideWidget);
+				clist.add(cMemDisplaySlideWidget);
+			}
+		}
+
+		List<Widget> widgets = widgetMapper.getByIds(ids);
+		if (null == widgets || widgets.size() != ids.size()) {
+			throw new ServerException("invalid widget id");
+		}
+
+		if (memDisplaySlideWidgetMapper.insertBatch(list) <= 0) {
+			log.error("insert batch MemDisplaySlideWidget error displayId:{}, slideId:{}", displayId, slideId);
+			throw new ServerException("addMemDisplaySlideWidgets fail");
+		}
+
+		List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
+		for (MemDisplaySlideWidget memDisplaySlideWidget : list) {
+			MemDisplaySlideWidgetCreate memDisplaySlideWidgetCreate = Arrays
+					.stream(slideWidgetCreates).filter((item -> (item.getDisplaySlideId()
+							.longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue())))
+					.findFirst().get();
+
+			if (!CollectionUtils.isEmpty(memDisplaySlideWidgetCreate.getRoleIds())) {
+				List<Role> roles = roleMapper.getRolesByIds(memDisplaySlideWidgetCreate.getRoleIds());
+				relRoleDisplaySlideWidgetList.addAll(roles.stream()
+						.map(r -> new RelRoleDisplaySlideWidget(r.getId(), memDisplaySlideWidget.getId())
+								.createdBy(user.getId()))
+						.collect(Collectors.toList()));
+			}
+		}
+
+		if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
+			relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
+			optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})",
+					relRoleDisplaySlideWidgetList.toString(), user.getId());
+		}
+
+		if (null != clist && clist.size() > 1) {
+			optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", clist.toString(), user.getId());
+			// 自定义主键
+			return clist;
+		} else {
+			optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", list.toString(), user.getId());
+			// 自增主键
+			return list;
+		}
+    }
+
+    private SlideWithDisplayAndProject getSlideWithDisplayAndProject(Long slideId) {
+
+    	SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDispalyAndProjectById(slideId);
 
         if (null == slideWithDisplayAndProject) {
             throw new NotFoundException("display slide is not found");
         }
 
-        if (null == slideWithDisplayAndProject.getDisplay() || !slideWithDisplayAndProject.getDisplayId().equals(displayId)) {
-            throw new ServerException("Invalid display slide");
+        if (null == slideWithDisplayAndProject.getDisplay()) {
+            throw new ServerException("display is not found");
         }
 
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
-
-        boolean disable = disableDisplays.contains(displayId);
-        List<Long> disableSlides = getDisableVizs(user.getId(), displayId, null, VizEnum.SLIDE);
-
-
-        //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
-                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
-            throw new UnAuthorizedExecption("Insufficient permissions");
-        }
-
-
-        Set<Long> ids = new HashSet<>();
-        List<MemDisplaySlideWidget> list = new ArrayList<>();
-        List<MemDisplaySlideWidget> clist = new ArrayList<>();
-        for (MemDisplaySlideWidgetCreate slideWidgetCreate : slideWidgetCreates) {
-            ids.add(slideWidgetCreate.getWidgetId());
-            MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget().createdBy(user.getId());
-            BeanUtils.copyProperties(slideWidgetCreate, memDisplaySlideWidget);
-            list.add(memDisplaySlideWidget);
-            //自定义主键，copy 一份修改内容作为返回值
-            if (null != slideWidgetCreate.getId() && slideWidgetCreate.getId().longValue() > 0L) {
-                MemDisplaySlideWidget cMemDisplaySlideWidget = new MemDisplaySlideWidget().createdBy(user.getId());
-                BeanUtils.copyProperties(slideWidgetCreate, cMemDisplaySlideWidget);
-                clist.add(cMemDisplaySlideWidget);
-            }
-        }
-
-        List<Widget> widgets = widgetMapper.getByIds(ids);
-        if (null == widgets) {
-            throw new ServerException("Invalid widget id");
-        }
-
-
-        int i = memDisplaySlideWidgetMapper.insertBatch(list);
-        if (i > 0) {
-            List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
-            for (MemDisplaySlideWidget memDisplaySlideWidget : list) {
-                MemDisplaySlideWidgetCreate memDisplaySlideWidgetCreate = Arrays.stream(slideWidgetCreates).filter(
-                        (item -> (item.getDisplaySlideId().longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue()))
-                ).findFirst().get();
-
-                if (!CollectionUtils.isEmpty(memDisplaySlideWidgetCreate.getRoleIds())) {
-                    List<Role> roles = roleMapper.getRolesByIds(memDisplaySlideWidgetCreate.getRoleIds());
-                    relRoleDisplaySlideWidgetList.addAll(roles.stream()
-                            .map(r -> new RelRoleDisplaySlideWidget(r.getId(), memDisplaySlideWidget.getId()).createdBy(user.getId())).collect(Collectors.toList()));
-                }
-            }
-
-            if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
-                relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
-                optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})", relRoleDisplaySlideWidgetList.toString(), user.getId());
-            }
-
-            if (null != clist && clist.size() > 1) {
-                optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", clist.toString(), user.getId());
-                //自定义主键
-                return clist;
-            } else {
-                //自增主键
-                optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", list.toString(), user.getId());
-                return list;
-            }
-        } else {
-            log.error("insert batch MemDisplaySlideWidget error");
-            throw new ServerException("unkown fail");
-        }
+        return slideWithDisplayAndProject;
     }
 
     /**
@@ -347,14 +357,11 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Override
     @Transactional
     public boolean updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetDto[] memDisplaySlideWidgets, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(slideId);
 
-        if (null == slideWithDisplayAndProject) {
-            throw new NotFoundException("display slide is not found");
-        }
+    	SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(slideId);
 
-        if (null == slideWithDisplayAndProject.getDisplay() || !slideWithDisplayAndProject.getDisplayId().equals(displayId)) {
-            throw new ServerException("Invalid display slide");
+        if (!slideWithDisplayAndProject.getDisplayId().equals(displayId)) {
+            throw new ServerException("invalid display slide");
         }
 
         List<MemDisplaySlideWidgetDto> dtoList = Arrays.asList(memDisplaySlideWidgets);
@@ -362,60 +369,57 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
         List<Widget> widgets = widgetMapper.getByIds(widgetIds);
         if (null == widgets) {
-            throw new ServerException("Invalid widget id");
+            throw new ServerException("invalid widget id");
         }
 
+        Long projectId = slideWithDisplayAndProject.getProject().getId();
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+		if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(slideId, displayId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "update widgets");
+		}
 
-        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
-        boolean disable = disableDisplays.contains(displayId);
-        List<Long> disableSlides = getDisableVizs(user.getId(), displayId, null, VizEnum.SLIDE);
+		List<MemDisplaySlideWidget> memDisplaySlideWidgetList = new ArrayList<>(dtoList.size());
+		Map<Long, List<Long>> rolesMap = new HashMap<>();
+		dtoList.forEach(m -> {
+			m.updatedBy(user.getId());
+			memDisplaySlideWidgetList.add(m);
+			rolesMap.put(m.getId(), m.getRoleIds());
+		});
 
-        //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
-                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
-            throw new UnAuthorizedExecption("Insufficient permissions");
+        if (memDisplaySlideWidgetMapper.updateBatch(memDisplaySlideWidgetList) <= 0) {
+            log.error("update batch MemDisplaySlideWidget error displayId:{}, slideId:{}", displayId, slideId);
+			throw new ServerException("updateMemDisplaySlideWidgets fail");
         }
 
-        List<MemDisplaySlideWidget> memDisplaySlideWidgetList = new ArrayList<>(dtoList.size());
-        Map<Long, List<Long>> rolesMap = new HashMap<>();
-        dtoList.forEach(m -> {
-            m.updatedBy(user.getId());
-            memDisplaySlideWidgetList.add(m);
-            rolesMap.put(m.getId(), m.getRoleIds());
-        });
+		if (!CollectionUtils.isEmpty(rolesMap)) {
+			Set<Long> memDisplaySlideWidgetIds = rolesMap.keySet();
+			relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetIds(memDisplaySlideWidgetIds);
 
-        int i = memDisplaySlideWidgetMapper.updateBatch(memDisplaySlideWidgetList);
-        if (i > 0) {
-            if (!CollectionUtils.isEmpty(rolesMap)) {
-                Set<Long> memDisplaySlideWidgetIds = rolesMap.keySet();
-                relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetIds(memDisplaySlideWidgetIds);
+			List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
+			for (MemDisplaySlideWidget memDisplaySlideWidget : memDisplaySlideWidgetList) {
+				MemDisplaySlideWidgetDto memDisplaySlideWidgetDto = Arrays
+						.stream(memDisplaySlideWidgets).filter((item -> (item.getDisplaySlideId()
+								.longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue())))
+						.findFirst().get();
 
-                List<RelRoleDisplaySlideWidget> relRoleDisplaySlideWidgetList = new ArrayList<>();
-                for (MemDisplaySlideWidget memDisplaySlideWidget : memDisplaySlideWidgetList) {
-                    MemDisplaySlideWidgetDto memDisplaySlideWidgetDto = Arrays.stream(memDisplaySlideWidgets).filter(
-                            (item -> (item.getDisplaySlideId().longValue() == memDisplaySlideWidget.getDisplaySlideId().longValue()))
-                    ).findFirst().get();
+				if (!CollectionUtils.isEmpty(memDisplaySlideWidgetDto.getRoleIds())) {
+					List<Role> roles = roleMapper.getRolesByIds(memDisplaySlideWidgetDto.getRoleIds());
+					relRoleDisplaySlideWidgetList.addAll(roles.stream()
+							.map(r -> new RelRoleDisplaySlideWidget(r.getId(), memDisplaySlideWidget.getId())
+									.createdBy(user.getId()))
+							.collect(Collectors.toList()));
+				}
+			}
 
-                    if (!CollectionUtils.isEmpty(memDisplaySlideWidgetDto.getRoleIds())) {
-                        List<Role> roles = roleMapper.getRolesByIds(memDisplaySlideWidgetDto.getRoleIds());
-                        relRoleDisplaySlideWidgetList.addAll(roles.stream()
-                                .map(r -> new RelRoleDisplaySlideWidget(r.getId(), memDisplaySlideWidget.getId()).createdBy(user.getId())).collect(Collectors.toList()));
-                    }
-                }
+			if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
+				relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
+				optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})",
+						relRoleDisplaySlideWidgetList.toString(), user.getId());
+			}
+		}
 
-                if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
-                    relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
-                    optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})", relRoleDisplaySlideWidgetList.toString(), user.getId());
-                }
-            }
-
-            return true;
-        } else {
-            log.error("update batch MemDisplaySlideWidget error");
-            throw new ServerException("unknown fail");
-        }
+        return true;
     }
 
     /**
@@ -428,44 +432,40 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Override
     @Transactional
     public boolean updateMemDisplaySlideWidget(MemDisplaySlideWidget memDisplaySlideWidget, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(memDisplaySlideWidget.getDisplaySlideId());
 
-        if (null == slideWithDisplayAndProject) {
-            throw new NotFoundException("display slide is not found");
-        }
+    	Long slideId = memDisplaySlideWidget.getDisplaySlideId();
+    	SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(slideId);
 
-        if (null == slideWithDisplayAndProject.getDisplay()) {
-            throw new ServerException("Invalid display slide");
-        }
+        MemDisplaySlideWidget slideWidget = getMemDisplaySlideWidget(memDisplaySlideWidget.getId());
 
-        MemDisplaySlideWidget slideWidget = memDisplaySlideWidgetMapper.getById(memDisplaySlideWidget.getId());
-        if (null == slideWidget) {
-            throw new ServerException("display slide widget is not found");
-        }
+        Long projectId = slideWithDisplayAndProject.getProject().getId();
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+        checkWritePermission(entity, projectId, user, "update widget");
 
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-
-        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
-        boolean disable = disableDisplays.contains(slideWithDisplayAndProject.getDisplayId());
-        List<Long> disableSlides = getDisableVizs(user.getId(), slideWithDisplayAndProject.getDisplayId(), null, VizEnum.SLIDE);
-
-        //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
-                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(memDisplaySlideWidget.getDisplaySlideId())))) {
-            throw new UnAuthorizedExecption("Insufficient permissions");
+        Long displayId = slideWithDisplayAndProject.getDisplayId();
+        if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(slideId, displayId, user, projectPermission)) {
+        	alertUnAuthorized(entity, user, "update widget");
         }
 
         String origin = slideWidget.toString();
         slideWidget.updatedBy(user.getId());
         BeanUtils.copyProperties(memDisplaySlideWidget, slideWidget);
-        int update = memDisplaySlideWidgetMapper.update(slideWidget);
-        if (update > 0) {
-            optLogger.info("MemDisplaySlideWidget ({}) is update by (:{}), origin:{}", slideWidget.toString(), user.getId(), origin);
-            return true;
-        } else {
-            log.error("update MemDisplaySlideWidget error");
-            throw new ServerException("unknown fail");
+
+        if (memDisplaySlideWidgetMapper.update(slideWidget) <= 0) {
+			log.error("update MemDisplaySlideWidget error slideId:{}", slideId);
+            throw new ServerException("updateMemDisplaySlideWidget fail");
         }
+
+        optLogger.info("MemDisplaySlideWidget ({}) is update by (:{}), origin:{}", slideWidget.toString(), user.getId(), origin);
+        return true;
+    }
+
+    private MemDisplaySlideWidget getMemDisplaySlideWidget(Long id) {
+        MemDisplaySlideWidget widget = memDisplaySlideWidgetMapper.getById(id);
+        if (null == widget) {
+            throw new ServerException("display slide widget is not found");
+        }
+        return widget;
     }
 
     /**
@@ -478,45 +478,29 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Transactional
     public boolean deleteMemDisplaySlideWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        MemDisplaySlideWidget slideWidget = memDisplaySlideWidgetMapper.getById(relationId);
-        if (null == slideWidget) {
-            optLogger.info("MemDisplaySlideWidget (:{}) is not found", relationId);
-            return true;
+        MemDisplaySlideWidget slideWidget = getMemDisplaySlideWidget(relationId);
+
+        Long slideId = slideWidget.getDisplaySlideId();
+        SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(slideId);
+
+
+        Long projectId = slideWithDisplayAndProject.getProject().getId();
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+        checkWritePermission(entity, projectId, user, "delete widget");
+
+        Long displayId = slideWithDisplayAndProject.getDisplayId();
+        if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(slideId, displayId, user, projectPermission)) {
+        	alertUnAuthorized(entity, user, "delete widget");
         }
 
-
-        SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(slideWidget.getDisplaySlideId());
-
-        if (null == slideWithDisplayAndProject) {
-            throw new NotFoundException("display slide is not found");
+        if (memDisplaySlideWidgetMapper.deleteById(relationId) > 0) {
+        	log.error("delete MemDisplaySlideWidget error slideId:{}", slideId);
+            throw new ServerException("deleteMemDisplaySlideWidget fail");
         }
 
-        if (null == slideWithDisplayAndProject.getDisplay()) {
-            throw new ServerException("Invalid display");
-        }
-
-
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
-        boolean disable = disableDisplays.contains(slideWithDisplayAndProject.getDisplayId());
-        List<Long> disableSlides = getDisableVizs(user.getId(), slideWithDisplayAndProject.getDisplayId(), null, VizEnum.SLIDE);
-
-        //校验权限
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
-                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideWidget.getDisplaySlideId())))) {
-            throw new UnAuthorizedExecption("Insufficient permissions");
-        }
-
-        //delete rel_role_display_slide_widget
         relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetId(relationId);
-
-        int i = memDisplaySlideWidgetMapper.deleteById(relationId);
-        if (i > 0) {
-            optLogger.info("MemDisplaySlideWdget ({}) is delete by (:{})", slideWidget.toString(), user.getId());
-            return true;
-        } else {
-            throw new ServerException("unknown fail");
-        }
+        optLogger.info("MemDisplaySlideWdget ({}) is delete by (:{})", slideWidget.toString(), user.getId());
+        return true;
     }
 
     /**
@@ -528,29 +512,17 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     public DisplayWithSlides getDisplaySlideList(Long displayId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        Display display = displayMapper.getById(displayId);
-        if (null == display) {
-            log.info("display (:{}) not found", displayId);
-            throw new NotFoundException("display is not found");
-        }
+        Display display = getDisplay(displayId);
 
-        ProjectDetail projectDetail = null;
-        try {
-            projectDetail = projectService.getProjectDetail(display.getProjectId(), user, false);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (UnAuthorizedExecption e) {
-            return null;
-        }
+        Long projectId = display.getProjectId();
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-        List<Long> disableDisplays = getDisableVizs(user.getId(), projectDetail.getId(), null, VizEnum.DISPLAY);
-        boolean isDisable = disableDisplays.contains(displayId);
+		if (!checkReadPermission(entity, projectId, user)) {
+			return null;
+		}
 
-        boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
         boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !display.getPublish();
-
-        if (hidden || (!projectPermission.isProjectMaintainer() && isDisable) || noPublish) {
+        if (isDisableDisplay(displayId, projectId, user, projectPermission) || noPublish) {
             return null;
         }
 
@@ -559,29 +531,28 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
             return null;
         }
 
-        List<Long> allSlides = displaySlides.stream().map(DisplaySlide::getId).collect(Collectors.toList());
+		List<Long> allSlides = displaySlides.stream().map(DisplaySlide::getId).collect(Collectors.toList());
+		List<Long> disableList = getDisableVizs(user.getId(), display.getId(), allSlides, VizEnum.SLIDE);
 
-        List<Long> disableList = getDisableVizs(user.getId(), display.getId(), allSlides, VizEnum.SLIDE);
+		Iterator<DisplaySlide> iterator = displaySlides.iterator();
+		while (iterator.hasNext()) {
+			DisplaySlide displaySlide = iterator.next();
+			if (!projectPermission.isProjectMaintainer() && disableList.contains(displaySlide.getId())) {
+				iterator.remove();
+			}
+		}
 
-        Iterator<DisplaySlide> iterator = displaySlides.iterator();
-        while (iterator.hasNext()) {
-            DisplaySlide displaySlide = iterator.next();
-            if (!projectPermission.isProjectMaintainer() && disableList.contains(displaySlide.getId())) {
-                iterator.remove();
-            }
-        }
+		List<DisplaySlideInfo> displaySlideInfos = displaySlides.stream().map(slide -> {
+			DisplaySlideInfo displaySlideInfo = new DisplaySlideInfo();
+			BeanUtils.copyProperties(slide, displaySlideInfo);
+			return displaySlideInfo;
+		}).collect(Collectors.toList());
 
-        List<DisplaySlideInfo> displaySlideInfos = displaySlides.stream().map(slide -> {
-            DisplaySlideInfo displaySlideInfo = new DisplaySlideInfo();
-            BeanUtils.copyProperties(slide, displaySlideInfo);
-            return displaySlideInfo;
-        }).collect(Collectors.toList());
+		DisplayWithSlides displayWithSlides = new DisplayWithSlides();
+		BeanUtils.copyProperties(display, displayWithSlides);
+		displayWithSlides.setSlides(displaySlideInfos);
 
-        DisplayWithSlides displayWithSlides = new DisplayWithSlides();
-        BeanUtils.copyProperties(display, displayWithSlides);
-        displayWithSlides.setSlides(displaySlideInfos);
-
-        return displayWithSlides;
+		return displayWithSlides;
     }
 
 
@@ -596,36 +567,35 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Override
     public SlideWithMem getDisplaySlideMem(Long displayId, Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        Display display = displayMapper.getById(displayId);
-        if (null == display) {
-            log.info("display (:{}) not found", displayId);
-            throw new NotFoundException("display is not found");
-        }
+		Display display = getDisplay(displayId);
 
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
-        if (projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission() ||
-                (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && !display.getPublish())) {
-            log.info("user (:{}) have not permission to view widgets in this display slide", user.getId());
-            throw new UnAuthorizedExecption("you have not permission to view widgets in this display slide");
-        }
+		Long projectId = display.getProjectId();
+		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
-        DisplaySlide displaySlide = displaySlideMapper.getById(slideId);
+		boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+				&& !display.getPublish();
+		if (noPublish || !checkReadPermission(entity, projectId, user)) {
+			log.info("user (:{}) have not permission to view widgets in this display slide", user.getId());
+			throw new UnAuthorizedExecption("you have not permission to view widgets in this display slide");
+		}
 
-        if (null == displaySlide || !displaySlide.getDisplayId().equals(displayId)) {
-            log.info("display slide (:{}) not found", displayId);
-            throw new ServerException("display slide is not found");
-        }
+		DisplaySlide displaySlide = displaySlideMapper.getById(slideId);
 
-        List<MemDisplaySlideWidget> widgetList = memDisplaySlideWidgetMapper.getMemDisplaySlideWidgetListBySlideId(slideId);
+		if (null == displaySlide || !displaySlide.getDisplayId().equals(displayId)) {
+			log.info("display slide (:{}) not found", displayId);
+			throw new ServerException("display slide is not found");
+		}
 
-        if (CollectionUtils.isEmpty(widgetList)) {
+        List<MemDisplaySlideWidget> memSlideWidgets = memDisplaySlideWidgetMapper.getMemDisplaySlideWidgetListBySlideId(slideId);
+
+        if (CollectionUtils.isEmpty(memSlideWidgets)) {
             return null;
         }
 
-        List<Long> disableList = getDisableVizs(user.getId(), display.getId(), null, VizEnum.SLIDE);
-        List<Long> disableMemDisplaySlideWidgets = relRoleDisplaySlideWidgetMapper.getDisableByUser(user.getId());
+		List<Long> disableList = getDisableVizs(user.getId(), display.getId(), null, VizEnum.SLIDE);
+		List<Long> disableMemDisplaySlideWidgets = relRoleDisplaySlideWidgetMapper.getDisableByUser(user.getId());
 
-        Iterator<MemDisplaySlideWidget> iterator = widgetList.iterator();
+        Iterator<MemDisplaySlideWidget> iterator = memSlideWidgets.iterator();
 
         while (iterator.hasNext()) {
             MemDisplaySlideWidget memDisplaySlideWidget = iterator.next();
@@ -635,16 +605,21 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
             }
         }
 
-        Set<Long> widgetIds = widgetList.stream().map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
+        Set<Long> widgetIds = memSlideWidgets.stream().map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
+
+
         Set<View> views = new HashSet<>();
+        List<Widget> widgets = null;
         if (!CollectionUtils.isEmpty(widgetIds)) {
+            widgets = widgetMapper.getByIds(widgetIds);
             views = viewMapper.selectByWidgetIds(widgetIds);
         }
 
         SlideWithMem slideWithMem = new SlideWithMem();
         BeanUtils.copyProperties(displaySlide, slideWithMem);
-        slideWithMem.setWidgets(widgetList);
+        slideWithMem.setItems(memSlideWidgets);
         slideWithMem.setViews(views);
+        slideWithMem.setWidgets(widgets);
 
         return slideWithMem;
     }
@@ -661,38 +636,23 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Transactional
     public boolean deleteDisplaySlideWidgetList(Long displayId, Long slideId, Long[] memIds, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(slideId);
-
-        if (null == slideWithDisplayAndProject) {
-            throw new NotFoundException("display slide is not found");
-        }
-
-        if (null == slideWithDisplayAndProject.getDisplay()) {
-            throw new NotFoundException("display is not found");
-        }
+        SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(slideId);
 
         if (!displayId.equals(slideWithDisplayAndProject.getDisplay().getId())) {
-            throw new ServerException("Invalid display id");
+            throw new ServerException("invalid display id");
         }
 
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
+        Long projectId = slideWithDisplayAndProject.getProject().getId();
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
-        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
-
-        boolean disable = disableDisplays.contains(displayId);
-        List<Long> disableSlides = getDisableVizs(user.getId(), slideWithDisplayAndProject.getDisplayId(), null, VizEnum.SLIDE);
-
-        if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission()
-                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
-            throw new UnAuthorizedExecption("Insufficient permissions");
-        }
+		if (projectPermission.getVizPermission() < UserPermissionEnum.DELETE.getPermission() || isDisableDisplay(displayId, projectId, user, projectPermission)) {
+			alertUnAuthorized(entity, user, "delete widgets");
+		}
 
         if (memIds.length > 0) {
             List<Long> idList = new ArrayList<>(Arrays.asList(memIds));
-
             Set<Long> idSet = new HashSet<>(idList);
             relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetIds(idSet);
-
             memDisplaySlideWidgetMapper.deleteBatchById(idList);
         }
         return true;
@@ -709,85 +669,72 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Override
     @Transactional
     public String uploadSlideBGImage(Long slideId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        SlideWithDisplayAndProject slideWithDipaly = displaySlideMapper.getSlideWithDipalyAndProjectById(slideId);
 
-        if (null == slideWithDipaly) {
-            throw new NotFoundException("dispaly slide is not found");
-        }
+    	SlideWithDisplayAndProject slideWithDispaly = getSlideWithDisplayAndProject(slideId);
+        Display display = slideWithDispaly.getDisplay();
 
-        Display display = slideWithDipaly.getDisplay();
-        if (null == display) {
-            throw new NotFoundException("display is not found");
-        }
+        Long projectId = display.getProjectId();
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(display.getProjectId(), user, false), user);
-        List<Long> disableDisplays = getDisableVizs(user.getId(), display.getProjectId(), null, VizEnum.DISPLAY);
-        boolean disable = disableDisplays.contains(display.getId());
-        List<Long> disableSlides = getDisableVizs(user.getId(), slideWithDipaly.getDisplayId(), null, VizEnum.SLIDE);
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
-                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideId)))) {
-            throw new UnAuthorizedExecption("Insufficient permissions");
-        }
+        checkWritePermission(entity, projectId, user, "upload BGImage");
+
+       if (isDisableDisplay(display.getId(), projectId, user, projectPermission)) {
+    	   alertUnAuthorized(entity, user, "upload BGImage");
+       }
 
         //校验文件是否图片
         if (!fileUtils.isImage(file)) {
             throw new ServerException("file format error");
         }
 
-        //上传文件
-        String fileName = System.currentTimeMillis() + "_" + UUID.randomUUID();
-        String background = null;
+		// 上传文件
+		String fileName = System.currentTimeMillis() + "_" + UUID.randomUUID();
+		String background = null;
+		JSONObject jsonObject = null;
+		try {
+			background = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
+			if (StringUtils.isEmpty(background)) {
+				throw new ServerException("display slide background upload error");
+			}
 
-        JSONObject jsonObject = null;
-        try {
-            background = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
-            if (StringUtils.isEmpty(background)) {
-                throw new ServerException("display slide background upload error");
-            }
+			if (!StringUtils.isEmpty(slideWithDispaly.getConfig())) {
+				jsonObject = JSONObject.parseObject(slideWithDispaly.getConfig());
+				if (null == jsonObject) {
+					jsonObject = new JSONObject();
+				}
+				JSONObject slideParams = jsonObject.getJSONObject("slideParams");
+				if (null != slideParams) {
+					// 删除原数据
+					if (!StringUtils.isEmpty(slideParams.getString("backgroundImage"))) {
+						File bgFile = new File(slideParams.getString("backgroundImage"));
+						if (null != bgFile && bgFile.exists() && bgFile.isFile() && fileUtils.isImage(bgFile)) {
+							bgFile.delete();
+						}
+					}
+				}
+				slideParams.put("backgroundImage", background);
+				jsonObject.put("slideParams", slideParams);
+			} else {
+				jsonObject = new JSONObject();
+				JSONObject slideParams = new JSONObject();
+				slideParams.put("backgroundImage", background);
+				jsonObject.put("slideParams", slideParams);
+			}
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException("display slide background upload error");
+		}
 
-            if (!StringUtils.isEmpty(slideWithDipaly.getConfig())) {
-                jsonObject = JSONObject.parseObject(slideWithDipaly.getConfig());
-                if (null == jsonObject) {
-                    jsonObject = new JSONObject();
-                }
-                JSONObject slideParams = null;
-                if (null != jsonObject) {
-                    slideParams = jsonObject.getJSONObject("slideParams");
-                    if (null != slideParams) {
-                        //删除原数据
-                        if (!StringUtils.isEmpty(slideParams.getString("backgroundImage"))) {
-                            File bgFile = new File(slideParams.getString("backgroundImage"));
-                            if (null != bgFile && bgFile.exists() && bgFile.isFile() && fileUtils.isImage(bgFile)) {
-                                bgFile.delete();
-                            }
-                        }
-                    }
-                } else {
-                    slideParams = new JSONObject();
-                }
-                slideParams.put("backgroundImage", background);
-                jsonObject.put("slideParams", slideParams);
+		DisplaySlide displaySlide = new DisplaySlide();
+		BeanUtils.copyProperties(slideWithDispaly, displaySlide);
 
-            } else {
-                jsonObject = new JSONObject();
-                JSONObject slideParams = new JSONObject();
-                slideParams.put("backgroundImage", background);
-                jsonObject.put("slideParams", slideParams);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServerException("display slide background upload error");
-        }
+		displaySlide.updatedBy(user.getId());
+		displaySlide.setConfig(jsonObject.toString());
+		displaySlideMapper.update(displaySlide);
+		optLogger.info("displaySlide ({}) update by (:{}), origin: {}", displaySlide.toString(), user.getId(),
+				slideWithDispaly.toString());
 
-        DisplaySlide displaySlide = new DisplaySlide();
-        BeanUtils.copyProperties(slideWithDipaly, displaySlide);
-
-        displaySlide.updatedBy(user.getId());
-        displaySlide.setConfig(jsonObject.toString());
-        displaySlideMapper.update(displaySlide);
-        optLogger.info("displaySlide ({}) update by (:{}), origin: {}", displaySlide.toString(), user.getId(), slideWithDipaly.toString());
-
-        return background;
+		return background;
     }
 
 
@@ -802,67 +749,65 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Override
     @Transactional
     public String uploadSlideSubWidgetBGImage(Long relationId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        MemDisplaySlideWidget memDisplaySlideWidget = memDisplaySlideWidgetMapper.getById(relationId);
 
-        if (null == memDisplaySlideWidget) {
-            throw new NotFoundException("dispaly slide widget is not found");
-        }
+    	MemDisplaySlideWidget memDisplaySlideWidget = getMemDisplaySlideWidget(relationId);
 
         if (2 != memDisplaySlideWidget.getType()) {
             throw new ServerException("dispaly slide widget is not sub widget");
         }
 
-        SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDipalyAndProjectById(memDisplaySlideWidget.getDisplaySlideId());
+        SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(memDisplaySlideWidget.getDisplaySlideId());
 
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(slideWithDisplayAndProject.getProject().getId(), user, false), user);
-        List<Long> disableDisplays = getDisableVizs(user.getId(), slideWithDisplayAndProject.getProject().getId(), null, VizEnum.DISPLAY);
-        boolean disable = disableDisplays.contains(slideWithDisplayAndProject.getDisplayId());
-        List<Long> disableSlides = getDisableVizs(user.getId(), slideWithDisplayAndProject.getDisplayId(), null, VizEnum.SLIDE);
-        if (projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
-                || (!projectPermission.isProjectMaintainer() && (disable || disableSlides.contains(slideWithDisplayAndProject.getId())))) {
-            throw new UnAuthorizedExecption("Insufficient permissions");
+        Long projectId = slideWithDisplayAndProject.getProject().getId();
+        checkWritePermission(entity, projectId, user, "upload BGImage");
+
+        Long displayId = slideWithDisplayAndProject.getDisplayId();
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+        if (isDisableDisplay(displayId, projectId, user, projectPermission) || isDisableDisplaySlide(relationId, displayId, user, projectPermission)) {
+        	alertUnAuthorized(entity, user, "upload BGImage");
         }
 
-        //上传文件
-        String fileName = System.currentTimeMillis() + "_" + UUID.randomUUID();
-        String background = null;
+		// 上传文件
+		String fileName = System.currentTimeMillis() + "_" + UUID.randomUUID();
+		String background = null;
 
-        JSONObject jsonObject = null;
-        String key = "backgroundImage";
-        try {
-            background = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
-            if (StringUtils.isEmpty(background)) {
-                throw new NotFoundException("display slide sub widget backgroundImage upload error");
-            }
+		JSONObject jsonObject = null;
+		String key = "backgroundImage";
+		try {
+			background = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
+			if (StringUtils.isEmpty(background)) {
+				throw new NotFoundException("display slide sub widget backgroundImage upload error");
+			}
 
-            if (!StringUtils.isEmpty(memDisplaySlideWidget.getParams())) {
-                jsonObject = JSONObject.parseObject(memDisplaySlideWidget.getParams());
-                if (null != jsonObject) {
-                    if (jsonObject.containsKey(key)) {
-                        String backgroundImage = jsonObject.getString(key);
-                        if (!StringUtils.isEmpty(backgroundImage)) {
-                            fileUtils.remove(backgroundImage);
-                        }
-                    }
-                } else {
-                    jsonObject = new JSONObject();
-                }
-            } else {
-                jsonObject = new JSONObject();
-            }
-            jsonObject.put(key, background);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServerException("display slide sub widget backgroundImage upload error");
-        }
+			if (!StringUtils.isEmpty(memDisplaySlideWidget.getParams())) {
+				jsonObject = JSONObject.parseObject(memDisplaySlideWidget.getParams());
+				if (null != jsonObject) {
+					if (jsonObject.containsKey(key)) {
+						String backgroundImage = jsonObject.getString(key);
+						if (!StringUtils.isEmpty(backgroundImage)) {
+							fileUtils.remove(backgroundImage);
+						}
+					}
+				} else {
+					jsonObject = new JSONObject();
+				}
+			} else {
+				jsonObject = new JSONObject();
+			}
+			jsonObject.put(key, background);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException("display slide sub widget backgroundImage upload error");
+		}
 
-        String origin = memDisplaySlideWidget.toString();
-        memDisplaySlideWidget.setParams(jsonObject.toString());
-        memDisplaySlideWidget.updatedBy(user.getId());
-        memDisplaySlideWidgetMapper.update(memDisplaySlideWidget);
-        optLogger.info("memDisplaySlideWidget ({}) update by (:{}), origin: ({})", memDisplaySlideWidget.toString(), user.getId(), origin);
+		String origin = memDisplaySlideWidget.toString();
+		memDisplaySlideWidget.setParams(jsonObject.toString());
+		memDisplaySlideWidget.updatedBy(user.getId());
+		memDisplaySlideWidgetMapper.update(memDisplaySlideWidget);
+		optLogger.info("memDisplaySlideWidget ({}) update by (:{}), origin: ({})", memDisplaySlideWidget.toString(),
+				user.getId(), origin);
 
-        return background;
+		return background;
     }
 
     @Override
@@ -873,85 +818,84 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Override
     @Transactional
     public boolean postSlideVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        SlideWithDisplayAndProject slide = displaySlideMapper.getSlideWithDipalyAndProjectById(vizVisibility.getId());
-        if (null == slide) {
-            throw new NotFoundException("display slide is not found");
-        }
 
-        projectService.getProjectDetail(slide.getProject().getId(), user, true);
+		SlideWithDisplayAndProject slide = getSlideWithDisplayAndProject(vizVisibility.getId());
 
-        if (vizVisibility.isVisible()) {
-            int delete = relRoleSlideMapper.delete(slide.getId(), role.getId());
-            if (delete > 0) {
-                optLogger.info("display slide ({}) can be accessed by role ({}), update by (:{})", (DisplaySlide) slide, role, user.getId());
-            }
-        } else {
-            RelRoleSlide relRoleSlide = new RelRoleSlide(slide.getId(), role.getId());
-            relRoleSlideMapper.insert(relRoleSlide);
-            optLogger.info("display slide ({}) limit role ({}) access, create by (:{})", (DisplaySlide) slide, role, user.getId());
-        }
+		if (vizVisibility.isVisible()) {
+			if (relRoleSlideMapper.delete(slide.getId(), role.getId()) > 0) {
+				optLogger.info("display slide ({}) can be accessed by role ({}), update by (:{})", (DisplaySlide) slide,
+						role, user.getId());
+			}
+		} else {
+			RelRoleSlide relRoleSlide = new RelRoleSlide(slide.getId(), role.getId());
+			relRoleSlideMapper.insert(relRoleSlide);
+			optLogger.info("display slide ({}) limit role ({}) access, create by (:{})", (DisplaySlide) slide, role,
+					user.getId());
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    @Override
-    @Transactional
-    public boolean copySlides(Long originDisplayId, Long displayId, User user) {
-        //  copy slide entity
-        List<DisplaySlide> originSlides = displaySlideMapper.selectByDisplayId(originDisplayId);
-        if (CollectionUtils.isEmpty(originSlides)) {
-            return true;
-        }
+	@Override
+	@Transactional
+	public boolean copySlides(Long originDisplayId, Long displayId, User user) {
+		// copy slide entity
+		List<DisplaySlide> originSlides = displaySlideMapper.selectByDisplayId(originDisplayId);
+		if (CollectionUtils.isEmpty(originSlides)) {
+			return true;
+		}
 
-        List<RelModelCopy> slideCopies = new ArrayList<>();
-        originSlides.forEach(originDisplay -> {
-            DisplaySlide slide = new DisplaySlide();
-            BeanUtils.copyProperties(originDisplay, slide, "id");
-            slide.setDisplayId(displayId);
-            slide.createdBy(user.getId());
-            int insert = displaySlideMapper.insert(slide);
-            if (insert > 0) {
-                optLogger.info("Slide ({}) is copied from ({}) by user(:{})", slide.toString(), originDisplay.toString(), user.getId());
-                slideCopies.add(new RelModelCopy(originDisplay.getId(), slide.getId()));
-            }
-        });
+		List<RelModelCopy> slideCopies = new ArrayList<>();
+		originSlides.forEach(originDisplay -> {
+			DisplaySlide slide = new DisplaySlide();
+			BeanUtils.copyProperties(originDisplay, slide, "id");
+			slide.setDisplayId(displayId);
+			slide.createdBy(user.getId());
+			if (displaySlideMapper.insert(slide) > 0) {
+				optLogger.info("Slide ({}) is copied from ({}) by user(:{})", slide.toString(),
+						originDisplay.toString(), user.getId());
+				slideCopies.add(new RelModelCopy(originDisplay.getId(), slide.getId()));
+			}
+		});
 
-        //  copy relRoleSlide
-        if (!slideCopies.isEmpty()) {
-            int i = relRoleSlideMapper.copyRoleSlideRelation(slideCopies, user.getId());
-            if (i > 0) {
-                optLogger.info("display (:{}) slides role is copied by user (:{}) from (:{})", displayId, user.getId(), originDisplayId);
-            }
-        }
+		// copy relRoleSlide
+		if (!slideCopies.isEmpty()) {
+			if (relRoleSlideMapper.copyRoleSlideRelation(slideCopies, user.getId()) > 0) {
+				optLogger.info("display (:{}) slides role is copied by user (:{}) from (:{})", displayId, user.getId(),
+						originDisplayId);
+			}
+		}
 
-        //  copy memDisplaySlideWidget
-        List<MemDisplaySlideWidgetWithSlide> memWithSlideWidgetList = memDisplaySlideWidgetMapper.getMemWithSlideByDisplayId(originDisplayId);
-        if (CollectionUtils.isEmpty(memWithSlideWidgetList)) {
-            return true;
-        }
+		// copy memDisplaySlideWidget
+		List<MemDisplaySlideWidgetWithSlide> memWithSlideWidgetList = memDisplaySlideWidgetMapper
+				.getMemWithSlideByDisplayId(originDisplayId);
+		if (CollectionUtils.isEmpty(memWithSlideWidgetList)) {
+			return true;
+		}
 
-        List<RelModelCopy> memCopies = new ArrayList<>();
-        Map<Long, Long> slideCopyIdMap = new HashMap<>();
-        slideCopies.forEach(copy -> slideCopyIdMap.put(copy.getOriginId(), copy.getCopyId()));
-        memWithSlideWidgetList.forEach(originMem -> {
-            MemDisplaySlideWidget mem = new MemDisplaySlideWidget();
-            BeanUtils.copyProperties(originMem, mem, "id");
-            mem.setDisplaySlideId(slideCopyIdMap.get(originMem.getDisplaySlideId()));
-            mem.createdBy(user.getId());
-            int insert = memDisplaySlideWidgetMapper.insert(mem);
-            if (insert > 0) {
-                optLogger.info("MemDisplaySlideWidget ({}) is copied from ({}) by user(:{})", mem.toString(), originMem.toString(), user.getId());
-                memCopies.add(new RelModelCopy(originMem.getId(), mem.getId()));
-            }
-        });
+		List<RelModelCopy> memCopies = new ArrayList<>();
+		Map<Long, Long> slideCopyIdMap = new HashMap<>();
+		slideCopies.forEach(copy -> slideCopyIdMap.put(copy.getOriginId(), copy.getCopyId()));
+		memWithSlideWidgetList.forEach(originMem -> {
+			MemDisplaySlideWidget mem = new MemDisplaySlideWidget();
+			BeanUtils.copyProperties(originMem, mem, "id");
+			mem.setDisplaySlideId(slideCopyIdMap.get(originMem.getDisplaySlideId()));
+			mem.createdBy(user.getId());
+			int insert = memDisplaySlideWidgetMapper.insert(mem);
+			if (insert > 0) {
+				optLogger.info("MemDisplaySlideWidget ({}) is copied from ({}) by user(:{})", mem.toString(),
+						originMem.toString(), user.getId());
+				memCopies.add(new RelModelCopy(originMem.getId(), mem.getId()));
+			}
+		});
 
-        //  copy relRoleDisplaySlideWidget
-        if (!memCopies.isEmpty()) {
-            int i = relRoleDisplaySlideWidgetMapper.copyRoleSlideWidgetRelation(memCopies, user.getId());
-            if (i > 0) {
-                optLogger.info("display (:{}) relRoleDisplaySlideWidgetMapper is copied by user (:{}) from (:{})", displayId, user.getId(), originDisplayId);
-            }
-        }
-        return true;
+		// copy relRoleDisplaySlideWidget
+		if (!memCopies.isEmpty()) {
+			if (relRoleDisplaySlideWidgetMapper.copyRoleSlideWidgetRelation(memCopies, user.getId()) > 0) {
+				optLogger.info("display (:{}) relRoleDisplaySlideWidgetMapper is copied by user (:{}) from (:{})",
+						displayId, user.getId(), originDisplayId);
+			}
+		}
+		return true;
     }
 }

@@ -19,108 +19,137 @@
  */
 
 import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
-import {
-  LOAD_WIDGETS,
-  ADD_WIDGET,
-  DELETE_WIDGET,
-  LOAD_WIDGET_DETAIL,
-  EDIT_WIDGET,
-  EXECUTE_COMPUTED_SQL
-} from './constants'
+import { ActionTypes } from './constants'
+import omit from 'lodash/omit'
 
-import {
-  widgetsLoaded,
-  widgetsLoadedFail,
-  widgetAdded,
-  addWidgetFail,
-  widgetDeleted,
-  deleteWidgetFail,
-  widgetDetailLoaded,
-  loadWidgetDetailFail,
-  widgetEdited,
-  editWidgetFail
-} from './actions'
+import { WidgetActions, WidgetActionType } from './actions'
 
 import request from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 
-export function* getWidgets (action) {
+export function* getWidgets(action: WidgetActionType) {
+  if (action.type !== ActionTypes.LOAD_WIDGETS) {
+    return
+  }
+
   const { projectId } = action.payload
   try {
     const result = yield call(request, `${api.widget}?projectId=${projectId}`)
-    yield put(widgetsLoaded(result.payload))
+    yield put(WidgetActions.widgetsLoaded(result.payload))
   } catch (err) {
-    yield put(widgetsLoadedFail())
+    yield put(WidgetActions.widgetsLoadedFail())
     errorHandler(err)
   }
 }
 
-export function* addWidget ({ payload }) {
+export function* addWidget(action: WidgetActionType) {
+  if (action.type !== ActionTypes.ADD_WIDGET) {
+    return
+  }
+
+  const { widget, resolve } = action.payload
   try {
     const result = yield call(request, {
       method: 'post',
       url: api.widget,
-      data: payload.widget
+      data: widget
     })
 
-    yield put(widgetAdded(result.payload))
-    payload.resolve()
+    yield put(WidgetActions.widgetAdded(result.payload))
+    resolve()
   } catch (err) {
-    yield put(addWidgetFail())
+    yield put(WidgetActions.addWidgetFail())
     errorHandler(err)
   }
 }
 
-export function* deleteWidget ({ payload }) {
+export function* deleteWidget(action: WidgetActionType) {
+  if (action.type !== ActionTypes.DELETE_WIDGET) {
+    return
+  }
+
+  const { id } = action.payload
   try {
     yield call(request, {
       method: 'delete',
-      url: `${api.widget}/${payload.id}`
+      url: `${api.widget}/${id}`
     })
-    yield put(widgetDeleted(payload.id))
+    yield put(WidgetActions.widgetDeleted(id))
   } catch (err) {
-    yield put(deleteWidgetFail())
+    yield put(WidgetActions.deleteWidgetFail())
     errorHandler(err)
   }
 }
 
-export function* getWidgetDetail (action) {
-  const { payload } = action
+export function* getWidgetDetail(action: WidgetActionType) {
+  if (action.type !== ActionTypes.LOAD_WIDGET_DETAIL) {
+    return
+  }
+
+  const { id } = action.payload
   try {
-    const result = yield call(request, `${api.widget}/${payload.id}`)
+    const result = yield call(request, `${api.widget}/${id}`)
     const viewId = result.payload.viewId
     const view = yield call(request, `${api.view}/${viewId}`)
-    yield put(widgetDetailLoaded(result.payload, view.payload))
+    yield put(WidgetActions.widgetDetailLoaded(result.payload, view.payload))
   } catch (err) {
-    yield put(loadWidgetDetailFail(err))
+    yield put(WidgetActions.loadWidgetDetailFail(err))
     errorHandler(err)
   }
 }
 
-export function* editWidget ({ payload }) {
+export function* editWidget(action: WidgetActionType) {
+  if (action.type !== ActionTypes.EDIT_WIDGET) {
+    return
+  }
+
+  const { widget, resolve } = action.payload
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.widget}/${payload.widget.id}`,
-      data: payload.widget
+      url: `${api.widget}/${widget.id}`,
+      data: widget
     })
-    yield put(widgetEdited())
-    payload.resolve()
+    yield put(WidgetActions.widgetEdited())
+    resolve()
   } catch (err) {
-    yield put(editWidgetFail())
+    yield put(WidgetActions.editWidgetFail())
     errorHandler(err)
   }
 }
 
+export function* copyWidget(action: WidgetActionType) {
+  if (action.type !== ActionTypes.COPY_WIDGET) {
+    return
+  }
 
+  const { widget, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: api.widget,
+      data: omit(widget, 'id')
+    })
+    yield put(WidgetActions.widgetCopied(widget.id, asyncData.payload))
+    resolve()
+  } catch (err) {
+    yield put(WidgetActions.copyWidgetFail())
+    errorHandler(err)
+  }
+}
 
-export function* executeComputed ({ payload }) {
+export function* executeComputed(action: WidgetActionType) {
+  if (action.type !== ActionTypes.EXECUTE_COMPUTED_SQL) {
+    return
+  }
+
+  const { sql } = action.payload
   try {
     const result = yield call(request, {
       method: 'post',
-    //  url: api.widget,
-      data: payload.sql
+      //  url: api.widget,
+      data: sql
     })
     // todo  返回sql校验结果
   } catch (err) {
@@ -128,13 +157,14 @@ export function* executeComputed ({ payload }) {
   }
 }
 
-export default function* rootWidgetSaga (): IterableIterator<any> {
+export default function* rootWidgetSaga() {
   yield all([
-    takeLatest(LOAD_WIDGETS, getWidgets as any),
-    takeEvery(ADD_WIDGET, addWidget as any),
-    takeEvery(DELETE_WIDGET, deleteWidget as any),
-    takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail),
-    takeEvery(EDIT_WIDGET, editWidget as any),
-    takeEvery(EXECUTE_COMPUTED_SQL, executeComputed as any)
+    takeLatest(ActionTypes.LOAD_WIDGETS, getWidgets),
+    takeEvery(ActionTypes.ADD_WIDGET, addWidget),
+    takeEvery(ActionTypes.DELETE_WIDGET, deleteWidget),
+    takeLatest(ActionTypes.LOAD_WIDGET_DETAIL, getWidgetDetail),
+    takeEvery(ActionTypes.EDIT_WIDGET, editWidget),
+    takeEvery(ActionTypes.COPY_WIDGET, copyWidget),
+    takeEvery(ActionTypes.EXECUTE_COMPUTED_SQL, executeComputed)
   ])
 }
