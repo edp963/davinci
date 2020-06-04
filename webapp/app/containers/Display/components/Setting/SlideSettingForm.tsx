@@ -42,6 +42,7 @@ const SlideSettingForm: React.FC<ISlideSettingFormProps> = (props) => {
         autoSlideGlobal: true,
         autoPlay: true,
         transitionGlobal: true,
+        backgroundImage: undefined,
         ...slideParams
       }
       refForm.current.setFieldsValue(fieldsValue)
@@ -58,4 +59,4 @@ const SlideSettingForm: React.FC<ISlideSettingFormProps> = (props) => {
   )
 }
 
-export default SlideSettingForm
+export default React.memo(SlideSettingForm)

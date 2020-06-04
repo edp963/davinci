@@ -31,7 +31,7 @@ interface ILayerRadioProps {
   onChange: (layerId: number, checked: boolean, exclusive: boolean) => void
 }
 
-export const LayerRadio: React.FC<ILayerRadioProps> = (props) => {
+export const LayerRadio: React.FC<ILayerRadioProps> = React.memo((props) => {
   const { id, checked, onChange } = props
 
   const wrapperCls = classnames({
@@ -69,10 +69,10 @@ export const LayerRadio: React.FC<ILayerRadioProps> = (props) => {
       </Tooltip>
     </label>
   )
-}
+})
 
-export const LayerRadioGroup: React.FC = (props) => (
+export const LayerRadioGroup: React.FC = React.memo((props) => (
   <div className="display-layer-radio-group ant-radio-group-outline">
     {props.children}
   </div>
-)
+))

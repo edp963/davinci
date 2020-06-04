@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { ChangeEvent, FormEvent } from 'react'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
 import LoginForm from 'containers/Login/LoginForm'
@@ -10,7 +10,7 @@ import { login } from 'share/containers/App/actions'
 import { Icon } from 'antd'
 
 interface ILoginProps {
-  loginLoading?: boolean
+  loading: boolean
   shareToken: any,
   legitimateUser: () => void
   onLogin?: (username: string, password: string, shareToken: any, resolve: (res) => void) => void
@@ -30,19 +30,20 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     }
   }
 
-  private changeUsername = (e) => {
+  private changeUsername = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       username: e.target.value.trim()
     })
   }
 
-  private changePassword = (e) => {
+  private changePassword = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       password: e.target.value
     })
   }
 
-  private doLogin = () => {
+  private doLogin = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     const { onLogin, shareToken, legitimateUser } = this.props
     const { username, password } = this.state
 
@@ -54,7 +55,7 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   }
 
   public render () {
-    const { loginLoading } = this.props
+    const { loading } = this.props
     const { username, password } = this.state
     return (
       <div className={`${styles.container} ${styles.share}`}>
@@ -64,21 +65,11 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
           <LoginForm
             username={username}
             password={password}
+            loading={loading}
             onChangeUsername={this.changeUsername}
             onChangePassword={this.changePassword}
             onLogin={this.doLogin}
           />
-          <button
-            disabled={loginLoading}
-            onClick={this.doLogin}
-          >
-            {
-              loginLoading
-                ? <Icon type="loading" />
-                : ''
-            }
-            登 录
-          </button>
         </div>
       </div>
     )

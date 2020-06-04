@@ -85,6 +85,7 @@ import {
   makeSelectDownloadList,
   makeSelectShareParams
 } from './selectors'
+import { makeSelectLoginLoading } from '../App/selectors'
 import { decodeMetricName } from 'app/containers/Widget/components/util'
 import {
   GRID_COLS,
@@ -460,6 +461,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       formedViews,
       linkages,
       downloadList,
+      loginLoading,
       onLoadResultset,
       onLoadBatchDataWithControlValues,
       onResizeDashboardItem,
@@ -587,6 +589,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     loginPanel = showLogin ? (
       <Login
+        loading={loginLoading}
         shareToken={shareToken}
         legitimateUser={this.handleLegitimateUser}
       />
@@ -651,7 +654,8 @@ const mapStateToProps = createStructuredSelector({
   currentItemsInfo: makeSelectItemsInfo(),
   linkages: makeSelectLinkages(),
   downloadList: makeSelectDownloadList(),
-  shareParams: makeSelectShareParams()
+  shareParams: makeSelectShareParams(),
+  loginLoading: makeSelectLoginLoading()
 })
 
 export function mapDispatchToProps(dispatch) {

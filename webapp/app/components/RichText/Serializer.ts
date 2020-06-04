@@ -95,7 +95,9 @@ const serializeNode = (node: Node) => {
     case ElementTypes.Link:
       return `<a href="${node.url}" target="_blank">${children}</a>`
     case ElementTypes.Image:
-      return `<div>${children}<img src="${node.url}" ${node.width ? `width="${node.width}"` : ''}/></div>`
+      return `<div>${children}<img src="${node.url}" ${
+        node.width ? `width="${node.width}"` : ''
+      }/></div>`
 
     case ElementTypes.Table:
       return `<table><tbody>${children}</tbody></table>`

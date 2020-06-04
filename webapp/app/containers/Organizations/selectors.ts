@@ -78,6 +78,12 @@ const makeSelectCurrentOrganizationProjectRoles = () => createSelector(
   (organizationState: IOrganizationState) => organizationState.projectRoles
 )
 
+const makeSelectInviteMemberLoading = () => createSelector(
+  selectOrganization,
+  (organizationState: IOrganizationState) => organizationState.inviteMemberfetching
+)
+
+
 
 export {
   selectOrganization,
@@ -91,5 +97,6 @@ export {
   makeSelectRoleModalLoading,
   makeSelectCurrentOrganizationProject,
   makeSelectCurrentOrganizationProjectAdmins,
-  makeSelectCurrentOrganizationProjectRoles
+  makeSelectCurrentOrganizationProjectRoles,
+  makeSelectInviteMemberLoading
 }

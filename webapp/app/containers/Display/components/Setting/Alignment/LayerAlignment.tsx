@@ -55,4 +55,4 @@ const LayerAlignment: React.FC<ILayerAlignmentProps> = (props) => {
   )
 }
 
-export default LayerAlignment
+export default React.memo(LayerAlignment)

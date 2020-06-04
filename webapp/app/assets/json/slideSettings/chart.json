@@ -107,7 +107,11 @@
       "default": "60",
       "min": 1,
       "placeholder": "秒",
-      "labelCol": 10
+      "labelCol": 10,
+      "relatedItems": [{
+        "name": "polling",
+        "values": ["true"]
+      }]
     }]
   }]
 }
