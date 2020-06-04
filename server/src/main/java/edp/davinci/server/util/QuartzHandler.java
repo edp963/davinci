@@ -53,11 +53,10 @@ public class QuartzHandler {
     public void addJob(CronJob cronJob) throws ServerException, SchedulerException {
 
         if (null == cronJob) {
-            throw new ServerException("EMPTY job");
+            throw new ServerException("Empty job");
         }
 
-        if (System.currentTimeMillis() < cronJob.getStartDate().getTime()
-                || System.currentTimeMillis() > cronJob.getEndDate().getTime()) {
+        if (System.currentTimeMillis() > cronJob.getEndDate().getTime()) {
             Object[] args = {
                     cronJob.getId(),
                     DateUtils.toyyyyMMddHHmmss(System.currentTimeMillis()),
