@@ -59,4 +59,4 @@ const SlideSettingForm: React.FC<ISlideSettingFormProps> = (props) => {
   )
 }
 
-export default SlideSettingForm
+export default React.memo(SlideSettingForm)

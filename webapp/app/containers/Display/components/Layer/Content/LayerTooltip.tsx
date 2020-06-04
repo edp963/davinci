@@ -18,18 +18,32 @@
  * >>
  */
 
-import React, { useContext } from 'react'
+import React, { useContext, useMemo } from 'react'
 import { Tooltip } from 'antd'
 
 import { LayerContext } from '../util'
+import { useSelector } from 'react-redux'
+import { makeSelectCurrentOperateItemParams } from 'app/containers/Display/selectors'
 
 const LayerTooltip: React.FC = (props) => {
-  const {
-    operationInfo,
-    layer: { params }
-  } = useContext(LayerContext)
+  const { operationInfo, layer } = useContext(LayerContext)
+
   const { resizing, dragging } = operationInfo
+
+  const { id: layerId } = layer
+
+  const operateItemParams = useSelector(makeSelectCurrentOperateItemParams())
+
+  const params = useMemo(
+    () =>
+      dragging
+        ? operateItemParams.find((_) => _.id === layerId)?.params
+        : layer.params,
+    [dragging, operateItemParams, layer.params]
+  )
+
   const { positionX, positionY, width, height } = params
+
   let tooltip: string
   if (resizing) {
     tooltip = `宽度：${width}px，高度：${height}px`

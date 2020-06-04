@@ -46,10 +46,7 @@ const LayerList: React.FC<ILayerListProps> = (props) => {
       className="display-layer-list"
       size="small"
       title={
-        <CommandList
-          className="display-layer-command"
-          onCommand={onCommand}
-        />
+        <CommandList className="display-layer-command" onCommand={onCommand} />
       }
     >
       <LayerRadioGroup>
@@ -68,4 +65,4 @@ const LayerList: React.FC<ILayerListProps> = (props) => {
   )
 }
 
-export default LayerList
+export default React.memo(LayerList)
