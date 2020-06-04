@@ -254,7 +254,7 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
                         }
                         List<WidgetContext> widgetContexts = new ArrayList<>();
                         widgets.forEach(widget -> {
-                            WidgetQueryParam viewExecuteParam = getWidgetQueryParam(ScriptUtils.getExecuteParamFormatEngine(), null, widget.getConfig(), null);
+                            WidgetQueryParam viewExecuteParam = getWidgetQueryParam(null, widget.getConfig(), null);
                             widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
                         });
 
@@ -288,7 +288,7 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
                     set.forEach(w -> {
                         Widget widget = new Widget();
                         BeanUtils.copyProperties(w, widget);
-                        WidgetQueryParam viewExecuteParam = getWidgetQueryParam(ScriptUtils.getExecuteParamFormatEngine(), dashboard.getConfig(), widget.getConfig(), w.getRelationId());
+                        WidgetQueryParam viewExecuteParam = getWidgetQueryParam(dashboard.getConfig(), widget.getConfig(), w.getRelationId());
                         widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
                     });
 

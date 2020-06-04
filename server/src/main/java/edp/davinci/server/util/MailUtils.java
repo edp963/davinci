@@ -58,7 +58,7 @@ public class MailUtils {
     @Value("${spring.mail.username}")
     private String mailUsername;
 
-    @Value("${spring.mail.fromAddress:}")
+    @Value("${spring.mail.fromAddress}")
     private String fromAddress;
 
     @Value("${spring.mail.nickname}")

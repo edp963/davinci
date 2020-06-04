@@ -36,7 +36,7 @@ const LayerBox: React.FC = (props) => {
 
   const operateItemParams = useSelector(makeSelectCurrentOperateItemParams())
 
-  const dragging = operationInfo?.dragging
+  const { dragging } = operationInfo
 
   const params = useMemo(
     () =>

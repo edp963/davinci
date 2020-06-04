@@ -21,6 +21,7 @@ package edp.davinci.data.aggregator;
 
 import java.util.List;
 
+import edp.davinci.data.aggregator.JdbcAggregator.DataTable;
 import edp.davinci.data.pojo.ColumnModel;
 
 public abstract class Aggregator {
@@ -30,4 +31,6 @@ public abstract class Aggregator {
 	public abstract boolean loadData(String table, List<ColumnModel> header, List<List<Object>> data, long ttl);
 
 	public abstract void cleanData();
+
+	public abstract DataTable getDataTable(String table);
 }

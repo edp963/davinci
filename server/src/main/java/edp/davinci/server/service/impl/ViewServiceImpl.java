@@ -25,16 +25,15 @@ import static edp.davinci.server.commons.Constants.NO_AUTH_PERMISSION;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -49,6 +48,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import edp.davinci.commons.Constants;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.MD5Utils;
@@ -66,6 +66,7 @@ import edp.davinci.data.pojo.PagingParam;
 import edp.davinci.data.pojo.Param;
 import edp.davinci.data.pojo.SqlQueryParam;
 import edp.davinci.data.provider.DataProviderFactory;
+import edp.davinci.data.util.SqlParseUtils;
 import edp.davinci.server.dao.RelRoleViewExtendMapper;
 import edp.davinci.server.dao.SourceExtendMapper;
 import edp.davinci.server.dao.ViewExtendMapper;
@@ -140,9 +141,6 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     private static final CheckEntityEnum entity = CheckEntityEnum.VIEW;
 
     private static final ExecutorService roleParamThreadPool = Executors.newFixedThreadPool(8);
-
-    @Value("${source.query-model:0.3}")
-    private String queryModel;
 
     private static final int CONCURRENCY_EXPIRE = 60 * 60;
 
@@ -441,12 +439,12 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                     .nativeQuery(true).type("query").build();
 
             statement = parser.parseSystemVars(statement, queryParam, source, user);
-            statement = parser.parseAuthVars(statement, queryParam, null, source, user);
+            statement = parser.parseAuthVars(statement, queryParam, null, null, source, user);
 
             Map<String, Object> queryParams = new HashMap<>();
             List<SqlVariable> variables = executeParam.getVariables();
             setQueryVarValue(queryParams, variables, null);
-            statement = parser.parseQueryVars(statement, queryParam, queryParams, source, user);
+            statement = parser.parseQueryVars(statement, queryParam, queryParams, null, source, user);
 
             List<String> executeStatements = parser.getExecuteStatement(statement, queryParam, source, user);
             List<String> queryStatements = parser.getQueryStatement(statement, queryParam, source, user);
@@ -473,31 +471,31 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
     private void setQueryVarValue(Map<String, Object> queryParams, List<SqlVariable> variables, List<Param> params) {
-        for (SqlVariable var : variables) {
+        variables.forEach(var -> {
             SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(var.getType());
             if (typeEnum != SqlVariableTypeEnum.QUERYVAR) {
-                continue;
+                return;
             }
 
-            String name = var.getName().trim();
+            String varName = var.getName().trim();
             Object value = null;
             if (!CollectionUtils.isEmpty(params)) {
-                Param param = params.stream().filter(p -> p.getName().equals(name)).findFirst().get();
+                Param param = params.stream().filter(p -> p.getName().equals(varName)).findFirst().get();
                 value = SqlVariableValueTypeEnum.getValue(var.getValueType(), param.getValue(), var.isUdf());
             }
 
             if (value == null) {
-                queryParams.put(name,
+                queryParams.put(varName,
                         SqlVariableValueTypeEnum.getValues(var.getValueType(), var.getDefaultValues(), var.isUdf()));
-                continue;
+                return;
             }
 
             if (value instanceof List && ((List) value).size() > 0) {
                 value = ((List) value).stream().collect(Collectors.joining(COMMA)).toString();
             }
 
-            queryParams.put(name, value);
-        }
+            queryParams.put(varName, value);
+        });
     }
 
     private boolean isMaintainer(User user, ProjectDetail projectDetail) {
@@ -589,16 +587,22 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
             String sWithSysVar = parser.parseSystemVars(statement, sqlQueryParam, source, user);
 
+            Map<String, List<String>> authParams = new HashMap<>();
+            if (isMaintainer) {
+                authParams = null;
+            }else{
+                setAuthVarValue(authParams, variables, roleViewList, user);
+            }
+
             Map<String, Object> queryParams = new HashMap<>();
             setQueryVarValue(queryParams, variables, params);
-            String sWithQueryVar = parser.parseQueryVars(sWithSysVar, sqlQueryParam, queryParams, source, user);
 
-            Map<String, List<String>> authParams = new HashMap<>();
-            setAuthVarValue(authParams, variables, roleViewList, user);
-            String sWithAuthVar = parser.parseAuthVars(sWithQueryVar, sqlQueryParam, authParams, source, user);
+            // parse auth var first
+            String sWithAuthVar = parser.parseAuthVars(sWithSysVar, sqlQueryParam, authParams, queryParams, source, user);
+            String sWithQueryVar = parser.parseQueryVars(sWithAuthVar, sqlQueryParam, queryParams, authParams, source, user);
 
-            List<String> executeStatements = parser.getExecuteStatement(sWithAuthVar, sqlQueryParam, source, user);
-            List<String> queryStatements = parser.getQueryStatement(sWithAuthVar, sqlQueryParam, source, user);
+            List<String> executeStatements = parser.getExecuteStatement(sWithQueryVar, sqlQueryParam, source, user);
+            List<String> queryStatements = parser.getQueryStatement(sWithQueryVar, sqlQueryParam, source, user);
 
             if (withCache) {
                 cacheKey = getCacheKey(source, queryStatements.get(queryStatements.size() - 1), param);
@@ -610,6 +614,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 }
             }
 
+            // execute statement with all var
             if (!CollectionUtils.isEmpty(executeStatements)) {
                 executeStatements.forEach(s -> {
                     DataUtils.execute(source, s, user);
@@ -641,9 +646,15 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                         Stopwatch watch = Stopwatch.createStarted();
                         
                         if (withAggregator) {
-                            pagingWithQueryColumns = doQueryByAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource, user);
+                            // parse auth var first but with out values
+                            sWithAuthVar = parser.parseAuthVars(sWithSysVar, sqlQueryParam, null, queryParams, source, user);
+                            sWithQueryVar = parser.parseQueryVars(sWithAuthVar, sqlQueryParam, queryParams, authParams, source, user);
+                            pagingWithQueryColumns = getPagingDataByAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource, user);
+                        
                         } else {
-                            pagingWithQueryColumns = doQuery(param, queryStatements, excludeColumns, source, user);
+                            pagingWithQueryColumns = doQuery(new PagingParam(sqlQueryParam.getPageNo(),
+                                    sqlQueryParam.getPageSize(), sqlQueryParam.getLimit()), queryStatements,
+                                    excludeColumns, source, user);
                         }
 
                         redisUtils.set(concurrencyKey, pagingWithQueryColumns, Math.max(10_000, watch.elapsed(TimeUnit.MILLISECONDS)), TimeUnit.MILLISECONDS);
@@ -666,9 +677,14 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             
             }else{
                 if (withAggregator) {
-                    pagingWithQueryColumns = doQueryByAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource, user);
+                    // parse auth var first but with out values
+                    sWithAuthVar = parser.parseAuthVars(sWithSysVar, sqlQueryParam, null, queryParams, source, user);
+                    sWithQueryVar = parser.parseQueryVars(sWithAuthVar, sqlQueryParam, queryParams, authParams, source, user);
+                    pagingWithQueryColumns = getPagingDataByAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource, user);
                 } else {
-                    pagingWithQueryColumns = doQuery(param, queryStatements, excludeColumns, source, user);
+                    pagingWithQueryColumns = doQuery(new PagingParam(sqlQueryParam.getPageNo(),
+                            sqlQueryParam.getPageSize(), sqlQueryParam.getLimit()), queryStatements, excludeColumns,
+                            source, user);
                 }
             }
 
@@ -684,17 +700,9 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         return pagingWithQueryColumns;
     }
 
-    private PagingWithQueryColumns doQueryByAggregator(String sWithQueryVar, SqlQueryParam sqlQueryParam,
-            Map<String, List<String>> authParams, Set<String> excludeColumns, ViewWithSource viewWithSource,
-            User user) {
-        return getPagingDataByLocalAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource,
-                user);
-    }
-
-    private PagingWithQueryColumns doQuery(WidgetQueryParam param, List<String> queryStatements,
+    private PagingWithQueryColumns doQuery(PagingParam paging, List<String> queryStatements,
             Set<String> excludeColumns, Source source, User user) {
         PagingWithQueryColumns pagingWithQueryColumns = null;
-        PagingParam paging = new PagingParam(param.getPageNo(), param.getPageSize(), param.getLimit());
         for (String s : queryStatements) {
             pagingWithQueryColumns = DataUtils.syncQuery4Paging(source, s, paging, excludeColumns, user);
         }
@@ -704,7 +712,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     public List<SqlVariable> getVariables(String variable) {
 
 		if (StringUtils.isEmpty(variable)) {
-			return null;
+			return Collections.emptyList();
 		}
 
 		try {
@@ -713,55 +721,33 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 			e.printStackTrace();
 		}
 
-		return null;
+		return Collections.emptyList();
 	}
 
     private void setAuthVarValue(Map<String, List<String>> authParams, List<SqlVariable> variables,
             List<RelRoleView> roleViewList, User user) {
 
-        // get auth var value
-        if (!CollectionUtils.isEmpty(authParams)) {
-            ExecutorService pool = Executors.newFixedThreadPool(Math.max(8, authParams.size()));
-            List<Future> futures = new ArrayList<>();
-            try {
-                authParams.forEach((k, v) -> {
-                    futures.add(pool.submit(() -> {
-                        // find var then change value
-                        variables.stream().filter(variable -> variable.getName().equals(k)).findFirst()
-                                .ifPresent(var -> {
-                                    // change null to default value
-                                    roleViewList.forEach(r -> {
-                                        List<AuthParamValue> paramValues = JSONUtils.toObjectArray(r.getRowAuth(),
-                                                AuthParamValue.class);
-                                        paramValues.stream().filter(paramValue -> paramValue.getName().equals(k))
-                                                .findFirst().ifPresent(paramValue -> {
-                                                    var.setDefaultValues(paramValue.getValues());
-                                                });
-                                    });
+        for (SqlVariable var : variables) {
+            SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(var.getType());
+            if (typeEnum != SqlVariableTypeEnum.AUTHVAR) {
+                continue;
+            }
 
-                                    // change default value to dac value if dac value is not empty
-                                    List<String> values = authVarUtils.getValue(var, user.getEmail());
-                                    if (values == null) {
-                                        authParams.put(k, Arrays.asList(new String[] { NO_AUTH_PERMISSION }));
-                                    } else if (!values.isEmpty()) {
-                                        authParams.put(k, values);
-                                    }
-                                });
-                    }));
-                });
+            String varName = var.getName().trim();
 
-                for (Future future : futures) {
-                    try {
-                        future.get();
-                    } catch (ExecutionException e) {
-                        pool.shutdownNow();
-                        throw new ServerException(e.getMessage());
-                    }
-                }
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            } finally {
-                pool.shutdown();
+            roleViewList.forEach(r -> {
+                List<AuthParamValue> paramValues = JSONUtils.toObjectArray(r.getRowAuth(), AuthParamValue.class);
+                paramValues.stream().filter(paramValue -> paramValue.isEnable() && paramValue.getName().equals(varName))
+                        .findFirst().ifPresent(paramValue -> {
+                            var.setDefaultValues(paramValue.getValues());
+                        });
+            });
+
+            List<String> values = authVarUtils.getValue(var, user.getEmail());
+            if (values == null) {
+                authParams.put(varName, Arrays.asList(new String[] { NO_AUTH_PERMISSION }));
+            } else if (!values.isEmpty()) {
+                authParams.put(varName, values);
             }
         }
     }
@@ -808,23 +794,36 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         return null;
     }
 
-    private PagingWithQueryColumns getPagingDataByLocalAggregator(String statement, SqlQueryParam queryParam,
+    /**
+     * @param statement the query statement with out auth var
+     */
+    private PagingWithQueryColumns getPagingDataByAggregator(String statement, SqlQueryParam queryParam,
             Map<String, List<String>> authParams, Set<String> excludeColumns, ViewWithSource viewWithSource,
             User user) {
-
-        PagingWithQueryColumns pagingWithQueryColumns = null;
 
         Stopwatch watch = Stopwatch.createStarted();
 
         Source source = viewWithSource.getSource();
         StatementParser parser = ParserFactory.getParser(source.getType());
-        statement = parser.parseAuthVars(statement, queryParam, null, source, user);
+        JdbcAggregator aggregator = (JdbcAggregator) AggregatorFactory.getAggregator("jdbc");
 
-        // query with out paging from source
-        PagingParam pagingParam = new PagingParam(0, 0, queryParam.getLimit());
-        List<String> queryStatements = parser.getQueryStatement(statement, queryParam, source, user);
+        // build query sql only with system var
+        List<String> queryStatements = parser.getQueryStatement(statement,
+                SqlQueryParam.builder().type("query").build(), source, user);
+
+        // get table name like T_md5(sourceId + @ + sql)
+        String table = "T_"
+                + MD5Utils.getMD5(source.getId() + AT_SIGN + queryStatements.get(queryStatements.size() - 1), true, 16);
+        
+        if (!aggregator.getDataTable(table).isTtl()) {
+            return queryByAggregator(table, queryParam, authParams, excludeColumns, viewWithSource, user);
+        }
+
+        PagingWithQueryColumns pagingWithQueryColumns = null;
+        // query from source
         for (String s : queryStatements) {
-            pagingWithQueryColumns = DataUtils.syncQuery4Paging(source, s, pagingParam, excludeColumns, user);
+            pagingWithQueryColumns = DataUtils.syncQuery4Paging(source, s, new PagingParam(0, 0, queryParam.getLimit()),
+                    Collections.emptySet(), user);
         }
 
         String viewModel = viewWithSource.getModel();
@@ -849,17 +848,27 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             data.add(row);
         });
 
-        // table name like T_md5(sourceId + @ + sql)
-        String table = "T_"
-                + MD5Utils.getMD5(source.getId() + AT_SIGN + queryStatements.get(queryStatements.size() - 1), true, 16);
-
-        JdbcAggregator aggregator = (JdbcAggregator) AggregatorFactory.getAggregator("jdbc");
+        // load data to aggregator table
         aggregator.loadData(table, header, data, Math.max(10_000, watch.elapsed(TimeUnit.MILLISECONDS)));
 
+        // query
+        return queryByAggregator(table, queryParam, authParams, excludeColumns, viewWithSource, user);
+    }
+
+    private PagingWithQueryColumns queryByAggregator(String table, SqlQueryParam queryParam,
+            Map<String, List<String>> authParams, Set<String> excludeColumns, ViewWithSource viewWithSource,
+            User user) {
+        
+        JdbcAggregator aggregator = (JdbcAggregator) AggregatorFactory.getAggregator("jdbc");
+        Source source = aggregator.getSource();
+        StatementParser parser = ParserFactory.getParser(aggregator.getAggregatorType());
+        
+        // build aggregator original query sql with out aggregation
         String sql = "select * from " + table;
-        Set<String> expSet = edp.davinci.data.util.SqlParseUtils.getAuthExpression(sql, sqlTempDelimiter);
+        String viewStatement = viewWithSource.getSql();
+        Set<String> expSet = SqlParseUtils.getAuthExpression(viewStatement, sqlTempDelimiter);
         if (!CollectionUtils.isEmpty(expSet)) {
-            Map<String, String> expMap = edp.davinci.data.util.SqlParseUtils.getAuthParsedExp(expSet, sqlTempDelimiter, authParams);
+            Map<String, String> expMap = SqlParseUtils.getAuthParsedExp(expSet, sqlTempDelimiter, authParams);
             int i = 0;
             for (String value : expMap.values()) {
                 if (i == 0) {
@@ -871,19 +880,10 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             }
         }
 
-        source = aggregator.getSource();
-        parser = ParserFactory.getParser(aggregator.getAggregatorType());
-        queryStatements = parser.getQueryStatement(sql, queryParam, source, user);
-
-        // paging query from local aggregator
-        pagingParam.setPageNo(queryParam.getPageNo());
-        pagingParam.setPageSize(queryParam.getPageSize());
-        pagingParam.setLimit(queryParam.getLimit());
-        
-        pagingWithQueryColumns = DataUtils.syncQuery4Paging(source, queryStatements.get(0), pagingParam,
-                excludeColumns, user);
-
-        return pagingWithQueryColumns;
+        // build query sql with aggregation
+        List<String> queryStatements = parser.getQueryStatement(sql, queryParam, source, user);
+        return doQuery(new PagingParam(queryParam.getPageNo(), queryParam.getPageSize(), queryParam.getLimit()),
+                queryStatements, excludeColumns, source, user);
     }
 
     /**
@@ -1020,8 +1020,63 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     @Override
     public String showSql(Long id, WidgetQueryParam queryParam, User user)
             throws NotFoundException, UnAuthorizedExecption, ServerException {
-        // TODO Auto-generated method stub
-        return null;
+        
+        ViewWithSource viewWithSource = getViewWithSource(id);
+        
+        if (StringUtils.isEmpty(viewWithSource.getSql())) {
+            return null;
+        }
+
+        Source source = viewWithSource.getSource();
+        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), user, false);
+        boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
+
+        List<Param> params = queryParam.getParams();
+        List<SqlVariable> variables = getVariables(viewWithSource.getVariable());
+        List<RelRoleView> roleViewList = relRoleViewExtendMapper.getByUserAndView(user.getId(),
+                viewWithSource.getId());
+        String statement = viewWithSource.getSql();
+        
+        StatementParser parser = ParserFactory.getParser(source.getType());
+        SqlQueryParam sqlQueryParam = SqlQueryParam.builder()
+                                        .limit(queryParam.getLimit())
+                                        .pageNo(queryParam.getPageNo())
+                                        .pageSize(queryParam.getPageSize())
+                                        .isMaintainer(isMaintainer)
+                                        .nativeQuery(queryParam.isNativeQuery())
+                                        .aggregators(queryParam.getAggregators())
+                                        .groups(queryParam.getGroups())
+                                        .filters(queryParam.getFilters())
+                                        .type(queryParam.getType())
+                                        .build();
+        
+        if("distinct".equals(queryParam.getType())) {
+            sqlQueryParam.setColumns(((WidgetDistinctParam)queryParam).getColumns());
+        }
+
+        String sWithSysVar = parser.parseSystemVars(statement, sqlQueryParam, source, user);
+
+        Map<String, List<String>> authParams = new HashMap<>();
+        if (isMaintainer) {
+            authParams = null;
+        }else{
+            setAuthVarValue(authParams, variables, roleViewList, user);
+        }
+
+        Map<String, Object> queryParams = new HashMap<>();
+        setQueryVarValue(queryParams, variables, params);
+
+        // parse auth var first
+        String sWithAuthVar = parser.parseAuthVars(sWithSysVar, sqlQueryParam, authParams, queryParams, source, user);
+        
+        String sWithQueryVar = parser.parseQueryVars(sWithAuthVar, sqlQueryParam, queryParams, authParams, source, user);
+
+        List<String> executeStatements = parser.getExecuteStatement(sWithQueryVar, sqlQueryParam, source, user);
+        List<String> queryStatements = parser.getQueryStatement(sWithQueryVar, sqlQueryParam, source, user);
+        
+        String sql = String.join(Constants.NEW_LINE, executeStatements);
+        sql += String.join(Constants.NEW_LINE, queryStatements);
+        return sql;
     }
 
 }

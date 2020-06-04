@@ -52,8 +52,6 @@ source:
   enable-query-log: true
   result-limit: 1000000
 
-  types: jdbc,cvs
-  query-model: 0.4
 
 aggregator:
   name: h2
@@ -62,7 +60,7 @@ aggregator:
   password: 
   keyword_prefix: '"' 
   keyword_suffix: '"'
-
+  ttl: 60000
   result-limit: 300000
 
 spring:

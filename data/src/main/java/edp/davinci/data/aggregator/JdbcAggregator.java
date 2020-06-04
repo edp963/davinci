@@ -25,11 +25,13 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.annotation.Resource;
 import javax.sql.DataSource;
+
+import com.google.common.base.Stopwatch;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,6 +78,9 @@ public class JdbcAggregator extends Aggregator {
 	@Value("${aggregator.password}")
 	private String password;
 
+	@Value("${aggregator.ttl:30000}")
+	private int ttl;
+
 	@Value("${aggregator.result-limit:300000}")
 	private int resultLimit;
 
@@ -99,13 +104,15 @@ public class JdbcAggregator extends Aggregator {
 		synchronized (table.intern()) {
 
 			DataTable t = getDataTable(table);
-			if (t != null && !t.isTtl()) {
+			if (!t.isTtl()) {
 				return true;
 			}
 
 			if (data.size() > resultLimit) {
 				throw new SourceException("The result set is more than " + resultLimit + " rows");
 			}
+
+			Stopwatch watch = Stopwatch.createStarted();
 
 			beforeLoad(table, header);
 
@@ -125,7 +132,7 @@ public class JdbcAggregator extends Aggregator {
 				}
 			});
 
-			afterLoad(table, ttl);
+			afterLoad(table, Math.max(watch.elapsed(TimeUnit.MILLISECONDS) + ttl, this.ttl));
 			return true;
 		}
 	}
@@ -154,8 +161,8 @@ public class JdbcAggregator extends Aggregator {
 	private void beforeLoad(String table, List<ColumnModel> header) {
 		DataSource source = getDataSource();
 		String[] sql = new String[3];
-		sql[0] = "delete from " + DATA_TABLE_NAME + " where table_name = '" + table + "'";
-		sql[1] = "drop table if exists " + table + "";
+		sql[0] = "drop table if exists " + table + "";
+		sql[1] = "delete from " + DATA_TABLE_NAME + " where table_name = '" + table + "'";
 		sql[2] = buildCreateSql(table, header);
 		getJdbcTemplate(source).batchUpdate(sql);
 	}
@@ -188,35 +195,20 @@ public class JdbcAggregator extends Aggregator {
 							throws SQLException, DataAccessException {
 						ps.setString(1, table);
 						// min ttl is 10s
-						ps.setInt(2, Math.max(Integer.parseInt(Long.toString(ttl)), 10_000));
+						ps.setInt(2, Integer.parseInt(Long.toString(ttl)));
 						ps.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
 						return ps.execute();
 					}
 				});
 	}
 
-	private DataTable getDataTable(String table) {
-		DataSource source = getDataSource();
-		getJdbcTemplate(source).query("select * from " + DATA_TABLE_NAME + " where table_name = '" + table + "'", (rs) -> {
-			DataTable t = null;
-			if (rs.next()) {
-				t = new DataTable();
-				t.setTableName(table);
-				t.setTtl(rs.getInt(2));
-				t.setCreateTime(rs.getTimestamp(3).getTime());
-			}
-			return t;
-		});
-		return null;
-	}
-
 	@Override
-	public void cleanData() {
+	public DataTable getDataTable(String table) {
 
 		List<DataTable> tables = new ArrayList<>();
-
+		String sql = "select * from " + DATA_TABLE_NAME + " where table_name = '" + table + "'";
 		DataSource source = getDataSource();
-		getJdbcTemplate(source).query("select * from " + DATA_TABLE_NAME, (rs) -> {
+		getJdbcTemplate(source).query(sql, (rs) -> {
 			DataTable t = new DataTable();
 			t.setTableName(rs.getString(1));
 			t.setTtl(rs.getInt(2));
@@ -224,19 +216,42 @@ public class JdbcAggregator extends Aggregator {
 			tables.add(t);
 		});
 
-		tables.stream().filter(t -> t.isTtl()).forEach(t -> {
-			String tableName = t.getTableName();
-			synchronized (tableName.intern()) {
-				t = getDataTable(tableName);
-				if (t.isTtl()) {// double check
-					// drop table;
-					String[] sql = new String[2];
-					sql[0] = "delete from " + DATA_TABLE_NAME + " where table_name = '" + tableName + "'";
-					sql[1] = "drop table if exists " + tableName + "";
-					getJdbcTemplate(source).batchUpdate(sql);
+		return tables.size() > 0 ? tables.get(0) : new DataTable();
+	}
+
+	@Override
+	public void cleanData() {
+
+		try {
+			
+			List<DataTable> tables = new ArrayList<>();
+
+			DataSource source = getDataSource();
+			getJdbcTemplate(source).query("select * from " + DATA_TABLE_NAME, (rs) -> {
+				DataTable t = new DataTable();
+				t.setTableName(rs.getString(1));
+				t.setTtl(rs.getInt(2));
+				t.setCreateTime(rs.getTimestamp(3).getTime());
+				tables.add(t);
+			});
+
+			tables.stream().filter(t -> t.isTtl()).forEach(t -> {
+				String tableName = t.getTableName();
+				synchronized (tableName.intern()) {
+					t = getDataTable(tableName);
+					if (t.isTtl()) {// double check
+						// drop table;
+						String[] sql = new String[2];
+						sql[0] = "drop table if exists " + tableName;
+						sql[1] = "delete from " + DATA_TABLE_NAME + " where table_name = '" + tableName + "'";
+						getJdbcTemplate(source).batchUpdate(sql);
+					}
 				}
-			}
-		});
+			});
+
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }

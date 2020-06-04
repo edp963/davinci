@@ -78,7 +78,6 @@ pagehelper:
   reasonable: true
   returnPageInfo: check
   helperDialect: mysql
-  params: count=countSql
 
 mybatis:
   mapper-locations: classpath:mybatis/mapper/*Mapper.xml

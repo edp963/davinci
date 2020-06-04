@@ -74,12 +74,11 @@ public class SqlParseUtils {
     public static final String REG_WITH_SQL_FRAGMENT = "((?i)WITH[\\s\\S]+(?i)AS?\\s*\\([\\s\\S]+\\))\\s*(?i)SELECT";
     public static final Pattern PATTERN_WITH_SQL_FRAGMENT = Pattern.compile(REG_WITH_SQL_FRAGMENT);
     
-    public static final String REG_SQL_ANNOTATE = "(?ms)('(?:''|[^'])*')|--.*?$|/\\*[^+]*?\\*/";
-    public static final Pattern PATTERN_SQL_ANNOTATE = Pattern.compile(REG_SQL_ANNOTATE);
+    public static final String REG_SQL_ANNOTATION = "(?ms)('(?:''|[^'])*')|--.*?$|/\\*[^+]*?\\*/";
+    public static final Pattern PATTERN_SQL_ANNOTATION = Pattern.compile(REG_SQL_ANNOTATION);
     
     public static String parseAnnotations(String sql) {
-        return PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1").replaceAll(NEW_LINE, SPACE).replaceAll("(;+\\s*)+",
-                SEMICOLON);
+        return PATTERN_SQL_ANNOTATION.matcher(sql).replaceAll("$1").replaceAll("(;+\\s*)+", SEMICOLON);
     }
 
     public static String parseSystemVars(String sql, boolean isMaintainer, User user) {
@@ -572,7 +571,7 @@ public class SqlParseUtils {
 		return list;
     }
 
-    public static void checkSensitiveSql(String sql) throws ServerException {
+    private static void checkSensitiveSql(String sql) throws ServerException {
         Matcher matcher = PATTERN_SENSITIVE_SQL.matcher(sql.toLowerCase());
         if (matcher.find()) {
             String group = matcher.group();

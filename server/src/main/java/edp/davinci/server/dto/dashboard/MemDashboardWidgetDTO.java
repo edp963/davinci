@@ -49,6 +49,4 @@ public class MemDashboardWidgetDTO extends MemDashboardWidget {
 	private Boolean polling = false;
 
 	private List<Long> roleIds;
-
-	private String alias;
 }

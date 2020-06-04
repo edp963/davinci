@@ -176,7 +176,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             if (widgetContext.isHasQueryParam() && null != widgetContext.getQueryParam()) {
                 queryParam = widgetContext.getQueryParam();
             } else {
-                queryParam = ScriptUtils.getWidgetQueryParam(ScriptUtils.getExecuteParamFormatEngine(), 
+                queryParam = ScriptUtils.getWidgetQueryParam(
                         widgetContext.getDashboard() != null ? widgetContext.getDashboard().getConfig() : null,
                         widgetContext.getWidget().getConfig(),
                         widgetContext.getMemDashboardWidget() != null ? widgetContext.getMemDashboardWidget().getId()
@@ -186,8 +186,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             boolean isTable;
             List<ExcelHeader> excelHeaders = null;
             if (isTable = ExcelUtils.isTable(widgetContext.getWidget().getConfig())) {
-                excelHeaders = ScriptUtils.formatHeader(ScriptUtils.getTableFormatEngine(), widgetContext.getWidget().getConfig(),
-                        queryParam.getParams());
+                excelHeaders = ScriptUtils.getExcelHeader(widgetContext.getWidget().getConfig(), queryParam.getParams());
             }
             
             SheetContext sheetContext = SheetContext.builder()

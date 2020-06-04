@@ -85,7 +85,7 @@ public interface UserExtendMapper extends UserMapper {
 	})
 	int insert(User user);
 
-    @Select({"select * from `user` where `username` = #{username} or `email` = #{username} or `name` = #{username}"})
+    @Select({"select * from `user` where `username` = #{username} or `email` = #{username}"})
     User selectByUsername(@Param("username") String username);
 
     @Select({"select * from `user` where `email` = #{email}"})

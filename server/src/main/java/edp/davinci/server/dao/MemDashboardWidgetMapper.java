@@ -20,28 +20,19 @@
 package edp.davinci.server.dao;
 
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
-import edp.davinci.server.model.MemDashboardWidget;
+import edp.davinci.core.dao.MemDashboardWidgetMapper;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
 
 import java.util.List;
 
 @Component
-public interface MemDashboardWidgetMapper {
-    int insert(MemDashboardWidget memDashboardWidget);
-
-    @Delete({"delete from mem_dashboard_widget where id = #{id}"})
-    int deleteById(@Param("id") Long id);
-
-
-    @Select({
-            "select * from mem_dashboard_widget where id = #{id}"
-    })
-    MemDashboardWidget getById(@Param("id") Long id);
-
+public interface MemDashboardWidgetExtendMapper extends MemDashboardWidgetMapper {
 
     @Update({
             "update mem_dashboard_widget",
@@ -59,27 +50,72 @@ public interface MemDashboardWidgetMapper {
     })
     int update(MemDashboardWidget memDashboardWidget);
 
-    @Select({"select * from mem_dashboard_widget where dashboard_id = #{dashboardId} order by create_time"})
+    @Select({"select * from mem_dashboard_widget where dashboard_id = #{dashboardId}"})
     List<MemDashboardWidget> getByDashboardId(@Param("dashboardId") Long dashboardId);
 
     @Delete({
             "delete from mem_dashboard_widget where dashboard_id in ",
-            "(SELECT d.id FROM dashboard d LEFT JOIN dashboard_portal p on d.dashboard_portal_id = p.id where p.project_id = #{projectId})"
+            "(select d.id from dashboard d left join dashboard_portal p on d.dashboard_portal_id = p.id where p.project_id = #{projectId})"
     })
     int deleteByProject(@Param("projectId") Long projectId);
 
+    @Insert({
+    	"<script>",
+    	"	insert into mem_dashboard_widget" + 
+    	"		(`dashboard_id`,`widget_Id`,`x`,`y`,`width`,`height`,`frequency`,`polling`,`create_by`,`create_time`)" + 
+    	"			values " + 
+    	"		<foreach collection='list' item='record' index='index' separator=','>" + 
+    	"			(" + 
+    	"			#{record.dashboardId,jdbcType=BIGINT}," + 
+    	"			#{record.widgetId,jdbcType=BIGINT}," + 
+    	"			#{record.x,jdbcType=INTEGER}," + 
+    	"			#{record.y,jdbcType=INTEGER}," + 
+    	"			#{record.width,jdbcType=INTEGER}," + 
+    	"			#{record.height,jdbcType=INTEGER}," + 
+    	"			#{record.frequency,jdbcType=INTEGER}," + 
+    	"			#{record.polling,jdbcType=BIT}," + 
+    	"			#{record.createBy,jdbcType=BIGINT}," + 
+    	"			#{record.createTime,jdbcType=TIMESTAMP}" + 
+    	"			)" + 
+    	"		</foreach>",
+    	"</script>"
+    })
     int insertBatch(@Param("list") List<MemDashboardWidget> list);
 
+    @Update({
+    	"<script>",
+    	"	<foreach collection='list' item='item' index='index' open='' close='' separator=';'>" + 
+    	"		update mem_dashboard_widget" + 
+    	"		<set>" + 
+		"			`alias` = #{item.alias,jdbcType=VARCHAR}," + 
+		"			`dashboard_id` = #{item.dashboardId,jdbcType=BIGINT}," + 
+    	"			`widget_Id` = #{item.widgetId,jdbcType=BIGINT}," + 
+    	"			`x` = #{item.x,jdbcType=INTEGER}," + 
+    	"			`y` = #{item.y,jdbcType=INTEGER}," + 
+    	"			`width` = #{item.width,jdbcType=INTEGER}," + 
+    	"			`height` = #{item.height,jdbcType=INTEGER}," + 
+    	"			`polling` = #{item.polling,jdbcType=BIT}," + 
+    	"			`frequency` = #{item.frequency,jdbcType=INTEGER}," + 
+    	"			`config` = #{item.config,jdbcType=LONGVARCHAR}," + 
+    	"			`update_by` = #{item.updateBy,jdbcType=BIGINT}," + 
+    	"			`update_time` = #{item.updateTime,jdbcType=TIMESTAMP}" + 
+    	"		</set>" + 
+    	"		<where>" + 
+    	"			`id` = #{item.id,jdbcType=BIGINT}" + 
+    	"		</where>" + 
+    	"	</foreach>",
+    	"</script>"
+    })
     int updateBatch(List<MemDashboardWidget> list);
 
     @Delete("delete from mem_dashboard_widget where widget_Id = #{widgetId}")
     int deleteByWidget(@Param("widgetId") Long widgetId);
 
-    @Delete({"DELETE mdw FROM mem_dashboard_widget mdw WHERE mdw.dashboard_id IN " +
+    @Delete({"delete mdw from mem_dashboard_widget mdw where mdw.dashboard_id in " +
             "( " +
-            "SELECT d.id " +
-            "FROM dashboard d " +
-            "WHERE d.dashboard_portal_id = #{portalId} " +
+            "select d.id " +
+            "from dashboard d " +
+            "where d.dashboard_portal_id = #{portalId} " +
             ") "})
     int deleteByPortalId(@Param("portalId") Long portalId);
 

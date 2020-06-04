@@ -5556,5 +5556,5 @@ function getFieldsHeader(widgetConfigJson, queryVarsJson) {
             }
         }
     }
-    return JSON.stringify(headerCells);
+    return JSON.stringify(headerCells)
 }

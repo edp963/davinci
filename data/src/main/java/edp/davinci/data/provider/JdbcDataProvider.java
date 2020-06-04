@@ -101,15 +101,9 @@ public class JdbcDataProvider extends DataProvider {
 		try {
 			SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
 			DataSource dataSource = jdbcDataSource.getDataSource(config);
-
 			Stopwatch stopwatch = Stopwatch.createStarted();
 			getJdbcTemplate(dataSource).execute(sql);
-			if (logEnable) {
-				String md5 = MD5Utils.getMD5(sql, true, 16);
-				sqlLogger.info("User({}) execute sql takes {} ms, sql:{}, md5:{}", user.getId(),
-						stopwatch.elapsed(TimeUnit.MILLISECONDS), SqlUtils.formatSql(sql), md5);
-			}
-
+			logSql(sql, -1, stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
 		} catch (Exception e) {
 			throw new SourceException(e.getMessage());
 		}
@@ -124,7 +118,6 @@ public class JdbcDataProvider extends DataProvider {
 			SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
 			DataSource dataSource = jdbcDataSource.getDataSource(config);
 
-			Stopwatch stopwatch = Stopwatch.createStarted();
 			JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource);
 
 			int maxRows = paging.getLimit();
@@ -143,13 +136,17 @@ public class JdbcDataProvider extends DataProvider {
 			
 			// query by paging
 			if (pageNo >= 1 && pageSize >= 1) {
-				int count = getCount(jdbcTemplate, SqlUtils.getCountSql(sql));
-				count = count < maxRows ? count : maxRows;
-
-				// special for mysql paging query you can extend other databases
+				Stopwatch stopwatch = Stopwatch.createStarted();
+				String countSql = SqlUtils.getCountSql(sql);
+				int count = getCount(jdbcTemplate, countSql);
+				logSql(countSql, -1, stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
+				
+				stopwatch = Stopwatch.createStarted();
+				// special for h2,mysql paging query you can extend other databases
 				switch(database) {
+					case H2:
 					case MYSQL:
-						sql = sql + " limit " + startRow + ", " + pageSize;
+						sql = sql + " limit " + startRow + "," + pageSize;
 						dataResult = getData(jdbcTemplate, sql);
 						break;
 				default:
@@ -157,17 +154,14 @@ public class JdbcDataProvider extends DataProvider {
 					break;
 				}
 				
-				dataResult.setCount(count);
+				dataResult.setCount(Math.min(count, maxRows));
+				logSql(sql, dataResult.getCount(), stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
 
 			}else {
+				Stopwatch stopwatch = Stopwatch.createStarted();
 				dataResult = getData(jdbcTemplate, sql);
 				dataResult.setCount(dataResult.getData().size());
-			}
-
-			if (logEnable) {
-				String md5 = MD5Utils.getMD5(sql, true, 16);
-				sqlLogger.info("User({}) execute sql takes {} ms, sql:{}, count:{}, md5:{}", user.getId(),
-						stopwatch.elapsed(TimeUnit.MILLISECONDS), SqlUtils.formatSql(sql), dataResult.getCount(), md5);
+				logSql(sql, dataResult.getData().size(), stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
 			}
 
 		} catch (Exception e) {
@@ -175,6 +169,22 @@ public class JdbcDataProvider extends DataProvider {
 		}
 
 		return dataResult;
+	}
+
+	private void logSql(String sql, int count, long cost, User user) {
+		if (!logEnable) {
+			return;
+		}
+
+		String md5 = MD5Utils.getMD5(sql, true, 16);
+		if (count < 0) {
+			sqlLogger.info("User({}) execute sql takes {} ms, sql:[{}], md5:{}", user.getId(), cost,
+					SqlUtils.formatSql(sql), md5);
+			return;
+		}
+		
+		sqlLogger.info("User({}) execute sql takes {} ms, sql:[{}], count:{}, md5:{}", user.getId(), cost,
+				SqlUtils.formatSql(sql), count, md5);
 	}
 	
 	private int getCount(JdbcTemplate jdbcTemplate, String sql) {
