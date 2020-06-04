@@ -21,5 +21,6 @@
 export const DEFAULT_LOCALE = 'en'
 export const LOGIN = 'davinci/Share/App/LOGIN'
 export const LOGGED = 'davinci/Share/App/LOGGED'
+export const LOGON_FAILURE = 'davinci/Share/App/LOGON_FAILURE'
 export const LOGOUT = 'davinci/Share/App/LOGOUT'
 export const GET_LOGIN_USER = 'davinci/Share/App/GET_LOGIN_USER'

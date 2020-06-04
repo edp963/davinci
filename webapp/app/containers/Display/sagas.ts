@@ -24,7 +24,8 @@ import {
   all,
   select,
   takeLatest,
-  takeEvery
+  takeEvery,
+  take
 } from 'redux-saga/effects'
 
 import produce from 'immer'
@@ -53,7 +54,8 @@ import {
   makeSelectCurrentSelectedLayerIds,
   makeSelectCurrentOperatingLayerList,
   makeSelectCurrentOtherLayerList,
-  makeSelectClipboardLayers
+  makeSelectClipboardLayers,
+  makeSelectCurrentOperateItemParams
 } from './selectors'
 import { makeSelectFormedViews } from 'containers/View/selectors'
 import { bringToFront, sendToBottom, bringToUpper, sendToNext } from './util'
@@ -240,6 +242,89 @@ export function* deleteSlideLayers(action: DisplayActionType) {
   } catch (err) {
     yield put(deleteSlideLayersFail())
     errorHandler(err)
+  }
+}
+
+export function* dragLayerIndependence(action: DisplayActionType) {
+  if (action.type !== ActionTypes.DRAG_LAYER_INDEPENDENCE) {
+    return
+  }
+  const { deltaPosition, layerId, finish, slideSize, scale } = action.payload
+
+  const movingLayers: ILayerFormed[] = yield select((state) =>
+    makeSelectCurrentOperatingLayerList()(state, layerId)
+  )
+  if (!movingLayers.length) {
+    return
+  }
+
+  const operateItemParams = yield select(makeSelectCurrentOperateItemParams())
+
+  const operateParamsMap = new Map()
+
+  operateItemParams.forEach((item) => {
+    operateParamsMap.set(item.id, item)
+  })
+
+  const updateMovingLayers = movingLayers.map((layer) => {
+    const id = layer.id
+    if (operateParamsMap.has(id)) {
+      layer.params = operateParamsMap.get(id).params
+      return {...{}, ...layer, ...{ params: operateParamsMap.get(id).params }}
+    }
+    return layer
+  })
+
+  const otherLayers = yield select((state) =>
+    makeSelectCurrentOtherLayerList()(state, layerId)
+  )
+  const {
+    id: displayId,
+    config: { displayParams }
+  }: IDisplayFormed = yield select(makeSelectCurrentDisplay())
+  const { id: slideId } = yield select(makeSelectCurrentSlide())
+
+  const baselines = computeEditorBaselines(
+    updateMovingLayers,
+    otherLayers,
+    slideSize,
+    (displayParams || DefaultDisplayParams).grid,
+    scale,
+    { ...deltaPosition, deltaWidth: 0, deltaHeight: 0 },
+    'position'
+  )
+
+  const { deltaX, deltaY } = deltaPosition
+  const deltaPositionAdjusted: DeltaPosition = baselines.reduce<DeltaPosition>(
+    (acc, bl) => ({
+      deltaX: acc.deltaX + bl.adjust[0],
+      deltaY: acc.deltaY + bl.adjust[1]
+    }),
+    { deltaX, deltaY }
+  )
+  yield put(
+    DisplayActions.dragLayerAdjustedIndependence(
+      updateMovingLayers.map(({ id }) => id),
+      slideSize,
+      deltaPositionAdjusted,
+      finish
+    )
+  )
+  yield put(DisplayActions.showEditorBaselines(baselines))
+
+  if (finish) {
+    const updateLayers = produce(updateMovingLayers, (draft) => {
+      draft.forEach((layer) => {
+        const item = operateParamsMap.get(layer.id)
+        if (item) {
+          layer.params.positionX = item.params.positionX
+          layer.params.positionY = item.params.positionY
+        }
+      })
+    })
+    yield put(DisplayActions.editSlideLayers(displayId, slideId, updateLayers))
+    yield take(ActionTypes.EDIT_SLIDE_LAYERS_SUCCESS)
+    yield put(DisplayActions.clearEditorBaselines())
   }
 }
 
@@ -621,6 +706,7 @@ export default function* rootDisplaySaga() {
     takeEvery(ActionTypes.PASTE_SLIDE_LAYERS, pasteSlideLayers),
 
     takeLatest(ActionTypes.DRAG_LAYER, dragLayer),
+    takeLatest(ActionTypes.DRAG_LAYER_INDEPENDENCE, dragLayerIndependence),
     takeLatest(ActionTypes.RESIZE_LAYER, resizeLayer),
     takeEvery(ActionTypes.CHANGE_LAYERS_STACK, changeLayersStack),
     takeLatest(ActionTypes.SET_LAYERS_ALIGNMENT, updateLayersAlignment),

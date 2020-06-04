@@ -87,7 +87,8 @@ public interface MemDashboardWidgetExtendMapper extends MemDashboardWidgetMapper
     	"	<foreach collection='list' item='item' index='index' open='' close='' separator=';'>" + 
     	"		update mem_dashboard_widget" + 
     	"		<set>" + 
-    	"			`dashboard_id` = #{item.dashboardId,jdbcType=BIGINT}," + 
+		"			`alias` = #{item.alias,jdbcType=VARCHAR}," + 
+		"			`dashboard_id` = #{item.dashboardId,jdbcType=BIGINT}," + 
     	"			`widget_Id` = #{item.widgetId,jdbcType=BIGINT}," + 
     	"			`x` = #{item.x,jdbcType=INTEGER}," + 
     	"			`y` = #{item.y,jdbcType=INTEGER}," + 

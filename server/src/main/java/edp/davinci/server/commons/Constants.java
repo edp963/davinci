@@ -80,7 +80,7 @@ public class Constants {
     /**
      * 邮箱格式
      */
-    public static final String REG_EMAIL_FORMAT = "^[a-z_0-9.-]{1,64}@([a-z0-9-]{1,200}.){1,5}[a-z]{1,6}$";
+    public static final String REG_EMAIL_FORMAT = "^[a-zA-Z_0-9.-]{1,64}@([a-zA-Z0-9-]{1,200}.){1,5}[a-zA-Z]{1,6}$";
     public static final Pattern PATTERN_EMAIL_FORMAT = Pattern.compile(Constants.REG_EMAIL_FORMAT);
 
     private static final String REG_WITH_SQL_FRAGMENT = "((?i)WITH[\\s\\S]+(?i)AS?\\s*\\([\\s\\S]+\\))\\s*(?i)SELECT";
@@ -196,12 +196,12 @@ public class Constants {
     /**
      * excel 表头，数据格式化js
      */
-    public static final String FORMAT_TABLE_JS = "templates/js/formatCellValue.js";
+    public static final String FORMAT_CELL_VALUE_JS = "templates/js/formatCellValue.js";
 
     /**
      * 格式化全局参数js
      */
-    public static final String FORMAT_EXECUTE_PARAM_JS = "templates/js/formatExecuteParam.js";
+    public static final String FORMAT_QUERY_PARAM_JS = "templates/js/formatQueryParam.js";
 
     /**
      * 定时任务发送邮件模板

@@ -38,14 +38,14 @@ public abstract class StatementParser {
     /**
      * parse view sql with query vars
      */
-    public abstract String parseQueryVars(String statement, SqlQueryParam queryParam, Map<String, Object> queryParams, Source source, User user);
+    public abstract String parseQueryVars(String statement, SqlQueryParam queryParam, Map<String, Object> queryParams, Map<String, List<String>> authParams, Source source, User user);
 
     /**
      * parse view sql with auth vars
      * if authParams is null, means no permission is needed
      * if authParams is empty, means no permission
      */
-    public abstract String parseAuthVars(String statement, SqlQueryParam queryParam, Map<String, List<String>> authParams, Source source, User user);
+    public abstract String parseAuthVars(String statement, SqlQueryParam queryParam, Map<String, List<String>> authParams, Map<String, Object> queryParams, Source source, User user);
 
     /**
      * get execute statement from parsed statement to do execute

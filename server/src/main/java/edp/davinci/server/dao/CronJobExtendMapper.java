@@ -37,8 +37,8 @@ public interface CronJobExtendMapper extends CronJobMapper {
     List<CronJob> getStopedJob();
 
     @Update({
-        "update cron_job",
-        "set `name` = #{name,jdbcType=VARCHAR},",
+        "update cron_job set ",
+          "`name` = #{name,jdbcType=VARCHAR},",
           "project_id = #{projectId,jdbcType=BIGINT},",
           "job_type = #{jobType,jdbcType=VARCHAR},",
           "job_status = #{jobStatus,jdbcType=VARCHAR},",

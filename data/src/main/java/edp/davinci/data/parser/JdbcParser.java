@@ -57,11 +57,21 @@ public class JdbcParser extends StatementParser {
     }
 
     @Override
-    public String parseQueryVars(String sql, SqlQueryParam param, Map<String, Object> queryParams, Source source,
-            User user) {
+    public String parseQueryVars(String sql, SqlQueryParam param, Map<String, Object> queryParams,
+            Map<String, List<String>> authParams, Source source, User user) {
         char c = sqlTempDelimiter.charAt(0);
         ST st = new ST(sql, c, c);
-        // replace query expression
+        if (!CollectionUtils.isEmpty(authParams)) {
+            authParams.forEach((k, v) -> {
+                List values = authParams.get(k);
+                if (CollectionUtils.isEmpty(values)
+                        || (values.size() == 1 && values.get(0).toString().contains(Constants.NO_AUTH_PERMISSION))) {
+                    st.add(k, false);
+                } else {
+                    st.add(k, true);
+                }
+            });
+        }
         if (!CollectionUtils.isEmpty(queryParams)) {
             queryParams.forEach(st::add);
         }
@@ -69,8 +79,8 @@ public class JdbcParser extends StatementParser {
     }
 
     @Override
-    public String parseAuthVars(String sql, SqlQueryParam param, Map<String, List<String>> authParams, Source source,
-            User user) {
+    public String parseAuthVars(String sql, SqlQueryParam param, Map<String, List<String>> authParams,
+            Map<String, Object> queryParams, Source source, User user) {
         String str = sql;
         Set<String> expSet = SqlParseUtils.getAuthExpression(sql, sqlTempDelimiter);
         if (!CollectionUtils.isEmpty(expSet)) {
@@ -125,6 +135,7 @@ public class JdbcParser extends StatementParser {
         }
 
         for (int i = 0; i < sqlList.size(); i++) {
+            st.remove("sql");
             st.add("sql", sqlList.get(i));
             sqlList.set(i, SqlParseUtils.parseSqlWithFragment(st.render()));
         }

@@ -34,6 +34,7 @@ import javax.script.ScriptEngineManager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.data.pojo.Aggregator;
 import edp.davinci.data.pojo.Order;
@@ -49,282 +50,56 @@ import edp.davinci.server.model.FieldDate;
 import edp.davinci.server.model.FieldNumeric;
 import edp.davinci.server.model.FieldPercentage;
 import edp.davinci.server.model.FieldScientificNotation;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 
 public class ScriptUtils {
+    private final static String LANGUAGE = "js";
+    private final static String FUNC_FIELDSHEADER = "getFieldsHeader";
+    private final static String FUNC_DASHBOARDITEMEXECUTEPARAM = "getDashboardItemExecuteParam";
 
     private static ClassLoader classLoader = ScriptUtils.class.getClassLoader();
 
-    private enum ScriptEngineEnum {
+    private enum ScriptEnum {
         INSTANCE;
 
-        private ScriptEngine tableFormatEngine;
-        private ScriptEngine executeParamFormatEngine;
+        private Value getFieldsHeader;
+        private Value getDashboardItemExecuteParam;
 
-        ScriptEngineEnum() {
+        ScriptEnum() {
             try {
-                tableFormatEngine = createScriptEngine(Constants.FORMAT_TABLE_JS);
-                executeParamFormatEngine = createScriptEngine(Constants.FORMAT_EXECUTE_PARAM_JS);
+                getFieldsHeader = createScriptEngine(Constants.FORMAT_CELL_VALUE_JS, FUNC_FIELDSHEADER);
+                getDashboardItemExecuteParam = createScriptEngine(Constants.FORMAT_QUERY_PARAM_JS, FUNC_DASHBOARDITEMEXECUTEPARAM);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        public ScriptEngine getTableFormatEngine() {
-            return tableFormatEngine;
+        private static Value createScriptEngine(String path, String member) throws Exception {
+            Context context = Context.create(LANGUAGE);
+            Source source = Source.newBuilder(LANGUAGE, classLoader.getResource(path)).build();
+            context.eval(source);
+            Value function = context.getBindings(LANGUAGE).getMember(member);
+            return function.canExecute() ? function : null;
         }
-
-        public ScriptEngine getExecuteParamFormatEngine() {
-            return executeParamFormatEngine;
-        }
     }
 
-    private static ScriptEngine createScriptEngine(String sourcePath) throws Exception {
-        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
-        engine.eval(new InputStreamReader(classLoader.getResourceAsStream(sourcePath)));
-        return engine;
-    }
 
-    public static synchronized ScriptEngine getTableFormatEngine()  {
-        return ScriptEngineEnum.INSTANCE.getTableFormatEngine();
-    }
-
-    public static ScriptEngine getExecuteParamFormatEngine() {
-        return ScriptEngineEnum.INSTANCE.getExecuteParamFormatEngine();
-    }
-
-    public static WidgetQueryParam getWidgetQueryParam(ScriptEngine engine, String dashboardConfig, String widgetConfig,
+    public static synchronized WidgetQueryParam getWidgetQueryParam(String dashboardConfig, String widgetConfig,
             Long releationId) {
 
-        try {
-            Invocable invocable = (Invocable) engine;
-            Object obj = invocable.invokeFunction("getDashboardItemExecuteParam", dashboardConfig, widgetConfig,
-                    releationId);
-
-            if (obj instanceof ScriptObjectMirror) {
-                ScriptObjectMirror vsom = (ScriptObjectMirror) obj;
-                List<String> groups = new ArrayList<>();
-                List<Aggregator> aggregators = new ArrayList<>();
-                List<Order> orders = new ArrayList<>();
-                List<String> filters = new ArrayList<>();
-                Boolean cache = false;
-                Boolean nativeQuery = false;
-
-                Long expired = 0L;
-                List<Param> params = new ArrayList<>();
-                for (String key : vsom.keySet()) {
-                    switch (key) {
-                        case "groups":
-                            ScriptObjectMirror groupMirror = (ScriptObjectMirror) vsom.get(key);
-                            if (groupMirror.isArray()) {
-                                Collection<Object> values = groupMirror.values();
-                                values.forEach(v -> groups.add(String.valueOf(v)));
-                            }
-                            break;
-                        case "aggregators":
-                            ScriptObjectMirror aggregatorsMirror = (ScriptObjectMirror) vsom.get(key);
-                            if (aggregatorsMirror.isArray()) {
-                                Collection<Object> values = aggregatorsMirror.values();
-                                values.forEach(v -> {
-                                    ScriptObjectMirror agg = (ScriptObjectMirror) v;
-                                    Aggregator aggregator = new Aggregator(String.valueOf(agg.get("column")),
-                                            String.valueOf(agg.get("func")));
-                                    aggregators.add(aggregator);
-                                });
-                            }
-                            break;
-                        case "orders":
-                            ScriptObjectMirror ordersMirror = (ScriptObjectMirror) vsom.get(key);
-                            if (ordersMirror.isArray()) {
-                                Collection<Object> values = ordersMirror.values();
-                                values.forEach(v -> {
-                                    ScriptObjectMirror agg = (ScriptObjectMirror) v;
-                                    Order order = new Order(String.valueOf(agg.get("column")),
-                                            String.valueOf(agg.get("direction")));
-                                    orders.add(order);
-                                });
-                            }
-                            break;
-                        case "filters":
-                            Object o = vsom.get(key);
-                            if (o instanceof String) {
-                                String filtersJsonStr = (String) o;
-                                if (!StringUtils.isEmpty(filtersJsonStr)) {
-                                    filters.add(filtersJsonStr);
-                                }
-                            }
-                            else if (o instanceof ScriptObjectMirror) {
-                                ScriptObjectMirror filterMirror = (ScriptObjectMirror) o;
-                                if (filterMirror.isArray() && filterMirror.size() > 0) {
-                                    Collection<Object> values = filterMirror.values();
-                                    values.forEach(v -> {
-                                        if (v != null) {
-                                            filters.add(String.valueOf(v));
-                                        }
-                                    });
-                                }
-                            }
-                            break;
-                        case "cache":
-                            cache = (Boolean) vsom.get(key);
-                            break;
-                        case "expired":
-                            expired = Long.parseLong(String.valueOf(vsom.get(key)));
-                            break;
-                        case "params":
-                            ScriptObjectMirror paramsMirror = (ScriptObjectMirror) vsom.get(key);
-                            if (paramsMirror.isArray()) {
-                                Collection<Object> values = paramsMirror.values();
-                                values.forEach(v -> {
-                                    ScriptObjectMirror agg = (ScriptObjectMirror) v;
-                                    Param param = new Param(String.valueOf(agg.get("name")),
-                                            String.valueOf(agg.get("value")));
-                                    params.add(param);
-                                });
-                            }
-                            break;
-                        case "nativeQuery":
-                            nativeQuery = (Boolean) vsom.get(key);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                return new WidgetQueryParam(groups, aggregators, orders, filters, params, cache, expired, nativeQuery);
-            }
-
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+        Value fun = ScriptEnum.INSTANCE.getDashboardItemExecuteParam;
+        Value result = fun.execute(dashboardConfig, widgetConfig, releationId);
+        WidgetQueryParam queryParam = JSONUtils.toObject(result.asString(), WidgetQueryParam.class);
+        return queryParam;
     }
 
-    public static List<ExcelHeader> formatHeader(ScriptEngine engine, String json, List<Param> params) {
+    public static synchronized List<ExcelHeader> getExcelHeader(String json, List<Param> params) {
 
-        try {
-            Invocable invocable = (Invocable) engine;
-            Object obj = invocable.invokeFunction("getFieldsHeader", json, params);
-
-            if (!(obj instanceof ScriptObjectMirror)) {
-                return null;
-            }
-
-            ScriptObjectMirror som = (ScriptObjectMirror) obj;
-
-            if (!som.isArray()) {
-                return null;
-            }
-
-            final List<ExcelHeader> excelHeaders = new ArrayList<>();
-            Collection<Object> values = som.values();
-            values.forEach(v -> {
-                ExcelHeader header = new ExcelHeader();
-                ScriptObjectMirror vsom = (ScriptObjectMirror) v;
-                for (String key : vsom.keySet()) {
-
-                    if (StringUtils.isEmpty(key)) {
-                        continue;
-                    }
-
-                    Object o = vsom.get(key);
-                    if (null == o) {
-                        continue;
-                    }
-                    
-                    String setter = "set" + String.valueOf(key.charAt(0)).toUpperCase() + key.substring(1);
-                    Class clazz = o.getClass();
-
-                    try {
-                        if (o instanceof ScriptObjectMirror) {
-                            ScriptObjectMirror mirror = (ScriptObjectMirror) o;
-                            if ("range".equals(key)) {
-                                if (mirror.isArray()) {
-                                    int[] array = new int[4];
-                                    for (int i = 0; i < 4; i++) {
-                                        array[i] = Integer.parseInt(mirror.get(i + EMPTY).toString());
-                                    }
-                                    header.setRange(array);
-                                }
-                            }
-                            else if ("style".equals(key)) {
-                                if (mirror.isArray()) {
-                                    List<String> list = new ArrayList<>();
-                                    for (int i = 0; i < 4; i++) {
-                                        list.add(mirror.get(i + EMPTY).toString());
-                                    }
-                                    header.setStyle(list);
-                                }
-                            }
-                            else if ("format".equals(key)) {
-                                String formatType = mirror.get(EXCEL_FORMAT_TYPE_KEY).toString();
-                                ScriptObjectMirror format = (ScriptObjectMirror) mirror.get(formatType);
-
-                                if (null != format) {
-                                    FieldFormatTypeEnum typeEnum = FieldFormatTypeEnum.typeOf(formatType);
-                                    ObjectMapper mapper = new ObjectMapper();
-
-                                    NumericUnitEnum numericUnit = null;
-                                    if (format.containsKey("unit")) {
-                                        numericUnit = NumericUnitEnum.unitOf(String.valueOf(format.get("unit")));
-                                    }
-
-                                    switch (typeEnum) {
-                                        case Currency:
-                                            FieldCurrency fieldCurrency = mapper.convertValue(format,
-                                                    FieldCurrency.class);
-                                            if (null != fieldCurrency) {
-                                                fieldCurrency.setUnit(numericUnit);
-                                                header.setFormat(fieldCurrency);
-                                            }
-                                            break;
-                                        case Custom:
-                                            FieldCustom fieldCustom = mapper.convertValue(format, FieldCustom.class);
-                                            header.setFormat(fieldCustom);
-                                            break;
-                                        case Date:
-                                            FieldDate fieldDate = mapper.convertValue(format, FieldDate.class);
-                                            header.setFormat(fieldDate);
-                                            break;
-                                        case Numeric:
-                                            FieldNumeric fieldNumeric = mapper.convertValue(format, FieldNumeric.class);
-                                            fieldNumeric.setUnit(numericUnit);
-                                            header.setFormat(fieldNumeric);
-                                            break;
-                                        case Percentage:
-                                            FieldPercentage fieldPercentage = mapper.convertValue(format,
-                                                    FieldPercentage.class);
-                                            header.setFormat(fieldPercentage);
-                                            break;
-                                        case ScientificNotation:
-                                            FieldScientificNotation scientificNotation = mapper.convertValue(format,
-                                                    FieldScientificNotation.class);
-                                            header.setFormat(scientificNotation);
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                }
-                            }
-
-                        }
-                        else {
-                            Method method = header.getClass().getMethod(setter, clazz);
-                            method.invoke(header, vsom.get(key));
-                        }
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                excelHeaders.add(header);
-            });
-            return excelHeaders;
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+        Value fun = ScriptEnum.INSTANCE.getFieldsHeader;
+        Value result = fun.execute(json, JSONUtils.toString(params));
+        List<ExcelHeader> excelHeaders = JSONUtils.toObjectArray(result.toString(), ExcelHeader.class);
+        return excelHeaders;
     }
 }

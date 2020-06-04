@@ -26,7 +26,6 @@ import static edp.davinci.commons.Constants.DOUBLE_QUOTES;
 import static edp.davinci.commons.Constants.EMPTY;
 import static edp.davinci.commons.Constants.PERCENT_SIGN;
 import static edp.davinci.commons.Constants.POUND_SIGN;
-import static edp.davinci.server.util.ScriptUtils.formatHeader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -215,7 +214,7 @@ public class ExcelUtils {
         List<ExcelHeader> excelHeaders = null;
         if (isTable) {
             try {
-                excelHeaders = formatHeader(ScriptUtils.getTableFormatEngine(), config, params);
+                excelHeaders = ScriptUtils.getExcelHeader(config, params);
             } catch (Exception e) {
                 e.printStackTrace();
             }

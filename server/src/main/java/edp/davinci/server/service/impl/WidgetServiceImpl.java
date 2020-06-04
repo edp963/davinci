@@ -431,7 +431,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      *
      * @param widgets
      * @param projectDetail
-     * @param executeParamMap
+     * @param queryParamMap
      * @param filePath
      * @param user
      * @param containType
@@ -439,7 +439,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      * @throws Exception
      */
     public File writeExcel(Set<Widget> widgets,
-                           ProjectDetail projectDetail, Map<Long, WidgetQueryParam> executeParamMap,
+                           ProjectDetail projectDetail, Map<Long, WidgetQueryParam> queryParamMap,
                            String filePath, User user, boolean containType) throws Exception {
  
         if (StringUtils.isEmpty(filePath)) {
@@ -465,19 +465,19 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                     ViewWithProjectAndSource viewWithProjectAndSource = viewExtendMapper
                             .getViewWithProjectAndSourceById(widget.getViewId());
 
-                    WidgetQueryParam executeParam = null;
-                    if (null != executeParamMap && executeParamMap.containsKey(widget.getId())) {
-                        executeParam = executeParamMap.get(widget.getId());
+                    WidgetQueryParam queryParam = null;
+                    if (null != queryParamMap && queryParamMap.containsKey(widget.getId())) {
+                        queryParam = queryParamMap.get(widget.getId());
                     } else {
-                        executeParam = getWidgetQueryParam(ScriptUtils.getExecuteParamFormatEngine(), null, widget.getConfig(), null);
+                        queryParam = getWidgetQueryParam(null, widget.getConfig(), null);
                     }
 
                     PagingWithQueryColumns paging = viewService.getDataWithQueryColumns(maintainer,
-                            viewWithProjectAndSource, executeParam, user);
+                            viewWithProjectAndSource, queryParam, user);
 
                     sheet = wb.createSheet(sheetName);
                     ExcelUtils.writeSheet(sheet, paging.getColumns(), paging.getResultList(), wb, containType,
-                            widget.getConfig(), executeParam.getParams());
+                            widget.getConfig(), queryParam.getParams());
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 } finally {
