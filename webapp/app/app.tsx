@@ -81,7 +81,6 @@ import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
 echarts.registerTheme('default', DEFAULT_ECHARTS_THEME)
 
 import configureStore from './configureStore'
-import 'utils/localStorage'
 
 
 const initialState = {}
