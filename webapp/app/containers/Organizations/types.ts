@@ -123,6 +123,7 @@ export interface IProjectsStates {
   pageNum: number
   pageSize: number
   currentProject: any
+  starModalVisble: boolean
   organizationProjects: IProject[]
 }
 
