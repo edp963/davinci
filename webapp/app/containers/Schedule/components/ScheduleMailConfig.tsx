@@ -39,7 +39,7 @@ import {
   DefaultEmailContent
 } from './constants'
 
-import { RichText } from 'components/RichText'
+import { RichText, RichTextNode } from 'components/RichText'
 
 interface IScheduleMailConfigProps
   extends FormComponentProps<IScheduleMailConfig> {
@@ -86,10 +86,10 @@ export const ScheduleMailConfig: React.FC<IScheduleMailConfigProps> = (
 
   const checkContentMaxLength = (
     _,
-    value: string,
+    value: RichTextNode[],
     callback: (msg?: string) => void
   ) => {
-    if (new Blob([value]).size / 1024 > 60) {
+    if (new Blob([JSON.stringify(value)]).size / 1024 > 60) {
       callback('邮件内容长度过长（不超过 64Kb）')
       return
     }
