@@ -18,10 +18,6 @@
  * >>
  */
 
-import '@babel/polyfill'
-import 'url-search-params-polyfill'
-import 'array-flat-polyfill'
-
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
