@@ -31,6 +31,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import edp.davinci.common.utils.OptLogUtils;
+import edp.davinci.core.enums.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -49,10 +51,6 @@ import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.davinci.common.model.RelModelCopy;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.VizEnum;
 import edp.davinci.dao.MemDisplaySlideWidgetMapper;
 import edp.davinci.dao.RelRoleDisplaySlideWidgetMapper;
 import edp.davinci.dao.ViewMapper;
@@ -65,7 +63,6 @@ import edp.davinci.dto.displayDto.MemDisplaySlideWidgetDto;
 import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
 import edp.davinci.dto.displayDto.SlideWithDisplayAndProject;
 import edp.davinci.dto.displayDto.SlideWithMem;
-import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.roleDto.VizVisibility;
 import edp.davinci.model.Display;
@@ -141,8 +138,8 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
             throw new ServerException("create display slide fail");
         }
 
-        optLogger.info("display slide ({}) create by (:{})", displaySlide.toString(), user.getId());
-
+//        optLogger.info("display slide ({}) create by (:{})", displaySlide.toString(), user.getId());
+	    OptLogUtils.insert(TableTypeEnum.DISPLAY_SLIDE, displaySlide, optLogger);
 		if (!CollectionUtils.isEmpty(displaySlideCreate.getRoleIds())) {
 			List<Role> roles = roleMapper.getRolesByIds(displaySlideCreate.getRoleIds());
 			List<RelRoleSlide> list = roles.stream()
@@ -150,8 +147,9 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 					.collect(Collectors.toList());
 			if (!CollectionUtils.isEmpty(list)) {
 				relRoleSlideMapper.insertBatch(list);
-				optLogger.info("display slide ({}) limit role ({}) access", displaySlide.getId(),
-						roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+//				optLogger.info("display slide ({}) limit role ({}) access", displaySlide.getId(),
+//						roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+				OptLogUtils.insertBatch(TableTypeEnum.REL_ROLE_SLIDE, list, optLogger);
 			}
 		}
 
@@ -197,7 +195,8 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		relRoleSlideMapper.deleteBySlideId(slideId);
 		displaySlideMapper.deleteById(slideId);
 
-		optLogger.info("display slide ({}) is delete by (:{})", displaySlide.toString(), user.getId());
+//		optLogger.info("display slide ({}) is delete by (:{})", displaySlide.toString(), user.getId());
+	    OptLogUtils.delete(TableTypeEnum.DISPLAY_SLIDE, displaySlide, optLogger);
 		return true;
     }
 
@@ -315,16 +314,19 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
 		if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
 			relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
-			optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})",
-					relRoleDisplaySlideWidgetList.toString(), user.getId());
+//			optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})",
+//					relRoleDisplaySlideWidgetList.toString(), user.getId());
+			OptLogUtils.insertBatch(TableTypeEnum.REL_ROLE_DISPLAY_SLIDE_WIDGET, relRoleDisplaySlideWidgetList, optLogger);
 		}
 
 		if (null != clist && clist.size() > 1) {
-			optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", clist.toString(), user.getId());
+//			optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", clist.toString(), user.getId());
+			OptLogUtils.insertBatch(TableTypeEnum.MEM_DISPLAY_SLIDE_WIDGET, clist, optLogger);
 			// 自定义主键
 			return clist;
 		} else {
-			optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", list.toString(), user.getId());
+//			optLogger.info("insert batch MemDisplaySlideWidget ({}) by (:{})", list.toString(), user.getId());
+			OptLogUtils.insertBatch(TableTypeEnum.MEM_DISPLAY_SLIDE_WIDGET, list, optLogger);
 			// 自增主键
 			return list;
 		}
@@ -414,8 +416,9 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
 			if (!CollectionUtils.isEmpty(relRoleDisplaySlideWidgetList)) {
 				relRoleDisplaySlideWidgetMapper.insertBatch(relRoleDisplaySlideWidgetList);
-				optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})",
-						relRoleDisplaySlideWidgetList.toString(), user.getId());
+//				optLogger.info("RoleDisplaySlideWidgets ({}) batch insert by (:{})",
+//						relRoleDisplaySlideWidgetList.toString(), user.getId());
+				OptLogUtils.insertBatch(TableTypeEnum.REL_ROLE_DISPLAY_SLIDE_WIDGET, relRoleDisplaySlideWidgetList, optLogger);
 			}
 		}
 
@@ -447,7 +450,9 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         	alertUnAuthorized(entity, user, "update widget");
         }
 
-        String origin = slideWidget.toString();
+//        String origin = slideWidget.toString();
+	    MemDisplaySlideWidget originSlideWidget = new MemDisplaySlideWidget();
+	    BeanUtils.copyProperties(slideWidget, originSlideWidget);
         slideWidget.updatedBy(user.getId());
         BeanUtils.copyProperties(memDisplaySlideWidget, slideWidget);
 
@@ -456,7 +461,8 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
             throw new ServerException("updateMemDisplaySlideWidget fail");
         }
 
-        optLogger.info("MemDisplaySlideWidget ({}) is update by (:{}), origin:{}", slideWidget.toString(), user.getId(), origin);
+//        optLogger.info("MemDisplaySlideWidget ({}) is update by (:{}), origin:{}", slideWidget.toString(), user.getId(), origin);
+	    OptLogUtils.update(TableTypeEnum.MEM_DISPLAY_SLIDE_WIDGET, originSlideWidget, slideWidget, optLogger);
         return true;
     }
 
@@ -499,7 +505,8 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
         }
 
         relRoleDisplaySlideWidgetMapper.deleteByMemDisplaySlideWidgetId(relationId);
-        optLogger.info("MemDisplaySlideWdget ({}) is delete by (:{})", slideWidget.toString(), user.getId());
+//        optLogger.info("MemDisplaySlideWdget ({}) is delete by (:{})", slideWidget.toString(), user.getId());
+	    OptLogUtils.delete(TableTypeEnum.MEM_DISPLAY_SLIDE_WIDGET, slideWidget, optLogger);
         return true;
     }
 
@@ -731,9 +738,9 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		displaySlide.updatedBy(user.getId());
 		displaySlide.setConfig(jsonObject.toString());
 		displaySlideMapper.update(displaySlide);
-		optLogger.info("displaySlide ({}) update by (:{}), origin: {}", displaySlide.toString(), user.getId(),
-				slideWithDispaly.toString());
-
+//		optLogger.info("displaySlide ({}) update by (:{}), origin: {}", displaySlide.toString(), user.getId(),
+//				slideWithDispaly.toString());
+	    OptLogUtils.update(TableTypeEnum.DISPLAY_SLIDE, slideWithDispaly, displaySlide, optLogger);
 		return background;
     }
 
@@ -800,13 +807,15 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			throw new ServerException("display slide sub widget backgroundImage upload error");
 		}
 
-		String origin = memDisplaySlideWidget.toString();
+//		String origin = memDisplaySlideWidget.toString();
+	    MemDisplaySlideWidget originMemDisplaySlideWidget = new MemDisplaySlideWidget();
+	    BeanUtils.copyProperties(memDisplaySlideWidget, originMemDisplaySlideWidget);
 		memDisplaySlideWidget.setParams(jsonObject.toString());
 		memDisplaySlideWidget.updatedBy(user.getId());
 		memDisplaySlideWidgetMapper.update(memDisplaySlideWidget);
-		optLogger.info("memDisplaySlideWidget ({}) update by (:{}), origin: ({})", memDisplaySlideWidget.toString(),
-				user.getId(), origin);
-
+//		optLogger.info("memDisplaySlideWidget ({}) update by (:{}), origin: ({})", memDisplaySlideWidget.toString(),
+//				user.getId(), origin);
+	    OptLogUtils.update(TableTypeEnum.MEM_DISPLAY_SLIDE_WIDGET, originMemDisplaySlideWidget, memDisplaySlideWidget, optLogger);
 		return background;
     }
 
@@ -823,14 +832,16 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
 		if (vizVisibility.isVisible()) {
 			if (relRoleSlideMapper.delete(slide.getId(), role.getId()) > 0) {
-				optLogger.info("display slide ({}) can be accessed by role ({}), update by (:{})", (DisplaySlide) slide,
-						role, user.getId());
+//				optLogger.info("display slide ({}) can be accessed by role ({}), update by (:{})", (DisplaySlide) slide,
+//						role, user.getId());
+				OptLogUtils.delete(TableTypeEnum.REL_ROLE_SLIDE, new RelRoleSlide(slide.getId(), role.getId()), optLogger);
 			}
 		} else {
 			RelRoleSlide relRoleSlide = new RelRoleSlide(slide.getId(), role.getId());
 			relRoleSlideMapper.insert(relRoleSlide);
-			optLogger.info("display slide ({}) limit role ({}) access, create by (:{})", (DisplaySlide) slide, role,
-					user.getId());
+//			optLogger.info("display slide ({}) limit role ({}) access, create by (:{})", (DisplaySlide) slide, role,
+//					user.getId());
+			OptLogUtils.insert(TableTypeEnum.REL_ROLE_SLIDE, relRoleSlide, optLogger);
 		}
 
 		return true;
@@ -852,17 +863,18 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			slide.setDisplayId(displayId);
 			slide.createdBy(user.getId());
 			if (displaySlideMapper.insert(slide) > 0) {
-				optLogger.info("Slide ({}) is copied from ({}) by user(:{})", slide.toString(),
-						originDisplay.toString(), user.getId());
+//				optLogger.info("Slide ({}) is copied from ({}) by user(:{})", slide.toString(),
+//						originDisplay.toString(), user.getId());
 				slideCopies.add(new RelModelCopy(originDisplay.getId(), slide.getId()));
 			}
 		});
+		OptLogUtils.insertBatch(TableTypeEnum.DISPLAY_SLIDE, slideCopies, optLogger);
 
 		// copy relRoleSlide
 		if (!slideCopies.isEmpty()) {
 			if (relRoleSlideMapper.copyRoleSlideRelation(slideCopies, user.getId()) > 0) {
-				optLogger.info("display (:{}) slides role is copied by user (:{}) from (:{})", displayId, user.getId(),
-						originDisplayId);
+//				optLogger.info("display (:{}) slides role is copied by user (:{}) from (:{})", displayId, user.getId(),
+//						originDisplayId);
 			}
 		}
 
@@ -883,17 +895,18 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			mem.createdBy(user.getId());
 			int insert = memDisplaySlideWidgetMapper.insert(mem);
 			if (insert > 0) {
-				optLogger.info("MemDisplaySlideWidget ({}) is copied from ({}) by user(:{})", mem.toString(),
-						originMem.toString(), user.getId());
+//				optLogger.info("MemDisplaySlideWidget ({}) is copied from ({}) by user(:{})", mem.toString(),
+//						originMem.toString(), user.getId());
 				memCopies.add(new RelModelCopy(originMem.getId(), mem.getId()));
 			}
 		});
+		OptLogUtils.insertBatch(TableTypeEnum.MEM_DISPLAY_SLIDE_WIDGET, memCopies, optLogger);
 
 		// copy relRoleDisplaySlideWidget
 		if (!memCopies.isEmpty()) {
 			if (relRoleDisplaySlideWidgetMapper.copyRoleSlideWidgetRelation(memCopies, user.getId()) > 0) {
-				optLogger.info("display (:{}) relRoleDisplaySlideWidgetMapper is copied by user (:{}) from (:{})",
-						displayId, user.getId(), originDisplayId);
+//				optLogger.info("display (:{}) relRoleDisplaySlideWidgetMapper is copied by user (:{}) from (:{})",
+//						displayId, user.getId(), originDisplayId);
 			}
 		}
 		return true;

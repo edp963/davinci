@@ -33,6 +33,7 @@ import edp.core.model.JdbcSourceInfo.JdbcSourceInfoBuilder;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
 import edp.core.utils.*;
+import edp.davinci.common.utils.OptLogUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.*;
 import edp.davinci.core.model.DataUploadEntity;
@@ -212,8 +213,9 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
                 throw new ServerException("create source fail");
             }
 
-            optLogger.info("source ({}) create by user (:{})", source.toString(), user.getId());
-            return source;
+//			optLogger.info("source ({}) create by user (:{})", source.toString(), user.getId());
+			OptLogUtils.insert(TableTypeEnum.SOURCE, source, optLogger);
+			return source;
 
         } finally {
             releaseLock(lock);
@@ -308,13 +310,14 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
                 releaseSource(sourceCopy);
             }
 
-            optLogger.info("source ({}) update by user (:{})", source.toString(), user.getId());
-            return source;
+//			optLogger.info("source ({}) update by user (:{})", source.toString(), user.getId());
+			OptLogUtils.update(TableTypeEnum.SOURCE, sourceCopy, source, optLogger);
+			return source;
 
-        } finally {
-            releaseLock(lock);
-        }
-    }
+		} finally {
+			releaseLock(lock);
+		}
+	}
 
     /**
      * 删除source
@@ -337,11 +340,12 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
             throw new ServerException("There is at least one view using the source, it is can not be deleted");
         }
 
-        if (sourceMapper.deleteById(id) == 1) {
-            optLogger.info("source ({}) delete by user (:{})", source.toString(), user.getId());
-            releaseSource(source);
-            return true;
-        }
+		if (sourceMapper.deleteById(id) == 1) {
+//			optLogger.info("source ({}) delete by user (:{})", source.toString(), user.getId());
+			OptLogUtils.delete(TableTypeEnum.SOURCE, source, optLogger);
+			releaseSource(source);
+			return true;
+		}
 
         return false;
     }

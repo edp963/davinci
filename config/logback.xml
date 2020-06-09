@@ -31,6 +31,7 @@
     <property name="SQL" value="sql"/>
     <property name="SCHEDULE" value="schedule"/>
     <property name="OPT" value="opt"/>
+    <property name="CRON_JOB" value="cronJob"/>
     <property name="DOWNLOAD" value="download"/>
 
     <property name="LOG_HOME_PATH" value="${DAVINCI3_HOME}/logs"/>
@@ -46,6 +47,8 @@
 
     <property name="BUSINESS_SCHEDULE_LOG_PATTERN"
               value="${BUSINESS_SCHEDULE_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} --- %file:%line : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
+    <springProperty scope="context" name="server.address" source="server.address"/>
 
     <property name="BUSINESS_DOWNLOAD_LOG_PATTERN"
               value="${BUSINESS_DOWNLOAD_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} --- %file:%line : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
@@ -82,9 +85,27 @@
             <MaxHistory>10</MaxHistory>
         </rollingPolicy>
 
-        <encoder>
-            <charset>UTF-8</charset>
-            <pattern>${BUSINESS_OPERATION_LOG_PATTERN}</pattern>
+        <!--<encoder>-->
+            <!--<charset>UTF-8</charset>-->
+            <!--<pattern>${BUSINESS_OPERATION_LOG_PATTERN}</pattern>-->
+        <!--</encoder>-->
+        <!--<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">-->
+            <!--<pattern>%date{yyyy-MM-dd HH:mm:ss}#!#%file#!#%M#!#%msg%n</pattern>-->
+        <!--</encoder>-->
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers class="net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders">
+                <pattern>
+                    <pattern>
+                        {
+                        "date":"%d{yyyy-MM-dd HH:mm:ss}",
+                        "service":"%file",
+                        "method":"%M",
+                        "ip":"${server.address}",
+                        "operationLog":"%msg"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
         </encoder>
     </appender>
 
@@ -98,6 +119,34 @@
         <encoder>
             <charset>UTF-8</charset>
             <pattern>${BUSINESS_SCHEDULE_LOG_PATTERN}</pattern>
+        </encoder>
+
+    </appender>
+
+    <appender name="BUSINESS_CRON_JOB_LOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_HOME_PATH}/${USER}/${CRON_JOB}/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <MaxHistory>10</MaxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers class="net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders">
+                <pattern>
+                    <pattern>
+                        {
+                        "date":"%d{yyyy-MM-dd HH:mm:ss}",
+                        "ip":"${server.address}",
+                        "cronJobLog":"%msg"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
         </encoder>
     </appender>
 
@@ -122,6 +171,9 @@
     </logger>
     <logger name="BUSINESS_SCHEDULE" additivity="false" level="INFO">
         <appender-ref ref="BUSINESS_SCHEDULE_LOG_APPENDER"/>
+    </logger>
+    <logger name="BUSINESS_CRON_JOB" additivity="false" level="INFO">
+        <appender-ref ref="BUSINESS_CRON_JOB_LOG_APPENDER"/>
     </logger>
     <logger name="BUSINESS_DOWNLOAD" additivity="false" level="INFO">
         <appender-ref ref="BUSINESS_DOWNLOAD_LOG_APPENDER"/>

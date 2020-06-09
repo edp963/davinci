@@ -29,6 +29,7 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.Paginate;
 import edp.core.model.PaginateWithQueryColumns;
 import edp.core.utils.*;
+import edp.davinci.common.utils.OptLogUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.*;
 import edp.davinci.core.model.SqlEntity;
@@ -253,7 +254,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 throw new ServerException("create view fail");
             }
 
-            optLogger.info("view ({}) is create by user (:{})", view.toString(), user.getId());
+//            optLogger.info("view ({}) is create by user (:{})", view.toString(), user.getId());
+	        OptLogUtils.insert(TableTypeEnum.VIEW, view, optLogger);
 
             if (!CollectionUtils.isEmpty(viewCreate.getRoles()) && !StringUtils.isEmpty(viewCreate.getVariable())) {
                 checkAndInsertRoleParam(viewCreate.getVariable(), viewCreate.getRoles(), user, view);
@@ -317,7 +319,9 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         try {
 
-            String originStr = view.toString();
+//            String originStr = view.toString();
+	        View originView = new View();
+	        BeanUtils.copyProperties(view, originView);
             BeanUtils.copyProperties(viewUpdate, view);
             view.updatedBy(user.getId());
 
@@ -325,8 +329,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 throw new ServerException("update view fail");
             }
 
-            optLogger.info("view ({}) is updated by user(:{}), origin: ({})", view.toString(), user.getId(), originStr);
-
+//            optLogger.info("view ({}) is updated by user(:{}), origin: ({})", view.toString(), user.getId(), originStr);
+	        OptLogUtils.update(TableTypeEnum.VIEW, originView, view, optLogger);
             if (CollectionUtils.isEmpty(viewUpdate.getRoles())) {
                 relRoleViewMapper.deleteByViewId(id);
             }
@@ -384,7 +388,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             throw new ServerException("delete view fail");
         }
 
-        optLogger.info("view ( {} ) delete by user( :{} )", view.toString(), user.getId());
+//        optLogger.info("view ( {} ) delete by user( :{} )", view.toString(), user.getId());
+	    OptLogUtils.delete(TableTypeEnum.VIEW, view, optLogger);
         relRoleViewMapper.deleteByViewId(id);
         return true;
     }

@@ -23,6 +23,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import edp.davinci.common.utils.OptLogUtils;
+import edp.davinci.core.enums.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -35,10 +37,6 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.BaseLock;
 import edp.core.utils.CollectionUtils;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.VizEnum;
 import edp.davinci.dao.MemDashboardWidgetMapper;
 import edp.davinci.dao.RelRoleDashboardWidgetMapper;
 import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
@@ -166,9 +164,9 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 			if (dashboardPortalMapper.insert(dashboardPortal) != 1) {
 				throw new ServerException("create dashboardPortal fail");
 			}
-			
-			optLogger.info("dashboardPortal ({}) is created by user (:{})", dashboardPortal.toString(), user.getId());
 
+//			optLogger.info("dashboardPortal ({}) is created by user (:{})", dashboardPortal.toString(), user.getId());
+			OptLogUtils.insert(TableTypeEnum.DASHBOARD_PORTAL, dashboardPortal, optLogger);
 			List<Long> roleIds = dashboardPortalCreate.getRoleIds();
 			
 			if (!CollectionUtils.isEmpty(roleIds)) {
@@ -179,8 +177,9 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
 				if (!CollectionUtils.isEmpty(rels)) {
 					relRolePortalMapper.insertBatch(rels);
-					optLogger.info("create dashboardPortal ({}) limit role ({}) access", dashboardPortal.getId(),
-							roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+//					optLogger.info("create dashboardPortal ({}) limit role ({}) access", dashboardPortal.getId(),
+//							roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+					OptLogUtils.insertBatch(TableTypeEnum.DASHBOARD_PORTAL, rels, optLogger);
 				}
 			}
 
@@ -223,7 +222,9 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
 		try {
 
-			String origin = dashboardPortal.toString();
+//			String origin = dashboardPortal.toString();
+			DashboardPortal originDashboardPortal = new DashboardPortal();
+			BeanUtils.copyProperties(dashboardPortal, originDashboardPortal);
 			BeanUtils.copyProperties(dashboardPortalUpdate, dashboardPortal);
 			dashboardPortal.updatedBy(user.getId());
 
@@ -231,8 +232,9 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 				throw new ServerException("update dashboardPortal fail");
 			}
 
-			optLogger.info("dashboardPortal ({}) is update by (:{}), origin:({})", dashboardPortal.toString(),
-					user.getId(), origin);
+//			optLogger.info("dashboardPortal ({}) is update by (:{}), origin:({})", dashboardPortal.toString(),
+//					user.getId(), origin);
+			OptLogUtils.update(TableTypeEnum.DASHBOARD_PORTAL, originDashboardPortal, dashboardPortal, optLogger);
 
 			relRolePortalMapper.deleteByProtalId(id);
 			if (!CollectionUtils.isEmpty(dashboardPortalUpdate.getRoleIds())) {
@@ -242,8 +244,9 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 						.collect(Collectors.toList());
 				if (!CollectionUtils.isEmpty(list)) {
 					relRolePortalMapper.insertBatch(list);
-					optLogger.info("update dashboardPortal ({}) limit role ({}) access", id,
-							roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+//					optLogger.info("update dashboardPortal ({}) limit role ({}) access", id,
+//							roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+					OptLogUtils.insertBatch(TableTypeEnum.REL_ROLE_PORTAL, list, optLogger);
 				}
 			}
 			
@@ -270,12 +273,14 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
         if (vizVisibility.isVisible()) {
             if (relRolePortalMapper.delete(portal.getId(), role.getId()) > 0) {
-                optLogger.info("dashboardPortal ({}) can be accessed by role ({}), update by (:{})", portal, role, user.getId());
+//                optLogger.info("dashboardPortal ({}) can be accessed by role ({}), update by (:{})", portal, role, user.getId());
+	            OptLogUtils.delete(TableTypeEnum.REL_ROLE_PORTAL, new RelRolePortal(portal.getId(), role.getId()), optLogger);
             }
         } else {
             RelRolePortal relRolePortal = new RelRolePortal(portal.getId(), role.getId()).createdBy(user.getId());
             relRolePortalMapper.insert(relRolePortal);
-            optLogger.info("dashboardPortal ({}) limit role ({}) access, create by (:{})", portal, role, user.getId());
+//            optLogger.info("dashboardPortal ({}) limit role ({}) access, create by (:{})", portal, role, user.getId());
+	        OptLogUtils.insert(TableTypeEnum.REL_ROLE_PORTAL, relRolePortal, optLogger);
         }
 
         return true;
@@ -307,7 +312,8 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
         if (dashboardPortalMapper.deleteById(id) == 1) {
             relRolePortalMapper.deleteByProtalId(dashboardPortal.getId());
-            optLogger.info("dashboaard portal ({}) delete by user (:{}) ", dashboardPortal.toString(), user.getId());
+//            optLogger.info("dashboaard portal ({}) delete by user (:{}) ", dashboardPortal.toString(), user.getId());
+	        OptLogUtils.delete(TableTypeEnum.DASHBOARD_PORTAL, dashboardPortal, optLogger);
             return true;
         }
         return false;

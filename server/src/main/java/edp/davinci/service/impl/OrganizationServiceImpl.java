@@ -26,9 +26,11 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.MailContent;
 import edp.core.utils.*;
+import edp.davinci.common.utils.OptLogUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.LogNameEnum;
+import edp.davinci.core.enums.TableTypeEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.model.TokenEntity;
 import edp.davinci.dao.*;
@@ -129,7 +131,8 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
                 throw new ServerException("create organization error");
             }
 
-            optLogger.info("organization ({}) create by (:{})", organization.toString(), user.getId());
+//            optLogger.info("organization ({}) create by (:{})", organization.toString(), user.getId());
+		    OptLogUtils.insert(TableTypeEnum.ORGANIZATION, organization, optLogger);
             //用户-组织 建立关联
             RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), user.getId(), UserOrgRoleEnum.OWNER.getRole());
             relUserOrganization.createdBy(user.getId());
@@ -174,7 +177,9 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         }
 
         try {
-            String origin = organization.toString();
+//            String origin = organization.toString();
+	        Organization originOrganization = new Organization();
+	        BeanUtils.copyProperties(organization, originOrganization);
             BeanUtils.copyProperties(organizationPut, organization);
             organization.setUpdateBy(user.getId());
             organization.setUpdateTime(new Date());
@@ -184,8 +189,9 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
                 throw new ServerException("update organization error");
             }
 
-            optLogger.info("organization ({}) is update by (:{}), origin: ({})", organization.toString(), user.getId(), origin);
-            return true;
+//	        optLogger.info("organization ({}) is update by (:{}), origin: ({})", organization.toString(), user.getId(), origin);
+			OptLogUtils.update(TableTypeEnum.ORGANIZATION, originOrganization, organization, optLogger);
+	        return true;
 
         } finally {
             lock.release();
@@ -291,7 +297,8 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         roleMapper.deleteByOrg(id);
         organizationMapper.deleteById(id);
 
-        optLogger.info("organization ({}) is delete by (:{})", organization.toString(), user.getId());
+//        optLogger.info("organization ({}) is delete by (:{})", organization.toString(), user.getId());
+	    OptLogUtils.delete(TableTypeEnum.ORGANIZATION, organization, optLogger);
         return true;
     }
 
@@ -671,7 +678,9 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             throw new ServerException("this member does not need to change role");
         }
 
-        String origin = rel.toString();
+//        String origin = rel.toString();
+	    RelUserOrganization originRel = new RelUserOrganization();
+	    BeanUtils.copyProperties(rel, originRel);
 
         rel.setRole(userOrgRoleEnum.getRole());
         rel.updatedBy(user.getId());
@@ -679,7 +688,8 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             throw new ServerException("unknown fail");
         }
 
-        optLogger.info("RelUserOrganization ({}) is update by (:{}), origin: {}", rel.toString(), user.getId(), origin);
+//        optLogger.info("RelUserOrganization ({}) is update by (:{}), origin", rel.toString(), user.getId(), origin);
+	    OptLogUtils.update(TableTypeEnum.REL_USER_ORGANIZATION, originRel, rel, optLogger);
         return true;
     }
 

@@ -25,7 +25,8 @@ import java.util.Date;
 import java.util.List;
 
 import edp.core.utils.*;
-import edp.davinci.core.enums.LockType;
+import edp.davinci.common.utils.OptLogUtils;
+import edp.davinci.core.enums.*;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +43,6 @@ import edp.core.consts.Consts;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.CronJobStatusEnum;
-import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.model.RedisMessageEntity;
 import edp.davinci.dao.CronJobMapper;
 import edp.davinci.dto.cronJobDto.CronJobBaseInfo;
@@ -169,7 +167,8 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			cronJobInfo.setId(cronJob.getId());
 			cronJobInfo.setJobStatus(CronJobStatusEnum.NEW.getStatus());
 
-			optLogger.info("cronJob ({}) is create by (:{})", cronJob.toString(), user.getId());
+//			optLogger.info("cronJob ({}) is create by (:{})", cronJob.toString(), user.getId());
+			OptLogUtils.insert(TableTypeEnum.CRON_JOB, cronJob, optLogger);
 			return cronJobInfo;
 
 		} finally {
@@ -212,14 +211,17 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		
 		BeanUtils.copyProperties(cronJobUpdate, cronJob);
 		cronJob.updatedBy(user.getId());
-		String origin = cronJob.toString();
+//		String origin = cronJob.toString();
+		CronJob originCronJob = new CronJob();
+		BeanUtils.copyProperties(cronJob, originCronJob);
 		boolean res = false;
 		try {
 			cronJob.setStartDate(DateUtils.toDate(cronJobUpdate.getStartDate()));
 			cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
 			cronJob.setUpdateTime(new Date());
 			if (cronJobMapper.update(cronJob) == 1) {
-				optLogger.info("cronJob ({}) is update by (:{}), origin: ({})", cronJob.toString(), user.getId(), origin);
+//				optLogger.info("cronJob ({}) is update by (:{}), origin: ({})", cronJob.toString(), user.getId(), origin);
+				OptLogUtils.update(TableTypeEnum.CRON_JOB, originCronJob, cronJob, optLogger);
 				quartzHandler.modifyJob(cronJob);
 				res = true;
 			}
@@ -251,7 +253,8 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		checkWritePermission(entity, cronJob.getProjectId(), user, "delete");
 
 		if (cronJobMapper.deleteById(id) == 1) {
-			optLogger.info("cronjob ({}) is delete by (:{})", cronJob.toString(), user.getId());
+//			optLogger.info("cronjob ({}) is delete by (:{})", cronJob.toString(), user.getId());
+			OptLogUtils.delete(TableTypeEnum.CRON_JOB, cronJob, optLogger);
 			quartzHandler.removeJob(cronJob);
 			return true;
 		}

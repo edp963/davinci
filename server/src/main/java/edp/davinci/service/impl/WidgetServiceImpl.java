@@ -29,10 +29,8 @@ import edp.core.utils.BaseLock;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.ServerUtils;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.FileTypeEnum;
-import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
+import edp.davinci.common.utils.OptLogUtils;
+import edp.davinci.core.enums.*;
 import edp.davinci.core.model.SqlEntity;
 import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.core.utils.ExcelUtils;
@@ -220,7 +218,8 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                 throw new ServerException("create widget fail");
             }
 
-            optLogger.info("widget ({}) create by user(:{})", widget.toString());
+//            optLogger.info("widget ({}) create by user(:{})", widget.toString());
+	        OptLogUtils.insert(TableTypeEnum.WIDGET, widget, optLogger);
             return widget;
 
         } finally {
@@ -261,26 +260,29 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
         BaseLock lock = getLock(entity, name, projectId);
 
-        if (lock != null && !lock.getLock()) {
-            alertNameTaken(entity, name);
-        }
+		if (lock != null && !lock.getLock()) {
+			alertNameTaken(entity, name);
+		}
 
-        try {
+		try {
 
-            String originStr = widget.toString();
-            BeanUtils.copyProperties(widgetUpdate, widget);
-            widget.updatedBy(user.getId());
-            if (widgetMapper.update(widget) <= 0) {
-                throw new ServerException("update widget fail");
-            }
+//			String originStr = widget.toString();
+			Widget originWidget = new Widget();
+			BeanUtils.copyProperties(widget, originWidget);
+			BeanUtils.copyProperties(widgetUpdate, widget);
+			widget.updatedBy(user.getId());
+			if (widgetMapper.update(widget) <= 0) {
+				throw new ServerException("update widget fail");
+			}
 
-            optLogger.info("widget ({}) is updated by user(:{}), origin: ({})", widget.toString(), user.getId(),
-                    originStr);
-            return true;
+//			optLogger.info("widget ({}) is updated by user(:{}), origin: ({})", widget.toString(), user.getId(),
+//					originStr);
+			OptLogUtils.update(TableTypeEnum.WIDGET, originWidget, widget, optLogger);
+			return true;
 
-        } finally {
-            releaseLock(lock);
-        }
+        }finally {
+			releaseLock(lock);
+		}
     }
 
     private Widget getWidget(Long id) {
@@ -311,7 +313,8 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         memDisplaySlideWidgetMapper.deleteByWidget(id);
         widgetMapper.deleteById(id);
 
-        optLogger.info("widget ( {} ) delete by user( :{} )", widget.toString(), user.getId());
+//        optLogger.info("widget ( {} ) delete by user( :{} )", widget.toString(), user.getId());
+	    OptLogUtils.delete(TableTypeEnum.WIDGET, widget, optLogger);
         return true;
     }
 

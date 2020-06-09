@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import edp.davinci.common.utils.OptLogUtils;
+import edp.davinci.core.enums.*;
 import edp.davinci.dto.displayDto.DisplayCopy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,10 +47,6 @@ import edp.core.utils.BaseLock;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.VizEnum;
 import edp.davinci.dao.MemDisplaySlideWidgetMapper;
 import edp.davinci.dao.RelRoleDisplaySlideWidgetMapper;
 import edp.davinci.dto.displayDto.DisplayInfo;
@@ -136,8 +134,8 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 				throw new ServerException("create display fail");
 			}
 
-			optLogger.info("display ({}) is create by (:{})", display.toString(), user.getId());
-
+//			optLogger.info("display ({}) is create by (:{})", display.toString(), user.getId());
+			OptLogUtils.insert(TableTypeEnum.DISPLAY, display, optLogger);
 			if (!CollectionUtils.isEmpty(displayInfo.getRoleIds())) {
 				List<Role> roles = roleMapper.getRolesByIds(displayInfo.getRoleIds());
 				List<RelRoleDisplay> list = roles.stream()
@@ -146,8 +144,9 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
 				if (!CollectionUtils.isEmpty(list)) {
 					relRoleDisplayMapper.insertBatch(list);
-					optLogger.info("display ({}) limit role ({}) access", display.getId(),
-							roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+//					optLogger.info("display ({}) limit role ({}) access", display.getId(),
+//							roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+					OptLogUtils.insertBatch(TableTypeEnum.REL_ROLE_DISPLAY, list, optLogger);
 				}
 			}
 
@@ -253,16 +252,19 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 	                file.delete();
 	            }
 	        }
-	        
-	        String origin = display.toString();
+
+//	        String origin = display.toString();
+			Display originDisplay = new Display();
+			BeanUtils.copyProperties(display, originDisplay);
 	        BeanUtils.copyProperties(displayUpdate, display);
 	        display.updatedBy(user.getId());
 
 			if (displayMapper.update(display) <= 0) {
 				throw new ServerException("update display fail");
 			}
-			
-			optLogger.info("display ({}) is update by (:{}), origin: ({})", display.toString(), user.getId(), origin);
+
+//			optLogger.info("display ({}) is update by (:{}), origin: ({})", display.toString(), user.getId(), origin);
+			OptLogUtils.update(TableTypeEnum.DISPLAY, originDisplay, display, optLogger);
 			if (displayUpdate.getRoleIds() != null) {
 				relRoleDisplayMapper.deleteByDisplayId(display.getId());
 				if (!CollectionUtils.isEmpty(displayUpdate.getRoleIds())) {
@@ -272,8 +274,9 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 							.collect(Collectors.toList());
 					if (!CollectionUtils.isEmpty(list)) {
 						relRoleDisplayMapper.insertBatch(list);
-						optLogger.info("update display ({}) limit role ({}) access", display.getId(),
-								roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+//						optLogger.info("update display ({}) limit role ({}) access", display.getId(),
+//								roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+						OptLogUtils.insertBatch(TableTypeEnum.REL_ROLE_DISPLAY, list, optLogger);
 					}
 				}
 			}
@@ -386,13 +389,15 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
 		if (vizVisibility.isVisible()) {
 			if (relRoleDisplayMapper.delete(display.getId(), role.getId()) > 0) {
-				optLogger.info("display ({}) can be accessed by role ({}), update by (:{})", display, role,
-						user.getId());
+//				optLogger.info("display ({}) can be accessed by role ({}), update by (:{})", display, role,
+//						user.getId());
+				OptLogUtils.delete(TableTypeEnum.REL_ROLE_DISPLAY, new RelRoleDisplay(display.getId(), role.getId()), optLogger);
 			}
 		} else {
 			RelRoleDisplay relRoleDisplay = new RelRoleDisplay(display.getId(), role.getId());
 			relRoleDisplayMapper.insert(relRoleDisplay);
-			optLogger.info("display ({}) limit role ({}) access, create by (:{})", display, role, user.getId());
+//			optLogger.info("display ({}) limit role ({}) access, create by (:{})", display, role, user.getId());
+			OptLogUtils.insert(TableTypeEnum.REL_ROLE_DISPLAY, relRoleDisplay, optLogger);
 		}
 
 		return true;
@@ -440,8 +445,8 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         if (displayMapper.insert(display) <= 0) {
             throw new ServerException("copy display fail");
         }
-		optLogger.info("display ({}) is copied by user (:{}) from ({})", display.toString(), user.getId(), originDisplay.toString());
-
+//		optLogger.info("display ({}) is copied by user (:{}) from ({})", display.toString(), user.getId(), originDisplay.toString());
+	    OptLogUtils.insert(TableTypeEnum.DISPLAY, display, optLogger);
 		// copy relRoleDisplay
 		if (!CollectionUtils.isEmpty(copy.getRoleIds())) {
 			List<Role> roles = roleMapper.getRolesByIds(copy.getRoleIds());
@@ -451,8 +456,9 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
 			if (!CollectionUtils.isEmpty(list)) {
 				relRoleDisplayMapper.insertBatch(list);
-				optLogger.info("display ({}) limit role ({}) access", display.getId(),
-						roles.stream().map(Role::getId).collect(Collectors.toList()));
+//				optLogger.info("display ({}) limit role ({}) access", display.getId(),
+//						roles.stream().map(Role::getId).collect(Collectors.toList()));
+				OptLogUtils.insertBatch(TableTypeEnum.REL_ROLE_DISPLAY, list, optLogger);
 			}
 		}
 

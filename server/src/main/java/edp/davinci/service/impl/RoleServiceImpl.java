@@ -23,10 +23,8 @@ import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.CollectionUtils;
-import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.UserOrgRoleEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.VizVisiblityEnum;
+import edp.davinci.common.utils.OptLogUtils;
+import edp.davinci.core.enums.*;
 import edp.davinci.dao.*;
 import edp.davinci.dto.roleDto.*;
 import edp.davinci.model.*;
@@ -137,7 +135,8 @@ public class RoleServiceImpl implements RoleService {
 
         int insert = roleMapper.insert(role);
         if (insert > 0) {
-            optLogger.info("role ( :{} ) create by user( :{} )", role.toString(), user.getId());
+//            optLogger.info("role ( :{} ) create by user( :{} )", role.toString(), user.getId());
+	        OptLogUtils.insert(TableTypeEnum.ROLE, role, optLogger);
             organization.setRoleNum(organization.getRoleNum() + 1);
             organizationMapper.updateRoleNum(organization);
             return role;
@@ -170,8 +169,8 @@ public class RoleServiceImpl implements RoleService {
 
         int delete = roleMapper.deleteById(id);
         if (delete > 0) {
-            optLogger.info("role ( {} ) delete by user( :{} )", role.toString(), user.getId());
-
+//            optLogger.info("role ( {} ) delete by user( :{} )", role.toString(), user.getId());
+	        OptLogUtils.delete(TableTypeEnum.ROLE, role, optLogger);
             Organization organization = organizationMapper.getById(role.getOrgId());
             if (null != organization) {
                 int roleNum = organization.getRoleNum() - 1;
@@ -227,7 +226,9 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedExecption("you have not permission to update this role");
         }
 
-        String originInfo = role.toString();
+//        String originInfo = role.toString();
+	    Role originRole = new Role();
+	    BeanUtils.copyProperties(role, originRole);
 
         BeanUtils.copyProperties(roleUpdate, role);
 
@@ -235,7 +236,8 @@ public class RoleServiceImpl implements RoleService {
 
         int update = roleMapper.update(role);
         if (update > 0) {
-            optLogger.info("role ( {} ) update by user( :{} ), origin ( {} )", role.toString(), user.getId(), originInfo);
+//            optLogger.info("role ( {} ) update by user( :{} ), origin ( {} )", role.toString(), user.getId(), originInfo);
+	        OptLogUtils.update(TableTypeEnum.ROLE, originRole, role, optLogger);
             return true;
         } else {
             log.info("update role fail: {}", role.toString());
@@ -352,7 +354,8 @@ public class RoleServiceImpl implements RoleService {
 
         int i = relRoleUserMapper.deleteById(relationId);
         if (i > 0) {
-            optLogger.info("relRoleUser ({}) delete by user(:{})", relRoleUser.toString(), user.getId());
+//            optLogger.info("relRoleUser ({}) delete by user(:{})", relRoleUser.toString(), user.getId());
+	        OptLogUtils.delete(TableTypeEnum.REL_ROLE_USER, relRoleUser, optLogger);
             return true;
         } else {
             log.error("delete role member fail: (relationId:)", relationId);
@@ -385,7 +388,8 @@ public class RoleServiceImpl implements RoleService {
         }
         relRoleUserMapper.insertBatch(collect);
 
-        optLogger.info("replace role(:{}) member by user(:{})", id, user.getId());
+//        optLogger.info("replace role(:{}) member by user(:{})", id, user.getId());
+	    OptLogUtils.insertBatch(TableTypeEnum.REL_ROLE_USER, collect, optLogger);
         return relRoleUserMapper.getMembersByRoleId(id);
     }
 
@@ -453,7 +457,8 @@ public class RoleServiceImpl implements RoleService {
 
         relRoleProjectMapper.insert(relRoleProject);
         if (null != relRoleProject.getId() && relRoleProject.getId().longValue() > 0L) {
-            optLogger.info("create relRoleProject ( {} ) update by user( :{} )", relRoleProject.toString(), user.getId());
+//            optLogger.info("create relRoleProject ( {} ) update by user( :{} )", relRoleProject.toString(), user.getId());
+	        OptLogUtils.insert(TableTypeEnum.REL_ROLE_PROJECT, relRoleProject, optLogger);
             RoleProject roleProject = new RoleProject(project);
             BeanUtils.copyProperties(relRoleProject, roleProject);
             return roleProject;
@@ -503,8 +508,9 @@ public class RoleServiceImpl implements RoleService {
             relRolePortalMapper.deleteByRoleAndProject(roleId, projectId);
             relRoleSlideMapper.deleteByRoleAndProject(roleId, projectId);
             relRoleViewMapper.deleteByRoleAndProject(roleId, projectId);
-            
-            optLogger.info("relRoleProject ({}) delete by user(:{})", relRoleProject.toString(), user.getId());
+
+//            optLogger.info("relRoleProject ({}) delete by user(:{})", relRoleProject.toString(), user.getId());
+	        OptLogUtils.delete(TableTypeEnum.REL_ROLE_PROJECT, relRoleProject, optLogger);
             return true;
         } else {
             log.error("delete role project fail: (relationId:)", role);
@@ -534,7 +540,9 @@ public class RoleServiceImpl implements RoleService {
             throw new NotFoundException("not found");
         }
 
-        String origin = relRoleProject.toString();
+//        String origin = relRoleProject.toString();
+	    RelRoleProject originRelRoleProject = new RelRoleProject();
+	    BeanUtils.copyProperties(relRoleProject, originRelRoleProject);
 
         Role role = null;
         try {
@@ -585,8 +593,9 @@ public class RoleServiceImpl implements RoleService {
         int i = relRoleProjectMapper.update(relRoleProject);
 
         if (i > 0) {
-            optLogger.info("relRoleProject ( {} ) update by user( :{} ), origin ( {} )", relRoleProject.toString(), user.getId(), origin);
-            return true;
+//            optLogger.info("relRoleProject ( {} ) update by user( :{} ), origin ( {} )", relRoleProject.toString(), user.getId(), origin);
+	        OptLogUtils.update(TableTypeEnum.REL_ROLE_PROJECT, originRelRoleProject, relRoleProject, optLogger);
+	        return true;
         } else {
             log.info("update role fail: {}", role.toString());
             throw new ServerException("update role fail: unspecified error");

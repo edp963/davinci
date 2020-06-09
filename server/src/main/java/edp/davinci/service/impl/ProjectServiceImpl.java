@@ -27,12 +27,9 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.BaseLock;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.PageUtils;
+import edp.davinci.common.utils.OptLogUtils;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.CronJobStatusEnum;
-import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.UserOrgRoleEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
+import edp.davinci.core.enums.*;
 import edp.davinci.dao.*;
 import edp.davinci.dto.organizationDto.OrganizationInfo;
 import edp.davinci.dto.projectDto.*;
@@ -213,8 +210,9 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	            log.info("create project fail: {}", projectCreat.toString());
 	            throw new ServerException("create project fail: unspecified error");
 	        }
-	        
-	        optLogger.info("project ({}) is create by user(:{})", project.toString(), user.getId());
+
+//	        optLogger.info("project ({}) is create by user(:{})", project.toString(), user.getId());
+			OptLogUtils.insert(TableTypeEnum.PROJECT, project, optLogger);
 	        organization.setProjectNum(organization.getProjectNum() + 1);
 	        organizationMapper.updateProjectNum(organization);
 
@@ -286,6 +284,9 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             throw new ServerException("the project name \"" + name + "\" is already in the organization you will transfer");
         }
 
+	    Project originProject = new Project();
+	    BeanUtils.copyProperties(project, originProject);
+
         Long beforeOrgId = project.getOrgId();
         project.setOrgId(organization.getId());
 
@@ -293,8 +294,9 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             log.info("transfer project fail, {} -> {}", project.getOrgId(), organization.getId());
             throw new ServerException("transfer project fail: unspecified error");
         }
-        
-        optLogger.info("project (:{}) transferd from org(:{}) to org(:{})", project.getId(), beforeOrgId, orgId);
+
+//        optLogger.info("project (:{}) transferd from org(:{}) to org(:{})", project.getId(), beforeOrgId, orgId);
+	    OptLogUtils.update(TableTypeEnum.PROJECT, originProject, project, optLogger);
 
         boolean isTransfer = true;
         //移交回原组织
@@ -356,8 +358,9 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             log.error("delete project(:{}) fail", id);
             throw new ServerException("delete project fail: unspecified error");
         }
-        
-        optLogger.info("project ({}) delete by user(:{})", project.toString(), user.getId());
+
+//        optLogger.info("project ({}) delete by user(:{})", project.toString(), user.getId());
+	    OptLogUtils.delete(TableTypeEnum.PROJECT, project, optLogger);
         Organization organization = organizationMapper.getById(project.getOrgId());
         organization.setProjectNum(organization.getProjectNum() - 1);
         organizationMapper.updateProjectNum(organization);
@@ -377,7 +380,9 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     public Project updateProject(Long id, ProjectUpdate projectUpdate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
         ProjectDetail project = getProjectDetail(id, user, true);
-        String originInfo = project.baseInfoToString();
+//        String originInfo = project.baseInfoToString();
+	    Project originProject = new Project();
+	    BeanUtils.copyProperties(project, originProject);
         
         String name = projectUpdate.getName();
         Long orgId = project.getOrgId();
@@ -402,8 +407,9 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	            log.info("update project fail, {}", project.toString());
 	            throw new ServerException("update project fail: unspecified error");
 	        }
-	        
-	        optLogger.info("project ({}) update to ({}) by user(:{})", originInfo, project.baseInfoToString(), user.getId());
+
+//	        optLogger.info("project ({}) update to ({}) by user(:{})", originInfo, project.baseInfoToString(), user.getId());
+			OptLogUtils.update(TableTypeEnum.PROJECT, originProject, project, optLogger);
 	        return project;
 			
 		}finally {
@@ -539,8 +545,9 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             log.error("delete rel project admin fail: (relationId:{})", relationId);
             throw new ServerException("unspecified error");
         }
-        
-        optLogger.info("relProjectAdmin ({}) delete by user(:{})", relProjectAdmin.toString(), user.getId());
+
+//        optLogger.info("relProjectAdmin ({}) delete by user(:{})", relProjectAdmin.toString(), user.getId());
+	    OptLogUtils.delete(TableTypeEnum.REL_PROJECT_ADMIN, relProjectAdmin, optLogger);
         return true;
     }
 
