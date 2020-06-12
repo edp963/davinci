@@ -347,7 +347,6 @@ export class ProjectList extends React.PureComponent<
       vizs,
       organizations
     } = this.props
-    const { id: userId } = loginUser
 
     let CreateButton = void 0
     if (currentOrganization) {
@@ -514,7 +513,11 @@ export function mapDispatchToProps(dispatch) {
   }
 }
 
-const withConnect = connect<{}, {}, IProjectsProps>(
+
+type MappedStates = ReturnType<typeof mapStateToProps>
+type MappedDispatches = ReturnType<typeof mapDispatchToProps>
+
+const withConnect = connect<MappedStates, MappedDispatches, IProjectsProps>(
   mapStateToProps,
   mapDispatchToProps
 )
