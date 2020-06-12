@@ -21,7 +21,7 @@
 import React from 'react'
 import { IStar, IEvent, IStarUserList } from './type'
 const styles = require('./Star.less')
-import StarUser from './Staruser'
+import StarUser from './StarUser'
 
 function stopPPG(e: IEvent) {
   e.stopPropagation()
