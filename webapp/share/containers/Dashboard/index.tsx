@@ -250,13 +250,25 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
   private deep_set(o, path, value) {
     let i = 0
+    const val = decodeURIComponent(value)
     for (; i < path.length - 1; i++) {
-      if (o[path[i]] === undefined) {
-        o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
-      }
-      o = o[decodeURIComponent(path[i])]
+        if (o[path[i]] === undefined) {
+            o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
+        }
+        o = o[decodeURIComponent(path[i])]
     }
-    o[decodeURIComponent(path[i])] = decodeURIComponent(value)
+    if (o[decodeURIComponent(path[i])] && o[decodeURIComponent(path[i])].length) {
+        const isInclude =
+            Array.isArray(o[decodeURIComponent(path[i])]) &&
+            o[decodeURIComponent(path[i])].includes(val)
+
+        const isEqual = o[decodeURIComponent(path[i])] === val
+        if (!(isInclude || isEqual)) {
+            o[decodeURIComponent(path[i])] = [val].concat(o[decodeURIComponent(path[i])])
+        }
+    } else {
+        o[decodeURIComponent(path[i])] = val
+    }
   }
 
   private initPolling = (token) => {
