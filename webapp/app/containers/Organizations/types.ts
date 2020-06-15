@@ -186,6 +186,7 @@ export interface IOrganizationProps {
   inviteMemberList: any
   currentOrganization: IOrganization
   collectProjects: IProject[]
+  currentOrganizationRole: IOrganizationRole[]
   onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
   onLoadOrganizationMembers: (id: number) => any
   onLoadOrganizationDetail: (id: number) => any
@@ -202,6 +203,7 @@ export interface IOrganizationProps {
   onDeleteOrganization: (id: number, resolve: () => any) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
   onGetRoleListByMemberId: onGetRoleListByMemberId
+  onLoadOrganizationRole: (id: number) => any
 }
 
 export interface IInviteMemberProps {

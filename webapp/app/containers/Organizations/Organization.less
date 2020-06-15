@@ -127,6 +127,7 @@
     width: 260px;
     height: 120px;
     margin-right: 20px;
+    flex-shrink: 0;
     background-color: @body-background;
     background-repeat: no-repeat;
     background-size: 100%;
@@ -143,16 +144,22 @@
     display: flex;
     flex-direction: column;
     .title {
+      max-width: 460px;
       font-size: 18px;
       font-weight: 600;
       margin-bottom: 16px;
       color: @blue;
       cursor: pointer;
+      padding: 0px 58px 0 0;
+      .ellipsis;
     }
     .desc {
       font-size: 12px;
+      max-width: 400px;
       color: @light-text-color;
       margin-bottom: 8px;
+
+      .ellipsis;
     }
     .tag {
       margin-bottom: 8px;
