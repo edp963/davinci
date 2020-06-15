@@ -158,7 +158,7 @@ export class MemberList extends React.PureComponent<
 
   private search = (event) => {
     const value = event.target.value
-    const { organizationMembers } = this.state
+    const { organizationMembers } = this.props
     const result = this.getOrgMembersBysearch(organizationMembers, value)
     this.updateOrganizationMembers(
       value && value.length ? result : this.props.organizationMembers
