@@ -258,8 +258,13 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         o = o[decodeURIComponent(path[i])]
     }
     if (o[decodeURIComponent(path[i])] && o[decodeURIComponent(path[i])].length) {
-        if (!(o[decodeURIComponent(path[i])].includes(val))) {
-            o[decodeURIComponent(path[i])] = [val].concat( o[decodeURIComponent(path[i])])
+        const isInclude =
+            Array.isArray(o[decodeURIComponent(path[i])]) &&
+            o[decodeURIComponent(path[i])].includes(val)
+
+        const isEqual = o[decodeURIComponent(path[i])] === val
+        if (!(isInclude || isEqual)) {
+            o[decodeURIComponent(path[i])] = [val].concat(o[decodeURIComponent(path[i])])
         }
     } else {
         o[decodeURIComponent(path[i])] = val
