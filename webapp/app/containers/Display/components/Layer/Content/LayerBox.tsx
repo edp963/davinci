@@ -72,7 +72,7 @@ const LayerBox: React.FC = (props) => {
 
     const style: React.CSSProperties = {
       transform: `translate(${positionX}px, ${positionY}px)`,
-      willChange: 'transform',
+      willChange: isOperatorPage() ? 'transform' : 'auto',
       width: `${width}px`,
       height: `${height}px`,
       zIndex: index,
@@ -148,6 +148,14 @@ const LayerBox: React.FC = (props) => {
       {props.children}
     </div>
   )
+}
+
+const isOperatorPage = () => {
+    const urlHash = location.hash
+    if (!urlHash || urlHash.includes('preview') || urlHash.includes('share')) {
+      return false
+    }
+    return true
 }
 
 export default LayerBox
