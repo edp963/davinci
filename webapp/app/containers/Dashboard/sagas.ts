@@ -34,7 +34,8 @@ import {
   makeSelectCurrentDashboard,
   makeSelectWidgets,
   makeSelectItemRelatedWidget,
-  makeSelectItemInfo
+  makeSelectItemInfo,
+  makeSelectCurrentItems
 } from './selectors'
 import {
   makeSelectGlobalControlPanelFormValues,
@@ -416,34 +417,31 @@ export function* initiateDownloadTask(action: DashboardActionType) {
   const downloadInfo: IDataDownloadStatistic[] = []
 
   if (type === DownloadTypes.Dashboard) {
-    const globalControlConditionsByItemEntries: Array<
-      [string, IGlobalControlConditions]
-    > = Object.entries(globalControlConditionsByItem)
-    while (globalControlConditionsByItemEntries.length) {
-      const [
-        relatedItemId,
-        globalControlConditions
-      ] = globalControlConditionsByItemEntries[0]
+    const currentItems = yield select(makeSelectCurrentItems())
+    const itemIds = currentItems.map((item) => item.id)
+    while (itemIds.length) {
+      const itemId = itemIds[0]
+      const globalControlConditions = globalControlConditionsByItem[itemId]
       const itemInfo: IDashboardItemInfo = yield select((state) =>
-        makeSelectItemInfo()(state, Number(relatedItemId))
+        makeSelectItemInfo()(state, itemId)
       )
       const relatedWidget: IWidgetFormed = yield select((state) =>
-        makeSelectItemRelatedWidget()(state, Number(relatedItemId))
+        makeSelectItemRelatedWidget()(state, itemId)
       )
       const localControlFormValues = yield select((state) =>
-        makeSelectLocalControlPanelFormValues()(state, Number(relatedItemId))
+        makeSelectLocalControlPanelFormValues()(state, itemId)
       )
       downloadInfo.push(
         getDownloadInfo(
           type,
-          Number(relatedItemId),
+          itemId,
           itemInfo,
           relatedWidget,
           localControlFormValues,
           globalControlConditions
         )
       )
-      globalControlConditionsByItemEntries.shift()
+      itemIds.shift()
     }
   } else {
     const itemInfo: IDashboardItemInfo = yield select((state) =>

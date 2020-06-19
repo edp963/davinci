@@ -8,4 +8,10 @@ export interface IStar {
   starUser?: IStarUser[]
 }
 
+export interface IStarUserList {
+  visible: boolean
+  starUser: IStarUser[]
+  closeUserListModal: () => void
+}
+
 export type IEvent = React.MouseEvent<HTMLElement>
