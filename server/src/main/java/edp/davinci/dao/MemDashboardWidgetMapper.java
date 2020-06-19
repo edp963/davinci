@@ -58,7 +58,7 @@ public interface MemDashboardWidgetMapper {
     })
     int update(MemDashboardWidget memDashboardWidget);
 
-    @Select({"select * from mem_dashboard_widget where dashboard_id = #{dashboardId}"})
+    @Select({"select * from mem_dashboard_widget where dashboard_id = #{dashboardId} order by create_time"})
     List<MemDashboardWidget> getByDashboardId(@Param("dashboardId") Long dashboardId);
 
     @Delete({
