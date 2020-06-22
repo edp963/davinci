@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo, useEffect, useCallback, useState } from 'react'
 import { IChartProps } from './index'
 import chartlibs from '../../config/chart'
 import echarts from 'echarts/lib/echarts'
@@ -6,142 +6,165 @@ import { ECharts } from 'echarts'
 import chartOptionGenerator from '../../render/chart'
 const styles = require('./Chart.less')
 
-export class Chart extends React.PureComponent<IChartProps> {
-  private container: HTMLDivElement = null
-  private instance: ECharts
-  constructor(props) {
-    super(props)
-  }
-  public componentDidMount() {
-    this.renderChart(this.props)
-  }
+const Chart: React.FC<IChartProps> = (props) => {
+  const {
+    data,
+    onError,
+    renderType,
+    isDrilling,
+    onDoInteract,
+    selectedChart,
+    selectedItems,
+    getDataDrillDetail,
+    onSelectChartsItems,
+    onCheckTableInteract
+  } = props
+  let container = useMemo<HTMLDivElement>(() => null, [])
+  let instance = useMemo<ECharts>(() => null, [])
+  const [seriesItems, setSItems] = useState<string[]>([])
 
-  public componentDidUpdate() {
-    this.renderChart(this.props)
-  }
-
-  private renderChart = (props: IChartProps) => {
-    const {
-      selectedChart,
-      renderType,
-      getDataDrillDetail,
-      isDrilling,
-      onError
-    } = props
-
-    if (renderType === 'loading') {
-      return
-    }
-    if (!this.instance) {
-      this.instance = echarts.init(this.container, 'default')
-    } else {
-      if (renderType === 'rerender') {
-        this.instance.dispose()
-        this.instance = echarts.init(this.container, 'default')
-      }
-      if (renderType === 'clear') {
-        this.instance.clear()
+  useEffect(() => {
+    renderChart(props)
+    return () => {
+      if (instance) {
+        instance.off('click')
       }
     }
+  }, [props])
 
-    try {
-      this.instance.setOption(
-        chartOptionGenerator(
-          chartlibs.find((cl) => cl.id === selectedChart).name,
-          props,
-          {
-            instance: this.instance,
-            isDrilling,
-            getDataDrillDetail,
-            selectedItems: this.props.selectedItems
-          }
-        )
-      )
-
-      // if (onDoInteract) {
-      //   this.instance.off('click')
-      //   this.instance.on('click', (params) => {
-      //     const isInteractiveChart = onCheckTableInteract()
-      //     if (isInteractiveChart) {
-      //       const triggerData = getTriggeringRecord(params, seriesData)
-      //       onDoInteract(triggerData)
-      //     }
-      //   })
-      // }
-
-      this.instance.off('click')
-      this.instance.on('click', (params) => {
-        this.collectSelectedItems(params)
-      })
-      this.instance.resize()
-    } catch (error) {
-      if (onError) {
-        onError(error)
+  const renderChart = useCallback(
+    (props: IChartProps) => {
+      if (renderType === 'loading') {
+        return
       }
-    }
-  }
-
-  public collectSelectedItems = (params) => {
-    const {
-      data,
-      onSelectChartsItems,
-      selectedChart,
-      onDoInteract,
-      onCheckTableInteract
-    } = this.props
-    let selectedItems = []
-    if (this.props.selectedItems && this.props.selectedItems.length) {
-      selectedItems = [...this.props.selectedItems]
-    }
-    const { getDataDrillDetail } = this.props
-    let dataIndex = params.dataIndex
-    if (selectedChart === 4) {
-      dataIndex = params.seriesIndex
-    }
-    if (selectedItems.length === 0) {
-      selectedItems.push(dataIndex)
-    } else {
-      const isb = selectedItems.some((item) => item === dataIndex)
-      if (isb) {
-        for (let index = 0, l = selectedItems.length; index < l; index++) {
-          if (selectedItems[index] === dataIndex) {
-            selectedItems.splice(index, 1)
-            break
-          }
-        }
+      if (!instance) {
+        instance = echarts.init(container, 'default')
       } else {
+        if (renderType === 'rerender') {
+          instance.dispose()
+          instance = echarts.init(container, 'default')
+        }
+        if (renderType === 'clear') {
+          instance.clear()
+        }
+      }
+
+      try {
+        instance.off('click')
+        instance.on('click', (params) => {
+          collectSelectedItems(params)
+        })
+
+        instance.setOption(
+          chartOptionGenerator(
+            chartlibs.find((cl) => cl.id === selectedChart).name,
+            props,
+            {
+              instance,
+              isDrilling,
+              getDataDrillDetail,
+              selectedItems,
+              callback: (seriesData) => {
+                instance.off('click')
+                instance.on('click', (params) => {
+                  collectSelectedItems(params, seriesData)
+                })
+              }
+            }
+          )
+        )
+        instance.resize()
+      } catch (error) {
+        if (onError) {
+          onError(error)
+        }
+      }
+    },
+    [
+      onError,
+      isDrilling,
+      renderType,
+      selectedChart,
+      selectedItems,
+      getDataDrillDetail
+    ]
+  )
+
+  const collectSelectedItems = useCallback(
+    (params, seriesData?) => {
+      let selectedItems = []
+      let series = []
+      if (props.selectedItems && props.selectedItems.length) {
+        selectedItems = [...props.selectedItems]
+      }
+      let dataIndex = params.dataIndex
+      if (selectedChart === 4) {
+        dataIndex = params.seriesIndex
+      }
+      if (selectedItems.length === 0) {
         selectedItems.push(dataIndex)
+      } else {
+        const isb = selectedItems.some((item) => item === dataIndex)
+        if (isb) {
+          for (let index = 0, l = selectedItems.length; index < l; index++) {
+            if (selectedItems[index] === dataIndex) {
+              selectedItems.splice(index, 1)
+              break
+            }
+          }
+        } else {
+          selectedItems.push(dataIndex)
+        }
       }
-    }
 
-    const resultData = selectedItems.map((item) => {
-      return data[item]
-    })
-    const brushed = [{ 0: Object.values(resultData) }]
-    const sourceData = Object.values(resultData)
-    const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
-    if (isInteractiveChart && onDoInteract) {
-      const triggerData = sourceData
-      onDoInteract(triggerData)
-    }
-    setTimeout(() => {
-      if (getDataDrillDetail) {
-        getDataDrillDetail(JSON.stringify({ range: null, brushed, sourceData }))
+      if (seriesData) {
+        const { seriesIndex, dataIndex } = params
+        const char = `${seriesIndex}&${dataIndex}`
+        if (seriesItems && Array.isArray(seriesItems)) {
+          series = seriesItems.includes(char)
+            ? seriesItems.filter((item) => item !== char)
+            : seriesItems.concat(char)
+          setSItems(() => series)
+        }
       }
-    }, 500)
-    if (onSelectChartsItems) {
-      onSelectChartsItems(selectedItems)
-    }
-  }
+      const resultData = selectedItems.map((item, index) => {
+        if (seriesData) {
+          const seriesIndex = series[index] ? series[index].split('&')[0] : null
+          return seriesData[seriesIndex] ? seriesData[seriesIndex][item] : []
+        }
+        return data[item]
+      })
+      const brushed = [{ 0: Object.values(resultData) }]
+      const sourceData = Object.values(resultData)
+      const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
+      if (isInteractiveChart && onDoInteract) {
+        const triggerData = sourceData
+        onDoInteract(triggerData)
+      }
+      setTimeout(() => {
+        if (getDataDrillDetail) {
+          getDataDrillDetail(
+            JSON.stringify({ range: null, brushed, sourceData })
+          )
+        }
+      }, 500)
+      if (onSelectChartsItems) {
+        onSelectChartsItems(selectedItems)
+      }
+    },
+    [
+      data,
+      seriesItems,
+      onDoInteract,
+      selectedChart,
+      selectedItems,
+      getDataDrillDetail,
+      onSelectChartsItems,
+      onCheckTableInteract
+    ]
+  )
 
-  public render() {
-    return (
-      <div
-        className={styles.chartContainer}
-        ref={(f) => (this.container = f)}
-      />
-    )
-  }
+  return <div className={styles.chartContainer} ref={(f) => (container = f)} />
 }
 
 export default Chart

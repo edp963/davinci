@@ -132,7 +132,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       widgetProps: null,
       cacheWidgetId: false,
       sourceDataGroup: false
-      //   isShowDrillPanel: true
     }
   }
 
@@ -322,6 +321,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         const sourceDataOfBrushed = sourceData && sourceData.length ? sourceData : void 0
         const whichDataDrillBrushed = brushed && brushed.length ? brushed : void 0
         const sourceDataGroup = sourceGroup && sourceGroup.length ? sourceGroup : void 0
+
         this.setState({
           dataDrillPanelPosition,
           whichDataDrillBrushed,
