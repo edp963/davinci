@@ -32,63 +32,53 @@ const Chart: React.FC<IChartProps> = (props) => {
     }
   }, [props])
 
-  const renderChart = useCallback(
-    (props: IChartProps) => {
-      if (renderType === 'loading') {
-        return
-      }
-      if (!instance) {
+  const renderChart = (props: IChartProps) => {
+    if (renderType === 'loading') {
+      return
+    }
+    if (!instance) {
+      instance = echarts.init(container, 'default')
+    } else {
+      if (renderType === 'rerender') {
+        instance.dispose()
         instance = echarts.init(container, 'default')
-      } else {
-        if (renderType === 'rerender') {
-          instance.dispose()
-          instance = echarts.init(container, 'default')
-        }
-        if (renderType === 'clear') {
-          instance.clear()
-        }
       }
+      if (renderType === 'clear') {
+        instance.clear()
+      }
+    }
 
-      try {
-        instance.off('click')
-        instance.on('click', (params) => {
-          collectSelectedItems(params)
-        })
+    try {
+      instance.off('click')
+      instance.on('click', (params) => {
+        collectSelectedItems(params)
+      })
 
-        instance.setOption(
-          chartOptionGenerator(
-            chartlibs.find((cl) => cl.id === selectedChart).name,
-            props,
-            {
-              instance,
-              isDrilling,
-              getDataDrillDetail,
-              selectedItems,
-              callback: (seriesData) => {
-                instance.off('click')
-                instance.on('click', (params) => {
-                  collectSelectedItems(params, seriesData)
-                })
-              }
+      instance.setOption(
+        chartOptionGenerator(
+          chartlibs.find((cl) => cl.id === selectedChart).name,
+          props,
+          {
+            instance,
+            isDrilling,
+            getDataDrillDetail,
+            selectedItems,
+            callback: (seriesData) => {
+              instance.off('click')
+              instance.on('click', (params) => {
+                collectSelectedItems(params, seriesData)
+              })
             }
-          )
+          }
         )
-        instance.resize()
-      } catch (error) {
-        if (onError) {
-          onError(error)
-        }
+      )
+      instance.resize()
+    } catch (error) {
+      if (onError) {
+        onError(error)
       }
-    },
-    [
-      onError,
-      isDrilling,
-      renderType,
-      selectedChart,
-      selectedItems,
-      getDataDrillDetail
-    ]
-  )
+    }
+  }
 
   const collectSelectedItems = useCallback(
     (params, seriesData?) => {
