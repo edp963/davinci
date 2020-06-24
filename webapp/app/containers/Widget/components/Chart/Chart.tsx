@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useCallback, useState } from 'react'
+import React from 'react'
 import { IChartProps } from './index'
 import chartlibs from '../../config/chart'
 import echarts from 'echarts/lib/echarts'
@@ -6,73 +6,76 @@ import { ECharts } from 'echarts'
 import chartOptionGenerator from '../../render/chart'
 const styles = require('./Chart.less')
 
-const Chart: React.FC<IChartProps> = (props) => {
-  const {
-    data,
-    onError,
-    renderType,
-    isDrilling,
-    onDoInteract,
-    selectedChart,
-    selectedItems,
-    getDataDrillDetail,
-    onSelectChartsItems,
-    onCheckTableInteract
-  } = props
-  let container = useMemo<HTMLDivElement>(() => null, [])
-  let instance = useMemo<ECharts>(() => null, [])
-  const [seriesItems, setSItems] = useState<string[]>([])
-
-  useEffect(() => {
-    renderChart(props)
-    return () => {
-      if (instance) {
-        instance.off('click')
-      }
+interface IChartStates {
+  seriesItems: string[]
+}
+export class Chart extends React.PureComponent<IChartProps, IChartStates> {
+  private asyncEmitTimer: NodeJS.Timer | null = null
+  private container: HTMLDivElement = null
+  private instance: ECharts
+  constructor(props) {
+    super(props)
+    this.state = {
+      seriesItems: []
     }
-  }, [props])
+  }
+  public componentDidMount() {
+    this.renderChart(this.props)
+  }
 
-  const renderChart = (props: IChartProps) => {
+  public componentDidUpdate() {
+    this.renderChart(this.props)
+  }
+
+  private renderChart = (props: IChartProps) => {
+    const {
+      selectedChart,
+      renderType,
+      getDataDrillDetail,
+      isDrilling,
+      onError
+    } = props
+
     if (renderType === 'loading') {
       return
     }
-    if (!instance) {
-      instance = echarts.init(container, 'default')
+    if (!this.instance) {
+      this.instance = echarts.init(this.container, 'default')
     } else {
       if (renderType === 'rerender') {
-        instance.dispose()
-        instance = echarts.init(container, 'default')
+        this.instance.dispose()
+        this.instance = echarts.init(this.container, 'default')
       }
       if (renderType === 'clear') {
-        instance.clear()
+        this.instance.clear()
       }
     }
 
     try {
-      instance.off('click')
-      instance.on('click', (params) => {
-        collectSelectedItems(params)
+      this.instance.off('click')
+      this.instance.on('click', (params) => {
+        this.collectSelectedItems(params)
       })
 
-      instance.setOption(
+      this.instance.setOption(
         chartOptionGenerator(
           chartlibs.find((cl) => cl.id === selectedChart).name,
           props,
           {
-            instance,
+            instance: this.instance,
             isDrilling,
             getDataDrillDetail,
-            selectedItems,
+            selectedItems: this.props.selectedItems,
             callback: (seriesData) => {
-              instance.off('click')
-              instance.on('click', (params) => {
-                collectSelectedItems(params, seriesData)
+              this.instance.off('click')
+              this.instance.on('click', (params) => {
+                this.collectSelectedItems(params, seriesData)
               })
             }
           }
         )
       )
-      instance.resize()
+      this.instance.resize()
     } catch (error) {
       if (onError) {
         onError(error)
@@ -80,81 +83,94 @@ const Chart: React.FC<IChartProps> = (props) => {
     }
   }
 
-  const collectSelectedItems = useCallback(
-    (params, seriesData?) => {
-      let selectedItems = []
-      let series = []
-      if (props.selectedItems && props.selectedItems.length) {
-        selectedItems = [...props.selectedItems]
-      }
-      let dataIndex = params.dataIndex
-      if (selectedChart === 4) {
-        dataIndex = params.seriesIndex
-      }
-      if (selectedItems.length === 0) {
-        selectedItems.push(dataIndex)
-      } else {
-        const isb = selectedItems.some((item) => item === dataIndex)
-        if (isb) {
-          for (let index = 0, l = selectedItems.length; index < l; index++) {
-            if (selectedItems[index] === dataIndex) {
-              selectedItems.splice(index, 1)
-              break
-            }
-          }
-        } else {
-          selectedItems.push(dataIndex)
-        }
-      }
+  public componentWillUnmount() {
+    if (this.instance) {
+      this.instance.off('click')
+    }
+    if (this.asyncEmitTimer) {
+      clearTimeout(this.asyncEmitTimer)
+    }
+  }
 
-      if (seriesData) {
-        const { seriesIndex, dataIndex } = params
-        const char = `${seriesIndex}&${dataIndex}`
-        if (seriesItems && Array.isArray(seriesItems)) {
-          series = seriesItems.includes(char)
-            ? seriesItems.filter((item) => item !== char)
-            : seriesItems.concat(char)
-          setSItems(() => series)
-        }
-      }
-      const resultData = selectedItems.map((item, index) => {
-        if (seriesData) {
-          const seriesIndex = series[index] ? series[index].split('&')[0] : null
-          return seriesData[seriesIndex] ? seriesData[seriesIndex][item] : []
-        }
-        return data[item]
-      })
-      const brushed = [{ 0: Object.values(resultData) }]
-      const sourceData = Object.values(resultData)
-      const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
-      if (isInteractiveChart && onDoInteract) {
-        const triggerData = sourceData
-        onDoInteract(triggerData)
-      }
-      setTimeout(() => {
-        if (getDataDrillDetail) {
-          getDataDrillDetail(
-            JSON.stringify({ range: null, brushed, sourceData })
-          )
-        }
-      }, 500)
-      if (onSelectChartsItems) {
-        onSelectChartsItems(selectedItems)
-      }
-    },
-    [
+  private collectSelectedItems = (params, seriesData?) => {
+    const {
       data,
-      seriesItems,
-      onDoInteract,
       selectedChart,
-      selectedItems,
+      onDoInteract,
       getDataDrillDetail,
       onSelectChartsItems,
       onCheckTableInteract
-    ]
-  )
+    } = this.props
 
-  return <div className={styles.chartContainer} ref={(f) => (container = f)} />
+    const { seriesItems } = this.state
+
+    let selectedItems = []
+    let series = []
+    if (this.props.selectedItems && this.props.selectedItems.length) {
+      selectedItems = [...this.props.selectedItems]
+    }
+    let dataIndex = params.dataIndex
+    if (selectedChart === 4) {
+      dataIndex = params.seriesIndex
+    }
+    if (selectedItems.length === 0) {
+      selectedItems.push(dataIndex)
+    } else {
+      const isb = selectedItems.some((item) => item === dataIndex)
+      if (isb) {
+        for (let index = 0, l = selectedItems.length; index < l; index++) {
+          if (selectedItems[index] === dataIndex) {
+            selectedItems.splice(index, 1)
+            break
+          }
+        }
+      } else {
+        selectedItems.push(dataIndex)
+      }
+    }
+
+    if (seriesData) {
+      const { seriesIndex, dataIndex } = params
+      const char = `${seriesIndex}&${dataIndex}`
+      if (seriesItems && Array.isArray(seriesItems)) {
+        series = seriesItems.includes(char)
+          ? seriesItems.filter((item) => item !== char)
+          : seriesItems.concat(char)
+        this.setState({ seriesItems: series })
+      }
+    }
+    const resultData = selectedItems.map((item, index) => {
+      if (seriesData) {
+        const seriesIndex = series[index] ? series[index].split('&')[0] : null
+        return seriesData[seriesIndex] ? seriesData[seriesIndex][item] : []
+      }
+      return data[item]
+    })
+    const brushed = [{ 0: Object.values(resultData) }]
+    const sourceData = Object.values(resultData)
+    const isInteractiveChart = onCheckTableInteract && onCheckTableInteract()
+    if (isInteractiveChart && onDoInteract) {
+      const triggerData = sourceData
+      onDoInteract(triggerData)
+    }
+    this.asyncEmitTimer = setTimeout(() => {
+      if (getDataDrillDetail) {
+        getDataDrillDetail(JSON.stringify({ range: null, brushed, sourceData }))
+      }
+    }, 500)
+    if (onSelectChartsItems) {
+      onSelectChartsItems(selectedItems)
+    }
+  }
+
+  public render() {
+    return (
+      <div
+        className={styles.chartContainer}
+        ref={(f) => (this.container = f)}
+      />
+    )
+  }
 }
 
 export default Chart
