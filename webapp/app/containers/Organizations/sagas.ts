@@ -27,6 +27,7 @@ import { message } from 'antd'
 import request from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
+import { resolveOnChange } from 'antd/lib/input/Input'
 
 export function* getOrganizations () {
   try {
@@ -286,18 +287,22 @@ export function* searchMember (action: OrganizationActionType) {
 export function* inviteMember (action: OrganizationActionType) {
   if (action.type !== ActionTypes.INVITE_MEMBER) { return }
 
-  const { orgId, memId } = action.payload
+  const { orgId, members, needEmail, resolve } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.organizations}/${orgId}/member/${memId}`,
+      url: `${api.organizations}/${orgId}/invite/members`,
       data: {
         orgId,
-        memId
+        members,
+        needConfirm: needEmail
       }
     })
     const result = asyncData.payload
     yield put(OrganizationActions.inviteMemberSuccess(result))
+    if (resolve) {
+      resolve()
+    }
   } catch (err) {
     yield put(OrganizationActions.inviteMemberFail())
     errorHandler(err)

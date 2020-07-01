@@ -18,25 +18,34 @@
  * >>
  */
 
-import React, {
-  useContext,
-  useMemo,
-  useCallback,
-  useEffect,
-  useState
-} from 'react'
+import React, { useContext, useMemo, useCallback, useState } from 'react'
 import classnames from 'classnames'
 
 import { LayerListContext, LayerContext } from '../util'
 import { DraggableProxyContext } from '../Draggable'
 import { ContextMenuProxyContext } from '../ContextMenu'
+import { useSelector } from 'react-redux'
+import { makeSelectCurrentOperateItemParams } from 'app/containers/Display/selectors'
 
 const LayerBox: React.FC = (props) => {
   const { onSelectionChange } = useContext(LayerListContext)
-  const {
-    layer: { id: layerId, params, index },
-    operationInfo
-  } = useContext(LayerContext)
+
+  const { layer, operationInfo } = useContext(LayerContext)
+
+  const { id: layerId, index } = layer
+
+  const operateItemParams = useSelector(makeSelectCurrentOperateItemParams())
+
+  const dragging = operationInfo?.dragging
+
+  const params = useMemo(
+    () =>
+      dragging
+        ? operateItemParams.find((_) => _.id === layerId)?.params
+        : layer.params,
+    [dragging, operateItemParams, layer.params]
+  )
+
   const { style: draggableStyle, ...restDraggableProps } = useContext(
     DraggableProxyContext
   )
@@ -62,9 +71,8 @@ const LayerBox: React.FC = (props) => {
     } = params
 
     const style: React.CSSProperties = {
-      position: 'absolute',
-      left: positionX,
-      top: positionY,
+      transform: `translate(${positionX}px, ${positionY}px)`,
+      willChange: 'transform',
       width: `${width}px`,
       height: `${height}px`,
       zIndex: index,
@@ -92,7 +100,10 @@ const LayerBox: React.FC = (props) => {
   const selectionChange = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       e.stopPropagation()
-      if (!onSelectionChange || (e.target as HTMLDivElement).nodeName.toLowerCase() === 'span') {
+      if (
+        !onSelectionChange ||
+        (e.target as HTMLDivElement).nodeName.toLowerCase() === 'span'
+      ) {
         return
       }
 

@@ -18,9 +18,6 @@
  * >>
  */
 
-import '@babel/polyfill'
-import 'url-search-params-polyfill'
-
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
@@ -84,7 +81,6 @@ import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
 echarts.registerTheme('default', DEFAULT_ECHARTS_THEME)
 
 import configureStore from './configureStore'
-import 'utils/localStorage'
 
 
 const initialState = {}

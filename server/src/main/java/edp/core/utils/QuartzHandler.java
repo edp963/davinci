@@ -55,8 +55,7 @@ public class QuartzHandler {
             throw new ServerException("EMPTY job");
         }
 
-        if (System.currentTimeMillis() < scheduleJob.getStartDate().getTime()
-                || System.currentTimeMillis() > scheduleJob.getEndDate().getTime()) {
+        if (System.currentTimeMillis() > scheduleJob.getEndDate().getTime()) {
             Object[] args = {
                     scheduleJob.getId(),
                     DateUtils.toyyyyMMddHHmmss(System.currentTimeMillis()),

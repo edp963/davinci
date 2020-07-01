@@ -122,7 +122,40 @@ export const DisplayActions = {
       }
     }
   },
-
+  dragLayerIndependence(
+    slideSize: Pick<ISlideParams, 'width' | 'height'>,
+    scale: number,
+    deltaPosition: DeltaPosition,
+    finish: boolean,
+    layerId?: number
+  ) {
+    return {
+      type: ActionTypes.DRAG_LAYER_INDEPENDENCE,
+      payload: {
+        slideSize,
+        scale,
+        layerId,
+        deltaPosition,
+        finish
+      }
+    }
+  },
+  dragLayerAdjustedIndependence(
+    layerIds: number[],
+    slideSize: Pick<ISlideParams, 'width' | 'height'>,
+    deltaPosition: DeltaPosition,
+    finish: boolean
+  ) {
+    return {
+      type: ActionTypes.DRAG_LAYER_ADJUSTED_INDEPENDENCE,
+      payload: {
+        layerIds,
+        slideSize,
+        deltaPosition,
+        finish
+      }
+    }
+  },
   dragLayer(
     slideSize: Pick<ISlideParams, 'width' | 'height'>,
     scale: number,

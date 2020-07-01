@@ -99,6 +99,10 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps & FormC
     }
   }
 
+  private substr (str: string) {
+    return  str?.length > 14 ?  `${str.substr(0, 14)}...` : str
+  }
+
   public render () {
     const { type, organizations, modalLoading, onCheckUniqueName } = this.props
     const { getFieldDecorator } = this.props.form
@@ -236,7 +240,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps & FormC
               <p className={styles.desc}><span className={styles.label}>创建人</span>  <b>{createBy.username}</b></p>
               <p className={styles.button}>
                 <Tooltip title="移交">
-                  <Button type="default" onClick={this.props.showEditProjectForm}>移交 {name}</Button>
+                  <Button type="default" onClick={this.props.showEditProjectForm}>移交 {this.substr(name)}</Button>
                 </Tooltip>
               </p>
             </div>
@@ -254,7 +258,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps & FormC
                   onConfirm={this.deleteProject(id)}
                 >
                   <Tooltip title="删除">
-                    <Button type="danger"  onClick={this.stopPPG} >删除 {name}</Button>
+                    <Button type="danger"  onClick={this.stopPPG} >删除 {this.substr(name)}</Button>
                   </Tooltip>
                 </Popconfirm>
               </p>

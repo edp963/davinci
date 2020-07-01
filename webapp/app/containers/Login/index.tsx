@@ -18,14 +18,13 @@
  * >>
  */
 
-import * as React from 'react'
+import React, { ChangeEvent, FormEvent } from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { RouteComponentProps } from 'react-router-dom'
 
 import LoginForm from './LoginForm'
-import { Icon } from 'antd'
 
 import { compose } from 'redux'
 
@@ -82,13 +81,13 @@ export class Login extends React.PureComponent<
     history.push('/findPassword')
   }
 
-  private changeUsername = (e) => {
+  private changeUsername = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       username: e.target.value.trim()
     })
   }
 
-  private changePassword = (e) => {
+  private changePassword = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       password: e.target.value
     })
@@ -99,7 +98,8 @@ export class Login extends React.PureComponent<
     history.replace('/register')
   }
 
-  private doLogin = () => {
+  private doLogin = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     const { onLogin, history } = this.props
     const { username, password } = this.state
 
@@ -132,13 +132,11 @@ export class Login extends React.PureComponent<
         <LoginForm
           username={username}
           password={password}
+          loading={loginLoading}
           onChangeUsername={this.changeUsername}
           onChangePassword={this.changePassword}
           onLogin={this.doLogin}
         />
-        <button disabled={loginLoading} onClick={this.doLogin}>
-          {loginLoading ? <Icon type="loading" /> : ''}登 录
-        </button>
         <p className={styles.tips}>
           <a
             href="javascript:;"

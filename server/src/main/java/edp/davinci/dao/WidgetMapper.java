@@ -45,9 +45,7 @@ public interface WidgetMapper {
     @Select({"select w.*,v.model from widget w LEFT JOIN `view` v on v.id = w.view_id where w.id = #{id}"})
     ShareWidget getShareWidgetById(@Param("id") Long id);
 
-
     int insertBatch(@Param("list") List<Widget> list);
-
 
     @Update({
             "update widget",
@@ -66,15 +64,13 @@ public interface WidgetMapper {
 
     List<Widget> getByIds(@Param("list") Set<Long> ids);
 
-
     Set<Long> getIdSetByIds(@Param("set") Set<Long> ids);
-
 
     @Select({
             "SELECT  w.*, s.id as 'vizId', s.index as 'vizIndex' FROM widget w ",
             "LEFT JOIN mem_display_slide_widget m on w.id = m.widget_id",
             "LEFT JOIN display_slide s on m.display_slide_id = s.id",
-            "WHERE s.display_id = #{displayId}",
+            "WHERE s.display_id = #{displayId} order by m.create_time",
     })
     List<WidgetWithVizId> queryByDisplayId(@Param("displayId") Long displayId);
 
@@ -93,8 +89,8 @@ public interface WidgetMapper {
     @Select({"select * from widget where project_id = #{projectId}"})
     List<Widget> getByProject(@Param("projectId") Long projectId);
 
-    @Select({"SELECT w.*, m.id as 'relationId' FROM mem_dashboard_widget m LEFT JOIN widget w on w.id = m.widget_Id WHERE m.dashboard_id = #{dashboardId}"})
-    Set<WidgetWithRelationDashboardId> getByDashboard(@Param("dashboardId") Long dashboardId);
+    @Select({"SELECT w.*, m.id as 'relationId' FROM mem_dashboard_widget m LEFT JOIN widget w on w.id = m.widget_Id WHERE m.dashboard_id = #{dashboardId} order by m.create_time"})
+    List<WidgetWithRelationDashboardId> getByDashboard(@Param("dashboardId") Long dashboardId);
 
     @Select({"SELECT w.*, v.model FROM mem_dashboard_widget m ",
             "LEFT JOIN widget w on w.id = m.widget_Id ",
@@ -107,7 +103,6 @@ public interface WidgetMapper {
 
     @Select({"select * from widget where view_id = #{viewId}"})
     List<Widget> getWidgetsByWiew(@Param("viewId") Long viewId);
-
 
     int updateConfigBatch(@Param("list") List<Widget> list);
 }

@@ -39,7 +39,8 @@ const initialState: IOrganizationState = {
   roleModalLoading: false,
   projectDetail: null,
   projectAdmins: null,
-  projectRoles: null
+  projectRoles: null,
+  inviteMemberfetching: false
 }
 
 const organizationReducer = (
@@ -162,9 +163,16 @@ const organizationReducer = (
       case ActionTypes.ADD_ROLE_FAILURE:
         draft.roleModalLoading = false
         break
-
+      case ActionTypes.SEARCH_MEMBER:
+        draft.inviteMemberfetching = true
+        break
       case ActionTypes.SEARCH_MEMBER_SUCCESS:
         draft.inviteMemberLists = action.payload.result
+        draft.inviteMemberfetching = false
+        break
+
+      case ActionTypes.SEARCH_MEMBER_FAILURE:
+        draft.inviteMemberfetching = true
         break
 
       case ActionTypes.SET_CURRENT_ORIGANIZATION_PROJECT:

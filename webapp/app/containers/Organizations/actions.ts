@@ -327,12 +327,14 @@ export const OrganizationActions = {
     }
   },
 
-  inviteMember (orgId, memId) {
+  inviteMember (orgId, members, needEmail, resolve) {
     return {
       type: ActionTypes.INVITE_MEMBER,
       payload: {
         orgId,
-        memId
+        members,
+        needEmail,
+        resolve
       }
     }
   },
