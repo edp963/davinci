@@ -172,32 +172,44 @@ public class SqlParseUtils {
 
         char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
 
-        // 替换auth@var
+        //查找 auth@var
+        Deque<String> deque = new ArrayDeque<>();
+        deque.push(sql);
+
         Pattern p = Pattern.compile(getReg(REG_AUTHVAR, delimiter, true));
-        Matcher matcher = p.matcher(sql);
-
-        Map<String, List<SqlOperatorEnum>> operatorMap = Arrays.stream(SqlOperatorEnum.values()).collect(Collectors.groupingBy(SqlOperatorEnum::getValue));
-
-        Set<String> expSet = new HashSet<>();
-        while (matcher.find()) {
-            String group = matcher.group();
-            if (SqlUtils.isSelect(group)) {
-                if (group.startsWith(PARENTHESES_START)) {
-                    group = group.substring(1);
-                }
-                if (group.endsWith(PARENTHESES_END)) {
-                    group = group.substring(0, group.length() - 1);
-                }
-                matcher = p.matcher(group);
-                continue;
-            }
-            for (String key : operatorMap.keySet()) {
-                if (group.toUpperCase().contains(key)) {
-                    expSet.add(group);
+        Set<String> authVarFragments = new HashSet<>();
+        while (!deque.isEmpty()) {
+            Matcher matcher = p.matcher(deque.pop());
+            while (matcher.find()) {
+                String group = matcher.group();
+                if (SqlUtils.isSelect(group)) {
+                    if (group.startsWith(PARENTHESES_START)) {
+                        group = group.substring(1);
+                    }
+                    if (group.endsWith(PARENTHESES_END)) {
+                        group = group.substring(0, group.length() - 1);
+                    }
+                    deque.push(group);
+                } else {
+                    authVarFragments.add(group);
                 }
             }
         }
 
+        Map<String, List<SqlOperatorEnum>> operatorMap = Arrays.stream(SqlOperatorEnum.values()).collect(Collectors.groupingBy(SqlOperatorEnum::getValue));
+        Set<String> expSet = new HashSet<>();
+
+        match:
+        for (String fragment : authVarFragments) {
+            for (String key : operatorMap.keySet()) {
+                if (fragment.toUpperCase().contains(key)) {
+                    expSet.add(fragment);
+                    break match;
+                }
+            }
+        }
+
+        // 替换auth@var
         found:
         if (!CollectionUtils.isEmpty(expSet)) {
             Map<String, String> parsedMap = getParsedExpression(expSet, authParamMap, delimiter);
