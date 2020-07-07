@@ -138,7 +138,7 @@ public class Constants extends Consts {
     /**
      * select 表达式
      */
-    public static final String SELECT_EXEPRESSION = "SELECT * FROM TABLE WHERE %s";
+    public static final String SELECT_EXPRESSION = "SELECT * FROM TABLE WHERE %s";
 
     /**
      * 点赞project
