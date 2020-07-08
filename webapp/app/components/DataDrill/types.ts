@@ -131,6 +131,7 @@ export interface IDataDrillProps {
   onDataDrillPath?: () => any
   onDataDrillDown?: (name: string, dimensions?: WidgetDimension) => any
   onDataDrillUp?: (name: string) => any
+  drillpathSetting?: []
 }
 
 export interface IEnhancerPanel {
