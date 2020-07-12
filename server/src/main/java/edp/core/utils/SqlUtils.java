@@ -297,8 +297,8 @@ public class SqlUtils {
             if (!CollectionUtils.isEmpty(excludeColumns) && excludeColumns.contains(label)) {
                 continue;
             }
-			Object value = rs.getObject(key);
-			map.put(label, value instanceof byte[] ? new String((byte[]) value) : value);
+            Object value = rs.getObject(key);
+            map.put(label, value instanceof byte[] ? new String((byte[]) value) : value);
         }
         return map;
     }
@@ -314,6 +314,18 @@ public class SqlUtils {
             log.debug(e.getMessage(), e);
         }
         return SqlParseUtils.rebuildSqlWithFragment(countSql);
+    }
+
+    public static boolean isSelect(String src) {
+        if (StringUtils.isEmpty(src)) {
+            return false;
+        }
+        try {
+            Statement parse = CCJSqlParserUtil.parse(src);
+            return parse instanceof Select;
+        } catch (JSQLParserException e) {
+            return false;
+        }
     }
 
     public static Set<String> getQueryFromsAndJoins(String sql) {
