@@ -1,12 +1,10 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import classnames from 'classnames'
 import styles from './Avatar.less'
-import utilStyles from 'assets/less/util.less'
 const logo = require('assets/images/profile.png')
 import { Modal, Spin } from 'antd'
-import { IAvatarProps, TSize } from './type'
+import { IAvatarProps, TSize, TImageState } from './type'
 import { useIntersectionObserver } from './useIntersectionObserver'
-import { useImage } from './useImage'
 
 export const Avatar: React.FC<IAvatarProps> = ({
   path,
@@ -21,18 +19,14 @@ export const Avatar: React.FC<IAvatarProps> = ({
     rootMargin: '0%',
     root: null
   })
-  const { image, status, error } = useImage(path)
-
-  const loading = useMemo(
-    () => {
-      return size === 'profile' ? (
-        <Spin size="large" />
-      ) : (
-        <Spin size={size as TSize} />
-      )
-    },
-    [size, status]
-  )
+  const [status, setStatus] = useState<TImageState>('loading')
+  const loading = useMemo(() => {
+    return size === 'profile' ? (
+      <Spin size="large" />
+    ) : (
+      <Spin size={size as TSize} />
+    )
+  }, [size, status])
 
   const showEnlarge = useCallback(() => {
     setFormVisible(true)
@@ -78,22 +72,35 @@ export const Avatar: React.FC<IAvatarProps> = ({
     })
   }, [size])
 
+  const loaded = useCallback(() => {
+    if (logo !== elementRef.current.src) {
+      setStatus('loaded')
+    }
+  }, [status])
+
+  const loadFail = useCallback(() => {
+    elementRef.current.src = logo
+    setStatus('loadFail')
+  }, [status])
+
   useEffect(() => {
     if (!inView) {
       return
     }
-
-    if (typeof image === 'string' && image.length && status === 'loaded') {
+    if (!elementRef.current.src) {
       elementRef.current.src = path
     }
+    elementRef.current.addEventListener('load', loaded, false)
+    elementRef.current.addEventListener('error', loadFail, false)
 
-    if (status === 'loadFail') {
-      elementRef.current.src = logo
+    return () => {
+      elementRef.current.removeEventListener('load', loaded)
+      elementRef.current.removeEventListener('error', loadFail)
     }
-  }, [inView, status, image])
+  }, [inView, status])
 
   const modalSrc = useMemo(() => {
-    return path && path.length && status === 'loaded' ? path : logo
+    return status === 'loaded' ? path : logo
   }, [path, status])
 
   return (

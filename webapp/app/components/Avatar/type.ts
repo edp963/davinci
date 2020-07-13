@@ -6,3 +6,4 @@ export interface IAvatarProps {
   border?: boolean
 }
 
+export type TImageState = 'loading' | 'loaded' | 'loadFail'
