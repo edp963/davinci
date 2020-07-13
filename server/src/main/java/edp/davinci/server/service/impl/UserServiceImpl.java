@@ -181,7 +181,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 			// 添加用户
 			if (userExtendMapper.insert(user) <= 0) {
 				log.error("User({}) regist fail", userRegist.toString());
-				throw new ServerException("Regist fail: unspecified error");
+				throw new ServerException("Regist fail:unspecified error");
 			}
 			// 添加成功，发送激活邮件
 			sendMail(user.getEmail(), user);
@@ -217,7 +217,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
             return user;
         } else {
             log.error("User({}) regist fail", oauthUser.getName());
-            throw new ServerException("Regist fail: unspecified error");
+            throw new ServerException("Regist fail:unspecified error");
         }
     }
     

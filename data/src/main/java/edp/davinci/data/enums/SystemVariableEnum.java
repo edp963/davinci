@@ -39,13 +39,4 @@ public enum SystemVariableEnum {
         this.key = variable;
         this.regex = regex;
     }
-
-    public static boolean isContains(String str) {
-        str = str.toUpperCase();
-        return str.contains(USER_ID.key) ||
-                str.contains(USER_NAME.key) ||
-                str.contains(USER_USERNAME.key) ||
-                str.contains(USER_EMAIL.key) ||
-                str.contains(USER_DEPARTMENT.key);
-    }
 }

@@ -576,7 +576,7 @@ CREATE TABLE `davinci_statistic_visitor_operation` (
 	`widget_name` VARCHAR ( 255 ) DEFAULT NULL,
 	`variables` VARCHAR ( 500 ) DEFAULT NULL,
 	`filters` text COLLATE utf8_unicode_ci DEFAULT NULL,
-	`groups` VARCHAR ( 500 ) DEFAULT NULL,
+	`groups` text COLLATE utf8_unicode_ci DEFAULT NULL,
 	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY ( `id` ) USING BTREE 
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;

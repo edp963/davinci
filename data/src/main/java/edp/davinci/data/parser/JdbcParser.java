@@ -114,7 +114,7 @@ public class JdbcParser extends StatementParser {
             case "distinct":// build distinct sql
                 st = stg.getInstanceOf("distinct");
                 st.add("columns", param.getColumns());
-                st.add("filters", SqlParseUtils.getFilters(param.getFilters(), config));
+                st.add("filters", SqlParseUtils.getFilters(param.getFilters(), url, version));
                 st.add("keywordPrefix", SqlUtils.getKeywordPrefix(url, version));
                 st.add("keywordSuffix", SqlUtils.getKeywordSuffix(url, version));
                 break;
@@ -128,7 +128,7 @@ public class JdbcParser extends StatementParser {
                     st.add("aggregators", SqlParseUtils.getAggregators(param.getAggregators(), url, version));
                 }
                 st.add("orders", SqlParseUtils.getOrders(param.getOrders(), url, version));
-                st.add("filters", SqlParseUtils.getFilters(param.getFilters(), config));
+                st.add("filters", SqlParseUtils.getFilters(param.getFilters(), url, version));
                 st.add("keywordPrefix", SqlUtils.getKeywordPrefix(url, version));
                 st.add("keywordSuffix", SqlUtils.getKeywordSuffix(url, version));
                 break;

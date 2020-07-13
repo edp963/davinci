@@ -21,6 +21,8 @@ package edp.davinci.data.pojo;
 
 import static edp.davinci.commons.Constants.EMPTY;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import edp.davinci.commons.util.StringUtils;
 import lombok.Data;
 
@@ -31,11 +33,18 @@ public class CustomDatabase {
     private String desc;
     private String version;
     private String driver;
+    
+    @JsonProperty("keyword_prefix")
     private String keywordPrefix;
-    private String keywordSuffix;
-    private String aliasPrefix;
-    private String aliasSuffix;
 
+    @JsonProperty("keyword_suffix")
+    private String keywordSuffix;
+
+    @JsonProperty("alias_prefix")
+    private String aliasPrefix;
+
+    @JsonProperty("alias_suffix")
+    private String aliasSuffix;
 
     public void setKeywordPrefix(String keywordPrefix) {
         this.keywordPrefix = removeEscapes(keywordPrefix);
@@ -45,7 +54,7 @@ public class CustomDatabase {
         this.keywordSuffix = removeEscapes(keywordSuffix);
     }
 
-    public void setAlias_prefix(String aliasPrefix) {
+    public void setAliasPrefix(String aliasPrefix) {
         this.aliasPrefix = removeEscapes(aliasPrefix);
     }
 

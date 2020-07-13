@@ -46,6 +46,7 @@ import org.springframework.stereotype.Component;
 
 import static edp.davinci.commons.Constants.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -86,14 +87,16 @@ public class DownloadCommonService {
             if (dashboard == null) {
                 continue;
             }
-            List<MemDashboardWidget> mdw = memDashboardWidgetExtendMapper.getByDashboardId(dashboardId);
-            if (CollectionUtils.isEmpty(mdw)) {
+            List<MemDashboardWidget> mdws = memDashboardWidgetExtendMapper.getByDashboardId(dashboardId);
+            if (CollectionUtils.isEmpty(mdws)) {
                 continue;
             }
-            Set<Long> widgetIds = mdw.stream().filter(y -> y != null).map(y -> y.getWidgetId()).collect(Collectors.toSet());
+            Set<Long> widgetIds = mdws.stream().filter(y -> y != null).map(y -> y.getWidgetId()).collect(Collectors.toSet());
             List<Widget> widgets = widgetMapper.getByIds(widgetIds);
             if (!CollectionUtils.isEmpty(widgets)) {
-                Map<Long, MemDashboardWidget> map = mdw.stream().collect(Collectors.toMap(o -> o.getWidgetId(), o -> o));
+                // order by mem_dashboard_widget create_time
+                widgets = sort(mdws, widgets);
+                Map<Long, MemDashboardWidget> map = mdws.stream().collect(Collectors.toMap(o -> o.getWidgetId(), o -> o));
                 widgets.stream().forEach(t -> {
                     WidgetQueryParam executeParam = null;
                     if (!CollectionUtils.isEmpty(params) && map.containsKey(t.getId())) {
@@ -109,6 +112,14 @@ public class DownloadCommonService {
             }
         }
         return widgetList;
+    }
+
+    private List<Widget> sort(List<MemDashboardWidget> memDashboardWidgets, List<Widget> widgets) {
+        List<Widget> list = new ArrayList<>();
+        memDashboardWidgets.forEach(m -> {
+            list.add(widgets.stream().filter(w -> w.getId().equals(m.getWidgetId())).findFirst().get());
+        });
+        return list;
     }
 
     protected List<WidgetContext> getWidgetContextListByDashBoardFolderId(Long id) {
