@@ -1,13 +1,12 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import classnames from 'classnames'
-const styles = require('./Avatar.less')
+import styles from './Avatar.less'
+import utilStyles from 'assets/less/util.less'
 const logo = require('assets/images/profile.png')
-const loading = require('assets/images/loading.gif')
-import { Modal } from 'antd'
-import { IAvatarProps } from './type'
+import { Modal, Spin } from 'antd'
+import { IAvatarProps, TSize } from './type'
 import { useIntersectionObserver } from './useIntersectionObserver'
 import { useImage } from './useImage'
-
 
 export const Avatar: React.FC<IAvatarProps> = ({
   path,
@@ -24,6 +23,17 @@ export const Avatar: React.FC<IAvatarProps> = ({
   })
   const { image, status, error } = useImage(path)
 
+  const loading = useMemo(
+    () => {
+      return size === 'profile' ? (
+        <Spin size="large" />
+      ) : (
+        <Spin size={size as TSize} />
+      )
+    },
+    [size, status]
+  )
+
   const showEnlarge = useCallback(() => {
     setFormVisible(true)
   }, [formVisible])
@@ -34,21 +44,29 @@ export const Avatar: React.FC<IAvatarProps> = ({
 
   const itemClass = useMemo(() => {
     return classnames({
-      [styles.profile]: size === 'profile',
-      [styles.default]: size === 'default',
+      [styles.isEnlarge]: enlarge,
       [styles.large]: size === 'large',
       [styles.small]: size === 'small',
-      [styles.isEnlarge]: enlarge
+      [styles.profile]: size === 'profile',
+      [styles.default]: size === 'default',
+      [styles.height0]: status === 'loading',
+      [styles.height1]: status !== 'loading'
     })
-  }, [size, enlarge])
+  }, [size, enlarge, status])
 
-  const isEnlarge = useMemo(() => {
-    return enlarge ? (
-      <img className={itemClass} src={loading} ref={elementRef} onClick={showEnlarge} />
+  const imgContent = useMemo(() => {
+    const img = enlarge ? (
+      <img className={itemClass} ref={elementRef} onClick={showEnlarge} />
     ) : (
-      <img className={itemClass} src={loading} ref={elementRef} />
+      <img className={itemClass} ref={elementRef} />
     )
-  }, [enlarge, showEnlarge])
+    return (
+      <>
+        {status === 'loading' ? loading : ''}
+        {img}
+      </>
+    )
+  }, [enlarge, showEnlarge, status])
 
   const wrapper = useMemo(() => {
     return classnames({
@@ -65,25 +83,29 @@ export const Avatar: React.FC<IAvatarProps> = ({
       return
     }
 
-    if (typeof(image) === 'string' && image.length && status === 'loaded') {
+    if (typeof image === 'string' && image.length && status === 'loaded') {
       elementRef.current.src = path
     }
 
-    if (status === 'loadFail'){
+    if (status === 'loadFail') {
       elementRef.current.src = logo
     }
   }, [inView, status, image])
 
+  const modalSrc = useMemo(() => {
+    return path && path.length && status === 'loaded' ? path : logo
+  }, [path, status])
+
   return (
     <div className={wrapper}>
-      {isEnlarge}
+      {imgContent}
       <Modal
         title={null}
         footer={null}
         visible={formVisible}
         onCancel={hideEnlarge}
       >
-        <img src={path} className={styles.sourceSrc} />
+        <img src={modalSrc} className={styles.sourceSrc} />
       </Modal>
     </div>
   )
