@@ -20,6 +20,7 @@
 package edp.davinci.data.source;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,10 +28,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
+import com.alibaba.druid.filter.Filter;
 import com.alibaba.druid.pool.DruidDataSource;
+import com.alibaba.druid.wall.WallConfig;
+import com.alibaba.druid.wall.WallFilter;
 
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
@@ -47,7 +54,37 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component()
 public class JdbcDataSource {
-	
+
+    @Bean(name = "wallConfig")
+	WallConfig wallConfig() {
+		WallConfig config = new WallConfig();
+        config.setDeleteAllow(false);
+        config.setUpdateAllow(false);
+        config.setInsertAllow(false);
+        config.setReplaceAllow(false);
+        config.setMergeAllow(false);
+        config.setTruncateAllow(false);
+        config.setCreateTableAllow(false);
+        config.setAlterTableAllow(false);
+        config.setDropTableAllow(false);
+        // config.setCommentAllow(false);
+        config.setUseAllow(false);
+        config.setDescribeAllow(false);
+        config.setShowAllow(false);
+		return config;
+	}
+
+    @Bean(name = "wallFilter")
+	@DependsOn("wallConfig")
+	WallFilter wallFilter(WallConfig wallConfig) {
+		WallFilter wfilter = new WallFilter();
+		wfilter.setConfig(wallConfig);
+		return wfilter;
+	}
+
+    @Autowired
+	WallFilter wallFilter;
+
     @Value("${source.max-active:10}")
     @Getter
     protected int maxActive;
@@ -64,29 +101,26 @@ public class JdbcDataSource {
     @Getter
     protected long maxWait;
 
-    @Value("${spring.datasource.time-between-eviction-runs-millis}")
+    @Value("${source.time-between-eviction-runs-millis}")
     @Getter
     protected long timeBetweenEvictionRunsMillis;
 
-    @Value("${spring.datasource.min-evictable-idle-time-millis}")
+    @Value("${source.min-evictable-idle-time-millis}")
     @Getter
     protected long minEvictableIdleTimeMillis;
 
-    @Value("${spring.datasource.test-while-idle}")
+    @Value("${source.test-while-idle}")
     @Getter
     protected boolean testWhileIdle;
 
-    @Value("${spring.datasource.test-on-borrow}")
+    @Value("${source.test-on-borrow}")
     @Getter
     protected boolean testOnBorrow;
 
-    @Value("${spring.datasource.test-on-return}")
+    @Value("${source.test-on-return}")
     @Getter
     protected boolean testOnReturn;
     
-    @Value("${spring.datasource.filters}")
-    private String filters;
-
     @Value("${source.break-after-acquire-failure:true}")
     @Getter
     protected boolean breakAfterAcquireFailure;
@@ -98,6 +132,14 @@ public class JdbcDataSource {
     @Value("${source.query-timeout:600000}")
     @Getter
     protected int queryTimeout;
+
+    @Value("${source.validation-query}")
+    @Getter
+    protected String validationQuery;
+
+    @Value("${aggregator.name}")
+    @Getter
+    protected String aggregatorName;
     
     private static volatile Map<String, DruidDataSource> dataSourceMap = new ConcurrentHashMap<>();
     private static volatile Map<String, Lock> dataSourceLockMap = new ConcurrentHashMap<>();
@@ -214,11 +256,7 @@ public class JdbcDataSource {
             druidDataSource.setTestOnReturn(testOnReturn);
             druidDataSource.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
             druidDataSource.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
-
-            String driverName = druidDataSource.getDriverClassName();
-            if (driverName.indexOf("sqlserver") != -1) {
-                druidDataSource.setValidationQuery("select 1");
-            }
+            druidDataSource.setValidationQuery(validationQuery);
 
             if (!CollectionUtils.isEmpty(config.getProperties())) {
                 Properties properties = new Properties();
@@ -227,7 +265,11 @@ public class JdbcDataSource {
             }
 
             try {
-				druidDataSource.setFilters("stat");
+                druidDataSource.addFilters("stat");
+                // davinci's aggregator source and statistic source don't need wall filter
+                if (!name.equals(aggregatorName) && !name.equals("statistic")) {
+                    druidDataSource.setProxyFilters(Arrays.asList(new Filter[] { wallFilter }));
+                }
 				druidDataSource.init();
             } catch (Exception e) {
                 log.error("Exception during pool initialization", e);

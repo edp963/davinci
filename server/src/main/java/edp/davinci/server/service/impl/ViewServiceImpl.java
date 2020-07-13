@@ -849,7 +849,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         });
 
         // load data to aggregator table
-        aggregator.loadData(table, header, data, Math.max(10_000, watch.elapsed(TimeUnit.MILLISECONDS)));
+        aggregator.loadData(table, header, data, watch.elapsed(TimeUnit.MILLISECONDS));
 
         // query
         return queryByAggregator(table, queryParam, authParams, excludeColumns, viewWithSource, user);
@@ -863,7 +863,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         Source source = aggregator.getSource();
         StatementParser parser = ParserFactory.getParser(aggregator.getAggregatorType());
         
-        // build aggregator original query sql with out aggregation
+        // aggregator original query sql with out aggregation
         String sql = "select * from " + table;
         String viewStatement = viewWithSource.getSql();
         Set<String> expSet = SqlParseUtils.getAuthExpression(viewStatement, sqlTempDelimiter);

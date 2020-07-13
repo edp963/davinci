@@ -20,10 +20,12 @@
 package edp.davinci.data.util;
 
 import static edp.davinci.commons.Constants.*;
-import static edp.davinci.data.commons.Constants.PATTERN_SENSITIVE_SQL;
+// import static edp.davinci.data.commons.Constants.PATTERN_SENSITIVE_SQL;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,6 +37,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.sun.tools.javac.util.ListBuffer;
+
+import org.springframework.beans.BeanUtils;
 
 import edp.davinci.commons.exception.ServerException;
 import edp.davinci.commons.util.CollectionUtils;
@@ -49,8 +53,10 @@ import edp.davinci.data.pojo.Criterion;
 import edp.davinci.data.pojo.Filter;
 import edp.davinci.data.pojo.Order;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 
@@ -83,119 +89,97 @@ public class SqlParseUtils {
 
     public static String parseSystemVars(String sql, boolean isMaintainer, User user) {
         
-        String str = sql;
-
-        boolean id = sql.toUpperCase().contains(SystemVariableEnum.USER_ID.getKey());
-		boolean name = sql.toUpperCase().contains(SystemVariableEnum.USER_NAME.getKey());
-		boolean username = sql.toUpperCase().contains(SystemVariableEnum.USER_USERNAME.getKey());
-		boolean email = sql.toUpperCase().contains(SystemVariableEnum.USER_EMAIL.getKey());
-		boolean department = sql.toUpperCase().contains(SystemVariableEnum.USER_DEPARTMENT.getKey());
-
-        if (isMaintainer) {
-            if (id) {
-                str = str.replaceAll(
-                        REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_ID.getRegex()),
-                        QUERY_WHERE_TRUE);
-            }
-            if (name) {
-                str = str.replaceAll(
-                        REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_NAME.getRegex()),
-                        QUERY_WHERE_TRUE);
-            }
-            if (username) {
-                str = str.replaceAll(
-                        REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_USERNAME.getRegex()),
-                        QUERY_WHERE_TRUE);
-            }
-            if (email) {
-                str = str.replaceAll(
-                        REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_EMAIL.getRegex()),
-                        QUERY_WHERE_TRUE);
-            }
-            if (department) {
-                str = str.replaceAll(
-                        REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_DEPARTMENT.getRegex()),
-                        QUERY_WHERE_TRUE);
-            }
-
-            checkSystemVars(str);
-            return str;
-        }
-
         if (user == null) {
-            if (id) {
-                str = str.replaceAll(
-                        REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_ID.getRegex()),
-                        QUERY_WHERE_FALSE);
-            }
-            if (name) {
-                str = str.replaceAll(
-                        REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_NAME.getRegex()),
-                        QUERY_WHERE_FALSE);
-            }
-            if (username) {
-                str = str.replaceAll(
-                        REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_USERNAME.getRegex()),
-                        QUERY_WHERE_FALSE);
-            }
-            if (email) {
-                str = str.replaceAll(
-                        REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_EMAIL.getRegex()),
-                        QUERY_WHERE_FALSE);
-            }
-            if (department) {
-                str = str.replaceAll(
-                        REG_IGNORE_CASE + String.format(REG_SYSVAR, SystemVariableEnum.USER_DEPARTMENT.getRegex()),
-                        QUERY_WHERE_FALSE);
-            }
-
-            checkSystemVars(str);
-            return str;
+            return replaceSystemVars(sql, QUERY_WHERE_FALSE, null);
         }
-
-        if (id) {
-            str = str.replaceAll(REG_IGNORE_CASE + SystemVariableEnum.USER_ID.getRegex(), user.getId().toString());
-        }
-        if (name) {
-            str = str.replaceAll(REG_IGNORE_CASE + SystemVariableEnum.USER_NAME.getRegex(),
-                    String.format(QUERY_WHERE_VALUE, user.getName()));
-        }
-        if (username) {
-            str = str.replaceAll(REG_IGNORE_CASE + SystemVariableEnum.USER_USERNAME.getRegex(),
-                    String.format(QUERY_WHERE_VALUE, user.getUsername()));
-        }
-        if (email) {
-            str = str.replaceAll(REG_IGNORE_CASE + SystemVariableEnum.USER_EMAIL.getRegex(),
-                    String.format(QUERY_WHERE_VALUE, user.getEmail()));
-        }
-        if (department) {
-            str = str.replaceAll(REG_IGNORE_CASE + SystemVariableEnum.USER_DEPARTMENT.getRegex(),
-                    String.format(QUERY_WHERE_VALUE, user.getDepartment()));
-        }
-        checkSystemVars(str);
-        return str;
+        
+        return replaceSystemVars(sql, null, user);
     }
 
-    private static void checkSystemVars(String sql) {
-        if (SystemVariableEnum.isContains(sql)) {
-            throw new ServerException("Illegal system variables expression, only supports \"=\" or \"!=\"");
+    private static String replaceSystemVars(String sql, String condition, User user) {
+        if (StringUtils.isEmpty(condition) && user == null) {
+            return sql;
         }
+
+        if (sql.toUpperCase().contains(SystemVariableEnum.USER_ID.getKey())) {
+            String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_ID.getRegex())
+                    : SystemVariableEnum.USER_ID.getRegex();
+            String repl = user == null ? condition : user.getId().toString();
+            sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
+        }
+        if (sql.toUpperCase().contains(SystemVariableEnum.USER_NAME.getKey())) {
+            String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_NAME.getRegex())
+                    : SystemVariableEnum.USER_NAME.getRegex();
+            String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getName());
+            sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
+        }
+        if (sql.toUpperCase().contains(SystemVariableEnum.USER_USERNAME.getKey())) {
+            String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_USERNAME.getRegex())
+                    : SystemVariableEnum.USER_USERNAME.getRegex();
+            String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername());
+            sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
+        }
+        if (sql.toUpperCase().contains(SystemVariableEnum.USER_EMAIL.getKey())) {
+            String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_EMAIL.getRegex())
+                    : SystemVariableEnum.USER_EMAIL.getRegex();
+            String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername());
+            sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
+        }
+        if (sql.toUpperCase().contains(SystemVariableEnum.USER_DEPARTMENT.getKey())) {
+            String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_DEPARTMENT.getRegex())
+                    : SystemVariableEnum.USER_DEPARTMENT.getRegex();
+            String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername());
+            sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
+        }
+        
+        return sql;
     }
 
     public static Set<String> getAuthExpression(String sql, String sqlTempDelimiter) {
-		Pattern p = Pattern.compile(getAuthRegExp(REG_AUTHVAR, sqlTempDelimiter));
-		Matcher matcher = p.matcher(sql);
+        Pattern p = Pattern.compile(getAuthRegExp(REG_AUTHVAR, sqlTempDelimiter));
+        Set<String> expressions = new HashSet<>();
 
-		Set<String> expressions = new HashSet<>();
-		while (matcher.find()) {
-			String group = matcher.group();
-			Arrays.stream(SqlOperatorEnum.values()).filter(e -> group.toUpperCase().contains(e.getValue())).findFirst()
-					.ifPresent(v -> {
-						expressions.add(group);
-					});
-		}
+        Set<String> authVarFragments = new HashSet<>();
+        Deque<String> deque = new ArrayDeque<>();
+        deque.push(sql);
+        while (!deque.isEmpty()) {
+            Matcher matcher = p.matcher(deque.pop());
+            while (matcher.find()) {
+                String group = matcher.group();
+                if (isSelectStatement(group)) {
+                    if (group.startsWith(PARENTHESES_START)) {
+                        group = group.substring(1);
+                    }
+                    if (group.endsWith(PARENTHESES_CLOSE)) {
+                        group = group.substring(0, group.length() - 1);
+                    }
+                    deque.push(group);
+                } else {
+                    authVarFragments.add(group);
+                }
+            }
+        }
 
-		return expressions;
+        for (String fragment : authVarFragments) {
+            Arrays.stream(SqlOperatorEnum.values()).filter(e -> fragment.toUpperCase().contains(e.getValue()))
+                    .findFirst().ifPresent(v -> {
+                        expressions.add(fragment);
+                    });
+        }
+
+        return expressions;
+    }
+
+    public static boolean isSelectStatement(String src) {
+        if (StringUtils.isEmpty(src)) {
+            return false;
+        }
+        try {
+            Statement parse = CCJSqlParserUtil.parse(src);
+            return parse instanceof Select;
+        } catch (JSQLParserException e) {
+            return false;
+        }
     }
     
     private static String getAuthRegExp(String express, String sqlTempDelimiter) {
@@ -410,16 +394,16 @@ public class SqlParseUtils {
         }
     }
 
-    private static String getColumn(String column, String jdbcUrl, String dbVersion) {
-        String keywordPrefix = SqlUtils.getKeywordPrefix(jdbcUrl, dbVersion);
-        String keywordSuffix = SqlUtils.getKeywordSuffix(jdbcUrl, dbVersion);
+    private static String getColumn(String column, String keywordPrefix, String keywordSuffix) {
+        
         if (!StringUtils.isEmpty(keywordPrefix) && !StringUtils.isEmpty(keywordSuffix)) {
             return keywordPrefix + column + keywordSuffix;
         }
+        
         return column;
     }
 
-    public static List<String> getFilters(List<Filter> filters, String config) {
+    public static List<String> getFilters(List<Filter> filters, String jdbcUrl, String dbVersion) {
         
         List<String> list = null;
         
@@ -431,16 +415,17 @@ public class SqlParseUtils {
 
             list = new ArrayList<>();
 
+            String keywordPrefix = SqlUtils.getKeywordPrefix(jdbcUrl, dbVersion);
+            String keywordSuffix = SqlUtils.getKeywordSuffix(jdbcUrl, dbVersion);
             for (Filter filter : filters) {
-                if (!StringUtils.isEmpty(filter.getName())) {
-                    filter.setName(getColumn(filter.getName(), JdbcSourceUtils.getUrl(config),
-                            JdbcSourceUtils.getVersion(config)));
-                }
-                list.add(parseFilter(filter));
+                Filter f = new Filter();
+                // keep the original value 
+                BeanUtils.copyProperties(filter, f);
+                list.add(parseFilter(f, keywordPrefix, keywordSuffix));
             }
 
         } catch (Exception e) {
-            log.error("Convert filters error, config={}, filters={}, whereClauses={}", config,
+            log.error("Convert filters error, url={}, version={}, filters={}, whereClauses={}", jdbcUrl, dbVersion,
                     JSONUtils.toString(filters), JSONUtils.toString(list));
             throw e;
         }
@@ -448,19 +433,19 @@ public class SqlParseUtils {
         return list;
     }
 
-    private static String parseFilter(Filter filter){
+    private static String parseFilter(Filter filter, String keywordPrefix, String keywordSuffix){
         StringBuilder condition = new StringBuilder();
         String type = filter.getType();
 
         if(Filter.TYPE_FILTER.equalsIgnoreCase(type)){
-            condition.append(parseOperator(filter));
+            condition.append(parseOperator(filter, keywordPrefix, keywordSuffix));
         }
 
         if(Filter.TYPE_RELATION.equalsIgnoreCase(type)){
             List<Filter> childs = filter.getChildren();
             condition.append(PARENTHESES_START);
             for(int i=0; i<childs.size(); i++){
-                condition.append(i == 0 ? parseFilter(childs.get(i)) : SPACE + filter.getValue().toString() + SPACE + parseFilter(childs.get(i)));
+                condition.append(i == 0 ? parseFilter(childs.get(i), keywordPrefix, keywordSuffix) : SPACE + filter.getValue().toString() + SPACE + parseFilter(childs.get(i), keywordPrefix, keywordSuffix));
             }
             condition.append(PARENTHESES_CLOSE);
         }
@@ -468,7 +453,7 @@ public class SqlParseUtils {
         return condition.toString();
     }
 
-    private static String parseOperator(Filter filter){
+    private static String parseOperator(Filter filter, String keywordPrefix, String keywordSuffix){
         String name     = filter.getName();
         Object value    = filter.getValue();
         String operator = filter.getOperator();
@@ -482,15 +467,21 @@ public class SqlParseUtils {
             criterion = new Criterion(name, operator, value, sqlType);
         }
 
-        return parseCriterion(criterion);
+        return parseCriterion(criterion, keywordPrefix, keywordSuffix);
     }
 
-    private static String parseCriterion(Criterion criterion){
+    private static String parseCriterion(Criterion criterion, String keywordPrefix, String keywordSuffix){
         StringBuilder whereClause = new StringBuilder();
+        
+        String column = criterion.getColumn();
+        if (!StringUtils.isEmpty(keywordPrefix) && !StringUtils.isEmpty(keywordSuffix)) {
+            column = keywordPrefix + column + keywordSuffix;
+        }
+        
         if (criterion.isSingleValue()) {
             // column='value'
             String value = criterion.getValue().toString();
-            whereClause.append(criterion.getColumn() + SPACE + criterion.getOperator() + SPACE);
+            whereClause.append(column + SPACE + criterion.getOperator() + SPACE);
             if (criterion.isNeedQuotes() && !Pattern.matches(REG_CRITERION, value)) {
                 whereClause.append(SINGLE_QUOTES + value + SINGLE_QUOTES);
             } else {
@@ -501,14 +492,14 @@ public class SqlParseUtils {
             // column>='' and column<=''
             String value = criterion.getValue().toString();
             whereClause.append(PARENTHESES_START);
-            whereClause.append(criterion.getColumn() + SPACE + SqlOperatorEnum.GREATERTHANEQUALS.getValue() + SPACE);
+            whereClause.append(column + SPACE + SqlOperatorEnum.GREATERTHANEQUALS.getValue() + SPACE);
             if (criterion.isNeedQuotes() && !Pattern.matches(REG_CRITERION, value)) {
                 whereClause.append(SINGLE_QUOTES + value + SINGLE_QUOTES);
             } else {
                 whereClause.append(value);
             }
             whereClause.append(SPACE + Filter.TYPE_AND + SPACE);
-            whereClause.append(criterion.getColumn() + SPACE + SqlOperatorEnum.MINORTHANEQUALS.getValue() + SPACE);
+            whereClause.append(column + SPACE + SqlOperatorEnum.MINORTHANEQUALS.getValue() + SPACE);
             value = criterion.getSecondValue().toString();
             if (criterion.isNeedQuotes() && !Pattern.matches(REG_CRITERION, value)) {
                 whereClause.append(SINGLE_QUOTES + value + SINGLE_QUOTES);
@@ -519,7 +510,7 @@ public class SqlParseUtils {
 
         } else if (criterion.isListValue()) {
             List values = (List) criterion.getValue();
-            whereClause.append(criterion.getColumn() + SPACE + criterion.getOperator() + SPACE);
+            whereClause.append(column + SPACE + criterion.getOperator() + SPACE);
             whereClause.append(PARENTHESES_START);
             if (criterion.isNeedQuotes() && !Pattern.matches(REG_CRITERION, values.get(0).toString())) {
                 whereClause.append(SINGLE_QUOTES + StringUtils.join(values, SINGLE_QUOTES + COMMA + SINGLE_QUOTES)
@@ -572,12 +563,12 @@ public class SqlParseUtils {
     }
 
     private static void checkSensitiveSql(String sql) throws ServerException {
-        Matcher matcher = PATTERN_SENSITIVE_SQL.matcher(sql.toLowerCase());
-        if (matcher.find()) {
-            String group = matcher.group();
-            log.warn("Sensitive SQL operations are not allowed:{}", group.toUpperCase());
-            throw new ServerException("Sensitive SQL operations are not allowed:" + group.toUpperCase());
-        }
+        // Matcher matcher = PATTERN_SENSITIVE_SQL.matcher(sql.toLowerCase());
+        // if (matcher.find()) {
+        //     String group = matcher.group();
+        //     log.warn("Sensitive SQL operations are not allowed:{}", group.toUpperCase());
+        //     throw new ServerException("Sensitive SQL operations are not allowed:" + group.toUpperCase());
+        // }
     }
     
     public static String parseSqlWithFragment(String sql) {

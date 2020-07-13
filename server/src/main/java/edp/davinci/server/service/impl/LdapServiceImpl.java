@@ -128,9 +128,12 @@ public class LdapServiceImpl implements LdapService {
         User user = new User();
         user.setUsername(ldapPerson.getSAMAccountName());
         user.setEmail(ldapPerson.getEmail());
-        user.setEmail(ldapPerson.getName());
+        user.setName(ldapPerson.getName());
         user.setActive(true);
+        user.setAdmin(true);
         user.setPassword(Constants.LDAP_USER_PASSWORD);
+        user.setCreateBy(0L);
+        user.setCreateTime(new Date());
 
         if (userExtendMapper.insert(user) <= 0) {
             log.error("Ldap regist fail, email:{}", user.getEmail());

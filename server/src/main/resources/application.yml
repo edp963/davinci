@@ -20,7 +20,6 @@ davinci:
 file:
   userfiles-path: ${DAVINCI_HOME}/userfiles/
   web_resources: ${DAVINCI_HOME}/davinci-ui/
-  phantomJs-path: ${DAVINCI_HOME}/bin/phantom.js
   base-path: ${DAVINCI_HOME}/lib/
 
 spring:
@@ -36,18 +35,6 @@ spring:
     location: classpath:/
     additional-location: file:${DAVINCI_HOME}/config/
     name: application
-
-  datasource:
-    type: com.alibaba.druid.pool.DruidDataSource
-    time-between-eviction-runs-millis: 30000
-    min-evictable-idle-time-millis: 300000
-    test-while-idle: true
-    test-on-borrow: false
-    test-on-return: false
-    filters: stat
-    break-after-acquire-failure: true
-    connection-error-retry-attempts: 3
-    validation-query: SELECT 1
 
   resources:
     static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, file:${file.userfiles-path}, file:${file.web_resources}

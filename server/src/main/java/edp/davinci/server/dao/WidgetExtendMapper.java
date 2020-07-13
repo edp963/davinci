@@ -139,16 +139,15 @@ public interface WidgetExtendMapper extends WidgetMapper {
     Set<Long> getIdSetByIds(@Param("set") Set<Long> ids);
 
     @Select({
-        "select  w.* from widget w ",
-        "select  w.*, s.id as 'vizid', s.index as 'vizindex' from widget w ",
+        "select w.*, s.id as 'vizId', s.index as 'vizIndex' from widget w ",
         "left join mem_display_slide_widget m on w.id = m.widget_id",
         "left join display_slide s on m.display_slide_id = s.id",
-        "where s.display_id = #{displayId}",
+        "where s.display_id = #{displayId} order by m.create_time",
     })
     List<WidgetWithVizId> queryByDisplayId(@Param("displayId") Long displayId);
 
     @Select({
-            "select  w.*, v.model, v.variable from widget w ",
+            "select w.*, v.model, v.variable from widget w ",
             "left join mem_display_slide_widget m on w.id = m.widget_id",
             "left join display_slide s on m.display_slide_id = s.id",
             "left join `view` v on v.id = w.view_id",
@@ -162,8 +161,8 @@ public interface WidgetExtendMapper extends WidgetMapper {
     @Select({"select * from widget where project_id = #{projectId}"})
     List<Widget> getByProject(@Param("projectId") Long projectId);
 
-    @Select({"select w.*, m.id as 'relationid' from mem_dashboard_widget m left join widget w on w.id = m.widget_id where m.dashboard_id = #{dashboardId}"})
-    Set<WidgetWithRelationDashboardId> getByDashboard(@Param("dashboardId") Long dashboardId);
+    @Select({"select w.*, m.id as 'relationId' from mem_dashboard_widget m left join widget w on w.id = m.widget_id where m.dashboard_id = #{dashboardId} order by m.create_time"})
+    List<WidgetWithRelationDashboardId> getByDashboard(@Param("dashboardId") Long dashboardId);
 
     @Select({"select w.*, v.model from mem_dashboard_widget m ",
             "left join widget w on w.id = m.widget_id ",

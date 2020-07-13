@@ -282,10 +282,10 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
                 ProjectDetail projectDetail = projectService.getProjectDetail(dashboard.getProject().getId(), user, false);
                 boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
 
-                Set<WidgetWithRelationDashboardId> set = widgetMapper.getByDashboard(cronJobContent.getId());
-                if (!CollectionUtils.isEmpty(set)) {
+                List<WidgetWithRelationDashboardId> widgets = widgetMapper.getByDashboard(cronJobContent.getId());
+                if (!CollectionUtils.isEmpty(widgets)) {
                     List<WidgetContext> widgetContexts = new ArrayList<>();
-                    set.forEach(w -> {
+                    widgets.forEach(w -> {
                         Widget widget = new Widget();
                         BeanUtils.copyProperties(w, widget);
                         WidgetQueryParam viewExecuteParam = getWidgetQueryParam(dashboard.getConfig(), widget.getConfig(), w.getRelationId());

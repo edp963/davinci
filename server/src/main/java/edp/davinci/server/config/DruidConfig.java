@@ -40,7 +40,7 @@ import java.sql.SQLException;
 public class DruidConfig {
 
     @Value("${spring.datasource.url}")
-    private String durl;
+    private String url;
 
     @Value("${spring.datasource.username}")
     private String username;
@@ -129,7 +129,7 @@ public class DruidConfig {
     @Bean
     public DruidDataSource druidDataSource() {
         DruidDataSource druidDataSource = new DruidDataSource();
-        druidDataSource.setUrl(durl);
+        druidDataSource.setUrl(url);
         druidDataSource.setUsername(username);
         druidDataSource.setPassword(password);
         druidDataSource.setDriverClassName(driverClassName);

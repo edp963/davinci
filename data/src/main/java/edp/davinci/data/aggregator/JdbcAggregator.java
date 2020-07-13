@@ -194,7 +194,6 @@ public class JdbcAggregator extends Aggregator {
 					public Boolean doInPreparedStatement(PreparedStatement ps)
 							throws SQLException, DataAccessException {
 						ps.setString(1, table);
-						// min ttl is 10s
 						ps.setInt(2, Integer.parseInt(Long.toString(ttl)));
 						ps.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
 						return ps.execute();

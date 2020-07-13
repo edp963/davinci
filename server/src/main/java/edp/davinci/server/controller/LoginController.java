@@ -99,7 +99,7 @@ public class LoginController {
         TokenEntity tokenDetail = new TokenEntity(user.getUsername(), user.getPassword());
         
         if (!user.getActive()) {
-            log.info("this user is not active： {}", userLogin.getUsername());
+            log.info("This user is not active:{}", userLogin.getUsername());
             ResultMap resultMap = new ResultMap(tokenUtils).failWithToken(tokenUtils.generateToken(tokenDetail)).message("this user is not active");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
@@ -113,7 +113,7 @@ public class LoginController {
         return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(tokenDetail)).payload(userLoginResult));
     }
     
-    @ApiOperation(value = "get oauth2 clents")
+    @ApiOperation(value = "get oauth2 clients")
     @GetMapping(value = "getOauth2Clients", consumes = MediaType.ALL_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @AuthIgnore
     public ResponseEntity getOauth2Clients(HttpServletRequest request) {

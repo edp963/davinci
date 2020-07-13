@@ -40,7 +40,7 @@
             <outputDirectory>config</outputDirectory>
             <includes>
                 <include>application.yml.example</include>
-                <include>datasource_driver.yml.example</include>
+                <include>database_driver.yml.example</include>
                 <include>logback.xml</include>
             </includes>
         </fileSet>
@@ -57,7 +57,7 @@
         </fileSet>
         <fileSet>
             <directory>
-                ${project.parent.basedir}/userfiles
+                ${project.parent.basedir}
             </directory>
             <outputDirectory>userfiles</outputDirectory>
             <excludes>
@@ -66,13 +66,21 @@
         </fileSet>
         <fileSet>
             <directory>
-                ${project.parent.basedir}/logs
+                ${project.parent.basedir}
             </directory>
-            <outputDirectory>logs</outputDirectory>
-            <includes>
-                <include>sys</include>
-                <include>user</include>
-            </includes>
+            <outputDirectory>logs/sys</outputDirectory>
+            <excludes>
+                <exclude>*/**</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>
+                ${project.parent.basedir}
+            </directory>
+            <outputDirectory>logs/user</outputDirectory>
+            <excludes>
+                <exclude>*/**</exclude>
+            </excludes>
         </fileSet>
         <fileSet>
             <directory>
