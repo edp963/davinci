@@ -496,6 +496,14 @@ public class RoleServiceImpl implements RoleService {
 
         int i = relRoleProjectMapper.deleteByRoleAndProject(roleId, projectId);
         if (i > 0) {
+            relRoleDashboardMapper.deleteByRoleAndProject(roleId, projectId);
+            relRoleDashboardWidgetMapper.deleteByRoleAndProject(roleId, projectId);
+            relRoleDisplayMapper.deleteByRoleAndProject(roleId, projectId);
+            relRoleDisplaySlideWidgetMapper.deleteByRoleAndProject(roleId, projectId);
+            relRolePortalMapper.deleteByRoleAndProject(roleId, projectId);
+            relRoleSlideMapper.deleteByRoleAndProject(roleId, projectId);
+            relRoleViewMapper.deleteByRoleAndProject(roleId, projectId);
+            
             optLogger.info("relRoleProject ({}) delete by user(:{})", relRoleProject.toString(), user.getId());
             return true;
         } else {

@@ -68,7 +68,7 @@ public interface RelRoleViewMapper {
     List<RelRoleView> getByUserAndView(@Param("userId") Long userId, @Param("viewId") Long viewId);
 
     @Select({
-           "select * from rel_role_view where  view_id = #{viewId}"
+           "select * from rel_role_view where view_id = #{viewId}"
     })
     List<RelRoleView> getByView(Long viewId);
 
@@ -76,4 +76,9 @@ public interface RelRoleViewMapper {
             "delete from rel_role_view where view_id in (select id from view where project_id = #{projectId})"
     })
     int deleteByProject(Long projectId);
+
+    @Delete({ 
+            "delete from rel_role_view where role_id = #{roleId} and view_id in (select id from view where project_id = #{projectId})" 
+    })
+    int deleteByRoleAndProject(Long roleId, Long projectId);
 }
