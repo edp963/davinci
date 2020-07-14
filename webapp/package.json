@@ -79,6 +79,7 @@
     "html2canvas": "^1.0.0-rc.5",
     "immer": "^4.0.2",
     "immutable": "^4.0.0-rc.12",
+    "intersection-observer": "^0.11.0",
     "intl": "1.2.5",
     "invariant": "2.2.4",
     "ip": "1.1.5",
