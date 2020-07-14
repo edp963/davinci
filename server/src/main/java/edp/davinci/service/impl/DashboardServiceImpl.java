@@ -677,7 +677,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     @Override
     @Transactional
     public void deleteDashboardAndPortalByProject(Long projectId) throws RuntimeException {
-        relRoleDashboardWidgetMapper.deleteByProjectId(projectId);
+        relRoleDashboardWidgetMapper.deleteByProject(projectId);
         memDashboardWidgetMapper.deleteByProject(projectId);
         relRoleDashboardMapper.deleteByProject(projectId);
         dashboardMapper.deleteByProject(projectId);
