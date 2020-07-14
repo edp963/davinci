@@ -364,6 +364,7 @@ export class MemberList extends React.PureComponent<
           <div className={styles.tableWrap}>
             <Table
               bordered
+              rowKey="id"
               columns={columns}
               dataSource={organizationMembers}
               pagination={pagination}
