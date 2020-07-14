@@ -149,7 +149,6 @@ export class ProjectAdmin extends React.PureComponent<IProjectAdminProps, IProje
 
   private setRowKeys = (item) => item.user.id
   private setTransferOptionTitle = (item) => item.user.username
-  private transferFilterOption = (inputValue, option) => option.user.username.indexOf(inputValue) > -1
   private setAdminTargetKeys = (newTargetKeys) => {
     if (newTargetKeys) {
       this.setState({adminTargetKeys: newTargetKeys})
@@ -266,7 +265,6 @@ export class ProjectAdmin extends React.PureComponent<IProjectAdminProps, IProje
                     wrappedComponentRef={this.refHandlers.AdminForm}
                     dataSource={notAdminMembers}
                     optionTitle={this.setTransferOptionTitle}
-                    filterOption={this.transferFilterOption}
                     adminTargetKeys={this.state.adminTargetKeys}
                     targetKeys={this.state.adminTargetKeys}
                     setTargetKeys={this.setAdminTargetKeys}

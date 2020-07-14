@@ -176,7 +176,6 @@ export class ProjectRole extends React.Component<IRoleProps, IRoleStates> {
 
   private setRowKeys = (item) => item.id
   private setTransferOptionTitle = (item) => item.name
-  private transferFilterOption = (inputValue, option) => option.user.username.indexOf(inputValue) > -1
   private setRoleTargetKeys = (newTargetKeys) => {
     if (newTargetKeys) {
       this.setState({roleTargetKeys: newTargetKeys})
@@ -314,7 +313,6 @@ export class ProjectRole extends React.Component<IRoleProps, IRoleStates> {
             wrappedComponentRef={this.refHandlers.RoleForm}
             dataSource={organizationRoles}
             optionTitle={this.setTransferOptionTitle}
-            filterOption={this.transferFilterOption}
             adminTargetKeys={this.state.roleTargetKeys}
             targetKeys={this.state.roleTargetKeys}
             setTargetKeys={this.setRoleTargetKeys}
