@@ -1,7 +1,22 @@
 package edp.davinci.service.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
 import edp.core.common.quartz.ScheduleService;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
@@ -14,21 +29,11 @@ import edp.davinci.model.CronJob;
 import edp.davinci.model.User;
 import edp.davinci.service.screenshot.ImageContent;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.io.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service("weChatWorkScheduleService")
 public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implements ScheduleService {
+    
     @Autowired
     private CronJobMapper cronJobMapper;
 
@@ -76,7 +81,7 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
         String url = cronJobConfig.getWebHookUrl();
 
         for (ImageContent imageContent : images) {
-            if (null == imageContent) {
+            if (null == imageContent || imageContent.getImageFile() == null) {
                 log.error("CronJob({}) image is null !", cronJob.getId());
                 return;
             }
@@ -93,14 +98,14 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
 
                 scheduleLogger.info("the original image has been replaced with a new image(path: {})!", imageContentFile.getPath());
             }
+            
             scheduleLogger.info("CronJob({}) is ready to request WeChatWork API", cronJob.getId());
 
-            Map mbMap = getMD5AndBase64(imageContent.getImageFile());
-
-            Map weChatWorkMap = new HashMap();
+            Map<String, Object> weChatWorkMap = new HashMap<>();
             weChatWorkMap.put("msgtype", "image");
 
-            Map imageMap = new HashMap();
+            Map<String, String> mbMap = getMD5AndBase64(imageContent.getImageFile());
+            Map<String, String> imageMap = new HashMap<>();
             imageMap.put("base64", mbMap.get("base64"));
             imageMap.put("md5", mbMap.get("md5"));
             weChatWorkMap.put("image", imageMap);
@@ -119,13 +124,10 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
      * @param file 图片
      * @return
      */
-    public static Map getMD5AndBase64(File file) {
-        Map resMap = new HashMap();
-        InputStream in = null;
-        ByteArrayOutputStream bytesOut = null;
-        try {
-            in = new FileInputStream(file);
-            bytesOut = new ByteArrayOutputStream((int) file.length());
+    private Map<String, String> getMD5AndBase64(File file) {
+        Map<String, String> resMap = new HashMap<>();
+        try (InputStream in = new FileInputStream(file);
+                ByteArrayOutputStream bytesOut = new ByteArrayOutputStream((int) file.length());) {
 
             byte[] buf = new byte[1024];
             int len = -1;
@@ -146,15 +148,8 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
             byte b[] = md.digest();
             resMap.put("md5", MD5Util.byteToString(b));
             return resMap;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } finally {
-            close(in);
-            close(bytesOut);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -162,15 +157,4 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
     private static String encode(byte[] data) {
         return Base64.getEncoder().encodeToString(data);
     }
-
-    private static void close(Closeable c) {
-        if (c != null) {
-            try {
-                c.close();
-            } catch (IOException e) {
-                // nothing
-            }
-        }
-    }
-
 }
