@@ -125,12 +125,6 @@
 
     <appender name="BUSINESS_CRON_JOB_LOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>INFO</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>${LOG_HOME_PATH}/${USER}/${CRON_JOB}/%d{yyyy-MM-dd}.log</FileNamePattern>
             <MaxHistory>10</MaxHistory>
