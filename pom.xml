@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>edp.davinci</groupId>
-    <artifactId>davinci-parent_3.01</artifactId>
+    <artifactId>davinci-parent_0.3.1</artifactId>
     <version>0.3.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 

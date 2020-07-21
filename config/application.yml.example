@@ -57,6 +57,11 @@ spring:
   mvc:
     async:
       request-timeout: 30s
+  rest:
+    proxy-host:
+    proxy-port:
+    proxy-ignore:
+
 
   ## davinci datasouce config
   datasource:

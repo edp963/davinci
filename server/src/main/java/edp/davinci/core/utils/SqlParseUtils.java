@@ -199,8 +199,8 @@ public class SqlParseUtils {
         Map<String, List<SqlOperatorEnum>> operatorMap = Arrays.stream(SqlOperatorEnum.values()).collect(Collectors.groupingBy(SqlOperatorEnum::getValue));
         Set<String> expSet = new HashSet<>();
 
-        match:
         for (String fragment : authVarFragments) {
+            match:
             for (String key : operatorMap.keySet()) {
                 if (fragment.toUpperCase().contains(key)) {
                     expSet.add(fragment);
