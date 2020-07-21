@@ -109,7 +109,6 @@ export interface IMembersProps {
   inviteMemberList: any
   onInviteMember: (ordId: number, members: number[], needEmail: boolean, resolve: () => void) => any
   handleSearchMember: (keywords: string) => any
-  toThatUserProfile: (url: string) => any
   onGetRoleListByMemberId: onGetRoleListByMemberId
 }
 

@@ -388,6 +388,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
       shownBlock = (
         <div className={styles.valueBlock}>
           <Transfer
+            showSearch
             dataSource={list}
             titles={['值列表', '所选值']}
             render={this.transferRender}
