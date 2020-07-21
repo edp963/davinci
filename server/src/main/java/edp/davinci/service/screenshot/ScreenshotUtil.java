@@ -20,8 +20,10 @@
 package edp.davinci.service.screenshot;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.davinci.common.utils.CronJobLogUtils;
+import edp.davinci.common.utils.CronJobTrackUtils;
+import edp.davinci.core.enums.CronJobStepEnum;
 import edp.davinci.core.enums.LogNameEnum;
+import edp.davinci.dto.cronJobDto.CronJobTrack;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.openqa.selenium.TimeoutException;
@@ -59,7 +61,6 @@ import static edp.davinci.service.screenshot.BrowserEnum.valueOf;
 public class ScreenshotUtil {
 	
 	private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
-	private static final Logger cronJobLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_CRON_JOB.getName());
 
     @Value("${screenshot.default_browser:PHANTOMJS}")
     private String DEFAULT_BROWSER;
@@ -73,7 +74,7 @@ public class ScreenshotUtil {
     @Value("${screenshot.remote_webdriver_url:}")
     private String REMOTE_WEBDRIVER_URL;
 
-    @Value("${screenshot.timeout_second:600}")
+	@Value("${screenshot.timeout_second:60}")
     private int timeOutSecond;
 
     private static final int DEFAULT_SCREENSHOT_WIDTH = 1920;
@@ -81,10 +82,10 @@ public class ScreenshotUtil {
 
     private static final ExecutorService executorService = Executors.newFixedThreadPool(8);
 
-    public void screenshot(long jobId, List<ImageContent> imageContents, Integer imageWidth) {
+	public void screenshot(long jobId, List<ImageContent> imageContents, Integer imageWidth, CronJobTrack cronJobTrack) {
     	scheduleLogger.info("Start screenshot for job({})", jobId);
-	    CronJobLogUtils.getBuilder().appendParam("total", imageContents.size())
-			    .info(jobId, "Cronjob start screenshot", cronJobLogger);
+		CronJobTrackUtils.getBuilder().appendParam("total", imageContents.size())
+				.info(cronJobTrack, CronJobStepEnum.MAIL_3_SCREEN_SHOT, "Cronjob start screenshot");
         try {
         	int contentsSize = imageContents.size();
             List<Future> futures = new ArrayList<>(contentsSize);
@@ -92,16 +93,14 @@ public class ScreenshotUtil {
             imageContents.forEach(content -> futures.add(executorService.submit(() -> {
             	scheduleLogger.info("Cronjob({}) thread({}) for screenshot start, type:{}, id:{}, total:{}", jobId, index.get(), content.getDesc(), content.getCId(), contentsSize);
                 try {
-                    File image = doScreenshot(jobId, content.getUrl(), imageWidth);
+                    File image = doScreenshot(jobId, content.getUrl(), imageWidth,cronJobTrack);
                     content.setContent(image);
                 } catch (Exception e) {
                 	scheduleLogger.error("Cronjob({}) thread({}) screenshot error", jobId, index.get());
                 	scheduleLogger.error(e.getMessage(), e);
-	                CronJobLogUtils.getBuilder().appendParam("thread", index.get())
-			                .appendParam("id", content.getCId())
-			                .appendParam("url", content.getUrl())
+	                CronJobTrackUtils.getBuilder().appendParam("url", content.getUrl())
 			                .appendParam("error", e.toString())
-			                .error(jobId, "Cronjob thread screenshot error", cronJobLogger);
+			                .error(cronJobTrack, CronJobStepEnum.MAIL_3_SCREEN_SHOT, "Cronjob screenshot error");
                 } finally {
                     scheduleLogger.info("Cronjob({}) thread({}) for screenshot finish, type:{}, id:{}, total:{}", jobId, index.get(), content.getDesc(), content.getCId(), contentsSize);
                     index.incrementAndGet();
@@ -114,8 +113,6 @@ public class ScreenshotUtil {
                 }
             } catch (ExecutionException e) {
             	scheduleLogger.error(e.getMessage(), e);
-	            CronJobLogUtils.getBuilder().appendParam("error", e.toString())
-			            .error(jobId, "Cronjob screenshot thread finish error", cronJobLogger);
             }
 
             imageContents.sort(Comparator.comparing(ImageContent::getOrder));
@@ -124,11 +121,11 @@ public class ScreenshotUtil {
         	scheduleLogger.error(e.getMessage(), e);
         } finally {
         	scheduleLogger.info("Cronjob({}) finish screenshot", jobId);
-	        CronJobLogUtils.info(jobId, "Cronjob finish screenshot", cronJobLogger);
+	        CronJobTrackUtils.info(cronJobTrack, CronJobStepEnum.MAIL_3_SCREEN_SHOT,"CronJob screenshot is finish");
         }
     }
 
-    private File doScreenshot(long jobId, String url, Integer imageWidth) throws Exception {
+	private File doScreenshot(long jobId, String url, Integer imageWidth, CronJobTrack cronJobTrack) throws Exception {
         WebDriver driver = generateWebDriver(jobId, imageWidth);
 
         driver.get(url);
@@ -167,14 +164,20 @@ public class ScreenshotUtil {
                 scheduleLogger.info(entry.getLevel() + " " + entry.getMessage());
             }
         	scheduleLogger.error(te.getMessage(), te);
+	        CronJobTrackUtils.getBuilder().appendParam("url", url)
+			        .appendParam("error", te.toString())
+			        .error(cronJobTrack, CronJobStepEnum.MAIL_3_SCREEN_SHOT, "Cronjob screenshot error");
         } catch (InterruptedException e) {
             LogEntries logEntries= driver.manage().logs().get(LogType.BROWSER);
             for (LogEntry entry : logEntries) {
                 scheduleLogger.info(entry.getLevel() + " " + entry.getMessage());
             }
         	scheduleLogger.error(e.getMessage(), e);
+	        CronJobTrackUtils.getBuilder().appendParam("url", url)
+			        .appendParam("error", e.toString())
+			        .error(cronJobTrack, CronJobStepEnum.MAIL_3_SCREEN_SHOT, "Cronjob screenshot error");
         } finally {
-        	scheduleLogger.info("Cronjob({}) do screenshot for url({}) finish", jobId, url);
+	        scheduleLogger.info("Cronjob({}) finish screenshot for url({}) ", jobId, url);
             driver.quit();
         }
 

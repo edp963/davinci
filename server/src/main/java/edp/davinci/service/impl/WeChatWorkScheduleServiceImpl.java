@@ -21,10 +21,13 @@ import edp.core.common.quartz.ScheduleService;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.MD5Util;
+import edp.davinci.common.utils.CronJobTrackUtils;
 import edp.davinci.core.enums.CronJobMediaType;
+import edp.davinci.core.enums.CronJobStepEnum;
 import edp.davinci.dao.CronJobMapper;
 import edp.davinci.dao.UserMapper;
 import edp.davinci.dto.cronJobDto.CronJobConfig;
+import edp.davinci.dto.cronJobDto.CronJobTrack;
 import edp.davinci.model.CronJob;
 import edp.davinci.model.User;
 import edp.davinci.service.screenshot.ImageContent;
@@ -46,8 +49,10 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
     @Override
     public void execute(long jobId) throws Exception {
         CronJob cronJob = cronJobMapper.getById(jobId);
+	    CronJobTrack cronJobTrack = new CronJobTrack(cronJob.getId(), cronJob.getName(), cronJob.getJobType());
         if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
             scheduleLogger.error("CronJob({}) config is empty", jobId);
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_1_PARSE_CONFIG, "config is empty");
             return;
         }
         cronJobMapper.updateExecLog(jobId, "");
@@ -70,7 +75,7 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
         User creater = userMapper.getById(cronJob.getCreateBy());
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-            images = generateImages(jobId, cronJobConfig, creater.getId());
+	        images = generateImages(jobId, cronJobConfig, creater.getId(), cronJobTrack);
         }
 
         if (CollectionUtils.isEmpty(images)) {

@@ -3,11 +3,14 @@ package edp.davinci.service.impl;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.ServerUtils;
+import edp.davinci.common.utils.CronJobTrackUtils;
+import edp.davinci.core.enums.CronJobStepEnum;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.dao.DashboardMapper;
 import edp.davinci.dao.DisplaySlideMapper;
 import edp.davinci.dto.cronJobDto.CronJobConfig;
 import edp.davinci.dto.cronJobDto.CronJobContent;
+import edp.davinci.dto.cronJobDto.CronJobTrack;
 import edp.davinci.dto.dashboardDto.DashboardTree;
 import edp.davinci.model.Dashboard;
 import edp.davinci.model.DisplaySlide;
@@ -57,7 +60,7 @@ public class BaseScheduleService {
      * @return
      * @throws Exception
      */
-    public List<ImageContent> generateImages(long jobId, CronJobConfig cronJobConfig, Long userId) throws Exception {
+    public List<ImageContent> generateImages(long jobId, CronJobConfig cronJobConfig, Long userId, CronJobTrack cronJobTrack) throws Exception {
 
         scheduleLogger.info("CronJob({}) fetching images contents", jobId);
 
@@ -70,6 +73,7 @@ public class BaseScheduleService {
 
         if (CollectionUtils.isEmpty(jobContentList)) {
             scheduleLogger.warn("CronJob({}) share entity is empty", jobId);
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_2_GENERATE_SHARE_IMAGES,"CronJob share image is empty");
             return null;
         }
 
@@ -107,8 +111,11 @@ public class BaseScheduleService {
             }
         }
 
+	    CronJobTrackUtils.getBuilder().appendParam("count", imageContents.size())
+			    .info(cronJobTrack, CronJobStepEnum.MAIL_2_GENERATE_SHARE_IMAGES,"CronJob generate share images is finish");
+
         if (!CollectionUtils.isEmpty(imageContents)) {
-            screenshotUtil.screenshot(jobId, imageContents, cronJobConfig.getImageWidth());
+            screenshotUtil.screenshot(jobId, imageContents, cronJobConfig.getImageWidth(),cronJobTrack);
         }
 
         scheduleLogger.info("CronJob({}) fetched images contents, count:{}", jobId, imageContents.size());
