@@ -1,7 +1,7 @@
 #  <<
 #  Davinci
 #  ==
-#  Copyright (C) 2016 - 2019 EDP
+#  Copyright (C) 2016 - 2020 EDP
 #  ==
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ server:
   servlet:
     context-path: /
 
-  # Userd for mail and download services, can be empty, careful configuration
-  # By default, 'server.address' and 'server.port' is used as the string value.
-  # access:
-  #  address:
-  #  port:
+## Userd for mail and download services, can be empty, careful configuration
+## By default, 'server.address' and 'server.port' is used as the string value.
+# access:
+#  address:
+#  port:
 
 
 ## jwt is one of the important configuration of the application
@@ -49,19 +49,24 @@ source:
   query-timeout: 600000
   validationQueryTimeout: 30000
 
-  enable-query-log: false
+  enable-query-log: true
   result-limit: 1000000
 
+
+aggregator:
+  name: h2
+  url: jdbc:h2:file:~/h2/data/davinci;DB_CLOSE_DELAY=-1;COMPRESS=true;TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=true;DATABASE_TO_UPPER=false
+  username:  
+  password: 
+  keyword_prefix: '"' 
+  keyword_suffix: '"'
+  ttl: 60000
+  result-limit: 300000
 
 spring:
   mvc:
     async:
       request-timeout: 30s
-  rest:
-    proxy-host:
-    proxy-port:
-    proxy-ignore:
-
 
   ## davinci datasouce config
   datasource:
@@ -74,18 +79,18 @@ spring:
     max-wait: 60000
     max-active: 10
 
-  ## redis config
-  ## please choose either of the two ways
+## redis config
+## please choose either of the two ways
   redis:
     isEnable: false
 
-  ## standalone config
+## standalone config
     host: 127.0.0.1
     port: 6379
 
-  ## cluster config
-  #  cluster:
-  #       nodes:
+## cluster config
+#    cluster:
+#      nodes:
 
     password:
     database: 0
@@ -97,9 +102,9 @@ spring:
         max-idle: 8
         min-idle: 0
 
-  ## mail is one of the important configuration of the application
-  ## mail config cannot be null or empty
-  ## some mailboxes need to be set separately password for the SMTP service)
+## mail is one of the important configuration of the application
+## mail config cannot be null or empty
+## some mailboxes need to be set separately password for the SMTP service)
   mail:
     host:
     port:
@@ -124,7 +129,8 @@ spring:
     username:
     password:
     base:
-    domainName:    # domainName 指 企业邮箱后缀，如企业邮箱为：xxx@example.com, 这里值为 '@example.com'
+## domainName is enterprise mailbox suffix, such as enterprise mailbox is: "xxx@example.com", the value here is "@example.com"
+    domainName:
 
   security:
     oauth2:
@@ -156,7 +162,7 @@ screenshot:
   timeout_second: 600
   phantomjs_path: $your_phantomjs_path$
   chromedriver_path: $your_chromedriver_path$
-  remote_webdriver_url:$your_remote_webdriver_url$
+  remote_webdriver_url: $your_remote_webdriver_url$
 
 data-auth-center:
   channels:

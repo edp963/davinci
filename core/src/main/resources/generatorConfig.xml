@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN" "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+	<context id="davinci" defaultModelType="flat">
+		<property name="javaFileEncoding" value="UTF-8" />
+		<property name="autoDelimitKeywords" value="true" />
+		<property name="beginningDelimiter" value="`" />
+		<property name="endingDelimiter" value="`" />
+		<plugin
+			type="com.softwareloop.mybatis.generator.plugins.LombokPlugin" />
+		<commentGenerator>
+			<property name="suppressDate" value="true" />
+			<property name="suppressAllComments" value="true" />
+		</commentGenerator>
+		<jdbcConnection
+			driverClass="com.mysql.jdbc.Driver" 
+			connectionURL=""
+			userId=""
+			password="" />
+		<javaTypeResolver>
+            <property name="forceBigDecimals" value="false"/>
+        </javaTypeResolver>
+		<javaModelGenerator
+			targetPackage="edp.davinci.core.dao.entity"
+			targetProject="" />
+		<javaClientGenerator
+			targetPackage="edp.davinci.core.dao"
+			targetProject=""
+			type="ANNOTATEDMAPPER" />
+		<table tableName="cron_job">
+			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
+			<columnOverride column="exec_log" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
+		<table tableName="dashboard">
+			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
+		<table tableName="dashboard_portal"></table>
+		<table tableName="display">
+			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
+		<table tableName="display_slide">
+			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
+		<table tableName="download_record"></table>
+		<table tableName="favorite"></table>
+		<table tableName="mem_dashboard_widget">
+			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
+		<table tableName="mem_display_slide_widget">
+			<columnOverride column="params" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
+		<table tableName="organization"></table>
+		<table tableName="platform">
+			<property name="useActualColumnNames" value="true"/>
+		</table>
+		<table tableName="project"></table>
+		<table tableName="rel_project_admin"></table>
+		<table tableName="rel_role_dashboard"></table>
+		<table tableName="rel_role_dashboard_widget"></table>
+		<table tableName="rel_role_display"></table>
+		<table tableName="rel_role_display_slide_widget"></table>
+		<table tableName="rel_role_portal"></table>
+		<table tableName="rel_role_project"></table>
+		<table tableName="rel_role_slide"></table>
+		<table tableName="rel_role_user"></table>
+		<table tableName="rel_role_view"></table>
+		<table tableName="rel_user_organization"></table>
+		<table tableName="role"></table>
+		<table tableName="share_download_record"></table>
+		<table tableName="source">
+			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
+		<table tableName="star"></table>
+		<table tableName="user"></table>
+		<table tableName="view">
+			<columnOverride column="sql" javaType="java.lang.String" jdbcType="VARCHAR" />
+			<columnOverride column="model" javaType="java.lang.String" jdbcType="VARCHAR" />
+			<columnOverride column="variable" javaType="java.lang.String" jdbcType="VARCHAR" />
+			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
+		<table tableName="widget">
+			<columnOverride column="config" javaType="java.lang.String" jdbcType="VARCHAR" />
+		</table>
+	</context>
+</generatorConfiguration>

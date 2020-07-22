@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.nimbusds:nimbus-jose-jwt:8.19">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/nimbusds/nimbus-jose-jwt/8.19/nimbus-jose-jwt-8.19.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/nimbusds/nimbus-jose-jwt/8.19/nimbus-jose-jwt-8.19-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/nimbusds/nimbus-jose-jwt/8.19/nimbus-jose-jwt-8.19-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

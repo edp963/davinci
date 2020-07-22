@@ -1,9 +1,5 @@
-export type TSize = 'large' | 'default' | 'small'
 export interface IAvatarProps {
-  path?: string
-  size?: 'profile' | TSize
+  path: string
+  size?: string
   enlarge?: boolean
-  border?: boolean
 }
-
-export type TImageState = 'loading' | 'loaded' | 'loadFail'

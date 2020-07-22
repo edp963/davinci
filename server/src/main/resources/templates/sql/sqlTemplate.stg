@@ -2,7 +2,7 @@
     <<
     Davinci
     ==
-    Copyright (C) 2016 - 2018 EDP
+    Copyright (C) 2016 - 2020 EDP
     ==
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,46 +17,7 @@
  */
 
 
-createTable(tableName, fields, primaryKeys, indexKeys)
-::=<<
-CREATE TABLE `<tableName>` (
-    <fields:{field|`<field.name>` <field.type>};separator=",\n">
-    <if(primaryKeys)>
-    ,
-    PRIMARY KEY (<primaryKeys:{pk| `<pk>`};separator=",">)
-    <endif>
-    <if(indexKeys)>
-    ,
-    <indexKeys:{idx|<idx.keys:{k|KEY `<k>` (`<idx.(k)>`)}>};separator=",\n">
-    <endif>
-) DEFAULT CHARSET=utf8;
->>
-
-
-insertData(tableName, columns)
-::=<<
-<if(columns)>
-INSERT INTO `<tableName>`
-(<columns:{item|<if(item.name)>`<item.name>`<endif>};separator=",">)
-VALUES
-(<columns:{item|<if(item.name)>?<endif>};separator=",">)
-<endif>
->>
-
-
-queryAll(tableName, keywordPrefix, keywordSuffix)
-::=<<
-<if(tableName)>
-<if(keywordPrefix && keywordSuffix)>
-SELECT * FROM <keywordPrefix><tableName><keywordSuffix>
-<else>
-SELECT * FROM <tableName>
-<endif>
-<endif>
->>
-
-
-querySql(nativeQuery, groups, aggregators, filters, orders, sql, keywordPrefix, keywordSuffix)
+query(nativeQuery, groups, aggregators, filters, orders, sql, keywordPrefix, keywordSuffix)
 ::=<<
 <if(!groups && !aggregators && !filters && !orders)>
 <sql>
@@ -92,7 +53,7 @@ ORDER BY <orders:{order|<if(order)><order.column> <order.direction><endif>}; sep
 >>
 
 
-queryDistinctSql(columns, filters, sql, keywordPrefix, keywordSuffix)
+distinct(columns, filters, sql, keywordPrefix, keywordSuffix)
 ::=<<
 <if(columns && sql)>
 <if(keywordPrefix && keywordSuffix)>
@@ -108,5 +69,32 @@ WHERE <filters:{filter|<if(filter)><filter><endif>}; separator=" AND ">
 <endif>
 ORDER BY <columns:{column|<if(column)>T.<column><endif>}; separator=",">
 <endif>
+<endif>
+>>
+
+
+create(tableName, fields, primaryKeys, indexKeys)
+::=<<
+CREATE TABLE `<tableName>` (
+    <fields:{field|`<field.name>` <field.type>};separator=",\n">
+    <if(primaryKeys)>
+    ,
+    PRIMARY KEY (<primaryKeys:{pk| `<pk>`};separator=",">)
+    <endif>
+    <if(indexKeys)>
+    ,
+    <indexKeys:{idx|<idx.keys:{k|KEY `<k>` (`<idx.(k)>`)}>};separator=",\n">
+    <endif>
+) DEFAULT CHARSET=utf8;
+>>
+
+
+insert(tableName, columns)
+::=<<
+<if(columns)>
+INSERT INTO `<tableName>`
+(<columns:{item|<if(item.name)>`<item.name>`<endif>};separator=",">)
+VALUES
+(<columns:{item|<if(item.name)>?<endif>};separator=",">)
 <endif>
 >>

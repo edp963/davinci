@@ -2,7 +2,7 @@
   <<
   Davinci
   ==
-  Copyright (C) 2016 - 2018 EDP
+  Copyright (C) 2016 - 2020 EDP
   ==
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@
   >>
   -->
 
-
 <assembly>
-    <id>dist-beta.9</id>
+    <id>dist</id>
     <formats>
         <format>zip</format>
     </formats>
@@ -41,7 +40,7 @@
             <outputDirectory>config</outputDirectory>
             <includes>
                 <include>application.yml.example</include>
-                <include>datasource_driver.yml.example</include>
+                <include>database_driver.yml.example</include>
                 <include>logback.xml</include>
             </includes>
         </fileSet>
@@ -100,4 +99,5 @@
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
     </dependencySets>
+
 </assembly>

@@ -28,7 +28,7 @@ Davinci 项目通过 [Project](https://github.com/edp963/davinci/projects) 来�
 - 与此版本相关的 Issue 和 PR 已经被正确处理
 
 编辑更新日志以及升级版本号
-- 新建一个 PR 将 dev-0.3 分支合并到 master，所有发布操作需要在 master 分支上进行。**注意！不要使用 squash merge！防止提交信息丢失！**
+- 新建一个 PR 将 dev-0.4 分支合并到 master，所有发布操作需要在 master 分支上进行。**注意！不要使用 squash merge！防止提交信息丢失！**
 - 从 master 新建一个 release 分支用来做发布的修改（例如：git checkout -b release-beta.7）
 - 在 CHANGELOG.md 里添加发布日志，可以用 compare 功能找到当前和之前版本的区别，将有价值的改动如实反馈给用户
 - 对用户使用上无感知的改动建议（文档修补、微小的样式优化、代码风格重构等等）不要提及，保持 changelog 的内容有效性
