@@ -1,3 +1,0 @@
-*.bat text eol=crlf
-*.cmd text eol=crlf
-*.zip filter=lfs diff=lfs merge=lfs -text
