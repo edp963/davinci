@@ -20,7 +20,7 @@
 package edp.davinci.server.service;
 
 import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
 import javax.servlet.http.HttpServletRequest;
 

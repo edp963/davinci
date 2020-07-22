@@ -17,14 +17,14 @@
  *
  */
 
-package edp.davinci.service.impl;
+package edp.davinci.server.service.impl;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.core.utils.TokenUtils;
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.service.CheckEntityService;
-import edp.davinci.service.CheckService;
+import edp.davinci.server.controller.ResultMap;
+import edp.davinci.server.enums.CheckEntityEnum;
+import edp.davinci.server.service.CheckEntityService;
+import edp.davinci.server.service.CheckService;
+import edp.davinci.server.util.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,37 +48,37 @@ public class CheckServiceImpl implements CheckService {
     	ResultMap resultMap = new ResultMap(tokenUtils);
 
         if (StringUtils.isEmpty(name)) {
-            log.info("the name of entity({}) is EMPTY", checkEntityEnum.getClazz());
+            log.info("The name of entity({}) is empty", checkEntityEnum.getClazz());
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
-                return resultMap.fail().message("name is EMPTY");
+                return resultMap.fail().message("Name is empty");
             }
-            return resultMap.failAndRefreshToken(request).message("name is EMPTY");
+            return resultMap.failAndRefreshToken(request).message("Name is empty");
         }
 
         try {
             String clazz = Class.forName(checkEntityEnum.getClazz()).getTypeName();
             if (StringUtils.isEmpty(clazz)) {
-                log.info("not found entity type : {}", checkEntityEnum.getClazz());
+                log.info("Not found entity type:{}", checkEntityEnum.getClazz());
                 if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
-                    return resultMap.fail().message("not supported entity type");
+                    return resultMap.fail().message("Not supported entity type");
                 }
-                return resultMap.failAndRefreshToken(request).message("not supported entity type");
+                return resultMap.failAndRefreshToken(request).message("Not supported entity type");
             }
         } catch (ClassNotFoundException e) {
             log.error("not supported entity type : {}", checkEntityEnum.getClazz());
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
                 resultMap.fail().message("not supported entity type");
             }
-            return resultMap.failAndRefreshToken(request).message("not supported entity type");
+            return resultMap.failAndRefreshToken(request).message("Not supported entity type");
         }
 
         CheckEntityService checkEntityService = (CheckEntityService) beanFactory.getBean(checkEntityEnum.getService());
         if (checkEntityService.isExist(name, id, scopeId)) {
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
-                return resultMap.fail().message("the current " + checkEntityEnum.getSource() + " name is already taken");
+                return resultMap.fail().message("The current " + checkEntityEnum.getSource() + " name is already taken");
             }
 			return resultMap.failAndRefreshToken(request)
-					.message("the current " + checkEntityEnum.getSource() + " name is already taken");
+					.message("The current " + checkEntityEnum.getSource() + " name is already taken");
         } else {
             if (checkEntityEnum == CheckEntityEnum.USER) {
                 return resultMap.success();

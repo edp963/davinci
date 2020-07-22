@@ -19,10 +19,10 @@
 
 package edp.davinci.server.service;
 
+import edp.davinci.core.dao.entity.DownloadRecord;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.DownloadType;
-import edp.davinci.server.model.DownloadRecord;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
 import java.util.List;
 

@@ -24,7 +24,7 @@ import edp.davinci.core.dao.entity.Role;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.role.*;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.RoleService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

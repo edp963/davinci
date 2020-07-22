@@ -166,72 +166,72 @@ public class CronJobExample {
         }
 
         public Criteria andNameIsNull() {
-            addCriterion("name is null");
+            addCriterion("`name` is null");
             return (Criteria) this;
         }
 
         public Criteria andNameIsNotNull() {
-            addCriterion("name is not null");
+            addCriterion("`name` is not null");
             return (Criteria) this;
         }
 
         public Criteria andNameEqualTo(String value) {
-            addCriterion("name =", value, "name");
+            addCriterion("`name` =", value, "name");
             return (Criteria) this;
         }
 
         public Criteria andNameNotEqualTo(String value) {
-            addCriterion("name <>", value, "name");
+            addCriterion("`name` <>", value, "name");
             return (Criteria) this;
         }
 
         public Criteria andNameGreaterThan(String value) {
-            addCriterion("name >", value, "name");
+            addCriterion("`name` >", value, "name");
             return (Criteria) this;
         }
 
         public Criteria andNameGreaterThanOrEqualTo(String value) {
-            addCriterion("name >=", value, "name");
+            addCriterion("`name` >=", value, "name");
             return (Criteria) this;
         }
 
         public Criteria andNameLessThan(String value) {
-            addCriterion("name <", value, "name");
+            addCriterion("`name` <", value, "name");
             return (Criteria) this;
         }
 
         public Criteria andNameLessThanOrEqualTo(String value) {
-            addCriterion("name <=", value, "name");
+            addCriterion("`name` <=", value, "name");
             return (Criteria) this;
         }
 
         public Criteria andNameLike(String value) {
-            addCriterion("name like", value, "name");
+            addCriterion("`name` like", value, "name");
             return (Criteria) this;
         }
 
         public Criteria andNameNotLike(String value) {
-            addCriterion("name not like", value, "name");
+            addCriterion("`name` not like", value, "name");
             return (Criteria) this;
         }
 
         public Criteria andNameIn(List<String> values) {
-            addCriterion("name in", values, "name");
+            addCriterion("`name` in", values, "name");
             return (Criteria) this;
         }
 
         public Criteria andNameNotIn(List<String> values) {
-            addCriterion("name not in", values, "name");
+            addCriterion("`name` not in", values, "name");
             return (Criteria) this;
         }
 
         public Criteria andNameBetween(String value1, String value2) {
-            addCriterion("name between", value1, value2, "name");
+            addCriterion("`name` between", value1, value2, "name");
             return (Criteria) this;
         }
 
         public Criteria andNameNotBetween(String value1, String value2) {
-            addCriterion("name not between", value1, value2, "name");
+            addCriterion("`name` not between", value1, value2, "name");
             return (Criteria) this;
         }
 
@@ -625,6 +625,76 @@ public class CronJobExample {
             return (Criteria) this;
         }
 
+        public Criteria andConfigIsNull() {
+            addCriterion("config is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigIsNotNull() {
+            addCriterion("config is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigEqualTo(String value) {
+            addCriterion("config =", value, "config");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigNotEqualTo(String value) {
+            addCriterion("config <>", value, "config");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigGreaterThan(String value) {
+            addCriterion("config >", value, "config");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigGreaterThanOrEqualTo(String value) {
+            addCriterion("config >=", value, "config");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigLessThan(String value) {
+            addCriterion("config <", value, "config");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigLessThanOrEqualTo(String value) {
+            addCriterion("config <=", value, "config");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigLike(String value) {
+            addCriterion("config like", value, "config");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigNotLike(String value) {
+            addCriterion("config not like", value, "config");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigIn(List<String> values) {
+            addCriterion("config in", values, "config");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigNotIn(List<String> values) {
+            addCriterion("config not in", values, "config");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigBetween(String value1, String value2) {
+            addCriterion("config between", value1, value2, "config");
+            return (Criteria) this;
+        }
+
+        public Criteria andConfigNotBetween(String value1, String value2) {
+            addCriterion("config not between", value1, value2, "config");
+            return (Criteria) this;
+        }
+
         public Criteria andDescriptionIsNull() {
             addCriterion("description is null");
             return (Criteria) this;
@@ -692,6 +762,76 @@ public class CronJobExample {
 
         public Criteria andDescriptionNotBetween(String value1, String value2) {
             addCriterion("description not between", value1, value2, "description");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogIsNull() {
+            addCriterion("exec_log is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogIsNotNull() {
+            addCriterion("exec_log is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogEqualTo(String value) {
+            addCriterion("exec_log =", value, "execLog");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogNotEqualTo(String value) {
+            addCriterion("exec_log <>", value, "execLog");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogGreaterThan(String value) {
+            addCriterion("exec_log >", value, "execLog");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogGreaterThanOrEqualTo(String value) {
+            addCriterion("exec_log >=", value, "execLog");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogLessThan(String value) {
+            addCriterion("exec_log <", value, "execLog");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogLessThanOrEqualTo(String value) {
+            addCriterion("exec_log <=", value, "execLog");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogLike(String value) {
+            addCriterion("exec_log like", value, "execLog");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogNotLike(String value) {
+            addCriterion("exec_log not like", value, "execLog");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogIn(List<String> values) {
+            addCriterion("exec_log in", values, "execLog");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogNotIn(List<String> values) {
+            addCriterion("exec_log not in", values, "execLog");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogBetween(String value1, String value2) {
+            addCriterion("exec_log between", value1, value2, "execLog");
+            return (Criteria) this;
+        }
+
+        public Criteria andExecLogNotBetween(String value1, String value2) {
+            addCriterion("exec_log not between", value1, value2, "execLog");
             return (Criteria) this;
         }
 
@@ -825,62 +965,52 @@ public class CronJobExample {
             return (Criteria) this;
         }
 
-        public Criteria andUpdateByEqualTo(String value) {
+        public Criteria andUpdateByEqualTo(Long value) {
             addCriterion("update_by =", value, "updateBy");
             return (Criteria) this;
         }
 
-        public Criteria andUpdateByNotEqualTo(String value) {
+        public Criteria andUpdateByNotEqualTo(Long value) {
             addCriterion("update_by <>", value, "updateBy");
             return (Criteria) this;
         }
 
-        public Criteria andUpdateByGreaterThan(String value) {
+        public Criteria andUpdateByGreaterThan(Long value) {
             addCriterion("update_by >", value, "updateBy");
             return (Criteria) this;
         }
 
-        public Criteria andUpdateByGreaterThanOrEqualTo(String value) {
+        public Criteria andUpdateByGreaterThanOrEqualTo(Long value) {
             addCriterion("update_by >=", value, "updateBy");
             return (Criteria) this;
         }
 
-        public Criteria andUpdateByLessThan(String value) {
+        public Criteria andUpdateByLessThan(Long value) {
             addCriterion("update_by <", value, "updateBy");
             return (Criteria) this;
         }
 
-        public Criteria andUpdateByLessThanOrEqualTo(String value) {
+        public Criteria andUpdateByLessThanOrEqualTo(Long value) {
             addCriterion("update_by <=", value, "updateBy");
             return (Criteria) this;
         }
 
-        public Criteria andUpdateByLike(String value) {
-            addCriterion("update_by like", value, "updateBy");
-            return (Criteria) this;
-        }
-
-        public Criteria andUpdateByNotLike(String value) {
-            addCriterion("update_by not like", value, "updateBy");
-            return (Criteria) this;
-        }
-
-        public Criteria andUpdateByIn(List<String> values) {
+        public Criteria andUpdateByIn(List<Long> values) {
             addCriterion("update_by in", values, "updateBy");
             return (Criteria) this;
         }
 
-        public Criteria andUpdateByNotIn(List<String> values) {
+        public Criteria andUpdateByNotIn(List<Long> values) {
             addCriterion("update_by not in", values, "updateBy");
             return (Criteria) this;
         }
 
-        public Criteria andUpdateByBetween(String value1, String value2) {
+        public Criteria andUpdateByBetween(Long value1, Long value2) {
             addCriterion("update_by between", value1, value2, "updateBy");
             return (Criteria) this;
         }
 
-        public Criteria andUpdateByNotBetween(String value1, String value2) {
+        public Criteria andUpdateByNotBetween(Long value1, Long value2) {
             addCriterion("update_by not between", value1, value2, "updateBy");
             return (Criteria) this;
         }
@@ -1136,62 +1266,62 @@ public class CronJobExample {
         }
 
         public Criteria andIndexIsNull() {
-            addCriterion("index is null");
+            addCriterion("`index` is null");
             return (Criteria) this;
         }
 
         public Criteria andIndexIsNotNull() {
-            addCriterion("index is not null");
+            addCriterion("`index` is not null");
             return (Criteria) this;
         }
 
         public Criteria andIndexEqualTo(Integer value) {
-            addCriterion("index =", value, "index");
+            addCriterion("`index` =", value, "index");
             return (Criteria) this;
         }
 
         public Criteria andIndexNotEqualTo(Integer value) {
-            addCriterion("index <>", value, "index");
+            addCriterion("`index` <>", value, "index");
             return (Criteria) this;
         }
 
         public Criteria andIndexGreaterThan(Integer value) {
-            addCriterion("index >", value, "index");
+            addCriterion("`index` >", value, "index");
             return (Criteria) this;
         }
 
         public Criteria andIndexGreaterThanOrEqualTo(Integer value) {
-            addCriterion("index >=", value, "index");
+            addCriterion("`index` >=", value, "index");
             return (Criteria) this;
         }
 
         public Criteria andIndexLessThan(Integer value) {
-            addCriterion("index <", value, "index");
+            addCriterion("`index` <", value, "index");
             return (Criteria) this;
         }
 
         public Criteria andIndexLessThanOrEqualTo(Integer value) {
-            addCriterion("index <=", value, "index");
+            addCriterion("`index` <=", value, "index");
             return (Criteria) this;
         }
 
         public Criteria andIndexIn(List<Integer> values) {
-            addCriterion("index in", values, "index");
+            addCriterion("`index` in", values, "index");
             return (Criteria) this;
         }
 
         public Criteria andIndexNotIn(List<Integer> values) {
-            addCriterion("index not in", values, "index");
+            addCriterion("`index` not in", values, "index");
             return (Criteria) this;
         }
 
         public Criteria andIndexBetween(Integer value1, Integer value2) {
-            addCriterion("index between", value1, value2, "index");
+            addCriterion("`index` between", value1, value2, "index");
             return (Criteria) this;
         }
 
         public Criteria andIndexNotBetween(Integer value1, Integer value2) {
-            addCriterion("index not between", value1, value2, "index");
+            addCriterion("`index` not between", value1, value2, "index");
             return (Criteria) this;
         }
     }

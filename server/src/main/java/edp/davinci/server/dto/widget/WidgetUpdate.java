@@ -25,14 +25,14 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-@NotNull(message = "widget cannot be null")
+@NotNull(message = "Widget cannot be null")
 @Data
 public class WidgetUpdate {
 
     @Min(value = 1L, message = "Invalid id")
     private Long id;
 
-    @NotBlank(message = "widget name cannot be EMPTY")
+    @NotBlank(message = "Widget name cannot be empty")
     private String name;
 
     private String description;

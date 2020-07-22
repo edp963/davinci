@@ -26,7 +26,7 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
-@NotNull(message = "display slide cannot be null")
+@NotNull(message = "Display slide cannot be null")
 public class DisplaySlideCreate {
 
     @Min(value = 1L, message = "Invalid display id")

@@ -19,10 +19,12 @@
 
 package edp.davinci.server.dto.widget;
 
-import edp.davinci.server.model.Widget;
+import edp.davinci.core.dao.entity.Widget;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class WidgetWithVizId extends Widget {
 	private Long vizId;
 	private int vizIndex;

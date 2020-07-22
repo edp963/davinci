@@ -28,7 +28,7 @@ import edp.davinci.server.dto.project.*;
 import edp.davinci.server.dto.role.RoleBaseInfo;
 import edp.davinci.server.dto.role.RoleProject;
 import edp.davinci.server.dto.role.RoleWithProjectPermission;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.RoleService;
 import io.swagger.annotations.Api;
@@ -208,7 +208,7 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        projectService.transferPeoject(id, organizationTransfer.getOrgId(), user);
+        projectService.transferProject(id, organizationTransfer.getOrgId(), user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 

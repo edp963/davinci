@@ -28,9 +28,9 @@ import javax.validation.constraints.NotNull;
 @NotNull(message = "Invalid password")
 public class ChangePassword {
 
-    @NotBlank(message = "password cannot be EMPTY")
+    @NotBlank(message = "Password cannot be empty")
     private String oldPassword;
 
-    @NotBlank(message = "new password cannot be EMPTY")
+    @NotBlank(message = "New password cannot be empty")
     private String password;
 }

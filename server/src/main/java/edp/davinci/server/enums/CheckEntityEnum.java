@@ -20,16 +20,16 @@
 package edp.davinci.server.enums;
 
 public enum CheckEntityEnum {
-    USER("user", "userService", "edp.davinci.server.model.User"),
-    PROJECT("project", "projectService", "edp.davinci.server.model.Project"),
-    ORGANIZATION("organization", "organizationService", "edp.davinci.server.model.Organization"),
-    SOURCE("source", "sourceService", "edp.davinci.server.model.Source"),
-    VIEW("view", "viewService", "edp.davinci.server.model.View"),
-    WIDGET("widget", "widgetService", "edp.davinci.server.model.Widget"),
-    DISPLAY("display", "displayService", "edp.davinci.server.model.Display"),
-    DISPLAYSLIDE("displaySlide", "displaySlideService", "edp.davinci.server.model.DisplaySlide"),
-    DASHBOARD("dashboard", "dashboardService", "edp.davinci.server.model.Dashboard"),
-    DASHBOARDPORTAL("dashboardPortal", "dashboardPortalService", "edp.davinci.server.model.DashboardPortal"),
+    USER("user", "userService", "edp.davinci.core.dao.entity.User"),
+    PROJECT("project", "projectService", "edp.davinci.core.dao.entity.Project"),
+    ORGANIZATION("organization", "organizationService", "edp.davinci.core.dao.entity.Organization"),
+    SOURCE("source", "sourceService", "edp.davinci.core.dao.entity.Source"),
+    VIEW("view", "viewService", "edp.davinci.core.dao.entity.View"),
+    WIDGET("widget", "widgetService", "edp.davinci.core.dao.entity.Widget"),
+    DISPLAY("display", "displayService", "edp.davinci.core.dao.entity.Display"),
+    DISPLAYSLIDE("displaySlide", "displaySlideService", "edp.davinci.core.dao.entity.DisplaySlide"),
+    DASHBOARD("dashboard", "dashboardService", "edp.davinci.core.dao.entity.Dashboard"),
+    DASHBOARDPORTAL("dashboardPortal", "dashboardPortalService", "edp.davinci.core.dao.entity.DashboardPortal"),
     CRONJOB("cronJob", "cronJobService", "edp.davinci.core.dao.entity.CronJob");
 
     private String source;

@@ -26,10 +26,9 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 @Data
-@NotNull(message = "Invlaid role")
+@NotNull(message = "Invalid role")
 public class OrganzationRole {
-
     @Min(value = 0, message = "Invalid role")
     @Max(value = 1, message = "Invalid role")
-    private Integer role;
+    private Short role;
 }

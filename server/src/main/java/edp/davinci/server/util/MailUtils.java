@@ -17,13 +17,15 @@
  *
  */
 
-package edp.core.utils;
+package edp.davinci.server.util;
 
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.model.MailContent;
+
 import com.google.common.base.Stopwatch;
-import edp.core.exception.ServerException;
-import edp.core.model.MailContent;
+
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +44,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
-import static edp.core.consts.Consts.PATTERN_EMAIL_FORMAT;
-import static edp.davinci.core.common.Constants.EMAIL_DEFAULT_TEMPLATE;
+import static edp.davinci.server.commons.Constants.EMAIL_DEFAULT_TEMPLATE;
+import static edp.davinci.server.commons.Constants.PATTERN_EMAIL_FORMAT;
 
 @Component
 @Slf4j
@@ -71,11 +73,10 @@ public class MailUtils {
     public void sendMail(MailContent mailContent, Logger customLogger) throws ServerException {
         Stopwatch watch = Stopwatch.createStarted();
         if (mailContent == null) {
-            log.error("Mail content is null");
             if (customLogger != null) {
-                customLogger.error("Mail content is null");
+                customLogger.error("Email content is null");
             }
-            throw new ServerException("Mail content is null");
+            throw new ServerException("Email content is null");
         }
 
         String from = StringUtils.isEmpty(fromAddress) ? mailUsername : fromAddress;
@@ -84,7 +85,6 @@ public class MailUtils {
         if (!StringUtils.isEmpty(mailContent.getFrom())) {
             Matcher matcher = PATTERN_EMAIL_FORMAT.matcher(mailContent.getFrom());
             if (!matcher.find()) {
-                log.error("Unknown email sending address: {}", mailContent.getFrom());
                 if (customLogger != null) {
                     customLogger.error("Unknown email sending address: {}", mailContent.getFrom());
                 }
@@ -98,19 +98,17 @@ public class MailUtils {
         }
 
         if (StringUtils.isEmpty(mailContent.getSubject())) {
-            log.error("Email subject cannot be EMPTY");
             if (customLogger != null) {
-                customLogger.error("Email subject cannot be EMPTY");
+                customLogger.error("Email subject cannot be empty");
             }
-            throw new ServerException("Email subject cannot be EMPTY");
+            throw new ServerException("Email subject cannot be empty");
         }
 
         if (null == mailContent.getTo() || mailContent.getTo().length < 1) {
-            log.error("Email receiving address(to) cannot be EMPTY");
             if (customLogger != null) {
-                log.error("Email receiving address(to) cannot be EMPTY");
+                log.error("Email receiving address(to) cannot be empty");
             }
-            throw new ServerException("Email receiving address cannot be EMPTY");
+            throw new ServerException("Email receiving address cannot be empty");
         }
 
         boolean multipart = false;
@@ -121,7 +119,7 @@ public class MailUtils {
         switch (mailContent.getMailContentType()) {
             case TEXT:
                 if (StringUtils.isEmpty(mailContent.getContent()) && emptyAttachments) {
-                    throw new ServerException("Mail content cannot be EMPTY");
+                    throw new ServerException("Email content cannot be empty");
                 }
                 if (!emptyAttachments) {
                     multipart = true;
@@ -131,7 +129,7 @@ public class MailUtils {
                 break;
             case HTML:
                 if (StringUtils.isEmpty(mailContent.getHtmlContent()) && emptyAttachments) {
-                    throw new ServerException("Mail content cannot be EMPTY");
+                    throw new ServerException("Email content cannot be empty");
                 }
                 if (!emptyAttachments) {
                     multipart = true;
@@ -141,7 +139,7 @@ public class MailUtils {
                 break;
             case TEMPLATE:
                 if (StringUtils.isEmpty(mailContent.getTemplate()) && emptyAttachments) {
-                    throw new ServerException("Mail content cannot be EMPTY");
+                    throw new ServerException("Email content cannot be empty");
                 }
                 if (!CollectionUtils.isEmpty(mailContent.getTemplateContent())) {
                     mailContent.getTemplateContent().forEach(context::setVariable);
@@ -191,32 +189,22 @@ public class MailUtils {
                             messageHelper.addAttachment(attachment.getName(), attachment.getFile());
                         }
                     } catch (MessagingException e) {
-                        log.warn(e.getMessage());
                         if (customLogger != null) {
-                            log.warn(e.getMessage());
+                            log.warn(e.getMessage(), e);
                         }
                     }
                 });
             }
 
             javaMailSender.send(message);
-            log.info("Email sending --- content: {}, cost: {}", mailContent.toString(), watch.elapsed(TimeUnit.MILLISECONDS));
             if (customLogger != null) {
-                customLogger.info("Email sending --- content: {}, cost: {}", mailContent.toString(), watch.elapsed(TimeUnit.MILLISECONDS));
+            	customLogger.info("Email sending content:{}, cost:{}", mailContent.toString(), watch.elapsed(TimeUnit.MILLISECONDS));
             }
-        } catch (MessagingException e) {
-            log.error("Send mail failed, {}\n", e.getMessage());
+        } catch (Exception e) {
             if (customLogger != null) {
-                customLogger.error("Send mail failed, {}\n", e.getMessage());
+            	customLogger.error("Send mail error:{}", e.getMessage());
             }
-            e.printStackTrace();
             throw new ServerException(e.getMessage());
-        } catch (UnsupportedEncodingException e) {
-            log.error("Send mail failed, {}\n", e.getMessage());
-            if (customLogger != null) {
-                customLogger.error("Send mail failed, {}\n", e.getMessage());
-            }
-            e.printStackTrace();
         }
     }
 }

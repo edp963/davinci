@@ -25,10 +25,10 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-@NotNull(message = "project cannot be null")
+@NotNull(message = "Project cannot be null")
 public class ProjectUpdate {
 
-    @NotBlank(message = "project name cannot be EMPTY")
+    @NotBlank(message = "Project name cannot be empty")
     private String name;
 
     private String description;

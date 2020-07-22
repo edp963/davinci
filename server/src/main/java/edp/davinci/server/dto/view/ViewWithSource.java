@@ -20,7 +20,7 @@
 package edp.davinci.server.dto.view;
 
 import edp.davinci.core.dao.entity.Source;
-import edp.davinci.server.model.View;
+import edp.davinci.core.dao.entity.View;
 import lombok.Data;
 import lombok.ToString;
 

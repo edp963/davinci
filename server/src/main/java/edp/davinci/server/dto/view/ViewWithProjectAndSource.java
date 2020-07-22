@@ -22,9 +22,10 @@ package edp.davinci.server.dto.view;
 import edp.davinci.core.dao.entity.Project;
 import edp.davinci.core.dao.entity.Source;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class ViewWithProjectAndSource extends ViewWithSource {
     private Project project;
-    private Source source;
 }

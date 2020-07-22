@@ -24,7 +24,7 @@ import edp.davinci.server.dto.role.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
 import java.util.List;
 

@@ -19,31 +19,17 @@
 
 package edp.davinci.server.dto.project;
 
+import edp.davinci.core.dao.entity.Organization;
+import edp.davinci.core.dao.entity.Project;
 import edp.davinci.server.dto.user.UserBaseInfo;
-import edp.davinci.server.model.Organization;
-import edp.davinci.server.model.Project;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class ProjectDetail extends Project {
-    private Organization organization;
 
-    private UserBaseInfo createBy;
+	private Organization organization;
 
-
-    @Override
-    public String toString() {
-        return "Project{" +
-                "id=" + getId() +
-                ", name='" + getName() + '\'' +
-                ", description='" + getDescription() + '\'' +
-                ", pic='" + getPic() + '\'' +
-                ", orgId=" + getOrgId() +
-                ", userId=" + getUserId() +
-                ", starNum=" + getStarNum() +
-                ", visibility=" + getVisibility() +
-                ", isTransfer=" + getIsTransfer() +
-                ", initialOrgId=" + getInitialOrgId() +
-                '}';
-    }
+	private UserBaseInfo createUser;
 }

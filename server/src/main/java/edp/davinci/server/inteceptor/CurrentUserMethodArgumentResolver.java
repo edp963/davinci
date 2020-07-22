@@ -21,7 +21,7 @@ package edp.davinci.server.inteceptor;
 
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;

@@ -51,8 +51,8 @@ import edp.davinci.core.dao.entity.Role;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDisplaySlideWidgetExtendMapper;
-import edp.davinci.server.dao.ViewMapper;
-import edp.davinci.server.dao.WidgetMapper;
+import edp.davinci.server.dao.ViewExtendMapper;
+import edp.davinci.server.dao.WidgetExtendMapper;
 import edp.davinci.server.dto.display.DisplaySlideCreate;
 import edp.davinci.server.dto.display.DisplaySlideInfo;
 import edp.davinci.server.dto.display.DisplayWithSlides;
@@ -71,9 +71,9 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.User;
-import edp.davinci.server.model.View;
-import edp.davinci.server.model.Widget;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.View;
+import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.service.DisplaySlideService;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.FileUtils;
@@ -89,13 +89,13 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     private MemDisplaySlideWidgetExtendMapper memDisplaySlideWidgetExtendMapper;
 
     @Autowired
-    private WidgetMapper widgetMapper;
+    private WidgetExtendMapper widgetMapper;
 
     @Autowired
     private FileUtils fileUtils;
 
     @Autowired
-    private ViewMapper viewMapper;
+    private ViewExtendMapper viewMapper;
 
     @Autowired
     private RelRoleDisplaySlideWidgetExtendMapper relRoleDisplaySlideWidgetExtendMapper;

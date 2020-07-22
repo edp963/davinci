@@ -20,11 +20,13 @@
 package edp.davinci.server.dto.display;
 
 
-import edp.davinci.server.model.DisplaySlide;
-import edp.davinci.server.model.MemDisplaySlideWidget;
+import edp.davinci.core.dao.entity.DisplaySlide;
+import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class MemDisplaySlideWidgetWithSlide extends MemDisplaySlideWidget {
     private DisplaySlide displaySlide;
 }

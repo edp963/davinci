@@ -34,10 +34,10 @@ import lombok.Data;
 
 
 @Data
-@NotNull(message = "upload info cannot be null")
+@NotNull(message = "Upload info cannot be null")
 public class SourceDataUpload {
 
-    @NotBlank(message = "uplaod table name cannot be EMPTY")
+    @NotBlank(message = "Upload table name cannot be empty")
     private String tableName;
 
     private String primaryKeys;

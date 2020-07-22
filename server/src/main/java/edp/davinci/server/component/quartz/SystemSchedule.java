@@ -37,6 +37,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 public class SystemSchedule {
@@ -45,13 +47,15 @@ public class SystemSchedule {
     private FileUtils fileUtils;
 
     @Autowired
-    private CronJobExtendMapper cronJobMapper;
+    private CronJobExtendMapper cronJobExtendMapper;
 
     @Autowired
     private QuartzHandler quartzHandler;
 
     @Autowired
     private ShareDownloadRecordExtendMapper shareDownloadRecordExtendMapper;
+    
+    private static final ExecutorService CLEAR_TEMPDIR_THREADPOOL = Executors.newFixedThreadPool(3);
 
     @Scheduled(cron = "0 0 1 * * *")
     public void clearTempDir() {
@@ -65,14 +69,14 @@ public class SystemSchedule {
         final String temp = fileUtils.formatFilePath(tempDir);
         final String csv = fileUtils.formatFilePath(csvDir);
 
-        new Thread(() -> FileUtils.deleteDir(new File(download))).start();
-        new Thread(() -> FileUtils.deleteDir(new File(temp))).start();
-        new Thread(() -> FileUtils.deleteDir(new File(csv))).start();
+        CLEAR_TEMPDIR_THREADPOOL.execute(() -> FileUtils.deleteDir(new File(download)));
+        CLEAR_TEMPDIR_THREADPOOL.execute(() -> FileUtils.deleteDir(new File(temp)));
+        CLEAR_TEMPDIR_THREADPOOL.execute(() -> FileUtils.deleteDir(new File(csv)));
     }
 
     @Scheduled(cron = "0 0/2 * * * *")
     public void stopCronJob() {
-        List<CronJob> jobs = cronJobMapper.getStopedJob();
+        List<CronJob> jobs = cronJobExtendMapper.getStopedJob();
         if (!CollectionUtils.isEmpty(jobs)) {
             for (CronJob job : jobs) {
                 try {

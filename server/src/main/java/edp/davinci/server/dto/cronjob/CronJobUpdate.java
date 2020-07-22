@@ -20,8 +20,10 @@
 package edp.davinci.server.dto.cronjob;
 
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class CronJobUpdate extends CronJobBaseInfo {
 	private Long id;
 }

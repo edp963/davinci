@@ -21,8 +21,8 @@ package edp.davinci.server.dto.role;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import edp.davinci.server.model.Project;
-import edp.davinci.server.model.RelRoleProject;
+import edp.davinci.core.dao.entity.Project;
+import edp.davinci.core.dao.entity.RelRoleProject;
 import lombok.Data;
 
 @Data
@@ -35,5 +35,6 @@ public class RoleProject extends RelRoleProject {
     }
 
     public RoleProject() {
+
     }
 }

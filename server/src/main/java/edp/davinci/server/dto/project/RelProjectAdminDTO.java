@@ -17,20 +17,20 @@
  *
  */
 
-package edp.davinci.dto.projectDto;
+package edp.davinci.server.dto.project;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.dto.userDto.UserBaseInfo;
-import edp.davinci.model.User;
+import edp.davinci.server.dto.user.UserBaseInfo;
+import edp.davinci.core.dao.entity.User;
 import lombok.Data;
 
 @Data
-public class RelProjectAdminDto {
+public class RelProjectAdminDTO {
     private Long id;
 
     private UserBaseInfo user;
 
-    public RelProjectAdminDto(Long id, User user) {
+    public RelProjectAdminDTO(Long id, User user) {
         this.id = id;
         UserBaseInfo userBaseInfo = new UserBaseInfo();
         userBaseInfo.setId(user.getId());
@@ -39,7 +39,7 @@ public class RelProjectAdminDto {
         this.user = userBaseInfo;
     }
 
+    public RelProjectAdminDTO() {
 
-    public RelProjectAdminDto() {
     }
 }

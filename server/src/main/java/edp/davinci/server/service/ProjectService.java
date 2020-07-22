@@ -21,13 +21,13 @@ package edp.davinci.server.service;
 
 import com.github.pagehelper.PageInfo;
 
+import edp.davinci.core.dao.entity.Project;
 import edp.davinci.server.dto.project.*;
 import edp.davinci.server.dto.role.RoleProject;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.Project;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 
 import java.util.List;
 
@@ -43,7 +43,7 @@ public interface ProjectService extends CheckEntityService {
 
     boolean deleteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
-    Project transferPeoject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    Project transferProject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
     PageInfo<ProjectWithCreateBy> searchProjects(String keywords, User user, int pageNum, int pageSize);
 

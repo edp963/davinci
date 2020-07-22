@@ -30,7 +30,7 @@ import edp.davinci.server.dto.share.ShareInfo;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.enums.DownloadType;
-import edp.davinci.server.model.User;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.ShareDownloadService;
 import edp.davinci.server.service.ShareService;
 import lombok.extern.slf4j.Slf4j;

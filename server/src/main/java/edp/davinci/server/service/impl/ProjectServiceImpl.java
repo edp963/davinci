@@ -30,6 +30,8 @@ import edp.davinci.core.dao.entity.RelProjectAdmin;
 import edp.davinci.core.dao.entity.RelRoleProject;
 import edp.davinci.core.dao.entity.RelUserOrganization;
 import edp.davinci.core.dao.entity.Role;
+import edp.davinci.core.dao.entity.Star;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.organization.OrganizationInfo;
@@ -85,16 +87,16 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private DisplayService displayService;
 
     @Autowired
-    private WidgetMapper widgetMapper;
+    private WidgetExtendMapper widgetMapper;
 
     @Autowired
-    private ViewMapper viewMapper;
+    private ViewExtendMapper viewMapper;
 
     @Autowired
     private SourceExtendMapper sourceExtendMapper;
 
     @Autowired
-    private StarMapper starMapper;
+    private StarExtendMapper starMapper;
 
     @Autowired
     private FavoriteExtendMapper favoriteExtendMapper;
@@ -103,7 +105,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private RelRoleProjectExtendMapper relRoleProjectMapper;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userMapper;
 
     @Autowired
     private RoleExtendMapper roleMapper;
@@ -226,6 +228,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	        project.setUserId(user.getId());
 	        project.setIsTransfer(false);
 	        project.setInitialOrgId(orgId);
+	        project.setStarNum(0);
 	        project.setCreateBy(user.getId());
 	        project.setCreateTime(new Date());
 
@@ -288,7 +291,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      */
     @Override
     @Transactional
-    public Project transferPeoject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public Project transferProject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
     	ProjectDetail project = getProjectDetail(id, user, true);
 

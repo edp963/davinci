@@ -158,46 +158,4 @@ public class JSONUtils {
     	
     	return null;
     }
-    
-    public static Object convertJO2POJO(Object data) {
-
-        Class<?> dCls = data.getClass();
-
-        if (JSONObject.class.isAssignableFrom(dCls)) {
-
-            Map<String, Object> m = new LinkedHashMap<String, Object>();
-
-            JSONObject jod = (JSONObject) data;
-
-            for (String key : jod.keySet()) {
-
-                Object attr = jod.get(key);
-
-                Object attrObj = convertJO2POJO(attr);
-
-                m.put(key, attrObj);
-            }
-
-            return m;
-
-        }
-        else if (JSONArray.class.isAssignableFrom(dCls)) {
-
-            List<Object> l = new ArrayList<Object>();
-
-            JSONArray joa = (JSONArray) data;
-
-            for (Object o : joa) {
-
-                Object attrObj = convertJO2POJO(o);
-
-                l.add(attrObj);
-            }
-
-            return l;
-
-        }
-
-        return data;
-    }
 }

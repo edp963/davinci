@@ -27,6 +27,5 @@ import edp.davinci.server.dto.user.UserBaseInfo;
 
 @Data
 public class StarUser extends UserBaseInfo {
-
     private Date starTime;
 }

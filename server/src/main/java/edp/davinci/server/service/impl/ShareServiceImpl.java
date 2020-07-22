@@ -21,6 +21,12 @@ package edp.davinci.server.service.impl;
 
 import edp.davinci.commons.util.AESUtils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.Display;
+import edp.davinci.core.dao.entity.DisplaySlide;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
+import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.dao.*;
@@ -71,34 +77,34 @@ public class ShareServiceImpl implements ShareService {
     private TokenUtils tokenUtils;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userExtendMapper;
 
     @Autowired
-    private WidgetMapper widgetMapper;
+    private WidgetExtendMapper widgetMapper;
 
     @Autowired
-    private DisplayMapper displayMapper;
+    private DisplayExtendMapper displayExtendMapper;
 
     @Autowired
-    private DisplaySlideMapper displaySlideMapper;
+    private DisplaySlideExtendMapper displaySlideExtendMapper;
 
     @Autowired
-    private DashboardMapper dashboardMapper;
+    private DashboardExtendMapper dashboardExtendMapper;
 
     @Autowired
     private ProjectService projectService;
 
     @Autowired
-    private ViewMapper viewMapper;
+    private ViewExtendMapper viewMapper;
 
     @Autowired
     private ViewService viewService;
 
     @Autowired
-    private MemDisplaySlideWidgetMapper memDisplaySlideWidgetMapper;
+    private MemDisplaySlideWidgetExtendMapper memDisplaySlideWidgetExtendMapper;
 
     @Autowired
-    private MemDashboardWidgetMapper memDashboardWidgetMapper;
+    private MemDashboardWidgetExtendMapper memDashboardWidgetExtendMapper;
 
     @Autowired
     private FileUtils fileUtils;
@@ -134,7 +140,7 @@ public class ShareServiceImpl implements ShareService {
             throw new ServerException("Invalid share token");
         }
 
-        User shareUser = userMapper.getById(shareUserId);
+        User shareUser = userExtendMapper.selectByPrimaryKey(shareUserId);
         if (null == shareUser) {
             throw new ServerException("Invalid share token");
         }
@@ -201,7 +207,7 @@ public class ShareServiceImpl implements ShareService {
         verifyShareUser(user, shareInfo);
 
         Long displayId = shareInfo.getShareId();
-        Display display = displayMapper.getById(displayId);
+        Display display = displayExtendMapper.selectByPrimaryKey(displayId);
         if (null == display) {
             throw new ServerException("Display is not found");
         }
@@ -210,8 +216,8 @@ public class ShareServiceImpl implements ShareService {
 
         BeanUtils.copyProperties(display, shareDisplay);
 
-        List<MemDisplaySlideWidgetWithSlide> memWithSlides = memDisplaySlideWidgetMapper.getMemWithSlideByDisplayId(displayId);
-        List<DisplaySlide> displaySlides = displaySlideMapper.selectByDisplayId(displayId);
+        List<MemDisplaySlideWidgetWithSlide> memWithSlides = memDisplaySlideWidgetExtendMapper.getMemWithSlideByDisplayId(displayId);
+        List<DisplaySlide> displaySlides = displaySlideExtendMapper.selectByDisplayId(displayId);
         Set<MemDisplaySlideWidget> memDisplaySlideWidgetSet = null;
 
         if (!CollectionUtils.isEmpty(memWithSlides)) {
@@ -271,7 +277,7 @@ public class ShareServiceImpl implements ShareService {
         verifyShareUser(user, shareInfo);
 
         Long dashboardId = shareInfo.getShareId();
-        Dashboard dashboard = dashboardMapper.getById(dashboardId);
+        Dashboard dashboard = dashboardExtendMapper.selectByPrimaryKey(dashboardId);
 
         if (null == dashboard) {
             throw new NotFoundException("Dashboard is not found");
@@ -280,7 +286,7 @@ public class ShareServiceImpl implements ShareService {
         ShareDashboard shareDashboard = new ShareDashboard();
         BeanUtils.copyProperties(dashboard, shareDashboard);
 
-        List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetMapper.getByDashboardId(dashboardId);
+        List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetExtendMapper.getByDashboardId(dashboardId);
         shareDashboard.setRelations(memDashboardWidgets);
 
         Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDashboard(dashboardId);
@@ -302,7 +308,7 @@ public class ShareServiceImpl implements ShareService {
         }
 
         if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
-            User tokenUser = userMapper.selectByUsername(shareInfo.getSharedUserName());
+            User tokenUser = userExtendMapper.selectByUsername(shareInfo.getSharedUserName());
             if (tokenUser == null || !tokenUser.getId().equals(user.getId())) {
                 throw new ForbiddenExecption("Error permission denied");
             }
@@ -442,14 +448,16 @@ public class ShareServiceImpl implements ShareService {
         TokenEntity shareToken = new TokenEntity();
         String tokenUserName = shareEntityId + Constants.SPLIT_CHAR_STRING + userId;
         String tokenPassword = shareEntityId + EMPTY;
+
         if (!StringUtils.isEmpty(username)) {
-            User shareUser = userMapper.selectByUsername(username);
+            User shareUser = userExtendMapper.selectByUsername(username);
             if (null == shareUser) {
-                throw new ServerException("user : \"" + username + "\" not found");
+                throw new ServerException("User " + username + " not found");
             }
             tokenUserName += Constants.SPLIT_CHAR_STRING + username;
             tokenPassword += (Constants.SPLIT_CHAR_STRING + shareUser.getId());
         }
+
         shareToken.setUsername(tokenUserName);
         shareToken.setPassword(tokenPassword);
 
@@ -490,7 +498,7 @@ public class ShareServiceImpl implements ShareService {
             throw new ServerException("Invalid share token");
         }
 
-        User shareUser = userMapper.getById(shareUserId);
+        User shareUser = userExtendMapper.selectByPrimaryKey(shareUserId);
         if (null == shareUser) {
             throw new ServerException("Invalid share token");
         }
@@ -502,7 +510,7 @@ public class ShareServiceImpl implements ShareService {
             }
             String username = tokenInfos[2];
             Long sharedUserId = Long.parseLong(tokenCrypts[1]);
-            User sharedUser = userMapper.selectByUsername(username);
+            User sharedUser = userExtendMapper.selectByUsername(username);
             if (null == sharedUser || !sharedUser.getId().equals(sharedUserId)) {
                 throw new ForbiddenExecption("The resource requires authentication, which was not supplied with the request");
             }

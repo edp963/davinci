@@ -20,8 +20,10 @@
 package edp.davinci.server.dto.organization;
 
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class OrganizationInfo extends OrganizationBaseInfo {
 
     private Integer projectNum;

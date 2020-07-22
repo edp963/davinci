@@ -21,11 +21,11 @@ package edp.davinci.server.dto.cronjob;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Date;
 
-import edp.davinci.commons.util.DateUtils;
-
+@ToString
 public class MsgMailExcel {
 
     @Getter
@@ -40,10 +40,5 @@ public class MsgMailExcel {
 
     public MsgMailExcel(Long id) {
         this.id = id;
-    }
-
-    @Override
-    public String toString() {
-        return "Date:" + DateUtils.toyyyyMMddHHmmss(date) + ", exception:{" + exception.getMessage() + "}";
     }
 }

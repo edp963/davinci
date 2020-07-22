@@ -23,10 +23,7 @@ public enum VizVisiblityEnum {
     PORTAL("portal"),
     DASHBOARD("dashboard"),
     DISPLAY("display"),
-    SLIDE("slide"),
-
-
-    ;
+    SLIDE("slide");
 
     private String viz;
 
@@ -35,6 +32,7 @@ public enum VizVisiblityEnum {
     }
 
     VizVisiblityEnum() {
+
     }
 
     public static VizVisiblityEnum vizOf(String viz) {

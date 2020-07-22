@@ -21,12 +21,12 @@ package edp.davinci.server.controller;
 
 
 import edp.davinci.core.dao.entity.CronJob;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.cronjob.CronJobBaseInfo;
 import edp.davinci.server.dto.cronjob.CronJobInfo;
 import edp.davinci.server.dto.cronjob.CronJobUpdate;
-import edp.davinci.server.model.User;
 import edp.davinci.server.service.CronJobService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

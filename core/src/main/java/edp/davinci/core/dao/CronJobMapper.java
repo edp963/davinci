@@ -36,51 +36,27 @@ public interface CronJobMapper {
         "project_id, job_type, ",
         "job_status, cron_expression, ",
         "start_date, end_date, ",
-        "description, create_by, ",
+        "config, description, ",
+        "exec_log, create_by, ",
         "create_time, update_by, ",
         "update_time, parent_id, ",
         "full_parent_id, is_folder, ",
-        "`index`, config, ",
-        "exec_log)",
+        "`index`)",
         "values (#{id,jdbcType=BIGINT}, #{name,jdbcType=VARCHAR}, ",
         "#{projectId,jdbcType=BIGINT}, #{jobType,jdbcType=VARCHAR}, ",
         "#{jobStatus,jdbcType=VARCHAR}, #{cronExpression,jdbcType=VARCHAR}, ",
         "#{startDate,jdbcType=TIMESTAMP}, #{endDate,jdbcType=TIMESTAMP}, ",
-        "#{description,jdbcType=VARCHAR}, #{createBy,jdbcType=BIGINT}, ",
+        "#{config,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, ",
+        "#{execLog,jdbcType=VARCHAR}, #{createBy,jdbcType=BIGINT}, ",
         "#{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=BIGINT}, ",
         "#{updateTime,jdbcType=TIMESTAMP}, #{parentId,jdbcType=BIGINT}, ",
         "#{fullParentId,jdbcType=VARCHAR}, #{isFolder,jdbcType=BIT}, ",
-        "#{index,jdbcType=INTEGER}, #{config,jdbcType=LONGVARCHAR}, ",
-        "#{execLog,jdbcType=LONGVARCHAR})"
+        "#{index,jdbcType=INTEGER})"
     })
     int insert(CronJob record);
 
     @InsertProvider(type=CronJobSqlProvider.class, method="insertSelective")
     int insertSelective(CronJob record);
-
-    @SelectProvider(type=CronJobSqlProvider.class, method="selectByExampleWithBLOBs")
-    @Results({
-        @Result(column="id", property="id", jdbcType=JdbcType.BIGINT, id=true),
-        @Result(column="name", property="name", jdbcType=JdbcType.VARCHAR),
-        @Result(column="project_id", property="projectId", jdbcType=JdbcType.BIGINT),
-        @Result(column="job_type", property="jobType", jdbcType=JdbcType.VARCHAR),
-        @Result(column="job_status", property="jobStatus", jdbcType=JdbcType.VARCHAR),
-        @Result(column="cron_expression", property="cronExpression", jdbcType=JdbcType.VARCHAR),
-        @Result(column="start_date", property="startDate", jdbcType=JdbcType.TIMESTAMP),
-        @Result(column="end_date", property="endDate", jdbcType=JdbcType.TIMESTAMP),
-        @Result(column="description", property="description", jdbcType=JdbcType.VARCHAR),
-        @Result(column="create_by", property="createBy", jdbcType=JdbcType.BIGINT),
-        @Result(column="create_time", property="createTime", jdbcType=JdbcType.TIMESTAMP),
-        @Result(column="update_by", property="updateBy", jdbcType=JdbcType.BIGINT),
-        @Result(column="update_time", property="updateTime", jdbcType=JdbcType.TIMESTAMP),
-        @Result(column="parent_id", property="parentId", jdbcType=JdbcType.BIGINT),
-        @Result(column="full_parent_id", property="fullParentId", jdbcType=JdbcType.VARCHAR),
-        @Result(column="is_folder", property="isFolder", jdbcType=JdbcType.BIT),
-        @Result(column="index", property="index", jdbcType=JdbcType.INTEGER),
-        @Result(column="config", property="config", jdbcType=JdbcType.LONGVARCHAR),
-        @Result(column="exec_log", property="execLog", jdbcType=JdbcType.LONGVARCHAR)
-    })
-    List<CronJob> selectByExampleWithBLOBs(CronJobExample example);
 
     @SelectProvider(type=CronJobSqlProvider.class, method="selectByExample")
     @Results({
@@ -92,7 +68,9 @@ public interface CronJobMapper {
         @Result(column="cron_expression", property="cronExpression", jdbcType=JdbcType.VARCHAR),
         @Result(column="start_date", property="startDate", jdbcType=JdbcType.TIMESTAMP),
         @Result(column="end_date", property="endDate", jdbcType=JdbcType.TIMESTAMP),
+        @Result(column="config", property="config", jdbcType=JdbcType.VARCHAR),
         @Result(column="description", property="description", jdbcType=JdbcType.VARCHAR),
+        @Result(column="exec_log", property="execLog", jdbcType=JdbcType.VARCHAR),
         @Result(column="create_by", property="createBy", jdbcType=JdbcType.BIGINT),
         @Result(column="create_time", property="createTime", jdbcType=JdbcType.TIMESTAMP),
         @Result(column="update_by", property="updateBy", jdbcType=JdbcType.BIGINT),
@@ -107,8 +85,8 @@ public interface CronJobMapper {
     @Select({
         "select",
         "id, `name`, project_id, job_type, job_status, cron_expression, start_date, end_date, ",
-        "description, create_by, create_time, update_by, update_time, parent_id, full_parent_id, ",
-        "is_folder, `index`, config, exec_log",
+        "config, description, exec_log, create_by, create_time, update_by, update_time, ",
+        "parent_id, full_parent_id, is_folder, `index`",
         "from cron_job",
         "where id = #{id,jdbcType=BIGINT}"
     })
@@ -121,7 +99,9 @@ public interface CronJobMapper {
         @Result(column="cron_expression", property="cronExpression", jdbcType=JdbcType.VARCHAR),
         @Result(column="start_date", property="startDate", jdbcType=JdbcType.TIMESTAMP),
         @Result(column="end_date", property="endDate", jdbcType=JdbcType.TIMESTAMP),
+        @Result(column="config", property="config", jdbcType=JdbcType.VARCHAR),
         @Result(column="description", property="description", jdbcType=JdbcType.VARCHAR),
+        @Result(column="exec_log", property="execLog", jdbcType=JdbcType.VARCHAR),
         @Result(column="create_by", property="createBy", jdbcType=JdbcType.BIGINT),
         @Result(column="create_time", property="createTime", jdbcType=JdbcType.TIMESTAMP),
         @Result(column="update_by", property="updateBy", jdbcType=JdbcType.BIGINT),
@@ -129,17 +109,12 @@ public interface CronJobMapper {
         @Result(column="parent_id", property="parentId", jdbcType=JdbcType.BIGINT),
         @Result(column="full_parent_id", property="fullParentId", jdbcType=JdbcType.VARCHAR),
         @Result(column="is_folder", property="isFolder", jdbcType=JdbcType.BIT),
-        @Result(column="index", property="index", jdbcType=JdbcType.INTEGER),
-        @Result(column="config", property="config", jdbcType=JdbcType.LONGVARCHAR),
-        @Result(column="exec_log", property="execLog", jdbcType=JdbcType.LONGVARCHAR)
+        @Result(column="index", property="index", jdbcType=JdbcType.INTEGER)
     })
     CronJob selectByPrimaryKey(Long id);
 
     @UpdateProvider(type=CronJobSqlProvider.class, method="updateByExampleSelective")
     int updateByExampleSelective(@Param("record") CronJob record, @Param("example") CronJobExample example);
-
-    @UpdateProvider(type=CronJobSqlProvider.class, method="updateByExampleWithBLOBs")
-    int updateByExampleWithBLOBs(@Param("record") CronJob record, @Param("example") CronJobExample example);
 
     @UpdateProvider(type=CronJobSqlProvider.class, method="updateByExample")
     int updateByExample(@Param("record") CronJob record, @Param("example") CronJobExample example);
@@ -156,31 +131,9 @@ public interface CronJobMapper {
           "cron_expression = #{cronExpression,jdbcType=VARCHAR},",
           "start_date = #{startDate,jdbcType=TIMESTAMP},",
           "end_date = #{endDate,jdbcType=TIMESTAMP},",
+          "config = #{config,jdbcType=VARCHAR},",
           "description = #{description,jdbcType=VARCHAR},",
-          "create_by = #{createBy,jdbcType=BIGINT},",
-          "create_time = #{createTime,jdbcType=TIMESTAMP},",
-          "update_by = #{updateBy,jdbcType=BIGINT},",
-          "update_time = #{updateTime,jdbcType=TIMESTAMP},",
-          "parent_id = #{parentId,jdbcType=BIGINT},",
-          "full_parent_id = #{fullParentId,jdbcType=VARCHAR},",
-          "is_folder = #{isFolder,jdbcType=BIT},",
-          "`index` = #{index,jdbcType=INTEGER},",
-          "config = #{config,jdbcType=LONGVARCHAR},",
-          "exec_log = #{execLog,jdbcType=LONGVARCHAR}",
-        "where id = #{id,jdbcType=BIGINT}"
-    })
-    int updateByPrimaryKeyWithBLOBs(CronJob record);
-
-    @Update({
-        "update cron_job",
-        "set `name` = #{name,jdbcType=VARCHAR},",
-          "project_id = #{projectId,jdbcType=BIGINT},",
-          "job_type = #{jobType,jdbcType=VARCHAR},",
-          "job_status = #{jobStatus,jdbcType=VARCHAR},",
-          "cron_expression = #{cronExpression,jdbcType=VARCHAR},",
-          "start_date = #{startDate,jdbcType=TIMESTAMP},",
-          "end_date = #{endDate,jdbcType=TIMESTAMP},",
-          "description = #{description,jdbcType=VARCHAR},",
+          "exec_log = #{execLog,jdbcType=VARCHAR},",
           "create_by = #{createBy,jdbcType=BIGINT},",
           "create_time = #{createTime,jdbcType=TIMESTAMP},",
           "update_by = #{updateBy,jdbcType=BIGINT},",

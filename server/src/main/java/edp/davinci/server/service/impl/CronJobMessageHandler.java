@@ -42,7 +42,7 @@ public class CronJobMessageHandler implements RedisMessageHandler {
 	private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
 	@Autowired
-	private CronJobExtendMapper cronJobMapper;
+	private CronJobExtendMapper cronJobExtendMapper;
 
 	@Autowired
 	private QuartzHandler quartzHandler;
@@ -62,6 +62,6 @@ public class CronJobMessageHandler implements RedisMessageHandler {
 		scheduleLogger.info("CronJob({}) is stoped", cronJob.getId());
 		cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
 		cronJob.setUpdateTime(new Date());
-		cronJobMapper.update(cronJob);
+		cronJobExtendMapper.update(cronJob);
 	}
 }

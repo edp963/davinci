@@ -17,19 +17,19 @@
  *
  */
 
-package edp.davinci.dto.roleDto;
+package edp.davinci.server.dto.role;
 
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.dto.userDto.UserBaseInfo;
-import edp.davinci.model.User;
+import edp.davinci.server.dto.user.UserBaseInfo;
+import edp.davinci.core.dao.entity.User;
 import lombok.Data;
 
 @Data
 public class RelRoleMember {
-    private Long id;
+
+	private Long id;
 
     private UserBaseInfo user;
-
 
     public RelRoleMember(Long id, User user) {
         this.id = id;
@@ -41,5 +41,6 @@ public class RelRoleMember {
     }
 
     public RelRoleMember() {
+
     }
 }

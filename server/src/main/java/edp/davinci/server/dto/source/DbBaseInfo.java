@@ -27,9 +27,9 @@ import javax.validation.constraints.NotNull;
 @NotNull
 @Data
 public class DbBaseInfo {
-    @NotBlank(message = "source user cannot be empty")
+    @NotBlank(message = "Source user cannot be empty")
     private String dbUser;
 
-    @NotBlank(message = "source password cannot be empty")
+    @NotBlank(message = "Source password cannot be empty")
     private String dbPassword;
 }

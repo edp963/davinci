@@ -36,6 +36,7 @@ import edp.davinci.core.dao.entity.RelRoleProject;
 import edp.davinci.core.dao.entity.RelRoleUser;
 import edp.davinci.core.dao.entity.RelUserOrganization;
 import edp.davinci.core.dao.entity.Role;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -68,7 +69,7 @@ public class RoleServiceImpl implements RoleService {
     private RoleExtendMapper roleExtendMapper;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userMapper;
 
     @Autowired
     private RelRoleUserExtendMapper relRoleUserExtendMapper;
