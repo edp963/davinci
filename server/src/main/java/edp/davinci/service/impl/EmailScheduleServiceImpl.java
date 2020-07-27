@@ -28,7 +28,6 @@ import edp.core.model.MailAttachment;
 import edp.core.model.MailContent;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.MailUtils;
-import edp.core.utils.ServerUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.CronJobMediaType;
@@ -39,22 +38,21 @@ import edp.davinci.dto.cronJobDto.CronJobConfig;
 import edp.davinci.dto.cronJobDto.CronJobContent;
 import edp.davinci.dto.cronJobDto.ExcelContent;
 import edp.davinci.dto.cronJobDto.MsgMailExcel;
-import edp.davinci.dto.dashboardDto.DashboardTree;
 import edp.davinci.dto.dashboardDto.DashboardWithPortal;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.widgetDto.WidgetWithRelationDashboardId;
 import edp.davinci.dto.widgetDto.WidgetWithVizId;
-import edp.davinci.model.*;
+import edp.davinci.model.CronJob;
+import edp.davinci.model.Display;
+import edp.davinci.model.User;
+import edp.davinci.model.Widget;
 import edp.davinci.service.ProjectService;
-import edp.davinci.service.ShareService;
 import edp.davinci.service.excel.ExecutorUtil;
 import edp.davinci.service.excel.MsgWrapper;
 import edp.davinci.service.excel.WidgetContext;
 import edp.davinci.service.excel.WorkBookContext;
 import edp.davinci.service.screenshot.ImageContent;
-import edp.davinci.service.screenshot.ScreenshotUtil;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -62,7 +60,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.script.ScriptEngine;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
@@ -72,9 +69,8 @@ import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.AT_SYMBOL;
 import static edp.core.consts.Consts.EMPTY;
-import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
+import static edp.davinci.common.utils.ScriptUtils.getViewExecuteParam;
 
-@Slf4j
 @Service("emailScheduleService")
 public class EmailScheduleServiceImpl extends BaseScheduleService implements ScheduleService {
 

@@ -19,16 +19,8 @@
 
 package edp.core.config;
 
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.util.regex.Pattern;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-
 import com.alibaba.druid.util.StringUtils;
-
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -52,7 +44,12 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
-import lombok.extern.slf4j.Slf4j;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Configuration
@@ -92,7 +89,7 @@ public class RestClientConfig {
     private String proxyHost;
 
     @Value("${spring.rest.proxy-port}")
-    private int proxyPort;
+    private Integer proxyPort;
 
     @Value("${spring.rest.proxy-ignore}")
     private String proxyIgnore;
@@ -154,7 +151,7 @@ public class RestClientConfig {
             clientHttpRequestFactory.setConnectionRequestTimeout(connectionRequestTimout);
             return clientHttpRequestFactory;
         } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
-            log.error("Initializing HTTP connection pool error, e={}", e);
+            log.error("Initializing HTTP connection pool error", e);
         }
         return null;
     }

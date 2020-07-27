@@ -49,6 +49,7 @@ public class WorkBookContext implements Serializable {
     private Logger customLogger;
 
     private WorkBookContext() {
+
     }
 
     public static final class WorkBookContextBuilder {
@@ -60,6 +61,7 @@ public class WorkBookContext implements Serializable {
         private Logger customLogger;
 
         private WorkBookContextBuilder() {
+        
         }
 
         public static WorkBookContextBuilder newBuildder() {

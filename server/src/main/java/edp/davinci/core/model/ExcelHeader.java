@@ -19,10 +19,13 @@
 
 package edp.davinci.core.model;
 
+import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
 import lombok.ToString;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @ToString
@@ -37,7 +40,7 @@ public class ExcelHeader {
     private int colspan;
     private int[] range;
     private List style;
-    private Object format;
+    private FieldFormat format;
 
     public void setKey(String key) {
         this.key = key;
@@ -78,4 +81,33 @@ public class ExcelHeader {
     public void setStyle(List<String> style) {
         this.style = style;
     }
+
+    public void setFormat(String formatStr) {
+        Map<String, Object> map = JSONObject.parseObject(formatStr, Map.class);
+        String formatType = (String)map.get("formatType");
+        if(StringUtils.isEmpty(formatType)) {
+            formatType = "default";
+        }
+        JSONObject formatObj = (JSONObject)map.get(formatType);
+
+        switch (formatType) {
+            case "numeric":
+                this.format = JSONObject.toJavaObject(formatObj, FieldNumeric.class);
+                break;
+            case "currency":
+                this.format = JSONObject.toJavaObject(formatObj, FieldCurrency.class);
+                break;
+            case "percentage":
+                this.format = JSONObject.toJavaObject(formatObj, FieldPercentage.class);
+                break;
+            case "scientificNotation":
+                this.format = JSONObject.toJavaObject(formatObj, FieldScientificNotation.class);
+                break;
+            default:
+                this.format = new FieldCustom();
+                this.format.setFormatType("default");
+                break;
+        }
+    }
+
 }
