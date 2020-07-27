@@ -34,7 +34,7 @@ public class AESUtils {
     public static final String AES_KEY = "sM7!tsv?5ygRo;h.";
 
 
-    private static String garbleSlat(String src) {
+    private static String garbleSalt(String src) {
         if (StringUtils.isEmpty(src)) {
             return AES_KEY;
         } else {
