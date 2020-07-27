@@ -85,10 +85,10 @@ public class ExcelHeader {
     public void setFormat(String formatStr) {
         Map<String, Object> map = JSONObject.parseObject(formatStr, Map.class);
         String formatType = (String)map.get("formatType");
-        JSONObject formatObj = (JSONObject)map.get(formatType);
         if(StringUtils.isEmpty(formatType)) {
             formatType = "default";
         }
+        JSONObject formatObj = (JSONObject)map.get(formatType);
 
         switch (formatType) {
             case "numeric":
