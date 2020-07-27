@@ -34,7 +34,7 @@
     <dependencies>
         <dependency>
             <groupId>edp.davinci</groupId>
-            <artifactId>davinci-server_3.01</artifactId>
+            <artifactId>davinci-server_0.3.1</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

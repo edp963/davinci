@@ -21,7 +21,6 @@ package edp.davinci.service.excel;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Maps;
-
 import edp.core.enums.DataTypeEnum;
 import edp.core.model.QueryColumn;
 import edp.core.utils.CollectionUtils;
@@ -30,7 +29,7 @@ import edp.core.utils.SqlUtils;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.utils.SqlParseUtils;
 import edp.davinci.dto.cronJobDto.MsgMailExcel;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.ResultSetMetaData;
@@ -48,8 +47,8 @@ import static edp.core.consts.Consts.QUERY_META_SQL;
  * @Date 19/5/28 18:23
  * To change this template use File | Settings | File Templates.
  */
-@Slf4j
 public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
+    
     private SheetContext context;
 
     private int maxRows = 1000000;
@@ -63,6 +62,8 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         Stopwatch watch = Stopwatch.createStarted();
         Boolean rst = true;
         String md5 = null;
+        Logger logger = context.getCustomLogger();
+        boolean log = context.getCustomLogger() != null;
         try {
             SqlUtils utils = context.getSqlUtils();
             JdbcTemplate template = utils.jdbcTemplate();
@@ -82,21 +83,25 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             sql = SqlParseUtils.rebuildSqlWithFragment(sql);
             md5 = MD5Util.getMD5(sql, true, 16);
             Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
-            if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("Task({}) sheet worker(name:{}, sheetNo: {}, sheetName:{}) start query sql:{}, md5:{}",
+            if (log) {
+                logger.info("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) start query sql:{}, md5:{}",
                         context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), SqlUtils.formatSql(sql), md5);
             }
+
             final AtomicInteger count = new AtomicInteger(0);
             template.query(sql, rs -> {
                 Map<String, Object> dataMap = Maps.newHashMap();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
                     dataMap.put(SqlUtils.getColumnLabel(queryFromsAndJoins, rs.getMetaData().getColumnLabel(i)), rs.getObject(rs.getMetaData().getColumnLabel(i)));
                 }
+                if (log) {
+                    logger.info("data map:{}", dataMap.toString());
+                }
                 writeLine(context, dataMap);
                 count.incrementAndGet();
             });
-            if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("Task({}) sheet  worker(name:{}, sheetNo: {}, sheetName:{}) finish query md5:{}, count:{}",
+            if (log) {
+                logger.info("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) finish query md5:{}, count:{}",
                         context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), md5, count.get());
             }
             super.refreshHeightWidth(context);
@@ -106,19 +111,19 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
                 msg.setDate(new Date());
                 msg.setException(e);
             }
-            if (context.getCustomLogger() != null) {
-                context.getCustomLogger().error("Task({}) sheet worker(name:{}, sheetNo: {}, sheetName:{}) error, md5={}, error={}",
-                        context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), md5, e.getMessage());
+            if (log) {
+                logger.error("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) error query md5:{}",
+                        context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), md5);
+                logger.error(e.toString(), e);
             }
-            e.printStackTrace();
             rst = false;
         }
 
         Object[] args = {context.getTaskKey(), context.getName(), md5, rst, context.getWrapper().getAction(), context.getWrapper().getxId(),
                 context.getWrapper().getxUUID(), context.getSheetNo(), context.getSheet().getSheetName(), context.getDashboardId(),
                 context.getWidgetId(), watch.elapsed(TimeUnit.MILLISECONDS)};
-        if (context.getCustomLogger() != null) {
-            context.getCustomLogger().info(
+        if (log) {
+            logger.info(
                     "Task({}) sheet worker({}) complete md5={}, status={}, action={}, xid={}, xUUID={}, sheetNo={}, sheetName={}, dashboardId={}, widgetId={}, cost={}ms",
                     args);
         }

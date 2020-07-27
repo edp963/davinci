@@ -50,7 +50,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static edp.core.consts.Consts.*;
-import static edp.davinci.common.utils.ScriptUtiils.formatHeader;
+import static edp.davinci.common.utils.ScriptUtils.formatHeader;
+
 
 public class ExcelUtils {
 
@@ -442,12 +443,6 @@ public class ExcelUtils {
 
         } else if (fieldTypeObject instanceof FieldCustom) {
 
-        } else if (fieldTypeObject instanceof FieldDate) {
-
-            // TODO need to fix impossible cast
-            FieldCustom fieldCustom = (FieldCustom) fieldTypeObject;
-
-            formatExpr = fieldCustom.getFormat().toLowerCase();
         } else if (fieldTypeObject instanceof FieldPercentage) {
 
             FieldPercentage fieldPercentage = (FieldPercentage) fieldTypeObject;
@@ -455,12 +450,12 @@ public class ExcelUtils {
             StringBuilder fmtSB = new StringBuilder("0");
             if (fieldPercentage.getDecimalPlaces() > 0) {
                 fmtSB.append(".").append(makeNTimesString(fieldPercentage.getDecimalPlaces(), 0));
-
             }
 
             fmtSB.append(PERCENT_SIGN);
 
             formatExpr = fmtSB.toString();
+
         } else if (fieldTypeObject instanceof FieldScientificNotation) {
 
             FieldScientificNotation fieldScientificNotation = (FieldScientificNotation) fieldTypeObject;
@@ -474,6 +469,7 @@ public class ExcelUtils {
             fmtSB.append("E+00");
 
             formatExpr = fmtSB.toString();
+
         }
 
         return formatExpr;

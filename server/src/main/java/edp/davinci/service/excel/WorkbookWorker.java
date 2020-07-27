@@ -24,7 +24,7 @@ import com.google.common.collect.Lists;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
-import edp.davinci.common.utils.ScriptUtiils;
+import edp.davinci.common.utils.ScriptUtils;
 import edp.davinci.core.config.SpringContextHolder;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.FileTypeEnum;
@@ -35,11 +35,11 @@ import edp.davinci.dto.cronJobDto.MsgMailExcel;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.service.ViewService;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.slf4j.Logger;
 
 import java.io.FileOutputStream;
 import java.util.List;
@@ -52,27 +52,25 @@ import java.util.concurrent.*;
  * @Date 19/5/29 19:29
  * To change this template use File | Settings | File Templates.
  */
-@Slf4j
 public class WorkbookWorker<T> extends MsgNotifier implements Callable {
 
-
     private WorkBookContext context;
-
 
     public WorkbookWorker(WorkBookContext context) {
         this.context = context;
     }
 
-
     @Override
     public T call() throws Exception {
         Stopwatch watch = Stopwatch.createStarted();
         Workbook wb = null;
+        Logger logger = context.getCustomLogger();
+        boolean log = context.getCustomLogger() != null;
 
         MsgWrapper wrapper = context.getWrapper();
         Object[] logArgs = {context.getTaskKey(), wrapper.getAction(), wrapper.getxId()};
-        if (context.getCustomLogger() != null) {
-            context.getCustomLogger().info("Task({}) workbook worker start action={}, xid={}", logArgs);
+        if (log) {
+            logger.info("Task({}) workbook worker start action={}, xid={}", logArgs);
         }
 
         String filePath = null;
@@ -104,21 +102,18 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                         future.cancel(true);
                     }
                 }
-            } catch (InterruptedException | ExecutionException e) {
-                if (context.getCustomLogger() != null) {
-                    context.getCustomLogger().error("Task({}) workbook worker error, e={}", context.getTaskKey(), e.getMessage());
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                if (log) {
+                    logger.error("Task({}) workbook worker error", context.getTaskKey());
+                    logger.error(e.toString(), e);
                 }
-                e.printStackTrace();
-            } catch (TimeoutException e) {
-                if (context.getCustomLogger() != null) {
-                    context.getCustomLogger().error("Task({}) workbook worker error, e={}", context.getTaskKey(), e.getMessage());
-                }
-                if (wrapper.getAction() == ActionEnum.MAIL) {
+            
+                if (e instanceof TimeoutException && wrapper.getAction() == ActionEnum.MAIL) {
                     MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
                     msg.setException(new TimeoutException("Get data timeout"));
                     super.tell(wrapper);
+                    return (T) filePath;
                 }
-                return (T) filePath;
             }
 
             if (rst) {
@@ -126,27 +121,29 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 try (FileOutputStream out = new FileOutputStream(filePath);) {
                     wb.write(out);
                     out.flush();
-                    out.close();
                 } catch (Exception e) {
                     filePath = null;
-                    e.printStackTrace();
                     throw e;
                 }
                 wrapper.setRst(filePath);
             } else {
-                log.info("{}-{}-{}: sheet worker result false", wrapper.getAction(), wrapper.xId, wrapper.getxUUID());
+                if (log) {
+                    logger.info("Task({}) sheet worker result false action={}, xid={}", logArgs);
+                }
                 wrapper.setRst(null);
             }
             super.tell(wrapper);
         } catch (Exception e) {
-            if (context.getCustomLogger() != null) {
-                context.getCustomLogger().error("Task({}) workbook worker error, e={}", context.getTaskKey(), e.getMessage());
+            if (log) {
+                logger.error("Task({}) workbook worker error", context.getTaskKey());
+                logger.error(e.toString(), e);
             }
+            
             if (wrapper.getAction() == ActionEnum.MAIL) {
                 MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
                 msg.setException(e);
             }
-            e.printStackTrace();
+            
             super.tell(wrapper);
             if (StringUtils.isNotEmpty(filePath)) {
                 FileUtils.delete(filePath);
@@ -154,15 +151,16 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
         } finally {
             wb = null;
         }
+
         if (wrapper.getAction() == ActionEnum.DOWNLOAD) {
             Object[] args = {context.getTaskKey(), StringUtils.isNotEmpty(filePath), wrapper.getAction(), wrapper.getxId(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
-            if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("Task({}) workbook worker complete status={}, action={}, xid={}, filePath={}, cost={}ms", args);
+            if (log) {
+                logger.info("Task({}) workbook worker complete status={}, action={}, xid={}, filePath={}, cost={}ms", args);
             }
         } else if (wrapper.getAction() == ActionEnum.SHAREDOWNLOAD || wrapper.getAction() == ActionEnum.MAIL) {
             Object[] args = {context.getTaskKey(), StringUtils.isNotEmpty(filePath), wrapper.getAction(), wrapper.getxUUID(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
-            if (context.getCustomLogger() != null) {
-                context.getCustomLogger().info("Task({}) workbook worker complete status={}, action={}, xUUID={}, filePath={}, cost={}ms", args);
+            if (log) {
+                logger.info("Task({}) workbook worker complete status={}, action={}, xUUID={}, filePath={}, cost={}ms", args);
             }
         }
 
@@ -177,7 +175,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             if (context.isHasExecuteParam() && null != context.getExecuteParam()) {
                 executeParam = context.getExecuteParam();
             } else {
-                executeParam = ScriptUtiils.getViewExecuteParam(
+                executeParam = ScriptUtils.getViewExecuteParam(
                         context.getDashboard() != null ? context.getDashboard().getConfig() : null,
                         context.getWidget().getConfig(),
                         context.getMemDashboardWidget() != null ? context.getMemDashboardWidget().getId() : null);
@@ -195,8 +193,8 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             boolean isTable;
             List<ExcelHeader> excelHeaders = null;
             if (isTable = ExcelUtils.isTable(context.getWidget().getConfig())) {
-                excelHeaders = ScriptUtiils.formatHeader(context.getWidget().getConfig(),
-                        sqlContext.getViewExecuteParam().getParams());
+                excelHeaders = ScriptUtils.formatHeader(
+                        context.getWidget().getConfig(), sqlContext.getViewExecuteParam().getParams());
             }
             SheetContext sheetContext = SheetContext.SheetContextBuilder.newBuilder()
                     .withExecuteSql(sqlContext.getExecuteSql())
