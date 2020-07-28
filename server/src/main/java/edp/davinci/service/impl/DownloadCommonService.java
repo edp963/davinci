@@ -44,10 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.UNDERLINE;
@@ -96,7 +93,7 @@ public class DownloadCommonService {
             if (!CollectionUtils.isEmpty(widgets)) {
                 // order by mem_dashboard_widget create_time
                 widgets = orderBy(mdw, widgets);
-                Map<Long, MemDashboardWidget> map = mdw.stream().collect(Collectors.toMap(o -> o.getWidgetId(), o -> o, (oldV, newV)->oldV));
+                Map<Long, MemDashboardWidget> map = mdw.stream().collect(Collectors.toMap(o -> o.getWidgetId(), o -> o, (oldV, newV) -> oldV));
                 widgets.stream().forEach(t -> {
                     ViewExecuteParam executeParam = null;
                     if (!CollectionUtils.isEmpty(params) && map.containsKey(t.getId())) {
