@@ -37,11 +37,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5976cf81-9708-413c-be52-22633630361c" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitattributes" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.travis.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bin/initdb.bat" beforeDir="false" afterPath="$PROJECT_DIR$/bin/initdb.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bin/run-server.bat" beforeDir="false" afterPath="$PROJECT_DIR$/bin/run-server.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bin/stop-server.bat" beforeDir="false" afterPath="$PROJECT_DIR$/bin/stop-server.bat" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -148,9 +146,10 @@
       <screen x="-581" y="-1417" width="2560" height="1417" />
     </state>
     <state x="402" y="-1040" key="#com.intellij.ide.util.TreeClassChooserDialog/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595838463431" />
-    <state x="-381" y="-1224" width="2160" height="1031" key="DiffContextDialog" timestamp="1595838306646">
+    <state x="-234" y="-1245" width="2160" height="1031" key="DiffContextDialog" timestamp="1596163571795">
       <screen x="-581" y="-1417" width="2560" height="1417" />
     </state>
+    <state x="-234" y="-1245" width="2160" height="1031" key="DiffContextDialog/0.23.1280.731/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1596163571795" />
     <state x="-381" y="-1224" width="2160" height="1031" key="DiffContextDialog/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595838306646" />
     <state x="100" y="123" width="1080" height="533" key="DiffContextDialog/0.23.1280.733/-581.-1417.2560.1417@0.23.1280.733" timestamp="1595385769931" />
     <state width="2486" height="441" key="GridCell.Tab.0.bottom" timestamp="1595840439042">
@@ -197,6 +196,10 @@
       <screen x="0" y="23" width="1280" height="733" />
     </state>
     <state x="0" y="23" width="1280" height="733" key="MultipleFileMergeDialog/0.23.1280.733/-581.-1417.2560.1417@0.23.1280.733" timestamp="1595386548747" />
+    <state x="362" y="-1208" key="RollbackChangesDialog" timestamp="1596163257842">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
+    </state>
+    <state x="362" y="-1208" key="RollbackChangesDialog/0.23.1280.731/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1596163257842" />
     <state x="-581" y="-1417" width="2560" height="1417" key="SettingsEditor" timestamp="1595838917060">
       <screen x="-581" y="-1417" width="2560" height="1417" />
     </state>
@@ -206,6 +209,10 @@
     </state>
     <state x="-343" y="-1210" key="VcsDiffUtil.ChangesDialog/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595838278483" />
     <state x="119" y="130" key="VcsDiffUtil.ChangesDialog/0.23.1280.733/-581.-1417.2560.1417@0.23.1280.733" timestamp="1595387573332" />
+    <state x="-481" y="-1317" width="2360" height="1217" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1596163571795">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
+    </state>
+    <state x="-481" y="-1317" width="2360" height="1217" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.23.1280.731/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1596163571795" />
     <state x="112" y="-396" key="run.anything.popup" timestamp="1595838864304">
       <screen x="-581" y="-1417" width="2560" height="1417" />
     </state>
