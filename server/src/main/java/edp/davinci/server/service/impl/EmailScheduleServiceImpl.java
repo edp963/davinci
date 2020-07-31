@@ -31,15 +31,12 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import javax.script.ScriptEngine;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,7 +83,6 @@ import edp.davinci.server.model.MailAttachment;
 import edp.davinci.server.model.MailContent;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.MailUtils;
-import edp.davinci.server.util.ScriptUtils;
 
 @Service("emailScheduleService")
 public class EmailScheduleServiceImpl extends BaseScheduleService implements ScheduleService {
@@ -121,7 +117,7 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
     public void execute(long jobId) throws Exception {
         CronJob cronJob = cronJobExtendMapper.selectByPrimaryKey(jobId);
         if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
-        	scheduleLogger.error("CronJob({}) config is empty", jobId);
+            scheduleLogger.error("CronJob({}) config is empty", jobId);
             return;
         }
         cronJobExtendMapper.updateExecLog(jobId, "");
@@ -137,7 +133,7 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
             scheduleLogger.error("Cronjob({}) config type is empty", jobId);
             return;
         }
-        
+
         scheduleLogger.info("CronJob({}) is start! --------------", jobId);
 
         List<ExcelContent> excels = null;
@@ -148,7 +144,7 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
             images = generateImages(jobId, cronJobConfig, creater.getId());
         }
-        
+
         if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
 			excels = generateExcels(jobId, cronJobConfig, creater);
         }
@@ -176,7 +172,6 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
             return;
         }
 
-
         scheduleLogger.info("CronJob({}) is ready to send email", cronJob.getId());
 
         MailContent mailContent = null;
@@ -197,7 +192,6 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
         mailUtils.sendMail(mailContent, null);
         scheduleLogger.info("CronJob({}) is finish! --------------", jobId);
     }
-
 
     /**
      * 根据job配置生成excel
@@ -347,7 +341,6 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
 
         excelContents.sort(Comparator.comparing(ExcelContent::getOrder));
         scheduleLogger.info("CronJob({}) fetched excel contents, count:{}", jobId, excelContents.size());
-
         return excelContents.isEmpty() ? null : excelContents;
     }
 

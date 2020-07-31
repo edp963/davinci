@@ -22,6 +22,6 @@ package edp.davinci.server.model;
 import lombok.Data;
 
 @Data
-public class FieldScientificNotation {
+public class FieldScientificNotation extends FieldFormat {
     private int decimalPlaces;
 }

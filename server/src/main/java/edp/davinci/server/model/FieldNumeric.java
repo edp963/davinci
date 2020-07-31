@@ -25,7 +25,7 @@ import edp.davinci.server.enums.NumericUnitEnum;
 import lombok.Data;
 
 @Data
-public class FieldNumeric {
+public class FieldNumeric extends FieldFormat {
     private int decimalPlaces;
 
     @JsonIgnore

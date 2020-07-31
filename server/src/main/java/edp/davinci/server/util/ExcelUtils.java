@@ -42,6 +42,10 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
+import edp.davinci.commons.util.JSONUtils;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.enums.SqlColumnMappingEnum;
+import edp.davinci.server.enums.SqlColumnTypeEnum;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -56,20 +60,15 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.web.multipart.MultipartFile;
 
 import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.data.pojo.Param;
-import edp.davinci.server.commons.Constants;
 import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.server.enums.NumericUnitEnum;
-import edp.davinci.server.enums.SqlColumnMappingEnum;
-import edp.davinci.server.enums.SqlColumnTypeEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.DataUploadEntity;
 import edp.davinci.server.model.ExcelHeader;
 import edp.davinci.server.model.FieldCurrency;
 import edp.davinci.server.model.FieldCustom;
-import edp.davinci.server.model.FieldDate;
 import edp.davinci.server.model.FieldNumeric;
 import edp.davinci.server.model.FieldPercentage;
 import edp.davinci.server.model.FieldScientificNotation;
@@ -109,7 +108,7 @@ public class ExcelUtils {
             if (sheet.getLastRowNum() < 1) {
                 throw new ServerException("EMPTY excel");
             }
-            
+
             //列
             Row headerRow = sheet.getRow(0);
             Row typeRow = sheet.getRow(1);
@@ -460,12 +459,6 @@ public class ExcelUtils {
 
         } else if (fieldTypeObject instanceof FieldCustom) {
 
-        } else if (fieldTypeObject instanceof FieldDate) {
-
-            // TODO need to fix impossible cast
-            FieldCustom fieldCustom = (FieldCustom) fieldTypeObject;
-
-            formatExpr = fieldCustom.getFormat().toLowerCase();
         } else if (fieldTypeObject instanceof FieldPercentage) {
 
             FieldPercentage fieldPercentage = (FieldPercentage) fieldTypeObject;
@@ -473,12 +466,12 @@ public class ExcelUtils {
             StringBuilder fmtSB = new StringBuilder("0");
             if (fieldPercentage.getDecimalPlaces() > 0) {
                 fmtSB.append(".").append(makeNTimesString(fieldPercentage.getDecimalPlaces(), 0));
-
             }
 
             fmtSB.append(PERCENT_SIGN);
 
             formatExpr = fmtSB.toString();
+
         } else if (fieldTypeObject instanceof FieldScientificNotation) {
 
             FieldScientificNotation fieldScientificNotation = (FieldScientificNotation) fieldTypeObject;
@@ -492,6 +485,7 @@ public class ExcelUtils {
             fmtSB.append("E+00");
 
             formatExpr = fmtSB.toString();
+
         }
 
         return formatExpr;
