@@ -71,6 +71,12 @@ public class JdbcDataSource {
         config.setUseAllow(false);
         config.setDescribeAllow(false);
         config.setShowAllow(false);
+        config.setSelectWhereAlwayTrueCheck(false);
+        config.setSelectHavingAlwayTrueCheck(false);
+        config.setSelectUnionCheck(false);
+        config.setConditionDoubleConstAllow(true);
+        config.setConditionAndAlwayTrueAllow(true);
+        config.setConditionAndAlwayFalseAllow(true);
 		return config;
 	}
 

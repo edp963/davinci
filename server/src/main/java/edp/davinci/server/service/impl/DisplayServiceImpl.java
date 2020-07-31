@@ -538,11 +538,11 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     @Override
     @Transactional
     public void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException {
-        relRoleDisplaySlideWidgetExtendMapper.deleteByProjectId(projectId);
+        relRoleDisplaySlideWidgetExtendMapper.deleteByProject(projectId);
         memDisplaySlideWidgetExtendMapper.deleteByProject(projectId);
-        relRoleSlideExtendMapper.deleteByProjectId(projectId);
+        relRoleSlideExtendMapper.deleteByProject(projectId);
         displaySlideExtendMapper.deleteByProjectId(projectId);
-        relRoleDisplayExtendMapper.deleteByProjectId(projectId);
+        relRoleDisplayExtendMapper.deleteByProject(projectId);
         displayExtendMapper.deleteByProject(projectId);
     }
 }

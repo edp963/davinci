@@ -27,7 +27,6 @@ import edp.davinci.server.enums.VizVisiblityEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.*;
 import edp.davinci.server.service.*;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.core.dao.entity.Organization;
@@ -516,6 +515,15 @@ public class RoleServiceImpl implements RoleService {
         }
 
         if (relRoleProjectExtendMapper.deleteByRoleAndProject(roleId, projectId) > 0) {
+
+            relRoleDashboardExtendMapper.deleteByRoleAndProject(roleId, projectId);
+            relRoleDashboardWidgetExtendMapper.deleteByRoleAndProject(roleId, projectId);
+            relRoleDisplayExtendMapper.deleteByRoleAndProject(roleId, projectId);
+            relRoleDisplaySlideWidgetExtendMapper.deleteByRoleAndProject(roleId, projectId);
+            relRolePortalExtendMapper.deleteByRoleAndProject(roleId, projectId);
+            relRoleSlideExtendMapper.deleteByRoleAndProject(roleId, projectId);
+            relRoleViewExtendMapper.deleteByRoleAndProject(roleId, projectId);
+
             optLogger.info("RelRoleProject({}) is delete by user({})", relRoleProject.getId(), user.getId());
             return true;
         }

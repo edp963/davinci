@@ -104,6 +104,16 @@ public interface RelRoleDashboardWidgetExtendMapper extends RelRoleDashboardWidg
             "inner join dashboard_portal dp on dp.id = d.dashboard_portal_id " +
             "where dp.project_id = #{projectId} " +
             ") "})
-    int deleteByProjectId(@Param("projectId") Long projectId);
+    int deleteByProject(@Param("projectId") Long projectId);
+    
+    @Delete({"delete rrdw from rel_role_dashboard_widget rrdw where rrdw.role_id = #{roleId} and rrdw.mem_dashboard_widget_id in " +
+            "( " +
+            "select mdw.id " +
+            "from mem_dashboard_widget mdw " +
+            "inner join dashboard d on d.id = mdw.dashboard_id " +
+            "inner join dashboard_portal dp on dp.id = d.dashboard_portal_id " +
+            "where dp.project_id = #{projectId} " +
+            ") "})
+    int deleteByRoleAndProject(Long roleId, Long projectId);
 
 }

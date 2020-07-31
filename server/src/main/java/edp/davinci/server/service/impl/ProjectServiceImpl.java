@@ -391,8 +391,8 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         relRoleViewExtendMapper.deleteByProject(project.getId());
         viewMapper.deleteByPorject(project.getId());
         sourceExtendMapper.deleteByProject(project.getId());
-        relRoleProjectMapper.deleteByProjectId(project.getId());
-        relProjectAdminExtendMapper.deleteByProjectId(project.getId());
+        relRoleProjectMapper.deleteByProject(project.getId());
+        relProjectAdminExtendMapper.deleteByProject(project.getId());
 
         if (projectExtendMapper.deleteByPrimaryKey(project.getId()) <= 0) {
             log.error("Delete project({}) fail", id);
@@ -664,7 +664,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		List<Role> roleList = roleMapper.getByOrgIdAndIds(projectDetail.getOrgId(), roleIds);
 
 		if (CollectionUtils.isEmpty(roleList)) {
-			relRoleProjectMapper.deleteByProjectId(projectId);
+			relRoleProjectMapper.deleteByProject(projectId);
 			return null;
 		}
 

@@ -39,7 +39,7 @@ public interface RelRoleProjectExtendMapper extends RelRoleProjectMapper {
     @Delete({
             "delete from rel_role_project where project_id = #{projectId}"
     })
-    int deleteByProjectId(@Param("projectId") Long projectId);
+    int deleteByProject(@Param("projectId") Long projectId);
 
     @Select({
             "select * from rel_role_project where id = #{id,jdbcType=BIGINT}"

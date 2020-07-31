@@ -57,7 +57,7 @@ public interface RelProjectAdminExtendMapper extends RelProjectAdminMapper {
     @Delete({
             "delete from rel_project_admin where project_id = #{projectId}"
     })
-    int deleteByProjectId(Long projectId);
+    int deleteByProject(Long projectId);
 
     @Select({
             "select r.id,",

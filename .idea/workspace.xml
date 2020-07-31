@@ -37,551 +37,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5976cf81-9708-413c-be52-22633630361c" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__ch_qos_logback_logback_classic_1_2_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__ch_qos_logback_logback_core_1_2_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_alibaba_druid_1_1_11.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_alibaba_druid_1_1_22.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_amazon_opendistroforelasticsearch_client_opendistro_sql_jdbc_1_6_0_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_carrotsearch_hppc_0_7_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_codeborne_phantomjsdriver_1_4_4.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_classmate_1_5_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_core_jackson_annotations_2_10_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_core_jackson_core_2_10_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_core_jackson_databind_2_10_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_dataformat_jackson_dataformat_cbor_2_10_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_dataformat_jackson_dataformat_smile_2_10_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_dataformat_jackson_dataformat_yaml_2_10_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_datatype_jackson_datatype_jdk8_2_10_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_datatype_jackson_datatype_jsr310_2_10_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_module_jackson_module_parameter_names_2_10_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_github_jsqlparser_jsqlparser_1_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_github_luben_zstd_jni_1_4_0_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_github_pagehelper_pagehelper_5_1_4.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_github_spullara_mustache_java_compiler_0_9_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_github_stephenc_jcip_jcip_annotations_1_0_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_google_code_findbugs_jsr305_1_3_9.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_google_errorprone_error_prone_annotations_2_1_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_google_guava_guava_23_6_jre.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_google_j2objc_j2objc_annotations_1_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_h2database_h2_1_4_200.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_ibm_icu_icu4j_64_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_jayway_jsonpath_json_path_2_4_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_mchange_mchange_commons_java_0_2_15.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_microsoft_sqlserver_mssql_jdbc_7_4_1_jre8.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_microsoft_sqlserver_mssql_jdbc_8_2_0_jre8.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_nimbusds_lang_tag_1_5.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_nimbusds_nimbus_jose_jwt_8_19.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_nimbusds_oauth2_oidc_sdk_6_14.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_squareup_okhttp3_okhttp_3_14_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_squareup_okio_okio_1_14_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_sun_activation_jakarta_activation_1_2_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_sun_mail_jakarta_mail_1_6_5.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_sun_mail_javax_mail_1_6_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_tdunning_t_digest_3_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_unboundid_unboundid_ldapsdk_4_0_14.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_vaadin_external_google_android_json_0_0_20131108_vaadin1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_zaxxer_HikariCP_3_4_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__commons_codec_commons_codec_1_13.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__commons_lang_commons_lang_2_6.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__commons_logging_commons_logging_1_1_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__dom4j_dom4j_1_6_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_jsonwebtoken_jjwt_0_7_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_lettuce_lettuce_core_5_2_2_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_buffer_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_http2_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_http_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_socks_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_common_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_handler_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_handler_proxy_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_resolver_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_epoll_linux_x86_64_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_unix_common_4_1_48_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_projectreactor_netty_reactor_netty_0_9_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_projectreactor_reactor_core_3_3_4_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_springfox_springfox_core_2_6_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_springfox_springfox_schema_2_6_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_springfox_springfox_spi_2_6_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_springfox_springfox_spring_web_2_6_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_springfox_springfox_swagger2_2_6_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_springfox_springfox_swagger_common_2_6_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_springfox_springfox_swagger_ui_2_6_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_swagger_swagger_annotations_1_5_10.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_swagger_swagger_models_1_5_10.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__jakarta_activation_jakarta_activation_api_1_2_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__jakarta_annotation_jakarta_annotation_api_1_3_5.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__jakarta_validation_jakarta_validation_api_2_0_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__jakarta_xml_bind_jakarta_xml_bind_api_2_3_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__javax_activation_activation_1_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__javax_activation_javax_activation_api_1_2_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__javax_xml_bind_jaxb_api_2_3_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__jline_jline_0_9_94.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__joda_time_joda_time_2_10_5.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__log4j_log4j_1_2_16.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__mysql_mysql_connector_java_8_0_19.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__net_bytebuddy_byte_buddy_1_10_8.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__net_bytebuddy_byte_buddy_agent_1_10_8.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__net_jpountz_lz4_lz4_1_3_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__net_minidev_accessors_smart_1_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__net_minidev_json_smart_2_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__net_sf_jopt_simple_jopt_simple_5_0_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_antlr_ST4_4_0_8.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_antlr_antlr_runtime_3_5_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_commons_commons_collections4_4_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_commons_commons_csv_1_4.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_commons_commons_exec_1_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_curator_curator_client_2_12_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_curator_curator_framework_2_12_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_curator_curator_test_2_12_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_httpcomponents_httpasyncclient_4_1_4.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_httpcomponents_httpclient_4_5_12.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_httpcomponents_httpcore_4_4_13.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_httpcomponents_httpcore_nio_4_4_13.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_kafka_kafka_clients_2_3_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_logging_log4j_log4j_api_2_12_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_logging_log4j_log4j_to_slf4j_2_12_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_analyzers_common_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_backward_codecs_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_core_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_grouping_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_highlighter_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_join_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_memory_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_misc_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_queries_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_queryparser_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_sandbox_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_spatial3d_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_spatial_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_spatial_extras_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_lucene_lucene_suggest_7_7_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_poi_poi_3_9.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_poi_poi_ooxml_3_9.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_poi_poi_ooxml_schemas_3_9.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_tomcat_embed_tomcat_embed_core_9_0_33.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_tomcat_embed_tomcat_embed_el_9_0_33.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_tomcat_embed_tomcat_embed_websocket_9_0_33.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_xmlbeans_xmlbeans_2_3_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_zookeeper_zookeeper_3_4_8.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_apiguardian_apiguardian_api_1_1_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_aspectj_aspectjweaver_1_9_5.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_assertj_assertj_core_3_13_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_attoparser_attoparser_2_0_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_checkerframework_checker_compat_qual_2_0_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_codehaus_mojo_animal_sniffer_annotations_1_14.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_client_elasticsearch_rest_client_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_client_transport_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_client_x_pack_transport_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_elasticsearch_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_elasticsearch_cli_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_elasticsearch_core_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_elasticsearch_secure_sm_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_elasticsearch_ssl_config_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_elasticsearch_x_content_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_jna_4_5_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_plugin_lang_mustache_client_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_plugin_parent_join_client_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_plugin_percolator_client_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_plugin_rank_eval_client_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_plugin_reindex_client_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_plugin_transport_netty4_client_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_elasticsearch_plugin_x_pack_core_6_8_7.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_glassfish_jakarta_el_3_0_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_graalvm_js_js_20_0_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_graalvm_js_js_scriptengine_20_0_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_graalvm_regex_regex_20_0_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_graalvm_sdk_graal_sdk_20_0_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_graalvm_tools_chromeinspector_20_0_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_graalvm_tools_profiler_20_0_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_graalvm_truffle_truffle_api_20_0_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_hamcrest_hamcrest_2_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_hdrhistogram_HdrHistogram_2_1_9.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_hibernate_javax_persistence_hibernate_jpa_2_0_api_1_0_1_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_hibernate_validator_hibernate_validator_6_0_18_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_javassist_javassist_3_18_1_GA.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_jboss_logging_jboss_logging_3_4_1_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_junit_jupiter_junit_jupiter_5_5_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_junit_jupiter_junit_jupiter_api_5_5_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_junit_jupiter_junit_jupiter_engine_5_5_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_junit_jupiter_junit_jupiter_params_5_5_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_junit_platform_junit_platform_commons_1_5_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_junit_platform_junit_platform_engine_1_5_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_lz4_lz4_java_1_6_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_mapstruct_mapstruct_1_0_0_Final.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_mindrot_jbcrypt_0_3m.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_mockito_mockito_core_3_1_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_mockito_mockito_junit_jupiter_3_1_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_mybatis_mybatis_3_4_6.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_mybatis_mybatis_spring_1_3_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_mybatis_spring_boot_mybatis_spring_boot_autoconfigure_1_3_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_mybatis_spring_boot_mybatis_spring_boot_starter_1_3_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_objenesis_objenesis_2_6.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_opentest4j_opentest4j_1_2_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_ow2_asm_asm_7_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_ow2_asm_asm_analysis_7_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_ow2_asm_asm_commons_7_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_ow2_asm_asm_tree_7_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_ow2_asm_asm_util_7_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_projectlombok_lombok_1_18_12.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_quartz_scheduler_quartz_2_3_2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_reactivestreams_reactive_streams_1_0_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_seleniumhq_selenium_selenium_api_3_141_59.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_seleniumhq_selenium_selenium_chrome_driver_3_141_59.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_seleniumhq_selenium_selenium_edge_driver_3_141_59.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_seleniumhq_selenium_selenium_firefox_driver_3_141_59.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_seleniumhq_selenium_selenium_ie_driver_3_141_59.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_seleniumhq_selenium_selenium_java_3_141_59.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_seleniumhq_selenium_selenium_opera_driver_3_141_59.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_seleniumhq_selenium_selenium_remote_driver_3_141_59.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_seleniumhq_selenium_selenium_safari_driver_3_141_59.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_seleniumhq_selenium_selenium_support_3_141_59.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_skyscreamer_jsonassert_1_5_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_slf4j_jul_to_slf4j_1_7_30.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_slf4j_slf4j_api_1_7_30.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_autoconfigure_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_aop_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_cache_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_data_ldap_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_data_redis_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_jdbc_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_json_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_logging_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_mail_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_reactor_netty_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_security_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_test_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_thymeleaf_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_tomcat_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_validation_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_web_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_webflux_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_test_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_test_autoconfigure_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_data_spring_data_commons_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_data_spring_data_keyvalue_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_data_spring_data_ldap_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_data_spring_data_redis_2_2_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_ldap_spring_ldap_core_2_3_2_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_plugin_spring_plugin_core_1_2_0_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_plugin_spring_plugin_metadata_1_2_0_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_security_spring_security_config_5_2_2_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_security_spring_security_core_5_2_2_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_security_spring_security_oauth2_client_5_2_2_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_security_spring_security_oauth2_core_5_2_2_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_security_spring_security_web_5_2_2_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_aop_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_beans_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_context_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_context_support_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_core_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_expression_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_jcl_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_jdbc_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_oxm_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_test_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_tx_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_web_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_webflux_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_webmvc_5_2_5_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_synchronoss_cloud_nio_multipart_parser_1_1_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_synchronoss_cloud_nio_stream_storage_1_1_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_thymeleaf_extras_thymeleaf_extras_java8time_3_0_4_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_thymeleaf_thymeleaf_3_0_11_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_thymeleaf_thymeleaf_spring5_3_0_11_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_unbescape_unbescape_1_1_6_RELEASE.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_webjars_jquery_1_11_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_xerial_snappy_snappy_java_1_1_7_3.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_xmlunit_xmlunit_core_2_6_4.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_yaml_snakeyaml_1_25.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__stax_stax_api_1_0_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__xml_apis_xml_apis_1_0_b2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assembly/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assembly/davinci-assembly.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/auth/davinci-auth.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/commons/davinci-commons.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/davinci-core.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/DashboardMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/DashboardPortalMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/DashboardPortalSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/DashboardSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/DisplayMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/DisplaySlideMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/DisplaySlideSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/DisplaySqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/DownloadRecordMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/DownloadRecordSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/FavoriteMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/FavoriteSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/MemDisplaySlideWidgetMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/MemDisplaySlideWidgetSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/OrganizationMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/OrganizationSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/PlatformMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/PlatformSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/ProjectMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/ProjectSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelProjectAdminMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelProjectAdminSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleDashboardMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleDashboardSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleDashboardWidgetMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleDashboardWidgetSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleDisplayMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleDisplaySlideWidgetMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleDisplaySlideWidgetSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleDisplaySqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRolePortalMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRolePortalSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleProjectMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleProjectSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleSlideMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleSlideSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleUserMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleUserSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleViewMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelRoleViewSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelUserOrganizationMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/RelUserOrganizationSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/StarMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/StarSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/UserMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/UserSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/ViewMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/ViewSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/WidgetMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/WidgetSqlProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/Dashboard.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/DashboardExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/DashboardPortal.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/DashboardPortalExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/Display.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/DisplayExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/DisplaySlide.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/DisplaySlideExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/DownloadRecord.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/DownloadRecordExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/Favorite.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/FavoriteExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/MemDisplaySlideWidget.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/MemDisplaySlideWidgetExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/Organization.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/OrganizationExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/Platform.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/PlatformExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/Project.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/ProjectExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelProjectAdmin.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelProjectAdminExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleDashboard.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleDashboardExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleDashboardWidget.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleDashboardWidgetExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleDisplay.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleDisplayExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleDisplaySlideWidget.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleDisplaySlideWidgetExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRolePortal.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRolePortalExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleProject.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleProjectExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleSlide.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleSlideExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleUser.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleUserExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleView.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelRoleViewExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelUserOrganization.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/RelUserOrganizationExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/Star.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/StarExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/User.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/UserExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/View.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/ViewExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/Widget.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/WidgetExample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/enums/DownloadRecordStatusEnum.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/enums/UserOrgRoleEnum.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/davinci-data.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/davinci-parent.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/manager/davinci-manager.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/davinci-server.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/config/WebSecurityConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DashboardPortalExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DisplayExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DisplaySlideExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DownloadRecordExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/FavoriteExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/MemDashboardWidgetExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/MemDisplaySlideWidgetExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/ProjectExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelProjectAdminExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRoleDisplayExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRolePortalExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRoleProjectExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRoleSlideExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRoleViewExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelUserOrganizationExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/StarExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/ViewExtendMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/DisplayCopy.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/statistic/DavinciStatisticDuration.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/statistic/DavinciStatisticTerminal.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/statistic/DavinciStatisticVisitorOperation.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/model/CreaterInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/start-server.bat" beforeDir="false" afterPath="$PROJECT_DIR$/bin/start-server.bat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/stop-server.bat" beforeDir="false" afterPath="$PROJECT_DIR$/bin/stop-server.bat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/commons/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/commons/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/commons/src/main/java/edp/davinci/commons/util/IOUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/commons/src/main/java/edp/davinci/commons/util/IOUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/commons/src/main/java/edp/davinci/commons/util/JSONUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/commons/src/main/java/edp/davinci/commons/util/JSONUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/core/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/CronJobMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/CronJobMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/CronJobSqlProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/CronJobSqlProvider.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/CronJob.java" beforeDir="false" afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/CronJob.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/CronJobExample.java" beforeDir="false" afterPath="$PROJECT_DIR$/core/src/main/java/edp/davinci/core/dao/entity/CronJobExample.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/src/main/resources/generatorConfig.xml" beforeDir="false" afterPath="$PROJECT_DIR$/core/src/main/resources/generatorConfig.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/src/main/java/edp/davinci/data/pojo/Aggregator.java" beforeDir="false" afterPath="$PROJECT_DIR$/data/src/main/java/edp/davinci/data/pojo/Aggregator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/src/main/java/edp/davinci/data/pojo/Order.java" beforeDir="false" afterPath="$PROJECT_DIR$/data/src/main/java/edp/davinci/data/pojo/Order.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/dto/viewDto/ExecuteSqlResult.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/commons/Constants.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/commons/Constants.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/component/excel/ExecutorUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/component/excel/ExecutorUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/component/excel/WorkBookContext.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/component/excel/WorkBookContext.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/component/quartz/QuartzJobExecutor.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/component/quartz/QuartzJobExecutor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/CronJobController.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/CronJobController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/DisplayController.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/DisplayController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/DownloadController.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/DownloadController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/ProjectController.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/ProjectController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/RoleController.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/RoleController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/StarController.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/controller/StarController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/CronJobExtendMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/CronJobExtendMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DashboardPortalMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DashboardPortalMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DisplayMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DisplayMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DisplaySlideMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DisplaySlideMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DownloadRecordMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/DownloadRecordMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelProjectAdminMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelProjectAdminMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRoleDisplayMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRoleDisplayMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRolePortalMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRolePortalMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRoleProjectMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRoleProjectMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRoleViewMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/RelRoleViewMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/StarMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/StarMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/ViewMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dao/ViewMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/cronjob/CronJobInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/cronjob/CronJobInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/cronjob/CronJobUpdate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/cronjob/CronJobUpdate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/cronjob/MsgMailExcel.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/cronjob/MsgMailExcel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/dashboard/DashboardDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/dashboard/DashboardDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/dashboard/DashboardWithMem.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/dashboard/DashboardWithMem.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/dashboard/DashboardWithPortal.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/dashboard/DashboardWithPortal.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/dashboard/PortalInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/dashboard/PortalInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/dashboard/PortalWithProject.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/dashboard/PortalWithProject.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/DisplayInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/DisplayInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/DisplaySlideCreate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/DisplaySlideCreate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/DisplaySlideUpdate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/DisplaySlideUpdate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/DisplayWithProject.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/DisplayWithProject.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/DisplayWithSlides.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/DisplayWithSlides.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/MemDisplaySlideWidgetCreate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/MemDisplaySlideWidgetCreate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/MemDisplaySlideWidgetWithSlide.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/MemDisplaySlideWidgetWithSlide.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/SlideWithDisplayAndProject.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/SlideWithDisplayAndProject.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/SlideWithMem.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/display/SlideWithMem.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/organization/OrganizationInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/organization/OrganizationInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/organization/OrganizationPut.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/organization/OrganizationPut.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/organization/OrganizationTransfer.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/organization/OrganizationTransfer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/organization/OrganzationRole.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/organization/OrganzationRole.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/project/ProjectCreat.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/project/ProjectCreat.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/project/ProjectDetail.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/project/ProjectDetail.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/project/ProjectUpdate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/project/ProjectUpdate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/project/RelProjectAdminDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/project/RelProjectAdminDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/role/RelRoleMember.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/role/RelRoleMember.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/role/RoleBaseInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/role/RoleBaseInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/role/RoleCreate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/role/RoleCreate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/role/RoleProject.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/role/RoleProject.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/role/RoleUpdate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/role/RoleUpdate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/share/ShareDashboard.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/share/ShareDashboard.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/share/ShareDisplaySlide.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/share/ShareDisplaySlide.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/share/ShareInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/share/ShareInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/source/DbBaseInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/source/DbBaseInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/source/SourceCreate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/source/SourceCreate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/source/SourceDataUpload.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/source/SourceDataUpload.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/source/SourceInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/source/SourceInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/source/UploadMeta.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/source/UploadMeta.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/star/StarUser.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/star/StarUser.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/statistic/DavinciStatisticTerminalInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/statistic/DavinciStatisticTerminalInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/statistic/DavinciStatisticVisitorOperationInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/statistic/DavinciStatisticVisitorOperationInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/user/ChangePassword.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/user/ChangePassword.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/user/SendMail.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/user/SendMail.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/user/UserLogin.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/user/UserLogin.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/user/UserLoginResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/user/UserLoginResult.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/user/UserRegist.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/user/UserRegist.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewBaseInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewBaseInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewCreate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewCreate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewUpdate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewUpdate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewWithProjectAndSource.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewWithProjectAndSource.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewWithSource.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewWithSource.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewWithSourceBaseInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/ViewWithSourceBaseInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/WhereParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/view/WhereParam.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/widget/WidgetCreate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/widget/WidgetCreate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/widget/WidgetUpdate.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/widget/WidgetUpdate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/widget/WidgetWithProjectAndView.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/widget/WidgetWithProjectAndView.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/widget/WidgetWithRelationDashboardId.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/widget/WidgetWithRelationDashboardId.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/widget/WidgetWithVizId.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/dto/widget/WidgetWithVizId.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/enums/ActionEnum.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/enums/ActionEnum.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/enums/CheckEntityEnum.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/enums/CheckEntityEnum.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/enums/DownloadTaskStatusType.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/enums/DownloadTaskStatusType.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/enums/UserOrgRoleEnum.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/enums/UserOrgRoleEnum.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/enums/VizVisiblityEnum.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/enums/VizVisiblityEnum.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/inteceptor/CurrentPlatformMethodArgumentResolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/inteceptor/CurrentPlatformMethodArgumentResolver.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/inteceptor/CurrentUserMethodArgumentResolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/inteceptor/CurrentUserMethodArgumentResolver.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/model/Dashboard.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/model/Dashboard.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/model/RecordInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/model/RecordInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/model/TokenDetail.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/model/TokenDetail.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/model/TokenEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/model/TokenEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/runner/DacRunner.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/runner/DacRunner.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/AuthPlatformService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/AuthPlatformService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/AuthenticationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/AuthenticationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/CronJobService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/CronJobService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DashboardPortalService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DashboardPortalService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DashboardService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DashboardService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DepartmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DepartmentService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DisplayService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DisplayService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DisplaySlideService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DisplaySlideService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DownloadService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/DownloadService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/LdapService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/LdapService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/ProjectService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/ProjectService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/RoleService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/RoleService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/ShareDownloadService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/ShareDownloadService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/StarService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/StarService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/BaseEntityService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/BaseEntityService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/CheckServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/CheckServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/CronJobMessageHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/CronJobMessageHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/DashboardPortalServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/DashboardPortalServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/DashboardServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/DashboardServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/DisplayServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/DisplayServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/DisplaySlideServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/DisplaySlideServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/ProjectServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/ProjectServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/RoleServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/RoleServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/ShareDownloadServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/ShareDownloadServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/ShareServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/ShareServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/VizCommonService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/service/impl/VizCommonService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/util/ExcelUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/util/ExcelUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/util/MailUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/edp/davinci/server/util/MailUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/resources/mybatis/mapper/ProjectMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/resources/mybatis/mapper/ProjectMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/resources/mybatis/mapper/RelRoleProjectMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/resources/mybatis/mapper/RelRoleProjectMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/resources/mybatis/mybatis-config.xml" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/resources/mybatis/mybatis-config.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webapp/app/components/Avatar/Avatar.less" beforeDir="false" afterPath="$PROJECT_DIR$/webapp/app/components/Avatar/Avatar.less" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webapp/app/components/Avatar/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/webapp/app/components/Avatar/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webapp/app/components/Avatar/type.ts" beforeDir="false" afterPath="$PROJECT_DIR$/webapp/app/components/Avatar/type.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitattributes" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.travis.yml" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -590,6 +50,13 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="importingSettings">
+      <MavenImportingSettings>
+        <option name="vmOptionsForImporter" value="-Xmx768m" />
+      </MavenImportingSettings>
+    </option>
   </component>
   <component name="ProjectId" id="1eykBthWe49n6SijhuFq1QMkoZK" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -601,13 +68,28 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.15" />
+    <property name="project.structure.side.proportion" value="0.3264368" />
+    <property name="settings.editor.selected.configurable" value="preferences.general" />
+  </component>
+  <component name="RunManager">
+    <configuration name="RUN_DAVINCI4" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="edp.davinci.server.DavinciServerApplication" />
+      <module name="davinci-server" />
+      <option name="VM_PARAMETERS" value="-Xmx1g" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/assembly/target/davinci-assembly-0.4.0-SNAPSHOT-dist" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
   </component>
   <component name="SvnConfiguration">
     <configuration />
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="5976cf81-9708-413c-be52-22633630361c" name="Default Changelist" comment="" />
+      <changelist id="6418d80c-52fc-4e55-b21d-7b595eea732c" name="Default Changelist" comment="" />
       <created>1595301087981</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
@@ -618,6 +100,31 @@
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
+        <entry key="1">
+          <value>
+            <State>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
         <entry key="MAIN">
           <value>
             <State />
@@ -625,29 +132,63 @@
         </entry>
       </map>
     </option>
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="1" value="TOOL_WINDOW" />
+      </map>
+    </option>
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="100" y="123" width="1080" height="533" key="DiffContextDialog" timestamp="1595385769931">
-      <screen x="0" y="23" width="1280" height="733" />
+    <state x="-581" y="-1417" width="2560" height="1417" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1595838540317">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
     </state>
+    <state x="-581" y="-1417" width="2560" height="1417" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595838540317" />
+    <state x="402" y="-1040" key="#com.intellij.ide.util.TreeClassChooserDialog" timestamp="1595838463431">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
+    </state>
+    <state x="402" y="-1040" key="#com.intellij.ide.util.TreeClassChooserDialog/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595838463431" />
+    <state x="-381" y="-1224" width="2160" height="1031" key="DiffContextDialog" timestamp="1595838306646">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
+    </state>
+    <state x="-381" y="-1224" width="2160" height="1031" key="DiffContextDialog/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595838306646" />
     <state x="100" y="123" width="1080" height="533" key="DiffContextDialog/0.23.1280.733/-581.-1417.2560.1417@0.23.1280.733" timestamp="1595385769931" />
-    <state width="1238" height="183" key="GridCell.Tab.0.bottom" timestamp="1595317300951">
-      <screen x="0" y="23" width="1280" height="733" />
+    <state width="2486" height="441" key="GridCell.Tab.0.bottom" timestamp="1595840439042">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
     </state>
+    <state width="2486" height="441" key="GridCell.Tab.0.bottom/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595840439042" />
     <state width="1238" height="183" key="GridCell.Tab.0.bottom/0.23.1280.733/-581.-1417.2560.1417@0.23.1280.733" timestamp="1595317300951" />
-    <state width="1238" height="183" key="GridCell.Tab.0.center" timestamp="1595317300950">
-      <screen x="0" y="23" width="1280" height="733" />
+    <state width="2486" height="441" key="GridCell.Tab.0.center" timestamp="1595840439042">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
     </state>
+    <state width="2486" height="441" key="GridCell.Tab.0.center/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595840439042" />
     <state width="1238" height="183" key="GridCell.Tab.0.center/0.23.1280.733/-581.-1417.2560.1417@0.23.1280.733" timestamp="1595317300950" />
-    <state width="1238" height="183" key="GridCell.Tab.0.left" timestamp="1595317300950">
-      <screen x="0" y="23" width="1280" height="733" />
+    <state width="2486" height="441" key="GridCell.Tab.0.left" timestamp="1595840439041">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
     </state>
+    <state width="2486" height="441" key="GridCell.Tab.0.left/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595840439041" />
     <state width="1238" height="183" key="GridCell.Tab.0.left/0.23.1280.733/-581.-1417.2560.1417@0.23.1280.733" timestamp="1595317300950" />
-    <state width="1238" height="183" key="GridCell.Tab.0.right" timestamp="1595317300951">
-      <screen x="0" y="23" width="1280" height="733" />
+    <state width="2486" height="441" key="GridCell.Tab.0.right" timestamp="1595840439042">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
     </state>
+    <state width="2486" height="441" key="GridCell.Tab.0.right/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595840439042" />
     <state width="1238" height="183" key="GridCell.Tab.0.right/0.23.1280.733/-581.-1417.2560.1417@0.23.1280.733" timestamp="1595317300951" />
+    <state width="2486" height="441" key="GridCell.Tab.1.bottom" timestamp="1595840439045">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
+    </state>
+    <state width="2486" height="441" key="GridCell.Tab.1.bottom/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595840439045" />
+    <state width="2486" height="441" key="GridCell.Tab.1.center" timestamp="1595840439044">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
+    </state>
+    <state width="2486" height="441" key="GridCell.Tab.1.center/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595840439044" />
+    <state width="2486" height="441" key="GridCell.Tab.1.left" timestamp="1595840439043">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
+    </state>
+    <state width="2486" height="441" key="GridCell.Tab.1.left/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595840439043" />
+    <state width="2486" height="441" key="GridCell.Tab.1.right" timestamp="1595840439045">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
+    </state>
+    <state width="2486" height="441" key="GridCell.Tab.1.right/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595840439045" />
     <state x="-581" y="-1417" width="2560" height="1373" key="MergeDialog" timestamp="1595384869361">
       <screen x="-581" y="-1417" width="2560" height="1417" />
     </state>
@@ -656,9 +197,22 @@
       <screen x="0" y="23" width="1280" height="733" />
     </state>
     <state x="0" y="23" width="1280" height="733" key="MultipleFileMergeDialog/0.23.1280.733/-581.-1417.2560.1417@0.23.1280.733" timestamp="1595386548747" />
-    <state x="119" y="130" key="VcsDiffUtil.ChangesDialog" timestamp="1595387573332">
-      <screen x="0" y="23" width="1280" height="733" />
+    <state x="-581" y="-1417" width="2560" height="1417" key="SettingsEditor" timestamp="1595838917060">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
     </state>
+    <state x="-581" y="-1417" width="2560" height="1417" key="SettingsEditor/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595838917060" />
+    <state x="-343" y="-1210" key="VcsDiffUtil.ChangesDialog" timestamp="1595838278483">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
+    </state>
+    <state x="-343" y="-1210" key="VcsDiffUtil.ChangesDialog/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595838278483" />
     <state x="119" y="130" key="VcsDiffUtil.ChangesDialog/0.23.1280.733/-581.-1417.2560.1417@0.23.1280.733" timestamp="1595387573332" />
+    <state x="112" y="-396" key="run.anything.popup" timestamp="1595838864304">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
+    </state>
+    <state x="112" y="-396" key="run.anything.popup/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595838864304" />
+    <state x="112" y="-1417" width="1173" height="1972" key="search.everywhere.popup" timestamp="1595839667691">
+      <screen x="-581" y="-1417" width="2560" height="1417" />
+    </state>
+    <state x="112" y="-1417" width="1173" height="1972" key="search.everywhere.popup/0.23.1280.733/-581.-1417.2560.1417@-581.-1417.2560.1417" timestamp="1595839667691" />
   </component>
 </project>

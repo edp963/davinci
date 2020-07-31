@@ -105,7 +105,17 @@ public interface RelRoleDisplaySlideWidgetExtendMapper extends RelRoleDisplaySli
             "inner join display d on d.id = ds.display_id " +
             "where d.project_id = #{projectId} " +
             ") "})
-    int deleteByProjectId(@Param("projectId") Long projectId);
+    int deleteByProject(@Param("projectId") Long projectId);
+
+    @Delete({"delete rrdsw from rel_role_display_slide_widget rrdsw where rrdsw.role_id = #{roleId} and rrdsw.mem_display_slide_widget_id in " +
+        "( " +
+        "select mdsw.id " +
+        "from mem_display_slide_widget mdsw " +
+        "inner join display_slide ds on ds.id = mdsw.display_slide_id " +
+        "inner join display d on d.id = ds.display_id " +
+        "where d.project_id = #{projectId} " +
+        ") "})
+    int deleteByRoleAndProject(Long roleId, Long projectId);
 
     @Insert({
     	"<script>",

@@ -2,15 +2,14 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/davinci.iml" filepath="$PROJECT_DIR$/.idea/davinci.iml" />
       <module fileurl="file://$PROJECT_DIR$/assembly/davinci-assembly.iml" filepath="$PROJECT_DIR$/assembly/davinci-assembly.iml" />
       <module fileurl="file://$PROJECT_DIR$/auth/davinci-auth.iml" filepath="$PROJECT_DIR$/auth/davinci-auth.iml" />
       <module fileurl="file://$PROJECT_DIR$/commons/davinci-commons.iml" filepath="$PROJECT_DIR$/commons/davinci-commons.iml" />
       <module fileurl="file://$PROJECT_DIR$/core/davinci-core.iml" filepath="$PROJECT_DIR$/core/davinci-core.iml" />
       <module fileurl="file://$PROJECT_DIR$/data/davinci-data.iml" filepath="$PROJECT_DIR$/data/davinci-data.iml" />
       <module fileurl="file://$PROJECT_DIR$/manager/davinci-manager.iml" filepath="$PROJECT_DIR$/manager/davinci-manager.iml" />
-      <module fileurl="file://$PROJECT_DIR$/davinci-parent.iml" filepath="$PROJECT_DIR$/davinci-parent.iml" />
       <module fileurl="file://$PROJECT_DIR$/server/davinci-server.iml" filepath="$PROJECT_DIR$/server/davinci-server.iml" />
-      <module fileurl="file://$PROJECT_DIR$/server/server.iml" filepath="$PROJECT_DIR$/server/server.iml" />
     </modules>
   </component>
 </project>

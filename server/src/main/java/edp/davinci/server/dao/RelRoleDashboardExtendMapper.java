@@ -130,5 +130,12 @@ public interface RelRoleDashboardExtendMapper extends RelRoleDashboardMapper {
             "select d.id from dashboard d left join dashboard_portal p on p.id = d.dashboard_portal_id ",
             "where p.project_id = #{projectId})"
     })
-    int deleteByProjectId(Long projectId);
+	int deleteByProject(Long projectId);
+	
+	@Delete({
+		"delete from rel_role_dashboard where role_id = #{roleId} and dashboard_id in (",
+		"select d.id from dashboard d left join dashboard_portal p on p.id = d.dashboard_portal_id ",
+		"where p.project_id = #{projectId})"
+    })
+    int deleteByRoleAndProject(Long roleId, Long projectId);
 }
