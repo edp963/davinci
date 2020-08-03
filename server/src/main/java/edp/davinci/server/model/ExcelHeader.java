@@ -19,17 +19,64 @@
 
 package edp.davinci.server.model;
 
-import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import edp.davinci.commons.util.JSONUtils;
 import lombok.Data;
 import lombok.ToString;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 @Data
 @ToString
 public class ExcelHeader {
+
+    public static class FormatDeserialize extends JsonDeserializer<Object> {
+
+        @Override
+        public Object deserialize(JsonParser p, DeserializationContext ctxt)
+                throws IOException, JsonProcessingException {
+            Object value = p.readValueAs(Object.class);
+            FieldFormat format = new FieldFormat();
+            if (!(value instanceof Map)) {
+                format.setFormatType("default");
+                return format;
+            }
+
+            Map<String, Object> map = (Map) value;
+            String formatType = (String) map.get("formatType");
+            if (StringUtils.isEmpty(formatType)) {
+                formatType = "default";
+            }
+            format.setFormatType(formatType);
+            Map formatMap = (Map) map.get(formatType);
+            switch (formatType) {
+                case "numeric":
+                    format = JSONUtils.toObject(formatMap, FieldNumeric.class);
+                    break;
+                case "currency":
+                    format = JSONUtils.toObject(formatMap, FieldCurrency.class);
+                    break;
+                case "percentage":
+                    format = JSONUtils.toObject(formatMap, FieldPercentage.class);
+                    break;
+                case "scientificNotation":
+                    format = JSONUtils.toObject(formatMap, FieldScientificNotation.class);
+                    break;
+                default:
+                    break;
+            }
+            return format;
+        }
+    }
+
     private String key;
     private String alias;
     private String type;
@@ -40,6 +87,8 @@ public class ExcelHeader {
     private int colspan;
     private int[] range;
     private List style;
+
+    @JsonDeserialize(using = FormatDeserialize.class)
     private FieldFormat format;
 
     public void setKey(String key) {
@@ -81,33 +130,4 @@ public class ExcelHeader {
     public void setStyle(List<String> style) {
         this.style = style;
     }
-
-    public void setFormat(String formatStr) {
-        Map<String, Object> map = JSONObject.parseObject(formatStr, Map.class);
-        String formatType = (String)map.get("formatType");
-        if(StringUtils.isEmpty(formatType)) {
-            formatType = "default";
-        }
-        JSONObject formatObj = (JSONObject)map.get(formatType);
-
-        switch (formatType) {
-            case "numeric":
-                this.format = JSONObject.toJavaObject(formatObj, FieldNumeric.class);
-                break;
-            case "currency":
-                this.format = JSONObject.toJavaObject(formatObj, FieldCurrency.class);
-                break;
-            case "percentage":
-                this.format = JSONObject.toJavaObject(formatObj, FieldPercentage.class);
-                break;
-            case "scientificNotation":
-                this.format = JSONObject.toJavaObject(formatObj, FieldScientificNotation.class);
-                break;
-            default:
-                this.format = new FieldCustom();
-                this.format.setFormatType("default");
-                break;
-        }
-    }
-
 }

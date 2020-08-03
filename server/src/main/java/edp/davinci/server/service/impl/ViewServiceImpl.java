@@ -752,16 +752,16 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         }
     }
 
-    private String getCacheKey(Source source, String sql, WidgetQueryParam executeParam) {
+    private String getCacheKey(Source source, String sql, WidgetQueryParam queryParam) {
         String md5 = MD5Utils.getMD5(sql, true, 16);
-        return "CACHE:" + source.getId() + AT_SIGN + md5 + AT_SIGN + executeParam.getPageNo() + AT_SIGN
-                + executeParam.getPageSize() + AT_SIGN + executeParam.getLimit();
+        return "CACHE:" + source.getId() + AT_SIGN + md5 + AT_SIGN + queryParam.getPageNo() + AT_SIGN
+                + queryParam.getPageSize() + AT_SIGN + queryParam.getLimit();
     }
 
-    private String getConcurrencyKey(Source source, String sql, WidgetQueryParam executeParam) {
+    private String getConcurrencyKey(Source source, String sql, WidgetQueryParam queryParam) {
         String md5 = MD5Utils.getMD5(sql, true, 16);
-        return "CONCURRENCY:" + source.getId() + AT_SIGN + md5 + AT_SIGN + executeParam.getPageNo() + AT_SIGN
-                + executeParam.getPageSize() + AT_SIGN + executeParam.getLimit();
+        return "CONCURRENCY:" + source.getId() + AT_SIGN + md5 + AT_SIGN + queryParam.getPageNo() + AT_SIGN
+                + queryParam.getPageSize() + AT_SIGN + queryParam.getLimit();
     }
 
     private PagingWithQueryColumns getPagingDataByCache(String key) {
@@ -795,7 +795,14 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
     /**
-     * @param statement the query statement with out auth var
+     *
+     * @param statement
+     * @param queryParam
+     * @param authParams
+     * @param excludeColumns
+     * @param viewWithSource
+     * @param user
+     * @return
      */
     private PagingWithQueryColumns getPagingDataByAggregator(String statement, SqlQueryParam queryParam,
             Map<String, List<String>> authParams, Set<String> excludeColumns, ViewWithSource viewWithSource,
@@ -891,15 +898,15 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      *
      * @param isMaintainer
      * @param viewWithSource
-     * @param executeParam
+     * @param queryParam
      * @param user
      * @return
      * @throws ServerException
      */
     @Override
     public PagingWithQueryColumns getDataWithQueryColumns(boolean isMaintainer, ViewWithSource viewWithSource,
-            WidgetQueryParam executeParam, User user) throws ServerException {
-        return getPagingData(isMaintainer, viewWithSource, executeParam, user);
+            WidgetQueryParam queryParam, User user) throws ServerException {
+        return getPagingData(isMaintainer, viewWithSource, queryParam, user);
     }
 
     @Override
@@ -1012,9 +1019,9 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
     @Override
-    public PagingWithQueryColumns getDataWithQueryColumns(Long id, WidgetQueryParam executeParam, User user)
+    public PagingWithQueryColumns getDataWithQueryColumns(Long id, WidgetQueryParam queryParam, User user)
             throws NotFoundException, UnAuthorizedExecption, ServerException {
-        return (PagingWithQueryColumns) getData(id, executeParam, user);
+        return (PagingWithQueryColumns) getData(id, queryParam, user);
     }
 
     @Override

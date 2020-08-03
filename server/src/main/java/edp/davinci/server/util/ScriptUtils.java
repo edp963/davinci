@@ -19,37 +19,13 @@
 
 package edp.davinci.server.util;
 
-import static edp.davinci.commons.Constants.EMPTY;
-import static edp.davinci.server.commons.Constants.EXCEL_FORMAT_TYPE_KEY;
-
-import java.io.InputStreamReader;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import edp.davinci.commons.util.JSONUtils;
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.data.pojo.Aggregator;
-import edp.davinci.data.pojo.Order;
 import edp.davinci.data.pojo.Param;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.view.WidgetQueryParam;
-import edp.davinci.server.enums.FieldFormatTypeEnum;
-import edp.davinci.server.enums.NumericUnitEnum;
 import edp.davinci.server.model.ExcelHeader;
-import edp.davinci.server.model.FieldCurrency;
-import edp.davinci.server.model.FieldCustom;
-import edp.davinci.server.model.FieldDate;
-import edp.davinci.server.model.FieldNumeric;
-import edp.davinci.server.model.FieldPercentage;
-import edp.davinci.server.model.FieldScientificNotation;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;

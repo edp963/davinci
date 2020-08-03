@@ -676,7 +676,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	/**
 	 * 向redis发布reconnect消息
 	 * 
-	 * @param id
+	 * @param message
 	 */
 	private void publishReconnect(String message) {
 
@@ -689,16 +689,16 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	/**
 	 * csv数据源建表
 	 *
-	 * @param fileds
+	 * @param fields
 	 * @param sourceDataUpload
 	 * @param source
 	 * @throws ServerException
 	 */
-	private void createTable(List<QueryColumn> fileds, SourceDataUpload sourceDataUpload, Source source, User user)
+	private void createTable(List<QueryColumn> fields, SourceDataUpload sourceDataUpload, Source source, User user)
 			throws ServerException {
 
-		if (CollectionUtils.isEmpty(fileds)) {
-			throw new ServerException("There is have not any fileds");
+		if (CollectionUtils.isEmpty(fields)) {
+			throw new ServerException("There is have not any fields");
 		}
 
 		STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
@@ -708,7 +708,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		if (sourceDataUpload.getMode() == UploadModeEnum.REPLACE.getMode()) {
 			ST st = stg.getInstanceOf("create");
 			st.add("tableName", sourceDataUpload.getTableName());
-			st.add("fields", fileds);
+			st.add("fields", fields);
 			st.add("primaryKeys", StringUtils.isEmpty(sourceDataUpload.getPrimaryKeys()) ? null
 					: sourceDataUpload.getPrimaryKeys().split(","));
 			st.add("indexKeys", sourceDataUpload.getIndexList());
@@ -723,7 +723,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 				if (!tableIsExist) {
 					ST st = stg.getInstanceOf("create");
 					st.add("tableName", sourceDataUpload.getTableName());
-					st.add("fields", fileds);
+					st.add("fields", fields);
 					st.add("primaryKeys", sourceDataUpload.getPrimaryKeys());
 					st.add("indexKeys", sourceDataUpload.getIndexList());
 					sql = st.render();

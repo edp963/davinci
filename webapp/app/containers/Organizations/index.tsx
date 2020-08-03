@@ -103,7 +103,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps & Rou
         <div className={styles.groupList} key={org.id} onClick={this.toOrganization(org)}>
           <div className={styles.orgHeader}>
             <div className={styles.avatar}>
-              <Avatar path={org.avatar} enlarge={false} size="small"/>
+              <Avatar path={org.avatar} enlarge={false} border size="small"/>
               <div className={styles.name}>
                 <div className={styles.title}>
                   {org.name}

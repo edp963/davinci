@@ -27,7 +27,6 @@ interface ICommonTransferProps {
   onGroupChange?: (targets) => any
   dataSource?: any[]
   optionTitle: (item) => any
-  filterOption: (inputValut: string, option: any) => any
   adminTargetKeys: any[]
   targetKeys: any[]
   setTargetKeys: (newTargetKeys: any) => any
@@ -83,7 +82,6 @@ export class CommonTransfer extends React.PureComponent<ICommonTransferProps & F
               listStyle={{width: '210px'}}
               rowKey={this.props.rowKeys}
               dataSource={this.state.dataSource}
-              filterOption={this.props.filterOption}
               targetKeys={this.props.targetKeys}
               onChange={this.handleChange}
              // onSearch={this.handleSearch}
@@ -97,9 +95,3 @@ export class CommonTransfer extends React.PureComponent<ICommonTransferProps & F
 
 
 export default Form.create<ICommonTransferProps & FormComponentProps>()(CommonTransfer)
-
-
-
-
-
-

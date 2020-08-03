@@ -63,6 +63,6 @@ public class SheetContext implements Serializable {
     private Logger customLogger;
     private String queryModel;
     private Long viewId;
-    private WidgetQueryParam executeParam;
+    private WidgetQueryParam queryParam;
     private User user;
 }

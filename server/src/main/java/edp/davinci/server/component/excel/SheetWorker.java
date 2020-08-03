@@ -34,6 +34,7 @@ import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.model.PagingWithQueryColumns;
 import edp.davinci.server.service.ViewService;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
 /**
  * Created by IntelliJ IDEA.
@@ -56,41 +57,42 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
 
         Boolean rst = true;
         Stopwatch watch = Stopwatch.createStarted();
+        boolean log = sheetContext.getCustomLogger() != null;
+        Logger logger = sheetContext.getCustomLogger();
         final AtomicInteger count = new AtomicInteger(0);
         try {
             PagingWithQueryColumns paging = ((ViewService) SpringContextHolder.getBean(ViewService.class))
-                    .getDataWithQueryColumns(sheetContext.getViewId(), sheetContext.getExecuteParam(),
+                    .getDataWithQueryColumns(sheetContext.getViewId(), sheetContext.getQueryParam(),
                             sheetContext.getUser());
+            if (log) {
+                logger.info(
+                        "Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) finish query, count:{}",
+                        sheetContext.getTaskKey(), sheetContext.getName(), sheetContext.getSheetNo(),
+                        sheetContext.getSheet().getSheetName(), count.get());
+            }
+
             List<Map<String, Object>> resultList = paging.getResultList();
             sheetContext.setQueryColumns(paging.getColumns());
             super.init(sheetContext);
             super.writeHeader(sheetContext);
-
             resultList.forEach(row -> {
                 writeLine(sheetContext, row);
                 count.incrementAndGet();
             });
-            
-            if (sheetContext.getCustomLogger() != null) {
-                sheetContext.getCustomLogger().info(
-                        "Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) finish query count:{}",
-                        sheetContext.getTaskKey(), sheetContext.getName(), sheetContext.getSheetNo(),
-                        sheetContext.getSheet().getSheetName(), count.get());
-            }
             super.refreshHeightWidth(sheetContext);
+
         } catch (Exception e) {
             if (sheetContext.getWrapper().getAction() == ActionEnum.MAIL) {
                 MsgMailExcel msg = (MsgMailExcel) sheetContext.getWrapper().getMsg();
                 msg.setDate(new Date());
                 msg.setException(e);
             }
-            if (sheetContext.getCustomLogger() != null) {
-                sheetContext.getCustomLogger().error(
-                        "Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) error, error={}",
+            if (log) {
+                logger.error(
+                        "Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) error",
                         sheetContext.getTaskKey(), sheetContext.getName(), sheetContext.getSheetNo(),
                         sheetContext.getSheet().getSheetName(), e.getMessage());
             }
-            log.error(e.getMessage(), e);
             rst = false;
         }
 
@@ -98,8 +100,8 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
                 sheetContext.getWrapper().getXId(), sheetContext.getWrapper().getXUUID(), sheetContext.getSheetNo(),
                 sheetContext.getSheet().getSheetName(), sheetContext.getDashboardId(), sheetContext.getWidgetId(),
                 watch.elapsed(TimeUnit.MILLISECONDS) };
-        if (sheetContext.getCustomLogger() != null) {
-            sheetContext.getCustomLogger().info(
+        if (log) {
+            logger.info(
                     "Task({}) sheet worker({}) complete status={}, action={}, xid={}, xUUID={}, sheetNo={}, sheetName={}, dashboardId={}, widgetId={}, cost={}ms",
                     args);
         }

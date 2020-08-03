@@ -216,13 +216,6 @@ export class MemberList extends React.PureComponent<
     this.ChangeRoleForm.props.form.resetFields()
   }
 
-  private toUserProfile = (obj) => () => {
-    const { id } = obj
-    if (id) {
-      this.props.toThatUserProfile(`account/profile/${id}`)
-    }
-  }
-
   private getContent(record: IMembers) {
     const { id } = record
     const { currentMemberId, organizationMembers } = this.state
@@ -298,10 +291,9 @@ export class MemberList extends React.PureComponent<
         key: 'user',
         render: (text) => (
           <div className={styles.avatarWrapper}>
-            <Avatar path={text.avatar} size="small" enlarge={true} />
+            <Avatar path={text.avatar} size="small" border enlarge={true} />
             <span
               className={styles.avatarName}
-              onClick={this.toUserProfile(text)}
             >
               {text.username}
             </span>
@@ -372,6 +364,7 @@ export class MemberList extends React.PureComponent<
           <div className={styles.tableWrap}>
             <Table
               bordered
+              rowKey="id"
               columns={columns}
               dataSource={organizationMembers}
               pagination={pagination}
