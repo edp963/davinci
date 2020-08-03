@@ -2,10 +2,12 @@ package edp.davinci.core.enums;
 
 public enum CronJobStepEnum {
 	MAIL_1_PARSE_CONFIG(1, "parse config"),
-	MAIL_2_GENERATE_SHARE_IMAGES(2, "generate share images"),
-	MAIL_3_SCREEN_SHOT(3,"screen shot"),
-	MAIL_4_GENERATE_SHARE_EXCEL(4,"generate share excel"),
-	MAIL_5_SEND_MAIL(5,"send mail"),
+	MAIL_WECHAT_2_GENERATE_VIZ(2, "generate viz"),
+	MAIL_WECHAT_3_SCREEN_SHOT(3,"screen shot"),
+	MAIL_4_GENERATE_EXCEL(4,"generate excel"),
+	MAIL_5_SEND(5,"send mail"),
+	WECHAT_1_PARSE_CONFIG(1, "parse config"),
+	WECHAT_4_SEND(4,"send wechat")
 	; {
 
 	}

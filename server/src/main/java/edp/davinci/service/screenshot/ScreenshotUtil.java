@@ -84,8 +84,6 @@ public class ScreenshotUtil {
 
 	public void screenshot(long jobId, List<ImageContent> imageContents, Integer imageWidth, CronJobTrack cronJobTrack) {
     	scheduleLogger.info("Start screenshot for job({})", jobId);
-		CronJobTrackUtils.getBuilder().appendParam("total", imageContents.size())
-				.info(cronJobTrack, CronJobStepEnum.MAIL_3_SCREEN_SHOT, "Cronjob start screenshot");
         try {
         	int contentsSize = imageContents.size();
             List<Future> futures = new ArrayList<>(contentsSize);
@@ -100,7 +98,7 @@ public class ScreenshotUtil {
                 	scheduleLogger.error(e.getMessage(), e);
 	                CronJobTrackUtils.getBuilder().appendParam("url", content.getUrl())
 			                .appendParam("error", e.toString())
-			                .error(cronJobTrack, CronJobStepEnum.MAIL_3_SCREEN_SHOT, "Cronjob screenshot error");
+			                .error(cronJobTrack, CronJobStepEnum.MAIL_WECHAT_3_SCREEN_SHOT, "screenshot error");
                 } finally {
                     scheduleLogger.info("Cronjob({}) thread({}) for screenshot finish, type:{}, id:{}, total:{}", jobId, index.get(), content.getDesc(), content.getCId(), contentsSize);
                     index.incrementAndGet();
@@ -111,17 +109,16 @@ public class ScreenshotUtil {
                 for (Future future : futures) {
                     future.get();
                 }
+	            CronJobTrackUtils.info(cronJobTrack, CronJobStepEnum.MAIL_WECHAT_3_SCREEN_SHOT, "screenshot is finish");
             } catch (ExecutionException e) {
             	scheduleLogger.error(e.getMessage(), e);
             }
 
             imageContents.sort(Comparator.comparing(ImageContent::getOrder));
-
         } catch (InterruptedException e) {
         	scheduleLogger.error(e.getMessage(), e);
         } finally {
         	scheduleLogger.info("Cronjob({}) finish screenshot", jobId);
-	        CronJobTrackUtils.info(cronJobTrack, CronJobStepEnum.MAIL_3_SCREEN_SHOT,"CronJob screenshot is finish");
         }
     }
 
@@ -166,7 +163,7 @@ public class ScreenshotUtil {
         	scheduleLogger.error(te.getMessage(), te);
 	        CronJobTrackUtils.getBuilder().appendParam("url", url)
 			        .appendParam("error", te.toString())
-			        .error(cronJobTrack, CronJobStepEnum.MAIL_3_SCREEN_SHOT, "Cronjob screenshot error");
+			        .error(cronJobTrack, CronJobStepEnum.MAIL_WECHAT_3_SCREEN_SHOT, "screenshot error");
         } catch (InterruptedException e) {
             LogEntries logEntries= driver.manage().logs().get(LogType.BROWSER);
             for (LogEntry entry : logEntries) {
@@ -175,7 +172,7 @@ public class ScreenshotUtil {
         	scheduleLogger.error(e.getMessage(), e);
 	        CronJobTrackUtils.getBuilder().appendParam("url", url)
 			        .appendParam("error", e.toString())
-			        .error(cronJobTrack, CronJobStepEnum.MAIL_3_SCREEN_SHOT, "Cronjob screenshot error");
+			        .error(cronJobTrack, CronJobStepEnum.MAIL_WECHAT_3_SCREEN_SHOT, "screenshot error");
         } finally {
 	        scheduleLogger.info("Cronjob({}) finish screenshot for url({}) ", jobId, url);
             driver.quit();

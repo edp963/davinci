@@ -13,7 +13,9 @@ import java.util.Map;
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 
+import edp.core.exception.ServerException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -49,10 +51,10 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
     @Override
     public void execute(long jobId) throws Exception {
         CronJob cronJob = cronJobMapper.getById(jobId);
-	    CronJobTrack cronJobTrack = new CronJobTrack(cronJob.getId(), cronJob.getName(), cronJob.getJobType());
+	    CronJobTrack cronJobTrack = new CronJobTrack(cronJob);
         if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
             scheduleLogger.error("CronJob({}) config is empty", jobId);
-	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_1_PARSE_CONFIG, "config is empty");
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.WECHAT_1_PARSE_CONFIG, "config is empty");
             return;
         }
         cronJobMapper.updateExecLog(jobId, "");
@@ -61,15 +63,19 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
             cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
         } catch (Exception e) {
             scheduleLogger.error("Cronjob({}) parse config({}) error:{}", jobId, cronJob.getConfig(), e.getMessage());
+	        CronJobTrackUtils.getBuilder().appendParam("config", cronJob.getConfig()).appendParam("error", e.toString())
+			        .error(cronJobTrack, CronJobStepEnum.WECHAT_1_PARSE_CONFIG, "parse config error");
             return;
         }
 
         if (StringUtils.isEmpty(cronJobConfig.getType())) {
             scheduleLogger.error("Cronjob({}) config type is empty", jobId);
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.WECHAT_1_PARSE_CONFIG, "config type is empty");
             return;
         }
 
         scheduleLogger.info("CronJob({}) is start! --------------", jobId);
+	    CronJobTrackUtils.info(cronJobTrack, CronJobStepEnum.WECHAT_1_PARSE_CONFIG, "parse config is finish");
 
         List<ImageContent> images = null;
         User creater = userMapper.getById(cronJob.getCreateBy());
@@ -80,6 +86,7 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
 
         if (CollectionUtils.isEmpty(images)) {
             scheduleLogger.warn("CronJob({}) image is empty", jobId);
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.WECHAT_4_SEND, "wechat send content is empty");
             return;
         }
 
@@ -115,12 +122,20 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
             imageMap.put("md5", mbMap.get("md5"));
             weChatWorkMap.put("image", imageMap);
 
-            restTemplate.postForEntity(url, weChatWorkMap, null).toString();
-
+	        try {
+		        ResponseEntity responseEntity =restTemplate.postForEntity(url, weChatWorkMap, null);
+		        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+			        throw new ServerException("request wechat api fail");
+		        }
+	        } catch (Exception e) {
+		        CronJobTrackUtils.getBuilder().appendParam("errro", e.toString())
+				        .error(cronJobTrack, CronJobStepEnum.WECHAT_4_SEND, "wechat send fail");
+		        throw e;
+	        }
             scheduleLogger.info("CronJob({}) is success to request WeChatWork API", cronJob.getId());
         }
-
         scheduleLogger.info("CronJob({}) is finish! --------------", jobId);
+	    CronJobTrackUtils.info(cronJobTrack, CronJobStepEnum.WECHAT_4_SEND, "CronJob is finish!");
     }
 
     /**

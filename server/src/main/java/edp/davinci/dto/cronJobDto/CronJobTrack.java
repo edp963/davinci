@@ -1,6 +1,7 @@
 package edp.davinci.dto.cronJobDto;
 
 import edp.davinci.common.utils.CronJobTrackUtils;
+import edp.davinci.model.CronJob;
 import lombok.Data;
 
 /**
@@ -15,10 +16,10 @@ public class CronJobTrack {
 	private String name;
 	private String jobType;
 
-	public CronJobTrack(Long cronJobId, String name, String jobType) {
-		this.cronJobId = cronJobId;
+	public CronJobTrack(CronJob cronJob) {
+		this.cronJobId = cronJob.getId();
 		this.batchId = CronJobTrackUtils.generateBatchId(cronJobId);
-		this.name = name;
-		this.jobType = jobType;
+		this.name = cronJob.getName();
+		this.jobType = cronJob.getJobType();
 	}
 }

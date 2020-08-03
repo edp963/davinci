@@ -73,7 +73,7 @@ public class BaseScheduleService {
 
         if (CollectionUtils.isEmpty(jobContentList)) {
             scheduleLogger.warn("CronJob({}) share entity is empty", jobId);
-	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_2_GENERATE_SHARE_IMAGES,"CronJob share image is empty");
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_WECHAT_2_GENERATE_VIZ,"share viz is empty");
             return null;
         }
 
@@ -111,11 +111,12 @@ public class BaseScheduleService {
             }
         }
 
-	    CronJobTrackUtils.getBuilder().appendParam("count", imageContents.size())
-			    .info(cronJobTrack, CronJobStepEnum.MAIL_2_GENERATE_SHARE_IMAGES,"CronJob generate share images is finish");
-
         if (!CollectionUtils.isEmpty(imageContents)) {
+	        CronJobTrackUtils.getBuilder().appendParam("count", imageContents.size())
+			        .info(cronJobTrack, CronJobStepEnum.MAIL_WECHAT_2_GENERATE_VIZ,"generate share viz is finish");
             screenshotUtil.screenshot(jobId, imageContents, cronJobConfig.getImageWidth(),cronJobTrack);
+        }else{
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_WECHAT_2_GENERATE_VIZ,"share viz is empty");
         }
 
         scheduleLogger.info("CronJob({}) fetched images contents, count:{}", jobId, imageContents.size());
