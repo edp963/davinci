@@ -56,7 +56,8 @@ const LayerDraggable: React.FC = (props) => {
   const drag: DraggableEventHandler = useCallback(
     (e, { deltaX, deltaY }) => {
       e.stopPropagation()
-      onDrag(layerId, adjustDelta(deltaX, deltaY))
+      const eventTrigger = e.type
+      onDrag(layerId, adjustDelta(deltaX, deltaY), eventTrigger)
     },
     [layerId, onDrag]
   )
@@ -64,7 +65,8 @@ const LayerDraggable: React.FC = (props) => {
   const stop: DraggableEventHandler = useCallback(
     (e, { deltaX, deltaY }) => {
       e.stopPropagation()
-      onDrag(layerId, adjustDelta(deltaX, deltaY), true)
+      const eventTrigger = e.type
+      onDrag(layerId, adjustDelta(deltaX, deltaY), eventTrigger, true)
     },
     [layerId, onDrag]
   )

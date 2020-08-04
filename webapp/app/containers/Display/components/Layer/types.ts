@@ -66,6 +66,7 @@ export type LayerListContextValue = {
   onDrag?: (
     layerId: number,
     deltaPosition: DeltaPosition,
+    eventTrigger: string,
     finish?: boolean
   ) => void
   onResize?: (layerId: number, deltaSize: DeltaSize, finish?: boolean) => void

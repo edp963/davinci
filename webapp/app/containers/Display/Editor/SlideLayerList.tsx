@@ -77,15 +77,16 @@ const SlideLayerList: React.FC = (props) => {
   )
 
   const onDrag = useCallback(
-    (layerId, deltaPosition: DeltaPosition, finish = false) => {
+    (layerId, deltaPosition: DeltaPosition, eventTrigger, finish = false) => {
       if (deltaPosition.deltaX == null && deltaPosition.deltaY == null) {
         return
       }
       dispatch(
-        DisplayActions.dragLayerIndependence(
+        DisplayActions.dragLayer(
           pick(slideParams, 'width', 'height'),
           scale[0],
           deltaPosition,
+          eventTrigger,
           finish,
           layerId
         )
