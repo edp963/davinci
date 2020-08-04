@@ -34,3 +34,4 @@ userfiles/
 bin/upgrade.go
 bin/upgrade
 .history/
+/davinci-ui/
