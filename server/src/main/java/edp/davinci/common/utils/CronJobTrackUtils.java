@@ -29,7 +29,7 @@ public class CronJobTrackUtils {
 
 	private static boolean isEnable;
 
-	@Value("${log_collect.enable:false}")
+	@Value("${statistic.cronjob_log_enable:false}")
 	public void setEnable(boolean enable) {
 		isEnable = enable;
 	}
