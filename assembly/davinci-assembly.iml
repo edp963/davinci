@@ -80,7 +80,7 @@
     <orderEntry type="library" name="Maven: javax.activation:activation:1.1" level="project" />
     <orderEntry type="library" name="Maven: com.github.stephenc.jcip:jcip-annotations:1.0-1" level="project" />
     <orderEntry type="library" name="Maven: com.nimbusds:lang-tag:1.5" level="project" />
-    <orderEntry type="library" name="Maven: com.nimbusds:nimbus-jose-jwt:8.19" level="project" />
+    <orderEntry type="library" name="Maven: com.nimbusds:nimbus-jose-jwt:8.20" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.security:spring-security-core:5.2.2.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.security:spring-security-oauth2-core:5.2.2.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework:spring-context-support:5.2.5.RELEASE" level="project" />
