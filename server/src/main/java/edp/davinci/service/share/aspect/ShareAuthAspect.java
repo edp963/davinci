@@ -114,6 +114,9 @@ public class ShareAuthAspect {
         for (Object arg : args) {
             if (arg instanceof User) {
                 user = (User) arg;
+                if (user.getId() == null || user.getId() < 1L) {
+                    user = null;
+                }
             }
         }
 

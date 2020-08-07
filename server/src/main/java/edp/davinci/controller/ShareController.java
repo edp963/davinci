@@ -77,11 +77,11 @@ public class ShareController extends BaseController {
     @ApiOperation(value = "get share permission")
     @AuthShare(type = ShareType.PERMISSION, operation = ShareOperation.PERMISSION)
     @GetMapping(value = "/permissions/{token}")
-    public ResponseEntity preFlight(@PathVariable(name = "token") String token,
-                                    @RequestParam(required = false) String password,
-                                    @RequestParam String type,
-                                    @ApiIgnore User user,
-                                    HttpServletRequest request) {
+    public ResponseEntity permission(@PathVariable(name = "token") String token,
+                                     @RequestParam(required = false) String password,
+                                     @RequestParam String type,
+                                     @ApiIgnore @CurrentUser User user,
+                                     HttpServletRequest request) {
         Map<String, Object> result = shareService.getSharePermissions();
         if (null == user || user.getId() == null) {
             return ResponseEntity.ok(new ResultMap().success().payload(result));
