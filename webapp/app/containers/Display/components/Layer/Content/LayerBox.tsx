@@ -18,7 +18,7 @@
  * >>
  */
 
-import React, { useContext, useMemo, useCallback, useState } from 'react'
+import React, { useContext, useMemo, useCallback, useState, memo } from 'react'
 import classnames from 'classnames'
 
 import { LayerListContext, LayerContext } from '../util'
@@ -150,4 +150,4 @@ const LayerBox: React.FC = (props) => {
   )
 }
 
-export default LayerBox
+export default memo(LayerBox)

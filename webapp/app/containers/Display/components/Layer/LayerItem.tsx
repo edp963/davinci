@@ -26,7 +26,7 @@ import LayerBox from './Content/LayerBox'
 // @TODO add contextmenu to Layer
 // import LayerContextMenu from './ContextMenu/LayerContextMenu'
 import LayerTool from './Content/LayerTool'
-import LayerTooltip from './Content/LayerTooltip'
+import LayerPositionTip from './Content/LayerPositionTip'
 import LayerCore from './LayerCore'
 
 const LayerItem: React.FC = () => (
@@ -35,9 +35,8 @@ const LayerItem: React.FC = () => (
     <LayerResizable>
       <LayerBox>
         <LayerTool />
-        <LayerTooltip>
-          <LayerCore />
-        </LayerTooltip>
+        <LayerPositionTip />
+        <LayerCore />
       </LayerBox>
     </LayerResizable>
   </LayerDraggable>

@@ -99,13 +99,14 @@ const SlideEditor: React.FC = (props) => {
     [displayId, slideId]
   )
   const changeLayersPosition = useCallback(
-    (deltaPosition: DeltaPosition, scale: number) => {
+    (deltaPosition: DeltaPosition, scale: number, eventTrigger: string) => {
       dispatch(
         DisplayActions.dragLayer(
           pick(slideParams, 'width', 'height'),
           scale,
           deltaPosition,
-          true
+          eventTrigger,
+          false
         )
       )
     },

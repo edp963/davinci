@@ -293,7 +293,7 @@ const displayReducer = (
           ].resizing = !action.payload.finish
         })
         break
-      case ActionTypes.DRAG_LAYER_ADJUSTED_INDEPENDENCE: {
+      case ActionTypes.DRAG_LAYER_ADJUSTED: {
         const {
           slideSize: { width: slideWidth, height: slideHeight },
           layerIds,
@@ -332,40 +332,6 @@ const displayReducer = (
         })
         break
       }
-      case ActionTypes.DRAG_LAYER_ADJUSTED:
-        const {
-          width: slideWidth,
-          height: slideHeight
-        } = action.payload.slideSize
-        const movingLayerIds = action.payload.layerIds
-        movingLayerIds.forEach((layerId) => {
-          if (!action.payload.finish) {
-            const layer = draft.slideLayers[draft.currentSlideId][layerId]
-            layer.params.positionX += action.payload.deltaPosition.deltaX
-            layer.params.positionY += action.payload.deltaPosition.deltaY
-            if (layer.params.positionX < 0) {
-              layer.params.positionX = 0
-            } else if (
-              layer.params.positionX + layer.params.width >
-              slideWidth
-            ) {
-              layer.params.positionX = slideWidth - layer.params.width
-            }
-            if (layer.params.positionY < 0) {
-              layer.params.positionY = 0
-            } else if (
-              layer.params.positionY + layer.params.height >
-              slideHeight
-            ) {
-              layer.params.positionY = slideHeight - layer.params.height
-            }
-          }
-
-          draft.slideLayersOperationInfo[draft.currentSlideId][
-            layerId
-          ].dragging = !action.payload.finish
-        })
-        break
 
       case ActionTypes.SELECT_LAYER:
         Object.entries(layersOperationInfo).forEach(
