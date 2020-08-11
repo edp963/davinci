@@ -18,7 +18,7 @@
  * >>
  */
 
-import { ActionTypes } from './constants'
+import { ActionTypes, DragTriggerTypes } from './constants'
 import { returnType } from 'utils/redux'
 
 import {
@@ -126,7 +126,7 @@ export const DisplayActions = {
     slideSize: Pick<ISlideParams, 'width' | 'height'>,
     scale: number,
     deltaPosition: DeltaPosition,
-    eventTrigger: string,
+    eventTrigger: DragTriggerTypes,
     finish: boolean,
     layerId?: number
   ) {
