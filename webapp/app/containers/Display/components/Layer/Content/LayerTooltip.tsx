@@ -19,13 +19,12 @@
  */
 
 import React, { useContext, useMemo } from 'react'
-import { Tooltip } from 'antd'
 
 import { LayerContext } from '../util'
 import { useSelector } from 'react-redux'
 import { makeSelectCurrentOperateItemParams } from 'app/containers/Display/selectors'
 
-const LayerTooltip: React.FC = (props) => {
+const LayerTooltip: React.FC = () => {
   const { operationInfo, layer } = useContext(LayerContext)
 
   const { resizing, dragging } = operationInfo
@@ -50,11 +49,7 @@ const LayerTooltip: React.FC = (props) => {
   } else if (dragging) {
     tooltip = `x：${positionX}px，y：${positionY}px`
   }
-  return (
-    <Tooltip title={tooltip} placement="right" visible={resizing || dragging}>
-      {props.children}
-    </Tooltip>
-  )
+  return <div className="display-slide-layer-tooltips">{tooltip}</div>
 }
 
 export default LayerTooltip

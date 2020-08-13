@@ -107,23 +107,21 @@
         &:hover &-tools {
           display: inline-block;
         }
-        &-position-tips {
+        &-tooltips {
           display: none;
           position: absolute;
-          top: 5px;
-          left: 5px;
+          top: -40px;
+          left: 0;
           z-index: 999998;
-          font-size: 16px;
+          font-size: 24px;
           color: #fff;
-          background-color: #000;
-          padding: 0 5px;
-          border-radius: 3px;
-          &:hover {
-            transform: scale(1.1, 1.1);
-          }
+          background-color: @black;
+          padding: 0 8px;
+          border-radius: 4px;
+          .ellipsis;
         }
-        &:hover &-position-tips {
-          display: inline-block;
+        &:hover &-tooltips {
+          display: block;
         }
       }
     }
