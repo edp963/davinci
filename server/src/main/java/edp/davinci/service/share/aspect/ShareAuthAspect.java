@@ -253,7 +253,7 @@ public class ShareAuthAspect {
                 shareFactor.setShareEntity(dashboard);
                 break;
             case DISPLAY:
-                Display display = displayService.getDisplay(shareFactor.getSharerId(), user);
+                Display display = displayService.getDisplay(shareFactor.getEntityId(), user);
                 shareFactor.setProjectDetail(projectService.getProjectDetail(display.getProjectId(), user, false));
                 shareFactor.setShareEntity(display);
                 break;
