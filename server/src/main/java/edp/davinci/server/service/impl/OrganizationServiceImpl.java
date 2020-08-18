@@ -32,6 +32,7 @@ import edp.davinci.server.dto.user.UserBaseInfo;
 import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.enums.MailContentTypeEnum;
+import edp.davinci.server.enums.TableTypeEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
@@ -39,12 +40,8 @@ import edp.davinci.server.model.MailContent;
 import edp.davinci.server.model.TokenEntity;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.OrganizationService;
-import edp.davinci.server.util.BaseLock;
+import edp.davinci.server.util.*;
 import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.server.util.FileUtils;
-import edp.davinci.server.util.MailUtils;
-import edp.davinci.server.util.ServerUtils;
-import edp.davinci.server.util.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,9 +139,10 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             organization.setCreateTime(new Date());
             RelUserOrganization relUserOrganization = new RelUserOrganization();
             insertOrganization(organization, relUserOrganization, user);
-            optLogger.info("Organization({}) create by user({})", organization.getId(), userId);
+	        optLogger.info(OptLogUtils.insert(TableTypeEnum.ORGANIZATION, organization));
 
-            OrganizationBaseInfo organizationBaseInfo = new OrganizationBaseInfo();
+
+	        OrganizationBaseInfo organizationBaseInfo = new OrganizationBaseInfo();
             BeanUtils.copyProperties(organization, organizationBaseInfo);
             organizationBaseInfo.setRole(relUserOrganization.getRole());
             return organizationBaseInfo;
@@ -155,7 +153,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     }
     
     @Transactional
-    private void insertOrganization(Organization organization, RelUserOrganization relUserOrganization, User user) {
+    protected void insertOrganization(Organization organization, RelUserOrganization relUserOrganization, User user) {
 
     	if (organizationExtendMapper.insertSelective(organization) <= 0) {
             throw new ServerException("Create organization error");
@@ -199,14 +197,14 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         }
 
         try {
-            String origin = organization.toString();
+	        Organization originOrganization = new Organization();
+	        BeanUtils.copyProperties(organization, originOrganization);
             BeanUtils.copyProperties(organizationPut, organization);
             organization.setUpdateBy(user.getId());
             organization.setUpdateTime(new Date());
 
             updateOrganization(organization);
-            optLogger.info("Organization({}) is update by user({}), origin:{}", organization.getId(), user.getId(), origin);
-
+	        optLogger.info(OptLogUtils.update(TableTypeEnum.ORGANIZATION, originOrganization, organization));
             return true;
         } finally {
             lock.release();
@@ -214,7 +212,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     }
     
     @Transactional
-    private void updateOrganization(Organization organization) {
+    protected void updateOrganization(Organization organization) {
 		if (organizationExtendMapper.update(organization) <= 0) {
 			throw new ServerException("Update organization error");
 		}
@@ -322,8 +320,8 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         roleMapper.deleteByOrg(id);
         organizationExtendMapper.deleteByPrimaryKey(id);
 
-        optLogger.info("Organization({}) is delete by user({})", organization.getId(), user.getId());
-        return true;
+	    optLogger.info(OptLogUtils.delete(TableTypeEnum.ORGANIZATION, organization));
+	    return true;
     }
 
     /**
@@ -718,7 +716,8 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             throw new ServerException("This member does not need to change role");
         }
 
-        String origin = rel.toString();
+	    RelUserOrganization originRel = new RelUserOrganization();
+	    BeanUtils.copyProperties(rel, originRel);
 
         rel.setRole(userOrgRoleEnum.getRole());
         rel.setUpdateBy(user.getId());
@@ -727,9 +726,8 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
             throw new ServerException("Unknown fail");
         }
 
-        optLogger.info("RelUserOrganization({}) is update by user({}), origin:{}", rel.toString(), user.getId(),
-                origin);
-        return true;
+        optLogger.info(OptLogUtils.update(TableTypeEnum.REL_USER_ORGANIZATION, originRel, rel));
+	    return true;
     }
 
     /**

@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
@@ -39,8 +38,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import javax.script.ScriptEngine;
 
+import edp.davinci.server.dto.cronjob.*;
+import edp.davinci.server.enums.*;
+import edp.davinci.server.util.CronJobTrackUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -67,26 +68,16 @@ import edp.davinci.server.dao.DashboardExtendMapper;
 import edp.davinci.server.dao.DisplayExtendMapper;
 import edp.davinci.server.dao.UserExtendMapper;
 import edp.davinci.server.dao.WidgetExtendMapper;
-import edp.davinci.server.dto.cronjob.CronJobConfig;
-import edp.davinci.server.dto.cronjob.CronJobContent;
-import edp.davinci.server.dto.cronjob.ExcelContent;
-import edp.davinci.server.dto.cronjob.MsgMailExcel;
 import edp.davinci.server.dto.dashboard.DashboardWithPortal;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetWithRelationDashboardId;
 import edp.davinci.server.dto.widget.WidgetWithVizId;
-import edp.davinci.server.enums.ActionEnum;
-import edp.davinci.server.enums.CronJobMediaType;
-import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.MailContentTypeEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.MailAttachment;
 import edp.davinci.server.model.MailContent;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.MailUtils;
-import edp.davinci.server.util.ScriptUtils;
 
 @Service("emailScheduleService")
 public class EmailScheduleServiceImpl extends BaseScheduleService implements ScheduleService {
@@ -120,9 +111,11 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
     @Override
     public void execute(long jobId) throws Exception {
         CronJob cronJob = cronJobExtendMapper.selectByPrimaryKey(jobId);
-        if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
+	    CronJobTrack cronJobTrack = new CronJobTrack(cronJob);
+	    if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
         	scheduleLogger.error("CronJob({}) config is empty", jobId);
-            return;
+		    CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_1_PARSE_CONFIG, "config is empty");
+		    return;
         }
         cronJobExtendMapper.updateExecLog(jobId, "");
         CronJobConfig cronJobConfig = null;
@@ -130,32 +123,36 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
             cronJobConfig = JSONUtils.toObject(cronJob.getConfig(), CronJobConfig.class);
         } catch (Exception e) {
         	scheduleLogger.error("Cronjob({}) parse config({}) error:{}", jobId, cronJob.getConfig(), e.getMessage());
+	        CronJobTrackUtils.getBuilder().appendParam("config", cronJob.getConfig()).appendParam("error", e.toString())
+			        .error(cronJobTrack, CronJobStepEnum.MAIL_1_PARSE_CONFIG, "parse config error");
             return;
         }
 
         if (StringUtils.isEmpty(cronJobConfig.getType())) {
             scheduleLogger.error("Cronjob({}) config type is empty", jobId);
-            return;
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_1_PARSE_CONFIG, "config type is empty");
+	        return;
         }
         
         scheduleLogger.info("CronJob({}) is start! --------------", jobId);
+	    CronJobTrackUtils.info(cronJobTrack, CronJobStepEnum.MAIL_1_PARSE_CONFIG, "parse config is finish ");
 
-        List<ExcelContent> excels = null;
+	    List<ExcelContent> excels = null;
         List<ImageContent> images = null;
 
         User creater = userExtendMapper.selectByPrimaryKey(cronJob.getCreateBy());
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-            images = generateImages(jobId, cronJobConfig, creater.getId());
+            images = generateImages(jobId, cronJobConfig, creater.getId(), cronJobTrack);
         }
         
         if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
-			excels = generateExcels(jobId, cronJobConfig, creater);
+			excels = generateExcels(jobId, cronJobConfig, creater, cronJobTrack);
         }
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
-            images = generateImages(jobId, cronJobConfig, creater.getId());
-            excels = generateExcels(jobId, cronJobConfig, creater);
+            images = generateImages(jobId, cronJobConfig, creater.getId(), cronJobTrack);
+            excels = generateExcels(jobId, cronJobConfig, creater, cronJobTrack);
         }
 
         List<MailAttachment> attachmentList = new ArrayList<>();
@@ -173,12 +170,12 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
 
         if (CollectionUtils.isEmpty(attachmentList)) {
         	scheduleLogger.warn("CronJob({}) email content is empty", jobId);
-            return;
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_5_SEND, "mail send content is empty");
+	        return;
         }
 
 
         scheduleLogger.info("CronJob({}) is ready to send email", cronJob.getId());
-
         MailContent mailContent = null;
         try {
             mailContent = MailContent.MailContentBuilder.builder()
@@ -193,9 +190,17 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
                     .build();
         } catch (ServerException e) {
         	scheduleLogger.error("CronJob({}) build email content error:{}", jobId, e.getMessage());
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_5_SEND, "CronJob build email error");
         }
-        mailUtils.sendMail(mailContent, null);
-        scheduleLogger.info("CronJob({}) is finish! --------------", jobId);
+	    try {
+		    mailUtils.sendMail(mailContent, null);
+	    } catch (Exception e) {
+		    CronJobTrackUtils.getBuilder().appendParam("errro", e.toString())
+				    .error(cronJobTrack, CronJobStepEnum.MAIL_5_SEND, "CronJob send email fail");
+		    throw e;
+	    }
+	    scheduleLogger.info("CronJob({}) is finish! --------------", jobId);
+	    CronJobTrackUtils.info(cronJobTrack, CronJobStepEnum.MAIL_5_SEND, "CronJob is finish!");
     }
 
 
@@ -207,11 +212,11 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
      * @return
      * @throws Exception
      */
-    private List<ExcelContent> generateExcels(Long jobId, CronJobConfig cronJobConfig, User user) throws Exception {
+    private List<ExcelContent> generateExcels(Long jobId, CronJobConfig cronJobConfig, User user, CronJobTrack cronJobTrack) throws Exception {
 
     	scheduleLogger.info("CronJob({}) fetching excel contents", jobId);
 
-        Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
+	    Map<String, WorkBookContext> workBookContextMap = new HashMap<>();
 
         Map<String, Integer> vizOrderMap = new HashMap<>();
         Map<Long, Map<Long, Integer>> displayPageMap = new HashMap<>();
@@ -221,7 +226,8 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
 
         if (CollectionUtils.isEmpty(jobContentList)) {
         	scheduleLogger.warn("CronJob({}) excel entity is empty", jobId);
-            return null;
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_4_GENERATE_EXCEL, "CronJob share excel is empty");
+	        return null;
         }
 
         for (CronJobContent cronJobContent : jobContentList) {
@@ -309,7 +315,8 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
 
         if (CollectionUtils.isEmpty(workBookContextMap)) {
         	scheduleLogger.warn("CronJob({}) workbook context is empty", jobId);
-            return null;
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_4_GENERATE_EXCEL, "CronJob share excel workbook context is empty");
+	        return null;
         }
 
         List<ExcelContent> excelContents = new CopyOnWriteArrayList<>();
@@ -326,6 +333,8 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
 			} catch (Exception e) {
 				scheduleLogger.error("Cronjob({}) submit workbook task error, thread:{}", jobId, index.get());
 				scheduleLogger.error(e.getMessage(), e);
+				CronJobTrackUtils.getBuilder().appendParam("error", e.toString())
+						.error(cronJobTrack, CronJobStepEnum.MAIL_4_GENERATE_EXCEL, "Cronjob submit workbook task error");
 			} finally {
 				index.incrementAndGet();
 			}
@@ -339,6 +348,8 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
             } catch (Exception e) {
             	scheduleLogger.info("CronJob({}) workbook task:{} error", jobId, name);
             	scheduleLogger.error(e.getMessage(), e);
+	            CronJobTrackUtils.getBuilder().appendParam("error", e.toString())
+			            .error(cronJobTrack, CronJobStepEnum.MAIL_4_GENERATE_EXCEL, "CronJob workbook task execute error");
             }
             if (!StringUtils.isEmpty(excelPath)) {
                 excelContents.add(new ExcelContent(excelEntityOrderMap.get(name), name, excelPath));
@@ -347,7 +358,8 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
 
         excelContents.sort(Comparator.comparing(ExcelContent::getOrder));
         scheduleLogger.info("CronJob({}) fetched excel contents, count:{}", jobId, excelContents.size());
-
+	    CronJobTrackUtils.getBuilder().appendParam("count", excelContents.size())
+			    .info(cronJobTrack, CronJobStepEnum.MAIL_4_GENERATE_EXCEL, "CronJob generate share excel contents is finish");
         return excelContents.isEmpty() ? null : excelContents;
     }
 

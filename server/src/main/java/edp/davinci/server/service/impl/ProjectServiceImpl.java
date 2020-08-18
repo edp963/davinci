@@ -42,6 +42,7 @@ import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.core.enums.CronJobStatusEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.server.enums.LogNameEnum;
+import edp.davinci.server.enums.TableTypeEnum;
 import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
@@ -51,6 +52,7 @@ import edp.davinci.server.service.DisplayService;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.BaseLock;
 import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.server.util.OptLogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -233,7 +235,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	        project.setCreateTime(new Date());
 
 	        insertProject(project, organization);
-	        optLogger.info("Project({}) is create by user({})", project.getId(), user.getId());
+			optLogger.info(OptLogUtils.insert(TableTypeEnum.PROJECT, project));
 
 	        ProjectInfo projectInfo = new ProjectInfo();
 	        UserBaseInfo userBaseInfo = new UserBaseInfo();
@@ -249,7 +251,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     }
     
     @Transactional
-    private void insertProject(Project project, Organization organization) {
+    protected void insertProject(Project project, Organization organization) {
     	if (projectExtendMapper.insertSelective(project) <= 0) {
             throw new ServerException("Create project fail");
         }
@@ -316,11 +318,13 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 			throw new ServerException("The project name \"" + name + "\" is already in the organization you will transfer");
 		}
 
+	    Project originProject = new Project();
+	    BeanUtils.copyProperties(project, originProject);
+
 		try {
 			project.setOrgId(organization.getId());
 			transferProject(project, organization);
-			optLogger.info("Project({}) transferd from org({}) to org({}) by user({})", project.getId(),
-					project.getOrgId(), orgId, user.getId());
+			optLogger.info(OptLogUtils.update(TableTypeEnum.PROJECT, originProject, project));
 			return project;
 		}finally {
 			releaseLock(lock);
@@ -328,7 +332,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     }
     
     @Transactional
-    private void transferProject(Project project, Organization organization) {
+    protected void transferProject(Project project, Organization organization) {
     	
     	Long beforeOrgId = project.getOrgId();
     	Long orgId = organization.getId();
@@ -399,8 +403,8 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             throw new ServerException("Delete project fail");
         }
         
-        optLogger.info("Project({}) is delete by user({})", project.getId(), user.getId());
-        Organization organization = organizationExtendMapper.selectByPrimaryKey(project.getOrgId());
+	    optLogger.info(OptLogUtils.delete(TableTypeEnum.PROJECT, project));
+	    Organization organization = organizationExtendMapper.selectByPrimaryKey(project.getOrgId());
         // TODO num is wrong in concurrent cases
         organization.setProjectNum(organization.getProjectNum() - 1);
         organizationExtendMapper.updateProjectNum(organization);
@@ -420,6 +424,8 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     public Project updateProject(Long id, ProjectUpdate projectUpdate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
         ProjectDetail project = getProjectDetail(id, user, true);
+	    Project originProject = new Project();
+	    BeanUtils.copyProperties(project, originProject);
         
         String name = projectUpdate.getName();
         Long orgId = project.getOrgId();
@@ -441,8 +447,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	        project.setUpdateBy(user.getId());
 
 	        updateProject(project);
-			optLogger.info("Project({}) is update by user({})", project.getId(), user.getId());
-
+			optLogger.info(OptLogUtils.update(TableTypeEnum.PROJECT, originProject, project));
 			return project;
 		}finally {
 			releaseLock(lock);
@@ -450,7 +455,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     }
     
     @Transactional
-	private void updateProject(Project project) {
+	protected void updateProject(Project project) {
 		if (projectExtendMapper.updateBaseInfo(project) <= 0) {
 			log.error("Update project({}) fail", project.getId());
 			throw new ServerException("Update project fail");
@@ -596,8 +601,8 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             throw new ServerException("Remove admin fail");
         }
         
-        optLogger.info("RelProjectAdmin({}) is delete by user({})", relProjectAdmin.toString(), user.getId());
-        return true;
+	    optLogger.info(OptLogUtils.delete(TableTypeEnum.REL_PROJECT_ADMIN, relProjectAdmin));
+	    return true;
     }
 
 

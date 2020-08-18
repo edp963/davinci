@@ -30,6 +30,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import edp.davinci.server.dto.cronjob.CronJobTrack;
+import edp.davinci.server.enums.CronJobStepEnum;
+import edp.davinci.server.util.CronJobTrackUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,7 +86,7 @@ public class BaseScheduleService {
      * @return
      * @throws Exception
      */
-    public List<ImageContent> generateImages(long jobId, CronJobConfig cronJobConfig, Long userId) throws Exception {
+    public List<ImageContent> generateImages(long jobId, CronJobConfig cronJobConfig, Long userId, CronJobTrack cronJobTrack) throws Exception {
 
         scheduleLogger.info("CronJob({}) fetching images contents", jobId);
 
@@ -96,7 +99,8 @@ public class BaseScheduleService {
 
         if (CollectionUtils.isEmpty(jobContentList)) {
             scheduleLogger.warn("CronJob({}) share entity is empty", jobId);
-            return null;
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_WECHAT_2_GENERATE_VIZ,"share viz is empty");
+	        return null;
         }
 
         for (CronJobContent cronJobContent : jobContentList) {
@@ -134,7 +138,11 @@ public class BaseScheduleService {
         }
 
         if (!CollectionUtils.isEmpty(imageContents)) {
-            screenshotUtils.screenshot(jobId, imageContents, cronJobConfig.getImageWidth());
+	        CronJobTrackUtils.getBuilder().appendParam("count", imageContents.size())
+			        .info(cronJobTrack, CronJobStepEnum.MAIL_WECHAT_2_GENERATE_VIZ,"generate share viz is finish");
+            screenshotUtils.screenshot(jobId, imageContents, cronJobConfig.getImageWidth(),cronJobTrack);
+        }else {
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.MAIL_WECHAT_2_GENERATE_VIZ,"share viz is empty");
         }
 
         scheduleLogger.info("CronJob({}) fetched images contents, count:{}", jobId, imageContents.size());

@@ -18,4 +18,12 @@ public class RelRoleSlide {
     private Long updateBy;
 
     private Date updateTime;
+
+	public RelRoleSlide(Long slideId, Long roleId) {
+		this.roleId = roleId;
+		this.slideId = slideId;
+	}
+
+	public RelRoleSlide() {
+	}
 }

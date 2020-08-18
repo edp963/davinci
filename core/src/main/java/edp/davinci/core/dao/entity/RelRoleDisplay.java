@@ -18,4 +18,12 @@ public class RelRoleDisplay {
     private Long updateBy;
 
     private Date updateTime;
+
+	public RelRoleDisplay(Long displayId, Long roleId) {
+		this.roleId = roleId;
+		this.displayId = displayId;
+	}
+
+	public RelRoleDisplay() {
+	}
 }

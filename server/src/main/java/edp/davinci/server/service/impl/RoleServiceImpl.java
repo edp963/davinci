@@ -22,6 +22,7 @@ package edp.davinci.server.service.impl;
 import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.role.*;
 import edp.davinci.server.enums.LogNameEnum;
+import edp.davinci.server.enums.TableTypeEnum;
 import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.enums.VizVisiblityEnum;
 import edp.davinci.server.exception.NotFoundException;
@@ -38,6 +39,7 @@ import edp.davinci.core.dao.entity.RelUserOrganization;
 import edp.davinci.core.dao.entity.Role;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.enums.UserOrgRoleEnum;
+import edp.davinci.server.util.OptLogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,7 +148,7 @@ public class RoleServiceImpl implements RoleService {
         BeanUtils.copyProperties(roleCreate, role);
 
         if (roleExtendMapper.insert(role) > 0) {
-            optLogger.info("Role({}) is create by user({})", role.getId(), user.getId());
+	        optLogger.info(OptLogUtils.insert(TableTypeEnum.ROLE, role));
             // TODO num is wrong in concurrent cases
             organization.setRoleNum(organization.getRoleNum() + 1);
             organizationExtendMapper.updateRoleNum(organization);
@@ -183,9 +185,8 @@ public class RoleServiceImpl implements RoleService {
         }
 
         if (roleExtendMapper.deleteByPrimaryKey(id) > 0) {
-            optLogger.info("Role({}) is delete by user({})", id, user.getId());
-
-            Organization organization = organizationExtendMapper.selectByPrimaryKey(role.getOrgId());
+	        optLogger.info(OptLogUtils.delete(TableTypeEnum.ROLE, role));
+	        Organization organization = organizationExtendMapper.selectByPrimaryKey(role.getOrgId());
             if (null != organization) {
             	// TODO num is wrong in concurrent cases
 				int roleNum = organization.getRoleNum() == null ? 0 : organization.getRoleNum() - 1;
@@ -230,14 +231,15 @@ public class RoleServiceImpl implements RoleService {
         } catch (UnAuthorizedExecption e) {
         	alertUnAuthorized(user, "update");
         }
-
+	    Role originRole = new Role();
+	    BeanUtils.copyProperties(role, originRole);
         BeanUtils.copyProperties(roleUpdate, role);
 
         role.setUpdateBy(user.getId());
         role.setUpdateTime(new Date());
 
         if (roleExtendMapper.update(role) > 0) {
-            optLogger.info("Role({}) is update by user({})", id, user.getId());
+	        optLogger.info(OptLogUtils.update(TableTypeEnum.ROLE, originRole, role));
             return true;
         }
 
@@ -357,8 +359,8 @@ public class RoleServiceImpl implements RoleService {
         }
 
         if (relRoleUserExtendMapper.deleteByPrimaryKey(relationId) > 0) {
-            optLogger.info("RelRoleUser({}) is delete by user({})", relationId, user.getId());
-            return true;
+	        optLogger.info(OptLogUtils.delete(TableTypeEnum.REL_ROLE_USER, relRoleUser));
+	        return true;
         }
         
         log.error("Delete role({}) member({}) fail", relRoleUser.getRoleId(), relationId);
@@ -399,8 +401,8 @@ public class RoleServiceImpl implements RoleService {
 
         relRoleUserExtendMapper.insertBatch(collect);
 
-		optLogger.info("Update role({}) member({}) by user({})", id, memberIds, user.getId());
-        return relRoleUserExtendMapper.getMembersByRoleId(id);
+	    optLogger.info(OptLogUtils.insertBatch(TableTypeEnum.REL_ROLE_USER, collect));
+	    return relRoleUserExtendMapper.getMembersByRoleId(id);
     }
 
     /**
@@ -476,8 +478,8 @@ public class RoleServiceImpl implements RoleService {
 
         relRoleProjectExtendMapper.insertSelective(relRoleProject);
         if (null != relRoleProject.getId() && relRoleProject.getId().longValue() > 0L) {
-            optLogger.info("RelRoleProject({}) create by user({})", relRoleProject.getId(), user.getId());
-            RoleProject roleProject = new RoleProject(project);
+	        optLogger.info(OptLogUtils.insert(TableTypeEnum.REL_ROLE_PROJECT, relRoleProject));
+	        RoleProject roleProject = new RoleProject(project);
             BeanUtils.copyProperties(relRoleProject, roleProject);
             return roleProject;
         }
@@ -516,8 +518,8 @@ public class RoleServiceImpl implements RoleService {
         }
 
         if (relRoleProjectExtendMapper.deleteByRoleAndProject(roleId, projectId) > 0) {
-            optLogger.info("RelRoleProject({}) is delete by user({})", relRoleProject.getId(), user.getId());
-            return true;
+	        optLogger.info(OptLogUtils.delete(TableTypeEnum.REL_ROLE_PROJECT, relRoleProject));
+	        return true;
         }
 
         log.error("Delete role({}) project({}) relation fail", roleId, projectId);
@@ -545,6 +547,9 @@ public class RoleServiceImpl implements RoleService {
 			log.error("Role({}) project({}) relation is not found", roleId, projectId);
             throw new ServerException("Role project relation is not found");
         }
+
+	    RelRoleProject originRelRoleProject = new RelRoleProject();
+	    BeanUtils.copyProperties(relRoleProject, originRelRoleProject);
 
         try {
             getRole(roleId, user, false);
@@ -593,8 +598,8 @@ public class RoleServiceImpl implements RoleService {
         relRoleProject.setUpdateTime(new Date());
 
         if (relRoleProjectExtendMapper.update(relRoleProject) > 0) {
-            optLogger.info("RelRoleProject({}) is update by user({})", relRoleProject.getId(), user.getId());
-            return true;
+	        optLogger.info(OptLogUtils.update(TableTypeEnum.REL_ROLE_PROJECT, originRelRoleProject, relRoleProject));
+	        return true;
         }
         
         log.error("Update role({}) project({}) relation fail", roleId, projectId);

@@ -22,7 +22,8 @@ package edp.davinci.server.enums;
 public enum LogNameEnum {
     BUSINESS_SQL("BUSINESS_SQL"),
     BUSINESS_OPERATION("BUSINESS_OPERATION"),
-    BUSINESS_SCHEDULE("BUSINESS_SCHEDULE");
+    BUSINESS_SCHEDULE("BUSINESS_SCHEDULE"),
+	BUSINESS_CRON_JOB("BUSINESS_CRON_JOB");
 
     private String name;
 

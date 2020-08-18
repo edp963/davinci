@@ -24,6 +24,8 @@ import static edp.davinci.server.commons.Constants.DAVINCI_TOPIC_CHANNEL;
 import java.util.Date;
 import java.util.List;
 
+import edp.davinci.server.enums.TableTypeEnum;
+import edp.davinci.server.util.*;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,10 +56,6 @@ import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.RedisMessageEntity;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.CronJobService;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.LockFactory;
-import edp.davinci.server.util.QuartzHandler;
-import edp.davinci.server.util.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -167,8 +165,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 
 		try {
 			insertCronJob(cronJob);
-			optLogger.info("CronJob({}) is create by user({})", cronJob.getId(), user.getId());
-
+			optLogger.info(OptLogUtils.insert(TableTypeEnum.CRON_JOB, cronJob));
 			CronJobInfo cronJobInfo = new CronJobInfo();
 			BeanUtils.copyProperties(cronJobBaseInfo, cronJobInfo);
 			cronJobInfo.setId(cronJob.getId());
@@ -181,7 +178,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	}
 	
 	@Transactional
-	private void insertCronJob(CronJob cronJob) {
+	protected void insertCronJob(CronJob cronJob) {
 		if (cronJobExtendMapper.insertSelective(cronJob) != 1) {
 			throw new ServerException("Create cronJob fail");
 		}
@@ -219,17 +216,17 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		if (lock != null && !lock.getLock()) {
 			alertNameTaken(entity, name);
 		}
-		
+		CronJob originCronJob = new CronJob();
+		BeanUtils.copyProperties(cronJob, originCronJob);
 		BeanUtils.copyProperties(cronJobUpdate, cronJob);
 		cronJob.setUpdateBy(user.getId());
 		cronJob.setUpdateTime(new Date());
-		String origin = cronJob.toString();
 		try {
 			cronJob.setStartDate(DateUtils.toDate(cronJobUpdate.getStartDate()));
 			cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
 			cronJob.setUpdateTime(new Date());
 			if(updateCronJob(cronJob, cronJobUpdate, user)) {
-				optLogger.info("CronJob({}) is update by user({}), origin:{}", id, user.getId(), origin);
+				optLogger.info(OptLogUtils.update(TableTypeEnum.CRON_JOB, originCronJob, cronJob));
 				return true;
 			}
 		}catch (Exception e) {
@@ -242,7 +239,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	}
 	
 	@Transactional
-	private boolean updateCronJob(CronJob cronJob, CronJobUpdate cronJobUpdate, User user) {
+	protected boolean updateCronJob(CronJob cronJob, CronJobUpdate cronJobUpdate, User user) {
 		try {
 			cronJob.setStartDate(DateUtils.toDate(cronJobUpdate.getStartDate()));
 			cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
@@ -277,7 +274,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 		checkWritePermission(entity, cronJob.getProjectId(), user, "delete");
 
 		if (cronJobExtendMapper.deleteByPrimaryKey(id) == 1) {
-			optLogger.info("Cronjob({}) is delete by user({})", id, user.getId());
+			optLogger.info(OptLogUtils.delete(TableTypeEnum.CRON_JOB, cronJob));
 			quartzHandler.removeJob(cronJob);
 			return true;
 		}

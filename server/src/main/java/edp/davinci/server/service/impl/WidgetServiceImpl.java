@@ -41,6 +41,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import edp.davinci.server.enums.*;
+import edp.davinci.server.util.*;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
@@ -76,12 +78,6 @@ import edp.davinci.server.dto.view.WidgetDistinctParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.SqlVariableTypeEnum;
-import edp.davinci.server.enums.SqlVariableValueTypeEnum;
-import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
@@ -92,12 +88,6 @@ import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.service.ViewService;
 import edp.davinci.server.service.WidgetService;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CsvUtils;
-import edp.davinci.server.util.ExcelUtils;
-import edp.davinci.server.util.FileUtils;
-import edp.davinci.server.util.ScriptUtils;
-import edp.davinci.server.util.ServerUtils;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -239,16 +229,15 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             BeanUtils.copyProperties(widgetCreate, widget);
 
             insertWidget(widget);
-            optLogger.info("Widget({}) is create by user({})", widget.getId(), user.getId());
-
-            return widget;
+	        optLogger.info(OptLogUtils.insert(TableTypeEnum.WIDGET, widget));
+	        return widget;
         } finally {
             releaseLock(lock);
         }
     }
     
     @Transactional
-	private void insertWidget(Widget widget) {
+	protected void insertWidget(Widget widget) {
 		if (widgetExtendMapper.insert(widget) <= 0) {
 			throw new ServerException("Create widget fail");
 		}
@@ -293,14 +282,14 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         }
 
         try {
-            String originStr = widget.toString();
+	        Widget originWidget = new Widget();
+	        BeanUtils.copyProperties(widget, originWidget);
             BeanUtils.copyProperties(widgetUpdate, widget);
             widget.setUpdateBy(user.getId());
             widget.setUpdateTime(new Date());
 
             updateWidget(widget);
-            optLogger.info("Widget({}) is updated by user({}), origin:{}", widget.getId(), user.getId(), originStr);
-
+	        optLogger.info(OptLogUtils.update(TableTypeEnum.WIDGET, originWidget, widget));
             return true;
         } finally {
             releaseLock(lock);
@@ -308,7 +297,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
     }
     
     @Transactional
-	private void updateWidget(Widget widget) {
+	protected void updateWidget(Widget widget) {
 		if (widgetExtendMapper.update(widget) <= 0) {
 			throw new ServerException("Update widget fail");
 		}
@@ -342,8 +331,8 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         memDisplaySlideWidgetExtendMapper.deleteByWidget(id);
         widgetExtendMapper.deleteByPrimaryKey(id);
 
-        optLogger.info("Widget({}) is delete by user({})", widget.getId(), user.getId());
-        return true;
+	    optLogger.info(OptLogUtils.delete(TableTypeEnum.WIDGET, widget));
+	    return true;
     }
 
 

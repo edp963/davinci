@@ -10,7 +10,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import edp.davinci.server.dto.cronjob.CronJobTrack;
+import edp.davinci.server.enums.CronJobStepEnum;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.util.CronJobTrackUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -46,10 +51,12 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
     public void execute(long jobId) throws Exception {
         
         CronJob cronJob = cronJobExtendMapper.selectByPrimaryKey(jobId);
-        
-        if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
+	    CronJobTrack cronJobTrack = new CronJobTrack(cronJob);
+
+	    if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
             scheduleLogger.error("CronJob({}) config is empty", jobId);
-            return;
+		    CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.WECHAT_1_PARSE_CONFIG, "config is empty");
+		    return;
         }
         
         cronJobExtendMapper.updateExecLog(jobId, "");
@@ -58,26 +65,31 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
             cronJobConfig = JSONUtils.toObject(cronJob.getConfig(), CronJobConfig.class);
         } catch (Exception e) {
             scheduleLogger.error("Cronjob({}) parse config({}) error:{}", jobId, cronJob.getConfig(), e.getMessage());
+	        CronJobTrackUtils.getBuilder().appendParam("config", cronJob.getConfig()).appendParam("error", e.toString())
+			        .error(cronJobTrack, CronJobStepEnum.WECHAT_1_PARSE_CONFIG, "parse config error");
             return;
         }
 
         if (StringUtils.isEmpty(cronJobConfig.getType())) {
             scheduleLogger.error("Cronjob({}) config type is empty", jobId);
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.WECHAT_1_PARSE_CONFIG, "config type is empty");
             return;
         }
 
         scheduleLogger.info("CronJob({}) is start! --------------", jobId);
+	    CronJobTrackUtils.info(cronJobTrack, CronJobStepEnum.WECHAT_1_PARSE_CONFIG, "parse config is finish");
 
         List<ImageContent> images = null;
         User creater = userExtendMapper.selectByPrimaryKey(cronJob.getCreateBy());
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-            images = generateImages(jobId, cronJobConfig, creater.getId());
+            images = generateImages(jobId, cronJobConfig, creater.getId(), cronJobTrack);
         }
 
         if (CollectionUtils.isEmpty(images)) {
             scheduleLogger.warn("CronJob({}) image is empty", jobId);
-            return;
+	        CronJobTrackUtils.error(cronJobTrack, CronJobStepEnum.WECHAT_4_SEND, "wechat send content is empty");
+	        return;
         }
 
         String url = cronJobConfig.getWebHookUrl();
@@ -108,12 +120,19 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
             weChatWorkMap.put("msgtype", "image");
             weChatWorkMap.put("image", mbMap);
 
-            restTemplate.postForEntity(url, weChatWorkMap, null).toString();
-
+	        try {
+		        ResponseEntity responseEntity =restTemplate.postForEntity(url, weChatWorkMap, null);
+		        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+			        throw new ServerException("request wechat api fail");
+		        }
+	        } catch (Exception e) {
+		        CronJobTrackUtils.getBuilder().appendParam("errro", e.toString())
+				        .error(cronJobTrack, CronJobStepEnum.WECHAT_4_SEND, "wechat send fail");
+	        }
             scheduleLogger.info("CronJob({}) is success to request WeChatWork API", cronJob.getId());
         }
-
         scheduleLogger.info("CronJob({}) is finish! --------------", jobId);
+	    CronJobTrackUtils.info(cronJobTrack, CronJobStepEnum.WECHAT_4_SEND, "CronJob is finish!");
     }
 
     /**

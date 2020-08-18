@@ -18,4 +18,12 @@ public class RelRolePortal {
     private Long updateBy;
 
     private Date updateTime;
+
+	public RelRolePortal(Long portalId, Long roleId) {
+		this.roleId = roleId;
+		this.portalId = portalId;
+	}
+
+	public RelRolePortal() {
+	}
 }

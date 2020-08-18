@@ -40,6 +40,8 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Stopwatch;
 
+import edp.davinci.server.enums.*;
+import edp.davinci.server.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -84,13 +86,6 @@ import edp.davinci.server.dto.view.ViewWithSource;
 import edp.davinci.server.dto.view.ViewWithSourceBaseInfo;
 import edp.davinci.server.dto.view.WidgetDistinctParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.ConcurrencyStrategyEnum;
-import edp.davinci.server.enums.LockType;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.SqlVariableTypeEnum;
-import edp.davinci.server.enums.SqlVariableValueTypeEnum;
-import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
@@ -99,11 +94,6 @@ import edp.davinci.server.model.PagingWithQueryColumns;
 import edp.davinci.server.model.SqlVariable;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ViewService;
-import edp.davinci.server.util.AuthVarUtils;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.DataUtils;
-import edp.davinci.server.util.LockFactory;
-import edp.davinci.server.util.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -247,9 +237,9 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             BeanUtils.copyProperties(viewCreate, view);
 
             insertView(view);
-            optLogger.info("View({}) is create by user({})", view.getId(), user.getId());
+	        optLogger.info(OptLogUtils.insert(TableTypeEnum.VIEW, view));
 
-            if (!CollectionUtils.isEmpty(viewCreate.getRoles()) && !StringUtils.isEmpty(viewCreate.getVariable())) {
+	        if (!CollectionUtils.isEmpty(viewCreate.getRoles()) && !StringUtils.isEmpty(viewCreate.getVariable())) {
                 insertRelRoleView(viewCreate.getVariable(), viewCreate.getRoles(), user, view);
             }
 
@@ -267,7 +257,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
     @Transactional
-    private void insertView(View view) {
+    protected void insertView(View view) {
         if (viewExtendMapper.insert(view) <= 0) {
             throw new ServerException("Create view fail");
         }
@@ -318,14 +308,14 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         }
 
         try {
-
-            String originStr = view.toString();
+	        View originView = new View();
+	        BeanUtils.copyProperties(view, originView);
             BeanUtils.copyProperties(viewUpdate, view);
             view.setUpdateBy(user.getId());
             view.setUpdateTime(new Date());
 
             updateView(view);
-            optLogger.info("View({}) is updated by user({}), origin:{}", view.getId(), user.getId(), originStr);
+	        optLogger.info(OptLogUtils.update(TableTypeEnum.VIEW, originView, view));
 
             if (CollectionUtils.isEmpty(viewUpdate.getRoles())) {
                 relRoleViewExtendMapper.deleteByViewId(id);
@@ -343,7 +333,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
     @Transactional
-    private void updateView(View view) {
+    protected void updateView(View view) {
         if (viewExtendMapper.update(view) <= 0) {
             throw new ServerException("Update view fail");
         }
@@ -392,8 +382,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             throw new ServerException("Delete view fail");
         }
 
-        optLogger.info("View({}) is delete by user({})", view.getId(), user.getId());
-        relRoleViewExtendMapper.deleteByViewId(id);
+	    optLogger.info(OptLogUtils.delete(TableTypeEnum.VIEW, view));
+	    relRoleViewExtendMapper.deleteByViewId(id);
         return true;
     }
 

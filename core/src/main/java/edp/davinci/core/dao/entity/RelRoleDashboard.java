@@ -18,4 +18,13 @@ public class RelRoleDashboard {
     private Long updateBy;
 
     private Date updateTime;
+
+
+	public RelRoleDashboard(Long dashboardId, Long roleId) {
+		this.dashboardId = dashboardId;
+		this.roleId = roleId;
+	}
+
+	public RelRoleDashboard() {
+	}
 }

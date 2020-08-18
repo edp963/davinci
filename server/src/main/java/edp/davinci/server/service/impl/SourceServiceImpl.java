@@ -28,6 +28,8 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import edp.davinci.server.enums.*;
+import edp.davinci.server.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -62,13 +64,6 @@ import edp.davinci.server.dto.source.SourceCreate;
 import edp.davinci.server.dto.source.SourceDataUpload;
 import edp.davinci.server.dto.source.SourceInfo;
 import edp.davinci.server.dto.source.UploadMeta;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.DatabaseTypeEnum;
-import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.SourceTypeEnum;
-import edp.davinci.server.enums.UploadModeEnum;
-import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.SourceException;
@@ -80,12 +75,6 @@ import edp.davinci.server.model.RedisMessageEntity;
 import edp.davinci.server.model.TableInfo;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.SourceService;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CsvUtils;
-import edp.davinci.server.util.ExcelUtils;
-import edp.davinci.server.util.FileUtils;
-import edp.davinci.server.util.RedisUtils;
-import edp.davinci.server.util.DataUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -222,7 +211,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			source.setConfig(JSONUtils.toString(config));
 			insertSource(source);
 
-			optLogger.info("Source({}) is create by user({})", source.getId(), user.getId());
+			optLogger.info(OptLogUtils.insert(TableTypeEnum.SOURCE, source));
 			return source;
 		}finally {
 			releaseLock(lock);
@@ -230,7 +219,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	}
 
 	@Transactional
-	private void insertSource(Source source) {
+	protected void insertSource(Source source) {
 		if (sourceExtendMapper.insert(source) != 1) {
 			log.error("Create source({}) fail", source);
 			throw new ServerException("Create source fail");
@@ -322,7 +311,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			source.setConfig(JSONUtils.toString(sourceInfo.getConfig()));
 			updateSource(source);
 
-			optLogger.info("Source({}) is update by user({})", source.getId(), user.getId());
+			optLogger.info(OptLogUtils.update(TableTypeEnum.SOURCE, sourceCopy, source));
 			return source;
 			
 		} finally {
@@ -331,7 +320,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	}
 	
 	@Transactional
-	private void updateSource(Source source) {
+	protected void updateSource(Source source) {
 		if (sourceExtendMapper.update(source) != 1) {
 			log.error("Update source({}) fail", source.getId());
 			throw new ServerException("Update source fail");
@@ -360,7 +349,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		}
 
 		if (sourceExtendMapper.deleteByPrimaryKey(id) == 1) {
-			optLogger.info("Source({}) is delete by user({})", source.toString(), user.getId());
+			optLogger.info(OptLogUtils.delete(TableTypeEnum.SOURCE, source));
 			releaseSource(source);
 			return true;
 		}
@@ -368,11 +357,13 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		return false;
 	}
 
+
 	/**
 	 * 测试连接
-	 *
-	 * @param sourceTest
+	 * @param config
+	 * @param user
 	 * @return
+	 * @throws ServerException
 	 */
 	@Override
 	public boolean testSource(SourceConfig config, User user) throws ServerException {
@@ -673,10 +664,10 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		}
 	}
 
+
 	/**
 	 * 向redis发布reconnect消息
-	 * 
-	 * @param id
+	 * @param message
 	 */
 	private void publishReconnect(String message) {
 

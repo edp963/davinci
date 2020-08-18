@@ -58,19 +58,25 @@ public class JdbcDataSource {
     @Bean(name = "wallConfig")
 	WallConfig wallConfig() {
 		WallConfig config = new WallConfig();
-        config.setDeleteAllow(false);
-        config.setUpdateAllow(false);
-        config.setInsertAllow(false);
-        config.setReplaceAllow(false);
-        config.setMergeAllow(false);
-        config.setTruncateAllow(false);
-        config.setCreateTableAllow(false);
-        config.setAlterTableAllow(false);
-        config.setDropTableAllow(false);
-        // config.setCommentAllow(false);
-        config.setUseAllow(false);
-        config.setDescribeAllow(false);
-        config.setShowAllow(false);
+	    config.setDeleteAllow(false);
+	    config.setUpdateAllow(false);
+	    config.setInsertAllow(false);
+	    config.setReplaceAllow(false);
+	    config.setMergeAllow(false);
+	    config.setTruncateAllow(false);
+	    config.setCreateTableAllow(false);
+	    config.setAlterTableAllow(false);
+	    config.setDropTableAllow(false);
+	    // config.setCommentAllow(false);
+	    config.setUseAllow(false);
+	    config.setDescribeAllow(false);
+	    config.setShowAllow(false);
+	    config.setSelectWhereAlwayTrueCheck(false);
+	    config.setSelectHavingAlwayTrueCheck(false);
+	    config.setSelectUnionCheck(false);
+	    config.setConditionDoubleConstAllow(true);
+	    config.setConditionAndAlwayTrueAllow(true);
+	    config.setConditionAndAlwayFalseAllow(true);
 		return config;
 	}
 
