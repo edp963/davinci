@@ -5237,7 +5237,7 @@ function getFormattedDataRows(widgetConfigJson, dataRows) {
         // formattedDataRows.push(getFormattedDataRow(fields, dataRows.get(i)))
         formattedDataRows.push(getFormattedDataRow(fields, dataRows[i])) // @FIXME
     }
-    return formattedDataRows
+    return JSON.stringify(formattedDataRows)
 }
 // #endregion
 

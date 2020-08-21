@@ -32,7 +32,6 @@ import edp.davinci.core.enums.NumericUnitEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import edp.davinci.core.model.*;
 import edp.davinci.dto.viewDto.Param;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -40,9 +39,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.script.Invocable;
 import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -523,47 +520,6 @@ public class ExcelUtils {
     private static String makeNTimesString(int n, Object s) {
         return IntStream.range(0, n).mapToObj(i -> String.valueOf(s)).collect(Collectors.joining(EMPTY));
     }
-
-
-    /**
-     * format cell value
-     *
-     * @param engine
-     * @param list
-     * @param json
-     * @return
-     */
-    private static List<Map<String, Object>> formatValue(ScriptEngine engine, List<Map<String, Object>> list, String json) {
-        try {
-            Invocable invocable = (Invocable) engine;
-            Object obj = invocable.invokeFunction("getFormattedDataRows", json, list);
-
-            if (obj instanceof ScriptObjectMirror) {
-                ScriptObjectMirror som = (ScriptObjectMirror) obj;
-                if (som.isArray()) {
-                    final List<Map<String, Object>> convertList = new ArrayList<>();
-                    Collection<Object> values = som.values();
-                    values.forEach(v -> {
-                        Map<String, Object> map = new HashMap<>();
-                        ScriptObjectMirror vsom = (ScriptObjectMirror) v;
-                        for (String key : vsom.keySet()) {
-                            map.put(key, vsom.get(key));
-                        }
-                        convertList.add(map);
-                    });
-                    return convertList;
-                }
-            }
-
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-
-        return list;
-    }
-
 
     public static boolean isTable(String json) {
         if (!StringUtils.isEmpty(json)) {

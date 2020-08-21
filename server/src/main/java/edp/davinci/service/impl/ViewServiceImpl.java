@@ -610,14 +610,14 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
                 if (null != executeParam.getCache() && executeParam.getCache() && executeParam.getExpired() > 0L) {
 
-                    StringBuilder slatBuilder = new StringBuilder();
-                    slatBuilder.append(executeParam.getPageNo());
-                    slatBuilder.append(MINUS);
-                    slatBuilder.append(executeParam.getLimit());
-                    slatBuilder.append(MINUS);
-                    slatBuilder.append(executeParam.getPageSize());
-                    excludeColumns.forEach(slatBuilder::append);
-                    cacheKey = MD5Util.getMD5(slatBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true,
+                    StringBuilder saltBuilder = new StringBuilder();
+                    saltBuilder.append(executeParam.getPageNo());
+                    saltBuilder.append(MINUS);
+                    saltBuilder.append(executeParam.getLimit());
+                    saltBuilder.append(MINUS);
+                    saltBuilder.append(executeParam.getPageSize());
+                    excludeColumns.forEach(saltBuilder::append);
+                    cacheKey = MD5Util.getMD5(saltBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true,
                             32);
                     if (!executeParam.getFlush()) {
 

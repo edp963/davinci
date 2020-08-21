@@ -24,6 +24,8 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.shareDto.ShareEntity;
+import edp.davinci.service.share.ShareResult;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
@@ -44,7 +46,7 @@ public interface WidgetService extends CheckEntityService {
 
     boolean deleteWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    String shareWidget(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    ShareResult shareWidget(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     Widget getWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
