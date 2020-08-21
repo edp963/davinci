@@ -689,7 +689,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             throw new ServerException(e.getMessage());
         }
 
@@ -880,6 +880,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             for (String value : expMap.values()) {
                 if (i == 0) {
                     sql += (" where " + value);
+                    i ++;
                     continue;
                 }
                 sql += (" and " + value);
