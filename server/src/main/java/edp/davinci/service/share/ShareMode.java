@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,27 +14,33 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
- *
  */
 
-package edp.core.annotation;
+package edp.davinci.service.share;
 
-import edp.davinci.service.share.ShareOperation;
-import edp.davinci.service.share.ShareType;
+import lombok.Getter;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public enum ShareMode {
 
-/**
- * 自定义 验证分享token 注解
- * 注解在 controller 方法
- */
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface AuthShare {
-    ShareType type();
+    COMPATIBLE(0),  // 兼容模式
+    NORMAL(1),      // 普通分享
+    PASSWORD(2),    // 口令分享
+    AUTH(3),        // 权限分享（用户、角色）
+    ;
+    @Getter
+    private int mode;
 
-    ShareOperation operation() default ShareOperation.READ;
+    ShareMode(int mode) {
+        this.mode = mode;
+    }
+
+    public static ShareMode valueOf(int mode) {
+        for (ShareMode shareMode : ShareMode.values()) {
+            if (shareMode.mode == mode) {
+                return shareMode;
+            }
+        }
+        return null;
+    }
+
 }

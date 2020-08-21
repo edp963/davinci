@@ -107,6 +107,22 @@
         &:hover &-tools {
           display: inline-block;
         }
+        &-tooltips {
+          display: none;
+          position: absolute;
+          top: -40px;
+          left: 0;
+          z-index: 999998;
+          font-size: 24px;
+          color: #fff;
+          background-color: @black;
+          padding: 0 8px;
+          border-radius: 4px;
+          .ellipsis;
+        }
+        &:hover &-tooltips {
+          display: block;
+        }
       }
     }
 

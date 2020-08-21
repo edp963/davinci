@@ -22,6 +22,8 @@ package edp.davinci.common.utils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.Lists;
+import edp.core.utils.CollectionUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.model.ExcelHeader;
 import edp.davinci.dto.viewDto.Param;
@@ -31,14 +33,17 @@ import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class ScriptUtils {
 
-    private final static String LANGUAGE = "js";
-    private final static String Func_FieldsHeader = "getFieldsHeader";
-    private final static String Func_DashboardItemExecuteParam = "getDashboardItemExecuteParam";
+    private static final String LANGUAGE = "js";
+    private static final String FUNC_FIELDS_HEADER = "getFieldsHeader";
+    private static final String FUNC_DASHBOARD_ITEM_EXECUTE_PARAM = "getDashboardItemExecuteParam";
+    private static final String FUNC_FORMATTED_DATA_ROWS = "getFormattedDataRows";
 
-    private static ClassLoader classLoader = ScriptUtils.class.getClassLoader();
+    private static final ClassLoader classLoader = ScriptUtils.class.getClassLoader();
 
     private enum ScriptEnum {
         INSTANCE;
@@ -46,11 +51,13 @@ public class ScriptUtils {
 
         private Value tableFormatJs;
         private Value executeParamFormatJs;
+        private Value formatDataRowsJs;
 
         ScriptEnum() {
             try {
-                tableFormatJs = createScriptEngine(Constants.TABLE_FORMAT_JS, Func_FieldsHeader);
-                executeParamFormatJs = createScriptEngine(Constants.EXECUTE_PARAM_FORMAT_JS, Func_DashboardItemExecuteParam);
+                tableFormatJs = createScriptEngine(Constants.TABLE_FORMAT_JS, FUNC_FIELDS_HEADER);
+                formatDataRowsJs = createScriptEngine(Constants.TABLE_FORMAT_JS, FUNC_FORMATTED_DATA_ROWS);
+                executeParamFormatJs = createScriptEngine(Constants.EXECUTE_PARAM_FORMAT_JS, FUNC_DASHBOARD_ITEM_EXECUTE_PARAM);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -58,7 +65,7 @@ public class ScriptUtils {
 
         private static Value createScriptEngine(String sourcePath, String member) throws Exception {
             Context context = Context.create(LANGUAGE);
-            Source source = Source.newBuilder(LANGUAGE, classLoader.getResource(sourcePath)).build();
+            Source source = Source.newBuilder(LANGUAGE, Objects.requireNonNull(classLoader.getResource(sourcePath))).build();
             context.eval(source);
             Value function = context.getBindings(LANGUAGE).getMember(member);
             return function.canExecute() ? function : null;
@@ -78,8 +85,21 @@ public class ScriptUtils {
     public static synchronized List<ExcelHeader> formatHeader(String json, List<Param> params) {
 
         Value js = ScriptEnum.INSTANCE.tableFormatJs;
-        Value result = js.execute(json,  JSON.toJSONString(params));
+        Value result = js.execute(json, JSON.toJSONString(params));
         List<ExcelHeader> excelHeaders = JSONArray.parseArray(result.toString(), ExcelHeader.class);
         return excelHeaders;
+    }
+
+
+    public static synchronized List<Map<String, Object>> formatCellValue(String json, List<Map<String, Object>> params) {
+
+        Value js = ScriptEnum.INSTANCE.formatDataRowsJs;
+        Value result = js.execute(json, JSON.toJSONString(params));
+        List<Map> maps = JSONArray.parseArray(result.toString(), Map.class);
+        List<Map<String, Object>> formattedValues = Lists.newArrayList();
+        if (!CollectionUtils.isEmpty(maps)) {
+            maps.forEach(v -> formattedValues.add((Map<String, Object>) v));
+        }
+        return formattedValues;
     }
 }

@@ -18,7 +18,14 @@
  * >>
  */
 
-import React, { useContext, useMemo, useCallback, useState } from 'react'
+import React, {
+  useContext,
+  useMemo,
+  useCallback,
+  useState,
+  memo,
+  ReactNode
+} from 'react'
 import classnames from 'classnames'
 
 import { LayerListContext, LayerContext } from '../util'
@@ -27,7 +34,11 @@ import { ContextMenuProxyContext } from '../ContextMenu'
 import { useSelector } from 'react-redux'
 import { makeSelectCurrentOperateItemParams } from 'app/containers/Display/selectors'
 
-const LayerBox: React.FC = (props) => {
+interface ILayerBoxProps {
+  children?: ReactNode
+}
+
+const LayerBox: React.FC = (props: ILayerBoxProps) => {
   const { onSelectionChange } = useContext(LayerListContext)
 
   const { layer, operationInfo } = useContext(LayerContext)
@@ -150,4 +161,4 @@ const LayerBox: React.FC = (props) => {
   )
 }
 
-export default LayerBox
+export default memo<ILayerBoxProps>(LayerBox)

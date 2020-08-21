@@ -33,7 +33,7 @@ import request from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 
-import { ActionTypes } from './constants'
+import { ActionTypes, DragTriggerTypes } from './constants'
 import DisplayActions, { DisplayActionType } from './actions'
 import {
   ILayerRaw,
@@ -245,11 +245,11 @@ export function* deleteSlideLayers(action: DisplayActionType) {
   }
 }
 
-export function* dragLayerIndependence(action: DisplayActionType) {
-  if (action.type !== ActionTypes.DRAG_LAYER_INDEPENDENCE) {
+export function* dragLayer(action: DisplayActionType) {
+  if (action.type !== ActionTypes.DRAG_LAYER) {
     return
   }
-  const { deltaPosition, layerId, finish, slideSize, scale } = action.payload
+  const { deltaPosition, layerId, finish, slideSize, scale, eventTrigger } = action.payload
 
   const movingLayers: ILayerFormed[] = yield select((state) =>
     makeSelectCurrentOperatingLayerList()(state, layerId)
@@ -295,15 +295,16 @@ export function* dragLayerIndependence(action: DisplayActionType) {
   )
 
   const { deltaX, deltaY } = deltaPosition
+  const needSnapToGrid = eventTrigger === DragTriggerTypes.MouseMove
   const deltaPositionAdjusted: DeltaPosition = baselines.reduce<DeltaPosition>(
     (acc, bl) => ({
-      deltaX: acc.deltaX + bl.adjust[0],
-      deltaY: acc.deltaY + bl.adjust[1]
+      deltaX: acc.deltaX + (needSnapToGrid && bl.adjust[0]),
+      deltaY: acc.deltaY + (needSnapToGrid && bl.adjust[1])
     }),
     { deltaX, deltaY }
   )
   yield put(
-    DisplayActions.dragLayerAdjustedIndependence(
+    DisplayActions.dragLayerAdjusted(
       updateMovingLayers.map(({ id }) => id),
       slideSize,
       deltaPositionAdjusted,
@@ -317,8 +318,8 @@ export function* dragLayerIndependence(action: DisplayActionType) {
       draft.forEach((layer) => {
         const item = operateParamsMap.get(layer.id)
         if (item) {
-          layer.params.positionX = item.params.positionX
-          layer.params.positionY = item.params.positionY
+          layer.params.positionX += deltaX
+          layer.params.positionY += deltaY
         }
       })
     })
@@ -326,69 +327,6 @@ export function* dragLayerIndependence(action: DisplayActionType) {
     yield take(ActionTypes.EDIT_SLIDE_LAYERS_SUCCESS)
     yield put(DisplayActions.clearEditorBaselines())
   }
-}
-
-export function* dragLayer(action: DisplayActionType) {
-  if (action.type !== ActionTypes.DRAG_LAYER) {
-    return
-  }
-  const { deltaPosition, layerId, finish, slideSize, scale } = action.payload
-
-  const movingLayers: ILayerFormed[] = yield select((state) =>
-    makeSelectCurrentOperatingLayerList()(state, layerId)
-  )
-  if (!movingLayers.length) {
-    return
-  }
-  const otherLayers = yield select((state) =>
-    makeSelectCurrentOtherLayerList()(state, layerId)
-  )
-  const {
-    id: displayId,
-    config: { displayParams }
-  }: IDisplayFormed = yield select(makeSelectCurrentDisplay())
-  const { id: slideId } = yield select(makeSelectCurrentSlide())
-
-  const baselines = computeEditorBaselines(
-    movingLayers,
-    otherLayers,
-    slideSize,
-    (displayParams || DefaultDisplayParams).grid,
-    scale,
-    { ...deltaPosition, deltaWidth: 0, deltaHeight: 0 },
-    'position'
-  )
-
-  const { deltaX, deltaY } = deltaPosition
-  const deltaPositionAdjusted: DeltaPosition = baselines.reduce<DeltaPosition>(
-    (acc, bl) => ({
-      deltaX: acc.deltaX + bl.adjust[0],
-      deltaY: acc.deltaY + bl.adjust[1]
-    }),
-    { deltaX, deltaY }
-  )
-
-  if (finish) {
-    const updateLayers = produce(movingLayers, (draft) => {
-      draft.forEach((layer) => {
-        layer.params.positionX += deltaX
-        layer.params.positionY += deltaY
-      })
-    })
-    yield put(DisplayActions.editSlideLayers(displayId, slideId, updateLayers))
-    yield put(DisplayActions.clearEditorBaselines())
-  } else {
-    yield put(DisplayActions.showEditorBaselines(baselines))
-  }
-
-  yield put(
-    DisplayActions.dragLayerAdjusted(
-      movingLayers.map(({ id }) => id),
-      slideSize,
-      deltaPositionAdjusted,
-      finish
-    )
-  )
 }
 
 export function* resizeLayer(action: DisplayActionType) {
@@ -706,7 +644,6 @@ export default function* rootDisplaySaga() {
     takeEvery(ActionTypes.PASTE_SLIDE_LAYERS, pasteSlideLayers),
 
     takeLatest(ActionTypes.DRAG_LAYER, dragLayer),
-    takeLatest(ActionTypes.DRAG_LAYER_INDEPENDENCE, dragLayerIndependence),
     takeLatest(ActionTypes.RESIZE_LAYER, resizeLayer),
     takeEvery(ActionTypes.CHANGE_LAYERS_STACK, changeLayersStack),
     takeLatest(ActionTypes.SET_LAYERS_ALIGNMENT, updateLayersAlignment),
