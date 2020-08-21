@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import edp.davinci.core.utils.SourcePasswordEncryptUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -174,7 +175,6 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 
 		Source source = getSource(id);
-
 		ProjectPermission projectPermission = getProjectPermission(source.getProjectId(), user);
 
 		if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
@@ -183,11 +183,14 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		SourceDetail sourceDetail = new SourceDetail();
 		BeanUtils.copyProperties(source, sourceDetail);
-
+		// Decrypt the password in config
+		JSONObject jsonObject = JSONObject.parseObject(sourceDetail.getConfig());
+		String decrypt = SourcePasswordEncryptUtils.decrypt((String) jsonObject.get("password"));
+		jsonObject.put("password", decrypt);
+		sourceDetail.setConfig(jsonObject.toString());
 		if (projectPermission.getSourcePermission() == UserPermissionEnum.READ.getPermission()) {
 			sourceDetail.setConfig(null);
 		}
-
 		return sourceDetail;
 	}
 
@@ -229,8 +232,11 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			
 			Source source = new Source().createdBy(user.getId());
 			BeanUtils.copyProperties(sourceCreate, source);
-			source.setConfig(JSONObject.toJSONString(config));
-
+			// Decrypt the password in config
+			JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(config));
+			String encrypt = SourcePasswordEncryptUtils.encrypt((String) jsonObject.get("password"));
+			jsonObject.put("password", encrypt);
+			source.setConfig(jsonObject.toString());
 			if (sourceMapper.insert(source) != 1) {
 				log.info("create source fail:{}", source.toString());
 				throw new ServerException("create source fail");
@@ -257,10 +263,12 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	}
 
 	private boolean testConnection(SourceConfig config) {
+		// The password is encrypted
+		String encrypt = SourcePasswordEncryptUtils.encrypt(config.getPassword());
 		return sqlUtils.init(
                         config.getUrl(),
                         config.getUsername(),
-                        config.getPassword(),
+						encrypt,
                         config.getVersion(),
                         config.getProperties(),
                         config.isExt()
@@ -306,7 +314,11 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 			BeanUtils.copyProperties(sourceInfo, source);
 			source.updatedBy(user.getId());
-			source.setConfig(JSONObject.toJSONString(sourceInfo.getConfig()));
+			// Decrypt the password in config
+			JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(sourceInfo.getConfig()));
+			String encrypt = SourcePasswordEncryptUtils.encrypt((String) jsonObject.get("password"));
+			jsonObject.put("password", encrypt);
+			source.setConfig(jsonObject.toString());
 
 			if (sourceMapper.update(source) != 1) {
 				log.info("update source fail:{}", source.toString());
@@ -392,7 +404,8 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 				sourceTest.setVersion(null);
 				sourceTest.setExt(false);
 			}
-
+			// The password is encrypted
+			sourceTest.setPassword(SourcePasswordEncryptUtils.encrypt(sourceTest.getPassword()));
             testConnection = sqlUtils
                     .init(
                             sourceTest.getUrl(),
@@ -634,7 +647,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		checkWritePermission(entity, source.getProjectId(), user, "reconnect");
 
 		if (!(dbBaseInfo.getDbUser().equals(source.getUsername())
-				&& dbBaseInfo.getDbPassword().equals(source.getPassword()))) {
+				&& dbBaseInfo.getDbPassword().equals(SourcePasswordEncryptUtils.decrypt(source.getPassword())))) {
 			log.warn("reconnect source (:{}) error, dbuser and dbpassword is wrong", id);
 			throw new ServerException("user or password is wrong");
 		}
