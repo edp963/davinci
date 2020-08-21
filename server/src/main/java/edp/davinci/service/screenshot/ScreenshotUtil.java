@@ -20,7 +20,9 @@
 package edp.davinci.service.screenshot;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.exception.ServerException;
+import edp.core.consts.Consts;
+import edp.core.utils.DateUtils;
+import edp.core.utils.FileUtils;
 import edp.davinci.core.enums.LogNameEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
@@ -40,8 +42,10 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.FileCopyUtils;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -79,6 +83,9 @@ public class ScreenshotUtil {
     private static final int DEFAULT_SCREENSHOT_HEIGHT = 1080;
 
     private static final ExecutorService executorService = Executors.newFixedThreadPool(8);
+
+    @Autowired
+    private FileUtils fileUtils;
 
     public void screenshot(long jobId, List<ImageContent> imageContents, Integer imageWidth) {
     	scheduleLogger.info("Start screenshot for job({})", jobId);
@@ -121,7 +128,7 @@ public class ScreenshotUtil {
         WebDriver driver = generateWebDriver(jobId, imageWidth);
 
         driver.get(url);
-        scheduleLogger.info("Cronjob({}) do screenshot for url[timeout={}]({}) start", jobId, timeOutSecond,url);
+        scheduleLogger.info("Cronjob({}) do screenshot url={}, timeout={} start", jobId, url, timeOutSecond);
         try {
             WebDriverWait wait = new WebDriverWait(driver, timeOutSecond);
             ExpectedCondition<WebElement> ConditionOfSign = ExpectedConditions.presenceOfElementLocated(By.id("headlessBrowserRenderSign"));
@@ -146,11 +153,20 @@ public class ScreenshotUtil {
 
             driver.manage().window().setSize(new Dimension(width, height));
             Thread.sleep(2000);
-            return ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            File tempImage = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            File tempDir = new File(fileUtils.fileBasePath + Consts.DIR_TEMPL + DateUtils.getNowDateYYYYMMDD());
+            if (!tempDir.exists()) {
+                tempDir.mkdirs();
+            }
+            File image = new File(tempDir.getPath() + File.separator + tempImage.getName());
+            if (FileUtils.copy(tempImage, image) > -1) {
+                tempImage.delete();
+                return image;
+            }
 
         } catch (TimeoutException te) {
             String text= driver.findElements(By.tagName("html")).get(0).getAttribute("innerText");
-            scheduleLogger.info("TEXT: \n{}",text);
+            scheduleLogger.info("Cronjob({}) do screenshot url={} text=\n{}",text);
             LogEntries logEntries= driver.manage().logs().get(LogType.BROWSER);
             for (LogEntry entry : logEntries) {
                 scheduleLogger.info(entry.getLevel() + " " + entry.getMessage());
@@ -163,7 +179,7 @@ public class ScreenshotUtil {
             }
         	scheduleLogger.error(e.getMessage(), e);
         } finally {
-        	scheduleLogger.info("Cronjob({}) do screenshot for url({}) finish", jobId, url);
+        	scheduleLogger.info("Cronjob({}) do screenshot url={} finish", jobId, url);
             driver.quit();
         }
 
@@ -195,13 +211,12 @@ public class ScreenshotUtil {
 
 
     private WebDriver generateChromeDriver() throws ExecutionException {
-        if(!StringUtils.isEmpty(REMOTE_WEBDRIVER_URL)){
-            scheduleLogger.info("user RemoteWebDriver ({})",REMOTE_WEBDRIVER_URL);
+        if (!StringUtils.isEmpty(REMOTE_WEBDRIVER_URL)) {
+            scheduleLogger.info("user RemoteWebDriver ({})", REMOTE_WEBDRIVER_URL);
             try {
-                WebDriver driver = new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_URL), DesiredCapabilities.chrome());
-                return driver;
-            }catch (MalformedURLException ex){
-                scheduleLogger.error(ex.getMessage(),ex);
+                return new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_URL), DesiredCapabilities.chrome());
+            } catch (MalformedURLException ex) {
+                scheduleLogger.error(ex.toString(), ex);
             }
         }
         File file = new File(CHROME_DRIVER_PATH);

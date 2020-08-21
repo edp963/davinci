@@ -50,6 +50,7 @@ import edp.davinci.model.View;
 import edp.davinci.runner.LoadSupportDataSourceRunner;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.SourceService;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -347,7 +348,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
     }
 
     /**
-     * 测试连接
+     * 测试数据源
      *
      * @param sourceTest
      * @return
@@ -369,18 +370,20 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
                 sourceTest.setExt(false);
             }
 
-            testConnection = sqlUtils
-                    .init(
-                            sourceTest.getUrl(),
-                            sourceTest.getUsername(),
-                            sourceTest.getPassword(),
-                            sourceTest.getVersion(),
-                            sourceTest.getProperties(),
-                            sourceTest.isExt()
-                    ).testConnection();
+            JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfoBuilder
+                    .aJdbcSourceInfo()
+                    .withJdbcUrl(sourceTest.getUrl())
+                    .withUsername(sourceTest.getUsername())
+                    .withPassword(sourceTest.getPassword())
+                    .withProperties(sourceTest.getProperties())
+                    .withExt(sourceTest.isExt())
+                    .withDbVersion(sourceTest.getVersion())
+                    .build();
+
+            testConnection = new SourceUtils(jdbcDataSource).testSource(jdbcSourceInfo);
 
         } catch (SourceException e) {
-            log.error(e.getMessage());
+            log.error(e.toString(), e);
             throw new ServerException(e.getMessage());
         }
 
@@ -623,6 +626,18 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
      */
     private void releaseSource(Source source) {
 
+        SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
+        JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfoBuilder
+                .aJdbcSourceInfo()
+                .withJdbcUrl(source.getJdbcUrl())
+                .withUsername(source.getUsername())
+                .withPassword(source.getPassword())
+                .withDbVersion(source.getDbVersion())
+                .withExt(source.isExt())
+                .build();
+
+        sourceUtils.releaseDataSource(jdbcSourceInfo);
+
         if (redisUtils.isRedisEnable()) {
             Map<String, Object> map = new HashMap<>();
 
@@ -632,21 +647,8 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
             map.put("version", source.getDbVersion());
             map.put("ext", source.isExt());
 
-            publishReconnect(JSON.toJSONString(map));
-        } else {
-            SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
-            JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfoBuilder
-                    .aJdbcSourceInfo()
-                    .withJdbcUrl(source.getJdbcUrl())
-                    .withUsername(source.getUsername())
-                    .withPassword(source.getPassword())
-                    .withDatabase(source.getDatabase())
-                    .withDbVersion(source.getDbVersion())
-                    .withProperties(source.getProperties())
-                    .withExt(source.isExt())
-                    .build();
-
-            sourceUtils.releaseDataSource(jdbcSourceInfo);
+            SourceUtils.getReleaseSourceSet().add(String.valueOf(source.getId()));
+            publishReconnect(JSON.toJSONString(map), source.getId());
         }
     }
 
@@ -654,27 +656,24 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
      * 向redis发布reconnect消息
      *
      * @param message
+     * @param id
      */
-    private void publishReconnect(String message) {
-
-        //	String flag = MD5Util.getMD5(UUID.randomUUID().toString() + id, true, 32);
-        // the flag is deprecated
-        String flag = "-1";
-        redisUtils.convertAndSend(DAVINCI_TOPIC_CHANNEL, new RedisMessageEntity(SourceMessageHandler.class, message, flag));
+    private void publishReconnect(String message, Long id) {
+        redisUtils.convertAndSend(DAVINCI_TOPIC_CHANNEL, new RedisMessageEntity(SourceMessageHandler.class, message, String.valueOf(id)));
     }
 
     /**
      * 建表
      *
-     * @param fileds
+     * @param fields
      * @param sourceDataUpload
      * @param source
      * @throws ServerException
      */
-    private void createTable(Set<QueryColumn> fileds, SourceDataUpload sourceDataUpload, Source source)
+    private void createTable(Set<QueryColumn> fields, SourceDataUpload sourceDataUpload, Source source)
             throws ServerException {
 
-        if (CollectionUtils.isEmpty(fileds)) {
+        if (CollectionUtils.isEmpty(fields)) {
             throw new ServerException("there is have not any fields");
         }
 
@@ -687,7 +686,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
         if (sourceDataUpload.getMode() == UploadModeEnum.COVER.getMode()) {
             ST st = stg.getInstanceOf("createTable");
             st.add("tableName", sourceDataUpload.getTableName());
-            st.add("fields", fileds);
+            st.add("fields", fields);
             st.add("primaryKeys", StringUtils.isEmpty(sourceDataUpload.getPrimaryKeys()) ? null
                     : sourceDataUpload.getPrimaryKeys().split(","));
             st.add("indexKeys", sourceDataUpload.getIndexList());
@@ -701,7 +700,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
                 if (!tableIsExist) {
                     ST st = stg.getInstanceOf("createTable");
                     st.add("tableName", sourceDataUpload.getTableName());
-                    st.add("fields", fileds);
+                    st.add("fields", fields);
                     st.add("primaryKeys", sourceDataUpload.getPrimaryKeys());
                     st.add("indexKeys", sourceDataUpload.getIndexList());
 

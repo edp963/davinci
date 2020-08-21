@@ -40,14 +40,22 @@ jwtToken:
 
 ##your datasouce config
 source:
-  initial-size: 2
+  initial-size: 1
   min-idle: 1
-  max-wait: 6000
+  max-wait: 30000
   max-active: 10
   break-after-acquire-failure: true
-  connection-error-retry-attempts: 0
-  query-timeout: 600000
-  validationQueryTimeout: 30000
+  connection-error-retry-attempts: 1
+  time-between-eviction-runs-millis: 2000
+  min-evictable-idle-time-millis: 600000
+  max-evictable-idle-time-millis: 900000
+  test-while-idle: true
+  test-on-borrow: false
+  test-on-return: false
+  validation-query: select 1
+  validation-query-timeout: 10
+  keep-alive: false
+  filters: stat
 
   enable-query-log: false
   result-limit: 1000000
@@ -69,10 +77,22 @@ spring:
     username: root
     password: root
     driver-class-name: com.mysql.jdbc.Driver
-    initial-size: 2
+    initial-size: 1
     min-idle: 1
-    max-wait: 60000
+    max-wait: 30000
     max-active: 10
+    break-after-acquire-failure: true
+    connection-error-retry-attempts: 1
+    time-between-eviction-runs-millis: 2000
+    min-evictable-idle-time-millis: 600000
+    max-evictable-idle-time-millis: 900000
+    test-while-idle: true
+    test-on-borrow: false
+    test-on-return: false
+    validation-query: select 1
+    validation-query-timeout: 10
+    keep-alive: false
+    filters: stat
 
   ## redis config
   ## please choose either of the two ways
@@ -156,7 +176,7 @@ screenshot:
   timeout_second: 600
   phantomjs_path: $your_phantomjs_path$
   chromedriver_path: $your_chromedriver_path$
-  remote_webdriver_url:$your_remote_webdriver_url$
+  remote_webdriver_url: $your_remote_webdriver_url$
 
 data-auth-center:
   channels:

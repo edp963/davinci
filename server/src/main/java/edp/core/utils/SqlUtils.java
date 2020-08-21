@@ -30,6 +30,7 @@ import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import edp.davinci.core.utils.SqlParseUtils;
+import edp.davinci.model.Source;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
@@ -464,7 +465,7 @@ public class SqlUtils {
         try {
             connection = sourceUtils.getConnection(this.jdbcSourceInfo);
             if (null == connection) {
-                return tableList;
+                return null;
             }
 
             DatabaseMetaData metaData = connection.getMetaData();
@@ -477,7 +478,7 @@ public class SqlUtils {
 
             tables = metaData.getTables(dbName, getDBSchemaPattern(schema), "%", TABLE_TYPES);
             if (null == tables) {
-                return tableList;
+                return null;
             }
 
             tableList = new ArrayList<>();
@@ -494,11 +495,11 @@ public class SqlUtils {
                 }
             }
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             return tableList;
         } finally {
-            SourceUtils.releaseConnection(connection);
             SourceUtils.closeResult(tables);
+            SourceUtils.releaseConnection(connection);
         }
         return tableList;
     }
@@ -549,7 +550,7 @@ public class SqlUtils {
                 tableInfo = new TableInfo(tableName, primaryKeys, columns);
             }
         } catch (SQLException e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcSourceInfo.getJdbcUrl());
         } finally {
             SourceUtils.releaseConnection(connection);
@@ -580,11 +581,11 @@ public class SqlUtils {
                 }
             }
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             throw new SourceException("Get connection meta data error, jdbcUrl=" + this.jdbcSourceInfo.getJdbcUrl());
         } finally {
-            SourceUtils.releaseConnection(connection);
             SourceUtils.closeResult(rs);
+            SourceUtils.releaseConnection(connection);
         }
         return result;
     }
@@ -664,38 +665,28 @@ public class SqlUtils {
         }
     }
 
-
     public JdbcTemplate jdbcTemplate() throws SourceException {
         Connection connection = null;
         try {
-            connection = sourceUtils.getConnection(this.jdbcSourceInfo);
-        } catch (SourceException e) {
-        }
-        if (connection == null) {
-            sourceUtils.releaseDataSource(this.jdbcSourceInfo);
-        } else {
+            connection = sourceUtils.getConnection(jdbcSourceInfo);
+        } finally {
             SourceUtils.releaseConnection(connection);
         }
-        DataSource dataSource = sourceUtils.getDataSource(this.jdbcSourceInfo);
+        DataSource dataSource = sourceUtils.getDataSource(jdbcSourceInfo);
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.setFetchSize(500);
         return jdbcTemplate;
     }
 
     public boolean testConnection() throws SourceException {
-        Connection connection = null;
-        try {
-            connection = sourceUtils.getConnection(jdbcSourceInfo);
+        try (Connection connection = sourceUtils.getConnection(jdbcSourceInfo);) {
             if (null != connection) {
                 return true;
             } else {
                 return false;
             }
-        } catch (SourceException sourceException) {
-            throw sourceException;
-        } finally {
-            SourceUtils.releaseConnection(connection);
-            sourceUtils.releaseDataSource(jdbcSourceInfo);
+        } catch (Exception e) {
+            throw new SourceException(e.getMessage());
         }
     }
 

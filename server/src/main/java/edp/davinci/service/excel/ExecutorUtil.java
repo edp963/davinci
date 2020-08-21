@@ -41,22 +41,22 @@ public class ExecutorUtil {
     public static final ExecutorService SHEET_WORKERS = Executors.newFixedThreadPool(16,
             new ThreadFactoryBuilder().setNameFormat("Sheet-worker-%d").setDaemon(true).build());
 
-    public static <T> Future<T> submitWorkbookTask(WorkbookWorker worker, Logger customLogger) {
-        printThreadPoolStatusLog(WORKBOOK_WORKERS, "WORKBOOK_WORKERS", customLogger);
-        return ExecutorUtil.WORKBOOK_WORKERS.submit(worker);
-    }
-
     public static <T> Future<T> submitWorkbookTask(WorkBookContext context, Logger customLogger) {
         return ExecutorUtil.submitWorkbookTask(new WorkbookWorker(context), customLogger);
     }
 
-    public static <T> Future<T> submitSheetTask(SheetWorker worker, Logger customLogger) {
-        printThreadPoolStatusLog(SHEET_WORKERS, "SHEET_WORKERS", customLogger);
-        return ExecutorUtil.SHEET_WORKERS.submit(worker);
+    private static <T> Future<T> submitWorkbookTask(WorkbookWorker worker, Logger customLogger) {
+        printThreadPoolStatusLog(WORKBOOK_WORKERS, "WORKBOOK_WORKERS", customLogger);
+        return ExecutorUtil.WORKBOOK_WORKERS.submit(worker);
     }
 
     public static <T> Future<T> submitSheetTask(SheetContext context, Logger customLogger) {
         return ExecutorUtil.submitSheetTask(new SheetWorker(context), customLogger);
+    }
+
+    private static <T> Future<T> submitSheetTask(SheetWorker worker, Logger customLogger) {
+        printThreadPoolStatusLog(SHEET_WORKERS, "SHEET_WORKERS", customLogger);
+        return ExecutorUtil.SHEET_WORKERS.submit(worker);
     }
 
     public static void printThreadPoolStatusLog(ExecutorService executorService, String serviceName, Logger customLogger) {
