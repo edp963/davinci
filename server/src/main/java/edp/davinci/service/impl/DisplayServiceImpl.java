@@ -19,15 +19,39 @@
 
 package edp.davinci.service.impl;
 
-import static edp.core.consts.Consts.DEFAULT_COPY_SUFFIX;
-
-import java.io.File;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
+import com.alibaba.druid.util.StringUtils;
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
+import edp.core.utils.BaseLock;
+import edp.core.utils.CollectionUtils;
+import edp.core.utils.FileUtils;
+import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ErrorMsg;
+import edp.davinci.core.enums.CheckEntityEnum;
+import edp.davinci.core.enums.LogNameEnum;
+import edp.davinci.core.enums.UserPermissionEnum;
+import edp.davinci.core.enums.VizEnum;
+import edp.davinci.dao.MemDisplaySlideWidgetMapper;
+import edp.davinci.dao.RelRoleDisplaySlideWidgetMapper;
 import edp.davinci.dto.displayDto.DisplayCopy;
+import edp.davinci.dto.displayDto.DisplayInfo;
+import edp.davinci.dto.displayDto.DisplayUpdate;
+import edp.davinci.dto.displayDto.DisplayWithProject;
+import edp.davinci.dto.projectDto.ProjectPermission;
+import edp.davinci.dto.roleDto.VizVisibility;
+import edp.davinci.dto.shareDto.ShareEntity;
+import edp.davinci.model.Display;
+import edp.davinci.model.RelRoleDisplay;
+import edp.davinci.model.Role;
+import edp.davinci.model.User;
+import edp.davinci.service.DisplayService;
+import edp.davinci.service.DisplaySlideService;
+import edp.davinci.service.ProjectService;
+import edp.davinci.service.share.ShareFactor;
+import edp.davinci.service.share.ShareResult;
+import edp.davinci.service.share.ShareType;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -36,34 +60,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.alibaba.druid.util.StringUtils;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-import edp.core.exception.NotFoundException;
-import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
-import edp.core.utils.BaseLock;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.FileUtils;
-import edp.davinci.core.common.Constants;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.VizEnum;
-import edp.davinci.dao.MemDisplaySlideWidgetMapper;
-import edp.davinci.dao.RelRoleDisplaySlideWidgetMapper;
-import edp.davinci.dto.displayDto.DisplayInfo;
-import edp.davinci.dto.displayDto.DisplayUpdate;
-import edp.davinci.dto.displayDto.DisplayWithProject;
-import edp.davinci.dto.projectDto.ProjectPermission;
-import edp.davinci.dto.roleDto.VizVisibility;
-import edp.davinci.model.Display;
-import edp.davinci.model.RelRoleDisplay;
-import edp.davinci.model.Role;
-import edp.davinci.model.User;
-import edp.davinci.service.DisplayService;
-import edp.davinci.service.DisplaySlideService;
-import edp.davinci.service.ProjectService;
-import lombok.extern.slf4j.Slf4j;
+import static edp.core.consts.Consts.DEFAULT_COPY_SUFFIX;
 
 @Slf4j
 @Service("displayService")
@@ -87,23 +91,26 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
     @Autowired
     private DisplaySlideService displaySlideService;
-    
-    private static final  CheckEntityEnum entity = CheckEntityEnum.DISPLAY;
 
-	@Override
-	public boolean isExist(String name, Long id, Long projectId) {
-		Long displayId = displayMapper.getByNameWithProjectId(name, projectId);
-		if (null != id && null != displayId) {
-			return !id.equals(displayId);
-		}
-		return null != displayId && displayId.longValue() > 0L;
-	}
-    
-	private void checkIsExist(String name, Long id, Long projectId) {
-		if (isExist(name, id, projectId)) {
-			alertNameTaken(entity, name);
-		}
-	}
+    @Autowired
+    private String TOKEN_SECRET;
+
+    private static final CheckEntityEnum entity = CheckEntityEnum.DISPLAY;
+
+    @Override
+    public boolean isExist(String name, Long id, Long projectId) {
+        Long displayId = displayMapper.getByNameWithProjectId(name, projectId);
+        if (null != id && null != displayId) {
+            return !id.equals(displayId);
+        }
+        return null != displayId && displayId.longValue() > 0L;
+    }
+
+    private void checkIsExist(String name, Long id, Long projectId) {
+        if (isExist(name, id, projectId)) {
+            alertNameTaken(entity, name);
+        }
+    }
 
     /**
      * 新建display
@@ -115,47 +122,47 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     @Override
     @Transactional
     public Display createDisplay(DisplayInfo displayInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-    	
-    	Long projectId = displayInfo.getProjectId();
-    	checkWritePermission(entity, projectId, user, "create");
 
-    	String name = displayInfo.getName();
+        Long projectId = displayInfo.getProjectId();
+        checkWritePermission(entity, projectId, user, "create");
+
+        String name = displayInfo.getName();
         checkIsExist(name, null, projectId);
 
         BaseLock lock = getLock(entity, name, projectId);
-		if (lock != null && !lock.getLock()) {
-			alertNameTaken(entity, name);
-		}
-		
-		try {
-			
-			Display display = new Display().createdBy(user.getId());
-	        BeanUtils.copyProperties(displayInfo, display);
+        if (lock != null && !lock.getLock()) {
+            alertNameTaken(entity, name);
+        }
 
-			if (displayMapper.insert(display) <= 0) {
-				throw new ServerException("create display fail");
-			}
+        try {
 
-			optLogger.info("display ({}) is create by (:{})", display.toString(), user.getId());
+            Display display = new Display().createdBy(user.getId());
+            BeanUtils.copyProperties(displayInfo, display);
 
-			if (!CollectionUtils.isEmpty(displayInfo.getRoleIds())) {
-				List<Role> roles = roleMapper.getRolesByIds(displayInfo.getRoleIds());
-				List<RelRoleDisplay> list = roles.stream()
-						.map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
-						.collect(Collectors.toList());
+            if (displayMapper.insert(display) <= 0) {
+                throw new ServerException("create display fail");
+            }
 
-				if (!CollectionUtils.isEmpty(list)) {
-					relRoleDisplayMapper.insertBatch(list);
-					optLogger.info("display ({}) limit role ({}) access", display.getId(),
-							roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
-				}
-			}
+            optLogger.info("display ({}) is create by (:{})", display.toString(), user.getId());
 
-			return display;
-			
-		}finally {
-			releaseLock(lock);
-		}
+            if (!CollectionUtils.isEmpty(displayInfo.getRoleIds())) {
+                List<Role> roles = roleMapper.getRolesByIds(displayInfo.getRoleIds());
+                List<RelRoleDisplay> list = roles.stream()
+                        .map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+                        .collect(Collectors.toList());
+
+                if (!CollectionUtils.isEmpty(list)) {
+                    relRoleDisplayMapper.insertBatch(list);
+                    optLogger.info("display ({}) limit role ({}) access", display.getId(),
+                            roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                }
+            }
+
+            return display;
+
+        } finally {
+            releaseLock(lock);
+        }
     }
 
 
@@ -169,18 +176,18 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     @Override
     @Transactional
     public boolean deleteDisplay(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        
-    	DisplayWithProject displayWithProject = getDisplayWithProject(id, false);
+
+        DisplayWithProject displayWithProject = getDisplayWithProject(id, false);
         if (null == displayWithProject) {
             return false;
         }
-        
+
         Long projectId = displayWithProject.getProjectId();
         checkWritePermission(entity, projectId, user, "copy");
 
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
         if (isDisableDisplay(displayWithProject.getId(), projectId, user, projectPermission)) {
-        	alertUnAuthorized(entity, user, "copy");
+            alertUnAuthorized(entity, user, "copy");
         }
 
         relRoleDisplaySlideWidgetMapper.deleteByDisplayId(id);
@@ -192,20 +199,20 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
         return true;
     }
-    
+
     private DisplayWithProject getDisplayWithProject(Long id, boolean isThrow) {
 
-    	DisplayWithProject displayWithProject = displayMapper.getDisplayWithProjectById(id);
+        DisplayWithProject displayWithProject = displayMapper.getDisplayWithProjectById(id);
 
-    	if (null == displayWithProject) {
+        if (null == displayWithProject) {
             log.info("display (:{}) is not found", id);
         }
-        
-		if (null == displayWithProject && isThrow) {
-			throw new NotFoundException("Display is not found");
-		}
 
-		return displayWithProject;
+        if (null == displayWithProject && isThrow) {
+            throw new NotFoundException("Display is not found");
+        }
+
+        return displayWithProject;
     }
 
     /**
@@ -229,99 +236,119 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
         if (isDisableDisplay(displayUpdate.getId(), projectId, user, projectPermission)) {
-        	alertUnAuthorized(entity, user, "update");
+            alertUnAuthorized(entity, user, "update");
         }
-        
+
         String name = displayUpdate.getName();
         BaseLock lock = getLock(entity, name, projectId);
-		if (lock != null && !lock.getLock()) {
-			alertNameTaken(entity, name);
-		}
-		
-		try {
+        if (lock != null && !lock.getLock()) {
+            alertNameTaken(entity, name);
+        }
 
-			String updateAvatar = displayUpdate.getAvatar();
-	        if (!StringUtils.isEmpty(updateAvatar) && !updateAvatar.startsWith(Constants.DISPLAY_AVATAR_PATH)) {
-	            throw new ServerException("Invalid cover image");
-	        }
+        try {
 
-	        String avatar = display.getAvatar();
-	        //删除原有封面图
-	        if (!StringUtils.isEmpty(avatar) && !updateAvatar.equals(avatar)) {
-	            File file = new File(avatar);
-	            if (null != file && file.exists() && file.isFile() && fileUtils.isImage(file)) {
-	                file.delete();
-	            }
-	        }
-	        
-	        String origin = display.toString();
-	        BeanUtils.copyProperties(displayUpdate, display);
-	        display.updatedBy(user.getId());
+            String updateAvatar = displayUpdate.getAvatar();
+            if (!StringUtils.isEmpty(updateAvatar) && !updateAvatar.startsWith(Constants.DISPLAY_AVATAR_PATH)) {
+                throw new ServerException("Invalid cover image");
+            }
 
-			if (displayMapper.update(display) <= 0) {
-				throw new ServerException("update display fail");
-			}
-			
-			optLogger.info("display ({}) is update by (:{}), origin: ({})", display.toString(), user.getId(), origin);
-			if (displayUpdate.getRoleIds() != null) {
-				relRoleDisplayMapper.deleteByDisplayId(display.getId());
-				if (!CollectionUtils.isEmpty(displayUpdate.getRoleIds())) {
-					List<Role> roles = roleMapper.getRolesByIds(displayUpdate.getRoleIds());
-					List<RelRoleDisplay> list = roles.stream()
-							.map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
-							.collect(Collectors.toList());
-					if (!CollectionUtils.isEmpty(list)) {
-						relRoleDisplayMapper.insertBatch(list);
-						optLogger.info("update display ({}) limit role ({}) access", display.getId(),
-								roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
-					}
-				}
-			}
+            String avatar = display.getAvatar();
+            //删除原有封面图
+            if (!StringUtils.isEmpty(avatar) && !updateAvatar.equals(avatar)) {
+                File file = new File(avatar);
+                if (null != file && file.exists() && file.isFile() && fileUtils.isImage(file)) {
+                    file.delete();
+                }
+            }
 
-			return true;
+            String origin = display.toString();
+            BeanUtils.copyProperties(displayUpdate, display);
+            display.updatedBy(user.getId());
 
-		}finally {
-			releaseLock(lock);
-		}
+            if (displayMapper.update(display) <= 0) {
+                throw new ServerException("update display fail");
+            }
+
+            optLogger.info("display ({}) is update by (:{}), origin: ({})", display.toString(), user.getId(), origin);
+            if (displayUpdate.getRoleIds() != null) {
+                relRoleDisplayMapper.deleteByDisplayId(display.getId());
+                if (!CollectionUtils.isEmpty(displayUpdate.getRoleIds())) {
+                    List<Role> roles = roleMapper.getRolesByIds(displayUpdate.getRoleIds());
+                    List<RelRoleDisplay> list = roles.stream()
+                            .map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+                            .collect(Collectors.toList());
+                    if (!CollectionUtils.isEmpty(list)) {
+                        relRoleDisplayMapper.insertBatch(list);
+                        optLogger.info("update display ({}) limit role ({}) access", display.getId(),
+                                roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                    }
+                }
+            }
+
+            return true;
+
+        } finally {
+            releaseLock(lock);
+        }
     }
 
-	/**
-	 * 根据项目获取当前用户可见Display列表
-	 *
-	 * @param projectId
-	 * @param user
-	 * @return
-	 */
-	@Override
-	public List<Display> getDisplayListByProject(Long projectId, User user)
-			throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Display getDisplay(Long displayId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Display display = displayMapper.getById(displayId);
+        if (display == null) {
+            throw new NotFoundException("Display is not found");
+        }
 
-		if (!checkReadPermission(entity, projectId, user)) {
-			return null;
-		}
+        if (!checkReadPermission(entity, display.getProjectId(), user)) {
+            return null;
+        }
+        ProjectPermission projectPermission = getProjectPermission(display.getProjectId(), user);
+        List<Long> disableList = getDisableVizs(user.getId(), display.getProjectId(), Arrays.asList(displayId), VizEnum.DISPLAY);
+        boolean disable = !projectPermission.isProjectMaintainer() && disableList.contains(display.getId());
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                && !display.getPublish();
+        if (disable || noPublish) {
+            throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
+        }
+        return display;
+    }
 
-		List<Display> displays = displayMapper.getByProject(projectId);
-		if (CollectionUtils.isEmpty(displays)) {
-			return null;
-		}
+    /**
+     * 根据项目获取当前用户可见Display列表
+     *
+     * @param projectId
+     * @param user
+     * @return
+     */
+    @Override
+    public List<Display> getDisplayListByProject(Long projectId, User user)
+            throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-		List<Long> allDisplays = displays.stream().map(Display::getId).collect(Collectors.toList());
-		List<Long> disableList = getDisableVizs(user.getId(), projectId, allDisplays, VizEnum.DISPLAY);
-		
-		ProjectPermission projectPermission = getProjectPermission(projectId, user);
-		Iterator<Display> iterator = displays.iterator();
-		while (iterator.hasNext()) {
-			Display display = iterator.next();
-			boolean disable = !projectPermission.isProjectMaintainer() && disableList.contains(display.getId());
-			boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
-					&& !display.getPublish();
-			if (disable || noPublish) {
-				iterator.remove();
-			}
-		}
+        if (!checkReadPermission(entity, projectId, user)) {
+            return null;
+        }
 
-		return displays;
-	}
+        List<Display> displays = displayMapper.getByProject(projectId);
+        if (CollectionUtils.isEmpty(displays)) {
+            return null;
+        }
+
+        List<Long> allDisplays = displays.stream().map(Display::getId).collect(Collectors.toList());
+        List<Long> disableList = getDisableVizs(user.getId(), projectId, allDisplays, VizEnum.DISPLAY);
+
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+        Iterator<Display> iterator = displays.iterator();
+        while (iterator.hasNext()) {
+            Display display = iterator.next();
+            boolean disable = !projectPermission.isProjectMaintainer() && disableList.contains(display.getId());
+            boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
+                    && !display.getPublish();
+            if (disable || noPublish) {
+                iterator.remove();
+            }
+        }
+
+        return displays;
+    }
 
     /**
      * 上传display封面图
@@ -349,74 +376,83 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         return avatar;
     }
 
-	@Override
-	public String shareDisplay(Long id, User user, String username)
-			throws NotFoundException, UnAuthorizedExecption, ServerException {
-		
-		DisplayWithProject displayWithProject = getDisplayWithProject(id, true);
+    @Override
+    public ShareResult shareDisplay(Long id, User user, ShareEntity shareEntity)
+            throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-		if (null == displayWithProject.getProject()) {
-			log.info("project is not found");
-			throw new NotFoundException("project is not found");
-		}
+        DisplayWithProject displayWithProject = getDisplayWithProject(id, true);
 
-		Long projectId = displayWithProject.getProjectId();
-		ProjectPermission projectPermission = projectService.getProjectPermission(
-				projectService.getProjectDetail(displayWithProject.getProjectId(), user, false), user);
-        if (isDisableDisplay(displayWithProject.getId(), projectId, user, projectPermission)) {
-        	alertUnAuthorized(entity, user, "share");
+        if (null == displayWithProject.getProject()) {
+            log.info("project is not found");
+            throw new NotFoundException("project is not found");
         }
 
-		return shareService.generateShareToken(id, username, user.getId());
-	}
+        Long projectId = displayWithProject.getProjectId();
+        ProjectPermission projectPermission = projectService.getProjectPermission(
+                projectService.getProjectDetail(displayWithProject.getProjectId(), user, false), user);
+        if (isDisableDisplay(displayWithProject.getId(), projectId, user, projectPermission)) {
+            alertUnAuthorized(entity, user, "share");
+        }
+
+        shareService.formatShareParam(projectId, shareEntity);
+        ShareFactor shareFactor = ShareFactor.Builder
+                .shareFactor()
+                .withType(ShareType.DISPLAY)
+                .withShareEntity(shareEntity)
+                .withEntityId(id)
+                .withSharerId(user.getId())
+                .build();
+
+        return shareFactor.toShareResult(TOKEN_SECRET);
+    }
 
     @Override
     public List<Long> getDisplayExcludeRoles(Long id) {
         return relRoleDisplayMapper.getById(id);
     }
 
-	@Override
-	@Transactional
-	public boolean postDisplayVisibility(Role role, VizVisibility vizVisibility, User user)
-			throws NotFoundException, UnAuthorizedExecption, ServerException {
-		Display display = displayMapper.getById(vizVisibility.getId());
-		if (null == display) {
-			throw new NotFoundException("display is not found");
-		}
+    @Override
+    @Transactional
+    public boolean postDisplayVisibility(Role role, VizVisibility vizVisibility, User user)
+            throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Display display = displayMapper.getById(vizVisibility.getId());
+        if (null == display) {
+            throw new NotFoundException("display is not found");
+        }
 
-		if (vizVisibility.isVisible()) {
-			if (relRoleDisplayMapper.delete(display.getId(), role.getId()) > 0) {
-				optLogger.info("display ({}) can be accessed by role ({}), update by (:{})", display, role,
-						user.getId());
-			}
-		} else {
-			RelRoleDisplay relRoleDisplay = new RelRoleDisplay(display.getId(), role.getId());
-			relRoleDisplayMapper.insert(relRoleDisplay);
-			optLogger.info("display ({}) limit role ({}) access, create by (:{})", display, role, user.getId());
-		}
+        if (vizVisibility.isVisible()) {
+            if (relRoleDisplayMapper.delete(display.getId(), role.getId()) > 0) {
+                optLogger.info("display ({}) can be accessed by role ({}), update by (:{})", display, role,
+                        user.getId());
+            }
+        } else {
+            RelRoleDisplay relRoleDisplay = new RelRoleDisplay(display.getId(), role.getId());
+            relRoleDisplayMapper.insert(relRoleDisplay);
+            optLogger.info("display ({}) limit role ({}) access, create by (:{})", display, role, user.getId());
+        }
 
-		return true;
-	}
+        return true;
+    }
 
     /**
      * Copy a display
      *
      * @param id   displayId
      * @param copy
-	 * @param user user
-	 * @return new display
+     * @param user user
+     * @return new display
      */
     @Override
     @Transactional
     public Display copyDisplay(Long id, DisplayCopy copy, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-    	DisplayWithProject originDisplay = getDisplayWithProject(id, true);
+        DisplayWithProject originDisplay = getDisplayWithProject(id, true);
 
-    	Long projectId = originDisplay.getProjectId();
+        Long projectId = originDisplay.getProjectId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
-		checkIsExist(copy.getName(), null, projectId);
+        checkIsExist(copy.getName(), null, projectId);
 
-		checkWritePermission(entity, projectId, user, "copy");
+        checkWritePermission(entity, projectId, user, "copy");
 
         if (isDisableDisplay(id, projectId, user, projectPermission)) {
             alertUnAuthorized(entity, user, "copy");
@@ -426,54 +462,54 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         Display display = new Display();
         BeanUtils.copyProperties(originDisplay, display, "id");
 
-		String name = copy.getName();
+        String name = copy.getName();
         BaseLock lock = getLock(entity, name, projectId);
-		while(lock != null && !lock.getLock()) {
-			name = getCopyName(name, projectId);
-			lock = getLock(entity, name, projectId);
-		}
+        while (lock != null && !lock.getLock()) {
+            name = getCopyName(name, projectId);
+            lock = getLock(entity, name, projectId);
+        }
 
-		display.setName(name);
-		display.setDescription(copy.getDescription());
-		display.setPublish(copy.getPublish());
+        display.setName(name);
+        display.setDescription(copy.getDescription());
+        display.setPublish(copy.getPublish());
         display.createdBy(user.getId());
         if (displayMapper.insert(display) <= 0) {
             throw new ServerException("copy display fail");
         }
-		optLogger.info("display ({}) is copied by user (:{}) from ({})", display.toString(), user.getId(), originDisplay.toString());
+        optLogger.info("display ({}) is copied by user (:{}) from ({})", display.toString(), user.getId(), originDisplay.toString());
 
-		// copy relRoleDisplay
-		if (!CollectionUtils.isEmpty(copy.getRoleIds())) {
-			List<Role> roles = roleMapper.getRolesByIds(copy.getRoleIds());
-			List<RelRoleDisplay> list = roles.stream()
-					.map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
-					.collect(Collectors.toList());
+        // copy relRoleDisplay
+        if (!CollectionUtils.isEmpty(copy.getRoleIds())) {
+            List<Role> roles = roleMapper.getRolesByIds(copy.getRoleIds());
+            List<RelRoleDisplay> list = roles.stream()
+                    .map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+                    .collect(Collectors.toList());
 
-			if (!CollectionUtils.isEmpty(list)) {
-				relRoleDisplayMapper.insertBatch(list);
-				optLogger.info("display ({}) limit role ({}) access", display.getId(),
-						roles.stream().map(Role::getId).collect(Collectors.toList()));
-			}
-		}
+            if (!CollectionUtils.isEmpty(list)) {
+                relRoleDisplayMapper.insertBatch(list);
+                optLogger.info("display ({}) limit role ({}) access", display.getId(),
+                        roles.stream().map(Role::getId).collect(Collectors.toList()));
+            }
+        }
 
         displaySlideService.copySlides(originDisplay.getId(), display.getId(), user);
         return display;
     }
-    
-	private String getCopyName(String name, Long projectId) {
-		
-		String copyName = name + DEFAULT_COPY_SUFFIX;
-		if (isExist(copyName, null, projectId)) {
-			Integer maxOrder = displayMapper.selectMaxNameOrderByName(copyName, projectId);
-			if (maxOrder == null) {
-				copyName += "2";
-			} else {
-				copyName += (maxOrder + 1);
-			}
-		}
-		
-		return copyName;
-	}
+
+    private String getCopyName(String name, Long projectId) {
+
+        String copyName = name + DEFAULT_COPY_SUFFIX;
+        if (isExist(copyName, null, projectId)) {
+            Integer maxOrder = displayMapper.selectMaxNameOrderByName(copyName, projectId);
+            if (maxOrder == null) {
+                copyName += "2";
+            } else {
+                copyName += (maxOrder + 1);
+            }
+        }
+
+        return copyName;
+    }
 
     @Override
     @Transactional
