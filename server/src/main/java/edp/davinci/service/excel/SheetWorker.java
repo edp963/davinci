@@ -59,12 +59,17 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
 
     @Override
     public T call() {
+
         Stopwatch watch = Stopwatch.createStarted();
         Boolean rst = true;
         String md5 = null;
         Logger logger = context.getCustomLogger();
         boolean log = context.getCustomLogger() != null;
+
         try {
+
+            interrupted(context);
+
             SqlUtils utils = context.getSqlUtils();
             JdbcTemplate template = utils.jdbcTemplate();
             propertiesSet(template);
@@ -72,8 +77,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             super.init(context);
             super.writeHeader(context);
             template.setMaxRows(context.getResultLimit() > 0 && context.getResultLimit() <= maxRows ? context.getResultLimit() : maxRows);
-            template.setFetchSize(500);
-            
+
             // special for mysql
             if(utils.getDataTypeEnum() == DataTypeEnum.MYSQL) {
             	template.setFetchSize(Integer.MIN_VALUE);
@@ -84,27 +88,30 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             md5 = MD5Util.getMD5(sql, true, 16);
             Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
             if (log) {
-                logger.info("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) start query sql:{}, md5:{}",
+                logger.info("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) query start sql:{}, md5:{}",
                         context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), SqlUtils.formatSql(sql), md5);
             }
 
             final AtomicInteger count = new AtomicInteger(0);
             template.query(sql, rs -> {
+
+                interrupted(context);
+
                 Map<String, Object> dataMap = Maps.newHashMap();
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
                     dataMap.put(SqlUtils.getColumnLabel(queryFromsAndJoins, rs.getMetaData().getColumnLabel(i)), rs.getObject(rs.getMetaData().getColumnLabel(i)));
                 }
-                if (log) {
-                    logger.info("data map:{}", dataMap.toString());
-                }
                 writeLine(context, dataMap);
                 count.incrementAndGet();
             });
+
             if (log) {
-                logger.info("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) finish query md5:{}, count:{}",
+                logger.info("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) query finish md5:{}, count:{}",
                         context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), md5, count.get());
             }
+
             super.refreshHeightWidth(context);
+
         } catch (Exception e) {
             if (context.getWrapper().getAction() == ActionEnum.MAIL) {
                 MsgMailExcel msg = (MsgMailExcel) context.getWrapper().getMsg();
@@ -112,7 +119,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
                 msg.setException(e);
             }
             if (log) {
-                logger.error("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) error query md5:{}",
+                logger.error("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) query error md5:{}",
                         context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), md5);
                 logger.error(e.toString(), e);
             }
@@ -131,6 +138,18 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         return (T) rst;
     }
 
+    private void interrupted(SheetContext context) {
+        if (Thread.interrupted()) {
+            Logger logger = context.getCustomLogger();
+            boolean log = context.getCustomLogger() != null;
+            if (log) {
+                logger.error("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) interrupted",
+                        context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName());
+            }
+            throw new RuntimeException("Task(" + context.getTaskKey() + ") sheet worker(name:" + context.getName() + ", " +
+                    "sheetNo:" + context.getSheetNo() + ", sheetName:" + context.getSheet().getSheetName() + ") interrupted");
+        }
+    }
 
     private void propertiesSet(JdbcTemplate template) {
         if (!CollectionUtils.isEmpty(context.getExecuteSql())) {

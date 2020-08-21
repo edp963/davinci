@@ -44,13 +44,17 @@ public class SourceMessageHandler implements RedisMessageHandler {
 	@Override
     public void handle(Object message, String flag) {
 
-    	// the flag is deprecated
-        log.info("SourceHandler received release source message (:{}), and Flag is (:{})", message, flag);
+        log.info("SourceHandler received release source message({}), id({})", message, flag);
         
         if (!(message instanceof String)) {
             return;
         }
-        
+
+        if (SourceUtils.getReleaseSourceSet().contains(flag)) {
+            SourceUtils.getReleaseSourceSet().remove(flag);
+            return;
+        }
+
         Map<String,Object> map = JSON.parseObject((String)message, Map.class);
         
         SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);

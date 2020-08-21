@@ -314,4 +314,30 @@ public class DateUtils {
         return toSqlDate(new Date(timeLongInMicros));
     }
 
+    public static Date dateFormat(String date, String dateFormat) {
+        if (date == null) {
+            return null;
+        }
+        SimpleDateFormat format = new SimpleDateFormat(dateFormat);
+        try {
+            return format.parse(date);
+        } catch (Exception ex) {
+
+        }
+        return null;
+    }
+
+    public static String dateFormat(Date date, String dateFormat) {
+        if (date == null) {
+            return "";
+        }
+        SimpleDateFormat format = new SimpleDateFormat(dateFormat);
+        try {
+            return format.format(date);
+        } catch (Exception ex) {
+
+        }
+        return "";
+    }
+
 }

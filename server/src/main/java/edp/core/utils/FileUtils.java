@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -366,5 +367,14 @@ public class FileUtils {
                 // ignore
             }
         }
+    }
+
+    public static int copy(File in, File out) {
+        try {
+            return FileCopyUtils.copy(in, out);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 }

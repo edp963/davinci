@@ -43,6 +43,6 @@ public class MsgMailExcel {
 
     @Override
     public String toString() {
-        return "Date: " + DateUtils.toyyyyMMddHHmmss(date) + ", exception: {" + exception.getMessage() + "}";
+        return "Date:" + DateUtils.dateFormat(date, "yyyy-MM-dd HH:ss:mm") + ", exception:" + exception.getMessage();
     }
 }

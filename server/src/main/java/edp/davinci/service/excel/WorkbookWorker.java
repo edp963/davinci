@@ -75,11 +75,13 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
 
         String filePath = null;
         try {
+
             List<SheetContext> sheetContextList = buildSheetContextList();
             if (CollectionUtils.isEmpty(sheetContextList)) {
                 throw new IllegalArgumentException(
                         "Task(" + context.getTaskKey() + ") workbook worker sheetContextList is empty");
             }
+
             wb = new SXSSFWorkbook(1000);
             List<Future> futures = Lists.newArrayList();
             int sheetNo = 0;
@@ -94,25 +96,28 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 futures.add(future);
             }
 
-            Boolean rst = false;
+            Boolean rst = true;
             try {
                 for (Future<Boolean> future : futures) {
-                    rst = future.get(1, TimeUnit.HOURS);
-                    if (!rst) {
-                        future.cancel(true);
+                    if (!future.get(1, TimeUnit.HOURS)) {
+                        rst = false;
+                        break;
                     }
                 }
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
+
+                rst = false;
+
                 if (log) {
-                    logger.error("Task({}) workbook worker error", context.getTaskKey());
+                    logger.error("Task({}) workbook worker execute error", context.getTaskKey());
                     logger.error(e.toString(), e);
                 }
-            
-                if (e instanceof TimeoutException && wrapper.getAction() == ActionEnum.MAIL) {
+
+                if (wrapper.getAction() == ActionEnum.MAIL) {
                     MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
-                    msg.setException(new TimeoutException("Get data timeout"));
+                    msg.setException(e);
                     super.tell(wrapper);
-                    return (T) filePath;
+                    return null;
                 }
             }
 
@@ -122,20 +127,27 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                     wb.write(out);
                     out.flush();
                 } catch (Exception e) {
-                    filePath = null;
+                    workbookDispose(wb);
                     throw e;
                 }
                 wrapper.setRst(filePath);
             } else {
                 if (log) {
-                    logger.info("Task({}) sheet worker result false action={}, xid={}", logArgs);
+                    logger.info("Task({}) sheet worker execute fail action={}, xid={}", logArgs);
                 }
+
+                for (Future future : futures) {
+                    future.cancel(true);
+                }
+
                 wrapper.setRst(null);
             }
+
             super.tell(wrapper);
+
         } catch (Exception e) {
             if (log) {
-                logger.error("Task({}) workbook worker error", context.getTaskKey());
+                logger.error("Task({}) workbook worker execute error", context.getTaskKey());
                 logger.error(e.toString(), e);
             }
             
@@ -144,12 +156,14 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 msg.setException(e);
             }
             
-            super.tell(wrapper);
             if (StringUtils.isNotEmpty(filePath)) {
                 FileUtils.delete(filePath);
             }
+
+            super.tell(wrapper);
+
         } finally {
-            wb = null;
+            workbookDispose(wb);
         }
 
         if (wrapper.getAction() == ActionEnum.DOWNLOAD) {
@@ -157,7 +171,9 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             if (log) {
                 logger.info("Task({}) workbook worker complete status={}, action={}, xid={}, filePath={}, cost={}ms", args);
             }
-        } else if (wrapper.getAction() == ActionEnum.SHAREDOWNLOAD || wrapper.getAction() == ActionEnum.MAIL) {
+        }
+
+        if (wrapper.getAction() == ActionEnum.SHAREDOWNLOAD || wrapper.getAction() == ActionEnum.MAIL) {
             Object[] args = {context.getTaskKey(), StringUtils.isNotEmpty(filePath), wrapper.getAction(), wrapper.getxUUID(), filePath, watch.elapsed(TimeUnit.MILLISECONDS)};
             if (log) {
                 logger.info("Task({}) workbook worker complete status={}, action={}, xUUID={}, filePath={}, cost={}ms", args);
@@ -167,6 +183,11 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
         return (T) filePath;
     }
 
+    private void workbookDispose(Workbook wb) {
+        if (wb != null) {
+            ((SXSSFWorkbook)wb).dispose();
+        }
+    }
 
     private List<SheetContext> buildSheetContextList() throws Exception {
         List<SheetContext> sheetContextList = Lists.newArrayList();
