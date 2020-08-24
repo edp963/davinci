@@ -597,15 +597,15 @@ public class DisplayController extends BaseController {
      * 共享display
      *
      * @param id
-     * @param username
+     * @param shareEntity
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "share display")
-    @GetMapping("/{id}/share")
+    @ApiOperation(value = "share display", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{id}/share", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity shareDisplay(@PathVariable Long id,
-                                       @RequestParam(required = false) String username,
+                                       @RequestBody ShareEntity shareEntity,
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) {
         if (invalidId(id)) {
@@ -613,8 +613,15 @@ public class DisplayController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        String shareToken = displayService.shareDisplay(id, user, username);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
+        try {
+            shareEntity.valid();
+        } catch (IllegalArgumentException e) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareResult shareResult = displayService.shareDisplay(id, user, shareEntity);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareResult));
     }
 
 
@@ -662,15 +669,16 @@ public class DisplayController extends BaseController {
     @ApiOperation(value = "copy a display", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(value = "/copy/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity copyDisplay(@PathVariable Long id,
-    														@Valid @RequestBody DisplayCopy copy,
-    														@ApiIgnore BindingResult bindingResult,
-    														@ApiIgnore @CurrentUser User user,
-    														HttpServletRequest request) {
+                                      @Valid @RequestBody DisplayCopy copy,
+                                      @ApiIgnore BindingResult bindingResult,
+                                      @ApiIgnore @CurrentUser User user,
+                                      HttpServletRequest request) {
+
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        
+
         if (bindingResult.hasErrors()) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);

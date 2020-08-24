@@ -117,72 +117,54 @@ public class DownloadController extends BaseController {
 
 
     @ApiOperation(value = "submit share download")
-    @PostMapping(value = "/share/submit/{type}/{uuid}/{dataToken:.*}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    @AuthShare
-    public ResponseEntity submitShareDownloadTask(@PathVariable(name = "type") String type,
+    @PostMapping(value = "/share/submit/{type}/{uuid}/{token:.*}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @AuthShare(type = ShareType.DATA, operation = ShareOperation.DOWNLOAD)
+    public ResponseEntity submitShareDownloadTask(@PathVariable(name = "token") String token,
+                                                  @RequestParam(required = false) String password,
                                                   @PathVariable(name = "uuid") String uuid,
-                                                  @PathVariable(name = "dataToken") String dataToken,
-                                                  @Valid @RequestBody(required = false) DownloadViewExecuteParam[] params,
-                                                  @ApiIgnore @CurrentUser User user,
-                                                  HttpServletRequest request) {
-
-
-        if (StringUtils.isEmpty(dataToken)) {
-            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
+                                                  @PathVariable(name = "type") String type,
+                                                  @Valid @RequestBody(required = false) DownloadViewExecuteParam[] params) {
 
         List<DownloadViewExecuteParam> downloadViewExecuteParams = Arrays.asList(params);
-        boolean rst = shareDownloadService.submit(DownloadType.getDownloadType(type), uuid, dataToken, user, downloadViewExecuteParams);
+        boolean rst = shareDownloadService.submit(DownloadType.getDownloadType(type), uuid, downloadViewExecuteParams);
 
         return ResponseEntity.ok(rst ? new ResultMap().success() : new ResultMap().fail());
     }
 
+    @ApiOperation(value = "get download record file")
+    @GetMapping(value = "/share/record/file/{id}/{uuid}/{token:.*}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @AuthShare(type = ShareType.FILE, operation = ShareOperation.DOWNLOAD)
+    public ResponseEntity getShareDownloadRecordFile(@PathVariable(name = "token") String token,
+                                                     @RequestParam(required = false) String password,
+                                                     @PathVariable(name = "uuid") String uuid,
+                                                     @PathVariable(name = "id") String id,
+                                                     HttpServletRequest request,
+                                                     HttpServletResponse response) {
+        ShareDownloadRecord record = shareDownloadService.downloadById(id, uuid);
+        try (FileInputStream is = new FileInputStream(new File(record.getPath()));) {
+            encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
+            Streams.copy(is, response.getOutputStream(), true);
+        } catch (Exception e) {
+            log.error("Get downloadRecordFile error, id:" + id + ", e:", e.getMessage());
+        }
+        return null;
+    }
 
     @ApiOperation(value = "get share download record page")
     @GetMapping(value = "/share/page/{uuid}/{token:.*}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    @AuthShare
-    public ResponseEntity getShareDownloadRecordPage(@PathVariable(name = "uuid") String uuid,
-                                                     @PathVariable(name = "token") String token,
+    @AuthShare(type = ShareType.RECORD, operation = ShareOperation.DOWNLOAD)
+    public ResponseEntity getShareDownloadRecordPage(@PathVariable(name = "token") String token,
+                                                     @RequestParam(required = false) String password,
+                                                     @PathVariable(name = "uuid") String uuid,
                                                      @ApiIgnore @CurrentUser User user,
                                                      HttpServletRequest request) {
-        if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
+        List<ShareDownloadRecord> records = shareDownloadService.queryDownloadRecordPage(uuid);
 
-        List<ShareDownloadRecord> records = shareDownloadService.queryDownloadRecordPage(uuid, token, user);
-
-        if (null == user) {
+        if (null == user || user.getId() == null) {
             return ResponseEntity.ok(new ResultMap(tokenUtils).payloads(records));
         } else {
             return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(records));
         }
-    }
-
-
-    @ApiOperation(value = "get download record file")
-    @GetMapping(value = "/share/record/file/{id}/{uuid}/{token:.*}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @AuthShare
-    public ResponseEntity getShareDownloadRecordFile(@PathVariable(name = "id") String id,
-                                                     @PathVariable(name = "uuid") String uuid,
-                                                     @PathVariable(name = "token") String token,
-                                                     @ApiIgnore @CurrentUser User user,
-                                                     HttpServletRequest request,
-                                                     HttpServletResponse response) {
-        if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-		ShareDownloadRecord record = shareDownloadService.downloadById(id, uuid, token, user);
-		try (FileInputStream is = new FileInputStream(new File(record.getPath()));) {
-			encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
-			Streams.copy(is, response.getOutputStream(), true);
-		} catch (Exception e) {
-			log.error("Get downloadRecordFile error, id:" + id + ", e:", e.getMessage());
-		}
-        return null;
     }
 
 

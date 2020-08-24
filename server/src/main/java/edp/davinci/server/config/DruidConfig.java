@@ -51,6 +51,9 @@ public class DruidConfig {
     @Value("${spring.datasource.driver-class-name}")
     private String driverClassName;
 
+    @Value("${spring.datasource.type}")
+    private String type;
+
     @Value("${spring.datasource.max-active}")
     private int maxActive;
 
@@ -68,6 +71,9 @@ public class DruidConfig {
 
     @Value("${spring.datasource.min-evictable-idle-time-millis}")
     private int minEvictableIdleTimeMillis;
+
+    @Value("${spring.datasource.max-evictable-idle-time-millis}")
+    private int maxEvictableIdleTimeMillis;
 
     @Value("${spring.datasource.test-while-idle}")
     private boolean testWhileIdle;
@@ -89,7 +95,10 @@ public class DruidConfig {
 
     @Value("${spring.datasource.validation-query}")
     private String validationQuery;
-    
+
+    @Value("${spring.datasource.validation-query-timeout}")
+    private int validationQueryTime;
+
     @Value("${spring.datasource.name:davinci}")
     private String name;
 
@@ -139,12 +148,14 @@ public class DruidConfig {
         druidDataSource.setMaxWait(maxWait);
         druidDataSource.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
         druidDataSource.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
+        druidDataSource.setMaxEvictableIdleTimeMillis(maxEvictableIdleTimeMillis);
         druidDataSource.setTestWhileIdle(testWhileIdle);
         druidDataSource.setTestOnBorrow(testOnBorrow);
         druidDataSource.setTestOnReturn(testOnReturn);
         druidDataSource.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
         druidDataSource.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
         druidDataSource.setValidationQuery(validationQuery);
+        druidDataSource.setValidationQueryTimeout(validationQueryTime);
         druidDataSource.setName(name);
 
         try {

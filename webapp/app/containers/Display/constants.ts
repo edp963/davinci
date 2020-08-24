@@ -46,10 +46,9 @@ enum Types {
 
   RESIZE_LAYER = 'davinci/Display/RESIZE_LAYER',
   RESIZE_LAYER_ADJUSTED = 'davinci/Display/RESIZE_LAYER_ADJUSTED',
-  DRAG_LAYER_INDEPENDENCE = 'davinci/Display/DRAG_LAYER_INDEPENDENCE',
+  
   DRAG_LAYER = 'davinci/Display/DRAG_LAYER',
   DRAG_LAYER_ADJUSTED = 'davinci/Display/DRAG_LAYER_ADJUSTED',
-  DRAG_LAYER_ADJUSTED_INDEPENDENCE = 'davinci/Display/DRAG_LAYER_ADJUSTED_INDEPENDENCE',
 
   CHANGE_LAYERS_STACK = 'davinci/Display/CHANGE_LAYERS_STACK',
   SET_LAYERS_ALIGNMENT = 'davinci/Display/SET_LAYERS_ALIGNMENT',
@@ -89,3 +88,8 @@ enum Types {
 export const ActionTypes = createTypes(Types)
 
 export { GraphTypes, DefaultDisplayParams } from './components/constants'
+
+export enum DragTriggerTypes {
+  MouseMove = 'mousemove',
+  KeyDown = 'keydown'
+}

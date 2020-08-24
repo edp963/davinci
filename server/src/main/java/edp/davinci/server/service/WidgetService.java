@@ -44,7 +44,7 @@ public interface WidgetService extends CheckEntityService {
 
     boolean deleteWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    String shareWidget(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    ShareResult shareWidget(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     Widget getWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 

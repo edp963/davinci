@@ -144,7 +144,7 @@ public abstract class BaseEntityService {
 		}
 	}
 	
-	protected boolean checkReadPermission(CheckEntityEnum entity, Long projectId, User user) {
+	public boolean checkReadPermission(CheckEntityEnum entity, Long projectId, User user) {
 
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 

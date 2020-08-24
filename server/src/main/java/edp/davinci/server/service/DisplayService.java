@@ -45,7 +45,7 @@ public interface DisplayService extends CheckEntityService {
 
     String uploadAvatar(MultipartFile file) throws ServerException;
 
-    String shareDisplay(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    ShareResult shareDisplay(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException;
 

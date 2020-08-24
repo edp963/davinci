@@ -47,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import edp.davinci.commons.util.StringUtils;
@@ -145,7 +146,7 @@ public class FileUtils {
         if (StringUtils.isEmpty(filePath)) {
             return;
         }
-        
+
 		File file = null;
 		if (!filePath.startsWith(fileBasePath)) {
 			file = new File(fileBasePath + filePath);
@@ -198,7 +199,6 @@ public class FileUtils {
      * @return
      */
     public static void deleteDir(File dir) {
-
 		if (dir.isFile() || dir.list().length == 0) {
 			dir.delete();
 		} else {
@@ -249,7 +249,7 @@ public class FileUtils {
     }
 
     /**
-     * 图片压缩，图片比例按原比例输出 
+     * 图片压缩，图片比例按原比例输出
      * tips: 压缩后的图片会替换原有的图片
      * @param filepath
      */
@@ -289,17 +289,17 @@ public class FileUtils {
             scheduleLogger.warn("Final compressed file size {}", imageLength);
 
             return new File(filepath);
-        
+
         } catch (Exception e) {
             scheduleLogger.error("Image compression failed", e);
         }
-        
+
         return null;
     }
 
     /**
      * 计算图片压缩率
-     * 
+     *
      * @param originLength
      * @param compressedLength
      * @return
@@ -308,7 +308,7 @@ public class FileUtils {
         DecimalFormat df = new DecimalFormat("0.000");
         String rate = df.format((float)compressedLength  / originLength);
         float result=  Float.valueOf(rate) * 100;
-        scheduleLogger.info("Compression {}/{}={}%",compressedLength,originLength,result);
+        scheduleLogger.info("Compression {}/{}={}%", compressedLength, originLength, result);
         return result;
     }
 
@@ -345,5 +345,14 @@ public class FileUtils {
             return file.delete();
         }
         return false;
+    }
+
+    public static int copy(File in, File out) {
+        try {
+            return FileCopyUtils.copy(in, out);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 }

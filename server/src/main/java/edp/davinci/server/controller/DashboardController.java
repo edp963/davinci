@@ -378,9 +378,9 @@ public class DashboardController extends BaseController {
         }
 
         for (MemDashboardWidgetCreate memDashboardWidgetCreate : memDashboardWidgetCreates) {
-            
+
             ExcelUtils.checkSheetName("Alias", memDashboardWidgetCreate.getAlias());
-            
+
             if (invalidId(dashboardId) || !dashboardId.equals(memDashboardWidgetCreate.getDashboardId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -469,15 +469,15 @@ public class DashboardController extends BaseController {
      * 分享dashboard
      *
      * @param dashboardId
-     * @param username
+     * @param shareEntity
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "share dashboard")
-    @GetMapping("/dashboards/{dashboardId}/share")
+    @ApiOperation(value = "share dashboard", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/dashboards/{dashboardId}/share", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity shareDashboard(@PathVariable Long dashboardId,
-                                         @RequestParam(required = false) String username,
+                                         @RequestBody ShareEntity shareEntity,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
 
@@ -486,8 +486,15 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        String shareToken = dashboardService.shareDashboard(dashboardId, username, user);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
+        try {
+            shareEntity.valid();
+        } catch (IllegalArgumentException e) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareResult shareResult = dashboardService.shareDashboard(dashboardId, user, shareEntity);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareResult));
     }
 
 }

@@ -196,7 +196,7 @@ public class WidgetController extends BaseController {
     @PostMapping("/{id}/{type}")
     public ResponseEntity downloadWidget(@PathVariable("id") Long id,
                                          @PathVariable("type") String type,
-                                         @Valid @RequestBody WidgetQueryParam executeParam,
+                                         @Valid @RequestBody WidgetQueryParam queryParam,
                                          @ApiIgnore BindingResult bindingResult,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
@@ -210,7 +210,7 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        String filePath = widgetService.generationFile(id, executeParam, user, type);
+        String filePath = widgetService.generationFile(id, queryParam, user, type);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(filePath));
     }
 
@@ -219,15 +219,15 @@ public class WidgetController extends BaseController {
      * 分享widget
      *
      * @param id
-     * @param username
+     * @param shareEntity
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "share widget")
-    @GetMapping("/{id}/share")
+    @ApiOperation(value = "share widget", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{id}/share", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity shareWidget(@PathVariable Long id,
-                                      @RequestParam(required = false) String username,
+                                      @RequestBody ShareEntity shareEntity,
                                       @ApiIgnore @CurrentUser User user,
                                       HttpServletRequest request) {
         if (invalidId(id)) {
@@ -235,8 +235,15 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        String shareToken = widgetService.shareWidget(id, user, username);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
+        try {
+            shareEntity.valid();
+        } catch (IllegalArgumentException e) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareResult shareResult = widgetService.shareWidget(id, user, shareEntity);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareResult));
     }
 
     @ApiOperation(value = "show sql")

@@ -14,20 +14,26 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
- *
  */
 
-package edp.davinci.commons.exception;
+package edp.davinci.server.dto.share;
 
-public class ServerException extends RuntimeException {
-    
-    private static final long serialVersionUID = -4795091944028932737L;
+import lombok.Data;
 
-    public ServerException(String message) {
-        super(message);
+@Data
+public class ShareResult {
+    String token;
+
+    /**
+     * only for share mode is <code>{@link ShareMode}</code> is password
+     */
+    String password;
+
+    public ShareResult(String token, String password) {
+        this.token = token;
+        this.password = password;
     }
 
-    public ServerException(String message, Throwable cause) {
-        super(message, cause);
+    public ShareResult() {
     }
 }

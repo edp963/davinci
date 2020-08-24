@@ -135,8 +135,11 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
     @Autowired
     private ProjectService projectService;
-    
-    private static final CheckEntityEnum entity = CheckEntityEnum.WIDGET; 
+
+    private static final CheckEntityEnum entity = CheckEntityEnum.WIDGET;
+
+    @Autowired
+    private String TOKEN_SECRET;
 
     @Override
     public boolean isExist(String name, Long id, Long projectId) {
@@ -198,7 +201,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getWidgetPermission() < UserPermissionEnum.READ.getPermission()) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedExecption(ErrorMsg.ERR_PERMISSION);
         }
 
         return widget;
@@ -246,14 +249,14 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             releaseLock(lock);
         }
     }
-    
+
     @Transactional
-	private void insertWidget(Widget widget) {
+	protected void insertWidget(Widget widget) {
 		if (widgetExtendMapper.insert(widget) <= 0) {
 			throw new ServerException("Create widget fail");
 		}
 	}
-    
+
     private void checkView(Long id) {
         if (null == viewExtendMapper.selectByPrimaryKey(id)) {
             log.error("View({}) is not found", id);
@@ -306,7 +309,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             releaseLock(lock);
         }
     }
-    
+
     @Transactional
 	private void updateWidget(Widget widget) {
 		if (widgetExtendMapper.update(widget) <= 0) {
@@ -352,20 +355,29 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      *
      * @param id
      * @param user
-     * @param username
+     * @param shareEntity
      * @return
      */
     @Override
-    public String shareWidget(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        
-    	Widget widget = getWidget(id);
+    public ShareResult shareWidget(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException {
+
+        Widget widget = getWidget(id);
         checkSharePermission(entity, widget.getProjectId(), user);
-        return shareService.generateShareToken(id, username, user.getId());
+        shareService.formatShareParam(widget.getProjectId(), shareEntity);
+        ShareFactor shareFactor = ShareFactor.Builder
+                .shareFactor()
+                .withType(ShareType.WIDGET)
+                .withShareEntity(shareEntity)
+                .withEntityId(id)
+                .withSharerId(user.getId())
+                .build();
+
+        return shareFactor.toShareResult(TOKEN_SECRET);
     }
 
 
     @Override
-    public String generationFile(Long id, WidgetQueryParam executeParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption {
+    public String generationFile(Long id, WidgetQueryParam queryParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption {
 
         Widget widget = getWidget(id);
 
@@ -376,9 +388,9 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             alertUnAuthorized(entity, user, "download");
         }
 
-        executeParam.setPageNo(-1);
-        executeParam.setPageSize(-1);
-        executeParam.setLimit(-1);
+        queryParam.setPageNo(-1);
+        queryParam.setPageSize(-1);
+        queryParam.setLimit(-1);
 
         String rootPath = fileUtils.fileBasePath + File.separator + "download" + File.separator
                 + DateUtils.dateFormat(new Date(), "yyyyMMdd") + File.separator + type + File.separator;
@@ -389,7 +401,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                 ViewWithSource viewWithSource = viewExtendMapper.getViewWithSource(widget.getViewId());
                 boolean maintainer = projectService.isMaintainer(projectDetail, user);
                 PagingWithQueryColumns paging = viewService.getDataWithQueryColumns(maintainer, viewWithSource,
-                        executeParam, user);
+                        queryParam, user);
                 List<QueryColumn> columns = paging.getColumns();
                 if (!CollectionUtils.isEmpty(columns)) {
                     File file = new File(rootPath);
@@ -409,11 +421,11 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
                 HashSet<Widget> widgets = new HashSet<>();
                 widgets.add(widget);
-                Map<Long, WidgetQueryParam> executeParamMap = new HashMap<>();
-                executeParamMap.put(widget.getId(), executeParam);
+                Map<Long, WidgetQueryParam> queryParamMap = new HashMap<>();
+                queryParamMap.put(widget.getId(), queryParam);
 
                 filePath = rootPath + excelName;
-                writeExcel(widgets, projectDetail, executeParamMap, filePath, user, false);
+                writeExcel(widgets, projectDetail, queryParamMap, filePath, user, false);
 
             } else {
                 throw new ServerException("Unknow file type");
@@ -441,7 +453,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
     public File writeExcel(Set<Widget> widgets,
                            ProjectDetail projectDetail, Map<Long, WidgetQueryParam> queryParamMap,
                            String filePath, User user, boolean containType) throws Exception {
- 
+
         if (StringUtils.isEmpty(filePath)) {
             throw new ServerException("Excel file path is empty");
         }

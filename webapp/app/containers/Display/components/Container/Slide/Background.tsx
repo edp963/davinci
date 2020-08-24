@@ -28,6 +28,7 @@ import { ContainerContext } from '../ContainerContext'
 import { DISPLAY_CONTAINER_PADDING } from './constants'
 import { LayerOperations } from '../../constants'
 import { DeltaPosition } from '../../Layer'
+import { DragTriggerTypes } from 'app/containers/Display/constants'
 
 type KeyDownKeys =
   | 'ArrowUp'
@@ -57,7 +58,11 @@ interface ISlideBackgroundProps {
   padding?: number
   autoFit?: boolean
   fullscreen?: boolean
-  onChangeLayersPosition?: (deltaPosition: DeltaPosition, scale: number) => void
+  onChangeLayersPosition?: (
+    deltaPosition: DeltaPosition,
+    scale: number,
+    eventTrigger: DragTriggerTypes
+  ) => void
   onDoLayerOperation?: (operation: LayerOperations) => void
   onRemoveLayerSelection?: () => void
 }
@@ -217,7 +222,11 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
             deltaPosition = { deltaX: grid[0], deltaY: 0 }
             break
         }
-        onChangeLayersPosition(deltaPosition, scale[0])
+        onChangeLayersPosition(
+          deltaPosition,
+          scale[0],
+          DragTriggerTypes.KeyDown
+        )
         return
       }
       if (key === 'Delete' || key === 'Backspace') {

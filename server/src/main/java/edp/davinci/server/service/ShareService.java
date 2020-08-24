@@ -36,24 +36,33 @@ import edp.davinci.core.dao.entity.User;
 
 import javax.servlet.http.HttpServletRequest;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 
 public interface ShareService {
-    ShareWidget getShareWidget(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    ShareWidget getShareWidget(User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
 
     String generateShareToken(Long shareEntityId, String username, Long userId) throws ServerException;
 
-    User shareLogin(String token, UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption;
+    User shareLogin(UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption;
 
-    ShareDisplay getShareDisplay(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    ShareDisplay getShareDisplay(User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
 
-    ShareDashboard getShareDashboard(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    ShareDashboard getShareDashboard(User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
 
-    Paging<Map<String, Object>> getShareData(String token, WidgetQueryParam executeParam, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException;
-
-    String generationShareDataCsv(WidgetQueryParam executeParam, User user, String token) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    Paging<Map<String, Object>> getShareData(WidgetQueryParam queryParam, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException;
 
     ResultMap getDistinctValue(String token, Long viewId, WidgetDistinctParam param, User user, HttpServletRequest request);
 
+    void formatShareParam(Long projectId, ShareEntity entity);
+
+    Map<String, Object> checkShareToken() throws ServerException, ForbiddenExecption;
+
+    Map<String, Object> getSharePermissions() throws ServerException, ForbiddenExecption;
+
+    @Deprecated
     ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption;
+
+    @Deprecated
+    void verifyShareUser(User user, ShareInfo shareInfo) throws ServerException, ForbiddenExecption;
 }

@@ -45,30 +45,29 @@ import java.util.List;
 public class ShareDownloadServiceImpl extends DownloadCommonService implements ShareDownloadService {
 
     @Autowired
-    private ShareDownloadRecordExtendMapper shareDownloadRecordMapper;
+    private ShareDownloadRecordExtendMapper shareDownloadRecordExtendMapper;
 
     @Autowired
     private ShareService shareService;
 
     @Override
-    public boolean submit(DownloadType downloadType, String uuid, String token, User user, List<DownloadViewExecuteParam> params) {
-        ShareInfo shareInfo = shareService.getShareInfo(token, user);
-
+    public boolean submit(DownloadType downloadType, String uuid, List<DownloadViewExecuteParam> params) {
+        ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         try {
-            List<WidgetContext> widgetList = getWidgetContexts(downloadType, shareInfo.getShareId(), user == null ? shareInfo.getShareUser() : user, params);
+            List<WidgetContext> widgetList = getWidgetContexts(downloadType, shareFactor.getEntityId(), shareFactor.getUser(), params);
 
             ShareDownloadRecord record = new ShareDownloadRecord();
             record.setUuid(uuid);
             record.setName(getDownloadFileName(downloadType, shareInfo.getShareId()));
             record.setStatus(DownloadRecordStatusEnum.PROCESSING.getStatus());
             record.setCreateTime(new Date());
-            shareDownloadRecordMapper.insertSelective(record);
+            shareDownloadRecordExtendMapper.insertSelective(record);
 
             MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.SHAREDOWNLOAD, uuid);
             WorkBookContext workBookContext = WorkBookContext.builder()
                     .wrapper(wrapper)
                     .widgets(widgetList)
-                    .user(shareInfo.getShareUser())
+                    .user(shareFactor.getUser())
                     .resultLimit(resultLimit)
                     .taskKey("ShareDownload_" + uuid)
                     .build();
@@ -83,22 +82,35 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
 
 
     @Override
-    public List<ShareDownloadRecord> queryDownloadRecordPage(String uuid, String token, User user) {
-        shareService.getShareInfo(token, user);
-
-        return shareDownloadRecordMapper.getByUuid(uuid);
+    public List<ShareDownloadRecord> queryDownloadRecordPage(String uuid) {
+        ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
+        ProjectDetail projectDetail = shareFactor.getProjectDetail();
+        if (projectDetail == null) {
+            return null;
+        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareFactor.getUser());
+        if (!projectPermission.getDownloadPermission()) {
+            return null;
+        }
+        return shareDownloadRecordExtendMapper.getByUuid(uuid);
     }
 
     @Override
-    public ShareDownloadRecord downloadById(String id, String uuid, String token, User user) {
-        shareService.getShareInfo(token, user);
-
-        ShareDownloadRecord record = shareDownloadRecordMapper.getByIdAndUuid(Long.valueOf(id), uuid);
-
+    public ShareDownloadRecord downloadById(String id, String uuid) throws UnAuthorizedExecption {
+        ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
+        ProjectDetail projectDetail = shareFactor.getProjectDetail();
+        if (projectDetail == null) {
+            throw new UnAuthorizedExecption(ErrorMsg.ERR_PERMISSION);
+        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareFactor.getUser());
+        if (!projectPermission.getDownloadPermission()) {
+            throw new UnAuthorizedExecption(ErrorMsg.ERR_PERMISSION);
+        }
+        ShareDownloadRecord record = shareDownloadRecordMapper.getShareDownloadRecordBy(Long.valueOf(id), uuid);
         if (record != null) {
             record.setLastDownloadTime(new Date());
             record.setStatus(DownloadRecordStatusEnum.DOWNLOADED.getStatus());
-            shareDownloadRecordMapper.update(record);
+            shareDownloadRecordExtendMapper.update(record);
             return record;
         } else {
             return null;

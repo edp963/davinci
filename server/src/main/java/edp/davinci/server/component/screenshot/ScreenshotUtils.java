@@ -41,6 +41,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.FileCopyUtils;
 
 import static edp.davinci.server.component.screenshot.BrowserEnum.valueOf;
 
@@ -77,6 +78,9 @@ public class ScreenshotUtils {
     private static final int DEFAULT_SCREENSHOT_HEIGHT = 1080;
 
     private static final ExecutorService executorService = Executors.newFixedThreadPool(8);
+
+    @Autowired
+    private FileUtils fileUtils;
 
     public void screenshot(long jobId, List<ImageContent> imageContents, Integer imageWidth) {
     	scheduleLogger.info("Start screenshot for job({})", jobId);
@@ -144,7 +148,17 @@ public class ScreenshotUtils {
             }
             driver.manage().window().setSize(new Dimension(width, height));
             Thread.sleep(2000);
-            return ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            File tempImage = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            File tempDir = new File(fileUtils.fileBasePath + Consts.DIR_TEMPL + DateUtils.getNowDateYYYYMMDD());
+            if (!tempDir.exists()) {
+                tempDir.mkdirs();
+            }
+            File image = new File(tempDir.getPath() + File.separator + tempImage.getName());
+            if (FileUtils.copy(tempImage, image) > -1) {
+                tempImage.delete();
+                return image;
+            }
+
         } catch (TimeoutException e) {
             String text = driver.findElements(By.tagName("html")).get(0).getAttribute("innerText");
             scheduleLogger.error("Cronjob({}) do screenshot for url({}) timeout, html text:{}", jobId, url, text);
@@ -153,19 +167,19 @@ public class ScreenshotUtils {
                 scheduleLogger.error("Cronjob({}) do screenshot for url({}) timeout, " + entry.getLevel() + ":" + entry.getMessage());
             }
             scheduleLogger.error(e.getMessage(), e);
-        
+
         } catch (InterruptedException e) {
             LogEntries logEntries= driver.manage().logs().get(LogType.BROWSER);
             for (LogEntry entry : logEntries) {
                 scheduleLogger.error("Cronjob({}) do screenshot for url({}) interrupted, " + entry.getLevel() + ":" + entry.getMessage());
             }
             scheduleLogger.error(e.getMessage(), e);
-        
+
         } finally {
         	scheduleLogger.info("Cronjob({}) do screenshot for url({}) finish", jobId, url);
             driver.quit();
         }
-        
+
         return null;
     }
 
@@ -197,13 +211,12 @@ public class ScreenshotUtils {
         if (!StringUtils.isEmpty(REMOTE_WEBDRIVER_URL)) {
             scheduleLogger.info("user RemoteWebDriver ({})", REMOTE_WEBDRIVER_URL);
             try {
-                WebDriver driver = new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_URL), DesiredCapabilities.chrome());
-                return driver;
+                return new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_URL), DesiredCapabilities.chrome());
             } catch (MalformedURLException ex) {
                 scheduleLogger.error(ex.getMessage(), ex);
             }
         }
-        
+
         File file = new File(CHROME_DRIVER_PATH);
         if (!file.canExecute()) {
             if (!file.setExecutable(true)) {

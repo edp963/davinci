@@ -540,47 +540,6 @@ public class ExcelUtils {
         return IntStream.range(0, n).mapToObj(i -> String.valueOf(s)).collect(Collectors.joining(EMPTY));
     }
 
-
-    /**
-     * format cell value
-     *
-     * @param engine
-     * @param list
-     * @param json
-     * @return
-     */
-    private static List<Map<String, Object>> formatValue(ScriptEngine engine, List<Map<String, Object>> list, String json) {
-        try {
-            Invocable invocable = (Invocable) engine;
-            Object obj = invocable.invokeFunction("getFormattedDataRows", json, list);
-
-            if (obj instanceof ScriptObjectMirror) {
-                ScriptObjectMirror som = (ScriptObjectMirror) obj;
-                if (som.isArray()) {
-                    final List<Map<String, Object>> convertList = new ArrayList<>();
-                    Collection<Object> values = som.values();
-                    values.forEach(v -> {
-                        Map<String, Object> map = new HashMap<>();
-                        ScriptObjectMirror vsom = (ScriptObjectMirror) v;
-                        for (String key : vsom.keySet()) {
-                            map.put(key, vsom.get(key));
-                        }
-                        convertList.add(map);
-                    });
-                    return convertList;
-                }
-            }
-
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-
-        return list;
-    }
-
-
     public static boolean isTable(String json) {
         if (!StringUtils.isEmpty(json)) {
             try {

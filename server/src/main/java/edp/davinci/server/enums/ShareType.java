@@ -14,22 +14,43 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
- *
  */
 
-package edp.davinci.server.dto.share;
+package edp.davinci.server.enums;
 
-import edp.davinci.service.share.ShareWidget;
-import lombok.Data;
+import lombok.Getter;
 
-import java.util.Set;
+public enum ShareType {
+    WIDGET(0),
+    DASHBOARD(1),
+    DISPLAY(2),
 
-@Data
-public class ShareDisplay {
-    private Long id;
-    private String name;
-    private String description;
-    private String config;
-    private Set<ShareDisplaySlide> slides;
-    private Set<ShareWidget> widgets;
+    /**
+     * 数据
+     */
+    DATA(3),
+
+    /**
+     * 记录
+     */
+    RECORD(4),
+
+    /**
+     * 文件
+     */
+    FILE(5),
+
+    /**
+     * 登录
+     */
+    LOGIN(6),
+
+    PERMISSION(7);
+
+    @Getter
+    private int type;
+
+    ShareType(int type) {
+        this.type = type;
+    }
 }

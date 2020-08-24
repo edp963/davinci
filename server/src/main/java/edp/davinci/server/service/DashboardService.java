@@ -49,7 +49,7 @@ public interface DashboardService extends CheckEntityService {
 
     boolean deleteMemDashboardWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    String shareDashboard(Long dashboardId, String username, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    ShareResult shareDashboard(Long dashboardId, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     void deleteDashboardAndPortalByProject(Long projectId) throws RuntimeException;
 

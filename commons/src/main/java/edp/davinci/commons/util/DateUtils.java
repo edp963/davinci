@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 import org.joda.time.DateTime;
 
 public class DateUtils {
-	
+
     public static final String DATE_BASE_REGEX = "\\d{4}-\\d{1,2}-\\d{1,2}";
     public static final String SEPARATOR_REGEX = "(T?|\\s*)";
 
@@ -100,80 +100,80 @@ public class DateUtils {
             return s;
         }
     }
-    
+
     private DateUtils() {
 
     }
-    
+
     public static Date toDate(String timeString) throws Exception {
         if (StringUtils.isEmpty(timeString)) {
             return null;
         }
         return DATE_FORMAT_ENUM.formatDate(timeString);
     }
-    
+
     public static String toyyyyMMddHHmmss(long currentTime) {
         Date date = new Date(currentTime);
         return dateFormat(date, "yyyyMMddHHmmss");
     }
-    
+
     public static String toyyyyMMddHHmmss(Date date) {
     	return dateFormat(date, "yyyyMMddHHmmss");
     }
-    
+
     public static Date toDate(DateTime dateTime) {
         if (null == dateTime) {
             return null;
         }
         return dateTime.toDate();
     }
-    
+
     public static DateTime toDateTime(String timeString) throws Exception {
         if (StringUtils.isEmpty(timeString)) {
             return null;
         }
         return toDateTime(toDate(timeString));
     }
-    
+
     public static DateTime toDateTime(Date date) {
         if (null == date) {
             return null;
         }
         return new DateTime(date);
     }
-    
+
     public static Timestamp toTimestamp(String timeString) throws Exception {
         if (StringUtils.isEmpty(timeString)) {
             return null;
         }
         return toTimestamp(toDate(timeString));
     }
-    
+
     public static Timestamp toTimestamp(Date date) {
         if (null == date) {
             return null;
         }
         return new Timestamp(date.getTime());
     }
-    
+
     public static Timestamp toTimestamp(DateTime dateTime) throws Exception {
         if (null == dateTime) {
             return null;
         }
         return toTimestamp(toDate(dateTime));
     }
-    
+
     public static java.sql.Date toSqlDate(Date date) {
         if (null == date) {
             return null;
         }
         return new java.sql.Date(date.getTime());
     }
-    
+
     public static Date getNow() {
         return new Date();
     }
-    
+
     public static Date dateFormat(String date, String dateFormat) {
         if (date == null) {
         	return null;
@@ -182,18 +182,24 @@ public class DateUtils {
 		try {
 			return format.parse(date);
 		} catch (Exception ex) {
+
 		}
 		return null;
     }
 
     public static String dateFormat(Date date, String dateFormat) {
         if (date == null) {
-        	return "";
+            return "";
         }
-		SimpleDateFormat format = new SimpleDateFormat(dateFormat);
-		return format.format(date);
+        SimpleDateFormat format = new SimpleDateFormat(dateFormat);
+        try {
+            return format.format(date);
+        } catch (Exception ex) {
+
+        }
+        return "";
     }
-    
+
     public static Date add(Date date, int field, int amount) {
 
         if (date == null) {
@@ -206,12 +212,12 @@ public class DateUtils {
 
         return cal.getTime();
     }
-    
+
     public static String getAWeekBeforeYYYYMMDD() {
     	Date date = add(null, Calendar.DAY_OF_MONTH, -7);
         return dateFormat(date, "yyyyMMdd");
     }
-    
+
     public static String getAMonthBeforeYYYYMMDD() {
     	Date date = add(null, Calendar.MONTH, -7);
         return dateFormat(date, "yyyyMMdd");
