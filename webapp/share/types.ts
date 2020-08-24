@@ -18,33 +18,11 @@
  * >>
  */
 
-import { IWidgetConfig } from './components/Widget'
-
-export interface IWidgetBase {
-  id: number
-  name: string
-  description: string
-  publish: boolean
-  type: number
-  viewId: number
-  projectId: number
+export interface IPasswordShareToken {
+  [key: string]: IToken
 }
 
-export interface IWidgetRaw extends IWidgetBase {
-  config: string
-}
-
-export interface IWidgetFormed extends IWidgetBase {
-  config: IWidgetConfig
-  dataToken?: string
-  password?: string
-}
-
-export interface IWidgetState {
-  widgets: IWidgetFormed[]
-  currentWidget: IWidgetRaw
-  loading: boolean
-  dataLoading: boolean
-  columnValueLoading: boolean
-  distinctColumnValues: any[]
+export interface IToken {
+  password: string
+  expire: number
 }

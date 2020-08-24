@@ -186,6 +186,17 @@ const makeSelectCurrentDisplayShareToken = () =>
     (displayState) => displayState.currentDisplayShareToken
   )
 
+const makeSelectCurrentDisplayPasswordShareToken = () =>
+  createSelector(
+    selectDisplay,
+    (dashboardState) => dashboardState.currentDisplayPasswordShareToken
+  )
+const makeSelectCurrentDisplayPasswordSharePassword = () =>
+  createSelector(
+    selectDisplay,
+    (dashboardState) => dashboardState.currentDisplayPasswordPassword
+  )
+
 const makeSelectCurrentDisplayAuthorizedShareToken = () =>
   createSelector(
     selectDisplay,
@@ -234,5 +245,7 @@ export {
   makeSelectCurrentDisplayAuthorizedShareToken,
   makeSelectSharePanel,
   makeSelectDisplayLoading,
-  makeSelectEditorBaselines
+  makeSelectEditorBaselines,
+  makeSelectCurrentDisplayPasswordShareToken,
+  makeSelectCurrentDisplayPasswordSharePassword
 }

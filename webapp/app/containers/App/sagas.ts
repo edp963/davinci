@@ -30,7 +30,6 @@ import { message } from 'antd'
 import {
   LOGIN,
   LOGOUT,
-  GET_LOGIN_USER,
   CHECK_NAME,
   ACTIVE,
   GET_VERSION,
@@ -43,13 +42,13 @@ import {
   TRY_EXTERNAL_AUTH,
   EXTERNAL_AUTH_LOGOUT,
   GET_CAPTCHA_FOR_RESET_PASSWORD,
-  RESET_PASSWORD_UNLOGGED
+  RESET_PASSWORD_UNLOGGED,
+  GET_USER_BY_TOKEN
 } from './constants'
 import {
   logged,
   getVersion,
   loginError,
-  getLoginUserError,
   activeSuccess,
   activeError,
   joinOrganizationSuccess,
@@ -68,7 +67,9 @@ import {
   resetPasswordUnloggedSuccess,
   resetPasswordUnloggedFail,
   getVersionSuccess,
-  getVersionFail
+  getVersionFail,
+  getUserByTokenFail,
+  getUserByTokenSuccess
 } from './actions'
 import request, { removeToken, getToken } from 'utils/request'
 import { errorHandler } from 'utils/util'
@@ -183,19 +184,6 @@ export function* activeUser(action): IterableIterator<any> {
     }
   } catch (err) {
     yield put(activeError())
-    errorHandler(err)
-  }
-}
-
-export function* getLoginUser(action): IterableIterator<any> {
-  try {
-    const asyncData = yield call(request, `${api.user}/token`)
-    const loginUser = asyncData.payload
-    yield put(logged(loginUser))
-    localStorage.setItem('loginUser', JSON.stringify(loginUser))
-    action.payload.resolve()
-  } catch (err) {
-    yield put(getLoginUserError())
     errorHandler(err)
   }
 }
@@ -400,10 +388,22 @@ export function* downloadFile(action): IterableIterator<any> {
   }
 }
 
+export function* getUserByToken(action): IterableIterator<any> {
+  const { token } = action.payload
+  try {
+    const result = yield call(request, `${api.user}/check/${token}`)
+    const loginUser = result.payload
+    yield put(getUserByTokenSuccess(loginUser))
+    localStorage.setItem('loginUser', JSON.stringify(loginUser))
+  } catch (err) {
+    yield put(getUserByTokenFail(err))
+    errorHandler(err)
+  }
+}
+
 export default function* rootGroupSaga(): IterableIterator<any> {
   yield all([
     throttle(1000, CHECK_NAME, checkNameUnique as any),
-    takeLatest(GET_LOGIN_USER, getLoginUser as any),
     takeEvery(ACTIVE, activeUser as any),
     takeLatest(GET_EXTERNAL_AUTH_PROVIDERS, getExternalAuthProviders as any),
     takeEvery(TRY_EXTERNAL_AUTH, tryExternalAuth as any),
@@ -417,6 +417,7 @@ export default function* rootGroupSaga(): IterableIterator<any> {
       getCaptchaForResetPassword as any
     ),
     takeEvery(RESET_PASSWORD_UNLOGGED, resetPasswordUnlogged as any),
+    takeEvery(GET_USER_BY_TOKEN, getUserByToken as any),
     takeEvery(JOIN_ORGANIZATION, joinOrganization as any),
     takeLatest(LOAD_DOWNLOAD_LIST, getDownloadList),
     takeLatest(DOWNLOAD_FILE, downloadFile),

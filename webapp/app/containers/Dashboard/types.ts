@@ -65,6 +65,8 @@ export interface IDashboardItemInfo {
   loading: boolean
   queryConditions: IQueryConditions
   shareToken: string
+  pwdToken?: string
+  pwd?: string
   authorizedShareToken: string
   shareLoading: boolean
   downloadCsvLoading: boolean
@@ -147,6 +149,8 @@ export interface IDashboardState {
   currentDashboardLoading: boolean
   currentDashboardShareToken: string
   currentDashboardAuthorizedShareToken: string
+  currentDashboardPasswordShareToken: string
+  currentDashboardPasswordSharePassword: string
   currentDashboardShareLoading: boolean
   sharePanel: IDashboardSharePanelState
   currentItems: IDashboardItem[]

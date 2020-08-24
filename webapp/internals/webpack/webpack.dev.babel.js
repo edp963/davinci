@@ -31,7 +31,8 @@ module.exports = require('./webpack.base.babel')({
 
   optimization: {
     splitChunks: {
-      chunks: 'all',
+      // chunks: 'all',
+      chunks: 'async',
       maxAsyncRequests: 5,
       cacheGroups: {
         vendors: {
