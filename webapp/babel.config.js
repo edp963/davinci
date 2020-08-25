@@ -1,7 +1,7 @@
 module.exports = {
   ignore: [
-    /\/core-js/,
-    /webpack\/buildin/
+    /[\\\/]core-js/,
+    /webpack[\\\/]buildin/
   ],
   overrides: [{
     test: "./node_modules",
