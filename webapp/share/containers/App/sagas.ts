@@ -32,7 +32,7 @@ export function* login (action: AppActionType) {
   if (action.type !== ActionTypes.LOGIN) {
     return
   }
-  const { username, password, shareToken, resolve } = action.payload
+  const { username, password, shareToken, resolve, reject } = action.payload
   const { logged, loginFail} = AppActions
   try {
     const userInfo = yield call(request, {
@@ -49,6 +49,9 @@ export function* login (action: AppActionType) {
       resolve()
     }
   } catch (err) {
+    if(reject) {
+      return reject()
+    }
     yield put(loginFail(err))
     errorHandler(err)
   }

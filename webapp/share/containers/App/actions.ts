@@ -22,14 +22,15 @@ import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
 
 export const AppActions = {
-  login(username, password, shareToken, resolve) {
+  login(username, password, shareToken, resolve, reject?) {
     return {
       type: ActionTypes.LOGIN,
       payload: {
         username,
         password,
         shareToken,
-        resolve
+        resolve,
+        reject
       }
     }
   },

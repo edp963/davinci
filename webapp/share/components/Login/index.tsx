@@ -5,6 +5,7 @@ import Background from 'share/components/Background'
 import { AppActions } from 'share/containers/App/actions'
 import checkLogin from 'utils/checkLogin'
 import { setToken } from 'utils/request'
+import { message } from 'antd'
 interface ILoginProps {
   loading: boolean
   shareToken: any
@@ -13,7 +14,8 @@ interface ILoginProps {
     username: string,
     password: string,
     shareToken: any,
-    resolve: (res) => void
+    resolve: (res) => void,
+    reject?: () => void
   ) => void
   logged?: (user) => void
 }
@@ -32,7 +34,7 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     }
   }
 
-  public componentWillMount () {
+  public componentWillMount() {
     this.checkNormalLogin()
   }
 
@@ -43,7 +45,7 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
       const loginUser = localStorage.getItem('loginUser')
       setToken(token)
       this.props.logged(JSON.parse(loginUser))
-      if(loginCallback) {
+      if (loginCallback) {
         loginCallback()
       }
     }
@@ -67,11 +69,19 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     const { username, password } = this.state
 
     if (username && password) {
-      onLogin(username, password, shareToken, () => {
-        if (loginCallback) {
-          loginCallback()
+      onLogin(
+        username,
+        password,
+        shareToken,
+        () => {
+          if (loginCallback) {
+            loginCallback()
+          }
+        },
+        () => {
+          message.error('该用户无权限')
         }
-      })
+      )
     }
   }
 
@@ -99,8 +109,9 @@ export function mapDispatchToProps(dispatch) {
       username: string,
       password: string,
       shareToken: any,
-      resolve: () => void
-    ) => dispatch(AppActions.login(username, password, shareToken, resolve)),
+      resolve: () => void,
+      reject?: () => void
+    ) => dispatch(AppActions.login(username, password, shareToken, resolve, reject)),
     logged: (user) => dispatch(AppActions.logged(user))
   }
 }
