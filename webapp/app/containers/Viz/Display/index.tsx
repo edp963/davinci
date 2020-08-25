@@ -24,7 +24,6 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import {
   makeSelectCurrentDisplay,
-  makeSelectCurrentSlides,
   makeSelectCurrentSlide
 } from '../selectors'
 
@@ -40,7 +39,6 @@ import { VizDisplayEditor } from './Loadable'
 const VizDisplay: React.FC<RouteComponentWithParams> = (props) => {
   const dispatch = useDispatch()
   const currentDisplay = useSelector(makeSelectCurrentDisplay())
-  const currentSlides = useSelector(makeSelectCurrentSlides())
   const currentSlide = useSelector(makeSelectCurrentSlide())
   const {
     history,

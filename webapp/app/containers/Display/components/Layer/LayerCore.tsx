@@ -23,10 +23,11 @@ import React, { useContext } from 'react'
 import { LayerContext } from './util'
 import { GraphTypes, SecondaryGraphTypes } from '../Setting'
 
-import { Chart, Rectangle, Label, Video, Timer } from './Content'
+import { Chart, Rectangle, Video, Timer } from './Content'
 
-const LayerCore: React.FC = (props) => {
-  const { layer, operationInfo } = useContext(LayerContext)
+import LabelEditor from './RichText'
+const LayerCore: React.FC = () => {
+  const { layer } = useContext(LayerContext)
   const { type, subType } = layer
   if (type === GraphTypes.Chart) {
     return <Chart />
@@ -36,7 +37,7 @@ const LayerCore: React.FC = (props) => {
       case SecondaryGraphTypes.Rectangle:
         return <Rectangle />
       case SecondaryGraphTypes.Label:
-        return <Label />
+        return <LabelEditor />
       case SecondaryGraphTypes.Video:
         return <Video />
       case SecondaryGraphTypes.Timer:

@@ -38,7 +38,7 @@ const LayerDraggable: React.FC = (props) => {
   const { scale, grid } = useContext(ContainerContext)
   const { onDrag } = useContext(LayerListContext)
   const {
-    layer: { id: layerId }
+    layer: { id: layerId }, operationInfo: { editing }
   } = useContext(LayerContext)
 
   const start: DraggableEventHandler = useCallback((e, data) => {
@@ -81,6 +81,7 @@ const LayerDraggable: React.FC = (props) => {
       onStop={stop}
       onDrag={drag}
       handle=".display-slide-layer"
+      disabled ={editing}
     >
       <DraggableProxy>{props.children}</DraggableProxy>
     </DraggableCore>

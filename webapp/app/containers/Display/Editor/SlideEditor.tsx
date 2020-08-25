@@ -49,8 +49,9 @@ import SlideBaselines from './SlideBaselines'
 import { LayerOperations } from '../components/constants'
 import { DeltaPosition } from '../components/types'
 import { DragTriggerTypes } from '../constants'
+import { ILayerOperationInfo } from 'app/containers/Display/components/types'
 
-const SlideEditor: React.FC = (props) => {
+const SlideEditor: React.FC = () => {
   const dispatch = useDispatch()
   const {
     id: displayId,
@@ -72,7 +73,7 @@ const SlideEditor: React.FC = (props) => {
   }, [displayId, slideId])
 
   const refContent = React.useRef<HTMLDivElement>(null)
-
+  const refBackground =  React.useRef() as React.MutableRefObject<HTMLInputElement>
   const doLayerOperation = useCallback(
     (operation: LayerOperations) => {
       switch (operation) {
@@ -114,21 +115,20 @@ const SlideEditor: React.FC = (props) => {
     [slideParams]
   )
 
-  const removeLayerSelection = useCallback(() => {
-    dispatch(DisplayActions.clearLayersSelection())
-  }, [])
-
   const commandLayers = useCallback((operation) => {
     dispatch(DisplayActions.changeLayersStack(operation))
   }, [])
 
   const selectionChange = useCallback(
     (layerId: number, checked: boolean, exclusive: boolean) => {
+      refBackground.current.focus()
       dispatch(DisplayActions.selectLayer(layerId, checked, exclusive))
     },
     []
   )
-
+  const onLayerOperationInfoChange = useCallback((changedInfo: Pick<Partial<ILayerOperationInfo>, 'selected'| 'editing'>) => {
+    dispatch(DisplayActions.clearLayersOperationInfo(changedInfo))
+  }, [])
   const createCover = useCallback(() => {
     const { transform, transition } = refContent.current.style
     refContent.current.style.transform = ''
@@ -145,6 +145,7 @@ const SlideEditor: React.FC = (props) => {
   const grid = useMemo(() => displayParams && displayParams.grid, [
     displayParams
   ])
+
   return (
     <SplitPane
       className="display-layout-content"
@@ -157,11 +158,12 @@ const SlideEditor: React.FC = (props) => {
       <DisplayContainer grid={grid}>
         <SlideContainer slideId={slideId} slideParams={slideParams}>
           <SlideBackground
+            parentRef={refBackground}
             autoFit
             className="display-slide-background-grid"
             onChangeLayersPosition={changeLayersPosition}
             onDoLayerOperation={doLayerOperation}
-            onRemoveLayerSelection={removeLayerSelection}
+            onRemoveLayerOperationInfo={onLayerOperationInfoChange}
           >
             <SlideContent ref={refContent}>
               <SlideLayerList />

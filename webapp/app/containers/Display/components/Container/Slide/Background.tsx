@@ -19,6 +19,7 @@
  */
 
 import React, { useContext, useMemo, useCallback, useEffect } from 'react'
+
 import classnames from 'classnames'
 
 import { useClientRect } from 'utils/hooks'
@@ -29,7 +30,8 @@ import { DISPLAY_CONTAINER_PADDING } from './constants'
 import { LayerOperations } from '../../constants'
 import { DeltaPosition } from '../../Layer'
 import { DragTriggerTypes } from 'app/containers/Display/constants'
-
+import { ILayerOperationInfo } from 'app/containers/Display/components/types'
+import { onLabelEditorSelectedRange } from 'app/containers/Display/components/Layer/RichText/util'
 type KeyDownKeys =
   | 'ArrowUp'
   | 'ArrowDown'
@@ -58,13 +60,18 @@ interface ISlideBackgroundProps {
   padding?: number
   autoFit?: boolean
   fullscreen?: boolean
+  parentRef?: {
+    current: HTMLDivElement
+  }
   onChangeLayersPosition?: (
     deltaPosition: DeltaPosition,
     scale: number,
     eventTrigger: DragTriggerTypes
   ) => void
   onDoLayerOperation?: (operation: LayerOperations) => void
-  onRemoveLayerSelection?: () => void
+  onRemoveLayerOperationInfo?: (
+    changedInfo: Pick<Partial<ILayerOperationInfo>, 'selected' | 'editing'>
+  ) => void
 }
 
 const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
@@ -75,11 +82,11 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
     fullscreen,
     onChangeLayersPosition,
     onDoLayerOperation,
-    onRemoveLayerSelection
+    onRemoveLayerOperationInfo,
+    parentRef
   } = props
   const { slideParams } = useContext(SlideContext)
   const { width: slideWidth, height: slideHeight, scaleMode } = slideParams
-
   const containerContextValue = useContext(ContainerContext)
   const {
     scale,
@@ -90,7 +97,6 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
     slideTranslateChange
   } = containerContextValue
   const [rect, refBackground] = useClientRect<HTMLDivElement>()
-
   const [containerWidth, containerHeight] = useMemo(() => {
     if (!fullscreen && !rect) {
       return []
@@ -268,6 +274,7 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
   )
   useEffect(() => {
     if (refBackground.current && onDoLayerOperation) {
+      parentRef.current = refBackground.current
       refBackground.current.addEventListener('keydown', keyDown, false)
     }
     return () => {
@@ -277,11 +284,14 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
     }
   }, [refBackground.current, onDoLayerOperation])
 
-  const removeLayerSelection = useCallback(() => {
-    if (onRemoveLayerSelection) {
-      onRemoveLayerSelection()
+  const removeLayerOperationInfo = useCallback(() => {
+    if (onRemoveLayerOperationInfo) {
+      onRemoveLayerOperationInfo({ selected: false })
     }
-  }, [onRemoveLayerSelection])
+    if (!onLabelEditorSelectedRange() && onRemoveLayerOperationInfo) {
+      onRemoveLayerOperationInfo({ editing: false })
+    }
+  }, [onRemoveLayerOperationInfo])
 
   const slideBackgroundCls = classnames({
     'display-slide-background': true,
@@ -294,7 +304,7 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
       className={slideBackgroundCls}
       style={nextBackgroundStyle}
       tabIndex={0}
-      onClick={removeLayerSelection}
+      onClick={removeLayerOperationInfo}
     >
       {props.children}
     </div>

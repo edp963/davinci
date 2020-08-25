@@ -112,6 +112,7 @@ const displayReducer = (
           },
           draft.currentDisplayWidgets
         )
+
         draft.slideLayers[slideId] = (action.payload.layers || []).reduce(
           (obj, layer) => {
             obj[layer.id] = layer
@@ -153,11 +154,13 @@ const displayReducer = (
           obj[layer.id] = {
             selected: false,
             dragging: false,
-            resizing: false
+            resizing: false,
+            editing: false
           }
           return obj
         }, {})
         draft.editorBaselines = []
+
         break
 
       case ActionTypes.LOAD_SLIDE_DETAIL_FAILURE:
@@ -195,7 +198,8 @@ const displayReducer = (
           draft.slideLayersOperationInfo[slideId][layer.id] = {
             selected: false,
             resizing: false,
-            dragging: false
+            dragging: false,
+            editing: false
           }
 
           if (Array.isArray(action.payload.widgets)) {
@@ -239,6 +243,30 @@ const displayReducer = (
         })
         draft.lastOperationType = ActionTypes.EDIT_SLIDE_LAYERS_SUCCESS
         draft.lastLayers = lastLayers
+        break
+
+      case ActionTypes.CHANGE_LAYER_OPERATION_INFO:
+        Object.entries(layersOperationInfo).forEach(
+          ([id, layerOperationInfo]: [string, any]) => {
+              Object.entries(action.payload.changedInfo).forEach(
+                ([ type, status ]: [ string, boolean]) => {
+                  if(status){
+                    return draft.slideLayersOperationInfo[draft.currentSlideId][id] = {
+                      ...layerOperationInfo,
+                      [type]: +id === action.payload.layerId
+                    }
+                  } else {
+                    return draft.slideLayersOperationInfo[draft.currentSlideId][id] = {
+                      ...layerOperationInfo,
+                      [type]: status
+                    }
+                  }
+                })
+          }
+        )
+        draft.slideLayersOperationInfo[draft.currentSlideId] = {
+          ...layersOperationInfo
+        }
         break
 
       case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
@@ -316,6 +344,7 @@ const displayReducer = (
           const item = draft.operateItemParams.find(
             (item) => item.id === layerId
           )
+
           if (item) {
             item.params.positionX += deltaPosition.deltaX
             item.params.positionY += deltaPosition.deltaY
@@ -346,7 +375,8 @@ const displayReducer = (
             if (action.payload.selected && action.payload.exclusive) {
               draft.slideLayersOperationInfo[draft.currentSlideId][id] = {
                 ...layerOperationInfo,
-                selected: false
+                selected: false,
+                editing: false
               }
             }
             if (+id === action.payload.layerId) {
@@ -362,12 +392,16 @@ const displayReducer = (
         }
         break
 
-      case ActionTypes.CLEAR_LAYERS_SELECTION:
-        Object.values(layersOperationInfo).forEach(
-          (layerOperationInfo: any) => {
-            layerOperationInfo.selected = false
-          }
-        )
+      case ActionTypes.CLEAR_LAYERS_OPERATION_INFO:
+        if(layersOperationInfo){
+          Object.values(layersOperationInfo).forEach(
+            (layerOperationInfo: any) => {
+              return Object.entries(action.payload.changedInfo).forEach(([type, value]: [string, boolean])=>{
+                layerOperationInfo[type] = value
+              })
+            }
+          )
+        }
         break
 
       case ActionTypes.CLEAR_EDITOR_BASELINES:
