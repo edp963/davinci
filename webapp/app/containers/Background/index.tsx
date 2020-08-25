@@ -52,7 +52,7 @@ export const Background: FC = () => {
 
   return (
     <div className={styles.container}>
-      {/* <Canvas /> */}
+      <Canvas />
       <img
         className={styles.logo}
         src={require('assets/images/logo_light.svg')}
