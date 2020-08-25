@@ -162,7 +162,7 @@ public class JdbcSourceUtils {
             throw new SourceException("Not supported data type: jdbcUrl=" + url);
         }
 
-        return className = null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver())
+        return null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver())
                 ? dataTypeEnum.getDriver()
                 : customDatabase.getDriver().trim();
     }
@@ -332,7 +332,6 @@ public class JdbcSourceUtils {
         if (rs != null) {
             try {
                 rs.close();
-                rs = null;
             } catch (Exception e) {
                 log.error("ResultSet close error", e.getMessage());
             }

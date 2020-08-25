@@ -31,6 +31,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareFactor;
+import edp.davinci.server.dto.share.ShareResult;
+import edp.davinci.server.enums.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -57,10 +61,6 @@ import edp.davinci.server.dto.dashboard.MemDashboardWidgetCreate;
 import edp.davinci.server.dto.dashboard.MemDashboardWidgetDTO;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.role.VizVisibility;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.UserPermissionEnum;
-import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
@@ -93,6 +93,9 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
     @Autowired
     private ShareService shareService;
+
+    @Autowired
+    private String TOKEN_SECRET;
 
     private static final CheckEntityEnum entity = CheckEntityEnum.DASHBOARD;
 
@@ -128,6 +131,35 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         return dashboard;
     }
 
+    public Dashboard getDashboard(Long dashboardId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+
+        Dashboard dashboard = getDashboard(dashboardId);
+        if (dashboard == null) {
+            return null;
+        }
+
+        DashboardPortal dashboardPortal = getDashboardPortal(dashboard.getDashboardPortalId(), false);
+        if (dashboardPortal == null) {
+            return null;
+        }
+
+        Long projectId = dashboardPortal.getProjectId();
+
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+
+        List<Long> disablePortals = getDisableVizs(user.getId(), projectId, null, VizEnum.PORTAL);
+
+        boolean isDisable = isDisableVizs(projectPermission, disablePortals, dashboardPortal.getId());
+        boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
+
+        if (hidden || isDisable || noPublish) {
+            throw new UnAuthorizedExecption();
+        }
+
+        return dashboard;
+    }
+
     /**
      * 获取dashboard列表
      *
@@ -151,9 +183,9 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
         boolean isDisable = isDisableVizs(projectPermission, disablePortals, portalId);
         boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
-        boolean noRublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
 
-		if (hidden || isDisable || noRublish) {
+		if (hidden || isDisable || noPublish) {
 			return null;
 		}
 
@@ -274,7 +306,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     }
     
     @Transactional
-    private void insertDashboard(Dashboard dashboard, List<Long> roleIds, User user) {
+    protected void insertDashboard(Dashboard dashboard, List<Long> roleIds, User user) {
 
     	if (dashboardExtendMapper.insertSelective(dashboard) != 1) {
         	throw new ServerException("Create dashboard fail");
@@ -381,7 +413,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     }
     
     @Transactional
-    private void updateDashboards(List<Dashboard> dashboardList,  Map<Long, List<Long>> rolesMap, User user) {
+    protected void updateDashboards(List<Dashboard> dashboardList,  Map<Long, List<Long>> rolesMap, User user) {
     	
     	if (dashboardExtendMapper.updateBatch(dashboardList) <= 0) {
         	throw new ServerException("Update dashboard fail");
@@ -720,16 +752,20 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         return true;
     }
 
-	/**
-	 * 分享dashboard
-	 *
-	 * @param dashboardId
-	 * @param username
-	 * @param user
-	 * @return
-	 */
+    /**
+     *
+     * 分享dashboard
+     *
+     * @param dashboardId
+     * @param user
+     * @param shareEntity
+     * @return
+     * @throws NotFoundException
+     * @throws UnAuthorizedExecption
+     * @throws ServerException
+     */
 	@Override
-	public String shareDashboard(Long dashboardId, String username, User user)
+	public ShareResult shareDashboard(Long dashboardId, User user, ShareEntity shareEntity)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 
 		DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(dashboardId, true);
@@ -746,7 +782,16 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 			alertUnAuthorized(entity, user, "share");
 		}
 
-		return shareService.generateShareToken(dashboardId, username, user.getId());
+        shareService.formatShareParam(projectId, shareEntity);
+        ShareFactor shareFactor = ShareFactor.Builder
+                .shareFactor()
+                .withType(ShareType.DASHBOARD)
+                .withShareEntity(shareEntity)
+                .withEntityId(dashboardId)
+                .withSharerId(user.getId())
+                .build();
+
+        return shareFactor.toShareResult(TOKEN_SECRET);
 	}
 
     @Override

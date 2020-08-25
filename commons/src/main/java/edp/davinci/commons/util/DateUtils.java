@@ -213,6 +213,11 @@ public class DateUtils {
         return cal.getTime();
     }
 
+    public static String getNowDateYYYYMMDD() {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+        return formatter.format(getNow());
+    }
+
     public static String getAWeekBeforeYYYYMMDD() {
     	Date date = add(null, Calendar.DAY_OF_MONTH, -7);
         return dateFormat(date, "yyyyMMdd");

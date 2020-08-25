@@ -24,8 +24,6 @@ import static edp.davinci.server.util.ScriptUtils.getWidgetQueryParam;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,12 +33,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
+import edp.davinci.server.commons.ErrorMsg;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareFactor;
+import edp.davinci.server.dto.share.ShareResult;
+import edp.davinci.server.enums.*;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
@@ -52,16 +52,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.DateUtils;
-import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
-import edp.davinci.core.dao.entity.RelRoleView;
-import edp.davinci.core.dao.entity.Source;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.dao.entity.Widget;
-import edp.davinci.data.parser.ParserFactory;
-import edp.davinci.data.parser.StatementParser;
-import edp.davinci.data.pojo.Param;
-import edp.davinci.data.pojo.SqlQueryParam;
 import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
 import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleViewExtendMapper;
@@ -69,25 +62,16 @@ import edp.davinci.server.dao.ViewExtendMapper;
 import edp.davinci.server.dao.WidgetExtendMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
-import edp.davinci.server.dto.view.AuthParamValue;
 import edp.davinci.server.dto.view.ViewWithProjectAndSource;
 import edp.davinci.server.dto.view.ViewWithSource;
-import edp.davinci.server.dto.view.WidgetDistinctParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.SqlVariableTypeEnum;
-import edp.davinci.server.enums.SqlVariableValueTypeEnum;
-import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.PagingWithQueryColumns;
 import edp.davinci.server.model.QueryColumn;
-import edp.davinci.server.model.SqlVariable;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.service.ViewService;
@@ -96,7 +80,6 @@ import edp.davinci.server.util.BaseLock;
 import edp.davinci.server.util.CsvUtils;
 import edp.davinci.server.util.ExcelUtils;
 import edp.davinci.server.util.FileUtils;
-import edp.davinci.server.util.ScriptUtils;
 import edp.davinci.server.util.ServerUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -311,7 +294,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
     }
 
     @Transactional
-	private void updateWidget(Widget widget) {
+	protected void updateWidget(Widget widget) {
 		if (widgetExtendMapper.update(widget) <= 0) {
 			throw new ServerException("Update widget fail");
 		}
@@ -428,7 +411,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                 writeExcel(widgets, projectDetail, queryParamMap, filePath, user, false);
 
             } else {
-                throw new ServerException("Unknow file type");
+                throw new ServerException("Unknown file type");
             }
         } catch (Exception e) {
             throw new ServerException("Generation " + type + " error");
@@ -491,7 +474,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                     ExcelUtils.writeSheet(sheet, paging.getColumns(), paging.getResultList(), wb, containType,
                             widget.getConfig(), queryParam.getParams());
                 } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    log.error(e.toString(), e);
                 } finally {
                     sheet = null;
                     countDownLatch.countDown();

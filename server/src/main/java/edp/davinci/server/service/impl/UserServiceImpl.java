@@ -27,6 +27,7 @@ import edp.davinci.core.enums.UserOrgRoleEnum;
 import static edp.davinci.commons.Constants.*;
 
 import edp.davinci.server.commons.Constants;
+import edp.davinci.server.commons.ErrorMsg;
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.dao.OrganizationExtendMapper;
 import edp.davinci.server.dao.RelUserOrganizationExtendMapper;

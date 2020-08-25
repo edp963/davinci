@@ -22,6 +22,8 @@ package edp.davinci.server.controller;
 
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareResult;
 import edp.davinci.server.dto.view.ViewExecuteParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;

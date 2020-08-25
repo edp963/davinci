@@ -21,16 +21,20 @@ package edp.davinci.server.service.impl;
 
 import edp.davinci.core.dao.entity.ShareDownloadRecord;
 import edp.davinci.core.enums.DownloadRecordStatusEnum;
+import edp.davinci.server.aspect.ShareAuthAspect;
+import edp.davinci.server.commons.ErrorMsg;
 import edp.davinci.server.component.excel.ExecutorUtil;
 import edp.davinci.server.component.excel.MsgWrapper;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.component.excel.WorkBookContext;
 import edp.davinci.server.dao.ShareDownloadRecordExtendMapper;
-import edp.davinci.server.dto.share.ShareInfo;
+import edp.davinci.server.dto.project.ProjectDetail;
+import edp.davinci.server.dto.project.ProjectPermission;
+import edp.davinci.server.dto.share.ShareFactor;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.enums.DownloadType;
-import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.service.ShareDownloadService;
 import edp.davinci.server.service.ShareService;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +62,7 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
 
             ShareDownloadRecord record = new ShareDownloadRecord();
             record.setUuid(uuid);
-            record.setName(getDownloadFileName(downloadType, shareInfo.getShareId()));
+            record.setName(getDownloadFileName(downloadType, shareFactor.getEntityId()));
             record.setStatus(DownloadRecordStatusEnum.PROCESSING.getStatus());
             record.setCreateTime(new Date());
             shareDownloadRecordExtendMapper.insertSelective(record);
@@ -106,7 +110,7 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
         if (!projectPermission.getDownloadPermission()) {
             throw new UnAuthorizedExecption(ErrorMsg.ERR_PERMISSION);
         }
-        ShareDownloadRecord record = shareDownloadRecordMapper.getShareDownloadRecordBy(Long.valueOf(id), uuid);
+        ShareDownloadRecord record = shareDownloadRecordExtendMapper.getByIdAndUuid(Long.valueOf(id), uuid);
         if (record != null) {
             record.setLastDownloadTime(new Date());
             record.setStatus(DownloadRecordStatusEnum.DOWNLOADED.getStatus());

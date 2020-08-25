@@ -20,7 +20,8 @@
 package edp.davinci.server.service;
 
 import edp.davinci.server.dto.project.ProjectDetail;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareResult;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;

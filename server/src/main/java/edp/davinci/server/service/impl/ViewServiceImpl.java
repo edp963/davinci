@@ -930,7 +930,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         return getDistinctValue(projectService.isMaintainer(projectDetail, user), viewWithSource, param, user);
     }
 
-    private List<Map<String, Object>> getDistinctValue(boolean isMaintainer, ViewWithSource viewWithSource,
+    public List<Map<String, Object>> getDistinctValue(boolean isMaintainer, ViewWithSource viewWithSource,
             WidgetDistinctParam param, User user) throws ServerException {
         return getPagingData(isMaintainer, viewWithSource, param, user).getResultList();
     }

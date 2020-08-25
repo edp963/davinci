@@ -24,6 +24,8 @@ import edp.davinci.core.dao.entity.MemDashboardWidget;
 import edp.davinci.core.dao.entity.Role;
 import edp.davinci.server.dto.dashboard.*;
 import edp.davinci.server.dto.role.VizVisibility;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareResult;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
@@ -32,6 +34,8 @@ import edp.davinci.core.dao.entity.User;
 import java.util.List;
 
 public interface DashboardService extends CheckEntityService {
+
+    Dashboard getDashboard(Long dashboardId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     List<Dashboard> getDashboards(Long portalId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 

@@ -230,7 +230,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	}
 
 	@Transactional
-	private void insertSource(Source source) {
+	protected void insertSource(Source source) {
 		if (sourceExtendMapper.insert(source) != 1) {
 			log.error("Create source({}) fail", source);
 			throw new ServerException("Create source fail");
@@ -331,7 +331,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	}
 	
 	@Transactional
-	private void updateSource(Source source) {
+	protected void updateSource(Source source) {
 		if (sourceExtendMapper.update(source) != 1) {
 			log.error("Update source({}) fail", source.getId());
 			throw new ServerException("Update source fail");
@@ -371,8 +371,10 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	/**
 	 * 测试连接
 	 *
-	 * @param sourceTest
+	 * @param config
+	 * @param user
 	 * @return
+	 * @throws ServerException
 	 */
 	@Override
 	public boolean testSource(SourceConfig config, User user) throws ServerException {
@@ -666,10 +668,11 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 										.name(JdbcSourceUtils.getSourceUName(source.getProjectId(), source.getName()))
 										.build();
 
+		utils.releaseDataSource(sourceConfig);
+
 		if (redisUtils.isRedisEnable()) {
-			publishReconnect(JSONUtils.toString(sourceConfig));
-		} else {
-			utils.releaseDataSource(sourceConfig);
+			JdbcDataSource.getReleaseSet().add(String.valueOf(source.getId()));
+			publishReconnect(JSONUtils.toString(sourceConfig), source.getId());
 		}
 	}
 
@@ -677,13 +680,10 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	 * 向redis发布reconnect消息
 	 * 
 	 * @param message
+	 * @param id
 	 */
-	private void publishReconnect(String message) {
-
-		//	String flag = MD5Utils.getMD5(UUID.randomUUID().toString() + id, true, 32);
-		// the flag is deprecated
-		String flag = "-1";
-		redisUtils.convertAndSend(DAVINCI_TOPIC_CHANNEL, new RedisMessageEntity(SourceMessageHandler.class,  message, flag));
+	private void publishReconnect(String message, Long id) {
+		redisUtils.convertAndSend(DAVINCI_TOPIC_CHANNEL, new RedisMessageEntity(SourceMessageHandler.class,  message, String.valueOf(id)));
 	}
 
 	/**

@@ -24,6 +24,8 @@ import edp.davinci.core.dao.entity.Role;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.dto.display.*;
 import edp.davinci.server.dto.role.VizVisibility;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareResult;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
@@ -34,6 +36,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface DisplayService extends CheckEntityService {
+
+    Display getDisplay(Long displayId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     List<Display> getDisplayListByProject(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 

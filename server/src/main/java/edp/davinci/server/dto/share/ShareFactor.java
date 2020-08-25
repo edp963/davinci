@@ -18,49 +18,30 @@
 
 package edp.davinci.server.dto.share;
 
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.alibaba.fastjson.serializer.ValueFilter;
-import edp.core.model.RecordInfo;
-import edp.core.utils.AESUtils;
-import edp.core.utils.StringZipUtil;
-import edp.davinci.dto.projectDto.ProjectDetail;
-import edp.davinci.dto.shareDto.ShareEntity;
-import edp.davinci.model.User;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import edp.davinci.commons.util.AESUtils;
+import edp.davinci.commons.util.JSONUtils;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.dto.project.ProjectDetail;
+import edp.davinci.server.enums.ShareDataPermission;
+import edp.davinci.server.enums.ShareMode;
+import edp.davinci.server.enums.ShareType;
+import edp.davinci.server.model.CreaterInfo;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Data
 public class ShareFactor {
-
-    private static class ShareFactorSerializeFilter implements ValueFilter {
-        @Override
-        public Object process(Object object, String name, Object value) {
-            if (value == null || value instanceof User || value instanceof RecordInfo || value instanceof ProjectDetail) {
-                return null;
-            }
-            if (value instanceof String && ((String) value).trim().length() == 0) {
-                return null;
-            }
-            if (value instanceof List && ((Set) value).isEmpty()) {
-                return null;
-            }
-            if (value instanceof ShareType) {
-                return ((ShareType) value).getType();
-            }
-            if (value instanceof ShareMode) {
-                return ((ShareMode) value).getMode();
-            }
-            if (value instanceof ShareDataPermission) {
-                return ((ShareDataPermission) value).getPermission();
-            }
-            return value;
-        }
-    }
 
     private static final char[] PASSWORD_SEEDS = {
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -71,13 +52,6 @@ public class ShareFactor {
     private static final int PASSWORD_LEN = 8;
 
     private static final int DEFAULT_TOKEN_EXPIRE_DAYS = 7;
-
-    private static final SerializerFeature[] serializerFeatures = {
-            SerializerFeature.QuoteFieldNames,
-            SerializerFeature.DisableCircularReferenceDetect,
-    };
-
-    private static final ShareFactorSerializeFilter serializeFilter = new ShareFactorSerializeFilter();
 
     /**
      * share mode
@@ -152,9 +126,9 @@ public class ShareFactor {
     public static ShareFactor parseShareFactor(String token, String secret) throws IllegalArgumentException {
         ShareFactor factor = null;
         try {
-            String uncompress = StringZipUtil.uncompress(token);
+            String uncompress = StringUtils.uncompress(token);
             String decrypt = AESUtils.decrypt(uncompress, secret);
-            factor = JSONObject.parseObject(decrypt, ShareFactor.class);
+            factor = JSONUtils.toObject(decrypt, ShareFactor.class);
             factor.format();
         } catch (Exception e) {
             factor = new ShareFactor();
@@ -174,8 +148,8 @@ public class ShareFactor {
             this.password = randomPassword();
         }
         format();
-        String jsonString = JSONObject.toJSONString(this, serializeFilter, serializerFeatures);
-        return new ShareResult(StringZipUtil.compress(AESUtils.encrypt(jsonString, secret)), this.password);
+        String jsonString = JSONUtils.toString(this);
+        return new ShareResult(StringUtils.compress(AESUtils.encrypt(jsonString, secret)), this.password);
     }
 
     public ShareResult freshShareDataToken(ShareWidget shareWidget, String secret) {

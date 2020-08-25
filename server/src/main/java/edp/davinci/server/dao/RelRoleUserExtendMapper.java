@@ -29,6 +29,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
+import java.util.Set;
 
 public interface RelRoleUserExtendMapper extends RelRoleUserMapper {
 
@@ -88,10 +89,26 @@ public interface RelRoleUserExtendMapper extends RelRoleUserMapper {
     })
     List<RelRoleUser> getByUserIds(@Param("userList") List<Long> userList);
 
+	@Select({
+			"<script>",
+			"	select * from rel_role_user where user_id = ${userId}" +
+			"		<if test='roleIds != null and roleIds.size > 0'>" +
+			"            and role_id in" +
+			"       	<foreach collection='roleIds' item='item' index='index' open='(' close=')' separator=','>" +
+			"                ${item}" +
+			"           </foreach>" +
+			"       </if>" +
+			"   	<if test='roleIds == null or roleIds.size == 0'>" +
+			"            and 1=0" +
+			"       </if>",
+			"</script>"
+	})
+	Set<RelRoleUser> getByUserAndRoles(@Param("userId") Long userId, @Param("roleIds") Set<Long> roleIds);
+
     @Select({
             "select rru.id, u.id as 'user.id', ifnull(u.`name`, u.username) as 'user.username', u.avatar",
             "from rel_role_user rru left join `user` u on u.id = rru.user_id",
-            "where rru.role_id = #{id}",
+            "where rru.role_id = #{id}"
     })
     List<RelRoleMember> getMembersByRoleId(Long id);
 

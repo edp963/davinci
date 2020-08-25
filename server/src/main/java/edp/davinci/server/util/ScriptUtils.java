@@ -19,8 +19,12 @@
 
 package edp.davinci.server.util;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.data.pojo.Param;
 import edp.davinci.server.commons.Constants;
@@ -32,21 +36,24 @@ import org.graalvm.polyglot.Value;
 
 public class ScriptUtils {
     private final static String LANGUAGE = "js";
-    private final static String FUNC_FIELDSHEADER = "getFieldsHeader";
-    private final static String FUNC_DASHBOARDITEMEXECUTEPARAM = "getDashboardItemExecuteParam";
+    private final static String FUNC_FIELDS_HEADER = "getFieldsHeader";
+    private final static String FUNC_DASHBOARD_ITEM_EXECUTE_PARAM = "getDashboardItemExecuteParam";
+    private static final String FUNC_FORMATTED_DATA_ROWS = "getFormattedDataRows";
 
-    private static ClassLoader classLoader = ScriptUtils.class.getClassLoader();
+    private static final ClassLoader classLoader = ScriptUtils.class.getClassLoader();
 
     private enum ScriptEnum {
         INSTANCE;
 
         private Value getFieldsHeader;
         private Value getDashboardItemExecuteParam;
+        private Value getFormattedDataRows;
 
         ScriptEnum() {
             try {
-                getFieldsHeader = createScriptEngine(Constants.FORMAT_CELL_VALUE_JS, FUNC_FIELDSHEADER);
-                getDashboardItemExecuteParam = createScriptEngine(Constants.FORMAT_QUERY_PARAM_JS, FUNC_DASHBOARDITEMEXECUTEPARAM);
+                getFieldsHeader = createScriptEngine(Constants.FORMAT_CELL_VALUE_JS, FUNC_FIELDS_HEADER);
+                getFormattedDataRows = createScriptEngine(Constants.FORMAT_CELL_VALUE_JS, FUNC_FORMATTED_DATA_ROWS);
+                getDashboardItemExecuteParam = createScriptEngine(Constants.FORMAT_QUERY_PARAM_JS, FUNC_DASHBOARD_ITEM_EXECUTE_PARAM);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -54,7 +61,7 @@ public class ScriptUtils {
 
         private static Value createScriptEngine(String path, String member) throws Exception {
             Context context = Context.create(LANGUAGE);
-            Source source = Source.newBuilder(LANGUAGE, classLoader.getResource(path)).build();
+            Source source = Source.newBuilder(LANGUAGE, Objects.requireNonNull(classLoader.getResource(path))).build();
             context.eval(source);
             Value function = context.getBindings(LANGUAGE).getMember(member);
             return function.canExecute() ? function : null;
@@ -77,5 +84,17 @@ public class ScriptUtils {
         Value result = fun.execute(json, JSONUtils.toString(params));
         List<ExcelHeader> excelHeaders = JSONUtils.toObjectArray(result.toString(), ExcelHeader.class);
         return excelHeaders;
+    }
+
+    public static synchronized List<Map<String, Object>> formatCellValue(String json, List<Map<String, Object>> params) {
+
+        Value js = ScriptEnum.INSTANCE.getFormattedDataRows;
+        Value result = js.execute(json, JSONUtils.toString(params));
+        List<Map> resultMaps = JSONUtils.toObjectArray(result.toString(), Map.class);
+        List<Map<String, Object>> values = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(resultMaps)) {
+            resultMaps.forEach(v -> values.add((Map<String, Object>) v));
+        }
+        return values;
     }
 }

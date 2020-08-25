@@ -79,7 +79,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
         Workbook wb = null;
         String filePath = null;
         try {
-            List<SheetContext> sheetContextList = buildSheetContext();
+            List<SheetContext> sheetContextList = buildSheetContextList();
             if (CollectionUtils.isEmpty(sheetContextList)) {
 				throw new IllegalArgumentException(
 						"Task(" + workBookContext.getTaskKey() + ") workbook worker sheetContextList is empty");
@@ -98,26 +98,25 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 futures.add(future);
             }
 
-            Boolean rst = false;
+            Boolean rst = true;
             try {
                 for (Future<Boolean> future : futures) {
-                    rst = future.get(1, TimeUnit.HOURS);
-                    if (!rst) {
-                        future.cancel(true);
+                    if (!future.get(1, TimeUnit.HOURS)) {
+                        rst = false;
+                        break;
                     }
                 }
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
+
+                rst = false;
+
                 if (log) {
                     logger.error("Task({}) workbook worker error", workBookContext.getTaskKey());
                     logger.error(e.toString(), e);
                 }
 
-                if (e instanceof TimeoutException && wrapper.getAction() == ActionEnum.MAIL) {
-                    MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
-                    msg.setException(new TimeoutException("Get data timeout"));
-                    super.tell(wrapper);
-                    return (T) filePath;
-                }
+                MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
+                msg.setException(e);
             }
 
             if (rst) {
@@ -126,7 +125,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                     wb.write(out);
                     out.flush();
                 } catch (Exception e) {
-                    filePath = null;
+                    workbookDispose(wb);
                     throw e;
                 }
                 wrapper.setRst(filePath);
@@ -134,20 +133,24 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                 if (log) {
                     logger.info("Task({}) workbook worker fail, xid={}, xUUID={}", workBookContext.getTaskKey(), wrapper.getXId(), wrapper.getXUUID());
                 }
+
+                for (Future future : futures) {
+                    future.cancel(true);
+                }
+
                 wrapper.setRst(null);
             }
+
             super.tell(wrapper);
+
         } catch (Exception e) {
             if (log) {
             	logger.error("Task({}) workbook worker error", workBookContext.getTaskKey(), e.getMessage());
                 logger.error(e.toString(), e);
             }
 
-            if (wrapper.getAction() == ActionEnum.MAIL) {
-                MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
-                msg.setException(e);
-            }
-
+            MsgMailExcel msg = (MsgMailExcel) wrapper.getMsg();
+            msg.setException(e);
             super.tell(wrapper);
 
             if (StringUtils.isNotEmpty(filePath)) {
@@ -155,7 +158,7 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
             }
 
         } finally {
-            wb = null;
+            workbookDispose(wb);
         }
 
         Object[] args = { workBookContext.getTaskKey(), StringUtils.isNotEmpty(filePath), wrapper.getAction(), wrapper.getXId(),
@@ -170,7 +173,13 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
         return (T) filePath;
     }
 
-    private List<SheetContext> buildSheetContext() throws Exception {
+    private void workbookDispose(Workbook wb) {
+        if (wb != null) {
+            ((SXSSFWorkbook)wb).dispose();
+        }
+    }
+
+    private List<SheetContext> buildSheetContextList() throws Exception {
         List<SheetContext> sheetContextList = Lists.newArrayList();
         for (WidgetContext widgetContext : workBookContext.getWidgets()) {
             WidgetQueryParam queryParam = null;
@@ -183,6 +192,9 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                         widgetContext.getMemDashboardWidget() != null ? widgetContext.getMemDashboardWidget().getId()
                                 : null);
             }
+
+            // data for excel do not use cache
+            queryParam.setCache(false);
 
             boolean isTable;
             List<ExcelHeader> excelHeaders = null;

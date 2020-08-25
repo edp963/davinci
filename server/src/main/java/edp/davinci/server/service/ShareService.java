@@ -20,10 +20,7 @@
 package edp.davinci.server.service;
 
 import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.dto.share.ShareDashboard;
-import edp.davinci.server.dto.share.ShareDisplay;
-import edp.davinci.server.dto.share.ShareInfo;
-import edp.davinci.server.dto.share.ShareWidget;
+import edp.davinci.server.dto.share.*;
 import edp.davinci.server.dto.user.UserLogin;
 import edp.davinci.server.dto.view.WidgetDistinctParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
@@ -34,7 +31,6 @@ import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.Paging;
 import edp.davinci.core.dao.entity.User;
 
-import javax.servlet.http.HttpServletRequest;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +48,7 @@ public interface ShareService {
 
     Paging<Map<String, Object>> getShareData(WidgetQueryParam queryParam, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException;
 
-    ResultMap getDistinctValue(String token, Long viewId, WidgetDistinctParam param, User user, HttpServletRequest request);
+    List<Map<String, Object>> getDistinctValue(Long viewId, WidgetDistinctParam param, User user);
 
     void formatShareParam(Long projectId, ShareEntity entity);
 

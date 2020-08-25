@@ -35,5 +35,6 @@ public class ShareResult {
     }
 
     public ShareResult() {
+
     }
 }

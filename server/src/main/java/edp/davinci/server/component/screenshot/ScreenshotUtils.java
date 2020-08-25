@@ -19,9 +19,12 @@
 
 package edp.davinci.server.component.screenshot;
 
+import edp.davinci.commons.util.DateUtils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.server.commons.Constants;
 import edp.davinci.server.enums.LogNameEnum;
 
+import edp.davinci.server.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.openqa.selenium.*;
@@ -39,9 +42,9 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.FileCopyUtils;
 
 import static edp.davinci.server.component.screenshot.BrowserEnum.valueOf;
 
@@ -83,13 +86,13 @@ public class ScreenshotUtils {
     private FileUtils fileUtils;
 
     public void screenshot(long jobId, List<ImageContent> imageContents, Integer imageWidth) {
-    	scheduleLogger.info("Start screenshot for job({})", jobId);
+    	scheduleLogger.info("Cronjob({}) screenshot start", jobId);
         try {
            	int contentsSize = imageContents.size();
             List<Future> futures = new ArrayList<>(contentsSize);
             final AtomicInteger index = new AtomicInteger(1);
             imageContents.forEach(content -> futures.add(executorService.submit(() -> {
-            	scheduleLogger.info("Cronjob({}) thread({}) for screenshot start, type:{}, id:{}, total:{}", jobId, index.get(), content.getDesc(), content.getCId(), contentsSize);
+            	scheduleLogger.info("Cronjob({}) thread({}) screenshot start, type:{}, id:{}, total:{}", jobId, index.get(), content.getDesc(), content.getCId(), contentsSize);
                 try {
                     File image = doScreenshot(jobId, content.getUrl(), imageWidth);
                     content.setContent(image);
@@ -97,7 +100,7 @@ public class ScreenshotUtils {
                 	scheduleLogger.error("Cronjob({}) thread({}) screenshot error", jobId, index.get());
                 	scheduleLogger.error(e.getMessage(), e);
                 } finally {
-                    scheduleLogger.info("Cronjob({}) thread({}) for screenshot finish, type:{}, id:{}, total:{}", jobId, index.get(), content.getDesc(), content.getCId(), contentsSize);
+                    scheduleLogger.info("Cronjob({}) thread({}) screenshot finish, type:{}, id:{}, total:{}", jobId, index.get(), content.getDesc(), content.getCId(), contentsSize);
                     index.incrementAndGet();
                 }
             })));
@@ -115,7 +118,7 @@ public class ScreenshotUtils {
         } catch (Exception e) {
         	scheduleLogger.error(e.getMessage(), e);
         } finally {
-        	scheduleLogger.info("Cronjob({}) finish screenshot", jobId);
+        	scheduleLogger.info("Cronjob({}) screenshot finish", jobId);
         }
     }
 
@@ -149,7 +152,7 @@ public class ScreenshotUtils {
             driver.manage().window().setSize(new Dimension(width, height));
             Thread.sleep(2000);
             File tempImage = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-            File tempDir = new File(fileUtils.fileBasePath + Consts.DIR_TEMPL + DateUtils.getNowDateYYYYMMDD());
+            File tempDir = new File(fileUtils.fileBasePath + Constants.DIR_TEMPL + DateUtils.getNowDateYYYYMMDD());
             if (!tempDir.exists()) {
                 tempDir.mkdirs();
             }

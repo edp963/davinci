@@ -60,5 +60,7 @@ public interface ViewService extends CheckEntityService {
 
     List<Map<String, Object>> getDistinctValue(Long id, WidgetDistinctParam param, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
+    List<Map<String, Object>> getDistinctValue(boolean isMaintainer, ViewWithSource viewWithSource, WidgetDistinctParam param, User user) throws ServerException;
+
     String showSql(Long id, WidgetQueryParam queryParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

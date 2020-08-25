@@ -30,6 +30,8 @@ import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.DownloadType;
 import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.enums.ShareOperation;
+import edp.davinci.server.enums.ShareType;
 import edp.davinci.server.service.DownloadService;
 import edp.davinci.server.service.ShareDownloadService;
 import io.swagger.annotations.Api;

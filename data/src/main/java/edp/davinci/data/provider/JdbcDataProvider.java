@@ -19,11 +19,7 @@
 
 package edp.davinci.data.provider;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -82,18 +78,21 @@ public class JdbcDataProvider extends DataProvider {
 	@Override
 	public boolean test(Source source, User user) {
 		SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
-		DataSource dataSource = jdbcDataSource.getDataSource(config);
-		try (Connection connection = dataSource.getConnection();) {
-			if (connection == null) {
-				return false;
-			}
-		} catch (Exception e) {
-			log.error("Get connection fail, url:{}, e:{}", config.getUrl(), e.getMessage());
+
+		try {
+			Class.forName(JdbcSourceUtils.getDriverClassName(config.getUrl(), config.getVersion()));
+		} catch (ClassNotFoundException e) {
+			log.error(e.toString(), e);
 			return false;
-		} finally {
-			jdbcDataSource.releaseDatasource(config);
 		}
-		return true;
+
+		try (Connection con = DriverManager.getConnection(config.getUrl(), config.getUsername(), config.getPassword());) {
+			return con != null;
+		} catch (SQLException e) {
+			log.error(e.toString(), e);
+		}
+
+		return false;
 	}
 
 	@Override

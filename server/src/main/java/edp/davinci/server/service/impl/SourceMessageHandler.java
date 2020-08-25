@@ -44,10 +44,15 @@ public class SourceMessageHandler implements RedisMessageHandler {
         if (!(message instanceof String)) {
             return;
         }
+
+        if (JdbcDataSource.getReleaseSet().contains(flag)) {
+            JdbcDataSource.getReleaseSet().remove(flag);
+            return;
+        }
         
         SourceConfig config = JSONUtils.toObject((String)message, SourceConfig.class);
         JdbcSourceUtils utils = new JdbcSourceUtils(jdbcDataSource);
         utils.releaseDataSource(config);
-        log.info("SourceMessageHandler release source whit message:{}", message);
+        log.info("SourceMessageHandler release source whit message:{}, id:{}", message, flag);
     }
 }

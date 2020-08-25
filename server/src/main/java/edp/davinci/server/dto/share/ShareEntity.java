@@ -19,8 +19,8 @@
 package edp.davinci.server.dto.share;
 
 import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.service.share.ShareDataPermission;
-import edp.davinci.service.share.ShareMode;
+import edp.davinci.server.enums.ShareDataPermission;
+import edp.davinci.server.enums.ShareMode;
 import lombok.Data;
 
 import java.util.Set;

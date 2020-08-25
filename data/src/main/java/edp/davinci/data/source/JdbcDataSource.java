@@ -20,9 +20,7 @@
 package edp.davinci.data.source;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -52,7 +50,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Component()
+@Component
 public class JdbcDataSource {
 
     @Bean(name = "wallConfig")
@@ -91,19 +89,19 @@ public class JdbcDataSource {
     @Autowired
 	WallFilter wallFilter;
 
-    @Value("${source.max-active:10}")
+    @Value("${source.max-active:8}")
     @Getter
     protected int maxActive;
 
-    @Value("${source.initial-size:1}")
+    @Value("${source.initial-size:0}")
     @Getter
     protected int initialSize;
 
-    @Value("${source.min-idle:3}")
+    @Value("${source.min-idle:1}")
     @Getter
     protected int minIdle;
 
-    @Value("${source.max-wait:30000}")
+    @Value("${source.max-wait:60000}")
     @Getter
     protected long maxWait;
 
@@ -114,6 +112,10 @@ public class JdbcDataSource {
     @Value("${source.min-evictable-idle-time-millis}")
     @Getter
     protected long minEvictableIdleTimeMillis;
+
+    @Value("${source.max-evictable-idle-time-millis}")
+    @Getter
+    protected long maxEvictableIdleTimeMillis;
 
     @Value("${source.test-while-idle}")
     @Getter
@@ -126,18 +128,22 @@ public class JdbcDataSource {
     @Value("${source.test-on-return}")
     @Getter
     protected boolean testOnReturn;
-    
+
     @Value("${source.break-after-acquire-failure:true}")
     @Getter
     protected boolean breakAfterAcquireFailure;
 
-    @Value("${source.connection-error-retry-attempts:0}")
+    @Value("${source.connection-error-retry-attempts:1}")
     @Getter
     protected int connectionErrorRetryAttempts;
 
-    @Value("${source.query-timeout:600000}")
+    @Value("${source.keep-alive:false}")
     @Getter
-    protected int queryTimeout;
+    protected boolean keepAlive;
+
+    @Value("${source.validation-query-timeout:5}")
+    @Getter
+    protected int validationQueryTimeout;
 
     @Value("${source.validation-query}")
     @Getter
@@ -146,23 +152,39 @@ public class JdbcDataSource {
     @Value("${aggregator.name}")
     @Getter
     protected String aggregatorName;
-    
+
+    @Value("${source.filters}")
+    @Getter
+    protected String filters;
+
     private static volatile Map<String, DruidDataSource> dataSourceMap = new ConcurrentHashMap<>();
     private static volatile Map<String, Lock> dataSourceLockMap = new ConcurrentHashMap<>();
+
+    @Getter
+    private static Set<String> releaseSet = new HashSet();
+
     private static final Object lockLock = new Object();
     
     private Lock getDataSourceLock(String key) {
-        if (dataSourceLockMap.containsKey(key)) {
-            return dataSourceLockMap.get(key);
-        }
-        
-        synchronized (lockLock) {
-            Lock lock = new ReentrantLock();
-            dataSourceLockMap.put(key, lock);
-            return lock;
-        }
+		if (dataSourceLockMap.containsKey(key)) {
+			return dataSourceLockMap.get(key);
+		}
+
+		synchronized (lockLock) {
+			if (dataSourceLockMap.containsKey(key)) {
+				return dataSourceLockMap.get(key);
+			}
+			Lock lock = new ReentrantLock();
+			dataSourceLockMap.put(key, lock);
+			return lock;
+		}
     }
-    
+
+    /**
+     * only for test
+     * @param config
+     * @return
+     */
     public boolean isExist(SourceConfig config) {
         return dataSourceMap.containsKey(getDataSourceKey(config));
     }
@@ -172,7 +194,7 @@ public class JdbcDataSource {
         String key = getDataSourceKey(config);
 
         Lock lock = getDataSourceLock(key);
-        
+
         if (!lock.tryLock()) {
             return;
         }
@@ -208,18 +230,23 @@ public class JdbcDataSource {
         Lock lock = getDataSourceLock(key);
         
         try {
-            if (!lock.tryLock(5L, TimeUnit.SECONDS)) {
-                throw new SourceException("Unable to get driver instance for jdbcUrl: " + url);
+            if (!lock.tryLock(30L, TimeUnit.SECONDS)) {
+                druidDataSource = dataSourceMap.get(key);
+                if (druidDataSource != null && !druidDataSource.isClosed()) {
+                    return druidDataSource;
+                }
+                throw new SourceException("Unable to get datasource for jdbcUrl: " + url);
             }
         }
         catch (InterruptedException e) {
-            throw new SourceException("Unable to get driver instance for jdbcUrl: " + url);
+            throw new SourceException("Unable to get datasource for jdbcUrl: " + url);
         }
 
-        druidDataSource = dataSourceMap.get(key);
-        if (druidDataSource != null && !druidDataSource.isClosed()) {
-            return druidDataSource;
-        }
+		druidDataSource = dataSourceMap.get(key);
+		if (druidDataSource != null && !druidDataSource.isClosed()) {
+            lock.unlock();
+			return druidDataSource;
+		}
         
         druidDataSource = new DruidDataSource();
         
@@ -257,12 +284,29 @@ public class JdbcDataSource {
             druidDataSource.setMaxWait(maxWait);
             druidDataSource.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
             druidDataSource.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
-            druidDataSource.setTestWhileIdle(false);
+            druidDataSource.setMaxEvictableIdleTimeMillis(maxEvictableIdleTimeMillis);
+            druidDataSource.setTestWhileIdle(testWhileIdle);
             druidDataSource.setTestOnBorrow(testOnBorrow);
             druidDataSource.setTestOnReturn(testOnReturn);
             druidDataSource.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
             druidDataSource.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
+            druidDataSource.setKeepAlive(keepAlive);
+            druidDataSource.setValidationQueryTimeout(validationQueryTimeout);
             druidDataSource.setValidationQuery(validationQuery);
+            druidDataSource.setRemoveAbandoned(true);
+            druidDataSource.setRemoveAbandonedTimeout(3600 + 5 * 60);
+            druidDataSource.setLogAbandoned(true);
+
+            // default validation query
+            String driverName = druidDataSource.getDriverClassName();
+            if (driverName.indexOf("sqlserver") != -1 || driverName.indexOf("mysql") != -1
+                    || driverName.indexOf("h2") != -1 || driverName.indexOf("moonbox") != -1) {
+                druidDataSource.setValidationQuery("select 1");
+            }
+
+            if (driverName.indexOf("oracle") != -1) {
+                druidDataSource.setValidationQuery("select 1 from dual");
+            }
 
             if (!CollectionUtils.isEmpty(config.getProperties())) {
                 Properties properties = new Properties();
@@ -271,7 +315,7 @@ public class JdbcDataSource {
             }
 
             try {
-                druidDataSource.addFilters("stat");
+                druidDataSource.setFilters(filters);
                 // davinci's aggregator source and statistic source don't need wall filter
                 if (!name.equals(aggregatorName) && !name.equals("statistic")) {
                     druidDataSource.setProxyFilters(Arrays.asList(new Filter[] { wallFilter }));
@@ -279,7 +323,7 @@ public class JdbcDataSource {
 				druidDataSource.init();
             } catch (Exception e) {
                 log.error("Exception during pool initialization", e);
-                throw new SourceException(e.getMessage(), e);
+                throw new SourceException(e.toString(), e);
             }
 
             dataSourceMap.put(key, druidDataSource);

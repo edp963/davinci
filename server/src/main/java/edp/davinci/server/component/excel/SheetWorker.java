@@ -61,12 +61,15 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         Logger logger = sheetContext.getCustomLogger();
         final AtomicInteger count = new AtomicInteger(0);
         try {
+
+            interrupted(sheetContext);
+
             PagingWithQueryColumns paging = ((ViewService) SpringContextHolder.getBean(ViewService.class))
                     .getDataWithQueryColumns(sheetContext.getViewId(), sheetContext.getQueryParam(),
                             sheetContext.getUser());
             if (log) {
                 logger.info(
-                        "Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) finish query, count:{}",
+                        "Task({}) sheet worker({}), sheetNo:{}, sheetName:{} finish query, count:{}",
                         sheetContext.getTaskKey(), sheetContext.getName(), sheetContext.getSheetNo(),
                         sheetContext.getSheet().getSheetName(), count.get());
             }
@@ -76,6 +79,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             super.init(sheetContext);
             super.writeHeader(sheetContext);
             resultList.forEach(row -> {
+                interrupted(sheetContext);
                 writeLine(sheetContext, row);
                 count.incrementAndGet();
             });
@@ -89,7 +93,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             }
             if (log) {
                 logger.error(
-                        "Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) error",
+                        "Task({}) sheet worker({}), sheetNo:{}, sheetName:{} error",
                         sheetContext.getTaskKey(), sheetContext.getName(), sheetContext.getSheetNo(),
                         sheetContext.getSheet().getSheetName(), e.getMessage());
             }
@@ -107,5 +111,18 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
         }
 
         return (T) rst;
+    }
+
+    private void interrupted(SheetContext sheetContext) {
+        if (Thread.interrupted()) {
+            Logger logger = sheetContext.getCustomLogger();
+            boolean log = sheetContext.getCustomLogger() != null;
+            if (log) {
+                logger.error("Task({}) sheet worker({}), sheetNo:{}, sheetName:{} interrupted",
+                        sheetContext.getTaskKey(), sheetContext.getName(), sheetContext.getSheetNo(), sheetContext.getSheet().getSheetName());
+            }
+            throw new RuntimeException("Task(" + sheetContext.getTaskKey() + ") sheet worker(" + sheetContext.getName() + "), " +
+                    "sheetNo:" + sheetContext.getSheetNo() + ", sheetName:" + sheetContext.getSheet().getSheetName() + " interrupted");
+        }
     }
 }

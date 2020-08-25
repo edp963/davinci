@@ -18,28 +18,26 @@
 
 package edp.davinci.server.aspect;
 
-import com.alibaba.druid.util.StringUtils;
-import edp.core.annotation.AuthShare;
-import edp.core.exception.ForbiddenExecption;
-import edp.core.exception.NotFoundException;
-import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
-import edp.core.utils.CollectionUtils;
-import edp.davinci.core.common.ErrorMsg;
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.core.enums.CheckEntityEnum;
-import edp.davinci.dao.DashboardPortalMapper;
-import edp.davinci.dao.RelRoleUserMapper;
-import edp.davinci.dao.UserMapper;
-import edp.davinci.dto.projectDto.ProjectDetail;
-import edp.davinci.dto.shareDto.ShareInfo;
-import edp.davinci.model.*;
-import edp.davinci.service.ProjectService;
-import edp.davinci.service.ShareService;
-import edp.davinci.service.impl.DashboardServiceImpl;
-import edp.davinci.service.impl.DisplayServiceImpl;
-import edp.davinci.service.impl.WidgetServiceImpl;
-import edp.davinci.service.share.*;
+
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.*;
+import edp.davinci.server.annotation.AuthShare;
+import edp.davinci.server.commons.ErrorMsg;
+import edp.davinci.server.controller.ResultMap;
+import edp.davinci.server.dao.DashboardPortalExtendMapper;
+import edp.davinci.server.dao.RelRoleUserExtendMapper;
+import edp.davinci.server.dao.UserExtendMapper;
+import edp.davinci.server.dto.project.ProjectDetail;
+import edp.davinci.server.dto.share.ShareFactor;
+import edp.davinci.server.dto.share.ShareInfo;
+import edp.davinci.server.enums.*;
+import edp.davinci.server.exception.ForbiddenExecption;
+import edp.davinci.server.exception.NotFoundException;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.service.*;
+
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -66,27 +64,27 @@ public class ShareAuthAspect {
     private ShareService shareService;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserExtendMapper userExtendMapper;
 
     @Autowired
-    private RelRoleUserMapper relRoleUserMapper;
+    private RelRoleUserExtendMapper relRoleUserExtendMapper;
 
     @Autowired
-    private WidgetServiceImpl widgetService;
+    private WidgetService widgetService;
 
     @Autowired
-    private DashboardServiceImpl dashboardService;
+    private DashboardService dashboardService;
 
     @Autowired
-    private DashboardPortalMapper dashboardPortalMapper;
+    private DashboardPortalExtendMapper dashboardPortalExtendMapper;
 
     @Autowired
-    private DisplayServiceImpl displayService;
+    private DisplayService displayService;
 
     @Autowired
     private ProjectService projectService;
 
-    @Pointcut("@annotation(edp.core.annotation.AuthShare)")
+    @Pointcut("@annotation(edp.davinci.server.annotation.AuthShare)")
     public void shareAuth() {
     }
 
@@ -160,6 +158,7 @@ public class ShareAuthAspect {
     }
 
     /**
+     *
      * 校验Token 是否合法
      *
      * @param operation
@@ -167,6 +166,7 @@ public class ShareAuthAspect {
      * @param user
      * @param args
      * @throws ForbiddenExecption
+     * @throws UnAuthorizedExecption
      */
     private void verifyToken(ShareOperation operation, ShareFactor shareFactor, User user, Object[] args)
             throws ForbiddenExecption, UnAuthorizedExecption {
@@ -174,24 +174,24 @@ public class ShareAuthAspect {
             case PASSWORD:
                 String password = (String) args[1];
                 if (StringUtils.isEmpty(password)) {
-                    throw new UnAuthorizedExecption(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_LOAD_DATA_TOKEN : ErrorMsg.ERR_EMPTY_SHARE_PASSWORD);
+                    throw new UnAuthorizedExecption(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_INVALID_DATA_TOKEN : ErrorMsg.ERR_EMPTY_PASSWORD);
                 }
                 if (!password.equals(shareFactor.getPassword())) {
-                    throw new ForbiddenExecption(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_LOAD_DATA_TOKEN : ErrorMsg.ERR_INVALID_SHARE_PASSWORD);
+                    throw new ForbiddenExecption(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_INVALID_DATA_TOKEN : ErrorMsg.ERR_INVALID_PASSWORD);
                 }
                 break;
             case AUTH:
                 if (user == null) {
-                    throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_AUTHENTICATION);
+                    throw new UnAuthorizedExecption(ErrorMsg.ERR_AUTHENTICATION);
                 }
                 if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
                     if (!user.getId().equals(shareFactor.getSharerId())) {
-                        throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
+                        throw new ForbiddenExecption(ErrorMsg.ERR_PERMISSION);
                     }
                 } else {
-                    Set<RelRoleUser> relRoleUsers = relRoleUserMapper.selectByUserAndRoles(user.getId(), shareFactor.getRoles());
+                    Set<RelRoleUser> relRoleUsers = relRoleUserExtendMapper.getByUserAndRoles(user.getId(), shareFactor.getRoles());
                     if (!shareFactor.getViewers().contains(user.getId()) && CollectionUtils.isEmpty(relRoleUsers)) {
-                        throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
+                        throw new ForbiddenExecption(ErrorMsg.ERR_PERMISSION);
                     }
                 }
                 break;
@@ -212,7 +212,7 @@ public class ShareAuthAspect {
     @Transactional
     protected void verifyDataPermission(ShareOperation shareOperation, ShareType flagShareType, ShareFactor shareFactor, User viewer)
             throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
-        User sharer = userMapper.getById(shareFactor.getSharerId());
+        User sharer = userExtendMapper.selectByPrimaryKey(shareFactor.getSharerId());
         if (sharer == null) {
             throw new ForbiddenExecption(ErrorMsg.ERR_INVALID_SHARER);
         }
@@ -222,12 +222,12 @@ public class ShareAuthAspect {
             parseEntityAndProject(shareFactor, user);
         } else if (shareOperation == ShareOperation.LOAD_DATA) {
             if (shareFactor.getType() != ShareType.WIDGET) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_LOAD_DATA_TOKEN);
+                throw new ForbiddenExecption(ErrorMsg.ERR_INVALID_DATA_TOKEN);
             }
             Widget widget = widgetService.getWidget(shareFactor.getEntityId(), user);
             ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
             if (!projectService.allowGetData(projectDetail, user)) {
-                throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
+                throw new UnAuthorizedExecption(ErrorMsg.ERR_PERMISSION);
             }
             shareFactor.setShareEntity(widget);
         } else {
@@ -248,7 +248,7 @@ public class ShareAuthAspect {
                 break;
             case DASHBOARD:
                 Dashboard dashboard = dashboardService.getDashboard(shareFactor.getEntityId(), user);
-                DashboardPortal portal = dashboardPortalMapper.getById(dashboard.getDashboardPortalId());
+                DashboardPortal portal = dashboardPortalExtendMapper.selectByPrimaryKey(dashboard.getDashboardPortalId());
                 shareFactor.setProjectDetail(projectService.getProjectDetail(portal.getProjectId(), user, false));
                 shareFactor.setShareEntity(dashboard);
                 break;
@@ -285,7 +285,7 @@ public class ShareAuthAspect {
         //授权模式
         if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
             shareFactor.setMode(ShareMode.AUTH);
-            Long viewerId = userMapper.getIdByName(shareInfo.getSharedUserName());
+            Long viewerId = userExtendMapper.getIdByName(shareInfo.getSharedUserName());
             shareFactor.setViewers(new HashSet<Long>(1) {{
                 add(viewerId);
             }});
