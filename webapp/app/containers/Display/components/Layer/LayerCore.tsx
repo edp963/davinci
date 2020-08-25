@@ -26,9 +26,8 @@ import { GraphTypes, SecondaryGraphTypes } from '../Setting'
 import { Chart, Rectangle, Label, Video, Timer } from './Content'
 
 import RichTextEditor from './RichText'
-
-const LayerCore: React.FC = (props) => {
-  const { layer, operationInfo } = useContext(LayerContext)
+const LayerCore: React.FC = () => {
+  const { layer } = useContext(LayerContext)
   const { type, subType } = layer
   if (type === GraphTypes.Chart) {
     return <Chart />

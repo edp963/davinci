@@ -17,14 +17,12 @@
  * limitations under the License.
  * >>
  */
-// MY
 export interface ElementStylesType {
-	bold: boolean,
-	italic: boolean,
-	underline: boolean,
-	fontFamily: string,
-	fontSize: number,
-	color: string,
-	backgroundColor: string
+  bold: boolean,
+  italic: boolean,
+  underline: boolean,
+  fontFamily: string,
+  fontSize: number,
+  color: string,
+  backgroundColor: string
 }
-  

@@ -21,7 +21,7 @@
 import React, { useContext, useMemo } from 'react'
 
 import { LayerContext } from '../util'
-import { SecondaryGraphTypes } from '../../Setting' // MY
+import { SecondaryGraphTypes } from '../../Setting'
 import { useSelector } from 'react-redux'
 import { makeSelectCurrentOperateItemParams } from 'app/containers/Display/selectors'
 
