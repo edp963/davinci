@@ -8,12 +8,11 @@
       "name": "width",
       "title": "宽度（像素）",
       "component": "inputnumber",
-      "default": 200
+      "default": 500
     }, {
       "name": "height",
       "title": "高度（像素）",
-      "component": "inputnumber",
-      "default": 120
+      "component": "inputnumber"
     }]
   }, {
     "name": "position",
@@ -35,7 +34,7 @@
     "name": "content",
     "title": "文本",
     "items": [{
-      "name": "contentText",
+      "name": "richText",
       "tip": "输入文本",
       "title": "文本内容",
       "component": "input",

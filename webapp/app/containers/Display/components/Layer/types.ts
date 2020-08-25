@@ -22,6 +22,7 @@ import { IWidgetFormed } from 'containers/Widget/types'
 import { IViewModel } from 'app/containers/View/types'
 import { RenderType } from 'app/containers/Widget/components/Widget'
 import { IQueryConditions } from 'app/containers/Dashboard/types'
+import { ILayerOperationInfo } from 'app/containers/Display/components/types'
 import { ILayerFormed } from '../types'
 import { ILayerInfo } from '../../types'
 import { DragTriggerTypes } from '../../constants'
@@ -75,6 +76,10 @@ export type LayerListContextValue = {
     layerId: number,
     selected: boolean,
     exclusive: boolean
+  ) => void
+  onEditLabelChange?: (
+    layerId: number,
+    changedInfo: Partial<ILayerOperationInfo>
   ) => void
 }
 

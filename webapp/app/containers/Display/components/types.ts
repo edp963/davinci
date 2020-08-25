@@ -66,7 +66,7 @@ export interface ILayerParams {
   paddingBottom: number
   paddingLeft: number
   paddingRight: number
-  contentText: string
+  richText: IRichTextConfig
 
   src: string
   controlSetting: string[]
@@ -76,6 +76,17 @@ export interface ILayerParams {
   timeFormat: string
   timeDuration: number
 }
+
+export interface ILayerOperationInfo {
+  dragging: boolean,
+  resizing: boolean,
+  selected: boolean,
+  editing: boolean
+}
+
+export interface IRichTextConfig {
+  content: string | RichTextNode[]
+} 
 
 export type ILayerFormed = LayerBase & {
   params: ILayerParams

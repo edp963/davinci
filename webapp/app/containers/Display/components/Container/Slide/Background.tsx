@@ -64,7 +64,7 @@ interface ISlideBackgroundProps {
     eventTrigger: DragTriggerTypes
   ) => void
   onDoLayerOperation?: (operation: LayerOperations) => void
-  onRemoveLayerSelection?: () => void
+  onRemoveLayerOperationInfo?: (changedInfo: Pick< Partial<ILayerOperationInfo>, 'selected'| 'editing'>) => void
 }
 
 const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
@@ -75,7 +75,8 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
     fullscreen,
     onChangeLayersPosition,
     onDoLayerOperation,
-    onRemoveLayerSelection
+    onRemoveLayerSelection,
+    onRemoveLayerOperationInfo
   } = props
   const { slideParams } = useContext(SlideContext)
   const { width: slideWidth, height: slideHeight, scaleMode } = slideParams
@@ -277,11 +278,15 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
     }
   }, [refBackground.current, onDoLayerOperation])
 
-  const removeLayerSelection = useCallback(() => {
-    if (onRemoveLayerSelection) {
-      onRemoveLayerSelection()
+  const removeLayerOperationInfo = useCallback(() => {
+    const { anchorNode: { parentNode } } = window.getSelection()
+    if(!parentNode && parentNode.className){
+      return
     }
-  }, [onRemoveLayerSelection])
+    if (onRemoveLayerOperationInfo) {
+      onRemoveLayerOperationInfo({selected: false, editing: false})
+    }
+  }, [onRemoveLayerOperationInfo])
 
   const slideBackgroundCls = classnames({
     'display-slide-background': true,
@@ -294,7 +299,7 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
       className={slideBackgroundCls}
       style={nextBackgroundStyle}
       tabIndex={0}
-      onClick={removeLayerSelection}
+      onClick={removeLayerOperationInfo}
     >
       {props.children}
     </div>
