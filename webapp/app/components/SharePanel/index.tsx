@@ -243,7 +243,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
         ? orgMembers.map((member: IOrganizationMember) => (
             <SelectOption
               key={`${uuid}${member.user.username}`}
-              value={`viewerIds-${member.id}`}
+              value={`viewerIds-${member.user.id}`}
             >
               <div className={styles.options}>
                 <strong>用户</strong> -
