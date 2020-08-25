@@ -153,11 +153,13 @@ const displayReducer = (
           obj[layer.id] = {
             selected: false,
             dragging: false,
-            resizing: false
+            resizing: false,
+            editing: false
           }
           return obj
         }, {})
         draft.editorBaselines = []
+
         break
 
       case ActionTypes.LOAD_SLIDE_DETAIL_FAILURE:
@@ -239,6 +241,30 @@ const displayReducer = (
         })
         draft.lastOperationType = ActionTypes.EDIT_SLIDE_LAYERS_SUCCESS
         draft.lastLayers = lastLayers
+        break
+
+      case ActionTypes.CHANGE_LAYER_OPERATION_INFO:
+        Object.entries(layersOperationInfo).forEach(
+          ([id, layerOperationInfo]: [string, any]) => {
+              Object.entries(action.payload.changedInfo).forEach(
+                ([ type, status ]: [ string, boolean]) => {
+                  if(status){
+                    return draft.slideLayersOperationInfo[draft.currentSlideId][id] = {
+                      ...layerOperationInfo,
+                      [type]: +id === action.payload.layerId
+                    }
+                  } else {
+                    return draft.slideLayersOperationInfo[draft.currentSlideId][id] = {
+                      ...layerOperationInfo,
+                      [type]: status
+                    }
+                  }
+                })
+          }
+        )
+        draft.slideLayersOperationInfo[draft.currentSlideId] = {
+          ...layersOperationInfo
+        }
         break
 
       case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
@@ -362,10 +388,12 @@ const displayReducer = (
         }
         break
 
-      case ActionTypes.CLEAR_LAYERS_SELECTION:
+      case ActionTypes.CLEAR_LAYERS_OPERATION_INFO:
         Object.values(layersOperationInfo).forEach(
           (layerOperationInfo: any) => {
-            layerOperationInfo.selected = false
+            return Object.entries(action.payload.changedInfo).forEach(([type, value]: [string, boolean])=>{
+              layerOperationInfo[type] = value
+            })
           }
         )
         break

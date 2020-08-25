@@ -17,13 +17,14 @@
  * limitations under the License.
  * >>
  */
-
-import React, { useContext } from 'react'
-
-const Label: React.FC = (props) => {
-  return <div>
-    {props.children}
-  </div>
+// MY
+export interface ElementStylesType {
+	bold: boolean,
+	italic: boolean,
+	underline: boolean,
+	fontFamily: string,
+	fontSize: number,
+	color: string,
+	backgroundColor: string
 }
-
-export default Label
+  

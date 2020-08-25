@@ -128,7 +128,11 @@ const SlideEditor: React.FC = (props) => {
     },
     []
   )
-
+  
+  const onLayerOperationInfoChange = useCallback((changedInfo: Pick< Partial<ILayerOperationInfo>, 'selected'| 'editing'>) => {
+    dispatch(DisplayActions.clearLayersOperationInfo(changedInfo))
+  }, [])
+  
   const createCover = useCallback(() => {
     const { transform, transition } = refContent.current.style
     refContent.current.style.transform = ''
@@ -161,7 +165,7 @@ const SlideEditor: React.FC = (props) => {
             className="display-slide-background-grid"
             onChangeLayersPosition={changeLayersPosition}
             onDoLayerOperation={doLayerOperation}
-            onRemoveLayerSelection={removeLayerSelection}
+            onRemoveLayerOperationInfo={onLayerOperationInfoChange}
           >
             <SlideContent ref={refContent}>
               <SlideLayerList />

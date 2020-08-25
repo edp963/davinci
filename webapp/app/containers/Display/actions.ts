@@ -26,7 +26,8 @@ import {
   ILayerFormed,
   DeltaSize,
   DeltaPosition,
-  ILayerParams
+  ILayerParams,
+  ILayerOperationInfo
 } from './components/types'
 import { IWidgetFormed } from 'containers/Widget/types'
 import { IView } from 'containers/View/types'
@@ -187,10 +188,12 @@ export const DisplayActions = {
     }
   },
 
-  clearLayersSelection() {
+  clearLayersOperationInfo(changedInfo: Pick< Partial<ILayerOperationInfo>, 'selected'| 'editing'>) {
     return {
-      type: ActionTypes.CLEAR_LAYERS_SELECTION,
-      payload: {}
+      type: ActionTypes.CLEAR_LAYERS_OPERATION_INFO,
+      payload: {
+        changedInfo
+      }
     }
   },
 
@@ -353,6 +356,17 @@ export const DisplayActions = {
       }
     }
   },
+
+  changeLayerOperationInfo(layerId: number, changedInfo: Partial<ILayerOperationInfo>) {
+    return {
+      type: ActionTypes.CHANGE_LAYER_OPERATION_INFO,
+      payload: {
+        layerId,
+        changedInfo
+      }
+    }
+  },
+
   slideLayersDeleted(slideId: number, layerIds: number[]) {
     return {
       type: ActionTypes.DELETE_SLIDE_LAYERS_SUCCESS,
@@ -455,7 +469,9 @@ export const DisplayActions = {
       type: ActionTypes.MONITORED_LINKAGE_DATA_ACTION,
       payload: {}
     }
-  }
+  },
+
+  
 }
 
 const mockAction = returnType(DisplayActions)

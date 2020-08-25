@@ -53,6 +53,8 @@ import { IWidgetFormed } from '../../Widget/types'
 import { DeltaPosition } from '../components/types'
 import { DragTriggerTypes } from '../constants'
 
+import { ILayerOperationInfo } from 'app/containers/Display/components/types'
+
 const SlideLayerList: React.FC = (props) => {
   const dispatch = useDispatch()
   const history = useHistory()
@@ -120,6 +122,10 @@ const SlideLayerList: React.FC = (props) => {
     dispatch(DisplayActions.selectLayer(layerId, selected, exclusive))
   }, [])
 
+  const onEditLabelChange = useCallback((layerId: number, changedInfo: Partial<ILayerOperationInfo>) => {
+    dispatch(DisplayActions.changeLayerOperationInfo(layerId, changedInfo))
+  }, [])
+
   const getWidgetViewModel = useCallback(
     (viewId: number) => {
       const viewModel = formedViews[viewId].model
@@ -163,6 +169,7 @@ const SlideLayerList: React.FC = (props) => {
       editWidget,
       onDrag,
       onSelectionChange,
+      onEditLabelChange,
       onResize,
       getWidgetViewModel,
       getChartData
@@ -172,6 +179,7 @@ const SlideLayerList: React.FC = (props) => {
       editWidget,
       onDrag,
       onSelectionChange,
+      onEditLabelChange,
       onResize,
       getWidgetViewModel,
       getChartData
