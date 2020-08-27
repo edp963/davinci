@@ -57,7 +57,10 @@ interface ISlideBackgroundProps {
   className?: string
   padding?: number
   autoFit?: boolean
-  fullscreen?: boolean
+  fullscreen?: boolean,
+  fatherRef?: {
+    current: HTMLDivElement
+  },
   onChangeLayersPosition?: (
     deltaPosition: DeltaPosition,
     scale: number,
@@ -75,7 +78,8 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
     fullscreen,
     onChangeLayersPosition,
     onDoLayerOperation,
-    onRemoveLayerSelection
+    onRemoveLayerSelection,
+    fatherRef
   } = props
   const { slideParams } = useContext(SlideContext)
   const { width: slideWidth, height: slideHeight, scaleMode } = slideParams
@@ -90,6 +94,8 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
     slideTranslateChange
   } = containerContextValue
   const [rect, refBackground] = useClientRect<HTMLDivElement>()
+  
+ 
 
   const [containerWidth, containerHeight] = useMemo(() => {
     if (!fullscreen && !rect) {
@@ -268,6 +274,7 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
   )
   useEffect(() => {
     if (refBackground.current && onDoLayerOperation) {
+      fatherRef.current = refBackground.current
       refBackground.current.addEventListener('keydown', keyDown, false)
     }
     return () => {

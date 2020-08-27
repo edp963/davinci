@@ -72,7 +72,7 @@ const SlideEditor: React.FC = (props) => {
   }, [displayId, slideId])
 
   const refContent = React.useRef<HTMLDivElement>(null)
-
+  const refBackground =  React.useRef<HTMLDivElement>()
   const doLayerOperation = useCallback(
     (operation: LayerOperations) => {
       switch (operation) {
@@ -124,6 +124,7 @@ const SlideEditor: React.FC = (props) => {
 
   const selectionChange = useCallback(
     (layerId: number, checked: boolean, exclusive: boolean) => {
+      refBackground.current.focus()
       dispatch(DisplayActions.selectLayer(layerId, checked, exclusive))
     },
     []
@@ -157,6 +158,7 @@ const SlideEditor: React.FC = (props) => {
       <DisplayContainer grid={grid}>
         <SlideContainer slideId={slideId} slideParams={slideParams}>
           <SlideBackground
+            fatherRef={refBackground}
             autoFit
             className="display-slide-background-grid"
             onChangeLayersPosition={changeLayersPosition}
