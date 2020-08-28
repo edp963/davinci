@@ -490,7 +490,7 @@ export function* getDashboardShareLink(action: DashboardActionType) {
     loadDashboardShareLinkFail
   } = DashboardActions
 
-  const { id, mode, permission, roles, viewerIds } = action.payload
+  const {id, mode, permission, roles, viewerIds} = action.payload.params
 
   let requestData = null
   switch(mode) {
@@ -545,22 +545,23 @@ export function* getWidgetShareLink (action: DashboardActionType) {
     widgetShareLinkLoaded,
     loadWidgetShareLinkFail
   } = DashboardActions
-  const { id, itemId,  shareType, permission, roles, viewerIds } = action.payload
+  const {id, itemId,  mode, permission, roles, viewerIds} = action.payload.params
 
   let requestData = null
-  switch(shareType) {
+  switch(mode) {
     case 'AUTH':
-        requestData = { mode: shareType, permission, roles, viewers: viewerIds }
+        requestData = { mode, permission, roles, viewers: viewerIds }
         break
       case 'PASSWORD':
-        requestData = { mode: shareType }
+        requestData = { mode }
         break
       case 'NORMAL':
-        requestData = { mode: shareType }
+        requestData = { mode }
         break
       default:
         break
   }
+
   try {
     const result = yield call(request, {
       method: 'post',
@@ -568,7 +569,7 @@ export function* getWidgetShareLink (action: DashboardActionType) {
       data: requestData
     })
     const { token, password } = result.payload
-    switch (shareType) {
+    switch (mode) {
       case 'AUTH':
         yield put(widgetAuthorizedShareLinkLoaded(token, itemId))
         break

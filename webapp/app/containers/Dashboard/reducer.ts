@@ -302,9 +302,9 @@ const dashboardReducer = (
         break
 
       case ActionTypes.LOAD_WIDGET_SHARE_LINK:
-        draft.currentItemsInfo[action.payload.itemId].shareLoading = true
-        if (action.payload.shareType === 'AUTH') {
-          draft.currentItemsInfo[action.payload.itemId].authorizedShareToken =
+        draft.currentItemsInfo[action.payload.params.itemId].shareLoading = true
+        if (action.payload.params.mode === 'AUTH') {
+          draft.currentItemsInfo[action.payload.params.itemId].authorizedShareToken =
             ''
         }
         break

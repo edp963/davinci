@@ -36,7 +36,6 @@ import {
 import {
   makeSelectProjectRoles
 } from 'containers/Projects/selectors'
-import { permission } from 'app/components/SharePanel/type'
 
 const SharePanel: FC = () => {
   const dispatch = useDispatch()
@@ -50,8 +49,8 @@ const SharePanel: FC = () => {
   const displayPasswordSharePassword = useSelector(makeSelectCurrentDisplayPasswordSharePassword())
 
 
-  const onLoadDisplayShareLink = useCallback((id, mode, permission, roles, viewerIds) => {
-    dispatch(DisplayActions.loadDisplayShareLink(id, mode, permission, roles, viewerIds))
+  const onLoadDisplayShareLink = useCallback(({id, mode, permission, roles, viewerIds}) => {
+    dispatch(DisplayActions.loadDisplayShareLink({id, mode, permission, roles, viewerIds}))
   }, [])
 
   const onCloseSharePanel = useCallback(() => {

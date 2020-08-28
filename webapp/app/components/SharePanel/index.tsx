@@ -31,11 +31,15 @@ import { RadioChangeEvent } from 'antd/lib/radio'
 import Ctrl from './Ctrl'
 const SelectOption = Select.Option
 const RadioGroup = Radio.Group
-const RadioButton = Radio.Button
 import { uuid } from 'utils/util'
 import ShareForm from './ShareForm'
 import styles from './SharePanel.less'
-import { TShareType, TsType, TShareVizsType, TPermission } from './type'
+import {
+  Tmode,
+  TShareVizsType,
+  TPermission,
+  IGetTokenParams
+} from './type'
 import { IProjectRoles } from 'containers/Organizations/component/ProjectRole'
 import { IOrganizationMember } from 'containers/Organizations/types'
 import { debounce } from 'lodash'
@@ -50,30 +54,11 @@ interface ISharePanelProps {
   pwd: string
   authorizedShareToken: string
   loading: boolean
-  onLoadDashboardShareLink?: (
-    id: number,
-    mode?: TShareType,
-    permission?: TPermission,
-    roles?: number[],
-    viewerIds?: number[]
-  ) => void
-  onLoadWidgetShareLink?: (
-    id: number,
-    itemId: number,
-    shareType?: TShareType,
-    permission?: TPermission,
-    roles?: number[],
-    viewerIds?: number[]
-  ) => void
   projectRoles: IProjectRoles[]
   organizationMembers: IOrganizationMember[]
-  onLoadDisplayShareLink?: (
-    id: number,
-    mode?: TShareType,
-    permission?: TPermission,
-    roles?: number[],
-    viewerIds?: number[]
-  ) => void
+  onLoadDashboardShareLink?: (params: IGetTokenParams) => void
+  onLoadWidgetShareLink?: (params: IGetTokenParams) => void
+  onLoadDisplayShareLink?: (params: IGetTokenParams) => void
   onClose: () => void
 }
 
@@ -96,60 +81,73 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
     onLoadDisplayShareLink,
     onLoadDashboardShareLink
   } = props
-  const [shareType, setShareType] = useState<TShareType>('NORMAL')
+  const [mode, setShareType] = useState<Tmode>('NORMAL')
   const [permission, setPermission] = useState<TPermission>('SHARER')
-  const [authUser, setAuthUser] = useState<string>('')
   const [searchValue, setSearchValue] = useState<string>('')
   const [viewerIds, setViewerIds] = useState<number[]>()
   const [roles, setRoles] = useState<number[]>()
 
-  // console.log(permission)
   useEffect(() => {
     if (id && visible && !shareToken) {
-      getShareToken()
+      getShareToken(type, {
+        id,
+        itemId,
+        mode,
+        permission,
+        roles,
+        viewerIds
+      })
     }
-  }, [id, visible, shareToken])
+  }, [id, visible, shareToken, itemId, mode, permission, roles, viewerIds])
 
   useEffect(() => {
-    if (id && visible && !pwdToken && shareType === 'PASSWORD') {
-      getShareToken()
+    if (id && visible && !pwdToken && mode === 'PASSWORD') {
+      getShareToken(type, {
+        id,
+        itemId,
+        mode,
+        permission,
+        roles,
+        viewerIds
+      })
     }
-  }, [pwdToken, pwd, id, visible, shareType])
+  }, [
+    pwdToken,
+    pwd,
+    id,
+    visible,
+    mode,
+    itemId,
+    permission,
+    roles,
+    viewerIds
+  ])
 
-  const getShareToken = useCallback(() => {
+  const getShareToken = (type: TShareVizsType, params: IGetTokenParams) => {
     switch (type) {
       case 'dashboard':
-        onLoadDashboardShareLink(id, shareType, permission, roles, viewerIds)
+        onLoadDashboardShareLink(params)
         break
       case 'widget':
-        onLoadWidgetShareLink(
-          id,
-          itemId,
-          shareType,
-          permission,
-          roles,
-          viewerIds
-        )
+        onLoadWidgetShareLink(params)
         break
       case 'display':
-        onLoadDisplayShareLink(
-          id,
-          shareType,
-          permission,
-          roles,
-          viewerIds
-        )
+        onLoadDisplayShareLink(params)
       default:
         break
     }
-  }, [id, shareType, permission, roles, viewerIds])
+  }
 
   const reloadShareToken = () => {
-    getShareToken()
+    getShareToken(type, { id, itemId, mode, permission, roles, viewerIds })
   }
 
   const afterModalClose = () => {
     setShareType('NORMAL')
+  }
+
+  const requestToken = () => {
+    getShareToken(type, { id, itemId, mode, permission, roles, viewerIds })
   }
 
   const Regular: ReactElement = useMemo(() => {
@@ -302,7 +300,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
         type="primary"
         disabled={isAuthorizedCanSend}
         className={styles.authButton}
-        onClick={getShareToken}
+        onClick={requestToken}
       >
         确定
       </Button>
@@ -354,10 +352,9 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
   }, [
     shareToken,
     type,
-    shareType,
+    mode,
     roles,
     viewerIds,
-    authUser,
     AuthOptions,
     authorizedShareToken
   ])
@@ -366,7 +363,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
     if (loading) {
       return <Icon type="loading" />
     }
-    switch (shareType) {
+    switch (mode) {
       case 'NORMAL':
         return Regular
       case 'AUTH':
@@ -376,17 +373,17 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
       default:
         return Regular
     }
-  }, [loading, shareType, roles, viewerIds, AuthOptions])
+  }, [loading, mode, roles, viewerIds, AuthOptions])
 
   const setSType = useCallback(
-    (val: TShareType) => {
+    (val: Tmode) => {
       if (val === 'AUTH') {
         setViewerIds([])
         setRoles([])
       }
       setShareType(val)
     },
-    [setShareType, shareType, roles, viewerIds]
+    [setShareType, mode, roles, viewerIds]
   )
 
   return (
@@ -400,7 +397,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
       destroyOnClose
     >
       <div className={styles.sharePanel}>
-        <Ctrl shareType={shareType} setSType={setSType} />
+        <Ctrl mode={mode} setSType={setSType} />
         <div className={styles.panelContent}>{Content}</div>
       </div>
     </Modal>

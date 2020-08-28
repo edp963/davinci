@@ -34,7 +34,7 @@ import injectReducer, { useInjectReducer } from 'utils/injectReducer'
 import injectSaga, { useInjectSaga } from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
-import { TShareType } from 'app/components/SharePanel/type'
+import { Tmode } from 'app/components/SharePanel/type'
 import { makeSelectShareType } from './selectors'
 
 import { Display } from 'share/containers/Display/Loadable'
@@ -46,7 +46,7 @@ import Interceptor from './Interceptor'
 export const App: React.FC = () => {
   useInjectReducer({ key: 'global', reducer })
   useInjectSaga({ key: 'global', saga })
-  const shareType: TShareType = useSelector(makeSelectShareType())
+  const shareType: Tmode = useSelector(makeSelectShareType())
 
   const { shareToken, type } = useMemo(
     () => querystring(window.location.search.substr(1)),

@@ -482,7 +482,7 @@ export function* getDisplayShareLink(action: DisplayActionType) {
     return
   }
 
-  const { id, mode, permission, roles, viewerIds } = action.payload
+  const {id, mode, permission, roles, viewerIds} = action.payload.params
   const {
     displayAuthorizedShareLinkLoaded,
     displayShareLinkLoaded,
@@ -505,8 +505,6 @@ export function* getDisplayShareLink(action: DisplayActionType) {
       default:
         break
   }
-
-  console.log(requestData)
 
   try {
     const asyncData = yield call(request, {

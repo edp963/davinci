@@ -369,11 +369,11 @@ export const DisplayActions = {
     }
   },
 
-  loadDisplayShareLink(id, mode, permission, roles, viewerIds) {
+  loadDisplayShareLink(params) {
     return {
       type: ActionTypes.LOAD_DISPLAY_SHARE_LINK,
       payload: {
-        id, mode, permission, roles, viewerIds
+        params
       }
     }
   },

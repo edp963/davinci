@@ -279,15 +279,11 @@ export const DashboardActions = {
     }
   },
 
-  loadDashboardShareLink (id, mode, permission, roles, viewerIds) {
+  loadDashboardShareLink (params) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_SHARE_LINK,
       payload: {
-        id,
-        mode,
-        permission,
-        roles,
-        viewerIds
+        params
       }
     }
   },
@@ -326,16 +322,11 @@ export const DashboardActions = {
     }
   },
 
-  loadWidgetShareLink(id, itemId, shareType, permission, roles, viewerIds) {
+  loadWidgetShareLink(params) {
     return {
       type: ActionTypes.LOAD_WIDGET_SHARE_LINK,
       payload: {
-        id,
-        itemId,
-        shareType,
-        permission,
-        roles,
-        viewerIds
+        params
       }
     }
   },

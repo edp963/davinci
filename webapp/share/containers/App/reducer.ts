@@ -20,13 +20,13 @@
 
 import produce from 'immer'
 import { ActionTypes } from './constants'
-import { TShareType } from 'app/components/SharePanel/type'
+import { Tmode } from 'app/components/SharePanel/type'
 
 interface IState {
   loading: boolean,
   logged: boolean,
   loginUser: object
-  shareType: TShareType
+  shareType: Tmode
   permissionLoading: boolean
   download: boolean
 }

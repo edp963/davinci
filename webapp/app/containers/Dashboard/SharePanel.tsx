@@ -55,12 +55,12 @@ const SharePanel: FC = () => {
   const projectRoles = useSelector(makeSelectProjectRoles())
   const organizationMembers = useSelector(makeSelectCurrentOrganizationMembers())
 
-  const onLoadDashboardShareLink = useCallback((id, mode, permission, roles, viewerIds) => {
-    dispatch(loadDashboardShareLink(id, mode, permission, roles, viewerIds))
+  const onLoadDashboardShareLink = useCallback(({id, mode, permission, roles, viewerIds}) => {
+    dispatch(loadDashboardShareLink({id, mode, permission, roles, viewerIds}))
   }, [])
 
-  const onLoadWidgetShareLink = useCallback((id, itemId, shareType, permission, roles, viewerIds) => {
-    dispatch(loadWidgetShareLink(id, itemId, shareType, permission, roles, viewerIds))
+  const onLoadWidgetShareLink = useCallback(({id, itemId, mode, permission, roles, viewerIds}) => {
+    dispatch(loadWidgetShareLink({id, itemId, mode, permission, roles, viewerIds}))
   }, [])
 
   const onCloseSharePanel = useCallback(() => {

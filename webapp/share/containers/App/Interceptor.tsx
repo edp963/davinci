@@ -36,7 +36,7 @@ import {
 } from '../../util'
 import reducer from './reducer'
 import saga from './sagas'
-import { TShareType } from 'app/components/SharePanel/type'
+import { Tmode } from 'app/components/SharePanel/type'
 import { message } from 'antd'
 import { makeSelectLoginLoading } from '../App/selectors'
 
@@ -44,7 +44,7 @@ const Interceptor: React.FC<any> = (props) => {
   useInjectReducer({ key: 'global', reducer })
   useInjectSaga({ key: 'global', saga })
   const dispatch = useDispatch()
-  const shareType: TShareType = useSelector(makeSelectShareType())
+  const shareType: Tmode = useSelector(makeSelectShareType())
   const loading: boolean = useSelector(makeSelectPermissionLoading())
   const loginLoading: boolean = useSelector(makeSelectLoginLoading())
 

@@ -26,17 +26,17 @@ const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 import {ICtrl} from './type'
 
-const Contrl: React.FC<ICtrl> = ({ shareType, setSType }) => {
+const Contrl: React.FC<ICtrl> = ({ mode, setSType }) => {
   const radioChange = useCallback(
     (e: RadioChangeEvent) => {
       setSType(e.target.value)
     },
-    [shareType]
+    [mode]
   )
 
   return (
     <div className={styles.panelHead}>
-      <RadioGroup defaultValue={shareType} buttonStyle="solid" onChange={radioChange}>
+      <RadioGroup defaultValue={mode} buttonStyle="solid" onChange={radioChange}>
         <RadioButton value="NORMAL">普通分享</RadioButton>
         <RadioButton value="PASSWORD">口令分享</RadioButton>
         <RadioButton value="AUTH">授权分享</RadioButton>
