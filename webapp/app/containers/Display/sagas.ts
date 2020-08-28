@@ -67,6 +67,8 @@ import {
 import { computeEditorBaselines, setLayersAlignment } from './components/util'
 import { DefaultDisplayParams } from './components/Setting/constants'
 import { IDisplayFormed } from '../Viz/types'
+import { IWidgetConfig } from '../Widget/components/Widget'
+import { widgetConfigMigrationRecorder } from 'app/utils/migrationRecorders'
 
 export function* getSlideDetail(action: DisplayActionType) {
   if (action.type !== ActionTypes.LOAD_SLIDE_DETAIL) {
@@ -95,7 +97,10 @@ export function* getSlideDetail(action: DisplayActionType) {
       item.params = JSON.parse(item.params)
     })
     widgets.forEach((widget: IWidgetRaw) => {
-      widget.config = JSON.parse(widget.config)
+      const parsedConfig: IWidgetConfig = JSON.parse(widget.config)
+      widget.config = widgetConfigMigrationRecorder(parsedConfig, {
+        viewId: widget.viewId
+      })
     })
 
     yield put(slideDetailLoaded(slideId, items, widgets, views))

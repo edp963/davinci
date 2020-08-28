@@ -20,7 +20,7 @@
 */
 
 import React from 'react'
-import { ItemToolbarProps } from './type'
+import { ItemToolbarProps } from './types'
 const Toolbar: React.FC<ItemToolbarProps> = (props) => {
   return (
     <>

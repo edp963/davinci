@@ -24,17 +24,18 @@ import { ControlActionType } from './actions'
 import { ActionTypes as ViewActionTypes } from 'app/containers/View/constants'
 import { ActionTypes as DashboardActionTypes } from 'app/containers/Dashboard/constants'
 import { ActionTypes as ShareDashboardActionTypes } from 'share/containers/Dashboard/constants'
+import { ActionTypes as VizActionTypes} from 'app/containers/Viz/constants'
 import { ViewActionType } from 'app/containers/View/actions'
 import { DashboardActionType } from 'app/containers/Dashboard/actions'
 import { DashboardActionType as ShareDashboardActionType } from 'share/containers/Dashboard/actions'
+import { VizActionType } from 'app/containers/Viz/actions'
 import { IControlState } from './types'
 
 const initialState: IControlState = {
   globalControlPanelFormValues: {},
   globalControlPanelSelectOptions: {},
   localControlPanelFormValues: {},
-  localControlPanelSelectOptions: {},
-  configForm: null
+  localControlPanelSelectOptions: {}
 }
 
 const controlReducer = (
@@ -44,6 +45,7 @@ const controlReducer = (
     | ViewActionType
     | DashboardActionType
     | ShareDashboardActionType
+    | VizActionType
 ): IControlState =>
   produce(state, (draft) => {
     switch (action.type) {
@@ -70,6 +72,12 @@ const controlReducer = (
         }
         draft.localControlPanelSelectOptions = {
           1: {}
+        }
+        break
+
+      case VizActionTypes.EDIT_CURRENT_DASHBOARD_SUCCESS:
+        if (action.payload.type === 'control') {
+          draft.globalControlPanelFormValues = {}
         }
         break
 
@@ -122,9 +130,6 @@ const controlReducer = (
           draft.globalControlPanelSelectOptions[action.payload.controlKey] =
             action.payload.options
         }
-        break
-      case ActionTypes.SET_CONFIG_FORM_VALUES:
-        draft.configForm = action.payload.formValues
         break
 
       default:

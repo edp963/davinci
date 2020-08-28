@@ -42,7 +42,7 @@ import {
 } from 'antd'
 import { ButtonProps } from 'antd/lib/button'
 import { ColumnProps, SorterResult } from 'antd/lib/table'
-import Container from 'components/Container'
+import Container, { ContainerTitle, ContainerBody } from 'components/Container'
 import Box from 'components/Box'
 import SearchFilterDropdown from 'app/components/SearchFilterDropdown'
 import CopyModal from './components/CopyModal'
@@ -263,7 +263,7 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
     <>
       <Container>
         <Helmet title="Widget" />
-        <Container.Title>
+        <ContainerTitle>
           <Row>
             <Col xl={18} lg={16} md={12} sm={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
@@ -273,8 +273,8 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
               </Breadcrumb>
             </Col>
           </Row>
-        </Container.Title>
-        <Container.Body>
+        </ContainerTitle>
+        <ContainerBody>
           <Box>
             <Box.Header>
               <Box.Title>
@@ -307,7 +307,7 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
               </Row>
             </Box.Body>
           </Box>
-        </Container.Body>
+        </ContainerBody>
       </Container>
       <CopyModal
         visible={copyModalVisible}

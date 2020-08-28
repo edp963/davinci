@@ -41,9 +41,7 @@ export interface IWidgetFormed extends IWidgetBase {
 
 export interface IWidgetState {
   widgets: IWidgetFormed[]
-  currentWidget: IWidgetRaw
+  currentWidget: IWidgetFormed
   loading: boolean
   dataLoading: boolean
-  columnValueLoading: boolean
-  distinctColumnValues: any[]
 }

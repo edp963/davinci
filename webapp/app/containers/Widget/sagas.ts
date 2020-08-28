@@ -28,6 +28,7 @@ import { IWidgetRaw, IWidgetFormed } from './types'
 import request from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
+import { widgetConfigMigrationRecorder } from 'app/utils/migrationRecorders'
 
 export function* getWidgets(action: WidgetActionType) {
   if (action.type !== ActionTypes.LOAD_WIDGETS) {
@@ -36,13 +37,17 @@ export function* getWidgets(action: WidgetActionType) {
   const { projectId } = action.payload
   try {
     const result = yield call(request, `${api.widget}?projectId=${projectId}`)
-    const formedWidgets: IWidgetFormed[] = result.payload.map((widget: IWidgetRaw) => {
-      const parsedConfig = JSON.parse(widget.config)
-      return {
-        ...widget,
-        config: parsedConfig
+    const formedWidgets: IWidgetFormed[] = result.payload.map(
+      (widget: IWidgetRaw) => {
+        const parsedConfig = JSON.parse(widget.config)
+        return {
+          ...widget,
+          config: widgetConfigMigrationRecorder(parsedConfig, {
+            viewId: widget.viewId
+          })
+        }
       }
-    })
+    )
     yield put(WidgetActions.widgetsLoaded(formedWidgets))
   } catch (err) {
     yield put(WidgetActions.widgetsLoadedFail())
@@ -100,10 +105,19 @@ export function* getWidgetDetail(action: WidgetActionType) {
 
   const { id } = action.payload
   try {
-    const result = yield call(request, `${api.widget}/${id}`)
-    const viewId = result.payload.viewId
-    const view = yield call(request, `${api.view}/${viewId}`)
-    yield put(WidgetActions.widgetDetailLoaded(result.payload, view.payload))
+    const widgetResult = yield call(request, `${api.widget}/${id}`)
+    const widget: IWidgetRaw = widgetResult.payload
+    const parsedConfig = JSON.parse(widget.config)
+    const formedWidget: IWidgetFormed = {
+      ...widget,
+      config: widgetConfigMigrationRecorder(parsedConfig, {
+        viewId: widget.viewId
+      })
+    }
+    const viewResult = yield call(request, `${api.view}/${widget.viewId}`)
+    yield put(
+      WidgetActions.widgetDetailLoaded(formedWidget, viewResult.payload)
+    )
   } catch (err) {
     yield put(WidgetActions.loadWidgetDetailFail(err))
     errorHandler(err)

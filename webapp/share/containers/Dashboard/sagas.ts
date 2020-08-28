@@ -31,7 +31,6 @@ import { ActionTypes } from './constants'
 import { DashboardActions, DashboardActionType } from './actions'
 import {
   makeSelectDashboard,
-  makeSelectWidgets,
   makeSelectItemRelatedWidget,
   makeSelectItemInfo
 } from './selectors'
@@ -41,8 +40,8 @@ import {
 } from 'app/containers/ControlPanel/selectors'
 import { ControlPanelTypes } from 'app/components/Control/constants'
 import {
-  globalControlMigrationRecorder,
-  localControlMigrationRecorder
+  dashboardConfigMigrationRecorder,
+  widgetConfigMigrationRecorder
 } from 'app/utils/migrationRecorders'
 import {
   getRequestParams,
@@ -54,7 +53,7 @@ import {
 import {
   IShareDashboardDetailRaw,
   IShareWidgetRaw,
-  IShareDashboardItemInfo,
+  IShareDashboardItemInfo
 } from './types'
 import {
   IDashboardConfig,
@@ -63,8 +62,6 @@ import {
 } from 'app/containers/Dashboard/types'
 import { IWidgetFormed } from 'app/containers/Widget/types'
 import {
-  IDistinctValueReqeustParams,
-  GlobalControlQueryMode,
   IGlobalControlConditions,
   IGlobalControlConditionsByItem,
   ILocalControlConditions
@@ -95,29 +92,18 @@ export function* getDashboard(action: DashboardActionType) {
       ...rest
     } = result.payload as IShareDashboardDetailRaw
     const parsedConfig: IDashboardConfig = JSON.parse(config || '{}')
-    const filters = (parsedConfig.filters || []).map((c) =>
-      globalControlMigrationRecorder(c)
-    )
-    const linkages = parsedConfig.linkages || []
-    const queryMode =
-      parsedConfig.queryMode || GlobalControlQueryMode.Immediately
     const dashboard = {
       ...rest,
-      config: {
-        filters,
-        linkages,
-        queryMode
-      }
+      config: dashboardConfigMigrationRecorder(parsedConfig)
     }
     const formedWidgets = widgets.map((widget) => {
       const { model, variable, config, ...rest } = widget
       const parsedConfig: IWidgetConfig = JSON.parse(config)
-      parsedConfig.controls = parsedConfig.controls.map((c) =>
-        localControlMigrationRecorder(c)
-      )
       return {
         ...rest,
-        config: parsedConfig
+        config: widgetConfigMigrationRecorder(parsedConfig, {
+          viewId: widget.viewId
+        })
       }
     })
     const formedViews = widgets.reduce(
@@ -146,12 +132,11 @@ export function* getWidget(action: DashboardActionType) {
     const widget: IShareWidgetRaw = result.payload
     const { model, variable, config, ...rest } = widget
     const parsedConfig: IWidgetConfig = JSON.parse(config)
-    parsedConfig.controls = parsedConfig.controls.map((c) =>
-      localControlMigrationRecorder(c)
-    )
     const formedWidget = {
       ...rest,
-      config: parsedConfig
+      config: widgetConfigMigrationRecorder(parsedConfig, {
+        viewId: widget.viewId
+      })
     }
     const formedViews = {
       [widget.viewId]: { model: JSON.parse(widget.model) }
@@ -250,13 +235,7 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
     )
     while (globalControlConditionsByItemEntries.length) {
       const [itemId, queryConditions] = globalControlConditionsByItemEntries[0]
-      yield fork(
-        getData,
-        'clear',
-        Number(itemId),
-        queryConditions,
-        true
-      )
+      yield fork(getData, 'clear', Number(itemId), queryConditions, true)
       globalControlConditionsByItemEntries.shift()
     }
   } else {
@@ -327,42 +306,30 @@ export function* getSelectOptions(action: DashboardActionType) {
   const { selectOptionsLoaded, loadSelectOptionsFail } = DashboardActions
   try {
     const { controlKey, dataToken, requestParams, itemId } = action.payload
-    const requestParamsMap: Array<[
-      string,
-      IDistinctValueReqeustParams
-    ]> = Object.entries(requestParams)
-    const requests = requestParamsMap.map(
-      ([viewId, params]: [string, IDistinctValueReqeustParams]) => {
-        const { columns, filters, variables, cache, expired } = params
-        return call(request, {
-          method: 'post',
-          url: `${api.share}/data/${dataToken}/distinctvalue/${viewId}`,
-          data: {
-            columns,
-            filters,
-            params: variables,
-            cache,
-            expired
-          }
-        })
-      }
-    )
+    const requests = Object.entries(requestParams).map(([viewId, params]) => {
+      const { columns, filters, variables, cache, expired } = params
+      return call(request, {
+        method: 'post',
+        url: `${api.share}/data/${dataToken}/distinctvalue/${viewId}`,
+        data: {
+          columns: Object.values(columns).filter((c) => !!c),
+          filters,
+          params: variables,
+          cache,
+          expired
+        }
+      })
+    })
     const results: Array<IDavinciResponse<object[]>> = yield all(requests)
-    const indistinctOptions = results.reduce((payloads, r, index) => {
-      const { columns } = requestParamsMap[index][1]
-      if (columns.length === 1) {
-        return payloads.concat(r.payload.map((obj) => obj[columns[0]]))
-      }
-      return payloads
-    }, [])
-    const distinctOptions = Array.from(new Set(indistinctOptions)).map((value) => ({
-      text: value,
-      value
-    }))
-    yield put(selectOptionsLoaded(controlKey, distinctOptions, itemId))
+    yield put(
+      selectOptionsLoaded(
+        controlKey,
+        results.reduce((arr, result) => arr.concat(result.payload), []),
+        itemId
+      )
+    )
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
-    // errorHandler(err)
   }
 }
 
@@ -405,9 +372,7 @@ export function* initiateDownloadTask(action: DashboardActionType) {
   }
   const { DownloadTaskInitiated, initiateDownloadTaskFail } = DashboardActions
   const { shareClientId, itemId } = action.payload
-  const currentDashboard: IDashboard = yield select(
-    makeSelectDashboard()
-  )
+  const currentDashboard: IDashboard = yield select(makeSelectDashboard())
   const currentDashboardFilters = currentDashboard?.config.filters || []
   const globalControlFormValues = yield select(
     makeSelectGlobalControlPanelFormValues()
@@ -445,15 +410,17 @@ export function* initiateDownloadTask(action: DashboardActionType) {
     yield call(request, {
       method: 'POST',
       url: `${api.download}/share/submit/${DownloadTypes.Widget}/${shareClientId}/${relatedWidget.dataToken}`,
-      data: [{
-        id: relatedWidget.id,
-        param: {
-          ...getRequestBody(requestParams),
-          flush: true,
-          pageNo: 0,
-          pageSize: 0
+      data: [
+        {
+          id: relatedWidget.id,
+          param: {
+            ...getRequestBody(requestParams),
+            flush: true,
+            pageNo: 0,
+            pageSize: 0
+          }
         }
-      }]
+      ]
     })
     message.success('下载任务创建成功！')
     yield put(DownloadTaskInitiated(itemId))
@@ -468,7 +435,10 @@ export default function* rootDashboardSaga(): IterableIterator<any> {
     takeLatest(ActionTypes.LOAD_SHARE_DASHBOARD, getDashboard),
     takeEvery(ActionTypes.LOAD_SHARE_WIDGET, getWidget),
     takeEvery(ActionTypes.LOAD_SHARE_RESULTSET, getResultset),
-    takeEvery(ActionTypes.LOAD_BATCH_DATA_WITH_CONTROL_VALUES, getBatchDataWithControlValues),
+    takeEvery(
+      ActionTypes.LOAD_BATCH_DATA_WITH_CONTROL_VALUES,
+      getBatchDataWithControlValues
+    ),
     takeLatest(ActionTypes.LOAD_WIDGET_CSV, getWidgetCsv),
     takeEvery(ActionTypes.LOAD_SELECT_OPTIONS, getSelectOptions),
     takeLatest(ActionTypes.LOAD_DOWNLOAD_LIST, getDownloadList),

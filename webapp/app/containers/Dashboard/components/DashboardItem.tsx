@@ -146,9 +146,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   public componentWillMount () {
     const { itemId, widget, view, onLoadData, container } = this.props
     const { cacheWidgetProps, cacheWidgetId } = this.state
-    const { autoLoadData } = widget.config
     if (container === 'share') {
-      if (autoLoadData === true || autoLoadData === undefined) {
+      if (widget.config.autoLoadData) {
         onLoadData('clear', itemId)
       }
       this.initPolling(this.props)
@@ -198,11 +197,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       container,
       onLoadData
     } = nextProps
-    const { autoLoadData } = widget.config
     if (!container) {
       if (!this.props.rendered && rendered) {
         // clear
-        if (autoLoadData === true || autoLoadData === undefined) {
+        if (widget.config.autoLoadData) {
           onLoadData('clear', itemId)
         }
         this.initPolling(this.props)

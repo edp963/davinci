@@ -32,7 +32,7 @@ import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import Container from 'components/Container'
+import Container, { ContainerTitle, ContainerBody } from 'components/Container'
 import Box from 'components/Box'
 import SearchFilterDropdown from 'components/SearchFilterDropdown'
 import SourceConfigModal from './components/SourceConfigModal'
@@ -510,7 +510,7 @@ export class SourceList extends React.PureComponent<
     return (
       <Container>
         <Helmet title="Source" />
-        <Container.Title>
+        <ContainerTitle>
           <Row>
             <Col span={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
@@ -520,8 +520,8 @@ export class SourceList extends React.PureComponent<
               </Breadcrumb>
             </Col>
           </Row>
-        </Container.Title>
-        <Container.Body>
+        </ContainerTitle>
+        <ContainerBody>
           <Box>
             <Box.Header>
               <Box.Title>
@@ -579,7 +579,7 @@ export class SourceList extends React.PureComponent<
               />
             </Box.Body>
           </Box>
-        </Container.Body>
+        </ContainerBody>
       </Container>
     )
   }

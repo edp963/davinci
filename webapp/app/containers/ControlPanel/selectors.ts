@@ -52,16 +52,9 @@ const makeSelectLocalControlPanelSelectOptions = () =>
       controlState.localControlPanelSelectOptions[itemId]
   )
 
-const makeSelectConfigFormValues = () =>
-  createSelector(
-    selectControl,
-    (controlState) => controlState.configForm
-  )
-
 export {
   makeSelectGlobalControlPanelFormValues,
   makeSelectGlobalControlPanelSelectOptions,
   makeSelectLocalControlPanelFormValues,
-  makeSelectLocalControlPanelSelectOptions,
-  makeSelectConfigFormValues
+  makeSelectLocalControlPanelSelectOptions
 }

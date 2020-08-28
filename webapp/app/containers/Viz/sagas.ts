@@ -357,8 +357,11 @@ export function* editDashboard(action: VizActionType) {
   }
 }
 
-export function* editCurrentDashboard(action) {
-  const { dashboard, resolve } = action.payload
+export function* editCurrentDashboard(action: VizActionType) {
+  if (action.type !== ActionTypes.EDIT_CURRENT_DASHBOARD) {
+    return
+  }
+  const { dashboard, type, resolve } = action.payload
   const { config, ...rest } = dashboard as IDashboard
   try {
     yield call(request, {
@@ -371,7 +374,7 @@ export function* editCurrentDashboard(action) {
         }
       ]
     })
-    yield put(VizActions.currentDashboardEdited(dashboard))
+    yield put(VizActions.currentDashboardEdited(dashboard, type))
     resolve()
   } catch (err) {
     yield put(VizActions.editCurrentDashboardFail())
