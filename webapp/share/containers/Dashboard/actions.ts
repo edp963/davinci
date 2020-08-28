@@ -30,7 +30,7 @@ import { IWidgetFormed } from 'app/containers/Widget/types'
 import { IFormedView, IViewQueryResponse } from 'app/containers/View/types'
 import { RenderType } from 'app/containers/Widget/components/Widget'
 import { ControlPanelTypes } from 'app/components/Control/constants'
-import { DownloadTypes } from 'app/containers/App/constants'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
 
 export const DashboardActions = {
   getDashboard(token, reject) {
@@ -192,7 +192,12 @@ export const DashboardActions = {
     }
   },
 
-  loadSelectOptions(controlKey, dataToken, requestParams, itemId) {
+  loadSelectOptions(
+    controlKey: string,
+    dataToken: string,
+    requestParams: { [viewId: string]: IDistinctValueReqeustParams },
+    itemId: number
+  ) {
     return {
       type: ActionTypes.LOAD_SELECT_OPTIONS,
       payload: {

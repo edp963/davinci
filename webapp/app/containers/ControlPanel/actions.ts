@@ -20,7 +20,6 @@
 
 import { returnType } from 'utils/redux'
 import { ActionTypes } from './constants'
-import { IControlBase } from 'app/components/Control/types'
 
 export const ControlActions = {
   setGlobalControlPanelFormValues(values: object) {
@@ -47,14 +46,6 @@ export const ControlActions = {
         controlKey,
         options,
         itemId
-      }
-    }
-  },
-  setConfigFormValues(formValues: IControlBase) {
-    return {
-      type: ActionTypes.SET_CONFIG_FORM_VALUES,
-      payload: {
-        formValues
       }
     }
   }

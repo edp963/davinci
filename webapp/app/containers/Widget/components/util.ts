@@ -290,7 +290,9 @@ export function getChartPieces (total, lines) {
 }
 
 export function metricAxisLabelFormatter (value) {
-  if (value >= Math.pow(10, 9) && value < Math.pow(10, 12)) {
+  if (value >= Math.pow(10, 12)) {
+    return `${precision(value / Math.pow(10, 12))}T`
+  } else if (value >= Math.pow(10, 9) && value < Math.pow(10, 12)) {
     return `${precision(value / Math.pow(10, 9))}B`
   } else if (value >= Math.pow(10, 6) && value < Math.pow(10, 9)) {
     return `${precision(value / Math.pow(10, 6))}M`

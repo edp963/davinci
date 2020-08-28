@@ -31,7 +31,7 @@ import reducer from './reducer'
 import controlReducer from 'app/containers/ControlPanel/reducer'
 import saga from './sagas'
 
-import Container from 'components/Container'
+import Container, { ContainerTitle } from 'components/Container'
 import {
   getMappingLinkage,
   processLinkage,
@@ -533,7 +533,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     return (
       <Container>
         <Helmet title={title} />
-        <Container.Title>
+        <ContainerTitle>
           <Row>
             <Col span={24}>
               <h2 className={styles.shareTitle}>{title}</h2>
@@ -553,7 +553,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
             onGetOptions={this.getControlSelectOptions}
             onSearch={onLoadBatchDataWithControlValues}
           />
-        </Container.Title>
+        </ContainerTitle>
         {grids}
         <div className={styles.gridBottom} />
         <FullScreenPanel

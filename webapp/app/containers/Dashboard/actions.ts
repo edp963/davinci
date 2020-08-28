@@ -163,11 +163,10 @@ export const DashboardActions = {
     }
   },
 
-  loadDashboardDetail(projectId, portalId, dashboardId) {
+  loadDashboardDetail(portalId, dashboardId) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_DETAIL,
       payload: {
-        projectId,
         portalId,
         dashboardId
       }

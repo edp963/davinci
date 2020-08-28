@@ -52,7 +52,7 @@ import {
 } from 'antd'
 import { ButtonProps } from 'antd/lib/button'
 import { ColumnProps } from 'antd/lib/table'
-import Container from 'components/Container'
+import Container, { ContainerTitle, ContainerBody } from 'components/Container'
 import Box from 'components/Box'
 
 import { ISchedule, JobStatus, IScheduleLoading } from './types'
@@ -289,7 +289,7 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
   return (
     <Container>
       <Helmet title="Schedule" />
-      <Container.Title>
+      <ContainerTitle>
         <Row>
           <Col span={24}>
             <Breadcrumb className={utilStyles.breadcrumb}>
@@ -299,8 +299,8 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
             </Breadcrumb>
           </Col>
         </Row>
-      </Container.Title>
-      <Container.Body>
+      </ContainerTitle>
+      <ContainerBody>
         <Box>
           <Box.Header>
             <Box.Title>
@@ -328,7 +328,7 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
             </Row>
           </Box.Body>
         </Box>
-      </Container.Body>
+      </ContainerBody>
       <Modal
         title="错误日志"
         wrapClassName="ant-modal-large"

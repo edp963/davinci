@@ -18,18 +18,18 @@
  * >>
  */
 
-import { getInitialPaginationAndNativeQuery } from 'app/containers/Dashboard/util'
+import {
+  getInitialPaginationAndNativeQuery,
+  getLocalControlInitialValues
+} from 'app/containers/Dashboard/util'
 import { IShareDashboardItemInfo } from './types'
 import { DashboardItemStatus } from './constants'
-import { IGlobalControl } from 'app/components/Control/types'
-import {
-  ControlTypes,
-  DatePickerDefaultValues
-} from 'app/components/Control/constants'
+import { IControl } from 'app/components/Control/types'
+import { ControlDefaultValueTypes } from 'app/components/Control/constants'
 import { IWidgetFormed } from 'app/containers/Widget/types'
 
 export function initDefaultValuesFromShareParams(
-  controls: IGlobalControl[],
+  controls: IControl[],
   shareParams: object
 ) {
   controls.forEach((control) => {
@@ -37,9 +37,7 @@ export function initDefaultValuesFromShareParams(
     if (shareParams) {
       const defaultValue = shareParams[name]
       if (defaultValue && defaultValue.length) {
-        if (type === ControlTypes.Date) {
-          control.dynamicDefaultValue = DatePickerDefaultValues.Custom
-        }
+        control.defaultValueType = ControlDefaultValueTypes.Fixed
         control.defaultValue =
           Array.isArray(defaultValue) && defaultValue.length
             ? defaultValue.map((val) => decodeURI(val))
@@ -63,13 +61,12 @@ export function getShareInitialItemInfo(
     },
     loading: false,
     queryConditions: {
-      tempFilters: [], // @TODO combine widget static filters with local filters
       linkageFilters: [],
       globalFilters: [],
-      variables: [],
       linkageVariables: [],
       globalVariables: [],
       drillpathInstance: [],
+      ...getLocalControlInitialValues(widget.config.controls),
       ...getInitialPaginationAndNativeQuery(widget)
     },
     downloadCsvLoading: false,

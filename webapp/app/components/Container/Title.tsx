@@ -18,25 +18,20 @@
  * >>
  */
 
-import * as React from 'react'
+import React, { FC, forwardRef } from 'react'
+import styles from './Container.less'
 
-const styles = require('./Container.less')
-
-interface IContainerProps {
+interface IContainerTitleProps {
   grid?: boolean
-  card?: boolean
-  children: React.ReactNode,
-  align?: any
+  children: React.ReactNode
 }
 
-export class Title extends React.Component<IContainerProps, {}> {
-  public render () {
-    return (
-      <div className={styles.title}>
-        {this.props.children}
-      </div>
-    )
-  }
+const Title: FC<IContainerTitleProps> = ({ grid, children }, ref) => {
+  return (
+    <div className={styles.title} ref={ref}>
+      {children}
+    </div>
+  )
 }
 
-export default Title
+export default forwardRef(Title)

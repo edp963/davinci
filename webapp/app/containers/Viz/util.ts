@@ -20,7 +20,6 @@
 
 import { IDashboardRaw, IDashboardNode } from './types'
 import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
-import { widgetDimensionMigrationRecorder } from 'app/utils/migrationRecorders'
 import { FieldSortTypes } from '../Widget/components/Config/Sort'
 import { IQueryConditions } from '../Dashboard/types'
 import { decodeMetricName } from '../Widget/components/util'
@@ -75,11 +74,9 @@ export function getRequestParamsByWidgetConfig(
     cache,
     expired
   } = widgetConfig
-  const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
-  const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
 
-  const customOrders = updatedCols
-    .concat(updatedRows)
+  const customOrders = cols
+    .concat(rows)
     .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
     .map(({ name, sort }) => ({
       name,
