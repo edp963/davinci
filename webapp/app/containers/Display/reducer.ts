@@ -390,7 +390,7 @@ const displayReducer = (
 
       case ActionTypes.LOAD_DISPLAY_SHARE_LINK:
         draft.loading.shareToken = true
-        if (action.payload.mode === 'AUTH') {
+        if (action.payload.params.mode === 'AUTH') {
           draft.currentDisplayAuthorizedShareToken = ''
         }
         break

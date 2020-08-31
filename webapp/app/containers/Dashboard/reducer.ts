@@ -273,7 +273,7 @@ const dashboardReducer = (
 
       case ActionTypes.LOAD_DASHBOARD_SHARE_LINK:
         draft.currentDashboardShareLoading = true
-        if (action.payload.mode === 'AUTH') {
+        if (action.payload.params.mode === 'AUTH') {
           draft.currentDashboardAuthorizedShareToken = ''
         }
         break

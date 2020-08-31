@@ -34,12 +34,7 @@ const RadioGroup = Radio.Group
 import { uuid } from 'utils/util'
 import ShareForm from './ShareForm'
 import styles from './SharePanel.less'
-import {
-  Tmode,
-  TShareVizsType,
-  TPermission,
-  IGetTokenParams
-} from './type'
+import { Tmode, TShareVizsType, TPermission, IGetTokenParams } from './type'
 import { IProjectRoles } from 'containers/Organizations/component/ProjectRole'
 import { IOrganizationMember } from 'containers/Organizations/types'
 import { debounce } from 'lodash'
@@ -98,7 +93,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
         viewerIds
       })
     }
-  }, [id, visible, shareToken, itemId, mode, permission, roles, viewerIds])
+  }, [id, type, visible, shareToken, itemId, mode, permission, roles, viewerIds])
 
   useEffect(() => {
     if (id && visible && !pwdToken && mode === 'PASSWORD') {
@@ -111,17 +106,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
         viewerIds
       })
     }
-  }, [
-    pwdToken,
-    pwd,
-    id,
-    visible,
-    mode,
-    itemId,
-    permission,
-    roles,
-    viewerIds
-  ])
+  }, [pwdToken, type, pwd, id, visible, mode, itemId, permission, roles, viewerIds])
 
   const getShareToken = (type: TShareVizsType, params: IGetTokenParams) => {
     switch (type) {
@@ -158,7 +143,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
         点击重新加载
       </Button>
     )
-  }, [type, shareToken])
+  }, [id, itemId, type, shareToken])
 
   const Pwd: ReactElement = useMemo(() => {
     return pwdToken ? (
@@ -168,7 +153,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
         点击重新加载
       </Button>
     )
-  }, [type, pwd, pwdToken])
+  }, [id, itemId, type, pwd, pwdToken])
 
   const AuthOptions = useMemo(() => {
     const roles = compose(
@@ -350,6 +335,8 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
       )
     }
   }, [
+    id,
+    itemId,
     shareToken,
     type,
     mode,
@@ -373,7 +360,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
       default:
         return Regular
     }
-  }, [loading, mode, roles, viewerIds, AuthOptions])
+  }, [id, itemId, type, loading, mode, roles, viewerIds, AuthOptions])
 
   const setSType = useCallback(
     (val: Tmode) => {
@@ -383,7 +370,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
       }
       setShareType(val)
     },
-    [setShareType, mode, roles, viewerIds]
+    [setShareType, mode, roles, type, viewerIds]
   )
 
   return (
